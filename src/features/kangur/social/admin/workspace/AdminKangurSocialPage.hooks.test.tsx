@@ -138,6 +138,7 @@ const createSettingsState = (overrides?: Record<string, unknown>) => ({
   brainModelId: null,
   visionModelId: null,
   projectUrl: 'https://project.example.com',
+  projectUrlError: null,
   setProjectUrl: vi.fn(),
   batchCaptureBaseUrl: 'https://capture.example.com',
   setBatchCaptureBaseUrl: vi.fn(),

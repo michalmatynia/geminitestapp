@@ -100,14 +100,17 @@ export function KangurSubjectFocusProvider({
       if (!normalizedSubject) {
         return;
       }
+      if (normalizedSubject === subject) {
+        return;
+      }
 
       setSubjectState(normalizedSubject);
       persistSubjectFocus(storageKey, normalizedSubject);
       if (canSyncRemote) {
-        void persistRemoteSubjectFocus(normalizedSubject);
+        void persistRemoteSubjectFocus(storageKey, normalizedSubject);
       }
     },
-    [canSyncRemote, storageKey]
+    [canSyncRemote, storageKey, subject]
   );
 
   const stateValue = useMemo<KangurSubjectFocusStateContextValue>(

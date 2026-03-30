@@ -109,6 +109,47 @@ export const requireActiveLearner = (actor: KangurActor): KangurLearnerProfile =
   return actor.activeLearner;
 };
 
+export const resolveKangurActiveLearner = async (
+  request?: NextRequest
+): Promise<KangurLearnerProfile> => {
+  const session = await readOptionalServerAuthSession();
+  const requestedLearnerId = resolveRequestedLearnerId(request);
+
+  if (session?.user?.id) {
+    const ownerUserId = session.user.id;
+
+    if (requestedLearnerId) {
+      const requestedLearner = await getKangurLearnerById(requestedLearnerId);
+      if (requestedLearner && requestedLearner.ownerUserId === ownerUserId) {
+        return requestedLearner;
+      }
+    }
+
+    const activeLearner = pickActiveLearner(await listKangurLearnersByOwner(ownerUserId), null);
+    if (activeLearner) {
+      return activeLearner;
+    }
+
+    throw notFoundError('No Kangur learner profiles are available.');
+  }
+
+  if (!request) {
+    throw authError('Authentication required.');
+  }
+
+  const learnerSession = readKangurLearnerSession(request);
+  if (!learnerSession) {
+    throw authError('Authentication required.');
+  }
+
+  const activeLearner = await getKangurLearnerById(learnerSession.learnerId);
+  if (activeLearner?.status !== 'active') {
+    throw authError('Learner session is no longer valid.');
+  }
+
+  return activeLearner;
+};
+
 export const resolveKangurActor = async (request?: NextRequest): Promise<KangurActor> => {
   const session = await readOptionalServerAuthSession();
   const requestedLearnerId = resolveRequestedLearnerId(request);

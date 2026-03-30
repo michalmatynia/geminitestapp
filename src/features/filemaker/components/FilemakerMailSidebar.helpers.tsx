@@ -141,16 +141,20 @@ const matchesFilemakerMailRecentThreadFilters = (
 
 const buildFilemakerMailComposeHref = (input: {
   accountId?: string | null;
+  forwardThreadId?: string | null;
   mailboxPath?: string | null;
-  originPanel?: 'recent' | null;
+  originPanel?: 'recent' | 'search' | null;
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  searchQuery?: string | null;
 }): string => {
   const search = new URLSearchParams();
   if (input.accountId) search.set('accountId', input.accountId);
+  if (input.forwardThreadId) search.set('forwardThreadId', input.forwardThreadId);
   if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
   if (input.accountId && input.originPanel === 'recent') search.set('panel', 'recent');
+  if (input.originPanel === 'search') search.set('panel', 'search');
   if (input.accountId && input.recentMailboxFilter) {
     search.set('recentMailbox', input.recentMailboxFilter);
   }
@@ -159,6 +163,9 @@ const buildFilemakerMailComposeHref = (input: {
   }
   if (input.accountId && input.originPanel === 'recent' && input.recentQuery) {
     search.set('recentQuery', input.recentQuery);
+  }
+  if (input.originPanel === 'search' && input.searchQuery) {
+    search.set('searchQuery', input.searchQuery);
   }
   const nextSearch = search.toString();
   return nextSearch ? `/admin/filemaker/mail/compose?${nextSearch}` : '/admin/filemaker/mail/compose';
@@ -168,15 +175,17 @@ const buildFilemakerMailThreadHref = (input: {
   threadId: string;
   accountId?: string | null;
   mailboxPath?: string | null;
-  originPanel?: 'recent' | null;
+  originPanel?: 'recent' | 'search' | null;
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  searchQuery?: string | null;
 }): string => {
   const search = new URLSearchParams();
   if (input.accountId) search.set('accountId', input.accountId);
   if (input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
   if (input.accountId && input.originPanel === 'recent') search.set('panel', 'recent');
+  if (input.originPanel === 'search') search.set('panel', 'search');
   if (input.accountId && input.recentMailboxFilter) {
     search.set('recentMailbox', input.recentMailboxFilter);
   }
@@ -185,6 +194,9 @@ const buildFilemakerMailThreadHref = (input: {
   }
   if (input.accountId && input.originPanel === 'recent' && input.recentQuery) {
     search.set('recentQuery', input.recentQuery);
+  }
+  if (input.originPanel === 'search' && input.searchQuery) {
+    search.set('searchQuery', input.searchQuery);
   }
   const nextSearch = search.toString();
   const base = `/admin/filemaker/mail/threads/${encodeURIComponent(input.threadId)}`;

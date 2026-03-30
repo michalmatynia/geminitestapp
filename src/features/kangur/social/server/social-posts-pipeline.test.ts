@@ -222,6 +222,48 @@ describe('runKangurSocialPostPipeline', () => {
     );
   });
 
+  it('keeps LinkedIn-published posts in published status while saving and regenerating pipeline output', async () => {
+    mocks.getKangurSocialPostByIdMock.mockResolvedValueOnce({
+      ...basePost,
+      status: 'draft',
+      publishedAt: '2026-03-19T12:00:00.000Z',
+      linkedinPostId: 'urn:li:share:published',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3Apublished',
+    });
+
+    await runKangurSocialPostPipeline({
+      postId: 'post-1',
+      editorState: {
+        titlePl: 'Draft PL',
+        titleEn: 'Draft EN',
+        bodyPl: 'Body PL',
+        bodyEn: 'Body EN',
+      },
+      imageAssets: [],
+      imageAddonIds: [],
+      captureMode: 'existing_assets',
+      linkedinConnectionId: null,
+      brainModelId: 'brain-model',
+      visionModelId: 'vision-model',
+      projectUrl: 'https://studiq.example.com',
+      generationNotes: 'Focus on the new onboarding improvements.',
+      docReferences: ['overview'],
+      actorId: 'user-1',
+    });
+
+    expect(mocks.upsertKangurSocialPostMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'published',
+      })
+    );
+    expect(mocks.updateKangurSocialPostMock).toHaveBeenCalledWith(
+      'post-1',
+      expect.objectContaining({
+        status: 'published',
+      })
+    );
+  });
+
   it('reports live Playwright capture counters during fresh capture runs', async () => {
     const reportProgress = vi.fn();
     mocks.createKangurSocialImageAddonsBatchMock.mockImplementation(
@@ -374,6 +416,58 @@ describe('runKangurSocialPostPipeline', () => {
         message: 'Playwright capture in progress: 1 captured, 1 left of 2 presets.',
       })
     );
+  });
+
+  it('rejects pipeline runs when Project URL is missing or localhost-only', async () => {
+    await expect(
+      runKangurSocialPostPipeline({
+        postId: 'post-1',
+        editorState: {
+          titlePl: 'Draft PL',
+          titleEn: 'Draft EN',
+          bodyPl: 'Body PL',
+          bodyEn: 'Body EN',
+        },
+        imageAssets: [],
+        imageAddonIds: [],
+        captureMode: 'existing_assets',
+        linkedinConnectionId: null,
+        brainModelId: 'brain-model',
+        visionModelId: 'vision-model',
+        projectUrl: '',
+        generationNotes: 'Focus on the new onboarding improvements.',
+        docReferences: ['overview'],
+        actorId: 'user-1',
+      })
+    ).rejects.toThrow('Set Settings Project URL before generating social posts.');
+
+    await expect(
+      runKangurSocialPostPipeline({
+        postId: 'post-1',
+        editorState: {
+          titlePl: 'Draft PL',
+          titleEn: 'Draft EN',
+          bodyPl: 'Body PL',
+          bodyEn: 'Body EN',
+        },
+        imageAssets: [],
+        imageAddonIds: [],
+        captureMode: 'existing_assets',
+        linkedinConnectionId: null,
+        brainModelId: 'brain-model',
+        visionModelId: 'vision-model',
+        projectUrl: 'http://localhost:3000',
+        generationNotes: 'Focus on the new onboarding improvements.',
+        docReferences: ['overview'],
+        actorId: 'user-1',
+      })
+    ).rejects.toThrow(
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+    );
+
+    expect(mocks.upsertKangurSocialPostMock).not.toHaveBeenCalled();
+    expect(mocks.generateKangurSocialPostDraftMock).not.toHaveBeenCalled();
+    expect(mocks.updateKangurSocialPostMock).not.toHaveBeenCalled();
   });
 
   it('passes prefetched visual analysis into draft generation when provided', async () => {

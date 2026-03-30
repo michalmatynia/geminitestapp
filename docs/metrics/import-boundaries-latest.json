@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-27T13:59:54.358Z",
-  "status": "failed",
+  "generatedAt": "2026-03-30T12:40:58.799Z",
+  "status": "warn",
   "summary": {
-    "total": 2,
-    "errorCount": 2,
-    "warningCount": 0,
+    "total": 11,
+    "errorCount": 0,
+    "warningCount": 11,
     "infoCount": 0,
-    "status": "failed",
-    "fileCount": 5929,
-    "featureCount": 10,
-    "circularDependencyCount": 1
+    "status": "warn",
+    "fileCount": 6401,
+    "featureCount": 13,
+    "circularDependencyCount": 0
   },
   "scope": {
     "root": "src",
@@ -23,6 +23,7 @@
       "prompt-engine"
     ],
     "ai": [
+      "auth",
       "files",
       "foldertree",
       "viewer3d"
@@ -40,15 +41,24 @@
       "products",
       "viewer3d"
     ],
+    "database": [
+      "auth"
+    ],
     "drafter": [
       "products"
     ],
+    "filemaker": [
+      "auth",
+      "document-editor",
+      "foldertree"
+    ],
     "integrations": [
-      "data-import-export",
-      "products"
+      "auth",
+      "data-import-export"
     ],
     "kangur": [
       "ai",
+      "auth",
       "cms",
       "document-editor",
       "files",
@@ -58,6 +68,9 @@
     "notesapp": [
       "document-editor",
       "foldertree"
+    ],
+    "observability": [
+      "ai"
     ],
     "products": [
       "ai",
@@ -70,30 +83,114 @@
       "foldertree"
     ]
   },
-  "circularDependencies": [
-    [
-      "products",
-      "integrations",
-      "products"
-    ]
-  ],
+  "circularDependencies": [],
   "issues": [
     {
-      "severity": "error",
-      "ruleId": "circular-feature-dep",
-      "message": "Circular dependency between features: products -> integrations -> products",
-      "file": null,
-      "line": null,
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/[...slug]/loading.tsx",
+      "line": 1,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "error",
-      "ruleId": "cross-feature-internal-import",
-      "message": "Imports internal path from feature \"products\": @/features/products/hooks/useProductOrdersImport. Use the barrel export instead.",
-      "file": "src/features/integrations/components/connections/BaselinkerSettings.tsx",
-      "line": 6,
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/kangur/(app)/duels/page.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/kangur/(app)/lessons/page.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/kangur/(app)/page.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (5 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/kangur/(app)/tests/page.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/kangur/loading.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/login/loading.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/preview/[id]/loading.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/preview/foldertree-shell-runtime/loading.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (4 levels up). Consider using path aliases.",
+      "file": "src/app/[locale]/(frontend)/products/[id]/loading.tsx",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "deep-relative-import",
+      "message": "Deep relative import (3 levels up). Consider using path aliases.",
+      "file": "src/shared/lib/ai-paths/core/runtime/handlers/parameter-inference/parameter-inference.merger.ts",
+      "line": 11,
       "column": null,
       "snippet": null,
       "context": null
@@ -101,17 +198,11 @@
   ],
   "rules": [
     {
-      "ruleId": "circular-feature-dep",
-      "errorCount": 1,
-      "warningCount": 0,
-      "infoCount": 0
-    },
-    {
-      "ruleId": "cross-feature-internal-import",
-      "errorCount": 1,
-      "warningCount": 0,
+      "ruleId": "deep-relative-import",
+      "errorCount": 0,
+      "warningCount": 11,
       "infoCount": 0
     }
   ],
-  "durationMs": 712
+  "durationMs": 386
 }

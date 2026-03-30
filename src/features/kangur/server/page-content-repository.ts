@@ -27,6 +27,7 @@ const pageContentServerCache = new LRUCache<string, KangurPageContentStore>({
   ttl: PAGE_CONTENT_SERVER_CACHE_TTL_MS,
   updateAgeOnGet: true,
 });
+const defaultPageContentStoreCache = new Map<string, KangurPageContentStore>();
 const pageContentInflight = new Map<string, Promise<KangurPageContentStore>>();
 
 let indexesEnsured: Promise<void> | null = null;
@@ -45,12 +46,26 @@ const clearCachedPageContentStore = (locale?: string | null): void => {
   if (locale) {
     const cacheKey = getPageContentCacheKey(locale);
     pageContentServerCache.delete(cacheKey);
+    defaultPageContentStoreCache.delete(cacheKey);
     pageContentInflight.delete(cacheKey);
     return;
   }
 
   pageContentServerCache.clear();
+  defaultPageContentStoreCache.clear();
   pageContentInflight.clear();
+};
+
+const getDefaultPageContentStore = (locale: string): KangurPageContentStore => {
+  const cacheKey = getPageContentCacheKey(locale);
+  const cached = defaultPageContentStoreCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const defaults = buildDefaultKangurPageContentStore(locale);
+  defaultPageContentStoreCache.set(cacheKey, defaults);
+  return defaults;
 };
 
 const ensureIndexes = async (): Promise<void> => {
@@ -138,12 +153,6 @@ const storesDiffer = (left: KangurPageContentStore, right: KangurPageContentStor
 
 export async function getKangurPageContentStore(locale = 'pl'): Promise<KangurPageContentStore> {
   const normalizedLocale = normalizeSiteLocale(locale);
-  const defaults = buildDefaultKangurPageContentStore(normalizedLocale);
-
-  if (!process.env['MONGODB_URI']) {
-    return defaults;
-  }
-
   const cached = getCachedPageContentStore(normalizedLocale);
   if (cached) {
     return cached;
@@ -153,6 +162,12 @@ export async function getKangurPageContentStore(locale = 'pl'): Promise<KangurPa
   const inflight = pageContentInflight.get(cacheKey);
   if (inflight) {
     return inflight;
+  }
+
+  const defaults = getDefaultPageContentStore(normalizedLocale);
+
+  if (!process.env['MONGODB_URI']) {
+    return defaults;
   }
 
   const loadPromise = (async (): Promise<KangurPageContentStore> => {

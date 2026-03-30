@@ -23,7 +23,7 @@ import {
   KANGUR_EMBED_QUERY_PARAM,
   KangurFeaturePage,
   resolveKangurPageKeyFromSlug,
-} from '@/features/kangur/public';
+} from '@/shared/lib/kangur-cms-bridge';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';

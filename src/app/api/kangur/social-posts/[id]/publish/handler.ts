@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
+  hasKangurSocialLinkedInPublication,
   kangurSocialPublishModeSchema,
   type KangurSocialPublishMode,
 } from '@/shared/contracts/kangur-social-posts';
@@ -15,6 +16,7 @@ import {
   AppErrorCodes,
   createAppError,
   forbiddenError,
+  invalidStateError,
   notFoundError,
 } from '@/shared/errors/app-error';
 
@@ -40,6 +42,9 @@ export async function postKangurSocialPostPublishHandler(
 
   const parsed = bodySchema.parse(ctx.body ?? {});
   const mode: KangurSocialPublishMode = parsed.mode === 'draft' ? 'draft' : 'published';
+  if (hasKangurSocialLinkedInPublication(post)) {
+    throw invalidStateError('Social post is already published on LinkedIn.');
+  }
 
   const startedAt = Date.now();
   try {

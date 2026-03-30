@@ -3,18 +3,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   getKangurSubjectFocusRepositoryMock,
-  resolveKangurActorMock,
+  resolveKangurActiveLearnerMock,
   saveSubjectFocusMock,
 } = vi.hoisted(() => ({
   getKangurSubjectFocusRepositoryMock: vi.fn(),
-  resolveKangurActorMock: vi.fn(),
+  resolveKangurActiveLearnerMock: vi.fn(),
   saveSubjectFocusMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/server', () => ({
   getKangurSubjectFocusRepository: getKangurSubjectFocusRepositoryMock,
-  resolveKangurActor: resolveKangurActorMock,
-  requireActiveLearner: (actor: { activeLearner?: unknown }) => actor.activeLearner,
+  resolveKangurActiveLearner: resolveKangurActiveLearnerMock,
 }));
 
 import { subjectFocusPatchHandler } from '@/app/api/kangur/[[...path]]/routing/routing.learner';
@@ -26,11 +25,8 @@ describe('kangur subject focus route handler', () => {
       getSubjectFocus: vi.fn(),
       saveSubjectFocus: saveSubjectFocusMock,
     });
-    resolveKangurActorMock.mockResolvedValue({
-      actorType: 'learner',
-      activeLearner: {
-        id: 'learner-1',
-      },
+    resolveKangurActiveLearnerMock.mockResolvedValue({
+      id: 'learner-1',
     });
   });
 

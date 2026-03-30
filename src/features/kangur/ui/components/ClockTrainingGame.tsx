@@ -706,6 +706,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
     <div
       data-kangur-print-panel='true'
       data-kangur-print-paged-panel='true'
+      data-kangur-print-preferred-target='true'
       data-kangur-print-panel-id={printPanelId}
       data-kangur-print-panel-title={printPanelTitle}
       data-testid='clock-training-print-panel'

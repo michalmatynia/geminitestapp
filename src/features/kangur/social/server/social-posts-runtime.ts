@@ -6,6 +6,7 @@ import {
 } from '@/shared/errors/app-error';
 import { normalizeKangurSocialVisualAnalysis } from '@/shared/lib/kangur-social-visual-analysis';
 import {
+  hasKangurSocialLinkedInPublication,
   kangurSocialVisualAnalysisSchema,
   type KangurSocialGeneratedDraft,
   type KangurSocialPost,
@@ -15,10 +16,17 @@ import type {
   KangurSocialManualGenerationJobResult,
   KangurSocialManualVisualAnalysisJobResult,
 } from '@/shared/contracts/kangur-social-pipeline';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 
 import { findKangurSocialImageAddonsByIds } from './social-image-addons-repository';
 import { generateKangurSocialPostDraft } from './social-posts-generation';
-import { updateKangurSocialPost } from './social-posts-repository';
+import {
+  getKangurSocialPostById,
+  updateKangurSocialPost,
+} from './social-posts-repository';
 import { analyzeKangurSocialVisuals } from './social-posts-vision';
 
 type SocialVisualAnalysisRuntimeInput = {
@@ -125,6 +133,7 @@ const persistVisualAnalysisOnPost = async ({
 const persistGeneratedDraftOnPost = async ({
   actorId,
   brainModelId,
+  currentPost,
   draft,
   imageAddonIds,
   postId,
@@ -132,12 +141,17 @@ const persistGeneratedDraftOnPost = async ({
 }: {
   actorId: string | null;
   brainModelId: string | null;
+  currentPost: KangurSocialPost | null;
   draft: KangurSocialGeneratedDraft;
   imageAddonIds: string[];
   postId: string | null;
   visionModelId: string | null;
 }): Promise<KangurSocialPost | null> => {
   if (!postId) return null;
+
+  const persistedStatus = hasKangurSocialLinkedInPublication(currentPost)
+    ? 'published'
+    : 'draft';
 
   const includeVisualAnalysisSource = hasVisualAnalysisContent(draft);
 
@@ -158,7 +172,7 @@ const persistGeneratedDraftOnPost = async ({
     ...(brainModelId ? { brainModelId } : {}),
     ...(visionModelId ? { visionModelId } : {}),
     ...(actorId ? { updatedBy: actorId } : {}),
-    status: 'draft',
+    status: persistedStatus,
   });
 
   if (!updated) {
@@ -233,6 +247,14 @@ export async function runKangurSocialPostGenerationJob(
   const normalizedBrainModelId = normalizeOptionalId(input.modelId);
   const normalizedVisionModelId = normalizeOptionalId(input.visionModelId);
   const normalizedActorId = normalizeOptionalId(input.actorId);
+  const normalizedProjectUrl = normalizeKangurSocialProjectUrl(input.projectUrl);
+  const projectUrlError = getKangurSocialProjectUrlError(normalizedProjectUrl);
+  if (projectUrlError) {
+    throw operationFailedError(projectUrlError);
+  }
+  const currentPost = normalizedPostId
+    ? await getKangurSocialPostById(normalizedPostId)
+    : null;
   const imageAddons =
     imageAddonIds.length > 0 ? await findKangurSocialImageAddonsByIds(imageAddonIds) : [];
 
@@ -242,7 +264,7 @@ export async function runKangurSocialPostGenerationJob(
     modelId: normalizedBrainModelId ?? undefined,
     visionModelId: normalizedVisionModelId ?? undefined,
     imageAddons,
-    projectUrl: input.projectUrl?.trim() ?? '',
+    projectUrl: normalizedProjectUrl,
     prefetchedVisualAnalysis: input.prefetchedVisualAnalysis,
     requireVisualAnalysisInBody: input.requireVisualAnalysisInBody,
   });
@@ -250,6 +272,7 @@ export async function runKangurSocialPostGenerationJob(
   const generatedPost = await persistGeneratedDraftOnPost({
     actorId: normalizedActorId,
     brainModelId: normalizedBrainModelId,
+    currentPost,
     draft,
     imageAddonIds,
     postId: normalizedPostId,

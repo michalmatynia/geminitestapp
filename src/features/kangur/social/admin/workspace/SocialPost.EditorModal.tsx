@@ -14,7 +14,10 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/features/kangur/shared/ui';
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
+import {
+  hasKangurSocialLinkedInPublication,
+  type KangurSocialPost,
+} from '@/shared/contracts/kangur-social-posts';
 
 import {
   formatDatetimeDisplay,
@@ -36,11 +39,16 @@ const resolvePostTitle = (
   post?.titlePl.trim() || post?.titleEn.trim() || 'Untitled update';
 
 const resolvePostSubtitle = (
-  post: Pick<KangurSocialPost, 'status' | 'publishedAt' | 'scheduledAt'> | null
+  post: Pick<
+    KangurSocialPost,
+    'status' | 'publishedAt' | 'scheduledAt' | 'linkedinPostId' | 'linkedinUrl'
+  > | null
 ): string => {
   if (!post) return 'Edit copy and review attached images.';
-  if (post.status === 'published' && post.publishedAt) {
-    return `Published ${formatDatetimeDisplay(post.publishedAt)}`;
+  if (hasKangurSocialLinkedInPublication(post)) {
+    return post.publishedAt
+      ? `Published on LinkedIn ${formatDatetimeDisplay(post.publishedAt)}`
+      : 'Published on LinkedIn';
   }
   if (post.status === 'scheduled' && post.scheduledAt) {
     return `Scheduled ${formatDatetimeDisplay(post.scheduledAt)}`;
@@ -84,6 +92,7 @@ export function SocialPostEditorModal({
 
   const isSavingDraft = patchMutation.isPending && !publishMutation.isPending;
   const isSubmitting = patchMutation.isPending || publishMutation.isPending;
+  const hasLinkedInPublication = hasKangurSocialLinkedInPublication(activePost);
   const hasBlockingRuntimeJob =
     isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
     isSocialRuntimeJobInFlight(currentPipelineJob?.status);
@@ -91,10 +100,22 @@ export function SocialPostEditorModal({
     isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) || hasBlockingRuntimeJob;
   const editorActionTitle = hasBlockingRuntimeJob
     ? 'Wait for the current Social runtime job to finish.'
+    : hasLinkedInPublication
+      ? 'This post is already published on LinkedIn. Unpublish it from the posts list before publishing again.'
+      : undefined;
+  const publishActionLabel = publishMutation.isPending
+    ? 'Publishing...'
+    : hasLinkedInPublication
+      ? 'Published on LinkedIn'
     : undefined;
   const imageMutationTitle = hasBlockingImageMutationJob
     ? 'Wait for the current Social runtime job to finish.'
     : undefined;
+  const scheduleActionTitle = hasBlockingRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : hasLinkedInPublication
+      ? 'This post is already published on LinkedIn. Unpublish it from the posts list before scheduling again.'
+      : undefined;
   const saveDraftTitle = hasBlockingRuntimeJob
     ? 'Wait for the current Social runtime job to finish.'
     : !activePost
@@ -162,10 +183,10 @@ export function SocialPostEditorModal({
         onClick={() => {
           void handlePublish();
         }}
-        disabled={!activePost || isSubmitting || hasBlockingRuntimeJob}
+        disabled={!activePost || isSubmitting || hasBlockingRuntimeJob || hasLinkedInPublication}
         title={editorActionTitle}
       >
-        {publishMutation.isPending ? 'Publishing...' : 'Publish to LinkedIn'}
+        {publishActionLabel || 'Publish to LinkedIn'}
       </Button>
     </>
   ) : null;
@@ -230,8 +251,8 @@ export function SocialPostEditorModal({
                     type='datetime-local'
                     aria-label='Scheduled publish date and time'
                     value={scheduledAt}
-                    disabled={hasBlockingRuntimeJob}
-                    title={editorActionTitle}
+                    disabled={hasBlockingRuntimeJob || hasLinkedInPublication}
+                    title={scheduleActionTitle}
                     onChange={(event) => setScheduledAt(event.target.value)}
                   />
                 </div>
@@ -247,9 +268,10 @@ export function SocialPostEditorModal({
                       !activePost ||
                       !scheduledAt ||
                       patchMutation.isPending ||
-                      hasBlockingRuntimeJob
+                      hasBlockingRuntimeJob ||
+                      hasLinkedInPublication
                     }
-                    title={editorActionTitle}
+                    title={scheduleActionTitle}
                   >
                     {patchMutation.isPending ? 'Scheduling...' : 'Schedule'}
                   </Button>

@@ -18,7 +18,10 @@ vi.mock('@/features/integrations/server', () => ({
   decryptSecret: (...args: unknown[]) => mocks.decryptSecretMock(...args),
 }));
 
-import { publishLinkedInPersonalPost } from './social-posts-publish.linkedin';
+import {
+  deleteLinkedInPersonalPost,
+  publishLinkedInPersonalPost,
+} from './social-posts-publish.linkedin';
 
 const basePost: KangurSocialPost = {
   id: 'post-1',
@@ -174,6 +177,71 @@ describe('publishLinkedInPersonalPost', () => {
       expect.objectContaining({
         linkedinPersonUrn: 'urn:li:person:person-1',
         linkedinProfileUrl: 'https://www.linkedin.com/in/kangur',
+      })
+    );
+  });
+});
+
+describe('deleteLinkedInPersonalPost', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.decryptSecretMock.mockImplementation((value: string) => value);
+  });
+
+  it('deletes a LinkedIn post when only the LinkedIn URL is stored locally', async () => {
+    mocks.listIntegrationsMock.mockResolvedValue([
+      {
+        id: 'int-1',
+        slug: 'linkedin',
+        name: 'LinkedIn',
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+      },
+    ]);
+    mocks.listConnectionsMock.mockResolvedValue([
+      {
+        id: 'conn-1',
+        integrationId: 'int-1',
+        name: 'LinkedIn Primary',
+        linkedinAccessToken: 'token-1',
+        linkedinTokenUpdatedAt: new Date().toISOString(),
+        linkedinExpiresAt: null,
+        linkedinPersonUrn: 'urn:li:person:existing',
+        linkedinProfileUrl: 'https://www.linkedin.com/in/kangur',
+        createdAt: new Date().toISOString(),
+        updatedAt: null,
+      },
+    ]);
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+
+      if (url === 'https://api.linkedin.com/v2/ugcPosts/urn%3Ali%3Ashare%3A123') {
+        expect(init?.method).toBe('DELETE');
+        expect(init?.headers).toMatchObject({
+          Authorization: 'Bearer token-1',
+          'X-Restli-Protocol-Version': '2.0.0',
+        });
+        return new Response(null, { status: 204 });
+      }
+
+      throw new Error(`Unexpected fetch request: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      deleteLinkedInPersonalPost({
+        ...basePost,
+        linkedinConnectionId: 'conn-1',
+        linkedinPostId: null,
+        linkedinUrl: 'https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A123',
+      })
+    ).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.linkedin.com/v2/ugcPosts/urn%3Ali%3Ashare%3A123',
+      expect.objectContaining({
+        method: 'DELETE',
       })
     );
   });

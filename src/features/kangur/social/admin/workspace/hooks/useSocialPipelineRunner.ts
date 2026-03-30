@@ -25,6 +25,10 @@ import type {
   KangurSocialImageAddon,
   KangurSocialImageAddonsBatchResult,
 } from '@/shared/contracts/kangur-social-image-addons';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 
 import {
   type EditorState,
@@ -559,6 +563,12 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
       toast('Create or select a post first', { variant: 'warning' });
       return;
     }
+    const normalizedProjectUrl = normalizeKangurSocialProjectUrl(d.projectUrl);
+    const projectUrlError = getKangurSocialProjectUrlError(normalizedProjectUrl);
+    if (projectUrlError) {
+      toast(projectUrlError, { variant: 'warning' });
+      return;
+    }
 
     const activePostId = d.activePost.id;
     const usesPrefetchedVisualAnalysis = Boolean(options?.prefetchedVisualAnalysis);
@@ -619,7 +629,7 @@ export function useSocialPipelineRunner(deps: SocialPipelineRunnerDeps) {
         linkedinConnectionId: d.linkedinConnectionId ?? null,
         brainModelId: d.brainModelId ?? null,
         visionModelId: d.visionModelId ?? null,
-        projectUrl: d.projectUrl || '',
+        projectUrl: normalizedProjectUrl,
         generationNotes: d.generationNotes,
         docReferences: d.resolveDocReferences(),
         prefetchedVisualAnalysis: options?.prefetchedVisualAnalysis,

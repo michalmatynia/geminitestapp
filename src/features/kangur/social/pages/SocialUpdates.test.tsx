@@ -190,6 +190,37 @@ describe('SocialUpdates', () => {
     );
   });
 
+  it('renders a public post even when the local status drifted back to draft after LinkedIn publication', () => {
+    useKangurSocialPostsMock.mockReturnValue({
+      data: [
+        buildPost({
+          id: 'post-drifted',
+          status: 'draft',
+          publishedAt: null,
+          linkedinPostId: 'li-post-drifted',
+          linkedinUrl: 'https://www.linkedin.com/feed/update/drifted',
+        }),
+      ],
+      isLoading: false,
+    });
+
+    render(<SocialUpdates />);
+
+    expect(screen.getByText('StudiQ weekly digest')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View on LinkedIn' })).toHaveAttribute(
+      'href',
+      'https://www.linkedin.com/feed/update/drifted'
+    );
+    expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+      'kangur_social_updates_view',
+      expect.objectContaining({
+        hasPost: true,
+        postId: 'post-drifted',
+        hasLinkedinUrl: true,
+      })
+    );
+  });
+
   it('shows the empty state when there are no public posts', () => {
     useKangurSocialPostsMock.mockReturnValue({
       data: [],

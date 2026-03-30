@@ -72,7 +72,7 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/integrations/product-integrations-adapter', () => ({
+vi.mock('@/features/integrations/public', () => ({
   fetchPreferredBaseConnection: (...args: unknown[]) =>
     fetchPreferredBaseConnectionMock(...args) as Promise<unknown>,
   fetchIntegrationsWithConnections: (...args: unknown[]) =>

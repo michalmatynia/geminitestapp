@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { cmsService } from '@/features/cms/services/cms-service';
+import { cmsService } from '@/features/cms/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';

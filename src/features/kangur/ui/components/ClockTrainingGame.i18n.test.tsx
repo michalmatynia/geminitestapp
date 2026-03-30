@@ -12,6 +12,8 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 
 import enMessages from '@/i18n/messages/en.json';
 import deMessages from '@/i18n/messages/de.json';
+import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
+import { KangurLessonNavigationProvider } from '@/features/kangur/ui/context/KangurLessonNavigationContext';
 import { KangurLessonPrintProvider } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 
 import ClockTrainingGame from './ClockTrainingGame';
@@ -186,6 +188,10 @@ describe('ClockTrainingGame i18n', () => {
       'true'
     );
     expect(screen.getByTestId('clock-training-print-panel')).toHaveAttribute(
+      'data-kangur-print-preferred-target',
+      'true'
+    );
+    expect(screen.getByTestId('clock-training-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-id',
       'clock-training-hours'
     );
@@ -196,6 +202,31 @@ describe('ClockTrainingGame i18n', () => {
     );
 
     fireEvent.click(screen.getByTestId('clock-training-print-button'));
+
+    expect(onPrintPanel).toHaveBeenCalledTimes(1);
+    expect(onPrintPanel).toHaveBeenCalledWith('clock-training-hours');
+  });
+
+  it('routes the outer lesson shell print button to the clock training preferred panel', () => {
+    const onPrintPanel = vi.fn();
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <KangurLessonNavigationProvider onBack={vi.fn()}>
+          <KangurLessonPrintProvider onPrintPanel={onPrintPanel}>
+            <LessonActivityShell accent='indigo' icon='🕐' onBack={vi.fn()} title='Practice: Hours'>
+              <ClockTrainingGame
+                onFinish={vi.fn()}
+                practiceTasks={[{ hours: 5, minutes: 0 }]}
+                section='hours'
+              />
+            </LessonActivityShell>
+          </KangurLessonPrintProvider>
+        </KangurLessonNavigationProvider>
+      </NextIntlClientProvider>
+    );
+
+    fireEvent.click(screen.getAllByTestId('lesson-activity-print-button')[0]);
 
     expect(onPrintPanel).toHaveBeenCalledTimes(1);
     expect(onPrintPanel).toHaveBeenCalledWith('clock-training-hours');

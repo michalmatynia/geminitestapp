@@ -27,6 +27,7 @@ import {
 } from '@/shared/ui';
 
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
+import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
 import { formatFilemakerMailFolderLabel } from '../mail-master-tree';
@@ -569,10 +570,11 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
         selectedAccountId={selectedAccountId}
         selectedMailboxPath={selectedMailboxPath}
         selectedPanel={selectedPanel}
-        originPanel={isRecentPanel ? 'recent' : null}
+        originPanel={isRecentPanel ? 'recent' : isSearchPanel ? 'search' : null}
         recentMailboxFilter={recentMailboxFilter}
         recentUnreadOnly={recentUnreadOnly}
         recentQuery={query}
+        searchQuery={isSearchPanel ? deepSearchQuery : null}
         onRecentMailboxFilterChange={setRecentMailboxFilter}
         onRecentQueryChange={setQuery}
         onRecentUnreadOnlyChange={setRecentUnreadOnly}
@@ -773,7 +775,13 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
                         variant='outline'
                         onClick={() =>
                           router.push(
-                            `/admin/filemaker/mail/threads/${encodeURIComponent(group.threadId)}?accountId=${encodeURIComponent(group.accountId)}&mailboxPath=${encodeURIComponent(group.mailboxPath)}`
+                            buildThreadHref({
+                              threadId: group.threadId,
+                              accountId: group.accountId,
+                              mailboxPath: group.mailboxPath,
+                              originPanel: 'search',
+                              searchQuery: deepSearchQuery,
+                            })
                           )
                         }
                       >

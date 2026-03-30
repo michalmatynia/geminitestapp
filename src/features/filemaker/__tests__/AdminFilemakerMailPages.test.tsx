@@ -892,4 +892,105 @@ describe('AdminFilemakerMail pages', () => {
       expect(screen.getByText('support@example.com • Last sync: Never')).toBeInTheDocument();
     });
   });
+
+  it('keeps search context when opening a thread from search results', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'panel') return 'search';
+      if (key === 'accountId') return 'account-1';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:00:00.000Z',
+              provider: 'imap_smtp',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+        return jsonResponse({ threads: [] });
+      }
+      if (url === '/api/filemaker/mail/search?query=invoice&accountId=account-1') {
+        return jsonResponse({
+          totalHits: 1,
+          groups: [
+            {
+              threadId: 'thread-1',
+              threadSubject: 'Invoice question',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+              hits: [
+                {
+                  messageId: 'message-1',
+                  matchField: 'body',
+                  matchSnippet: 'Invoice status update',
+                  from: { address: 'alice@example.com', name: 'Alice' },
+                  to: [{ address: 'support@example.com', name: 'Support' }],
+                  sentAt: '2026-03-28T10:00:00.000Z',
+                  receivedAt: '2026-03-28T10:00:00.000Z',
+                },
+              ],
+            },
+          ],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailPage />);
+
+    await screen.findByText('Invoice question');
+    fireEvent.click(screen.getByRole('button', { name: 'Open Thread' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail/threads/thread-1?accountId=account-1&mailboxPath=VIP&panel=search&searchQuery=invoice'
+    );
+  });
 });

@@ -75,6 +75,35 @@ export const kangurSocialPostSchema = z.object({
 });
 export type KangurSocialPost = z.infer<typeof kangurSocialPostSchema>;
 
+type KangurSocialPublicationRecord = Pick<
+  KangurSocialPost,
+  'status' | 'publishedAt' | 'linkedinPostId' | 'linkedinUrl'
+>;
+
+const hasTrimmedValue = (value?: string | null): boolean =>
+  typeof value === 'string' && value.trim().length > 0;
+
+export const hasKangurSocialLinkedInPublication = (
+  value: KangurSocialPublicationRecord | null | undefined
+): boolean => {
+  if (!value) return false;
+
+  return (
+    value.status === 'published' ||
+    hasTrimmedValue(value.publishedAt) ||
+    hasTrimmedValue(value.linkedinPostId) ||
+    hasTrimmedValue(value.linkedinUrl)
+  );
+};
+
+export const hasKangurSocialLinkedInPublicationTarget = (
+  value: Pick<KangurSocialPost, 'linkedinPostId' | 'linkedinUrl'> | null | undefined
+): boolean =>
+  Boolean(
+    value &&
+      (hasTrimmedValue(value.linkedinPostId) || hasTrimmedValue(value.linkedinUrl))
+  );
+
 export type KangurSocialGeneratedDraft = {
   titlePl: string;
   titleEn: string;

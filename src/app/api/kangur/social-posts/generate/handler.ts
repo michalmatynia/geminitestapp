@@ -9,6 +9,10 @@ import {
   startKangurSocialPipelineQueue,
 } from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
@@ -37,10 +41,16 @@ export async function postKangurSocialPostGenerateHandler(
 
   const parsed = bodySchema.parse(ctx.body ?? {});
   const startedAt = Date.now();
+  const normalizedProjectUrl = normalizeKangurSocialProjectUrl(parsed.projectUrl);
+  const projectUrlError = getKangurSocialProjectUrlError(normalizedProjectUrl);
 
   const imageAddonIds = (parsed.imageAddonIds ?? []).map((id) => id.trim()).filter(Boolean);
 
   try {
+    if (projectUrlError) {
+      throw operationFailedError(projectUrlError);
+    }
+
     if (!isRedisAvailable()) {
       throw operationFailedError(
         'Social pipeline queue is not available. Configure REDIS_URL and start Redis.'
@@ -66,7 +76,7 @@ export async function postKangurSocialPostGenerateHandler(
         modelId: parsed.modelId?.trim() || null,
         visionModelId: parsed.visionModelId?.trim() || null,
         imageAddonIds,
-        projectUrl: parsed.projectUrl ?? '',
+        projectUrl: normalizedProjectUrl,
         prefetchedVisualAnalysis: parsed.prefetchedVisualAnalysis,
         requireVisualAnalysisInBody: parsed.requireVisualAnalysisInBody ?? false,
         actorId: actor.actorId,

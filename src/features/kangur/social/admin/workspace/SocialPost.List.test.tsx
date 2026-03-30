@@ -608,6 +608,53 @@ describe('SocialPostList', () => {
     expect(handleOpenPostEditor).not.toHaveBeenCalled();
   });
 
+  it('keeps the LinkedIn publication indicator and unpublish actions when a published post drifts back to local draft status', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            status: 'draft',
+            publishedAt: '2026-03-20T12:00:00.000Z',
+            linkedinPostId: 'linkedin-post-1',
+            linkedinUrl: 'https://linkedin.example/post/1',
+          },
+        ],
+        activePostId: 'post-1',
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByRole('button', { name: 'LinkedIn publication details' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unpublish from LinkedIn' })).toBeInTheDocument();
+    expect(screen.getByText(/Published on LinkedIn:/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open post actions' })).not.toBeInTheDocument();
+  });
+
+  it('keeps unpublish actions enabled when the published post only has a LinkedIn URL', () => {
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        posts: [
+          {
+            ...buildPost(),
+            status: 'draft',
+            publishedAt: '2026-03-20T12:00:00.000Z',
+            linkedinPostId: null,
+            linkedinUrl: 'https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A123',
+          },
+        ],
+        activePostId: 'post-1',
+      })
+    );
+
+    render(<SocialPostList />);
+
+    expect(screen.getByRole('button', { name: 'LinkedIn publication details' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unpublish from LinkedIn' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Unpublish and delete' })).toBeEnabled();
+  });
+
   it('keeps delete actions separate from opening the post modal', () => {
     const post = buildPost();
     const setActivePostId = vi.fn();

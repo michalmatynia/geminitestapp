@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildFilemakerMailForwardHtmlSeed,
   buildFilemakerMailPlainText,
   buildFilemakerMailReplyHtmlSeed,
   buildFilemakerMailSnippet,
+  ensureFilemakerForwardSubject,
   ensureFilemakerReplySubject,
   formatFilemakerMailboxAllowlist,
   formatFilemakerMailParticipants,
@@ -19,6 +21,8 @@ describe('filemaker mail utils', () => {
     expect(normalizeFilemakerMailSubject('   ')).toBe('(no subject)');
     expect(ensureFilemakerReplySubject('Launch update')).toBe('Re: Launch update');
     expect(ensureFilemakerReplySubject('Re: Launch update')).toBe('Re: Launch update');
+    expect(ensureFilemakerForwardSubject('Launch update')).toBe('Fwd: Launch update');
+    expect(ensureFilemakerForwardSubject('Fwd: Launch update')).toBe('Fwd: Launch update');
   });
 
   it('parses, dedupes, and formats participants', () => {
@@ -86,5 +90,36 @@ describe('filemaker mail utils', () => {
 
     expect(textSeed).toContain('Plain text body');
     expect(textSeed).toContain('Unknown time');
+  });
+
+  it('builds sanitized forward html seeds for html and text messages', () => {
+    const htmlSeed = buildFilemakerMailForwardHtmlSeed({
+      from: { address: 'sender@example.com', name: 'Sender' },
+      to: [{ address: 'support@example.com', name: 'Support' }],
+      cc: [{ address: 'team@example.com', name: 'Team' }],
+      sentAt: '2026-03-28T09:00:00.000Z',
+      subject: 'Launch update',
+      htmlBody: '<p>Hello</p><script>alert(1)</script>',
+      textBody: null,
+    });
+
+    expect(htmlSeed).toContain('data-filemaker-forward-quote="true"');
+    expect(htmlSeed).toContain('Forwarded message');
+    expect(htmlSeed).toContain('<p>Hello</p>');
+    expect(htmlSeed).not.toContain('<script>');
+
+    const textSeed = buildFilemakerMailForwardHtmlSeed({
+      from: { address: 'sender@example.com', name: null },
+      to: [],
+      cc: [],
+      sentAt: null,
+      subject: '',
+      htmlBody: null,
+      textBody: 'Plain text body',
+    });
+
+    expect(textSeed).toContain('Plain text body');
+    expect(textSeed).toContain('Unknown time');
+    expect(textSeed).toContain('(no subject)');
   });
 });

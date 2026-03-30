@@ -18,6 +18,10 @@ import {
   parseKangurSocialGeneratedDraftText,
 } from '@/shared/lib/kangur-social-generated-draft';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 
 import {
   buildKangurDocContext,
@@ -76,6 +80,8 @@ const buildSystemPrompt = (basePrompt: string): string => {
     'Return a JSON object with keys: titlePl, titleEn, bodyPl, bodyEn.',
     'Return only the JSON object, without markdown fences or explanatory prose.',
     'Keep each body concise and professional for LinkedIn.',
+    'If the post mentions a page, CTA, redirect, or link, use only the provided Project URL.',
+    'Never mention localhost, loopback hosts, or development URLs in the output.',
     'If image add-ons are provided, reference them naturally in the post.',
     'Treat the visual analysis as descriptive input only and consolidate it with the current documentation context to write the update.',
   ].filter(Boolean);
@@ -94,7 +100,11 @@ const resolveImageAddons = (
 const normalizeGenerationInput = (input: GenerationInput): GenerationContext => {
   const docReferences = normalizeDocReferences(input.docReferences);
   const notes = normalizeOptionalText(input.notes);
-  const projectUrl = normalizeOptionalText(input.projectUrl);
+  const projectUrl = normalizeKangurSocialProjectUrl(input.projectUrl);
+  const projectUrlError = getKangurSocialProjectUrlError(projectUrl);
+  if (projectUrlError) {
+    throw operationFailedError(projectUrlError);
+  }
   const imageAddons = resolveImageAddons(input.imageAddons);
 
   return {
@@ -179,11 +189,21 @@ const buildUserPromptLines = ({
   docsContext: string;
   visualAnalysis: VisualAnalysisSnapshot;
 }): string[] => {
-  const userPromptLines = [
-    'Use the following documentation summary and excerpts together with the visual analysis to craft the post:',
-    '',
-    docsContext,
-  ];
+  const userPromptLines = ['Use the following Project URL, documentation summary, and visual analysis to craft the post:'];
+
+  pushPromptSection(
+    userPromptLines,
+    'Mandatory link rules:',
+    [
+      `- Use only this public Project URL for any CTA, redirect, or link: ${context.projectUrl}`,
+      '- Do not output localhost, 127.0.0.1, 0.0.0.0, ::1, or other development URLs.',
+    ]
+  );
+  pushPromptSection(
+    userPromptLines,
+    'Documentation summary and excerpts:',
+    docsContext
+  );
 
   pushPromptSection(
     userPromptLines,
@@ -210,7 +230,6 @@ const buildUserPromptLines = ({
     'Visual add-ons available for the post:',
     context.imageAddonSummary
   );
-  pushPromptSection(userPromptLines, 'Project URL to reference in the post:', context.projectUrl);
   pushPromptSection(userPromptLines, 'Additional notes:', context.notes);
 
   return userPromptLines;

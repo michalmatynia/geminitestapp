@@ -64,10 +64,12 @@ vi.mock('@/shared/ui/FolderTreePanel', () => ({
 vi.mock('@/features/foldertree/public', () => ({
   useMasterFolderTreeShell: ({
     nodes,
+    selectedNodeId,
   }: {
     nodes: Array<Record<string, unknown>>;
+    selectedNodeId?: string | null;
   }) => ({
-    controller: { nodes },
+    controller: { nodes, selectedNodeId: selectedNodeId ?? null },
     appearance: { rootDropUi: null },
     viewport: { scrollToNodeRef: { current: null } },
   }),
@@ -76,7 +78,7 @@ vi.mock('@/features/foldertree/public', () => ({
     renderNode,
     emptyLabel,
   }: {
-    controller: { nodes: Array<Record<string, unknown>> };
+    controller: { nodes: Array<Record<string, unknown>>; selectedNodeId?: string | null };
     renderNode: (input: {
       node: Record<string, unknown>;
       depth: number;
@@ -103,7 +105,7 @@ vi.mock('@/features/foldertree/public', () => ({
                 depth: parentId ? 1 : 0,
                 hasChildren,
                 isExpanded: true,
-                isSelected: false,
+                isSelected: controller.selectedNodeId === nodeId,
                 select: () => {},
                 toggleExpand: () => {},
               })}

@@ -9,6 +9,7 @@ vi.mock('server-only', () => ({}));
 const mocks = vi.hoisted(() => ({
   findKangurSocialImageAddonsByIdsMock: vi.fn(),
   analyzeKangurSocialVisualsMock: vi.fn(),
+  getKangurSocialPostByIdMock: vi.fn(),
   updateKangurSocialPostMock: vi.fn(),
   generateKangurSocialPostDraftMock: vi.fn(),
 }));
@@ -24,6 +25,7 @@ vi.mock('./social-posts-vision', () => ({
 }));
 
 vi.mock('./social-posts-repository', () => ({
+  getKangurSocialPostById: (...args: unknown[]) => mocks.getKangurSocialPostByIdMock(...args),
   updateKangurSocialPost: (...args: unknown[]) => mocks.updateKangurSocialPostMock(...args),
 }));
 
@@ -80,6 +82,7 @@ describe('runKangurSocialPostVisualAnalysisJob', () => {
     mocks.findKangurSocialImageAddonsByIdsMock.mockResolvedValue([
       { id: 'addon-1', kind: 'capture', url: 'https://studiq.example.com/capture-1.png' },
     ]);
+    mocks.getKangurSocialPostByIdMock.mockResolvedValue(basePost);
     mocks.analyzeKangurSocialVisualsMock.mockResolvedValue({
       summary: 'The hero now shows a larger classroom card.',
       highlights: ['Larger classroom card'],
@@ -176,6 +179,7 @@ describe('runKangurSocialPostGenerationJob', () => {
     mocks.findKangurSocialImageAddonsByIdsMock.mockResolvedValue([
       { id: 'addon-1', kind: 'capture', url: 'https://studiq.example.com/capture-1.png' },
     ]);
+    mocks.getKangurSocialPostByIdMock.mockResolvedValue(basePost);
     mocks.generateKangurSocialPostDraftMock.mockResolvedValue({
       titlePl: 'Generated PL',
       titleEn: 'Generated EN',
@@ -252,5 +256,65 @@ describe('runKangurSocialPostGenerationJob', () => {
     expect(result.generatedPost?.titlePl).toBe('Generated PL');
     expect(result.generatedPost?.bodyPl).toContain('classroom card update');
     expect(result.draft).toBeNull();
+  });
+
+  it('keeps LinkedIn-published posts in published status when persisting generated copy', async () => {
+    mocks.getKangurSocialPostByIdMock.mockResolvedValueOnce({
+      ...basePost,
+      status: 'draft',
+      publishedAt: '2026-03-29T12:10:00.000Z',
+      linkedinPostId: 'urn:li:share:published',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3Apublished',
+    });
+
+    await runKangurSocialPostGenerationJob({
+      postId: 'post-1',
+      actorId: 'user-1',
+      modelId: 'brain-model',
+      visionModelId: 'vision-model',
+      imageAddonIds: ['addon-1'],
+      docReferences: ['docs/overview.mdx'],
+      notes: 'Focus on the refreshed hero.',
+      projectUrl: 'https://studiq.example.com/project',
+    });
+
+    expect(mocks.updateKangurSocialPostMock).toHaveBeenCalledWith(
+      'post-1',
+      expect.objectContaining({
+        status: 'published',
+      })
+    );
+  });
+
+  it('rejects generation jobs when Project URL is missing or localhost-only', async () => {
+    await expect(
+      runKangurSocialPostGenerationJob({
+        postId: 'post-1',
+        actorId: 'user-1',
+        modelId: 'brain-model',
+        visionModelId: 'vision-model',
+        imageAddonIds: ['addon-1'],
+        docReferences: ['docs/overview.mdx'],
+        notes: 'Focus on the refreshed hero.',
+      })
+    ).rejects.toThrow('Set Settings Project URL before generating social posts.');
+
+    await expect(
+      runKangurSocialPostGenerationJob({
+        postId: 'post-1',
+        actorId: 'user-1',
+        modelId: 'brain-model',
+        visionModelId: 'vision-model',
+        imageAddonIds: ['addon-1'],
+        docReferences: ['docs/overview.mdx'],
+        notes: 'Focus on the refreshed hero.',
+        projectUrl: 'http://localhost:3000',
+      })
+    ).rejects.toThrow(
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+    );
+
+    expect(mocks.generateKangurSocialPostDraftMock).not.toHaveBeenCalled();
+    expect(mocks.updateKangurSocialPostMock).not.toHaveBeenCalled();
   });
 });

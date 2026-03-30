@@ -10,6 +10,7 @@ import {
 } from '@/shared/contracts/kangur-social-pipeline';
 import {
   buildKangurSocialPostCombinedBody,
+  hasKangurSocialLinkedInPublication,
   kangurSocialPostSchema,
   type KangurSocialVisualAnalysis,
   type KangurSocialPostEditorStateDto,
@@ -22,6 +23,10 @@ import type {
 import { operationFailedError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/social/shared/social-capture-presets';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 
 import { createKangurSocialImageAddonsBatch } from './social-image-addons-batch';
 import {
@@ -211,8 +216,13 @@ export async function runKangurSocialPostPipeline(
 ): Promise<KangurSocialManualPipelineJobResult> {
   const startedAt = Date.now();
   const postId = input.postId.trim();
+  const normalizedProjectUrl = normalizeKangurSocialProjectUrl(input.projectUrl);
+  const projectUrlError = getKangurSocialProjectUrlError(normalizedProjectUrl);
   if (!postId) {
     throw operationFailedError('Pipeline stopped: missing post id.');
+  }
+  if (projectUrlError) {
+    throw operationFailedError(projectUrlError);
   }
 
   const captureMode = input.captureMode;
@@ -281,6 +291,9 @@ export async function runKangurSocialPostPipeline(
   if (!existingPost) {
     throw operationFailedError('Pipeline stopped: social post not found.');
   }
+  const persistedStatus = hasKangurSocialLinkedInPublication(existingPost)
+    ? 'published'
+    : 'draft';
 
   try {
     let batchCaptureResult: KangurSocialImageAddonsBatchResult | null = null;
@@ -399,7 +412,7 @@ export async function runKangurSocialPostPipeline(
         bodyPl: input.editorState.bodyPl,
         bodyEn: input.editorState.bodyEn,
         combinedBody,
-        status: 'draft',
+        status: persistedStatus,
         imageAssets: mergedImageAssets,
         imageAddonIds: mergedImageAddonIds,
         docReferences: normalizedDocReferences,
@@ -425,7 +438,7 @@ export async function runKangurSocialPostPipeline(
       modelId: input.brainModelId ?? undefined,
       visionModelId: input.visionModelId ?? undefined,
       imageAddons,
-      projectUrl: input.projectUrl || undefined,
+      projectUrl: normalizedProjectUrl,
       prefetchedVisualAnalysis: input.prefetchedVisualAnalysis,
       requireVisualAnalysisInBody: input.requireVisualAnalysisInBody,
     });
@@ -452,7 +465,7 @@ export async function runKangurSocialPostPipeline(
       contextSummary,
       ...(input.brainModelId ? { brainModelId: input.brainModelId } : {}),
       ...(input.visionModelId ? { visionModelId: input.visionModelId } : {}),
-      status: 'draft',
+      status: persistedStatus,
       publishError: null,
       updatedBy: input.actorId,
     });

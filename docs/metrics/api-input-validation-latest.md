@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-03-30'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,23 +8,23 @@ canonical: true
 ---
 # API Input Validation Check
 
-Generated at: 2026-03-28T14:12:27.782Z
+Generated at: 2026-03-30T12:40:59.098Z
 
 ## Summary
 
 - Status: WARN
-- Files scanned: 976
-- Total handlers: 928
-- Validated handlers: 928
+- Files scanned: 1000
+- Total handlers: 949
+- Validated handlers: 949
 - **Coverage: 100%**
 - Errors: 0
-- Warnings: 2
+- Warnings: 8
 
 ## Rule Breakdown
 
 | Rule | Errors | Warnings | Info |
 | --- | ---: | ---: | ---: |
-| query-param-unvalidated | 0 | 2 | 0 |
+| query-param-unvalidated | 0 | 8 | 0 |
 
 ## Issues
 
@@ -32,6 +32,12 @@ Generated at: 2026-03-28T14:12:27.782Z
 | --- | --- | --- | --- |
 | WARN | query-param-unvalidated | src/app/api/filemaker/campaigns/click/handler.ts:35 | searchParams.get() used without Zod schema validation. |
 | WARN | query-param-unvalidated | src/app/api/filemaker/campaigns/open/handler.ts:36 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/filemaker/mail/folders/handler.ts:9 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/filemaker/mail/search/handler.ts:9 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/filemaker/mail/search/handler.ts:10 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/filemaker/mail/threads/handler.ts:9 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/filemaker/mail/threads/handler.ts:10 | searchParams.get() used without Zod schema validation. |
+| WARN | query-param-unvalidated | src/app/api/filemaker/mail/threads/handler.ts:11 | searchParams.get() used without Zod schema validation. |
 
 ## Notes
 

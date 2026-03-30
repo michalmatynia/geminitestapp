@@ -48,16 +48,18 @@ export function useAdminKangurSocialPage() {
   const visionRoutingModelId = settings.visionModelOptions.effectiveModelId || null;
   const resolvedBrainModelId = settings.brainModelId || brainRoutingModelId;
   const resolvedVisionModelId = settings.visionModelId || visionRoutingModelId;
-  const canGenerateSocialDraft = Boolean(resolvedBrainModelId);
+  const hasGenerationModel = Boolean(resolvedBrainModelId);
+  const canGenerateSocialDraft =
+    hasGenerationModel && !settings.projectUrlError;
   const hasBatchCaptureConfig =
     Boolean(settings.batchCaptureBaseUrl.trim()) && settings.batchCapturePresetIds.length > 0;
   const effectiveBatchCapturePresetCount =
     settings.batchCapturePresetLimit == null
       ? settings.batchCapturePresetIds.length
       : Math.min(settings.batchCapturePresetLimit, settings.batchCapturePresetIds.length);
-  const socialDraftBlockedReason = canGenerateSocialDraft
-    ? null
-    : 'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.';
+  const socialDraftBlockedReason = !hasGenerationModel
+    ? 'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
+    : settings.projectUrlError;
   const socialBatchCaptureBlockedReason = hasBatchCaptureConfig
     ? null
     : !settings.batchCaptureBaseUrl.trim()
@@ -87,10 +89,10 @@ export function useAdminKangurSocialPage() {
     visionModelId: resolvedVisionModelId,
   });
   const canRunVisualAnalysisPipeline =
-    canGenerateSocialDraft &&
+    hasGenerationModel &&
     Boolean(resolvedVisionModelId) &&
     editor.imageAddonIds.length > 0;
-  const socialVisualAnalysisBlockedReason = !canGenerateSocialDraft
+  const socialVisualAnalysisBlockedReason = !hasGenerationModel
     ? socialDraftBlockedReason
     : !resolvedVisionModelId
       ? socialVisionWarning
@@ -978,6 +980,7 @@ export function useAdminKangurSocialPage() {
     socialBatchCaptureBlockedReason,
     socialVisionWarning,
     projectUrl: settings.projectUrl,
+    projectUrlError: settings.projectUrlError,
     setProjectUrl: settings.setProjectUrl,
     batchCaptureBaseUrl: settings.batchCaptureBaseUrl,
     setBatchCaptureBaseUrl: settings.setBatchCaptureBaseUrl,

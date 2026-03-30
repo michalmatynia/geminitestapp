@@ -2,7 +2,7 @@
 
 import { ChevronsLeft, Printer } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { createContext, useContext, useEffect, useId } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useRef } from 'react';
 
 import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {
@@ -55,6 +55,7 @@ type LessonActivityShellContextValue = {
   navigationPills?: React.ReactNode;
   onBack: () => void;
   printPanelId: string;
+  resolvePrintPanelId: () => string;
   title: string;
   titleId?: string;
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
@@ -82,12 +83,12 @@ const translateLessonChrome = (
 function LessonActivityShellPrintButton({
   isCoarsePointer,
   onPrintPanel,
-  printPanelId,
+  resolvePrintPanelId,
   printPanelLabel,
 }: {
   isCoarsePointer: boolean;
   onPrintPanel: ((panelId: string) => void) | undefined;
-  printPanelId: string;
+  resolvePrintPanelId: () => string;
   printPanelLabel: string;
 }): React.JSX.Element | null {
   if (!onPrintPanel) {
@@ -95,7 +96,7 @@ function LessonActivityShellPrintButton({
   }
 
   return renderKangurLessonNavigationIconButton({
-    onClick: () => onPrintPanel(printPanelId),
+    onClick: () => onPrintPanel(resolvePrintPanelId()),
     'data-testid': 'lesson-activity-print-button',
     'aria-label': printPanelLabel,
     icon: Printer,
@@ -251,7 +252,7 @@ function LessonActivityShellPillsRow({
 function LessonActivityShellTopBar(): React.JSX.Element {
   const lessonChrome = useTranslations('KangurLessonChrome');
   const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
-  const { backButtonLabel, navigationPills, onBack, printPanelId, secretLessonPill } =
+  const { backButtonLabel, navigationPills, onBack, resolvePrintPanelId, secretLessonPill } =
     useLessonActivityShellContext();
   const isCoarsePointer = useKangurCoarsePointer();
   const lessonPrint = useOptionalKangurLessonPrint();
@@ -261,7 +262,7 @@ function LessonActivityShellTopBar(): React.JSX.Element {
     <LessonActivityShellPrintButton
       isCoarsePointer={isCoarsePointer}
       onPrintPanel={lessonPrint?.onPrintPanel}
-      printPanelId={printPanelId}
+      resolvePrintPanelId={resolvePrintPanelId}
       printPanelLabel={printPanelLabel}
     />
   );
@@ -355,6 +356,7 @@ function LessonActivityShellBody({
   panelAriaLabel,
   panelDescribedBy,
   panelLabelledBy,
+  panelRef,
   printInteractiveHint,
   printPanelId,
   shellPanelClassName,
@@ -368,6 +370,7 @@ function LessonActivityShellBody({
   panelAriaLabel: string | undefined;
   panelDescribedBy: string | undefined;
   panelLabelledBy: string | undefined;
+  panelRef: React.RefObject<HTMLDivElement | null>;
   printInteractiveHint: string;
   printPanelId: string;
   shellPanelClassName: string;
@@ -392,6 +395,7 @@ function LessonActivityShellBody({
   if (shellVariant === 'plain') {
     return (
       <div
+        ref={panelRef}
         className={shellPanelClassName}
         data-kangur-print-panel='true'
         data-kangur-print-paged-panel='true'
@@ -410,6 +414,7 @@ function LessonActivityShellBody({
 
   return (
     <KangurGlassPanel
+      ref={panelRef}
       className={shellPanelClassName}
       data-kangur-print-panel='true'
       data-kangur-print-paged-panel='true'
@@ -438,6 +443,7 @@ function resolveLessonActivityShellContextValue({
   navigationPills,
   onBack,
   printPanelId,
+  resolvePrintPanelId,
   secretLessonPill,
   shouldRenderShellHeader,
   title,
@@ -452,6 +458,7 @@ function resolveLessonActivityShellContextValue({
   navigationPills?: React.ReactNode;
   onBack: () => void;
   printPanelId: string;
+  resolvePrintPanelId: () => string;
   secretLessonPill: ReturnType<typeof useKangurLessonSecretPill>;
   shouldRenderShellHeader: boolean;
   title: string;
@@ -467,10 +474,34 @@ function resolveLessonActivityShellContextValue({
     navigationPills,
     onBack,
     printPanelId,
+    resolvePrintPanelId,
     title,
     titleId: shouldRenderShellHeader ? titleId : undefined,
     secretLessonPill,
   };
+}
+
+function resolveLessonActivityShellPrintTargetId({
+  fallbackPanelId,
+  panelElement,
+}: {
+  fallbackPanelId: string;
+  panelElement: HTMLElement | null;
+}): string {
+  if (!panelElement) {
+    return fallbackPanelId;
+  }
+
+  const preferredTarget = Array.from(
+    panelElement.querySelectorAll<HTMLElement>(
+      '[data-kangur-print-panel=\'true\'][data-kangur-print-preferred-target=\'true\'][data-kangur-print-panel-id]'
+    )
+  ).find((panel) => {
+    const panelId = panel.dataset['kangurPrintPanelId']?.trim();
+    return Boolean(panelId) && panelId !== fallbackPanelId;
+  });
+
+  return preferredTarget?.dataset['kangurPrintPanelId']?.trim() || fallbackPanelId;
 }
 
 function resolveLessonActivityShellPanelAccessibility({
@@ -575,6 +606,7 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
   const titleId = useId();
   const descriptionId = useId();
   const printPanelId = `lesson-activity-panel-${useId()}`;
+  const shellPanelRef = useRef<HTMLDivElement | null>(null);
   const shellPanelClassName = cn(
     'flex w-full flex-col',
     KANGUR_PANEL_GAP_CLASSNAME,
@@ -599,6 +631,14 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
     'printInteractiveHint',
     'Otwórz tę lekcję na ekranie, aby wykonać to ćwiczenie interaktywnie.'
   );
+  const resolvePrintPanelId = useCallback(
+    (): string =>
+      resolveLessonActivityShellPrintTargetId({
+        fallbackPanelId: printPanelId,
+        panelElement: shellPanelRef.current,
+      }),
+    [printPanelId]
+  );
   const contextValue = resolveLessonActivityShellContextValue({
     accent,
     backButtonLabel: resolvedBackButtonLabel,
@@ -609,6 +649,7 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
     navigationPills,
     onBack,
     printPanelId,
+    resolvePrintPanelId,
     secretLessonPill,
     shouldRenderShellHeader,
     title,
@@ -638,6 +679,7 @@ export default function LessonActivityShell(props: LessonActivityShellProps): Re
           panelAriaLabel={panelAriaLabel}
           panelDescribedBy={panelDescribedBy}
           panelLabelledBy={panelLabelledBy}
+          panelRef={shellPanelRef}
           printInteractiveHint={printInteractiveHint}
           printPanelId={printPanelId}
           shellPanelClassName={shellPanelClassName}

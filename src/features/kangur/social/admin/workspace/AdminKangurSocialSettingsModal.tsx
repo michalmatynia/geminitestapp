@@ -97,6 +97,7 @@ export function AdminKangurSocialSettingsModal({
     handleVisionModelChange,
     linkedinConnectionId,
     projectUrl,
+    projectUrlError,
     selectAllCapturePresets,
     setAddonForm,
     setBatchCaptureBaseUrl,
@@ -228,6 +229,7 @@ export function AdminKangurSocialSettingsModal({
         <TabsContent value='project' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
           <SocialSettingsProjectTab
             projectUrl={projectUrl}
+            projectUrlError={projectUrlError ?? null}
             setProjectUrl={setProjectUrl}
             isRuntimeLocked={hasBlockingRuntimeJob}
           />

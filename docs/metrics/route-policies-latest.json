@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-27T13:59:51.782Z",
+  "generatedAt": "2026-03-30T12:41:01.581Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,13 +7,14 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeCount": 296,
-    "methodCount": 440,
-    "csrfExemptionCount": 47,
+    "routeCount": 307,
+    "methodCount": 454,
+    "csrfExemptionCount": 49,
     "csrfExemptionsByPolicy": {
       "webhook-ingest": 1,
       "telemetry-ingest": 3,
       "auth-bootstrap": 11,
+      "public-campaign-links": 2,
       "deprecated-public-auth": 2,
       "external-integrations": 30
     }
@@ -108,6 +109,18 @@
       "method": "POST",
       "policy": "telemetry-ingest",
       "reason": "Telemetry and client error endpoints ingest browser-originated reports."
+    },
+    {
+      "routePath": "filemaker/campaigns/preferences",
+      "method": "POST",
+      "policy": "public-campaign-links",
+      "reason": "Public email campaign tracking and preference endpoints must accept tokenized requests from email clients and landing pages."
+    },
+    {
+      "routePath": "filemaker/campaigns/unsubscribe",
+      "method": "POST",
+      "policy": "public-campaign-links",
+      "reason": "Public email campaign tracking and preference endpoints must accept tokenized requests from email clients and landing pages."
     },
     {
       "routePath": "kangur/auth/parent-magic-link/exchange",
@@ -308,5 +321,5 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 202
+  "durationMs": 105
 }

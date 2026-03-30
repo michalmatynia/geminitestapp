@@ -8,6 +8,10 @@ import {
   recoverKangurSocialPipelineQueue,
   startKangurSocialPipelineQueue,
 } from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { imageFileSelectionSchema } from '@/shared/contracts/files';
 import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
@@ -126,6 +130,24 @@ export async function POST_handler(
     jobType === 'manual-post-generation'
       ? manualGenerationInputSchema.parse(parsed.input ?? {})
       : null;
+  const normalizedManualPipelineProjectUrl =
+    manualPipelineInput
+      ? normalizeKangurSocialProjectUrl(manualPipelineInput.projectUrl)
+      : '';
+  const normalizedManualGenerationProjectUrl =
+    manualGenerationInput
+      ? normalizeKangurSocialProjectUrl(manualGenerationInput.projectUrl)
+      : '';
+  const manualProjectUrlError = getKangurSocialProjectUrlError(
+    normalizedManualPipelineProjectUrl || normalizedManualGenerationProjectUrl
+  );
+
+  if (
+    (jobType === 'manual-post-pipeline' || jobType === 'manual-post-generation') &&
+    manualProjectUrlError
+  ) {
+    throw operationFailedError(manualProjectUrlError);
+  }
 
   if (!isRedisAvailable()) {
     throw operationFailedError(
@@ -149,6 +171,7 @@ export async function POST_handler(
           type: 'manual-post-pipeline',
           input: {
             ...manualPipelineInput!,
+            projectUrl: normalizedManualPipelineProjectUrl,
             actorId: actor.actorId,
             linkedinConnectionId: manualPipelineInput?.linkedinConnectionId ?? null,
             brainModelId: manualPipelineInput?.brainModelId ?? null,
@@ -169,6 +192,7 @@ export async function POST_handler(
               type: 'manual-post-generation',
               input: {
                 ...manualGenerationInput!,
+                projectUrl: normalizedManualGenerationProjectUrl,
                 actorId: actor.actorId,
               },
             })

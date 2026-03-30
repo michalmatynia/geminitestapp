@@ -8,7 +8,7 @@ import {
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
   type FolderTreeViewportV2Props,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree/public';
 
 import {
   buildBrainCatalogMasterNodes,

@@ -21,6 +21,7 @@ import {
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   buildKangurSocialPostCombinedBody,
+  hasKangurSocialLinkedInPublication,
   kangurSocialPostSchema,
   type KangurSocialPost,
   type KangurSocialPublishMode,
@@ -96,6 +97,10 @@ const formatSocialPostValidationError = (error: z.ZodError): string => {
 const resolvePublishSuccessToast = (mode: KangurSocialPublishMode): string =>
   mode === 'draft' ? 'Draft sent to LinkedIn.' : 'Published to LinkedIn.';
 
+const ALREADY_PUBLISHED_TOAST = 'This post is already published on LinkedIn. Unpublish it before publishing again.';
+const ALREADY_PUBLISHED_SCHEDULE_TOAST =
+  'This post is already published on LinkedIn. Unpublish it before scheduling again.';
+
 const didRecoverSuccessfulPublish = (
   post: KangurSocialPost | null,
   mode: KangurSocialPublishMode
@@ -111,7 +116,7 @@ const didRecoverSuccessfulPublish = (
     );
   }
 
-  return post.status === 'published';
+  return hasKangurSocialLinkedInPublication(post);
 };
 
 export function useSocialPostCrud(deps: SocialPostCrudDeps) {
@@ -127,7 +132,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
   const [publishingPostId, setPublishingPostId] = useState<string | null>(null);
   const [unpublishingPostId, setUnpublishingPostId] = useState<string | null>(null);
 
-  const syncRecoveredPost = (post: KangurSocialPost): void => {
+  const syncPostInCache = (post: KangurSocialPost): void => {
     queryClient.setQueryData<KangurSocialPost[] | undefined>(
       KANGUR_SOCIAL_ADMIN_POSTS_QUERY_KEY,
       (current) => {
@@ -172,6 +177,8 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
   const buildValidatedPostUpdates = (
     nextStatus: KangurSocialPost['status']
   ): Partial<KangurSocialPost> | null => {
+    const shouldKeepPublishedStatus =
+      nextStatus === 'draft' && hasKangurSocialLinkedInPublication(deps.activePost);
     const resolvedImageState = resolveSocialPostImageState({
       imageAssets: deps.imageAssets,
       imageAddonIds: deps.imageAddonIds,
@@ -183,7 +190,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         deps.editorState.bodyPl,
         deps.editorState.bodyEn
       ),
-      status: nextStatus,
+      status: shouldKeepPublishedStatus ? 'published' : nextStatus,
       scheduledAt: nextStatus === 'scheduled' ? parseDatetimeLocal(deps.scheduledAt) : null,
       imageAssets: resolvedImageState.imageAssets,
       imageAddonIds: resolvedImageState.imageAddonIds,
@@ -330,11 +337,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
     setPublishingPostId(postId);
     try {
       const published = await publishMutation.mutateAsync({ id: postId, mode, skipImages: options?.skipImages });
-      const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
-      queryClient.setQueryData<KangurSocialPost[]>(queryKey, (current) => {
-        const entries = current ?? [];
-        return entries.map((entry) => (entry.id === published.id ? published : entry));
-      });
+      syncPostInCache(published);
       toast(
         resolvePublishSuccessToast(mode),
         { variant: 'success' }
@@ -342,7 +345,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
     } catch (error) {
       const recoveredPost = await recoverRefreshedPost(postId);
       if (didRecoverSuccessfulPublish(recoveredPost, mode)) {
-        syncRecoveredPost(recoveredPost);
+        syncPostInCache(recoveredPost);
         toast(resolvePublishSuccessToast(mode), { variant: 'success' });
         return;
       }
@@ -418,6 +421,13 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
 
   const handleSave = async (nextStatus: KangurSocialPost['status']): Promise<void> => {
     if (!deps.activePost) return;
+    if (
+      nextStatus === 'scheduled' &&
+      hasKangurSocialLinkedInPublication(deps.activePost)
+    ) {
+      toast(ALREADY_PUBLISHED_SCHEDULE_TOAST, { variant: 'info' });
+      return;
+    }
     const updates = buildValidatedPostUpdates(nextStatus);
     if (!updates) {
       trackKangurClientEvent(
@@ -458,6 +468,10 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
 
   const handlePublish = async (): Promise<void> => {
     if (!deps.activePost) return;
+    if (hasKangurSocialLinkedInPublication(deps.activePost)) {
+      toast(ALREADY_PUBLISHED_TOAST, { variant: 'info' });
+      return;
+    }
     const updates = buildValidatedPostUpdates('scheduled');
     if (!updates) {
       trackKangurClientEvent(
@@ -477,7 +491,12 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
         updates,
       });
       stage = 'publish';
-      await publishMutation.mutateAsync({ id: deps.activePost.id, mode: 'published' });
+      const published = await publishMutation.mutateAsync({
+        id: deps.activePost.id,
+        mode: 'published',
+      });
+      syncPostInCache(published);
+      toast(resolvePublishSuccessToast('published'), { variant: 'success' });
       trackKangurClientEvent(
         'kangur_social_post_publish_success',
         deps.buildSocialContext()
@@ -486,7 +505,7 @@ export function useSocialPostCrud(deps: SocialPostCrudDeps) {
       const recoveredPost =
         stage === 'publish' ? await recoverRefreshedPost(deps.activePost.id) : null;
       if (stage === 'publish' && didRecoverSuccessfulPublish(recoveredPost, 'published')) {
-        syncRecoveredPost(recoveredPost);
+        syncPostInCache(recoveredPost);
         toast(resolvePublishSuccessToast('published'), { variant: 'success' });
         trackKangurClientEvent(
           'kangur_social_post_publish_success',

@@ -1,9 +1,17 @@
 import 'server-only';
 
-import { configurationError, invalidStateError, notFoundError } from '@/shared/errors/app-error';
+import {
+  configurationError,
+  invalidStateError,
+  notFoundError,
+} from '@/shared/errors/app-error';
 import type {
   KangurSocialPost,
   KangurSocialPublishMode,
+} from '@/shared/contracts/kangur-social-posts';
+import {
+  hasKangurSocialLinkedInPublication,
+  hasKangurSocialLinkedInPublicationTarget,
 } from '@/shared/contracts/kangur-social-posts';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
@@ -24,6 +32,10 @@ export async function publishKangurSocialPost(
   post: KangurSocialPost,
   options?: { mode?: KangurSocialPublishMode; skipImages?: boolean }
 ): Promise<KangurSocialPost> {
+  if (hasKangurSocialLinkedInPublication(post)) {
+    throw invalidStateError('Social post is already published on LinkedIn.');
+  }
+
   const now = new Date().toISOString();
   const startedAt = Date.now();
   const bodyLength = post.combinedBody ? post.combinedBody.trim().length : 0;
@@ -99,11 +111,8 @@ export async function unpublishKangurSocialPost(
     keepLocal,
   };
 
-  if (post.status !== 'published') {
-    throw invalidStateError('Only published posts can be unpublished.');
-  }
-  if (!post.linkedinPostId?.trim()) {
-    throw configurationError('LinkedIn post id is missing.');
+  if (!hasKangurSocialLinkedInPublicationTarget(post)) {
+    throw configurationError('LinkedIn publication details are missing.');
   }
 
   try {

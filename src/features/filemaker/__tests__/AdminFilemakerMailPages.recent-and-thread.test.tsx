@@ -541,6 +541,137 @@ describe('AdminFilemakerMail pages recent and thread flows', () => {
     });
   });
 
+  it('loads a forward draft in compose and keeps recent context on send', async () => {
+    const { AdminFilemakerMailComposePage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailComposePage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      if (key === 'panel') return 'recent';
+      if (key === 'recentMailbox') return 'VIP';
+      if (key === 'recentUnread') return '1';
+      if (key === 'recentQuery') return 'welcome';
+      if (key === 'forwardThreadId') return 'thread 1';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [],
+          },
+          forwardDraft: {
+            accountId: 'account-1',
+            to: [],
+            cc: [],
+            bcc: [],
+            subject: 'Fwd: Hello',
+            bodyHtml: '<p>Forwarded body</p>',
+            inReplyTo: null,
+          },
+          replyDraft: null,
+        });
+      }
+      if (url === '/api/filemaker/mail/send' && init?.method === 'POST') {
+        return jsonResponse({ message: { threadId: 'thread-300' } }, 201);
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailComposePage />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Subject')).toHaveValue('Fwd: Hello');
+      expect(screen.getByTestId('document-wysiwyg-editor')).toHaveValue('<p>Forwarded body</p>');
+    });
+
+    fireEvent.change(
+      screen.getByPlaceholderText('Jane Doe <jane@example.com>, team@example.com'),
+      {
+        target: { value: 'Bob <bob@example.com>' },
+      }
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'Send Email' })[0]!);
+
+    await waitFor(() => {
+      const sendCall = fetchMock.mock.calls.find(
+        ([url, init]) => url === '/api/filemaker/mail/send' && init?.method === 'POST'
+      );
+      expect(sendCall).toBeDefined();
+      const payload = JSON.parse(String(sendCall?.[1]?.body)) as {
+        accountId: string;
+        subject: string;
+        bodyHtml: string;
+      };
+      expect(payload.accountId).toBe('account-1');
+      expect(payload.subject).toBe('Fwd: Hello');
+      expect(payload.bodyHtml).toBe('<p>Forwarded body</p>');
+    });
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail/threads/thread-300?accountId=account-1&mailboxPath=VIP&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
+    );
+  });
+
   it('loads a thread, sends a reply, and refreshes the thread detail', async () => {
     const { AdminFilemakerMailThreadPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
@@ -790,5 +921,1275 @@ describe('AdminFilemakerMail pages recent and thread flows', () => {
     expect(routerPushMock).toHaveBeenCalledWith(
       '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
     );
+  });
+
+  it('marks a thread read and unread from the thread page', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) =>
+      key === 'accountId' ? 'account-1' : key === 'mailboxPath' ? 'INBOX' : null
+    );
+
+    let unreadCount = 1;
+    let recentLoads = 0;
+    let folderLoads = 0;
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::INBOX',
+              accountId: 'account-1',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 1,
+              unreadCount,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+        recentLoads += 1;
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1&mailboxPath=INBOX') {
+        folderLoads += 1;
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'INBOX',
+              unreadCount,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: null,
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && init?.method === 'PATCH') {
+        const payload = JSON.parse(String(init.body)) as { read: boolean };
+        unreadCount = payload.read ? 0 : 1;
+        return jsonResponse({
+          thread: {
+            id: 'thread 1',
+            unreadCount,
+          },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    fireEvent.click(screen.getByRole('button', { name: 'Mark Read' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/filemaker/mail/threads/thread%201',
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ read: true }),
+        })
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Mark Unread' })).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(recentLoads).toBeGreaterThanOrEqual(2);
+      expect(folderLoads).toBeGreaterThanOrEqual(2);
+    });
+    expect(toastMock).toHaveBeenCalledWith('Marked as read.', { variant: 'success' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark Unread' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/filemaker/mail/threads/thread%201',
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify({ read: false }),
+        })
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Mark Read' })).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(recentLoads).toBeGreaterThanOrEqual(3);
+      expect(folderLoads).toBeGreaterThanOrEqual(3);
+    });
+    expect(toastMock).toHaveBeenCalledWith('Marked as unread.', { variant: 'success' });
+  });
+
+  it('forwards a recent-origin thread into compose while preserving recent filters', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      if (key === 'panel') return 'recent';
+      if (key === 'recentMailbox') return 'VIP';
+      if (key === 'recentUnread') return '1';
+      if (key === 'recentQuery') return 'welcome';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: {
+            accountId: 'account-1',
+            to: [],
+            cc: [],
+            bcc: [],
+            subject: 'Fwd: Hello',
+            bodyHtml: '<p>Forwarded body</p>',
+            inReplyTo: null,
+          },
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    fireEvent.click(screen.getByRole('button', { name: 'Forward' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail/compose?accountId=account-1&forwardThreadId=thread+1&mailboxPath=VIP&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
+    );
+  });
+
+  it('deletes a recent-origin thread and returns to the filtered recent panel', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      if (key === 'panel') return 'recent';
+      if (key === 'recentMailbox') return 'VIP';
+      if (key === 'recentUnread') return '1';
+      if (key === 'recentQuery') return 'welcome';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: null,
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && init?.method === 'DELETE') {
+        return jsonResponse({ ok: true });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/filemaker/mail/threads/thread%201',
+        expect.objectContaining({
+          method: 'DELETE',
+        })
+      );
+    });
+    expect(toastMock).toHaveBeenCalledWith('Thread deleted.', { variant: 'success' });
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
+    );
+  });
+
+  it('preserves search-origin context in compose back and send routes', async () => {
+    const { AdminFilemakerMailComposePage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailComposePage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'panel') return 'search';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({ threads: [] });
+      }
+      if (url === '/api/filemaker/mail/send' && init?.method === 'POST') {
+        return jsonResponse({ message: { threadId: 'thread-400' } }, 201);
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailComposePage />);
+
+    await screen.findByText(/Sending from:/);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Search' }));
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail?panel=search&accountId=account-1&searchQuery=invoice'
+    );
+
+    fireEvent.change(screen.getByLabelText('Subject'), {
+      target: { value: 'Search follow-up' },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText('Jane Doe <jane@example.com>, team@example.com'),
+      {
+        target: { value: 'Jane Doe <jane@example.com>' },
+      }
+    );
+    fireEvent.change(screen.getByTestId('document-wysiwyg-editor'), {
+      target: { value: '<p>Reply from search</p>' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Send Email' })[0]!);
+
+    await waitFor(() => {
+      expect(routerPushMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail/threads/thread-400?accountId=account-1&panel=search&searchQuery=invoice'
+      );
+    });
+  });
+
+  it('returns to search from a search-origin thread route', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      if (key === 'panel') return 'search';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: null,
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Search' }));
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail?panel=search&accountId=account-1&searchQuery=invoice'
+    );
+  });
+
+  it('forwards a search-origin thread into compose while preserving the search query', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      if (key === 'panel') return 'search';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: {
+            accountId: 'account-1',
+            to: [],
+            cc: [],
+            bcc: [],
+            subject: 'Fwd: Hello',
+            bodyHtml: '<p>Forwarded body</p>',
+            inReplyTo: null,
+          },
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    fireEvent.click(screen.getByRole('button', { name: 'Forward' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail/compose?accountId=account-1&forwardThreadId=thread+1&mailboxPath=VIP&panel=search&searchQuery=invoice'
+    );
+  });
+
+  it('deletes a search-origin thread and returns to the search panel', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      if (key === 'panel') return 'search';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: null,
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && init?.method === 'DELETE') {
+        return jsonResponse({ ok: true });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/filemaker/mail/threads/thread%201',
+        expect.objectContaining({
+          method: 'DELETE',
+        })
+      );
+    });
+    expect(toastMock).toHaveBeenCalledWith('Thread deleted.', { variant: 'success' });
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail?panel=search&accountId=account-1&searchQuery=invoice'
+    );
+  });
+
+  it('opens account-scoped search from a recent-origin thread via the sidebar', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      if (key === 'panel') return 'recent';
+      if (key === 'recentMailbox') return 'VIP';
+      if (key === 'recentUnread') return '1';
+      if (key === 'recentQuery') return 'welcome';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Hi there',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: null,
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    fireEvent.click(screen.getByRole('button', { name: /Search Messages/ }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail?panel=search&accountId=account-1'
+    );
+  });
+
+  it('shows clear search in search-origin compose and keeps account scope', async () => {
+    const { AdminFilemakerMailComposePage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailComposePage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'panel') return 'search';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailComposePage />);
+
+    await screen.findByText(/Sending from:/);
+    expect(screen.getByText('Search Query: invoice')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear Search' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail?panel=search&accountId=account-1'
+    );
+  });
+
+  it('highlights the folder thread instead of the recent thread on a folder-origin thread route', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Recent Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Recent preview',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Recent Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1&mailboxPath=VIP') {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Folder Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Folder preview',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Folder Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: null,
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    const sidebar = screen.getByText('Mail Navigation').closest('section');
+    expect(sidebar).not.toBeNull();
+    const scoped = within(sidebar!);
+
+    expect(scoped.getByRole('button', { name: /Folder Hello/ })).toHaveClass('bg-sky-500/15');
+    expect(scoped.getByRole('button', { name: /Recent Hello/ })).not.toHaveClass('bg-sky-500/15');
+  });
+
+  it('highlights search instead of recent or folder threads on a search-origin thread route', async () => {
+    const { AdminFilemakerMailThreadPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailThreadPage'
+    );
+    routeParamsMock.threadId = 'thread%201';
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'VIP';
+      if (key === 'panel') return 'search';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              fromName: 'Support',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::VIP',
+              accountId: 'account-1',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Recent Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Recent preview',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Recent Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1&mailboxPath=VIP') {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Folder Hello',
+              participantSummary: [{ address: 'alice@example.com', name: 'Alice' }],
+              snippet: 'Folder preview',
+              mailboxPath: 'VIP',
+              mailboxRole: 'custom',
+              normalizedSubject: 'Folder Hello',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads/thread%201' && !init?.method) {
+        return jsonResponse({
+          detail: {
+            thread: {
+              id: 'thread 1',
+              accountId: 'account-1',
+              subject: 'Hello',
+              mailboxPath: 'VIP',
+              unreadCount: 1,
+              messageCount: 1,
+            },
+            messages: [
+              {
+                id: 'message-1',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                htmlBody: '<p>Hi there</p>',
+                textBody: 'Hi there',
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+          forwardDraft: null,
+          replyDraft: {
+            accountId: 'account-1',
+            to: [{ address: 'alice@example.com', name: 'Alice' }],
+            subject: 'Re: Hello',
+            bodyHtml: '<p><br/></p>',
+            inReplyTo: 'provider-1',
+          },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailThreadPage />);
+
+    await screen.findByText('Alice');
+    const sidebar = screen.getByText('Mail Navigation').closest('section');
+    expect(sidebar).not.toBeNull();
+    const scoped = within(sidebar!);
+
+    expect(scoped.getByRole('button', { name: /Search Messages/ })).toHaveClass('bg-sky-500/15');
+    expect(scoped.getByRole('button', { name: /Recent Hello/ })).not.toHaveClass('bg-sky-500/15');
+    expect(scoped.getByRole('button', { name: /Folder Hello/ })).not.toHaveClass('bg-sky-500/15');
   });
 });

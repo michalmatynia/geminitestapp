@@ -1,10 +1,9 @@
 export const runtime = 'nodejs';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
+import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 import { POST_handler } from './handler';
 
-export const POST = apiHandler(POST_handler, {
-  source: 'filemaker.mail.accounts.sync.POST',
+export const POST = apiHandlerWithParams<{ accountId: string }>(POST_handler, {
+  source: 'filemaker.mail.accounts.[accountId].sync.POST',
 });
-

@@ -12,7 +12,7 @@ vi.mock('@/features/integrations/hooks/useBaselinkerSettingsState', () => ({
   useBaselinkerSettingsState: () => useBaselinkerSettingsState(),
 }));
 
-vi.mock('@/features/products/hooks/useProductOrdersImport', () => ({
+vi.mock('@/shared/hooks/useBaseOrderQuickImport', () => ({
   useQuickImportBaseOrdersMutation: () => useQuickImportBaseOrdersMutation(),
 }));
 

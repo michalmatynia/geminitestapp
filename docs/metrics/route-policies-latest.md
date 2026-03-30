@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-27'
+last_reviewed: '2026-03-30'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Route Policy Report
 
-Generated at: 2026-03-27T13:59:51.782Z
+Generated at: 2026-03-30T12:41:01.581Z
 
 ## Summary
 
 - Status: PASSED
-- Routes scanned: 296
-- Method exports scanned: 440
+- Routes scanned: 307
+- Method exports scanned: 454
 - Errors: 0
 - Warnings: 0
-- CSRF exemptions: 47
+- CSRF exemptions: 49
 
 ## Rule Breakdown
 
@@ -46,6 +46,8 @@ No route policy issues detected.
 | auth/users/[id]/security | PATCH | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | auth/verify-credentials | POST | auth-bootstrap | Auth bootstrap flows need to accept requests before app CSRF is established. |
 | client-errors | POST | telemetry-ingest | Telemetry and client error endpoints ingest browser-originated reports. |
+| filemaker/campaigns/preferences | POST | public-campaign-links | Public email campaign tracking and preference endpoints must accept tokenized requests from email clients and landing pages. |
+| filemaker/campaigns/unsubscribe | POST | public-campaign-links | Public email campaign tracking and preference endpoints must accept tokenized requests from email clients and landing pages. |
 | kangur/auth/parent-magic-link/exchange | POST | deprecated-public-auth | Deprecated auth endpoints stay reachable so stale clients receive a controlled 410 response. |
 | kangur/auth/parent-magic-link/request | POST | deprecated-public-auth | Deprecated auth endpoints stay reachable so stale clients receive a controlled 410 response. |
 | query-telemetry | POST | telemetry-ingest | Telemetry and client error endpoints ingest browser-originated reports. |

@@ -451,9 +451,10 @@ export async function publishLinkedInPersonalPost(
 
 export async function deleteLinkedInPersonalPost(post: KangurSocialPost): Promise<void> {
   const startedAt = Date.now();
-  const postUrn = extractLinkedInPostUrn(post.linkedinPostId ?? null);
+  const postReference = post.linkedinPostId?.trim() ? post.linkedinPostId : post.linkedinUrl;
+  const postUrn = extractLinkedInPostUrn(postReference ?? null);
   if (!postUrn) {
-    throw configurationError('LinkedIn post id is missing.');
+    throw configurationError('LinkedIn publication details are missing.');
   }
 
   const baseContext = {

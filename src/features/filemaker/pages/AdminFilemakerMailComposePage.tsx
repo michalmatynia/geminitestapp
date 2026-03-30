@@ -4,14 +4,26 @@ import { ArrowLeft, SendHorizonal } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { DocumentWysiwygEditor } from '@/features/document-editor/components/DocumentWysiwygEditor';
-import { parseFilemakerMailParticipantsInput } from '../mail-utils';
+import { DocumentWysiwygEditor } from '@/features/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
+import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
+import { buildFilemakerMailSelectionHref as buildSelectionHref } from '../mail-ui-helpers';
+import { parseFilemakerMailParticipantsInput } from '../mail-utils';
 
 import type { FilemakerMailAccount, FilemakerMailParticipant } from '../types';
 import { Button, FormField, FormSection, Input, PanelHeader, SelectSimple, useToast } from '@/shared/ui';
 
 type AccountsResponse = { accounts: FilemakerMailAccount[] };
+type ForwardDraftResponse = {
+  forwardDraft: {
+    accountId: string;
+    bodyHtml: string;
+    bcc: FilemakerMailParticipant[];
+    cc: FilemakerMailParticipant[];
+    subject: string;
+    to: FilemakerMailParticipant[];
+  } | null;
+};
 
 const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(url, {
@@ -44,25 +56,34 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const accountIdFromRoute = searchParams.get('accountId');
+  const forwardThreadId = searchParams.get('forwardThreadId');
   const mailboxPathFromRoute = searchParams.get('mailboxPath');
-  const originPanel = searchParams.get('panel') === 'recent' ? 'recent' : null;
+  const originPanel =
+    searchParams.get('panel') === 'recent'
+      ? 'recent'
+      : searchParams.get('panel') === 'search'
+        ? 'search'
+        : null;
   const recentMailboxFilter = searchParams.get('recentMailbox');
   const recentUnreadOnly = searchParams.get('recentUnread') === '1';
   const recentQuery = searchParams.get('recentQuery');
-  const backLabel = originPanel === 'recent' ? 'Back to Recent' : 'Back to Mail';
+  const searchQuery = searchParams.get('searchQuery');
+  const backLabel =
+    originPanel === 'recent'
+      ? 'Back to Recent'
+      : originPanel === 'search'
+        ? 'Back to Search'
+        : 'Back to Mail';
   const backHref = useMemo(() => {
-    const search = new URLSearchParams();
-    if (accountIdFromRoute) search.set('accountId', accountIdFromRoute);
-    if (originPanel === 'recent' && accountIdFromRoute) {
-      search.set('panel', 'recent');
-    } else if (mailboxPathFromRoute) {
-      search.set('mailboxPath', mailboxPathFromRoute);
-    }
-    if (recentMailboxFilter) search.set('recentMailbox', recentMailboxFilter);
-    if (recentUnreadOnly) search.set('recentUnread', '1');
-    if (recentQuery) search.set('recentQuery', recentQuery);
-    const nextSearch = search.toString();
-    return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
+    return buildSelectionHref({
+      accountId: accountIdFromRoute,
+      mailboxPath: originPanel ? null : mailboxPathFromRoute,
+      panel: originPanel,
+      recentMailboxFilter: originPanel === 'recent' ? recentMailboxFilter : null,
+      recentUnreadOnly: originPanel === 'recent' ? recentUnreadOnly : false,
+      recentQuery: originPanel === 'recent' ? recentQuery : null,
+      searchQuery: originPanel === 'search' ? searchQuery : null,
+    });
   }, [
     accountIdFromRoute,
     mailboxPathFromRoute,
@@ -70,6 +91,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     recentMailboxFilter,
     recentQuery,
     recentUnreadOnly,
+    searchQuery,
   ]);
 
   useEffect(() => {
@@ -78,7 +100,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       try {
         const result = await fetchJson<AccountsResponse>('/api/filemaker/mail/accounts');
         setAccounts(result.accounts);
-        setAccountId(accountIdFromRoute ?? result.accounts[0]?.id ?? '');
+        setAccountId((current) => current || accountIdFromRoute || result.accounts[0]?.id || '');
       } catch (error) {
         toast(error instanceof Error ? error.message : 'Failed to load mailbox accounts.', {
           variant: 'error',
@@ -89,6 +111,47 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     };
     void load();
   }, [accountIdFromRoute, searchParams, toast]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (!forwardThreadId) {
+      return () => {
+        isActive = false;
+      };
+    }
+
+    const loadForwardDraft = async (): Promise<void> => {
+      try {
+        const result = await fetchJson<ForwardDraftResponse>(
+          `/api/filemaker/mail/threads/${encodeURIComponent(forwardThreadId)}`
+        );
+        if (!isActive || !result.forwardDraft) {
+          return;
+        }
+
+        setAccountId(result.forwardDraft.accountId);
+        setTo(formatParticipants(result.forwardDraft.to));
+        setCc(formatParticipants(result.forwardDraft.cc));
+        setBcc(formatParticipants(result.forwardDraft.bcc));
+        setSubject(result.forwardDraft.subject);
+        setBodyHtml(result.forwardDraft.bodyHtml);
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+        toast(error instanceof Error ? error.message : 'Failed to load forward draft.', {
+          variant: 'error',
+        });
+      }
+    };
+
+    void loadForwardDraft();
+
+    return () => {
+      isActive = false;
+    };
+  }, [forwardThreadId, toast]);
 
   const handleSend = async (): Promise<void> => {
     setIsSending(true);
@@ -105,15 +168,17 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
         }),
       });
       toast('Email sent.', { variant: 'success' });
-      const search = new URLSearchParams();
-      search.set('accountId', accountId);
-      if (mailboxPathFromRoute) search.set('mailboxPath', mailboxPathFromRoute);
-      if (originPanel === 'recent') search.set('panel', 'recent');
-      if (recentMailboxFilter) search.set('recentMailbox', recentMailboxFilter);
-      if (recentUnreadOnly) search.set('recentUnread', '1');
-      if (recentQuery) search.set('recentQuery', recentQuery);
       router.push(
-        `/admin/filemaker/mail/threads/${encodeURIComponent(result.message.threadId)}?${search.toString()}`
+        buildThreadHref({
+          threadId: result.message.threadId,
+          accountId,
+          mailboxPath: mailboxPathFromRoute,
+          originPanel,
+          recentMailboxFilter,
+          recentUnreadOnly,
+          recentQuery,
+          searchQuery,
+        })
       );
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to send email.', {
@@ -134,6 +199,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
         recentMailboxFilter={recentMailboxFilter}
         recentUnreadOnly={recentUnreadOnly}
         recentQuery={recentQuery}
+        searchQuery={searchQuery}
         onAccountUpdated={(account) => {
           setAccounts((current) =>
             current.map((entry) => (entry.id === account.id ? account : entry))

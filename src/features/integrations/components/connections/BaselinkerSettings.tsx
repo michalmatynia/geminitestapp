@@ -4,7 +4,8 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 
 import { useBaselinkerSettingsState } from '@/features/integrations/hooks/useBaselinkerSettingsState';
-import { useQuickImportBaseOrdersMutation, buildBaseOrderQuickImportFeedback } from '@/features/products/public';
+import { useQuickImportBaseOrdersMutation } from '@/shared/hooks/useBaseOrderQuickImport';
+import { buildBaseOrderQuickImportFeedback } from '@/shared/lib/base-order-quick-import-feedback';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import {
   Button,

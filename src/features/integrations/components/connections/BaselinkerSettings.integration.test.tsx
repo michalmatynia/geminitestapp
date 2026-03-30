@@ -19,7 +19,7 @@ const useDefaultExportConnection = vi.fn();
 const useUpdateDefaultExportConnection = vi.fn();
 const toastMock = vi.fn();
 
-vi.mock('@/features/products/hooks/useProductOrdersImport', () => ({
+vi.mock('@/shared/hooks/useBaseOrderQuickImport', () => ({
   useQuickImportBaseOrdersMutation: () => useQuickImportBaseOrdersMutation(),
 }));
 

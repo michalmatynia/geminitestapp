@@ -422,38 +422,38 @@ export class MockAudioContext {
 
   createBuffer = vi.fn(
     (numberOfChannels: number, length: number, _sampleRate: number) =>
-      new MockAudioBuffer(numberOfChannels, length) as unknown as AudioBuffer
+      new MockAudioBuffer(numberOfChannels, length)
   );
 
   close = vi.fn(async () => {
     this.state = 'closed';
   });
 
-  createBiquadFilter = vi.fn(() => new MockBiquadFilterNode() as unknown as BiquadFilterNode);
-  createConvolver = vi.fn(() => new MockConvolverNode() as unknown as ConvolverNode);
+  createBiquadFilter = vi.fn(() => new MockBiquadFilterNode());
+  createConvolver = vi.fn(() => new MockConvolverNode());
   createDynamicsCompressor = vi.fn(
-    () => new MockDynamicsCompressorNode() as unknown as DynamicsCompressorNode
+    () => new MockDynamicsCompressorNode()
   );
 
   createGain = vi.fn(() => {
     const gainNode = new MockGainNode();
     this.gains.push(gainNode);
-    return gainNode as unknown as GainNode;
+    return gainNode;
   });
 
   createOscillator = vi.fn(() => {
     const oscillator = new MockOscillatorNode();
     this.oscillators.push(oscillator);
-    return oscillator as unknown as OscillatorNode;
+    return oscillator;
   });
 
   createStereoPanner = vi.fn(() => {
     const panner = new MockStereoPannerNode();
     this.panners.push(panner);
-    return panner as unknown as StereoPannerNode;
+    return panner;
   });
 
-  createWaveShaper = vi.fn(() => new MockWaveShaperNode() as unknown as WaveShaperNode);
+  createWaveShaper = vi.fn(() => new MockWaveShaperNode());
 
   resume = vi.fn(async () => {
     this.state = 'running';

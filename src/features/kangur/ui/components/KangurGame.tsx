@@ -163,6 +163,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
       className={`flex flex-col w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}
       data-kangur-print-panel='true'
       data-kangur-print-paged-panel='true'
+      data-kangur-print-preferred-target='true'
       data-kangur-print-panel-id={printPanelId}
       data-kangur-print-panel-title={printPanelTitle}
       data-testid='kangur-game-question-print-panel'
@@ -420,6 +421,7 @@ function ResultView({
       className={`w-full flex flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}
       data-kangur-print-panel='true'
       data-kangur-print-paged-panel='true'
+      data-kangur-print-preferred-target='true'
       data-kangur-print-panel-id={printPanelId}
       data-kangur-print-panel-title={printPanelTitle}
       data-testid='kangur-game-result-print-panel'

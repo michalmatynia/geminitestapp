@@ -23,6 +23,7 @@ const kangurSubjectFocusApiClient = createKangurApiClient({
   credentials: 'same-origin',
   getHeaders: () => createActorAwareHeaders(),
 });
+const subjectFocusRemoteUpdateInflight = new Map<string, Promise<KangurLessonSubject | null>>();
 
 type KangurSubjectFocusStore = {
   version: 1;
@@ -242,6 +243,11 @@ const updateSubjectFocusViaApi = async (
   );
 };
 
+const buildRemoteSubjectFocusUpdateKey = (
+  key: string | null,
+  subject: KangurLessonSubject
+): string => `${key ?? 'anonymous'}:${subject}`;
+
 export const loadPersistedSubjectFocus = (key: string | null): KangurLessonSubject => {
   if (!key) {
     return DEFAULT_SUBJECT;
@@ -288,8 +294,27 @@ export const persistSubjectFocus = (
 };
 
 export const persistRemoteSubjectFocus = async (
+  key: string | null,
   subject: KangurLessonSubject
-): Promise<KangurLessonSubject | null> => updateSubjectFocusViaApi(subject);
+): Promise<KangurLessonSubject | null> => {
+  const normalizedSubject = normalizeKangurSubjectFocusSubject(subject);
+  if (!normalizedSubject) {
+    return null;
+  }
+
+  const updateKey = buildRemoteSubjectFocusUpdateKey(key, normalizedSubject);
+  const inflight = subjectFocusRemoteUpdateInflight.get(updateKey);
+  if (inflight) {
+    return await inflight;
+  }
+
+  const updatePromise = updateSubjectFocusViaApi(normalizedSubject).finally(() => {
+    subjectFocusRemoteUpdateInflight.delete(updateKey);
+  });
+
+  subjectFocusRemoteUpdateInflight.set(updateKey, updatePromise);
+  return await updatePromise;
+};
 
 export const subscribeToSubjectFocusChanges = (
   key: string | null,

@@ -147,8 +147,37 @@ describe('KangurSubjectFocusContext', () => {
       'english'
     );
     expect(subjectFocusServiceMocks.persistRemoteSubjectFocusMock).toHaveBeenCalledWith(
+      'learner-1',
       'english'
     );
+  });
+
+  it('skips duplicate subject writes when the selected subject is already active', async () => {
+    subjectFocusServiceMocks.loadPersistedSubjectFocusMock.mockReturnValue('english');
+    subjectFocusServiceMocks.subscribeToSubjectFocusChangesMock.mockImplementation(
+      (_key: string | null, listener: (subject: 'english') => void) => {
+        listener('english');
+        return () => undefined;
+      }
+    );
+
+    render(
+      <KangurSubjectFocusProvider>
+        <Probe />
+      </KangurSubjectFocusProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subject-value')).toHaveTextContent('english');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'set-valid' }));
+
+    expect(subjectFocusServiceMocks.persistSubjectFocusMock).not.toHaveBeenCalledWith(
+      'learner-1',
+      'english'
+    );
+    expect(subjectFocusServiceMocks.persistRemoteSubjectFocusMock).not.toHaveBeenCalled();
   });
 
   it('skips remote hydration when a persisted subject already exists for the active learner', async () => {

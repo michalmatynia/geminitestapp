@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { DocumentWysiwygEditor } from '@/features/document-editor/components/DocumentWysiwygEditor';
+import { DocumentWysiwygEditor } from '@/features/document-editor/public';
 import type {
   FilemakerEmailCampaign,
   FilemakerPartyReference,

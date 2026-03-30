@@ -5,10 +5,29 @@ import { parseKangurPageContentStore } from '@/shared/contracts/kangur-page-cont
 const { getMongoDbMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
 }));
+const { buildDefaultKangurPageContentStoreSpy } = vi.hoisted(() => ({
+  buildDefaultKangurPageContentStoreSpy: vi.fn(),
+}));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
 }));
+
+vi.mock('@/features/kangur/ai-tutor/page-content-catalog', async () => {
+  const actual = await vi.importActual<typeof import('@/features/kangur/ai-tutor/page-content-catalog')>(
+    '@/features/kangur/ai-tutor/page-content-catalog'
+  );
+
+  return {
+    ...actual,
+    buildDefaultKangurPageContentStore: (
+      ...args: Parameters<typeof actual.buildDefaultKangurPageContentStore>
+    ) => {
+      buildDefaultKangurPageContentStoreSpy(...args);
+      return actual.buildDefaultKangurPageContentStore(...args);
+    },
+  };
+});
 
 import {
   clearKangurPageContentServerCache,
@@ -48,6 +67,7 @@ describe('page-content repository cache', () => {
     const second = await getKangurPageContentStore('en');
 
     expect(collection.find).toHaveBeenCalledTimes(1);
+    expect(buildDefaultKangurPageContentStoreSpy).toHaveBeenCalledTimes(1);
     expect(second).toEqual(first);
   });
 

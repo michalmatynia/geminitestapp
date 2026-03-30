@@ -11,13 +11,13 @@ import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/k
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
-import { cmsService } from '@/features/cms/services/cms-service';
 import {
   buildCmsPageCanonicalText,
   buildCmsPageSemanticText,
+  cmsService,
   extractCmsPageTextContent,
   hasMeaningfulTextContent,
-} from '@/features/cms/utils/cms-text-extractor';
+} from '@/features/cms/server';
 import { KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 import { runNeo4jStatements } from '@/shared/lib/neo4j/client';

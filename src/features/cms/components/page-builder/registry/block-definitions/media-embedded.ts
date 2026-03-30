@@ -8,7 +8,7 @@ import {
   DEFAULT_APP_EMBED_ID,
   KANGUR_APP_EMBED_ENTRY_PAGE_OPTIONS,
 } from '@/shared/lib/app-embeds';
-import { KANGUR_WIDGET_OPTIONS } from '@/features/kangur/cms/public';
+import { KANGUR_WIDGET_OPTIONS } from '@/shared/contracts/kangur-cms';
 import {
   KANGUR_WIDGET_DISPLAY_OPTIONS,
   KANGUR_WIDGET_GAME_SCREEN_OPTIONS,

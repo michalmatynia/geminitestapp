@@ -6,7 +6,7 @@ import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/v2';
+} from '@/features/foldertree/public';
 import { internalError } from '@/shared/errors/app-error';
 
 import { getBrainCapabilityDefinition } from '../settings';

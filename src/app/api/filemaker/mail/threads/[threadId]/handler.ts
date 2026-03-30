@@ -1,14 +1,21 @@
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 import { notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
 import { requireFilemakerMailAdminSession } from '@/features/filemaker/server/filemaker-mail-access';
 import {
+  buildFilemakerMailForwardDraft,
   buildFilemakerMailReplyDraft,
   deleteFilemakerMailThread,
   getFilemakerMailThreadDetail,
   markFilemakerMailThreadRead,
 } from '@/features/filemaker/server/filemaker-mail-service';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+
+const filemakerMailThreadPatchSchema = z.object({
+  read: z.boolean().optional(),
+});
 
 const resolveThreadId = (ctx: ApiHandlerContext): string => {
   const raw = Array.isArray(ctx.params?.['threadId'])
@@ -24,18 +31,30 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   if (!detail) {
     throw notFoundError('Filemaker mail thread was not found.');
   }
+  const [forwardDraft, replyDraft] = await Promise.all([
+    buildFilemakerMailForwardDraft(detail),
+    buildFilemakerMailReplyDraft(detail),
+  ]);
   return Response.json({
     detail,
-    replyDraft: await buildFilemakerMailReplyDraft(threadId),
+    forwardDraft,
+    replyDraft,
   });
 }
 
 export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const threadId = resolveThreadId(ctx);
-  const body = (await req.json()) as { read?: boolean };
-  if (typeof body.read === 'boolean') {
-    const thread = await markFilemakerMailThreadRead(threadId, body.read);
+  const result: JsonParseResult<z.infer<typeof filemakerMailThreadPatchSchema>> =
+    await parseJsonBody(req, filemakerMailThreadPatchSchema, {
+      logPrefix: 'filemaker.mail.threads.PATCH',
+    });
+  if (!result.ok) {
+    return result.response;
+  }
+
+  if (typeof result.data.read === 'boolean') {
+    const thread = await markFilemakerMailThreadRead(threadId, result.data.read);
     return Response.json({ thread });
   }
   return Response.json({ ok: true });
@@ -47,4 +66,3 @@ export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext):
   await deleteFilemakerMailThread(threadId);
   return Response.json({ ok: true });
 }
-

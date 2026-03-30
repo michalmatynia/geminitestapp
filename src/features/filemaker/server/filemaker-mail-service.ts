@@ -16,10 +16,12 @@ import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-
 import { stripHtmlToPlainText } from '@/shared/lib/document-editor-format';
 
 import {
+  buildFilemakerMailForwardHtmlSeed,
   buildFilemakerMailPlainText,
   buildFilemakerMailReplyHtmlSeed,
   buildFilemakerMailSnippet,
   dedupeFilemakerMailParticipants,
+  ensureFilemakerForwardSubject,
   ensureFilemakerReplySubject,
   normalizeFilemakerMailSubject,
   parseFilemakerMailboxAllowlistInput,
@@ -394,8 +396,17 @@ export const getFilemakerMailThreadDetail = async (
   };
 };
 
+const resolveFilemakerMailThreadDetailInput = async (
+  input: string | FilemakerMailThreadDetail
+): Promise<FilemakerMailThreadDetail | null> => {
+  if (typeof input !== 'string') {
+    return input;
+  }
+  return getFilemakerMailThreadDetail(input);
+};
+
 export const buildFilemakerMailReplyDraft = async (
-  threadId: string
+  threadIdOrDetail: string | FilemakerMailThreadDetail
 ): Promise<{
   accountId: string;
   to: FilemakerMailParticipant[];
@@ -403,7 +414,7 @@ export const buildFilemakerMailReplyDraft = async (
   bodyHtml: string;
   inReplyTo: string | null;
 } | null> => {
-  const detail = await getFilemakerMailThreadDetail(threadId);
+  const detail = await resolveFilemakerMailThreadDetailInput(threadIdOrDetail);
   if (!detail) return null;
   const referenceMessage =
     detail.messages
@@ -426,6 +437,34 @@ export const buildFilemakerMailReplyDraft = async (
     subject: ensureFilemakerReplySubject(detail.thread.subject || referenceMessage.subject),
     bodyHtml: buildFilemakerMailReplyHtmlSeed(referenceMessage),
     inReplyTo: referenceMessage.providerMessageId ?? null,
+  };
+};
+
+export const buildFilemakerMailForwardDraft = async (
+  threadIdOrDetail: string | FilemakerMailThreadDetail
+): Promise<{
+  accountId: string;
+  to: FilemakerMailParticipant[];
+  cc: FilemakerMailParticipant[];
+  bcc: FilemakerMailParticipant[];
+  subject: string;
+  bodyHtml: string;
+  inReplyTo: string | null;
+} | null> => {
+  const detail = await resolveFilemakerMailThreadDetailInput(threadIdOrDetail);
+  if (!detail) return null;
+  const referenceMessage = detail.messages[detail.messages.length - 1] ?? null;
+
+  if (!referenceMessage) return null;
+
+  return {
+    accountId: detail.thread.accountId,
+    to: [],
+    cc: [],
+    bcc: [],
+    subject: ensureFilemakerForwardSubject(detail.thread.subject || referenceMessage.subject),
+    bodyHtml: buildFilemakerMailForwardHtmlSeed(referenceMessage),
+    inReplyTo: null,
   };
 };
 

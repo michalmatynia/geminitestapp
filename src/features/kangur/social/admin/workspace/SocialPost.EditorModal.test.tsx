@@ -341,6 +341,57 @@ describe('SocialPostEditorModal', () => {
     );
   });
 
+  it('shows the LinkedIn publication subtitle even when the local draft status has drifted from published', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: {
+        ...buildPost(),
+        status: 'draft',
+        publishedAt: '2026-03-21T10:30:00.000Z',
+        linkedinPostId: 'linkedin-post-1',
+        linkedinUrl: 'https://linkedin.example/post/1',
+      },
+      scheduledAt: '',
+      setScheduledAt: vi.fn(),
+      hasUnsavedChanges: false,
+      handleSave: vi.fn(async () => {}),
+      handlePublish: vi.fn(async () => {}),
+      patchMutation: { isPending: false },
+      publishMutation: { isPending: false },
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      imageAssets: buildPost().imageAssets,
+      handleRemoveImage: vi.fn(),
+      setShowMediaLibrary: vi.fn(),
+      showMediaLibrary: false,
+      handleAddImages: vi.fn(),
+    });
+
+    render(<SocialPostEditorModal isOpen={true} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('dialog', { name: 'StudiQ Weekly Update' })).toHaveTextContent(
+      /Published on LinkedIn/i
+    );
+    expect(screen.getByRole('button', { name: 'Published on LinkedIn' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Published on LinkedIn' })).toHaveAttribute(
+      'title',
+      'This post is already published on LinkedIn. Unpublish it from the posts list before publishing again.'
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Schedule' }));
+
+    expect(screen.getByLabelText('Scheduled publish date and time')).toBeDisabled();
+    expect(screen.getByLabelText('Scheduled publish date and time')).toHaveAttribute(
+      'title',
+      'This post is already published on LinkedIn. Unpublish it from the posts list before scheduling again.'
+    );
+    expect(screen.getByRole('button', { name: 'Schedule' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Schedule' })).toHaveAttribute(
+      'title',
+      'This post is already published on LinkedIn. Unpublish it from the posts list before scheduling again.'
+    );
+  });
+
   it('keeps the save action muted when there are no unsaved changes', () => {
     useSocialPostContextMock.mockReturnValue({
       activePost: buildPost(),

@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildKangurEmbeddedBasePath } from '@/features/kangur/public';
+import { buildKangurEmbeddedBasePath } from '@/shared/lib/kangur-cms-bridge';
 
 const { kangurAdapterTestDouble, sessionMock, usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
   kangurAdapterTestDouble: {
@@ -110,7 +110,7 @@ vi.mock('@/shared/lib/auth/useOptionalNextAuthSession', () => ({
   useOptionalNextAuthSession: () => sessionMock(),
 }));
 
-vi.mock('@/features/kangur/public', async () => {
+vi.mock('@/shared/lib/kangur-cms-bridge', async () => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     ...kangurAdapterTestDouble,

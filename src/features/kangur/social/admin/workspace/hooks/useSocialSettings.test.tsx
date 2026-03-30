@@ -173,6 +173,40 @@ describe('useSocialSettings', () => {
     });
   });
 
+  it('exposes Project URL validation errors and blocks invalid settings saves', async () => {
+    const { result } = renderHook(() => useSocialSettings(), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.setProjectUrl('http://localhost:3000');
+    });
+
+    expect(result.current.projectUrlError).toBe(
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+    );
+
+    let saveResult = true;
+    await act(async () => {
+      saveResult = await result.current.handleSaveSettings();
+    });
+
+    expect(saveResult).toBe(false);
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+      { variant: 'warning' }
+    );
+
+    act(() => {
+      result.current.setProjectUrl('');
+    });
+
+    expect(result.current.projectUrlError).toBe(
+      'Set Settings Project URL before generating social posts.'
+    );
+  });
+
   it('respects persisted settings and supports reset-style handlers', async () => {
     settingsStoreMock.get.mockReturnValue(
       JSON.stringify({
@@ -317,6 +351,10 @@ describe('useSocialSettings', () => {
       wrapper: createWrapper(),
     });
 
+    act(() => {
+      result.current.setProjectUrl('https://project.example.com');
+    });
+
     let saveResult = true;
     await act(async () => {
       saveResult = await result.current.handleSaveSettings();
@@ -338,6 +376,10 @@ describe('useSocialSettings', () => {
 
     const { result } = renderHook(() => useSocialSettings(), {
       wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.setProjectUrl('https://project.example.com');
     });
 
     let saveResult = true;

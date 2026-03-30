@@ -6,9 +6,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('server-only', () => ({}));
 
+import { isAppError } from '@/shared/errors/app-error';
+
 const mocks = vi.hoisted(() => ({
   publishLinkedInPersonalPostMock: vi.fn(),
+  deleteLinkedInPersonalPostMock: vi.fn(),
   listDueScheduledKangurSocialPostsMock: vi.fn(),
+  deleteKangurSocialPostMock: vi.fn(),
   updateKangurSocialPostMock: vi.fn(),
   logInfoMock: vi.fn(),
   logWarningMock: vi.fn(),
@@ -18,11 +22,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock('./social-posts-publish.linkedin', () => ({
   publishLinkedInPersonalPost: (...args: unknown[]) =>
     mocks.publishLinkedInPersonalPostMock(...args),
+  deleteLinkedInPersonalPost: (...args: unknown[]) =>
+    mocks.deleteLinkedInPersonalPostMock(...args),
 }));
 
 vi.mock('./social-posts-repository', () => ({
   listDueScheduledKangurSocialPosts: (...args: unknown[]) =>
     mocks.listDueScheduledKangurSocialPostsMock(...args),
+  deleteKangurSocialPost: (...args: unknown[]) => mocks.deleteKangurSocialPostMock(...args),
   updateKangurSocialPost: (...args: unknown[]) => mocks.updateKangurSocialPostMock(...args),
 }));
 
@@ -38,6 +45,7 @@ import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 import {
   publishDueScheduledKangurSocialPosts,
   publishKangurSocialPost,
+  unpublishKangurSocialPost,
 } from './social-posts-publish';
 
 const basePost: KangurSocialPost = {
@@ -127,6 +135,102 @@ describe('publishKangurSocialPost', () => {
     expect(publishError).toBeTruthy();
     expect(publishError?.length).toBeLessThanOrEqual(1000);
     expect(publishError?.endsWith('...')).toBe(true);
+  });
+
+  it('blocks duplicate publish attempts when the post already has LinkedIn publication metadata', async () => {
+    const alreadyPublishedPost: KangurSocialPost = {
+      ...basePost,
+      status: 'draft',
+      publishedAt: '2026-03-21T10:30:00.000Z',
+      linkedinPostId: 'urn:li:share:existing',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3Aexisting',
+    };
+
+    let thrown: unknown;
+    try {
+      await publishKangurSocialPost(alreadyPublishedPost);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(isAppError(thrown)).toBe(true);
+    expect((thrown as Error).message).toBe('Social post is already published on LinkedIn.');
+    expect(mocks.publishLinkedInPersonalPostMock).not.toHaveBeenCalled();
+    expect(mocks.updateKangurSocialPostMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('unpublishKangurSocialPost', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('keeps unpublish available when a LinkedIn post still exists but the local status drifted back to draft', async () => {
+    const driftedDraftPost: KangurSocialPost = {
+      ...basePost,
+      status: 'draft',
+      publishedAt: '2026-03-21T10:30:00.000Z',
+      linkedinPostId: 'urn:li:share:123',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A123',
+    };
+    mocks.deleteLinkedInPersonalPostMock.mockResolvedValue(undefined);
+    mocks.updateKangurSocialPostMock.mockImplementation(
+      async (id: string, updates: Partial<KangurSocialPost>) => ({
+        ...driftedDraftPost,
+        id,
+        ...updates,
+      })
+    );
+
+    const result = await unpublishKangurSocialPost(driftedDraftPost, { keepLocal: true });
+
+    expect(mocks.deleteLinkedInPersonalPostMock).toHaveBeenCalledWith(driftedDraftPost);
+    expect(mocks.updateKangurSocialPostMock).toHaveBeenCalledWith(
+      driftedDraftPost.id,
+      expect.objectContaining({
+        status: 'draft',
+        linkedinPostId: null,
+        linkedinUrl: null,
+        publishedAt: null,
+        publishError: null,
+      })
+    );
+    expect(result.linkedinPostId).toBeNull();
+    expect(result.publishedAt).toBeNull();
+  });
+
+  it('keeps unpublish available when the stored publication only has a LinkedIn URL', async () => {
+    const urlOnlyPublishedPost: KangurSocialPost = {
+      ...basePost,
+      status: 'draft',
+      publishedAt: '2026-03-21T10:30:00.000Z',
+      linkedinPostId: null,
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A123',
+    };
+    mocks.deleteLinkedInPersonalPostMock.mockResolvedValue(undefined);
+    mocks.updateKangurSocialPostMock.mockImplementation(
+      async (id: string, updates: Partial<KangurSocialPost>) => ({
+        ...urlOnlyPublishedPost,
+        id,
+        ...updates,
+      })
+    );
+
+    const result = await unpublishKangurSocialPost(urlOnlyPublishedPost, { keepLocal: true });
+
+    expect(mocks.deleteLinkedInPersonalPostMock).toHaveBeenCalledWith(urlOnlyPublishedPost);
+    expect(mocks.updateKangurSocialPostMock).toHaveBeenCalledWith(
+      urlOnlyPublishedPost.id,
+      expect.objectContaining({
+        status: 'draft',
+        linkedinPostId: null,
+        linkedinUrl: null,
+        publishedAt: null,
+        publishError: null,
+      })
+    );
+    expect(result.linkedinUrl).toBeNull();
+    expect(result.publishedAt).toBeNull();
   });
 });
 

@@ -4,8 +4,10 @@ import { ArrowLeft, Eye, EyeOff, Forward, Reply, Trash2 } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DocumentWysiwygEditor } from '@/features/document-editor/components/DocumentWysiwygEditor';
+import { DocumentWysiwygEditor } from '@/features/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
+import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
+import { buildFilemakerMailSelectionHref as buildSelectionHref } from '../mail-ui-helpers';
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
 import { sanitizeHtml } from '@/shared/utils';
 
@@ -14,6 +16,15 @@ import { Badge, Button, FormField, FormSection, Input, PanelHeader, useToast } f
 
 type ThreadResponse = {
   detail: FilemakerMailThreadDetail;
+  forwardDraft: {
+    accountId: string;
+    bodyHtml: string;
+    bcc: FilemakerMailParticipant[];
+    cc: FilemakerMailParticipant[];
+    inReplyTo: string | null;
+    subject: string;
+    to: FilemakerMailParticipant[];
+  } | null;
   replyDraft: {
     accountId: string;
     to: FilemakerMailParticipant[];
@@ -63,27 +74,44 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const [isSending, setIsSending] = useState(false);
   const [isTogglingRead, setIsTogglingRead] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const originPanel = searchParams.get('panel') === 'recent' ? 'recent' : null;
+  const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const accountId = searchParams.get('accountId');
+  const mailboxPath = searchParams.get('mailboxPath');
+  const originPanel =
+    searchParams.get('panel') === 'recent'
+      ? 'recent'
+      : searchParams.get('panel') === 'search'
+        ? 'search'
+        : null;
   const recentMailboxFilter = searchParams.get('recentMailbox');
   const recentUnreadOnly = searchParams.get('recentUnread') === '1';
   const recentQuery = searchParams.get('recentQuery');
-  const backLabel = originPanel === 'recent' ? 'Back to Recent' : 'Back to Mail';
+  const searchQuery = searchParams.get('searchQuery');
+  const backLabel =
+    originPanel === 'recent'
+      ? 'Back to Recent'
+      : originPanel === 'search'
+        ? 'Back to Search'
+        : 'Back to Mail';
   const backHref = useMemo(() => {
-    const search = new URLSearchParams();
-    const accountId = searchParams.get('accountId');
-    const mailboxPath = searchParams.get('mailboxPath');
-    if (accountId) search.set('accountId', accountId);
-    if (originPanel === 'recent' && accountId) {
-      search.set('panel', 'recent');
-    } else if (mailboxPath) {
-      search.set('mailboxPath', mailboxPath);
-    }
-    if (recentMailboxFilter) search.set('recentMailbox', recentMailboxFilter);
-    if (recentUnreadOnly) search.set('recentUnread', '1');
-    if (recentQuery) search.set('recentQuery', recentQuery);
-    const nextSearch = search.toString();
-    return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
-  }, [originPanel, recentMailboxFilter, recentQuery, recentUnreadOnly, searchParams]);
+    return buildSelectionHref({
+      accountId,
+      mailboxPath: originPanel ? null : mailboxPath,
+      panel: originPanel,
+      recentMailboxFilter: originPanel === 'recent' ? recentMailboxFilter : null,
+      recentUnreadOnly: originPanel === 'recent' ? recentUnreadOnly : false,
+      recentQuery: originPanel === 'recent' ? recentQuery : null,
+      searchQuery: originPanel === 'search' ? searchQuery : null,
+    });
+  }, [
+    accountId,
+    mailboxPath,
+    originPanel,
+    recentMailboxFilter,
+    recentQuery,
+    recentUnreadOnly,
+    searchQuery,
+  ]);
 
   const load = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -128,6 +156,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       });
       toast('Reply sent.', { variant: 'success' });
       await load();
+      setSidebarRefreshKey((current) => current + 1);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to send reply.', {
         variant: 'error',
@@ -151,6 +180,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       );
       toast(markRead ? 'Marked as read.' : 'Marked as unread.', { variant: 'success' });
       await load();
+      setSidebarRefreshKey((current) => current + 1);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to update thread.', {
         variant: 'error',
@@ -183,13 +213,15 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
       <FilemakerMailSidebar
-        selectedAccountId={searchParams.get('accountId')}
-        selectedMailboxPath={searchParams.get('mailboxPath')}
+        selectedAccountId={accountId}
+        selectedMailboxPath={mailboxPath}
         selectedThreadId={threadId}
         originPanel={originPanel}
         recentMailboxFilter={recentMailboxFilter}
         recentUnreadOnly={recentUnreadOnly}
         recentQuery={recentQuery}
+        searchQuery={searchQuery}
+        refreshKey={sidebarRefreshKey}
       />
 
       <div className='space-y-6'>
@@ -229,10 +261,18 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                     onClick: () => {
                       const lastMessage = detail.messages[detail.messages.length - 1];
                       if (!lastMessage) return;
-                      const search = new URLSearchParams();
-                      search.set('accountId', detail.thread.accountId);
-                      search.set('forwardThreadId', threadId);
-                      router.push(`/admin/filemaker/mail/compose?${search.toString()}`);
+                      router.push(
+                        buildComposeHref({
+                          accountId: detail.thread.accountId,
+                          forwardThreadId: threadId,
+                          mailboxPath: mailboxPath ?? detail.thread.mailboxPath,
+                          originPanel,
+                          recentMailboxFilter,
+                          recentUnreadOnly,
+                          recentQuery,
+                          searchQuery,
+                        })
+                      );
                     },
                   },
                   {

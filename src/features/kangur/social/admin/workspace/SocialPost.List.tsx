@@ -17,7 +17,11 @@ import {
   SelectSimple,
 } from '@/features/kangur/shared/ui';
 import { cn } from '@/shared/utils';
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
+import {
+  hasKangurSocialLinkedInPublication,
+  hasKangurSocialLinkedInPublicationTarget,
+  type KangurSocialPost,
+} from '@/shared/contracts/kangur-social-posts';
 import {
   formatDatetimeDisplay,
   statusLabel,
@@ -65,6 +69,9 @@ const buildSearchText = (post: KangurSocialPost): string =>
     .join(' ')
     .toLowerCase();
 
+const resolveSocialPostListStatus = (post: KangurSocialPost): KangurSocialPost['status'] =>
+  hasKangurSocialLinkedInPublication(post) ? 'published' : post.status;
+
 export function SocialPostList(): React.JSX.Element {
   const {
     posts,
@@ -91,7 +98,8 @@ export function SocialPostList(): React.JSX.Element {
   const filteredPosts = React.useMemo(() => {
     const normalizedSearch = searchValue.trim().toLowerCase();
     return posts.filter((post) => {
-      if (statusFilter !== 'all' && post.status !== statusFilter) {
+      const listStatus = resolveSocialPostListStatus(post);
+      if (statusFilter !== 'all' && listStatus !== statusFilter) {
         return false;
       }
       if (!normalizedSearch) {
@@ -109,10 +117,10 @@ export function SocialPostList(): React.JSX.Element {
 
   const statusCounts = React.useMemo(
     () => ({
-      draft: posts.filter((post) => post.status === 'draft').length,
-      scheduled: posts.filter((post) => post.status === 'scheduled').length,
-      published: posts.filter((post) => post.status === 'published').length,
-      failed: posts.filter((post) => post.status === 'failed').length,
+      draft: posts.filter((post) => resolveSocialPostListStatus(post) === 'draft').length,
+      scheduled: posts.filter((post) => resolveSocialPostListStatus(post) === 'scheduled').length,
+      published: posts.filter((post) => resolveSocialPostListStatus(post) === 'published').length,
+      failed: posts.filter((post) => resolveSocialPostListStatus(post) === 'failed').length,
     }),
     [posts]
   );
@@ -199,6 +207,8 @@ export function SocialPostList(): React.JSX.Element {
           {paginatedPosts.map((post) => {
           const title = post.titlePl || post.titleEn || 'Untitled update';
           const isActive = activePostId === post.id;
+          const listStatus = resolveSocialPostListStatus(post);
+          const hasLinkedInPublication = listStatus === 'published';
           const activeVisualAnalysisJob = isActive ? currentVisualAnalysisJob : null;
           const hasVisualAnalysis =
             Boolean(post.visualSummary?.trim()) ||
@@ -313,10 +323,14 @@ export function SocialPostList(): React.JSX.Element {
                   </button>
                   <div className='space-y-0.5 text-xs text-muted-foreground'>
                     <div>
-                      {post.status === 'scheduled'
+                      {hasLinkedInPublication
+                        ? `Published on LinkedIn: ${
+                            formatDatetimeDisplay(post.publishedAt) || 'date unavailable'
+                          }`
+                        : post.status === 'scheduled'
                         ? `Scheduled: ${formatDatetimeDisplay(post.scheduledAt) || '—'}`
-                        : post.publishedAt
-                          ? `Published: ${formatDatetimeDisplay(post.publishedAt)}`
+                        : post.status === 'failed'
+                          ? 'Publish failed'
                           : 'Draft'}
                     </div>
                     <div>
@@ -388,16 +402,16 @@ export function SocialPostList(): React.JSX.Element {
                     ) : null}
                   </div>
                 </div>
-                {post.status !== 'draft' ? (
-                  <Badge variant={post.status === 'published' ? 'secondary' : 'outline'}>
-                    {statusLabel[post.status]}
+                {listStatus !== 'draft' ? (
+                  <Badge variant={listStatus === 'published' ? 'secondary' : 'outline'}>
+                    {statusLabel[listStatus]}
                   </Badge>
                 ) : null}
               </div>
               
               {(() => {
-                const isPublished = post.status === 'published';
-                const canPublish = post.status === 'draft' || post.status === 'failed';
+                const isPublished = hasLinkedInPublication;
+                const canPublish = listStatus === 'draft' || listStatus === 'failed';
                 const publishPending = publishingPostId === post.id;
                 const unpublishPending = unpublishingPostId === post.id;
                 const hasBlockingRuntimeJob =
@@ -526,7 +540,11 @@ export function SocialPostList(): React.JSX.Element {
                         onSelect={() => {
                           void handleUnpublishPost(post.id, { keepLocal: true });
                         }}
-                        disabled={unpublishPending || hasBlockingRuntimeJob || !post.linkedinPostId}
+                        disabled={
+                          unpublishPending ||
+                          hasBlockingRuntimeJob ||
+                          !hasKangurSocialLinkedInPublicationTarget(post)
+                        }
                         title={unpublishTitle}
                       >
                         Unpublish from LinkedIn
@@ -534,7 +552,11 @@ export function SocialPostList(): React.JSX.Element {
                       <DropdownMenuItem
                         onSelect={() => setPostToUnpublish(post)}
                         className='text-destructive focus:text-destructive'
-                        disabled={unpublishPending || hasBlockingRuntimeJob || !post.linkedinPostId}
+                        disabled={
+                          unpublishPending ||
+                          hasBlockingRuntimeJob ||
+                          !hasKangurSocialLinkedInPublicationTarget(post)
+                        }
                         title={unpublishAndDeleteTitle}
                       >
                         Unpublish and delete
@@ -544,7 +566,7 @@ export function SocialPostList(): React.JSX.Element {
                 );
               })()}
               
-              {post.status === 'draft' && (
+              {!hasLinkedInPublication && post.status === 'draft' && (
                 <div className='flex justify-end'>
                   <ActionMenu
                     ariaLabel='Open post actions'

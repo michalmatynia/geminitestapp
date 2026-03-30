@@ -621,6 +621,72 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     expect(screen.getByText(/"issue": "Add a base URL to resolve this route\."/)).toBeInTheDocument();
   });
 
+  it('allows programmable capture but blocks capture-plus-pipeline when Project URL is invalid', () => {
+    const handleRunProgrammablePlaywrightCapture = vi.fn();
+    const handleRunProgrammablePlaywrightCaptureAndPipeline = vi.fn();
+
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: true,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: 'https://example.com',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: 'return input.captures;',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [
+        {
+          id: 'route-1',
+          title: 'Pricing page',
+          path: '/pricing',
+          description: '',
+          selector: '',
+          waitForMs: 0,
+          waitForSelectorMs: 10000,
+        },
+      ],
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture,
+      handleRunProgrammablePlaywrightCaptureAndPipeline,
+      canGenerateSocialDraft: false,
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      socialDraftBlockedReason:
+        'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(screen.getByRole('button', { name: 'Capture programmable images' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture + run pipeline' })).toHaveAttribute(
+      'title',
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Capture programmable images' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Capture + run pipeline' }));
+
+    expect(handleRunProgrammablePlaywrightCapture).toHaveBeenCalledTimes(1);
+    expect(handleRunProgrammablePlaywrightCaptureAndPipeline).not.toHaveBeenCalled();
+  });
+
   it('blocks programmable capture while Social image analysis is already running', () => {
     usePlaywrightPersonasMock.mockReturnValue({
       data: [],

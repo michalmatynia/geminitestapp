@@ -14,6 +14,7 @@ import {
   kangurRecentFeaturesContextProvider,
   createKangurRecentFeaturesRef,
 } from '@/features/ai/server';
+import { sanitizeKangurSocialPromptText } from '@/features/kangur/social/project-url';
 
 export type KangurDocEntry = KangurDocumentationGuide | KangurTooltipDocEntry;
 
@@ -259,8 +260,9 @@ export const buildKangurDocContext = async (
     )
     .join('\n\n');
 
-  const combined = [summary, recentFeaturesContext, excerpts].filter(Boolean).join('\n\n');
-  const trimmedContext = truncateText(combined, MAX_CONTEXT_CHARS);
+  const combined = [summary, excerpts, recentFeaturesContext].filter(Boolean).join('\n\n');
+  const sanitizedContext = sanitizeKangurSocialPromptText(combined);
+  const trimmedContext = truncateText(sanitizedContext, MAX_CONTEXT_CHARS);
 
   return {
     summary: trimmedContext,

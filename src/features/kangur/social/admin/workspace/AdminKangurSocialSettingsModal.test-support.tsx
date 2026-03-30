@@ -39,16 +39,19 @@ vi.mock('@/features/kangur/shared/ui', async () => {
     FormField: ({
       label,
       description,
+      error,
       children,
     }: {
       label: string;
       description?: string;
+      error?: string | null;
       children: React.ReactNode;
     }) => (
       <label>
         <span>{label}</span>
         {description ? <span>{description}</span> : null}
         {children}
+        {error ? <span>{error}</span> : null}
       </label>
     ),
     FormModal: (props: {
@@ -207,6 +210,7 @@ export function buildSocialPostContextState(
     brainModelId: 'gpt-4.1-mini',
     visionModelId: 'gpt-4.1',
     projectUrl: 'https://studiq.example.com/project',
+    projectUrlError: null,
     setProjectUrl: vi.fn(),
     handleBrainModelChange: vi.fn(),
     handleVisionModelChange: vi.fn(),

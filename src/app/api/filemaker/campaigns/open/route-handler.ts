@@ -6,5 +6,4 @@ import { GET_handler } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'filemaker.campaigns.open.GET',
-  requireCsrf: false,
 });

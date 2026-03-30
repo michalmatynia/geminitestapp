@@ -208,6 +208,61 @@ describe('useSocialGeneration', () => {
     });
   });
 
+  it('blocks generation when Project URL is missing or localhost-only', async () => {
+    const createDeps = (projectUrl: string) => ({
+      activePost: {
+        id: 'post-1',
+        titlePl: 'Draft',
+        titleEn: '',
+        bodyPl: '',
+        bodyEn: '',
+        status: 'draft',
+      } as never,
+      resolveDocReferences: () => ['docs/overview.mdx'],
+      generationNotes: 'Focus on product changes.',
+      brainModelId: 'gpt-4.1',
+      visionModelId: 'gpt-4.1-mini',
+      canGenerateDraft: true,
+      generateDraftBlockedReason: null,
+      imageAddonIds: ['addon-1'],
+      projectUrl,
+      setActivePostId: vi.fn(),
+      setEditorState: vi.fn(),
+      setContextSummary: vi.fn(),
+      buildSocialContext: () => ({ postId: 'post-1' }),
+    });
+
+    const { result, rerender } = renderHook(
+      (deps: ReturnType<typeof createDeps>) => useSocialGeneration(deps),
+      {
+        initialProps: createDeps(''),
+        wrapper: createWrapper(),
+      }
+    );
+
+    await act(async () => {
+      await expect(result.current.handleGenerate()).resolves.toBe(false);
+    });
+
+    expect(generateMutateAsyncMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Set Settings Project URL before generating social posts.',
+      { variant: 'warning' }
+    );
+
+    rerender(createDeps('http://localhost:3000'));
+
+    await act(async () => {
+      await expect(result.current.handleGenerate()).resolves.toBe(false);
+    });
+
+    expect(generateMutateAsyncMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+      { variant: 'warning' }
+    );
+  });
+
   it('fails instead of reporting success when the generation job returns no post copy', async () => {
     const setActivePostId = vi.fn();
     const setEditorState = vi.fn();

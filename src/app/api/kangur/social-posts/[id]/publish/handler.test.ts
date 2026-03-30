@@ -65,6 +65,34 @@ describe('postKangurSocialPostPublishHandler', () => {
     });
   });
 
+  it('rejects duplicate publish attempts before calling the publish service when the post is already published on LinkedIn', async () => {
+    mocks.getKangurSocialPostByIdMock.mockResolvedValueOnce({
+      ...basePost,
+      status: 'draft',
+      publishedAt: '2026-03-21T10:30:00.000Z',
+      linkedinPostId: 'urn:li:share:existing',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3Aexisting',
+    });
+
+    const request = new NextRequest('http://localhost/api/kangur/social-posts/post-1/publish', {
+      method: 'POST',
+    });
+
+    let thrown: unknown;
+    try {
+      await postKangurSocialPostPublishHandler(request, {
+        params: { id: 'post-1' },
+        body: {},
+      } as never);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(isAppError(thrown)).toBe(true);
+    expect((thrown as Error).message).toBe('Social post is already published on LinkedIn.');
+    expect(mocks.publishKangurSocialPostMock).not.toHaveBeenCalled();
+  });
+
   it('rethrows the saved publishError as a user-facing app error after LinkedIn publish failure', async () => {
     mocks.publishKangurSocialPostMock.mockRejectedValueOnce(
       new Error('The operation failed. Please try again.')

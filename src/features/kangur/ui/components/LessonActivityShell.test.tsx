@@ -211,4 +211,46 @@ describe('LessonActivityShell', () => {
       shell?.getAttribute('data-kangur-print-panel-id')
     );
   });
+
+  it('delegates the shell print button to a nested preferred print target when present', () => {
+    const onPrintPanel = vi.fn();
+
+    render(
+      <KangurLessonPrintProvider onPrintPanel={onPrintPanel}>
+        <LessonActivityShell
+          accent='indigo'
+          icon='🕐'
+          onBack={vi.fn()}
+          shellTestId='lesson-activity-shell-with-nested-target'
+          title='Ćwiczenie: Godziny'
+        >
+          <div
+            data-kangur-print-panel='true'
+            data-kangur-print-paged-panel='true'
+            data-kangur-print-preferred-target='true'
+            data-kangur-print-panel-id='nested-clock-panel'
+            data-kangur-print-panel-title='Zagnieżdżony panel zegara'
+            data-testid='nested-clock-print-panel'
+          >
+            <div>Gra</div>
+          </div>
+        </LessonActivityShell>
+      </KangurLessonPrintProvider>
+    );
+
+    const [printButton] = screen.getAllByTestId('lesson-activity-print-button');
+    const shell = screen.getByTestId('lesson-activity-shell-with-nested-target');
+
+    expect(shell).toHaveAttribute('data-kangur-print-panel-id');
+    expect(shell).not.toHaveAttribute('data-kangur-print-panel-id', 'nested-clock-panel');
+    expect(screen.getByTestId('nested-clock-print-panel')).toHaveAttribute(
+      'data-kangur-print-preferred-target',
+      'true'
+    );
+
+    fireEvent.click(printButton);
+
+    expect(onPrintPanel).toHaveBeenCalledTimes(1);
+    expect(onPrintPanel).toHaveBeenCalledWith('nested-clock-panel');
+  });
 });

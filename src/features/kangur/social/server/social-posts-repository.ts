@@ -7,6 +7,7 @@ import type { Filter } from 'mongodb';
 
 import {
   KANGUR_SOCIAL_POSTS_COLLECTION,
+  hasKangurSocialLinkedInPublication,
   normalizeKangurSocialPost,
   parseKangurSocialPostStore,
   type KangurSocialPost,
@@ -106,7 +107,14 @@ const toDocUpdate = (post: KangurSocialPost): Omit<KangurSocialPostDoc, 'created
   return rest;
 };
 
-const matchPublished = (): Filter<KangurSocialPostDoc> => ({ status: 'published' });
+const matchPublished = (): Filter<KangurSocialPostDoc> => ({
+  $or: [
+    { status: 'published' },
+    { publishedAt: { $ne: null } },
+    { linkedinPostId: { $ne: null } },
+    { linkedinUrl: { $ne: null } },
+  ],
+});
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -143,7 +151,7 @@ export async function listPublishedKangurSocialPosts(limit = 8): Promise<KangurS
   if (!process.env['MONGODB_URI']) {
     const store = await readLocalStore();
     return [...store.posts]
-      .filter((post) => post.status === 'published')
+      .filter((post) => hasKangurSocialLinkedInPublication(post))
       .sort((left, right) => {
         const leftTs = left.publishedAt ? Date.parse(left.publishedAt) : 0;
         const rightTs = right.publishedAt ? Date.parse(right.publishedAt) : 0;

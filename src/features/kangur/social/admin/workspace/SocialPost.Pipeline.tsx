@@ -46,7 +46,6 @@ export function SocialPostPipeline(): React.JSX.Element {
     handleRunFullPipeline,
     handleRunFullPipelineWithFreshCapture,
     handleOpenVisualAnalysisModal,
-    handleOpenProgrammablePlaywrightModal,
     handleCaptureImagesOnly,
     canGenerateSocialDraft,
     canRunVisualAnalysisPipeline,
@@ -77,7 +76,6 @@ export function SocialPostPipeline(): React.JSX.Element {
     hasActivePost &&
     Boolean((batchCaptureBaseUrl ?? '').trim()) &&
     batchCapturePresetIds.length > 0;
-  const canOpenProgrammableCapture = hasActivePost;
   const batchCapturePresetCount = batchCapturePresetIds.length;
   const pipelineProgressValue = pipelineProgress
     ? PIPELINE_PROGRESS_VALUE_BY_STEP[pipelineProgress.step]
@@ -230,11 +228,6 @@ export function SocialPostPipeline(): React.JSX.Element {
       : captureOnlyPending || isPipelineBusy || hasBlockingRuntimeJob
         ? 'Wait for the current Social runtime job to finish.'
         : 'Capture screenshots and attach them to the active draft without generating copy.';
-  const programmableCaptureButtonTitle = !hasActivePost
-    ? 'Create or select a draft before opening programmable Playwright capture.'
-    : programmableCapturePending || isPipelineBusy
-      ? 'Wait for the current capture or pipeline run to finish.'
-      : 'Choose a Playwright persona, edit the script, and define custom routes for fresh screenshots.';
 
   React.useEffect(() => {
     if (
@@ -302,16 +295,6 @@ export function SocialPostPipeline(): React.JSX.Element {
               title={freshCaptureButtonTitle}
             >
               Fresh capture & pipeline
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={handleOpenProgrammablePlaywrightModal}
-              disabled={!canOpenProgrammableCapture || programmableCapturePending || isPipelineBusy}
-              title={programmableCaptureButtonTitle}
-            >
-              Programmable Playwright
             </Button>
             <Button
               type='button'

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import {
   getKangurSubjectFocusRepository,
-  requireActiveLearner,
-  resolveKangurActor,
+  resolveKangurActiveLearner,
 } from '@/features/kangur/server';
 import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
 import { kangurSubjectFocusSchema } from '@kangur/contracts';
@@ -16,8 +15,7 @@ export async function getKangurSubjectFocusHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
-  const actor = await resolveKangurActor(req);
-  const activeLearner = requireActiveLearner(actor);
+  const activeLearner = await resolveKangurActiveLearner(req);
   const repository = await getKangurSubjectFocusRepository();
   const subject = (await repository.getSubjectFocus(activeLearner.id)) ?? DEFAULT_SUBJECT;
 
@@ -28,8 +26,7 @@ export async function patchKangurSubjectFocusHandler(
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const actor = await resolveKangurActor(req);
-  const activeLearner = requireActiveLearner(actor);
+  const activeLearner = await resolveKangurActiveLearner(req);
   const parsedPayload = kangurSubjectFocusSchema.safeParse(ctx.body);
   if (!parsedPayload.success) {
     throw validationError('Invalid payload', {

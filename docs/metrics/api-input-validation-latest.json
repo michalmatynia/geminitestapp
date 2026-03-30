@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-28T14:12:27.782Z",
+  "generatedAt": "2026-03-30T12:40:59.098Z",
   "status": "warn",
   "summary": {
-    "total": 2,
+    "total": 8,
     "errorCount": 0,
-    "warningCount": 2,
+    "warningCount": 8,
     "infoCount": 0,
     "status": "warn",
-    "fileCount": 976,
-    "totalHandlers": 928,
-    "validatedHandlers": 928,
+    "fileCount": 1000,
+    "totalHandlers": 949,
+    "validatedHandlers": 949,
     "coveragePercent": 100
   },
   "scope": {
@@ -35,15 +35,75 @@
       "column": null,
       "snippet": null,
       "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/filemaker/mail/folders/handler.ts",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/filemaker/mail/search/handler.ts",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/filemaker/mail/search/handler.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/filemaker/mail/threads/handler.ts",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/filemaker/mail/threads/handler.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "query-param-unvalidated",
+      "message": "searchParams.get() used without Zod schema validation.",
+      "file": "src/app/api/filemaker/mail/threads/handler.ts",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
     }
   ],
   "rules": [
     {
       "ruleId": "query-param-unvalidated",
       "errorCount": 0,
-      "warningCount": 2,
+      "warningCount": 8,
       "infoCount": 0
     }
   ],
-  "durationMs": 97
+  "durationMs": 83
 }

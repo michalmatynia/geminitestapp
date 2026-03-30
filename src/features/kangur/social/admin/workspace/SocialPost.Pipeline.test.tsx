@@ -63,7 +63,6 @@ describe('SocialPostPipeline', () => {
       'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
     );
     expect(screen.getByRole('button', { name: 'Image analysis' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
     expect(
@@ -76,6 +75,46 @@ describe('SocialPostPipeline', () => {
     expect(handleRunFullPipeline).not.toHaveBeenCalled();
     expect(handleRunFullPipelineWithFreshCapture).not.toHaveBeenCalled();
     expect(handleCaptureImagesOnly).not.toHaveBeenCalled();
+  });
+
+  it('surfaces the Project URL validation error when generation is blocked by settings', () => {
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: false,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: false,
+      batchCaptureBaseUrl: 'https://capture.example.com',
+      batchCapturePresetIds: ['home', 'pricing'],
+      socialDraftBlockedReason: 'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+      socialBatchCaptureBlockedReason: 'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 2,
+      hasBatchCaptureConfig: true,
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toHaveAttribute(
+      'title',
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+    );
+    expect(
+      screen.getByText(
+        'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows capture progress details and screenshot failure reasons', () => {
@@ -303,7 +342,6 @@ describe('SocialPostPipeline', () => {
 
     expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Image analysis' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
     expect(
@@ -394,53 +432,6 @@ describe('SocialPostPipeline', () => {
     expect(screen.getByRole('button', { name: 'Image analysis' })).toHaveAttribute(
       'title',
       'Analyze the selected visuals first, then use Generate post with analysis as the follow-up AI pass.'
-    );
-  });
-
-  it('opens the programmable Playwright modal from the dedicated pipeline button', () => {
-    const handleOpenProgrammablePlaywrightModal = vi.fn();
-
-    mockSocialPostContextReturnValue({
-      activePostId: 'post-1',
-      editorState: {
-        titlePl: 'Selected pipeline target',
-        titleEn: '',
-      },
-      pipelineStep: 'idle',
-      pipelineProgress: null,
-      pipelineErrorMessage: null,
-      handleRunFullPipeline: vi.fn(),
-      handleRunFullPipelineWithFreshCapture: vi.fn(),
-      handleOpenVisualAnalysisModal: vi.fn(),
-      handleOpenProgrammablePlaywrightModal,
-      handleCaptureImagesOnly: vi.fn(),
-      canGenerateSocialDraft: true,
-      canRunVisualAnalysisPipeline: true,
-      canRunFreshCapturePipeline: true,
-      batchCaptureBaseUrl: 'https://kangur.app',
-      batchCapturePresetIds: ['home'],
-      socialDraftBlockedReason: null,
-      socialBatchCaptureBlockedReason: null,
-      socialVisualAnalysisBlockedReason: null,
-      captureOnlyPending: false,
-      captureOnlyMessage: null,
-      captureOnlyErrorMessage: null,
-      programmableCapturePending: false,
-      programmableCaptureMessage: null,
-      programmableCaptureErrorMessage: null,
-      batchCapturePresetLimit: 1,
-      hasBatchCaptureConfig: true,
-      setIsPostEditorModalOpen: vi.fn(),
-    });
-
-    render(<SocialPostPipeline />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Programmable Playwright' }));
-
-    expect(handleOpenProgrammablePlaywrightModal).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toHaveAttribute(
-      'title',
-      'Choose a Playwright persona, edit the script, and define custom routes for fresh screenshots.'
     );
   });
 
@@ -608,7 +599,6 @@ describe('SocialPostPipeline', () => {
     expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Review image analysis' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Programmable Playwright' })).toBeEnabled();
   });
 
 });

@@ -115,6 +115,7 @@ describe('social post generate handler', () => {
         postId: 'post-1',
         docReferences: ['overview'],
         imageAddonIds: ['addon-1'],
+        projectUrl: 'https://studiq.example.com/project',
         prefetchedVisualAnalysis: {
           summary: 'The hero now shows a larger classroom card.',
           highlights: ['Larger classroom card'],
@@ -133,5 +134,43 @@ describe('social post generate handler', () => {
         requireVisualAnalysisInBody: true,
       }),
     });
+  });
+
+  it('rejects generation when Project URL is missing or localhost-only', async () => {
+    await expect(
+      postKangurSocialPostGenerateHandler(
+        new NextRequest('http://localhost/api/kangur/social-posts/generate', {
+          method: 'POST',
+        }),
+        createContext({
+          postId: 'post-1',
+          docReferences: ['overview'],
+          imageAddonIds: ['addon-1'],
+        })
+      )
+    ).rejects.toMatchObject({
+      message: 'Set Settings Project URL before generating social posts.',
+    });
+
+    await expect(
+      postKangurSocialPostGenerateHandler(
+        new NextRequest('http://localhost/api/kangur/social-posts/generate', {
+          method: 'POST',
+        }),
+        createContext({
+          postId: 'post-1',
+          docReferences: ['overview'],
+          imageAddonIds: ['addon-1'],
+          projectUrl: 'http://localhost:3000',
+        })
+      )
+    ).rejects.toMatchObject({
+      message:
+        'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+    });
+
+    expect(mocks.recoverKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(mocks.startKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(mocks.enqueueKangurSocialPipelineJobMock).not.toHaveBeenCalled();
   });
 });

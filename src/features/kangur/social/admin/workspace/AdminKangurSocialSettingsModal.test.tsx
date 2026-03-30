@@ -221,6 +221,40 @@ describe('AdminKangurSocialSettingsModal', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows the Project URL validation error on the project tab', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue(
+      buildSocialPostContextState({
+        projectUrl: 'http://localhost:3000',
+        projectUrlError:
+          'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+      })
+    );
+
+    render(
+      <AdminKangurSocialSettingsModal
+        open={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        isSaving={false}
+        hasUnsavedChanges={true}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Project' }));
+
+    expect(screen.getByText('Used for all links and redirects in generated social posts. Localhost and loopback URLs are rejected.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('renders publishing settings when no LinkedIn integration exists', () => {
     usePlaywrightPersonasMock.mockReturnValue({
       data: [],

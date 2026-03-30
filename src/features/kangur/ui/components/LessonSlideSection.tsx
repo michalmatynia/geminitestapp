@@ -548,6 +548,7 @@ export default function LessonSlideSection(
             )}
             data-kangur-print-panel='true'
             data-kangur-print-paged-panel='true'
+            data-kangur-print-preferred-target='true'
             data-kangur-print-slide-panel='true'
             data-kangur-print-panel-id={slidePanelId}
             data-kangur-print-panel-title={activeSlide.title}

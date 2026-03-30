@@ -168,6 +168,80 @@ describe('useSocialPipelineRunner guard and error flows', () => {
     expect(result.current.isSavedVisualAnalysisStale).toBe(false);
   });
 
+  it('blocks manual pipeline runs when Project URL is missing or localhost-only', async () => {
+    const createArgs = (projectUrl: string) => ({
+      activePost: {
+        id: 'post-1',
+        titlePl: 'Draft',
+        titleEn: '',
+        bodyPl: '',
+        bodyEn: '',
+        status: 'draft',
+      } as never,
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Draft',
+        titleEn: '',
+        bodyPl: '',
+        bodyEn: '',
+      },
+      imageAssets: [],
+      imageAddonIds: ['addon-1'],
+      batchCaptureBaseUrl: 'https://example.com',
+      batchCapturePresetIds: ['preset-1'],
+      batchCapturePresetLimit: 1,
+      linkedinConnectionId: null,
+      brainModelId: 'brain-1',
+      visionModelId: 'vision-1',
+      canRunServerPipeline: true,
+      pipelineBlockedReason: null,
+      canRunVisualAnalysisPipeline: true,
+      visualAnalysisBlockedReason: null,
+      projectUrl,
+      generationNotes: 'Call out the updated hero.',
+      resolveDocReferences: () => ['docs/kangur/example.mdx'],
+      buildSocialContext: () => ({ postId: 'post-1' }),
+      handleLoadContext: vi.fn(),
+      setContextSummary: vi.fn(),
+      setActivePostId: vi.fn(),
+      setEditorState: vi.fn(),
+      setImageAddonIds: vi.fn(),
+      setImageAssets: vi.fn(),
+      setBatchCaptureResult: vi.fn(),
+      handleSelectAddons: vi.fn(),
+    });
+
+    const { result, rerender } = renderHook(
+      (args: ReturnType<typeof createArgs>) => useSocialPipelineRunner(args),
+      {
+        initialProps: createArgs(''),
+        wrapper: createWrapper(),
+      }
+    );
+
+    await act(async () => {
+      await result.current.handleRunFullPipeline();
+    });
+
+    expect(apiPostMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Set Settings Project URL before generating social posts.',
+      { variant: 'warning' }
+    );
+
+    rerender(createArgs('http://localhost:3000'));
+
+    await act(async () => {
+      await result.current.handleRunFullPipeline();
+    });
+
+    expect(apiPostMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+      { variant: 'warning' }
+    );
+  });
+
   it('does not treat an empty saved analysis payload as persisted image analysis', async () => {
     const { result } = renderHook(
       () =>

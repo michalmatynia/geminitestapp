@@ -8,6 +8,7 @@ import { render as rtlRender } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LessonHub from '@/features/kangur/ui/components/LessonHub';
+import LessonActivityShell from '@/features/kangur/ui/components/LessonActivityShell';
 import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import {
   LESSONS_ACTIVE_HUB_COLUMN_CLASSNAME,
@@ -100,6 +101,9 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNavigationWidget', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurLessonNavigationContext', () => ({
   KangurLessonNavigationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useKangurLessonSecretPill: () => null,
+  useKangurRegisterLessonSubsectionNavigation: () => () => () => {},
+  useKangurSyncLessonSubsectionSummary: () => {},
 }));
 
 vi.mock('@/features/kangur/ui/design/primitives', () => ({
@@ -119,7 +123,20 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
       {children}
     </button>
   ),
-  KangurGlassPanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  KangurGlassPanel: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+  } & React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
+  KangurHeadline: ({
+    as: Component = 'div',
+    children,
+    ...props
+  }: {
+    as?: keyof JSX.IntrinsicElements;
+    children: React.ReactNode;
+  } & React.HTMLAttributes<HTMLElement>) => <Component {...props}>{children}</Component>,
   KangurIconBadge: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   KangurOptionCardButton: ({
     children,
@@ -672,6 +689,67 @@ describe('ActiveLessonView mobile controls', () => {
     expect(firstPanel).not.toHaveAttribute('data-kangur-print-panel-selected');
     expect(secondPanel).not.toHaveAttribute('data-kangur-print-panel-selected');
     expect(secondPanel).not.toHaveAttribute('data-kangur-print-target-panel');
+  });
+
+  it('routes the lesson shell print button to a nested preferred lesson panel', async () => {
+    activeLesson.contentMode = 'component';
+    let shellPanel: HTMLElement | null = null;
+    let nestedPanel: HTMLElement | null = null;
+    let titleDuringPrint = '';
+    let shellSelectedDuringPrint: string | undefined;
+    let nestedSelectedDuringPrint: string | undefined;
+    let nestedTargetedDuringPrint: string | undefined;
+
+    Object.defineProperty(window, 'print', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(() => {
+        titleDuringPrint = document.title;
+        shellSelectedDuringPrint = shellPanel?.dataset.kangurPrintPanelSelected;
+        nestedSelectedDuringPrint = nestedPanel?.dataset.kangurPrintPanelSelected;
+        nestedTargetedDuringPrint = nestedPanel?.dataset.kangurPrintTargetPanel;
+        window.dispatchEvent(new Event('afterprint'));
+      }),
+    });
+
+    lessonComponentsMock[activeLesson.componentId] = () => (
+      <LessonActivityShell
+        accent='indigo'
+        icon='🕐'
+        onBack={vi.fn()}
+        shellTestId='mock-shell-print-panel'
+        title='Ćwiczenie: Godziny'
+      >
+        <section
+          data-kangur-print-panel='true'
+          data-kangur-print-paged-panel='true'
+          data-kangur-print-panel-id='preferred-panel'
+          data-kangur-print-panel-title='Preferred Panel'
+          data-kangur-print-preferred-target='true'
+          data-testid='mock-preferred-print-panel'
+        >
+          Preferred panel content
+        </section>
+      </LessonActivityShell>
+    );
+
+    render(<ActiveLessonView />);
+
+    await act(async () => {});
+
+    shellPanel = screen.getByTestId('mock-shell-print-panel');
+    nestedPanel = screen.getByTestId('mock-preferred-print-panel');
+
+    fireEvent.click(screen.getAllByTestId('lesson-activity-print-button')[0]);
+
+    expect(window.print).toHaveBeenCalledTimes(1);
+    expect(titleDuringPrint).toBe('StudiQ - Lesson 1 - Preferred Panel');
+    expect(shellSelectedDuringPrint).toBe('true');
+    expect(nestedSelectedDuringPrint).toBe('true');
+    expect(nestedTargetedDuringPrint).toBe('true');
+    expect(shellPanel).not.toHaveAttribute('data-kangur-print-panel-selected');
+    expect(nestedPanel).not.toHaveAttribute('data-kangur-print-panel-selected');
+    expect(nestedPanel).not.toHaveAttribute('data-kangur-print-target-panel');
   });
 
   it('keeps a parent print panel visible when targeting a nested child panel', async () => {

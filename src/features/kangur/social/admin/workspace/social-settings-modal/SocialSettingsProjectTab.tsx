@@ -5,16 +5,22 @@ import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminC
 
 export function SocialSettingsProjectTab({
   projectUrl,
+  projectUrlError,
   setProjectUrl,
   isRuntimeLocked,
 }: {
   projectUrl: string;
+  projectUrlError: string | null;
   setProjectUrl: (val: string) => void;
   isRuntimeLocked?: boolean;
 }) {
   return (
     <KangurAdminCard>
-      <FormField label='Project URL' description='Current project link to reference in generated posts.'>
+      <FormField
+        label='Project URL'
+        description='Used for all links and redirects in generated social posts. Localhost and loopback URLs are rejected.'
+        error={projectUrlError}
+      >
         <Input
           type='url'
           value={projectUrl}

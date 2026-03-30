@@ -20,6 +20,10 @@ import {
   DEFAULT_KANGUR_SOCIAL_SETTINGS,
   parseKangurSocialSettings,
 } from '@/features/kangur/social/settings';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { KANGUR_SOCIAL_CAPTURE_PRESETS } from '@/features/kangur/social/shared/social-capture-presets';
@@ -111,7 +115,8 @@ export function useSocialSettings() {
     return right.every((value) => leftSet.has(value));
   }, []);
 
-  const normalizedProjectUrl = projectUrl.trim() || null;
+  const normalizedProjectUrl = normalizeKangurSocialProjectUrl(projectUrl) || null;
+  const projectUrlError = getKangurSocialProjectUrlError(projectUrl);
 
   const isSettingsDirty =
     persistedSocialSettings.brainModelId !== brainModelId ||
@@ -174,6 +179,10 @@ export function useSocialSettings() {
 
   const handleSaveSettings = useCallback(async (): Promise<boolean> => {
     if (updateSetting.isPending) return false;
+    if (projectUrlError) {
+      toast(projectUrlError, { variant: 'warning' });
+      return false;
+    }
     const payload = {
       brainModelId: brainModelId ?? null,
       visionModelId: visionModelId ?? null,
@@ -204,6 +213,8 @@ export function useSocialSettings() {
     persistedSocialSettings.programmableCaptureRoutes,
     persistedSocialSettings.programmableCaptureScript,
     visionModelId,
+    projectUrlError,
+    toast,
   ]);
 
   const handleSaveProgrammableCaptureDefaults = useCallback(
@@ -348,6 +359,7 @@ export function useSocialSettings() {
     visionModelId,
     setVisionModelId,
     projectUrl,
+    projectUrlError,
     setProjectUrl,
     batchCaptureBaseUrl,
     setBatchCaptureBaseUrl: handleBatchCaptureBaseUrlChange,

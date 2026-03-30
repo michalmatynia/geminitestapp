@@ -67,10 +67,12 @@ type FilemakerMailSidebarProps = {
   selectedMailboxPath?: string | null;
   selectedThreadId?: string | null;
   selectedPanel?: 'account' | 'attention' | 'compose' | 'recent' | 'search' | 'settings' | null;
-  originPanel?: 'recent' | null;
+  originPanel?: 'recent' | 'search' | null;
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  searchQuery?: string | null;
+  refreshKey?: number;
   onRecentMailboxFilterChange?: (value: string) => void;
   onRecentQueryChange?: (value: string) => void;
   onRecentUnreadOnlyChange?: (value: boolean) => void;
@@ -92,6 +94,8 @@ export function FilemakerMailSidebar({
   recentMailboxFilter = null,
   recentUnreadOnly = false,
   recentQuery = null,
+  searchQuery = null,
+  refreshKey = 0,
   onRecentMailboxFilterChange,
   onRecentQueryChange,
   onRecentUnreadOnlyChange,
@@ -116,6 +120,8 @@ export function FilemakerMailSidebar({
     recentMailboxFilter || recentUnreadOnly || recentQuery?.trim()
   );
   const isRecentContext = selectedPanel === 'recent' || originPanel === 'recent';
+  const isSearchContext = selectedPanel === 'search' || originPanel === 'search';
+  const hasActiveSearchQuery = Boolean(searchQuery?.trim());
   const showRecentControls = Boolean(selectedAccountId && selectedPanel === 'recent');
   const errorAccountCount = useMemo(
     () => accounts.filter((account) => Boolean(account.lastSyncError?.trim())).length,
@@ -166,13 +172,20 @@ export function FilemakerMailSidebar({
     [accounts, folders, threads, visibleRecentThreads]
   );
   const selectedNodeId = useMemo(() => {
-    if (selectedPanel === 'search') {
+    const isImplicitSearchSelection = selectedPanel == null && originPanel === 'search';
+    const isImplicitRecentSelection = selectedPanel == null && originPanel === 'recent';
+
+    if (selectedPanel === 'search' || isImplicitSearchSelection) {
       return toFilemakerMailSearchNodeId();
     }
     if (selectedPanel === 'attention') {
       return toFilemakerMailAttentionNodeId();
     }
-    if (selectedAccountId && selectedThreadId) {
+    if (
+      selectedAccountId &&
+      selectedThreadId &&
+      (selectedPanel === 'recent' || isImplicitRecentSelection)
+    ) {
       const recentMatch = treeNodes.find(
         (node) =>
           node.kind === 'mail_recent_thread' &&
@@ -181,7 +194,7 @@ export function FilemakerMailSidebar({
       );
       if (recentMatch) return recentMatch.id;
     }
-    if (selectedAccountId && selectedPanel === 'recent') {
+    if (selectedAccountId && (selectedPanel === 'recent' || isImplicitRecentSelection)) {
       return toFilemakerMailAccountRecentNodeId(selectedAccountId);
     }
     if (selectedAccountId && selectedMailboxPath && selectedThreadId) {
@@ -217,6 +230,7 @@ export function FilemakerMailSidebar({
     }
     return toFilemakerMailNewAccountNodeId();
   }, [
+    originPanel,
     selectedAccountId,
     selectedMailboxPath,
     selectedPanel,
@@ -269,7 +283,7 @@ export function FilemakerMailSidebar({
       }
     };
     void load();
-  }, [toast]);
+  }, [refreshKey, toast]);
 
   useEffect(() => {
     if (!selectedAccountId) {
@@ -291,7 +305,7 @@ export function FilemakerMailSidebar({
     };
 
     void loadRecentThreads();
-  }, [selectedAccountId, toast]);
+  }, [refreshKey, selectedAccountId, toast]);
 
   useEffect(() => {
     if (!selectedAccountId || !selectedMailboxPath) {
@@ -315,7 +329,7 @@ export function FilemakerMailSidebar({
     };
 
     void loadThreads();
-  }, [selectedAccountId, selectedMailboxPath, toast]);
+  }, [refreshKey, selectedAccountId, selectedMailboxPath, toast]);
 
   const renderNode = useCallback(
     (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
@@ -464,7 +478,13 @@ export function FilemakerMailSidebar({
                 onSelectSearch();
                 return;
               }
-              router.push(buildMailSelectionHref({ panel: 'search' }));
+              router.push(
+                buildMailSelectionHref({
+                  panel: 'search',
+                  accountId: selectedAccountId,
+                  searchQuery,
+                })
+              );
               return;
             }
             if (parsed?.kind === 'mail_attention') {
@@ -518,6 +538,7 @@ export function FilemakerMailSidebar({
                   recentMailboxFilter,
                   recentUnreadOnly,
                   recentQuery,
+                  searchQuery,
                 })
               );
               return;
@@ -634,6 +655,7 @@ export function FilemakerMailSidebar({
                   recentMailboxFilter,
                   recentUnreadOnly,
                   recentQuery,
+                  searchQuery,
                 })
               );
               return;
@@ -742,6 +764,7 @@ export function FilemakerMailSidebar({
       recentUnreadOnly,
       recentQuery,
       originPanel,
+      searchQuery,
       router,
       selectedAccountId,
       selectedMailboxPath,
@@ -813,6 +836,7 @@ export function FilemakerMailSidebar({
                       recentMailboxFilter,
                       recentUnreadOnly,
                       recentQuery,
+                      searchQuery,
                     })
                   );
                 }}
@@ -836,6 +860,24 @@ export function FilemakerMailSidebar({
                 >
                   <FilterX className='mr-2 size-4' />
                   Clear Recent
+                </Button>
+              ) : null}
+              {isSearchContext && hasActiveSearchQuery ? (
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  onClick={(): void => {
+                    router.push(
+                      buildMailSelectionHref({
+                        accountId: selectedAccountId,
+                        panel: 'search',
+                      })
+                    );
+                  }}
+                >
+                  <FilterX className='mr-2 size-4' />
+                  Clear Search
                 </Button>
               ) : null}
             </div>
@@ -907,6 +949,9 @@ export function FilemakerMailSidebar({
               ) : null}
               {selectedAccountId && recentQuery?.trim() ? (
                 <Badge variant='outline'>Recent Search: {recentQuery.trim()}</Badge>
+              ) : null}
+              {isSearchContext && hasActiveSearchQuery ? (
+                <Badge variant='outline'>Search Query: {searchQuery?.trim()}</Badge>
               ) : null}
               {selectedAccountId && selectedMailboxPath ? (
                 <Badge variant='outline'>Threads: {threads.length}</Badge>

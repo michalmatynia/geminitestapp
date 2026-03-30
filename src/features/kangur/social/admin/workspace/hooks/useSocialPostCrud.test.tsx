@@ -233,10 +233,49 @@ describe('useSocialPostCrud', () => {
     });
   });
 
-  it('publishes after saving the prepared post payload', async () => {
+  it('keeps a LinkedIn-published post in published status when saving local draft edits', async () => {
     const deps = createDeps();
+    deps.activePost = {
+      ...activePost,
+      status: 'draft' as const,
+      publishedAt: '2026-03-27T12:31:00.000Z',
+      linkedinPostId: 'urn:li:share:still-published',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn:li:share:still-published/',
+    } as never;
+
     const { result } = renderHook(() => useSocialPostCrud(deps), {
       wrapper: createWrapper().Wrapper,
+    });
+
+    await act(async () => {
+      await result.current.handleSave('draft');
+    });
+
+    expect(patchMutateAsyncMock).toHaveBeenCalledWith({
+      id: 'post-1',
+      updates: expect.objectContaining({
+        status: 'published',
+      }),
+    });
+  });
+
+  it('publishes after saving the prepared post payload and syncs the published post into cache', async () => {
+    const deps = createDeps();
+    const { queryClient, Wrapper } = createWrapper();
+    const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
+    const publishedPost = {
+      ...activePost,
+      status: 'published' as const,
+      publishedAt: '2026-03-27T12:31:00.000Z',
+      linkedinPostId: 'urn:li:share:published',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn:li:share:published/',
+      publishError: null,
+    };
+    queryClient.setQueryData(queryKey, [activePost]);
+    publishMutateAsyncMock.mockResolvedValueOnce(publishedPost);
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: Wrapper,
     });
 
     await act(async () => {
@@ -248,9 +287,62 @@ describe('useSocialPostCrud', () => {
       id: 'post-1',
       mode: 'published',
     });
+    expect(queryClient.getQueryData(queryKey)).toEqual([publishedPost]);
+    expect(toastMock).toHaveBeenCalledWith('Published to LinkedIn.', { variant: 'success' });
     expect(trackKangurClientEventMock).toHaveBeenCalledWith(
       'kangur_social_post_publish_success',
       { postId: 'post-1' }
+    );
+  });
+
+  it('skips duplicate publish attempts when the active post is already published on LinkedIn', async () => {
+    const deps = createDeps();
+    deps.activePost = {
+      ...activePost,
+      status: 'draft' as const,
+      publishedAt: '2026-03-27T12:31:00.000Z',
+      linkedinPostId: 'urn:li:share:already-published',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn:li:share:already-published/',
+    } as never;
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: createWrapper().Wrapper,
+    });
+
+    await act(async () => {
+      await result.current.handlePublish();
+    });
+
+    expect(patchMutateAsyncMock).not.toHaveBeenCalled();
+    expect(publishMutateAsyncMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'This post is already published on LinkedIn. Unpublish it before publishing again.',
+      { variant: 'info' }
+    );
+  });
+
+  it('skips scheduling attempts when the active post is already published on LinkedIn', async () => {
+    const deps = createDeps();
+    deps.activePost = {
+      ...activePost,
+      status: 'draft' as const,
+      publishedAt: '2026-03-27T12:31:00.000Z',
+      linkedinPostId: 'urn:li:share:already-published',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn:li:share:already-published/',
+    } as never;
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: createWrapper().Wrapper,
+    });
+
+    await act(async () => {
+      await result.current.handleSave('scheduled');
+    });
+
+    expect(patchMutateAsyncMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'This post is already published on LinkedIn. Unpublish it before scheduling again.',
+      { variant: 'info' }
     );
   });
 
@@ -357,6 +449,38 @@ describe('useSocialPostCrud', () => {
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();
   });
 
+  it('syncs the published post into cache after quick publish succeeds', async () => {
+    const deps = createDeps();
+    const { queryClient, Wrapper } = createWrapper();
+    const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
+    const publishedPost = {
+      ...activePost,
+      status: 'published' as const,
+      publishedAt: '2026-03-27T12:31:00.000Z',
+      linkedinPostId: 'urn:li:share:quick-published',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn:li:share:quick-published/',
+      publishError: null,
+    };
+    queryClient.setQueryData(queryKey, [activePost]);
+    publishMutateAsyncMock.mockResolvedValueOnce(publishedPost);
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: Wrapper,
+    });
+
+    await act(async () => {
+      await expect(result.current.handleQuickPublishPost('post-1')).resolves.toBeUndefined();
+    });
+
+    expect(publishMutateAsyncMock).toHaveBeenCalledWith({
+      id: 'post-1',
+      mode: 'published',
+      skipImages: undefined,
+    });
+    expect(queryClient.getQueryData(queryKey)).toEqual([publishedPost]);
+    expect(toastMock).toHaveBeenCalledWith('Published to LinkedIn.', { variant: 'success' });
+  });
+
   it('recovers quick publish success when the client times out but the refreshed post is already published', async () => {
     const deps = createDeps();
     const { queryClient, Wrapper } = createWrapper();
@@ -383,6 +507,37 @@ describe('useSocialPostCrud', () => {
 
     expect(fetchKangurSocialPostsMock).toHaveBeenCalledWith({ scope: 'admin' });
     expect(queryClient.getQueryData(queryKey)).toEqual([publishedPost]);
+    expect(toastMock).toHaveBeenCalledWith('Published to LinkedIn.', { variant: 'success' });
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('recovers quick publish success when LinkedIn metadata exists even if the refreshed post drifted back to local draft status', async () => {
+    const deps = createDeps();
+    const { queryClient, Wrapper } = createWrapper();
+    const queryKey = QUERY_KEYS.kangur.socialPosts({ scope: 'admin', limit: null });
+    const publishedDriftPost = {
+      ...activePost,
+      status: 'draft' as const,
+      publishedAt: '2026-03-27T12:31:00.000Z',
+      linkedinPostId: 'urn:li:share:789',
+      linkedinUrl: 'https://www.linkedin.com/feed/update/urn:li:share:789/',
+      publishError: null,
+    };
+    queryClient.setQueryData(queryKey, [activePost]);
+    publishMutateAsyncMock.mockRejectedValueOnce(new Error('Request timeout after 15000ms'));
+    fetchKangurSocialPostsMock.mockResolvedValueOnce([publishedDriftPost]);
+
+    const { result } = renderHook(() => useSocialPostCrud(deps), {
+      wrapper: Wrapper,
+    });
+
+    await act(async () => {
+      await expect(result.current.handleQuickPublishPost('post-1')).resolves.toBeUndefined();
+    });
+
+    expect(fetchKangurSocialPostsMock).toHaveBeenCalledWith({ scope: 'admin' });
+    expect(queryClient.getQueryData(queryKey)).toEqual([publishedDriftPost]);
     expect(toastMock).toHaveBeenCalledWith('Published to LinkedIn.', { variant: 'success' });
     expect(captureExceptionMock).not.toHaveBeenCalled();
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();

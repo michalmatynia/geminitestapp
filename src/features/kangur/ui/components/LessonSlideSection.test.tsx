@@ -249,6 +249,7 @@ describe('LessonSlideSection', () => {
     ]);
     expect(slideShell).toHaveAttribute('data-kangur-print-slide-panel', 'true');
     expect(slideShell).toHaveAttribute('data-kangur-print-paged-panel', 'true');
+    expect(slideShell).toHaveAttribute('data-kangur-print-preferred-target', 'true');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-id');
     expect(slideShell).toHaveAttribute('data-kangur-print-panel-title', 'Slajd 1');
     expect(slideShellRoot).toHaveAttribute('data-kangur-print-slide-shell', 'true');

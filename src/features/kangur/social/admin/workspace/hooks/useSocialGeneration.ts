@@ -15,6 +15,10 @@ import type {
   KangurSocialPost,
   KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 import { normalizeKangurSocialDraftLike } from '@/shared/lib/kangur-social-generated-draft';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -162,6 +166,13 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
     }
     if (!deps.activePost) return false;
 
+    const normalizedProjectUrl = normalizeKangurSocialProjectUrl(deps.projectUrl);
+    const projectUrlError = getKangurSocialProjectUrlError(normalizedProjectUrl);
+    if (projectUrlError) {
+      toast(projectUrlError, { variant: 'warning' });
+      return false;
+    }
+
     const usesPrefetchedVisualAnalysis = Boolean(options?.prefetchedVisualAnalysis);
     const generationContext = deps.buildSocialContext({
       usesPrefetchedVisualAnalysis,
@@ -184,7 +195,7 @@ export function useSocialGeneration(deps: SocialGenerationDeps) {
         modelId: deps.brainModelId ?? undefined,
         visionModelId: deps.visionModelId ?? undefined,
         imageAddonIds: deps.imageAddonIds,
-        projectUrl: deps.projectUrl || undefined,
+        projectUrl: normalizedProjectUrl,
         ...(options?.prefetchedVisualAnalysis
           ? { prefetchedVisualAnalysis: options.prefetchedVisualAnalysis }
           : {}),

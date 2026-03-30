@@ -54,6 +54,7 @@ describe('generateKangurSocialPostDraft', () => {
     const result = await generateKangurSocialPostDraft({
       docReferences: ['overview'],
       modelId: 'override-model',
+      projectUrl: 'https://studiq.example.com/project',
     });
 
     expect(mocks.resolveBrainExecutionConfigMock).toHaveBeenCalledWith(
@@ -85,6 +86,7 @@ describe('generateKangurSocialPostDraft', () => {
 
     const result = await generateKangurSocialPostDraft({
       docReferences: ['overview'],
+      projectUrl: 'https://studiq.example.com/project',
     });
 
     expect(result.titlePl).toBe('Ogrodzenie');
@@ -108,6 +110,7 @@ describe('generateKangurSocialPostDraft', () => {
 
     const result = await generateKangurSocialPostDraft({
       docReferences: ['overview'],
+      projectUrl: 'https://studiq.example.com/project',
     });
 
     expect(result.titlePl).toBe('Nowe funkcje w Kangur i StudiQ');
@@ -120,6 +123,7 @@ describe('generateKangurSocialPostDraft', () => {
   it('reuses prefetched visual analysis and requires it to be mentioned in the prompt', async () => {
     await generateKangurSocialPostDraft({
       docReferences: ['overview'],
+      projectUrl: 'https://studiq.example.com/project',
       prefetchedVisualAnalysis: {
         summary: 'The hero now shows a larger classroom card.',
         highlights: ['Larger classroom card'],
@@ -148,6 +152,9 @@ describe('generateKangurSocialPostDraft', () => {
     );
     const callArgs = mocks.runBrainChatCompletionMock.mock.calls[0]?.[0];
     const userMessage = callArgs?.messages?.find((entry: { role?: string }) => entry.role === 'user');
+    expect(userMessage?.content).toContain(
+      'Use only this public Project URL for any CTA, redirect, or link: https://studiq.example.com/project'
+    );
     expect(userMessage?.content).toContain('Visual analysis summary from the prior image-only pass:');
     expect(userMessage?.content).not.toContain('Documentation updates suggested from visuals:');
   });
@@ -155,6 +162,7 @@ describe('generateKangurSocialPostDraft', () => {
   it('sanitizes legacy prefetched visual analysis before building the generation prompt', async () => {
     await generateKangurSocialPostDraft({
       docReferences: ['overview'],
+      projectUrl: 'https://studiq.example.com/project',
       prefetchedVisualAnalysis: {
         summary: `Okay, I've reviewed the provided text and images. Here's a summary of the key information. The screenshots show a Polish-localized navigation and refreshed lesson cards.
 
@@ -177,5 +185,22 @@ Here's a draft you could use for release notes.
     expect(userMessage?.content).not.toContain('Potential Documentation/Communication Narrative');
     expect(userMessage?.content).not.toContain("Here's a draft you could use");
     expect(userMessage?.content).not.toContain('Documentation update proposal');
+  });
+
+  it('fails when the Project URL is missing or localhost-only', async () => {
+    await expect(
+      generateKangurSocialPostDraft({
+        docReferences: ['overview'],
+      })
+    ).rejects.toThrow('Set Settings Project URL before generating social posts.');
+
+    await expect(
+      generateKangurSocialPostDraft({
+        docReferences: ['overview'],
+        projectUrl: 'http://localhost:3000',
+      })
+    ).rejects.toThrow(
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+    );
   });
 });

@@ -156,6 +156,10 @@ describe('KangurGame', () => {
       'true'
     );
     expect(screen.getByTestId('kangur-game-question-print-panel')).toHaveAttribute(
+      'data-kangur-print-preferred-target',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-game-question-print-panel')).toHaveAttribute(
       'data-kangur-print-panel-id',
       'kangur-game-question-2024_1'
     );
@@ -310,6 +314,10 @@ describe('KangurGame', () => {
     );
     expect(screen.getByTestId('kangur-game-result-print-panel')).toHaveAttribute(
       'data-kangur-print-paged-panel',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-game-result-print-panel')).toHaveAttribute(
+      'data-kangur-print-preferred-target',
       'true'
     );
     expect(screen.getByTestId('kangur-game-result-print-panel')).toHaveAttribute(

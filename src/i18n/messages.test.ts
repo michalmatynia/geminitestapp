@@ -336,6 +336,28 @@ describe('site messages', () => {
     }
   });
 
+  it('keeps leaderboard operation labels aligned across bundled locales', async () => {
+    const englishLeaderboardOperations = readMessagePath(
+      rawEnglishMessages,
+      'KangurGameWidgets.leaderboard.operations',
+    );
+
+    expect(englishLeaderboardOperations).toBeTruthy();
+
+    for (const locale of ['en', 'pl', 'de', 'uk'] as const) {
+      const messages = await loadSiteMessages(locale);
+      const localeLeaderboardOperations = readMessagePath(
+        messages,
+        'KangurGameWidgets.leaderboard.operations',
+      );
+
+      expect(
+        collectMissingKeys(englishLeaderboardOperations, localeLeaderboardOperations),
+        `${locale}:KangurGameWidgets.leaderboard.operations`,
+      ).toEqual([]);
+    }
+  });
+
   it('covers every English message key in the Ukrainian source bundle', () => {
     expect(collectMissingKeys(rawEnglishMessages, rawUkrainianMessages)).toEqual([]);
   });

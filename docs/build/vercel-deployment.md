@@ -136,9 +136,8 @@ Preferred release flow:
 4. If Kangur lesson content changed, also run `npm run verify:kangur:content -- --strict`.
 
 GitHub Actions also exposes `.github/workflows/vercel-production-sync.yml` for
-PR-time verification, scheduled drift detection, and manual recovery. Use
-`mode=repair` only when the scheduled or local check has already confirmed
-alias drift.
+scheduled drift detection and manual recovery. Use `mode=repair` only when the
+scheduled or local check has already confirmed alias drift.
 
 GitHub Actions also exposes `.github/workflows/github-main-branch-protection.yml`
 for scheduled drift detection and manual `mode=repair` recovery of the minimum
@@ -182,5 +181,5 @@ Your local machine has no timeout and more RAM.
 1. Run `npm run check:vercel:production:sync`.
 2. If drift is reported, run `npm run repair:vercel:production:sync`.
 3. Run `npm run check:github:branch-protection` to confirm the required
-   `production-sync` branch gate is still enforced on `main`.
+   `toolchain-contract` branch gate is still enforced on `main`.
 4. Re-check the affected public route or API after the alias converges.

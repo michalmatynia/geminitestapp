@@ -9,7 +9,7 @@ import { promisify } from 'node:util';
 const DEFAULT_API_BASE = 'https://api.github.com';
 const DEFAULT_REPOSITORY = 'michalmatynia/geminitestapp';
 const DEFAULT_BRANCH = 'main';
-const DEFAULT_REQUIRED_CHECK = 'production-sync';
+const DEFAULT_REQUIRED_CHECK = 'toolchain-contract';
 const DEFAULT_REQUIRED_CHECK_APP_ID = 15368;
 const DEFAULT_GITHUB_API_VERSION = '2022-11-28';
 const execFile = promisify(execFileCallback);

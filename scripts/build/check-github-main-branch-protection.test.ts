@@ -13,7 +13,7 @@ const baseConfig = {
   owner: 'michalmatynia',
   repo: 'geminitestapp',
   branch: 'main',
-  requiredCheck: 'production-sync',
+  requiredCheck: 'toolchain-contract',
   checkAppId: 15368,
   apiBase: 'https://api.github.com',
   ghBin: 'gh',
@@ -45,8 +45,8 @@ const createFetchStub = (responses: Record<string, () => Response | Promise<Resp
 const protectedBranch = {
   required_status_checks: {
     strict: true,
-    checks: [{ context: 'production-sync', app_id: 15368 }],
-    contexts: ['production-sync'],
+    checks: [{ context: 'toolchain-contract', app_id: 15368 }],
+    contexts: ['toolchain-contract'],
   },
   enforce_admins: {
     enabled: false,
@@ -85,7 +85,7 @@ describe('check-github-main-branch-protection', () => {
       'michalmatynia/geminitestapp',
       '--branch=main',
       '--required-check',
-      'production-sync',
+      'toolchain-contract',
       '--check-app-id=15368',
       '--repair',
     ]);
@@ -93,7 +93,7 @@ describe('check-github-main-branch-protection', () => {
     expect(args).toEqual({
       repository: 'michalmatynia/geminitestapp',
       branch: 'main',
-      'required-check': 'production-sync',
+      'required-check': 'toolchain-contract',
       'check-app-id': '15368',
       repair: true,
     });
@@ -106,7 +106,7 @@ describe('check-github-main-branch-protection', () => {
         GITHUB_ADMIN_TOKEN: 'ghp_test_123',
         GITHUB_REPOSITORY: 'michalmatynia/geminitestapp',
         GITHUB_BRANCH_PROTECTION_BRANCH: 'main',
-        GITHUB_BRANCH_PROTECTION_CHECK: 'production-sync',
+        GITHUB_BRANCH_PROTECTION_CHECK: 'toolchain-contract',
         GITHUB_BRANCH_PROTECTION_CHECK_APP_ID: '15368',
       } as NodeJS.ProcessEnv,
     );
@@ -124,8 +124,8 @@ describe('check-github-main-branch-protection', () => {
         ...protectedBranch,
         required_status_checks: {
           strict: false,
-          checks: [{ context: 'production-sync', app_id: null }],
-          contexts: ['production-sync'],
+          checks: [{ context: 'toolchain-contract', app_id: null }],
+          contexts: ['toolchain-contract'],
         },
         allow_force_pushes: {
           enabled: true,
@@ -153,7 +153,7 @@ describe('check-github-main-branch-protection', () => {
     expect(payload).toMatchObject({
       required_status_checks: {
         strict: true,
-        checks: [{ context: 'production-sync', app_id: 15368 }],
+        checks: [{ context: 'toolchain-contract', app_id: 15368 }],
       },
       allow_force_pushes: false,
       allow_deletions: false,
@@ -275,7 +275,7 @@ describe('check-github-main-branch-protection', () => {
       body: expect.objectContaining({
         required_status_checks: {
           strict: true,
-          checks: [{ context: 'production-sync', app_id: 15368 }],
+          checks: [{ context: 'toolchain-contract', app_id: 15368 }],
         },
         allow_force_pushes: false,
         allow_deletions: false,

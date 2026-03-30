@@ -15,9 +15,6 @@ describe('Vercel production sync workflow contract', () => {
     const workflowText = readRepoFile('.github/workflows/vercel-production-sync.yml');
 
     expect(workflowText).toContain('name: vercel-production-sync');
-    expect(workflowText).toContain('pull_request:');
-    expect(workflowText).toContain('push:');
-    expect(workflowText).toContain('- main');
     expect(workflowText).toContain('workflow_dispatch:');
     expect(workflowText).toContain('mode:');
     expect(workflowText).toContain("default: check");

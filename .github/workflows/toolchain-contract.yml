@@ -2,6 +2,12 @@ name: toolchain-contract
 
 on:
   workflow_dispatch:
+    inputs:
+      include_vercel_sync:
+        description: 'Also run the Vercel production alias sync check'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -28,3 +34,12 @@ jobs:
 
       - name: Run toolchain contract tests
         run: npm run test:toolchain:contract
+
+      - name: Run build contract tests
+        run: npm run test:build:contracts
+
+      - name: Run Vercel production sync check
+        if: ${{ inputs.include_vercel_sync }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npm run check:vercel:production:sync

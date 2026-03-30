@@ -35,6 +35,9 @@ jobs:
       - name: Run toolchain contract tests
         run: npm run test:toolchain:contract
 
+      - name: Run build contract tests
+        run: npm run test:build:contracts
+
   canonical-sitewide:
     runs-on: ubuntu-latest
     steps:

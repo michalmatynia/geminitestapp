@@ -21,7 +21,7 @@ import {
   toQuestionFormData,
   upsertKangurTestQuestion,
   type QuestionFormData,
-} from '../../test-questions';
+} from '../../test-suites/questions';
 import {
   canonicalizeKangurTestSuites,
   KANGUR_TEST_SUITES_SETTING_KEY,

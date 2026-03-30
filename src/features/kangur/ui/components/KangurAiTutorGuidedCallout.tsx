@@ -3,13 +3,14 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
-import { resolveKangurPageContentFragment } from '@/features/kangur/page-content-fragments';
+import { resolveKangurPageContentFragment } from '@/features/kangur/ai-tutor/page-content-fragments';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurButton, KangurPanelRow } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { cn } from '@/features/kangur/shared/utils';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
   KANGUR_TIGHT_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
@@ -75,30 +76,115 @@ const getLatestAssistantMessage = (
 ): KangurAiTutorRuntimeMessage | null =>
   [...messages].reverse().find((message) => message.role === 'assistant') ?? null;
 
-export function KangurAiTutorGuidedCallout({
-  avatarPlacement,
-  calloutKey,
-  calloutTestId,
-  detail,
-  entryDirection,
-  headerLabel,
-  mode,
-  onAction,
-  placement,
-  prefersReducedMotion,
-  reducedMotionTransitions,
-  sectionGuidanceLabel,
-  sectionResponsePendingKind,
-  shouldRender,
-  showSectionGuidanceCallout,
-  showSelectionGuidanceCallout,
-  stepLabel,
-  style,
-  title,
-  transitionDuration,
-  transitionEase,
-}: Props): JSX.Element {
+type GuidedCalloutFallbackCopy = {
+  knowledgeFragmentBadge: string;
+  pageContentBadge: string;
+  savedPageContentBadge: string;
+  selectionDetailFromPageContent: string;
+  selectionDetailReady: string;
+  selectionSketchCtaLabel: string;
+  selectionSketchHint: string;
+};
+
+const getGuidedCalloutFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): GuidedCalloutFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      knowledgeFragmentBadge: 'Фрагмент з бази знань',
+      pageContentBadge: 'Вміст сторінки',
+      savedPageContentBadge: 'Збережений вміст сторінки',
+      selectionDetailFromPageContent:
+        'Пояснення використовує збережений вміст сторінки для цього виділення.',
+      selectionDetailReady: 'Пояснення вже готове для вибраного фрагмента.',
+      selectionSketchCtaLabel: 'Намалюй це для мене',
+      selectionSketchHint:
+        'Відкриваю дошку для малювання. Спробуй намалювати поділи та порівняти фігури після повороту або віддзеркалення.',
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      knowledgeFragmentBadge: 'Wissensbasis-Ausschnitt',
+      pageContentBadge: 'Seiteninhalt',
+      savedPageContentBadge: 'Gespeicherter Seiteninhalt',
+      selectionDetailFromPageContent:
+        'Die Erklarung nutzt den gespeicherten Seiteninhalt fur diese Auswahl.',
+      selectionDetailReady: 'Die Erklarung fur den ausgewahlten Ausschnitt ist bereits fertig.',
+      selectionSketchCtaLabel: 'Zeig es mir als Skizze',
+      selectionSketchHint:
+        'Ich offne das Zeichenfeld. Skizziere die Aufteilung und vergleiche die Formen nach Drehung oder Spiegelung.',
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      knowledgeFragmentBadge: 'Knowledge base fragment',
+      pageContentBadge: 'Page content',
+      savedPageContentBadge: 'Saved page content',
+      selectionDetailFromPageContent:
+        'The explanation uses the saved page content for this selection.',
+      selectionDetailReady: 'The explanation for the selected fragment is already ready.',
+      selectionSketchCtaLabel: 'Sketch it out for me',
+      selectionSketchHint:
+        'I am opening the drawing board. Try sketching the partitions and comparing the shapes after a rotation or reflection.',
+    };
+  }
+
+  return {
+    knowledgeFragmentBadge: 'Fragment z bazy wiedzy',
+    pageContentBadge: 'Treść strony',
+    savedPageContentBadge: 'Zapisana treść strony',
+    selectionDetailFromPageContent:
+      'Wyjaśnienie korzysta z zapisanej treści strony dla tego zaznaczenia.',
+    selectionDetailReady: 'Wyjaśnienie jest już gotowe dla zaznaczonego fragmentu.',
+    selectionSketchCtaLabel: 'Rozrysuj mi to, proszę',
+    selectionSketchHint:
+      'Otwieram planszę do rysowania. Spróbuj rozrysować podziały i porównać kształty po obrocie lub odbiciu.',
+  };
+};
+
+const resolveTutorGuidedFallback = (
+  value: string | null | undefined,
+  fallback: string
+): string => {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return fallback;
+  }
+
+  return value;
+};
+
+export function KangurAiTutorGuidedCallout(props: Props): JSX.Element {
+  const {
+    avatarPlacement,
+    calloutKey,
+    calloutTestId,
+    detail,
+    entryDirection,
+    headerLabel,
+    mode,
+    onAction,
+    placement,
+    prefersReducedMotion,
+    reducedMotionTransitions,
+    sectionGuidanceLabel,
+    sectionResponsePendingKind,
+    shouldRender,
+    showSectionGuidanceCallout,
+    showSelectionGuidanceCallout,
+    stepLabel,
+    style,
+    title,
+    transitionDuration,
+    transitionEase,
+  } = props;
   const tutorContent = useKangurAiTutorContent();
+  const normalizedLocale = normalizeSiteLocale(tutorContent.locale);
+  const fallbackCopy = useMemo(
+    () => getGuidedCalloutFallbackCopy(normalizedLocale),
+    [normalizedLocale]
+  );
   const isCoarsePointer = useKangurCoarsePointer();
   const calloutLabelId = useId();
   const calloutDescriptionId = useId();
@@ -216,7 +302,10 @@ export function KangurAiTutorGuidedCallout({
     !isSelectionExplainPendingMode &&
     !isLoading &&
     resolvedSelectionAssistantMessage !== null;
-  const shouldHideResolvedSelectionAnswer = isResolvedSelectionCallout && isTestSurface;
+  const hasKnowledgeBackedSelectionAnswer =
+    resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content';
+  const shouldHideResolvedSelectionAnswer =
+    isResolvedSelectionCallout && isTestSurface && !hasKnowledgeBackedSelectionAnswer;
   const isHintResponseCandidate =
     resolvedSelectionAssistantMessage?.coachingFrame?.mode === 'hint_ladder' ||
     lastPromptMode === 'hint' ||
@@ -238,17 +327,16 @@ export function KangurAiTutorGuidedCallout({
   const selectedKnowledgeSummary =
     selectedKnowledgeFragment?.explanation ?? selectedKnowledgeEntry?.summary ?? null;
   const resolvedSelectionDetail =
-    resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content'
-      ? 'Wyjaśnienie korzysta z zapisanej treści strony dla tego zaznaczenia.'
+    hasKnowledgeBackedSelectionAnswer
+      ? fallbackCopy.selectionDetailFromPageContent
       : isResolvedSelectionCallout
-        ? 'Wyjaśnienie jest już gotowe dla zaznaczonego fragmentu.'
+        ? fallbackCopy.selectionDetailReady
         : detail;
   const shouldShowSelectionIntro =
     !(mode === 'selection' && isResolvedSelectionCallout);
   const shouldShowSelectionDetail = Boolean(resolvedSelectionDetail);
   const shouldShowSelectionPageContentBadge =
-    resolvedSelectionAssistantMessage?.answerResolutionMode === 'page_content' &&
-    !shouldHideResolvedSelectionAnswer;
+    hasKnowledgeBackedSelectionAnswer && !shouldHideResolvedSelectionAnswer;
   const shouldShowSelectionPreparingBadge =
     mode === 'selection' && !isResolvedSelectionCallout && !shouldShowSelectedKnowledgeReference;
   const shouldAnnounceCallout =
@@ -409,7 +497,9 @@ export function KangurAiTutorGuidedCallout({
                       </KangurAiTutorChromeBadge>
                     ) : null}
                     <KangurAiTutorChromeBadge className='px-3 py-1 text-[10px]'>
-                      {selectedKnowledgeFragment ? 'Fragment z bazy wiedzy' : 'Treść strony'}
+                      {selectedKnowledgeFragment
+                        ? fallbackCopy.knowledgeFragmentBadge
+                        : fallbackCopy.pageContentBadge}
                     </KangurAiTutorChromeBadge>
                   </div>
                   {selectedKnowledgeSummary ? (
@@ -428,7 +518,7 @@ export function KangurAiTutorGuidedCallout({
                           data-testid='kangur-ai-tutor-selection-guided-page-content-badge'
                           className='w-fit max-w-full px-3 py-1 text-[10px]'
                         >
-                          Zapisana treść strony
+                          {fallbackCopy.savedPageContentBadge}
                         </KangurAiTutorChromeBadge>
                       ) : null}
                       <KangurAiTutorWarmInsetCard
@@ -455,12 +545,17 @@ export function KangurAiTutorGuidedCallout({
                           }
                           onClick={handleSketchRequest}
                         >
-                          {tutorContent.guidedCallout.selectionSketchCtaLabel ?? 'Rozrysuj mi to, proszę'}
+                          {resolveTutorGuidedFallback(
+                            tutorContent.guidedCallout.selectionSketchCtaLabel,
+                            fallbackCopy.selectionSketchCtaLabel
+                          )}
                         </KangurButton>
                         {shouldShowSketchHint ? (
                           <div className='text-xs leading-relaxed [color:var(--kangur-chat-muted-text,var(--kangur-page-muted-text))]'>
-                            {tutorContent.guidedCallout.selectionSketchHint ??
-                              'Otwieram planszę do rysowania. Spróbuj rozrysować podziały i porównać kształty po obrocie lub odbiciu.'}
+                            {resolveTutorGuidedFallback(
+                              tutorContent.guidedCallout.selectionSketchHint,
+                              fallbackCopy.selectionSketchHint
+                            )}
                           </div>
                         ) : null}
                       </div>

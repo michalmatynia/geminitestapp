@@ -1,7 +1,10 @@
 'use client';
 
-import DivisionGroupsGame from '@/features/kangur/ui/components/DivisionGroupsGame';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { useMemo } from 'react';
+
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   DivisionEqualGroupsAnimation,
   DivisionInverseAnimation,
@@ -18,50 +21,58 @@ import {
   KangurEquationDisplay,
 } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_STACK_TIGHT_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import {
+  DIVISION_LESSON_COMPONENT_CONTENT,
+  resolveDivisionLessonContent,
+} from './division-lesson-content';
+import type { KangurDivisionLessonTemplateContent } from '@/shared/contracts/kangur-lesson-templates';
 
 type SectionId = 'intro' | 'odwrotnosc' | 'reszta' | 'zapamietaj' | 'game';
+type DivisionSlideSectionId = Exclude<SectionId, 'game'>;
+type DivisionLessonCopy = KangurDivisionLessonTemplateContent;
 
-export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
+const DIVISION_GROUPS_INSTANCE_ID = getKangurBuiltInGameInstanceId('division_groups');
+
+const buildDivisionSlides = (
+  copy: DivisionLessonCopy,
+): Record<DivisionSlideSectionId, LessonSlide[]> => ({
   intro: [
     {
-      title: 'Co to znaczy dzielić?',
+      title: copy.slides.intro.meaning.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Dzielenie to równy podział na grupy. Pytamy: ile w każdej grupie?
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.intro.meaning.lead}</KangurLessonLead>
           <KangurLessonStack gap='sm'>
             <KangurDisplayEmoji size='sm'>🍪🍪🍪🍪🍪🍪</KangurDisplayEmoji>
-            <KangurLessonCaption>
-              6 ciastek podzielone na 2 osoby
-            </KangurLessonCaption>
+            <KangurLessonCaption>{copy.slides.intro.meaning.exampleCaption}</KangurLessonCaption>
             <KangurEquationDisplay accent='sky' size='md'>
-              6 ÷ 2 = 3
+              {copy.slides.intro.meaning.equation}
             </KangurEquationDisplay>
             <div className='flex kangur-panel-gap'>
-              <KangurDisplayEmoji size='xs'>🧒🍪🍪🍪</KangurDisplayEmoji>
-              <KangurDisplayEmoji size='xs'>🧒🍪🍪🍪</KangurDisplayEmoji>
+              <KangurDisplayEmoji size='xs'>{copy.slides.intro.meaning.groupOne}</KangurDisplayEmoji>
+              <KangurDisplayEmoji size='xs'>{copy.slides.intro.meaning.groupTwo}</KangurDisplayEmoji>
             </div>
           </KangurLessonStack>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Dzielenie w ruchu (SVG)',
+      title: copy.slides.intro.equalGroupsAnimation.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Dzielimy równo: każda grupa dostaje tyle samo elementów.
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.intro.equalGroupsAnimation.lead}</KangurLessonLead>
           <KangurLessonCallout accent='sky' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
               <DivisionEqualGroupsAnimation />
             </div>
             <KangurEquationDisplay accent='sky' className='mt-2' size='sm'>
-              12 ÷ 3 = 4
+              {copy.slides.intro.equalGroupsAnimation.equation}
             </KangurEquationDisplay>
-            <KangurLessonCaption className='mt-1'>3 grupy po 4.</KangurLessonCaption>
+            <KangurLessonCaption className='mt-1'>
+              {copy.slides.intro.equalGroupsAnimation.caption}
+            </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
@@ -69,44 +80,41 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   odwrotnosc: [
     {
-      title: 'Dzielenie i mnożenie',
+      title: copy.slides.odwrotnosc.basics.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Każde mnożenie ma swoje dzielenie!
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.odwrotnosc.basics.lead}</KangurLessonLead>
           <KangurLessonCallout accent='sky' className='max-w-xs'>
             <div className={`${KANGUR_STACK_TIGHT_CLASSNAME} text-center`}>
               <p className='[color:var(--kangur-page-text)]'>
-                4 × 3 = <b>12</b>
+                {copy.slides.odwrotnosc.basics.multiplicationEquation.split('=')[0]?.trim()} ={' '}
+                <b>{copy.slides.odwrotnosc.basics.multiplicationEquation.split('=')[1]?.trim()}</b>
               </p>
               <div className='flex flex-wrap justify-center kangur-panel-gap'>
                 <KangurEquationDisplay accent='sky' size='sm'>
-                  12 ÷ 4 = 3
+                  {copy.slides.odwrotnosc.basics.divisionEquationA}
                 </KangurEquationDisplay>
                 <KangurEquationDisplay accent='sky' size='sm'>
-                  12 ÷ 3 = 4
+                  {copy.slides.odwrotnosc.basics.divisionEquationB}
                 </KangurEquationDisplay>
               </div>
             </div>
           </KangurLessonCallout>
-          <KangurLessonCaption>
-            Znając tabliczkę mnożenia, znasz też tabliczkę dzielenia!
-          </KangurLessonCaption>
+          <KangurLessonCaption>{copy.slides.odwrotnosc.basics.caption}</KangurLessonCaption>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Odwrotność w animacji',
+      title: copy.slides.odwrotnosc.animation.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>Dzielenie i mnożenie to odwrotne działania.</KangurLessonLead>
+          <KangurLessonLead>{copy.slides.odwrotnosc.animation.lead}</KangurLessonLead>
           <KangurLessonCallout accent='sky' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
               <DivisionInverseAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Jeśli 4 × 3 = 12, to 12 ÷ 3 = 4.
+              {copy.slides.odwrotnosc.animation.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -115,44 +123,40 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   reszta: [
     {
-      title: 'Reszta z dzielenia',
+      title: copy.slides.reszta.basics.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>
-            Nie zawsze dzielenie wychodzi równo — wtedy zostaje reszta.
-          </KangurLessonLead>
+          <KangurLessonLead>{copy.slides.reszta.basics.lead}</KangurLessonLead>
           <KangurLessonCallout accent='teal' className='max-w-xs text-center'>
             <KangurEquationDisplay accent='teal' data-testid='division-lesson-remainder-equation'>
-              7 ÷ 2 = ?
+              {copy.slides.reszta.basics.promptEquation}
             </KangurEquationDisplay>
             <KangurLessonCaption className='mt-2'>
-              2×3=6 (za mało), 2×4=8 (za dużo)
+              {copy.slides.reszta.basics.reasoningCaption}
             </KangurLessonCaption>
             <KangurEquationDisplay accent='teal' className='mt-1' size='md'>
-              7 ÷ 2 = <b>3</b> reszta <b>1</b>
+              {copy.slides.reszta.basics.resultEquation}
             </KangurEquationDisplay>
           </KangurLessonCallout>
-          <KangurDisplayEmoji size='xs'>🍫🍫🍫🍫🍫🍫🍫</KangurDisplayEmoji>
-          <KangurLessonCaption>
-            7 czekolad → 3 dla każdego, 1 zostaje
-          </KangurLessonCaption>
+          <KangurDisplayEmoji size='xs'>{copy.slides.reszta.basics.exampleEmojiRow}</KangurDisplayEmoji>
+          <KangurLessonCaption>{copy.slides.reszta.basics.exampleCaption}</KangurLessonCaption>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Reszta w ruchu',
+      title: copy.slides.reszta.animation.title,
       content: (
         <KangurLessonStack>
-          <KangurLessonLead>Gdy nie da się podzielić równo, coś zostaje.</KangurLessonLead>
+          <KangurLessonLead>{copy.slides.reszta.animation.lead}</KangurLessonLead>
           <KangurLessonCallout accent='teal' className='text-center'>
             <div className='mx-auto w-full max-w-sm'>
               <DivisionRemainderAnimation />
             </div>
             <KangurEquationDisplay accent='teal' className='mt-2' size='sm'>
-              7 ÷ 2 = 3 r 1
+              {copy.slides.reszta.animation.equation}
             </KangurEquationDisplay>
             <KangurLessonCaption className='mt-1'>
-              3 pełne pary i 1 zostaje.
+              {copy.slides.reszta.animation.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -161,29 +165,21 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
   ],
   zapamietaj: [
     {
-      title: 'Zapamiętaj!',
+      title: copy.slides.zapamietaj.rules.title,
       content: (
         <KangurLessonStack>
           <KangurLessonCallout accent='amber' className='max-w-xs'>
             <ul className='space-y-2 text-sm [color:var(--kangur-page-text)]'>
-              <li>
-                ✅ Podziel przez 1 = ta sama liczba: <b>9÷1=9</b>
-              </li>
-              <li>
-                ✅ Podziel przez siebie = 1: <b>5÷5=1</b>
-              </li>
-              <li>
-                ✅ 0 podzielone przez cokolwiek = 0: <b>0÷4=0</b>
-              </li>
-              <li>✅ Reszta jest zawsze mniejsza od dzielnika</li>
-              <li>✅ Sprawdź: wynik × dzielnik + reszta = liczba</li>
+              {copy.slides.zapamietaj.rules.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Równe grupy',
+      title: copy.slides.zapamietaj.equalGroups.title,
       content: (
         <KangurLessonStack>
           <KangurLessonCallout
@@ -195,14 +191,14 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <DivisionEqualGroupsAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Dziel równo na grupy – każda grupa ma tyle samo.
+              {copy.slides.zapamietaj.equalGroups.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Odwrotność',
+      title: copy.slides.zapamietaj.inverse.title,
       content: (
         <KangurLessonStack>
           <KangurLessonCallout
@@ -214,14 +210,14 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <DivisionInverseAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Dzielenie i mnożenie to działania odwrotne.
+              {copy.slides.zapamietaj.inverse.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
     {
-      title: 'Reszta',
+      title: copy.slides.zapamietaj.remainder.title,
       content: (
         <KangurLessonStack>
           <KangurLessonCallout
@@ -233,43 +229,70 @@ export const SLIDES: Record<Exclude<SectionId, 'game'>, LessonSlide[]> = {
               <DivisionRemainderAnimation />
             </div>
             <KangurLessonCaption className='mt-2'>
-              Reszta pokazuje, co zostaje poza pełnymi grupami.
+              {copy.slides.zapamietaj.remainder.caption}
             </KangurLessonCaption>
           </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
   ],
-};
+});
 
-export const HUB_SECTIONS = [
-  { id: 'intro', emoji: '÷', title: 'Co to dzielenie?', description: 'Podział na równe grupy' },
-  {
-    id: 'odwrotnosc',
-    emoji: '🔄',
-    title: 'Dzielenie i mnożenie',
-    description: 'Odwrotne działania',
-  },
-  { id: 'reszta', emoji: '🍫', title: 'Reszta z dzielenia', description: 'Gdy nie wychodzi równo' },
-  { id: 'zapamietaj', emoji: '🧠', title: 'Zapamiętaj!', description: 'Ważne zasady dzielenia' },
-  {
-    id: 'game',
-    emoji: '🎮',
-    title: 'Gra z dzieleniem',
-    description: 'Podziel elementy na równe grupy',
-    isGame: true,
-  },
-];
+const buildDivisionSections = (copy: DivisionLessonCopy) =>
+  [
+    {
+      id: 'intro',
+      emoji: '÷',
+      title: copy.sections.intro.title,
+      description: copy.sections.intro.description,
+    },
+    {
+      id: 'odwrotnosc',
+      emoji: '🔄',
+      title: copy.sections.odwrotnosc.title,
+      description: copy.sections.odwrotnosc.description,
+    },
+    {
+      id: 'reszta',
+      emoji: '🍫',
+      title: copy.sections.reszta.title,
+      description: copy.sections.reszta.description,
+    },
+    {
+      id: 'zapamietaj',
+      emoji: '🧠',
+      title: copy.sections.zapamietaj.title,
+      description: copy.sections.zapamietaj.description,
+    },
+    {
+      id: 'game',
+      emoji: '🎮',
+      title: copy.sections.game.title,
+      description: copy.sections.game.description,
+      isGame: true,
+    },
+  ] as const;
 
-export default function DivisionLesson(): React.JSX.Element {
+export const SLIDES = buildDivisionSlides(DIVISION_LESSON_COMPONENT_CONTENT);
+export const HUB_SECTIONS = buildDivisionSections(DIVISION_LESSON_COMPONENT_CONTENT);
+
+export default function DivisionLesson({
+  lessonTemplate,
+}: LessonProps): React.JSX.Element {
+  const runtimeTemplate = useOptionalKangurLessonTemplate('division');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
+  const copy = useMemo(() => resolveDivisionLessonContent(resolvedTemplate), [resolvedTemplate]);
+  const sections = buildDivisionSections(copy);
+  const slides = buildDivisionSlides(copy);
+
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='division'
       lessonEmoji='➗'
-      lessonTitle='Dzielenie'
-      sections={HUB_SECTIONS}
-      slides={SLIDES}
+      lessonTitle={resolvedTemplate?.title?.trim() || copy.lessonTitle}
+      sections={sections}
+      slides={slides}
       gradientClass='kangur-gradient-accent-teal'
       progressDotClassName='bg-blue-300'
       dotActiveClass='bg-blue-500'
@@ -278,20 +301,18 @@ export default function DivisionLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'sky',
-            title: 'Gra z dzieleniem!',
+            title: copy.game.gameTitle ?? 'Gra z dzieleniem!',
             icon: '🎮',
             maxWidthClassName: 'max-w-none',
             headerTestId: 'division-lesson-game-header',
             shellTestId: 'division-lesson-game-shell',
           },
-          render: ({ onFinish }) => (
-            <DivisionGroupsGame
-              finishLabelVariant='topics'
-              onFinish={onFinish}
-            />
-          ),
+          launchableInstance: {
+            gameId: 'division_groups',
+            instanceId: DIVISION_GROUPS_INSTANCE_ID,
+          },
         },
       ]}
     />

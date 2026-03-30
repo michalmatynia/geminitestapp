@@ -95,3 +95,6 @@ docker.md
 /tmp/
 /output/playwright
 /.playwright-cli
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

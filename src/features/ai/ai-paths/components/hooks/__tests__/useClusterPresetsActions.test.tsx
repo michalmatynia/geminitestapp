@@ -96,7 +96,12 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
 vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
   useCanvasState: () => mockState.canvasState,
   useCanvasRefs: () => ({ viewportRef: mockState.viewportRef }),
-  useCanvasActions: () => ({ updateView: mockState.updateView }),
+  useCanvasActions: () => {
+    const canvasActions = {
+      updateView: mockState.updateView,
+    };
+    return canvasActions;
+  },
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({

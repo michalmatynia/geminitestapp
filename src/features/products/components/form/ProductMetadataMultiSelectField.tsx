@@ -154,27 +154,69 @@ export interface ProductMetadataMultiSelectFieldProps {
   single?: boolean;
 }
 
+type ProductMetadataMultiSelectFieldResolvedProps = {
+  label: string;
+  options: Array<LabeledOptionDto<string>>;
+  selectedIds: string[];
+  resolvedOnChange: (nextIds: string[]) => void;
+  resolvedLoading: boolean;
+  disabled: boolean;
+  resolvedPlaceholder: string;
+  resolvedSearchPlaceholder: string;
+  emptyMessage?: string;
+  single: boolean;
+};
+
+const renderProductMetadataMultiSelectField = ({
+  label,
+  options,
+  selectedIds,
+  resolvedOnChange,
+  resolvedLoading,
+  disabled,
+  resolvedPlaceholder,
+  resolvedSearchPlaceholder,
+  emptyMessage,
+  single,
+}: ProductMetadataMultiSelectFieldResolvedProps): React.JSX.Element => (
+  <MultiSelect
+    label={label}
+    options={options}
+    selected={selectedIds}
+    onChange={resolvedOnChange}
+    loading={resolvedLoading}
+    disabled={disabled}
+    placeholder={resolvedPlaceholder}
+    searchPlaceholder={resolvedSearchPlaceholder}
+    emptyMessage={emptyMessage}
+    single={single}
+  />
+);
+
 /**
  * Generic field for product metadata selection (Catalogs, Producers, Tags).
  * Consolidates CatalogMultiSelectField, ProducerMultiSelectField, TagMultiSelectField.
  */
-export function ProductMetadataMultiSelectField({
-  label,
-  items: itemsProp,
-  selectedIds: selectedIdsProp,
-  onChange: onChangeProp,
-  loading = false,
-  disabled = false,
-  placeholder,
-  searchPlaceholder,
-  emptyMessage,
-  contextItemsKey,
-  contextSelectedKey,
-  contextLoadingKey,
-  contextOnChangeKey,
-  formContextToggleName,
-  single = false,
-}: ProductMetadataMultiSelectFieldProps): React.JSX.Element {
+export function ProductMetadataMultiSelectField(
+  props: ProductMetadataMultiSelectFieldProps
+): React.JSX.Element {
+  const {
+    label,
+    items: itemsProp,
+    selectedIds: selectedIdsProp,
+    onChange: onChangeProp,
+    loading = false,
+    disabled = false,
+    placeholder,
+    searchPlaceholder,
+    emptyMessage,
+    contextItemsKey,
+    contextSelectedKey,
+    contextLoadingKey,
+    contextOnChangeKey,
+    formContextToggleName,
+    single = false,
+  } = props;
   const formMetadataContext = useContext(ProductFormMetadataContext);
   const metadataStateContext = useOptionalProductMetadataFieldStateContext();
   const metadataActionsContext = useOptionalProductMetadataFieldActionsContext();
@@ -337,18 +379,16 @@ export function ProductMetadataMultiSelectField({
   const resolvedPlaceholder = placeholder || `Select ${label.toLowerCase()}`;
   const resolvedSearchPlaceholder = searchPlaceholder || `Search ${label.toLowerCase()}...`;
 
-  return (
-    <MultiSelect
-      label={label}
-      options={options}
-      selected={selectedIds}
-      onChange={resolvedOnChange}
-      loading={resolvedLoading}
-      disabled={disabled}
-      placeholder={resolvedPlaceholder}
-      searchPlaceholder={resolvedSearchPlaceholder}
-      emptyMessage={emptyMessage}
-      single={single}
-    />
-  );
+  return renderProductMetadataMultiSelectField({
+    label,
+    options,
+    selectedIds,
+    resolvedOnChange,
+    resolvedLoading,
+    disabled,
+    resolvedPlaceholder,
+    resolvedSearchPlaceholder,
+    emptyMessage,
+    single,
+  });
 }

@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { useKangurCoarsePointer } from './useKangurCoarsePointer';
+import { useKangurMobileBreakpoint } from './useKangurMobileBreakpoint';
 
-const MOBILE_MEDIA_QUERY = '(max-width: 639px)';
 const PREV_TARGET_KEY_PREFIX = 'kangurMobileInteractionScrollLockPrev';
 const LOCK_STATE_DATA_KEY = 'kangurMobileInteractionScrollLockActive';
 
@@ -34,14 +35,6 @@ const getLockTargets = (): LockTarget | null => {
     body,
     app: app instanceof HTMLElement ? app : undefined,
   };
-};
-
-const isMobileViewport = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  if (typeof window.matchMedia === 'function') {
-    return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
-  }
-  return window.innerWidth <= 639;
 };
 
 const getDatasetKey = (target: 'html' | 'body' | 'app', property: StyleProperty): string => {
@@ -124,10 +117,6 @@ const preventDefaultScrollable = (event: Event): void => {
 };
 
 const lockKangurMobileInteractionScroll = (): void => {
-  if (!isMobileViewport()) {
-    return;
-  }
-
   const targets = getLockTargets();
   if (!targets) {
     return;
@@ -151,16 +140,6 @@ const unlockKangurMobileInteractionScroll = (): void => {
     return;
   }
 
-  if (!isMobileViewport()) {
-    lockReferenceCount = 0;
-    if (preventScrollListenerAttached) {
-      document.removeEventListener('touchmove', preventDefaultScrollable, { capture: true });
-      document.removeEventListener('wheel', preventDefaultScrollable, { capture: true });
-      preventScrollListenerAttached = false;
-    }
-    return;
-  }
-
   lockReferenceCount -= 1;
 
   if (lockReferenceCount > 0) {
@@ -180,15 +159,18 @@ export const useKangurMobileInteractionScrollLock = (): {
   lock: () => void;
   unlock: () => void;
 } => {
+  const isCoarsePointer = useKangurCoarsePointer();
+  const isMobileBreakpoint = useKangurMobileBreakpoint();
+  const shouldEnableLock = isCoarsePointer || isMobileBreakpoint;
   const isLockedRef = useRef(false);
 
   const lock = useCallback((): void => {
-    if (isLockedRef.current || !isMobileViewport()) {
+    if (isLockedRef.current || !shouldEnableLock) {
       return;
     }
     isLockedRef.current = true;
     lockKangurMobileInteractionScroll();
-  }, []);
+  }, [shouldEnableLock]);
 
   const unlock = useCallback((): void => {
     if (!isLockedRef.current) {
@@ -199,7 +181,7 @@ export const useKangurMobileInteractionScrollLock = (): {
   }, []);
 
   useEffect(() => {
-    if (!isMobileViewport() && isLockedRef.current) {
+    if (!shouldEnableLock && isLockedRef.current) {
       isLockedRef.current = false;
       unlockKangurMobileInteractionScroll();
     }
@@ -210,7 +192,7 @@ export const useKangurMobileInteractionScrollLock = (): {
         unlockKangurMobileInteractionScroll();
       }
     };
-  }, [unlock]);
+  }, [shouldEnableLock, unlock]);
 
   return { lock, unlock };
 };

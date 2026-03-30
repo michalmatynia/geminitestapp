@@ -415,3 +415,15 @@ export const bulkTagMappingRequestSchema = z.object({
 });
 
 export type BulkTagMappingRequest = z.infer<typeof bulkTagMappingRequestSchema>;
+
+/**
+ * Product Listings Recovery DTOs
+ */
+
+export type ProductListingsRecoveryContext = {
+  source: 'base_quick_export_failed';
+  integrationSlug: 'baselinker';
+  status: string;
+  runId: string | null;
+};
+

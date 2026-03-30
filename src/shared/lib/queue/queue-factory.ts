@@ -270,6 +270,11 @@ export function createManagedQueue<TJobData>(
     const q = ensureQueue();
     if (!q) {
       return {
+        deliveryMode: 'inline',
+        workerState: 'inline',
+        statusReason: 'missing_redis',
+        redisAvailable: false,
+        workerLocal: false,
         running: false,
         healthy: false,
         processing: false,
@@ -283,14 +288,36 @@ export function createManagedQueue<TJobData>(
     }
     const counts = await q.getJobCounts('active', 'waiting', 'failed', 'completed');
     const now = Date.now();
+    const activeCount = counts['active'] ?? 0;
+    const waitingCount = counts['waiting'] ?? 0;
+    const failedCount = counts['failed'] ?? 0;
+    const completedCount = counts['completed'] ?? 0;
+    const processing = activeCount > 0;
+    const hasObservedQueueActivity =
+      processing ||
+      waitingCount > 0 ||
+      failedCount > 0 ||
+      completedCount > 0 ||
+      lastProcessTime > 0;
+    const workerState = processing
+      ? 'running'
+      : workerStarted || hasObservedQueueActivity
+        ? 'idle'
+        : 'offline';
+
     return {
-      running: workerStarted,
-      healthy: workerStarted && (lastProcessTime === 0 || now - lastProcessTime < 120_000),
-      processing: (counts['active'] ?? 0) > 0,
-      activeCount: counts['active'] ?? 0,
-      waitingCount: counts['waiting'] ?? 0,
-      failedCount: counts['failed'] ?? 0,
-      completedCount: counts['completed'] ?? 0,
+      deliveryMode: 'queue',
+      workerState,
+      statusReason: workerState === 'offline' ? 'worker_inactive' : undefined,
+      redisAvailable: true,
+      workerLocal: workerStarted,
+      running: workerStarted || processing,
+      healthy: workerState !== 'offline',
+      processing,
+      activeCount,
+      waitingCount,
+      failedCount,
+      completedCount,
       lastPollTime: lastProcessTime,
       timeSinceLastPoll: lastProcessTime > 0 ? now - lastProcessTime : 0,
     };

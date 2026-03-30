@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'overview'
 scope: 'feature:ai-paths'
@@ -43,11 +43,12 @@ AI Paths are split across four major areas:
 
 - `src/app/api/ai-paths/`
 - enqueue, runs, validation, settings, trigger buttons, health, runtime
-  analytics, Playwright, and related endpoints
+  analytics, Playwright, portable-engine, and related endpoints
 
 ### Queue and worker
 
 - `src/features/ai/ai-paths/workers/aiPathRunQueue.ts`
+- `src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts`
 - startup wiring happens via `src/features/jobs/queue-init.ts`
 
 ## Core Concepts
@@ -67,6 +68,7 @@ At runtime AI Paths use:
 - typed or convention-based input/output ports
 - run records and node event records
 - queue-aware orchestration with cancellation/retry handling
+- explicit lease-blocked and handoff-ready execution states for contested runs
 - runtime analytics and observability hooks
 
 The exact graph contract is documented in the semantic grammar docs under
@@ -98,6 +100,14 @@ under `src/app/api/ai-paths/trigger-buttons/`.
 
 Typical trigger context includes entity identifiers such as product, note, or
 other record scope depending on where the button is mounted.
+
+The current operator API surface also includes:
+
+- run resume and replay: `src/app/api/ai-paths/runs/[runId]/resume/`
+- run handoff: `src/app/api/ai-paths/runs/[runId]/handoff/`
+- queue status: `src/app/api/ai-paths/runs/queue-status/`
+- runtime analytics summary and insights: `src/app/api/ai-paths/runtime-analytics/`
+- portable-engine schema, remediation, and trend snapshots: `src/app/api/ai-paths/portable-engine/`
 
 ## Starter Workflow Registry
 
@@ -166,4 +176,5 @@ npm run ai-paths:check:canonical
 - `docs/ai-paths/reference.md`
 - `docs/ai-paths/semantic-grammar/README.md`
 - `docs/ai-paths/playwright-node.md`
+- `docs/platform/ai-paths-resume-vs-handoff.md`
 - `docs/platform/architecture-guardrails.md`

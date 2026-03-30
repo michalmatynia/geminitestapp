@@ -4,7 +4,7 @@ import React from 'react';
 
 import { AI_PATHS_NODE_DOCS as NODE_DOCS_LIST } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES } from '@/shared/lib/ai-paths/core/validation-engine';
-import { Hint, Label, SearchInput, Textarea, useToast } from '@/shared/ui';
+import { Card, Hint, Label, SearchInput, Textarea, useToast } from '@/shared/ui';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { parseDocsSourcesText } from '../../pages/AdminAiPathsValidationUtils';
@@ -12,7 +12,7 @@ import { ValidationActionButton } from './ValidationActionButton';
 import { ValidationItemCard } from './ValidationItemCard';
 import { ValidationPanel } from './ValidationPanel';
 import { ValidationPanelHeader } from './ValidationPanelHeader';
-import { ValidationSubpanel } from './ValidationSubpanel';
+import { validationSubpanelClassName } from './ValidationSubpanel';
 
 type NodeDocCatalogEntry = (typeof NODE_DOCS_LIST)[number];
 
@@ -22,7 +22,7 @@ type DocsConnectionsCatalogCardProps = {
   onConnect: () => void;
 };
 
-function DocsConnectionsCatalogCard({
+function renderDocsConnectionsCatalogCard({
   doc,
   connected,
   onConnect,
@@ -118,20 +118,25 @@ export function DocsConnectionsPanel(): React.JSX.Element {
         placeholder='Search node docs by type, title, ports...'
         className='mt-2 h-9'
       />
-      <ValidationSubpanel className='mt-3 max-h-56 space-y-2 overflow-y-auto'>
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className={validationSubpanelClassName('mt-3 max-h-56 space-y-2 overflow-y-auto')}
+      >
         {filteredNodeDocs.map((doc) => {
           const sourceId = `ai-paths:node-docs:${doc.type}`;
           const connected = docsSet.has(sourceId);
           return (
-            <DocsConnectionsCatalogCard
-              key={doc.type}
-              doc={doc}
-              connected={connected}
-              onConnect={() => handleConnectDoc(sourceId, connected)}
-            />
+            <React.Fragment key={doc.type}>
+              {renderDocsConnectionsCatalogCard({
+                doc,
+                connected,
+                onConnect: () => handleConnectDoc(sourceId, connected),
+              })}
+            </React.Fragment>
           );
         })}
-      </ValidationSubpanel>
+      </Card>
     </ValidationPanel>
   );
 }

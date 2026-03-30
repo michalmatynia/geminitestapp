@@ -17,6 +17,10 @@ const canvasContextStub = {
   fillRect: vi.fn(),
   lineTo: vi.fn(),
   moveTo: vi.fn(),
+  quadraticCurveTo: vi.fn(),
+  resetTransform: vi.fn(),
+  scale: vi.fn(),
+  setTransform: vi.fn(),
   stroke: vi.fn(),
   fillStyle: '#ffffff',
   globalCompositeOperation: 'source-over',
@@ -64,6 +68,8 @@ describe('KangurAiTutorDrawingCanvas touch interactions', () => {
     );
     expect(screen.getByRole('button', { name: 'Kolor #2563eb' })).toHaveClass('h-11', 'w-11');
     expect(screen.getByRole('button', { name: 'Pióro' })).toHaveClass('h-11', 'w-11');
+    expect(screen.getByRole('button', { name: 'Ponów' })).toHaveClass('h-11', 'w-11');
+    expect(screen.getByRole('button', { name: 'Eksportuj PNG' })).toHaveClass('h-11', 'w-11');
     expect(screen.getByRole('button', { name: 'Anuluj' })).toHaveClass(
       'min-h-11',
       'px-4',

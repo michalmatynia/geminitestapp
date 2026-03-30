@@ -73,15 +73,22 @@ export const normalizeBundleNode = (node: AiNode): AiNode => {
 };
 
 export const normalizeCompareNode = (node: AiNode): AiNode => {
+  const compareConfig = node.config?.compare ?? {};
+  const {
+    operator = 'eq',
+    compareTo = '',
+    caseSensitive = false,
+    message = 'Comparison failed',
+  } = compareConfig;
   return {
     ...node,
     config: {
       ...node.config,
       compare: {
-        operator: node.config?.compare?.operator ?? 'eq',
-        compareTo: node.config?.compare?.compareTo ?? '',
-        caseSensitive: node.config?.compare?.caseSensitive ?? false,
-        message: node.config?.compare?.message ?? 'Comparison failed',
+        operator,
+        compareTo,
+        caseSensitive,
+        message,
       },
     },
   };

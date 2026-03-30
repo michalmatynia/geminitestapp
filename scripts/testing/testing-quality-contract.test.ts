@@ -11,6 +11,10 @@ const weeklyWorkflow = fs.readFileSync(
   path.join(repoRoot, '.github', 'workflows', 'weekly-quality-report.yml'),
   'utf8'
 );
+const nightlyWorkflow = fs.readFileSync(
+  path.join(repoRoot, '.github', 'workflows', 'nightly-deep-tests.yml'),
+  'utf8'
+);
 const testMatrixWorkflow = fs.readFileSync(
   path.join(repoRoot, '.github', 'workflows', 'test-matrix.yml'),
   'utf8'
@@ -21,6 +25,8 @@ const metricsDocs = fs.readFileSync(path.join(repoRoot, 'docs', 'metrics', 'READ
 describe('testing quality contract', () => {
   it('keeps the testing quality and integration baseline scripts in package.json', () => {
     expect(packageJson.scripts).toMatchObject({
+      'metrics:test-suite-inventory': 'node scripts/testing/scan-test-suite-inventory.mjs',
+      'metrics:test-run-ledger': 'node scripts/testing/record-test-run.mjs --init',
       'metrics:test-quality': 'node scripts/quality/generate-test-quality-snapshot.mjs',
       'check:test-quality':
         'node scripts/quality/generate-test-quality-snapshot.mjs --summary-json --no-write',
@@ -52,20 +58,51 @@ describe('testing quality contract', () => {
     expect(weeklyWorkflow).toContain('Run test distribution quality scan');
     expect(weeklyWorkflow).toContain('npm run check:test-distribution');
     expect(weeklyWorkflow).toContain('Generate testing quality snapshot');
+    expect(weeklyWorkflow).toContain('Generate testing suite inventory');
+    expect(weeklyWorkflow).toContain('npm run metrics:test-suite-inventory');
+    expect(weeklyWorkflow).toContain('Record weekly audit ledger entry');
+    expect(weeklyWorkflow).toContain('npm run testing:record -- --lane=weekly-audit');
     expect(weeklyWorkflow).toContain('npm run metrics:test-quality');
+    expect(weeklyWorkflow).toContain('docs/metrics/testing-suite-inventory-latest.json');
+    expect(weeklyWorkflow).toContain('docs/metrics/testing-run-ledger-latest.json');
     expect(weeklyWorkflow).toContain('docs/metrics/testing-quality-snapshot-latest.json');
     expect(weeklyWorkflow).toContain('docs/metrics/test-distribution-latest.json');
     expect(weeklyWorkflow).toContain('docs/metrics/high-risk-coverage-latest.json');
     expect(weeklyWorkflow).toContain('docs/metrics/integration-mongo-latest.json');
   });
 
+  it('keeps the nightly deep workflow aligned to the canonical lane and its artifacts', () => {
+    expect(nightlyWorkflow).toContain('cron: \'0 2 * * *\'');
+    expect(nightlyWorkflow).toContain('Install Playwright browsers');
+    expect(nightlyWorkflow).toContain('npx playwright install --with-deps chromium');
+    expect(nightlyWorkflow).toContain('Run nightly-deep testing lane');
+    expect(nightlyWorkflow).toContain('npm run test:lane:nightly-deep');
+    expect(nightlyWorkflow).toContain('Upload nightly-deep artifacts');
+    expect(nightlyWorkflow).toContain('docs/metrics/lint-domain-checks-latest.json');
+    expect(nightlyWorkflow).toContain('docs/metrics/unit-domain-timings-latest.json');
+    expect(nightlyWorkflow).toContain('docs/metrics/critical-flow-tests-latest.json');
+    expect(nightlyWorkflow).toContain('docs/metrics/security-smoke-latest.json');
+    expect(nightlyWorkflow).toContain('docs/metrics/accessibility-smoke-latest.json');
+    expect(nightlyWorkflow).toContain('docs/metrics/accessibility-route-crawl-latest.json');
+    expect(nightlyWorkflow).toContain('docs/metrics/integration-mongo-latest.json');
+    expect(nightlyWorkflow).toContain('docs/metrics/high-risk-coverage-latest.json');
+    expect(nightlyWorkflow).toContain('docs/metrics/testing-run-ledger-latest.json');
+  });
+
   it('keeps the main test matrix publishing integration baseline artifacts and docs references', () => {
     expect(testMatrixWorkflow).toContain('Upload Mongo integration report');
     expect(testMatrixWorkflow).toContain('docs/metrics/integration-mongo-latest.json');
+    expect(testMatrixWorkflow).toContain('Record pr-required lane ledger entry');
+    expect(testMatrixWorkflow).toContain('npm run testing:record -- --lane=pr-required');
+    expect(testMatrixWorkflow).toContain('Upload pr-required testing ledger');
+    expect(testMatrixWorkflow).toContain('docs/metrics/testing-run-ledger-latest.json');
+    expect(testMatrixWorkflow).toContain('docs/metrics/testing-run-ledger-latest.md');
 
     expect(bazelDocs).toContain(
       '`//:integration_mongo` -> direct Mongo integration baseline runner with metrics artifact output'
     );
+    expect(metricsDocs).toContain('[`testing-suite-inventory-latest.md`](./testing-suite-inventory-latest.md)');
+    expect(metricsDocs).toContain('[`testing-run-ledger-latest.md`](./testing-run-ledger-latest.md)');
     expect(metricsDocs).toContain('[`test-distribution-latest.md`](./test-distribution-latest.md)');
     expect(metricsDocs).toContain('[`high-risk-coverage-latest.md`](./high-risk-coverage-latest.md)');
     expect(metricsDocs).toContain('[`integration-mongo-latest.md`](./integration-mongo-latest.md)');

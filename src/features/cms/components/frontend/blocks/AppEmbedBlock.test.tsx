@@ -5,14 +5,15 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { buildKangurEmbeddedBasePath } from '@/shared/lib/kangur-bridge';
+import { buildKangurEmbeddedBasePath } from '@/shared/lib/kangur-cms-bridge';
 
-const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
+const { kangurAdapterTestDouble, sessionMock, usePathnameMock, useSearchParamsMock } = vi.hoisted(() => ({
   kangurAdapterTestDouble: {
     KANGUR_EMBED_QUERY_PARAM: 'kangur',
     KANGUR_MAIN_PAGE_KEY: 'Game',
     KANGUR_PAGE_TO_SLUG: Object.freeze({
       Game: 'game',
+      GamesLibrary: 'games',
       LearnerProfile: 'profile',
       Lessons: 'lessons',
       Tests: 'tests',
@@ -54,12 +55,30 @@ const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoi
       return (
         {
           Game: 'game',
+          GamesLibrary: 'games',
           LearnerProfile: 'profile',
           Lessons: 'lessons',
           Tests: 'tests',
           ParentDashboard: 'parent-dashboard',
         }[pageName] ?? pageName
       );
+    },
+    resolveKangurPageKeyFromSlug: (slug: string | null | undefined): string | null => {
+      if (!slug) {
+        return 'Game';
+      }
+
+      const normalizedSlug = slug.trim().toLowerCase();
+      const entry = Object.entries({
+        Game: 'game',
+        GamesLibrary: 'games',
+        LearnerProfile: 'profile',
+        Lessons: 'lessons',
+        Tests: 'tests',
+        ParentDashboard: 'parent-dashboard',
+      }).find(([, mappedSlug]) => mappedSlug === normalizedSlug);
+
+      return entry?.[0] ?? null;
     },
     readKangurUrlParam: (
       searchParams: URLSearchParams,
@@ -77,6 +96,7 @@ const { kangurAdapterTestDouble, usePathnameMock, useSearchParamsMock } = vi.hoi
       return scopeMatch ? searchParams.get(key) : null;
     },
   },
+  sessionMock: vi.fn(),
   usePathnameMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
 }));
@@ -86,7 +106,11 @@ vi.mock('next/navigation', () => ({
   useSearchParams: useSearchParamsMock,
 }));
 
-vi.mock('@/shared/lib/kangur-bridge', async () => {
+vi.mock('@/shared/lib/auth/useOptionalNextAuthSession', () => ({
+  useOptionalNextAuthSession: () => sessionMock(),
+}));
+
+vi.mock('@/shared/lib/kangur-cms-bridge', async () => {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     ...kangurAdapterTestDouble,
@@ -135,6 +159,10 @@ describe('AppEmbedBlock', () => {
   beforeEach(() => {
     usePathnameMock.mockReturnValue('/home');
     useSearchParamsMock.mockReturnValue(new URLSearchParams('preview=1'));
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
   });
 
   it('renders iframe embeds for iframe-based app embeds', () => {
@@ -199,6 +227,44 @@ describe('AppEmbedBlock', () => {
       'data-base-path',
       buildKangurEmbeddedBasePath('/home?preview=1', 'app-embed-a')
     );
+  });
+
+  it('downgrades blocked GamesLibrary embed entry pages for non-super-admin users', () => {
+    renderAppEmbedBlock({
+      appId: 'kangur',
+      title: 'Kangur Games',
+      entryPage: 'GamesLibrary',
+      basePath: '',
+      height: 640,
+    });
+
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '[]');
+  });
+
+  it('keeps GamesLibrary embed routes for exact super-admin users', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'owner@example.com',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams('preview=1&kangur-app-embed-a=games')
+    );
+
+    renderAppEmbedBlock({
+      appId: 'kangur',
+      title: 'Kangur Games',
+      entryPage: 'Lessons',
+      basePath: '',
+      height: 640,
+    });
+
+    expect(screen.getByTestId('kangur-feature-page')).toHaveAttribute('data-slug', '["games"]');
   });
 
   it('preserves other embedded Kangur instances when deriving the current host page', () => {

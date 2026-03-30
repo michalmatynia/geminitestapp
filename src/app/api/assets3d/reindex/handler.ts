@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { reindexAsset3DUploadsFromDisk } from '@/features/viewer3d/utils/asset3dReindex';
+import { reindexAsset3DUploadsFromDisk } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

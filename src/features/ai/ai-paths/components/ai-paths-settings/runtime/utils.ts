@@ -77,6 +77,44 @@ const hasWaitingPorts = (value: unknown): boolean =>
   Array.isArray(value) &&
   value.some((port: unknown): boolean => typeof port === 'string' && port.trim().length > 0);
 
+const resolveRuntimeMetadataOutputs = (
+  metadata: Record<string, unknown> | null
+): Record<string, unknown> | null =>
+  isObjectValue(metadata?.['outputs']) ? metadata['outputs'] : null;
+
+const resolveRuntimeBlockedReason = (args: {
+  metadata: Record<string, unknown> | null;
+  outputs: Record<string, unknown> | null;
+}): string | null => {
+  const metadataOutputs = resolveRuntimeMetadataOutputs(args.metadata);
+
+  return (
+    normalizeBlockedReason(args.outputs?.['blockedReason']) ??
+    normalizeBlockedReason(metadataOutputs?.['blockedReason']) ??
+    normalizeBlockedReason(args.metadata?.['reason'])
+  );
+};
+
+const hasRuntimeWaitingPorts = (args: {
+  metadata: Record<string, unknown> | null;
+  outputs: Record<string, unknown> | null;
+}): boolean => {
+  const metadataOutputs = resolveRuntimeMetadataOutputs(args.metadata);
+
+  return (
+    hasWaitingPorts(args.outputs?.['waitingOnPorts']) ||
+    hasWaitingPorts(metadataOutputs?.['waitingOnPorts']) ||
+    hasWaitingPorts(args.metadata?.['waitingOnPorts'])
+  );
+};
+
+const shouldDisplayWaitingCallback = (args: {
+  blockedReason: string | null;
+  waitingPortsPresent: boolean;
+}): boolean =>
+  args.blockedReason === 'missing_inputs' ||
+  (!args.blockedReason && args.waitingPortsPresent);
+
 export const resolveRuntimeNodeDisplayStatus = (input: {
   status: AiPathRuntimeNodeStatus | null;
   outputs?: RuntimePortValues | null;
@@ -88,19 +126,16 @@ export const resolveRuntimeNodeDisplayStatus = (input: {
 
   const outputs = isObjectValue(input.outputs) ? input.outputs : null;
   const metadata = isObjectValue(input.metadata) ? input.metadata : null;
-  const metadataOutputs = isObjectValue(metadata?.['outputs']) ? metadata['outputs'] : null;
-  const blockedReason =
-    normalizeBlockedReason(outputs?.['blockedReason']) ??
-    normalizeBlockedReason(metadataOutputs?.['blockedReason']) ??
-    normalizeBlockedReason(metadata?.['reason']);
-  const waitingPortsPresent =
-    hasWaitingPorts(outputs?.['waitingOnPorts']) ||
-    hasWaitingPorts(metadataOutputs?.['waitingOnPorts']) ||
-    hasWaitingPorts(metadata?.['waitingOnPorts']);
 
-  if (blockedReason === 'missing_inputs' || (!blockedReason && waitingPortsPresent)) {
+  if (
+    shouldDisplayWaitingCallback({
+      blockedReason: resolveRuntimeBlockedReason({ metadata, outputs }),
+      waitingPortsPresent: hasRuntimeWaitingPorts({ metadata, outputs }),
+    })
+  ) {
     return 'waiting_callback';
   }
+
   return status;
 };
 
@@ -151,6 +186,55 @@ export const mergeRuntimeNodeOutputsForStatus = (input: {
   return merged;
 };
 
+const mergeRuntimeStateRecords = <T extends Record<string, unknown>>(
+  current: T | undefined,
+  incoming: T | undefined
+): T | undefined => {
+  if (!incoming || Object.keys(incoming).length === 0) {
+    return current;
+  }
+
+  return {
+    ...(current ?? {}),
+    ...incoming,
+  } as T;
+};
+
+const collectRuntimeOutputNodeIds = (
+  current: RuntimeState,
+  incoming: RuntimeState
+): Set<string> =>
+  new Set<string>([
+    ...Object.keys(current.outputs ?? {}),
+    ...Object.keys(incoming.outputs ?? {}),
+  ]);
+
+const resolveMergedRuntimeNodeOutputs = (
+  current: RuntimeState,
+  incoming: RuntimeState
+): Record<string, RuntimePortValues> => {
+  const nextOutputs: Record<string, RuntimePortValues> = {};
+
+  collectRuntimeOutputNodeIds(current, incoming).forEach((nodeId: string) => {
+    const incomingNodeOutputs = incoming.outputs?.[nodeId];
+
+    if (incomingNodeOutputs === undefined) {
+      if (current.outputs?.[nodeId] !== undefined) {
+        nextOutputs[nodeId] = current.outputs[nodeId]!;
+      }
+      return;
+    }
+
+    nextOutputs[nodeId] = mergeRuntimeNodeOutputsForStatus({
+      previous: current.outputs?.[nodeId],
+      next: incomingNodeOutputs,
+      status: incomingNodeOutputs['status'],
+    });
+  });
+
+  return nextOutputs;
+};
+
 /**
  * Merge an incoming runtime state snapshot into current state
  */
@@ -163,37 +247,9 @@ export const mergeRuntimeStateSnapshot = (
     ...(current.inputs ?? {}),
     ...(incoming.inputs ?? {}),
   };
-  const nextOutputs: Record<string, RuntimePortValues> = {};
-  const outputNodeIds = new Set<string>([
-    ...Object.keys(current.outputs ?? {}),
-    ...Object.keys(incoming.outputs ?? {}),
-  ]);
-  outputNodeIds.forEach((nodeId: string) => {
-    const incomingNodeOutputs = incoming.outputs?.[nodeId];
-    if (incomingNodeOutputs === undefined) {
-      if (current.outputs?.[nodeId] !== undefined) {
-        nextOutputs[nodeId] = current.outputs[nodeId]!;
-      }
-      return;
-    }
-    nextOutputs[nodeId] = mergeRuntimeNodeOutputsForStatus({
-      previous: current.outputs?.[nodeId],
-      next: incomingNodeOutputs,
-      status: incomingNodeOutputs['status'],
-    });
-  });
-
-  const incomingHashes = incoming.hashes ?? undefined;
-  const hasIncomingHashes = !!incomingHashes && Object.keys(incomingHashes).length > 0;
-  const mergedHashes = hasIncomingHashes
-    ? { ...(current.hashes ?? {}), ...(incomingHashes ?? {}) }
-    : current.hashes;
-
-  const incomingHistory = incoming.history ?? undefined;
-  const hasIncomingHistory = !!incomingHistory && Object.keys(incomingHistory).length > 0;
-  const mergedHistory = hasIncomingHistory
-    ? { ...(current.history ?? {}), ...(incomingHistory ?? {}) }
-    : current.history;
+  const nextOutputs = resolveMergedRuntimeNodeOutputs(current, incoming);
+  const mergedHashes = mergeRuntimeStateRecords(current.hashes, incoming.hashes);
+  const mergedHistory = mergeRuntimeStateRecords(current.history, incoming.history);
 
   const next: RuntimeState = {
     ...current,

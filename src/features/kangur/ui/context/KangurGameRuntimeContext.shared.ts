@@ -1,4 +1,6 @@
 import type { KangurAssignmentSnapshot, KangurUser } from '@kangur/platform';
+import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
+import { KANGUR_GAME_SCREENS } from '@/features/kangur/ui/types';
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -23,6 +25,7 @@ export type KangurGameRuntimeStateContextValue = {
   isLoadingAuth: boolean;
   progress: KangurProgressState;
   screen: KangurGameScreen;
+  launchableGameInstanceId: KangurGameInstanceId | null;
   playerName: string;
   operation: KangurOperation | null;
   difficulty: KangurDifficulty;
@@ -88,22 +91,4 @@ export const isKangurDifficulty = (value: string | null): value is KangurDifficu
   Boolean(value && KANGUR_DIFFICULTIES.includes(value as KangurDifficulty));
 
 export const isKangurGameScreen = (value: string | null | undefined): value is KangurGameScreen =>
-  value === 'home' ||
-  value === 'training' ||
-  value === 'kangur_setup' ||
-  value === 'kangur' ||
-  value === 'calendar_quiz' ||
-  value === 'geometry_quiz' ||
-  value === 'clock_quiz' ||
-  value === 'addition_quiz' ||
-  value === 'subtraction_quiz' ||
-  value === 'multiplication_quiz' ||
-  value === 'division_quiz' ||
-  value === 'logical_patterns_quiz' ||
-  value === 'logical_classification_quiz' ||
-  value === 'logical_analogies_quiz' ||
-  value === 'english_sentence_quiz' ||
-  value === 'english_parts_of_speech_quiz' ||
-  value === 'operation' ||
-  value === 'playing' ||
-  value === 'result';
+  Boolean(value && KANGUR_GAME_SCREENS.includes(value as KangurGameScreen));

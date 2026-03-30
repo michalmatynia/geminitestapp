@@ -11,6 +11,14 @@ const { apiGetMock, authStateMock } = vi.hoisted(() => ({
   authStateMock: vi.fn(),
 }));
 
+const { localeMock } = vi.hoisted(() => ({
+  localeMock: vi.fn(() => 'pl'),
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeMock(),
+}));
+
 vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/api-client')>();
   return {
@@ -26,11 +34,31 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   useKangurAuthState: () => authStateMock(),
 }));
 
+const { withKangurClientErrorMock } = vi.hoisted(() => ({
+  withKangurClientErrorMock: vi.fn(async (_report, task, options) => {
+    try {
+      return await task();
+    } catch (error) {
+      options.onError?.(error);
+      if (options.shouldRethrow?.(error)) {
+        throw error;
+      }
+      return typeof options.fallback === 'function' ? options.fallback() : options.fallback;
+    }
+  }),
+}));
+
+vi.mock('@/features/kangur/observability/client', () => ({
+  withKangurClientError: withKangurClientErrorMock,
+}));
+
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   formatKangurAiTutorTemplate,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { buildKangurAiTutorContentLocaleScaffold } from '@/features/kangur/server/ai-tutor-content-locale-scaffold';
 import {
+  clearKangurAiTutorContentClientCache,
   KangurAiTutorContentProvider,
   useActivateKangurAiTutorContent,
   useKangurAiTutorContent,
@@ -62,7 +90,9 @@ function ActivatorHarness(): React.JSX.Element {
 describe('KangurAiTutorContentContext', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    clearKangurAiTutorContentClientCache();
     authStateMock.mockReturnValue({ isAuthenticated: false });
+    localeMock.mockReturnValue('pl');
   });
 
   it('falls back to the default AI Tutor content when no provider is mounted', () => {
@@ -78,6 +108,25 @@ describe('KangurAiTutorContentContext', () => {
       DEFAULT_KANGUR_AI_TUTOR_CONTENT.narrator.registrySourceLabel
     );
     expect(screen.getByTestId('step-label')).toHaveTextContent('Krok 2 z 5');
+  });
+
+  it('uses scaffolded locale content when no provider is mounted in a non-Polish locale', () => {
+    localeMock.mockReturnValue('de');
+
+    render(<Harness />);
+
+    const germanScaffold = buildKangurAiTutorContentLocaleScaffold({
+      locale: 'de',
+      sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+    });
+
+    expect(screen.getByTestId('restore-label')).toHaveTextContent(
+      germanScaffold.navigation.restoreTutorLabel
+    );
+    expect(screen.getByTestId('narrator-source-label')).toHaveTextContent(
+      germanScaffold.narrator.registrySourceLabel
+    );
+    expect(screen.getByTestId('step-label')).toHaveTextContent('Schritt 2 von 5');
   });
 
   it('hydrates the AI Tutor content from the API when the provider is mounted', async () => {
@@ -115,5 +164,86 @@ describe('KangurAiTutorContentContext', () => {
     expect(screen.getByTestId('default-tutor-name')).toHaveTextContent('Przewodnik');
     expect(screen.getByTestId('narrator-source-label')).toHaveTextContent('Czytnik tutora');
     expect(screen.getByTestId('step-label')).toHaveTextContent('Etap 2 z 5');
+  });
+
+  it('quietly falls back to the default AI Tutor content when the optional fetch fails', async () => {
+    apiGetMock.mockRejectedValue(new Error('database down'));
+    authStateMock.mockReturnValue({ isAuthenticated: true });
+
+    render(
+      <KangurAiTutorContentProvider>
+        <ActivatorHarness />
+      </KangurAiTutorContentProvider>
+    );
+
+    await waitFor(() => {
+      expect(apiGetMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(screen.getByTestId('restore-label')).toHaveTextContent(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation.restoreTutorLabel
+    );
+    expect(screen.getByTestId('default-tutor-name')).toHaveTextContent(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.common.defaultTutorName
+    );
+    const options = withKangurClientErrorMock.mock.calls.at(-1)?.[2];
+    expect(options?.shouldReport?.(new Error('database down'))).toBe(false);
+  });
+
+  it('uses scaffolded locale content before activation for non-Polish providers', () => {
+    authStateMock.mockReturnValue({ isAuthenticated: false });
+
+    render(
+      <KangurAiTutorContentProvider locale='de'>
+        <Harness />
+      </KangurAiTutorContentProvider>
+    );
+
+    const germanScaffold = buildKangurAiTutorContentLocaleScaffold({
+      locale: 'de',
+      sourceContent: DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+    });
+
+    expect(screen.getByTestId('restore-label')).toHaveTextContent(
+      germanScaffold.navigation.restoreTutorLabel
+    );
+    expect(screen.getByTestId('narrator-source-label')).toHaveTextContent(
+      germanScaffold.narrator.registrySourceLabel
+    );
+    expect(screen.getByTestId('step-label')).toHaveTextContent('Schritt 2 von 5');
+  });
+
+  it('reuses cached AI Tutor content across repeated provider mounts for the same locale', async () => {
+    apiGetMock.mockResolvedValue({
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      navigation: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation,
+        restoreTutorLabel: 'Cached Tutor Label',
+      },
+    });
+    authStateMock.mockReturnValue({ isAuthenticated: true });
+
+    const firstRender = render(
+      <KangurAiTutorContentProvider>
+        <ActivatorHarness />
+      </KangurAiTutorContentProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('restore-label')).toHaveTextContent('Cached Tutor Label');
+    });
+    firstRender.unmount();
+
+    render(
+      <KangurAiTutorContentProvider>
+        <ActivatorHarness />
+      </KangurAiTutorContentProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('restore-label')).toHaveTextContent('Cached Tutor Label');
+    });
+
+    expect(apiGetMock).toHaveBeenCalledTimes(1);
   });
 });

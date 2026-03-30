@@ -1,16 +1,11 @@
-import { KangurFeatureRouteShell } from '@/features/kangur/ui/KangurFeatureRouteShell';
+import { KangurAliasAppLayout } from '@/features/kangur/server';
 
 import type { ReactNode } from 'react';
 
-
-export default function Layout({
-  children: _children,
+export default async function Layout({
+  children,
 }: {
   children: ReactNode;
-}): ReactNode {
-  return (
-    <>
-      <KangurFeatureRouteShell />
-    </>
-  );
+}): Promise<ReactNode> {
+  return await KangurAliasAppLayout({ children });
 }

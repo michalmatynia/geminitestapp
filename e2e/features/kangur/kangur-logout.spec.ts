@@ -2,6 +2,21 @@ import { expect, test, type Page } from '@playwright/test';
 
 const ROUTE_INITIAL_GOTO_TIMEOUT_MS = 90_000;
 const ROUTE_BOOT_TIMEOUT_MS = 45_000;
+const UNAUTHORIZED_RESPONSE = JSON.stringify({ message: 'Unauthorized' });
+const LOGOUT_SUCCESS_RESPONSE = JSON.stringify({ ok: true });
+const EMPTY_SCORES_RESPONSE = JSON.stringify([]);
+const EMPTY_PROGRESS_RESPONSE = JSON.stringify({
+  totalXp: 0,
+  gamesPlayed: 0,
+  perfectGames: 0,
+  lessonsCompleted: 0,
+  clockPerfect: 0,
+  calendarPerfect: 0,
+  geometryPerfect: 0,
+  badges: [],
+  operationsPlayed: [],
+  lessonMastery: {},
+});
 
 const buildManagerUser = () => {
   const nowIso = new Date('2026-03-08T10:00:00.000Z').toISOString();
@@ -76,6 +91,7 @@ test.describe('Kangur logout', () => {
     let isLoggedOut = false;
     let authMeRequests = 0;
     let logoutRequests = 0;
+    const managerUserResponse = JSON.stringify(buildManagerUser());
 
     await page.route('**/api/kangur/auth/me**', async (route) => {
       authMeRequests += 1;
@@ -84,7 +100,7 @@ test.describe('Kangur logout', () => {
         await route.fulfill({
           status: 401,
           contentType: 'application/json',
-          body: JSON.stringify({ message: 'Unauthorized' }),
+          body: UNAUTHORIZED_RESPONSE,
         });
         return;
       }
@@ -92,7 +108,7 @@ test.describe('Kangur logout', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(buildManagerUser()),
+        body: managerUserResponse,
       });
     });
 
@@ -102,7 +118,7 @@ test.describe('Kangur logout', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ ok: true }),
+        body: LOGOUT_SUCCESS_RESPONSE,
       });
     });
 
@@ -110,7 +126,7 @@ test.describe('Kangur logout', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([]),
+        body: EMPTY_SCORES_RESPONSE,
       });
     });
 
@@ -118,18 +134,7 @@ test.describe('Kangur logout', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          totalXp: 0,
-          gamesPlayed: 0,
-          perfectGames: 0,
-          lessonsCompleted: 0,
-          clockPerfect: 0,
-          calendarPerfect: 0,
-          geometryPerfect: 0,
-          badges: [],
-          operationsPlayed: [],
-          lessonMastery: {},
-        }),
+        body: EMPTY_PROGRESS_RESPONSE,
       });
     });
 

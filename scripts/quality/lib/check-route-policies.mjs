@@ -49,6 +49,11 @@ const CSRF_EXEMPTION_POLICIES = [
     pattern: /^ai-paths\/portable-engine\/remediation-webhook(\/|$)/,
   },
   {
+    id: 'public-campaign-links',
+    reason: 'Public email campaign tracking and preference endpoints must accept tokenized requests from email clients and landing pages.',
+    pattern: /^filemaker\/campaigns\/(click|open|preferences|unsubscribe)(\/|$)/,
+  },
+  {
     id: 'external-integrations',
     reason: 'Integration routes accept external callbacks, requests, and connection flows.',
     pattern: /^v2\/integrations(\/|$)/,

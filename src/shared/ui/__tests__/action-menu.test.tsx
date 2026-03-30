@@ -43,4 +43,17 @@ describe('ActionMenu', () => {
       className: 'menu-shell',
     });
   });
+
+  it('forwards an explicit deterministic trigger id', () => {
+    render(
+      <ActionMenu triggerId='stable-menu-trigger'>
+        <button type='button'>Archive</button>
+      </ActionMenu>
+    );
+
+    expect(screen.getByRole('button', { name: 'Open actions menu' })).toHaveAttribute(
+      'id',
+      'stable-menu-trigger'
+    );
+  });
 });

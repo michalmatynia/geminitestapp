@@ -40,21 +40,24 @@ type UseCanvasPulseEffectsResult = {
   outputPulseNodes: Set<string>;
 };
 
-export function useCanvasPulseEffects({
-  nodes,
-  edges,
-  runtimeEvents,
-  runtimeState,
-  getPortValue,
-  edgesByFromPort,
-  edgesByToPort,
-  incomingEdgeIdsByNode,
-  outgoingEdgeIdsByNode,
-  buildEdgePortKey,
-  nodeById,
-  flowAnimationMs,
-  nodePulseMs,
-}: UseCanvasPulseEffectsInput): UseCanvasPulseEffectsResult {
+export function useCanvasPulseEffects(
+  args: UseCanvasPulseEffectsInput
+): UseCanvasPulseEffectsResult {
+  const {
+    nodes,
+    edges,
+    runtimeEvents,
+    runtimeState,
+    getPortValue,
+    edgesByFromPort,
+    edgesByToPort,
+    incomingEdgeIdsByNode,
+    outgoingEdgeIdsByNode,
+    buildEdgePortKey,
+    nodeById,
+    flowAnimationMs,
+    nodePulseMs,
+  } = args;
   const [activeEdgeIds, setActiveEdgeIds] = React.useState<Set<string>>(() => new Set());
   const [inputPulseNodes, setInputPulseNodes] = React.useState<Set<string>>(() => new Set());
   const [outputPulseNodes, setOutputPulseNodes] = React.useState<Set<string>>(() => new Set());

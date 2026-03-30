@@ -13,6 +13,7 @@ import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsCont
 import { AdminNotesPage } from '@/features/notesapp/pages/AdminNotesPage';
 import { server } from '@/mocks/server';
 import type { NoteWithRelations, TagRecord, CategoryRecord } from '@/shared/contracts/notes';
+import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { ToastProvider } from '@/shared/ui/toast';
 
 const now = new Date().toISOString();
@@ -121,6 +122,7 @@ describe('Notes page UI', () => {
   let createNoteRequestTitles: string[] = [];
 
   beforeEach(() => {
+    invalidateSettingsCache();
     window.localStorage.clear();
     notes = [makeNote(), makeNote({ id: 'note-2', title: 'Beta' })];
     sawNotebookScopedNotesFetch = false;
@@ -137,6 +139,17 @@ describe('Notes page UI', () => {
 
     server.use(
       http.get('/api/settings', () => HttpResponse.json([])),
+      http.get('/api/settings/lite', () => HttpResponse.json([])),
+      http.post('/api/settings', async ({ request }) => {
+        const body = (await request.json()) as { key?: string; value?: string };
+        return HttpResponse.json({
+          id: body.key ?? 'setting',
+          key: body.key ?? 'setting',
+          value: body.value ?? '',
+          createdAt: now,
+          updatedAt: now,
+        });
+      }),
       http.get('/api/notes/categories', () => HttpResponse.json([])),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true })),
       http.post('/api/query-telemetry', () => HttpResponse.json({ success: true })),
@@ -225,6 +238,7 @@ describe('Notes page UI', () => {
   });
 
   afterEach(() => {
+    invalidateSettingsCache();
     vi.restoreAllMocks();
   });
 

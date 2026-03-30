@@ -1,654 +1,41 @@
-import type { KangurAssignmentPlan } from '@kangur/core';
-import type { KangurScore } from '@kangur/contracts';
-import { Link, useRouter, type Href } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Text, View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   useKangurMobileLessonCheckpoints,
-  type KangurMobileLessonCheckpointItem,
 } from '../lessons/useKangurMobileLessonCheckpoints';
+import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
 import {
-  formatKangurMobileScoreDateTime,
-  formatKangurMobileScoreOperation,
-  getKangurMobileScoreAccuracyPercent,
-} from '../scores/mobileScoreSummary';
+  KangurMobileActionButton as ActionButton,
+  KangurMobileCard as Card,
+  KangurMobileInsetPanel as InsetPanel,
+  KangurMobileLinkButton as LinkButton,
+  KangurMobilePendingActionButton,
+  KangurMobilePill as Pill,
+  KangurMobileScrollScreen,
+} from '../shared/KangurMobileUi';
 import { createKangurResultsHref } from '../scores/resultsHref';
-import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
+import {
+  AssignmentRow,
+  DailyPlanBadgeChip,
+  DUELS_ROUTE,
+  FocusCard,
+  LessonCheckpointRow,
+  LESSONS_ROUTE,
+  LessonMasteryRow,
+  PROFILE_ROUTE,
+  RecentResultRow,
+  RESULTS_ROUTE,
+} from './daily-plan-primitives';
 import { useKangurMobileDailyPlanAssignments } from './useKangurMobileDailyPlanAssignments';
 import {
   useKangurMobileDailyPlanBadges,
-  type KangurMobileDailyPlanBadgeItem,
 } from './useKangurMobileDailyPlanBadges';
 import { useKangurMobileDailyPlanDuels } from './useKangurMobileDailyPlanDuels';
 import { useKangurMobileDailyPlan } from './useKangurMobileDailyPlan';
-import {
-  useKangurMobileDailyPlanLessonMastery,
-  type KangurMobileDailyPlanLessonMasteryItem,
-} from './useKangurMobileDailyPlanLessonMastery';
-
-function Card({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        borderRadius: 24,
-        backgroundColor: '#ffffff',
-        padding: 18,
-        gap: 12,
-        shadowColor: '#0f172a',
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
-        elevation: 3,
-      }}
-    >
-      {children}
-    </View>
-  );
-}
-
-function Pill({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: {
-    backgroundColor: string;
-    borderColor: string;
-    textColor: string;
-  };
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: tone.borderColor,
-        backgroundColor: tone.backgroundColor,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
-  );
-}
-
-function LinkButton({
-  href,
-  label,
-  tone = 'secondary',
-  stretch = false,
-}: {
-  href: Href;
-  label: string;
-  stretch?: boolean;
-  tone?: 'primary' | 'secondary';
-}): React.JSX.Element {
-  const isPrimary = tone === 'primary';
-
-  return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityRole='button'
-        style={{
-          alignSelf: stretch ? 'stretch' : 'flex-start',
-          width: stretch ? '100%' : undefined,
-          borderRadius: 999,
-          borderWidth: isPrimary ? 0 : 1,
-          borderColor: isPrimary ? 'transparent' : '#cbd5e1',
-          backgroundColor: isPrimary ? '#0f172a' : '#ffffff',
-          paddingHorizontal: 14,
-          paddingVertical: 10,
-        }}
-      >
-        <Text
-          style={{
-            color: isPrimary ? '#ffffff' : '#0f172a',
-            fontWeight: '700',
-            textAlign: stretch ? 'center' : 'left',
-          }}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
-  );
-}
-
-function FocusCard({
-  accentColor,
-  description,
-  historyHref,
-  lessonHref,
-  operation,
-  practiceHref,
-  title,
-}: {
-  accentColor: string;
-  description: string;
-  historyHref: Href;
-  lessonHref: Href | null;
-  operation: {
-    averageAccuracyPercent: number;
-    operation: string;
-    sessions: number;
-  };
-  practiceHref: Href;
-  title: string;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
-      <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-        {formatKangurMobileScoreOperation(operation.operation, locale)}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{description}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Pill
-          label={copy({
-            de: `Durchschnitt ${operation.averageAccuracyPercent}%`,
-            en: `Average ${operation.averageAccuracyPercent}%`,
-            pl: `Średnio ${operation.averageAccuracyPercent}%`,
-          })}
-          tone={{
-            backgroundColor: accentColor === '#b91c1c' ? '#fef2f2' : '#ecfdf5',
-            borderColor: accentColor === '#b91c1c' ? '#fecaca' : '#a7f3d0',
-            textColor: accentColor,
-          }}
-        />
-        <Pill
-          label={copy({
-            de: `Ergebnisse ${operation.sessions}`,
-            en: `Results ${operation.sessions}`,
-            pl: `Wyniki ${operation.sessions}`,
-          })}
-          tone={{
-            backgroundColor: '#f1f5f9',
-            borderColor: '#cbd5e1',
-            textColor: '#475569',
-          }}
-        />
-      </View>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <LinkButton
-          href={practiceHref}
-          label={copy({
-            de: 'Jetzt trainieren',
-            en: 'Practice now',
-            pl: 'Trenuj teraz',
-          })}
-          tone='primary'
-        />
-        {lessonHref ? (
-          <LinkButton
-            href={lessonHref}
-            label={copy({
-              de: 'Lektion öffnen',
-              en: 'Open lesson',
-              pl: 'Otwórz lekcję',
-            })}
-          />
-        ) : null}
-        <LinkButton
-          href={historyHref}
-          label={copy({
-            de: 'Modusverlauf',
-            en: 'Mode history',
-            pl: 'Historia trybu',
-          })}
-        />
-      </View>
-    </View>
-  );
-}
-
-const getPriorityTone = (
-  priority: KangurAssignmentPlan['priority'],
-): {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-} => {
-  if (priority === 'high') {
-    return {
-      backgroundColor: '#fef2f2',
-      borderColor: '#fecaca',
-      textColor: '#b91c1c',
-    };
-  }
-  if (priority === 'medium') {
-    return {
-      backgroundColor: '#fffbeb',
-      borderColor: '#fde68a',
-      textColor: '#b45309',
-    };
-  }
-
-  return {
-    backgroundColor: '#eff6ff',
-    borderColor: '#bfdbfe',
-    textColor: '#1d4ed8',
-  };
-};
-
-const getPriorityLabel = (priority: KangurAssignmentPlan['priority']): string => {
-  return priority;
-};
-
-function AssignmentRow({
-  assignment,
-  href,
-}: {
-  assignment: KangurAssignmentPlan;
-  href: Href | null;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 8,
-      }}
-    >
-      <Pill
-        label={copy({
-          de:
-            getPriorityLabel(assignment.priority) === 'high'
-              ? 'Hohe Priorität'
-              : getPriorityLabel(assignment.priority) === 'medium'
-                ? 'Mittlere Priorität'
-                : 'Niedrige Priorität',
-          en:
-            getPriorityLabel(assignment.priority) === 'high'
-              ? 'High priority'
-              : getPriorityLabel(assignment.priority) === 'medium'
-                ? 'Medium priority'
-                : 'Low priority',
-          pl:
-            getPriorityLabel(assignment.priority) === 'high'
-              ? 'Priorytet wysoki'
-              : getPriorityLabel(assignment.priority) === 'medium'
-                ? 'Priorytet średni'
-                : 'Priorytet niski',
-        })}
-        tone={getPriorityTone(assignment.priority)}
-      />
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-        {assignment.title}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {assignment.description}
-      </Text>
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Ziel: ${assignment.target}`,
-          en: `Goal: ${assignment.target}`,
-          pl: `Cel: ${assignment.target}`,
-        })}
-      </Text>
-      {href ? (
-        <LinkButton
-          href={href}
-          label={translateKangurMobileActionLabel(assignment.action.label, locale)}
-          tone='primary'
-        />
-      ) : (
-        <View
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            backgroundColor: '#e2e8f0',
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-          }}
-        >
-          <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {translateKangurMobileActionLabel(assignment.action.label, locale)} ·{' '}
-            {copy({
-              de: 'bald',
-              en: 'soon',
-              pl: 'wkrotce',
-            })}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function RecentResultRow({
-  historyHref,
-  lessonHref,
-  practiceHref,
-  result,
-}: {
-  historyHref: Href;
-  lessonHref: Href | null;
-  practiceHref: Href;
-  result: KangurScore;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const accuracyPercent = getKangurMobileScoreAccuracyPercent(result);
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 8,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {formatKangurMobileScoreOperation(result.operation, locale)}
-          </Text>
-          <Text style={{ color: '#64748b', fontSize: 12 }}>
-            {formatKangurMobileScoreDateTime(result.created_date, locale)}
-          </Text>
-        </View>
-        <Pill
-          label={`${result.correct_answers}/${result.total_questions}`}
-          tone={{
-            backgroundColor:
-              accuracyPercent >= 80 ? '#ecfdf5' : accuracyPercent >= 60 ? '#fffbeb' : '#fef2f2',
-            borderColor:
-              accuracyPercent >= 80 ? '#a7f3d0' : accuracyPercent >= 60 ? '#fde68a' : '#fecaca',
-            textColor:
-              accuracyPercent >= 80 ? '#047857' : accuracyPercent >= 60 ? '#b45309' : '#b91c1c',
-          }}
-        />
-      </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <LinkButton
-          href={practiceHref}
-          label={copy({
-            de: 'Erneut trainieren',
-            en: 'Train again',
-            pl: 'Trenuj ponownie',
-          })}
-          tone='primary'
-        />
-        {lessonHref ? (
-          <LinkButton
-            href={lessonHref}
-            label={copy({
-              de: 'Lektion öffnen',
-              en: 'Open lesson',
-              pl: 'Otwórz lekcję',
-            })}
-          />
-        ) : null}
-        <LinkButton
-          href={historyHref}
-          label={copy({
-            de: 'Modusverlauf',
-            en: 'Mode history',
-            pl: 'Historia trybu',
-          })}
-        />
-      </View>
-    </View>
-  );
-}
-
-function LessonCheckpointRow({
-  item,
-}: {
-  item: KangurMobileLessonCheckpointItem;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-            {item.emoji} {item.title}
-          </Text>
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: `Letztes Ergebnis ${item.lastScorePercent}% • Beherrschung ${item.masteryPercent}%`,
-              en: `Last score ${item.lastScorePercent}% • mastery ${item.masteryPercent}%`,
-              pl: `Ostatni wynik ${item.lastScorePercent}% • opanowanie ${item.masteryPercent}%`,
-            })}
-          </Text>
-        </View>
-        <Pill
-          label={`${item.bestScorePercent}%`}
-          tone={{
-            backgroundColor: '#eef2ff',
-            borderColor: '#c7d2fe',
-            textColor: '#4338ca',
-          }}
-        />
-      </View>
-
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Zuletzt gespeichert ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-          en: `Last saved ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-          pl: `Ostatni zapis ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-        })}
-      </Text>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <LinkButton
-          href={item.lessonHref}
-          label={`${copy({
-            de: 'Zur Lektion zurück',
-            en: 'Return to lesson',
-            pl: 'Wróć do lekcji',
-          })}: ${item.title}`}
-          tone='primary'
-        />
-        {item.practiceHref ? (
-          <LinkButton
-            href={item.practiceHref}
-            label={`${copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}: ${item.title}`}
-          />
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-const getLessonMasteryTone = (
-  masteryPercent: number,
-): {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-} => {
-  if (masteryPercent >= 90) {
-    return {
-      backgroundColor: '#ecfdf5',
-      borderColor: '#a7f3d0',
-      textColor: '#047857',
-    };
-  }
-  if (masteryPercent >= 70) {
-    return {
-      backgroundColor: '#fffbeb',
-      borderColor: '#fde68a',
-      textColor: '#b45309',
-    };
-  }
-  return {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
-    textColor: '#b91c1c',
-  };
-};
-
-function LessonMasteryRow({
-  insight,
-  title,
-}: {
-  insight: KangurMobileDailyPlanLessonMasteryItem;
-  title: string;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const masteryTone = getLessonMasteryTone(insight.masteryPercent);
-  const lastAttemptLabel = insight.lastCompletedAt
-    ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale)
-    : copy({
-        de: 'kein Datum',
-        en: 'no date',
-        pl: 'brak daty',
-      });
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
-          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-            {insight.emoji} {insight.title}
-          </Text>
-          <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-            {copy({
-              de: `Versuche ${insight.attempts} • letztes Ergebnis ${insight.lastScorePercent}%`,
-              en: `Attempts ${insight.attempts} • last score ${insight.lastScorePercent}%`,
-              pl: `Próby ${insight.attempts} • ostatni wynik ${insight.lastScorePercent}%`,
-            })}
-          </Text>
-        </View>
-        <Pill label={`${insight.masteryPercent}%`} tone={masteryTone} />
-      </View>
-
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Bestes Ergebnis ${insight.bestScorePercent}% • letzter Versuch ${lastAttemptLabel}`,
-          en: `Best score ${insight.bestScorePercent}% • last attempt ${lastAttemptLabel}`,
-          pl: `Najlepszy wynik ${insight.bestScorePercent}% • ostatnia próba ${lastAttemptLabel}`,
-        })}
-      </Text>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <LinkButton
-          href={insight.lessonHref}
-          label={copy({
-            de: 'Lektion öffnen',
-            en: 'Open lesson',
-            pl: 'Otwórz lekcję',
-          })}
-          tone='primary'
-        />
-        {insight.practiceHref ? (
-          <LinkButton
-            href={insight.practiceHref}
-            label={copy({
-              de: 'Danach trainieren',
-              en: 'Practice after',
-              pl: 'Potem trenuj',
-            })}
-          />
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-const LESSONS_ROUTE = '/lessons' as Href;
-const DUELS_ROUTE = createKangurDuelsHref();
-const PROFILE_ROUTE = '/profile' as Href;
-const RESULTS_ROUTE = createKangurResultsHref();
-
-function DailyPlanBadgeChip({
-  item,
-}: {
-  item: KangurMobileDailyPlanBadgeItem;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: '#c7d2fe',
-        backgroundColor: '#eef2ff',
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-        {item.emoji} {item.name}
-      </Text>
-    </View>
-  );
-}
+import { useKangurMobileDailyPlanLessonMastery } from './useKangurMobileDailyPlanLessonMastery';
 
 export function KangurDailyPlanScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -692,37 +79,22 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 18,
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-        }}
-      >
+    <KangurMobileScrollScreen
+      contentContainerStyle={{
+        gap: 18,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+    >
         <View style={{ gap: 14 }}>
-          <Link href='/' asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                backgroundColor: '#ffffff',
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Zurück',
-                  en: 'Back',
-                  pl: 'Wróć',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          <LinkButton
+            href='/'
+            label={copy({
+              de: 'Zurück',
+              en: 'Back',
+              pl: 'Wróć',
+            })}
+          />
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -821,30 +193,16 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 })}
                 stretch
               />
-              <Pressable
-                accessibilityRole='button'
-                onPress={() => {
-                  void refresh();
-                }}
-                style={{
-                  alignSelf: 'stretch',
-                  width: '100%',
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: '#cbd5e1',
-                  backgroundColor: '#ffffff',
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                }}
-              >
-                <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
-                  {copy({
-                    de: 'Plan aktualisieren',
-                    en: 'Refresh plan',
-                    pl: 'Odśwież plan',
-                  })}
-                </Text>
-              </Pressable>
+              <ActionButton
+                label={copy({
+                  de: 'Plan aktualisieren',
+                  en: 'Refresh plan',
+                  pl: 'Odśwież plan',
+                })}
+                onPress={() => refresh()}
+                stretch
+                tone='secondary'
+              />
             </View>
 
             {isLoadingAuth && !isAuthenticated ? (
@@ -875,27 +233,15 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                   />
                 </View>
               ) : (
-                <Pressable
-                  accessibilityRole='button'
-                  onPress={() => {
-                    void signIn();
-                  }}
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    backgroundColor: '#1d4ed8',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Demo starten',
-                      en: 'Start demo',
-                      pl: 'Uruchom demo',
-                    })}
-                  </Text>
-                </Pressable>
+                <ActionButton
+                  label={copy({
+                    de: 'Demo starten',
+                    en: 'Start demo',
+                    pl: 'Uruchom demo',
+                  })}
+                  onPress={() => signIn()}
+                  tone='brand'
+                />
               )
             ) : null}
 
@@ -1140,27 +486,14 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : duelPlan.error ? (
               <View style={{ gap: 10 }}>
                 <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{duelPlan.error}</Text>
-                <Pressable
-                  accessibilityRole='button'
-                  onPress={() => {
-                    void duelPlan.refresh();
-                  }}
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    backgroundColor: '#0f172a',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Duelle aktualisieren',
-                      en: 'Refresh duels',
-                      pl: 'Odśwież pojedynki',
-                    })}
-                  </Text>
-                </Pressable>
+                <ActionButton
+                  label={copy({
+                    de: 'Duelle aktualisieren',
+                    en: 'Refresh duels',
+                    pl: 'Odśwież pojedynki',
+                  })}
+                  onPress={() => duelPlan.refresh()}
+                />
               </View>
             ) : !duelPlan.isAuthenticated ? (
               <Text style={{ color: '#475569', lineHeight: 22 }}>
@@ -1173,14 +506,11 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             ) : (
               <View style={{ gap: 12 }}>
                 {duelPlan.currentEntry ? (
-                  <View
+                  <InsetPanel
+                    gap={8}
                     style={{
-                      borderRadius: 20,
-                      borderWidth: 1,
                       borderColor: '#bfdbfe',
                       backgroundColor: '#eff6ff',
-                      padding: 14,
-                      gap: 8,
                     }}
                   >
                     <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
@@ -1200,7 +530,7 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                         pl: `Wygrane ${duelPlan.currentEntry.wins} • Porażki ${duelPlan.currentEntry.losses} • Remisy ${duelPlan.currentEntry.ties}`,
                       })}
                     </Text>
-                  </View>
+                  </InsetPanel>
                 ) : (
                   <Text style={{ color: '#475569', lineHeight: 22 }}>
                     {copy({
@@ -1226,16 +556,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 ) : (
                   <View style={{ gap: 12 }}>
                     {duelPlan.opponents.map((opponent) => (
-                      <View
+                      <InsetPanel
                         key={opponent.learnerId}
-                        style={{
-                          borderRadius: 20,
-                          borderWidth: 1,
-                          borderColor: '#e2e8f0',
-                          backgroundColor: '#f8fafc',
-                          padding: 14,
-                          gap: 8,
-                        }}
+                        gap={8}
                       >
                         <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
                           {opponent.displayName}
@@ -1247,9 +570,13 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                             pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
                           })}
                         </Text>
-                        <Pressable
-                          accessibilityRole='button'
-                          disabled={duelPlan.isActionPending}
+                        <KangurMobilePendingActionButton
+                          horizontalPadding={14}
+                          label={copy({
+                            de: 'Schneller Rückkampf',
+                            en: 'Quick rematch',
+                            pl: 'Szybki rewanż',
+                          })}
                           onPress={() => {
                             void duelPlan.createRematch(opponent.learnerId).then((sessionId) => {
                               if (sessionId) {
@@ -1257,58 +584,29 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                               }
                             });
                           }}
-                          style={{
-                            alignSelf: 'flex-start',
-                            borderRadius: 999,
-                            backgroundColor: duelPlan.isActionPending ? '#94a3b8' : '#1d4ed8',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
-                          }}
-                        >
-                          <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                            {duelPlan.pendingOpponentLearnerId === opponent.learnerId
-                              ? copy({
-                                  de: 'Rückkampf wird gesendet...',
-                                  en: 'Sending rematch...',
-                                  pl: 'Wysyłanie rewanżu...',
-                                })
-                              : copy({
-                                  de: 'Schneller Rückkampf',
-                                  en: 'Quick rematch',
-                                  pl: 'Szybki rewanż',
-                                })}
-                          </Text>
-                        </Pressable>
-                      </View>
+                          pending={duelPlan.pendingOpponentLearnerId === opponent.learnerId}
+                          pendingLabel={copy({
+                            de: 'Rückkampf wird gesendet...',
+                            en: 'Sending rematch...',
+                            pl: 'Wysyłanie rewanżu...',
+                          })}
+                        />
+                      </InsetPanel>
                     ))}
                   </View>
                 )}
 
                 <View style={{ alignSelf: 'stretch', gap: 10 }}>
-                  <Pressable
-                    accessibilityRole='button'
-                    onPress={() => {
-                      void duelPlan.refresh();
-                    }}
-                    style={{
-                      alignSelf: 'stretch',
-                      width: '100%',
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#cbd5e1',
-                      backgroundColor: '#ffffff',
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
-                      {copy({
-                        de: 'Duelle aktualisieren',
-                        en: 'Refresh duels',
-                        pl: 'Odśwież pojedynki',
-                      })}
-                    </Text>
-                  </Pressable>
+                  <ActionButton
+                    label={copy({
+                      de: 'Duelle aktualisieren',
+                      en: 'Refresh duels',
+                      pl: 'Odśwież pojedynki',
+                    })}
+                    onPress={() => duelPlan.refresh()}
+                    stretch
+                    tone='secondary'
+                  />
 
                   <LinkButton
                     href={DUELS_ROUTE}
@@ -1616,7 +914,6 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             )}
           </Card>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }

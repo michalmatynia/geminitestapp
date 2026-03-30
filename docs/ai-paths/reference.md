@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -23,7 +23,8 @@ This document is the detailed operator/developer reference for AI Paths:
 - shared core runtime: `src/shared/lib/ai-paths/core/`
 - feature UI/services: `src/features/ai/ai-paths/`
 - API routes: `src/app/api/ai-paths/`
-- worker queue: `src/features/ai/ai-paths/workers/aiPathRunQueue.ts`
+- worker queue entry: `src/features/ai/ai-paths/workers/aiPathRunQueue.ts`
+- worker queue implementation: `src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts`
 - queue bootstrap: `src/features/jobs/queue-init.ts`
 
 ## Path Lifecycle
@@ -47,6 +48,7 @@ This document is the detailed operator/developer reference for AI Paths:
   - node input snapshots
   - node outputs
   - per-node errors, retries, and timing
+  - explicit lease/contention states such as `blocked_on_lease` and `handoff_ready`
 
 ## Node Categories
 
@@ -97,6 +99,7 @@ This document is the detailed operator/developer reference for AI Paths:
 - Keep model temperature low for deterministic classification/extraction tasks.
 - Cap retries/loops to avoid runaway runs.
 - Always expose observability payloads for drop/accept/write decisions.
+- When execution ownership is unavailable, surface lease contention and handoff explicitly instead of retrying hidden concurrent mutation.
 
 ## Prompt Design Standard
 
@@ -131,6 +134,18 @@ This document is the detailed operator/developer reference for AI Paths:
 5. Gradual enablement by trigger scope/category.
 6. Promote to default after stable monitoring window.
 
+## Operator Run Controls
+
+Current run-control entrypoints include:
+
+- `POST /api/ai-paths/runs/[runId]/resume`
+- `POST /api/ai-paths/runs/[runId]/handoff`
+- `POST /api/ai-paths/runs/[runId]/cancel`
+- `POST /api/ai-paths/runs/[runId]/retry-node`
+- `POST /api/ai-paths/runs/dead-letter/requeue`
+
+Use the platform policy in `docs/platform/ai-paths-resume-vs-handoff.md` when deciding whether a blocked run should resume, replay, or move into handoff-ready state.
+
 ## Failure Playbook
 
 1. Identify failing node from run timeline.
@@ -159,6 +174,7 @@ This document is the detailed operator/developer reference for AI Paths:
 
 - `docs/ai-paths/overview.md`
 - `docs/ai-paths/ai-paths-improvements-plan-2026-03-06.md`
+- `docs/platform/ai-paths-resume-vs-handoff.md`
 - `docs/prompt-exploder/overview.md`
 - `docs/prompt-exploder/tooltip-guide.md`
 - `docs/prompt-exploder/operations-runbook.md`

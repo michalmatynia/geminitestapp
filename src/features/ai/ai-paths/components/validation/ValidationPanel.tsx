@@ -10,10 +10,8 @@ type ValidationPanelProps = {
   className?: string;
 };
 
-export function ValidationPanel({
-  children,
-  className,
-}: ValidationPanelProps): React.JSX.Element {
+export function ValidationPanel(props: ValidationPanelProps): React.JSX.Element {
+  const { children, className } = props;
   return (
     <Card variant='subtle' padding='md' className={cn('border-border/60 bg-card/40', className)}>
       {children}

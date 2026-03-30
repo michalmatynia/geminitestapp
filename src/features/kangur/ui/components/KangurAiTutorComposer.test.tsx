@@ -6,10 +6,12 @@
 "use client";
 
 import { render, screen } from '@testing-library/react';
-import { useEffect, type ReactNode } from 'react';
+import { fireEvent } from '@testing-library/react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import type { KangurDrawingDraftStorageController } from '@/features/kangur/ui/components/drawing-engine/useKangurDrawingDraftStorage';
 
 import {
   KangurAiTutorPanelBodyProvider,
@@ -27,6 +29,33 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('./KangurAiTutorDrawingCanvas', () => ({
+  KangurAiTutorDrawingCanvas: ({
+    draftStorage,
+    onCancel,
+    onComplete,
+  }: {
+    draftStorage?: KangurDrawingDraftStorageController;
+    onCancel: () => void;
+    onComplete: (dataUrl: string) => void;
+  }) => (
+    <div
+      data-initial-snapshot={draftStorage?.draftSnapshot ?? ''}
+      data-testid='mock-kangur-ai-tutor-drawing-canvas'
+    >
+      <button type='button' onClick={() => draftStorage?.setDraftSnapshot('draft-snapshot-1')}>
+        Save draft
+      </button>
+      <button type='button' onClick={onCancel}>
+        Cancel drawing
+      </button>
+      <button type='button' onClick={() => onComplete('data:image/png;base64,DRAW')}>
+        Complete drawing
+      </button>
+    </div>
+  ),
 }));
 
 const createPanelBodyContextValue = (
@@ -136,6 +165,30 @@ function ComposerHarness({
   );
 }
 
+function ComposerDraftPersistenceHarness(): ReactNode {
+  const [drawingImageData, setDrawingImageData] = useState<string | null>(null);
+  const [drawingMode, setDrawingMode] = useState(false);
+
+  return (
+    <ComposerHarness
+      bodyValue={createPanelBodyContextValue({
+        drawingImageData,
+        drawingMode,
+        handleClearDrawing: () => {
+          setDrawingImageData(null);
+        },
+        handleDrawingComplete: (dataUrl: string) => {
+          setDrawingImageData(dataUrl);
+          setDrawingMode(false);
+        },
+        handleToggleDrawing: () => {
+          setDrawingMode((current) => !current);
+        },
+      })}
+    />
+  );
+}
+
 describe('KangurAiTutorComposer', () => {
   it('renders the composer input and quick actions with shared chat spacing tokens', () => {
     render(
@@ -174,5 +227,35 @@ describe('KangurAiTutorComposer', () => {
       'select-none'
     );
     expect(screen.getByLabelText('Wpisz pytanie')).toBeInTheDocument();
+  });
+
+  it('preserves a drawing draft across close and reopen, then clears it after completion', () => {
+    render(<ComposerDraftPersistenceHarness />);
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-drawing-toggle'));
+    expect(screen.getByTestId('mock-kangur-ai-tutor-drawing-canvas')).toHaveAttribute(
+      'data-initial-snapshot',
+      ''
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel drawing' }));
+
+    expect(screen.queryByTestId('mock-kangur-ai-tutor-drawing-canvas')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-drawing-toggle'));
+    expect(screen.getByTestId('mock-kangur-ai-tutor-drawing-canvas')).toHaveAttribute(
+      'data-initial-snapshot',
+      'draft-snapshot-1'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete drawing' }));
+    expect(screen.getByAltText('Rysunek')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('kangur-ai-tutor-drawing-toggle'));
+    expect(screen.getByTestId('mock-kangur-ai-tutor-drawing-canvas')).toHaveAttribute(
+      'data-initial-snapshot',
+      ''
+    );
   });
 });

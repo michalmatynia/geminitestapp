@@ -9,12 +9,18 @@ const runtimeState = vi.hoisted(() => ({
   value: {
     activeLearner: { id: 'learner-1', displayName: 'Maja' },
     activeTab: 'assign',
+    assignments: [],
+    assignmentsError: null,
     basePath: '/kangur',
     canAccessDashboard: true,
+    createAssignment: vi.fn(),
+    isLoadingAssignments: false,
+    lessons: [],
     learners: [
       { id: 'learner-1', displayName: 'Maja', loginName: 'maja', status: 'active' },
       { id: 'learner-2', displayName: 'Tomek', loginName: 'tomek', status: 'active' },
     ],
+    reassignAssignment: vi.fn(),
     selectLearner: vi.fn(),
     progress: {
       totalXp: 480,
@@ -76,12 +82,18 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
     runtimeState.value = {
       activeLearner: { id: 'learner-1', displayName: 'Maja' },
       activeTab: 'assign',
+      assignments: [],
+      assignmentsError: null,
       basePath: '/kangur',
       canAccessDashboard: true,
+      createAssignment: vi.fn(),
+      isLoadingAssignments: false,
+      lessons: [],
       learners: [
         { id: 'learner-1', displayName: 'Maja', loginName: 'maja', status: 'active' },
         { id: 'learner-2', displayName: 'Tomek', loginName: 'tomek', status: 'active' },
       ],
+      reassignAssignment: vi.fn(),
       selectLearner: vi.fn(),
       progress: {
         totalXp: 480,
@@ -99,6 +111,7 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
         activityStats: {},
         lessonMastery: {},
       },
+      updateAssignment: vi.fn(),
     };
   });
 
@@ -109,6 +122,10 @@ describe('KangurParentDashboardAssignmentsWidget', () => {
     expect(assignmentManagerMock).toHaveBeenCalledWith(
       expect.objectContaining({
         basePath: '/kangur',
+        preloadedAssignments: [],
+        preloadedAssignmentsError: null,
+        preloadedLessons: [],
+        preloadedLoading: false,
         view: 'catalogWithLists',
       })
     );

@@ -3,13 +3,14 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
+import { subscribeToTutorVisibilityChanges } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const {
@@ -21,6 +22,7 @@ const {
   queryClientMock,
   usageQueryState,
   useKangurPageContentEntryMock,
+  useQueryMock,
 } = vi.hoisted(() => ({
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
@@ -63,10 +65,11 @@ const {
     },
   },
   useKangurPageContentEntryMock: vi.fn(),
+  useQueryMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => usageQueryState.value,
+  useQuery: useQueryMock,
   useQueryClient: () => queryClientMock,
 }));
 
@@ -103,9 +106,25 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 
 import { KangurParentDashboardAiTutorWidget } from './KangurParentDashboardAiTutorWidget';
 
+const flushDeferredUsageLoad = async (): Promise<void> => {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(900);
+  });
+};
+
+function TutorVisibilityProbe(): React.JSX.Element {
+  const [hidden, setHidden] = React.useState(true);
+
+  React.useEffect(() => subscribeToTutorVisibilityChanges(setHidden), []);
+
+  return <div data-testid='tutor-visibility-probe'>{hidden ? 'hidden' : 'visible'}</div>;
+}
+
 describe('KangurParentDashboardAiTutorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
+    useQueryMock.mockImplementation(() => usageQueryState.value);
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
       entry: null,
@@ -175,6 +194,25 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     apiPostMock.mockResolvedValue({});
     invalidateAllSettingsMock.mockResolvedValue(undefined);
     vi.mocked(queryClientMock.invalidateQueries).mockResolvedValue(undefined);
+  });
+
+  it('disables focus refetch for usage because polling already keeps it fresh', async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(<KangurParentDashboardAiTutorWidget />);
+      await flushDeferredUsageLoad();
+
+      expect(useQueryMock).toHaveBeenCalled();
+      const lastCall = useQueryMock.mock.calls.at(-1);
+      expect(lastCall?.[0]).toMatchObject({
+        refetchOnWindowFocus: false,
+        refetchInterval: 30_000,
+        staleTime: 10_000,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows the AI Tutor tab helper state when no learner is active', () => {
@@ -264,6 +302,63 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     expect(screen.queryByText(/wykorzystanie dzisiaj/i)).not.toBeInTheDocument();
   });
 
+  it('enables the tutor without triggering cross-component render updates', async () => {
+    settingsStoreMock.get.mockImplementation((key: string) => {
+      if (key === KANGUR_AI_TUTOR_SETTINGS_KEY) {
+        return JSON.stringify({
+          'learner-1': {
+            enabled: false,
+            uiMode: 'anchored',
+            allowCrossPagePersistence: true,
+            allowLessons: true,
+            allowGames: true,
+            testAccessMode: 'guided',
+            showSources: true,
+            allowSelectedTextSupport: true,
+          },
+        });
+      }
+      if (key === KANGUR_AI_TUTOR_APP_SETTINGS_KEY) {
+        return JSON.stringify({
+          agentPersonaId: 'persona-1',
+          motionPresetId: 'tablet',
+          dailyMessageLimit: 12,
+        });
+      }
+      return undefined;
+    });
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    render(
+      <>
+        <TutorVisibilityProbe />
+        <KangurParentDashboardAiTutorWidget />
+      </>
+    );
+
+    expect(screen.getByTestId('tutor-visibility-probe')).toHaveTextContent('hidden');
+
+    fireEvent.click(screen.getByRole('button', { name: /włącz ai-tutora/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tutor-visibility-probe')).toHaveTextContent('visible');
+    });
+
+    const hasRenderPhaseUpdateWarning = consoleErrorSpy.mock.calls.some((call) =>
+      call.some(
+        (value) =>
+          typeof value === 'string' &&
+          value.includes('Cannot update a component') &&
+          value.includes('AiTutorConfigPanel')
+      )
+    );
+
+    expect(hasRenderPhaseUpdateWarning).toBe(false);
+
+    consoleErrorSpy.mockRestore();
+  });
+
   it('shows the learner-specific tutor mood summary for the active learner', () => {
     runtimeState.value = {
       activeLearner: {
@@ -351,16 +446,42 @@ describe('KangurParentDashboardAiTutorWidget', () => {
     );
   });
 
-  it('shows a fallback message when live usage cannot be loaded', () => {
+  it('shows loading copy before deferred live usage becomes available', async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(<KangurParentDashboardAiTutorWidget />);
+
+      expect(screen.getByText('Sprawdzam dzisiejsze wiadomości…')).toBeInTheDocument();
+      expect(screen.queryByText('Wysłano 0 wiadomości.')).not.toBeInTheDocument();
+
+      await flushDeferredUsageLoad();
+
+      expect(screen.getByText('Wysłano 0 wiadomości.')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows a fallback message when live usage cannot be loaded', async () => {
+    vi.useFakeTimers();
     usageQueryState.value = {
       data: undefined,
       isLoading: false,
       isError: true,
     };
 
-    render(<KangurParentDashboardAiTutorWidget />);
+    try {
+      render(<KangurParentDashboardAiTutorWidget />);
 
-    expect(screen.getByText('Nie udało się odczytać bieżącego użycia.')).toBeInTheDocument();
+      expect(screen.queryByText('Nie udało się odczytać bieżącego użycia.')).not.toBeInTheDocument();
+
+      await flushDeferredUsageLoad();
+
+      expect(screen.getByText('Nie udało się odczytać bieżącego użycia.')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not show app-wide tutor controls in the parent dashboard', () => {

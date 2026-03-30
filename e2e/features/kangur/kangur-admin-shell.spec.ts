@@ -50,7 +50,7 @@ const ROUTES: KangurAdminRouteExpectation[] = [
     heading: 'Kangur Lessons',
     breadcrumb: 'Admin/Kangur/Lessons',
     assertSurface: async (page) => {
-      await expect(page.getByText('Lesson Library', { exact: true })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 2, name: /lessons workspace/i })).toBeVisible();
     },
   },
   {

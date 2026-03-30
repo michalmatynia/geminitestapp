@@ -1,17 +1,23 @@
-export { default } from '@/features/integrations/public';
+'use client';
+
+export { default as ListProductModal } from './components/listings/ListProductModal';
+export { default as MassListProductModal } from './components/listings/MassListProductModal';
+export { ProductListingsModal } from './components/listings/ProductListingsModal';
 export {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-} from '@/features/integrations/public';
+} from './components/listings/hooks/useIntegrationSelection';
 export {
   fetchProductListings,
   productListingsQueryKey,
-} from '@/features/integrations/public';
+} from './hooks/useListingQueries';
 export {
-  ListProductModal,
-  MassListProductModal,
-  ProductListingsModal,
   useGenericExportToBaseMutation,
+} from './hooks/useProductListingMutations';
+export {
+  useIntegrationListingBadges,
+  useIntegrationModalOperations,
   useIntegrationOperations,
-} from '@/features/integrations/public';
+} from './hooks/useIntegrationOperations';
+export { isBaseIntegrationSlug } from './constants/slugs';

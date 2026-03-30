@@ -17,7 +17,7 @@ import {
   parseKangurTestQuestionStore,
   usesRichQuestionPresentation,
   type QuestionFormData,
-} from '../test-questions';
+} from '../test-suites/questions';
 import {
   KANGUR_TEST_SUITES_SETTING_KEY,
   parseKangurTestSuites,

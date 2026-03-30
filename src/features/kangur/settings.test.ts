@@ -81,6 +81,30 @@ describe('kangur lesson settings', () => {
     });
   });
 
+  it('includes English adverbs with grammar subsection references in the default library', () => {
+    const lessons = createDefaultKangurLessons();
+    const adverbs = lessons.find((lesson) => lesson.componentId === 'english_adverbs');
+
+    expect(adverbs).toMatchObject({
+      subject: 'english',
+      ageGroup: 'ten_year_old',
+      sectionId: 'english_grammar',
+      subsectionId: 'english_grammar_adverbs',
+    });
+  });
+
+  it('includes English adverbs of frequency with grammar subsection references in the default library', () => {
+    const lessons = createDefaultKangurLessons();
+    const adverbs = lessons.find((lesson) => lesson.componentId === 'english_adverbs_frequency');
+
+    expect(adverbs).toMatchObject({
+      subject: 'english',
+      ageGroup: 'ten_year_old',
+      sectionId: 'english_grammar',
+      subsectionId: 'english_grammar_adverbs_frequency',
+    });
+  });
+
   it('defines the Art subject sections for six-year-old lessons', () => {
     const sections = createDefaultKangurSections().filter((section) => section.subject === 'art');
 
@@ -107,7 +131,7 @@ describe('kangur lesson settings', () => {
     });
   });
 
-  it('defines English grammar subsections, including adjectives', () => {
+  it('defines English grammar subsections, including adjectives and comparatives', () => {
     const grammarSection = createDefaultKangurSections().find(
       (section) => section.id === 'english_grammar'
     );
@@ -116,14 +140,37 @@ describe('kangur lesson settings', () => {
       'english_grammar_pronouns',
       'english_grammar_sentence_structure',
       'english_grammar_subject_verb_agreement',
+      'english_grammar_going_to',
       'english_grammar_articles',
       'english_grammar_adjectives',
+      'english_grammar_comparatives_superlatives',
+      'english_grammar_adverbs',
+      'english_grammar_adverbs_frequency',
       'english_grammar_prepositions',
     ]);
     expect(grammarSection?.subsections.find((subsection) => subsection.id === 'english_grammar_adjectives'))
       .toMatchObject({
         componentIds: ['english_adjectives'],
       });
+    expect(
+      grammarSection?.subsections.find(
+        (subsection) => subsection.id === 'english_grammar_comparatives_superlatives'
+      )
+    ).toMatchObject({
+      componentIds: ['english_comparatives_superlatives'],
+    });
+    expect(
+      grammarSection?.subsections.find((subsection) => subsection.id === 'english_grammar_adverbs')
+    ).toMatchObject({
+      componentIds: ['english_adverbs'],
+    });
+    expect(
+      grammarSection?.subsections.find(
+        (subsection) => subsection.id === 'english_grammar_adverbs_frequency'
+      )
+    ).toMatchObject({
+      componentIds: ['english_adverbs_frequency'],
+    });
   });
 
   it('includes logical thinking lessons in default library', () => {
@@ -195,6 +242,33 @@ describe('kangur lesson settings', () => {
     });
   });
 
+  it('keeps the canonical lesson id when duplicate component entries share the same requested id', () => {
+    const parsed = normalizeKangurLessons([
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        ageGroup: 'ten_year_old',
+        title: 'Nauka zegara',
+        enabled: true,
+        sortOrder: 1000,
+      },
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        ageGroup: 'ten_year_old',
+        title: 'Nauka zegara',
+        enabled: true,
+        sortOrder: 2000,
+      },
+    ]);
+
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]).toMatchObject({
+      id: 'kangur-lesson-clock',
+      componentId: 'clock',
+    });
+  });
+
   it('preserves explicit document render mode when provided', () => {
     const parsed = normalizeKangurLessons([
       {
@@ -212,6 +286,29 @@ describe('kangur lesson settings', () => {
     ]);
 
     expect(parsed[0]?.contentMode).toBe('document');
+  });
+
+  it('preserves explicit section references when canonicalizing lessons', () => {
+    const parsed = normalizeKangurLessons([
+      {
+        id: 'lesson-with-sections',
+        componentId: 'english_comparatives_superlatives',
+        title: 'Comparatives and superlatives',
+        description: 'Grammar practice',
+        emoji: '📚',
+        color: 'kangur-gradient-accent-sky',
+        activeBg: 'bg-sky-500',
+        sortOrder: 1000,
+        enabled: true,
+        sectionId: 'english_grammar',
+        subsectionId: 'english_grammar_comparatives_superlatives',
+      },
+    ]);
+
+    expect(parsed[0]).toMatchObject({
+      sectionId: 'english_grammar',
+      subsectionId: 'english_grammar_comparatives_superlatives',
+    });
   });
 
   it('defaults narrator settings to server mode with voice', () => {

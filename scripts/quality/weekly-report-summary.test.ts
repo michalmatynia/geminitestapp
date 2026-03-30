@@ -38,6 +38,11 @@ describe('weekly report summary helpers', () => {
       status: 'fail',
       exitCode: 1,
       durationMs: 408_370,
+      canonicalTestingSuite: {
+        canonicalSuiteId: 'lint-domains',
+        canonicalSuiteLabel: 'Lint Domain Gate',
+        canonicalLaneIds: ['nightly-deep'],
+      },
       scanSummary: {
         status: 'failed',
         summary: {
@@ -243,6 +248,11 @@ describe('weekly report summary helpers', () => {
     expect(details.checks[0]).toMatchObject({
       id: 'lintDomains',
       status: 'fail',
+      canonicalTestingSuite: {
+        canonicalSuiteId: 'lint-domains',
+        canonicalSuiteLabel: 'Lint Domain Gate',
+        canonicalLaneIds: ['nightly-deep'],
+      },
       scanSummary: {
         summary: {
           totalDomains: 5,
@@ -254,6 +264,11 @@ describe('weekly report summary helpers', () => {
     expect(details.checks[1]).toMatchObject({
       id: 'criticalFlows',
       status: 'pass',
+      canonicalTestingSuite: {
+        canonicalSuiteId: 'critical-flows',
+        canonicalSuiteLabel: 'Critical Flow Regression',
+        canonicalLaneIds: ['local-fast', 'pr-required', 'nightly-deep', 'release-gate'],
+      },
       scanSummary: {
         summary: {
           totalFlows: 6,

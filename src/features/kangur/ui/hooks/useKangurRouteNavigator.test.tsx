@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   startRouteTransitionMock,
+  frontendPublicOwnerMock,
+  sessionMock,
   useOptionalKangurRouteTransitionStateMock,
   useOptionalKangurRoutingMock,
   usePathnameMock,
@@ -17,6 +19,8 @@ const {
   routerReplaceMock,
 } = vi.hoisted(() => ({
   startRouteTransitionMock: vi.fn(),
+  frontendPublicOwnerMock: vi.fn(),
+  sessionMock: vi.fn(),
   useOptionalKangurRouteTransitionStateMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
   usePathnameMock: vi.fn(),
@@ -29,6 +33,14 @@ const {
 vi.mock('next-intl', () => ({
   useLocale: useLocaleMock,
 }));
+
+vi.mock('next-auth/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-auth/react')>();
+  return {
+    ...actual,
+    useSession: () => sessionMock(),
+  };
+});
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
@@ -49,6 +61,10 @@ vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useOptionalKangurRouting: useOptionalKangurRoutingMock,
+}));
+
+vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
+  useOptionalFrontendPublicOwner: () => frontendPublicOwnerMock(),
 }));
 
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
@@ -119,8 +135,31 @@ const NavigatorBackProbe = ({
 describe('useKangurRouteNavigator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    Object.defineProperty(window.navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 0,
+    });
     useLocaleMock.mockReturnValue('pl');
     usePathnameMock.mockReturnValue('/lessons');
+    frontendPublicOwnerMock.mockReturnValue(null);
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     useOptionalKangurRouteTransitionStateMock.mockReturnValue(null);
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/',
@@ -194,6 +233,56 @@ describe('useKangurRouteNavigator', () => {
     expect(routerReplaceMock).toHaveBeenCalledWith('/en/kangur/lessons', { scroll: false });
   });
 
+  it('canonicalizes localized /kangur alias routes when Kangur owns the public frontend', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en/kangur');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en/kangur',
+      requestedPath: '/kangur',
+    });
+
+    render(<NavigatorProbe href='/kangur/lessons?focus=division' />);
+
+    fireEvent.click(screen.getByTestId('navigator-replace'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons?focus=division',
+      pageKey: 'Lessons',
+    });
+    expect(routerReplaceMock).toHaveBeenCalledWith('/en/lessons?focus=division', {
+      scroll: false,
+    });
+  });
+
+  it('keeps the canonical public route when navigating from root-owned public Kangur routes', () => {
+    frontendPublicOwnerMock.mockReturnValue({ publicOwner: 'kangur' });
+    useLocaleMock.mockReturnValue('en');
+    usePathnameMock.mockReturnValue('/en');
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+      embedded: false,
+      pageKey: 'Game',
+      requestedHref: '/en',
+      requestedPath: '/',
+    });
+
+    render(<NavigatorProbe href='/lessons?focus=division' />);
+
+    fireEvent.click(screen.getByTestId('navigator-replace'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/en/lessons?focus=division',
+      pageKey: 'Lessons',
+    });
+    expect(routerReplaceMock).toHaveBeenCalledWith('/en/lessons?focus=division', {
+      scroll: false,
+    });
+  });
+
   it('preserves the active locale prefix when navigating between root-owned public Kangur routes', () => {
     useLocaleMock.mockReturnValue('en');
     usePathnameMock.mockReturnValue('/en/lessons');
@@ -229,6 +318,46 @@ describe('useKangurRouteNavigator', () => {
     unmount();
     vi.advanceTimersByTime(110);
 
+    expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
+  });
+
+  it('prefetches managed push destinations before navigation starts', () => {
+    render(<NavigatorPushProbe acknowledgeMs={0} href='/lessons' />);
+
+    fireEvent.click(screen.getByTestId('navigator-push'));
+
+    expect(routerPrefetchMock).toHaveBeenCalledWith('/lessons');
+    expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
+  });
+
+  it('bypasses acknowledged navigation delays on coarse-pointer devices', () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(pointer: coarse)' || query === '(hover: none)',
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    Object.defineProperty(window.navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+    });
+
+    render(<NavigatorPushProbe acknowledgeMs={110} href='/lessons' />);
+
+    fireEvent.click(screen.getByTestId('navigator-push'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/lessons',
+      pageKey: 'Lessons',
+    });
     expect(routerPushMock).toHaveBeenCalledWith('/lessons', { scroll: false });
   });
 
@@ -293,5 +422,27 @@ describe('useKangurRouteNavigator', () => {
     if (originalHistoryLengthDescriptor) {
       Object.defineProperty(window.history, 'length', originalHistoryLengthDescriptor);
     }
+  });
+
+  it('downgrades blocked GamesLibrary targets to the current accessible page for non-super-admin users', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<NavigatorProbe href='/games' />);
+
+    fireEvent.click(screen.getByTestId('navigator-replace'));
+
+    expect(startRouteTransitionMock).toHaveBeenCalledWith({
+      href: '/games',
+      pageKey: 'Lessons',
+    });
+    expect(routerReplaceMock).toHaveBeenCalledWith('/games', { scroll: false });
   });
 });

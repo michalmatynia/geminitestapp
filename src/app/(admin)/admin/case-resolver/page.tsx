@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminCaseResolverPage } from '@/features/case-resolver/pages/AdminCaseResolverPage';
+import { AdminCaseResolverPage } from '@/features/case-resolver/public';
 
 export default function Page(): JSX.Element {
   return <AdminCaseResolverPage />;

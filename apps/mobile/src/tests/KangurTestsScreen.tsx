@@ -1,406 +1,38 @@
-import type {
-  KangurTestChoice,
-} from '@kangur/contracts';
-import { Link, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Text, View } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 
 import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
-import { useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
-import { createKangurLessonsCatalogHref } from '../lessons/lessonHref';
-import { createKangurPlanHref } from '../plan/planHref';
-import { createKangurPracticeHref } from '../practice/practiceHref';
-import { createKangurResultsHref } from '../scores/resultsHref';
-import { createKangurTestsHref } from './testsHref';
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import {
+  BASE_TONE,
+  INDIGO_TONE,
+  OutlineLink,
+  PrimaryButton,
+  SectionCard,
+  StatusPill,
+  SUCCESS_TONE,
+  WARNING_TONE,
+} from '../shared/KangurAssessmentUi';
+import { KangurMobileScrollScreen } from '../shared/KangurMobileUi';
+import {
+  ChoiceButton,
+  formatFocusToken,
+  formatPointsLabel,
+  formatQuestionCount,
+  formatQuestionProgress,
+  formatSuiteMeta,
+  LESSONS_ROUTE,
+  PLAN_ROUTE,
+  PRACTICE_ROUTE,
+  resolveQuestionStatusTone,
+  RESULTS_ROUTE,
+  TESTS_ROUTE,
+} from './tests-primitives';
 import {
   useKangurMobileTests,
   type KangurMobileTestSuiteItem,
 } from './useKangurMobileTests';
-
-type Tone = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-};
-
-const TESTS_ROUTE = createKangurTestsHref();
-const LESSONS_ROUTE = createKangurLessonsCatalogHref();
-const PRACTICE_ROUTE = createKangurPracticeHref('mixed');
-const PLAN_ROUTE = createKangurPlanHref();
-const RESULTS_ROUTE = createKangurResultsHref();
-
-const BASE_TONE: Tone = {
-  backgroundColor: '#f8fafc',
-  borderColor: '#cbd5e1',
-  textColor: '#475569',
-};
-
-const SUCCESS_TONE: Tone = {
-  backgroundColor: '#ecfdf5',
-  borderColor: '#a7f3d0',
-  textColor: '#047857',
-};
-
-const WARNING_TONE: Tone = {
-  backgroundColor: '#fffbeb',
-  borderColor: '#fde68a',
-  textColor: '#b45309',
-};
-
-const ERROR_TONE: Tone = {
-  backgroundColor: '#fef2f2',
-  borderColor: '#fecaca',
-  textColor: '#b91c1c',
-};
-
-const INDIGO_TONE: Tone = {
-  backgroundColor: '#eef2ff',
-  borderColor: '#c7d2fe',
-  textColor: '#4338ca',
-};
-
-const formatFocusToken = (
-  value: string,
-): string => value.replace(/[-_]+/g, ' ').trim();
-
-const formatSuiteMeta = (
-  suite: KangurMobileTestSuiteItem['suite'],
-  locale: KangurMobileLocale,
-): string[] => {
-  const parts: string[] = [];
-
-  if (typeof suite.year === 'number') {
-    parts.push(
-      {
-        de: `Jahr ${suite.year}`,
-        en: `Year ${suite.year}`,
-        pl: `Rok ${suite.year}`,
-      }[locale],
-    );
-  }
-
-  if (suite.gradeLevel.trim().length > 0) {
-    parts.push(
-      {
-        de: `Poziom ${suite.gradeLevel}`,
-        en: `Level ${suite.gradeLevel}`,
-        pl: `Poziom ${suite.gradeLevel}`,
-      }[locale],
-    );
-  }
-
-  if (suite.category.trim().length > 0) {
-    parts.push(
-      {
-        de: `Kategoria ${suite.category}`,
-        en: `Category ${suite.category}`,
-        pl: `Kategoria ${suite.category}`,
-      }[locale],
-    );
-  }
-
-  return parts;
-};
-
-const formatQuestionProgress = (
-  current: number,
-  total: number,
-  locale: KangurMobileLocale,
-): string =>
-  ({
-    de: `Frage ${current} von ${total}`,
-    en: `Question ${current} of ${total}`,
-    pl: `Pytanie ${current} z ${total}`,
-  })[locale];
-
-const formatQuestionCount = (
-  count: number,
-  locale: KangurMobileLocale,
-): string => {
-  if (locale === 'de') {
-    return count === 1 ? '1 Frage' : `${count} Fragen`;
-  }
-
-  if (locale === 'en') {
-    return count === 1 ? '1 question' : `${count} questions`;
-  }
-
-  if (count === 1) {
-    return '1 pytanie';
-  }
-
-  const lastDigit = count % 10;
-  const lastTwoDigits = count % 100;
-  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)) {
-    return `${count} pytania`;
-  }
-
-  return `${count} pytań`;
-};
-
-const formatPointsLabel = (
-  value: number,
-  locale: KangurMobileLocale,
-): string =>
-  ({
-    de: `${value} Pkt`,
-    en: `${value} pts`,
-    pl: `${value} pkt`,
-  })[locale];
-
-const resolveQuestionStatusTone = (
-  scorePercent: number,
-): Tone => {
-  if (scorePercent >= 80) {
-    return SUCCESS_TONE;
-  }
-  if (scorePercent >= 50) {
-    return WARNING_TONE;
-  }
-  return ERROR_TONE;
-};
-
-function SectionCard({
-  children,
-  title,
-}: {
-  children: React.ReactNode;
-  title: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        elevation: 3,
-        gap: 12,
-        padding: 20,
-        shadowColor: '#0f172a',
-        shadowOffset: { height: 10, width: 0 },
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-      }}
-    >
-      <Text
-        accessibilityRole='header'
-        style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}
-      >
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
-function StatusPill({
-  label,
-  tone = BASE_TONE,
-}: {
-  label: string;
-  tone?: Tone;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        backgroundColor: tone.backgroundColor,
-        borderColor: tone.borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-      }}
-    >
-      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-function OutlineLink({
-  href,
-  hint,
-  label,
-}: {
-  href: Href;
-  hint?: string;
-  label: string;
-}): React.JSX.Element {
-  return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityHint={hint}
-        accessibilityLabel={label}
-        accessibilityRole='button'
-        style={{
-          alignSelf: 'stretch',
-          backgroundColor: '#ffffff',
-          borderColor: '#cbd5e1',
-          borderRadius: 999,
-          borderWidth: 1,
-          paddingHorizontal: 14,
-          paddingVertical: 10,
-          width: '100%',
-        }}
-      >
-        <Text
-          style={{
-            color: '#0f172a',
-            fontWeight: '700',
-            textAlign: 'center',
-          }}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
-  );
-}
-
-function PrimaryButton({
-  disabled = false,
-  hint,
-  label,
-  onPress,
-  tone = INDIGO_TONE,
-}: {
-  disabled?: boolean;
-  hint?: string;
-  label: string;
-  onPress?: () => void;
-  tone?: Tone;
-}): React.JSX.Element {
-  return (
-    <Pressable
-      accessibilityHint={hint}
-      accessibilityLabel={label}
-      accessibilityRole='button'
-      disabled={disabled}
-      onPress={onPress}
-      style={{
-        alignItems: 'center',
-        backgroundColor: disabled ? '#e2e8f0' : tone.backgroundColor,
-        borderColor: disabled ? '#cbd5e1' : tone.borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        justifyContent: 'center',
-        minHeight: 44,
-        opacity: disabled ? 0.7 : 1,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-      }}
-    >
-      <Text
-        style={{
-          color: disabled ? '#64748b' : tone.textColor,
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function ChoiceButton({
-  choice,
-  disabled = false,
-  isCorrect,
-  isRevealed,
-  isSelected,
-  label,
-  locale,
-  onPress,
-}: {
-  choice: KangurTestChoice;
-  disabled?: boolean;
-  isCorrect: boolean;
-  isRevealed: boolean;
-  isSelected: boolean;
-  label: string;
-  locale: KangurMobileLocale;
-  onPress: () => void;
-}): React.JSX.Element {
-  const tone = isRevealed
-    ? isCorrect
-      ? SUCCESS_TONE
-      : isSelected
-        ? ERROR_TONE
-        : BASE_TONE
-    : isSelected
-      ? INDIGO_TONE
-      : BASE_TONE;
-
-  return (
-    <Pressable
-      accessibilityRole='button'
-      disabled={disabled}
-      onPress={onPress}
-      style={{
-        backgroundColor: tone.backgroundColor,
-        borderColor: tone.borderColor,
-        borderRadius: 20,
-        borderWidth: 1,
-        gap: 8,
-        opacity: disabled ? 0.8 : 1,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-      }}
-    >
-      <View
-        style={{
-          alignItems: 'center',
-          flexDirection: 'row',
-          gap: 10,
-        }}
-      >
-        <View
-          style={{
-            alignItems: 'center',
-            backgroundColor: '#ffffff',
-            borderColor: tone.borderColor,
-            borderRadius: 999,
-            borderWidth: 1,
-            height: 28,
-            justifyContent: 'center',
-            width: 28,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontWeight: '800' }}>{label}</Text>
-        </View>
-        <Text
-          style={{
-            color: '#0f172a',
-            flex: 1,
-            fontSize: 15,
-            fontWeight: '700',
-          }}
-        >
-          {choice.text}
-        </Text>
-      </View>
-      {choice.description ? (
-        <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-          {choice.description}
-        </Text>
-      ) : null}
-      {choice.svgContent.trim().length > 0 ? (
-        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 16 }}>
-          {
-            {
-              de: 'Diese Antwort hat zusatzliche Illustrationen.',
-              en: 'This answer includes extra illustration content.',
-              pl: 'Ta odpowiedź ma dodatkową ilustrację.',
-            }[locale]
-          }
-        </Text>
-      ) : null}
-    </Pressable>
-  );
-}
 
 function KangurMobileTestPlayer({
   item,
@@ -925,14 +557,12 @@ export function KangurTestsScreen(): React.JSX.Element {
   };
 
   return (
-    <SafeAreaView
-      style={{ backgroundColor: '#f8fafc', flex: 1 }}
+    <KangurMobileScrollScreen
+      backgroundColor='#f8fafc'
+      contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 32 }}
       edges={['top', 'left', 'right']}
+      keyboardShouldPersistTaps='handled'
     >
-      <ScrollView
-        contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 32 }}
-        keyboardShouldPersistTaps='handled'
-      >
         <SectionCard
           title={copy({
             de: 'Tests',
@@ -1207,7 +837,6 @@ export function KangurTestsScreen(): React.JSX.Element {
             />
           </View>
         </SectionCard>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }

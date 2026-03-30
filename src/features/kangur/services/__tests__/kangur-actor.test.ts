@@ -1,0 +1,123 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/server/auth', () => ({
+  findAuthUserById: vi.fn(),
+  normalizeAuthEmail: (value: string) => value.trim().toLowerCase(),
+}));
+
+vi.mock('@/features/auth/server', () => ({
+  readOptionalServerAuthSession: vi.fn(),
+}));
+
+vi.mock('../kangur-learner-repository', () => ({
+  getKangurLearnerById: vi.fn(),
+  listKangurLearnersByOwner: vi.fn(),
+}));
+
+vi.mock('../kangur-learner-session', () => ({
+  readKangurLearnerSession: vi.fn(),
+}));
+
+import { createDefaultKangurAiTutorLearnerMood } from '@/features/kangur/shared/contracts/kangur-ai-tutor-mood';
+import { kangurAuthUserSchema } from '@kangur/contracts';
+import { findAuthUserById } from '@/server/auth';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
+
+import { listKangurLearnersByOwner } from '../kangur-learner-repository';
+import { resolveKangurActor, toKangurAuthUser, type KangurParentActor } from '../kangur-actor';
+
+const learner = {
+  id: 'learner-1',
+  ownerUserId: 'owner-1',
+  displayName: 'Ada',
+  loginName: 'ada',
+  status: 'active' as const,
+  legacyUserKey: null,
+  aiTutor: createDefaultKangurAiTutorLearnerMood(),
+  createdAt: '2026-03-10T12:00:00.000Z',
+  updatedAt: '2026-03-10T12:00:00.000Z',
+};
+
+const buildParentActor = (overrides: Partial<KangurParentActor> = {}): KangurParentActor => ({
+  actorId: 'owner-1',
+  actorType: 'parent',
+  canManageLearners: true,
+  ownerUserId: 'owner-1',
+  ownerEmail: 'parent@example.com',
+  ownerName: 'Parent Example',
+  ownerEmailVerified: true,
+  role: 'user',
+  activeLearner: learner,
+  learners: [learner],
+  ...overrides,
+});
+
+describe('toKangurAuthUser', () => {
+  it('drops invalid parent owner emails so the auth payload stays schema-valid', () => {
+    const authUser = toKangurAuthUser(buildParentActor({ ownerEmail: 'not-an-email' }));
+
+    expect(authUser.email).toBeNull();
+    expect(kangurAuthUserSchema.parse(authUser).email).toBeNull();
+  });
+
+  it('normalizes valid parent owner emails before returning the auth payload', () => {
+    const authUser = toKangurAuthUser(buildParentActor({ ownerEmail: ' Parent@Example.COM ' }));
+
+    expect(authUser.email).toBe('parent@example.com');
+    expect(kangurAuthUserSchema.parse(authUser).email).toBe('parent@example.com');
+  });
+});
+
+describe('resolveKangurActor', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('maps super_admin to admin role', async () => {
+    vi.mocked(readOptionalServerAuthSession).mockResolvedValue({
+      user: {
+        id: 'owner-1',
+        email: 'parent@example.com',
+        name: 'Parent Example',
+        role: 'super_admin',
+      },
+    });
+    vi.mocked(findAuthUserById).mockResolvedValue({
+      email: 'parent@example.com',
+      emailVerified: true,
+    });
+    vi.mocked(listKangurLearnersByOwner).mockResolvedValue([learner]);
+
+    const actor = await resolveKangurActor();
+
+    expect(actor.actorType).toBe('parent');
+    expect(actor.role).toBe('admin');
+  });
+
+  it('maps superuser to admin role', async () => {
+    vi.mocked(readOptionalServerAuthSession).mockResolvedValue({
+      user: {
+        id: 'owner-1',
+        email: 'parent@example.com',
+        name: 'Parent Example',
+        role: 'superuser',
+      },
+    });
+    vi.mocked(findAuthUserById).mockResolvedValue({
+      email: 'parent@example.com',
+      emailVerified: true,
+    });
+    vi.mocked(listKangurLearnersByOwner).mockResolvedValue([learner]);
+
+    const actor = await resolveKangurActor();
+
+    expect(actor.actorType).toBe('parent');
+    expect(actor.role).toBe('admin');
+  });
+
+  it('treats missing request scope as unauthenticated when no request is provided', async () => {
+    vi.mocked(readOptionalServerAuthSession).mockResolvedValue(null);
+
+    await expect(resolveKangurActor()).rejects.toThrow(/Authentication required/);
+  });
+});

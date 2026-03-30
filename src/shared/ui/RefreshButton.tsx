@@ -16,38 +16,37 @@ interface RefreshButtonProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 }
 
-type RefreshButtonControlProps = {
+type RefreshButtonResolvedProps = {
   onRefresh: () => void;
   isRefreshing: boolean;
   label: string;
   className?: string;
   size: 'default' | 'sm' | 'lg' | 'icon';
   variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  ariaLabel?: string;
 };
 
-function RefreshButtonControl({
+const renderRefreshButton = ({
   onRefresh,
   isRefreshing,
   label,
   className,
   size,
   variant,
-}: RefreshButtonControlProps): React.JSX.Element {
-  const ariaLabel = size === 'icon' || !label ? label || 'Refresh' : undefined;
-  return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={onRefresh}
-      disabled={isRefreshing}
-      className={cn('gap-2', className)}
-      aria-label={ariaLabel}
-    >
-      <RefreshCcw className={cn('size-4', isRefreshing && 'animate-spin')} />
-      {label ? <span>{label}</span> : null}
-    </Button>
-  );
-}
+  ariaLabel,
+}: RefreshButtonResolvedProps): React.JSX.Element => (
+  <Button
+    variant={variant}
+    size={size}
+    onClick={onRefresh}
+    disabled={isRefreshing}
+    className={cn('gap-2', className)}
+    aria-label={ariaLabel}
+  >
+    <RefreshCcw className={cn('size-4', isRefreshing && 'animate-spin')} />
+    {label ? <span>{label}</span> : null}
+  </Button>
+);
 
 /**
  * A standardized refresh button with an animated icon when refreshing.
@@ -60,14 +59,15 @@ export function RefreshButton({
   size = 'sm',
   variant = 'outline',
 }: RefreshButtonProps): React.JSX.Element {
-  return (
-    <RefreshButtonControl
-      onRefresh={onRefresh}
-      isRefreshing={isRefreshing}
-      label={label}
-      className={className}
-      size={size}
-      variant={variant}
-    />
-  );
+  const ariaLabel = size === 'icon' || !label ? label || 'Refresh' : undefined;
+
+  return renderRefreshButton({
+    onRefresh,
+    isRefreshing,
+    label,
+    className,
+    size,
+    variant,
+    ariaLabel,
+  });
 }

@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,18 @@ canonical: true
 ---
 
 # AI Paths V1 Sprint 1 Test Plan (2026-03-06)
+
+This is the retained test-plan artifact for the V1 sprint contract work. It remains
+useful as historical evidence, but it is not the primary current QA entrypoint for
+AI Paths.
+
+For the current QA and validation entrypoints, use:
+
+- [`overview.md`](./overview.md)
+- [`reference.md`](./reference.md)
+- `npm run ai-paths:check:canonical`
+- `npm run docs:ai-paths:node-docs:check`
+- `npm run docs:ai-paths:kernel-transition:check`
 
 ## References
 

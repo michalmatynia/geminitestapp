@@ -20,6 +20,10 @@ const { useSearchParamsMock } = vi.hoisted(() => ({
   useSearchParamsMock: vi.fn(),
 }));
 
+const { sessionMock } = vi.hoisted(() => ({
+  sessionMock: vi.fn(),
+}));
+
 const { kangurPageTransitionSkeletonMock } = vi.hoisted(() => ({
   kangurPageTransitionSkeletonMock: vi.fn(),
 }));
@@ -27,6 +31,10 @@ const { kangurPageTransitionSkeletonMock } = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
   useSearchParams: useSearchParamsMock,
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurPageTransitionSkeleton', () => ({
@@ -41,6 +49,10 @@ import { KangurRouteLoadingFallback } from '@/features/kangur/ui/components/Kang
 describe('KangurRouteLoadingFallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     clearKangurPendingRouteLoadingSnapshot();
     clearLatchedKangurTopBarHeightCssValue();
     document.documentElement.style.removeProperty('--kangur-top-bar-height');
@@ -54,7 +66,7 @@ describe('KangurRouteLoadingFallback', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       embeddedOverride: false,
-      pageKey: undefined,
+      pageKey: 'Lessons',
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
       topBarHeightCssValue: null,
@@ -69,7 +81,7 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       embeddedOverride: false,
-      pageKey: undefined,
+      pageKey: 'Lessons',
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
       topBarHeightCssValue: null,
@@ -85,7 +97,7 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       embeddedOverride: true,
-      pageKey: undefined,
+      pageKey: 'Game',
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
       topBarHeightCssValue: null,
@@ -99,7 +111,7 @@ describe('KangurRouteLoadingFallback', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton-probe')).toBeInTheDocument();
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       embeddedOverride: false,
-      pageKey: undefined,
+      pageKey: 'Lessons',
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: false,
       topBarHeightCssValue: null,
@@ -114,7 +126,7 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       embeddedOverride: false,
-      pageKey: undefined,
+      pageKey: 'Lessons',
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
       topBarHeightCssValue: '136px',
@@ -152,7 +164,7 @@ describe('KangurRouteLoadingFallback', () => {
 
     expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
       embeddedOverride: true,
-      pageKey: undefined,
+      pageKey: 'Game',
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
       topBarHeightCssValue: null,
@@ -179,6 +191,30 @@ describe('KangurRouteLoadingFallback', () => {
       reason: 'navigation',
       renderInlineTopNavigationSkeleton: true,
       topBarHeightCssValue: '136px',
+      variant: 'game-home',
+    });
+  });
+
+  it('downgrades blocked GamesLibrary routes to the game-home skeleton for non-super-admin users', () => {
+    usePathnameMock.mockReturnValue('/en/games');
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<KangurRouteLoadingFallback />);
+
+    expect(kangurPageTransitionSkeletonMock).toHaveBeenCalledWith({
+      embeddedOverride: false,
+      pageKey: 'Game',
+      reason: 'navigation',
+      renderInlineTopNavigationSkeleton: true,
+      topBarHeightCssValue: null,
       variant: 'game-home',
     });
   });

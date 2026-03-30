@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { resolveKangurUserScopeKey } from '@/features/kangur/ui/context/kangur-user-scope';
 import {
   loadPersistedAgeGroupFocus,
   persistAgeGroupFocus,
@@ -27,20 +28,6 @@ type KangurAgeGroupFocusContextValue = {
 
 const KangurAgeGroupFocusContext = createContext<KangurAgeGroupFocusContextValue | null>(null);
 
-const resolveAgeGroupFocusKey = (user: ReturnType<typeof useKangurAuth>['user']): string | null => {
-  const activeLearnerId = user?.activeLearner?.id?.trim();
-  if (activeLearnerId) {
-    return activeLearnerId;
-  }
-
-  if (user?.actorType === 'parent') {
-    return null;
-  }
-
-  const userId = user?.id?.trim();
-  return userId && userId.length > 0 ? userId : null;
-};
-
 const FALLBACK_AGE_GROUP_KEY = 'guest';
 
 export function KangurAgeGroupFocusProvider({
@@ -49,7 +36,7 @@ export function KangurAgeGroupFocusProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const { user } = useKangurAuth();
-  const ageGroupKey = resolveAgeGroupFocusKey(user);
+  const ageGroupKey = resolveKangurUserScopeKey(user);
   const storageKey = ageGroupKey ?? FALLBACK_AGE_GROUP_KEY;
   const [ageGroup, setAgeGroupState] = useState<KangurLessonAgeGroup>(() =>
     loadPersistedAgeGroupFocus(storageKey)

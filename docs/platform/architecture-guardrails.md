@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'platform'
@@ -123,6 +123,21 @@ For `src/app/**/*` imports:
 
 This is enforced via ESLint.
 
+For `src/app/api/**/*` routes:
+
+- Keep Next route segment config such as `runtime`, `dynamic`, and `revalidate`
+  declared directly in `route.ts`.
+- Export HTTP methods through `apiHandler` / `apiHandlerWithParams` wrappers in
+  `route.ts`.
+- Keep the heavier request logic in sibling `handler.ts` or `route-handler.ts`
+  files instead of growing the route file itself.
+
+These conventions are enforced through:
+
+- `npm run check:route-policies`
+- `npm run check:next-route-config-reexports`
+- `npm run check:factory-meta`
+
 ## Definition of Done (Architecture Changes)
 
 A modularity/performance refactor is complete when:
@@ -131,7 +146,9 @@ A modularity/performance refactor is complete when:
 2. New app-layer feature imports use `public`/`server` entrypoints.
 3. Route-level caching policy is explicit or covered by standardized handler policy.
 4. New orchestration code is split from utility/adapter code.
-5. `npm run metrics:all` passes locally.
+5. Query factory metadata and route policy checks still pass when the change
+   affects those surfaces.
+6. `npm run metrics:all` passes locally.
 
 ## Next Iteration Targets
 

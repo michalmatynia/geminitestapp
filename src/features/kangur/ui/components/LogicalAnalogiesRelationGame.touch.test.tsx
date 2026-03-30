@@ -60,6 +60,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 import enMessages from '@/i18n/messages/en.json';
 import LogicalAnalogiesRelationGame from '@/features/kangur/ui/components/LogicalAnalogiesRelationGame';
 
+const assignRelationToTarget = (relationLabel: string, targetTestId: string): void => {
+  const pool = screen.getByTestId('logical-analogies-pool');
+  fireEvent.click(within(pool).getByRole('listitem', { name: `Relation: ${relationLabel}` }));
+  fireEvent.click(screen.getByTestId(targetTestId));
+};
+
 describe('LogicalAnalogiesRelationGame touch interactions', () => {
   it('shows touch guidance and supports tap-to-pair assignment', () => {
     render(
@@ -93,5 +99,39 @@ describe('LogicalAnalogiesRelationGame touch interactions', () => {
     fireEvent.click(target);
 
     expect(within(target).getByText('opposite')).toBeInTheDocument();
+  });
+
+  it('keeps Check visible in green after a correct round', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <LogicalAnalogiesRelationGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    assignRelationToTarget('opposite', 'logical-analogies-target-r1-1');
+    assignRelationToTarget('category -> example', 'logical-analogies-target-r1-2');
+
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
+
+    expect(checkButton).toHaveClass('bg-emerald-500');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
+  });
+
+  it('keeps Check visible in red on a wrong round without extra correction text', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <LogicalAnalogiesRelationGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    assignRelationToTarget('category -> example', 'logical-analogies-target-r1-1');
+    assignRelationToTarget('opposite', 'logical-analogies-target-r1-2');
+
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
+
+    expect(checkButton).toHaveClass('bg-rose-500');
+    expect(screen.queryByText(/Correct:/i)).not.toBeInTheDocument();
   });
 });

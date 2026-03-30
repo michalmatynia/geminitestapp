@@ -1,4 +1,9 @@
-export { getRedisConnection, isRedisAvailable, closeRedisConnection } from './redis-connection';
+export {
+  getRedisConnection,
+  isRedisAvailable,
+  isRedisReachable,
+  closeRedisConnection,
+} from './redis-connection';
 export { createManagedQueue } from './queue-factory';
 export {
   registerQueue,

@@ -1,14 +1,9 @@
 'use client';
 
-import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
-import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
+import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurLearnerInteractionHistory } from '@kangur/platform';
-import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
-import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import {
   type KangurParentDashboardPanelDisplayMode,
   shouldRenderKangurParentDashboardPanel,
@@ -17,766 +12,857 @@ import {
 import {
   KangurButton,
   KangurEmptyState,
-  KangurInfoCard,
-  KangurMetaText,
+  KangurGlassPanel,
+  KangurPanelIntro,
   KangurPanelStack,
-  KangurSummaryPanel,
   KangurTextField,
-  KangurWidgetIntro,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_COMPACT_ROW_CLASSNAME,
-  KANGUR_GRID_TIGHT_CLASSNAME,
+  formatProgressTimestamp,
+  type InteractionFilter,
+  type InteractionView,
+} from '@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget.utils';
+import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-  KANGUR_STACK_COMPACT_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
   KANGUR_TIGHT_ROW_CLASSNAME,
+  KANGUR_WIDGET_TITLE_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { ActivityTypes } from '@/shared/constants/observability';
-import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
-import { withKangurClientError } from '@/features/kangur/observability/client';
-import type { KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 
+import { useMonitoringWidgetState } from './monitoring-widget/MonitoringWidget.hooks';
 
-const kangurPlatform = getKangurPlatform();
-const INTERACTIONS_PAGE_LIMIT = 20;
+const MONITORING_FALLBACK_COPY = {
+  clearFilters: 'Wyczyść filtry',
+  dateFromLabel: 'Data od',
+  dateToLabel: 'Data do',
+  description:
+    'Monitoruj postęp przypisanych zadań, w tym sugestii StudiQ, aby utrzymać stały rytm nauki.',
+  eyebrow: 'Monitorowanie',
+  filters: {
+    all: 'Wszystkie',
+    lessonPanel: 'Panele lekcji',
+    openedTask: 'Zadania',
+    session: 'Sesje',
+  },
+  history: {
+    description: 'Ostatnie interakcje ucznia: otwarte zadania, aktywność w panelach oraz sesje logowania.',
+    empty: 'Brak interakcji do pokazania.',
+    error: 'Nie udało się wczytać historii interakcji.',
+    loadMore: 'Pokaż starsze',
+    loading: 'Ładowanie...',
+    title: 'Historia interakcji',
+  },
+  lessonFocus: {
+    empty: 'Brak lekcji z czasem paneli do porównania.',
+  },
+  lessonPanelTimeTitle: 'Czas w panelach lekcji',
+  title: 'Monitorowanie zadań',
+} as const;
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+type MonitoringWidgetState = ReturnType<typeof useMonitoringWidgetState>;
+type MonitoringTranslate = (
+  key: string,
+  fallback: string,
+  values?: Record<string, string | number>
+) => string;
+type MonitoringInteractionCounts = {
+  lessonPanels: number;
+  openedTasks: number;
+  sessions: number;
+  total: number;
+  totalSessionSeconds: number;
+};
 
-type InteractionFilter = 'all' | 'opened_task' | 'lesson_panel' | 'session';
+function interpolateTemplate(
+  template: string,
+  values?: Record<string, string | number>
+): string {
+  if (!values) {
+    return template;
+  }
 
-const formatDuration = ({
-  seconds,
+  return template.replace(/\{(\w+)\}/g, (match: string, key: string) => {
+    const value = values[key];
+    return value === undefined ? match : String(value);
+  });
+}
+
+const matchesInteractionKindFilter = (
+  interactionFilter: InteractionFilter,
+  view: InteractionView
+): boolean => interactionFilter === 'all' || view.kind === interactionFilter;
+
+const matchesInteractionDateFrom = (
+  interactionDateFrom: string,
+  viewDate: string | null
+): boolean => !interactionDateFrom || Boolean(viewDate && viewDate >= interactionDateFrom);
+
+const matchesInteractionDateTo = (
+  interactionDateTo: string,
+  viewDate: string | null
+): boolean => !interactionDateTo || Boolean(viewDate && viewDate <= interactionDateTo);
+
+const shouldIncludeInteractionView = ({
+  interactionDateFrom,
+  interactionDateTo,
+  interactionFilter,
+  view,
+}: {
+  interactionDateFrom: string;
+  interactionDateTo: string;
+  interactionFilter: InteractionFilter;
+  view: InteractionView;
+}): boolean => {
+  const viewDate = view.timestamp?.slice(0, 10) ?? null;
+  return (
+    matchesInteractionKindFilter(interactionFilter, view) &&
+    matchesInteractionDateFrom(interactionDateFrom, viewDate) &&
+    matchesInteractionDateTo(interactionDateTo, viewDate)
+  );
+};
+
+function filterInteractionViews(
+  views: ReadonlyArray<InteractionView>,
+  interactionFilter: InteractionFilter,
+  interactionDateFrom: string,
+  interactionDateTo: string
+): InteractionView[] {
+  return views.filter((view) =>
+    shouldIncludeInteractionView({
+      interactionDateFrom,
+      interactionDateTo,
+      interactionFilter,
+      view,
+    })
+  );
+}
+
+const createMonitoringTranslate = (
+  translations: MonitoringWidgetState['translations']
+): MonitoringTranslate => {
+  return (key, fallback, values) => {
+    const translated = translations(key as never, values as never);
+    if (translated === key || translated.endsWith(`.${key}`)) {
+      return interpolateTemplate(fallback, values);
+    }
+
+    return translated;
+  };
+};
+
+const resolveMonitoringInteractionFilterOptions = (
+  translate: MonitoringTranslate
+): ReadonlyArray<LabeledOptionDto<InteractionFilter>> =>
+  [
+    {
+      value: 'all',
+      label: translate('widgets.monitoring.filters.all', MONITORING_FALLBACK_COPY.filters.all),
+    },
+    {
+      value: 'opened_task',
+      label: translate(
+        'widgets.monitoring.filters.openedTask',
+        MONITORING_FALLBACK_COPY.filters.openedTask
+      ),
+    },
+    {
+      value: 'lesson_panel',
+      label: translate(
+        'widgets.monitoring.filters.lessonPanel',
+        MONITORING_FALLBACK_COPY.filters.lessonPanel
+      ),
+    },
+    {
+      value: 'session',
+      label: translate(
+        'widgets.monitoring.filters.session',
+        MONITORING_FALLBACK_COPY.filters.session
+      ),
+    },
+  ];
+
+const resolveMonitoringSegmentedFilterClassName = (isCoarsePointer: boolean): string =>
+  isCoarsePointer
+    ? 'min-h-11 min-w-0 flex-1 px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none'
+    : 'min-w-0 flex-1 px-3 text-xs sm:flex-none';
+
+const resolveMonitoringHasMoreInteractions = (
+  interactionHistory: MonitoringWidgetState['interactionHistory']
+): boolean =>
+  Boolean(interactionHistory && interactionHistory.items.length < interactionHistory.total);
+
+const resolveMonitoringNextInteractionOffset = (
+  interactionHistory: MonitoringWidgetState['interactionHistory']
+): number | null => interactionHistory?.items.length ?? null;
+
+const resolveMonitoringInteractionCounts = (
+  filteredInteractionViews: InteractionView[]
+): MonitoringInteractionCounts =>
+  filteredInteractionViews.reduce(
+    (acc, view) => {
+      acc.total += 1;
+      if (view.kind === 'session') {
+        acc.sessions += 1;
+        if (typeof view.durationSeconds === 'number' && view.durationSeconds > 0) {
+          acc.totalSessionSeconds += view.durationSeconds;
+        }
+      } else if (view.kind === 'opened_task') {
+        acc.openedTasks += 1;
+      } else if (view.kind === 'lesson_panel') {
+        acc.lessonPanels += 1;
+      }
+      return acc;
+    },
+    {
+      lessonPanels: 0,
+      openedTasks: 0,
+      sessions: 0,
+      total: 0,
+      totalSessionSeconds: 0,
+    }
+  );
+
+const resolveMonitoringAverageSessionDurationLabel = (
+  formatLocalizedDuration: MonitoringWidgetState['formatLocalizedDuration'],
+  interactionCounts: MonitoringInteractionCounts
+): string | null =>
+  interactionCounts.sessions > 0
+    ? formatLocalizedDuration(
+        Math.round(interactionCounts.totalSessionSeconds / interactionCounts.sessions)
+      )
+    : null;
+
+const resolveMonitoringTopLessonPanelCard = (
+  lessonPanelTimeCards: MonitoringWidgetState['lessonPanelTimeCards']
+): MonitoringWidgetState['lessonPanelTimeCards'][number] | null =>
+  lessonPanelTimeCards
+    .slice()
+    .sort((left, right) => right.totalSeconds - left.totalSeconds)[0] ?? null;
+
+const shouldShowMonitoringLoadingState = (
+  isInteractionQueryReady: boolean,
+  isLoadingInteractions: boolean
+): boolean => !isInteractionQueryReady || isLoadingInteractions;
+
+function KangurParentDashboardMonitoringOverviewCards({
+  averageSessionDurationLabel,
+  interactionCounts,
+}: {
+  averageSessionDurationLabel: string | null;
+  interactionCounts: MonitoringInteractionCounts;
+}): React.JSX.Element {
+  return (
+    <div className='grid grid-cols-2 gap-3 lg:grid-cols-4'>
+      <KangurGlassPanel
+        data-testid='parent-monitoring-overview-total'
+        padding='md'
+        surface='solid'
+        variant='soft'
+      >
+        <div className='text-[10px] font-black uppercase tracking-wider text-slate-400'>
+          Interakcje
+        </div>
+        <div className='mt-1 text-3xl font-extrabold text-slate-900'>{interactionCounts.total}</div>
+      </KangurGlassPanel>
+      <KangurGlassPanel
+        data-testid='parent-monitoring-overview-sessions'
+        padding='md'
+        surface='solid'
+        variant='soft'
+      >
+        <div className='text-[10px] font-black uppercase tracking-wider text-slate-400'>Sesje</div>
+        <div className='mt-1 text-3xl font-extrabold text-slate-900'>
+          {interactionCounts.sessions}
+        </div>
+        {averageSessionDurationLabel ? (
+          <p className='mt-2 text-xs font-semibold text-slate-500'>
+            Średnia sesja: {averageSessionDurationLabel}
+          </p>
+        ) : null}
+      </KangurGlassPanel>
+      <KangurGlassPanel
+        data-testid='parent-monitoring-overview-opened-tasks'
+        padding='md'
+        surface='solid'
+        variant='soft'
+      >
+        <div className='text-[10px] font-black uppercase tracking-wider text-slate-400'>
+          Otwarte zadania
+        </div>
+        <div className='mt-1 text-3xl font-extrabold text-slate-900'>
+          {interactionCounts.openedTasks}
+        </div>
+      </KangurGlassPanel>
+      <KangurGlassPanel
+        data-testid='parent-monitoring-overview-lesson-panels'
+        padding='md'
+        surface='solid'
+        variant='soft'
+      >
+        <div className='text-[10px] font-black uppercase tracking-wider text-slate-400'>
+          Panele lekcji
+        </div>
+        <div className='mt-1 text-3xl font-extrabold text-slate-900'>
+          {interactionCounts.lessonPanels}
+        </div>
+      </KangurGlassPanel>
+    </div>
+  );
+}
+
+function KangurParentDashboardMonitoringActivityMix({
+  interactionCounts,
+}: {
+  interactionCounts: MonitoringInteractionCounts;
+}): React.JSX.Element {
+  return (
+    <KangurGlassPanel padding='md' surface='mist' variant='soft'>
+      <div className='text-[10px] font-black uppercase tracking-wider text-slate-400'>
+        Rozkład aktywności
+      </div>
+      <div className='mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3'>
+        {[
+          ['session', 'Sesje', interactionCounts.sessions],
+          ['opened-task', 'Zadania', interactionCounts.openedTasks],
+          ['lesson-panel', 'Panele lekcji', interactionCounts.lessonPanels],
+        ].map(([id, label, count]) => (
+          <div
+            key={id}
+            className='rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3'
+            data-testid={`parent-monitoring-activity-mix-${id}`}
+          >
+            <div className='text-[10px] font-black uppercase tracking-wider text-slate-400'>
+              {label}
+            </div>
+            <div className='mt-1 text-2xl font-extrabold text-slate-900'>{count}</div>
+          </div>
+        ))}
+      </div>
+    </KangurGlassPanel>
+  );
+}
+
+function KangurParentDashboardMonitoringHistoryFilters({
+  hasActiveFilters,
+  interactionDateFrom,
+  interactionDateTo,
+  interactionFilter,
+  interactionFilterOptions,
+  segmentedFilterClassName,
+  setInteractionDateFrom,
+  setInteractionDateTo,
+  setInteractionFilter,
   translate,
 }: {
-  seconds: number;
-  translate: (key: string, values?: Record<string, string | number>) => string;
-}): string => {
-  const normalized = Math.max(0, Math.round(seconds));
-  const minutes = Math.floor(normalized / 60);
-  const remainingSeconds = normalized % 60;
-  if (minutes === 0) {
-    return translate('widgets.monitoring.duration.seconds', {
-      seconds: remainingSeconds,
-    });
-  }
-  return translate('widgets.monitoring.duration.minutesSeconds', {
-    minutes,
-    seconds: `${remainingSeconds}`.padStart(2, '0'),
-  });
-};
+  hasActiveFilters: boolean;
+  interactionDateFrom: string;
+  interactionDateTo: string;
+  interactionFilter: InteractionFilter;
+  interactionFilterOptions: ReadonlyArray<LabeledOptionDto<InteractionFilter>>;
+  segmentedFilterClassName: string;
+  setInteractionDateFrom: (value: string) => void;
+  setInteractionDateTo: (value: string) => void;
+  setInteractionFilter: (value: InteractionFilter) => void;
+  translate: MonitoringTranslate;
+}): React.JSX.Element {
+  return (
+    <div className='flex flex-wrap items-center gap-3'>
+      <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto`}>
+        {interactionFilterOptions.map((option) => (
+          <KangurButton
+            aria-selected={interactionFilter === option.value}
+            key={option.value}
+            onClick={() => setInteractionFilter(option.value)}
+            role='tab'
+            variant={interactionFilter === option.value ? 'segmentActive' : 'segment'}
+            size='sm'
+            className={segmentedFilterClassName}
+          >
+            {option.label}
+          </KangurButton>
+        ))}
+      </div>
+      <div className={KANGUR_TIGHT_ROW_CLASSNAME}>
+        <KangurTextField
+          aria-label={translate(
+            'widgets.monitoring.filters.dateFromLabel',
+            MONITORING_FALLBACK_COPY.dateFromLabel
+          )}
+          type='date'
+          value={interactionDateFrom}
+          onChange={(e) => setInteractionDateFrom(e.target.value)}
+          size='sm'
+          className='w-32'
+        />
+        <span className='text-slate-400'>-</span>
+        <KangurTextField
+          aria-label={translate(
+            'widgets.monitoring.filters.dateToLabel',
+            MONITORING_FALLBACK_COPY.dateToLabel
+          )}
+          type='date'
+          value={interactionDateTo}
+          onChange={(e) => setInteractionDateTo(e.target.value)}
+          size='sm'
+          className='w-32'
+        />
+        {hasActiveFilters ? (
+          <KangurButton
+            onClick={() => {
+              setInteractionFilter('all');
+              setInteractionDateFrom('');
+              setInteractionDateTo('');
+            }}
+            size='sm'
+            variant='surface'
+            className={segmentedFilterClassName}
+          >
+            {translate('widgets.monitoring.filters.clear', MONITORING_FALLBACK_COPY.clearFilters)}
+          </KangurButton>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
-const formatProgressTimestamp = ({
-  value,
-  locale,
-  fallback,
+function KangurParentDashboardMonitoringHistoryContent({
+  activeLearnerId,
+  fetchInteractions,
+  filteredInteractionViews,
+  formatTimestamp,
+  hasMoreInteractions,
+  interactionsError,
+  interactionsLoadMoreError,
+  isLoadingMoreInteractions,
+  nextInteractionOffset,
+  shouldShowLoadingState,
+  translate,
 }: {
-  value: string | null | undefined;
-  locale: string;
-  fallback: string;
-}): string => {
-  if (!value) {
-    return fallback;
+  activeLearnerId: string | null;
+  fetchInteractions: MonitoringWidgetState['fetchInteractions'];
+  filteredInteractionViews: InteractionView[];
+  formatTimestamp: (value: string | null | undefined) => string;
+  hasMoreInteractions: boolean;
+  interactionsError: string | null;
+  interactionsLoadMoreError: string | null;
+  isLoadingMoreInteractions: boolean;
+  nextInteractionOffset: number | null;
+  shouldShowLoadingState: boolean;
+  translate: MonitoringTranslate;
+}): React.JSX.Element {
+  if (shouldShowLoadingState) {
+    return (
+      <KangurEmptyState
+        accent='slate'
+        data-testid='parent-monitoring-interactions-loading'
+        description={translate(
+          'widgets.monitoring.history.loadingDescription',
+          MONITORING_FALLBACK_COPY.history.description
+        )}
+        title={translate(
+          'widgets.monitoring.history.loadingTitle',
+          MONITORING_FALLBACK_COPY.history.loading
+        )}
+      />
+    );
   }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return fallback;
-  }
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
-};
 
-const normalizePanelLabel = (value: string | null | undefined, fallback: string): string => {
-  const trimmed = value?.trim();
-  if (trimmed) {
-    return trimmed;
+  if (interactionsError) {
+    return (
+      <KangurEmptyState
+        accent='rose'
+        data-testid='parent-monitoring-interactions-error'
+        description={interactionsError}
+        title={translate(
+          'widgets.monitoring.history.loadError',
+          MONITORING_FALLBACK_COPY.history.error
+        )}
+      />
+    );
   }
-  return fallback.replace(/_/g, ' ').trim();
-};
 
-const parsePanelIndex = (panelId: string): number => {
-  const match = panelId.match(/\d+/u);
-  if (!match) {
-    return Number.MAX_SAFE_INTEGER;
+  if (filteredInteractionViews.length === 0) {
+    return (
+      <KangurEmptyState
+        accent='slate'
+        data-testid='parent-monitoring-interactions-empty'
+        description={translate(
+          'widgets.monitoring.history.emptyDescription',
+          MONITORING_FALLBACK_COPY.history.empty
+        )}
+      />
+    );
   }
-  const parsed = Number.parseInt(match[0], 10);
-  return Number.isNaN(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
-};
 
-const parseTimestamp = (value: string | null | undefined): number => {
-  if (!value) {
-    return 0;
-  }
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? 0 : parsed;
-};
+  return (
+    <div className='space-y-3'>
+      {filteredInteractionViews.map((view) => (
+        <KangurGlassPanel
+          key={view.id}
+          className='space-y-2'
+          data-testid={`parent-monitoring-interaction-${view.id}`}
+          padding='md'
+          surface='mistSoft'
+          variant='soft'
+        >
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <span className='text-[10px] font-black uppercase tracking-wider text-slate-400'>
+              {view.label}
+            </span>
+            <span className='text-[10px] font-bold text-slate-400'>
+              {formatTimestamp(view.timestamp)}
+            </span>
+          </div>
+          <div className='text-sm font-bold text-slate-900'>{view.description}</div>
+        </KangurGlassPanel>
+      ))}
+      {hasMoreInteractions ? (
+        <KangurButton
+          onClick={() => {
+            if (!activeLearnerId || nextInteractionOffset === null) return;
+            void fetchInteractions(activeLearnerId, { offset: nextInteractionOffset });
+          }}
+          variant='surface'
+          size='sm'
+          className='w-full min-h-11 px-4 touch-manipulation'
+          disabled={isLoadingMoreInteractions}
+        >
+          {isLoadingMoreInteractions
+            ? translate(
+                'widgets.monitoring.history.loadingMore',
+                MONITORING_FALLBACK_COPY.history.loading
+              )
+            : translate(
+                'widgets.monitoring.history.loadMore',
+                MONITORING_FALLBACK_COPY.history.loadMore
+              )}
+        </KangurButton>
+      ) : null}
+      {interactionsLoadMoreError ? (
+        <p className='text-center text-xs font-semibold text-rose-500'>
+          {interactionsLoadMoreError}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
-const parseTimestampStrict = (value: string | null | undefined): number | null => {
-  if (!value) {
-    return null;
-  }
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? null : parsed;
-};
+function KangurParentDashboardMonitoringHistorySection({
+  activeLearnerId,
+  fetchInteractions,
+  filteredInteractionViews,
+  formatTimestamp,
+  hasActiveFilters,
+  hasMoreInteractions,
+  interactionDateFrom,
+  interactionDateTo,
+  interactionFilter,
+  interactionFilterOptions,
+  interactionsError,
+  interactionsLoadMoreError,
+  isLoadingMoreInteractions,
+  nextInteractionOffset,
+  segmentedFilterClassName,
+  setInteractionDateFrom,
+  setInteractionDateTo,
+  setInteractionFilter,
+  shouldShowLoadingState,
+  translate,
+}: {
+  activeLearnerId: string | null;
+  fetchInteractions: MonitoringWidgetState['fetchInteractions'];
+  filteredInteractionViews: InteractionView[];
+  formatTimestamp: (value: string | null | undefined) => string;
+  hasActiveFilters: boolean;
+  hasMoreInteractions: boolean;
+  interactionDateFrom: string;
+  interactionDateTo: string;
+  interactionFilter: InteractionFilter;
+  interactionFilterOptions: ReadonlyArray<LabeledOptionDto<InteractionFilter>>;
+  interactionsError: string | null;
+  interactionsLoadMoreError: string | null;
+  isLoadingMoreInteractions: boolean;
+  nextInteractionOffset: number | null;
+  segmentedFilterClassName: string;
+  setInteractionDateFrom: (value: string) => void;
+  setInteractionDateTo: (value: string) => void;
+  setInteractionFilter: (value: InteractionFilter) => void;
+  shouldShowLoadingState: boolean;
+  translate: MonitoringTranslate;
+}): React.JSX.Element {
+  return (
+    <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
+      <div className='flex items-center justify-between'>
+        <h3 className={KANGUR_WIDGET_TITLE_CLASSNAME}>
+          {translate('widgets.monitoring.history.title', MONITORING_FALLBACK_COPY.history.title)}
+        </h3>
+      </div>
 
-const parseDateFilterValue = (value: string): number | null => {
-  if (!value) {
-    return null;
-  }
-  const parsed = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-  return parsed.getTime();
-};
+      <KangurParentDashboardMonitoringHistoryFilters
+        hasActiveFilters={hasActiveFilters}
+        interactionDateFrom={interactionDateFrom}
+        interactionDateTo={interactionDateTo}
+        interactionFilter={interactionFilter}
+        interactionFilterOptions={interactionFilterOptions}
+        segmentedFilterClassName={segmentedFilterClassName}
+        setInteractionDateFrom={setInteractionDateFrom}
+        setInteractionDateTo={setInteractionDateTo}
+        setInteractionFilter={setInteractionFilter}
+        translate={translate}
+      />
 
-const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null;
-  }
-  return value as Record<string, unknown>;
-};
+      <KangurParentDashboardMonitoringHistoryContent
+        activeLearnerId={activeLearnerId}
+        fetchInteractions={fetchInteractions}
+        filteredInteractionViews={filteredInteractionViews}
+        formatTimestamp={formatTimestamp}
+        hasMoreInteractions={hasMoreInteractions}
+        interactionsError={interactionsError}
+        interactionsLoadMoreError={interactionsLoadMoreError}
+        isLoadingMoreInteractions={isLoadingMoreInteractions}
+        nextInteractionOffset={nextInteractionOffset}
+        shouldShowLoadingState={shouldShowLoadingState}
+        translate={translate}
+      />
+    </div>
+  );
+}
 
-const readString = (value: unknown): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const readNumber = (value: unknown): number | null => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null;
-  }
-  return value;
-};
-
-const isLessonComponentId = (
-  value: string,
-  lessonsMap: Map<KangurLessonComponentId, unknown>
-): value is KangurLessonComponentId => lessonsMap.has(value as KangurLessonComponentId);
+function KangurParentDashboardMonitoringLessonPanelTimeSection({
+  formatLocalizedDuration,
+  lessonPanelTimeCards,
+  topLessonPanelCard,
+  translate,
+}: {
+  formatLocalizedDuration: MonitoringWidgetState['formatLocalizedDuration'];
+  lessonPanelTimeCards: MonitoringWidgetState['lessonPanelTimeCards'];
+  topLessonPanelCard: MonitoringWidgetState['lessonPanelTimeCards'][number] | null;
+  translate: MonitoringTranslate;
+}): React.JSX.Element {
+  return (
+    <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
+      <h3 className={KANGUR_WIDGET_TITLE_CLASSNAME}>
+        {translate(
+          'widgets.monitoring.lessonPanelTime.title',
+          MONITORING_FALLBACK_COPY.lessonPanelTimeTitle
+        )}
+      </h3>
+      <KangurGlassPanel
+        data-testid='parent-monitoring-lesson-focus'
+        padding='md'
+        surface='mist'
+        variant='soft'
+      >
+        {topLessonPanelCard ? (
+          <div className='space-y-1'>
+            <div className='text-sm font-black text-slate-900'>{topLessonPanelCard.lesson.title}</div>
+            <p className='text-xs font-semibold text-slate-500'>
+              {formatLocalizedDuration(topLessonPanelCard.totalSeconds)}
+            </p>
+          </div>
+        ) : (
+          <p className='text-xs italic text-slate-400'>
+            {MONITORING_FALLBACK_COPY.lessonFocus.empty}
+          </p>
+        )}
+      </KangurGlassPanel>
+      {lessonPanelTimeCards.length === 0 ? (
+        <p className='text-xs italic text-slate-400'>
+          {translate('widgets.monitoring.lessonPanelTime.empty', '')}
+        </p>
+      ) : (
+        <div className='space-y-4'>
+          {lessonPanelTimeCards.map((card) => (
+            <KangurGlassPanel
+              key={card.lesson.id ?? card.lesson.componentId}
+              padding='md'
+              surface='solid'
+              variant='soft'
+              className='space-y-3'
+            >
+              <div className='flex items-center gap-3'>
+                <div className='text-xl'>{card.lesson.emoji}</div>
+                <div className='min-w-0 flex-1'>
+                  <div className='truncate text-xs font-black text-slate-900'>{card.lesson.title}</div>
+                  <div className='text-[10px] font-bold text-slate-400'>
+                    {formatLocalizedDuration(card.totalSeconds)}
+                  </div>
+                </div>
+              </div>
+              <div className='space-y-2'>
+                {card.sections.map((section) => (
+                  <div key={section.id} className='space-y-1'>
+                    <div className='flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400'>
+                      <span className='truncate'>{section.label}</span>
+                      <span>{formatLocalizedDuration(section.totalSeconds)}</span>
+                    </div>
+                    <div className='flex flex-wrap gap-1'>
+                      {section.panels.map((panel) => (
+                        <div
+                          key={panel.id}
+                          className='rounded-md bg-slate-100/80 px-1.5 py-0.5 text-[9px] font-black text-slate-500'
+                          title={panel.title}
+                        >
+                          {panel.index !== Number.MAX_SAFE_INTEGER ? panel.index : 'P'}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </KangurGlassPanel>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function KangurParentDashboardAssignmentsMonitoringWidget({
   displayMode = 'always',
 }: {
   displayMode?: KangurParentDashboardPanelDisplayMode;
 }): React.JSX.Element | null {
-  const locale = useLocale();
-  const translations = useTranslations('KangurParentDashboard');
-  const isCoarsePointer = useKangurCoarsePointer();
-  const {
-    activeLearner,
-    activeTab,
-    canAccessDashboard,
-    progress,
-  } = useKangurParentDashboardRuntime();
-  const { entry: monitoringContent } = useKangurPageContentEntry('parent-dashboard-monitoring');
-  const { ageGroup } = useKangurAgeGroupFocus();
-  const lessonsQuery = useKangurLessons({ ageGroup, enabledOnly: true });
-  const lessons = useMemo(() => lessonsQuery.data ?? [], [lessonsQuery.data]);
+  const { activeLearner, activeTab, canAccessDashboard } = useKangurParentDashboardRuntime();
   const activeLearnerId = activeLearner?.id ?? null;
-  const lessonPanelProgress = progress.lessonPanelProgress ?? {};
+
+  if (!canAccessDashboard) return null;
+  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'monitoring')) return null;
+  if (!activeLearnerId) return null;
+
+  return <KangurParentDashboardAssignmentsMonitoringWidgetContent />;
+}
+
+function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.Element {
+  const locale = useLocale();
+  const isCoarsePointer = useKangurCoarsePointer();
+  const state = useMonitoringWidgetState();
+  const {
+    translations,
+    activeLearnerId,
+    interactionFilter,
+    setInteractionFilter,
+    interactionDateFrom,
+    setInteractionDateFrom,
+    interactionDateTo,
+    setInteractionDateTo,
+    interactionHistory,
+    isInteractionQueryReady,
+    isLoadingInteractions,
+    interactionsError,
+    isLoadingMoreInteractions,
+    interactionsLoadMoreError,
+    interactionViews,
+    lessonPanelTimeCards,
+    fetchInteractions,
+    formatLocalizedDuration,
+  } = state;
+
+  const { entry: monitoringContent } = useKangurPageContentEntry('parent-dashboard-monitoring');
+
+  const translate = createMonitoringTranslate(translations);
   const interactionFilterOptions = useMemo(
-    () =>
-      [
-        { value: 'all', label: translations('widgets.monitoring.filters.all') },
-        { value: 'opened_task', label: translations('widgets.monitoring.filters.openedTask') },
-        { value: 'lesson_panel', label: translations('widgets.monitoring.filters.lessonPanel') },
-        { value: 'session', label: translations('widgets.monitoring.filters.session') },
-      ] satisfies ReadonlyArray<LabeledOptionDto<InteractionFilter>>,
-    [translations]
+    () => resolveMonitoringInteractionFilterOptions(translate),
+    [translate]
   );
-  const taskKindLabels: Record<string, string> = {
-    game: translations('widgets.monitoring.interaction.kind.game'),
-    lesson: translations('widgets.monitoring.interaction.kind.lesson'),
-    test: translations('widgets.monitoring.interaction.kind.test'),
-  };
+
   const formatTimestamp = (value: string | null | undefined): string =>
     formatProgressTimestamp({
       value,
       locale,
       fallback: translations('widgets.monitoring.timestampUnavailable'),
     });
-  const formatLocalizedDuration = (seconds: number): string =>
-    formatDuration({
-      seconds,
-      translate: (key, values) => translations(key, values),
-    });
-  const [interactionHistory, setInteractionHistory] =
-    useState<KangurLearnerInteractionHistory | null>(null);
-  const [isLoadingInteractions, setIsLoadingInteractions] = useState(false);
-  const [interactionsError, setInteractionsError] = useState<string | null>(null);
-  const [isLoadingMoreInteractions, setIsLoadingMoreInteractions] = useState(false);
-  const [interactionsLoadMoreError, setInteractionsLoadMoreError] = useState<string | null>(null);
-  const [interactionFilter, setInteractionFilter] = useState<InteractionFilter>('all');
-  const [interactionDateFrom, setInteractionDateFrom] = useState('');
-  const [interactionDateTo, setInteractionDateTo] = useState('');
-  const compactActionClassName = isCoarsePointer
-    ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
-    : 'w-full sm:w-auto';
-  const segmentedFilterClassName = isCoarsePointer
-    ? 'min-h-11 min-w-0 flex-1 px-4 text-xs touch-manipulation select-none active:scale-[0.97] sm:flex-none'
-    : 'min-w-0 flex-1 px-3 text-xs sm:flex-none';
-  const lessonPanelTimeCards = useMemo(
+
+  const segmentedFilterClassName = resolveMonitoringSegmentedFilterClassName(isCoarsePointer);
+  const hasMoreInteractions = resolveMonitoringHasMoreInteractions(interactionHistory);
+  const nextInteractionOffset = resolveMonitoringNextInteractionOffset(interactionHistory);
+  const filteredInteractionViews = useMemo(
     () =>
-      lessons
-        .map((lesson) => {
-          const panels = lessonPanelProgress[lesson.componentId] ?? {};
-          const sectionEntries = Object.entries(panels)
-            .map(([sectionId, entry]) => {
-              const panelTimes = entry.panelTimes ?? {};
-              const panelEntries = Object.entries(panelTimes)
-                .map(([panelId, panel]) => {
-                  const panelIndex = parsePanelIndex(panelId);
-                  const title =
-                    panel.title?.trim() ||
-                    (panelIndex !== Number.MAX_SAFE_INTEGER
-                      ? translations('widgets.monitoring.lessonPanelTime.panelNumber', {
-                          number: panelIndex,
-                        })
-                      : translations('widgets.monitoring.lessonPanelTime.panelDefault'));
-                  return {
-                    id: panelId,
-                    index: panelIndex,
-                    title,
-                    seconds: panel.seconds,
-                  };
-                })
-                .filter((panel) => panel.seconds > 0)
-                .sort((left, right) => left.index - right.index);
-
-              if (panelEntries.length === 0) {
-                return null;
-              }
-
-              const totalSeconds = panelEntries.reduce((sum, panel) => sum + panel.seconds, 0);
-              return {
-                id: sectionId,
-                label: normalizePanelLabel(entry.label, sectionId),
-                panels: panelEntries,
-                totalSeconds,
-                sessionUpdatedAt: entry.sessionUpdatedAt ?? entry.lastViewedAt ?? null,
-              };
-            })
-            .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-            .sort((left, right) => left.label.localeCompare(right.label));
-
-          if (sectionEntries.length === 0) {
-            return null;
-          }
-
-          const totalSeconds = sectionEntries.reduce((sum, section) => sum + section.totalSeconds, 0);
-          const sessionUpdatedAt = sectionEntries.reduce<string | null>((latest, section) => {
-            const latestTimestamp = parseTimestamp(latest);
-            const sectionTimestamp = parseTimestamp(section.sessionUpdatedAt);
-            return sectionTimestamp >= latestTimestamp ? section.sessionUpdatedAt : latest;
-          }, null);
-
-          return {
-            lesson,
-            sections: sectionEntries,
-            totalSeconds,
-            sessionUpdatedAt,
-          };
-        })
-        .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)),
-    [lessonPanelProgress, lessons]
+      filterInteractionViews(
+        interactionViews,
+        interactionFilter,
+        interactionDateFrom,
+        interactionDateTo
+      ),
+    [interactionDateFrom, interactionDateTo, interactionFilter, interactionViews]
   );
-  const lessonsById = useMemo(
-    () => new Map(lessons.map((lesson) => [lesson.componentId, lesson] as const)),
-    [lessons]
+  const interactionCounts = useMemo(
+    () => resolveMonitoringInteractionCounts(filteredInteractionViews),
+    [filteredInteractionViews]
   );
-  const interactions = interactionHistory?.items ?? [];
-  const hasMoreInteractions = interactionHistory
-    ? interactionHistory.offset + interactions.length < interactionHistory.total
-    : false;
-  const nextInteractionOffset = interactionHistory
-    ? interactionHistory.offset + interactions.length
-    : 0;
-  const interactionViews = useMemo(
-    () =>
-      interactions.map((entry) => {
-        const metadata = asRecord(entry.metadata);
-        const timestamp =
-          readString(metadata?.['endedAt']) ??
-          readString(metadata?.['openedAt']) ??
-          readString(metadata?.['sessionUpdatedAt']) ??
-          readString(metadata?.['startedAt']) ??
-          readString(entry.createdAt) ??
-          readString(entry.updatedAt) ??
-          null;
-
-        const timestampMs = parseTimestampStrict(timestamp);
-
-        if (entry.type === ActivityTypes.KANGUR.OPENED_TASK) {
-          const title =
-            readString(metadata?.['title']) ??
-            readString(entry.description) ??
-            translations('widgets.monitoring.interaction.openedTaskTitle');
-          const kindRaw = readString(metadata?.['kind']);
-          const kindLabel = kindRaw
-            ? taskKindLabels[kindRaw] ?? translations('widgets.monitoring.interaction.kind.default')
-            : translations('widgets.monitoring.interaction.kind.default');
-          return {
-            id: entry.id,
-            kind: 'opened_task' as const,
-            label: translations('widgets.monitoring.interaction.openedTaskLabel', {
-              kind: kindLabel.toLowerCase(),
-            }),
-            description: title,
-            timestamp,
-            timestampMs,
-          };
-        }
-
-        if (entry.type === ActivityTypes.KANGUR.LESSON_PANEL_ACTIVITY) {
-          const lessonKey = readString(metadata?.['lessonKey']);
-          const sectionLabel =
-            readString(metadata?.['label']) ?? readString(metadata?.['sectionId']);
-          const lessonId =
-            lessonKey && isLessonComponentId(lessonKey, lessonsById) ? lessonKey : null;
-          const lessonTitle = lessonId
-            ? lessonsById.get(lessonId)?.title ?? translations('widgets.monitoring.interaction.lessonFallback')
-            : translations('widgets.monitoring.interaction.lessonFallback');
-          const detail = sectionLabel ? `${lessonTitle} · ${sectionLabel}` : lessonTitle;
-          const totalSeconds = readNumber(metadata?.['totalSeconds']);
-          const timeLabel = totalSeconds ? ` · ${formatLocalizedDuration(totalSeconds)}` : '';
-          return {
-            id: entry.id,
-            kind: 'lesson_panel' as const,
-            label: translations('widgets.monitoring.interaction.lessonPanelLabel'),
-            description: `${detail}${timeLabel}`,
-            timestamp,
-            timestampMs,
-          };
-        }
-
-        if (entry.type === ActivityTypes.KANGUR.LEARNER_SESSION) {
-          const durationSeconds = readNumber(metadata?.['durationSeconds']);
-          const durationLabel = durationSeconds ? formatLocalizedDuration(durationSeconds) : null;
-          const endedAt = readString(metadata?.['endedAt']);
-          const description = endedAt
-            ? durationLabel
-              ? translations('widgets.monitoring.interaction.sessionDuration', {
-                  duration: durationLabel,
-                })
-              : translations('widgets.monitoring.interaction.sessionEnded')
-            : durationLabel
-              ? translations('widgets.monitoring.interaction.sessionInProgressWithDuration', {
-                  duration: durationLabel,
-                })
-              : translations('widgets.monitoring.interaction.sessionInProgress');
-
-          return {
-            id: entry.id,
-            kind: 'session' as const,
-            label: translations('widgets.monitoring.interaction.sessionLabel'),
-            description,
-            timestamp,
-            timestampMs,
-          };
-        }
-
-        return {
-          id: entry.id,
-          kind: 'other' as const,
-          label: translations('widgets.monitoring.interaction.learnerActivityLabel'),
-          description:
-            entry.description ??
-            translations('widgets.monitoring.interaction.learnerActivityDescription'),
-          timestamp,
-          timestampMs,
-        };
-      }),
-    [formatLocalizedDuration, interactions, lessonsById, taskKindLabels, translations]
+  const averageSessionDurationLabel = resolveMonitoringAverageSessionDurationLabel(
+    formatLocalizedDuration,
+    interactionCounts
   );
-  const { rangeStartMs, rangeEndMs } = useMemo(() => {
-    const startMs = parseDateFilterValue(interactionDateFrom);
-    const rawEndMs = parseDateFilterValue(interactionDateTo);
-    const endMs = rawEndMs !== null ? rawEndMs + DAY_MS - 1 : null;
-    if (startMs !== null && endMs !== null && startMs > endMs) {
-      return { rangeStartMs: endMs, rangeEndMs: startMs };
-    }
-    return { rangeStartMs: startMs, rangeEndMs: endMs };
-  }, [interactionDateFrom, interactionDateTo]);
-  const filteredInteractions = useMemo(() => {
-    const typeFilter = interactionFilter;
-    const startMs = rangeStartMs;
-    const endMs = rangeEndMs;
-    const hasDateFilter = startMs !== null || endMs !== null;
-    return interactionViews.filter((entry) => {
-      if (typeFilter !== 'all' && entry.kind !== typeFilter) {
-        return false;
-      }
-      if (!hasDateFilter) {
-        return true;
-      }
-      if (entry.timestampMs === null) {
-        return false;
-      }
-      if (startMs !== null && entry.timestampMs < startMs) {
-        return false;
-      }
-      if (endMs !== null && entry.timestampMs > endMs) {
-        return false;
-      }
-      return true;
-    });
-  }, [interactionFilter, interactionViews, rangeEndMs, rangeStartMs]);
-  const filtersActive =
-    interactionFilter !== 'all' || Boolean(interactionDateFrom) || Boolean(interactionDateTo);
-
-  const handleLoadMoreInteractions = async (): Promise<void> => {
-    if (!activeLearnerId || !interactionHistory || isLoadingMoreInteractions) {
-      return;
-    }
-
-    setIsLoadingMoreInteractions(true);
-    setInteractionsLoadMoreError(null);
-    await withKangurClientError(
-      {
-        source: 'kangur-parent-dashboard',
-        action: 'load-more-interactions',
-        description: 'Load more learner interactions in parent dashboard.',
-        context: {
-          learnerId: activeLearnerId,
-          offset: nextInteractionOffset,
-        },
-      },
-      async () => {
-        const history = await kangurPlatform.learnerInteractions.list(activeLearnerId, {
-          limit: INTERACTIONS_PAGE_LIMIT,
-          offset: nextInteractionOffset,
-        });
-        setInteractionHistory((current) => {
-          if (!current) {
-            return history;
-          }
-          const existingIds = new Set(current.items.map((entry) => entry.id));
-          const mergedItems = [
-            ...current.items,
-            ...history.items.filter((entry) => !existingIds.has(entry.id)),
-          ];
-          const total = Math.max(current.total, history.total);
-          return {
-            ...history,
-            items: mergedItems,
-            total,
-            offset: current.offset,
-            limit: current.limit,
-          };
-        });
-      },
-      {
-        fallback: undefined,
-        onError: () => {
-          setInteractionsLoadMoreError(translations('widgets.monitoring.history.loadMoreError'));
-        },
-      }
-    );
-    setIsLoadingMoreInteractions(false);
-  };
-
-  useEffect(() => {
-    if (!activeLearnerId || !canAccessDashboard) {
-      setInteractionHistory(null);
-      return;
-    }
-
-    let isActive = true;
-    setIsLoadingInteractions(true);
-    setIsLoadingMoreInteractions(false);
-    setInteractionsError(null);
-    setInteractionsLoadMoreError(null);
-    setInteractionHistory(null);
-
-    kangurPlatform.learnerInteractions
-      .list(activeLearnerId, { limit: INTERACTIONS_PAGE_LIMIT, offset: 0 })
-      .then((history) => {
-        if (!isActive) {
-          return;
-        }
-        setInteractionHistory(history);
-      })
-      .catch((error) => {
-        void ErrorSystem.captureException(error);
-        if (!isActive) {
-          return;
-        }
-        setInteractionsError(translations('widgets.monitoring.history.loadError'));
-      })
-      .finally(() => {
-        if (isActive) {
-          setIsLoadingInteractions(false);
-        }
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [activeLearnerId, canAccessDashboard]);
-
-  if (!canAccessDashboard) {
-    return null;
-  }
-
-  if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'monitoring')) {
-    return null;
-  }
-
-  if (!activeLearnerId) {
-    return null;
-  }
+  const topLessonPanelCard = resolveMonitoringTopLessonPanelCard(lessonPanelTimeCards);
+  const hasActiveFilters =
+    interactionFilter !== 'all' || interactionDateFrom.length > 0 || interactionDateTo.length > 0;
+  const shouldShowLoadingState = shouldShowMonitoringLoadingState(
+    isInteractionQueryReady,
+    isLoadingInteractions
+  );
 
   return (
-    <KangurPanelStack>
-      <KangurWidgetIntro
+    <KangurPanelStack className='w-full' data-testid='parent-monitoring-overview'>
+      <KangurPanelIntro
+        eyebrow={translate('widgets.monitoring.eyebrow', MONITORING_FALLBACK_COPY.eyebrow)}
+        title={
+          monitoringContent?.title ??
+          translate('widgets.monitoring.title', MONITORING_FALLBACK_COPY.title)
+        }
         description={
           monitoringContent?.summary ??
-          translations('widgets.monitoring.description')
+          translate(
+            'widgets.monitoring.description',
+            MONITORING_FALLBACK_COPY.description
+          )
         }
-        title={monitoringContent?.title ?? translations('widgets.monitoring.title')}
       />
-      <KangurSummaryPanel
-        accent='sky'
-        className='mt-1'
-        description={translations('widgets.monitoring.lessonPanelTime.description')}
-        label={translations('widgets.monitoring.lessonPanelTime.label')}
-      >
-        {lessonPanelTimeCards.length > 0 ? (
-          <div className='mt-3 flex flex-col kangur-panel-gap'>
-            {lessonPanelTimeCards.map((entry) => {
-              const lessonTitle = getLocalizedKangurLessonTitle(
-                entry.lesson.componentId,
-                locale,
-                entry.lesson.title
-              );
 
-              return (
-              <KangurInfoCard
-                key={entry.lesson.componentId}
-                className='rounded-[26px]'
-                padding='lg'
-              >
-                <div className='flex flex-col kangur-panel-gap'>
-                  <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-                    <div>
-                      <div className='break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                        {lessonTitle}
-                      </div>
-                      <KangurMetaText className='break-words' tone='slate'>
-                        {translations('widgets.monitoring.lessonPanelTime.lastSession', {
-                          timestamp: formatTimestamp(entry.sessionUpdatedAt),
-                        })}
-                      </KangurMetaText>
-                    </div>
-                    <div className='text-sm font-semibold text-sky-700'>
-                      {formatLocalizedDuration(entry.totalSeconds)}
-                    </div>
-                  </div>
-                  <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-                    {entry.sections.map((section) => (
-                      <div
-                        key={`${entry.lesson.componentId}-${section.id}`}
-                        className='rounded-[18px] border border-sky-200/70 bg-white/80 px-3 py-2'
-                      >
-                        <div className='break-words text-xs font-semibold [color:var(--kangur-page-text)]'>
-                          {section.label}
-                        </div>
-                        <KangurMetaText tone='slate'>
-                          {translations('widgets.monitoring.lessonPanelTime.total', {
-                            duration: formatLocalizedDuration(section.totalSeconds),
-                          })}
-                        </KangurMetaText>
-                        <div className={`mt-2 ${KANGUR_STACK_COMPACT_CLASSNAME} text-xs`}>
-                          {section.panels.map((panel) => (
-                            <div
-                              key={`${entry.lesson.componentId}-${section.id}-${panel.id}`}
-                              className='flex items-center justify-between gap-2'
-                            >
-                              <span className='min-w-0 truncate [color:var(--kangur-page-text)]'>
-                                {panel.title}
-                              </span>
-                              <span className='shrink-0 text-slate-500'>
-                                {formatLocalizedDuration(panel.seconds)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </KangurInfoCard>
-              );
-            })}
-          </div>
-        ) : (
-          <div className='mt-3 text-sm [color:var(--kangur-page-muted-text)]'>
-            {translations('widgets.monitoring.lessonPanelTime.empty')}
-          </div>
-        )}
-      </KangurSummaryPanel>
-
-      <KangurSummaryPanel
-        accent='indigo'
-        className='mt-1'
-        description={translations('widgets.monitoring.history.description')}
-        label={translations('widgets.monitoring.history.label')}
-      >
-        <div className='mt-3 rounded-[18px] border border-indigo-100/80 bg-white/70 p-4'>
-          <div className='flex flex-col kangur-panel-gap'>
-            <div className={`${KANGUR_TIGHT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-              <KangurMetaText tone='slate'>
-                {translations('widgets.monitoring.filters.label')}
-              </KangurMetaText>
-              <div
-                className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto sm:flex-wrap sm:justify-start`}
-                role='tablist'
-                aria-label={translations('widgets.monitoring.filters.ariaLabel')}
-              >
-                {interactionFilterOptions.map((option) => (
-                  <KangurButton
-                    key={option.value}
-                    type='button'
-                    onClick={() => setInteractionFilter(option.value)}
-                    aria-pressed={interactionFilter === option.value}
-                    aria-selected={interactionFilter === option.value}
-                    role='tab'
-                    className={segmentedFilterClassName}
-                    size='sm'
-                    variant={interactionFilter === option.value ? 'segmentActive' : 'segment'}
-                  >
-                    {option.label}
-                  </KangurButton>
-                ))}
-              </div>
-            </div>
-            <div className='grid kangur-panel-gap sm:grid-cols-3'>
-              <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-                <KangurMetaText tone='slate'>
-                  {translations('widgets.monitoring.filters.dateFromLabel')}
-                </KangurMetaText>
-                <KangurTextField
-                  type='date'
-                  value={interactionDateFrom}
-                  onChange={(event) => setInteractionDateFrom(event.target.value)}
-                  aria-label={translations('widgets.monitoring.filters.dateFromLabel')}
-                  size='sm'
-                />
-              </div>
-              <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-                <KangurMetaText tone='slate'>
-                  {translations('widgets.monitoring.filters.dateToLabel')}
-                </KangurMetaText>
-                <KangurTextField
-                  type='date'
-                  value={interactionDateTo}
-                  onChange={(event) => setInteractionDateTo(event.target.value)}
-                  aria-label={translations('widgets.monitoring.filters.dateToLabel')}
-                  size='sm'
-                />
-              </div>
-              <div className='flex items-end justify-start sm:justify-end'>
-                {filtersActive ? (
-                  <KangurButton
-                    type='button'
-                    size='sm'
-                    variant='ghost'
-                    onClick={() => {
-                      setInteractionFilter('all');
-                      setInteractionDateFrom('');
-                      setInteractionDateTo('');
-                    }}
-                    className={compactActionClassName}
-                  >
-                    {translations('widgets.monitoring.filters.clear')}
-                  </KangurButton>
-                ) : null}
-              </div>
-            </div>
-          </div>
+      <div className='grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]'>
+        <div className='space-y-6'>
+          <KangurParentDashboardMonitoringOverviewCards
+            averageSessionDurationLabel={averageSessionDurationLabel}
+            interactionCounts={interactionCounts}
+          />
+          <KangurParentDashboardMonitoringActivityMix interactionCounts={interactionCounts} />
+          <KangurParentDashboardMonitoringHistorySection
+            activeLearnerId={activeLearnerId}
+            fetchInteractions={fetchInteractions}
+            filteredInteractionViews={filteredInteractionViews}
+            formatTimestamp={formatTimestamp}
+            hasActiveFilters={hasActiveFilters}
+            hasMoreInteractions={hasMoreInteractions}
+            interactionDateFrom={interactionDateFrom}
+            interactionDateTo={interactionDateTo}
+            interactionFilter={interactionFilter}
+            interactionFilterOptions={interactionFilterOptions}
+            interactionsError={interactionsError}
+            interactionsLoadMoreError={interactionsLoadMoreError}
+            isLoadingMoreInteractions={isLoadingMoreInteractions}
+            nextInteractionOffset={nextInteractionOffset}
+            segmentedFilterClassName={segmentedFilterClassName}
+            setInteractionDateFrom={setInteractionDateFrom}
+            setInteractionDateTo={setInteractionDateTo}
+            setInteractionFilter={setInteractionFilter}
+            shouldShowLoadingState={shouldShowLoadingState}
+            translate={translate}
+          />
         </div>
-        {isLoadingInteractions ? (
-          <KangurEmptyState
-            accent='slate'
-            align='center'
-            data-testid='parent-monitoring-interactions-loading'
-            description={translations('widgets.monitoring.history.loadingDescription')}
-            title={translations('widgets.monitoring.history.loadingTitle')}
+
+        <div className='space-y-6'>
+          <KangurParentDashboardMonitoringLessonPanelTimeSection
+            formatLocalizedDuration={formatLocalizedDuration}
+            lessonPanelTimeCards={lessonPanelTimeCards}
+            topLessonPanelCard={topLessonPanelCard}
+            translate={translate}
           />
-        ) : interactionsError ? (
-          <KangurEmptyState
-            accent='rose'
-            align='center'
-            data-testid='parent-monitoring-interactions-error'
-            description={translations('widgets.monitoring.history.errorDescription')}
-            title={interactionsError}
-          />
-        ) : filteredInteractions.length === 0 ? (
-          <KangurEmptyState
-            accent='slate'
-            align='center'
-            data-testid='parent-monitoring-interactions-empty'
-            description={
-              filtersActive
-                ? translations('widgets.monitoring.history.filteredEmptyDescription')
-                : translations('widgets.monitoring.history.emptyDescription')
-            }
-            title={
-              filtersActive
-                ? translations('widgets.monitoring.history.filteredEmptyTitle')
-                : translations('widgets.monitoring.history.emptyTitle')
-            }
-          />
-        ) : (
-          <div className='mt-3 flex flex-col kangur-panel-gap'>
-            {filteredInteractions.map((entry) => (
-              <div
-                key={entry.id}
-                className='rounded-[18px] border border-indigo-200/70 bg-white/80 px-4 py-3'
-                data-testid={`parent-monitoring-interaction-${entry.id}`}
-              >
-                <div className={`${KANGUR_COMPACT_ROW_CLASSNAME} sm:items-center sm:justify-between`}>
-                  <div className='break-words text-sm font-semibold [color:var(--kangur-page-text)]'>
-                    {entry.label}
-                  </div>
-                  <KangurMetaText className='break-words' tone='slate'>
-                    {formatTimestamp(entry.timestamp)}
-                  </KangurMetaText>
-                </div>
-                <div className='mt-1 break-words text-sm [color:var(--kangur-page-text)]'>
-                  {entry.description}
-                </div>
-              </div>
-            ))}
-            {hasMoreInteractions ? (
-              <div className='flex justify-center'>
-                <KangurButton
-                  className={compactActionClassName}
-                  disabled={isLoadingMoreInteractions}
-                  onClick={() => void handleLoadMoreInteractions()}
-                  size='sm'
-                  variant='surface'
-                  data-doc-id='parent_monitoring_interactions_load_more'
-                >
-                  {isLoadingMoreInteractions
-                    ? translations('widgets.monitoring.history.loadingMore')
-                    : translations('widgets.monitoring.history.loadMore')}
-                </KangurButton>
-              </div>
-            ) : null}
-            {interactionsLoadMoreError ? (
-              <div className='text-xs text-rose-600'>{interactionsLoadMoreError}</div>
-            ) : null}
-          </div>
-        )}
-      </KangurSummaryPanel>
+        </div>
+      </div>
     </KangurPanelStack>
   );
 }
+
+export default KangurParentDashboardAssignmentsMonitoringWidget;

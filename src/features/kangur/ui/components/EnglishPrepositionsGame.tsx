@@ -1,11 +1,12 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -21,12 +22,13 @@ import {
   translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
+  KangurButton,
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -191,6 +193,7 @@ export default function EnglishPrepositionsGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
@@ -249,7 +252,7 @@ export default function EnglishPrepositionsGame({
 
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, {
           activityKey: 'english_prepositions_quiz',
           lessonKey: 'english_prepositions_time_place',
@@ -257,7 +260,7 @@ export default function EnglishPrepositionsGame({
           totalQuestions: TOTAL_ROUNDS,
           strongThresholdPercent: 75,
         });
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'english_prepositions_time_place',
           score: nextScore,
@@ -328,10 +331,8 @@ export default function EnglishPrepositionsGame({
     );
   }
 
-  const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
-
   return (
-    <KangurPracticeGameStage className='max-w-sm'>
+    <KangurPracticeGameShell className='max-w-sm'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -397,26 +398,32 @@ export default function EnglishPrepositionsGame({
         </div>
 
         {feedback ? (
-          <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-            {feedback.text}
+          <KangurInfoCard
+            accent={feedback.kind === 'success' ? 'emerald' : 'amber'}
+            tone={feedback.kind === 'success' ? 'accent' : 'neutral'}
+            padding='sm'
+            className='w-full text-sm'
+            data-testid='english-prepositions-feedback'
+          >
+            <p className='font-semibold'>{feedback.text}</p>
           </KangurInfoCard>
         ) : null}
 
-        <KangurCheckButton
+        <KangurButton
           type='button'
           size='lg'
           variant='primary'
-          className='w-full'
-          feedbackTone={
+          className={getKangurCheckButtonClassName(
+            'w-full',
             feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
-          }
+          )}
           disabled={!isReady || isChecking}
           onClick={handleCheck}
           data-testid='english-prepositions-check'
         >
           {translations('englishPrepositions.inRound.check')}
-        </KangurCheckButton>
+        </KangurButton>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

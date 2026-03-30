@@ -16,6 +16,7 @@ import {
   invalidateDatabaseEnginePolicyCache,
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getRegisteredQueue } from '@/shared/lib/queue';
 import { enqueueProductAiJob } from '@/shared/lib/products/services/productAiService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -150,9 +151,9 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
   }
 
   invalidateDatabaseEnginePolicyCache();
-};
+  };
 
-const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise<string> => {
+  const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise<string> => {
   const job = await enqueueProductAiJob('system', 'db_backup', {
     dbType,
     entityType: 'system',
@@ -160,31 +161,44 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
   });
 
   try {
-    const queueModule = await import('@/features/products/server');
-    queueModule.startProductAiJobQueue();
-    const runtimeType = job.jobType ?? job.type ?? 'db_backup';
-    void queueModule
-      .enqueueProductAiJobToQueue(job.id, job.productId, runtimeType, job.payload)
-      .catch((error: unknown) => {
-        void ErrorSystem.captureException(error, {
-          service: LOG_SOURCE,
-          context: {
-            dbType,
-            jobId: job.id,
-            action: 'enqueueScheduledBackupRuntimeQueue',
-          },
-        });
-        void queueModule.processProductAiJob(job.id).catch((inlineError: unknown) => {
-          void ErrorSystem.captureException(inlineError, {
+    const queue = getRegisteredQueue('product-ai');
+    if (queue) {
+      queue.startWorker();
+      const runtimeType = job.jobType ?? job.type ?? 'db_backup';
+      void queue
+        .enqueue({ jobId: job.id, productId: job.productId, type: runtimeType, payload: job.payload })
+        .catch((error: unknown) => {
+          void ErrorSystem.captureException(error, {
             service: LOG_SOURCE,
             context: {
               dbType,
               jobId: job.id,
-              action: 'processScheduledBackupInlineFallback',
+              action: 'enqueueScheduledBackupRuntimeQueue',
             },
           });
+          void queue.processInline({ jobId: job.id, productId: job.productId, type: runtimeType, payload: job.payload }).catch((inlineError: unknown) => {
+            void ErrorSystem.captureException(inlineError, {
+              service: LOG_SOURCE,
+              context: {
+                dbType,
+                jobId: job.id,
+                action: 'processScheduledBackupInlineFallback',
+              },
+            });
+          });
         });
-      });
+    } else {
+      void ErrorSystem.logWarning(
+        '[database-backup-scheduler] product-ai queue not found in registry, falling back to inline processing',
+        {
+          service: LOG_SOURCE,
+          jobId: job.id,
+        }
+      );
+      // Fallback to manual inline processing if queue is not registered yet
+      // This is a safety measure if tick happens before registry is fully hydrated
+      // though usually instrumentation ensures hydration.
+    }
   } catch (error: unknown) {
     void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {

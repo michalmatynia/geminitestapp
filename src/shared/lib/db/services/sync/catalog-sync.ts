@@ -9,11 +9,96 @@ import type {
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
+type BatchResult = { count: number };
+
+type MongoRecordWithStringId<TDoc> = Omit<TDoc, '_id'> & { _id: string };
+
+type EntityWithId = { id: string };
+
+type PriceGroupSeed = {
+  id: string;
+  groupId: string;
+  isDefault: boolean;
+  name: string;
+  description: string | null;
+  currencyId: string;
+  type: string;
+  basePriceField: string;
+  sourceGroupId: string | null;
+  priceMultiplier: number;
+  addToPrice: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CatalogSeed = {
+  id: string;
+  name: string;
+  description: string | null;
+  isDefault: boolean;
+  defaultLanguageId: string | null;
+  defaultPriceGroupId: string | null;
+  priceGroupIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  languageIds: string[];
+};
+
+type ProductCategorySeed = {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  parentId: string | null;
+  catalogId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ProductTagSeed = {
+  id: string;
+  name: string;
+  color: string | null;
+  catalogId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ProducerSeed = {
+  id: string;
+  name: string;
+  website: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type ProductParameterSeed = {
+  id: string;
+  catalogId: string;
+  name_en: string;
+  name_pl: string | null;
+  name_de: string | null;
+  selectorType: string;
+  optionLabels: string[];
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type PriceGroupRow = PriceGroupSeed;
+type CatalogRow = Omit<CatalogSeed, 'languageIds'> & {
+  languages: Array<{ languageId: string; position: number }>;
+};
+type ProductCategoryRow = ProductCategorySeed;
+type ProductTagRow = ProductTagSeed;
+type ProducerRow = ProducerSeed;
+type ProductParameterRow = ProductParameterSeed;
+
 export const syncPriceGroups: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
+  const currencyRows = (await prisma.currency.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableCurrencyIds = new Set<string>(
-    (await prisma.currency.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    currencyRows.map((entry) => entry.id)
   );
   const warnings: string[] = [];
   const docs = (await mongo
@@ -26,7 +111,7 @@ export const syncPriceGroups: DatabaseSyncHandler = async ({ mongo, prisma, norm
       .filter((id: string | null): id is string => Boolean(id))
   );
   const data = docs
-    .map((doc: MongoPriceGroupDoc): Prisma.PriceGroupCreateManyInput | null => {
+    .map((doc: MongoPriceGroupDoc): PriceGroupSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const rawCurrencyId = doc.currencyId ?? 'PLN';
@@ -61,9 +146,13 @@ export const syncPriceGroups: DatabaseSyncHandler = async ({ mongo, prisma, norm
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.PriceGroupCreateManyInput => item !== null);
-  const deleted = await prisma.priceGroup.deleteMany();
-  const created = data.length ? await prisma.priceGroup.createMany({ data }) : { count: 0 };
+    .filter((item): item is PriceGroupSeed => item !== null);
+  const deleted = (await prisma.priceGroup.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.priceGroup.createMany({
+      data: data as Prisma.PriceGroupCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -73,15 +162,17 @@ export const syncPriceGroups: DatabaseSyncHandler = async ({ mongo, prisma, norm
 };
 
 export const syncCatalogs: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
+  const languageRows = (await prisma.language.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableLanguageIds = new Set<string>(
-    (await prisma.language.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    languageRows.map((entry) => entry.id)
   );
+  const priceGroupRows = (await prisma.priceGroup.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availablePriceGroupIds = new Set<string>(
-    (await prisma.priceGroup.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    priceGroupRows.map((entry) => entry.id)
   );
   const warnings: string[] = [];
   const docs = (await mongo
@@ -89,7 +180,7 @@ export const syncCatalogs: DatabaseSyncHandler = async ({ mongo, prisma, normali
     .find({})
     .toArray()) as MongoCatalogDoc[];
   const data = docs
-    .map((doc: MongoCatalogDoc) => {
+    .map((doc: MongoCatalogDoc): CatalogSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const rawDefaultLanguageId = doc.defaultLanguageId ?? null;
@@ -139,12 +230,12 @@ export const syncCatalogs: DatabaseSyncHandler = async ({ mongo, prisma, normali
         languageIds,
       };
     })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
-  const deleted = await prisma.catalog.deleteMany();
-  const created = data.length
-    ? await prisma.catalog.createMany({
+    .filter((item): item is CatalogSeed => item !== null);
+  const deleted = (await prisma.catalog.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.catalog.createMany({
       data: data.map(({ languageIds: _, ...rest }) => rest) as Prisma.CatalogCreateManyInput[],
-    })
+    })) as BatchResult)
     : { count: 0 };
 
   const catalogLanguages = data.flatMap((catalog) =>
@@ -173,7 +264,7 @@ export const syncProductCategories: DatabaseSyncHandler = async ({ mongo, prisma
     .find({})
     .toArray()) as MongoCategoryDoc[];
   const data = docs
-    .map((doc: MongoCategoryDoc): Prisma.ProductCategoryCreateManyInput | null => {
+    .map((doc: MongoCategoryDoc): ProductCategorySeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
@@ -187,9 +278,13 @@ export const syncProductCategories: DatabaseSyncHandler = async ({ mongo, prisma
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.ProductCategoryCreateManyInput => item !== null);
-  const deleted = await prisma.productCategory.deleteMany();
-  const created = data.length ? await prisma.productCategory.createMany({ data }) : { count: 0 };
+    .filter((item): item is ProductCategorySeed => item !== null);
+  const deleted = (await prisma.productCategory.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.productCategory.createMany({
+      data: data as Prisma.ProductCategoryCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -199,7 +294,7 @@ export const syncProductTags: DatabaseSyncHandler = async ({ mongo, prisma, norm
     .find({})
     .toArray()) as MongoTagDoc[];
   const data = docs
-    .map((doc: MongoTagDoc): Prisma.ProductTagCreateManyInput | null => {
+    .map((doc: MongoTagDoc): ProductTagSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
@@ -211,9 +306,13 @@ export const syncProductTags: DatabaseSyncHandler = async ({ mongo, prisma, norm
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.ProductTagCreateManyInput => item !== null);
-  const deleted = await prisma.productTag.deleteMany();
-  const created = data.length ? await prisma.productTag.createMany({ data }) : { count: 0 };
+    .filter((item): item is ProductTagSeed => item !== null);
+  const deleted = (await prisma.productTag.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.productTag.createMany({
+      data: data as Prisma.ProductTagCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -225,7 +324,7 @@ export const syncProductProducers: DatabaseSyncHandler = async ({ mongo, prisma,
   const warnings: string[] = [];
   const seenNames = new Set<string>();
   const data = docs
-    .map((doc: MongoProducerDoc): Prisma.ProducerCreateManyInput | null => {
+    .map((doc: MongoProducerDoc): ProducerSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const rawName = typeof doc.name === 'string' ? (doc.name.trim() ?? '') : '';
@@ -244,10 +343,14 @@ export const syncProductProducers: DatabaseSyncHandler = async ({ mongo, prisma,
         updatedAt: toDate(doc.updatedAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.ProducerCreateManyInput => item !== null);
+    .filter((item): item is ProducerSeed => item !== null);
   await prisma.productProducerAssignment.deleteMany();
-  const deleted = await prisma.producer.deleteMany();
-  const created = data.length ? await prisma.producer.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.producer.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.producer.createMany({
+      data: data as Prisma.ProducerCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -262,7 +365,7 @@ export const syncProductParameters: DatabaseSyncHandler = async ({ mongo, prisma
     .find({})
     .toArray()) as MongoProductParameterDoc[];
   const data = docs
-    .map((doc: MongoProductParameterDoc): Prisma.ProductParameterCreateManyInput | null => {
+    .map((doc: MongoProductParameterDoc): ProductParameterSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
@@ -277,17 +380,21 @@ export const syncProductParameters: DatabaseSyncHandler = async ({ mongo, prisma
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.ProductParameterCreateManyInput => item !== null);
-  const deleted = await prisma.productParameter.deleteMany();
-  const created = data.length ? await prisma.productParameter.createMany({ data }) : { count: 0 };
+    .filter((item): item is ProductParameterSeed => item !== null);
+  const deleted = (await prisma.productParameter.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.productParameter.createMany({
+      data: data as Prisma.ProductParameterCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 // --- Prisma to Mongo handlers ---
 
 export const syncPriceGroupsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.priceGroup.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.priceGroup.findMany()) as PriceGroupRow[];
+  const docs: MongoRecordWithStringId<MongoPriceGroupDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     groupId: row.groupId,
@@ -303,9 +410,9 @@ export const syncPriceGroupsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('price_groups');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoPriceGroupDoc>>('price_groups');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -314,10 +421,10 @@ export const syncPriceGroupsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
 };
 
 export const syncCatalogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.catalog.findMany({
+  const rows = (await prisma.catalog.findMany({
     include: { languages: true },
-  });
-  const docs = rows.map((row) => ({
+  })) as CatalogRow[];
+  const docs: MongoRecordWithStringId<MongoCatalogDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -332,9 +439,9 @@ export const syncCatalogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('catalogs');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoCatalogDoc>>('catalogs');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -343,8 +450,8 @@ export const syncCatalogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 };
 
 export const syncProductCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.productCategory.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.productCategory.findMany()) as ProductCategoryRow[];
+  const docs: MongoRecordWithStringId<MongoCategoryDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -355,9 +462,11 @@ export const syncProductCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ 
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('product_categories');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoCategoryDoc>>(
+    'product_categories'
+  );
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -366,8 +475,8 @@ export const syncProductCategoriesPrismaToMongo: DatabaseSyncHandler = async ({ 
 };
 
 export const syncProductTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.productTag.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.productTag.findMany()) as ProductTagRow[];
+  const docs: MongoRecordWithStringId<MongoTagDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -376,9 +485,9 @@ export const syncProductTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('product_tags');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoTagDoc>>('product_tags');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -387,8 +496,8 @@ export const syncProductTagsPrismaToMongo: DatabaseSyncHandler = async ({ mongo,
 };
 
 export const syncProductProducersPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.producer.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.producer.findMany()) as ProducerRow[];
+  const docs: MongoRecordWithStringId<MongoProducerDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     name: row.name,
@@ -396,9 +505,11 @@ export const syncProductProducersPrismaToMongo: DatabaseSyncHandler = async ({ m
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('product_producers');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoProducerDoc>>(
+    'product_producers'
+  );
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -407,8 +518,8 @@ export const syncProductProducersPrismaToMongo: DatabaseSyncHandler = async ({ m
 };
 
 export const syncProductParametersPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.productParameter.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.productParameter.findMany()) as ProductParameterRow[];
+  const docs: MongoRecordWithStringId<MongoProductParameterDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     catalogId: row.catalogId,
@@ -420,9 +531,11 @@ export const syncProductParametersPrismaToMongo: DatabaseSyncHandler = async ({ 
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('product_parameters');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoProductParameterDoc>>(
+    'product_parameters'
+  );
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,

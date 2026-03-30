@@ -48,23 +48,26 @@ type KangurNarratorControlProps = {
   docId?: string;
 };
 
-export function KangurNarratorControl({
-  script,
-  engine,
-  voice,
-  contextRegistry = null,
-  className,
-  displayMode = 'button',
-  diagnosticsVisible = false,
-  loadingLabel,
-  pauseLabel = 'Pause',
-  readLabel = 'Read',
-  resumeLabel = 'Resume',
-  renderWhenEmpty = false,
-  showFeedback,
-  shellTestId,
-  docId,
-}: KangurNarratorControlProps): React.JSX.Element | null {
+export function KangurNarratorControl(
+  props: KangurNarratorControlProps
+): React.JSX.Element | null {
+  const {
+    script,
+    engine,
+    voice,
+    contextRegistry = null,
+    className,
+    displayMode = 'button',
+    diagnosticsVisible = false,
+    loadingLabel,
+    pauseLabel = 'Pause',
+    readLabel = 'Read',
+    resumeLabel = 'Resume',
+    renderWhenEmpty = false,
+    showFeedback,
+    shellTestId,
+    docId,
+  } = props;
   const isIconMode = displayMode === 'icon';
   const isCoarsePointer = useKangurCoarsePointer();
   const shouldShowFeedback = showFeedback ?? !isIconMode;

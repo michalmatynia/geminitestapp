@@ -30,8 +30,12 @@ export const kangurLessonComponentIdSchema = z.enum([
   'english_parts_of_speech',
   'english_sentence_structure',
   'english_subject_verb_agreement',
+  'english_going_to',
   'english_articles',
   'english_adjectives',
+  'english_comparatives_superlatives',
+  'english_adverbs',
+  'english_adverbs_frequency',
   'english_prepositions_time_place',
   'webdev_react_components',
   'webdev_react_hooks',
@@ -107,6 +111,7 @@ export type KangurLessonAgeGroup = z.infer<typeof kangurLessonAgeGroupSchema>;
 export const kangurLessonCollectionFilterSchema = z.object({
   subject: kangurLessonSubjectSchema.optional(),
   ageGroup: kangurLessonAgeGroupSchema.optional(),
+  componentIds: z.array(kangurLessonComponentIdSchema).optional(),
   enabledOnly: z.boolean().optional(),
 });
 export type KangurLessonCollectionFilterDto = z.infer<typeof kangurLessonCollectionFilterSchema>;

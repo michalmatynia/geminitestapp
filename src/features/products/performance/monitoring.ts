@@ -2,6 +2,8 @@
 // Ring buffer — O(1) push, O(n) drain; bounded, no slice on every overflow
 // ---------------------------------------------------------------------------
 
+import { logger } from '@/shared/utils/logger';
+
 class RingBuffer<T> {
   private readonly buf: (T | undefined)[];
   private head: number = 0; // next write slot
@@ -73,7 +75,7 @@ function shipMetric(name: string, value: number, tags?: Record<string, string>):
         },
       });
     } catch (error) {
-      console.error('[products.performance.monitor] Failed to ship metric', error);
+      logger.error('[products.performance.monitor] Failed to ship metric', error);
 
       // Never let observability failures propagate
     }
@@ -302,7 +304,7 @@ export function withPerformanceMiddleware(
 
       return result;
     } catch (error) {
-      console.error('[products.performance.monitor] Request wrapper failed', error);
+      logger.error('[products.performance.monitor] Request wrapper failed', error);
       const duration = performance.now() - start;
 
       performanceMonitor.record('request', duration, {

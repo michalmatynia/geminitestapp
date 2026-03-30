@@ -6,12 +6,14 @@ import { KangurTopNavigationController } from '@/features/kangur/ui/components/K
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 
 export function KangurGameNavigationWidget({
   visible = true,
 }: {
   visible?: boolean;
 } = {}): React.JSX.Element | null {
+  const { pageKey } = useKangurRouting();
   const {
     basePath,
     handleHome,
@@ -46,6 +48,7 @@ export function KangurGameNavigationWidget({
       user,
     ]
   );
+  const shouldOwnTopNavigation = visible && pageKey === 'Game';
 
-  return <KangurTopNavigationController navigation={navigation} visible={visible} />;
+  return <KangurTopNavigationController navigation={navigation} visible={shouldOwnTopNavigation} />;
 }

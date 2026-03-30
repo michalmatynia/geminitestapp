@@ -28,7 +28,7 @@ import {
 import {
   listBaseListingsForSync,
   syncBaseImagesForListing,
-} from '@/shared/lib/integrations/server';
+} from '@/features/integrations/server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import {
   prepareGraphModelExecutionInput,
@@ -402,21 +402,19 @@ export async function processBase64ConvertAll(job: Job): Promise<Record<string, 
       page: page,
       pageSize: pageSize,
     });
-    if (!products.length) break;
-    requested += products.length;
-
-    for (const product of products) {
-      try {
-        const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
-        await productRepo.updateProduct(product.id, { imageBase64s, imageLinks });
-        succeeded += 1;
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-        failed += 1;
-      }
+    if (!products.length) {
+      break;
     }
 
-    if (products.length < pageSize) break;
+    const pageResult = await processBase64ConvertPage(productRepo, products);
+    requested += pageResult.requested;
+    succeeded += pageResult.succeeded;
+    failed += pageResult.failed;
+
+    if (products.length < pageSize) {
+      break;
+    }
+
     page += 1;
   }
 
@@ -436,6 +434,51 @@ export async function processBase64ConvertAll(job: Job): Promise<Record<string, 
     source: job.payload.source ?? 'base64_all',
   };
 }
+
+type ProductRepository = Awaited<ReturnType<typeof getProductRepository>>;
+type ProductListItem = Awaited<ReturnType<ProductRepository['getProducts']>>[number];
+type Base64ConvertPageResult = {
+  requested: number;
+  succeeded: number;
+  failed: number;
+};
+
+const processBase64ConvertProduct = async (
+  productRepo: ProductRepository,
+  product: ProductListItem,
+): Promise<boolean> => {
+  try {
+    const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
+    await productRepo.updateProduct(product.id, { imageBase64s, imageLinks });
+    return true;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return false;
+  }
+};
+
+const processBase64ConvertPage = async (
+  productRepo: ProductRepository,
+  products: ProductListItem[],
+): Promise<Base64ConvertPageResult> => {
+  let succeeded = 0;
+  let failed = 0;
+
+  for (const product of products) {
+    if (await processBase64ConvertProduct(productRepo, product)) {
+      succeeded += 1;
+      continue;
+    }
+
+    failed += 1;
+  }
+
+  return {
+    requested: products.length,
+    succeeded,
+    failed,
+  };
+};
 
 export async function processBaseImageSyncAll(job: Job): Promise<Record<string, unknown>> {
   const listings = await listBaseListingsForSync();

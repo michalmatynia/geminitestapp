@@ -130,7 +130,8 @@ export const buildFullValidatorDocumentationClipboardText = (): string => {
     '',
     '## Source Paths',
     '- docs/validator/semantic-grammar/*',
-    '- src/features/documentation/catalogs/validator-docs.ts',
+    '- docs/validator/tooltips.md',
+    '- src/shared/lib/documentation/catalogs/validator-docs.ts',
     ''
   );
 

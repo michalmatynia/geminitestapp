@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,13 @@ canonical: true
 ---
 
 # AI Paths Improvement Plan (2026-03-06)
+
+This is a retained planning baseline for the March 2026 improvement wave. Current
+runtime/operator truth lives in:
+
+- [`overview.md`](./overview.md)
+- [`reference.md`](./reference.md)
+- the specific active runbooks and reference docs linked from those hubs
 
 ## Reference Basis
 

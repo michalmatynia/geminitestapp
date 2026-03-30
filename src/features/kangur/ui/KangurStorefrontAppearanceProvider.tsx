@@ -7,7 +7,7 @@ import {
   parseKangurStorefrontAppearanceMode,
   type KangurStorefrontThemeSettingsSnapshot,
   type KangurStorefrontAppearanceMode,
-} from '@/features/kangur/storefront-appearance-settings';
+} from '@/features/kangur/appearance/storefront-appearance-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 
 import {
@@ -28,44 +28,78 @@ const KANGUR_EMPTY_THEME_SETTINGS_SNAPSHOT: KangurStorefrontThemeSettingsSnapsho
 
 const KangurStorefrontInitialThemeSettingsContext =
   createContext<KangurStorefrontThemeSettingsSnapshot>(KANGUR_EMPTY_THEME_SETTINGS_SNAPSHOT);
+const KangurStorefrontAppearanceHydratedContext = createContext(false);
 
 export const useKangurStorefrontInitialThemeSettings =
   (): KangurStorefrontThemeSettingsSnapshot =>
     useContext(KangurStorefrontInitialThemeSettingsContext);
 
+export const useKangurStorefrontAppearanceHydrated = (): boolean =>
+  useContext(KangurStorefrontAppearanceHydratedContext);
+
+const resolveKangurStorefrontInitialThemeSettings = (
+  initialThemeSettings:
+    | Partial<KangurStorefrontThemeSettingsSnapshot>
+    | null
+    | undefined
+): KangurStorefrontThemeSettingsSnapshot => {
+  const settings =
+    initialThemeSettings ?? KANGUR_EMPTY_THEME_SETTINGS_SNAPSHOT;
+
+  return {
+    default: settings.default ?? null,
+    dawn: settings.dawn ?? null,
+    sunset: settings.sunset ?? null,
+    dark: settings.dark ?? null,
+  };
+};
+
+const resolveKangurStorefrontPersistMode = (): boolean => {
+  const raw = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
+  return raw === 'true';
+};
+
+const hasStoredKangurAppearanceMode = (value: string | undefined): boolean =>
+  typeof value === 'string' && value.trim().length > 0;
+
 export function KangurStorefrontAppearanceProvider({
   children,
+  initialAppearance,
   initialMode,
   initialThemeSettings,
+  persistMode,
 }: {
   children: ReactNode;
+  initialAppearance?: {
+    mode?: KangurStorefrontAppearanceMode;
+    themeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
+  };
   initialMode?: KangurStorefrontAppearanceMode;
   initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
+  persistMode?: boolean;
 }): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const [hydrated, setHydrated] = useState(false);
+  const resolvedInitialMode = initialAppearance?.mode ?? initialMode;
+  const resolvedInitialThemeSettingsInput =
+    initialAppearance?.themeSettings ?? initialThemeSettings;
   const storedMode = settingsStore.get(KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY);
   const resolvedMode = useMemo(
     () => parseKangurStorefrontAppearanceMode(storedMode),
     [storedMode]
   );
   const resolvedInitialThemeSettings = useMemo<KangurStorefrontThemeSettingsSnapshot>(
-    () => ({
-      default: initialThemeSettings?.default ?? null,
-      dawn: initialThemeSettings?.dawn ?? null,
-      sunset: initialThemeSettings?.sunset ?? null,
-      dark: initialThemeSettings?.dark ?? null,
-    }),
-    [initialThemeSettings]
+    () => resolveKangurStorefrontInitialThemeSettings(resolvedInitialThemeSettingsInput),
+    [resolvedInitialThemeSettingsInput]
   );
-  const defaultMode = hydrated ? resolvedMode : (initialMode ?? 'default');
-  const shouldPersistMode = useMemo(() => {
-    const raw = process.env['NEXT_PUBLIC_KANGUR_APPEARANCE_PERSIST'];
-    if (process.env['NODE_ENV'] !== 'production') {
-      return raw !== 'false';
-    }
-    return raw === 'true';
-  }, []);
+  const defaultMode =
+    hydrated && hasStoredKangurAppearanceMode(storedMode)
+      ? resolvedMode
+      : (resolvedInitialMode ?? 'default');
+  const shouldPersistMode = useMemo(
+    () => persistMode ?? resolveKangurStorefrontPersistMode(),
+    [persistMode]
+  );
 
   useEffect(() => {
     setHydrated(true);
@@ -73,13 +107,15 @@ export function KangurStorefrontAppearanceProvider({
 
   return (
     <KangurStorefrontInitialThemeSettingsContext.Provider value={resolvedInitialThemeSettings}>
-      <CmsStorefrontAppearanceProvider
-        initialMode={defaultMode}
-        storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
-        persistMode={shouldPersistMode}
-      >
-        {children}
-      </CmsStorefrontAppearanceProvider>
+      <KangurStorefrontAppearanceHydratedContext.Provider value={hydrated}>
+        <CmsStorefrontAppearanceProvider
+          initialMode={defaultMode}
+          storageKey={KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY}
+          persistMode={shouldPersistMode}
+        >
+          {children}
+        </CmsStorefrontAppearanceProvider>
+      </KangurStorefrontAppearanceHydratedContext.Provider>
     </KangurStorefrontInitialThemeSettingsContext.Provider>
   );
 }

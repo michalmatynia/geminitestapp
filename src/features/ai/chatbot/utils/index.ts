@@ -10,7 +10,6 @@ import {
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 export const parseModelSize = (normalized: string): number | null => {
   const mixMatch: RegExpMatchArray | null = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);
   if (mixMatch) {
@@ -26,6 +25,11 @@ export const parseModelSize = (normalized: string): number | null => {
   if (normalized.includes('tiny')) return 1.5;
   return null;
 };
+
+const getMetadataRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 
 export const buildModelProfile = (name: string): ExtendedModelProfile => {
   const normalized: string = name.toLowerCase();
@@ -228,14 +232,17 @@ export const buildAgentResultMessage = (
   const resolvedTaskType: string | null =
     (taskType as { plannerMeta?: { taskType?: string } })?.plannerMeta?.taskType ?? null;
   const extractionAudit: AgentAuditLog | undefined = audits.find(
-    (audit: AgentAuditLog): boolean =>
-      Array.isArray(audit.metadata?.['items']) || Array.isArray(audit.metadata?.['names'])
+    (audit: AgentAuditLog): boolean => {
+      const metadata = getMetadataRecord(audit.metadata);
+      return Array.isArray(metadata?.['items']) || Array.isArray(metadata?.['names']);
+    }
   );
   if (extractionAudit) {
-    const extractionItems: unknown[] = Array.isArray(extractionAudit.metadata?.['items'])
-      ? (extractionAudit.metadata['items'] as unknown[])
-      : Array.isArray(extractionAudit.metadata?.['names'])
-        ? (extractionAudit.metadata['names'] as unknown[])
+    const metadata = getMetadataRecord(extractionAudit.metadata);
+    const extractionItems: unknown[] = Array.isArray(metadata?.['items'])
+      ? (metadata['items'] as unknown[])
+      : Array.isArray(metadata?.['names'])
+        ? (metadata['names'] as unknown[])
         : [];
     const items: string[] = extractionItems
       .filter((name: unknown): name is string => typeof name === 'string')
@@ -243,12 +250,12 @@ export const buildAgentResultMessage = (
       .filter(Boolean);
     if (items.length > 0) {
       const url: string | null =
-        typeof extractionAudit.metadata?.['url'] === 'string'
-          ? extractionAudit.metadata['url']
+        typeof metadata?.['url'] === 'string'
+          ? metadata['url']
           : null;
       const extractionType: string | null =
-        typeof extractionAudit.metadata?.['extractionType'] === 'string'
-          ? extractionAudit.metadata['extractionType']
+        typeof metadata?.['extractionType'] === 'string'
+          ? metadata['extractionType']
           : null;
       const label: string =
         extractionType === 'emails'
@@ -264,8 +271,9 @@ export const buildAgentResultMessage = (
     (audit: AgentAuditLog): boolean => audit.message === 'No product names extracted.'
   );
   if (emptyAudit) {
+    const metadata = getMetadataRecord(emptyAudit.metadata);
     const url: string | null =
-      typeof emptyAudit.metadata?.['url'] === 'string' ? emptyAudit.metadata['url'] : null;
+      typeof metadata?.['url'] === 'string' ? metadata['url'] : null;
     return `No information extracted${url ? ` from ${url}` : ''}.`;
   }
   if (status === 'completed') {
@@ -300,9 +308,10 @@ export const buildAgentResumeSummaryMessage = (audits: AgentAuditLog[]): string 
       : null;
     return `Auto-resume queued for stuck run${timestamp ? ` (${timestamp})` : ''}.`;
   }
+  const metadata = getMetadataRecord(resumeAudit.metadata);
   const summary: string =
-    typeof resumeAudit.metadata?.['summary'] === 'string'
-      ? resumeAudit.metadata['summary'].trim()
+    typeof metadata?.['summary'] === 'string'
+      ? metadata['summary'].trim()
       : '';
   if (!summary) return null;
   return `Resume summary:\n${summary}`;
@@ -429,7 +438,7 @@ export const getLatestAuditByType = (
   type: string
 ): AgentAuditLog | null => {
   const filtered: AgentAuditLog[] = audits.filter(
-    (audit: AgentAuditLog): boolean => audit.metadata?.['type'] === type
+    (audit: AgentAuditLog): boolean => getMetadataRecord(audit.metadata)?.['type'] === type
   );
   return filtered.length ? filtered[filtered.length - 1]! : null;
 };

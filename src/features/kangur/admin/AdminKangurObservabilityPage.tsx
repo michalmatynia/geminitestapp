@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createContext, type JSX, useCallback, useContext, useState } from 'react';
 
-import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor-page-coverage-manifest';
+import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor/page-coverage-manifest';
 import { KangurAdminContentShell } from '@/features/kangur/admin/components/KangurAdminContentShell';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import {
@@ -398,7 +398,7 @@ export function AdminKangurObservabilityPage(): JSX.Element {
         {summaryQuery.error ? <Alert variant='error'>{summaryQuery.error.message}</Alert> : null}
 
         {summaryQuery.isLoading && !summary ? (
-          <LoadingState message='Loading Kangur observability...' className='min-h-[320px]' />
+          <LoadingState message='Loading observability...' className='min-h-[320px]' />
         ) : !summary || !knowledgeGraphStatus ? (
           <CompactEmptyState
             title='No observability summary available'

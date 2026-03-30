@@ -43,7 +43,7 @@ vi.mock('@/shared/ui', () => ({
   DropdownMenuSeparator: () => <div data-testid='database-action-separator' />,
 }));
 
-import { getDatabaseColumns } from '@/features/database/components/DatabaseColumns';
+import { buildDatabaseColumns } from '@/features/database/components/DatabaseColumns';
 
 const buildBackup = (overrides: Partial<DatabaseInfo> = {}): DatabaseInfo => ({
   name: 'backup-2026-03-22',
@@ -55,7 +55,12 @@ const buildBackup = (overrides: Partial<DatabaseInfo> = {}): DatabaseInfo => ({
 });
 
 function renderActionsCell(backup: DatabaseInfo = buildBackup()) {
-  const actionsColumn = getDatabaseColumns().find((column) => column.id === 'actions');
+  const actionsColumn = buildDatabaseColumns({
+    backupMaintenanceAllowed: backupMaintenanceAllowedState.value,
+    handlePreview: handlePreviewMock,
+    handleRestoreRequest: handleRestoreRequestMock,
+    handleDeleteRequest: handleDeleteRequestMock,
+  }).find((column) => column.id === 'actions');
   if (!actionsColumn || typeof actionsColumn.cell !== 'function') {
     throw new Error('Expected actions column with a cell renderer');
   }
@@ -70,7 +75,7 @@ function renderActionsCell(backup: DatabaseInfo = buildBackup()) {
   };
 }
 
-describe('getDatabaseColumns actions cell', () => {
+describe('buildDatabaseColumns actions cell', () => {
   beforeEach(() => {
     backupMaintenanceAllowedState.value = true;
     handleDeleteRequestMock.mockReset();

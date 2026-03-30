@@ -198,4 +198,17 @@ describe('CalendarTrainingGame', () => {
       })
     );
   });
+
+  it('limits the generated prompt pool when a calendar section is provided', () => {
+    render(<CalendarTrainingGame onFinish={() => undefined} section='data' />);
+
+    const questionText =
+      screen.getByText((content, element) =>
+        element?.tagName.toLowerCase() === 'p' && element.className.includes('text-green-800')
+          ? content.length > 0
+          : false
+      ).textContent ?? '';
+
+    expect(questionText).toMatch(/^Ile dni ma miesiąc /);
+  });
 });

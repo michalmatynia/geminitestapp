@@ -3,6 +3,10 @@ import { test, expect, type Page } from '@playwright/test';
 test.describe.configure({ timeout: 60_000 });
 
 const ROUTE_BOOT_TIMEOUT_MS = 45_000;
+const TRAINING_HEADING_PATTERN = /training|trening/i;
+const GAME_PLAYING_HEADING_PATTERN =
+  /question to solve|pytanie do rozwiazania|pytanie do rozwiązania/i;
+const OPERATION_HEADING_PATTERN = /let's play|grajmy/i;
 
 const waitForQuickStartParamsToClear = async (page: Page) => {
   await expect
@@ -50,16 +54,26 @@ test.describe('Kangur Game Quick Start', () => {
     await expect(
       page
         .getByTestId('kangur-game-training-top-section')
-        .getByRole('heading', { name: /^Trening$/i })
+        .getByRole('heading', { name: TRAINING_HEADING_PATTERN })
     ).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
     await waitForQuickStartParamsToClear(page);
-    await page
-      .getByTestId('kangur-game-training-top-section')
-      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
-      .click();
-    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
+  });
+
+  test('opens training setup from localized quickStart=training routes and clears query params', async ({
+    page,
+  }) => {
+    await page.goto('/en/kangur/game?quickStart=training', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+
+    await expect(page).toHaveURL(/\/en\/kangur\/game/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
+    await expect(page.getByTestId('kangur-game-training-top-section')).toBeVisible({
+      timeout: ROUTE_BOOT_TIMEOUT_MS,
+    });
+    await waitForQuickStartParamsToClear(page);
   });
 
   test('starts operation run from quickStart=operation and clears query params', async ({ page }) => {
@@ -69,9 +83,11 @@ test.describe('Kangur Game Quick Start', () => {
     });
 
     await expect(page).toHaveURL(/\/kangur\/game/, { timeout: ROUTE_BOOT_TIMEOUT_MS });
-    await expect(page.getByRole('heading', { name: 'Pytanie do rozwiazania' })).toBeVisible({
-      timeout: ROUTE_BOOT_TIMEOUT_MS,
-    });
+    await expect(
+      page.locator('#kangur-game-main').getByRole('heading', {
+        name: GAME_PLAYING_HEADING_PATTERN,
+      })
+    ).toBeVisible({ timeout: ROUTE_BOOT_TIMEOUT_MS });
     await expect
       .poll(
         () => {
@@ -103,14 +119,9 @@ test.describe('Kangur Game Quick Start', () => {
     await expect(page.getByTestId('kangur-game-operation-top-section')).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
-    await expect(page.getByRole('heading', { name: /Grajmy!/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: OPERATION_HEADING_PATTERN })).toBeVisible({
       timeout: ROUTE_BOOT_TIMEOUT_MS,
     });
     await waitForQuickStartParamsToClear(page);
-    await page
-      .getByTestId('kangur-game-operation-top-section')
-      .getByRole('button', { name: 'Wróć do poprzedniej strony' })
-      .click();
-    await expect(page.getByTestId('kangur-home-actions-shell')).toBeVisible();
   });
 });

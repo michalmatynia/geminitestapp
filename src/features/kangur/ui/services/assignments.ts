@@ -263,6 +263,351 @@ const resolveAssignmentLessonTitle = (
   localizer: KangurAssignmentLocalizer | undefined
 ): string => localizer?.resolveLessonTitle?.(lesson.componentId, lesson.title) ?? lesson.title;
 
+const translateAssignmentSuggestionWithFallback = (
+  translate: KangurAssignmentLocalizer['translate'],
+  key: string,
+  fallback: string,
+  values?: KangurAssignmentTranslationValues
+): string => {
+  const translated = translate?.(key, values);
+  if (!translated || translated === key || translated.endsWith(`.${key}`)) {
+    return fallback;
+  }
+
+  return translated;
+};
+
+type KangurAssignmentInsights = ReturnType<typeof buildLessonMasteryInsights>;
+
+type KangurAssignmentBuildContext = {
+  fallbackCopy: KangurAssignmentFallbackCopy;
+  insights: KangurAssignmentInsights;
+  localizer?: KangurAssignmentLocalizer;
+  progress: KangurProgressState;
+  translate?: KangurAssignmentLocalizer['translate'];
+};
+
+const buildStarterAssignment = ({
+  fallbackCopy,
+  translate,
+}: KangurAssignmentBuildContext): KangurAssignmentPlan => ({
+  id: 'lesson-start',
+  title: translateAssignmentSuggestionWithFallback(
+    translate,
+    'starter.title',
+    fallbackCopy.starter.title
+  ),
+  description: translateAssignmentSuggestionWithFallback(
+    translate,
+    'starter.description',
+    fallbackCopy.starter.description
+  ),
+  target: translateAssignmentSuggestionWithFallback(
+    translate,
+    'starter.target',
+    fallbackCopy.starter.target
+  ),
+  priority: 'medium',
+  progressLabel: translateAssignmentSuggestionWithFallback(
+    translate,
+    'starter.progressLabel',
+    fallbackCopy.starter.progressLabel
+  ),
+  questLabel: translateAssignmentSuggestionWithFallback(
+    translate,
+    'starter.questLabel',
+    fallbackCopy.starter.questLabel
+  ),
+  rewardXp: 40,
+  questMetric: {
+    kind: 'lessons_completed',
+    targetDelta: 1,
+  },
+  action: {
+    label: translateAssignmentSuggestionWithFallback(
+      translate,
+      'actions.openLesson',
+      fallbackCopy.starter.actionOpenLesson
+    ),
+    page: 'Lessons',
+  },
+});
+
+const resolveRetryTargetPercent = (masteryPercent: number): number =>
+  masteryPercent < 60 ? 75 : 80;
+
+const resolveRetryMode = (
+  fallbackCopy: KangurAssignmentFallbackCopy,
+  critical: boolean
+): {
+  descriptionKey: 'retry.descriptionCritical' | 'retry.descriptionDefault';
+  description: (masteryPercent: number) => string;
+  priority: 'high' | 'medium';
+  questLabel: string;
+  questLabelKey: 'retry.questLabelCritical' | 'retry.questLabelDefault';
+  rewardXp: number;
+  target: string;
+  targetKey: 'retry.targetPrimary' | 'retry.targetSecondary';
+} =>
+  critical
+    ? {
+        descriptionKey: 'retry.descriptionCritical',
+        description: fallbackCopy.retry.descriptionCritical,
+        priority: 'high',
+        questLabel: fallbackCopy.retry.questLabelCritical,
+        questLabelKey: 'retry.questLabelCritical',
+        rewardXp: 55,
+        target: fallbackCopy.retry.targetPrimary,
+        targetKey: 'retry.targetPrimary',
+      }
+    : {
+        descriptionKey: 'retry.descriptionDefault',
+        description: fallbackCopy.retry.descriptionDefault,
+        priority: 'medium',
+        questLabel: fallbackCopy.retry.questLabelDefault,
+        questLabelKey: 'retry.questLabelDefault',
+        rewardXp: 45,
+        target: fallbackCopy.retry.targetSecondary,
+        targetKey: 'retry.targetSecondary',
+      };
+
+const buildRetryAssignment = ({
+  fallbackCopy,
+  lesson,
+  localizer,
+  translate,
+}: KangurAssignmentBuildContext & {
+  lesson: KangurAssignmentInsights['weakest'][number];
+}): KangurAssignmentPlan => {
+  const critical = lesson.masteryPercent < 60;
+  const retryMode = resolveRetryMode(fallbackCopy, critical);
+  const targetMastery = resolveRetryTargetPercent(lesson.masteryPercent);
+  const lessonTitle = resolveAssignmentLessonTitle(lesson, localizer);
+
+  return {
+    id: `lesson-retry-${lesson.componentId}`,
+    title: translateAssignmentSuggestionWithFallback(
+      translate,
+      'retry.title',
+      fallbackCopy.retry.title(lesson.emoji, lessonTitle),
+      {
+        emoji: lesson.emoji,
+        title: lessonTitle,
+      }
+    ),
+    description: translateAssignmentSuggestionWithFallback(
+      translate,
+      retryMode.descriptionKey,
+      retryMode.description(lesson.masteryPercent),
+      {
+        masteryPercent: lesson.masteryPercent,
+      }
+    ),
+    target: translateAssignmentSuggestionWithFallback(
+      translate,
+      retryMode.targetKey,
+      retryMode.target
+    ),
+    priority: retryMode.priority,
+    progressLabel: translateAssignmentSuggestionWithFallback(
+      translate,
+      'retry.progressLabel',
+      fallbackCopy.retry.progressLabel(lesson.masteryPercent, targetMastery),
+      {
+        masteryPercent: lesson.masteryPercent,
+        targetPercent: targetMastery,
+      }
+    ),
+    questLabel: translateAssignmentSuggestionWithFallback(
+      translate,
+      retryMode.questLabelKey,
+      retryMode.questLabel
+    ),
+    rewardXp: retryMode.rewardXp,
+    questMetric: {
+      kind: 'lesson_mastery',
+      lessonComponentId: lesson.componentId,
+      targetPercent: targetMastery,
+    },
+    action: {
+      label: translateAssignmentSuggestionWithFallback(
+        translate,
+        'actions.openLesson',
+        fallbackCopy.retry.actionOpenLesson
+      ),
+      page: 'Lessons',
+      query: {
+        focus: lesson.componentId,
+      },
+    },
+  };
+};
+
+const resolveMixedPracticeMode = (
+  fallbackCopy: KangurAssignmentFallbackCopy,
+  hasPlayedGames: boolean,
+  needsPractice: boolean
+): {
+  description: string;
+  descriptionKey: 'mixed.descriptionNeedsPractice' | 'mixed.descriptionDefault';
+  priority: 'medium' | 'low';
+  progressLabelKey: 'mixed.progressLabel' | 'mixed.progressLabelEmpty';
+  questLabel: string;
+  questLabelKey: 'mixed.questLabelNeedsPractice' | 'mixed.questLabelDefault';
+  rewardXp: number;
+} => ({
+  description: needsPractice
+    ? fallbackCopy.mixed.descriptionNeedsPractice
+    : fallbackCopy.mixed.descriptionDefault,
+  descriptionKey: needsPractice ? 'mixed.descriptionNeedsPractice' : 'mixed.descriptionDefault',
+  priority: needsPractice ? 'medium' : 'low',
+  progressLabelKey: hasPlayedGames ? 'mixed.progressLabel' : 'mixed.progressLabelEmpty',
+  questLabel: needsPractice
+    ? fallbackCopy.mixed.questLabelNeedsPractice
+    : fallbackCopy.mixed.questLabelDefault,
+  questLabelKey: needsPractice ? 'mixed.questLabelNeedsPractice' : 'mixed.questLabelDefault',
+  rewardXp: needsPractice ? 36 : 28,
+});
+
+const buildMixedPracticeAssignment = ({
+  fallbackCopy,
+  insights,
+  progress,
+  translate,
+}: KangurAssignmentBuildContext): KangurAssignmentPlan => {
+  const needsPractice = insights.lessonsNeedingPractice > 0;
+  const gamesPlayed = progress.gamesPlayed;
+  const questionCount = gamesPlayed < 5 ? 8 : 12;
+  const hasPlayedGames = gamesPlayed > 0;
+  const mixedPracticeMode = resolveMixedPracticeMode(
+    fallbackCopy,
+    hasPlayedGames,
+    needsPractice
+  );
+  const progressLabel = hasPlayedGames
+    ? fallbackCopy.mixed.progressLabel(gamesPlayed)
+    : fallbackCopy.mixed.progressLabelEmpty;
+
+  return {
+    id: 'mixed-practice',
+    title: translateAssignmentSuggestionWithFallback(
+      translate,
+      'mixed.title',
+      fallbackCopy.mixed.title
+    ),
+    description: translateAssignmentSuggestionWithFallback(
+      translate,
+      mixedPracticeMode.descriptionKey,
+      mixedPracticeMode.description
+    ),
+    target: translateAssignmentSuggestionWithFallback(
+      translate,
+      'mixed.target',
+      fallbackCopy.mixed.target(questionCount),
+      {
+        questionCount,
+      }
+    ),
+    priority: mixedPracticeMode.priority,
+    progressLabel: translateAssignmentSuggestionWithFallback(
+      translate,
+      mixedPracticeMode.progressLabelKey,
+      progressLabel,
+      hasPlayedGames ? { gamesPlayed } : undefined
+    ),
+    questLabel: translateAssignmentSuggestionWithFallback(
+      translate,
+      mixedPracticeMode.questLabelKey,
+      mixedPracticeMode.questLabel
+    ),
+    rewardXp: mixedPracticeMode.rewardXp,
+    questMetric: {
+      kind: 'games_played',
+      targetDelta: 1,
+    },
+    action: {
+      label: translateAssignmentSuggestionWithFallback(
+        translate,
+        'actions.startTraining',
+        fallbackCopy.mixed.actionStartTraining
+      ),
+      page: 'Game',
+      query: {
+        quickStart: 'training',
+      },
+    },
+  };
+};
+
+const buildRetentionAssignment = ({
+  fallbackCopy,
+  insights,
+  localizer,
+  translate,
+}: KangurAssignmentBuildContext): KangurAssignmentPlan | null => {
+  const strongestLesson = insights.strongest[0] ?? null;
+  if (!strongestLesson || strongestLesson.masteryPercent < 85) {
+    return null;
+  }
+
+  const strongestLessonTitle = resolveAssignmentLessonTitle(strongestLesson, localizer);
+  return {
+    id: `lesson-retain-${strongestLesson.componentId}`,
+    title: translateAssignmentSuggestionWithFallback(
+      translate,
+      'retain.title',
+      fallbackCopy.retain.title(strongestLesson.emoji),
+      {
+        emoji: strongestLesson.emoji,
+      }
+    ),
+    description: translateAssignmentSuggestionWithFallback(
+      translate,
+      'retain.description',
+      fallbackCopy.retain.description(strongestLessonTitle, strongestLesson.masteryPercent),
+      {
+        title: strongestLessonTitle,
+        masteryPercent: strongestLesson.masteryPercent,
+      }
+    ),
+    target: translateAssignmentSuggestionWithFallback(
+      translate,
+      'retain.target',
+      fallbackCopy.retain.target
+    ),
+    priority: 'low',
+    progressLabel: translateAssignmentSuggestionWithFallback(
+      translate,
+      'retain.progressLabel',
+      fallbackCopy.retain.progressLabel(strongestLesson.masteryPercent),
+      {
+        masteryPercent: strongestLesson.masteryPercent,
+      }
+    ),
+    questLabel: translateAssignmentSuggestionWithFallback(
+      translate,
+      'retain.questLabel',
+      fallbackCopy.retain.questLabel
+    ),
+    rewardXp: 22,
+    questMetric: {
+      kind: 'lessons_completed',
+      targetDelta: 1,
+    },
+    action: {
+      label: translateAssignmentSuggestionWithFallback(
+        translate,
+        'actions.repeatLesson',
+        fallbackCopy.retain.actionRepeatLesson
+      ),
+      page: 'Lessons',
+      query: {
+        focus: strongestLesson.componentId,
+      },
+    },
+  };
+};
+
 export const buildKangurAssignments = (
   progress: KangurProgressState,
   limit = 3,
@@ -270,191 +615,25 @@ export const buildKangurAssignments = (
 ): KangurAssignmentPlan[] => {
   const safeLimit = Math.max(1, Math.floor(limit));
   const insights = buildLessonMasteryInsights(progress, 2);
-  const assignments: KangurAssignmentPlan[] = [];
-  const translate = localizer?.translate;
-  const fallbackCopy = getAssignmentFallbackCopy(localizer?.locale);
+  const context: KangurAssignmentBuildContext = {
+    fallbackCopy: getAssignmentFallbackCopy(localizer?.locale),
+    insights,
+    localizer,
+    progress,
+    translate: localizer?.translate,
+  };
+  const assignments = [
+    ...(insights.trackedLessons === 0 ? [buildStarterAssignment(context)] : []),
+    ...insights.weakest.map((lesson) => buildRetryAssignment({ ...context, lesson })),
+    buildMixedPracticeAssignment(context),
+    ...(() => {
+      const retentionAssignment = buildRetentionAssignment(context);
+      return retentionAssignment ? [retentionAssignment] : [];
+    })(),
+  ];
 
-  if (insights.trackedLessons === 0) {
-    assignments.push({
-      id: 'lesson-start',
-      title: translate ? translate('starter.title') : fallbackCopy.starter.title,
-      description: translate
-        ? translate('starter.description')
-        : fallbackCopy.starter.description,
-      target: translate ? translate('starter.target') : fallbackCopy.starter.target,
-      priority: 'medium',
-      progressLabel: translate
-        ? translate('starter.progressLabel')
-        : fallbackCopy.starter.progressLabel,
-      questLabel: translate ? translate('starter.questLabel') : fallbackCopy.starter.questLabel,
-      rewardXp: 40,
-      questMetric: {
-        kind: 'lessons_completed',
-        targetDelta: 1,
-      },
-      action: {
-        label: translate ? translate('actions.openLesson') : fallbackCopy.starter.actionOpenLesson,
-        page: 'Lessons',
-      },
-    });
-  }
-
-  insights.weakest.forEach((lesson, index) => {
-    const targetMastery = index === 0 ? 75 : 80;
-    const critical = lesson.masteryPercent < 60;
-    const lessonTitle = resolveAssignmentLessonTitle(lesson, localizer);
-    assignments.push({
-      id: `lesson-retry-${lesson.componentId}`,
-      title: translate
-        ? translate('retry.title', {
-            emoji: lesson.emoji,
-            title: lessonTitle,
-          })
-        : fallbackCopy.retry.title(lesson.emoji, lessonTitle),
-      description:
-        translate
-          ? critical
-            ? translate('retry.descriptionCritical', {
-                masteryPercent: lesson.masteryPercent,
-              })
-            : translate('retry.descriptionDefault', {
-                masteryPercent: lesson.masteryPercent,
-              })
-          : critical
-            ? fallbackCopy.retry.descriptionCritical(lesson.masteryPercent)
-            : fallbackCopy.retry.descriptionDefault(lesson.masteryPercent),
-      target: translate
-        ? translate(index === 0 ? 'retry.targetPrimary' : 'retry.targetSecondary')
-        : index === 0
-          ? fallbackCopy.retry.targetPrimary
-          : fallbackCopy.retry.targetSecondary,
-      priority: critical ? 'high' : 'medium',
-      progressLabel: translate
-        ? translate('retry.progressLabel', {
-            masteryPercent: lesson.masteryPercent,
-            targetPercent: targetMastery,
-          })
-        : fallbackCopy.retry.progressLabel(lesson.masteryPercent, targetMastery),
-      questLabel: translate
-        ? translate(critical ? 'retry.questLabelCritical' : 'retry.questLabelDefault')
-        : critical
-          ? fallbackCopy.retry.questLabelCritical
-          : fallbackCopy.retry.questLabelDefault,
-      rewardXp: critical ? 55 : 45,
-      questMetric: {
-        kind: 'lesson_mastery',
-        lessonComponentId: lesson.componentId,
-        targetPercent: targetMastery,
-      },
-      action: {
-        label: translate ? translate('actions.openLesson') : fallbackCopy.retry.actionOpenLesson,
-        page: 'Lessons',
-        query: {
-          focus: lesson.componentId,
-        },
-      },
-    });
-  });
-
-  assignments.push({
-    id: 'mixed-practice',
-    title: translate ? translate('mixed.title') : fallbackCopy.mixed.title,
-    description:
-      translate
-        ? insights.lessonsNeedingPractice > 0
-          ? translate('mixed.descriptionNeedsPractice')
-          : translate('mixed.descriptionDefault')
-        : insights.lessonsNeedingPractice > 0
-          ? fallbackCopy.mixed.descriptionNeedsPractice
-          : fallbackCopy.mixed.descriptionDefault,
-    target: translate
-      ? translate('mixed.target', {
-          questionCount: progress.gamesPlayed < 5 ? 8 : 12,
-        })
-      : fallbackCopy.mixed.target(progress.gamesPlayed < 5 ? 8 : 12),
-    priority: insights.lessonsNeedingPractice > 0 ? 'medium' : 'low',
-    progressLabel:
-      translate
-        ? progress.gamesPlayed > 0
-          ? translate('mixed.progressLabel', {
-              gamesPlayed: progress.gamesPlayed,
-            })
-          : translate('mixed.progressLabelEmpty')
-        : progress.gamesPlayed > 0
-          ? fallbackCopy.mixed.progressLabel(progress.gamesPlayed)
-          : fallbackCopy.mixed.progressLabelEmpty,
-    questLabel: translate
-      ? translate(
-          insights.lessonsNeedingPractice > 0
-            ? 'mixed.questLabelNeedsPractice'
-            : 'mixed.questLabelDefault'
-        )
-      : insights.lessonsNeedingPractice > 0
-        ? fallbackCopy.mixed.questLabelNeedsPractice
-        : fallbackCopy.mixed.questLabelDefault,
-    rewardXp: insights.lessonsNeedingPractice > 0 ? 36 : 28,
-    questMetric: {
-      kind: 'games_played',
-      targetDelta: 1,
-    },
-      action: {
-        label: translate
-          ? translate('actions.startTraining')
-          : fallbackCopy.mixed.actionStartTraining,
-        page: 'Game',
-      query: {
-        quickStart: 'training',
-      },
-    },
-  });
-
-  const strongestLesson = insights.strongest[0] ?? null;
-  if (strongestLesson && strongestLesson.masteryPercent >= 85) {
-    const strongestLessonTitle = resolveAssignmentLessonTitle(strongestLesson, localizer);
-    assignments.push({
-      id: `lesson-retain-${strongestLesson.componentId}`,
-      title: translate
-        ? translate('retain.title', {
-            emoji: strongestLesson.emoji,
-          })
-        : fallbackCopy.retain.title(strongestLesson.emoji),
-      description: translate
-        ? translate('retain.description', {
-            title: strongestLessonTitle,
-            masteryPercent: strongestLesson.masteryPercent,
-          })
-        : fallbackCopy.retain.description(strongestLessonTitle, strongestLesson.masteryPercent),
-      target: translate ? translate('retain.target') : fallbackCopy.retain.target,
-      priority: 'low',
-      progressLabel: translate
-        ? translate('retain.progressLabel', {
-            masteryPercent: strongestLesson.masteryPercent,
-          })
-        : fallbackCopy.retain.progressLabel(strongestLesson.masteryPercent),
-      questLabel: translate ? translate('retain.questLabel') : fallbackCopy.retain.questLabel,
-      rewardXp: 22,
-      questMetric: {
-        kind: 'lessons_completed',
-        targetDelta: 1,
-      },
-      action: {
-        label: translate
-          ? translate('actions.repeatLesson')
-          : fallbackCopy.retain.actionRepeatLesson,
-        page: 'Lessons',
-        query: {
-          focus: strongestLesson.componentId,
-        },
-      },
-    });
-  }
-
-  const uniqueAssignments = new Map<string, KangurAssignmentPlan>();
-  assignments.forEach((assignment) => {
-    if (!uniqueAssignments.has(assignment.id)) {
-      uniqueAssignments.set(assignment.id, assignment);
-    }
-  });
-
-  return Array.from(uniqueAssignments.values()).slice(0, safeLimit);
+  return Array.from(new Map(assignments.map((assignment) => [assignment.id, assignment])).values()).slice(
+    0,
+    safeLimit
+  );
 };

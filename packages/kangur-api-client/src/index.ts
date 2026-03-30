@@ -4,23 +4,6 @@ import type {
   KangurAssignmentSnapshot,
   KangurAssignmentUpdateInput,
   KangurAuthUser,
-  KangurDuelAnswerInput,
-  KangurDuelCreateInput,
-  KangurDuelHeartbeatInput,
-  KangurDuelJoinInput,
-  KangurDuelLeaderboardResponse,
-  KangurDuelLobbyChatCreateInput,
-  KangurDuelLobbyChatListResponse,
-  KangurDuelLobbyChatSendResponse,
-  KangurDuelLobbyPresenceResponse,
-  KangurDuelLobbyResponse,
-  KangurDuelOpponentsResponse,
-  KangurDuelReactionInput,
-  KangurDuelReactionResponse,
-  KangurDuelSearchResponse,
-  KangurDuelSpectatorStateResponse,
-  KangurDuelStateResponse,
-  KangurDuelLeaveInput,
   KangurLearnerCreateInput,
   KangurLearnerActivitySnapshot,
   KangurLearnerActivityStatus,
@@ -35,6 +18,28 @@ import type {
   KangurScore,
   KangurScoreCreateInput,
   KangurSubjectFocus,
+} from '@kangur/contracts';
+import type {
+  KangurDuelAnswerInput,
+  KangurDuelCreateInput,
+  KangurDuelHeartbeatInput,
+  KangurDuelJoinInput,
+  KangurDuelLeaderboardResponse,
+  KangurDuelLobbyPresenceResponse,
+  KangurDuelLobbyResponse,
+  KangurDuelOpponentsResponse,
+  KangurDuelVisibility,
+  KangurDuelReactionInput,
+  KangurDuelReactionResponse,
+  KangurDuelSearchResponse,
+  KangurDuelSpectatorStateResponse,
+  KangurDuelStateResponse,
+  KangurDuelLeaveInput,
+} from '@kangur/contracts';
+import type {
+  KangurDuelLobbyChatCreateInput,
+  KangurDuelLobbyChatListResponse,
+  KangurDuelLobbyChatSendResponse,
 } from '@kangur/contracts';
 
 export type KangurApiClientOptions = {
@@ -70,6 +75,10 @@ export type KangurPaginationQuery = {
 
 export type KangurDuelLimitQuery = {
   limit?: number;
+};
+
+export type KangurDuelLobbyQuery = KangurDuelLimitQuery & {
+  visibility?: KangurDuelVisibility;
 };
 
 export type KangurDuelLeaderboardQuery = KangurDuelLimitQuery & {
@@ -222,9 +231,18 @@ const buildDuelSpectatePath = (
   return `${DUELS_SPECTATE_PATH}?${search.toString()}`;
 };
 
-const buildDuelLobbyPath = (query?: KangurDuelLimitQuery): string => {
+const buildDuelLobbyPath = (query?: KangurDuelLobbyQuery): string => {
+  const search = new URLSearchParams();
   const limit = normalizeQueryInteger(query?.limit);
-  return limit ? `${DUELS_LOBBY_PATH}?limit=${encodeURIComponent(limit)}` : DUELS_LOBBY_PATH;
+
+  if (limit) {
+    search.set('limit', String(limit));
+  }
+  if (query?.visibility) {
+    search.set('visibility', query.visibility);
+  }
+
+  return search.size ? `${DUELS_LOBBY_PATH}?${search.toString()}` : DUELS_LOBBY_PATH;
 };
 
 const buildDuelLobbyPresencePath = (query?: KangurDuelLimitQuery): string => {
@@ -500,7 +518,7 @@ export const createKangurApiClient = (options: KangurApiClientOptions = {}) => {
         method: 'GET',
       }),
     listDuelLobby: (
-      query?: KangurDuelLimitQuery,
+      query?: KangurDuelLobbyQuery,
       requestOptions?: KangurApiRequestOptions,
     ) =>
       request<KangurDuelLobbyResponse>(buildDuelLobbyPath(query), {

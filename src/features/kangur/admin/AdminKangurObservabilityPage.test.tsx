@@ -19,6 +19,8 @@ const {
   knowledgeGraphStatusRefetchMock,
   replaceMock,
   navigationState,
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurObservabilitySummaryMock: vi.fn(),
   useKangurKnowledgeGraphStatusMock: vi.fn(),
@@ -30,14 +32,33 @@ const {
     pathname: '/admin/kangur/observability',
     search: '',
   },
+  disabledDocsTooltipsMock: {
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  } as const,
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
+
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; prefetch?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -65,21 +86,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => ({
-    enabled: false,
-    helpSettings: {
-      version: 1,
-      docsTooltips: {
-        enabled: false,
-        homeEnabled: false,
-        lessonsEnabled: false,
-        testsEnabled: false,
-        profileEnabled: false,
-        parentDashboardEnabled: false,
-        adminEnabled: false,
-      },
-    },
-  }),
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 import { AdminKangurObservabilityPage } from './AdminKangurObservabilityPage';
@@ -87,6 +94,7 @@ import { AdminKangurObservabilityPage } from './AdminKangurObservabilityPage';
 describe('AdminKangurObservabilityPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     navigationState.pathname = '/admin/kangur/observability';
     navigationState.search = '';
     apiPostMock.mockImplementation(async (path: string) => {

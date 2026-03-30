@@ -1,12 +1,13 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -35,7 +36,9 @@ import {
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   addXp,
   createLessonPracticeReward,
@@ -60,6 +63,7 @@ import {
   EnglishPrepositionsRelationsDiagram,
   EnglishPrepositionsTimeAnimation,
 } from './LessonAnimations';
+import type { PartialBinnedRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -79,10 +83,7 @@ type Round = {
   bins: PrepositionBinId[];
 };
 
-type RoundState = {
-  pool: PrepositionToken[];
-  bins: Partial<Record<PrepositionBinId, PrepositionToken[]>>;
-};
+type RoundState = PartialBinnedRoundStateDto<PrepositionToken, PrepositionBinId>;
 
 const BINS: Record<
   PrepositionBinId,
@@ -263,6 +264,7 @@ export default function EnglishPrepositionsSortGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
@@ -438,7 +440,7 @@ export default function EnglishPrepositionsSortGame({
     const nextTotal = totalCorrect + roundCorrect;
     setTotalCorrect(nextTotal);
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: 'english_prepositions_sort',
         lessonKey: 'english_prepositions_time_place',
@@ -446,7 +448,7 @@ export default function EnglishPrepositionsSortGame({
         totalQuestions: TOTAL_TOKENS,
         strongThresholdPercent: 75,
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'english_prepositions_time_place',
         score: nextTotal,
@@ -520,7 +522,7 @@ export default function EnglishPrepositionsSortGame({
   const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
-    <KangurPracticeGameStage className='mx-auto max-w-3xl'>
+    <KangurPracticeGameShell className='mx-auto max-w-3xl'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -734,12 +736,6 @@ export default function EnglishPrepositionsSortGame({
             </KangurInfoCard>
           ) : null}
 
-          {feedback ? (
-            <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-              {feedback.text}
-            </KangurInfoCard>
-          ) : null}
-
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurButton size='sm' type='button' variant='surface' onClick={handleReset} disabled={checked}>
@@ -754,21 +750,30 @@ export default function EnglishPrepositionsSortGame({
                 </KangurStatusChip>
               ) : null}
             </div>
-            {!checked ? (
-              <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck} disabled={!isRoundComplete}>
-                {translations('englishPrepositions.inRound.check')}
-              </KangurButton>
-            ) : (
+            <KangurButton
+              size='sm'
+              type='button'
+              variant='primary'
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+              )}
+            >
+              {translations('englishPrepositions.inRound.check')}
+            </KangurButton>
+            {checked ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
                 {roundIndex + 1 >= TOTAL_ROUNDS
                   ? translations('englishPrepositions.inRound.seeResult')
                   : translations('englishPrepositions.inRound.next')}
               </KangurButton>
-            )}
+            ) : null}
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }
 
@@ -792,7 +797,7 @@ function DraggableToken({
   isSelected?: boolean;
   isCoarsePointer?: boolean;
   onClick?: () => void;
-}): React.JSX.Element {
+}): React.JSX.Element | React.ReactPortal {
   const statusClass = showStatus ? (isCorrect ? 'border-emerald-300' : 'border-rose-300') : '';
   const selectedClass = isSelected
     ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white'
@@ -804,37 +809,41 @@ function DraggableToken({
       isDragDisabled={isDragDisabled}
       disableInteractiveElementBlocking
     >
-      {(provided, snapshot) => (
-        <button
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          style={getKangurMobileDragHandleStyle(
-            provided.draggableProps.style,
-            isCoarsePointer
-          )}
-          type='button'
-          className={cn(
-            'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
-            isCoarsePointer ? 'min-h-[3.75rem] px-4 py-3 touch-manipulation' : undefined,
-            KANGUR_ACCENT_STYLES[accent].badge,
-            snapshot.isDragging && 'scale-[1.02] shadow-lg',
-            statusClass,
-            selectedClass
-          )}
-          aria-label={token.label}
-          aria-disabled={isDragDisabled}
-          aria-pressed={isSelected}
-          title={token.label}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (snapshot.isDragging || isDragDisabled) return;
-            onClick?.();
-          }}
-        >
-          {token.label}
-        </button>
-      )}
+      {(provided, snapshot) => {
+        const content = (
+          <button
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
+            type='button'
+            className={cn(
+              'rounded-[16px] border px-3 py-2 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isCoarsePointer ? 'min-h-[3.75rem] px-4 py-3 touch-manipulation' : undefined,
+              KANGUR_ACCENT_STYLES[accent].badge,
+              snapshot.isDragging && 'scale-[1.02] shadow-lg',
+              statusClass,
+              selectedClass
+            )}
+            aria-label={token.label}
+            aria-disabled={isDragDisabled}
+            aria-pressed={isSelected}
+            title={token.label}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (snapshot.isDragging || isDragDisabled) return;
+              onClick?.();
+            }}
+          >
+            {token.label}
+          </button>
+        );
+
+        return renderKangurDragPreview(content, snapshot.isDragging);
+      }}
     </Draggable>
   );
 }

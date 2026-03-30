@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { analyzeTestDistribution } from './check-test-distribution.mjs';
+import { getMajorTestingLaneIds, testingLanes, testingSuites } from '../../testing/config/test-suite-registry.mjs';
 
 const TEST_FILE_PATTERN = /\.(test|spec)\.(ts|tsx|js|jsx|mjs|cjs)$/;
 const MAX_SLOWEST_SUITES = 20;
@@ -93,6 +94,25 @@ const readJsonIfExists = (root, relativePath) => {
   }
 
   return JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
+};
+
+const readTestingRunLedger = (root) => {
+  const payload = readJsonIfExists(root, 'docs/metrics/testing-run-ledger-latest.json');
+  if (!payload || !Array.isArray(payload.entries)) {
+    return {
+      generatedAt: null,
+      summary: {
+        totalEntries: 0,
+        passingEntries: 0,
+        failingEntries: 0,
+        warningEntries: 0,
+        latestRunAt: null,
+      },
+      entries: [],
+    };
+  }
+
+  return payload;
 };
 
 const coerceNumber = (value) => (Number.isFinite(value) ? value : null);
@@ -253,6 +273,7 @@ export const collectTestingQualitySnapshot = ({
   now = new Date(),
 } = {}) => {
   const distribution = analyzeTestDistribution({ root });
+  const ledger = readTestingRunLedger(root);
   const repoTestFileCount = countTestFiles(root, ['src', '__tests__', 'e2e', 'scripts']);
   const e2eTestFileCount = countTestFiles(root, ['e2e']);
   const scriptTestFileCount = countTestFiles(root, ['scripts']);
@@ -295,6 +316,14 @@ export const collectTestingQualitySnapshot = ({
       repoTestFileCount,
       e2eTestFileCount,
       scriptTestFileCount,
+      registeredSuiteCount: testingSuites.length,
+      registeredLaneCount: testingLanes.length,
+      majorLaneCount: getMajorTestingLaneIds().length,
+      recordedRunCount: ledger.summary.totalEntries ?? 0,
+      passingRecordedRunCount: ledger.summary.passingEntries ?? 0,
+      failingRecordedRunCount: ledger.summary.failingEntries ?? 0,
+      warningRecordedRunCount: ledger.summary.warningEntries ?? 0,
+      latestRecordedRunAt: ledger.summary.latestRunAt ?? null,
       featureCount: distribution.summary.featureCount,
       featuresWithTestCount: distribution.summary.featuresWithTestCount,
       featuresWithoutTestCount: distribution.summary.featuresWithoutTestCount,
@@ -317,6 +346,11 @@ export const collectTestingQualitySnapshot = ({
       repoTestFileCount,
       e2eTestFileCount,
       scriptTestFileCount,
+      registry: {
+        suiteCount: testingSuites.length,
+        laneCount: testingLanes.length,
+        majorLaneIds: getMajorTestingLaneIds(),
+      },
       featureCoverage: {
         featureCount: distribution.summary.featureCount,
         featuresWithTestCount: distribution.summary.featuresWithTestCount,
@@ -330,6 +364,41 @@ export const collectTestingQualitySnapshot = ({
         skipCount: distribution.summary.skipCount,
         todoCount: distribution.summary.todoCount,
       },
+    },
+    registry: {
+      suites: testingSuites.map((suite) => ({
+        id: suite.id,
+        label: suite.label,
+        kind: suite.kind,
+        cadence: suite.cadence,
+        cost: suite.cost,
+        supportsSummaryJson: suite.supportsSummaryJson,
+      })),
+      lanes: testingLanes.map((lane) => ({
+        id: lane.id,
+        label: lane.label,
+        cadence: lane.cadence,
+        requiresLedgerEntry: lane.requiresLedgerEntry,
+        suites: lane.suites,
+      })),
+    },
+    ledger: {
+      generatedAt: ledger.generatedAt ?? null,
+      summary: ledger.summary,
+      latestEntry:
+        ledger.entries.length > 0
+          ? {
+              id: ledger.entries[0].id,
+              recordedAt: ledger.entries[0].recordedAt,
+              label: ledger.entries[0].label,
+              status: ledger.entries[0].status,
+              laneId: ledger.entries[0].laneId,
+              suiteIds: ledger.entries[0].suiteIds,
+              durationMs: ledger.entries[0].durationMs,
+              actor: ledger.entries[0].actor,
+              git: ledger.entries[0].git,
+            }
+          : null,
     },
     baselines,
     slowestSuites,

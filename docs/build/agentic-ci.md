@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'repository'
@@ -65,6 +65,7 @@ Uploaded outputs now include:
 - `artifacts/agent-work-order.json`
 - `artifacts/agent-execution-report.json`
 - `artifacts/agent-bundle-plan.json`
+- `artifacts/agent-bundle-selection.json`
 - `artifacts/generated-outputs-manifest.json`
 - `artifacts/generated-outputs/**`
 
@@ -145,6 +146,10 @@ Use it only when a low-risk work order still needs explicit validation execution
 ## History diff tooling
 
 The repo now also provides a local diff entrypoint for comparing two agentic history snapshots:
+- `npm run agentic:bundle-plan`
+- `npm run agentic:select-bundles -- --plan <plan.json> [--previous <history.json>]`
+- `npm run agentic:bundle-selection:summary -- --input <selection.json>`
+- `npm run agentic:history`
 - `npm run agentic:history:diff -- --current <path> --previous <path> --output <path>`
 - `npm run agentic:history:summary -- --input <diff-path>`
 

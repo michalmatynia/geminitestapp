@@ -28,22 +28,23 @@ export const getKangurLessonTemplateRepository =
           throw error;
         }
       },
-      replaceTemplates: async (templates) => {
+      replaceTemplates: async (templates, locale) => {
         try {
-          return await repository.replaceTemplates(templates);
+          return await repository.replaceTemplates(templates, locale);
         } catch (error) {
           void ErrorSystem.captureException(error, {
             service: SERVICE,
             action: 'replaceTemplates',
             provider,
             count: templates.length,
+            locale: locale ?? null,
           });
           throw error;
         }
       },
-      saveTemplate: async (template) => {
+      saveTemplate: async (template, locale) => {
         try {
-          await repository.saveTemplate(template);
+          await repository.saveTemplate(template, locale);
           return;
         } catch (error) {
           void ErrorSystem.captureException(error, {
@@ -51,13 +52,14 @@ export const getKangurLessonTemplateRepository =
             action: 'saveTemplate',
             provider,
             componentId: template.componentId,
+            locale: locale ?? null,
           });
           throw error;
         }
       },
-      removeTemplate: async (componentId) => {
+      removeTemplate: async (componentId, locale) => {
         try {
-          await repository.removeTemplate(componentId);
+          await repository.removeTemplate(componentId, locale);
           return;
         } catch (error) {
           void ErrorSystem.captureException(error, {
@@ -65,6 +67,7 @@ export const getKangurLessonTemplateRepository =
             action: 'removeTemplate',
             provider,
             componentId,
+            locale: locale ?? null,
           });
           throw error;
         }

@@ -20,6 +20,7 @@ import {
   renderFieldGroups,
 } from './field-group-helpers';
 import { SettingsFormProvider } from './SettingsFormContext';
+import { usePageBuilderPolicy } from '../PageBuilderPolicyContext';
 import { useComponentSettingsActions } from '../context/ComponentSettingsContext';
 import { GRID_TEMPLATE_SETTINGS_KEY, normalizeGridTemplates } from '../grid-templates';
 import { getSectionDefinition } from '../section-registry';
@@ -33,6 +34,7 @@ import {
 
 export function SectionSettingsTab(): React.JSX.Element | null {
   const dispatch = usePageBuilderDispatch();
+  const policy = usePageBuilderPolicy();
   const { selectedSection } = usePageBuilderSelection();
   const { handleSectionSettingChange } = useComponentSettingsActions();
   const settingsStore = useSettingsStore();
@@ -145,6 +147,7 @@ export function SectionSettingsTab(): React.JSX.Element | null {
   if (!selectedSection) return null;
   const sectionDef = getSectionDefinition(selectedSection.type);
   if (!sectionDef) return null;
+  const visibleSettingsSchema = policy.filterSettingsFields(sectionDef.settingsSchema);
 
   return (
     <SettingsFormProvider
@@ -164,8 +167,8 @@ export function SectionSettingsTab(): React.JSX.Element | null {
           groupSettingsFields(
             appendRuntimeVisibilityFields(
               selectedSection.type === 'Grid'
-                ? prependManagementFields(sectionDef.settingsSchema)
-                : sectionDef.settingsSchema
+                ? prependManagementFields(visibleSettingsSchema)
+                : visibleSettingsSchema
             )
           ),
           selectedSection.settings,

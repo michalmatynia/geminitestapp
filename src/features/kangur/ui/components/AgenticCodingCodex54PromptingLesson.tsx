@@ -1,11 +1,13 @@
 'use client';
 
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './AgenticCodingCodex54PromptingLesson.data';
-import AgenticPromptTrimGame from './AgenticPromptTrimGame';
 
 export { HUB_SECTIONS, SLIDES };
+
+const AGENTIC_PROMPT_TRIM_INSTANCE_ID = getKangurBuiltInGameInstanceId('agentic_prompt_trim_stage');
 
 export default function AgenticCodingCodex54PromptingLesson(): JSX.Element {
   return (
@@ -23,14 +25,18 @@ export default function AgenticCodingCodex54PromptingLesson(): JSX.Element {
       games={[
         {
           sectionId: 'prompt_trim_game',
-          stage: {
+          shell: {
             accent: 'rose',
             icon: '✂️',
             title: 'Prompt Trim Game',
             description: 'Trim the prompt by clicking the unnecessary words.',
             maxWidthClassName: 'max-w-4xl',
+            shellTestId: 'agentic-prompt-trim-game-shell',
           },
-          render: ({ onFinish }) => <AgenticPromptTrimGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'agentic_prompt_trim_stage',
+            instanceId: AGENTIC_PROMPT_TRIM_INSTANCE_ID,
+          },
         },
       ]}
       completionSectionId='prompting'

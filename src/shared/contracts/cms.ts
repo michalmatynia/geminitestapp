@@ -1,113 +1,66 @@
 import { z } from 'zod';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { contextRegistryConsumerEnvelopeSchema } from './ai-context-registry';
-import type { LabeledOptionDto } from './base';
-import { dtoBaseSchema, namedDtoSchema } from './base';
+import { dtoBaseSchema } from './base';
 import { chatMessageSchema } from './chatbot';
+import type {
+  CmsTheme,
+  CreateCmsThemeDto,
+  UpdateCmsThemeDto,
+} from './cms-theme-contract';
+export {
+  cmsThemeColorsSchema,
+  cmsThemeCreateSchema,
+  cmsThemeSchema,
+  cmsThemeSpacingSchema,
+  cmsThemeTypographySchema,
+  cmsThemeUpdateSchema,
+  createCmsThemeSchema,
+} from './cms-theme-contract';
+export type {
+  CmsTheme,
+  CmsThemeColors,
+  CmsThemeCreateInput,
+  CmsThemeCreateRequestDto,
+  CmsThemeDto,
+  CmsThemeSpacing,
+  CmsThemeTypography,
+  CmsThemeUpdateInput,
+  CmsThemeUpdateRequestDto,
+  CreateCmsThemeDto,
+  UpdateCmsThemeDto,
+} from './cms-theme-contract';
 import {
   cmsTranslationMetadataSchema,
-  cmsTranslationStatusSchema,
   siteLocaleCodeSchema,
   type CmsTranslationStatus,
 } from './site-i18n';
 
-export const cmsPageStatusSchema = z.enum(['draft', 'published', 'scheduled']);
-export type CmsPageStatusDto = z.infer<typeof cmsPageStatusSchema>;
-export type PageStatus = CmsPageStatusDto;
+export * from './cms-contracts/cms-core';
+export * from './cms-contracts/cms-builder';
 
-export const cmsPageSlugLinkSchema = z.object({
-  slug: z.object({
-    id: z.string(),
-    slug: z.string(),
-  }),
-});
-
-export type CmsPageSlugLinkDto = z.infer<typeof cmsPageSlugLinkSchema>;
-export type PageSlugLink = CmsPageSlugLinkDto;
-
-export const cmsPageSummarySchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  status: cmsPageStatusSchema,
-  slugs: z.array(cmsPageSlugLinkSchema),
-});
-
-export type CmsPageSummaryDto = z.infer<typeof cmsPageSummarySchema>;
-export type PageSummary = CmsPageSummaryDto;
-
-/**
- * CMS Theme Contract
- */
-export const cmsThemeColorsSchema = z.object({
-  primary: z.string(),
-  secondary: z.string(),
-  accent: z.string(),
-  background: z.string(),
-  surface: z.string(),
-  text: z.string(),
-  muted: z.string(),
-});
-export type CmsThemeColors = z.infer<typeof cmsThemeColorsSchema>;
-
-export const cmsThemeTypographySchema = z.object({
-  headingFont: z.string(),
-  bodyFont: z.string(),
-  baseSize: z.number(),
-  headingWeight: z.number(),
-  bodyWeight: z.number(),
-});
-export type CmsThemeTypography = z.infer<typeof cmsThemeTypographySchema>;
-
-export const cmsThemeSpacingSchema = z.object({
-  sectionPadding: z.string(),
-  containerMaxWidth: z.string(),
-});
-export type CmsThemeSpacing = z.infer<typeof cmsThemeSpacingSchema>;
-
-export const cmsThemeSchema = namedDtoSchema.extend({
-  colors: cmsThemeColorsSchema,
-  typography: cmsThemeTypographySchema,
-  spacing: cmsThemeSpacingSchema,
-  customCss: z.string().optional(),
-  isDefault: z.boolean(),
-});
-
-export type CmsThemeDto = z.infer<typeof cmsThemeSchema>;
-export type CmsTheme = CmsThemeDto;
-
-export const createCmsThemeSchema = cmsThemeSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateCmsThemeDto = z.infer<typeof createCmsThemeSchema>;
-export type CmsThemeCreateInput = CreateCmsThemeDto;
-export type UpdateCmsThemeDto = Partial<CreateCmsThemeDto>;
-export type CmsThemeUpdateInput = UpdateCmsThemeDto;
+import {
+  cmsPageStatusSchema,
+  cmsSlugSchema,
+  cmsPageSeoSchema,
+  createCmsSlugSchema,
+  type CmsDomainDto,
+  type Slug,
+} from './cms-contracts/cms-core';
+import {
+  type BlockInstance,
+  type ClipboardData,
+  type InspectorSettings,
+  cmsBlockInstanceSchema,
+  pageZoneSchema,
+  type PageZone,
+  type SectionInstance,
+} from './cms-contracts/cms-builder';
+export * from './cms-animation';
 
 const cmsRequiredStringSchema = z.string().trim().min(1);
 const cmsIdArraySchema = z.array(cmsRequiredStringSchema);
-
-export const cmsThemeCreateSchema = z.object({
-  name: cmsRequiredStringSchema,
-  colors: cmsThemeColorsSchema,
-  typography: cmsThemeTypographySchema,
-  spacing: cmsThemeSpacingSchema,
-  customCss: z.string().optional(),
-});
-
-export type CmsThemeCreateRequestDto = z.infer<typeof cmsThemeCreateSchema>;
-
-export const cmsThemeUpdateSchema = z.object({
-  name: cmsRequiredStringSchema,
-  colors: cmsThemeColorsSchema.optional(),
-  typography: cmsThemeTypographySchema.optional(),
-  spacing: cmsThemeSpacingSchema.optional(),
-  customCss: z.string().nullable().optional(),
-});
-
-export type CmsThemeUpdateRequestDto = z.infer<typeof cmsThemeUpdateSchema>;
 
 /**
  * CMS Component Contract
@@ -167,523 +120,6 @@ export const cmsPageComponentRequestSchema = z
 export type CmsPageComponentRequestDto = z.infer<typeof cmsPageComponentRequestSchema>;
 
 /**
- * CMS Slug Contract
- */
-export const cmsSlugSchema = dtoBaseSchema.extend({
-  slug: z.string(),
-  pageId: z.string().nullable(),
-  isDefault: z.boolean(),
-  locale: siteLocaleCodeSchema.default('pl'),
-  translationGroupId: z.string().trim().min(1).max(160).nullable().default(null),
-});
-
-export type CmsSlugDto = z.infer<typeof cmsSlugSchema>;
-export type Slug = CmsSlugDto;
-
-export const createCmsSlugSchema = cmsSlugSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateCmsSlugDto = z.infer<typeof createCmsSlugSchema>;
-export type UpdateCmsSlugDto = Partial<CreateCmsSlugDto>;
-
-export const cmsSlugCreateSchema = z.object({
-  slug: cmsRequiredStringSchema,
-  locale: siteLocaleCodeSchema.optional(),
-  translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
-});
-
-export type CmsSlugCreateRequestDto = z.infer<typeof cmsSlugCreateSchema>;
-
-export const cmsSlugUpdateSchema = z.object({
-  slug: cmsRequiredStringSchema,
-  isDefault: z.boolean().optional(),
-  locale: siteLocaleCodeSchema.optional(),
-  translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
-});
-
-export type CmsSlugUpdateRequestDto = z.infer<typeof cmsSlugUpdateSchema>;
-
-export const cmsSlugDomainsUpdateSchema = z.object({
-  domainIds: cmsIdArraySchema,
-});
-
-export type CmsSlugDomainsUpdateRequestDto = z.infer<typeof cmsSlugDomainsUpdateSchema>;
-
-/**
- * CMS Domain Contract
- */
-export const cmsDomainSchema = namedDtoSchema.extend({
-  domain: z.string(),
-  aliasOf: z.string().nullable().optional(),
-});
-
-export type CmsDomainDto = z.infer<typeof cmsDomainSchema>;
-export type CmsDomain = CmsDomainDto;
-
-export const createCmsDomainSchema = cmsDomainSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateCmsDomainDto = z.infer<typeof createCmsDomainSchema>;
-export type UpdateCmsDomainDto = Partial<CreateCmsDomainDto>;
-
-export const cmsDomainCreateSchema = z.object({
-  domain: cmsRequiredStringSchema,
-});
-
-export type CmsDomainCreateRequestDto = z.infer<typeof cmsDomainCreateSchema>;
-
-export const cmsDomainUpdateSchema = z.object({
-  aliasOf: cmsRequiredStringSchema.nullable().optional(),
-});
-
-export type CmsDomainUpdateRequestDto = z.infer<typeof cmsDomainUpdateSchema>;
-
-/**
- * CMS Page SEO Contract
- */
-export const cmsPageSeoSchema = z.object({
-  seoTitle: z.string().optional(),
-  seoDescription: z.string().optional(),
-  seoOgImage: z.string().optional(),
-  seoCanonical: z.string().optional(),
-  robotsMeta: z.string().optional(),
-});
-
-export type CmsPageSeoDto = z.infer<typeof cmsPageSeoSchema>;
-export type PageSeoData = CmsPageSeoDto;
-
-/**
- * CMS Page Builder Contracts
- */
-export type BlockInstance = {
-  id: string;
-  type: string;
-  settings: Record<string, unknown>;
-  blocks?: BlockInstance[] | undefined;
-};
-
-export interface PreviewBlockItemProps {
-  block: BlockInstance;
-}
-
-export interface PreviewBlockProps {
-  block: BlockInstance;
-  stretch?: boolean;
-  mediaStyles?: React.CSSProperties;
-}
-
-export interface PreviewSectionBlockProps {
-  section: SectionInstance;
-  colorSchemes?: Record<string, unknown>;
-  mediaStyles?: React.CSSProperties;
-}
-
-export const cmsBlockInstanceSchema: z.ZodType<BlockInstance> = z.lazy(() =>
-  z.object({
-    id: z.string(),
-    type: z.string(),
-    settings: z.record(z.string(), z.unknown()),
-    blocks: z.array(cmsBlockInstanceSchema).optional(),
-  })
-);
-
-export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
-export type PageZoneDto = z.infer<typeof pageZoneSchema>;
-export type PageZone = PageZoneDto;
-
-export type SectionInstance = {
-  id: string;
-  type: string;
-  zone: PageZone;
-  parentSectionId?: string | null;
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
-};
-
-export const cmsSectionInstanceSchema: z.ZodType<SectionInstance> = z.object({
-  id: z.string(),
-  type: z.string(),
-  zone: pageZoneSchema,
-  parentSectionId: z.string().nullable().optional(),
-  settings: z.record(z.string(), z.unknown()),
-  blocks: z.array(cmsBlockInstanceSchema),
-});
-
-export interface SectionDragData {
-  sectionId: string;
-  zone: PageZone;
-}
-
-export interface BlockDragData {
-  blockId: string;
-  sectionId: string;
-  columnId?: string;
-  parentBlockId?: string;
-}
-
-export const sectionHierarchyClipboardDataSchema = z.object({
-  rootSectionId: z.string(),
-  sections: z.array(cmsSectionInstanceSchema),
-});
-
-export const clipboardDataSchema = z.discriminatedUnion('type', [
-  z.object({
-    type: z.literal('section'),
-    data: cmsSectionInstanceSchema,
-  }),
-  z.object({
-    type: z.literal('block'),
-    data: cmsBlockInstanceSchema,
-  }),
-  z.object({
-    type: z.literal('section_hierarchy'),
-    data: sectionHierarchyClipboardDataSchema,
-  }),
-]);
-
-export type ClipboardDataDto = z.infer<typeof clipboardDataSchema>;
-export type ClipboardData = ClipboardDataDto;
-
-export const pageBuilderSnapshotSchema = z.object({
-  currentPage: z.lazy(() => cmsPageSchema).nullable(),
-  sections: z.array(cmsSectionInstanceSchema),
-});
-
-export type PageBuilderSnapshotDto = z.infer<typeof pageBuilderSnapshotSchema>;
-export type PageBuilderSnapshot = PageBuilderSnapshotDto;
-
-export const pageBuilderHistoryDtoSchema = z.object({
-  past: z.array(pageBuilderSnapshotSchema),
-  future: z.array(pageBuilderSnapshotSchema),
-});
-
-export type PageBuilderHistoryDto = z.infer<typeof pageBuilderHistoryDtoSchema>;
-export type PageBuilderHistory = PageBuilderHistoryDto;
-
-/**
- * CMS Inspector Settings DTO
- */
-
-export const cmsInspectorSettingsSchema = z.object({
-  showTooltip: z.boolean(),
-  showStyleSettings: z.boolean(),
-  showStructureInfo: z.boolean(),
-  showIdentifiers: z.boolean(),
-  showVisibilityInfo: z.boolean(),
-  showConnectionInfo: z.boolean(),
-  showEditorChrome: z.boolean(),
-  showLayoutGuides: z.boolean().optional(),
-  pauseAnimations: z.boolean().optional(),
-});
-
-export type CmsInspectorSettingsDto = z.infer<typeof cmsInspectorSettingsSchema>;
-export type InspectorSettings = CmsInspectorSettingsDto;
-
-export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
-  showTooltip: true,
-  showStyleSettings: true,
-  showStructureInfo: true,
-  showIdentifiers: true,
-  showVisibilityInfo: true,
-  showConnectionInfo: true,
-  showEditorChrome: true,
-  showLayoutGuides: true,
-  pauseAnimations: false,
-};
-
-export const pageBuilderStateSchema = z.object({
-  pages: z.array(cmsPageSummarySchema),
-  currentPage: z.lazy(() => cmsPageSchema).nullable(),
-  sections: z.array(cmsSectionInstanceSchema),
-  selectedNodeId: z.string().nullable(),
-  inspectorEnabled: z.boolean(),
-  inspectorSettings: cmsInspectorSettingsSchema,
-  previewMode: z.enum(['desktop', 'mobile']),
-  leftPanelCollapsed: z.boolean(),
-  rightPanelCollapsed: z.boolean(),
-  clipboard: clipboardDataSchema.nullable(),
-  history: pageBuilderHistoryDtoSchema,
-});
-
-export type PageBuilderStateDto = z.infer<typeof pageBuilderStateSchema>;
-export type PageBuilderState = PageBuilderStateDto;
-
-export const pageBuilderActionSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('UNDO') }),
-  z.object({ type: z.literal('REDO') }),
-  z.object({ type: z.literal('SET_PAGES'), pages: z.array(cmsPageSummarySchema) }),
-  z.object({ type: z.literal('SET_CURRENT_PAGE'), page: z.lazy(() => cmsPageSchema) }),
-  z.object({ type: z.literal('CLEAR_CURRENT_PAGE') }),
-  z.object({ type: z.literal('SELECT_NODE'), nodeId: z.string().nullable() }),
-  z.object({
-    type: z.literal('ADD_SECTION'),
-    sectionType: z.string(),
-    zone: pageZoneSchema,
-    initialSettings: z.record(z.string(), z.unknown()).optional(),
-  }),
-  z.object({ type: z.literal('REMOVE_SECTION'), sectionId: z.string() }),
-  z.object({ type: z.literal('ADD_BLOCK'), sectionId: z.string(), blockType: z.string() }),
-  z.object({ type: z.literal('REMOVE_BLOCK'), sectionId: z.string(), blockId: z.string() }),
-  z.object({
-    type: z.literal('UPDATE_SECTION_SETTINGS'),
-    sectionId: z.string(),
-    settings: z.record(z.string(), z.unknown()),
-  }),
-  z.object({
-    type: z.literal('UPDATE_BLOCK_SETTINGS'),
-    sectionId: z.string(),
-    blockId: z.string(),
-    settings: z.record(z.string(), z.unknown()),
-  }),
-  z.object({
-    type: z.literal('MOVE_BLOCK'),
-    blockId: z.string(),
-    fromSectionId: z.string(),
-    toSectionId: z.string(),
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('REORDER_BLOCKS'),
-    sectionId: z.string(),
-    fromIndex: z.number(),
-    toIndex: z.number(),
-  }),
-  z.object({ type: z.literal('SET_GRID_COLUMNS'), sectionId: z.string(), columnCount: z.number() }),
-  z.object({ type: z.literal('SET_GRID_ROWS'), sectionId: z.string(), rowCount: z.number() }),
-  z.object({ type: z.literal('ADD_GRID_ROW'), sectionId: z.string() }),
-  z.object({ type: z.literal('REMOVE_GRID_ROW'), sectionId: z.string(), rowId: z.string() }),
-  z.object({ type: z.literal('ADD_COLUMN_TO_ROW'), sectionId: z.string(), rowId: z.string() }),
-  z.object({
-    type: z.literal('REMOVE_COLUMN_FROM_ROW'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    rowId: z.string().optional(),
-  }),
-  z.object({
-    type: z.literal('ADD_BLOCK_TO_COLUMN'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    blockType: z.string(),
-  }),
-  z.object({
-    type: z.literal('REMOVE_BLOCK_FROM_COLUMN'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    blockId: z.string(),
-  }),
-  z.object({
-    type: z.literal('UPDATE_COLUMN_SETTINGS'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    settings: z.record(z.string(), z.unknown()),
-  }),
-  z.object({
-    type: z.literal('UPDATE_BLOCK_IN_COLUMN'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    blockId: z.string(),
-    settings: z.record(z.string(), z.unknown()),
-  }),
-  z.object({
-    type: z.literal('MOVE_BLOCK_TO_COLUMN'),
-    blockId: z.string(),
-    fromSectionId: z.string(),
-    fromColumnId: z.string().optional(),
-    fromParentBlockId: z.string().optional(),
-    toSectionId: z.string(),
-    toColumnId: z.string(),
-    toParentBlockId: z.string().optional(),
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('MOVE_BLOCK_TO_ROW'),
-    blockId: z.string(),
-    fromSectionId: z.string(),
-    fromColumnId: z.string().optional(),
-    fromParentBlockId: z.string().optional(),
-    toSectionId: z.string(),
-    toRowId: z.string(),
-    toParentBlockId: z.string().optional(),
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('MOVE_BLOCK_TO_SECTION'),
-    blockId: z.string(),
-    fromSectionId: z.string(),
-    fromColumnId: z.string().optional(),
-    fromParentBlockId: z.string().optional(),
-    toSectionId: z.string(),
-    toParentBlockId: z.string().optional(),
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('CONVERT_BLOCK_TO_SECTION'),
-    blockId: z.string(),
-    fromSectionId: z.string(),
-    fromColumnId: z.string().optional(),
-    fromParentBlockId: z.string().optional(),
-    toZone: pageZoneSchema,
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('CONVERT_SECTION_TO_BLOCK'),
-    sectionId: z.string(),
-    toSectionId: z.string(),
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('MOVE_SECTION_TO_COLUMN'),
-    sectionId: z.string(),
-    toSectionId: z.string(),
-    toColumnId: z.string(),
-    toParentBlockId: z.string().optional(),
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('ADD_ELEMENT_TO_NESTED_BLOCK'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    parentBlockId: z.string(),
-    elementType: z.string(),
-  }),
-  z.object({
-    type: z.literal('REMOVE_ELEMENT_FROM_NESTED_BLOCK'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    parentBlockId: z.string(),
-    elementId: z.string(),
-  }),
-  z.object({
-    type: z.literal('UPDATE_NESTED_BLOCK_SETTINGS'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    parentBlockId: z.string(),
-    blockId: z.string(),
-    settings: z.record(z.string(), z.unknown()),
-  }),
-  z.object({
-    type: z.literal('ADD_ELEMENT_TO_SECTION_BLOCK'),
-    sectionId: z.string(),
-    parentBlockId: z.string(),
-    elementType: z.string(),
-  }),
-  z.object({
-    type: z.literal('REMOVE_ELEMENT_FROM_SECTION_BLOCK'),
-    sectionId: z.string(),
-    parentBlockId: z.string(),
-    elementId: z.string(),
-  }),
-  z.object({
-    type: z.literal('UPDATE_SECTION_BLOCK_SETTINGS'),
-    sectionId: z.string(),
-    parentBlockId: z.string(),
-    blockId: z.string(),
-    settings: z.record(z.string(), z.unknown()),
-  }),
-  z.object({
-    type: z.literal('REORDER_SECTIONS'),
-    zone: pageZoneSchema,
-    fromIndex: z.number(),
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('MOVE_SECTION_TO_ZONE'),
-    sectionId: z.string(),
-    toZone: pageZoneSchema,
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('MOVE_SECTION_IN_TREE'),
-    sectionId: z.string(),
-    toZone: pageZoneSchema,
-    toParentSectionId: z.string().nullable().optional(),
-    toIndex: z.number(),
-  }),
-  z.object({ type: z.literal('SET_PAGE_STATUS'), status: cmsPageStatusSchema }),
-  z.object({ type: z.literal('SET_PAGE_NAME'), name: z.string() }),
-  z.object({ type: z.literal('UPDATE_SEO'), seo: cmsPageSeoSchema.partial() }),
-  z.object({
-    type: z.literal('UPDATE_PAGE_SLUGS'),
-    slugIds: z.array(z.string()),
-    slugValues: z.array(z.string()),
-  }),
-  z.object({ type: z.literal('SET_PAGE_MENU_VISIBILITY'), showMenu: z.boolean() }),
-  z.object({ type: z.literal('TOGGLE_INSPECTOR') }),
-  z.object({
-    type: z.literal('UPDATE_INSPECTOR_SETTINGS'),
-    settings: cmsInspectorSettingsSchema.partial(),
-  }),
-  z.object({ type: z.literal('SET_PREVIEW_MODE'), mode: z.enum(['desktop', 'mobile']) }),
-  z.object({ type: z.literal('TOGGLE_LEFT_PANEL') }),
-  z.object({ type: z.literal('TOGGLE_RIGHT_PANEL') }),
-  z.object({ type: z.literal('COPY_SECTION'), sectionId: z.string() }),
-  z.object({ type: z.literal('PASTE_SECTION'), zone: pageZoneSchema }),
-  z.object({
-    type: z.literal('COPY_BLOCK'),
-    sectionId: z.string(),
-    blockId: z.string(),
-    columnId: z.string().optional(),
-    parentBlockId: z.string().optional(),
-  }),
-  z.object({
-    type: z.literal('PASTE_BLOCK'),
-    sectionId: z.string(),
-    columnId: z.string().optional(),
-    parentBlockId: z.string().optional(),
-  }),
-  z.object({ type: z.literal('DUPLICATE_SECTION'), sectionId: z.string() }),
-  z.object({ type: z.literal('INSERT_TEMPLATE_SECTION'), section: cmsSectionInstanceSchema }),
-  z.object({ type: z.literal('SET_PAGE_THEME'), themeId: z.string().nullable() }),
-  z.object({
-    type: z.literal('ADD_CAROUSEL_FRAME'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    carouselId: z.string(),
-  }),
-  z.object({
-    type: z.literal('REMOVE_CAROUSEL_FRAME'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    carouselId: z.string(),
-    frameId: z.string(),
-  }),
-  z.object({
-    type: z.literal('ADD_ELEMENT_TO_CAROUSEL_FRAME'),
-    sectionId: z.string(),
-    columnId: z.string(),
-    carouselId: z.string(),
-    frameId: z.string(),
-    elementType: z.string(),
-  }),
-  z.object({
-    type: z.literal('MOVE_BLOCK_TO_SLIDESHOW_FRAME'),
-    blockId: z.string(),
-    fromSectionId: z.string(),
-    fromColumnId: z.string().optional(),
-    fromParentBlockId: z.string().optional(),
-    toSectionId: z.string(),
-    toFrameId: z.string(),
-    toIndex: z.number(),
-  }),
-  z.object({
-    type: z.literal('MOVE_SECTION_TO_SLIDESHOW_FRAME'),
-    sectionId: z.string(),
-    toSectionId: z.string(),
-    toFrameId: z.string(),
-    toIndex: z.number(),
-  }),
-]);
-
-export type PageBuilderActionDto = z.infer<typeof pageBuilderActionSchema>;
-export type PageBuilderAction = PageBuilderActionDto;
-
-/**
  * CMS Page Contract
  */
 
@@ -703,47 +139,67 @@ export const cmsPageSchema = dtoBaseSchema
 export type CmsPageDto = z.infer<typeof cmsPageSchema>;
 export type Page = CmsPageDto;
 
-export const createCmsPageSchema = cmsPageSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateCmsPageDto = z.infer<typeof createCmsPageSchema>;
-export type UpdateCmsPageDto = Partial<CreateCmsPageDto>;
-
-export const cmsPageCreateSchema = z.object({
-  name: cmsRequiredStringSchema,
-  slugIds: cmsIdArraySchema.optional(),
-  themeId: z.string().nullable().optional(),
-  locale: siteLocaleCodeSchema.optional(),
-  translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
-  sourceLocale: siteLocaleCodeSchema.nullable().optional(),
-  translationStatus: cmsTranslationStatusSchema.optional(),
-});
-
+export const cmsPageCreateSchema = z
+  .object({
+    name: cmsRequiredStringSchema,
+    slugIds: cmsIdArraySchema.optional(),
+    themeId: z.string().nullable().optional(),
+  })
+  .strict();
 export type CmsPageCreateRequestDto = z.infer<typeof cmsPageCreateSchema>;
 
-export const cmsPageUpdateSchema = z.object({
-  name: cmsRequiredStringSchema,
-  status: cmsPageStatusSchema.optional(),
-  publishedAt: z.string().nullable().optional(),
-  seoTitle: z.string().nullable().optional(),
-  seoDescription: z.string().nullable().optional(),
-  seoOgImage: z.string().nullable().optional(),
-  seoCanonical: z.string().nullable().optional(),
-  robotsMeta: z.string().nullable().optional(),
-  showMenu: z.boolean().optional(),
-  themeId: z.string().nullable().optional(),
-  slugIds: cmsIdArraySchema.optional(),
-  components: z.array(cmsPageComponentRequestSchema),
-  locale: siteLocaleCodeSchema.optional(),
-  translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
-  sourceLocale: siteLocaleCodeSchema.nullable().optional(),
-  translationStatus: cmsTranslationStatusSchema.optional(),
-});
-
+export const cmsPageUpdateSchema = z
+  .object({
+    name: cmsRequiredStringSchema.optional(),
+    status: cmsPageStatusSchema.optional(),
+    publishedAt: z.string().nullable().optional(),
+    seoTitle: z.string().nullable().optional(),
+    seoDescription: z.string().nullable().optional(),
+    seoOgImage: z.string().nullable().optional(),
+    seoCanonical: z.string().nullable().optional(),
+    robotsMeta: z.string().nullable().optional(),
+    themeId: z.string().nullable().optional(),
+    slugIds: cmsIdArraySchema.optional(),
+    components: z.array(cmsPageComponentRequestSchema).optional(),
+    showMenu: z.boolean().optional(),
+  })
+  .strict();
 export type CmsPageUpdateRequestDto = z.infer<typeof cmsPageUpdateSchema>;
+
+export const cmsDomainCreateSchema = z
+  .object({
+    domain: cmsRequiredStringSchema,
+  })
+  .strict();
+export type CmsDomainCreateRequestDto = z.infer<typeof cmsDomainCreateSchema>;
+
+export const cmsDomainUpdateSchema = z
+  .object({
+    aliasOf: z.string().nullable().optional(),
+  })
+  .strict();
+export type CmsDomainUpdateRequestDto = z.infer<typeof cmsDomainUpdateSchema>;
+
+export const cmsSlugCreateSchema = createCmsSlugSchema;
+export type CmsSlugCreateRequestDto = z.infer<typeof cmsSlugCreateSchema>;
+
+export const cmsSlugUpdateSchema = z
+  .object({
+    slug: cmsRequiredStringSchema.optional(),
+    pageId: z.string().nullable().optional(),
+    isDefault: z.boolean().optional(),
+    locale: siteLocaleCodeSchema.optional(),
+    translationGroupId: z.string().trim().min(1).max(160).nullable().optional(),
+  })
+  .strict();
+export type CmsSlugUpdateRequestDto = z.infer<typeof cmsSlugUpdateSchema>;
+
+export const cmsSlugDomainsUpdateSchema = z
+  .object({
+    domainIds: cmsIdArraySchema,
+  })
+  .strict();
+export type CmsSlugDomainsUpdateRequestDto = z.infer<typeof cmsSlugDomainsUpdateSchema>;
 
 /**
  * CMS AI Config Contract
@@ -798,27 +254,268 @@ export const DEFAULT_CMS_DOMAIN_SETTINGS: CmsDomainSettings = {
   zoningEnabled: true,
 };
 
-export function normalizeCmsDomainSettings(
-  input?: Partial<CmsDomainSettings> | null
-): CmsDomainSettings {
-  const exact = cmsDomainSettingsSchema.safeParse(input);
-  if (exact.success) {
-    return exact.data;
-  }
+export const normalizeCmsDomainSettings = (
+  value: Partial<CmsDomainSettings> | null | undefined
+): CmsDomainSettings => ({
+  zoningEnabled: value?.zoningEnabled ?? DEFAULT_CMS_DOMAIN_SETTINGS.zoningEnabled,
+});
 
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return DEFAULT_CMS_DOMAIN_SETTINGS;
-  }
+export type SettingsFieldOption = {
+  label: string;
+  value: string;
+  description?: string;
+  disabled?: boolean;
+  [key: string]: unknown;
+};
 
-  const merged = {
-    ...DEFAULT_CMS_DOMAIN_SETTINGS,
-    ...input,
+export type SettingsField = {
+  key: string;
+  label: string;
+  type: string;
+  options?: ReadonlyArray<SettingsFieldOption>;
+  defaultValue?: unknown;
+  disabled?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  suffix?: string;
+  placeholder?: string;
+  helperText?: string;
+  render?: (args: {
+    value: unknown;
+    onChange: (value: unknown) => void;
+    disabled?: boolean;
+  }) => ReactNode;
+  [key: string]: unknown;
+};
+
+type CmsNodeDefinitionBase = {
+  type: string;
+  label: string;
+  icon?: string;
+  defaultSettings: Record<string, unknown>;
+  settingsSchema: SettingsField[];
+  [key: string]: unknown;
+};
+
+type CmsNodeDefinitionAllowedBlocks<TRequired extends boolean> = TRequired extends true
+  ? { allowedBlockTypes: string[] }
+  : { allowedBlockTypes?: string[] };
+
+export type BlockDefinition = CmsNodeDefinitionBase & CmsNodeDefinitionAllowedBlocks<false>;
+
+export type SectionDefinition = CmsNodeDefinitionBase & CmsNodeDefinitionAllowedBlocks<true>;
+
+export type PreviewBlockProps = {
+  block: BlockInstance;
+  stretch?: boolean;
+  mediaStyles?: CSSProperties | null;
+};
+
+export type PreviewBlockItemProps = {
+  block: BlockInstance;
+};
+
+export type PageBuilderSnapshot = {
+  currentPage: Page | null;
+  sections: SectionInstance[];
+};
+
+export type PageBuilderState = {
+  pages: Page[];
+  currentPage: Page | null;
+  sections: SectionInstance[];
+  selectedNodeId: string | null;
+  inspectorEnabled: boolean;
+  inspectorSettings: InspectorSettings;
+  previewMode: string;
+  leftPanelCollapsed: boolean;
+  rightPanelCollapsed: boolean;
+  clipboard: ClipboardData | null;
+  history: {
+    past: PageBuilderSnapshot[];
+    future: PageBuilderSnapshot[];
   };
-  const mergedResult = cmsDomainSettingsSchema.safeParse(merged);
-  if (mergedResult.success) return mergedResult.data;
+  [key: string]: unknown;
+};
 
-  return DEFAULT_CMS_DOMAIN_SETTINGS;
-}
+type PageBuilderCommonActionFields = {
+  sectionId?: string;
+  blockId?: string;
+  columnId?: string;
+  parentBlockId?: string | null;
+  fromSectionId?: string;
+  fromColumnId?: string;
+  fromParentBlockId?: string | null;
+  toSectionId?: string;
+  toColumnId?: string;
+  toParentBlockId?: string | null;
+  toIndex?: number;
+  toRowId?: string;
+  toFrameId?: string;
+  toZone?: PageZone;
+  toParentSectionId?: string | null;
+};
+
+export type PageBuilderAction =
+  | { type: 'UNDO' }
+  | { type: 'REDO' }
+  | { type: 'SET_PAGES'; pages: Page[] }
+  | { type: 'SET_CURRENT_PAGE'; page: Page }
+  | { type: 'CLEAR_CURRENT_PAGE' }
+  | { type: 'SET_PAGE_STATUS'; status: Page['status'] }
+  | { type: 'SET_PAGE_NAME'; name: string }
+  | { type: 'UPDATE_SEO'; seo: Record<string, unknown> }
+  | { type: 'UPDATE_PAGE_SLUGS'; slugIds: string[]; slugValues: string[] }
+  | { type: 'SET_PAGE_MENU_VISIBILITY'; showMenu: boolean }
+  | { type: 'SET_PAGE_THEME'; themeId: string | null }
+  | { type: 'TOGGLE_INSPECTOR' }
+  | { type: 'UPDATE_INSPECTOR_SETTINGS'; settings: Partial<InspectorSettings> }
+  | { type: 'SET_PREVIEW_MODE'; mode: string }
+  | { type: 'TOGGLE_LEFT_PANEL' }
+  | { type: 'TOGGLE_RIGHT_PANEL' }
+  | { type: 'SELECT_NODE'; nodeId: string | null }
+  | { type: 'COPY_SECTION'; sectionId: string }
+  | ({ type: 'PASTE_SECTION'; zone: PageZone } & PageBuilderCommonActionFields)
+  | ({
+      type: 'COPY_BLOCK';
+      sectionId: string;
+      blockId: string;
+      columnId?: string;
+      parentBlockId?: string | null;
+    } & PageBuilderCommonActionFields)
+  | ({
+      type: 'PASTE_BLOCK';
+      sectionId: string;
+      columnId?: string;
+      parentBlockId?: string | null;
+    } & PageBuilderCommonActionFields)
+  | { type: 'ADD_SECTION'; sectionType: string; zone: PageZone; initialSettings?: Record<string, unknown> }
+  | { type: 'REMOVE_SECTION'; sectionId: string }
+  | { type: 'DUPLICATE_SECTION'; sectionId: string }
+  | { type: 'UPDATE_SECTION_SETTINGS'; sectionId: string; settings: Record<string, unknown> }
+  | { type: 'REORDER_SECTION_IN_ZONE'; zone: PageZone; fromIndex: number; toIndex: number }
+  | { type: 'REORDER_SECTIONS'; zone: PageZone; fromIndex: number; toIndex: number }
+  | { type: 'ADD_BLOCK'; sectionId: string; blockType: string }
+  | { type: 'ADD_BLOCK_TO_COLUMN'; sectionId: string; columnId: string; blockType: string }
+  | { type: 'REMOVE_BLOCK'; sectionId: string; blockId: string }
+  | {
+      type: 'REMOVE_BLOCK_FROM_COLUMN';
+      sectionId: string;
+      columnId: string;
+      blockId: string;
+      parentBlockId?: string | null;
+    }
+  | { type: 'UPDATE_BLOCK_SETTINGS'; sectionId: string; blockId: string; settings: Record<string, unknown> }
+  | { type: 'MOVE_BLOCK'; blockId: string; fromSectionId: string; toSectionId: string; toIndex: number }
+  | { type: 'REORDER_BLOCKS'; sectionId: string; fromIndex: number; toIndex: number }
+  | { type: 'SET_GRID_COLUMNS'; sectionId: string; columnCount: number }
+  | { type: 'SET_GRID_ROWS'; sectionId: string; rowCount: number }
+  | { type: 'ADD_GRID_ROW'; sectionId: string }
+  | { type: 'REMOVE_GRID_ROW'; sectionId: string; rowId: string }
+  | { type: 'ADD_COLUMN_TO_ROW'; sectionId: string; rowId: string }
+  | { type: 'REMOVE_COLUMN_FROM_ROW'; sectionId: string; columnId: string; rowId?: string }
+  | {
+      type: 'UPDATE_NESTED_BLOCK_SETTINGS';
+      sectionId: string;
+      blockId: string;
+      settings: Record<string, unknown>;
+    }
+  | {
+      type: 'ADD_ELEMENT_TO_NESTED_BLOCK';
+      sectionId: string;
+      columnId: string;
+      parentBlockId: string;
+      elementType: string;
+    }
+  | {
+      type: 'REMOVE_ELEMENT_FROM_NESTED_BLOCK';
+      sectionId: string;
+      columnId: string;
+      parentBlockId: string;
+      elementId: string;
+    }
+  | {
+      type: 'ADD_ELEMENT_TO_SECTION_BLOCK';
+      sectionId: string;
+      parentBlockId: string;
+      elementType: string;
+    }
+  | {
+      type: 'REMOVE_ELEMENT_FROM_SECTION_BLOCK';
+      sectionId: string;
+      parentBlockId: string;
+      elementId: string;
+    }
+  | {
+      type: 'MOVE_BLOCK_TO_COLUMN';
+      blockId: string;
+      fromSectionId: string;
+      toSectionId: string;
+      toColumnId: string;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+      toParentBlockId?: string | null;
+    }
+  | {
+      type: 'MOVE_BLOCK_TO_ROW';
+      blockId: string;
+      fromSectionId: string;
+      toSectionId: string;
+      toRowId: string;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+      toParentBlockId?: string | null;
+    }
+  | {
+      type: 'MOVE_BLOCK_TO_SECTION';
+      blockId: string;
+      fromSectionId: string;
+      toSectionId: string;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+      toParentBlockId?: string | null;
+    }
+  | {
+      type: 'MOVE_BLOCK_TO_SLIDESHOW_FRAME';
+      blockId: string;
+      fromSectionId: string;
+      toSectionId: string;
+      toFrameId: string;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+    }
+  | { type: 'MOVE_SECTION_TO_SLIDESHOW_FRAME'; sectionId: string; toSectionId: string; toFrameId: string; toIndex: number }
+  | {
+      type: 'CONVERT_BLOCK_TO_SECTION';
+      blockId: string;
+      fromSectionId: string;
+      toZone: PageZone;
+      toIndex: number;
+      fromColumnId?: string;
+      fromParentBlockId?: string | null;
+    }
+  | { type: 'CONVERT_SECTION_TO_BLOCK'; sectionId: string; toSectionId: string; toIndex: number }
+  | {
+      type: 'MOVE_SECTION_TO_COLUMN';
+      sectionId: string;
+      toSectionId: string;
+      toColumnId: string;
+      toIndex: number;
+      toParentBlockId?: string | null;
+    }
+  | { type: 'MOVE_SECTION_TO_ZONE'; sectionId: string; toZone: PageZone; toIndex: number }
+  | {
+      type: 'MOVE_SECTION_IN_TREE';
+      sectionId: string;
+      toZone: PageZone;
+      toIndex: number;
+      toParentSectionId?: string | null;
+    };
 
 /**
  * CMS Event Effects Contract
@@ -853,97 +550,6 @@ export type CmsEventEffectsConfigDto = z.infer<typeof cmsEventEffectsConfigSchem
 export type CmsEventEffectsConfig = CmsEventEffectsConfigDto;
 
 /**
- * CMS CSS Animation Contract
- */
-export {
-  CSS_ANIMATION_DIRECTIONS,
-  CSS_ANIMATION_EFFECTS,
-  CSS_ANIMATION_FILL_MODES,
-  CSS_ANIMATION_TRIGGERS,
-  CSS_EASINGS,
-  cssAnimationConfigSchema,
-  cssAnimationDirectionSchema,
-  cssAnimationEffectSchema,
-  cssAnimationFillModeSchema,
-  cssAnimationTriggerSchema,
-  DEFAULT_CSS_ANIMATION_CONFIG,
-  type CssAnimationConfig,
-  type CssAnimationDirection,
-  type CssAnimationEffect,
-  type CssAnimationFillMode,
-  type CssAnimationTrigger,
-} from './cms-animation';
-
-export const settingsFieldOptionSchema = z.object({
-  label: z.string(),
-  value: z.string(),
-});
-
-export type SettingsFieldOptionDto = LabeledOptionDto;
-export type SettingsFieldOption = SettingsFieldOptionDto;
-
-export const settingsFieldTypeSchema = z.enum([
-  'text',
-  'select',
-  'radio',
-  'number',
-  'image',
-  'asset3d',
-  'color-scheme',
-  'range',
-  'color',
-  'font-family',
-  'font-weight',
-  'spacing',
-  'border',
-  'shadow',
-  'background',
-  'typography',
-  'link',
-  'alignment',
-]);
-
-export type SettingsFieldTypeDto = z.infer<typeof settingsFieldTypeSchema>;
-
-export const settingsFieldSchema = z.object({
-  key: z.string(),
-  label: z.string(),
-  type: settingsFieldTypeSchema,
-  options: z.array(settingsFieldOptionSchema).optional(),
-  defaultValue: z.unknown().optional(),
-  min: z.number().optional(),
-  max: z.number().optional(),
-  disabled: z.boolean().optional(),
-});
-
-export type SettingsFieldDto = z.infer<typeof settingsFieldSchema>;
-export type SettingsField = SettingsFieldDto;
-
-export const sectionDefinitionSchema = z.object({
-  type: z.string(),
-  label: z.string(),
-  icon: z.string(),
-  defaultSettings: z.record(z.string(), z.unknown()),
-  settingsSchema: z.array(settingsFieldSchema),
-  allowedBlockTypes: z.array(z.string()),
-});
-
-export type SectionDefinitionDto = z.infer<typeof sectionDefinitionSchema>;
-export type SectionDefinition = SectionDefinitionDto;
-
-export const blockDefinitionSchema = z.object({
-  type: z.string(),
-  label: z.string(),
-  icon: z.string(),
-  defaultSettings: z.record(z.string(), z.unknown()),
-  settingsSchema: z.array(settingsFieldSchema),
-  allowedBlockTypes: z.array(z.string()).optional(),
-});
-
-export type BlockDefinitionDto = z.infer<typeof blockDefinitionSchema>;
-export type BlockDefinition = BlockDefinitionDto;
-
-/**
  * CMS Repository Interfaces
  */
 
@@ -958,7 +564,7 @@ export type CmsLookupOptionsDto = {
 
 export type CmsPageLookupOptions = CmsLookupOptionsDto;
 
-export type CmsSlugLookupOptions = CmsLookupOptionsDto;
+export type CmsSlugLookupOptions = CmsPageLookupOptions;
 
 export type CmsRepository = {
   // Pages
@@ -1016,7 +622,7 @@ export type CmsRepository = {
   // Domains
   getDomains(): Promise<CmsDomainDto[]>;
   getDomainById(id: string): Promise<CmsDomainDto | null>;
-  createDomain(data: CreateCmsDomainDto): Promise<CmsDomainDto>;
-  updateDomain(id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto>;
+  createDomain(data: CmsDomainCreateRequestDto): Promise<CmsDomainDto>;
+  updateDomain(id: string, data: CmsDomainUpdateRequestDto): Promise<CmsDomainDto>;
   deleteDomain(id: string): Promise<void>;
 };

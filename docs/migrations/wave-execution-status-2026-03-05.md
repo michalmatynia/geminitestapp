@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'cross-feature'
@@ -11,6 +11,13 @@ canonical: true
 
 Date: 2026-03-05  
 Scope: execution update for `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md`
+
+This file is the retained March 5 execution snapshot for the initial hard-cut
+run. For ongoing stabilization, script reclassification, and final publication
+status, use
+[`wave-execution-status-2026-04-17.md`](./wave-execution-status-2026-04-17.md),
+[`stabilization-window-2026-04-17.md`](./stabilization-window-2026-04-17.md),
+and [`docs/plans/canonical-closeout-2026-04-17.md`](../plans/canonical-closeout-2026-04-17.md).
 
 ## Executed Today
 

@@ -104,7 +104,7 @@ export function useKangurAiTutorWidgetCoordinator({
     reducedMotionTransitions,
     remainingMessages,
     resolveGuestLoginGuidanceIntentForContent,
-    routing,
+    accessibleRoutingPageKey,
     selectionGlowSupported: _selectionGlowSupported,
     shouldRepeatGuestIntroOnEntry,
     shouldRepeatHomeOnboardingOnEntry,
@@ -238,6 +238,7 @@ export function useKangurAiTutorWidgetCoordinator({
         widgetState.sectionResponsePending !== null));
 
   const interactions = useKangurAiTutorPanelInteractions({
+    activeConversationFocus: activeFocus.conversationFocus,
     activeSelectedText,
     allowSelectedTextSupport,
     bubblePlacementMode: bubblePlacement.mode,
@@ -276,7 +277,7 @@ export function useKangurAiTutorWidgetCoordinator({
     messages,
     rawSelectedText,
     recordFollowUpCompletion,
-    routingPageKey: routing?.pageKey,
+    routingPageKey: accessibleRoutingPageKey,
     selectedText: activeSelectedText,
     sessionContext,
     suppressFocus,
@@ -586,6 +587,7 @@ export function useKangurAiTutorWidgetCoordinator({
     tutorSessionKey,
     widgetState: {
       setDismissedSelectedText: widgetState.setDismissedSelectedText,
+      setDrawingDraftSnapshot: widgetState.setDrawingDraftSnapshot,
       setDrawingImageData: widgetState.setDrawingImageData,
       setDrawingMode: widgetState.setDrawingMode,
       setHighlightedSection: widgetState.setHighlightedSection,

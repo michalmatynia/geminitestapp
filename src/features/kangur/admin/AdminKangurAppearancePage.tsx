@@ -25,7 +25,7 @@ import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import {
   AppearancePageProvider,
   useAppearancePage,
-} from './appearance/AppearancePage.context';
+} from '@/features/kangur/appearance/admin/workspace/AppearancePage.context';
 import {
   BUILTIN_DAILY_ID,
   BUILTIN_DAWN_ID,
@@ -38,11 +38,11 @@ import {
   PRESET_DAILY_CRYSTAL_ID,
   PRESET_NIGHTLY_CRYSTAL_ID,
   SLOT_ORDER,
-} from './appearance/AppearancePage.constants';
-import { ThemeCatalogModal } from './appearance/ThemeCatalogModal';
-import { AppearanceModeSelector } from './appearance/AppearanceModeSelector';
-import { ThemeImportExport } from './appearance/ThemeImportExport';
-import { ThemePreviewPanel } from './appearance/ThemePreviewPanel';
+} from '@/features/kangur/appearance/admin/workspace/AppearancePage.constants';
+import { ThemeCatalogModal } from '@/features/kangur/appearance/admin/workspace/ThemeCatalogModal';
+import { AppearanceModeSelector } from '@/features/kangur/appearance/admin/workspace/AppearanceModeSelector';
+import { ThemeImportExport } from '@/features/kangur/appearance/admin/workspace/ThemeImportExport';
+import { ThemePreviewPanel } from '@/features/kangur/appearance/admin/workspace/ThemePreviewPanel';
 import {
   buildAppearanceThemeSections,
   buildAppearanceThemeSelectorOptions,
@@ -50,7 +50,7 @@ import {
   getAppearanceSlotLabel,
   getAppearanceThemeTypeLabel,
   resolveAppearanceAdminLocale,
-} from './appearance/appearance.copy';
+} from '@/features/kangur/appearance/admin/workspace/appearance.copy';
 
 function AdminKangurAppearancePageContent(): React.JSX.Element {
   const locale = resolveAppearanceAdminLocale(useLocale());

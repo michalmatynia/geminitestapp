@@ -9,6 +9,10 @@ import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurScoreRecord, KangurUser } from '@kangur/platform';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
+import {
+  loadKangurLeaderboardScores,
+  peekCachedKangurLeaderboardScores,
+} from '@/features/kangur/ui/services/learner-profile-scores';
 import { resolveKangurScoreSubject, type KangurLessonSubject } from '@/shared/contracts/kangur';
 
 const kangurPlatform = getKangurPlatform();
@@ -96,8 +100,12 @@ const ENGLISH_OPERATION_LABELS: Record<string, KangurLeaderboardOperationLabel> 
   english_parts_of_speech: { label: 'Części mowy', emoji: '🔤' },
   english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
   english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
+  english_going_to: { label: 'Going to', emoji: '🧳' },
   english_articles: { label: 'Przedimki', emoji: '📰' },
   english_adjectives: { label: 'Przymiotniki', emoji: '🎨' },
+  english_comparatives_superlatives: { label: 'Stopniowanie przymiotników', emoji: '👑' },
+  english_adverbs: { label: 'Przysłówki', emoji: '🎭' },
+  english_adverbs_frequency: { label: 'Przysłówki częstotliwości', emoji: '🔁' },
   english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
 };
 
@@ -219,8 +227,12 @@ const TRANSLATED_OPERATION_IDS = new Set([
   'english_parts_of_speech',
   'english_sentence_structure',
   'english_subject_verb_agreement',
+  'english_going_to',
   'english_articles',
   'english_adjectives',
+  'english_comparatives_superlatives',
+  'english_adverbs',
+  'english_adverbs_frequency',
   'english_prepositions_time_place',
   'alphabet_basics',
   'alphabet_copy',
@@ -269,21 +281,112 @@ const getOperationInfo = (
 const normalizeXpEarned = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : null;
 
+const resolveKangurLeaderboardEnabled = (
+  options: UseKangurLeaderboardStateOptions
+): boolean => options.enabled ?? true;
+
+const resolveKangurLeaderboardLimit = (
+  options: UseKangurLeaderboardStateOptions
+): number =>
+  typeof options.limit === 'number' && options.limit > 0 ? Math.round(options.limit) : 10;
+
+const resolveKangurLeaderboardCurrentUser = (
+  auth: ReturnType<typeof useOptionalKangurAuth>
+): KangurUser | null => auth?.user ?? null;
+
+const resolveInitialCachedKangurLeaderboardScores = ({
+  enabled,
+  leaderboardFetchLimit,
+  subject,
+}: {
+  enabled: boolean;
+  leaderboardFetchLimit: number;
+  subject: KangurLessonSubject;
+}): KangurScoreRecord[] | null =>
+  enabled
+    ? peekCachedKangurLeaderboardScores(kangurPlatform.score, {
+        subject,
+        limit: leaderboardFetchLimit,
+      })
+    : null;
+
+const resolveInitialKangurLeaderboardLoading = ({
+  enabled,
+  initialCachedScores,
+}: {
+  enabled: boolean;
+  initialCachedScores: KangurScoreRecord[] | null;
+}): boolean => enabled && initialCachedScores === null;
+
+const resolveKangurLeaderboardAccountLabel = (
+  isRegistered: boolean,
+  translations: (key: string) => string
+): string =>
+  isRegistered ? translations('account.registered') : translations('account.anonymous');
+
+const buildKangurLeaderboardItem = ({
+  currentUserEmail,
+  index,
+  score,
+  translations,
+}: {
+  currentUserEmail?: string | null;
+  index: number;
+  score: KangurScoreRecord;
+  translations: (key: string) => string;
+}): KangurLeaderboardItem => {
+  const isRegistered = Boolean(score.created_by);
+  const operationInfo = getOperationInfo(score.operation, translations);
+  const medal = index < MEDALS.length ? MEDALS[index]! : null;
+  const xpEarned = normalizeXpEarned(score.xp_earned);
+  const accountLabel = resolveKangurLeaderboardAccountLabel(isRegistered, translations);
+  const isCurrentUser = Boolean(currentUserEmail) && score.created_by === (currentUserEmail ?? null);
+
+  return {
+    accountLabel,
+    currentUserBadgeLabel: translations('currentUserBadge'),
+    id: score.id,
+    isCurrentUser,
+    isMedal: medal !== null,
+    isRegistered,
+    metaLabel: `${operationInfo.emoji} ${operationInfo.label} · ${accountLabel}`,
+    operationEmoji: operationInfo.emoji,
+    operationLabel: operationInfo.label,
+    operationSummary: `${operationInfo.emoji} ${operationInfo.label}`,
+    playerName: score.player_name,
+    rank: index + 1,
+    rankLabel: medal ?? `${index + 1}.`,
+    scoreLabel: `${score.score}/${score.total_questions}`,
+    timeLabel: `${score.time_taken}s`,
+    xpLabel: xpEarned !== null ? `+${xpEarned} XP` : null,
+  };
+};
+
 export const useKangurLeaderboardState = (
   options: UseKangurLeaderboardStateOptions = {}
 ): UseKangurLeaderboardStateResult => {
   const translations = useTranslations('KangurGameWidgets.leaderboard');
-  const enabled = options.enabled ?? true;
-  const limit = typeof options.limit === 'number' && options.limit > 0 ? Math.round(options.limit) : 10;
+  const enabled = resolveKangurLeaderboardEnabled(options);
+  const limit = resolveKangurLeaderboardLimit(options);
   const auth = useOptionalKangurAuth();
-  const currentUser = auth?.user ?? null;
-  const [scores, setScores] = useState<KangurScoreRecord[]>([]);
-  const [loading, setLoading] = useState(enabled);
+  const currentUser = resolveKangurLeaderboardCurrentUser(auth);
   const [operationFilter, setOperationFilter] = useState('all');
   const [userFilter, setUserFilter] = useState<KangurLeaderboardUserFilter>('all');
   const [error, setError] = useState<string | null>(null);
   const { subject } = useKangurSubjectFocus();
-
+  const leaderboardFetchLimit = Math.max(limit, 20);
+  const initialCachedScores = resolveInitialCachedKangurLeaderboardScores({
+    enabled,
+    leaderboardFetchLimit,
+    subject,
+  });
+  const [scores, setScores] = useState<KangurScoreRecord[]>(() => initialCachedScores ?? []);
+  const [loading, setLoading] = useState(
+    resolveInitialKangurLeaderboardLoading({
+      enabled,
+      initialCachedScores,
+    })
+  );
   useEffect(() => {
     let isActive = true;
 
@@ -296,12 +399,28 @@ export const useKangurLeaderboardState = (
       };
     }
 
+    const cachedScores = peekCachedKangurLeaderboardScores(kangurPlatform.score, {
+      subject,
+      limit: leaderboardFetchLimit,
+    });
+    if (cachedScores !== null) {
+      setScores(cachedScores);
+      setError(null);
+      setLoading(false);
+      return () => {
+        isActive = false;
+      };
+    }
+
     const loadScores = async (): Promise<void> => {
       setLoading(true);
       setError(null);
 
       try {
-        const scoreRows = await kangurPlatform.score.filter({ subject }, '-score', 20);
+        const scoreRows = await loadKangurLeaderboardScores(kangurPlatform.score, {
+          subject,
+          limit: leaderboardFetchLimit,
+        });
 
         if (!isActive) {
           return;
@@ -331,7 +450,7 @@ export const useKangurLeaderboardState = (
     return () => {
       isActive = false;
     };
-  }, [enabled, subject, translations]);
+  }, [enabled, leaderboardFetchLimit, subject]);
 
   const operationOptions = useMemo(
     () => buildOperationOptions(subject, translations),
@@ -365,39 +484,14 @@ export const useKangurLeaderboardState = (
 
   const items = useMemo(
     () =>
-      visibleScores.map((score, index) => {
-        const isRegistered = Boolean(score.created_by);
-        const operationInfo = getOperationInfo(score.operation, translations);
-        const medal = index < MEDALS.length ? MEDALS[index]! : null;
-        const xpEarned = normalizeXpEarned(score.xp_earned);
-        const isCurrentUser =
-          Boolean(currentUser?.email) && score.created_by === (currentUser?.email ?? null);
-
-        return {
-          accountLabel: isRegistered
-            ? translations('account.registered')
-            : translations('account.anonymous'),
-          currentUserBadgeLabel: translations('currentUserBadge'),
-          id: score.id,
-          isCurrentUser,
-          isMedal: medal !== null,
-          isRegistered,
-          metaLabel: `${operationInfo.emoji} ${operationInfo.label} · ${
-            isRegistered
-              ? translations('account.registered')
-              : translations('account.anonymous')
-          }`,
-          operationEmoji: operationInfo.emoji,
-          operationLabel: operationInfo.label,
-          operationSummary: `${operationInfo.emoji} ${operationInfo.label}`,
-          playerName: score.player_name,
-          rank: index + 1,
-          rankLabel: medal ?? `${index + 1}.`,
-          scoreLabel: `${score.score}/${score.total_questions}`,
-          timeLabel: `${score.time_taken}s`,
-          xpLabel: xpEarned !== null ? `+${xpEarned} XP` : null,
-        };
-      }),
+      visibleScores.map((score, index) =>
+        buildKangurLeaderboardItem({
+          currentUserEmail: currentUser?.email,
+          index,
+          score,
+          translations,
+        })
+      ),
     [currentUser?.email, translations, visibleScores]
   );
 

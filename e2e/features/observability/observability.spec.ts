@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 
 const E2E_ADMIN_EMAIL = process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'] ?? 'e2e.admin@example.com';
 const E2E_ADMIN_PASSWORD = process.env['PLAYWRIGHT_E2E_ADMIN_PASSWORD'] ?? 'E2eAdmin!123';
+const CLIENT_ERROR_SUCCESS_RESPONSE = JSON.stringify({ success: true });
+const EMPTY_INSIGHTS_RESPONSE = JSON.stringify({ insights: [] });
+const CLEARED_LOGS_DELETE_RESPONSE = JSON.stringify({ deleted: 1 });
 
 const ensureSignedInForAdmin = async (page: import('@playwright/test').Page): Promise<void> => {
   await page.waitForLoadState('domcontentloaded');
@@ -113,22 +116,55 @@ test.describe('Observability and Monitoring', () => {
   test('should clear logs after confirmation', async ({ page }) => {
     let deleteCalls = 0;
     let cleared = false;
+    const generatedAt = new Date().toISOString();
+    const metricsResponse = JSON.stringify({
+      metrics: {
+        total: 1,
+        levels: { info: 1, warn: 0, error: 0 },
+        last24Hours: 1,
+        last7Days: 1,
+        topSources: [{ source: 'e2e', count: 1 }],
+        topPaths: [{ path: '/admin/system/logs', count: 1 }],
+        generatedAt,
+      },
+    });
+    const mongoIndexesResponse = JSON.stringify({
+      collections: [],
+      generatedAt,
+    });
+    const liveLogsResponse = JSON.stringify({
+      logs: [
+        {
+          id: 'log-e2e-1',
+          level: 'info',
+          message: 'E2E log entry',
+          source: 'e2e',
+          context: null,
+          stack: null,
+          path: '/admin/system/logs',
+          method: 'GET',
+          statusCode: 200,
+          requestId: 'req-e2e-1',
+          userId: null,
+          createdAt: generatedAt,
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 50,
+    });
+    const clearedLogsResponse = JSON.stringify({
+      logs: [],
+      total: 0,
+      page: 1,
+      pageSize: 50,
+    });
 
     await page.route(/\/api\/system\/logs\/metrics(\?.*)?$/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          metrics: {
-            total: 1,
-            levels: { info: 1, warn: 0, error: 0 },
-            last24Hours: 1,
-            last7Days: 1,
-            topSources: [{ source: 'e2e', count: 1 }],
-            topPaths: [{ path: '/admin/system/logs', count: 1 }],
-            generatedAt: new Date().toISOString(),
-          },
-        }),
+        body: metricsResponse,
       });
     });
 
@@ -136,7 +172,7 @@ test.describe('Observability and Monitoring', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ insights: [] }),
+        body: EMPTY_INSIGHTS_RESPONSE,
       });
     });
 
@@ -144,7 +180,7 @@ test.describe('Observability and Monitoring', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ collections: [], generatedAt: new Date().toISOString() }),
+        body: mongoIndexesResponse,
       });
     });
 
@@ -156,7 +192,7 @@ test.describe('Observability and Monitoring', () => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ deleted: 1 }),
+          body: CLEARED_LOGS_DELETE_RESPONSE,
         });
         return;
       }
@@ -164,31 +200,7 @@ test.describe('Observability and Monitoring', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(
-          cleared
-            ? { logs: [], total: 0, page: 1, pageSize: 50 }
-            : {
-              logs: [
-                {
-                  id: 'log-e2e-1',
-                  level: 'info',
-                  message: 'E2E log entry',
-                  source: 'e2e',
-                  context: null,
-                  stack: null,
-                  path: '/admin/system/logs',
-                  method: 'GET',
-                  statusCode: 200,
-                  requestId: 'req-e2e-1',
-                  userId: null,
-                  createdAt: new Date().toISOString(),
-                },
-              ],
-              total: 1,
-              page: 1,
-              pageSize: 50,
-            }
-        ),
+        body: cleared ? clearedLogsResponse : liveLogsResponse,
       });
     });
 

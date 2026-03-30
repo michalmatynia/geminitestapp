@@ -36,19 +36,38 @@ const useNativeSelectMode = (): boolean => {
   return shouldUseNativeSelectMode(pathname);
 };
 
+const isTextNode = (node: React.ReactNode): boolean =>
+  typeof node === 'string' || typeof node === 'number';
+
+const hasElementChildren = (
+  node: React.ReactNode
+): node is React.ReactElement<{ children?: React.ReactNode }> =>
+  React.isValidElement<{ children?: React.ReactNode }>(node);
+
 const getNodeText = (node: React.ReactNode): string => {
   if (node === null || node === undefined || typeof node === 'boolean') return '';
-  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (isTextNode(node)) return String(node);
   if (Array.isArray(node)) return node.map(getNodeText).join('');
-  if (
-    React.isValidElement(node) &&
-    node.props &&
-    typeof node.props === 'object' &&
-    'children' in node.props
-  ) {
-    return getNodeText(node.props.children as React.ReactNode);
+  if (hasElementChildren(node)) {
+    return getNodeText(node.props.children);
   }
   return '';
+};
+
+const readNativeOptionValue = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  return '';
+};
+
+const appendNativeOption = (options: NativeOption[], props: Record<string, unknown>): void => {
+  const value = readNativeOptionValue(props['value']);
+  if (!value) return;
+  options.push({
+    value,
+    label: getNodeText(props['children'] as React.ReactNode),
+    disabled: Boolean(props['disabled']),
+  });
 };
 
 const extractNativeOptions = (
@@ -72,18 +91,7 @@ const extractNativeOptions = (
         return;
       }
       if (child.type === SelectItem) {
-        const value =
-          typeof props['value'] === 'string'
-            ? props['value']
-            : typeof props['value'] === 'number'
-              ? String(props['value'])
-              : '';
-        if (!value) return;
-        options.push({
-          value,
-          label: getNodeText(props['children'] as React.ReactNode),
-          disabled: Boolean(props['disabled']),
-        });
+        appendNativeOption(options, props);
         return;
       }
       if (props['children']) {

@@ -28,6 +28,112 @@ type Props = {
   prefersReducedMotion: boolean;
 };
 
+type GuestIntroProposalProps = {
+  guestTutorLabel: string;
+  isCoarsePointer: boolean;
+  onAccept: () => void;
+  onDismiss: () => void;
+};
+
+const resolveGuestIntroModalSurface = (shouldShowProposal: boolean): string =>
+  shouldShowProposal ? 'canonical-onboarding' : 'canonical-chat';
+
+const resolveGuestIntroMotionProps = (
+  prefersReducedMotion: boolean
+): {
+  initial: { opacity: number };
+  animate: { opacity: number };
+  exit: { opacity: number };
+  transition: { duration: number } | undefined;
+} => ({
+  initial: prefersReducedMotion ? { opacity: 1 } : { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: prefersReducedMotion ? { opacity: 1 } : { opacity: 0 },
+  transition: prefersReducedMotion ? { duration: 0 } : undefined,
+});
+
+const resolveGuestIntroActionClassName = (isCoarsePointer: boolean): string =>
+  cn(
+    'cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]',
+    isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
+  );
+
+function GuestIntroProposal({
+  guestTutorLabel,
+  isCoarsePointer,
+  onAccept,
+  onDismiss,
+}: GuestIntroProposalProps): JSX.Element {
+  const actionClassName = resolveGuestIntroActionClassName(isCoarsePointer);
+
+  return (
+    <>
+      <p className='text-sm kangur-chat-text-primary'>
+        Cześć,
+        <br />
+        Jestem {guestTutorLabel}.
+        <br />
+        Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie.
+      </p>
+      <div className='flex items-center kangur-panel-gap text-[12px] font-semibold'>
+        <button
+          type='button'
+          data-testid='kangur-ai-tutor-onboarding-accept'
+          className={actionClassName}
+          onClick={onAccept}
+        >
+          Tak
+        </button>
+        <button
+          type='button'
+          data-testid='kangur-ai-tutor-onboarding-dismiss'
+          className={actionClassName}
+          onClick={onDismiss}
+        >
+          Nie
+        </button>
+      </div>
+    </>
+  );
+}
+
+function GuestIntroChatPrompt(): JSX.Element {
+  return (
+    <>
+      <p
+        data-testid='kangur-ai-tutor-minimal-prompt'
+        className='text-sm kangur-chat-text-primary'
+      >
+        W czym mogę ci pomóc?
+      </p>
+      <KangurAiTutorComposer />
+    </>
+  );
+}
+
+function KangurAiTutorGuestIntroContent(props: {
+  shouldShowProposal: boolean;
+  guestTutorLabel: string;
+  isCoarsePointer: boolean;
+  onAccept: () => void;
+  onDismiss: () => void;
+}): JSX.Element {
+  const { shouldShowProposal, guestTutorLabel, isCoarsePointer, onAccept, onDismiss } = props;
+
+  if (shouldShowProposal) {
+    return (
+      <GuestIntroProposal
+        guestTutorLabel={guestTutorLabel}
+        isCoarsePointer={isCoarsePointer}
+        onAccept={onAccept}
+        onDismiss={onDismiss}
+      />
+    );
+  }
+
+  return <GuestIntroChatPrompt />;
+}
+
 export function KangurAiTutorGuestIntroPanel({
   guestTutorLabel,
   isAnonymousVisitor,
@@ -42,13 +148,18 @@ export function KangurAiTutorGuestIntroPanel({
   const isCoarsePointer = useKangurCoarsePointer();
   const handleClose = onClose;
   const shouldShowProposal = isAnonymousVisitor && !dismissed;
-  const handleYes = (): void => {
+  const motionProps = resolveGuestIntroMotionProps(prefersReducedMotion);
+  const handleAccept = (): void => {
     setDismissed(true);
     if (isAnonymousVisitor) {
       onStartChat();
-    } else {
-      onAccept();
+      return;
     }
+    onAccept();
+  };
+  const handleDismiss = (): void => {
+    setDismissed(true);
+    onDismiss();
   };
 
   return (
@@ -58,10 +169,10 @@ export function KangurAiTutorGuestIntroPanel({
         data-testid='kangur-ai-tutor-guest-intro-backdrop'
         type='button'
         aria-label='Zamknij'
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        transition={prefersReducedMotion ? { duration: 0 } : undefined}
+        initial={motionProps.initial}
+        animate={motionProps.animate}
+        exit={motionProps.exit}
+        transition={motionProps.transition}
         onClick={onClose}
         className='fixed inset-0 z-[74] cursor-pointer border-0 bg-transparent p-0 touch-manipulation active:opacity-95'
       />
@@ -70,12 +181,12 @@ export function KangurAiTutorGuestIntroPanel({
         key='guest-intro'
         data-modal-card='warm-glow-soft'
         data-modal-motion='fade-only'
-        data-modal-surface={shouldShowProposal ? 'canonical-onboarding' : 'canonical-chat'}
+        data-modal-surface={resolveGuestIntroModalSurface(shouldShowProposal)}
         data-testid='kangur-ai-tutor-guest-intro'
-        initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-        transition={prefersReducedMotion ? { duration: 0 } : undefined}
+        initial={motionProps.initial}
+        animate={motionProps.animate}
+        exit={motionProps.exit}
+        transition={motionProps.transition}
         style={panelStyle}
         className='fixed z-[75]'
       >
@@ -94,54 +205,13 @@ export function KangurAiTutorGuestIntroPanel({
               aria-label='Zamknij'
             />
           </div>
-          {shouldShowProposal ? (
-            <>
-              <p className='text-sm kangur-chat-text-primary'>
-                Cześć,
-                <br />
-                Jestem {guestTutorLabel}.
-                <br />
-                Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie.
-              </p>
-              <div className='flex items-center kangur-panel-gap text-[12px] font-semibold'>
-                <button
-                  type='button'
-                  data-testid='kangur-ai-tutor-onboarding-accept'
-                  className={cn(
-                    'cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]',
-                    isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
-                  )}
-                  onClick={handleYes}
-                >
-                  Tak
-                </button>
-                <button
-                  type='button'
-                  data-testid='kangur-ai-tutor-onboarding-dismiss'
-                  className={cn(
-                    'cursor-pointer transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 ring-offset-white [color:var(--kangur-chat-panel-text,var(--kangur-page-text))] hover:scale-[1.02]',
-                    isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
-                  )}
-                  onClick={() => {
-                    setDismissed(true);
-                    onDismiss();
-                  }}
-                >
-                  Nie
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p
-                data-testid='kangur-ai-tutor-minimal-prompt'
-                className='text-sm kangur-chat-text-primary'
-              >
-                W czym mogę ci pomóc?
-              </p>
-              <KangurAiTutorComposer />
-            </>
-          )}
+          <KangurAiTutorGuestIntroContent
+            shouldShowProposal={shouldShowProposal}
+            guestTutorLabel={guestTutorLabel}
+            isCoarsePointer={isCoarsePointer}
+            onAccept={handleAccept}
+            onDismiss={handleDismiss}
+          />
         </KangurAiTutorWarmOverlayPanel>
       </motion.div>
     </>

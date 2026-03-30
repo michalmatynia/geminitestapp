@@ -16,6 +16,14 @@ const kangurAiTutorPanelChromePath = path.join(
   process.cwd(),
   'src/features/kangur/ui/components/KangurAiTutorPanelChrome.tsx'
 );
+const kangurAiTutorPanelChromeSharedPath = path.join(
+  process.cwd(),
+  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.shared.ts'
+);
+const kangurAiTutorPanelChromeSurfacePath = path.join(
+  process.cwd(),
+  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.surface.tsx'
+);
 const kangurAiTutorPanelAuxiliaryControlsPath = path.join(
   process.cwd(),
   'src/features/kangur/ui/components/KangurAiTutorPanelAuxiliaryControls.tsx'
@@ -112,6 +120,8 @@ describe('Kangur CTA contract cleanup', () => {
   it('keeps the ai tutor runtime wrappers on the warm amber/orange palette', () => {
     const source = readSources([
       kangurAiTutorPanelChromePath,
+      kangurAiTutorPanelChromeSharedPath,
+      kangurAiTutorPanelChromeSurfacePath,
       kangurAiTutorPanelAuxiliaryControlsPath,
       kangurAiTutorMessageListPath,
       kangurAiTutorComposerPath,

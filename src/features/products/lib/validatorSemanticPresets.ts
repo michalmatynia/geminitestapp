@@ -11,6 +11,7 @@ import {
   PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS as PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS_SHARED,
   type ProductValidationSemanticOperationId,
 } from '@/shared/lib/products/utils/validator-semantic-operations';
+import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import { PRODUCT_VALIDATION_SOURCE_FIELD_IDS } from '@/features/products/lib/validatorSourceFields';
 import { hasProductValidationSemanticPreset } from '@/shared/lib/products/utils/validator-semantic-state';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
@@ -163,7 +164,7 @@ export const buildSkuAutoIncrementLatestSemanticState =
       targetField: 'sku',
       tags: ['sequence', 'sku', 'auto_fill'],
       metadata: {
-        placeholder: 'KEYCHA000',
+        placeholder: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         padLength: 3,
       },
     });
@@ -177,7 +178,7 @@ export const buildSkuAutoIncrementGuardSemanticState =
       targetField: 'sku',
       tags: ['sequence', 'sku', 'guard'],
       metadata: {
-        placeholder: 'KEYCHA000',
+        placeholder: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
       },
     });
 
@@ -402,7 +403,7 @@ export const buildSkuAutoIncrementSequenceBundle = ({
         label: autoLabel,
         target: 'sku',
         locale: null,
-        regex: '^KEYCHA000$',
+        regex: `^${PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER}$`,
         flags: null,
         message:
           buildProductValidationSemanticOperationPresetMessage(
@@ -449,7 +450,7 @@ export const buildSkuAutoIncrementSequenceBundle = ({
         launchSourceMode: 'current_field',
         launchSourceField: null,
         launchOperator: 'equals',
-        launchValue: 'KEYCHA000',
+        launchValue: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         launchFlags: null,
         semanticState: buildSkuAutoIncrementLatestSemanticState(),
       },
@@ -457,13 +458,14 @@ export const buildSkuAutoIncrementSequenceBundle = ({
         label: guardLabel,
         target: 'sku',
         locale: null,
-        regex: '^KEYCHA000$',
+        regex: `^${PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER}$`,
         flags: null,
         message:
           buildProductValidationSemanticOperationPresetMessage(
             PRODUCT_VALIDATION_SEMANTIC_OPERATION_IDS.guardPlaceholderSku,
-            { placeholder: 'KEYCHA000' }
-          ) ?? 'SKU is still KEYCHA000. Check latest product SKU format or set SKU manually.',
+            { placeholder: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER }
+          ) ??
+          `SKU is still ${PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER}. Check latest product SKU format or set SKU manually.`,
         severity: 'error',
         enabled: true,
         replacementEnabled: false,
@@ -484,7 +486,7 @@ export const buildSkuAutoIncrementSequenceBundle = ({
         launchSourceMode: 'current_field',
         launchSourceField: null,
         launchOperator: 'equals',
-        launchValue: 'KEYCHA000',
+        launchValue: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
         launchFlags: null,
         semanticState: buildSkuAutoIncrementGuardSemanticState(),
       },

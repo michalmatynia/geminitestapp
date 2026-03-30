@@ -12,6 +12,7 @@ interface FormActionsProps {
   onSave?: (() => void) | undefined;
   cancelText?: string | undefined;
   saveText?: string | undefined;
+  saveTitle?: string | undefined;
   isSaving?: boolean | undefined;
   isDisabled?: boolean | undefined;
   className?: string | undefined;
@@ -23,27 +24,31 @@ interface FormActionsProps {
   size?: 'default' | 'sm' | 'lg' | 'xs';
 }
 
-export function FormActions({
-  onCancel,
-  onSave,
-  cancelText = 'Cancel',
-  saveText = 'Save Changes',
-  isSaving = false,
-  isDisabled = false,
-  className,
-  saveVariant = 'default',
-  cancelVariant = 'outline',
-  saveIcon,
-  saveLoadingText = 'Saving...',
-  children,
-  size = 'sm',
-}: FormActionsProps): React.JSX.Element {
+export function FormActions(props: FormActionsProps): React.JSX.Element {
+  const {
+    onCancel,
+    onSave,
+    cancelText = 'Cancel',
+    saveText = 'Save Changes',
+    saveTitle,
+    isSaving = false,
+    isDisabled = false,
+    className,
+    saveVariant = 'default',
+    cancelVariant = 'outline',
+    saveIcon,
+    saveLoadingText = 'Saving...',
+    children,
+    size = 'sm',
+  } = props;
+
   const actionRuntime = React.useMemo(
     () => ({
       onCancel,
       onSave,
       cancelText,
       saveText,
+      saveTitle,
       isSaving,
       isDisabled,
       saveVariant,
@@ -57,6 +62,7 @@ export function FormActions({
       onSave,
       cancelText,
       saveText,
+      saveTitle,
       isSaving,
       isDisabled,
       saveVariant,
@@ -88,6 +94,7 @@ export function FormActions({
           size={actionRuntime.size}
           onClick={actionRuntime.onSave}
           disabled={actionRuntime.isDisabled || actionRuntime.isSaving}
+          title={actionRuntime.saveTitle}
           loading={actionRuntime.isSaving}
           loadingText={actionRuntime.saveLoadingText}
         >

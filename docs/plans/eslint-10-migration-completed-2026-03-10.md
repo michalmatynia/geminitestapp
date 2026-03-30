@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'closeout'
 scope: 'repo'
@@ -8,6 +8,13 @@ canonical: true
 ---
 
 # ESLint 10 migration completed - 2026-03-10
+
+This is the retained closeout record for the March ESLint 10 migration. Current
+lint entrypoints and build integration guidance now live in:
+
+- [`../../README.md`](../../README.md)
+- [`../build/bazel.md`](../build/bazel.md)
+- [`../platform/architecture-guardrails.md`](../platform/architecture-guardrails.md)
 
 ## Status
 
@@ -77,3 +84,7 @@ Those rules were explicitly turned off in `eslint.config.mjs` so the version bum
 If desired, the repo can still do small cleanup after the version bump:
 
 - keep architecture-boundary enforcement in the dedicated checker, not in ESLint
+
+Keep this file as the migration closeout snapshot; update the maintained build
+and platform docs above instead of extending this closeout note with new lint
+policy changes.

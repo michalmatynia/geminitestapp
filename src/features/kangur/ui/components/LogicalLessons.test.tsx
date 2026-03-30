@@ -14,6 +14,42 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelProgress', async () => {
+  const { useLessonHubProgress } =
+    await vi.importActual<typeof import('@/features/kangur/ui/hooks/useLessonHubProgress')>(
+      '@/features/kangur/ui/hooks/useLessonHubProgress'
+    );
+  return {
+    useKangurLessonPanelProgress: ({
+      slideSections,
+    }: {
+      slideSections: Partial<Record<string, readonly unknown[]>>;
+    }) => {
+      const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+        useLessonHubProgress(slideSections);
+      return {
+        markSectionOpened,
+        markSectionViewedCount,
+        recordPanelTime: vi.fn(),
+        sectionProgress,
+      };
+    },
+  };
+});
+
+vi.mock('@/features/kangur/ui/learner-activity/hooks', () => ({
+  useKangurLessonSubsectionProgress: () => ({
+    markSectionOpened: vi.fn(),
+    markSectionViewedCount: vi.fn(),
+    recordPanelTime: vi.fn(),
+    sectionProgress: {},
+  }),
+  useLessonTimeTracking: () => ({
+    recordComplete: vi.fn(async () => undefined),
+    recordPanelTime: vi.fn(),
+  }),
+}));
+
 import LogicalAnalogiesLesson from '@/features/kangur/ui/components/LogicalAnalogiesLesson';
 import LogicalClassificationLesson from '@/features/kangur/ui/components/LogicalClassificationLesson';
 import LogicalPatternsLesson from '@/features/kangur/ui/components/LogicalPatternsLesson';

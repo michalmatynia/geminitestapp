@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { readSecretSettingValue } from '@/shared/lib/settings/secret-settings';
+import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 
 export const AUTH_SECRET_SETTINGS_KEYS = {
   googleClientId: 'auth_google_client_id',
@@ -46,37 +46,43 @@ const parsePort = (raw: string | null, fallback: number): number => {
 };
 
 export const getAuthOAuthSecrets = async (): Promise<AuthOAuthSecrets> => {
-  const [googleClientId, googleClientSecret, facebookClientId, facebookClientSecret] =
-    await Promise.all([
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.googleClientId),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.googleClientSecret),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.facebookClientId),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.facebookClientSecret),
-    ]);
+  const values = await readSecretSettingValues([
+    AUTH_SECRET_SETTINGS_KEYS.googleClientId,
+    AUTH_SECRET_SETTINGS_KEYS.googleClientSecret,
+    AUTH_SECRET_SETTINGS_KEYS.facebookClientId,
+    AUTH_SECRET_SETTINGS_KEYS.facebookClientSecret,
+  ]);
 
   return {
     google: {
-      clientId: googleClientId,
-      clientSecret: googleClientSecret,
+      clientId: values[AUTH_SECRET_SETTINGS_KEYS.googleClientId] ?? null,
+      clientSecret: values[AUTH_SECRET_SETTINGS_KEYS.googleClientSecret] ?? null,
     },
     facebook: {
-      clientId: facebookClientId,
-      clientSecret: facebookClientSecret,
+      clientId: values[AUTH_SECRET_SETTINGS_KEYS.facebookClientId] ?? null,
+      clientSecret: values[AUTH_SECRET_SETTINGS_KEYS.facebookClientSecret] ?? null,
     },
   };
 };
 
 export const getAuthEmailSecrets = async (): Promise<AuthEmailSecrets> => {
-  const [webhookUrl, webhookSecret, smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom] =
-    await Promise.all([
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.emailWebhookUrl),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.emailWebhookSecret),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.smtpHost),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.smtpPort),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.smtpUser),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.smtpPass),
-      readSecretSettingValue(AUTH_SECRET_SETTINGS_KEYS.smtpFrom),
-    ]);
+  const values = await readSecretSettingValues([
+    AUTH_SECRET_SETTINGS_KEYS.emailWebhookUrl,
+    AUTH_SECRET_SETTINGS_KEYS.emailWebhookSecret,
+    AUTH_SECRET_SETTINGS_KEYS.smtpHost,
+    AUTH_SECRET_SETTINGS_KEYS.smtpPort,
+    AUTH_SECRET_SETTINGS_KEYS.smtpUser,
+    AUTH_SECRET_SETTINGS_KEYS.smtpPass,
+    AUTH_SECRET_SETTINGS_KEYS.smtpFrom,
+  ]);
+
+  const webhookUrl = values[AUTH_SECRET_SETTINGS_KEYS.emailWebhookUrl] ?? null;
+  const webhookSecret = values[AUTH_SECRET_SETTINGS_KEYS.emailWebhookSecret] ?? null;
+  const smtpHost = values[AUTH_SECRET_SETTINGS_KEYS.smtpHost] ?? null;
+  const smtpPort = values[AUTH_SECRET_SETTINGS_KEYS.smtpPort] ?? null;
+  const smtpUser = values[AUTH_SECRET_SETTINGS_KEYS.smtpUser] ?? null;
+  const smtpPass = values[AUTH_SECRET_SETTINGS_KEYS.smtpPass] ?? null;
+  const smtpFrom = values[AUTH_SECRET_SETTINGS_KEYS.smtpFrom] ?? null;
 
   const smtp =
     smtpHost && smtpUser && smtpPass

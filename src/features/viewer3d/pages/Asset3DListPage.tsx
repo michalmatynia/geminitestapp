@@ -4,6 +4,7 @@ import { Box, Grid, List } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import type { GridPickerItem } from '@/shared/contracts/ui';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   Button,
@@ -15,6 +16,7 @@ import {
   Card,
   FilterPanel,
   LoadingState,
+  GenericGridPicker,
   UI_CENTER_ROW_SPACED_CLASSNAME,
 } from '@/shared/ui';
 
@@ -24,6 +26,10 @@ import { useAsset3DListState } from '../hooks/useAsset3DListState';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const ALL_CATEGORIES_OPTION: LabeledOptionDto<string> = { value: '__all__', label: 'All categories' };
+
+type Asset3DGridItem = GridPickerItem<Asset3DRecord> & {
+  value: Asset3DRecord;
+};
 
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -161,6 +167,16 @@ export function Asset3DListPage(): React.JSX.Element {
       </div>
     ) : null;
 
+  const pickerItems = useMemo<Asset3DGridItem[]>(
+    () =>
+      assets.map((asset) => ({
+        id: asset.id,
+        label: asset.name || asset.filename || asset.id,
+        value: asset,
+      })),
+    [assets]
+  );
+
   const searchConfig = useMemo(
     () => ({
       value: searchQuery,
@@ -269,6 +285,7 @@ export function Asset3DListPage(): React.JSX.Element {
       columns={columns}
       data={assets}
       isLoading={loading}
+      showTable={viewMode === 'list'}
     >
       {loading && <LoadingState className='py-16' />}
 
@@ -298,53 +315,56 @@ export function Asset3DListPage(): React.JSX.Element {
       )}
 
       {!loading && assets.length > 0 && viewMode === 'grid' && (
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
-          {assets.map((asset) => (
-            <Card
-              key={asset.id}
-              onClick={() => setPreviewAsset(asset)}
-              className='group cursor-pointer overflow-hidden bg-card/60 transition-all hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/10'
-            >
-              <div className='relative flex aspect-square items-center justify-center bg-muted/30'>
-                <Box className='h-12 w-12 text-muted-foreground/70' />
-                <div className='absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover:opacity-100'>
-                  <div className='flex flex-col items-center gap-2'>
-                    <div className='flex size-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg'>
-                      <Box className='size-5' />
+        <GenericGridPicker<Asset3DGridItem>
+          items={pickerItems}
+          onSelect={(item) => setPreviewAsset(item.value)}
+          gridClassName='grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+          gap='16px'
+          renderItem={(item) => {
+            const asset = item.value;
+            return (
+              <Card className='group cursor-pointer overflow-hidden bg-card/60 transition-all hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/10'>
+                <div className='relative flex aspect-square items-center justify-center bg-muted/30'>
+                  <Box className='h-12 w-12 text-muted-foreground/70' />
+                  <div className='absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover:opacity-100'>
+                    <div className='flex flex-col items-center gap-2'>
+                      <div className='flex size-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg'>
+                        <Box className='size-5' />
+                      </div>
+                      <span className='text-[10px] font-bold uppercase tracking-wider text-blue-400'>
+                        Preview
+                      </span>
                     </div>
-                    <span className='text-[10px] font-bold uppercase tracking-wider text-blue-400'>
-                      Preview
+                  </div>
+                </div>
+
+                <div className='p-3'>
+                  <p
+                    className='text-sm font-medium text-foreground truncate'
+                    title={asset.name || asset.filename}
+                  >
+                    {asset.name || asset.filename}
+                  </p>
+                  <div className='mt-2 flex items-center justify-between'>
+                    {asset.categoryId ? (
+                      <StatusBadge
+                        status={asset.categoryId}
+                        variant='info'
+                        size='sm'
+                        className='font-medium'
+                      />
+                    ) : (
+                      <div />
+                    )}
+                    <span className='text-[10px] text-muted-foreground font-medium'>
+                      {formatFileSize(asset.size || 0)}
                     </span>
                   </div>
                 </div>
-              </div>
-
-              <div className='p-3'>
-                <p
-                  className='text-sm font-medium text-foreground truncate'
-                  title={asset.name || asset.filename}
-                >
-                  {asset.name || asset.filename}
-                </p>
-                <div className='mt-2 flex items-center justify-between'>
-                  {asset.categoryId ? (
-                    <StatusBadge
-                      status={asset.categoryId}
-                      variant='info'
-                      size='sm'
-                      className='font-medium'
-                    />
-                  ) : (
-                    <div />
-                  )}
-                  <span className='text-[10px] text-muted-foreground font-medium'>
-                    {formatFileSize(asset.size || 0)}
-                  </span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            );
+          }}
+        />
       )}
 
       {!loading && assets.length > 0 && viewMode === 'list' && null}

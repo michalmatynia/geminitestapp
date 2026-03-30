@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'platform'
@@ -10,6 +10,8 @@ canonical: true
 # Forward-Only Execution
 
 Forward-only execution means agent work is coordinated through durable events, checkpoints, and ownership changes rather than destructive rewrites of shared state.
+
+In this repo, the discovery and lease surfaces that describe this model are authenticated internal APIs. Treat them as operator and agent runtime contracts, not anonymous public endpoints.
 
 ## Core rules
 
@@ -45,6 +47,8 @@ When an agent cannot safely continue:
 - capture the blocker in the checkpoint or event stream
 - release or retain the lease according to the resource contract
 - hand off the run if another agent or operator should continue
+
+For AI Paths specifically, lease contention should surface as explicit runtime states such as `blocked_on_lease` and `handoff_ready` rather than hidden retries or silent ownership races.
 
 Do not silently overwrite shared state to make the conflict disappear.
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { sanitizeSvg } from '@/shared/utils/sanitization';
+import { sanitizeHtml, sanitizeSvg } from '@/shared/utils/sanitization';
 
 // Helper: strip XMLSerializer namespace noise for comparison
 const normalizeXml = (s: string): string =>
@@ -187,5 +187,30 @@ describe('sanitizeSvg', () => {
       // The important XSS test is that external hrefs are removed.
       expect(result).not.toContain('href="https://');
     });
+  });
+});
+
+describe('sanitizeHtml', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('removes dangerous tags and inline handlers in DOM mode', () => {
+    const result = sanitizeHtml(
+      '<div><script>alert(1)</script><a href="javascript:alert(2)" onclick="evil()">Click</a></div>'
+    );
+
+    expect(result).not.toContain('<script');
+    expect(result).not.toContain('onclick');
+    expect(result).not.toContain('javascript:');
+    expect(result).toContain('Click');
+  });
+
+  it('falls back to regex sanitization when DOMParser is unavailable', () => {
+    vi.stubGlobal('DOMParser', undefined);
+
+    expect(sanitizeHtml('<div><script>alert(1)</script><span>Safe</span></div>')).toBe(
+      '<div><span>Safe</span></div>'
+    );
   });
 });

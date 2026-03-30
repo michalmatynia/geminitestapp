@@ -69,6 +69,7 @@ export default function ProductCard(props: ProductCardProps): React.JSX.Element 
                 src={imageUrl}
                 alt={name}
                 fill
+                loading='lazy'
                 className='rounded-md object-cover transition-transform duration-300 ease-out group-hover:scale-105'
                 sizes='(min-width: 1280px) 240px, (min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'
               />

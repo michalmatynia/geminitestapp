@@ -238,14 +238,24 @@ export const invalidateProductMetadata = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.all });
 };
 
-export const invalidateProducts = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() });
+export const invalidateProductValidatorLatestSource = (queryClient: QueryClient) => {
+  return queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
+  });
+};
+
+export const invalidateProducts = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() }),
+    invalidateProductValidatorLatestSource(queryClient),
+  ]);
 };
 
 export const invalidateProductsAndCounts = async (queryClient: QueryClient): Promise<void> => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
+    invalidateProductValidatorLatestSource(queryClient),
   ]);
 };
 
@@ -257,6 +267,7 @@ export const invalidateProductsAndDetail = async (
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detailEdit(productId) }),
+    invalidateProductValidatorLatestSource(queryClient),
   ]);
 };
 
@@ -269,6 +280,7 @@ export const invalidateProductsCountsAndDetail = async (
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detailEdit(productId) }),
+    invalidateProductValidatorLatestSource(queryClient),
   ]);
 };
 
@@ -286,6 +298,7 @@ export const refetchProductsAndCounts = async (queryClient: QueryClient): Promis
   await Promise.all([
     queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.lists() }),
     queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.counts() }),
+    queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.validatorLatestProductSource() }),
   ]);
 };
 

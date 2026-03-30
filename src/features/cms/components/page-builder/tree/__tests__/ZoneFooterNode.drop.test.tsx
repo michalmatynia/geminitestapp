@@ -5,14 +5,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ZoneFooterNode } from '@/features/cms/components/page-builder/tree/ZoneFooterNode';
 
-const { moveSectionByMasterMock, endSectionDragMock, useDragStateMock } = vi.hoisted(() => ({
+const {
+  moveSectionByMasterMock,
+  endSectionDragMock,
+  useDragStateMock,
+  componentTreePanelState,
+} = vi.hoisted(() => ({
   moveSectionByMasterMock: vi.fn(async () => true),
   endSectionDragMock: vi.fn(),
   useDragStateMock: vi.fn(),
-}));
-
-vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext', () => ({
-  useComponentTreePanelState: () => ({
+  componentTreePanelState: {
     currentPage: { id: 'page-1' },
     clipboard: null,
     showExtractPlaceholder: true,
@@ -30,7 +32,11 @@ vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext',
     treeInlineDropLabel: 'Drop here',
     treeRootDropLabel: 'Drop section',
     draggedMasterSectionId: 'section-master',
-  }),
+  },
+}));
+
+vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext', () => ({
+  useComponentTreePanelState: () => componentTreePanelState,
   useComponentTreePanelActions: () => ({
     startSectionMasterDrag: vi.fn(),
     endSectionMasterDrag: vi.fn(),
@@ -51,7 +57,7 @@ vi.mock('@/features/cms/hooks/useTreeActionsContext', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/tree/TreeSectionPicker', () => ({
-  TreeSectionPicker: () => <div data-testid='section-picker' />,
+  renderTreeSectionPicker: () => <div data-testid='section-picker' />,
 }));
 
 const createTestQueryClient = () =>

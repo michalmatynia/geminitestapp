@@ -1,24 +1,29 @@
 {
-  "generatedAt": "2026-03-22T08:43:45.995Z",
-  "strictMode": true,
+  "generatedAt": "2026-03-26T13:07:24.310Z",
+  "strictMode": false,
   "includeE2E": false,
   "allowInfraE2EFail": false,
   "runtime": null,
   "unit": {
     "id": "kangur-unit",
     "command": "npx vitest run __tests__/features/kangur/learner-profile.page.test.tsx __tests__/features/kangur/lessons-focus-routing.test.tsx __tests__/features/kangur/kangur-feature-app.shell.test.tsx __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx src/features/kangur/ui/services/profile.test.ts src/features/kangur/settings.test.ts",
-    "status": "pass",
-    "exitCode": 0,
-    "durationMs": 22810,
-    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 526ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  378ms\n ✓ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (4 tests) 637ms\n     ✓ loads user scores and renders profile metrics  392ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 146ms\n ✓ |unit| src/features/kangur/settings.test.ts (18 tests) 17ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests) 79ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (11 tests) 17ms\n\n Test Files  6 passed (6)\n      Tests  47 passed (47)\n   Start at  09:43:24\n   Duration  21.71s (transform 6.92s, setup 1.08s, import 16.29s, tests 1.42s, environment 2.32s)"
+    "status": "fail",
+    "exitCode": 1,
+    "durationMs": 25450,
+    "output": "RUN  v4.0.18 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp\n\n ✓ |unit| __tests__/features/kangur/lessons-focus-routing.test.tsx (2 tests) 7649ms\n     ✓ auto-opens the focused lesson when focus query maps to operation  7082ms\n     ✓ keeps lessons list view when focus query does not map to a lesson  562ms\n ❯ |unit| __tests__/features/kangur/learner-profile.page.test.tsx (5 tests | 1 failed) 1147ms\n     × loads user scores and renders profile metrics 444ms\n     ✓ supports keyboard navigation between learner profile tabs  306ms\n     ✓ keeps profile in local mode when user is not authenticated 228ms\n     ✓ shows scores loading error when score provider fails 89ms\n     ✓ treats score authorization errors as expected local-mode fallback 76ms\n ✓ |unit| __tests__/features/kangur/kangur-admin-menu-toggle.test.tsx (2 tests) 503ms\n     ✓ toggles admin menu visibility with eye button  443ms\n ✓ |unit| __tests__/features/kangur/kangur-feature-app.shell.test.tsx (10 tests) 198ms\n ✓ |unit| src/features/kangur/settings.test.ts (26 tests) 31ms\n ✓ |unit| src/features/kangur/ui/services/profile.test.ts (13 tests) 23ms\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  |unit| __tests__/features/kangur/learner-profile.page.test.tsx > LearnerProfile page > loads user scores and renders profile metrics\nTestingLibraryElementError: Found multiple elements with the text: Wyniki wg operacji\n\nHere are the matching elements:\n\nIgnored nodes: comments, script, style\n\u001b[36m<p\u001b[39m\n  \u001b[33mclass\u001b[39m=\u001b[32m\"break-words text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)] mb-3\"\u001b[39m\n\u001b[36m>\u001b[39m\n  \u001b[0mWyniki wg operacji\u001b[0m\n\u001b[36m</p>\u001b[39m\n\nIgnored nodes: comments, script, style\n\u001b[36m<p\u001b[39m\n  \u001b[33mclass\u001b[39m=\u001b[32m\"break-words text-[11px] font-bold uppercase tracking-[0.22em] [color:var(--kangur-page-muted-text)] mb-3\"\u001b[39m\n\u001b[36m>\u001b[39m\n  \u001b[0mWyniki wg operacji\u001b[0m\n\u001b[36m</p>\u001b[39m\n\n(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)] kangur-shell-viewport-height kangur-premium-bg\"\u001b[39m\n      \u001b[33mid\u001b[39m=\u001b[32m\"kangur-learner-profile-page\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<a\u001b[39m\n        \u001b[33maria-label\u001b[39m=\u001b[32m\"Przejdź do głównej treści\"\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70\"\u001b[39m\n        \u001b[33mhref\u001b[39m=\u001b[32m\"#kangur-learner-profile-main\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[0mPrzejdź do głównej treści\u001b[0m\n      \u001b[36m</a>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"relative z-10 flex w-full flex-col items-center kangur-shell-viewport-height\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<section\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"kangur-page-container min-w-0 max-w-full px-4 sm:px-6 lg:px-8 mx-auto flex w-full flex-col items-center kangur-panel-gap\"\u001b[39m\n          \u001b[33mdata-kangur-route-main\u001b[39m=\u001b[32m\"true\"\u001b[39m\n          \u001b[33mid\u001b[39m=\u001b[32m\"kangur-learner-profile-main\"\u001b[39m\n          \u001b[33mrole\u001b[39m=\u001b[32m\"main\"\u001b[39m\n          \u001b[33mtabindex\u001b[39m=\u001b[32m\"-1\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"flex w-full flex-col kangur-panel-gap\"\u001b[39m\n            \u001b[33mid\u001b[39m=\u001b[32m\"learner-profile-root\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<section\u001b[39m\n              \u001b[33mclass\u001b[39m=\u001b[32m\"w-full\"\u001b[39m\n            \u001b[36m>\u001b[39m\n              \u001b[36m<div\u001b[39m\n                \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0 glass-panel kangur-panel-soft kangur-panel-padding-lg kangur-glass-surface-mist-strong kangur-panel-shell text-center mx-auto w-full max-w-2xl\"\u001b[39m\n                \u001b[33mdata-testid\u001b[39m=\u001b[32m\"kangur-learner-profile-hero\"\u001b[39m\n              \u001b[36m>\u001b[39m\n                \u001b[36m<div\u001b[39m\n                  \u001b[33mclass\u001b[39m=\u001b[32m\"mt-3 w-full\"\u001b[39m\n                \u001b[36m>\u001b[39m\n                  \u001b[36m<div\u001b[39m\n                    \u001b[33mclass\u001b[39m=\u001b[32m\"mb-4 w-full flex flex-col gap-3 sm:flex-row items-center sm:justify-center sm:gap-4\"\u001b[39m\n                  \u001b[36m>\u001b[39m\n                    \u001b[36m<div\u001b[39m\n                      \u001b[33mclass\u001b[39m=\u001b[32m\"h-16 w-16 overflow-hidden rounded-full border border-white/80 bg-white/80 shadow-sm\"\u001b[39m\n                    \u001b[36m>\u001b[39m\n                      \u001b[36m<div\u001b[39m\n                        \u001b[33mclass\u001b[39m=\u001b[32m\"flex h-full w-full items-center justify-center text-xl font-black text-slate-400\"\u001b[39m\n                      \u001b[36m>\u001b[39m\n                        \u001b[0m?\u001b[0m\n                      \u001b[36m</div>\u001b[39m\n                    \u001b[36m</div>\u001b[39m\n                    \u001b[36m<div\u001b[39m\n                      \u001b[33mclass\u001b[39m=\u001b[32m\"text-center sm:text-left\"\u001b[39m\n                    \u001b[36m>\u001b[39m\n                      \u001b[36m<p\u001b[39m\n                        \u001b[33mclass\u001b[39m=\u001b[32m\"text-xs font-semibold uppercase tracking-[0.2em] text-slate-500\"\u001b[39m\n                      \u001b[36m>\u001b[39m\n                        \u001b[0mAvatar ucznia\u001b[0m\n                      \u001b[36m</p>\u001b[39m\n                      \u001b[36m<p\u001b[39m\n                        \u001b[33mclass\u001b[39m=\u001b[32m\"text-lg font-bold text-slate-800\"\u001b[39m\n                      \u001b[36m>\u001b[39m\n                        \u001b[0mJan\u001b[0m\n                      \u001b[36m</p>\u001b[39m\n                    \u001b[36m</div>\u001b[39m\n                  \u001b[36m</div>\u001b[39m\n                  \u001b[36m<div\u001b[39m\n                    \u001b[33mclass\u001b[39m=\u001b[32m\"grid kangur-panel-gap text-left mb-3 w-full\"\u001b[39m\n                    \u001b[33mdata-testid\u001b[39m=\u001b[32m\"kangur-learner-profile-hero-milestone-shell\"\u001b[39m\n                  \u001b[36m>\u001b[39m\n                    \u001b[36m<div\u001b[39m\n                      \u001b[33mclass\u001b[39m=\u001b[32m\"rounded-[28px] border px-4 py-4\"\u001b[39m\n                      \u001b[33mdata-testid\u001b[39m=\u001b[32m\"kangur-learner-profile-hero-milestone-next-badge\"\u001b[39m\n                      \u001b[33mstyle\u001b[39m=\u001b[32m\"background: color-mix(in srgb, var(--kangur-soft-card-background) 96%, #fef3c7 4%); border-color: color-mix(in srgb, var(--kangur-soft-card-border) 94%, #d97706 6%);\"\u001b[39m\n                    \u001b[36m>\u001b[39m\n                      \u001b[36m<div\u001b[39m\n                        \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0 flex flex-col kangur-panel-gap sm:flex-row items-start sm:justify-between\"\u001b[39m\n                      \u001b[36m>\u001b[39m\n                        \u001b[36m<div\u001b[39m\n                          \u001b[33mclass\u001b[39m=\u001b[32m\"min-w-0\"\u001b[39m\n                        \u001b[36m>\u001b[39m\n                          \u001b[36m<p\u001b[39m\n                            \u001b[33mclass\u001b[39m=\u001b[32m\"break-words text-[11px] font-bold uppercase [color:var(--kangur-page-muted-text)] tracking-[0.18em]\"\u001b[39m\n                            \u001b[33mstyle\u001b[39m=\u001b[32m\"color: color-mix(in srgb, var(--kangur-page-text) 70%, #92400e 30%);\"\u001b[39m\n                          \u001b[36m>\u001b[39m\n                            \u001b[0mNastępny kamień milowy\u001b[0m\n                          \u001b[36m</p>\u001b[39m\n                          \u001b[36m<p\u001b[39m\n                            \u001b[33mclass\u001b[39m=\u001b[32m\"[color:var(--kangur-page-text)] [font-family:var(--kangur-font-heading,var(--app-font-heading))] text-sm font-semibold mt-1 break-words\"\u001b[39m\n                          \u001b[36m>\u001b[39m\n                            \u001b[0m🌟\u001b[0m\n                            \u001b[0m \u001b[0m\n                            \u001b[0mTysiącznik\u001b[0m\n                          \u001b[36m</p>\u001b[39m\n                          \u001b[36m<p\u001b[39m\n                            \u001b[33mclass\u001b[39m=\u001b[32m\"[color:var(--kangur-page-muted-text)] text-xs mt-1 break-words leading-5\"\u001b[39m\n                            \u001b[33mstyle\u001b[39m=\u001b[32m\"color: color-mix(in srgb, var(--kangur-page-text) 74%, var(--kangur-page-muted-text) 26%);\"\u001b[39m\n                          \u001b[36m>\u001b[39m\n                            \u001b[0mZdobądź 1000 XP łącznie\u001b[0m\n                          \u001b[36m</p>\u001b[39m\n                        \u001b[36m</div>\u001b[39m\n                        \u001b[36m<span\u001b[39m\n                          \u001b[33mclass\u001b[39m=\u001b[32m\"inline-flex max-w-full items-center justify-center rounded-full border font-semibold tracking-tight text-center whitespace-normal break-words shadow-[0_12px_28px_-24px_rgba(15,23,42,0.32)] px-3 py-1 [border-color:color-mix(in_srgb,var(--kangur-soft-card-border)_52%,var(--kangur-accent-amber-start,#fb923c))] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-amber-start,#fb923c))] [color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-amber-end,#facc15))] self-start sm:shrink-0 text-[11px]\"\u001b[39m\n                        \u001b[36m>\u001b[39m\n                          \u001b[0m620/1000 XP\u001b[0m\n                        \u001b[36m</span>\u001b[39m\n                      \u001b[36m</div>\u001b[39m\n                      \u001b[36m<div\u001b[39m\n                        \u001b[33maria-label\u001b[39m=\u001b[32m\"Postęp\"\u001b[39m\n                        \u001b[33...\n ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19\n ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35\n ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10\n ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13\n ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19\n ❯ __tests__/features/kangur/learner-profile.page.test.tsx:318:19\n    316|       'false'\n    317|     );\n    318|     expect(screen.getByText('Wyniki wg operacji')).toBeInTheDocument();\n       |                   ^\n    319|     expect(screen.getByTestId('learner-profile-operation-progress-addi…\n    320|       'aria-valuenow',\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\n\n\n Test Files  1 failed | 5 passed (6)\n      Tests  1 failed | 57 passed (58)\n   Start at  14:07:00\n   Duration  24.16s (transform 5.71s, setup 1.33s, import 8.97s, tests 9.55s, environment 3.51s)"
   },
   "e2e": null,
   "bundleRisk": {
     "files": [
       {
         "path": "src/features/kangur/ui/pages/Game.tsx",
-        "lines": 943,
-        "bytes": 44423
+        "lines": 638,
+        "bytes": 26166
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurGame.tsx",
+        "lines": 607,
+        "bytes": 21670
       },
       {
         "path": "src/features/kangur/ui/services/kangur-questions-data.js",
@@ -26,19 +31,14 @@
         "bytes": 21289
       },
       {
-        "path": "src/features/kangur/ui/components/KangurGame.tsx",
-        "lines": 478,
-        "bytes": 15283
-      },
-      {
         "path": "src/features/kangur/ui/pages/LearnerProfile.tsx",
-        "lines": 237,
-        "bytes": 9592
+        "lines": 305,
+        "bytes": 11941
       },
       {
         "path": "src/features/kangur/ui/pages/Lessons.tsx",
-        "lines": 105,
-        "bytes": 3614
+        "lines": 147,
+        "bytes": 4627
       },
       {
         "path": "src/features/kangur/ui/components/KangurIllustrations.ts",
@@ -46,11 +46,11 @@
         "bytes": 853
       }
     ],
-    "totalBytes": 95054,
-    "totalLines": 2106
+    "totalBytes": 86546,
+    "totalLines": 2040
   },
   "summary": {
-    "failedRuns": 0,
+    "failedRuns": 1,
     "infraFailures": 0
   }
 }

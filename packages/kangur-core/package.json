@@ -3,7 +3,26 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./progress-store": "./src/progress-store.ts",
+    "./profile": "./src/profile.ts",
+    "./progress-metadata": "./src/progress-metadata.ts",
+    "./practice": "./src/practice.ts",
+    "./assignments": "./src/assignments.ts",
+    "./lessons": "./src/lessons.ts",
+    "./leaderboard": "./src/leaderboard.ts",
+    "./lesson-catalog": "./src/lesson-catalog.ts",
+    "./lesson-content": "./src/lesson-content.ts",
+    "./profile-i18n": "./src/profile-i18n.ts",
+    "./competition": "./src/competition.ts",
+    "./math/types": "./src/math/types.ts",
+    "./math/questions": "./src/math/questions.ts",
+    "./progress/badges": "./src/progress/badges.ts",
+    "./progress/rewards": "./src/progress/rewards.ts",
+    "./progress/activity": "./src/progress/activity.ts",
+    "./progress/summary": "./src/progress/summary.ts",
+    "./progress-i18n": "./src/progress-i18n.ts"
   }
 }

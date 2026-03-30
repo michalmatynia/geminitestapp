@@ -28,6 +28,58 @@ const requestedDevBundler =
 const isPlaywrightBrokerRuntime = Boolean(
   process.env.PLAYWRIGHT_RUNTIME_LEASE_KEY || process.env.PLAYWRIGHT_RUNTIME_AGENT_ID
 );
+const explicitBuildCpus = Number.parseInt(process.env.NEXT_BUILD_CPUS ?? '', 10);
+// Webpack page-data generation becomes unreliable on the default Vercel builder
+// when it fans out work, so cap at 1 worker for webpack. Turbopack handles its
+// own parallelism in its Rust runtime and should use the default CPU count.
+const buildWorkerCpuLimit = Number.isFinite(explicitBuildCpus)
+  ? Math.max(1, explicitBuildCpus)
+  : isTurbopack
+    ? undefined
+    : 1;
+const optimizePackageImports = [
+  'lucide-react',
+  '@radix-ui/react-alert-dialog',
+  '@radix-ui/react-avatar',
+  '@radix-ui/react-checkbox',
+  '@radix-ui/react-collapsible',
+  '@radix-ui/react-dialog',
+  '@radix-ui/react-dropdown-menu',
+  '@radix-ui/react-label',
+  '@radix-ui/react-menu',
+  '@radix-ui/react-radio-group',
+  '@radix-ui/react-select',
+  '@radix-ui/react-separator',
+  '@radix-ui/react-slot',
+  '@radix-ui/react-switch',
+  '@radix-ui/react-tabs',
+  '@radix-ui/react-toast',
+  'date-fns',
+  'lodash',
+  'react-syntax-highlighter',
+  'three',
+  '@react-three/drei',
+  '@react-three/fiber',
+  '@react-three/postprocessing',
+  'postprocessing',
+  'gsap',
+  'zod',
+  'framer-motion',
+];
+const outputFileTracingExcludes = {
+  // These directories hold local runtime artifacts and user data. When server code
+  // references them via process.cwd(), @vercel/nft can conservatively trace the
+  // entire directory tree, which explodes Vercel function size.
+  '/*': [
+    './public/uploads/**/*',
+    './mongo/backups/**/*',
+    './tmp/**/*',
+    './playwright-debug/**/*',
+    './test-results/**/*',
+    './node_modules/.cache/**/*',
+  ],
+  '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
+};
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -58,10 +110,16 @@ const ensureFileCopy = async (sourcePath, targetPath) => {
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  ...(isDev
+    ? {
+        allowedDevOrigins: ['127.0.0.1', '::1'],
+      }
+    : {}),
   // Keep dev artifacts separate from production builds to avoid lock/cache races
   // when `next build` and `next dev` are triggered in parallel.
   distDir: process.env.NEXT_DIST_DIR || (isDev ? '.next-dev' : '.next'),
   compress: true, // Ensure gzip compression is enabled
+  outputFileTracingExcludes,
   // Standalone output is needed for Docker/self-hosted deploys (see Dockerfile).
   // On Vercel, Vercel manages deployment itself and standalone output only adds
   // expensive file-tracing work that can push builds past the 45-minute limit.
@@ -70,54 +128,34 @@ const nextConfig = {
     : {
         output: 'standalone',
         outputFileTracingRoot: __dirname,
-        outputFileTracingExcludes: {
-          '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
-        },
       }),
   // Skip TypeScript type-checking during `next build` — already enforced in CI.
   // Saves ~5-10 minutes on a 5926-file project.
   typescript: { ignoreBuildErrors: true },
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // On Vercel, skip the SWC removeConsole transform to save build time on the
+    // initial cold build. Console calls are harmless in serverless logs and the
+    // transform touches every file in the compilation graph.
+    removeConsole: process.env.NODE_ENV === 'production' && !isVercel,
   },
   experimental: {
+    // Webpack page-data workers fan out aggressively and trigger OOM on Vercel;
+    // cap at 1 for webpack. Turbopack handles parallelism in Rust and should
+    // use the default CPU count for faster builds.
+    ...(isDev || buildWorkerCpuLimit === undefined ? {} : { cpus: buildWorkerCpuLimit }),
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: '50mb',
-    // cpus: 1 was needed for webpack; Turbopack manages its own parallelism.
-    optimizePackageImports: [
-      'lucide-react',
-      '@radix-ui/react-alert-dialog',
-      '@radix-ui/react-avatar',
-      '@radix-ui/react-checkbox',
-      '@radix-ui/react-collapsible',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-label',
-      '@radix-ui/react-menu',
-      '@radix-ui/react-radio-group',
-      '@radix-ui/react-select',
-      '@radix-ui/react-separator',
-      '@radix-ui/react-slot',
-      '@radix-ui/react-switch',
-      '@radix-ui/react-tabs',
-      '@radix-ui/react-toast',
-      'date-fns',
-      'lodash',
-      'react-syntax-highlighter',
-      'three',
-      '@react-three/drei',
-      '@react-three/fiber',
-      '@react-three/postprocessing',
-      'postprocessing',
-      'papaparse',
-      'gsap',
-      'zod',
-      'framer-motion',
-    ],
+    // Turbopack production builds keep their own persistent cache under distDir/cache.
+    // Enable it for the isolated Turbopack lane so repeated stabilization runs and
+    // cached CI/Vercel builds can reuse prior work instead of recompiling the full graph.
+    ...(isTurbopack ? { turbopackFileSystemCacheForBuild: true } : {}),
+    // Turbopack is more stable in this repo when it resolves packages normally
+    // instead of rewriting import graphs through optimizePackageImports.
+    ...(isTurbopack ? {} : { optimizePackageImports }),
   },
   serverExternalPackages: [
-    'bcrypt',
+    'bcryptjs',
     'bullmq',
     '@grpc/grpc-js',
     'ioredis',
@@ -141,6 +179,29 @@ const nextConfig = {
     'sharp',
     // instrumentation-winston lazily requires this optional transport at runtime.
     '@opentelemetry/winston-transport',
+    // Node-only IMAP/mail-parsing libraries with native bindings — bundling them
+    // inflates webpack memory usage significantly on constrained builders.
+    'imapflow',
+    'mailparser',
+    // OpenAI SDK is server-only (used in AI Brain, image studio, TTS, OCR workers).
+    // Externalizing it saves ~13MB of compilation work per build.
+    'openai',
+    // PDF parsing is server-only (API routes + OCR workers). 21MB dependency.
+    'pdf-parse',
+    // SMTP/email transport — server-only (auth email delivery, campaign emails).
+    'nodemailer',
+    // CSV parsing — server-only (product import API route).
+    'papaparse',
+    // MIME type detection — server-only (file serving, social image handlers).
+    'mime-types',
+    // In-memory caching — server-only (settings cache, page content repository).
+    'lru-cache',
+    // Auth packages — server-only (auth.ts with 'server-only' import).
+    '@auth/core',
+    '@auth/mongodb-adapter',
+    // OpenTelemetry API surface — server-only (observability/otel-context, otel-log-bridge).
+    '@opentelemetry/api',
+    '@opentelemetry/api-logs',
   ],
   turbopack: {
     root: __dirname,
@@ -155,7 +216,11 @@ const nextConfig = {
     config.optimization.moduleIds = 'deterministic';
     config.optimization.minimize = process.env.NODE_ENV === 'production';
 
-    if (isDev && requestedDevBundler === 'webpack' && isPlaywrightBrokerRuntime) {
+    if (isVercel) {
+      // Disable webpack's filesystem cache on Vercel. The cache serialization
+      // phase spikes memory and contributes to OOM on 8 GB build machines.
+      config.cache = false;
+    } else if (isDev && requestedDevBundler === 'webpack' && isPlaywrightBrokerRuntime) {
       // Brokered Playwright runtimes already isolate their dist dir. Keep webpack
       // cache in memory to avoid ENOSPC and partial on-disk cache writes during
       // accessibility/browser smoke runs on near-full local volumes.
@@ -313,4 +378,9 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+const withBundleAnalyzer =
+  process.env.ANALYZE === 'true'
+    ? (await import('@next/bundle-analyzer')).default({ enabled: true })
+    : (/** @type {import('next').NextConfig} */ config) => config;
+
+export default withBundleAnalyzer(withNextIntl(nextConfig));

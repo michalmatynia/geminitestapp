@@ -10,13 +10,13 @@ const { chatbotAgentRunMock } = vi.hoisted(() => ({
 }));
 
 import { GET, POST, DELETE } from '@/app/api/agentcreator/agent/route';
-import { startAgentQueue } from '@/features/ai/server';
+import { startAgentQueue } from '@/features/ai/agent-runtime/workers/agentQueue';
 
 vi.mock('@/features/ai/agent-runtime/store-delegates', () => ({
   getChatbotAgentRunDelegate: vi.fn(() => chatbotAgentRunMock),
 }));
 
-vi.mock('@/features/ai/server', () => ({
+vi.mock('@/features/ai/agent-runtime/workers/agentQueue', () => ({
   startAgentQueue: vi.fn(),
 }));
 

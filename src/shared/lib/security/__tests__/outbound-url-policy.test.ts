@@ -29,6 +29,17 @@ describe('shared outbound URL policy', () => {
     expect(result.reason).toBe('metadata_ip_blocked');
   });
 
+  it('blocks private IPv6 hosts, including IPv4-mapped private ranges', () => {
+    expect(evaluateOutboundUrlPolicy('http://[fc00::1]/path')).toMatchObject({
+      allowed: false,
+      reason: 'private_ip_blocked',
+    });
+    expect(evaluateOutboundUrlPolicy('http://[::ffff:192.168.1.10]/path')).toMatchObject({
+      allowed: false,
+      reason: 'private_ip_blocked',
+    });
+  });
+
   it('follows allowed redirects', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()

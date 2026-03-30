@@ -10,7 +10,7 @@ import type {
   IntegrationRecord,
   IntegrationConnectionRecord,
   IntegrationRepository,
-} from '../types/integrations';
+} from '@/shared/contracts/integrations';
 
 /**
  * Helper to call the Integration repository with error handling and logging.
@@ -21,8 +21,7 @@ async function repoCall<K extends keyof IntegrationRepository>(
 ): Promise<Awaited<ReturnType<IntegrationRepository[K]>>> {
   try {
     const repo = await getIntegrationRepository();
-    const fn = repo[key];
-    // @ts-expect-error - Higher order generic function call with spread parameters
+    const fn = repo[key] as (...fnArgs: Parameters<IntegrationRepository[K]>) => ReturnType<IntegrationRepository[K]>;
     return await fn(...args);
   } catch (error) {
     void ErrorSystem.captureException(error);

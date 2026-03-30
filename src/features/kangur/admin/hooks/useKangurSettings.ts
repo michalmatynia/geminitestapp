@@ -20,7 +20,7 @@ import {
   type KangurAiTutorAppSettings,
   type KangurAiTutorGuestIntroMode,
   type KangurAiTutorHomeOnboardingMode,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import type {
   KangurLessonTtsProbeResponse,
   KangurLessonTtsVoice,

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { PageComponent } from '@/shared/contracts/cms';
+import type { PageComponentInput } from '@/shared/contracts/cms';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 import type { ProductWithImages } from '@/shared/contracts/products';
@@ -20,7 +20,9 @@ const LazyHomeCmsDefaultContent = React.lazy(() =>
 );
 const LazyHomeFallbackContent = React.lazy(() =>
   import('./home-fallback-content').then((mod) => ({
-    default: mod.HomeFallbackContent,
+    default: function LazyHomeFallbackContentEntry(props: import('./home-fallback-content').HomeFallbackContentProps) {
+      return mod.renderHomeFallbackContent(props);
+    },
   }))
 );
 
@@ -33,7 +35,7 @@ type CmsVariantProps = {
   loadingLabel: string;
   hasCmsContent: boolean;
   defaultSlug: string;
-  rendererComponents: PageComponent[];
+  rendererComponents: PageComponentInput[];
 };
 
 type FallbackVariantProps = {
@@ -55,7 +57,30 @@ type FallbackVariantProps = {
 
 type HomeContentClientProps = CmsVariantProps | FallbackVariantProps;
 
-export function HomeContentClient(props: HomeContentClientProps): React.JSX.Element {
+function renderHomeContentVariant(props: HomeContentClientProps): React.JSX.Element {
+  if (props.variant === 'cms') {
+    return (
+      <LazyHomeCmsDefaultContent
+        themeSettings={props.theme}
+        colorSchemes={props.colorSchemes}
+        hasCmsContent={props.hasCmsContent}
+        defaultSlug={props.defaultSlug}
+        rendererComponents={props.rendererComponents}
+      />
+    );
+  }
+
+  return (
+    <LazyHomeFallbackContent
+      showFallbackHeader={props.showFallbackHeader}
+      products={props.products}
+      themeSettings={props.theme}
+      appearanceTone={props.appearanceTone}
+    />
+  );
+}
+
+function renderHomeContentClientShell(props: HomeContentClientProps): React.JSX.Element {
   return (
     <React.Suspense
       fallback={<LoadingPanel>{props.loadingLabel}</LoadingPanel>}
@@ -66,23 +91,16 @@ export function HomeContentClient(props: HomeContentClientProps): React.JSX.Elem
         colorSchemes={props.colorSchemes}
         showMenu={props.showMenu}
       >
-        {props.variant === 'cms' ? (
-          <LazyHomeCmsDefaultContent
-            themeSettings={props.theme}
-            colorSchemes={props.colorSchemes}
-            hasCmsContent={props.hasCmsContent}
-            defaultSlug={props.defaultSlug}
-            rendererComponents={props.rendererComponents}
-          />
-        ) : (
-          <LazyHomeFallbackContent
-            showFallbackHeader={props.showFallbackHeader}
-            products={props.products}
-            themeSettings={props.theme}
-            appearanceTone={props.appearanceTone}
-          />
-        )}
+        <React.Suspense
+          fallback={<LoadingPanel>{props.loadingLabel}</LoadingPanel>}
+        >
+          {renderHomeContentVariant(props)}
+        </React.Suspense>
       </LazyCmsPageShell>
     </React.Suspense>
   );
+}
+
+export function HomeContentClient(props: HomeContentClientProps): React.JSX.Element {
+  return renderHomeContentClientShell(props);
 }

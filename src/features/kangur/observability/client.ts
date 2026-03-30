@@ -1,4 +1,5 @@
 import { readClientCookie, setClientCookie } from '@/shared/lib/browser/client-cookies';
+import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import {
   logClientError,
   setClientErrorBaseContext,
@@ -17,6 +18,18 @@ type KangurClientErrorHandlingOptions<T> = {
   onError?: (error: unknown) => void;
   shouldReport?: (error: unknown) => boolean;
   shouldRethrow?: (error: unknown) => boolean;
+};
+
+const resolveKangurClientErrorFallback = <T>(
+  options?: Partial<KangurClientErrorHandlingOptions<T>>
+): T => {
+  if (options && Object.prototype.hasOwnProperty.call(options, 'fallback')) {
+    return typeof options.fallback === 'function'
+      ? (options.fallback as () => T)()
+      : (options.fallback as T);
+  }
+
+  return undefined as T;
 };
 
 const KANGUR_CLIENT_CONTEXT = Object.freeze({
@@ -125,15 +138,49 @@ export const reportKangurClientError = (
   });
 };
 
+export const isRecoverableKangurClientFetchError = (error: unknown): boolean => {
+  let message: string | null = null;
+  if (error instanceof Error) {
+    message = error.message;
+  } else if (typeof error === 'string') {
+    message = error;
+  } else if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    message = error.message;
+  }
+
+  if (!message) {
+    return false;
+  }
+
+  const normalizedMessage = message.trim().toLowerCase();
+  return (
+    normalizedMessage.includes('failed to fetch') ||
+    normalizedMessage.includes('load failed') ||
+    normalizedMessage.includes('request timeout after') ||
+    normalizedMessage.includes('response body timeout after')
+  );
+};
+
+export const isExpectedKangurClientError = (error: unknown): boolean =>
+  mapErrorToAppError(error)?.expected === true;
+
 export const withKangurClientError = async <T>(
   report: KangurClientErrorReport | ((error: unknown) => KangurClientErrorReport),
   task: () => Promise<T>,
-  options: KangurClientErrorHandlingOptions<T>
+  options?: Partial<KangurClientErrorHandlingOptions<T>>
 ): Promise<T> => {
   try {
     return await task();
   } catch (error) {
-    const shouldReport = options.shouldReport?.(error) ?? true;
+    const shouldReport =
+      !isRecoverableKangurClientFetchError(error) &&
+      !isExpectedKangurClientError(error) &&
+      (options?.shouldReport?.(error) ?? true);
     if (shouldReport) {
       void ErrorSystem.captureException(error);
     }
@@ -141,25 +188,26 @@ export const withKangurClientError = async <T>(
     if (shouldReport) {
       reportKangurClientError(error, resolvedReport);
     }
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
+    options?.onError?.(error);
+    if (options?.shouldRethrow?.(error)) {
       throw error;
     }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
+    return resolveKangurClientErrorFallback(options);
   }
 };
 
 export const withKangurClientErrorSync = <T>(
   report: KangurClientErrorReport | ((error: unknown) => KangurClientErrorReport),
   task: () => T,
-  options: KangurClientErrorHandlingOptions<T>
+  options?: Partial<KangurClientErrorHandlingOptions<T>>
 ): T => {
   try {
     return task();
   } catch (error) {
-    const shouldReport = options.shouldReport?.(error) ?? true;
+    const shouldReport =
+      !isRecoverableKangurClientFetchError(error) &&
+      !isExpectedKangurClientError(error) &&
+      (options?.shouldReport?.(error) ?? true);
     if (shouldReport) {
       void ErrorSystem.captureException(error);
     }
@@ -167,13 +215,11 @@ export const withKangurClientErrorSync = <T>(
     if (shouldReport) {
       reportKangurClientError(error, resolvedReport);
     }
-    options.onError?.(error);
-    if (options.shouldRethrow?.(error)) {
+    options?.onError?.(error);
+    if (options?.shouldRethrow?.(error)) {
       throw error;
     }
-    return typeof options.fallback === 'function'
-      ? (options.fallback as () => T)()
-      : options.fallback;
+    return resolveKangurClientErrorFallback(options);
   }
 };
 

@@ -1,5 +1,5 @@
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
-import { hydrateLogRuntimeContext } from '@/features/observability/entry-server';
+import { hydrateLogContext } from '@/shared/lib/observability/log-hydration-registry';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { ALERT_EVIDENCE_SAMPLE_LIMIT } from './config';
@@ -59,7 +59,7 @@ export const readContextRegistryEvidence = (
 export const summarizeLogForAlertEvidence = async (
   log: SystemLogRecord
 ): Promise<AlertEvidenceSample> => {
-  const context = await hydrateLogRuntimeContext(log.context ?? null);
+  const context = await hydrateLogContext(log.context ?? null);
   const contextRecord = asRecord(context);
   const contextRegistry = readContextRegistryEvidence(contextRecord?.['contextRegistry']);
 

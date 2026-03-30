@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -11,6 +12,7 @@ type ProductListingsModalViewContextValue = {
   onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
   filterIntegrationSlug?: string | null | undefined;
   onListingsUpdated?: (() => void) | undefined;
+  recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 };
 
 const ProductListingsModalViewContext =

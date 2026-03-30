@@ -1,6 +1,6 @@
+import { resolvePreferredKangurPracticeOperation } from '@kangur/core';
 import {
   buildKangurLearnerProfileSnapshot,
-  resolvePreferredKangurPracticeOperation,
   type KangurLearnerRecommendationAction,
   type KangurLearnerProfileSnapshot,
 } from '@kangur/core';

@@ -11,6 +11,16 @@ vi.mock('@/features/notesapp/server', () => ({
   },
 }));
 
+const buildCreateNotebookRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/notes/notebooks', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+const createdNotebookInputExpectation = expect.objectContaining({
+  name: 'My New Notebook',
+});
+
 describe('Notes Notebooks API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,28 +56,16 @@ describe('Notes Notebooks API', () => {
       } as any);
 
       const res = await POST(
-        new NextRequest('http://localhost/api/notes/notebooks', {
-          method: 'POST',
-          body: JSON.stringify(newNotebook),
-        })
+        buildCreateNotebookRequest(newNotebook)
       );
       const data = await res.json();
       expect(res.status).toEqual(201);
       expect(data.name).toEqual('New Notebook'); // Based on mock return value
-      expect(noteService.createNotebook).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'My New Notebook',
-        })
-      );
+      expect(noteService.createNotebook).toHaveBeenCalledWith(createdNotebookInputExpectation);
     });
 
     it('should return 400 for invalid data', async () => {
-      const res = await POST(
-        new NextRequest('http://localhost/api/notes/notebooks', {
-          method: 'POST',
-          body: JSON.stringify({}), // missing name
-        })
-      );
+      const res = await POST(buildCreateNotebookRequest({})); // missing name
       expect(res.status).toEqual(400);
     });
   });

@@ -3,10 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import EnglishPrepositionsGame from '@/features/kangur/ui/components/EnglishPrepositionsGame';
-import EnglishPrepositionsOrderGame from '@/features/kangur/ui/components/EnglishPrepositionsOrderGame';
-import EnglishPrepositionsSortGame from '@/features/kangur/ui/components/EnglishPrepositionsSortGame';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   EnglishPrepositionsPlaceAnimation,
   EnglishPrepositionsRelationsDiagram,
@@ -30,6 +28,15 @@ import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-compone
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 
 const LESSON_KEY = 'english_prepositions_time_place';
+const ENGLISH_PREPOSITIONS_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_prepositions_time_place'
+);
+const ENGLISH_PREPOSITIONS_SORT_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_prepositions_sort'
+);
+const ENGLISH_PREPOSITIONS_ORDER_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_prepositions_order'
+);
 
 type SectionId =
   | 'intro'
@@ -92,25 +99,30 @@ const buildEnglishPrepositionsSlides = (
           <KangurLessonVisual
             accent='rose'
             caption={translations('slides.time.core.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3 text-sm`}>
+                {[
+                  { title: 'AT', items: ['at 7:30', 'at noon', 'at midnight'] },
+                  { title: 'ON', items: ['on Monday', 'on 14 May', 'on my birthday'] },
+                  { title: 'IN', items: ['in April', 'in 2026', 'in the morning'] },
+                ].map((group) => (
+                  <div
+                    key={group.title}
+                    className='rounded-2xl border border-rose-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'
+                  >
+                    <p className='text-xs uppercase tracking-wide text-rose-500'>{group.title}</p>
+                    <ul className='mt-1 space-y-1 text-sm font-semibold text-rose-700'>
+                      {group.items.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishPrepositionsTimeAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-3 text-sm`}>
-            {[
-              { title: 'AT', items: ['at 7:30', 'at noon', 'at midnight'] },
-              { title: 'ON', items: ['on Monday', 'on 14 May', 'on my birthday'] },
-              { title: 'IN', items: ['in April', 'in 2026', 'in the morning'] },
-            ].map((group) => (
-              <KangurLessonInset key={group.title} accent='rose' className='text-left'>
-                <p className='text-xs uppercase tracking-wide text-rose-500'>{group.title}</p>
-                <ul className='mt-1 space-y-1 text-sm font-semibold text-rose-700'>
-                  {group.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -124,22 +136,27 @@ const buildEnglishPrepositionsSlides = (
           <KangurLessonVisual
             accent='rose'
             caption={translations('slides.time.sequence.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'Finish the homework before class.',
+                  'No phones during the test.',
+                  'We compare answers after school.',
+                  'Wait until 4:00.',
+                  'I have been here since 8:00.',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-rose-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-rose-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishPrepositionsTimelineAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'Finish the homework before class.',
-              'No phones during the test.',
-              'We compare answers after school.',
-              'Wait until 4:00.',
-              'I have been here since 8:00.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='rose' className='text-left'>
-                <p className='font-semibold text-rose-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -179,20 +196,25 @@ const buildEnglishPrepositionsSlides = (
           <KangurLessonVisual
             accent='rose'
             caption={translations('slides.place.core.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'Meet me at the bus stop.',
+                  'The calculator is in the backpack.',
+                  'The formula is on the screen.',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-rose-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-rose-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishPrepositionsPlaceAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'Meet me at the bus stop.',
-              'The calculator is in the backpack.',
-              'The formula is on the screen.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='rose' className='text-left'>
-                <p className='font-semibold text-rose-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -239,22 +261,27 @@ const buildEnglishPrepositionsSlides = (
           <KangurLessonVisual
             accent='violet'
             caption={translations('slides.relations.core.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'Point P is between A and B.',
+                  'The graph is above the axis.',
+                  'The label sits below the chart.',
+                  'The triangle is next to the square.',
+                  'The coach stands in front of the board.',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-violet-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-violet-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishPrepositionsRelationsDiagram />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'Point P is between A and B.',
-              'The graph is above the axis.',
-              'The label sits below the chart.',
-              'The triangle is next to the square.',
-              'The coach stands in front of the board.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='violet' className='text-left'>
-                <p className='font-semibold text-violet-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -450,18 +477,21 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_prepositions',
-          stage: {
+          shell: {
             accent: 'rose',
             title: sectionTitles.game_prepositions,
             icon: '🎯',
             description: sectionDescriptions.game_prepositions,
             shellTestId: 'english-prepositions-game-shell',
           },
-          render: ({ onFinish }) => <EnglishPrepositionsGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'english_prepositions_time_place',
+            instanceId: ENGLISH_PREPOSITIONS_INSTANCE_ID,
+          },
         },
         {
           sectionId: 'game_prepositions_sort',
-          stage: {
+          shell: {
             accent: 'rose',
             title: sectionTitles.game_prepositions_sort,
             icon: '🧲',
@@ -469,11 +499,14 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'english-prepositions-sort-game-shell',
           },
-          render: ({ onFinish }) => <EnglishPrepositionsSortGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'english_prepositions_sort',
+            instanceId: ENGLISH_PREPOSITIONS_SORT_INSTANCE_ID,
+          },
         },
         {
           sectionId: 'game_prepositions_order',
-          stage: {
+          shell: {
             accent: 'rose',
             title: sectionTitles.game_prepositions_order,
             icon: '🧩',
@@ -481,7 +514,10 @@ export default function EnglishPrepositionsLesson(): React.JSX.Element {
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'english-prepositions-order-game-shell',
           },
-          render: ({ onFinish }) => <EnglishPrepositionsOrderGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'english_prepositions_order',
+            instanceId: ENGLISH_PREPOSITIONS_ORDER_INSTANCE_ID,
+          },
         },
       ]}
     />

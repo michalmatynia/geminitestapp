@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'cross-feature'
@@ -8,6 +8,12 @@ canonical: true
 ---
 
 # Image Studio Object Layout Improvement Plan
+
+This file is the retained improvement record for the Object Layout and Auto Scaler
+upgrade wave. Current user-facing and operator-facing runtime guidance is split across:
+
+- [`docs/ai-features/image-studio-overview.md`](../ai-features/image-studio-overview.md)
+- `src/features/ai/image-studio/components/ImageStudioDocsContent.tsx`
 
 Date: 2026-02-20  
 Status: In Progress (Phase A complete, Phase B foundation complete, Phase C complete, Integration Phase H complete, Phase I complete, Phase J complete, Phase K complete)

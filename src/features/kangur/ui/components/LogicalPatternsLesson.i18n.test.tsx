@@ -21,6 +21,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 
 import LogicalPatternsLesson from '@/features/kangur/ui/components/LogicalPatternsLesson';
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 
 type CapturedSlide = {
   title: string;
@@ -43,7 +44,12 @@ describe('LogicalPatternsLesson i18n', () => {
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
       title: 'Muster - Einstieg',
@@ -53,8 +59,14 @@ describe('LogicalPatternsLesson i18n', () => {
       title: 'Geometrische Folgen und Fibonacci',
       description: 'Multiplikation und besondere Folgen',
     });
-    expect(games.find((game) => game.sectionId === 'game_warsztat')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game_warsztat')?.shell).toMatchObject({
       title: 'Musterwerkstatt',
+    });
+    expect(
+      games.find((game) => game.sectionId === 'game_warsztat')?.launchableInstance,
+    ).toMatchObject({
+      gameId: 'logical_patterns_workshop',
+      instanceId: getKangurBuiltInGameInstanceId('logical_patterns_workshop'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
@@ -64,5 +76,27 @@ describe('LogicalPatternsLesson i18n', () => {
 
     expect(screen.getByText('Muster sind ueberall:')).toBeInTheDocument();
     expect(screen.getByText('1, 2, 3, 4, 5 - jede Zahl ist um 1 groesser')).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the workshop shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.logicalPatterns.game.gameTitle =
+      'Benutzerdefinierte Musterwerkstatt';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <LogicalPatternsLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game_warsztat')?.shell).toMatchObject({
+      title: 'Benutzerdefinierte Musterwerkstatt',
+    });
   });
 });

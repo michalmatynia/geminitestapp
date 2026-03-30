@@ -7,7 +7,7 @@ import {
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
@@ -268,9 +268,9 @@ export default function LogicalIfThenStepsGame({
         </div>
       </KangurInfoCard>
 
-      {feedback ? (
+      {feedback === 'info' ? (
         <KangurInfoCard
-          accent={feedback === 'success' ? 'emerald' : feedback === 'error' ? 'rose' : 'amber'}
+          accent='amber'
           tone='accent'
           padding='sm'
           className='w-full text-sm'
@@ -278,28 +278,27 @@ export default function LogicalIfThenStepsGame({
           aria-live='polite'
           aria-atomic='true'
         >
-          {feedback === 'info'
-            ? copy.feedback.fillAll
-            : feedback === 'success'
-              ? formatTemplate(copy.feedback.successTemplate, { explanation: round.explanation })
-              : copy.feedback.error}
+          {copy.feedback.fillAll}
         </KangurInfoCard>
       ) : null}
 
       <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-        <KangurCheckButton
+        <KangurButton
           onClick={handleCheck}
           size='sm'
           type='button'
           variant='primary'
           className={cn(
             'px-4 touch-manipulation select-none',
-            isCoarsePointer && 'min-h-11 active:scale-[0.98]'
+            isCoarsePointer && 'min-h-11 active:scale-[0.98]',
+            getKangurCheckButtonClassName(
+              undefined,
+              feedback === 'success' ? 'success' : feedback === 'error' ? 'error' : null
+            )
           )}
-          feedbackTone={feedback === 'success' ? 'success' : feedback === 'error' ? 'error' : null}
         >
           {copy.actions.check}
-        </KangurCheckButton>
+        </KangurButton>
         {checked ? (
           <>
             <KangurButton

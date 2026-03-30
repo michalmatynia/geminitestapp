@@ -122,32 +122,27 @@ export function ComponentSettingsProvider({
         dispatch({
           type: 'UPDATE_NESTED_BLOCK_SETTINGS',
           sectionId: selectedParentSection.id,
-          columnId: selectedParentColumn.id,
-          parentBlockId: selectedParentBlock.id,
           blockId: selectedBlock.id,
           settings: next,
         });
       } else if (selectedParentBlock) {
         dispatch({
-          type: 'UPDATE_SECTION_BLOCK_SETTINGS',
+          type: 'UPDATE_NESTED_BLOCK_SETTINGS',
           sectionId: selectedParentSection.id,
-          parentBlockId: selectedParentBlock.id,
           blockId: selectedBlock.id,
           settings: next,
         });
       } else if (selectedParentColumn) {
         dispatch({
-          type: 'UPDATE_BLOCK_IN_COLUMN',
+          type: 'UPDATE_NESTED_BLOCK_SETTINGS',
           sectionId: selectedParentSection.id,
-          columnId: selectedParentColumn.id,
           blockId: selectedBlock.id,
           settings: next,
         });
       } else if (selectedParentRow) {
         dispatch({
-          type: 'UPDATE_SECTION_BLOCK_SETTINGS',
+          type: 'UPDATE_NESTED_BLOCK_SETTINGS',
           sectionId: selectedParentSection.id,
-          parentBlockId: selectedParentRow.id,
           blockId: selectedBlock.id,
           settings: next,
         });
@@ -179,9 +174,9 @@ export function ComponentSettingsProvider({
         ...(key === 'heightMode' && value === 'inherit' ? { height: 0 } : {}),
       };
       dispatch({
-        type: 'UPDATE_COLUMN_SETTINGS',
+        type: 'UPDATE_NESTED_BLOCK_SETTINGS',
         sectionId: selectedColumnParentSection.id,
-        columnId: selectedColumn.id,
+        blockId: selectedColumn.id,
         settings: next,
       });
     },

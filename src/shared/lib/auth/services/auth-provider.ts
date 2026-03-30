@@ -64,19 +64,16 @@ const ensureAvailableAuthProvider = (provider: AuthDbProvider): AuthDbProvider =
 
 // Auth provider must be deterministic and never fail.
 export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
-  const policy = await getDatabaseEnginePolicy();
-  const appProvider = await getAppDbProvider();
   const envProvider = normalizeProvider(process.env['AUTH_DB_PROVIDER']);
   if (envProvider) {
-    warnAuthProviderDrift(appProvider, envProvider, 'env');
     return ensureAvailableAuthProvider(envProvider);
   }
   const mongoSetting = await readMongoAuthProvider();
   if (mongoSetting) {
-    warnAuthProviderDrift(appProvider, mongoSetting, 'mongo-setting');
     return ensureAvailableAuthProvider(mongoSetting);
   }
 
+  const policy = await getDatabaseEnginePolicy();
   const routeProvider = await getDatabaseEngineServiceProvider('auth');
   if (routeProvider) {
     if (routeProvider === 'redis') {
@@ -87,7 +84,6 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
         `Database Engine route "auth" targets "${routeProvider}" but only MongoDB is supported.`
       );
     }
-    warnAuthProviderDrift(appProvider, routeProvider, 'route-map');
     return ensureAvailableAuthProvider(routeProvider);
   }
 
@@ -97,6 +93,7 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
     );
   }
 
+  const appProvider = await getAppDbProvider();
   const defaultProvider: AuthDbProvider = appProvider;
   warnAuthProviderDrift(appProvider, defaultProvider, 'default');
   return ensureAvailableAuthProvider(defaultProvider);

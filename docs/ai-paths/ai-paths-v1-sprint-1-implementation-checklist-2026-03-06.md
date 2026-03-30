@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,17 @@ canonical: true
 ---
 
 # AI Paths V1 Sprint 1 Implementation Checklist (2026-03-06)
+
+This checklist is retained for historical implementation traceability. The active
+contract/runtime surface should be read from [`overview.md`](./overview.md),
+[`reference.md`](./reference.md), and the current schema/reference docs.
+
+Do not treat this checklist as the active work queue. For current validation and
+readiness gates, use:
+
+- `npm run ai-paths:check:canonical`
+- `npm run docs:ai-paths:node-docs:check`
+- `npm run docs:ai-paths:kernel-transition:check`
 
 ## References
 

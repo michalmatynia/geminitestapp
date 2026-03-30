@@ -238,45 +238,55 @@
     "confidentDisplayDescription": "Підкреслює ціну, характеристики та наявність."
   },
   "KangurPublic": {
-    "routeLoading": "Завантаження Kangur...",
-    "entryLoading": "Завантаження Kangur...",
+    "routeLoading": "Завантаження...",
+    "entryLoading": "Завантаження...",
     "loaderStatus": "Завантаження",
-    "loaderSrLabel": "Завантаження застосунку Kangur",
-    "errorTitle": "У Kangur сталася помилка",
-    "errorDescription": "Під час завантаження застосунку Kangur щось пішло не так.",
+    "loaderSrLabel": "Завантаження застосунку",
+    "errorTitle": "У StudiQ сталася помилка",
+    "errorDescription": "Під час завантаження застосунку StudiQ щось пішло не так.",
     "tryAgain": "Спробувати ще раз",
-    "backToHome": "Назад до Kangur",
-    "loadingApp": "Завантаження застосунку Kangur",
-    "loadingPage": "Завантаження сторінки Kangur",
-    "loadingLanguage": "Перемикання мови Kangur",
+    "backToHome": "Назад до StudiQ",
+    "loadingApp": "Завантаження застосунку",
+    "loadingPage": "Завантаження сторінки",
+    "loadingLanguage": "Перемикання мови",
     "accessibility": {
       "pageAnnouncement": "Перегляд: {label}",
       "languageSwitchAnnouncement": "Перемикання мови: {label}",
       "pages": {
         "Competition": "Математичний Кенгуру",
         "Game": "Головна",
+        "GamesLibrary": "Бібліотека ігор",
         "Lessons": "Уроки",
         "Tests": "Тести",
         "LearnerProfile": "Профіль учня",
         "ParentDashboard": "Панель для батьків",
         "Duels": "Дуелі",
-        "default": "Сторінка Kangur"
+        "default": "Сторінка StudiQ"
       }
     }
   },
   "KangurShell": {
     "creatorCredentials": "Дані автора: {name} · створено {year} ·",
     "socialUpdates": "Оновлення",
-    "contactLabel": "контакт: {email}"
+    "contactLabel": "контакт: {email}",
+    "supportLabel": "Підтримати застосунок:"
   },
   "KangurNavigation": {
     "home": "Головна",
+    "gamesLibrary": "Бібліотека ігор",
     "lessons": "Уроки",
     "duels": "Дуелі",
     "parent": "Батьки",
+    "parentDashboard": "Панель батьків",
     "languageSwitcher": {
       "triggerAriaLabel": "Поточна мова: {language}. Відкрити меню мов.",
       "triggerTitle": "Мова: {language}"
+    },
+    "mobileMenu": {
+      "open": "Відкрити меню",
+      "close": "Закрити меню",
+      "title": "Меню StudiQ",
+      "description": "Використовуйте Tab, щоб переходити між параметрами навігації, і Escape, щоб закрити меню."
     },
     "subject": {
       "label": "Вибрати предмет",
@@ -291,6 +301,567 @@
       "dialogDescription": "Виберіть, для кого мають бути підібрані уроки.",
       "closeAriaLabel": "Закрити вибір вікової групи",
       "groupAriaLabel": "Вибір вікової групи"
+    }
+  },
+  "KangurGamesLibraryPage": {
+    "introEyebrow": "Спільний домен ігор",
+    "title": "Бібліотека ігор",
+    "description": "Єдиний спільний каталог для всіх ігор StudiQ, упорядкований за рушіями, механіками, варіантами та зв’язками з уроками.",
+    "groupEyebrow": "Навчальна область",
+    "groupDescription": "{count, plural, one {# гра в цій області.} few {# гри в цій області.} many {# ігор у цій області.} other {# ігор у цій області.}}",
+    "engineGroupsEyebrow": "Вид консолідації",
+    "engineGroupsTitle": "Сімейства рушіїв",
+    "engineGroupsDescription": "{count, plural, one {# сімейство рушіїв зараз згруповане в каталозі.} few {# сімейства рушіїв зараз згруповані в каталозі.} many {# сімейств рушіїв зараз згруповані в каталозі.} other {# сімейств рушіїв зараз згруповані в каталозі.}}",
+    "variantGroupsEyebrow": "Поверхні варіантів",
+    "variantGroupsTitle": "Каталог варіантів",
+    "variantGroupsDescription": "{count, plural, one {# видимий варіант згруповано по {surfaceCount} поверхнях.} few {# видимі варіанти згруповано по {surfaceCount} поверхнях.} many {# видимих варіантів згруповано по {surfaceCount} поверхнях.} other {# видимих варіантів згруповано по {surfaceCount} поверхнях.}}",
+    "emptyTitle": "У бібліотеці ще немає ігор",
+    "emptyDescription": "Додайте перші визначення ігор, щоб почати класифікувати рушії та варіанти.",
+    "emptyFilteredTitle": "Жодна гра не відповідає цим фільтрам",
+    "emptyFilteredDescription": "Очистьте один або кілька фільтрів, щоб побачити решту каталогу.",
+    "focus": {
+      "eyebrow": "Фокус із deep link",
+      "gameTitle": "Сфокусований запис каталогу",
+      "gameDescription": "Цей перегляд зараз звужено до гри {game}.",
+      "clear": "Прибрати фокус гри",
+      "engineTitle": "Сфокусоване сімейство рушіїв",
+      "engineDescription": "Цей перегляд зараз звужено до сімейства рушіїв {engine}.",
+      "clearEngine": "Прибрати фокус рушія"
+    },
+    "tabs": {
+      "eyebrow": "Макет секцій",
+      "title": "Перегляд по вкладках",
+      "description": "Перемикайтеся між каталогом ігор, спільною структурою домену та серіалізацією runtime.",
+      "listLabel": "Секції бібліотеки ігор",
+      "catalog": "Каталог",
+      "structure": "Структура",
+      "runtime": "Runtime"
+    },
+    "metrics": {
+      "games": "Ігри",
+      "gamesDescription": "Видимі записи каталогу.",
+      "engines": "Рушії",
+      "enginesDescription": "Видимі сімейства рушіїв.",
+      "variants": "Варіанти",
+      "variantsDescription": "Видимі способи вбудовування та запуску.",
+      "lessonLinked": "Пов’язані з уроками",
+      "lessonLinkedDescription": "Видимі ігри, уже підключені до компонентів уроків."
+    },
+    "serializationAuditEyebrow": "Контракт runtime",
+    "serializationAuditTitle": "Серіалізація runtime",
+    "serializationAuditDescription": "Показує, які runtime-варіанти використовують явні ідентифікатори, а які ще спираються на fallback-и сумісності.",
+    "serializationAudit": {
+      "statusClean": "Явні runtime-ідентифікатори",
+      "statusAttention": "Прибирання сумісності",
+      "explicitLabel": "Явні runtime",
+      "explicitDescription": "{count} з {total} runtime-варіантів використовують явні runtime-ідентифікатори.",
+      "fallbackLabel": "Лише fallback",
+      "fallbackDescription": "Варіанти, які все ще розв’язуються тільки через ідентифікатори сумісності.",
+      "duplicatesLabel": "Дубльовані legacy ids",
+      "duplicatesDescription": "Варіанти, які все ще мають і явні, і legacy runtime-ідентифікатори.",
+      "legacyGameFallbackLabel": "Legacy launch games",
+      "legacyGameFallbackDescription": "Ігри, які все ще мають legacyScreenIds у спільній дефініції.",
+      "backlogEyebrow": "Беклог виправлень",
+      "backlogDescription": "Показує точні ідентифікатори каталогу, яким ще потрібне прибирання сумісності.",
+      "fallbackBacklogLabel": "Варіанти лише з fallback",
+      "duplicatesBacklogLabel": "Варіанти з дубльованим legacy",
+      "missingBacklogLabel": "Варіанти без runtime",
+      "legacyGameBacklogLabel": "Legacy launch games",
+      "nonSharedBacklogLabel": "Не shared рушії",
+      "nonSharedEnginesLabel": "Не shared рушії",
+      "nonSharedEnginesDescription": "Сімейства рушіїв, які ще не позначені як shared runtime.",
+      "surfaceDescription": "{count} runtime-варіантів зараз використовують цю поверхню.",
+      "totalVariantsLabel": "Runtime-варіанти",
+      "explicitVariantsLabel": "Явні",
+      "fallbackVariantsLabel": "Лише fallback",
+      "duplicatesVariantsLabel": "Дубльовані legacy",
+      "missingVariantsLabel": "Відсутній runtime"
+    },
+    "coverageGroupsEyebrow": "Політика покриття",
+    "coverageGroupsTitle": "Мапа покриття уроків",
+    "coverageGroupsDescription": "{count, plural, one {# напрям покриття відстежується у спільному домені ігор.} few {# напрями покриття відстежуються у спільному домені ігор.} many {# напрямів покриття відстежуються у спільному домені ігор.} other {# напрямів покриття відстежуються у спільному домені ігор.}}",
+    "coverageGroups": {
+      "completeChip": "Повне",
+      "gapsChip": "{count, plural, one {# прогалина} few {# прогалини} many {# прогалин} other {# прогалин}}",
+      "lessonsLabel": "Уроки",
+      "coveredLabel": "Покрито",
+      "gamesLabel": "Ігри",
+      "cohortsLabel": "Когорти",
+      "subjectsLabel": "Предмети",
+      "coveredLessonsLabel": "Покриті уроки",
+      "uncoveredLessonsLabel": "Уроки без покриття",
+      "groups": {
+        "library_backed": {
+          "eyebrow": "Спільний каталог",
+          "title": "Уроки з підтримкою бібліотеки",
+          "description": "Компоненти уроків, які мають розв’язуватися в одну або кілька спільних дефініцій гри в бібліотеці ігор."
+        },
+        "launchable": {
+          "eyebrow": "Повноекранний runtime",
+          "title": "Уроки з запуском",
+          "description": "Компоненти уроків, які мають зберігати прямий повноекранний маршрут гри поруч зі своїм спільним записом у каталозі."
+        }
+      }
+    },
+    "cohortGroupsEyebrow": "Вікові когорти",
+    "cohortGroupsTitle": "Каталог за когортами",
+    "cohortGroupsDescription": "{count, plural, one {# вікова когорта видима в поточному каталозі.} few {# вікові когорти видимі в поточному каталозі.} many {# вікових когорт видимі в поточному каталозі.} other {# вікових когорт видимі в поточному каталозі.}}",
+    "cohortGroups": {
+      "groupDescription": "{count, plural, one {# гра зараз видима в цій когорті.} few {# гри зараз видимі в цій когорті.} many {# ігор зараз видимі в цій когорті.} other {# ігор зараз видимі в цій когорті.}}",
+      "gamesLabel": "Ігри",
+      "enginesLabel": "Рушії",
+      "launchableLabel": "Запуск",
+      "lessonLinkedLabel": "Пов’язані з уроками",
+      "subjectsLabel": "Предмети"
+    },
+    "implementationGroupsEyebrow": "Стан винесення",
+    "implementationGroupsTitle": "Власність імплементації",
+    "implementationGroupsDescription": "{count, plural, one {# лінія власності зараз відстежується в каталозі рушіїв.} few {# лінії власності зараз відстежуються в каталозі рушіїв.} many {# ліній власності зараз відстежуються в каталозі рушіїв.} other {# ліній власності зараз відстежуються в каталозі рушіїв.}}",
+    "implementationGroups": {
+      "eyebrow": "Лінія власності",
+      "groupDescription": "{count, plural, one {# сімейство рушія зараз віднесене до цього стану власності.} few {# сімейства рушіїв зараз віднесені до цього стану власності.} many {# сімейств рушіїв зараз віднесені до цього стану власності.} other {# сімейств рушіїв зараз віднесені до цього стану власності.}}",
+      "enginesLabel": "Рушії",
+      "gamesLabel": "Ігри",
+      "runtimeComponentsLabel": "Runtime-компоненти",
+      "lessonsLabel": "Уроки",
+      "engineTitlesLabel": "Сімейства рушіїв",
+      "lessonLinksLabel": "Зв’язки з уроками"
+    },
+    "drawingGroupsEyebrow": "Механіки малювання",
+    "drawingGroupsTitle": "Рушії малювання",
+    "drawingGroupsDescription": "{count, plural, one {# сімейство рушія малювання видиме в поточному каталозі.} few {# сімейства рушіїв малювання видимі в поточному каталозі.} many {# сімейств рушіїв малювання видимі в поточному каталозі.} other {# сімейств рушіїв малювання видимі в поточному каталозі.}}",
+    "drawingGroups": {
+      "gamesLabel": "Ігри",
+      "variantsLabel": "Варіанти",
+      "cohortsLabel": "Когорти",
+      "lessonsLabel": "Уроки",
+      "ownershipLabel": "Власність імплементації",
+      "runtimeComponentsLabel": "Runtime-компоненти",
+      "subjectsLabel": "Предмети",
+      "lessonLinksLabel": "Зв’язки з уроками",
+      "gameTitlesLabel": "Назви ігор"
+    },
+    "filters": {
+      "eyebrow": "Керування класифікацією",
+      "title": "Фільтрувати каталог",
+      "activeEyebrow": "Активні фільтри",
+      "summaryAll": "{count, plural, one {Показано # гру зі спільного каталогу.} few {Показано # гри зі спільного каталогу.} many {Показано # ігор зі спільного каталогу.} other {Показано # ігор зі спільного каталогу.}}",
+      "summaryFiltered": "Показано {visible} з {total} ігор зі спільного каталогу.",
+      "clear": "Очистити фільтри",
+      "game": {
+        "label": "Гра",
+        "aria": "Фільтрувати ігри за точною грою",
+        "all": "Усі ігри"
+      },
+      "subject": {
+        "label": "Предмет",
+        "aria": "Фільтрувати ігри за предметом",
+        "all": "Усі предмети"
+      },
+      "ageGroup": {
+        "label": "Вікова група",
+        "aria": "Фільтрувати ігри за віковою групою",
+        "all": "Усі вікові групи"
+      },
+      "mechanic": {
+        "label": "Механіка",
+        "aria": "Фільтрувати ігри за механікою",
+        "all": "Усі механіки"
+      },
+      "surface": {
+        "label": "Поверхня",
+        "aria": "Фільтрувати ігри за поверхнею",
+        "all": "Усі поверхні"
+      },
+      "status": {
+        "label": "Статус",
+        "aria": "Фільтрувати ігри за статусом",
+        "all": "Усі статуси"
+      },
+      "variantSurface": {
+        "label": "Поверхня варіанта",
+        "aria": "Фільтрувати варіанти за поверхнею",
+        "all": "Усі поверхні варіантів"
+      },
+      "variantStatus": {
+        "label": "Статус варіанта",
+        "aria": "Фільтрувати варіанти за статусом",
+        "all": "Усі статуси варіантів"
+      },
+      "engine": {
+        "label": "Сімейство рушія",
+        "aria": "Фільтрувати ігри за сімейством рушія",
+        "all": "Усі рушії"
+      },
+      "engineCategory": {
+        "label": "Категорія рушія",
+        "aria": "Фільтрувати ігри за категорією рушія",
+        "all": "Усі категорії рушіїв"
+      },
+      "implementationOwnership": {
+        "label": "Власність імплементації",
+        "aria": "Фільтрувати ігри за власністю імплементації",
+        "all": "Усі стани власності"
+      },
+      "launchability": {
+        "label": "Шлях запуску",
+        "aria": "Фільтрувати ігри за шляхом запуску",
+        "all": "Усі ігри",
+        "launchable": "Повноекранний запуск"
+      }
+    },
+    "actions": {
+      "previewGame": "Попередній перегляд і прив’язка",
+      "openGame": "Відкрити гру",
+      "openLessons": "Відкрити уроки"
+    },
+    "modal": {
+      "eyebrow": "Скелет гри",
+      "scaffoldBadge": "Scaffold",
+      "description": "Переглянь runtime, прив’яжи гру до lesson hub і керуй збереженими секціями хаба.",
+      "settingsButton": "Налаштування гри",
+      "hideSettingsButton": "Сховати налаштування",
+      "closeButton": "Закрити",
+      "lessonEyebrow": "Lesson hub",
+      "lessonTitle": "Прив’язати гру до lesson hub",
+      "lessonSelectLabel": "Прив’язаний lesson hub",
+      "lessonPlaceholder": "Оберіть lesson hub",
+      "lessonSearchPlaceholder": "Пошук lesson hub",
+      "lessonEmpty": "Lesson hub не знайдено.",
+      "lessonUnassigned": "Урок ще не прив’язаний",
+      "scaffoldHint": "Поточний редактор прив’язаний до: {lesson}.",
+      "previewEyebrow": "Live runtime",
+      "previewTitle": "Попередній перегляд гри",
+      "previewFallback": "Спочатку scaffold для годинника. Інші ігри підключимо до цього модального вікна далі.",
+      "draftEyebrow": "Чернетка секції",
+      "draftTitle": "Створити нову ігрову секцію хаба",
+      "editDraftTitle": "Редагувати збережену ігрову секцію хаба",
+      "draftNameLabel": "Назва секції",
+      "draftNamePlaceholder": "Виклик з годинником",
+      "draftSubtextLabel": "Підтекст секції",
+      "draftSubtextPlaceholder": "Додайте короткий підпис для картки lesson hub.",
+      "draftIconLabel": "Іконка гри",
+      "draftEnabledLabel": "Видима в lesson hub",
+      "draftEnabledDescription": "Керує тим, чи з’явиться ця секція в lesson flow після збереження.",
+      "customIconInputLabel": "Власна іконка гри",
+      "customIconInputPlaceholder": "Встав emoji або коротку іконку",
+      "customIconPreviewLabel": "Попередній перегляд вибраної іконки гри",
+      "draftIconAria": "Вибрати {icon} як іконку гри",
+      "addDraftButton": "Додати чернетку секції",
+      "saveDraftButton": "Зберегти секцію хаба",
+      "newDraftButton": "Нова секція хаба",
+      "draftListEyebrow": "Список чернеток",
+      "draftListTitle": "Збережені секції хаба",
+      "draftListSearchLabel": "Пошук збережених секцій хаба",
+      "draftListSearchPlaceholder": "Пошук збережених секцій хаба",
+      "draftListClearFiltersButton": "Очистити фільтри списку",
+      "draftListStatusFilterLabel": "Фільтрувати збережені секції за статусом",
+      "draftListStatusFilterAll": "Усі",
+      "draftListStatusFilterEnabled": "Активні",
+      "draftListStatusFilterDisabled": "Вимкнені",
+      "draftListSearchEmpty": "Немає збережених секцій, що відповідають поточним фільтрам.",
+      "draftListEmpty": "Чернеток секцій ще немає.",
+      "editDraftButton": "Редагувати",
+      "duplicateDraftButton": "Дублювати",
+      "duplicateDraftSuffix": "Копія",
+      "moveDraftUpButton": "Перемістити вище",
+      "moveDraftDownButton": "Перемістити нижче",
+      "enableDraftButton": "Увімкнути",
+      "disableDraftButton": "Вимкнути",
+      "enabledBadge": "Активна",
+      "disabledBadge": "Вимкнена",
+      "dirtyBadge": "Незбережені зміни",
+      "editingBadge": "Редагування",
+      "discardChangesButton": "Скасувати зміни",
+      "removeDraftButton": "Видалити",
+      "syncPending": "Збереження секцій хаба...",
+      "syncError": "Не вдалося зберегти останню зміну в хабі. Стан редактора відновлено.",
+      "sectionsLoading": "Завантаження збережених секцій хаба...",
+      "settingsEyebrow": "Налаштування перегляду",
+      "settingsTitle": "Налаштування перегляду годинника",
+      "resetPreviewSettingsButton": "Скинути параметри перегляду",
+      "settingsDescription": "Ці параметри зараз керують clock scaffold у модальному вікні.",
+      "settings": {
+        "showModeSwitchLabel": "Показувати перемикач режимів",
+        "showModeSwitchDescription": "Залишити вкладки practice і challenge видимими у прев’ю.",
+        "showTaskTitleLabel": "Показувати назву завдання",
+        "showTaskTitleDescription": "Показувати цільовий час над годинником.",
+        "showTimeDisplayLabel": "Показувати цифровий час",
+        "showTimeDisplayDescription": "Показувати синій цифровий індикатор над циферблатом.",
+        "showHourHandLabel": "Показувати годинну стрілку",
+        "showHourHandDescription": "Приховати або показати коротку червону стрілку.",
+        "showMinuteHandLabel": "Показувати хвилинну стрілку",
+        "showMinuteHandDescription": "Приховати або показати довгу зелену стрілку.",
+        "clockSectionLabel": "Фокус годинника",
+        "clockSectionHours": "Години",
+        "clockSectionMinutes": "Хвилини",
+        "clockSectionCombined": "Години й хвилини",
+        "initialModeLabel": "Початковий режим",
+        "initialModePractice": "Практика",
+        "initialModeChallenge": "Виклик"
+      },
+      "settingsSummary": {
+        "hourHandHidden": "Годинникову стрілку приховано",
+        "minuteHandHidden": "Хвилинну стрілку приховано",
+        "modeSwitchHidden": "Перемикач режимів приховано",
+        "taskTitleHidden": "Назву завдання приховано",
+        "timeDisplayHidden": "Цифровий час приховано"
+      },
+      "validation": {
+        "attachedLessonRequired": "Прив’яжи цю ігрову секцію до lesson hub перед збереженням.",
+        "sectionNameRequired": "Додай назву секції перед збереженням.",
+        "gameIconRequired": "Вибери або введи іконку гри перед збереженням.",
+        "visibleClockHandRequired": "Залиш щонайменше одну стрілку видимою, щоб зберегти цю секцію хаба."
+      },
+      "instances": {
+        "eyebrow": "Launchable instances",
+        "title": "Create game instances",
+        "description": "Combine the current engine settings with a reusable content set and save that launchable setup as a reusable game instance.",
+        "unavailable": "This game does not expose a launchable runtime yet, so instance creation is unavailable here.",
+        "engineLabel": "Engine",
+        "runtimeLabel": "Runtime screen",
+        "contentSetLabel": "Content set",
+        "contentSetSearchLabel": "Search content sets",
+        "contentSetSearchPlaceholder": "Search content sets",
+        "contentSetSourceFilterLabel": "Filter content sets by source",
+        "contentSetSourceFilterAll": "All",
+        "contentSetSourceFilterBuiltIn": "Built-in",
+        "contentSetSourceFilterCustom": "Custom",
+        "contentSetUsageFilterLabel": "Filter content sets by usage",
+        "contentSetUsageFilterAll": "All",
+        "contentSetUsageFilterInUse": "In use",
+        "contentSetUsageFilterUnused": "Unused",
+        "contentSetClearFiltersButton": "Clear content-set filters",
+        "contentSetSelectionOutsideFilters": "The current selection stays available while filters narrow the list.",
+        "contentSetListTitle": "Available content sets",
+        "contentSetListDescription": "Browse built-in and custom feeds, then select the one you want to mix into the current instance.",
+        "contentSetListEmpty": "No content sets match the current filters.",
+        "contentSetSourceBuiltIn": "Built-in",
+        "contentSetSourceCustom": "Custom",
+        "contentSetUsageBadgeInUse": "Used by {count}",
+        "contentSetUsageBadgeUnused": "Unused",
+        "selectContentSetButton": "Select",
+        "selectedContentSetButton": "Selected",
+        "showLinkedInstancesButton": "Show linked instances",
+        "showingLinkedInstancesButton": "Showing linked instances",
+        "contentSetLinkedInstancesLabel": "Linked instances",
+        "contentSetLinkedInstancesMore": "+{count} more",
+        "openLinkedInstanceButton": "Edit linked instance: {title}",
+        "contentSourceLabel": "Content source",
+        "engineSourceLabel": "Engine source",
+        "contentSourceBadge": "Content source",
+        "engineSourceBadge": "Engine source",
+        "sourceCustomDraft": "Current draft",
+        "contentSetComposerTitle": "Create custom content set",
+        "contentSetComposerEditTitle": "Edit custom content set",
+        "contentSetComposerDescription": "Save a reusable content feed separately from the engine so it can be mixed into any compatible instance.",
+        "contentSetDraftLabel": "Content-set name",
+        "contentSetDraftLabelPlaceholder": "Hours review pack",
+        "contentSetDraftDescriptionLabel": "Content-set description",
+        "contentSetDraftDescriptionPlaceholder": "Explain what content this reusable set feeds into the engine.",
+        "contentSetDraftFeedLabel": "Content feed",
+        "contentSetDraftShapesLabel": "Included shapes",
+        "contentSetDraftPatternSetLabel": "Pattern set",
+        "geometryShape": {
+          "circle": "Circle",
+          "oval": "Oval",
+          "triangle": "Triangle",
+          "diamond": "Diamond",
+          "square": "Square",
+          "rectangle": "Rectangle",
+          "pentagon": "Pentagon",
+          "hexagon": "Hexagon"
+        },
+        "logicalPatternSet": {
+          "logical_patterns_workshop": "Logical workshop",
+          "alphabet_letter_order": "Alphabet order"
+        },
+        "contentSetPlaceholder": "Select a content set",
+        "contentSetHint": "Choose which content payload is fed into the engine for this saved instance.",
+        "contentSetFallback": "Default content set",
+        "contentKind": {
+          "default_content": "Bundled content",
+          "calendar_section": "Calendar section",
+          "clock_section": "Clock section",
+          "logical_pattern_set": "Pattern set",
+          "geometry_shape_pack": "Shape pack"
+        },
+        "feedSummary": {
+          "defaultContent": "Bundled runtime content",
+          "calendarDays": "Days of week",
+          "calendarMonths": "Months",
+          "calendarDates": "Dates",
+          "logicalPatternsWorkshop": "Logical workshop",
+          "alphabetOrder": "Alphabet order",
+          "geometryShapeCount": "{count} shapes"
+        },
+        "contentSetDraftCalendarSectionLabel": "Calendar section",
+        "calendarSection": {
+          "dni": "Days of week",
+          "miesiace": "Months",
+          "data": "Dates"
+        },
+        "titleLabel": "Instance title",
+        "titlePlaceholder": "Hours only clock drill",
+        "descriptionLabel": "Instance description",
+        "descriptionPlaceholder": "Explain what content and engine setup this instance should launch with.",
+        "emojiLabel": "Instance icon",
+        "emojiPlaceholder": "🕐",
+        "enabledLabel": "Instance visible in the library",
+        "enabledDescription": "Disable the instance without deleting its saved engine and content configuration.",
+        "currentEngineSettingsTitle": "Current engine settings",
+        "currentEngineSettingsDescription": "Saving an instance captures the current engine settings from this modal separately from the selected content set.",
+        "usePreviewSettingsButton": "Use hub preview settings",
+        "currentEngineSettingsDefault": "Default engine settings",
+        "previewTitle": "Instance preview",
+        "previewDescription": "Review the current content payload and engine behavior that will be saved together as one launchable instance.",
+        "mode": {
+          "editing_saved": "Editing saved instance",
+          "draft_from_saved": "Draft from saved instance",
+          "mixed_draft": "Mixed draft",
+          "custom_draft": "Custom draft"
+        },
+        "initialModeAriaLabel": "Instance initial mode",
+        "showModeSwitchAriaLabel": "Instance show mode switch",
+        "showTaskTitleAriaLabel": "Instance show task title",
+        "showTimeDisplayAriaLabel": "Instance show time display",
+        "showHourHandAriaLabel": "Instance show hour hand",
+        "showMinuteHandAriaLabel": "Instance show minute hand",
+        "createButton": "Create instance",
+        "saveButton": "Save instance",
+        "newButton": "New instance",
+        "forkDraftButton": "Fork to new draft",
+        "createAndOpenButton": "Create and open instance",
+        "saveAndOpenButton": "Save and open instance",
+        "openButton": "Open instance",
+        "editButton": "Edit",
+        "useContentSetButton": "Use content set",
+        "usingContentSetButton": "Using content set",
+        "detachContentSourceButton": "Detach content source",
+        "useEngineSettingsButton": "Use engine settings",
+        "usingEngineSettingsButton": "Using engine settings",
+        "detachEngineSourceButton": "Detach engine source",
+        "contentSetSaveButton": "Save content set",
+        "contentSetUpdateButton": "Update content set",
+        "contentSetResetButton": "Reset content-set draft",
+        "contentSetDuplicateSuffix": "Copy",
+        "forkSelectedContentSetButton": "Fork selected content set",
+        "forkDraftContentSetButton": "Fork to new content set",
+        "discardContentSetChangesButton": "Discard content-set changes",
+        "editSelectedContentSetButton": "Edit selected content set",
+        "removeSelectedContentSetButton": "Remove selected content set",
+        "contentSetUsageSummaryUnused": "This custom content set is not used by any saved instance yet.",
+        "contentSetUsageSummaryInUse": "Used by {count} saved instance(s). Remove or retarget those instances first.",
+        "duplicateButton": "Duplicate",
+        "duplicateSuffix": "Copy",
+        "enableButton": "Enable",
+        "disableButton": "Disable",
+        "moveUpButton": "Move up",
+        "moveDownButton": "Move down",
+        "removeButton": "Remove",
+        "discardChangesButton": "Discard instance changes",
+        "dirtyBadge": "Unsaved instance changes",
+        "enabledBadge": "Enabled",
+        "disabledBadge": "Disabled",
+        "listTitle": "Saved instances",
+        "listDescription": "Each saved instance combines the chosen content set with the current engine settings.",
+        "listSearchLabel": "Search saved instances",
+        "listSearchPlaceholder": "Search saved instances",
+        "listClearFiltersButton": "Clear instance filters",
+        "listStatusFilterLabel": "Filter saved instances by status",
+        "listStatusFilterAll": "All",
+        "listStatusFilterEnabled": "Enabled",
+        "listStatusFilterDisabled": "Disabled",
+        "listContentSetFilterLabel": "Filter saved instances by content set",
+        "listContentSetFilterAll": "All content sets",
+        "listSearchEmpty": "No saved instances match the current filters.",
+        "listEmpty": "No saved launchable instances yet.",
+        "contentSetSyncError": "We couldn't save the last content-set change. Try again.",
+        "contentSetInUseError": "This content set is still used by saved instances. Remove or retarget those instances first.",
+        "syncError": "We couldn't save the last game-instance change. Try again.",
+        "validation": {
+          "contentSetRequired": "Choose a content set before saving this instance.",
+          "titleRequired": "Add an instance title before saving.",
+          "emojiRequired": "Choose or enter an instance icon before saving."
+        }
+      }
+    },
+    "statuses": {
+      "active": "Активна",
+      "draft": "Чернетка",
+      "legacy": "Legacy"
+    },
+    "surfaces": {
+      "lesson": "Урок",
+      "library": "Бібліотека",
+      "game": "Гра",
+      "duel": "Дуель"
+    },
+    "variantSurfaces": {
+      "lesson_inline": "Вбудовано в урок",
+      "lesson_stage": "Варіант уроку",
+      "library_preview": "Попередній перегляд бібліотеки",
+      "game_screen": "Екран гри"
+    },
+    "labels": {
+      "engineId": "Id рушія",
+      "engineCategory": "Категорія рушія",
+      "mechanic": "Механіка",
+      "ageGroup": "Вікова група",
+      "allAgeGroups": "Усі",
+      "variants": "Варіанти",
+      "variantCount": "{count, plural, one {# варіант} few {# варіанти} many {# варіантів} other {# варіантів}}",
+      "legacyScreens": "Legacy-екрани",
+      "lessonLinks": "Пов’язані уроки",
+      "none": "Немає"
+    },
+    "engineCategories": {
+      "foundational": "Базові",
+      "early_learning": "Раннє навчання",
+      "adult_learning": "Навчання дорослих"
+    },
+    "implementationOwnership": {
+      "shared_runtime": "Спільний runtime",
+      "lesson_embedded": "Вбудовано в урок",
+      "mixed_runtime": "Змішаний runtime"
+    },
+    "lessonCoverageStatuses": {
+      "launchable": "запускний",
+      "library_backed": "у бібліотеці",
+      "lesson_only": "лише урок"
+    },
+    "mechanics": {
+      "drag_drop": "Перетягування",
+      "multiple_choice": "Вибір відповіді",
+      "tap_select": "Натисни й обери",
+      "drawing": "Малювання",
+      "rhythm": "Ритм",
+      "clock_training": "Тренування годинника",
+      "calendar_interactive": "Інтерактивний календар",
+      "logic_pattern": "Логічні візерунки",
+      "logic_classification": "Логічна класифікація",
+      "logic_relation": "Відношення та аналогії",
+      "sentence_building": "Побудова речень"
+    },
+    "engineGroups": {
+      "gameCount": "{count, plural, one {# гра використовує цей рушій.} few {# гри використовують цей рушій.} many {# ігор використовують цей рушій.} other {# ігор використовують цей рушій.}}",
+      "sharedChip": "Спільний рушій",
+      "singleChip": "Одна гра",
+      "gamesLabel": "Ігри",
+      "subjectsLabel": "Предмети",
+      "ownershipLabel": "Власність реалізації",
+      "mechanicsLabel": "Механіки",
+      "surfacesLabel": "Поверхні",
+      "runtimeComponentsLabel": "Runtime-компоненти"
+    },
+    "variantGroups": {
+      "surfaceLabel": "Поверхня варіанта",
+      "groupDescription": "{count, plural, one {# варіант зараз використовує цю поверхню.} few {# варіанти зараз використовують цю поверхню.} many {# варіантів зараз використовують цю поверхню.} other {# варіантів зараз використовують цю поверхню.}}",
+      "gamesLabel": "Ігри",
+      "enginesLabel": "Рушії",
+      "defaultsLabel": "Типові варіанти",
+      "launchableLabel": "Запускні",
+      "variantsLabel": "Варіанти"
     }
   },
   "KangurGameHomeActions": {
@@ -329,6 +900,42 @@
         "label": "Сесія Математичного Кенгуру",
         "description": "Розв'язуйте завдання Математичного Кенгуру крок за кроком."
       },
+      "agentic_approval_gate_quiz": {
+        "label": "Вікторина з approval gate",
+        "description": "Тренуйтеся визначати, які дії потребують дозволу перед запуском."
+      },
+      "agentic_prompt_trim_quiz": {
+        "label": "Вікторина зі скорочення promptів",
+        "description": "Тренуйте скорочення promptів до найкоротшої корисної версії."
+      },
+      "agentic_reasoning_router_quiz": {
+        "label": "Вікторина з вибору режиму мислення",
+        "description": "Добирайте правильний режим мислення до кожного завдання."
+      },
+      "agentic_surface_match_quiz": {
+        "label": "Вікторина з добору інтерфейсу",
+        "description": "Добирайте до завдання правильний інтерфейс або робочу поверхню."
+      },
+      "alphabet_first_words_quiz": {
+        "label": "Вікторина з перших слів",
+        "description": "Поєднуйте літери та зображення, щоб складати перші слова."
+      },
+      "alphabet_letter_matching_quiz": {
+        "label": "Вікторина з добору літер",
+        "description": "Добирайте літери в коротких алфавітних раундах."
+      },
+      "alphabet_letter_order_quiz": {
+        "label": "Вікторина з порядку літер",
+        "description": "Поверніть літери у правильний порядок."
+      },
+      "art_color_harmony_quiz": {
+        "label": "Вікторина з гармонії кольорів",
+        "description": "Тренуйте поєднання теплих і холодних кольорових гармоній."
+      },
+      "art_shape_rotation_quiz": {
+        "label": "Вікторина з обертання фігур",
+        "description": "Розпізнавайте, як фігури виглядають після обертання."
+      },
       "calendar_quiz": {
         "label": "Практика з календарем",
         "description": "Тренуйте читання дат і зв’язків у календарі."
@@ -337,17 +944,37 @@
         "label": "Практика з фігурами",
         "description": "Тренуйте фігури та просторові зв’язки."
       },
+      "geometry_shape_spotter_quiz": {
+        "label": "Вікторина з розпізнавання фігур",
+        "description": "Розпізнавайте та називайте фігури в коротких раундах."
+      },
       "clock_quiz": {
         "label": "Практика з годинником",
         "description": "Тренуйте читання годин і хвилин."
+      },
+      "music_melody_repeat_quiz": {
+        "label": "Повторення мелодії",
+        "description": "Послухайте мелодію та відтворіть її нота за нотою."
+      },
+      "music_piano_roll_free_play_quiz": {
+        "label": "Вільний piano roll",
+        "description": "Досліджуйте клавіатуру й керування синтезатором у вільній грі."
       },
       "addition_quiz": {
         "label": "Вікторина з додавання",
         "description": "Швидка вікторина з додавання."
       },
+      "adding_synthesis_quiz": {
+        "label": "Вікторина з синтезу додавання",
+        "description": "Розвивайте плавність додавання в коротких ритмічних раундах."
+      },
       "subtraction_quiz": {
         "label": "Вікторина з віднімання",
         "description": "Швидка вікторина з віднімання."
+      },
+      "multiplication_array_quiz": {
+        "label": "Масиви множення",
+        "description": "Будуйте рівні групи й бачте множення як ряди та стовпчики."
       },
       "division_quiz": {
         "label": "Вікторина з ділення",
@@ -369,6 +996,46 @@
         "label": "Вікторина з аналогій",
         "description": "Тренуйте аналогії та зв’язки в коротких раундах."
       },
+      "english_subject_verb_agreement_quiz": {
+        "label": "Вікторина з узгодження підмета й присудка",
+        "description": "Добирайте підмет і дієслово так, щоб речення звучало правильно."
+      },
+      "english_going_to_quiz": {
+        "label": "Парад планів з going to",
+        "description": "Складай речення про майбутні плани з going to в коротких раундах."
+      },
+      "english_adjectives_quiz": {
+        "label": "Вікторина з прикметників",
+        "description": "Обирайте прикметники для опису людей, місць і речей."
+      },
+      "english_compare_and_crown_quiz": {
+        "label": "Студія порівнянь і корони",
+        "description": "Порівнюй дві речі й обирай переможця за допомогою форм вищого й найвищого ступенів."
+      },
+      "english_adverbs_frequency_quiz": {
+        "label": "Вікторина з прислівників частоти",
+        "description": "Тренуйте речення про звички з always, often і never."
+      },
+      "english_articles_quiz": {
+        "label": "Вікторина з артиклів",
+        "description": "Обирайте a, an або the в коротких граматичних раундах."
+      },
+      "english_prepositions_quiz": {
+        "label": "Вікторина з прийменників",
+        "description": "Тренуйте англійські прийменники часу та місця."
+      },
+      "english_prepositions_sort_quiz": {
+        "label": "Вікторина з сортування прийменників",
+        "description": "Сортуйте прийменники до правильних граматичних груп."
+      },
+      "english_prepositions_order_quiz": {
+        "label": "Вікторина з порядку прийменників",
+        "description": "Складайте короткі фрази з прийменниками у правильному порядку."
+      },
+      "english_pronouns_warmup_quiz": {
+        "label": "Розминка із займенниками",
+        "description": "Розігрійтеся короткими раундами з англійських займенників."
+      },
       "english_sentence_quiz": {
         "label": "Вікторина зі структури речення",
         "description": "Тренуйте порядок слів, запитання та сполучники в англійській мові."
@@ -388,6 +1055,10 @@
       "result": {
         "label": "Результат гри",
         "description": "Перегляньте результат гри й оберіть, що тренувати далі."
+      },
+      "english_adverbs_quiz": {
+        "label": "Студія прислівників",
+        "description": "Керуй сценками дій за допомогою прислівників, які описують, як усе відбувається."
       }
     },
     "home": {
@@ -421,6 +1092,7 @@
       "label": "Питання {number}",
       "pointChip": "⭐ {points} б. ({difficulty})",
       "touchHint": "Торкніться відповіді, а потім кнопки підтвердження.",
+      "printHint": "Відкрийте цей урок на екрані, щоб відповісти на запитання інтерактивно.",
       "difficulty": {
         "easy": "легко",
         "medium": "середньо",
@@ -432,6 +1104,8 @@
       },
       "confirm": "Підтвердити відповідь ✓"
     },
+    "examPrintHint": "Відкрийте цей урок на екрані, щоб відповісти на запитання Математичного Кенгуру інтерактивно.",
+    "examResultPrintHint": "Відкрийте цей урок на екрані, щоб переглянути відповіді та розв'язання Математичного Кенгуру.",
     "operationSelector": {
       "title": "Граймо!",
       "intro": {
@@ -625,6 +1299,43 @@
           "activeTitle": "Активні завдання",
           "activeEmpty": "Для цього учня немає активних завдань."
         },
+        "analytics": {
+          "label": "Знімок навчання",
+          "description": "Найважливіші числа з останніх сесій і поточного ритму роботи учня.",
+          "averageAccuracyLabel": "Середня точність",
+          "averageAccuracyDescription": "Найкращий результат: {best}%",
+          "streakLabel": "Серія днів",
+          "streakDescription": "Найдовша серія: {longest} днів",
+          "xpLabel": "XP сьогодні",
+          "xpDescription": "{weeklyXp} XP за 7 днів · у середньому {averageXp} XP / сесію",
+          "dailyGoalLabel": "Денна ціль",
+          "dailyGoalDescription": "{percent}% сьогоднішнього плану"
+        },
+        "weeklyActivity": {
+          "label": "Тижнева активність",
+          "description": "Кількість ігор на день і їхня середня точність за останній тиждень.",
+          "loading": "Завантажуємо історію сесій",
+          "error": "Не вдалося завантажити повну історію результатів",
+          "barTitle": "{count} ігор · {accuracy}% точності"
+        },
+        "operationFocus": {
+          "label": "Робочі зони",
+          "description": "Найчастіше треновані зони разом із точністю та темпом отримання XP.",
+          "progressAria": "Точність у зоні {title}",
+          "attempts": "{count} спроб",
+          "averageXp": "{xp} XP / сесію",
+          "empty": "Ще немає даних за зонами. Результати з’являться після перших ігор."
+        },
+        "masterySummary": {
+          "label": "Карта опанування уроків",
+          "description": "Які уроки вже стабільні, а які ще потребують підтримки.",
+          "trackedLabel": "Відстежувані уроки",
+          "masteredLabel": "Опановано",
+          "needsPracticeLabel": "Потрібно повторити",
+          "weakestLabel": "Потребують підтримки",
+          "strongestLabel": "Найсильніші",
+          "empty": "Ще немає даних про mastery уроків. Вони з’являться після роботи учня в уроках."
+        },
         "lessonProgress": {
           "label": "Прогрес уроків",
           "description": "Прогрес уроків, збережений по панелях.",
@@ -653,6 +1364,28 @@
           "dateFromLabel": "Дата від",
           "dateToLabel": "Дата до",
           "clear": "Очистити фільтри"
+        },
+        "overview": {
+          "label": "Огляд активності",
+          "description": "Ключові числа для поточного видимого діапазону активності.",
+          "totalInteractionsLabel": "Взаємодії",
+          "sessionsLabel": "Сесії",
+          "openedTasksLabel": "Відкриті завдання",
+          "lessonPanelsLabel": "Панелі уроків",
+          "averageSessionDuration": "Середня сесія: {duration}",
+          "latestActivity": "Остання активність: {timestamp}"
+        },
+        "activityMix": {
+          "label": "Розподіл активності",
+          "description": "Порівняння сесій, відкриттів завдань і відвідувань панелей уроків.",
+          "barTitle": "{label}: {count}"
+        },
+        "lessonFocus": {
+          "label": "Найбільше часу",
+          "description": "Уроки, у панелях яких учень провів найбільше часу.",
+          "progressAria": "Частка часу для уроку {title}",
+          "sectionCount": "{count} секцій з активністю",
+          "empty": "Ще немає даних про час у панелях для порівняння."
         },
         "lessonPanelTime": {
           "label": "Час у панелях уроків",
@@ -713,7 +1446,7 @@
   },
   "KangurLogin": {
     "defaultLoginTitle": "Увійти",
-    "defaultSessionTitle": "Вхід до Kangur",
+    "defaultSessionTitle": "Вхід до StudiQ",
     "defaultSessionDescription": "Батьки входять за електронною поштою та паролем. Учні входять за своїм нікнеймом і паролем.",
     "checkInboxLabel": "Перевірте вхідні: {email}",
     "checkInboxTitle": "Перевірте вхідні",
@@ -722,8 +1455,18 @@
     "cooldownSeconds": "{count} с",
     "magicLinkDeprecatedNotice": "Вхід за посиланням з електронного листа більше недоступний. Увійдіть за електронною поштою та паролем або створіть акаунт.",
     "verifyParentEmailFailed": "Не вдалося підтвердити електронну пошту батьків.",
+    "captchaVerificationFailed": "Не вдалося перевірити captcha. Спробуйте ще раз.",
     "fillEmailAndPassword": "Введіть електронну пошту та пароль.",
+    "invalidParentEmailNotice": "Введіть коректну електронну пошту батьків.",
     "completeSecurityVerification": "Пройдіть перевірку безпеки.",
+    "sessionResettingNotice": "Готуємо безпечний вхід...",
+    "verifyingCredentialsNotice": "Перевіряємо дані для входу...",
+    "signingInParentNotice": "Входимо як батьки...",
+    "signingInStudentNotice": "Входимо як учень...",
+    "refreshingSessionNotice": "Оновлюємо сесію...",
+    "redirectingNotice": "Відкриваємо ваш простір...",
+    "creatingAccountNotice": "Готуємо батьківський акаунт...",
+    "sendingVerificationNotice": "Надсилаємо лист для підтвердження...",
     "createAccountInstruction": "Натисніть на посилання підтвердження в електронному листі. Потім увійдіть, використовуючи ту саму пошту й пароль.",
     "createParentAccountFailed": "Не вдалося створити батьківський акаунт.",
     "createParentAccountUnexpected": "Під час створення акаунта сталася помилка.",
@@ -739,15 +1482,24 @@
     "studentLoginUnexpected": "Під час входу для учня сталася помилка.",
     "resendEmailIn": "Надіслати лист повторно через {label}",
     "resendEmail": "Надіслати лист повторно",
+    "changeEmailAction": "Змінити пошту",
+    "continueToSignInAction": "Я вже підтвердив(-ла) пошту",
     "resendHelper": "Новий лист можна надіслати через {label}.",
     "createAccountIdentifierLabel": "Електронна пошта",
     "identifierLabel": "Електронна пошта або нікнейм учня",
     "createAccountIdentifierPlaceholder": "parent@example.com",
     "identifierPlaceholder": "Введіть пошту або нікнейм учня",
+    "signInModeHint": "Введіть електронну пошту батьків або нікнейм учня. StudiQ сам підбере правильний спосіб входу.",
+    "parentLoginModeHint": "Схоже, це вхід для батьків. Використайте електронну пошту батьків і пароль акаунта.",
+    "studentLoginModeHint": "Схоже, це вхід для учня. Використайте нікнейм учня, а не електронну пошту.",
+    "createAccountModeHint": "Створіть батьківський акаунт за електронною поштою, а потім підтвердьте адресу з листа.",
     "haveAccount": "У мене є акаунт",
     "createAccount": "Створити акаунт",
     "passwordLabel": "Пароль",
     "passwordPlaceholder": "Введіть пароль",
+    "parentPasswordHint": "Це пароль від батьківського акаунта.",
+    "studentPasswordHint": "Це пароль, прив'язаний до нікнейма учня.",
+    "createAccountPasswordHint": "Створіть новий пароль для батьків. Щонайменше 8 символів.",
     "securityVerificationLabel": "Перевірка безпеки",
     "submitCreateAccount": "Створити батьківський акаунт",
     "submitParentLogin": "Увійти як батьки",
@@ -758,6 +1510,7 @@
     "loginFormAriaLabel": "Форма входу",
     "loginSubmit": "Увійти",
     "loginSubmitting": "Вхід...",
+    "openingSpaceButtonLabel": "Відкриваємо StudiQ...",
     "continueWith": "Або продовжити за допомогою",
     "signupFormAriaLabel": "Форма реєстрації для батьків",
     "parentEmailLabel": "Пошта батьків",
@@ -767,7 +1520,9 @@
     "createAccountSubmitting": "Створення акаунта...",
     "verificationSentTo": "Ми надіслали посилання для підтвердження на:",
     "verificationAction": "Натисніть посилання в листі, щоб активувати акаунт.",
-    "debugLinkLabel": "Налагоджувальне посилання (лише dev)"
+    "debugLinkLabel": "Налагоджувальне посилання (лише dev)",
+    "showPassword": "Показати пароль",
+    "hidePassword": "Приховати пароль"
   },
   "KangurGameWidgets": {
     "quizBackButton": "Назад на попередню сторінку",
@@ -834,13 +1589,17 @@
         "english_parts_of_speech": "Частини мови",
         "english_sentence_structure": "Структура речення",
         "english_subject_verb_agreement": "Узгодження підмета і присудка",
+        "english_going_to": "Going to",
         "english_articles": "Артиклі",
         "english_adjectives": "Прикметники",
+        "english_comparatives_superlatives": "Вищий і найвищий ступені",
+        "english_adverbs_frequency": "Прислівники частоти",
         "english_prepositions_time_place": "Прийменники часу і місця",
         "alphabet_basics": "Абетка",
         "alphabet_copy": "Копіювання літер",
         "alphabet_syllables": "Склади",
-        "geometry_shape_recognition": "Геометрія"
+        "geometry_shape_recognition": "Геометрія",
+        "english_adverbs": "Прислівники"
       }
     }
   },
@@ -1129,7 +1888,7 @@
   },
   "KangurUserAccess": {
     "restricted": "Доступ обмежено",
-    "title": "Цей акаунт ще не має доступу до Kangur",
+    "title": "Цей акаунт ще не має доступу до StudiQ",
     "description": "Схоже, ваш акаунт ще не додано до застосунку. Зверніться до адміністратора, щоб отримати доступ.",
     "checkLabel": "Якщо це помилка, перевірте:",
     "checkCurrentAccount": "що ви увійшли з правильним акаунтом,",
@@ -1214,7 +1973,10 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
-      "english_prepositions_time_place": "Прийменники часу й місця"
+      "english_comparatives_superlatives": "Вищий і найвищий ступені",
+      "english_adverbs_frequency": "Прислівники частоти",
+      "english_prepositions_time_place": "Прийменники часу й місця",
+      "english_adverbs": "Прислівники"
     },
     "weeklyActivity": {
       "sun": "Нд",
@@ -1299,10 +2061,9 @@
       "ariaLabel": "Навігація уроком",
       "previousLesson": "Попередній урок: {title}",
       "noPreviousLesson": "Немає попереднього уроку",
-      "previousShort": "Попередній",
       "nextLesson": "Наступний урок: {title}",
       "noNextLesson": "Немає наступного уроку",
-      "nextShort": "Наступний"
+      "printPanel": "Друкувати панель"
     },
     "activeHeader": {
       "narrator": {
@@ -1401,9 +2162,14 @@
       "guidedChipPrefix": "Рекомендовано: {count} ·",
       "guidedChipUnlocked": "усі значки треку відкриті",
       "activityBarTitle": "{count} ігор, середня точність {accuracy}%",
-      "operationsHeading": "Результати за операціями",
+      "operationsHeading": "Треновані операції",
       "emptyTitle": "Немає даних за операціями.",
       "emptyDescription": "Зіграйте кілька завдань, щоб побачити точність для кожної операції.",
+      "accuracyLabel": "середня точність",
+      "attemptsLabel": "Спроби",
+      "averageXpLabel": "XP за сесію",
+      "totalXpLabel": "Усього",
+      "bestAccuracyLabel": "Найкраща точність",
       "train": "Тренувати",
       "operationStats": "Спроби: {attempts} · XP за сесію: {averageXp} · Усього: {totalXp} XP · Найкраща точність: {bestScore}%"
     },
@@ -1459,6 +2225,7 @@
     "openSecretPanel": "Відкрити секретну панель",
     "secretPanelTitle": "Секретна панель",
     "backToTopics": "Назад до тем",
+    "printInteractiveHint": "Відкрийте цей урок на екрані, щоб виконати цю інтерактивну вправу.",
     "panelsNavigation": "Навігація панелями",
     "previousPanel": "Попередня панель",
     "nextPanel": "Наступна панель",
@@ -1570,7 +2337,10 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
-      "english_prepositions_time_place": "Прийменники часу й місця"
+      "english_comparatives_superlatives": "Вищий і найвищий ступені",
+      "english_adverbs_frequency": "Прислівники частоти",
+      "english_prepositions_time_place": "Прийменники часу й місця",
+      "english_adverbs": "Прислівники"
     }
   },
   "KangurAssignmentsRuntime": {
@@ -1770,7 +2540,10 @@
         "english_subject_verb_agreement": "Узгодження підмета і присудка",
         "english_articles": "Артиклі",
         "english_adjectives": "Прикметники",
-        "english_prepositions_time_place": "Прийменники часу й місця"
+        "english_comparatives_superlatives": "Вищий і найвищий ступені",
+        "english_adverbs_frequency": "Прислівники частоти",
+        "english_prepositions_time_place": "Прийменники часу й місця",
+        "english_adverbs": "Прислівники"
       }
     },
     "setupMomentum": {
@@ -1913,7 +2686,10 @@
       "english_subject_verb_agreement": "Узгодження підмета і присудка",
       "english_articles": "Артиклі",
       "english_adjectives": "Прикметники",
-      "english_prepositions_time_place": "Прийменники часу й місця"
+      "english_comparatives_superlatives": "Вищий і найвищий ступені",
+      "english_adverbs_frequency": "Прислівники частоти",
+      "english_prepositions_time_place": "Прийменники часу й місця",
+      "english_adverbs": "Прислівники"
     }
   },
   "KangurProgressRuntime": {
@@ -2145,7 +2921,8 @@
     },
     "badgeTrackCard": {
       "count": "{unlocked}/{total} значків",
-      "allUnlocked": "Усі значки відкрито"
+      "allUnlocked": "Усі значки відкрито",
+      "nextEyebrow": "Наступний рубіж"
     },
     "badgeTrackHighlights": {
       "placeholders": {
@@ -2380,6 +3157,8 @@
   "KangurMiniGames": {
     "shared": {
       "restart": "Спробуйте ще раз",
+      "check": "Перевірити",
+      "next": "Далі",
       "scoreLabel": "Результат",
       "pointsShort": "б.",
       "correctAnswersSuffix": "правильних відповідей",
@@ -2391,6 +3170,22 @@
         "menu": "Назад до меню",
         "done": "Завершити урок ✅",
         "end": "Завершити"
+      }
+    },
+    "musicPianoRoll": {
+      "adsr": {
+        "button": "ADSR",
+        "buttonAriaLabel": "ADSR: {summary}",
+        "title": "ADSR синтезатора",
+        "description": "Налаштуйте атаку, спад, рівень підтримки та затухання синтезатора.",
+        "closeAriaLabel": "Закрити налаштування ADSR",
+        "reset": "Типові",
+        "close": "Закрити",
+        "attack": "Атака",
+        "decay": "Спад",
+        "sustain": "Підтримка",
+        "release": "Затухання",
+        "summary": "A {attackMs} ms · D {decayMs} ms · S {sustainPercent}% · R {releaseMs} ms"
       }
     },
     "questionCard": {
@@ -2460,7 +3255,13 @@
     },
     "division": {
       "inRound": {
-        "touchHint": "Торкніться відповіді, а потім натисніть «Перевірити»."
+        "touchHint": "Торкніться відповіді, а потім натисніть «Перевірити».",
+        "prompt": "Розкладіть предмети на рівні групи.",
+        "roundLabel": "Раунд {current}/{total}",
+        "groupLabel": "Група {index}",
+        "remainderLabel": "Остача",
+        "poolLabel": "Набір",
+        "tokenAria": "Перемістити предмет"
       },
       "summary": {
         "perfect": "Ідеально! Майстер ділення!",
@@ -2481,7 +3282,15 @@
         "correct": "Чудово! Групи розподілено порівну.",
         "idle": "Перетягніть або натискайте елементи, щоб поділити їх на групи.",
         "touchIdle": "Торкніться елемента, а потім групи, набору або зони остачі. Перетягування теж працює.",
-        "touchSelected": "Вибраний елемент: {emoji}. Торкніться групи, набору або зони остачі."
+        "touchSelected": "Вибраний елемент: {emoji}. Торкніться групи, набору або зони остачі.",
+        "keyboardIdle": "Виберіть елемент, перейдіть до групи, набору або зони остачі й натисніть Enter або пробіл.",
+        "keyboardSelected": "Вибраний елемент: {emoji}. Перейдіть до групи, набору або зони остачі й натисніть Enter або пробіл."
+      },
+      "aria": {
+        "token": "Перемістити елемент",
+        "pool": "Перемістити вибраний елемент до набору",
+        "group": "Перемістити вибраний елемент до групи {group}",
+        "remainder": "Перемістити вибраний елемент до зони остачі"
       }
     },
     "calendarTraining": {
@@ -2565,12 +3374,41 @@
       }
     },
     "subtractingGarden": {
+      "inRound": {
+        "idle": "Перетягуйте або натискайте обʼєкти, щоб віднімати.",
+        "takeAwayInstruction": "Заберіть {count} сяючих точок",
+        "target": "Ціль: заберіть {count}",
+        "removed": "Забрано: {current}/{total}",
+        "remaining": "Залишилось: {count}",
+        "check": "Перевірити",
+        "zones": {
+          "basket": {
+            "title": "Стартовий кошик",
+            "empty": "Порожній кошик"
+          },
+          "cloud": {
+            "title": "Хмарка забирає",
+            "empty": "Перетягни сюди"
+          }
+        }
+      },
       "touch": {
         "idle": "Торкніться підсвіченої точки, а потім кошика або хмарки. Перетягування теж працює.",
-        "selected": "Вибрана точка: {emoji}. Торкніться кошика або хмарки."
+        "selected": "Вибрана точка: {emoji}. Торкніться кошика або хмарки.",
+        "keyboardIdle": "Виберіть підсвічену точку, перейдіть до кошика або хмарки й натисніть Enter або пробіл.",
+        "keyboardSelected": "Вибрана точка: {emoji}. Перейдіть до кошика або хмарки й натисніть Enter або пробіл.",
+        "moveToBasket": "До кошика",
+        "moveToCloud": "До хмарки"
+      },
+      "aria": {
+        "token": "Перемістити точку",
+        "basket": "Перемістити вибрану точку до кошика",
+        "sky": "Перемістити вибрану точку до хмарки"
       },
       "feedback": {
-        "correct": "Чудово! Залишилося:"
+        "correct": "Чудово! Залишилося:",
+        "tooFew": "Замало. Забери ще {count}.",
+        "tooMany": "Забагато. Поверни {count}."
       },
       "summary": {
         "perfect": "Ідеально! Віднімання у вас на кінчиках пальців.",
@@ -2657,7 +3495,7 @@
         "menu": "Меню"
       },
       "summary": {
-        "perfect": "Ідеальний результат! Ви чемпіон Kangur! 🦘",
+        "perfect": "Ідеальний результат! Ви чемпіон StudiQ! 🦘",
         "good": "Чудово! Ви готові до конкурсу!",
         "fair": "Гарна робота! Практикуйтеся далі!",
         "retry": "Не здавайтеся! Спробуйте ще раз!"
@@ -2667,9 +3505,9 @@
       "actions": {
         "backToMenu": "Назад до меню"
       },
-      "progressAriaLabel": "Точність відповідей у тесті Kangur",
+      "progressAriaLabel": "Точність відповідей у тесті StudiQ",
       "summary": {
-        "perfect": "Ідеальний результат! Ви чемпіон Kangur! 🦘",
+        "perfect": "Ідеальний результат! Ви чемпіон StudiQ! 🦘",
         "good": "Чудово! Ви готові до конкурсу!",
         "fair": "Гарна робота! Практикуйтеся далі!",
         "retry": "Не здавайтеся! Спробуйте ще раз!"
@@ -2749,6 +3587,415 @@
           "pair-is": {
             "prompt": "Фраза \"pair of\" рахується як однина.",
             "hint": "Pair = один набір."
+          }
+        }
+      }
+    },
+    "englishArticles": {
+      "summary": {
+        "perfect": "Perfect! Articles are in the right places.",
+        "good": "Good job! You can hear the pattern already.",
+        "retry": "Try one more round and listen to the first sound."
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "drag": {
+          "topicLabel": "Articles",
+          "modeLabel": "Drag and drop",
+          "modeLabelTouch": "Tap or drag",
+          "poolLabel": "Article bank",
+          "poolAria": "Article bank",
+          "poolEmpty": "Article bank empty",
+          "slotAria": "Sentence {index}",
+          "sentenceLabel": "Sentence {current}",
+          "missingArticle": "This sentence still needs an article.",
+          "touchIdle": "Tap an article, then tap a sentence or the bank.",
+          "touchSelected": "Selected article: {article}. Tap a sentence or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! Each article fits the sentence.",
+            "retry": "Check the specific noun and the first sound again."
+          },
+          "rounds": {
+            "school-bag": {
+              "prompt": "Drag a, an, and the into the school sentences.",
+              "hint": "One new thing, one vowel sound, one known thing.",
+              "title": "School bag"
+            },
+            "zoo-day": {
+              "prompt": "Fill the zoo trip sentences with the correct articles.",
+              "hint": "First mention uses a/an. A known place often uses the.",
+              "title": "Zoo day"
+            },
+            "sound-detective": {
+              "prompt": "Listen to the first sound before you choose the article.",
+              "hint": "a unicorn, but an hour.",
+              "title": "Sound detective"
+            },
+            "trip-day": {
+              "prompt": "Pack the correct articles into the trip sentences.",
+              "hint": "Check if the noun is new, specific, or starts with a vowel sound.",
+              "title": "Trip day"
+            },
+            "museum-day": {
+              "prompt": "Fill the museum sentences with the right articles.",
+              "hint": "Listen to audio, and notice the specific entrance.",
+              "title": "Museum day"
+            },
+            "picnic-time": {
+              "prompt": "Choose the articles for the picnic sentences.",
+              "hint": "One sandwich, one apple, one known basket.",
+              "title": "Picnic time"
+            }
+          },
+          "articles": {
+            "a": {
+              "description": "one example, consonant sound"
+            },
+            "an": {
+              "description": "one example, vowel sound"
+            },
+            "the": {
+              "description": "one specific thing"
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectives": {
+      "summary": {
+        "perfect": "Perfect! The whole scene matches the adjectives.",
+        "good": "Good job! Most of the scene matches already.",
+        "retry": "Try again and watch how each adjective changes the object.",
+        "badges": {
+          "rounds": "Rounds {current}/{total}",
+          "targets": "Targets {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        },
+        "guideLabel": "Adjective guide",
+        "guideHint": "Group adjectives by what they change in the picture.",
+        "groups": {
+          "color": {
+            "label": "Colour",
+            "lead": "Use colour words to change what something looks like.",
+            "examples": "red train, brown eyes"
+          },
+          "sizeColor": {
+            "label": "Size + colour",
+            "lead": "More than one adjective can build one clear noun phrase.",
+            "examples": "big yellow cupboard, small blue teddy, long black hair"
+          },
+          "texture": {
+            "label": "Texture",
+            "lead": "Texture words tell us how something feels.",
+            "examples": "soft rug"
+          },
+          "opinionAge": {
+            "label": "Opinion + age",
+            "lead": "Some adjectives give an opinion or show if something feels new.",
+            "examples": "beautiful picture, new games"
+          }
+        },
+        "orderGuideLabel": "Word order guide",
+        "orderGuideHint": "In English, describing words usually come before the noun.",
+        "orderCards": {
+          "clear": {
+            "label": "Clear phrase",
+            "phrase": "a small blue teddy",
+            "rule": "adjective + adjective + noun"
+          },
+          "fix": {
+            "label": "Fix it",
+            "phrase": "a teddy small blue → a small blue teddy",
+            "rule": "move the adjectives before the noun"
+          }
+        },
+        "starterLabel": "Say it about the scene",
+        "starterHint": "Use these sentence frames to describe your own picture.",
+        "starters": {
+          "room": "There is a big yellow cupboard in the room.",
+          "toy": "I have a small blue teddy on the shelf.",
+          "portrait": "She has long black hair and brown eyes.",
+          "study": "There is a new desk by the wall.",
+          "playground": "It is an old bench near the slide."
+        },
+        "questionLabel": "What can you see?",
+        "questionHint": "Pick one question and answer it with an adjective phrase.",
+        "questions": {
+          "room": {
+            "prompt": "What can you see in the room?",
+            "starter": "Try: There is a..."
+          },
+          "toy": {
+            "prompt": "What toy can you see on the shelf?",
+            "starter": "Try: It is a..."
+          },
+          "person": {
+            "prompt": "What can you say about the person?",
+            "starter": "Try: She has..."
+          },
+          "study": {
+            "prompt": "What can you see in the study corner?",
+            "starter": "Try: There is a..."
+          },
+          "playground": {
+            "prompt": "What can you see in the playground?",
+            "starter": "Try: It is a..."
+          }
+        }
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "scene": {
+          "modeLabel": "Drag adjective cards",
+          "modeLabelTouch": "Tap or drag cards",
+          "ideaLabel": "Target scene",
+          "studioLabel": "Adjective studio",
+          "watchLabel": "Watch it change",
+          "poolLabel": "Adjective bank",
+          "poolAria": "Adjective bank",
+          "objectSlotAria": "Object slot for {object}",
+          "dropLabel": "Drop or tap an adjective here.",
+          "describePrompt": "How can you describe the {object}?",
+          "describeStarter": "Build: adjective + noun",
+          "yourPhraseLabel": "Your phrase",
+          "yourSentenceLabel": "Your sentence",
+          "targetPhraseLabel": "Target phrase",
+          "targetSentenceLabel": "Target sentence",
+          "categoryCompareLabel": "Category change",
+          "clueLabel": "Clue",
+          "matchedLabel": "Matched",
+          "typeLabel": "Type",
+          "touchIdle": "Tap an adjective, then tap an object or the bank.",
+          "touchSelected": "Selected adjective: {adjective}. Tap an object or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! The scene matches the description.",
+            "retry": "Try again and check which adjective changes each object."
+          },
+          "focus": {
+            "color": "change the colour",
+            "size_color": "change the size and colour",
+            "texture": "change the texture",
+            "age": "change how new it feels",
+            "opinion": "change the feeling or opinion"
+          },
+          "rounds": {
+            "bedroom": {
+              "title": "Bedroom makeover",
+              "prompt": "Match the adjective cards to rebuild the bedroom scene.",
+              "hint": "Look for the big yellow cupboard, soft rug, and long blue curtains."
+            },
+            "toy_shelf": {
+              "title": "Toy shelf",
+              "prompt": "Dress the toys with the right describing words.",
+              "hint": "One train is red, one teddy is small and blue, and the games are new."
+            },
+            "study_corner": {
+              "title": "Study corner",
+              "prompt": "Match the adjective cards to rebuild the study corner.",
+              "hint": "Look for the new desk, the small red lamp, and the bright green book."
+            },
+            "portrait": {
+              "title": "Portrait details",
+              "prompt": "Add the right adjectives to the portrait.",
+              "hint": "Brown eyes, long black hair, and a beautiful picture."
+            },
+            "playground": {
+              "title": "Playground scene",
+              "prompt": "Use the adjective cards to rebuild the playground.",
+              "hint": "Look for the big yellow slide, the long blue kite, and the old bench."
+            }
+          },
+          "tokens": {
+            "big_yellow": "big yellow",
+            "soft": "soft",
+            "long_blue": "long blue",
+            "red": "red",
+            "small_red": "small red",
+            "small_blue": "small blue",
+            "bright_green": "bright green",
+            "new": "new",
+            "old": "old",
+            "brown": "brown",
+            "long_black": "long black",
+            "beautiful": "beautiful"
+          },
+          "objects": {
+            "cupboard": "cupboard",
+            "curtains": "curtains",
+            "rug": "rug",
+            "train": "train",
+            "teddy": "teddy",
+            "games": "games",
+            "eyes": "eyes",
+            "hair": "hair",
+            "picture": "picture",
+            "desk": "desk",
+            "lamp": "lamp",
+            "book": "book",
+            "slide": "slide",
+            "kite": "kite",
+            "bench": "bench"
+          },
+          "sceneAria": {
+            "room": "Animated bedroom scene",
+            "bedroom": "Animated bedroom scene",
+            "toyShelf": "Animated toy shelf scene",
+            "studyCorner": "Animated study corner scene",
+            "portrait": "Animated portrait scene",
+            "playground": "Animated playground scene"
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequency": {
+      "summary": {
+        "perfect": "Ідеально! Увесь тижневий план збігається зі словами частоти.",
+        "good": "Гарна робота! Більша частина тижня вже має правильний ритм.",
+        "retry": "Спробуй ще раз і подивися, як часто засвічується кожна дія.",
+        "guideLabel": "Підказка з частоти",
+        "guideHint": "Читай кожне слово як тижневий шаблон.",
+        "orderLabel": "Від найчастіше до найрідше",
+        "ruleGuideLabel": "Підказка з порядку слів",
+        "ruleGuideHint": "Запам’ятай ці дві схеми речень.",
+        "mainVerbLabel": "Перед головним дієсловом",
+        "beVerbLabel": "Після am/is/are",
+        "starterLabel": "Скажи це про свій тиждень",
+        "starterHint": "Скористайся одним із цих шаблонів для власного речення.",
+        "starters": {
+          "alwaysHabit": "I always do my homework after school.",
+          "sometimesPlace": "I sometimes go to the park with my friends.",
+          "neverLate": "I am never late for school."
+        },
+        "questionLabel": "Як часто...?",
+        "questionHint": "Вибери одне запитання і дай відповідь словом частоти.",
+        "questions": {
+          "homework": {
+            "prompt": "How often do you do your homework?",
+            "starter": "Try: I always..."
+          },
+          "park": {
+            "prompt": "How often do you go to the park?",
+            "starter": "Try: I sometimes..."
+          },
+          "late": {
+            "prompt": "How often are you late for school?",
+            "starter": "Try: I am never..."
+          }
+        },
+        "badges": {
+          "rounds": "Раунди {current}/{total}",
+          "patterns": "Шаблони {current}/{total}",
+          "studio": "Студія {current}/{total}"
+        }
+      },
+      "inRound": {
+        "roundLabel": "Раунд {current}/{total}",
+        "hitsLabel": "{hits}/{total} правильно",
+        "check": "Перевірити",
+        "next": "Далі",
+        "seeResult": "Подивитися результат",
+        "studio": {
+          "modeLabel": "Перетягни картки частоти",
+          "modeLabelTouch": "Торкнися або перетягни картки",
+          "targetLabel": "Цільова рутина",
+          "plannerLabel": "План тижня",
+          "watchLabel": "Подивись, як рухається тиждень",
+          "poolLabel": "Банк частоти",
+          "poolAria": "Банк частоти",
+          "poolHint": "У кожному раунді одна картка може залишитися невикористаною.",
+          "laneAria": "Смуга рутини для дії {action}",
+          "dropLabel": "Поклади сюди картку частоти або торкнися її.",
+          "currentSentenceLabel": "Твоє речення",
+          "yourFrequencyLabel": "Твоя частота",
+          "yourWeekLabel": "Твій тиждень",
+          "targetFrequencyLabel": "Цільова частота",
+          "targetSentenceLabel": "Цільове речення",
+          "targetWeekLabel": "Цільовий тиждень",
+          "changeDaysLabel": "Дні для зміни",
+          "turnOnLabel": "Увімкнути",
+          "turnOffLabel": "Вимкнути",
+          "daysLitLabel": "Активні дні",
+          "matchedLabel": "Збігається",
+          "sentenceLabel": "Речення",
+          "patternLabel": "Порядок слів:",
+          "previewEmpty": "Вибери картку частоти, щоб побудувати речення.",
+          "weekAria": "Тижнева рутина для {action}: {frequency}",
+          "touchIdle": "Торкнися картки частоти, а потім смуги рутини або банку.",
+          "touchSelected": "Вибрана частота: {frequency}. Торкнися смуги рутини або банку.",
+          "clearRound": "Очистити раунд",
+          "patterns": {
+            "mainVerb": "прислівник перед основним дієсловом",
+            "beVerb": "прислівник після am/is/are"
+          },
+          "feedback": {
+            "perfect": "Ідеально! План збігається з цільовою рутиною.",
+            "retry": "Спробуй ще раз і порівняй, скільки днів має бути в кожної дії."
+          },
+          "rounds": {
+            "cinema-sunday": {
+              "title": "Кінонеділя",
+              "prompt": "Віднови недільну рутину, зіставляючи картки частоти з тижневим планом.",
+              "hint": "Одна річ трапляється щотижня, одна — більшість тижнів, а одна — ніколи."
+            },
+            "school-week": {
+              "title": "Шкільний тиждень",
+              "prompt": "Зістав картки частоти зі шкільними звичками.",
+              "hint": "Подумай, що відбувається щодня, що часто, а що ніколи не повинно траплятися."
+            },
+            "weekend-club": {
+              "title": "Клуб вихідного дня",
+              "prompt": "Побудуй правильний ритм тижня для плану клубу вихідного дня.",
+              "hint": "Одна активність є звичкою, одна трапляється лише інколи, а одна — ніколи."
+            },
+            "after-school": {
+              "title": "Після школи",
+              "prompt": "Добери картки до розкладу після школи.",
+              "hint": "Домашнє завдання буває щодня, парк лише інколи, а плавання ніколи."
+            },
+            "morning-check": {
+              "title": "Ранковий план",
+              "prompt": "Склади ранкову рутину для уважного шкільного дня.",
+              "hint": "Прокидатися о сьомій буває зазвичай, запізнюватися ніколи, а телевізор лише інколи."
+            }
+          },
+          "frequencies": {
+            "always": {
+              "label": "always",
+              "description": "щодня або щоразу"
+            },
+            "usually": {
+              "label": "usually",
+              "description": "у більшість днів"
+            },
+            "sometimes": {
+              "label": "sometimes",
+              "description": "лише кілька днів"
+            },
+            "never": {
+              "label": "never",
+              "description": "жодного дня"
+            }
+          },
+          "actions": {
+            "go_to_cinema": "go to the cinema",
+            "go_with_friends": "go with friends",
+            "eat_popcorn": "eat popcorn",
+            "do_homework": "do homework",
+            "get_up_at_seven": "get up at seven",
+            "be_late_for_school": "be late for school",
+            "go_to_park": "go to the park",
+            "watch_tv": "watch TV",
+            "go_swimming": "go swimming"
           }
         }
       }
@@ -2977,6 +4224,9 @@
         "drawOnGrid": "Малюйте на сітці",
         "inputHelp": "Поле для малювання підтримує мишу, дотик або клавіатуру. Enter або пробіл починає і завершує лінію, стрілки рухають курсор, а Escape очищає поле.",
         "clear": "Очистити",
+        "undo": "Скасувати",
+        "redo": "Повторити",
+        "export": "Експортувати PNG",
         "checkDrawing": "Перевірити малюнок",
         "checkPerimeter": "Перевірити периметр",
         "rounds": {
@@ -3059,6 +4309,9 @@
         "canvasAria": "Поле для малювання осей симетрії та відображень.",
         "inputHelp": "Поле для малювання підтримує мишу, дотик або клавіатуру. Enter або пробіл починає і завершує лінію, стрілки рухають курсор, а Escape очищає поле.",
         "clear": "Очистити",
+        "undo": "Скасувати",
+        "redo": "Повторити",
+        "export": "Експортувати PNG",
         "check": "Перевірити",
         "rounds": {
           "axis-butterfly": {
@@ -3330,7 +4583,7 @@
         "rushMode": "Bridge Rush",
         "rushModeHint": "Режим Bridge Rush: встигніть до завершення часу. Зміна режиму перезапускає гру.",
         "modeResetHint": "Зміна режиму перезапускає гру.",
-        "stageTitle": "Міст зв'язків",
+        "title": "Міст зв'язків",
         "roundLabel": "Раунд {current}/{total}",
         "timeExpired": "Час вийшов",
         "instructions": "Перетягніть зв'язок на картку пари або натисніть зв'язок, а потім натисніть пару. Іконки підказують тип зв'язку.",
@@ -3519,6 +4772,9 @@
         "drawHere": "Малюйте тут",
         "inputHelp": "Поле для малювання підтримує мишу, дотик або клавіатуру. Enter або пробіл починає і завершує лінію, стрілки рухають курсор, а Escape очищає поле.",
         "clear": "Очистити",
+        "undo": "Скасувати",
+        "redo": "Повторити",
+        "export": "Експортувати PNG",
         "check": "Перевірити",
         "tooShort": "Намалюйте фігуру трохи довше, щоб її можна було перевірити.",
         "keyboard": {
@@ -3726,8 +4982,7 @@
         },
         "wordAria": "Слово: {token}"
       }
-    }
-    ,
+    },
     "calendarInteractive": {
       "progressAriaLabel": "Точність в інтерактивній практиці з календарем",
       "summary": {
@@ -3768,6 +5023,7 @@
         }
       },
       "inRound": {
+        "taskLabel": "Завдання",
         "previousMonth": "Попередній місяць",
         "nextMonth": "Наступний місяць",
         "tryAgain": "Ой, не той варіант. Спробуйте ще раз!",
@@ -4023,6 +5279,163 @@
           "retry": "Практикуйтеся далі, і ви опануєте годинник!"
         }
       }
+    },
+    "englishAdverbs": {
+      "summary": {
+        "perfect": "Perfect! Every action matches the right adverb.",
+        "good": "Good job! Most of the action scenes already sound right.",
+        "retry": "Try one more round and watch how the action style changes.",
+        "guideLabel": "Adverb guide",
+        "guideHint": "Each adverb changes the style of the action in a different way.",
+        "formGuideLabel": "Word-building guide",
+        "formGuideHint": "Remember the adjective → adverb change.",
+        "starterLabel": "Say it about yourself",
+        "starterHint": "Use one of these frames to build your own sentence.",
+        "starters": {
+          "carefully": "I work carefully in class.",
+          "happily": "I sing happily with my friends.",
+          "fast": "I run fast in PE."
+        },
+        "examples": {
+          "fast": "He runs fast.",
+          "carefully": "She carries the books carefully.",
+          "beautifully": "She paints beautifully.",
+          "happily": "They dance happily.",
+          "well": "She plays football well.",
+          "badly": "He writes badly."
+        },
+        "formPairs": {
+          "careful": {
+            "adjective": "careful",
+            "adverb": "carefully",
+            "hint": "Add -ly"
+          },
+          "beautiful": {
+            "adjective": "beautiful",
+            "adverb": "beautifully",
+            "hint": "Add -ly"
+          },
+          "good": {
+            "adjective": "good",
+            "adverb": "well",
+            "hint": "Special word"
+          },
+          "fast": {
+            "adjective": "fast",
+            "adverb": "fast",
+            "hint": "Same word"
+          }
+        },
+        "badges": {
+          "rounds": "Rounds {current}/{total}",
+          "actions": "Actions {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        }
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "studio": {
+          "modeLabel": "Drag adverb cards",
+          "modeLabelTouch": "Tap or drag cards",
+          "targetLabel": "Target actions",
+          "plannerLabel": "Action planner",
+          "poolLabel": "Adverb bank",
+          "poolAria": "Adverb bank",
+          "poolHint": "Two cards can stay unused in each round.",
+          "laneAria": "Action lane for {action}",
+          "dropLabel": "Drop or tap an adverb card here.",
+          "currentSentenceLabel": "Sentence",
+          "yourAdverbLabel": "Your adverb",
+          "targetAdverbLabel": "Target adverb",
+          "yourSentenceLabel": "Your sentence",
+          "targetSentenceLabel": "Target sentence",
+          "styleChangeLabel": "Style change",
+          "matchedLabel": "Matched",
+          "correctionLabel": "Fix this lane",
+          "actionAria": "Action scene for {action}: {adverb}",
+          "touchIdle": "Tap an adverb card, then tap an action lane or the bank.",
+          "touchSelected": "Selected adverb: {adverb}. Tap an action lane or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! The action cards match every target scene.",
+            "retry": "Try again and compare how each action should happen."
+          },
+          "rounds": {
+            "race-day": {
+              "title": "Race day",
+              "prompt": "Match each action with the adverb that changes its style in the right way.",
+              "hint": "One action needs speed, one needs care, and one needs beauty."
+            },
+            "school-studio": {
+              "title": "School studio",
+              "prompt": "Direct the classroom actions with the best adverb card.",
+              "hint": "One action sounds strong, one joyful, and one not very successful."
+            },
+            "talent-corner": {
+              "title": "Talent corner",
+              "prompt": "Give each small performance the right action style.",
+              "hint": "Listen for speed, care, and beauty in the sentences."
+            },
+            "playground-show": {
+              "title": "Playground show",
+              "prompt": "Build the right adverb scenes for the playground performance.",
+              "hint": "One action is happy, one is poor, and one sounds strong."
+            },
+            "homework-club": {
+              "title": "Homework club",
+              "prompt": "Pick the adverbs that fit these club actions best.",
+              "hint": "Writing can go well, carrying needs care, and running stays fast."
+            }
+          },
+          "adverbs": {
+            "fast": {
+              "label": "fast",
+              "description": "with a lot of speed"
+            },
+            "carefully": {
+              "label": "carefully",
+              "description": "with care and attention"
+            },
+            "beautifully": {
+              "label": "beautifully",
+              "description": "in a very pretty way"
+            },
+            "happily": {
+              "label": "happily",
+              "description": "with joy"
+            },
+            "well": {
+              "label": "well",
+              "description": "in a strong or correct way"
+            },
+            "badly": {
+              "label": "badly",
+              "description": "in a poor or wrong way"
+            }
+          },
+          "actions": {
+            "run_race": "run the race",
+            "paint_picture": "paint the picture",
+            "carry_books": "carry the books",
+            "play_football": "play football",
+            "write_story": "write the story",
+            "sing_song": "sing the song",
+            "dance_show": "dance in the show"
+          },
+          "styleChanges": {
+            "speed": "change the speed",
+            "care": "change the care",
+            "beauty": "change the beauty",
+            "joy": "change the feeling",
+            "skill": "change the quality",
+            "mistake": "change the result"
+          }
+        }
+      }
     }
   },
   "KangurCmsRuntime": {
@@ -4088,7 +5501,7 @@
         "showCanvasOnly": "Показати лише полотно"
       },
       "toolbar": {
-        "backToKangur": "Назад до Kangur",
+        "backToKangur": "Назад до StudiQ",
         "status": {
           "saved": "Збережено",
           "unsaved": "Незбережено"
@@ -4112,7 +5525,7 @@
         "saveProject": "Зберегти проєкт"
       },
       "empty": {
-        "selectScreen": "Виберіть екран Kangur для редагування.",
+        "selectScreen": "Виберіть екран StudiQ для редагування.",
         "noSections": "Поки що немає секцій. Скористайтеся панеллю структури, щоб додати їх."
       }
     },
@@ -4200,7 +5613,7 @@
           "lessons": "Уроки",
           "play": "Грати",
           "training": "Тренування",
-          "kangur": "Kangur"
+          "kangur": "StudiQ"
         }
       },
       "inputs": {
@@ -4208,7 +5621,7 @@
         "ariaLabel": "Попередній перегляд поля вводу"
       },
       "typography": {
-        "heading": "Заголовок Kangur",
+        "heading": "Заголовок StudiQ",
         "bodySample": "Зразок основного тексту з поточним базовим розміром і висотою рядка.",
         "layout": "Макет"
       },
@@ -4413,10 +5826,10 @@
         }
       },
       "game": {
-        "stageTitle": "Гра з м'ячами!"
+        "gameTitle": "Гра з м'ячами!"
       },
       "synthesis": {
-        "stageTitle": "Синтез додавання"
+        "gameTitle": "Синтез додавання"
       }
     },
     "subtracting": {
@@ -4576,7 +5989,7 @@
         }
       },
       "game": {
-        "stageTitle": "Гра на віднімання!"
+        "gameTitle": "Гра на віднімання!"
       }
     },
     "clock": {
@@ -5002,7 +6415,7 @@
         }
       },
       "game": {
-        "stageTitle": "Геомісія"
+        "gameTitle": "Геомісія"
       }
     },
     "artShapesBasic": {
@@ -5105,7 +6518,7 @@
         }
       },
       "game": {
-        "stageTitle": "Доповни обертовий візерунок",
+        "gameTitle": "Доповни обертовий візерунок",
         "progress": {
           "round": "Раунд {current}/{total}",
           "score": "Рахунок: {score}"
@@ -5235,7 +6648,7 @@
         "caption": "Шукайте вдома кола, квадрати, трикутники, прямокутники, овали та ромби."
       },
       "draw": {
-        "stageTitle": "Гра: Малюй фігури",
+        "gameTitle": "Гра: Малюй фігури",
         "difficultyLabel": "Базовий",
         "finishLabel": "Назад до тем"
       }
@@ -5303,7 +6716,7 @@
         }
       },
       "game": {
-        "stageTitle": "Гра: Намалюй периметр"
+        "gameTitle": "Гра: Намалюй периметр"
       }
     },
     "geometryShapes": {
@@ -5408,7 +6821,7 @@
         }
       },
       "game": {
-        "stageTitle": "Малюй фігури"
+        "gameTitle": "Малюй фігури"
       }
     },
     "geometrySymmetry": {
@@ -5513,7 +6926,7 @@
         }
       },
       "game": {
-        "stageTitle": "Дзеркала симетрії"
+        "gameTitle": "Дзеркала симетрії"
       }
     },
     "logicalAnalogies": {
@@ -5712,7 +7125,7 @@
         }
       },
       "game": {
-        "stageTitle": "Міст зв'язків"
+        "gameTitle": "Міст зв'язків"
       },
       "animations": {
         "analogyBridge": "Анімація: зв'язок A:B = C:D.",
@@ -5908,7 +7321,7 @@
         }
       },
       "game": {
-        "stageTitle": "Майстерня візерунків"
+        "gameTitle": "Майстерня візерунків"
       }
     },
     "logicalClassification": {
@@ -6161,7 +7574,7 @@
         }
       },
       "game": {
-        "stageTitle": "Лабораторія класифікації"
+        "gameTitle": "Лабораторія класифікації"
       }
     },
     "logicalReasoning": {
@@ -6803,6 +8216,135 @@
         }
       }
     },
+    "englishAdverbsFrequency": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Як часто це трапляється?",
+            "lead": "Прислівники частоти показують, як часто відбувається дія. Вони допомагають говорити про звички та щоденні рутини.",
+            "caption": "always = завжди, usually = зазвичай, sometimes = інколи, never = ніколи"
+          }
+        },
+        "routine": {
+          "cinemaStory": {
+            "title": "Кінорутина",
+            "lead": "Прочитай коротку рутину й подивися, як прислівники змінюють картину всього тижня.",
+            "caption": "Always, usually і never змінюють кількість днів, що засвічуються."
+          },
+          "frequencyStrip": {
+            "title": "Читай смужку тижня",
+            "lead": "Кожен прислівник можна уявити як смужку із семи днів. Більше вогників означає частішу дію.",
+            "items": {
+              "always": "always = 7 днів",
+              "usually": "usually = більшість днів",
+              "sometimes": "sometimes = кілька днів",
+              "never": "never = 0 днів"
+            }
+          }
+        },
+        "position": {
+          "mainVerb": {
+            "title": "Став прислівник перед головним дієсловом",
+            "lead": "З більшістю дієслів прислівник частоти стоїть перед головним дієсловом.",
+            "caption": "She always checks her notes."
+          },
+          "beVerb": {
+            "title": "Став прислівник після be",
+            "lead": "З am, is та are прислівник зазвичай стоїть після дієслова be.",
+            "caption": "He is never late."
+          },
+          "repairOrder": {
+            "title": "Полагодь порядок",
+            "lead": "Іноді прислівник опиняється не там. Пересунь його туди, де англійська його очікує.",
+            "caption": "I always do my homework. He is never late."
+          }
+        },
+        "answer": {
+          "howOften": {
+            "title": "Відповідай на How often...?",
+            "lead": "Використовуй прислівник частоти, щоб відповідати на запитання про звички та рутини.",
+            "caption": "How often do you go to the park? I sometimes go after school."
+          },
+          "wordBank": {
+            "title": "Банк слів частоти",
+            "lead": "Тримай ці чотири слова напохваті, коли описуєш свій тиждень."
+          },
+          "chooseWord": {
+            "title": "Обери найкраще слово частоти",
+            "lead": "Добери підказку до прислівника, який пасує найкраще, перш ніж складати власну рутину.",
+            "items": {
+              "homework": {
+                "clue": "Я щодня після школи роблю домашнє завдання.",
+                "answer": "always"
+              },
+              "seven": {
+                "clue": "Вона прокидається о сьомій у більшість шкільних днів.",
+                "answer": "usually"
+              },
+              "late": {
+                "clue": "Він запізнюється до школи нуль днів.",
+                "answer": "never"
+              },
+              "tv": {
+                "clue": "Ми дивимося телевізор у кілька вечорів.",
+                "answer": "sometimes"
+              }
+            }
+          },
+          "myWeek": {
+            "title": "Склади свій тиждень",
+            "lead": "Тепер перетвори слова частоти на власну картку звичок. Обери прості дії й скажи, як часто вони трапляються.",
+            "caption": "I always do my homework. I sometimes go to the park. I never arrive late."
+          },
+          "favoritePlace": {
+            "title": "Розкажи про одне місце",
+            "lead": "Обери місце, яке ти знаєш, і скажи, як часто ти туди ходиш. Слова частоти роблять речення набагато зрозумілішим.",
+            "caption": "I usually go to the library. I sometimes go to the park. I never go to the swimming pool on school days."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Коротке повторення",
+            "lead": "Пам'ятай ці правила, коли говориш про рутини.",
+            "items": {
+              "meaning": "Always, usually, sometimes і never показують, як часто щось відбувається.",
+              "mainVerb": "Перед головним дієсловом: I always do my homework.",
+              "beVerb": "Після be: She is never late.",
+              "answer": "Використовуй їх у відповідях на запитання How often...?."
+            }
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequencyShell": {
+      "lessonTitle": "Англійська: прислівники частоти",
+      "sections": {
+        "intro": {
+          "title": "Вступ",
+          "description": "Що означають слова частоти"
+        },
+        "routine": {
+          "title": "Рутина",
+          "description": "Побач частоту на цілому тижні"
+        },
+        "position": {
+          "title": "Позиція",
+          "description": "Де прислівник стоїть у реченні"
+        },
+        "answer": {
+          "title": "Відповідь",
+          "description": "Розкажи про свої звички"
+        },
+        "gameFrequencyStudio": {
+          "title": "Frequency Studio",
+          "description": "Побудуй анімований тижневий план"
+        },
+        "summary": {
+          "title": "Підсумок",
+          "description": "Головні правила в одному місці"
+        }
+      }
+    },
     "englishBasics": {
       "slides": {
         "greetings": {
@@ -6872,6 +8414,11 @@
             "title": "Артиклі коротко",
             "lead": "Артиклі - це короткі слова перед іменником. Вони показують, чи маємо ми на увазі будь-який приклад, щось одне конкретне або взагалі без артикля.",
             "caption": "a/an = будь-який приклад, the = щось конкретне, нульовий артикль = без артикля"
+          },
+          "storyTrail": {
+            "title": "From first mention to the known thing",
+            "lead": "In a short story, a or an often introduces a new noun. When the noun becomes known, the story usually changes to the.",
+            "caption": "First time = a cat. Known cat = the cat."
           }
         },
         "aAn": {
@@ -6890,6 +8437,11 @@
             "title": "Приклад у завданні",
             "lead": "Слухай звук на початку слова, а не лише дивись на написання.",
             "caption": "Ми кажемо an equation, бо equation починається з голосного звуку."
+          },
+          "soundCheck": {
+            "title": "Sound check",
+            "lead": "The first sound decides between a and an. That is why we say a unicorn but an hour.",
+            "caption": "Listen for the sound, not only for the first letter."
           }
         },
         "the": {
@@ -6897,6 +8449,11 @@
             "title": "The для чогось конкретного",
             "lead": "Використовуй the, коли обидві людини точно знають, який саме об'єкт ти маєш на увазі.",
             "caption": "Цей артикль указує на один конкретний графік, розв'язок або кут."
+          },
+          "secondMention": {
+            "title": "The on second mention",
+            "lead": "After you introduce something with a or an, the next sentence often uses the because the noun is already known.",
+            "caption": "A shell becomes the shell in the next sentence."
           }
         },
         "zero": {
@@ -6904,6 +8461,11 @@
             "title": "Нульовий артикль",
             "lead": "Іноді в англійській артикль узагалі не використовується, особливо зі шкільними предметами, загальними твердженнями та загальними формами множини.",
             "caption": "Без артикля перед загальними назвами предметів або загальними іменниками в множині"
+          },
+          "everyday": {
+            "title": "Zero article in everyday English",
+            "lead": "School subjects, meals, seasons, and general plural nouns often use no article.",
+            "caption": "English, lunch, summer, cats."
           }
         },
         "practice": {
@@ -6911,6 +8473,21 @@
             "title": "Швидка вправа",
             "lead": "Заповни пропуск: a, an, the або без артикля.",
             "answersCaption": "Відповіді: an, the, —, the, a"
+          },
+          "chooseAnswer": {
+            "title": "Choose the answer",
+            "lead": "This looks like a worksheet test: read fast and choose the article that sounds right.",
+            "caption": "Think: first example, specific thing, or no article?"
+          },
+          "makeItRight": {
+            "title": "Make it right",
+            "lead": "Find the mistake and repair the article choice.",
+            "caption": "Wrong article, missing article, or zero article?"
+          },
+          "mixedRules": {
+            "title": "Mini article test",
+            "lead": "Mix first mention, known nouns, and zero article in one short set.",
+            "caption": "Ask: new thing, known thing, vowel sound, or no article?"
           }
         },
         "summary": {
@@ -7296,6 +8873,9 @@
       },
       "actions": {
         "clear": "Очистити",
+        "undo": "Скасувати",
+        "redo": "Повторити",
+        "export": "Експортувати PNG",
         "check": "Перевірити",
         "next": "Далі",
         "restart": "Почати знову"
@@ -7342,6 +8922,9 @@
       },
       "actions": {
         "clear": "Очистити",
+        "undo": "Скасувати",
+        "redo": "Повторити",
+        "export": "Експортувати PNG",
         "check": "Перевірити",
         "next": "Далі",
         "restart": "Почати знову"
@@ -7410,9 +8993,110 @@
           "title": "Вправа",
           "description": "Швидке заповнення пропусків"
         },
+        "gameArticlesDrag": {
+          "title": "Article Builder",
+          "description": "Drag a, an, and the into the sentences"
+        },
         "summary": {
           "title": "Підсумок",
           "description": "Короткий виклад правил"
+        }
+      }
+    },
+    "englishAdjectives": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Adjectives paint the picture",
+            "lead": "Adjectives describe people, places, and things. They add colour, size, feeling, and detail to a noun.",
+            "caption": "big yellow cupboard, soft rug, long blue curtains"
+          },
+          "peoplePlacesThings": {
+            "title": "People, places, things",
+            "lead": "You can use adjectives to describe a person, a place, or one object. They work almost everywhere in a sentence.",
+            "caption": "Ask: what kind? what colour? what size?"
+          }
+        },
+        "order": {
+          "beforeNoun": {
+            "title": "Put adjectives before the noun",
+            "lead": "In English, adjectives usually stand before the noun: red train, brown eyes, small blue teddy.",
+            "caption": "adjective + adjective + noun"
+          },
+          "clearPicture": {
+            "title": "Build a clear phrase",
+            "lead": "Put the describing words before the noun so the picture sounds clear straight away.",
+            "caption": "small + blue + teddy"
+          }
+        },
+        "repair": {
+          "makeItRight": {
+            "title": "Fix the adjective",
+            "lead": "Do not add plural endings to adjectives and keep them before the noun.",
+            "caption": "two red shoes, a small car, long brown hair"
+          }
+        },
+        "describe": {
+          "roomStory": {
+            "title": "Describe a room",
+            "lead": "Read the little room story and spot how adjectives make the picture clearer.",
+            "caption": "Each adjective adds one more detail to the scene."
+          },
+          "peopleAndPlaces": {
+            "title": "Describe people and places",
+            "lead": "The same adjective rules help you talk about faces, hair, rooms, toys, and pictures.",
+            "caption": "Use the adjective before the noun each time."
+          },
+          "studyAndPlay": {
+            "title": "Describe study and play scenes",
+            "lead": "The same adjective rules also work when you talk about desks, lamps, books, slides, kites, and benches.",
+            "caption": "One adjective can change colour, size, age, or feeling in any scene."
+          },
+          "wordBank": {
+            "title": "Word bank",
+            "lead": "These adjectives can help you build clear noun phrases."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Quick recap",
+            "lead": "Remember these adjective rules while you describe scenes and objects.",
+            "items": {
+              "describe": "Adjectives describe people, places, and things.",
+              "beforeNoun": "They usually come before the noun.",
+              "order": "More than one adjective can build one clear picture.",
+              "fix": "Adjectives do not take plural -s in English."
+            }
+          }
+        }
+      }
+    },
+    "englishAdjectivesShell": {
+      "lessonTitle": "English: Adjectives",
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "What adjectives do"
+        },
+        "order": {
+          "title": "Order",
+          "description": "Put adjectives before nouns"
+        },
+        "repair": {
+          "title": "Repair",
+          "description": "Fix endings and word order"
+        },
+        "describe": {
+          "title": "Describe",
+          "description": "Turn a plain scene into a detailed one"
+        },
+        "gameAdjectiveStudio": {
+          "title": "Adjective Studio",
+          "description": "Animate the scene with adjective cards"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Rule recap"
         }
       }
     },
@@ -7438,6 +9122,10 @@
         "practice": {
           "title": "Вправа",
           "description": "Швидка розминка"
+        },
+        "game": {
+          "title": "Гра: побудова речень",
+          "description": "Складай і виправляй англійські речення"
         },
         "summary": {
           "title": "Підсумок",
@@ -7559,6 +9247,126 @@
           "description": "Упорядкуй речення з прийменниками"
         }
       }
+    },
+    "englishAdverbs": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Adverbs show how actions happen",
+            "lead": "We use adverbs to describe how somebody does something. They help us hear the style of the action.",
+            "caption": "run fast, carry books carefully, paint beautifully, sing happily"
+          },
+          "howQuestion": {
+            "title": "Ask: How?",
+            "lead": "A good adverb answer often comes after the verb. Ask How does she paint? How does he run?"
+          }
+        },
+        "form": {
+          "changeWords": {
+            "title": "Change the word into an adverb",
+            "lead": "Many adjectives become adverbs with -ly. This helps us describe the action, not the person or thing.",
+            "caption": "careful → carefully, beautiful → beautifully, happy → happily"
+          },
+          "specialWords": {
+            "title": "Remember the special words",
+            "lead": "A few important adverbs do not follow the simple -ly pattern. Learn them as special pairs.",
+            "caption": "good → well, fast → fast, hard → hard"
+          }
+        },
+        "repair": {
+          "makeItRight": {
+            "title": "Make it right",
+            "lead": "Some words look almost correct, but English uses a different adverb form. Spot the mistake and repair it.",
+            "caption": "bad → badly, fastly → fast, good → well"
+          }
+        },
+        "answer": {
+          "schoolDay": {
+            "title": "Talk about your school day",
+            "lead": "Use short action sentences to say how you work, play, or learn.",
+            "caption": "I work carefully. I write well. I run fast."
+          },
+          "wordBank": {
+            "title": "Adverb word bank",
+            "lead": "Keep these adverbs ready when you build a sentence about yourself."
+          },
+          "writeAndDraw": {
+            "title": "Write and draw",
+            "lead": "Draw your classroom or yourself in action, then write two or three short sentences with adverbs.",
+            "caption": "I listen carefully. I sing happily. I paint beautifully."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Quick recap",
+            "lead": "Keep these adverb rules in mind when you describe actions.",
+            "items": {
+              "meaning": "Adverbs tell us how an action happens.",
+              "ly": "Many adjectives change into adverbs with -ly.",
+              "special": "Some forms are special: good → well, fast → fast.",
+              "use": "Adverbs often come after the verb: She sings beautifully."
+            }
+          }
+        }
+      }
+    },
+    "englishAdverbsShell": {
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "What adverbs do"
+        },
+        "form": {
+          "title": "Form",
+          "description": "Build adverbs from describing words"
+        },
+        "repair": {
+          "title": "Repair",
+          "description": "Fix the wrong adverb form"
+        },
+        "answer": {
+          "title": "Answer",
+          "description": "Use adverbs in your own sentences"
+        },
+        "gameActionStudio": {
+          "title": "Action Studio",
+          "description": "Direct animated actions with adverb cards"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Key rules in one place"
+        }
+      },
+      "lessonTitle": "Англійська: прислівники"
+    },
+    "englishComparativesSuperlativesShell": {
+      "sections": {
+        "intro": {
+          "title": "Вступ",
+          "description": "Порівнюй дві речі й обирай переможця"
+        },
+        "form": {
+          "title": "Форма",
+          "description": "Будуй форми вищого й найвищого ступенів"
+        },
+        "repair": {
+          "title": "Виправлення",
+          "description": "Полагодь неправильну форму"
+        },
+        "answer": {
+          "title": "Відповідь",
+          "description": "Використовуй порівняння у своїх реченнях"
+        },
+        "gameCompareAndCrown": {
+          "title": "Compare & Crown",
+          "description": "Керуй анімованими сценами з картками ступенів"
+        },
+        "summary": {
+          "title": "Підсумок",
+          "description": "Головні правила в одному місці"
+        }
+      },
+      "lessonTitle": "Англійська: вищий і найвищий ступені"
     }
   }
 }

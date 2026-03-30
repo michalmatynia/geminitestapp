@@ -139,45 +139,59 @@ export const getLocaleFallbackChain = (
   return Array.from(new Set([normalizedLocale, ...configuredFallbacks, defaultLocale]));
 };
 
+const toTrimmedNonEmptyString = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const toLocalizedTextRecord = (
+  value: LocalizedText | string | null | undefined,
+): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const resolveLocalizedRecordValue = (
+  record: Record<string, unknown>,
+  keys: string[],
+): string | null => {
+  for (const key of keys) {
+    const resolved = toTrimmedNonEmptyString(record[key]);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return null;
+};
+
+const resolveLocalizedTextFromRecord = (
+  record: Record<string, unknown>,
+  locale: string | null | undefined,
+  config?: SiteI18nConfig
+): string | null =>
+  resolveLocalizedRecordValue(record, getLocaleFallbackChain(locale, config)) ??
+  resolveLocalizedRecordValue(record, Object.keys(record));
+
 export const resolveLocalizedText = (
   value: LocalizedText | string | null | undefined,
   locale: string | null | undefined,
   config?: SiteI18nConfig
 ): string | null => {
   if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : null;
+    return toTrimmedNonEmptyString(value);
   }
 
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  const record = toLocalizedTextRecord(value);
+  if (!record) {
     return null;
   }
 
-  const record = value;
-  const candidates = getLocaleFallbackChain(locale, config);
-
-  for (const candidate of candidates) {
-    const resolved = record[candidate];
-    if (typeof resolved !== 'string') {
-      continue;
-    }
-    const trimmed = resolved.trim();
-    if (trimmed.length > 0) {
-      return trimmed;
-    }
-  }
-
-  for (const rawValue of Object.values(record)) {
-    if (typeof rawValue !== 'string') {
-      continue;
-    }
-    const trimmed = rawValue.trim();
-    if (trimmed.length > 0) {
-      return trimmed;
-    }
-  }
-
-  return null;
+  return resolveLocalizedTextFromRecord(record, locale, config);
 };
 
 export const getStaticSiteLocaleParams = (config?: SiteI18nConfig): Array<{ locale: string }> =>

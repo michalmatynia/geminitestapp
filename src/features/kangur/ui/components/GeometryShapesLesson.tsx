@@ -1,12 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
+import { useCallback, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import plMessages from '@/i18n/messages/pl.json';
-import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import { KangurLessonCallout } from '@/features/kangur/ui/design/lesson-primitives';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import { GEOMETRY_SHAPES_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';
 import {
   GeometryMovingPointAnimation,
   GeometryPolygonSidesAnimation,
@@ -17,7 +20,7 @@ import {
   GeometryShapesOrbitAnimation,
   GeometrySideHighlightAnimation,
   GeometryVerticesAnimation,
-} from '@/features/kangur/ui/components/GeometryLessonAnimations';
+} from './GeometryLessonAnimations';
 import { KANGUR_CENTER_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 import {
@@ -25,22 +28,21 @@ import {
   createLessonCompletionReward,
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import {
+  createLessonFallbackTranslate,
+  type LessonTranslate,
+} from '@/features/kangur/ui/components/lesson-copy';
+import {
+  createGeometryShapesLessonTranslate,
+  resolveGeometryShapesLessonContent,
+} from './geometry-shapes-lesson-content';
 
 type SectionId = 'podstawowe' | 'ile_bokow' | 'podsumowanie' | 'game';
 type ShapeCardId = 'circle' | 'triangle' | 'square' | 'rectangle' | 'pentagon' | 'hexagon';
 
-const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
-  const resolved = key.split('.').reduce<unknown>(
-    (current, segment) =>
-      typeof current === 'object' && current !== null
-        ? (current as Record<string, unknown>)[segment]
-        : undefined,
-    messages
-  );
-
-  return typeof resolved === 'string' ? resolved : key;
-};
+const GEOMETRY_SHAPE_WORKSHOP_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_shape_workshop'
+);
 
 const SHAPE_CARD_IDS = [
   { id: 'circle', emoji: '⚪' },
@@ -50,20 +52,6 @@ const SHAPE_CARD_IDS = [
   { id: 'pentagon', emoji: '⬟' },
   { id: 'hexagon', emoji: '⬢' },
 ] as const satisfies ReadonlyArray<{ id: ShapeCardId; emoji: string }>;
-
-function GeometryShapesGameStage({
-  onFinish,
-  onStart,
-}: {
-  onFinish: () => void;
-  onStart: () => void;
-}): React.JSX.Element {
-  useEffect(() => {
-    onStart();
-  }, [onStart]);
-
-  return <GeometryDrawingGame onFinish={onFinish} />;
-}
 
 const buildShapeCards = (translations: LessonTranslate) =>
   SHAPE_CARD_IDS.map((shape) => ({
@@ -301,34 +289,39 @@ const buildGeometryShapesSections = (translations: LessonTranslate) => [
   },
 ] as const;
 
-const translateStaticGeometryShapes = createStaticTranslator(
-  plMessages.KangurStaticLessons.geometryShapes as Record<string, unknown>
-);
+const translateStaticGeometryShapes = createGeometryShapesLessonTranslate(CONTENT);
 
 export const SLIDES = buildGeometryShapesSlides(translateStaticGeometryShapes);
 export const HUB_SECTIONS = buildGeometryShapesSections(translateStaticGeometryShapes);
 
-export default function GeometryShapesLesson(): React.JSX.Element {
+export default function GeometryShapesLesson({ lessonTemplate }: LessonProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
+  const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_shapes');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
   const translations = useTranslations('KangurStaticLessons.geometryShapes');
   const [rewarded, setRewarded] = useState(false);
-  const translate = (key: string): string => translations(key as never);
+  const fallbackTranslate = createLessonFallbackTranslate(
+    translations as LessonTranslate & { has?: (key: string) => boolean }
+  );
+  const resolvedContent = resolveGeometryShapesLessonContent(resolvedTemplate, fallbackTranslate);
+  const translate = createGeometryShapesLessonTranslate(resolvedContent);
   const sections = buildGeometryShapesSections(translate);
   const slides = buildGeometryShapesSlides(translate);
 
   const handleGameStart = useCallback((): void => {
     if (rewarded) return;
-    const progress = loadProgress();
+    const progress = loadProgress({ ownerKey });
     const reward = createLessonCompletionReward(progress, 'geometry_shapes', 60);
-    addXp(reward.xp, reward.progressUpdates);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey });
     setRewarded(true);
-  }, [rewarded]);
+  }, [ownerKey, rewarded]);
 
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='geometry_shapes'
       lessonEmoji='🔷'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={resolvedTemplate?.title?.trim() || translate('lessonTitle')}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-violet-reverse'
@@ -339,15 +332,17 @@ export default function GeometryShapesLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game',
-          stage: {
+          onShellEnter: handleGameStart,
+          shell: {
             accent: 'violet',
             icon: '✍️',
             shellTestId: 'geometry-shapes-game-shell',
-            title: translate('game.stageTitle'),
+            title: translate('game.gameTitle'),
           },
-          render: ({ onFinish }) => (
-            <GeometryShapesGameStage onFinish={onFinish} onStart={handleGameStart} />
-          ),
+          launchableInstance: {
+            gameId: 'geometry_shape_workshop',
+            instanceId: GEOMETRY_SHAPE_WORKSHOP_INSTANCE_ID,
+          },
         },
       ]}
     />

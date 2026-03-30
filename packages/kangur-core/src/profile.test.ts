@@ -63,6 +63,26 @@ describe('kangur-core profile localization', () => {
     expect(insights.strongest[0]?.title).toBe('Clock');
   });
 
+  it('keeps counts while limiting weakest and strongest lesson selections', () => {
+    const insights = buildLessonMasteryInsights(createProgressWithMastery(), 1, 'en');
+
+    expect(insights.trackedLessons).toBe(3);
+    expect(insights.masteredLessons).toBe(1);
+    expect(insights.lessonsNeedingPractice).toBe(2);
+    expect(insights.weakest).toEqual([
+      expect.objectContaining({
+        componentId: 'division',
+        title: 'Division',
+      }),
+    ]);
+    expect(insights.strongest).toEqual([
+      expect.objectContaining({
+        componentId: 'clock',
+        title: 'Clock',
+      }),
+    ]);
+  });
+
   it('localizes learner snapshot labels and recommendations in German', () => {
     const snapshot = buildKangurLearnerProfileSnapshot({
       dailyGoalGames: 3,
@@ -101,5 +121,36 @@ describe('kangur-core profile localization', () => {
         title: 'Lektion wiederholen: Division',
       }),
     ]);
+  });
+
+  it('keeps longest streaks while dropping current streak when the latest session is too old', () => {
+    const snapshot = buildKangurLearnerProfileSnapshot({
+      dailyGoalGames: 3,
+      locale: 'en',
+      now: new Date('2026-03-10T15:00:00.000Z'),
+      progress: createProgressWithMastery(),
+      scores: [
+        createScore({
+          id: 's1',
+          created_date: '2026-03-07T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's2',
+          created_date: '2026-03-05T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's3',
+          created_date: '2026-03-04T12:00:00.000Z',
+        }),
+        createScore({
+          id: 's4',
+          created_date: '2026-03-03T12:00:00.000Z',
+        }),
+      ],
+    });
+
+    expect(snapshot.currentStreakDays).toBe(0);
+    expect(snapshot.longestStreakDays).toBe(3);
+    expect(snapshot.lastPlayedAt).toBe('2026-03-07T12:00:00.000Z');
   });
 });

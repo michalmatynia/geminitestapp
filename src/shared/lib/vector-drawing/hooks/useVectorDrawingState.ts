@@ -34,19 +34,20 @@ export type UseVectorDrawingStateProps = {
   selectedPointIndex?: number | null;
 };
 
-export function useVectorDrawingState({
-  value,
-  defaultValue,
-  onChange,
-  onOutput,
-  tool,
-  defaultTool = 'select',
-  onToolChange,
-  onSelectShape,
-  onSelectPoint,
-  activeShapeId,
-  selectedPointIndex,
-}: UseVectorDrawingStateProps) {
+export function useVectorDrawingState(props: UseVectorDrawingStateProps) {
+  const {
+    value,
+    defaultValue,
+    onChange,
+    onOutput,
+    tool,
+    defaultTool = 'select',
+    onToolChange,
+    onSelectShape,
+    onSelectPoint,
+    activeShapeId,
+    selectedPointIndex,
+  } = props;
   const [internalShapes, setInternalShapes] = useState<VectorShape[]>(defaultValue ?? []);
   const [internalTool, setInternalTool] = useState<VectorToolMode>(defaultTool);
 

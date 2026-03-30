@@ -16,7 +16,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
-import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export async function postDatabasesPreviewHandler(

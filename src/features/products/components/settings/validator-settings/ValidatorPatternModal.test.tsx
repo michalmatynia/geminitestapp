@@ -43,15 +43,14 @@ vi.mock('./ValidatorDocsTooltips', () => ({
 }));
 
 vi.mock('@/shared/ui', () => ({
-  FormModal: ({
-    open,
-    title,
-    children,
-  }: {
+  FormModal: (props: {
     open: boolean;
     title: string;
     children?: React.ReactNode;
-  }) => (open ? <div><h1>{title}</h1>{children}</div> : null),
+  }) => {
+    const { open, title, children } = props;
+    return open ? <div><h1>{title}</h1>{children}</div> : null;
+  },
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
   SelectSimple: () => <div data-testid='select-simple' />,

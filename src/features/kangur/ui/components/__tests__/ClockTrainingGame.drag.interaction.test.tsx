@@ -1,5 +1,13 @@
-import { act, fireEvent, render, screen, waitFor } from '../../../../../../__tests__/test-utils';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '../../../../../../__tests__/test-utils';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { KANGUR_CLOCK_THEME_COLORS } from '../clock-theme';
 
 const { persistKangurSessionScoreMock, mobileInteractionLockMock, mobileInteractionUnlockMock } =
   vi.hoisted(() => ({
@@ -39,6 +47,34 @@ const getClockDisplay = (): HTMLElement => {
     throw new Error('Clock display not found.');
   }
   return display;
+};
+
+const expectClockStyleAttributeToContain = (element: HTMLElement, declaration: string): void => {
+  expect(element.getAttribute('style') ?? '').toContain(declaration);
+};
+
+const expectClockSubmitButtonFeedbackStyle = ({
+  button,
+  kind,
+}: {
+  button: HTMLElement;
+  kind: 'correct' | 'wrong';
+}): void => {
+  const backgroundColor =
+    kind === 'correct'
+      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectBackground
+      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongBackground;
+  const borderColor =
+    kind === 'correct'
+      ? KANGUR_CLOCK_THEME_COLORS.feedbackCorrectBorder
+      : KANGUR_CLOCK_THEME_COLORS.feedbackWrongBorder;
+
+  expectClockStyleAttributeToContain(button, `background-color: ${backgroundColor};`);
+  expectClockStyleAttributeToContain(button, `border-color: ${borderColor};`);
+  expectClockStyleAttributeToContain(
+    button,
+    `color: ${KANGUR_CLOCK_THEME_COLORS.contrastText};`
+  );
 };
 
 const getHourHand = (container: HTMLElement): Element => {
@@ -109,8 +145,26 @@ const parseDisplayedTime = (value: string): { hours: number; minutes: number } =
   return { hours, minutes };
 };
 
-const getByExactTextContent = (expected: string[]): HTMLElement =>
-  screen.getByText((content) => expected.includes(content));
+const getLiveUi = (): HTMLElement => {
+  const liveUi = screen.queryByTestId('clock-training-live-ui');
+  if (!(liveUi instanceof HTMLElement)) {
+    throw new Error('Clock training live UI not found.');
+  }
+  return liveUi;
+};
+
+const getSummaryShell = (): HTMLElement => {
+  const summaryShell = screen.queryByTestId('clock-training-summary-shell');
+  if (!(summaryShell instanceof HTMLElement)) {
+    throw new Error('Clock training summary shell not found.');
+  }
+  return summaryShell;
+};
+
+const getLiveTaskLabel = (label: string): HTMLElement => within(getLiveUi()).getByText(label);
+
+const getByExactTextContent = (expected: string[], scope: HTMLElement = document.body): HTMLElement =>
+  within(scope).getByText((content) => expected.includes(content));
 
 const hourToAngle = (hours: number): number => (hours % 12) * 30;
 const minuteToAngle = (minutes: number): number => minutes * 6;
@@ -235,7 +289,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const minuteHand = getMinuteHand(container);
     const coarseSnapButton = screen.getByTestId('clock-snap-mode-5');
     const exactSnapButton = screen.getByTestId('clock-snap-mode-1');
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw zegar na godzinę');
     const clockDisplay = screen.getByTestId('clock-time-display');
     const snapModeSwitch = screen.getByTestId('clock-snap-mode-switch');
     const modeSwitch = screen.getByTestId('clock-mode-switch');
@@ -250,11 +304,23 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(clockDisplay).toHaveClass('rounded-full', 'border');
     expect(snapModeSwitch).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
     expect(modeSwitch).toHaveClass('kangur-segmented-control', 'rounded-[28px]', 'border');
-    expect(screen.getByTestId('clock-hour-legend-dot')).toHaveClass('bg-rose-500');
-    expect(screen.getByTestId('clock-minute-legend-dot')).toHaveClass('bg-emerald-500');
+    expect(screen.getByTestId('clock-hour-legend-dot')).toHaveAttribute(
+      'style',
+      expect.stringContaining(`background-color: ${KANGUR_CLOCK_THEME_COLORS.interactiveHourHand}`)
+    );
+    expect(screen.getByTestId('clock-minute-legend-dot')).toHaveAttribute(
+      'style',
+      expect.stringContaining(
+        `background-color: ${KANGUR_CLOCK_THEME_COLORS.interactiveMinuteHand}`
+      )
+    );
     expect(taskLabel).toHaveClass('rounded-full', 'border');
     expect(screen.getByTestId('clock-task-prompt').parentElement).toHaveClass(
       'soft-card'
+    );
+    expect(screen.getByTestId('clock-task-prompt')).toHaveAttribute(
+      'style',
+      expect.stringContaining(`color: ${KANGUR_CLOCK_THEME_COLORS.promptText}`)
     );
 
     fireEvent.click(exactSnapButton);
@@ -277,12 +343,12 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.queryByTestId('clock-training-section-badge')).toBeNull();
     expect(screen.queryByTestId('clock-training-guidance')).toBeNull();
     expect(screen.queryByTestId('clock-training-guidance-title')).toBeNull();
-    expect(screen.getByText('Ustaw pełną godzinę')).toBeInTheDocument();
+    expect(getLiveTaskLabel('Ustaw pełną godzinę')).toBeInTheDocument();
     expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
     expect(screen.queryByTestId('clock-interaction-hint')).toBeNull();
-    expect(
-      container.querySelector('circle[fill=\'var(--kangur-soft-card-background)\']')
-    ).not.toBeNull();
+    const face = container.querySelector('circle[r="95"]');
+    expect(face).not.toBeNull();
+    expect(face?.getAttribute('fill')).toContain('var(--kangur-soft-card-background');
 
     dragHandToAngle(minuteHand, 180);
     await waitFor(() => {
@@ -303,7 +369,7 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.queryByTestId('clock-training-section-badge')).toBeNull();
     expect(screen.queryByTestId('clock-training-guidance')).toBeNull();
     expect(screen.queryByTestId('clock-training-guidance-title')).toBeNull();
-    expect(screen.getByText('Ustaw minuty na tarczy')).toBeInTheDocument();
+    expect(getLiveTaskLabel('Ustaw minuty na tarczy')).toBeInTheDocument();
     expect(screen.getByTestId('clock-task-prompt')).toHaveTextContent(
       'Krótka wskazówka zostaje na 12'
     );
@@ -324,7 +390,7 @@ describe('ClockTrainingGame drag interactions', () => {
   it('turns Sprawdź red after a near miss in the minutes section', async () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} section='minutes' />);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw minuty na tarczy');
+    const taskLabel = getLiveTaskLabel('Ustaw minuty na tarczy');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:05';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 5) % 60;
@@ -333,10 +399,10 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
-        'border-rose-500',
-        'bg-rose-500'
-      );
+      expectClockSubmitButtonFeedbackStyle({
+        button: screen.getByTestId('clock-submit-button'),
+        kind: 'wrong',
+      });
     });
   });
 
@@ -344,7 +410,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
@@ -356,10 +422,10 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
-        'border-rose-500',
-        'bg-rose-500'
-      );
+      expectClockSubmitButtonFeedbackStyle({
+        button: screen.getByTestId('clock-submit-button'),
+        kind: 'wrong',
+      });
     });
   });
 
@@ -367,7 +433,7 @@ describe('ClockTrainingGame drag interactions', () => {
     const { container } = render(<ClockTrainingGame onFinish={vi.fn()} />);
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
@@ -441,7 +507,7 @@ describe('ClockTrainingGame drag interactions', () => {
 
     const hourHand = getHourHand(container);
     const minuteHand = getMinuteHand(container);
-    const taskLabel = screen.getByText('Ustaw zegar na godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw zegar na godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
     const nearMinutes = (target.minutes + 55) % 60;
@@ -453,10 +519,10 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
-        'border-rose-500',
-        'bg-rose-500'
-      );
+      expectClockSubmitButtonFeedbackStyle({
+        button: screen.getByTestId('clock-submit-button'),
+        kind: 'wrong',
+      });
     });
     expect(screen.queryByTestId('clock-retry-count')).toBeNull();
   });
@@ -467,7 +533,7 @@ describe('ClockTrainingGame drag interactions', () => {
       <ClockTrainingGame onFinish={vi.fn()} onPracticeSuccess={onPracticeSuccess} section='hours' />
     );
     const hourHand = getHourHand(container);
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
 
@@ -475,10 +541,10 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
-        'border-emerald-500',
-        'bg-emerald-500'
-      );
+      expectClockSubmitButtonFeedbackStyle({
+        button: screen.getByTestId('clock-submit-button'),
+        kind: 'correct',
+      });
     });
 
     expect(onPracticeSuccess).toHaveBeenCalledTimes(1);
@@ -503,7 +569,9 @@ describe('ClockTrainingGame drag interactions', () => {
     expect(screen.getByTestId('clock-task-progress-label')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
-    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveClass('bg-indigo-500');
+    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveStyle({
+      backgroundColor: KANGUR_CLOCK_THEME_COLORS.progressPracticeActive,
+    });
     expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveClass(
       'kangur-step-pill-pending'
     );
@@ -511,10 +579,10 @@ describe('ClockTrainingGame drag interactions', () => {
     dragHandToAngle(hourHand, hourToAngle(3));
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
-    expect(screen.getByRole('button', { name: 'Dobrze! ✅' })).toHaveClass(
-      'border-emerald-500',
-      'bg-emerald-500'
-    );
+    expectClockSubmitButtonFeedbackStyle({
+      button: screen.getByRole('button', { name: 'Dobrze! ✅' }),
+      kind: 'correct',
+    });
     expect(screen.getByTestId('clock-submit-feedback')).toHaveTextContent(
       'Brawo! To dobra godzina!'
     );
@@ -523,12 +591,16 @@ describe('ClockTrainingGame drag interactions', () => {
       vi.advanceTimersByTime(1200);
     });
 
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     expect(taskLabel.nextElementSibling).toHaveTextContent('7:00');
     expect(screen.queryByTestId('clock-submit-feedback')).toBeNull();
     expect(screen.getByTestId('clock-task-progress-label')).toHaveTextContent('Zadanie 2 z 2');
-    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveClass('bg-indigo-200');
-    expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveClass('bg-indigo-500');
+    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveStyle({
+      backgroundColor: KANGUR_CLOCK_THEME_COLORS.progressPracticeDone,
+    });
+    expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveStyle({
+      backgroundColor: KANGUR_CLOCK_THEME_COLORS.progressPracticeActive,
+    });
   });
 
   it('turns Sprawdź red and still advances to the next hours task in the series', async () => {
@@ -550,10 +622,10 @@ describe('ClockTrainingGame drag interactions', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
-    expect(screen.getByRole('button', { name: 'Błąd! ❌' })).toHaveClass(
-      'border-rose-500',
-      'bg-rose-500'
-    );
+    expectClockSubmitButtonFeedbackStyle({
+      button: screen.getByRole('button', { name: 'Błąd! ❌' }),
+      kind: 'wrong',
+    });
     expect(screen.getByTestId('clock-submit-feedback')).toHaveTextContent(
       'Prawie! To sąsiednia godzina.'
     );
@@ -562,12 +634,16 @@ describe('ClockTrainingGame drag interactions', () => {
       vi.advanceTimersByTime(2100);
     });
 
-    const nextTaskLabel = screen.getByText('Ustaw pełną godzinę');
+    const nextTaskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     expect(nextTaskLabel.nextElementSibling).toHaveTextContent('7:00');
     expect(screen.queryByTestId('clock-submit-feedback')).toBeNull();
     expect(screen.getByTestId('clock-task-progress-label')).toHaveTextContent('Zadanie 2 z 3');
-    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveClass('bg-indigo-200');
-    expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveClass('bg-indigo-500');
+    expect(screen.getByTestId('clock-task-progress-pill-0')).toHaveStyle({
+      backgroundColor: KANGUR_CLOCK_THEME_COLORS.progressPracticeDone,
+    });
+    expect(screen.getByTestId('clock-task-progress-pill-1')).toHaveStyle({
+      backgroundColor: KANGUR_CLOCK_THEME_COLORS.progressPracticeActive,
+    });
     expect(screen.getByTestId('clock-task-progress-pill-2')).toHaveClass(
       'kangur-step-pill-pending'
     );
@@ -603,7 +679,7 @@ describe('ClockTrainingGame drag interactions', () => {
       vi.advanceTimersByTime(1200);
     });
 
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     expect(taskLabel.nextElementSibling).toHaveTextContent('7:00');
   });
 
@@ -677,7 +753,7 @@ describe('ClockTrainingGame drag interactions', () => {
       />
     );
 
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     expect(taskLabel.nextElementSibling).toHaveTextContent('11:00');
   });
 
@@ -731,12 +807,14 @@ describe('ClockTrainingGame drag interactions', () => {
     });
 
     expect(screen.getByTestId('clock-training-summary-shell')).toBeInTheDocument();
-    expect(getByExactTextContent(['shared.scoreLabel: 0/1', 'Wynik: 0/1'])).toBeInTheDocument();
+    expect(
+      getByExactTextContent(['shared.scoreLabel: 0/1', 'Wynik: 0/1'], getSummaryShell())
+    ).toBeInTheDocument();
     expect(
       getByExactTextContent([
         'clockTraining.summary.hours.retry',
         'Poćwicz jeszcze pełne godziny i obserwuj krótką wskazówkę.',
-      ])
+      ], getSummaryShell())
     ).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
@@ -759,7 +837,7 @@ describe('ClockTrainingGame drag interactions', () => {
       expect(screen.getByTestId('clock-challenge-timer')).toBeInTheDocument();
     });
 
-    const taskLabel = screen.getByText('Ustaw pełną godzinę');
+    const taskLabel = getLiveTaskLabel('Ustaw pełną godzinę');
     const taskValueText = taskLabel.nextElementSibling?.textContent ?? '12:00';
     const target = parseDisplayedTime(taskValueText);
 
@@ -767,10 +845,10 @@ describe('ClockTrainingGame drag interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sprawdź! ✅' }));
 
     await waitFor(() => {
-      expect(screen.getByTestId('clock-submit-button')).toHaveClass(
-        'border-emerald-500',
-        'bg-emerald-500'
-      );
+      expectClockSubmitButtonFeedbackStyle({
+        button: screen.getByTestId('clock-submit-button'),
+        kind: 'correct',
+      });
     });
 
     expect(onPracticeSuccess).not.toHaveBeenCalled();
@@ -780,5 +858,33 @@ describe('ClockTrainingGame drag interactions', () => {
     render(<ClockTrainingGame onFinish={vi.fn()} section='hours' showTimeDisplay={false} />);
 
     expect(screen.queryByTestId('clock-time-display')).toBeNull();
+  });
+
+  it('can hide each clock hand independently for scaffold previews', () => {
+    const { container, rerender } = render(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        section='mixed'
+        showHourHand={false}
+        showMinuteHand
+      />
+    );
+
+    expect(container.querySelector('[data-testid="clock-hour-hand"]')).toBeNull();
+    expect(container.querySelector('[data-testid="clock-minute-hand"]')).not.toBeNull();
+    expect(screen.queryByTestId('clock-snap-mode-switch')).toBeInTheDocument();
+
+    rerender(
+      <ClockTrainingGame
+        onFinish={vi.fn()}
+        section='mixed'
+        showHourHand
+        showMinuteHand={false}
+      />
+    );
+
+    expect(container.querySelector('[data-testid="clock-hour-hand"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="clock-minute-hand"]')).toBeNull();
+    expect(screen.queryByTestId('clock-snap-mode-switch')).toBeNull();
   });
 });

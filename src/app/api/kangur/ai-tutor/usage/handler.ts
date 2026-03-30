@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
@@ -11,17 +12,23 @@ import {
   getKangurAiTutorSettingsForLearner,
   parseKangurAiTutorSettings,
   resolveKangurAiTutorAppSettings,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import type { KangurAiTutorUsageResponse } from '@/shared/contracts/kangur-ai-tutor';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
+
+export const querySchema = z.object({
+  locale: z.preprocess((value) => normalizeOptionalQueryString(value) ?? 'pl', z.string()),
+});
 
 export async function getKangurAiTutorUsageHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
-  const tutorContent = await getKangurAiTutorContent('pl');
+  const query = querySchema.parse(ctx.query ?? {});
+  const tutorContent = await getKangurAiTutorContent(query.locale);
   const errorMessages = tutorContent.usageApi.availabilityErrors;
   const actor = await resolveKangurActor(req);
   const learnerId = requireActiveLearner(actor).id;

@@ -31,6 +31,7 @@ import {
   isSameOriginRequest,
   isTrustedOriginRequest,
 } from '@/shared/lib/security/csrf';
+import { resolveServiceFromSource } from '@/shared/lib/api/source-service';
 import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';
@@ -93,27 +94,6 @@ const readHeaderTrimmed = (request: NextRequest, key: string): string | null => 
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const resolveServiceFromSource = (source: string): string => {
-  const trimmed = source.trim();
-  if (!trimmed) return 'api.unknown';
-  const segments = trimmed.split('.').filter(Boolean);
-  const maybeMethod = segments[segments.length - 1];
-  const isMethod =
-    maybeMethod === 'GET' ||
-    maybeMethod === 'POST' ||
-    maybeMethod === 'PUT' ||
-    maybeMethod === 'PATCH' ||
-    maybeMethod === 'DELETE' ||
-    maybeMethod === 'HEAD' ||
-    maybeMethod === 'OPTIONS';
-  const base = isMethod ? segments.slice(0, -1) : segments;
-  const first = base[0];
-  const second = base[1];
-  if (first && second) return `${first}.${second}`;
-  if (first) return first;
-  return 'api.unknown';
-};
-
 const resolveSuccessLoggingPolicy = (options: ApiHandlerOptions): 'all' | 'slow' | 'off' => {
   if (options.successLogging) return options.successLogging;
   if (options.logSuccess === true) return 'all';
@@ -166,32 +146,72 @@ const shouldSkipCsrfInTestEnv = (request: NextRequest): boolean => {
   }
 };
 
-const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => {
-  const method = request.method.toUpperCase();
-  if (CSRF_SAFE_METHODS.has(method)) return;
-  const shouldRequire = options.requireCsrf !== false;
-  if (!shouldRequire) return;
-  if (shouldSkipCsrfInTestEnv(request)) return;
-  const isAllowedRequestOrigin =
-    isSameOriginRequest(request) || isTrustedOriginRequest(request, options.corsOrigins);
-  if (!isAllowedRequestOrigin) {
-    throw forbiddenError('Invalid request origin.');
+const shouldEnforceCsrfProtection = (
+  request: NextRequest,
+  options: ApiHandlerOptions
+): boolean => {
+  if (CSRF_SAFE_METHODS.has(request.method.toUpperCase())) return false;
+  if (options.requireCsrf === false) return false;
+  if (shouldSkipCsrfInTestEnv(request)) return false;
+  return true;
+};
+
+const hasAllowedCsrfOrigin = (request: NextRequest, options: ApiHandlerOptions): boolean =>
+  isSameOriginRequest(request) || isTrustedOriginRequest(request, options.corsOrigins);
+
+const readCsrfHeaderToken = (request: NextRequest): string | null =>
+  getCsrfTokenFromHeaders(request)?.trim() || null;
+
+const parseCookieHeaderTokens = (cookieHeader: string | null): string[] => {
+  if (!cookieHeader) return [];
+  return cookieHeader
+    .split(';')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.startsWith(`${CSRF_COOKIE_NAME}=`))
+    .map((entry) => entry.slice(CSRF_COOKIE_NAME.length + 1).trim())
+    .filter(Boolean);
+};
+
+const readCsrfCookieTokens = (request: NextRequest): string[] => {
+  try {
+    const cookies = request.cookies?.getAll?.(CSRF_COOKIE_NAME) ?? [];
+    if (cookies.length > 0) {
+      return cookies
+        .map((cookie: { value: string }) => cookie.value?.trim())
+        .filter((token: string | undefined): token is string => Boolean(token));
+    }
+  } catch (error) {
+    void ErrorSystem.captureException(error);
   }
-  const headerToken = getCsrfTokenFromHeaders(request)?.trim() || null;
+  return parseCookieHeaderTokens(request.headers.get('cookie'));
+};
+
+const assertValidCsrfHeaderToken = (request: NextRequest): string => {
+  const headerToken = readCsrfHeaderToken(request);
   if (!headerToken) {
     throw forbiddenError('Invalid CSRF token.');
   }
-  const cookieTokens = request.cookies
-    .getAll(CSRF_COOKIE_NAME)
-    .map((cookie: { value: string }) => cookie.value?.trim())
-    .filter((token: string | undefined): token is string => Boolean(token));
+  return headerToken;
+};
+
+const assertMatchingCsrfCookieToken = (cookieTokens: string[], headerToken: string): void => {
+  if (cookieTokens.length > 0 && !cookieTokens.includes(headerToken)) {
+    throw forbiddenError('Invalid CSRF token.');
+  }
+};
+
+const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => {
+  if (!shouldEnforceCsrfProtection(request, options)) return;
+  if (!hasAllowedCsrfOrigin(request, options)) {
+    throw forbiddenError('Invalid request origin.');
+  }
+  const headerToken = assertValidCsrfHeaderToken(request);
+  const cookieTokens = readCsrfCookieTokens(request);
 
   // Prefer strict double-submit validation when cookie exists.
   // If cookie is temporarily absent but request is same-origin and header is present,
   // accept to avoid false negatives in dev/proxy edge cases.
-  if (cookieTokens.length > 0 && !cookieTokens.includes(headerToken)) {
-    throw forbiddenError('Invalid CSRF token.');
-  }
+  assertMatchingCsrfCookieToken(cookieTokens, headerToken);
 };
 
 const appendVaryHeader = (response: Response, value: string): void => {
@@ -323,8 +343,9 @@ const parseJsonBody = async (
     throw payloadTooLargeError('Payload too large', { limit: options.maxBodyBytes });
   }
 
-  const clone = request.clone();
-  const text = await clone.text();
+  // Consume the request body directly. The parsed payload is forwarded via `ctx.body`,
+  // so handlers should not need to re-read the raw stream, and cloning can hang in tests.
+  const text = await request.text();
   if (text.length > options.maxBodyBytes) {
     throw payloadTooLargeError('Payload too large', { limit: options.maxBodyBytes });
   }
@@ -349,6 +370,14 @@ const parseJsonBody = async (
   }
 
   return { body: parsed };
+};
+
+const parseWithSchema = <T>(schema: ZodSchema<T>, value: unknown, message: string): T => {
+  const validation = schema.safeParse(value);
+  if (!validation.success) {
+    throw validationError(message, { issues: validation.error.flatten() });
+  }
+  return validation.data;
 };
 
 const applySecurityHeaders = (response: Response): void => {
@@ -408,7 +437,8 @@ export function apiHandler(
     const requestId = readHeaderTrimmed(request, 'x-request-id') ?? randomUUID();
     const traceId = readHeaderTrimmed(request, 'x-trace-id') ?? randomUUID();
     const correlationId = readHeaderTrimmed(request, 'x-correlation-id') ?? requestId;
-    const service = options.service?.trim() || resolveServiceFromSource(options.source);
+    const service =
+      options.service?.trim() || resolveServiceFromSource(options.source, 'api.unknown');
     const startTime = performance.now();
     const user = options.resolveSessionUser === false ? null : await getSessionUser();
 
@@ -450,13 +480,11 @@ export function apiHandler(
 
           if (options.querySchema) {
             const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
-            const validation = options.querySchema.safeParse(queryParams);
-            if (!validation.success) {
-              throw validationError('Query validation failed', {
-                issues: validation.error.flatten(),
-              });
-            }
-            context.query = validation.data;
+            context.query = parseWithSchema(
+              options.querySchema,
+              queryParams,
+              'Query validation failed'
+            );
           }
 
           const response = await handler(request, context);
@@ -560,7 +588,8 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
     const requestId = readHeaderTrimmed(request, 'x-request-id') ?? randomUUID();
     const traceId = readHeaderTrimmed(request, 'x-trace-id') ?? randomUUID();
     const correlationId = readHeaderTrimmed(request, 'x-correlation-id') ?? requestId;
-    const service = options.service?.trim() || resolveServiceFromSource(options.source);
+    const service =
+      options.service?.trim() || resolveServiceFromSource(options.source, 'api.unknown');
     const startTime = performance.now();
     const user = options.resolveSessionUser === false ? null : await getSessionUser();
 
@@ -615,12 +644,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           handlerContext.params = params as Record<string, string | string[]>;
 
           if (options.paramsSchema) {
-            const validation = options.paramsSchema.safeParse(params);
-            if (!validation.success) {
-              throw validationError('Parameter validation failed', {
-                issues: validation.error.flatten(),
-              });
-            }
+            parseWithSchema(options.paramsSchema, params, 'Parameter validation failed');
           }
 
           const response = await handler(request, handlerContext, params);
@@ -790,7 +814,8 @@ async function createErrorResponseWithTiming(
   })();
   const queryKeys = getQueryKeys(request);
   const bodyShape = context.body !== undefined ? summarizeBodyShape(context.body) : null;
-  const service = options.service?.trim() || resolveServiceFromSource(options.source);
+  const service =
+    options.service?.trim() || resolveServiceFromSource(options.source, 'api.unknown');
   const { resolved, userMessage, fingerprint } = await reportError({
     error,
     source: options.source,

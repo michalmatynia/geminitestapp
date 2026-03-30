@@ -18,6 +18,7 @@ import {
   kangurLearnerInteractionHistorySchema,
 } from '@kangur/contracts';
 import {
+  isRecoverableKangurClientFetchError,
   withKangurClientError,
 } from '@/features/kangur/observability/client';
 import {
@@ -246,10 +247,14 @@ export const requestLearnerSessions = async (
     },
     {
       fallback: createKangurClientFallback('learnerSessions.list'),
-      shouldReport: (error) => !isKangurAuthStatusError(error),
+      shouldReport: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('learnerSessions.list', error, {
@@ -296,10 +301,14 @@ export const requestLearnerInteractions = async (
     },
     {
       fallback: createKangurClientFallback('learnerInteractions.list'),
-      shouldReport: (error) => !isKangurAuthStatusError(error),
+      shouldReport: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('learnerInteractions.list', error, {

@@ -6,17 +6,28 @@ import {
   PUT as updatePage,
   DELETE as deletePage,
 } from '@/app/api/cms/pages/[id]/route';
+import { POST_handler as createPageHandler } from '@/app/api/cms/pages/handler';
 import { GET as listPages, POST as createPage } from '@/app/api/cms/pages/route';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
+import { getCmsRepository } from '@/features/cms/server';
 
-vi.mock('@/features/cms/services/cms-repository', () => ({
-  getCmsRepository: vi.fn(),
-}));
+vi.mock('@/features/cms/server', async () => {
+  const actual = await vi.importActual<typeof import('@/features/cms/server')>(
+    '@/features/cms/server'
+  );
+  return {
+    ...actual,
+    getCmsRepository: vi.fn(),
+  };
+});
 
 vi.mock('@/features/cms/services/cms-domain', () => ({
   resolveCmsDomainFromRequest: vi.fn().mockResolvedValue({ id: 'd1', domain: 'localhost' }),
   getSlugsForDomain: vi.fn().mockResolvedValue([]),
   resolveCmsDomainScopeById: vi.fn(),
+}));
+
+vi.mock('@/shared/utils/observability/activity-service', () => ({
+  logActivity: vi.fn().mockResolvedValue(null),
 }));
 
 describe('CMS Pages API', () => {
@@ -83,7 +94,15 @@ describe('CMS Pages API', () => {
         body: JSON.stringify(pageData),
       });
 
-      const res = await createPage(req);
+      const res = await createPageHandler(req, {
+        body: pageData,
+        correlationId: 'test-correlation-id',
+        getElapsedMs: () => 0,
+        requestId: 'test-request-id',
+        startTime: 0,
+        traceId: 'test-trace-id',
+        userId: null,
+      });
       const data = await res.json();
 
       expect(res.status).toBe(200);

@@ -13,6 +13,7 @@ import {
   useProductListingsLogs,
   useProductListingsModals,
 } from '@/features/integrations/context/ProductListingsContext';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
@@ -37,6 +38,7 @@ interface ProductListingsModalProps extends EntityModalProps<ProductWithImages> 
   onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
   filterIntegrationSlug?: string | null | undefined;
   onListingsUpdated?: (() => void) | undefined;
+  recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 }
 
 const normalizeSlug = (value: string | null | undefined): string =>
@@ -124,7 +126,7 @@ function ProductListingsModalContent(): React.JSX.Element {
 }
 
 function ProductListingsModalProviders(): React.JSX.Element {
-  const { product, onListingsUpdated, onClose, onStartListing, filterIntegrationSlug } =
+  const { product, onListingsUpdated, onClose, onStartListing, filterIntegrationSlug, recoveryContext } =
     useProductListingsModalViewContext();
 
   return (
@@ -134,6 +136,7 @@ function ProductListingsModalProviders(): React.JSX.Element {
       onClose={onClose}
       onStartListing={onStartListing}
       filterIntegrationSlug={filterIntegrationSlug}
+      recoveryContext={recoveryContext}
     >
       <ProductListingsModalContent />
     </ProductListingsProvider>
@@ -147,6 +150,7 @@ export function ProductListingsModal({
   onStartListing,
   filterIntegrationSlug,
   onListingsUpdated,
+  recoveryContext,
 }: ProductListingsModalProps): React.JSX.Element | null {
   const viewContextValue = React.useMemo(
     () => ({
@@ -155,8 +159,9 @@ export function ProductListingsModal({
       ...(onStartListing !== undefined && { onStartListing }),
       ...(filterIntegrationSlug !== undefined && { filterIntegrationSlug }),
       ...(onListingsUpdated !== undefined && { onListingsUpdated }),
+      ...(recoveryContext !== undefined && { recoveryContext }),
     }),
-    [filterIntegrationSlug, onClose, onListingsUpdated, onStartListing, product]
+    [filterIntegrationSlug, onClose, onListingsUpdated, onStartListing, product, recoveryContext]
   );
 
   if (!product || !isOpen) return null;

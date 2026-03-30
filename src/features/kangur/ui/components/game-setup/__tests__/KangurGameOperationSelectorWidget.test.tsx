@@ -1,0 +1,967 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+  buildProgress,
+  buildRuntime,
+  operationSelectorTranslations,
+} from '../KangurGameOperationSelectorWidget.test-support';
+
+const {
+  getCurrentKangurDailyQuestMock,
+  operationSelectorPropsMock,
+  useKangurGameRuntimeMock,
+} = vi.hoisted(() => ({
+  getCurrentKangurDailyQuestMock: vi.fn(),
+  operationSelectorPropsMock: vi.fn(),
+  useKangurGameRuntimeMock: vi.fn(),
+}));
+
+const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
+  useKangurSubjectFocusMock: vi.fn(),
+}));
+
+const { ageGroupState } = vi.hoisted(() => ({
+  ageGroupState: {
+    value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
+  },
+}));
+
+const { lessonsQueryRefetchMock } = vi.hoisted(() => ({
+  lessonsQueryRefetchMock: vi.fn(),
+}));
+
+const { localeState } = vi.hoisted(() => ({
+  localeState: {
+    value: 'pl' as 'de' | 'en' | 'pl' | 'uk',
+  },
+}));
+
+const { translationState } = vi.hoisted(() => ({
+  translationState: {
+    missing: false,
+  },
+}));
+
+const lessonsState = vi.hoisted(() => ({
+  value: [] as Array<Record<string, unknown>>,
+}));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeState.value,
+  useTranslations:
+    (namespace?: string) =>
+    (key: string) =>
+      translationState.missing
+        ? key
+        : operationSelectorTranslations[`${namespace}.${key}`]?.[localeState.value] ?? key,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
+  useKangurGameRuntime: useKangurGameRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: ageGroupState.value,
+    setAgeGroup: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
+    let data = lessonsState.value;
+    if (options.enabledOnly) {
+      data = data.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    return {
+      data,
+      isLoading: false,
+      isFetching: false,
+      refetch: lessonsQueryRefetchMock,
+      error: null,
+    };
+  },
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
+  getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
+}));
+
+vi.mock('../OperationSelector', () => ({
+  default: (props: unknown) => {
+    operationSelectorPropsMock(props);
+    return <div data-testid='mock-operation-selector'>mock-operation-selector</div>;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurPageIntroCard', () => ({
+  KangurPageIntroCard: ({
+    description,
+    title,
+    visualTitle,
+  }: {
+    description?: React.ReactNode;
+    title: string;
+    visualTitle?: React.ReactNode;
+  }) => (
+    <div data-testid='mock-operation-intro'>
+      <span>{title}</span>
+      {description ? <span>{description}</span> : null}
+      {visualTitle}
+    </div>
+  ),
+}));
+
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
+  default: () => <div data-testid='mock-practice-assignment-banner'>assignment-banner</div>,
+}));
+
+import { KangurGameOperationSelectorWidget } from '../KangurGameOperationSelectorWidget';
+
+describe('KangurGameOperationSelectorWidget', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    lessonsQueryRefetchMock.mockReset();
+    ageGroupState.value = 'ten_year_old';
+    localeState.value = 'pl';
+    translationState.missing = false;
+    getCurrentKangurDailyQuestMock.mockReturnValue(null);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-clock',
+        componentId: 'clock',
+        title: 'Nauka zegara',
+        description: 'Odczytuj godziny',
+        emoji: '🕐',
+        color: 'kangur-gradient-accent-indigo-reverse',
+        activeBg: 'bg-indigo-500',
+        sortOrder: 1000,
+        enabled: true,
+        subject: 'maths',
+      },
+      {
+        id: 'kangur-lesson-calendar',
+        componentId: 'calendar',
+        title: 'Nauka kalendarza',
+        description: 'Dni i miesiące',
+        emoji: '📅',
+        color: 'kangur-gradient-accent-emerald',
+        activeBg: 'bg-emerald-500',
+        sortOrder: 2000,
+        enabled: true,
+        subject: 'maths',
+      },
+      {
+        id: 'kangur-lesson-geometry-shapes',
+        componentId: 'geometry_shapes',
+        title: 'Figury geometryczne',
+        description: 'Rozpoznawaj figury',
+        emoji: '🔷',
+        color: 'kangur-gradient-accent-violet',
+        activeBg: 'bg-violet-500',
+        sortOrder: 3000,
+        enabled: true,
+        subject: 'maths',
+      },
+    ];
+  });
+
+  it('does not refetch lessons again when the current subject has no active lessons', () => {
+    lessonsState.value = [];
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(lessonsQueryRefetchMock).not.toHaveBeenCalled();
+  });
+
+  it('recommends the quest-mapped operation and forwards it to the selector cards', () => {
+    const progress = buildProgress();
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+    getCurrentKangurDailyQuestMock.mockReturnValue({
+      assignment: {
+        title: '➗ Powtórka: Dzielenie',
+        description: 'Jedna dobra gra ustabilizuje ten temat.',
+        progressLabel: '48% / 75% opanowania',
+        questLabel: 'Misja dnia',
+        action: {
+          label: 'Otwórz lekcję',
+          page: 'Lessons',
+          query: {
+            focus: 'division',
+          },
+        },
+      },
+      progress: {
+        current: 48,
+        percent: 64,
+        status: 'in_progress',
+        summary: '48% / 75% opanowania',
+        target: 75,
+      },
+    });
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-title')).toHaveTextContent(
+      '➗ Powtórka: Dzielenie'
+    );
+    expect(screen.getByTestId('kangur-operation-recommendation-title')).toHaveClass(
+      '[color:var(--kangur-page-text)]'
+    );
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveClass(
+      '[color:var(--kangur-page-muted-text)]'
+    );
+    expect(operationSelectorPropsMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        recommendedLabel: 'Misja dnia',
+        recommendedOperation: 'division',
+      })
+    );
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        totalXp: 420,
+      }),
+      expect.objectContaining({
+        ownerKey: 'learner-1',
+        subject: 'maths',
+      })
+    );
+    expect(screen.getByTestId('kangur-operation-recommendation-action')).toHaveClass(
+      'min-h-11',
+      'px-4',
+      'touch-manipulation'
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-operation-recommendation-action'));
+
+    expect(runtime.handleSelectOperation).toHaveBeenCalledWith('division', 'medium', {
+      recommendation: {
+        description: '48% / 75% opanowania',
+        label: 'Misja dnia',
+        source: 'operation_selector',
+        title: '➗ Powtórka: Dzielenie',
+      },
+    });
+    expect(runtime.setScreen).not.toHaveBeenCalled();
+  });
+
+  it('recommends quick calendar practice when the quest points to calendar learning', () => {
+    const progress = buildProgress();
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+    getCurrentKangurDailyQuestMock.mockReturnValue({
+      assignment: {
+        title: '📅 Powtórka: Kalendarz',
+        description: 'Dni i daty potrzebują jeszcze jednej serii.',
+        progressLabel: '62% / 75% opanowania',
+        questLabel: 'Misja dnia',
+        action: {
+          label: 'Otwórz lekcję',
+          page: 'Lessons',
+          query: {
+            focus: 'calendar',
+          },
+        },
+      },
+      progress: {
+        current: 62,
+        percent: 83,
+        status: 'in_progress',
+        summary: '62% / 75% opanowania',
+        target: 75,
+      },
+    });
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(operationSelectorPropsMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        recommendedLabel: 'Misja dnia',
+        recommendedOperation: null,
+      })
+    );
+    expect(
+      screen.getByTestId('kangur-quick-practice-recommendation-calendar_quiz')
+    ).toHaveTextContent('Misja dnia');
+
+    fireEvent.click(screen.getByTestId('kangur-operation-recommendation-action'));
+
+    expect(runtime.setScreen).toHaveBeenCalledWith('calendar_quiz');
+    expect(runtime.handleSelectOperation).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the weakest lesson when there is no active quest', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        geometry_shapes: {
+          attempts: 2,
+          completions: 2,
+          masteryPercent: 42,
+          bestScorePercent: 60,
+          lastScorePercent: 48,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-title')).toHaveTextContent(
+      'Najpierw popraw: Figury geometryczne'
+    );
+    expect(
+      screen.getByTestId('kangur-quick-practice-recommendation-geometry_quiz')
+    ).toHaveTextContent('Nadrabiamy lekcje');
+
+    fireEvent.click(screen.getByTestId('kangur-operation-recommendation-action'));
+
+    expect(runtime.setScreen).toHaveBeenCalledWith('geometry_quiz');
+  });
+
+  it('renders the music intro without the maths-only recommendation card', () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'music',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-music-diatonic-scale',
+        componentId: 'music_diatonic_scale',
+        title: 'Skala diatoniczna',
+        description: 'Poznaj dźwięki do re mi fa sol la si.',
+        emoji: '🎵',
+        color: 'kangur-gradient-accent-sky',
+        activeBg: 'bg-sky-500',
+        sortOrder: 4000,
+        enabled: true,
+        subject: 'music',
+      },
+    ];
+    const progress = buildProgress({
+      lessonMastery: {
+        music_diatonic_scale: {
+          attempts: 2,
+          completions: 2,
+          masteryPercent: 38,
+          bestScorePercent: 56,
+          lastScorePercent: 42,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('mock-operation-intro')).toHaveTextContent(
+      'Wybierz lekcję muzyki i śpiewaj dźwięki skali diatonicznej krok po kroku.'
+    );
+    expect(screen.queryByTestId('kangur-operation-recommendation-title')).not.toBeInTheDocument();
+  });
+
+  it('renders icon-first quick practice cues for six-year-old geometry learners', () => {
+    ageGroupState.value = 'six_year_old';
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'geometry',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-geometry-shapes',
+        componentId: 'geometry_shapes',
+        title: 'Figury geometryczne',
+        description: 'Rozpoznawaj figury',
+        emoji: '🔷',
+        color: 'kangur-gradient-accent-violet',
+        activeBg: 'bg-violet-500',
+        sortOrder: 3000,
+        enabled: true,
+        subject: 'geometry',
+      },
+    ];
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-game-operation-intro-icon')).toHaveTextContent('🔷');
+    expect(screen.getByTestId('kangur-quick-practice-heading-icon')).toHaveTextContent('⚡');
+    expect(screen.getByTestId('kangur-quick-practice-group-icon-geometry')).toHaveTextContent(
+      '🔷'
+    );
+    expect(
+      screen.getByTestId('kangur-quick-practice-game-chip-icon-geometry_quiz')
+    ).toHaveTextContent('🎮');
+  });
+
+  it('falls back to the hottest badge-track lane when lessons are stable', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        'game:clock': {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-label')).toHaveTextContent(
+      'Tor odznak'
+    );
+    expect(operationSelectorPropsMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        recommendedOperation: 'clock',
+      })
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-operation-recommendation-action'));
+
+    expect(runtime.handleSelectOperation).toHaveBeenCalledWith(
+      'clock',
+      'hard',
+      expect.objectContaining({
+        recommendation: expect.objectContaining({
+          label: 'Tor odznak',
+          source: 'operation_selector',
+          title: expect.stringMatching(/^Rozpędź tor:/),
+        }),
+      })
+    );
+  });
+
+  it('renders the localized English play wordmark in the operation heading art', () => {
+    localeState.value = 'en';
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-grajmy-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent("Let's play!");
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent("Let's play!");
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to English operation and quick-practice copy when translations are unavailable', () => {
+    localeState.value = 'en';
+    translationState.missing = true;
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-grajmy-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent(
+      'Choose a game type and jump straight into maths practice.'
+    );
+    expect(screen.getByRole('heading', { name: 'Quick practice' })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-quick-practice-card-calendar_quiz')).toHaveTextContent(
+      'Calendar practice'
+    );
+    expect(screen.getByTestId('kangur-quick-practice-card-calendar_quiz')).toHaveTextContent(
+      'Check dates, weekdays, and months in short tasks.'
+    );
+  });
+
+  it('renders the localized English training wordmark in the training heading art', () => {
+    localeState.value = 'en';
+    useKangurGameRuntimeMock.mockReturnValue(
+      buildRuntime(buildProgress(), {
+        screen: 'training',
+      })
+    );
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Training setup');
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Training');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to English training copy when translations are unavailable', () => {
+    localeState.value = 'en';
+    translationState.missing = true;
+    useKangurGameRuntimeMock.mockReturnValue(
+      buildRuntime(buildProgress(), {
+        screen: 'training',
+      })
+    );
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Mixed training');
+    expect(intro).toHaveTextContent(
+      'Choose the level, categories, and number of questions for one session.'
+    );
+  });
+
+  it('renders the localized German play wordmark in the operation heading art', () => {
+    localeState.value = 'de';
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-grajmy-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent("Los geht's!");
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent("Los geht's!");
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('renders the localized German training wordmark in the training heading art', () => {
+    localeState.value = 'de';
+    useKangurGameRuntimeMock.mockReturnValue(
+      buildRuntime(buildProgress(), {
+        screen: 'training',
+      })
+    );
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Training einrichten');
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Training');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to Ukrainian play copy when translations are unavailable', () => {
+    localeState.value = 'uk';
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-grajmy-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Граймо!');
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Граймо!');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('falls back to German recommendation labels and actions when translations are unavailable', () => {
+    localeState.value = 'de';
+    translationState.missing = true;
+    const progress = buildProgress();
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+    getCurrentKangurDailyQuestMock.mockReturnValue({
+      assignment: {
+        title: '📅 Powtórka: Kalendarz',
+        description: 'Dni i daty potrzebują jeszcze jednej serii.',
+        action: {
+          label: 'Otwórz lekcję',
+          page: 'Lessons',
+          query: {
+            focus: 'calendar',
+          },
+        },
+      },
+      progress: {
+        current: 62,
+        percent: 83,
+        status: 'in_progress',
+        summary: '62% / 75% opanowania',
+        target: 75,
+      },
+    });
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-label')).toHaveTextContent(
+      'Mission des Tages'
+    );
+    expect(screen.getByTestId('kangur-operation-recommendation-action')).toHaveTextContent(
+      'Kalender uben'
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-operation-recommendation-action'));
+
+    expect(runtime.setScreen).toHaveBeenCalledWith('calendar_quiz');
+  });
+
+  it('falls back to Ukrainian training copy when translations are unavailable', () => {
+    localeState.value = 'uk';
+    useKangurGameRuntimeMock.mockReturnValue(
+      buildRuntime(buildProgress(), {
+        screen: 'training',
+      })
+    );
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    const art = screen.getByTestId('kangur-training-heading-art');
+    const intro = art.closest('[data-testid="mock-operation-intro"]');
+    const text = art.querySelector('text');
+
+    expect(intro).not.toBeNull();
+    expect(intro).toHaveTextContent('Налаштування тренування');
+    expect(intro).toHaveTextContent('Налаштуйте змішане тренування й виберіть діапазон запитань.');
+    expect(text).not.toBeNull();
+    expect(text).toHaveTextContent('Тренування');
+    expect(text).toHaveAttribute('font-size', '68');
+    expect(text).not.toHaveAttribute('textLength');
+    expect(text).not.toHaveAttribute('lengthAdjust');
+  });
+
+  it('prioritizes guided momentum before the generic badge-track push', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      recommendedSessionsCompleted: 2,
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        'game:clock': {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-label')).toHaveTextContent(
+      'Polecony kierunek'
+    );
+    expect(screen.getByTestId('kangur-operation-recommendation-title')).toHaveTextContent(
+      'Dopnij: Trzymam kierunek'
+    );
+    expect(operationSelectorPropsMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        recommendedOperation: 'clock',
+      })
+    );
+
+    fireEvent.click(screen.getByTestId('kangur-operation-recommendation-action'));
+
+    expect(runtime.handleSelectOperation).toHaveBeenCalledWith(
+      'clock',
+      'hard',
+      expect.objectContaining({
+        recommendation: expect.objectContaining({
+          label: 'Polecony kierunek',
+          source: 'operation_selector',
+          title: 'Dopnij: Trzymam kierunek',
+        }),
+      })
+    );
+  });
+
+  it('localizes bare adjective activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_adjectives_scene_studio: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      'przymiotniki'
+    );
+  });
+
+  it('localizes bare adverb activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_adverbs_action_studio: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      'przysłówki'
+    );
+  });
+
+  it('localizes bare comparatives activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_compare_and_crown: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      /stopniowanie przymiotników/i
+    );
+  });
+
+  it('localizes bare adverbs-of-frequency activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_adverbs_frequency_routine_studio: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      'przysłówki częstotliwości'
+    );
+  });
+
+  it('shows English quick practice cards when English lessons are available', () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    lessonsState.value = [
+      {
+        id: 'kangur-lesson-english-sentence',
+        componentId: 'english_sentence_structure',
+        title: 'Składnia zdania',
+        description: 'Szyk zdania',
+        emoji: '🧩',
+        color: 'kangur-gradient-accent-violet',
+        activeBg: 'bg-violet-500',
+        sortOrder: 1000,
+        enabled: true,
+        subject: 'english',
+      },
+      {
+        id: 'kangur-lesson-english-pos',
+        componentId: 'english_parts_of_speech',
+        title: 'Części mowy',
+        description: 'Zaimki i czasowniki',
+        emoji: '🔤',
+        color: 'kangur-gradient-accent-sky',
+        activeBg: 'bg-sky-500',
+        sortOrder: 2000,
+        enabled: true,
+        subject: 'english',
+      },
+    ];
+
+    const runtime = buildRuntime(buildProgress());
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(
+      screen.getByTestId('kangur-quick-practice-card-english_sentence_quiz')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('kangur-quick-practice-card-english_parts_of_speech_quiz')
+    ).toBeInTheDocument();
+  });
+
+  it('hides math-only sections when the subject is English', () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+    const runtime = buildRuntime(buildProgress());
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.queryByTestId('mock-operation-selector')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kangur-game-training-top-section')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Szybkie ćwiczenia' })).toBeInTheDocument();
+  });
+});

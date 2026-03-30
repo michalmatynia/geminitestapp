@@ -39,6 +39,12 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
   } = props;
 
   const hasSelection = selectedCount > 0;
+  const selectionIdBase =
+    label
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'selection';
 
   return (
     <div
@@ -48,6 +54,7 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
       )}
     >
       <ActionMenu
+        triggerId={`${selectionIdBase}-actions-menu`}
         align='start'
         className='w-56'
         ariaLabel={`${label} actions`}
@@ -91,6 +98,7 @@ export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element 
 
       {(actions || onDeleteSelected) && (
         <ActionMenu
+          triggerId={`${selectionIdBase}-batch-actions-menu`}
           align='start'
           className='w-56'
           ariaLabel='Batch actions'

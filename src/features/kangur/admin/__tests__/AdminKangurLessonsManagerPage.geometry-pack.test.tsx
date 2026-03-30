@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { withKangurClientError, withKangurClientErrorSync } = globalThis.__kangurClientErrorMocks();
 const mutateAsyncMock = vi.fn();
 const updateLessonDocumentsMock = vi.fn();
+const updateLessonTemplatesMock = vi.fn();
 const toastMock = vi.fn();
 const lessonsState = {
   value: [] as Array<Record<string, unknown>>,
@@ -64,6 +65,10 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
   useKangurLessonTemplates: () => ({ data: [] }),
+  useUpdateKangurLessonTemplates: () => ({
+    mutateAsync: updateLessonTemplatesMock,
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
@@ -96,10 +101,47 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
     </div>
   ),
   FormField: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FormModal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FormModal: (props: { children: React.ReactNode }) => {
+    const { children } = props;
+    return <div>{children}</div>;
+  },
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   SectionHeader: ({ title }: { title: string }) => <h1>{title}</h1>,
-  SelectSimple: () => <div data-testid='select-simple' />,
+  SelectSimple: ({
+    value,
+    onChange,
+    onValueChange,
+    options = [],
+    id,
+    ariaLabel,
+    title,
+  }: {
+    value?: string;
+    onChange?: (value: string) => void;
+    onValueChange?: (value: string) => void;
+    options?: Array<{ value: string; label: string }>;
+    id?: string;
+    ariaLabel?: string;
+    title?: string;
+  }) => (
+    <select
+      data-testid='select-simple'
+      id={id}
+      aria-label={ariaLabel}
+      title={title}
+      value={value}
+      onChange={(event): void => {
+        onChange?.(event.target.value);
+        onValueChange?.(event.target.value);
+      }}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
   Skeleton: () => <div data-testid='skeleton' />,
   Switch: ({ checked }: { checked: boolean }) => <div data-checked={checked} />,
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
@@ -121,7 +163,18 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
-  KangurAdminContentShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  KangurAdminContentShell: ({
+    children,
+    headerActions,
+  }: {
+    children: React.ReactNode;
+    headerActions?: React.ReactNode;
+  }) => (
+    <div>
+      {headerActions}
+      {children}
+    </div>
+  ),
 }));
 
 import { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKangurLessonsManagerPage';
@@ -185,6 +238,7 @@ describe('AdminKangurLessonsManagerPage geometry pack action', () => {
   beforeEach(() => {
     mutateAsyncMock.mockReset();
     updateLessonDocumentsMock.mockReset();
+    updateLessonTemplatesMock.mockReset();
     toastMock.mockReset();
     useMasterFolderTreeShellMock.mockReset();
     folderTreeViewportMock.mockReset();

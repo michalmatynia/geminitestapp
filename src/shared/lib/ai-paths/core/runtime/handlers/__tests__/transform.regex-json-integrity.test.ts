@@ -147,4 +147,249 @@ describe('handleRegex json integrity policy', () => {
       ])
     );
   });
+
+  it('supports captures and named-group selectors after normalization', async () => {
+    const node = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '^(?<kind>[^:]+):(?<value>.+)$',
+          flags: '',
+          mode: 'extract',
+          matchMode: 'first',
+          groupBy: 'groups',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const output = await handleRegex(buildContext(node, 'tag:alpha'));
+    const [record] = output['matches'] as Array<Record<string, unknown>>;
+
+    expect(output['value']).toEqual({ kind: 'tag', value: 'alpha' });
+    expect(record?.['groups']).toEqual({ kind: 'tag', value: 'alpha' });
+    expect(record?.['captures']).toEqual(['tag', 'alpha']);
+  });
+
+  it('returns empty grouped output for blank patterns and emits ai prompts only when requested', async () => {
+    const node = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '   ',
+          flags: '',
+          mode: 'group',
+          matchMode: 'first',
+          groupBy: 'match',
+          outputMode: 'array',
+          includeUnmatched: true,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          aiPrompt: 'Review {{text}}',
+          aiAutoRun: true,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const output = await handleRegex(buildContext(node, 'alpha'));
+
+    expect(output).toEqual({
+      grouped: [],
+      matches: [],
+      value: [],
+      aiPrompt: 'Review alpha',
+    });
+  });
+
+  it('uses first_overall unmatched records when no input matches and includeUnmatched is enabled', async () => {
+    const node = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '^z+$',
+          flags: '',
+          mode: 'group',
+          matchMode: 'first_overall',
+          groupBy: 'match',
+          outputMode: 'object',
+          includeUnmatched: true,
+          unmatchedKey: 'fallback',
+          splitLines: true,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const output = await handleRegex(buildContext(node, 'alpha\nbeta'));
+
+    expect(output['grouped']).toEqual({
+      fallback: [
+        {
+          input: 'alpha',
+          match: null,
+          index: null,
+          captures: [],
+          groups: null,
+          key: 'fallback',
+          extracted: null,
+        },
+      ],
+    });
+    expect(output['matches']).toHaveLength(1);
+    expect(output['value']).toEqual(output['grouped']);
+  });
+
+  it('extracts arrays of parsed json captures and supports numeric group selectors in all mode', async () => {
+    const extractJsonNode = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '^(\\{[^}]+\\})(\\{[^}]+\\})$',
+          flags: '',
+          mode: 'extract_json',
+          matchMode: 'first',
+          groupBy: 'captures',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const extractJsonOutput = await handleRegex(
+      buildContext(extractJsonNode, '{"a":1}{"b":2}')
+    );
+    expect(extractJsonOutput['value']).toEqual([{ a: 1 }, { b: 2 }]);
+    expect(extractJsonOutput['jsonIntegrity']).toBeUndefined();
+
+    const numericSelectorNode = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '^(\\w+):(\\w+)$',
+          flags: '',
+          mode: 'extract',
+          matchMode: 'all',
+          groupBy: '1',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: true,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const numericSelectorOutput = await handleRegex(buildContext(numericSelectorNode, 'tag:alpha\nkind:beta'));
+    expect(numericSelectorOutput['value']).toEqual(['tag', 'kind']);
+  });
+
+  it('returns empty output for invalid regex patterns and for misses when includeUnmatched is disabled', async () => {
+    const invalidRegexNode = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '[',
+          flags: '',
+          mode: 'group',
+          matchMode: 'first',
+          groupBy: 'match',
+          outputMode: 'object',
+          includeUnmatched: true,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          aiPrompt: '   ',
+          aiAutoRun: true,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const invalidOutput = await handleRegex(buildContext(invalidRegexNode, 'alpha'));
+    expect(invalidOutput).toEqual({
+      grouped: {},
+      matches: [],
+      value: {},
+    });
+
+    const noMatchNode = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '^z+$',
+          flags: '',
+          mode: 'group',
+          matchMode: 'first',
+          groupBy: 'match',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const noMatchOutput = await handleRegex(buildContext(noMatchNode, 'alpha'));
+    expect(noMatchOutput).toEqual({
+      grouped: {},
+      matches: [],
+      value: {},
+    });
+  });
+
+  it('stringifies non-string inputs and avoids infinite loops on zero-length all-mode matches', async () => {
+    const stringifiedNode = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '\\d+',
+          flags: '',
+          mode: 'extract',
+          matchMode: 'first',
+          groupBy: 'match',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const stringifiedOutput = await handleRegex(buildContext(stringifiedNode, { total: 42 }));
+    expect(stringifiedOutput['value']).toBe('42');
+    expect((stringifiedOutput['matches'] as Array<Record<string, unknown>>)[0]?.['input']).toBe(
+      '{"total":42}'
+    );
+
+    const zeroLengthNode = {
+      ...buildRegexNode('repair'),
+      config: {
+        regex: {
+          pattern: '^',
+          flags: '',
+          mode: 'extract',
+          matchMode: 'all',
+          groupBy: 'match',
+          outputMode: 'object',
+          includeUnmatched: false,
+          unmatchedKey: '__unmatched__',
+          splitLines: false,
+          jsonIntegrityPolicy: 'repair',
+        },
+      },
+    } as AiNode;
+
+    const zeroLengthOutput = await handleRegex(buildContext(zeroLengthNode, 'ab'));
+    expect(zeroLengthOutput['matches']).toHaveLength(1);
+    expect(zeroLengthOutput['value']).toBe('');
+  });
 });

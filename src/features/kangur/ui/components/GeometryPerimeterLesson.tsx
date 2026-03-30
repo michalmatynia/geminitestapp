@@ -3,14 +3,14 @@
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
-import GeometryPerimeterDrawingGame from '@/features/kangur/ui/components/GeometryPerimeterDrawingGame';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   GeometryPerimeterOppositeSidesAnimation,
   GeometryPerimeterSidesAnimation,
   GeometryPerimeterSumAnimation,
   GeometryPerimeterTraceAnimation,
-} from '@/features/kangur/ui/components/GeometryLessonAnimations';
+} from './GeometryLessonAnimations';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -18,10 +18,17 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-import type { LessonTranslate, WidenLessonCopy } from './lesson-copy';
+import {
+  type LessonTranslate,
+  type WidenLessonCopy,
+  translateLessonShellTitle,
+} from './lesson-copy';
 
 type SectionId = 'intro' | 'kwadrat' | 'prostokan' | 'podsumowanie' | 'game_draw';
 type SlideSectionId = Exclude<SectionId, 'game_draw'>;
+const GEOMETRY_PERIMETER_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_perimeter_trainer'
+);
 
 const GEOMETRY_PERIMETER_LESSON_COPY_PL = {
   lessonTitle: 'Obwód figur',
@@ -86,7 +93,7 @@ const GEOMETRY_PERIMETER_LESSON_COPY_PL = {
     },
   },
   game: {
-    stageTitle: 'Gra: Rysuj obwód',
+    gameTitle: 'Gra: Rysuj obwód',
   },
 } as const;
 
@@ -322,10 +329,10 @@ const buildGeometryPerimeterLessonCopy = (
     },
   },
   game: {
-    stageTitle: translateGeometryPerimeterLesson(
+    gameTitle: translateLessonShellTitle(
       translate,
-      'game.stageTitle',
-      GEOMETRY_PERIMETER_LESSON_COPY_PL.game.stageTitle
+      'game',
+      GEOMETRY_PERIMETER_LESSON_COPY_PL.game.gameTitle
     ),
   },
 });
@@ -543,15 +550,18 @@ export default function GeometryPerimeterLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_draw',
-          stage: {
+          shell: {
             accent: 'amber',
-            title: copy.game.stageTitle,
+            title: copy.game.gameTitle ?? 'Gra: Rysuj obwód',
             icon: '✍️',
             maxWidthClassName: 'max-w-sm',
             headerTestId: 'geometry-perimeter-game-header',
             shellTestId: 'geometry-perimeter-game-shell',
           },
-          render: ({ onFinish }) => <GeometryPerimeterDrawingGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'geometry_perimeter_trainer',
+            instanceId: GEOMETRY_PERIMETER_INSTANCE_ID,
+          },
         },
       ]}
     />

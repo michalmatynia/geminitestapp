@@ -1,17 +1,14 @@
 'use client';
 
 import AddingBallGame from '@/features/kangur/ui/components/AddingBallGame';
-import { KangurGameQuizStage } from '@/features/kangur/ui/components/KangurGameQuizStage';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
 
 export function KangurGameAdditionQuizWidget(): React.JSX.Element | null {
-  return (
-    <KangurGameQuizStage
-      accent='amber'
-      icon='➕'
-      screen='addition_quiz'
-      shellTestId='kangur-addition-quiz-top-section'
-    >
-      {({ handleHome }) => <AddingBallGame finishLabelVariant='play' onFinish={handleHome} />}
-    </KangurGameQuizStage>
-  );
+  return renderKangurGameQuizShell({
+    accent: 'amber',
+    children: ({ handleHome }) => <AddingBallGame finishLabelVariant='play' onFinish={handleHome} />,
+    icon: '➕',
+    screen: 'addition_quiz',
+    shellTestId: 'kangur-addition-quiz-top-section',
+  });
 }

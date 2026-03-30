@@ -35,11 +35,44 @@ const setHistoryRetentionPassesGraphMock = vi.fn();
 const setHistoryRetentionOptionsMaxGraphMock = vi.fn();
 const setIsPathLockedGraphMock = vi.fn();
 const setIsPathActiveGraphMock = vi.fn();
+const graphActionsMock = {
+  setNodes: setNodesGraphMock,
+  setEdges: setEdgesGraphMock,
+  setPathConfigs: setPathConfigsGraphMock,
+  setPaths: setPathsGraphMock,
+  setActivePathId: setActivePathIdGraphMock,
+  setPathName: setPathNameGraphMock,
+  setPathDescription: setPathDescriptionGraphMock,
+  setActiveTrigger: setActiveTriggerGraphMock,
+  setExecutionMode: setExecutionModeGraphMock,
+  setFlowIntensity: setFlowIntensityGraphMock,
+  setRunMode: setRunModeGraphMock,
+  setStrictFlowMode: setStrictFlowModeGraphMock,
+  setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
+  setAiPathsValidation: setAiPathsValidationGraphMock,
+  setHistoryRetentionPasses: setHistoryRetentionPassesGraphMock,
+  setHistoryRetentionOptionsMax: setHistoryRetentionOptionsMaxGraphMock,
+  setIsPathLocked: setIsPathLockedGraphMock,
+  setIsPathActive: setIsPathActiveGraphMock,
+};
 const setRuntimeStateMock = vi.fn();
 const setParserSamplesMock = vi.fn();
 const setUpdaterSamplesMock = vi.fn();
 const setLastRunAtMock = vi.fn();
 const setLoadingPersistenceMock = vi.fn();
+const selectionActionsMock = {
+  selectNode: selectNodeMock,
+  setConfigOpen: setConfigOpenSelectionMock,
+};
+const runtimeActionsMock = {
+  setRuntimeState: setRuntimeStateMock,
+  setParserSamples: setParserSamplesMock,
+  setUpdaterSamples: setUpdaterSamplesMock,
+  setLastRunAt: setLastRunAtMock,
+};
+const persistenceActionsMock = {
+  setLoading: setLoadingPersistenceMock,
+};
 
 const preferenceMock = {
   resolveUserPreferences: vi.fn(() => null),
@@ -91,48 +124,19 @@ vi.mock('../hooks/persistence/usePresetPersistence', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
-  useSelectionActions: () => ({
-    selectNode: selectNodeMock,
-    setConfigOpen: setConfigOpenSelectionMock,
-  }),
+  useSelectionActions: () => selectionActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
-  useGraphActions: () => ({
-    setNodes: setNodesGraphMock,
-    setEdges: setEdgesGraphMock,
-    setPathConfigs: setPathConfigsGraphMock,
-    setPaths: setPathsGraphMock,
-    setActivePathId: setActivePathIdGraphMock,
-    setPathName: setPathNameGraphMock,
-    setPathDescription: setPathDescriptionGraphMock,
-    setActiveTrigger: setActiveTriggerGraphMock,
-    setExecutionMode: setExecutionModeGraphMock,
-    setFlowIntensity: setFlowIntensityGraphMock,
-    setRunMode: setRunModeGraphMock,
-    setStrictFlowMode: setStrictFlowModeGraphMock,
-    setBlockedRunPolicy: setBlockedRunPolicyGraphMock,
-    setAiPathsValidation: setAiPathsValidationGraphMock,
-    setHistoryRetentionPasses: setHistoryRetentionPassesGraphMock,
-    setHistoryRetentionOptionsMax: setHistoryRetentionOptionsMaxGraphMock,
-    setIsPathLocked: setIsPathLockedGraphMock,
-    setIsPathActive: setIsPathActiveGraphMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({
-  useRuntimeActions: () => ({
-    setRuntimeState: setRuntimeStateMock,
-    setParserSamples: setParserSamplesMock,
-    setUpdaterSamples: setUpdaterSamplesMock,
-    setLastRunAt: setLastRunAtMock,
-  }),
+  useRuntimeActions: () => runtimeActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/PersistenceContext', () => ({
-  usePersistenceActions: () => ({
-    setLoading: setLoadingPersistenceMock,
-  }),
+  usePersistenceActions: () => persistenceActionsMock,
 }));
 
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);

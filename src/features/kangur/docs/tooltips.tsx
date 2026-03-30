@@ -8,7 +8,7 @@ import {
   parseKangurHelpSettings,
   type KangurDocsTooltipSurface,
   type KangurHelpSettings,
-} from '@/features/kangur/help-settings';
+} from '@/features/kangur/docs/help-settings';
 import {
   DOCUMENTATION_MODULE_IDS,
   createDocsTooltipEnhancer,

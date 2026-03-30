@@ -51,6 +51,53 @@ const joinPathToBase = (path: string, baseUrl: string): string => {
   return `${normalizedBase}/${cleanedPath}`;
 };
 
+const isDataOrBlobUrl = (value: string): boolean =>
+  value.startsWith('data:') || value.startsWith('blob:');
+
+const isAbsoluteUrl = (value: string): boolean => /^[a-z][a-z0-9+.-]*:/i.test(value);
+
+const resolveAbsoluteProductImageUrl = (
+  value: string,
+  normalizedBase: string,
+  baseIsLoopback: boolean
+): string => {
+  try {
+    const parsed = new URL(value);
+    const protocol = parsed.protocol.toLowerCase();
+    if (protocol !== 'http:' && protocol !== 'https:') {
+      return value;
+    }
+    const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    if (!normalizedBase) return value;
+
+    const sourceIsLoopback = isLoopbackHostname(parsed.hostname);
+    if (!sourceIsLoopback) return value;
+    if (baseIsLoopback) return path || value;
+    return joinPathToBase(path, normalizedBase) || value;
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'image-routing',
+      action: 'resolveProductImageUrl',
+      value,
+      externalBaseUrl: normalizedBase,
+      level: 'warn',
+    });
+    return value;
+  }
+};
+
+const resolveRelativeProductImageUrl = (
+  value: string,
+  normalizedBase: string,
+  baseIsLoopback: boolean
+): string => {
+  const path = `/${value.replace(/^\/+/, '')}`;
+  if (!normalizedBase || baseIsLoopback) {
+    return path;
+  }
+  return joinPathToBase(path, normalizedBase);
+};
+
 export const resolveProductImageUrl = (
   rawValue: string | null | undefined,
   externalBaseUrl?: string | null
@@ -58,12 +105,7 @@ export const resolveProductImageUrl = (
   const value = rawValue?.trim() ?? '';
   if (!value) return null;
 
-  if (value.startsWith('data:')) {
-    return value;
-  }
-
-  // Keep local object URLs used for in-modal previews.
-  if (value.startsWith('blob:')) {
+  if (isDataOrBlobUrl(value)) {
     return value;
   }
 
@@ -77,39 +119,9 @@ export const resolveProductImageUrl = (
     return joinPathToBase(value, normalizedBase);
   }
 
-  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) {
-    try {
-      const parsed = new URL(value);
-      const protocol = parsed.protocol.toLowerCase();
-      if (protocol !== 'http:' && protocol !== 'https:') {
-        return value;
-      }
-      const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
-      if (!normalizedBase) return value;
-
-      const sourceIsLoopback = isLoopbackHostname(parsed.hostname);
-
-      // Preserve external absolute URLs by default; only remap when the
-      // source is loopback and the configured base is a non-loopback host.
-      if (!sourceIsLoopback) return value;
-      if (baseIsLoopback) return path || value;
-
-      return joinPathToBase(path, normalizedBase) || value;
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'image-routing',
-        action: 'resolveProductImageUrl',
-        value,
-        externalBaseUrl: normalizedBase,
-        level: 'warn',
-      });
-      return value;
-    }
+  if (isAbsoluteUrl(value)) {
+    return resolveAbsoluteProductImageUrl(value, normalizedBase, baseIsLoopback);
   }
 
-  const path = `/${value.replace(/^\/+/, '')}`;
-  if (!normalizedBase || baseIsLoopback) {
-    return path;
-  }
-  return joinPathToBase(path, normalizedBase);
+  return resolveRelativeProductImageUrl(value, normalizedBase, baseIsLoopback);
 };

@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'generated'
@@ -10,6 +10,13 @@ canonical: true
 # Validator Semantic Grammar
 
 This folder centralizes machine-readable documentation for validator pattern import and sequencing.
+
+This is the maintained generated-contract hub for validator import grammar. Use
+the broader validator docs for product/runtime context and operator guidance:
+
+- [`../README.md`](../README.md)
+- [`../architecture.md`](../architecture.md)
+- [`../function-reference.md`](../function-reference.md)
 
 ## Artifacts
 

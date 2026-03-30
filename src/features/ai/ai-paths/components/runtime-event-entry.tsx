@@ -2,11 +2,17 @@
 
 import React from 'react';
 
+import { StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { RuntimeEventKindBadge, RuntimeEventLevelBadge } from './runtime-event-badges';
+import {
+  getRuntimeEventDotVariant,
+  getRuntimeEventKindLabel,
+  getRuntimeEventKindVariant,
+  getRuntimeEventLevelVariant,
+} from './runtime-event-badges';
 
-type RuntimeEventEntryProps = {
+export type RuntimeEventEntryProps = {
   timestamp: React.ReactNode;
   level: string | null | undefined;
   kind: string | null | undefined;
@@ -25,7 +31,7 @@ type RuntimeEventEntryProps = {
   hideKindBadge?: boolean;
 };
 
-export function RuntimeEventEntry({
+export function renderRuntimeEventEntry({
   timestamp,
   level,
   kind,
@@ -43,17 +49,31 @@ export function RuntimeEventEntry({
   hideLevelLabel = false,
   hideKindBadge = false,
 }: RuntimeEventEntryProps): React.JSX.Element {
+  const levelBadge = (
+    <StatusBadge
+      status={hideLevelLabel ? '' : level ?? 'info'}
+      variant={hideLevelLabel ? getRuntimeEventDotVariant(level) : getRuntimeEventLevelVariant(level)}
+      size='sm'
+      hideLabel={hideLevelLabel}
+      className={levelClassName}
+    />
+  );
+  const kindBadge = hideKindBadge ? null : (
+    <StatusBadge
+      status={getRuntimeEventKindLabel(kind)}
+      variant={getRuntimeEventKindVariant(kind)}
+      size='sm'
+      className={kindClassName}
+    />
+  );
+
   if (stacked) {
     return (
       <div className={className}>
         <div className={cn('flex flex-wrap items-center gap-1.5 text-[10px]', metadataClassName)}>
           <span className={timeClassName}>{timestamp}</span>
-          <RuntimeEventLevelBadge
-            level={level}
-            hideLabel={hideLevelLabel}
-            className={levelClassName}
-          />
-          {!hideKindBadge ? <RuntimeEventKindBadge kind={kind} className={kindClassName} /> : null}
+          {levelBadge}
+          {kindBadge}
           {trailingMetadata}
         </div>
         <div className={cn('mt-1 text-gray-200', messageClassName)}>{message}</div>
@@ -65,12 +85,8 @@ export function RuntimeEventEntry({
   return (
     <div className={className}>
       <span className={timeClassName}>{timestamp}</span>
-      <RuntimeEventLevelBadge
-        level={level}
-        hideLabel={hideLevelLabel}
-        className={levelClassName}
-      />
-      {!hideKindBadge ? <RuntimeEventKindBadge kind={kind} className={kindClassName} /> : null}
+      {levelBadge}
+      {kindBadge}
       {trailingMetadata}
       {inlinePrefix}
       <span className={cn('truncate text-gray-200', messageClassName)}>{message}</span>

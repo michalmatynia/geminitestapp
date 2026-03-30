@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,10 @@ canonical: true
 ---
 
 # AI-Paths Kernel Engine Transition Plan (2026-03-05)
+
+This is the retained transition plan for the kernel-engine migration wave. Current
+runtime state and operator entrypoints are documented in [`overview.md`](./overview.md),
+[`reference.md`](./reference.md), and the AI Paths runtime/reference docs they link to.
 
 ## Goal
 

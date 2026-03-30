@@ -44,6 +44,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutor: useKangurAiTutorMock,
   useOptionalKangurAiTutor: useKangurAiTutorMock,
+  useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 
 const motionProfile: TutorMotionProfile = {

@@ -26,6 +26,23 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurLessonTitle('english_adjectives', 'de', 'English: Adjectives')).toBe(
       'Englisch: Adjektive'
     );
+    expect(
+      getLocalizedKangurLessonTitle(
+        'english_comparatives_superlatives',
+        'de',
+        'English: Comparatives & Superlatives'
+      )
+    ).toBe('Englisch: Komparativ und Superlativ');
+    expect(getLocalizedKangurLessonTitle('english_adverbs', 'de', 'English: Adverbs')).toBe(
+      'Englisch: Adverbien'
+    );
+    expect(
+      getLocalizedKangurLessonTitle(
+        'english_adverbs_frequency',
+        'en',
+        'English: Adverbs of Frequency'
+      )
+    ).toBe('English: Adverbs of Frequency');
   });
 
   it('keeps custom lesson titles intact instead of overwriting Mongo-edited copy', () => {
@@ -81,6 +98,27 @@ describe('lesson-catalog-i18n', () => {
         'Opisywanie osób, miejsc i rzeczy oraz kolejność przymiotników'
       )
     ).toContain('adjective order');
+    expect(
+      getLocalizedKangurLessonDescription(
+        'english_adverbs',
+        'en',
+        'Przysłówki sposobu i słowa opisujące, jak wykonujemy czynności'
+      )
+    ).toContain('actions happen');
+    expect(
+      getLocalizedKangurLessonDescription(
+        'english_adverbs_frequency',
+        'de',
+        'Always, usually, sometimes i never w codziennych rutynach'
+      )
+    ).toContain('Routinen');
+    expect(
+      getLocalizedKangurLessonDescription(
+        'english_comparatives_superlatives',
+        'uk',
+        'Compare two things, choose the top one in a group, and practise tricky forms like better and the best.'
+      )
+    ).toContain('better');
   });
 
   it('returns Ukrainian technical lesson metadata for grown-ups lesson catalogs', () => {
@@ -141,6 +179,23 @@ describe('lesson-catalog-i18n', () => {
     expect(getLocalizedKangurLessonSectionLabel('maths_geometry', 'en', 'Geometria')).toBe(
       'Geometry'
     );
+    expect(
+      getLocalizedKangurLessonSectionLabel('english_grammar_adverbs', 'en', 'Przysłówki')
+    ).toBe('Adverbs');
+    expect(
+      getLocalizedKangurLessonSectionLabel(
+        'english_grammar_adverbs_frequency',
+        'en',
+        'Przysłówki częstotliwości'
+      )
+    ).toBe('Adverbs of frequency');
+    expect(
+      getLocalizedKangurLessonSectionLabel(
+        'english_grammar_comparatives_superlatives',
+        'de',
+        'Stopniowanie przymiotników'
+      )
+    ).toBe('Komparativ und Superlativ');
     expect(
       getLocalizedKangurLessonSectionLabel('alphabet_matching', 'de', 'Dopasuj litery')
     ).toBe('Buchstaben zuordnen');

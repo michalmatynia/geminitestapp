@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@/features/auth/server';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { verifyKangurParentCaptcha } from '@/features/kangur/server/parent-account-captcha';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
@@ -16,6 +15,7 @@ import type { KangurParentAccountCreate } from '@/shared/contracts/kangur-auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
+import { readTolerantServerAuthSession } from '@/features/auth/server';
 import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 
 export async function postKangurParentAccountCreateHandler(
@@ -23,9 +23,8 @@ export async function postKangurParentAccountCreateHandler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const { locale, t } = await getSiteTranslator({ request: req });
-  await auth().catch((error) => {
-    void ErrorSystem.captureException(error);
-    return null;
+  await readTolerantServerAuthSession({
+    onError: (error) => ErrorSystem.captureException(error),
   });
   const body = ctx.body as KangurParentAccountCreate | undefined;
   if (!body) {

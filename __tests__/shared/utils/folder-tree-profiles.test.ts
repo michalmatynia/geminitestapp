@@ -26,6 +26,7 @@ describe('folder-tree-profiles-v2', () => {
       'prompt_exploder_segments',
       'prompt_exploder_hierarchy',
       'admin_menu_layout',
+      'filemaker_mail',
       'kangur_lessons_manager',
       'kangur_lessons_manager_catalog',
       'kangur_test_suites_manager',

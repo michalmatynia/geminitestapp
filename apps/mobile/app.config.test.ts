@@ -13,6 +13,11 @@ describe('createKangurExpoConfig', () => {
     expect(config.slug).toBe('kangur-mobile');
     expect(config.scheme).toBe('kangur');
     expect(config.version).toBe('0.1.0');
+    expect(config.backgroundColor).toBe('#fffaf2');
+    expect(config.splash).toEqual({
+      backgroundColor: '#fffaf2',
+      resizeMode: 'contain',
+    });
     expect(config.ios?.bundleIdentifier).toBe('com.kangur.mobile');
     expect(config.android?.package).toBe('com.kangur.mobile');
     expect(config.extra).toEqual({

@@ -164,12 +164,10 @@ describe('KangurAssignmentManager', () => {
       screen.getByPlaceholderText('Szukaj po temacie, typie zadania lub slowie kluczowym...')
     ).toHaveClass('soft-card');
     expect(screen.getByText('Monitorowanie zadan')).toBeInTheDocument();
-    expect(screen.getByText('Aktywne').parentElement).toHaveClass(
-      'soft-card'
-    );
-    expect(screen.getByText('Do rozpoczecia').parentElement).toHaveClass(
-      'soft-card'
-    );
+    expect(screen.getByText('Aktywne').parentElement).toHaveClass('soft-card');
+    expect(screen.getByText('Aktywne').parentElement).toHaveTextContent('1');
+    expect(screen.getByText('Do rozpoczecia').parentElement).toHaveClass('soft-card');
+    expect(screen.getByText('Do rozpoczecia').parentElement).toHaveTextContent('0');
     expect(screen.getByText('Aktywne zadania')).toBeInTheDocument();
     expect(screen.getAllByText('Praktyka: Dzielenie').length).toBeGreaterThanOrEqual(1);
 
@@ -294,9 +292,7 @@ describe('KangurAssignmentManager', () => {
 
     expect(screen.getByText('Monitorowanie zadan')).toBeInTheDocument();
     expect(screen.getByText('Skutecznosc wykonania')).toBeInTheDocument();
-    expect(screen.getByText('Skutecznosc wykonania').parentElement).toHaveClass(
-      'soft-card'
-    );
+    expect(screen.getByText('Skutecznosc wykonania').parentElement).toHaveClass('soft-card');
     expect(screen.getByText('33%')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Przypisz sugestie' }));

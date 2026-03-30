@@ -317,6 +317,53 @@ export type AnalyticsEventsTableProps = {
   showTypeColumn?: boolean;
 };
 
+const renderAnalyticsEventsTable = ({
+  columns,
+  emptyDescription,
+  emptyTitle,
+  events,
+  footer,
+  isLoading,
+  maxHeight,
+  selectedEvent,
+  setSelectedEvent,
+  showTypeColumn,
+  title,
+}: AnalyticsEventsTableProps & {
+  columns: ColumnDef<AnalyticsEvent>[];
+  emptyDescription: string;
+  emptyTitle: string;
+  selectedEvent: AnalyticsEvent | null;
+  setSelectedEvent: React.Dispatch<React.SetStateAction<AnalyticsEvent | null>>;
+  showTypeColumn: boolean;
+  title: string;
+}): React.JSX.Element => (
+  <>
+    <StandardDataTablePanel
+      title={title}
+      columns={columns}
+      data={events}
+      isLoading={isLoading}
+      variant='flat'
+      maxHeight={maxHeight}
+      enableVirtualization={true}
+      footer={footer}
+      emptyState={
+        <CompactEmptyState title={emptyTitle} description={emptyDescription} />
+      }
+    />
+    <AppModal
+      open={Boolean(selectedEvent)}
+      onClose={() => setSelectedEvent(null)}
+      title={showTypeColumn ? 'Analytics Event Details' : 'Website Connection Details'}
+      subtitle={selectedEvent?.path ?? selectedEvent?.url ?? undefined}
+      size='lg'
+    >
+      {selectedEvent ? <AnalyticsEventDetails event={selectedEvent} /> : null}
+    </AppModal>
+  </>
+);
+
 export function AnalyticsEventsTable({
   events,
   isLoading = false,
@@ -421,32 +468,19 @@ export function AnalyticsEventsTable({
     [showTypeColumn]
   );
 
-  return (
-    <>
-      <StandardDataTablePanel
-        title={title}
-        columns={columns}
-        data={events}
-        isLoading={isLoading}
-        variant='flat'
-        maxHeight={maxHeight}
-        enableVirtualization={true}
-        footer={footer}
-        emptyState={
-          <CompactEmptyState title={emptyTitle} description={emptyDescription} />
-        }
-      />
-      <AppModal
-        open={Boolean(selectedEvent)}
-        onClose={() => setSelectedEvent(null)}
-        title={showTypeColumn ? 'Analytics Event Details' : 'Website Connection Details'}
-        subtitle={selectedEvent?.path ?? selectedEvent?.url ?? undefined}
-        size='lg'
-      >
-        {selectedEvent ? <AnalyticsEventDetails event={selectedEvent} /> : null}
-      </AppModal>
-    </>
-  );
+  return renderAnalyticsEventsTable({
+    columns,
+    emptyDescription,
+    emptyTitle,
+    events,
+    footer,
+    isLoading,
+    maxHeight,
+    selectedEvent,
+    setSelectedEvent,
+    showTypeColumn,
+    title,
+  });
 }
 
 export default AnalyticsEventsTable;

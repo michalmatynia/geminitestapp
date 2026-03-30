@@ -1,6 +1,7 @@
 'use client';
 
 import { KangurDialog } from '@/features/kangur/ui/components/KangurDialog';
+import { KangurDialogMeta } from '@/features/kangur/ui/components/KangurDialogMeta';
 import { KangurPanelCloseButton } from '@/features/kangur/ui/components/KangurPanelCloseButton';
 import {
   KangurButton,
@@ -22,7 +23,8 @@ type KangurChoiceDialogOption = {
   onSelect: () => void;
 };
 
-type KangurChoiceDialogProps = {
+export type KangurChoiceDialogProps = {
+  contentId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   header: ReactNode;
@@ -36,26 +38,38 @@ type KangurChoiceDialogProps = {
   doneLabel?: ReactNode;
 };
 
-export function KangurChoiceDialog({
-  open,
-  onOpenChange,
-  header,
-  title,
-  defaultChoiceLabel,
-  currentChoiceLabel,
-  closeAriaLabel,
-  groupAriaLabel,
-  options,
-  doneAriaLabel,
-  doneLabel = 'Gotowe',
-}: KangurChoiceDialogProps): React.JSX.Element {
+export function renderKangurChoiceDialog(props: KangurChoiceDialogProps): React.JSX.Element {
+  const {
+    contentId,
+    open,
+    onOpenChange,
+    header,
+    title,
+    defaultChoiceLabel,
+    currentChoiceLabel,
+    closeAriaLabel,
+    groupAriaLabel,
+    options,
+    doneAriaLabel,
+    doneLabel = 'Gotowe',
+  } = props;
+
   return (
     <KangurDialog
       open={open}
       onOpenChange={onOpenChange}
       overlayVariant='dark'
       contentVariant='choice'
+      contentProps={contentId ? { id: contentId } : undefined}
     >
+        <KangurDialogMeta
+          title={title}
+          description={
+            <>
+              Domyślnie: {defaultChoiceLabel}. Aktualny wybór: {currentChoiceLabel}.
+            </>
+          }
+        />
         {header}
         <KangurGlassPanel
           className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}

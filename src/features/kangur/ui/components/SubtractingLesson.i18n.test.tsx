@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -17,8 +17,99 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelProgress', async () => {
+  const { useLessonHubProgress } =
+    await vi.importActual<typeof import('@/features/kangur/ui/hooks/useLessonHubProgress')>(
+      '@/features/kangur/ui/hooks/useLessonHubProgress'
+    );
+  return {
+    useKangurLessonPanelProgress: ({
+      slideSections,
+    }: {
+      slideSections: Partial<Record<string, readonly unknown[]>>;
+    }) => {
+      const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+        useLessonHubProgress(slideSections);
+      return {
+        markSectionOpened,
+        markSectionViewedCount,
+        recordPanelTime: vi.fn(),
+        sectionProgress,
+      };
+    },
+  };
+});
+
+vi.mock('@/features/kangur/ui/learner-activity/hooks', () => ({
+  useKangurLessonSubsectionProgress: () => ({
+    markSectionOpened: vi.fn(),
+    markSectionViewedCount: vi.fn(),
+    recordPanelTime: vi.fn(),
+    sectionProgress: {},
+  }),
+  useLessonTimeTracking: () => ({
+    recordComplete: vi.fn(async () => undefined),
+    recordPanelTime: vi.fn(),
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/components/SubtractingGardenGame', () => ({
   default: () => <div>Mock Subtracting Garden Game</div>,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  __esModule: true,
+  KangurLaunchableGameInstanceRuntime: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-subtracting-instance-runtime'>
+      <span data-testid='mock-subtracting-game-id'>{gameId}</span>
+      <span data-testid='mock-subtracting-instance-id'>{instanceId}</span>
+    </div>
+  ),
+  default: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-subtracting-instance-runtime'>
+      <span data-testid='mock-subtracting-game-id'>{gameId}</span>
+      <span data-testid='mock-subtracting-instance-id'>{instanceId}</span>
+    </div>
+  ),
+}));
+
+import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
+
+vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
+  return {
+    ...actual,
+    addXp: vi.fn(),
+    createLessonCompletionReward: vi.fn(() => ({
+      xp: 28,
+      scorePercent: 100,
+      progressUpdates: {},
+    })),
+    loadProgress: vi.fn(() => createDefaultKangurProgressState()),
+    recordKangurLessonPanelProgress: vi.fn(),
+    recordKangurLessonPanelTime: vi.fn(),
+  };
+});
+
+vi.mock('@/features/kangur/services/kangur-platform', () => ({
+  getKangurPlatform: () => ({
+    progress: {
+      get: vi.fn(async () => createDefaultKangurProgressState()),
+      update: vi.fn(async (progress: unknown) => progress),
+    },
+  }),
 }));
 
 import enMessages from '@/i18n/messages/en.json';
@@ -140,5 +231,24 @@ describe('SubtractingLesson i18n', () => {
       screen.getByText('Teile die Zahl, die du abziehst, in zwei Teile: zuerst gehst du bis zur 10 herunter, dann ziehst du den Rest ab.')
     ).toBeInTheDocument();
     expect(screen.getByText('Subtrahiere 2: 10 − 2 = 8')).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(enMessages);
+    customMessages.KangurStaticLessons.subtracting.game.gameTitle =
+      'Custom subtraction shell title';
+
+    renderLesson(<SubtractingLesson />, {
+      locale: 'en',
+      messages: customMessages,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Subtraction game/i }));
+
+    expect(
+      within(screen.getByTestId('subtracting-lesson-game-shell')).getByText(
+        'Custom subtraction shell title'
+      )
+    ).toBeInTheDocument();
   });
 });

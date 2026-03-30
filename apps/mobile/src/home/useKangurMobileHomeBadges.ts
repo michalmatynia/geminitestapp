@@ -1,12 +1,11 @@
 import {
-  KANGUR_BADGES,
   getLocalizedKangurMetadataBadgeName,
+  KANGUR_BADGES,
 } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
-import { useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
-import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { useKangurMobileHomeProgressSnapshot } from './KangurMobileHomeProgressSnapshotContext';
 
 export type KangurMobileHomeBadgeItem = {
   emoji: string;
@@ -22,27 +21,32 @@ type UseKangurMobileHomeBadgesResult = {
 };
 
 const HOME_BADGE_RECENT_LIMIT = 3;
-const badgeById = new Map(KANGUR_BADGES.map((badge) => [badge.id, badge]));
+
+let badgeById: Map<string, { id: string; emoji: string; name: string }> | null = null;
+
+const getBadgeById = () => {
+  if (!badgeById) {
+    badgeById = new Map(KANGUR_BADGES.map((badge) => [badge.id, badge]));
+  }
+  return badgeById;
+};
 
 export const useKangurMobileHomeBadges =
   (): UseKangurMobileHomeBadgesResult => {
     const { locale } = useKangurMobileI18n();
-    const { progressStore } = useKangurMobileRuntime();
-    const progress = useSyncExternalStore(
-      progressStore.subscribeToProgress,
-      progressStore.loadProgress,
-      createDefaultKangurProgressState,
-    );
+    const progress = useKangurMobileHomeProgressSnapshot();
 
     return useMemo(() => {
+      const badges = getBadgeById();
+
       const unlockedBadgeIds = Array.from(
-        new Set(progress.badges.filter((badgeId) => badgeById.has(badgeId))),
+        new Set(progress.badges.filter((badgeId) => badges.has(badgeId))),
       );
       const recentBadges = unlockedBadgeIds
         .slice(-HOME_BADGE_RECENT_LIMIT)
         .reverse()
         .map((badgeId) => {
-          const badge = badgeById.get(badgeId);
+          const badge = badges.get(badgeId);
 
           if (!badge) {
             return null;

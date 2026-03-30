@@ -6,15 +6,17 @@ type CanvasTouchLockOptions = {
   enabled?: boolean;
 };
 
-const TOUCH_EVENTS: Array<keyof HTMLElementEventMap> = [
+type TouchLockSurface = HTMLElement | SVGElement;
+
+const TOUCH_EVENTS = [
   'touchstart',
   'touchmove',
   'touchend',
   'touchcancel',
-];
+] as const;
 
 export const useKangurCanvasTouchLock = (
-  canvasRef: RefObject<HTMLCanvasElement | null>,
+  canvasRef: RefObject<TouchLockSurface | null>,
   { enabled = true }: CanvasTouchLockOptions = {}
 ): void => {
   const { lock, unlock } = useKangurMobileInteractionScrollLock();

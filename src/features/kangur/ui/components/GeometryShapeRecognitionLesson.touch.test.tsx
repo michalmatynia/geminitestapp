@@ -26,14 +26,22 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: () => <div data-testid='geometry-drawing-game' />,
 }));
+vi.mock('@/features/kangur/ui/components/ShapeRecognitionGame', () => ({
+  default: () => (
+    <div data-testid='shape-recognition-game'>
+      <button
+        type='button'
+        className='touch-manipulation select-none min-h-[4rem]'
+      >
+        Koło
+      </button>
+    </div>
+  ),
+}));
 
 import plMessages from '@/i18n/messages/pl.json';
 import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
-
-type CapturedSlide = {
-  title: string;
-  content: React.ReactNode;
-};
+import ShapeRecognitionGame from '@/features/kangur/ui/components/ShapeRecognitionGame';
 
 describe('GeometryShapeRecognitionLesson touch mode', () => {
   afterEach(() => {
@@ -47,9 +55,11 @@ describe('GeometryShapeRecognitionLesson touch mode', () => {
       </NextIntlClientProvider>
     );
 
-    const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
-
-    render(<>{slides.practice?.[0]?.content}</>);
+    render(
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <ShapeRecognitionGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
 
     expect(screen.getByRole('button', { name: 'Koło' })).toHaveClass(
       'touch-manipulation',

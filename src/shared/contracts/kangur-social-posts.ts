@@ -1,39 +1,28 @@
 import { z } from 'zod';
 
 import { imageFileSelectionSchema } from './files';
+import { normalizeKangurSocialVisualAnalysis } from '@/shared/lib/kangur-social-visual-analysis';
 
 const trimmedString = z.string().trim();
 const optionalText = (max: number) => trimmedString.max(max).default('');
 
-export const kangurSocialDocUpdateSchema = z.object({
-  docPath: trimmedString.max(240),
-  section: trimmedString.max(200).nullable().default(null),
-  proposedText: optionalText(5000),
-  reason: optionalText(1000),
+export const kangurSocialVisualAnalysisSchema = z.object({
+  summary: optionalText(8000),
+  highlights: z.array(trimmedString.max(400)).max(24).default([]),
 });
-export type KangurSocialDocUpdate = z.infer<typeof kangurSocialDocUpdateSchema>;
+export type KangurSocialVisualAnalysis = z.infer<
+  typeof kangurSocialVisualAnalysisSchema
+>;
 
-export type KangurSocialDocUpdateItemPlan = {
-  docPath: string;
-  section: string | null;
-  proposedText: string;
-  applied: boolean;
-  skipReason?: string;
-};
-
-export type KangurSocialDocUpdateFilePlan = {
-  docPath: string;
-  applied: boolean;
-  diff: string;
-  truncated: boolean;
-  before: string;
-  after: string;
-};
-
-export type KangurSocialDocUpdatePlan = {
-  items: KangurSocialDocUpdateItemPlan[];
-  files: KangurSocialDocUpdateFilePlan[];
-};
+export const kangurSocialVisualAnalysisStatusSchema = z.enum([
+  'queued',
+  'running',
+  'completed',
+  'failed',
+]);
+export type KangurSocialVisualAnalysisStatus = z.infer<
+  typeof kangurSocialVisualAnalysisStatusSchema
+>;
 
 export const kangurSocialPublishModeSchema = z.enum(['published', 'draft']);
 export type KangurSocialPublishMode = z.infer<typeof kangurSocialPublishModeSchema>;
@@ -65,22 +54,67 @@ export const kangurSocialPostSchema = z.object({
   brainModelId: trimmedString.max(160).nullable().default(null),
   visionModelId: trimmedString.max(160).nullable().default(null),
   publishError: trimmedString.max(1000).nullable().default(null),
-  imageAssets: z.array(imageFileSelectionSchema).max(12).default([]),
+  imageAssets: z.array(imageFileSelectionSchema).max(30).default([]),
   imageAddonIds: z.array(trimmedString.max(160)).max(30).default([]),
   docReferences: z.array(trimmedString.max(240)).max(80).default([]),
   contextSummary: trimmedString.max(8000).nullable().default(null),
   generatedSummary: trimmedString.max(8000).nullable().default(null),
   visualSummary: trimmedString.max(8000).nullable().default(null),
   visualHighlights: z.array(trimmedString.max(400)).max(24).default([]),
-  visualDocUpdates: z.array(kangurSocialDocUpdateSchema).max(50).default([]),
-  docUpdatesAppliedAt: z.string().datetime().nullable().default(null),
-  docUpdatesAppliedBy: trimmedString.max(120).nullable().default(null),
+  visualAnalysisSourceImageAddonIds: z.array(trimmedString.max(160)).max(30).default([]),
+  visualAnalysisSourceVisionModelId: trimmedString.max(160).nullable().default(null),
+  visualAnalysisStatus: kangurSocialVisualAnalysisStatusSchema.nullable().default(null),
+  visualAnalysisUpdatedAt: z.string().datetime().nullable().default(null),
+  visualAnalysisJobId: trimmedString.max(160).nullable().default(null),
+  visualAnalysisModelId: trimmedString.max(160).nullable().default(null),
+  visualAnalysisError: trimmedString.max(2000).nullable().default(null),
   createdBy: trimmedString.max(120).nullable().default(null),
   updatedBy: trimmedString.max(120).nullable().default(null),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 });
 export type KangurSocialPost = z.infer<typeof kangurSocialPostSchema>;
+
+type KangurSocialPublicationRecord = Pick<
+  KangurSocialPost,
+  'status' | 'publishedAt' | 'linkedinPostId' | 'linkedinUrl'
+>;
+
+const hasTrimmedValue = (value?: string | null): boolean =>
+  typeof value === 'string' && value.trim().length > 0;
+
+export const hasKangurSocialLinkedInPublication = (
+  value: KangurSocialPublicationRecord | null | undefined
+): boolean => {
+  if (!value) return false;
+
+  return (
+    value.status === 'published' ||
+    hasTrimmedValue(value.publishedAt) ||
+    hasTrimmedValue(value.linkedinPostId) ||
+    hasTrimmedValue(value.linkedinUrl)
+  );
+};
+
+export const hasKangurSocialLinkedInPublicationTarget = (
+  value: Pick<KangurSocialPost, 'linkedinPostId' | 'linkedinUrl'> | null | undefined
+): boolean =>
+  Boolean(
+    value &&
+      (hasTrimmedValue(value.linkedinPostId) || hasTrimmedValue(value.linkedinUrl))
+  );
+
+export type KangurSocialGeneratedDraft = {
+  titlePl: string;
+  titleEn: string;
+  bodyPl: string;
+  bodyEn: string;
+  combinedBody: string;
+  summary?: string;
+  docReferences?: string[];
+  visualSummary?: string | null;
+  visualHighlights?: KangurSocialVisualAnalysis['highlights'];
+};
 
 export const kangurSocialPostEditorStateSchema = kangurSocialPostSchema.pick({
   titlePl: true,
@@ -94,12 +128,6 @@ export type KangurSocialPostEditorStateDto = z.infer<
 
 export const kangurSocialPostsSchema = z.array(kangurSocialPostSchema);
 export type KangurSocialPosts = z.infer<typeof kangurSocialPostsSchema>;
-
-export type KangurSocialDocUpdatesResponse = {
-  applied: boolean;
-  plan: KangurSocialDocUpdatePlan;
-  post: KangurSocialPost | null;
-};
 
 export const kangurSocialPostStoreSchema = z.object({
   version: z.number().int().positive().default(1),
@@ -135,6 +163,10 @@ export const buildKangurSocialPostCombinedBody = (
 
 export const normalizeKangurSocialPost = (value: KangurSocialPost): KangurSocialPost => {
   const parsed = kangurSocialPostSchema.parse(value);
+  const visualAnalysis = normalizeKangurSocialVisualAnalysis({
+    summary: parsed.visualSummary,
+    highlights: parsed.visualHighlights,
+  });
   const combinedBody =
     parsed.combinedBody.trim().length > 0
       ? parsed.combinedBody
@@ -142,8 +174,15 @@ export const normalizeKangurSocialPost = (value: KangurSocialPost): KangurSocial
   return {
     ...parsed,
     combinedBody,
+    visualSummary: visualAnalysis.summary || null,
+    visualHighlights: visualAnalysis.highlights,
   };
 };
 
-export const parseKangurSocialPostStore = (value: unknown): KangurSocialPostStore =>
-  kangurSocialPostStoreSchema.parse(value);
+export const parseKangurSocialPostStore = (value: unknown): KangurSocialPostStore => {
+  const parsed = kangurSocialPostStoreSchema.parse(value);
+  return {
+    ...parsed,
+    posts: parsed.posts.map((post) => normalizeKangurSocialPost(post)),
+  };
+};

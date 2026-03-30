@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -24,10 +24,13 @@ Use this directory for cross-feature or repo-wide:
 
 ## Current Docs
 
+- Active execution baselines:
+- [`repo-deep-scan-and-doc-refresh-plan-2026-03-25.md`](./repo-deep-scan-and-doc-refresh-plan-2026-03-25.md)
+- [`canonical-closeout-2026-04-17.md`](./canonical-closeout-2026-04-17.md)
+- Historical or retained plan records:
 - [`fastcomet-storage-plan.md`](./fastcomet-storage-plan.md)
 - [`image-studio-object-layout-improvement-plan.md`](./image-studio-object-layout-improvement-plan.md)
 - [`bazel-bun-repo-integration-closeout-2026-03-11.md`](./bazel-bun-repo-integration-closeout-2026-03-11.md)
-- [`canonical-closeout-2026-04-17.md`](./canonical-closeout-2026-04-17.md)
 - [`eslint-10-migration-completed-2026-03-10.md`](./eslint-10-migration-completed-2026-03-10.md)
 - [`site-wide-canonical-migration-plan-2026-03-05.md`](./site-wide-canonical-migration-plan-2026-03-05.md)
 
@@ -37,3 +40,7 @@ Use this directory for cross-feature or repo-wide:
 - Delete superseded dated plan iterations once a later re-baseline or closeout
   document replaces them and no active repo consumers still depend on them.
 - Feature-specific implementation waves should not linger here after completion.
+- When a file is retained for historical context, say so explicitly at the top and
+  link to the current owning runtime or operator docs.
+- Retained closeout docs should prefer pointing to maintained hub docs rather than
+  duplicating current command guidance inline.

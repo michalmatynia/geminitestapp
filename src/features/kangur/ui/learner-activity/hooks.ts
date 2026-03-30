@@ -9,6 +9,7 @@ import {
   recordKangurLessonPanelProgress,
   recordKangurLessonPanelTime,
 } from '@/features/kangur/ui/services/progress';
+import * as KangurSubjectFocusContext from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useLessonHubProgress, type LessonHubSectionProgress } from '@/features/kangur/ui/hooks/useLessonHubProgress';
 
 type LessonSectionInput<SectionId extends string> = {
@@ -46,10 +47,26 @@ type UseLessonTimeTrackingResult = {
 
 const normalizeLessonKey = (lessonId: string): string => lessonId.trim().replace(/-/g, '_');
 
+const useLegacySubjectFocusState = (): { subjectKey: string | null } | null => {
+  const legacyFocus = KangurSubjectFocusContext.useKangurSubjectFocus?.();
+  return legacyFocus ? { subjectKey: legacyFocus.subjectKey ?? null } : null;
+};
+
+const useResolvedSubjectFocusState = Object.prototype.hasOwnProperty.call(
+  KangurSubjectFocusContext,
+  'useOptionalKangurSubjectFocusState'
+)
+  ? (KangurSubjectFocusContext as {
+      useOptionalKangurSubjectFocusState: () => { subjectKey: string | null } | null;
+    }).useOptionalKangurSubjectFocusState
+  : useLegacySubjectFocusState;
+
 export const useKangurLessonSubsectionProgress = <SectionId extends string>({
   lessonId,
   sections,
 }: UseKangurLessonSubsectionProgressOptions<SectionId>): UseKangurLessonSubsectionProgressResult<SectionId> => {
+  const subjectFocusState = useResolvedSubjectFocusState();
+  const subjectKey = subjectFocusState?.subjectKey ?? null;
   const lessonKey = useMemo(() => normalizeLessonKey(lessonId), [lessonId]);
   const sectionLabels = useMemo(
     () =>
@@ -89,9 +106,9 @@ export const useKangurLessonSubsectionProgress = <SectionId extends string>({
         viewedCount,
         totalCount,
         label: sectionLabels[sectionId],
-      });
+      }, { ownerKey: subjectKey });
     },
-    [lessonKey, sectionLabels, slideSections]
+    [lessonKey, sectionLabels, slideSections, subjectKey]
   );
 
   const handleSectionViewedCount = useCallback(
@@ -121,6 +138,8 @@ export const useLessonTimeTracking = ({
   lessonId,
   scorePercent = 100,
 }: UseLessonTimeTrackingOptions): UseLessonTimeTrackingResult => {
+  const subjectFocusState = useResolvedSubjectFocusState();
+  const subjectKey = subjectFocusState?.subjectKey ?? null;
   const lessonKey = useMemo(() => normalizeLessonKey(lessonId), [lessonId]);
   const sessionIdRef = useRef<string>(
     `lesson-session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
@@ -137,16 +156,16 @@ export const useLessonTimeTracking = ({
         seconds,
         sessionId: sessionIdRef.current,
         sessionStartedAt: sessionStartedAtRef.current,
-      });
+      }, { ownerKey: subjectKey });
     },
-    [lessonKey]
+    [lessonKey, subjectKey]
   );
 
   const recordComplete = useCallback(async (): Promise<void> => {
-    const progress = loadProgress();
+    const progress = loadProgress({ ownerKey: subjectKey });
     const reward = createLessonCompletionReward(progress, lessonKey, scorePercent);
-    addXp(reward.xp, reward.progressUpdates);
-  }, [lessonKey, scorePercent]);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey: subjectKey });
+  }, [lessonKey, scorePercent, subjectKey]);
 
   return {
     recordPanelTime,

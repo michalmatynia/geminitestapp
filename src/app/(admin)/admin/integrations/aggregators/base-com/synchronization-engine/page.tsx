@@ -1,7 +1,17 @@
 import { JSX } from 'react';
 
-import BaseSynchronizationEnginePage from '@/features/integrations/pages/aggregators/base-com/BaseSynchronizationEnginePage';
+import { ProductSyncSettings } from '@/features/product-sync/public';
+import { SectionHeader } from '@/shared/ui';
 
-export default function Page(): JSX.Element {
-  return <BaseSynchronizationEnginePage />;
+export default function BaseSynchronizationEnginePage(): JSX.Element {
+  return (
+    <div className='page-section'>
+      <SectionHeader
+        title='Base.com Synchronization Engine'
+        description='Configure scheduled product synchronization profiles between your app and Base.com.'
+        className='mb-6'
+      />
+      <ProductSyncSettings />
+    </div>
+  );
 }

@@ -93,6 +93,7 @@ interface ProductFormProps {
   submitButtonText: string;
   skuRequired?: boolean;
   validationInstanceScopeOverride?: string;
+  validatorSessionKey?: string;
 }
 
 const PRODUCT_FORM_TAB_SET = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS);
@@ -206,6 +207,7 @@ export default function ProductForm({
   submitButtonText: _submitButtonText,
   skuRequired: _skuRequired = false,
   validationInstanceScopeOverride,
+  validatorSessionKey,
 }: ProductFormProps): React.JSX.Element {
   const { handleSubmit, product, draft, ConfirmationModal } = useProductFormCore();
 
@@ -227,7 +229,17 @@ export default function ProductForm({
     return initial;
   });
 
-  const validator = useProductFormValidator(validationInstanceScopeOverride);
+  const [fallbackValidatorSessionKey] = useState<string>(() =>
+    typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : `product-form-validator-${Date.now().toString(36)}`
+  );
+  const effectiveValidatorSessionKey = validatorSessionKey ?? fallbackValidatorSessionKey;
+
+  const validator = useProductFormValidator(
+    validationInstanceScopeOverride,
+    effectiveValidatorSessionKey
+  );
 
   const footerEntityId = product?.id?.trim() || draft?.id?.trim() || '';
 

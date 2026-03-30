@@ -1,4 +1,5 @@
 import { type ClientErrorContext, logClientCatch } from './client-error-logger';
+import { reportObservabilityInternalError } from './internal-observability-fallback';
 
 export type RuntimeErrorReportingContext = ClientErrorContext & {
   source: string;
@@ -24,9 +25,12 @@ export const reportRuntimeCatch = async (
       ...errorContext,
     });
   } catch (reportingError) {
-    console.error('[observability] Failed to report runtime catch', reportingError, {
+    reportObservabilityInternalError(reportingError, {
+      source: 'observability',
+      action: 'reportRuntimeCatch',
+      message: '[observability] Failed to report runtime catch',
       originalError: error,
-      context,
+      runtimeContext: context,
     });
   }
 };

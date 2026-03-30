@@ -1,12 +1,13 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -44,22 +45,137 @@ type AddingBallGameProps = {
   onFinish: () => void;
 };
 
+type MiniGameTranslations = ReturnType<typeof useTranslations>;
+
+const resolveAddingBallFinishLabelVariant = (
+  finishLabelVariant: AddingBallGameProps['finishLabelVariant']
+): 'lesson' | 'topics' | 'play' =>
+  finishLabelVariant === 'topics' ? 'topics' : finishLabelVariant === 'play' ? 'play' : 'lesson';
+
+const resolveMotionOpacity = (value: unknown, fallback: number): number => {
+  if (!value || typeof value !== 'object') {
+    return fallback;
+  }
+  const opacity = (value as { opacity?: unknown }).opacity;
+  return typeof opacity === 'number' ? opacity : fallback;
+};
+
+const resolveAddingBallSummaryEmoji = (percent: number): string => {
+  if (percent === 100) {
+    return '🏆';
+  }
+  if (percent >= 60) {
+    return '🌟';
+  }
+  return '💪';
+};
+
+const resolveAddingBallSummaryMessage = (
+  translations: MiniGameTranslations,
+  percent: number
+): string => {
+  if (percent === 100) {
+    return translations('adding.summary.perfect');
+  }
+  if (percent >= 60) {
+    return translations('adding.summary.good');
+  }
+  return translations('adding.summary.retry');
+};
+
+const resolveAddingBallNextMode = (roundIdx: number): RoundMode =>
+  MODES[(roundIdx + 1) % MODES.length] ?? 'complete_equation';
+
+const resolveAddingBallModeLabel = (
+  mode: RoundMode,
+  translations: MiniGameTranslations
+): string =>
+  ({
+    complete_equation: translations('adding.rounds.completeEquation.label'),
+    group_sum: translations('adding.rounds.groupSum.label'),
+    pick_answer: translations('adding.rounds.pickAnswer.label'),
+  })[mode];
+
+const resolveAddingBallTouchHint = (
+  mode: RoundMode,
+  translations: MiniGameTranslations
+): string =>
+  ({
+    complete_equation: translations('adding.rounds.completeEquation.touchHint'),
+    group_sum: translations('adding.rounds.groupSum.touchHint'),
+    pick_answer: translations('adding.rounds.pickAnswer.touchHint'),
+  })[mode];
+
+function AddingBallRoundContent(props: {
+  round: Round;
+  onResult: (correct: boolean) => void;
+}): React.JSX.Element {
+  const { round, onResult } = props;
+
+  if (round.mode === 'complete_equation') {
+    return <CompleteEquation round={round} onResult={onResult} />;
+  }
+  if (round.mode === 'group_sum') {
+    return <GroupSum round={round} onResult={onResult} />;
+  }
+  return <PickAnswer round={round} onResult={onResult} />;
+}
+
+function AddingBallSummaryView(props: {
+  percent: number;
+  score: number;
+  xpEarned: number;
+  xpBreakdown: KangurRewardBreakdownEntry[];
+  finishLabel: string;
+  translations: MiniGameTranslations;
+  onFinish: () => void;
+  onRestart: () => void;
+}): React.JSX.Element {
+  const { percent, score, xpEarned, xpBreakdown, finishLabel, translations, onFinish, onRestart } =
+    props;
+
+  return (
+    <KangurPracticeGameSummary dataTestId='adding-ball-summary-shell' wrapperClassName='w-full max-w-none'>
+      <KangurPracticeGameSummaryEmoji
+        dataTestId='adding-ball-summary-emoji'
+        emoji={resolveAddingBallSummaryEmoji(percent)}
+      />
+      <KangurPracticeGameSummaryTitle
+        dataTestId='adding-ball-summary-title'
+        title={getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
+      />
+      <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
+      <KangurPracticeGameSummaryBreakdown
+        breakdown={xpBreakdown}
+        dataTestId='adding-ball-summary-breakdown'
+        itemDataTestIdPrefix='adding-ball-summary-breakdown'
+      />
+      <KangurPracticeGameSummaryProgress accent='amber' percent={percent} />
+      <KangurPracticeGameSummaryMessage>
+        {resolveAddingBallSummaryMessage(translations, percent)}
+      </KangurPracticeGameSummaryMessage>
+      <KangurPracticeGameSummaryActions
+        finishLabel={finishLabel}
+        onFinish={onFinish}
+        restartLabel={translations('shared.restart')}
+        onRestart={onRestart}
+      />
+    </KangurPracticeGameSummary>
+  );
+}
+
 export default function AddingBallGame({
   finishLabelVariant = 'lesson',
   onFinish,
 }: AddingBallGameProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const finishLabel = getKangurMiniGameFinishLabel(
     translations,
-    finishLabelVariant === 'topics' ? 'topics' : finishLabelVariant === 'play' ? 'play' : 'lesson'
+    resolveAddingBallFinishLabelVariant(finishLabelVariant)
   );
   const isCoarsePointer = useKangurCoarsePointer();
   const prefersReducedMotion = useReducedMotion();
-  const resolveMotionOpacity = (value: unknown, fallback: number): number => {
-    if (!value || typeof value !== 'object') return fallback;
-    const opacity = (value as { opacity?: unknown }).opacity;
-    return typeof opacity === 'number' ? opacity : fallback;
-  };
   const [roundIdx, setRoundIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
@@ -78,13 +194,22 @@ export default function AddingBallGame({
   const handleFinishGame = (): void => {
     onFinish();
   };
+  const handleRestartGame = (): void => {
+    setRoundIdx(0);
+    setScore(0);
+    setDone(false);
+    setXpEarned(0);
+    setXpBreakdown([]);
+    setRound(generateRound(MODES[0] ?? 'complete_equation'));
+    sessionStartedAtRef.current = Date.now();
+  };
 
   const handleResult = (correct: boolean): void => {
     const nextScore = correct ? score + 1 : score;
     if (roundIdx + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, 'adding', nextScore, TOTAL_ROUNDS);
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'addition',
         score: nextScore,
@@ -100,7 +225,7 @@ export default function AddingBallGame({
       return;
     }
 
-    const nextMode = MODES[(roundIdx + 1) % MODES.length] ?? 'complete_equation';
+    const nextMode = resolveAddingBallNextMode(roundIdx);
     setRound(generateRound(nextMode));
     setScore(nextScore);
     setRoundIdx(roundIdx + 1);
@@ -109,62 +234,24 @@ export default function AddingBallGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <KangurPracticeGameSummary dataTestId='adding-ball-summary-shell' wrapperClassName='w-full max-w-none'>
-        <KangurPracticeGameSummaryEmoji
-          dataTestId='adding-ball-summary-emoji'
-          emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
-        />
-        <KangurPracticeGameSummaryTitle
-          dataTestId='adding-ball-summary-title'
-          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
-        />
-        <KangurPracticeGameSummaryXP accent='indigo' xpEarned={xpEarned} />
-        <KangurPracticeGameSummaryBreakdown
-          breakdown={xpBreakdown}
-          dataTestId='adding-ball-summary-breakdown'
-          itemDataTestIdPrefix='adding-ball-summary-breakdown'
-        />
-        <KangurPracticeGameSummaryProgress accent='amber' percent={percent} />
-        <KangurPracticeGameSummaryMessage>
-          {percent === 100
-            ? translations('adding.summary.perfect')
-            : percent >= 60
-              ? translations('adding.summary.good')
-              : translations('adding.summary.retry')}
-        </KangurPracticeGameSummaryMessage>
-        <KangurPracticeGameSummaryActions
-          finishLabel={finishLabel}
-          onFinish={handleFinishGame}
-          restartLabel={translations('shared.restart')}
-          onRestart={() => {
-            setRoundIdx(0);
-            setScore(0);
-            setDone(false);
-            setXpEarned(0);
-            setXpBreakdown([]);
-            setRound(generateRound(MODES[0] ?? 'complete_equation'));
-            sessionStartedAtRef.current = Date.now();
-          }}
-        />
-      </KangurPracticeGameSummary>
+      <AddingBallSummaryView
+        percent={percent}
+        score={score}
+        xpEarned={xpEarned}
+        xpBreakdown={xpBreakdown}
+        finishLabel={finishLabel}
+        translations={translations}
+        onFinish={handleFinishGame}
+        onRestart={handleRestartGame}
+      />
     );
   }
 
-  const modeLabelByMode: Record<RoundMode, string> = {
-    complete_equation: translations('adding.rounds.completeEquation.label'),
-    group_sum: translations('adding.rounds.groupSum.label'),
-    pick_answer: translations('adding.rounds.pickAnswer.label'),
-  };
-  const modeLabel = modeLabelByMode[round.mode];
-  const touchHintByMode: Record<RoundMode, string> = {
-    complete_equation: translations('adding.rounds.completeEquation.touchHint'),
-    group_sum: translations('adding.rounds.groupSum.touchHint'),
-    pick_answer: translations('adding.rounds.pickAnswer.touchHint'),
-  };
-  const touchHint = touchHintByMode[round.mode];
+  const modeLabel = resolveAddingBallModeLabel(round.mode, translations);
+  const touchHint = resolveAddingBallTouchHint(round.mode, translations);
 
   return (
-    <KangurPracticeGameStage className='w-full max-w-none'>
+    <KangurPracticeGameShell className='w-full max-w-none'>
       <KangurPracticeGameProgress
         accent='amber'
         currentRound={roundIdx}
@@ -195,14 +282,10 @@ export default function AddingBallGame({
             key={roundIdx}
             {...roundMotionProps}
           >
-            {round.mode === 'complete_equation' && (
-              <CompleteEquation round={round} onResult={handleResult} />
-            )}
-            {round.mode === 'group_sum' && <GroupSum round={round} onResult={handleResult} />}
-            {round.mode === 'pick_answer' && <PickAnswer round={round} onResult={handleResult} />}
+            <AddingBallRoundContent round={round} onResult={handleResult} />
           </motion.div>
         </AnimatePresence>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

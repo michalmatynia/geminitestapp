@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type {
   ProductListingWithDetails,
@@ -63,6 +64,7 @@ export interface ProductListingsModals {
   onClose: () => void;
   onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
   filterIntegrationSlug?: string | null | undefined;
+  recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 }
 const ModalsContext = createContext<ProductListingsModals | null>(null);
 export const useProductListingsModals = () => {
@@ -117,6 +119,7 @@ export function ProductListingsProvider({
   onClose,
   onStartListing,
   filterIntegrationSlug,
+  recoveryContext,
 }: {
   product: ProductWithImages;
   children: React.ReactNode;
@@ -124,6 +127,7 @@ export function ProductListingsProvider({
   onClose: () => void;
   onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
   filterIntegrationSlug?: string | null | undefined;
+  recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 }): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [deletingFromBase, setDeletingFromBase] = useState<string | null>(null);
@@ -220,6 +224,7 @@ export function ProductListingsProvider({
       onClose,
       onStartListing,
       filterIntegrationSlug,
+      recoveryContext,
     }),
     [
       listingToDelete,
@@ -228,6 +233,7 @@ export function ProductListingsProvider({
       onClose,
       onStartListing,
       filterIntegrationSlug,
+      recoveryContext,
     ]
   );
 

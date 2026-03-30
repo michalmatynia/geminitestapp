@@ -40,6 +40,7 @@ vi.mock('@/features/kangur/observability/server', () => ({
 }));
 
 import { patchKangurAssignmentHandler } from './handler';
+import { clearKangurAssignmentSnapshotsCache } from '../shared';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -72,6 +73,7 @@ const assignment: KangurAssignment = {
 describe('kangur assignment patch handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurAssignmentSnapshotsCache();
 
     getKangurAssignmentRepositoryMock.mockResolvedValue({
       updateAssignment: updateAssignmentMock,

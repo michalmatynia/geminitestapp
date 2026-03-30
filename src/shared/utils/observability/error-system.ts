@@ -10,6 +10,8 @@ import {
 import { isAppError } from '@/shared/errors/app-error';
 import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
 import type { ResolvedError } from '@/shared/contracts/base';
+import { isServerLoggingEnabled } from '@/shared/lib/observability/logging-controls-server';
+import { reportObservabilityInternalError } from '@/shared/utils/observability/internal-observability-fallback';
 
 
 export const ErrorCategories = ERROR_CATEGORY;
@@ -33,11 +35,11 @@ const logErrorSystemFailure = async (
     }
     logger.error(message, error, { service: 'error-system' });
   } catch {
-    if (level === 'warn') {
-      console.warn(message, error);
-      return;
-    }
-    console.error(message, error);
+    reportObservabilityInternalError(error, {
+      source: 'error-system',
+      action: level === 'warn' ? 'warn-fallback' : 'error-fallback',
+      message,
+    });
   }
 };
 
@@ -53,6 +55,7 @@ export const ErrorSystem = {
    * @param context Contextual information (service name, IDs, etc.)
    */
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
+    if (!(await isServerLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
       const { classifyError } = await import('@/shared/errors/error-classifier');
@@ -92,6 +95,7 @@ export const ErrorSystem = {
    * Log a warning (non-fatal issue).
    */
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    if (!(await isServerLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
       const { classifyError } = await import('@/shared/errors/error-classifier');
@@ -124,6 +128,7 @@ export const ErrorSystem = {
    * Log a validation error.
    */
   logValidationError: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    if (!(await isServerLoggingEnabled('error'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
       const service = context.service || 'unknown';
@@ -146,6 +151,7 @@ export const ErrorSystem = {
    * Log an operational info event.
    */
   logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    if (!(await isServerLoggingEnabled('info'))) return;
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
       const { classifyError } = await import('@/shared/errors/error-classifier');

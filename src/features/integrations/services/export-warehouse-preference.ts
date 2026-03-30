@@ -1,4 +1,4 @@
-import type { AiPathsCollectionMap as ExportWarehouseByInventoryMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
+import type { StringRecord as ExportWarehouseByInventoryMap } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

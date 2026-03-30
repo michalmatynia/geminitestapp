@@ -29,7 +29,14 @@ import type {
 import type { TutorGuidedMode } from './KangurAiTutorWidget.types';
 import type { Transition } from 'framer-motion';
 
-export type KangurAiTutorPortalStateContextValue = {
+type MergePortalSections<
+  TState extends Record<string, unknown>,
+  TActions extends Partial<Record<keyof TState, unknown>>,
+> = {
+  [K in keyof TState]: K extends keyof TActions ? TState[K] & TActions[K] : TState[K];
+};
+
+type KangurAiTutorPortalStateSections = {
   avatar: {
     ariaLabel: string;
     avatarAnchorKind: string;
@@ -166,8 +173,9 @@ export type KangurAiTutorPortalStateContextValue = {
     selectionSpotlightStyle: CSSProperties | null;
   };
 };
+export type KangurAiTutorPortalStateContextValue = KangurAiTutorPortalStateSections;
 
-export type KangurAiTutorPortalActionsContextValue = {
+type KangurAiTutorPortalActionSections = {
   avatar: {
     onClick: () => void;
     onMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -215,17 +223,12 @@ export type KangurAiTutorPortalActionsContextValue = {
     onSelectionActionMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
   };
 };
+export type KangurAiTutorPortalActionsContextValue = KangurAiTutorPortalActionSections;
 
-export type KangurAiTutorPortalContextValue = {
-  avatar: KangurAiTutorPortalStateContextValue['avatar'] & KangurAiTutorPortalActionsContextValue['avatar'];
-  diagnostics: KangurAiTutorPortalStateContextValue['diagnostics'];
-  drawingPanel: KangurAiTutorPortalStateContextValue['drawingPanel'] & KangurAiTutorPortalActionsContextValue['drawingPanel'];
-  guestIntro: KangurAiTutorPortalStateContextValue['guestIntro'] & KangurAiTutorPortalActionsContextValue['guestIntro'];
-  guidedCallout: KangurAiTutorPortalStateContextValue['guidedCallout'] & KangurAiTutorPortalActionsContextValue['guidedCallout'];
-  panel: KangurAiTutorPortalStateContextValue['panel'] & KangurAiTutorPortalActionsContextValue['panel'];
-  selectionAction: KangurAiTutorPortalStateContextValue['selectionAction'] & KangurAiTutorPortalActionsContextValue['selectionAction'];
-  spotlights: KangurAiTutorPortalStateContextValue['spotlights'];
-};
+export type KangurAiTutorPortalContextValue = MergePortalSections<
+  KangurAiTutorPortalStateSections,
+  KangurAiTutorPortalActionSections
+>;
 
 const KangurAiTutorPortalStateContext = createContext<KangurAiTutorPortalStateContextValue | null>(null);
 const KangurAiTutorPortalActionsContext = createContext<KangurAiTutorPortalActionsContextValue | null>(null);

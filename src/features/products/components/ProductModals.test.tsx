@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React, { type ReactNode } from 'react';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
+import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 
 const { useProductListHeaderActionsContextMock, useProductListModalsContextMock } = vi.hoisted(() => ({
   useProductListHeaderActionsContextMock: vi.fn(),
@@ -11,16 +12,22 @@ const { useProductListHeaderActionsContextMock, useProductListModalsContextMock 
 }));
 
 const {
+  productFormPropsMock,
   useProductFormCoreMock,
+  productFormProviderPropsMock,
   triggerButtonBarMock,
+  productListingsModalPropsMock,
   getNextProviderInstanceIdMock,
   resetProviderInstanceCounterMock,
 } = vi.hoisted(() => {
   let providerInstanceCounter = 0;
 
   return {
-  useProductFormCoreMock: vi.fn(),
-  triggerButtonBarMock: vi.fn(),
+    productFormPropsMock: vi.fn(),
+    useProductFormCoreMock: vi.fn(),
+    productFormProviderPropsMock: vi.fn(),
+    triggerButtonBarMock: vi.fn(),
+    productListingsModalPropsMock: vi.fn(),
     getNextProviderInstanceIdMock: (): number => {
       providerInstanceCounter += 1;
       return providerInstanceCounter;
@@ -37,7 +44,16 @@ vi.mock('@/features/products/context/ProductListContext', () => ({
 }));
 
 vi.mock('@/features/products/context/ProductFormContext', () => ({
-  ProductFormProvider: ({ children }: { children: ReactNode }) => {
+  ProductFormProvider: ({
+    children,
+    ...props
+  }: {
+    children: ReactNode;
+    initialSku?: string;
+    draft?: ProductDraft;
+    product?: ProductWithImages;
+  }) => {
+    productFormProviderPropsMock(props);
     const instanceIdRef = React.useRef<number | null>(null);
     if (instanceIdRef.current === null) {
       instanceIdRef.current = getNextProviderInstanceIdMock();
@@ -72,22 +88,21 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  FormModal: ({
-    children,
-    isSaveDisabled,
-    saveText,
-  }: {
+  FormModal: (props: {
     children: ReactNode;
     isSaveDisabled?: boolean;
     saveText?: string;
-  }) => (
-    <div data-testid='loading-form-modal'>
-      <button type='button' disabled={Boolean(isSaveDisabled)}>
-        {saveText ?? 'Save'}
-      </button>
-      {children}
-    </div>
-  ),
+  }) => {
+    const { children, isSaveDisabled, saveText } = props;
+    return (
+      <div data-testid='loading-form-modal'>
+        <button type='button' disabled={Boolean(isSaveDisabled)}>
+          {saveText ?? 'Save'}
+        </button>
+        {children}
+      </div>
+    );
+  },
   Skeleton: ({ className }: { className?: string }) => (
     <div data-testid='skeleton' className={className} />
   ),
@@ -101,15 +116,19 @@ vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () 
 }));
 
 vi.mock('@/features/products/components/ProductForm', () => ({
-  default: () => <div data-testid='product-form' />,
+  default: (props: Record<string, unknown>) => {
+    productFormPropsMock(props);
+    return <div data-testid='product-form' />;
+  },
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/product-integrations-adapter', () => ({
   ListProductModal: () => null,
   MassListProductModal: () => null,
-  ProductListingsModal: () => null,
-  __esModule: true,
-  default: () => null,
+  ProductListingsModal: (props: Record<string, unknown>) => {
+    productListingsModalPropsMock(props);
+    return null;
+  },
 }));
 
 import { ProductModals, buildTriggeredProductEntityJson } from './ProductModals';
@@ -181,6 +200,7 @@ const buildContext = (overrides: Record<string, unknown> = {}) => ({
   onEditSuccess: vi.fn(),
   onEditSave: vi.fn(),
   integrationsProduct: null,
+  integrationsRecoveryContext: null,
   onCloseIntegrations: vi.fn(),
   onStartListing: vi.fn(),
   showListProductModal: false,
@@ -261,6 +281,36 @@ describe('ProductModals edit hydration guard', () => {
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Update' })).not.toBeDisabled();
+  });
+
+  it('passes failed export recovery context into the listings modal', async () => {
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        integrationsProduct: createProduct(),
+        integrationsRecoveryContext: {
+          source: 'base_quick_export_failed',
+          integrationSlug: 'baselinker',
+          status: 'failed',
+          runId: 'run-failed-42',
+        },
+      })
+    );
+
+    render(<ProductModals />);
+
+    await waitFor(() => {
+      expect(productListingsModalPropsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          item: expect.objectContaining({ id: 'product-1' }),
+          recoveryContext: {
+            source: 'base_quick_export_failed',
+            integrationSlug: 'baselinker',
+            status: 'failed',
+            runId: 'run-failed-42',
+          },
+        })
+      );
+    });
   });
 
   it('renders edit form when the editing product is hydrated', () => {
@@ -399,6 +449,93 @@ describe('ProductModals edit hydration guard', () => {
     expect(providerAfter.getAttribute('data-instance-id')).toBe(instanceIdBefore);
     expect(providerAfter).toBe(providerBefore);
   });
+
+  it('keeps the same validator session while edit hydration upgrades a product snapshot', () => {
+    let editingProduct = createProduct({
+      id: 'product-hydration-session',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    useProductFormCoreMock.mockImplementation(() => ({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: editingProduct,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({}),
+    }));
+    useProductListModalsContextMock.mockImplementation(() =>
+      buildContext({
+        editingProduct,
+      })
+    );
+
+    const { rerender } = render(<ProductModals />);
+
+    const sessionKeyBefore = productFormPropsMock.mock.lastCall?.[0]?.[
+      'validatorSessionKey'
+    ] as string | undefined;
+
+    editingProduct = markEditingProductHydrated(
+      createProduct({
+        id: 'product-hydration-session',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+        name_en: 'Hydrated product',
+      })
+    );
+
+    rerender(<ProductModals />);
+
+    const sessionKeyAfter = productFormPropsMock.mock.lastCall?.[0]?.[
+      'validatorSessionKey'
+    ] as string | undefined;
+
+    expect(sessionKeyBefore).toBeTruthy();
+    expect(sessionKeyAfter).toBeTruthy();
+    expect(sessionKeyAfter).toBe(sessionKeyBefore);
+  });
+
+  it('starts a fresh validator session when reopening edit for the same product', () => {
+    const editingProduct = markEditingProductHydrated(createProduct());
+
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: editingProduct,
+      draft: null,
+      getValues: vi.fn().mockReturnValue({}),
+    });
+
+    const openContext = buildContext({ editingProduct });
+    const closedContext = buildContext({ editingProduct: null });
+    useProductListModalsContextMock.mockReturnValue(openContext);
+
+    const { rerender } = render(<ProductModals />);
+
+    const firstSessionKey = productFormPropsMock.mock.lastCall?.[0]?.[
+      'validatorSessionKey'
+    ] as string | undefined;
+
+    useProductListModalsContextMock.mockReturnValue(closedContext);
+    rerender(<ProductModals />);
+
+    useProductListModalsContextMock.mockReturnValue(openContext);
+    rerender(<ProductModals />);
+
+    const reopenedSessionKey = productFormPropsMock.mock.lastCall?.[0]?.[
+      'validatorSessionKey'
+    ] as string | undefined;
+
+    expect(firstSessionKey).toBeTruthy();
+    expect(reopenedSessionKey).toBeTruthy();
+    expect(reopenedSessionKey).not.toBe(firstSessionKey);
+    expect(productFormPropsMock.mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({
+        validationInstanceScopeOverride: 'product_edit',
+      })
+    );
+  });
 });
 
 describe('ProductModals create flows use unified modal shell', () => {
@@ -447,5 +584,33 @@ describe('ProductModals create flows use unified modal shell', () => {
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
+  });
+
+  it('forwards the auto-increment placeholder SKU for draft-backed create flows', () => {
+    const draft = createDraft({ sku: 'DRAFT-OLD-099' } as Partial<ProductDraft>);
+    useProductFormCoreMock.mockReturnValue({
+      handleSubmit: vi.fn(),
+      uploading: false,
+      hasUnsavedChanges: false,
+      product: null,
+      draft,
+      getValues: vi.fn().mockReturnValue({}),
+    });
+    useProductListModalsContextMock.mockReturnValue(
+      buildContext({
+        isCreateOpen: true,
+        createDraft: draft,
+        initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+      })
+    );
+
+    render(<ProductModals />);
+
+    expect(productFormProviderPropsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draft,
+        initialSku: PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER,
+      })
+    );
   });
 });

@@ -1,18 +1,19 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useLocale, useTranslations } from 'next-intl';
+import { useMemo, useRef, useState } from 'react';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -25,6 +26,7 @@ import {
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
+  translateKangurMiniGameWithFallback,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import {
   KangurButton,
@@ -33,7 +35,7 @@ import {
   KangurInfoCard,
   KangurPanelRow,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_TIGHT_CLASSNAME,
@@ -50,6 +52,7 @@ import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
@@ -70,10 +73,104 @@ type Round = {
   tokens: TokenItem[];
 };
 
+type SubtractingGardenFallbackCopy = {
+  basketEmpty: string;
+  basketTitle: string;
+  checkLabel: string;
+  cloudEmpty: string;
+  cloudTitle: string;
+  desktopIdle: string;
+  feedbackTooFew: (missing: number) => string;
+  feedbackTooMany: (missing: number) => string;
+  moveToBasket: string;
+  moveToCloud: string;
+  remainingLabel: (value: number) => string;
+  removedLabel: (value: number, target: number) => string;
+  takeAwayInstruction: (count: number) => string;
+  targetLabel: (value: number) => string;
+};
+
 type ZoneId = 'basket' | 'sky';
 
 const TOTAL_ROUNDS = 6;
-const dragPortal = typeof document === 'undefined' ? null : document.body;
+
+const getSubtractingGardenFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): SubtractingGardenFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      basketEmpty: 'Порожній кошик',
+      basketTitle: 'Стартовий кошик',
+      checkLabel: 'Перевірити',
+      cloudEmpty: 'Перетягни сюди',
+      cloudTitle: 'Хмарка забирає',
+      desktopIdle: 'Перетягуй або натискай обʼєкти, щоб віднімати.',
+      feedbackTooFew: (missing) => `Замало. Забери ще ${missing}.`,
+      feedbackTooMany: (missing) => `Забагато. Поверни ${missing}.`,
+      moveToBasket: 'До кошика',
+      moveToCloud: 'До хмарки',
+      remainingLabel: (value) => `Залишилось: ${value}`,
+      removedLabel: (value, target) => `Забрано: ${value}/${target}`,
+      takeAwayInstruction: (count) => `Забери ${count} сяючих точок`,
+      targetLabel: (value) => `Ціль: забери ${value}`,
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      basketEmpty: 'Leerer Korb',
+      basketTitle: 'Startkorb',
+      checkLabel: 'Prufen',
+      cloudEmpty: 'Hier ablegen',
+      cloudTitle: 'Die Wolke nimmt weg',
+      desktopIdle: 'Ziehe oder klicke Objekte, um zu subtrahieren.',
+      feedbackTooFew: (missing) => `Zu wenig. Nimm noch ${missing} weg.`,
+      feedbackTooMany: (missing) => `Zu viel. Gib ${missing} zuruck.`,
+      moveToBasket: 'Zum Korb',
+      moveToCloud: 'Zur Wolke',
+      remainingLabel: (value) => `Ubrig: ${value}`,
+      removedLabel: (value, target) => `Weggenommen: ${value}/${target}`,
+      takeAwayInstruction: (count) => `Nimm ${count} leuchtende Punkte weg`,
+      targetLabel: (value) => `Ziel: nimm ${value} weg`,
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      basketEmpty: 'Empty basket',
+      basketTitle: 'Starting basket',
+      checkLabel: 'Check',
+      cloudEmpty: 'Drop here',
+      cloudTitle: 'The cloud takes away',
+      desktopIdle: 'Drag or tap the objects to subtract.',
+      feedbackTooFew: (missing) => `Too few. Take away ${missing} more.`,
+      feedbackTooMany: (missing) => `Too many. Put back ${missing}.`,
+      moveToBasket: 'To basket',
+      moveToCloud: 'To cloud',
+      remainingLabel: (value) => `Left: ${value}`,
+      removedLabel: (value, target) => `Taken away: ${value}/${target}`,
+      takeAwayInstruction: (count) => `Take away ${count} glowing points`,
+      targetLabel: (value) => `Target: take away ${value}`,
+    };
+  }
+
+  return {
+    basketEmpty: 'Pusty koszyk',
+    basketTitle: 'Koszyk startowy',
+    checkLabel: 'Sprawdź',
+    cloudEmpty: 'Upuść tutaj',
+    cloudTitle: 'Chmura zabiera',
+    desktopIdle: 'Przeciągnij lub kliknij obiekty, aby odejmować.',
+    feedbackTooFew: (missing) => `Za mało. Zabierz jeszcze ${missing}.`,
+    feedbackTooMany: (missing) => `Za dużo. Oddaj ${missing}.`,
+    moveToBasket: 'Do koszyka',
+    moveToCloud: 'Do chmury',
+    remainingLabel: (value) => `Zostało: ${value}`,
+    removedLabel: (value, target) => `Zabrane: ${value}/${target}`,
+    takeAwayInstruction: (count) => `Zabierz ${count} swiecacych punktów`,
+    targetLabel: (value) => `Cel: zabierz ${value}`,
+  };
+};
 
 const TOKEN_STYLES = [
   'bg-gradient-to-br from-amber-200 via-orange-300 to-rose-300 shadow-[0_10px_26px_-12px_rgba(251,146,60,0.7)]',
@@ -144,6 +241,7 @@ const isZoneId = (id: string): id is ZoneId => id === 'basket' || id === 'sky';
 function DraggableToken({
   token,
   index,
+  ariaLabel,
   isDragDisabled,
   isSelected,
   isCoarsePointer,
@@ -152,6 +250,7 @@ function DraggableToken({
 }: {
   token: TokenItem;
   index: number;
+  ariaLabel: string;
   isDragDisabled: boolean;
   isSelected: boolean;
   isCoarsePointer: boolean;
@@ -193,7 +292,7 @@ function DraggableToken({
               }
             }}
             role='button'
-            aria-label='Przenieś obiekt'
+            aria-label={ariaLabel}
             aria-pressed={isSelected}
             aria-disabled={isDragDisabled}
             tabIndex={isDragDisabled ? -1 : 0}
@@ -209,10 +308,7 @@ function DraggableToken({
           </div>
         );
 
-        if (snapshot.isDragging && dragPortal) {
-          return createPortal(content, dragPortal);
-        }
-        return content;
+        return renderKangurDragPreview(content, snapshot.isDragging);
       }}
     </Draggable>
   );
@@ -222,7 +318,10 @@ export default function SubtractingGardenGame({
   finishLabelVariant = 'lesson',
   onFinish,
 }: SubtractingGardenGameProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
+  const locale = normalizeSiteLocale(useLocale());
   const translations = useTranslations('KangurMiniGames');
+  const fallbackCopy = useMemo(() => getSubtractingGardenFallbackCopy(locale), [locale]);
   const isCoarsePointer = useKangurCoarsePointer();
   const finishLabel =
     finishLabelVariant === 'topics'
@@ -313,6 +412,7 @@ export default function SubtractingGardenGame({
         sky.find((item) => item.id === selectedTokenId) ??
         null
       : null;
+  const canPlaceSelectedToken = Boolean(selectedToken) && !isLocked;
 
   const moveSelectedToken = (destination: ZoneId): void => {
     if (isLocked || !selectedTokenId) return;
@@ -353,9 +453,9 @@ export default function SubtractingGardenGame({
     const nextScore = score + 1;
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, 'subtracting', nextScore, TOTAL_ROUNDS);
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'subtraction',
           score: nextScore,
@@ -391,7 +491,10 @@ export default function SubtractingGardenGame({
   if (done) {
     const percent = Math.round((score / TOTAL_ROUNDS) * 100);
     return (
-      <KangurPracticeGameSummary dataTestId='subtracting-garden-summary-shell'>
+      <KangurPracticeGameSummary
+        dataTestId='subtracting-garden-summary-shell'
+        wrapperClassName='w-full max-w-3xl'
+      >
         <KangurPracticeGameSummaryEmoji
           dataTestId='subtracting-garden-summary-emoji'
           emoji={percent === 100 ? '🏆' : percent >= 60 ? '🌟' : '💪'}
@@ -437,14 +540,32 @@ export default function SubtractingGardenGame({
       ? `${translations('subtractingGarden.feedback.correct')} ${round.a - round.b}.`
       : status === 'wrong'
         ? missing > 0
-          ? `Za mało. Zabierz jeszcze ${missing}.`
-          : `Za dużo. Oddaj ${Math.abs(missing)}.`
+          ? translateKangurMiniGameWithFallback(
+            translations,
+            'subtractingGarden.feedback.tooFew',
+            fallbackCopy.feedbackTooFew(missing),
+            { count: missing }
+          )
+          : translateKangurMiniGameWithFallback(
+            translations,
+            'subtractingGarden.feedback.tooMany',
+            fallbackCopy.feedbackTooMany(Math.abs(missing)),
+            { count: Math.abs(missing) }
+          )
         : isCoarsePointer
           ? translations('subtractingGarden.touch.idle')
-          : 'Przeciągnij lub kliknij obiekty, aby odejmować.';
+          : translateKangurMiniGameWithFallback(
+            translations,
+            'subtractingGarden.inRound.idle',
+            fallbackCopy.desktopIdle
+          );
+  const tokenAriaLabel = translations('subtractingGarden.aria.token');
 
   return (
-    <KangurPracticeGameStage className='w-full max-w-none'>
+    <KangurPracticeGameShell
+      className='w-full max-w-none'
+      data-testid='subtracting-garden-game-shell'
+    >
       <KangurPracticeGameProgress
         accent='rose'
         currentRound={roundIndex}
@@ -467,7 +588,12 @@ export default function SubtractingGardenGame({
                 <span className='[color:var(--kangur-page-muted-text)]'>?</span>
               </KangurEquationDisplay>
               <p className='text-xs font-semibold uppercase tracking-wide text-rose-500'>
-                Zabierz {round.b} swiecacych punktów
+                {translateKangurMiniGameWithFallback(
+                  translations,
+                  'subtractingGarden.inRound.takeAwayInstruction',
+                  fallbackCopy.takeAwayInstruction(round.b),
+                  { count: round.b }
+                )}
               </p>
             </div>
             <KangurDragDropContext onDragEnd={handleDragEnd}>
@@ -490,7 +616,11 @@ export default function SubtractingGardenGame({
                       tone='accent'
                     >
                       <p className='text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700'>
-                        Koszyk startowy
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.zones.basket.title',
+                          fallbackCopy.basketTitle
+                        )}
                       </p>
                       <Droppable droppableId='basket' direction='horizontal'>
                         {(provided, snapshot) => (
@@ -499,16 +629,27 @@ export default function SubtractingGardenGame({
                             {...provided.droppableProps}
                             data-testid='subtracting-garden-zone-basket'
                             className={cn(
-                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation select-none sm:min-h-[112px] lg:min-h-[140px]',
+                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white sm:min-h-[112px] lg:min-h-[140px]',
                               snapshot.isDraggingOver
                                 ? 'border-amber-300 bg-amber-50/70'
-                                : selectedTokenId && isCoarsePointer
+                                : canPlaceSelectedToken
                                   ? 'border-amber-200 bg-amber-50/50'
                                   : 'border-white/60 bg-white/70'
                             )}
+                            role='button'
+                            aria-label={translations('subtractingGarden.aria.basket')}
+                            aria-disabled={!canPlaceSelectedToken}
+                            tabIndex={canPlaceSelectedToken ? 0 : -1}
                             onClick={() => {
-                              if (!isCoarsePointer || isLocked || !selectedTokenId) return;
+                              if (!canPlaceSelectedToken) return;
                               moveSelectedToken('basket');
+                            }}
+                            onKeyDown={(event) => {
+                              if (!canPlaceSelectedToken) return;
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                moveSelectedToken('basket');
+                              }
                             }}
                           >
                             {basket.map((token, index) => (
@@ -516,6 +657,7 @@ export default function SubtractingGardenGame({
                                 key={token.id}
                                 token={token}
                                 index={index}
+                                ariaLabel={tokenAriaLabel}
                                 isDragDisabled={isLocked}
                                 isSelected={selectedTokenId === token.id}
                                 isCoarsePointer={isCoarsePointer}
@@ -539,7 +681,11 @@ export default function SubtractingGardenGame({
                             {provided.placeholder}
                             {basket.length === 0 ? (
                               <p className='text-xs font-semibold text-slate-400'>
-                                Pusty koszyk
+                                {translateKangurMiniGameWithFallback(
+                                  translations,
+                                  'subtractingGarden.inRound.zones.basket.empty',
+                                  fallbackCopy.basketEmpty
+                                )}
                               </p>
                             ) : null}
                           </div>
@@ -553,7 +699,12 @@ export default function SubtractingGardenGame({
                         padding='sm'
                         tone='accent'
                       >
-                        Cel: zabierz {round.b}
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.target',
+                          fallbackCopy.targetLabel(round.b),
+                          { count: round.b }
+                        )}
                       </KangurInfoCard>
                       <KangurInfoCard
                         accent='amber'
@@ -561,7 +712,12 @@ export default function SubtractingGardenGame({
                         padding='sm'
                         tone='accent'
                       >
-                        Zabrane: {removed}/{round.b}
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.removed',
+                          fallbackCopy.removedLabel(removed, round.b),
+                          { current: removed, total: round.b }
+                        )}
                       </KangurInfoCard>
                       <KangurInfoCard
                         accent='emerald'
@@ -569,7 +725,12 @@ export default function SubtractingGardenGame({
                         padding='sm'
                         tone='accent'
                       >
-                        Zostało: {remaining}
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.remaining',
+                          fallbackCopy.remainingLabel(remaining),
+                          { count: remaining }
+                        )}
                       </KangurInfoCard>
                     </div>
                     <KangurInfoCard
@@ -579,7 +740,11 @@ export default function SubtractingGardenGame({
                       tone='accent'
                     >
                       <p className='text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700'>
-                        Chmura zabiera
+                        {translateKangurMiniGameWithFallback(
+                          translations,
+                          'subtractingGarden.inRound.zones.cloud.title',
+                          fallbackCopy.cloudTitle
+                        )}
                       </p>
                       <Droppable droppableId='sky' direction='horizontal'>
                         {(provided, snapshot) => (
@@ -588,16 +753,27 @@ export default function SubtractingGardenGame({
                             {...provided.droppableProps}
                             data-testid='subtracting-garden-zone-sky'
                             className={cn(
-                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation select-none sm:min-h-[112px] lg:min-h-[140px]',
+                              'mt-3 flex min-h-[96px] flex-wrap items-center justify-center kangur-panel-gap rounded-[20px] border-2 border-dashed px-3 py-4 transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 focus-visible:ring-offset-2 ring-offset-white sm:min-h-[112px] lg:min-h-[140px]',
                               snapshot.isDraggingOver
                                 ? 'border-rose-300 bg-rose-50/80'
-                                : selectedTokenId && isCoarsePointer
+                                : canPlaceSelectedToken
                                   ? 'border-rose-200 bg-rose-50/60'
                                   : 'border-white/60 bg-white/70'
                             )}
+                            role='button'
+                            aria-label={translations('subtractingGarden.aria.sky')}
+                            aria-disabled={!canPlaceSelectedToken}
+                            tabIndex={canPlaceSelectedToken ? 0 : -1}
                             onClick={() => {
-                              if (!isCoarsePointer || isLocked || !selectedTokenId) return;
+                              if (!canPlaceSelectedToken) return;
                               moveSelectedToken('sky');
+                            }}
+                            onKeyDown={(event) => {
+                              if (!canPlaceSelectedToken) return;
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                moveSelectedToken('sky');
+                              }
                             }}
                           >
                             {sky.map((token, index) => (
@@ -605,6 +781,7 @@ export default function SubtractingGardenGame({
                                 key={token.id}
                                 token={token}
                                 index={index}
+                                ariaLabel={tokenAriaLabel}
                                 isDragDisabled={isLocked}
                                 isSelected={selectedTokenId === token.id}
                                 isCoarsePointer={isCoarsePointer}
@@ -628,7 +805,11 @@ export default function SubtractingGardenGame({
                             {provided.placeholder}
                             {sky.length === 0 ? (
                               <p className='text-xs font-semibold text-slate-400'>
-                                Upusc tutaj
+                                {translateKangurMiniGameWithFallback(
+                                  translations,
+                                  'subtractingGarden.inRound.zones.cloud.empty',
+                                  fallbackCopy.cloudEmpty
+                                )}
                               </p>
                             ) : null}
                           </div>
@@ -654,10 +835,12 @@ export default function SubtractingGardenGame({
                               ? translations('subtractingGarden.touch.selected', {
                                   emoji: selectedToken.emoji,
                                 })
-                              : `Wybrany obiekt: ${selectedToken.emoji}`
+                              : translations('subtractingGarden.touch.keyboardSelected', {
+                                  emoji: selectedToken.emoji,
+                                })
                             : isCoarsePointer
                               ? translations('subtractingGarden.touch.idle')
-                              : 'Wybierz obiekt, aby przenieść go klawiaturą.'}
+                              : translations('subtractingGarden.touch.keyboardIdle')}
                         </p>
                         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
                           <KangurButton
@@ -667,7 +850,11 @@ export default function SubtractingGardenGame({
                             onClick={() => moveSelectedToken('basket')}
                             disabled={!selectedToken || isLocked}
                           >
-                            Do koszyka
+                            {translateKangurMiniGameWithFallback(
+                              translations,
+                              'subtractingGarden.touch.moveToBasket',
+                              fallbackCopy.moveToBasket
+                            )}
                           </KangurButton>
                           <KangurButton
                             size='sm'
@@ -676,41 +863,44 @@ export default function SubtractingGardenGame({
                             onClick={() => moveSelectedToken('sky')}
                             disabled={!selectedToken || isLocked}
                           >
-                            Do chmury
+                            {translateKangurMiniGameWithFallback(
+                              translations,
+                              'subtractingGarden.touch.moveToCloud',
+                              fallbackCopy.moveToCloud
+                            )}
                           </KangurButton>
                         </div>
                       </div>
                     </KangurInfoCard>
                   </div>
                   <KangurPanelRow className='items-center sm:justify-between'>
-                    <KangurCheckButton
-                      className='w-full sm:w-auto sm:min-w-[180px]'
+                    <KangurButton
+                      className={getKangurCheckButtonClassName(
+                        'w-full sm:w-auto sm:min-w-[180px]',
+                        status === 'correct' ? 'success' : status === 'wrong' ? 'error' : null
+                      )}
                       onClick={handleCheck}
                       size='md'
                       type='button'
                       variant='surface'
-                      feedbackTone={
-                        status === 'correct' ? 'success' : status === 'wrong' ? 'error' : null
-                      }
                       disabled={isLocked}
                     >
-                      Sprawdź
-                    </KangurCheckButton>
-                    <p
-                      className={cn(
-                        'text-sm font-semibold sm:text-base sm:text-left sm:max-w-md',
-                        status === 'correct'
-                          ? 'text-emerald-600'
-                          : status === 'wrong'
-                            ? 'text-rose-500'
-                            : 'text-slate-500'
+                      {translateKangurMiniGameWithFallback(
+                        translations,
+                        'subtractingGarden.inRound.check',
+                        fallbackCopy.checkLabel
                       )}
-                      role='status'
-                      aria-live='polite'
-                      aria-atomic='true'
-                    >
-                      {feedbackMessage}
-                    </p>
+                    </KangurButton>
+                    {status === 'idle' ? (
+                      <p
+                        className='text-sm font-semibold text-slate-500 sm:max-w-md sm:text-left sm:text-base'
+                        role='status'
+                        aria-live='polite'
+                        aria-atomic='true'
+                      >
+                        {feedbackMessage}
+                      </p>
+                    ) : null}
                   </KangurPanelRow>
                 </motion.div>
               </AnimatePresence>
@@ -718,6 +908,6 @@ export default function SubtractingGardenGame({
           </div>
         </div>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

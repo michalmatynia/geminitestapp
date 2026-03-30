@@ -119,6 +119,7 @@ export function useChatbotContextState() {
     (item: ContextItem) => {
       setModalDraft({
         ...item,
+        source: item.source ?? 'manual',
         tags: item.tags || [],
         active: activeIds.includes(item.id),
       });
@@ -151,9 +152,9 @@ export function useChatbotContextState() {
       id: modalDraft.id,
       title: modalDraft.title,
       content: modalDraft.content,
+      source: modalDraft.source ?? 'manual',
       createdAt: modalDraft.createdAt,
       ...(modalDraft.tags !== undefined && { tags: modalDraft.tags }),
-      ...(modalDraft.source !== undefined && { source: modalDraft.source }),
     };
 
     setContexts((prev) => {

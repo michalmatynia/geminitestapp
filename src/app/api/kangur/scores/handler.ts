@@ -28,6 +28,20 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
+const KANGUR_SCORES_CACHE_TTL_MS = 30_000;
+
+type KangurScoresListResult = Awaited<
+  ReturnType<Awaited<ReturnType<typeof getKangurScoreRepository>>['listScores']>
+>;
+
+type KangurScoresCacheEntry = {
+  data: KangurScoresListResult;
+  fetchedAt: number;
+};
+
+const kangurScoresCache = new Map<string, KangurScoresCacheEntry>();
+const kangurScoresInflight = new Map<string, Promise<KangurScoresListResult>>();
+
 export const querySchema = z.object({
   sort: z.preprocess(normalizeOptionalQueryString, kangurScoreSortSchema.optional()),
   limit: z.preprocess(parseOptionalIntegerQueryValue, kangurScoreLimitSchema.optional()),
@@ -50,6 +64,33 @@ const resolveOptionalSubject = (value: unknown): KangurLessonSubject | undefined
   }
   const parsed = kangurLessonSubjectSchema.safeParse(normalized);
   return parsed.success ? parsed.data : undefined;
+};
+
+const cloneKangurScores = (rows: KangurScoresListResult): KangurScoresListResult =>
+  structuredClone(rows);
+
+const buildKangurScoresCacheKey = (input: {
+  sort?: string;
+  limit?: number;
+  player_name?: string;
+  operation?: string;
+  subject?: KangurLessonSubject;
+  created_by?: string;
+  learner_id?: string;
+}): string =>
+  JSON.stringify({
+    sort: normalizeKangurSort(input.sort),
+    limit: input.limit ?? null,
+    player_name: input.player_name ?? null,
+    operation: input.operation ?? null,
+    subject: input.subject ?? null,
+    created_by: input.created_by ?? null,
+    learner_id: input.learner_id ?? null,
+  });
+
+export const clearKangurScoresCache = (): void => {
+  kangurScoresCache.clear();
+  kangurScoresInflight.clear();
 };
 
 const resolveKangurScoresQuery = (
@@ -114,6 +155,17 @@ export async function getKangurScoresHandler(
     return null;
   });
   const query = resolveKangurScoresQuery(req, ctx);
+  const cacheKey = buildKangurScoresCacheKey(query);
+  const cached = kangurScoresCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < KANGUR_SCORES_CACHE_TTL_MS) {
+    return NextResponse.json(cloneKangurScores(cached.data));
+  }
+
+  const inflight = kangurScoresInflight.get(cacheKey);
+  if (inflight) {
+    return NextResponse.json(cloneKangurScores(await inflight));
+  }
 
   const repository = await getKangurScoreRepository();
   const filters = {
@@ -125,11 +177,25 @@ export async function getKangurScoresHandler(
       ? { learner_id: query.learner_id }
       : {}),
   };
-  const rows = await repository.listScores({
-    sort: normalizeKangurSort(query.sort),
-    limit: query.limit,
-    filters,
-  });
+  const inflightPromise = repository
+    .listScores({
+      sort: normalizeKangurSort(query.sort),
+      limit: query.limit,
+      filters,
+    })
+    .then((rows) => {
+      kangurScoresCache.set(cacheKey, {
+        data: cloneKangurScores(rows),
+        fetchedAt: Date.now(),
+      });
+      return rows;
+    })
+    .finally(() => {
+      kangurScoresInflight.delete(cacheKey);
+    });
+
+  kangurScoresInflight.set(cacheKey, inflightPromise);
+  const rows = await inflightPromise;
 
   return NextResponse.json(rows);
 }
@@ -154,6 +220,7 @@ export async function postKangurScoresHandler(
     learner_id: activeLearner.id,
     owner_user_id: actor.ownerUserId,
   });
+  clearKangurScoresCache();
 
   void logKangurServerEvent({
     source: 'kangur.scores.create',

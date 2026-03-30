@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';
+import type { Session } from 'next-auth';
 import React from 'react';
 
 import {
@@ -10,6 +11,8 @@ import {
   DEFAULT_APP_EMBED_ID,
   getAppEmbedOption,
 } from '@/shared/lib/app-embeds';
+import { isSuperAdminSession } from '@/shared/lib/auth/elevated-session-user';
+import { useOptionalNextAuthSession } from '@/shared/lib/auth/useOptionalNextAuthSession';
 import {
   buildKangurEmbeddedBasePath,
   getKangurPageSlug,
@@ -19,7 +22,8 @@ import {
   readKangurUrlParam,
   KANGUR_EMBED_QUERY_PARAM,
   KangurFeaturePage,
-} from '@/shared/lib/kangur-bridge';
+  resolveKangurPageKeyFromSlug,
+} from '@/shared/lib/kangur-cms-bridge';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';
@@ -65,11 +69,50 @@ const resolveKangurEntrySlug = (entryPage: unknown): string[] => {
   return [resolvedSlug];
 };
 
+const SUPER_ADMIN_ONLY_KANGUR_PAGE_KEYS = new Set(['GamesLibrary']);
+
+const canAccessKangurPage = (
+  pageKey: string | null | undefined,
+  session: Session | null | undefined
+): boolean => {
+  const normalizedPageKey = pageKey?.trim();
+  return !normalizedPageKey ||
+    !SUPER_ADMIN_ONLY_KANGUR_PAGE_KEYS.has(normalizedPageKey) ||
+    isSuperAdminSession(session);
+};
+
+const canAccessKangurSlugSegments = (
+  slugSegments: readonly string[] = [],
+  session: Session | null | undefined
+): boolean => {
+  const leadSlug = slugSegments[0]?.trim() || null;
+  const pageKey = resolveKangurPageKeyFromSlug(leadSlug);
+  return canAccessKangurPage(pageKey, session);
+};
+
+const resolveAccessibleKangurEmbedSlug = (input: {
+  requestedSlug: string | null;
+  entryPage: unknown;
+  session: import('next-auth').Session | null | undefined;
+}): string[] => {
+  const { requestedSlug, entryPage, session } = input;
+  const fallbackSlug = resolveKangurEntrySlug(entryPage);
+  const requestedActiveSlug =
+    requestedSlug === null ? fallbackSlug : requestedSlug ? [requestedSlug] : [];
+
+  if (canAccessKangurSlugSegments(requestedActiveSlug, session)) {
+    return requestedActiveSlug;
+  }
+
+  return canAccessKangurSlugSegments(fallbackSlug, session) ? fallbackSlug : [];
+};
+
 export function AppEmbedBlock(): React.ReactNode {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const settings = useRequiredBlockSettings();
   const { block } = useRequiredBlockRenderContext();
+  const { data: session } = useOptionalNextAuthSession();
   const rawAppId = settings['appId'];
   const appOption = getAppEmbedOption(
     typeof rawAppId === 'string' ? rawAppId : DEFAULT_APP_EMBED_ID
@@ -101,12 +144,11 @@ export function AppEmbedBlock(): React.ReactNode {
     KANGUR_EMBED_QUERY_PARAM,
     embeddedBasePath
   );
-  const activeSlug =
-    requestedSlug === null
-      ? resolveKangurEntrySlug(entryPage)
-      : requestedSlug
-        ? [requestedSlug]
-        : [];
+  const activeSlug = resolveAccessibleKangurEmbedSlug({
+    requestedSlug,
+    entryPage,
+    session,
+  });
 
   return (
     <Card

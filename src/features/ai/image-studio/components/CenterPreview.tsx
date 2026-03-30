@@ -224,6 +224,17 @@ export function CenterPreviewInner(): React.JSX.Element {
     () => hasSourceSlotReference && Boolean(workingSlotImageSrc && sourceSlotImageSrc),
     [hasSourceSlotReference, sourceSlotImageSrc, workingSlotImageSrc]
   );
+  const centerPreviewVariantsInput = {
+    activeRunId,
+    activeRunSourceSlotId,
+    landingSlots,
+    pendingSequenceThumbnail,
+    productImagesExternalBaseUrl,
+    projectId,
+    rootVariantSourceSlotId,
+    slots,
+    workingSlot,
+  };
   const {
     activeVariantId,
     buildVariantDismissKeys,
@@ -240,17 +251,7 @@ export function CenterPreviewInner(): React.JSX.Element {
     setVariantTimestampQuery,
     variantTimestampQuery,
     visibleVariantThumbnails,
-  } = useCenterPreviewVariants({
-    activeRunId,
-    activeRunSourceSlotId,
-    landingSlots,
-    pendingSequenceThumbnail,
-    productImagesExternalBaseUrl,
-    projectId,
-    rootVariantSourceSlotId,
-    slots,
-    workingSlot,
-  });
+  } = useCenterPreviewVariants(centerPreviewVariantsInput);
 
   const activeCanvasImageSrc = useMemo(() => {
     if (isCompositeSlot && compositeResultImage) return compositeResultImage;

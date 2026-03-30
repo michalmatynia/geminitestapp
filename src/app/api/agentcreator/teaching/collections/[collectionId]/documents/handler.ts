@@ -30,24 +30,32 @@ export const querySchema = z.object({
   skip: optionalIntegerQuerySchema(z.number().int().nonnegative()),
 });
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+const requireCollectionId = (ctx: ApiHandlerContext): string => {
   const collectionId = ctx.params?.['collectionId'];
   if (typeof collectionId !== 'string' || !collectionId.trim()) {
     throw badRequestError('Missing collectionId.');
   }
+  return collectionId;
+};
+
+const resolveDocumentListQuery = (
+  query: z.infer<typeof querySchema> | undefined
+): { limit: number; skip: number } => {
+  const { limit = 50, skip = 0 } = query ?? {};
+  return { limit, skip };
+};
+
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const collectionId = requireCollectionId(ctx);
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
-  const limit = query.limit ?? 50;
-  const skip = query.skip ?? 0;
+  const { limit, skip } = resolveDocumentListQuery(query);
   const result = await listEmbeddingDocuments(collectionId, { limit, skip });
   const response: AgentTeachingDocumentsResponse = result;
   return NextResponse.json(response);
 }
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const collectionId = ctx.params?.['collectionId'];
-  if (typeof collectionId !== 'string' || !collectionId.trim()) {
-    throw badRequestError('Missing collectionId.');
-  }
+  const collectionId = requireCollectionId(ctx);
   const collection = await getEmbeddingCollectionById(collectionId);
   if (!collection) {
     throw notFoundError('Collection not found');

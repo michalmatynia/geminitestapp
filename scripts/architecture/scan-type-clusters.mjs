@@ -44,6 +44,7 @@ const readNumberOption = (flagName, fallbackValue) => {
 };
 
 const HISTORY_DISABLED = !args.has('--write-history') || args.has('--ci') || args.has('--no-history');
+const NO_WRITE = args.has('--no-write');
 const SUMMARY_JSON_ONLY = args.has('--summary-json');
 const INIT_ONLY = args.has('--init');
 const DOMAIN_FILTERS = collectOptionValues('--domain');
@@ -346,6 +347,8 @@ const createBaseReport = () => ({
   filters: {
     domains: DOMAIN_FILTERS,
     minRisk: MIN_RISK,
+    topLimit: TOP_LIMIT,
+    planTopLimit: PLAN_TOP_LIMIT,
   },
   thresholds: {
     minClusterSize: 2,
@@ -558,8 +561,6 @@ const createPlanMarkdown = (report) => {
 };
 
 const writeOutputs = async (report) => {
-  await fs.mkdir(outDir, { recursive: true });
-
   const latestJsonPath = path.join(outDir, 'type-clusters-latest.json');
   const latestMdPath = path.join(outDir, 'type-clusters-latest.md');
   const latestCsvPath = path.join(outDir, 'type-clusters-latest.csv');
@@ -567,21 +568,25 @@ const writeOutputs = async (report) => {
   const stamp = report.generatedAt.replace(/[:.]/g, '-');
   const historyJsonPath = path.join(outDir, `type-clusters-${stamp}.json`);
 
-  await fs.writeFile(latestJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestMdPath,
-    content: createMarkdownReport(report),
-  });
-  await fs.writeFile(latestCsvPath, createCsvReport(report), 'utf8');
-  await writeMetricsMarkdownFile({
-    root,
-    targetPath: latestPlanMdPath,
-    content: createPlanMarkdown(report),
-  });
+  if (!NO_WRITE) {
+    await fs.mkdir(outDir, { recursive: true });
 
-  if (!HISTORY_DISABLED && !INIT_ONLY) {
-    await fs.writeFile(historyJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    await fs.writeFile(latestJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    await writeMetricsMarkdownFile({
+      root,
+      targetPath: latestMdPath,
+      content: createMarkdownReport(report),
+    });
+    await fs.writeFile(latestCsvPath, createCsvReport(report), 'utf8');
+    await writeMetricsMarkdownFile({
+      root,
+      targetPath: latestPlanMdPath,
+      content: createPlanMarkdown(report),
+    });
+
+    if (!HISTORY_DISABLED && !INIT_ONLY) {
+      await fs.writeFile(historyJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    }
   }
 
   return {
@@ -590,7 +595,7 @@ const writeOutputs = async (report) => {
     latestCsvPath,
     latestPlanMdPath,
     historyJsonPath,
-    wroteHistory: !HISTORY_DISABLED && !INIT_ONLY,
+    wroteHistory: !NO_WRITE && !HISTORY_DISABLED && !INIT_ONLY,
   };
 };
 
@@ -759,14 +764,20 @@ const run = async () => {
             clusters: report.clusters,
             status: report.status,
           },
-          filters: report.filters,
-          paths: {
-            latestJson: toRelativePosix(output.latestJsonPath),
-            latestMarkdown: toRelativePosix(output.latestMdPath),
-            latestCsv: toRelativePosix(output.latestCsvPath),
-            latestPlanMarkdown: toRelativePosix(output.latestPlanMdPath),
-            historyJson: output.wroteHistory ? toRelativePosix(output.historyJsonPath) : null,
+          filters: {
+            ...report.filters,
+            historyDisabled: HISTORY_DISABLED,
+            noWrite: NO_WRITE,
           },
+          paths: NO_WRITE
+            ? null
+            : {
+                latestJson: toRelativePosix(output.latestJsonPath),
+                latestMarkdown: toRelativePosix(output.latestMdPath),
+                latestCsv: toRelativePosix(output.latestCsvPath),
+                latestPlanMarkdown: toRelativePosix(output.latestPlanMdPath),
+                historyJson: output.wroteHistory ? toRelativePosix(output.historyJsonPath) : null,
+              },
           notes: ['type-clusters scan result'],
         }),
         null,
@@ -786,12 +797,14 @@ const run = async () => {
   console.log(
     `[type-clusters] filters domains=${report.filters.domains.join('|') || '<none>'} minRisk=${report.filters.minRisk}`
   );
-  console.log(`[type-clusters] wrote ${toRelativePosix(output.latestJsonPath)}`);
-  console.log(`[type-clusters] wrote ${toRelativePosix(output.latestMdPath)}`);
-  console.log(`[type-clusters] wrote ${toRelativePosix(output.latestCsvPath)}`);
-  console.log(`[type-clusters] wrote ${toRelativePosix(output.latestPlanMdPath)}`);
-  if (output.wroteHistory) {
-    console.log(`[type-clusters] wrote ${toRelativePosix(output.historyJsonPath)}`);
+  if (!NO_WRITE) {
+    console.log(`[type-clusters] wrote ${toRelativePosix(output.latestJsonPath)}`);
+    console.log(`[type-clusters] wrote ${toRelativePosix(output.latestMdPath)}`);
+    console.log(`[type-clusters] wrote ${toRelativePosix(output.latestCsvPath)}`);
+    console.log(`[type-clusters] wrote ${toRelativePosix(output.latestPlanMdPath)}`);
+    if (output.wroteHistory) {
+      console.log(`[type-clusters] wrote ${toRelativePosix(output.historyJsonPath)}`);
+    }
   }
 };
 

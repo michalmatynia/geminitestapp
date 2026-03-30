@@ -65,6 +65,32 @@ export const applyResolvedValidatorFieldReplacement = (
   return true;
 };
 
+export const doesResolvedValidatorFieldReplacementMatchCurrentValue = ({
+  resolvedReplacement,
+  getCurrentFieldValue,
+}: Pick<ApplyResolvedValidatorFieldReplacementInput, 'resolvedReplacement' | 'getCurrentFieldValue'>): boolean => {
+  if (resolvedReplacement.kind === 'category') {
+    const currentCategoryValue = toComparableFieldString(getCurrentFieldValue('categoryId'));
+    return currentCategoryValue === resolvedReplacement.comparableValue;
+  }
+
+  if (resolvedReplacement.kind === 'number') {
+    const currentNumeric = getCurrentFieldValue(
+      resolvedReplacement.fieldName as keyof ProductFormData
+    );
+    return (
+      typeof currentNumeric === 'number' &&
+      Number.isFinite(currentNumeric) &&
+      currentNumeric === resolvedReplacement.value
+    );
+  }
+
+  const currentValue = toComparableFieldString(
+    getCurrentFieldValue(resolvedReplacement.fieldName as keyof ProductFormData)
+  );
+  return currentValue === resolvedReplacement.comparableValue;
+};
+
 export const applyValidatorFieldReplacement = (
   input: ApplyValidatorFieldReplacementInput
 ): boolean => {
@@ -91,5 +117,30 @@ export const applyValidatorFieldReplacement = (
     getCurrentFieldValue,
     setFormFieldValue,
     setCategoryId,
+  });
+};
+
+export const doesValidatorFieldReplacementMatchCurrentValue = (
+  input: ApplyValidatorFieldReplacementInput
+): boolean => {
+  const {
+    fieldName,
+    replacementValue,
+    categories,
+    categoryNameById,
+    getCurrentFieldValue,
+  } = input;
+
+  const resolvedReplacement = resolveValidatorFieldReplacement({
+    fieldName,
+    replacementValue,
+    categories,
+    categoryNameById,
+  });
+  if (!resolvedReplacement) return false;
+
+  return doesResolvedValidatorFieldReplacementMatchCurrentValue({
+    resolvedReplacement,
+    getCurrentFieldValue,
   });
 };

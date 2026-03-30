@@ -1,0 +1,219 @@
+import type {
+  KangurGameContentSet,
+  KangurGameContentSetId,
+} from '@/shared/contracts/kangur-game-instances';
+import { kangurGameContentSetSchema } from '@/shared/contracts/kangur-game-instances';
+import type {
+  KangurGameDefinition,
+  KangurLaunchableGameRuntimeSpec,
+} from '@/shared/contracts/kangur-games';
+
+import { getKangurLaunchableGameRuntimeSpecForGame } from './catalog';
+
+const createContentSet = (
+  game: KangurGameDefinition,
+  runtime: KangurLaunchableGameRuntimeSpec,
+  input: Omit<KangurGameContentSet, 'gameId' | 'launchableRuntimeId' | 'engineId'>
+): KangurGameContentSet =>
+  kangurGameContentSetSchema.parse({
+    ...input,
+    gameId: game.id,
+    engineId: runtime.engineId,
+    launchableRuntimeId: runtime.screen,
+  });
+
+const createDefaultContentSet = (
+  game: KangurGameDefinition,
+  runtime: KangurLaunchableGameRuntimeSpec,
+  input?: Partial<Pick<KangurGameContentSet, 'description' | 'label' | 'rendererProps'>>
+): KangurGameContentSet =>
+  createContentSet(game, runtime, {
+    id: `${game.id}:default`,
+    label: input?.label ?? 'Default content',
+    description:
+      input?.description ??
+      'Uses the default content payload bundled with this launchable game runtime.',
+    contentKind: 'default_content',
+    rendererProps: input?.rendererProps ?? {},
+    sortOrder: 1,
+  });
+
+export const getKangurGameContentSetsForGame = (
+  game: KangurGameDefinition
+): KangurGameContentSet[] => {
+  const runtime = getKangurLaunchableGameRuntimeSpecForGame(game);
+  if (!runtime) {
+    return [];
+  }
+
+  switch (runtime.rendererId) {
+    case 'alphabet_literacy_game':
+      return [
+        createDefaultContentSet(game, runtime, {
+          label:
+            game.id === 'alphabet_first_words' ? 'First words set' : 'Letter matching set',
+          description:
+            game.id === 'alphabet_first_words'
+              ? 'Feeds the first-words literacy rounds into the shared alphabet engine.'
+              : 'Feeds uppercase-to-lowercase letter matching rounds into the shared alphabet engine.',
+          rendererProps: {
+            literacyMatchSetId:
+              game.id === 'alphabet_first_words'
+                ? 'alphabet_first_words'
+                : 'alphabet_letter_matching',
+          },
+        }),
+      ];
+    case 'calendar_training_game':
+      return [
+        createDefaultContentSet(game, runtime, {
+          label: 'Mixed calendar drills',
+          description: 'Uses a mixed calendar quiz with days, months, and date-focused prompts.',
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:calendar-days`,
+          label: 'Days of week',
+          description: 'Feeds weekday-order and week-length prompts into the calendar engine.',
+          contentKind: 'calendar_section',
+          rendererProps: { calendarSection: 'dni' },
+          sortOrder: 2,
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:calendar-months`,
+          label: 'Months',
+          description: 'Feeds month-order and year-length prompts into the calendar engine.',
+          contentKind: 'calendar_section',
+          rendererProps: { calendarSection: 'miesiace' },
+          sortOrder: 3,
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:calendar-dates`,
+          label: 'Dates',
+          description: 'Feeds month-length prompts into the calendar engine.',
+          contentKind: 'calendar_section',
+          rendererProps: { calendarSection: 'data' },
+          sortOrder: 4,
+        }),
+      ];
+    case 'clock_training_game':
+      return [
+        createDefaultContentSet(game, runtime, {
+          label: 'Combined clock drills',
+          description: 'Feeds mixed hours-and-minutes exercises into the clock engine.',
+          rendererProps: { clockSection: 'combined' },
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:clock-hours`,
+          label: 'Hours only',
+          description: 'Feeds only hour-reading tasks into the clock engine.',
+          contentKind: 'clock_section',
+          rendererProps: { clockSection: 'hours' },
+          sortOrder: 2,
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:clock-minutes`,
+          label: 'Minutes only',
+          description: 'Feeds only minute-reading tasks into the clock engine.',
+          contentKind: 'clock_section',
+          rendererProps: { clockSection: 'minutes' },
+          sortOrder: 3,
+        }),
+      ];
+    case 'logical_patterns_workshop_game':
+      if (game.id === 'alphabet_letter_order') {
+        return [
+          createDefaultContentSet(game, runtime, {
+            label: 'Alphabet order set',
+            description:
+              'Feeds alphabet letter ordering rounds into the shared pattern engine.',
+            rendererProps: { patternSetId: 'alphabet_letter_order' },
+          }),
+        ];
+      }
+
+      return [
+        createDefaultContentSet(game, runtime, {
+          label: 'Logical patterns workshop',
+          description: 'Uses the core logical pattern-sequencing round set.',
+          rendererProps: { patternSetId: 'logical_patterns_workshop' },
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:alphabet-order`,
+          label: 'Alphabet order set',
+          description: 'Feeds alphabet letter ordering rounds into the same pattern engine.',
+          contentKind: 'logical_pattern_set',
+          rendererProps: { patternSetId: 'alphabet_letter_order' },
+          sortOrder: 2,
+        }),
+      ];
+    case 'geometry_drawing_game':
+      return [
+        createDefaultContentSet(game, runtime, {
+          label: 'Starter shape pack',
+          description: 'Feeds beginner-friendly shape tracing rounds into the drawing engine.',
+          rendererProps: { shapeIds: ['circle', 'triangle', 'square'] },
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:geometry-polygons`,
+          label: 'Polygon pack',
+          description: 'Feeds polygon-heavy rounds into the same drawing engine.',
+          contentKind: 'geometry_shape_pack',
+          rendererProps: { shapeIds: ['triangle', 'square', 'pentagon', 'hexagon'] },
+          sortOrder: 2,
+        }),
+        createContentSet(game, runtime, {
+          id: `${game.id}:geometry-curves`,
+          label: 'Curves pack',
+          description: 'Feeds rounded and mixed-shape rounds into the drawing engine.',
+          contentKind: 'geometry_shape_pack',
+          rendererProps: { shapeIds: ['circle', 'oval', 'rectangle', 'diamond'] },
+          sortOrder: 3,
+        }),
+      ];
+    default:
+      return [createDefaultContentSet(game, runtime)];
+  }
+};
+
+export const mergeKangurGameContentSetsForGame = (
+  game: KangurGameDefinition,
+  customContentSets?: readonly KangurGameContentSet[] | null
+): KangurGameContentSet[] => {
+  const builtInContentSets = getKangurGameContentSetsForGame(game);
+  const merged = new Map<KangurGameContentSetId, KangurGameContentSet>();
+
+  for (const contentSet of builtInContentSets) {
+    merged.set(contentSet.id, contentSet);
+  }
+
+  for (const contentSet of customContentSets ?? []) {
+    if (contentSet.gameId !== game.id) {
+      continue;
+    }
+    merged.set(contentSet.id, contentSet);
+  }
+
+  return [...merged.values()].sort(
+    (left, right) =>
+      left.sortOrder - right.sortOrder ||
+      left.label.localeCompare(right.label) ||
+      left.id.localeCompare(right.id)
+  );
+};
+
+export const getKangurGameContentSetForGame = (
+  game: KangurGameDefinition,
+  contentSetId: KangurGameContentSetId | null | undefined,
+  customContentSets?: readonly KangurGameContentSet[] | null
+): KangurGameContentSet | null => {
+  const contentSets = mergeKangurGameContentSetsForGame(game, customContentSets);
+  if (contentSets.length === 0) {
+    return null;
+  }
+
+  if (!contentSetId) {
+    return contentSets[0] ?? null;
+  }
+
+  return contentSets.find((contentSet) => contentSet.id === contentSetId) ?? contentSets[0] ?? null;
+};

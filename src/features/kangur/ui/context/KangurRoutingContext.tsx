@@ -4,6 +4,7 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import { KANGUR_BASE_PATH, normalizeKangurBasePath } from '@/features/kangur/config/routing';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 
 type KangurRoutingContextValue = {
   pageKey?: string | null;
@@ -37,16 +38,34 @@ export const KangurRoutingProvider = ({
   embedded = false,
   children,
 }: KangurRoutingProviderProps): React.JSX.Element => {
+  const { resolveRouteState } = useKangurRouteAccess();
   const resolvedBasePath = normalizeKangurBasePath(basePath);
+  const normalizedRequestedPath = requestedPath?.trim() || resolvedBasePath;
+  const accessibleRouteState = resolveRouteState({
+    normalizedBasePath: resolvedBasePath,
+    pageKey,
+    requestedPath: normalizedRequestedPath,
+  });
+  const normalizedRequestedHref = requestedHref?.trim() || normalizedRequestedPath;
+  const accessibleRequestedHref =
+    accessibleRouteState.requestedPath === normalizedRequestedPath
+      ? normalizedRequestedHref
+      : accessibleRouteState.requestedPath;
   const stateValue = useMemo<KangurRoutingStateContextValue>(
     () => ({
-      pageKey,
-      requestedPath,
-      requestedHref: requestedHref ?? requestedPath,
+      pageKey: accessibleRouteState.pageKey,
+      requestedPath: accessibleRouteState.requestedPath,
+      requestedHref: accessibleRequestedHref,
       basePath: resolvedBasePath,
       embedded,
     }),
-    [embedded, pageKey, requestedHref, requestedPath, resolvedBasePath]
+    [
+      accessibleRequestedHref,
+      accessibleRouteState.pageKey,
+      accessibleRouteState.requestedPath,
+      embedded,
+      resolvedBasePath,
+    ]
   );
 
   return (

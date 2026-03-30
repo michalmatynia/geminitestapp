@@ -5,10 +5,6 @@ import { useLocale } from 'next-intl';
 import { useQuery, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import {
-  buildDefaultKangurPageContentStore,
-  DEFAULT_KANGUR_PAGE_CONTENT_STORE,
-} from '@/features/kangur/page-content-catalog';
-import {
   parseKangurPageContentStore,
   type KangurPageContentEntry,
   type KangurPageContentStore,
@@ -19,6 +15,7 @@ import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 const KANGUR_PAGE_CONTENT_STALE_TIME_MS = 5 * 60_000;
 const KANGUR_PAGE_CONTENT_GC_TIME_MS = 30 * 60_000;
+const KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS = 30_000;
 
 const resolveKangurPageContentLocale = (locale?: string | null, routeLocale?: string | null): string =>
   normalizeSiteLocale(locale ?? routeLocale);
@@ -33,7 +30,10 @@ export const fetchKangurPageContentStore = async (
 
   return parseKangurPageContentStore(
     await api.get<KangurPageContentStore>(
-      `/api/kangur/ai-tutor/page-content?locale=${encodeURIComponent(resolvedLocale)}`
+      `/api/kangur/ai-tutor/page-content?locale=${encodeURIComponent(resolvedLocale)}`,
+      {
+        timeout: KANGUR_PAGE_CONTENT_REQUEST_TIMEOUT_MS,
+      }
     )
   );
 };
@@ -69,20 +69,15 @@ export const useKangurPageContentStore = (
 ): UseQueryResult<KangurPageContentStore, Error> => {
   const routeLocale = useLocale();
   const resolvedLocale = resolveKangurPageContentLocale(locale, routeLocale);
-  const initialData = useMemo(
-    () =>
-      resolvedLocale === 'pl'
-        ? DEFAULT_KANGUR_PAGE_CONTENT_STORE
-        : buildDefaultKangurPageContentStore(resolvedLocale),
-    [resolvedLocale]
-  );
 
   return useQuery<KangurPageContentStore, Error>({
     queryKey: createKangurPageContentQueryKey(resolvedLocale),
     queryFn: () => fetchKangurPageContentStore(resolvedLocale),
     gcTime: KANGUR_PAGE_CONTENT_GC_TIME_MS,
-    initialData,
     staleTime: KANGUR_PAGE_CONTENT_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 };

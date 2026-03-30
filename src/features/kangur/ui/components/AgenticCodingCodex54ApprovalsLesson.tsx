@@ -1,11 +1,13 @@
 'use client';
 
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './AgenticCodingCodex54ApprovalsLesson.data';
-import AgenticApprovalGateGame from './AgenticApprovalGateGame';
 
 export { HUB_SECTIONS, SLIDES };
+
+const AGENTIC_APPROVAL_GATE_INSTANCE_ID = getKangurBuiltInGameInstanceId('agentic_approval_gate');
 
 export default function AgenticCodingCodex54ApprovalsLesson(): JSX.Element {
   return (
@@ -23,14 +25,18 @@ export default function AgenticCodingCodex54ApprovalsLesson(): JSX.Element {
       games={[
         {
           sectionId: 'approval_gate_game',
-          stage: {
+          shell: {
             accent: 'sky',
             icon: '🛡️',
             title: 'Approval Gate',
             description: 'Classify actions that require approval.',
             maxWidthClassName: 'max-w-4xl',
+            shellTestId: 'agentic-approval-gate-game-shell',
           },
-          render: ({ onFinish }) => <AgenticApprovalGateGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'agentic_approval_gate',
+            instanceId: AGENTIC_APPROVAL_GATE_INSTANCE_ID,
+          },
         },
       ]}
       completionSectionId='approvals'

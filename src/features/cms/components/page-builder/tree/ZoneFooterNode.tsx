@@ -11,7 +11,7 @@ import {
   useComponentTreePanelActions,
   useComponentTreePanelState,
 } from './ComponentTreePanelContext';
-import { TreeSectionPicker } from './TreeSectionPicker';
+import { renderTreeSectionPicker } from './TreeSectionPicker';
 
 
 export function ZoneFooterNode({
@@ -77,7 +77,7 @@ export function ZoneFooterNode({
             Empty Zone
           </Button>
         ) : null}
-        <TreeSectionPicker disabled={!currentPage} zone={pickerZone} />
+        {renderTreeSectionPicker({ disabled: !currentPage, zone: pickerZone })}
       </div>
     </>
   );

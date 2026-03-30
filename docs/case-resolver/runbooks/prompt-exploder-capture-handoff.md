@@ -1,6 +1,6 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-26'
 status: 'active'
 related_components:
   - 'src/features/prompt-exploder/bridge.ts'
@@ -28,6 +28,9 @@ Each transfer payload carries:
 - `createdAt` and `expiresAt`
 - Case Resolver context (`fileId`, `fileName`, optional `sessionId`, optional `documentVersionAtStart`)
 
+Pending payloads are TTL-bound. When `expiresAt` is missing, Case Resolver falls back
+to the transfer lifecycle TTL (`15 minutes`) before the payload is treated as expired.
+
 ## Expected Flow
 
 1. Case Resolver sends document content to Prompt Exploder with bound file/session context.
@@ -37,6 +40,8 @@ Each transfer payload carries:
 5. If capture proposal exists, modal opens for explicit mapping decision.
 6. `Apply Mapping` commits field mapping + source cleanup.
 7. `Dismiss (No Mapping)` closes without mutating party/date fields.
+
+Expected lifecycle states are `pending -> blocked|capture_review|applied|failed|dismissed|discarded|expired`.
 
 ## Triage Matrix
 
@@ -110,6 +115,7 @@ Action:
 - Prompt transfer diagnostics:
   - `transferId`, `payloadVersion`, `payloadStatus`, `checksum`
   - resolution strategies and reasons
+  - lifecycle `status`, `reason`, `updatedAt`
 - Capture mapping diagnostics:
   - stage (`precheck|mutation|rebase`)
   - attempts

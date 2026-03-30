@@ -1,33 +1,37 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
 import {
-  KangurButton,
+  computeKangurTotalStrokeLength,
+  flattenKangurStrokePoints,
+} from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import {
+  createKangurDrawingDraftStorageKey,
+  createKangurDrawingExportFilename,
+} from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
+import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
+import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';
+import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
+import {
+  evaluateKangurTracingAttempt,
+  getKangurTracingCanvasConfig,
+} from '@/features/kangur/ui/components/drawing-engine/tracing';
+import { useKangurManagedStoredPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing';
+import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
+import {
   KangurGlassPanel,
   KangurHeadline,
-  KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
-import {
-  KANGUR_STACK_ROOMY_CLASSNAME,
-  KANGUR_WRAP_ROW_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
-import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
-import {
-  resolveKangurCanvasPoint,
-  syncKangurCanvasContext,
-} from '@/features/kangur/ui/services/drawing-canvas';
+import { KANGUR_STACK_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import type {
   KangurIntlTranslate,
   KangurMiniGameFeedbackState,
 } from '@/features/kangur/ui/types';
-import type { Point2d } from '@/shared/contracts/geometry';
 import type { TranslationValues } from 'use-intl';
 
 const CANVAS_WIDTH = 360;
@@ -90,29 +94,96 @@ const translateAlphabetBasics = (
   return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
 };
 
-const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
-  strokes.flatMap((stroke) => stroke);
+export function AlphabetBasicsGuideSurface({
+  guideColor,
+  glowColor,
+  letter,
+  paths,
+}: {
+  guideColor: string;
+  glowColor: string;
+  letter: string;
+  paths: string[];
+}): React.JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `alphabet-basics-guide-${baseId}-clip`;
+  const panelGradientId = `alphabet-basics-guide-${baseId}-panel`;
+  const frameGradientId = `alphabet-basics-guide-${baseId}-frame`;
 
-const distance = (a: Point2d, b: Point2d): number =>
-  Math.hypot(a.x - b.x, a.y - b.y);
-
-const computeStrokeLength = (stroke: Point2d[]): number => {
-  if (stroke.length < 2) return 0;
-  let total = 0;
-  for (let i = 1; i < stroke.length; i += 1) {
-    total += distance(stroke[i - 1] as Point2d, stroke[i] as Point2d);
-  }
-  return total;
-};
+  return (
+    <svg
+      viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+      className='absolute inset-0 h-full w-full'
+      aria-hidden='true'
+      data-testid='alphabet-basics-guide-animation'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='0' y='0' width={CANVAS_WIDTH} height={CANVAS_HEIGHT} rx='28' />
+        </clipPath>
+        <linearGradient id={panelGradientId} x1='0' x2='1' y1='0' y2='1'>
+          <stop offset='0%' stopColor='#fef3c7' />
+          <stop offset='50%' stopColor='#e0f2fe' />
+          <stop offset='100%' stopColor='#fae8ff' />
+        </linearGradient>
+        <linearGradient id={frameGradientId} x1='0' x2='1' y1='0' y2='0'>
+          <stop offset='0%' stopColor='rgba(245,158,11,0.78)' />
+          <stop offset='50%' stopColor='rgba(56,189,248,0.82)' />
+          <stop offset='100%' stopColor='rgba(244,114,182,0.82)' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${clipId})`} data-testid='alphabet-basics-guide-atmosphere'>
+        <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill={`url(#${panelGradientId})`} />
+        <circle cx='58' cy='60' r='24' fill='#fde68a' opacity='0.6' />
+        <circle cx='310' cy='54' r='18' fill='#bae6fd' opacity='0.65' />
+        <circle cx='304' cy='190' r='22' fill='#fecaca' opacity='0.55' />
+        {paths.map((path) => (
+          <path
+            key={`guide-${path}`}
+            d={path}
+            className='letter-guide'
+            stroke={guideColor}
+          />
+        ))}
+        {paths.map((path, index) => (
+          <path
+            key={`glow-${index}`}
+            d={path}
+            className='letter-glow motion-reduce:animate-none'
+            stroke={glowColor}
+          />
+        ))}
+        <text
+          x='24'
+          y='220'
+          fontSize='26'
+          fontWeight='700'
+          fill='#0f172a'
+          opacity='0.2'
+        >
+          {letter}
+        </text>
+      </g>
+      <rect
+        x='10'
+        y='10'
+        width={CANVAS_WIDTH - 20}
+        height={CANVAS_HEIGHT - 20}
+        rx='24'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid='alphabet-basics-guide-frame'
+      />
+    </svg>
+  );
+}
 
 export default function AlphabetBasicsLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.alphabetBasics');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const isDrawingRef = useRef(false);
 
   const [roundIndex, setRoundIndex] = useState(0);
-  const [strokes, setStrokes] = useState<Point2d[][]>([]);
-  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
   const isCoarsePointer = useKangurCoarsePointer();
 
@@ -123,18 +194,55 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     `rounds.${currentRound.id}.word`,
     currentRound.word
   );
-  const points = useMemo(() => flattenPoints(strokes), [strokes]);
-  const strokeLength = useMemo(
-    () => strokes.reduce((sum, stroke) => sum + computeStrokeLength(stroke), 0),
-    [strokes]
+  const tracingCanvasConfig = useMemo(
+    () =>
+      getKangurTracingCanvasConfig(isCoarsePointer, {
+        fineMinDrawingLength: BASE_MIN_DRAWING_LENGTH,
+        fineMinDrawingPoints: BASE_MIN_DRAWING_POINTS,
+      }),
+    [isCoarsePointer]
   );
-
-  const minPointDistance = isCoarsePointer ? 5 : 2;
-  const minDrawingPoints = isCoarsePointer ? 12 : BASE_MIN_DRAWING_POINTS;
-  const minDrawingLength = isCoarsePointer ? 120 : BASE_MIN_DRAWING_LENGTH;
-  const strokeWidth = isCoarsePointer ? 14 : 10;
   const guideStrokeWidth = isCoarsePointer ? 18 : 14;
   const glowStrokeWidth = isCoarsePointer ? 12 : 8;
+  const {
+    canRedo,
+    canUndo,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    hasDrawableContent,
+    isPointerDrawing,
+    strokes,
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedStoredPointDrawing({
+    actions: {
+      clearFeedback: () => {
+        setFeedback(null);
+      },
+      exportFilename: createKangurDrawingExportFilename('alphabet-basics', currentRound.id),
+    },
+    drawing: {
+      canvasRef,
+      enabled: feedback?.kind !== 'success',
+      logicalHeight: CANVAS_HEIGHT,
+      logicalWidth: CANVAS_WIDTH,
+      minPointDistance: tracingCanvasConfig.minPointDistance,
+      onPointerStart: () => {
+        if (feedback?.kind === 'error') {
+          setFeedback(null);
+        }
+      },
+      resolveStyle: () => tracingCanvasConfig.strokeStyle,
+      storageKey: createKangurDrawingDraftStorageKey('alphabet-basics', currentRound.id),
+      touchLockEnabled: isCoarsePointer,
+    },
+  });
+  const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
+  const strokeLength = useMemo(() => computeKangurTotalStrokeLength(strokes), [strokes]);
   const drawHint = isCoarsePointer
     ? translateAlphabetBasics(
         translations,
@@ -146,13 +254,20 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
         'drawHint.fine',
         'Rysuj palcem lub myszką'
       );
+  const traceHint = translateAlphabetBasics(
+    translations,
+    'footer.traceHint',
+    'Rysuj po grubych liniach i nie spiesz się.'
+  );
   const touchHint = isPointerDrawing
-    ? translateAlphabetBasics(
-        translations,
-        'footer.traceHint',
-        'Rysuj po grubych liniach i nie spiesz się.'
-      )
+    ? traceHint
     : drawHint;
+  const pointsLabel = translateAlphabetBasics(
+    translations,
+    'footer.points',
+    '{count} punktów',
+    { count: points.length }
+  );
   const canvasSurfaceStyle = useMemo<CSSProperties>(
     () =>
       ({
@@ -163,142 +278,29 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
     [guideStrokeWidth, glowStrokeWidth]
   );
 
-  const redrawCanvas = useCallback((nextStrokes: Point2d[][]): void => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.lineWidth = strokeWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#0f172a';
-    ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
-    ctx.shadowBlur = isCoarsePointer ? 8 : 6;
-
-    for (const stroke of nextStrokes) {
-      if (stroke.length === 0) continue;
-      ctx.beginPath();
-      const first = stroke[0];
-      if (!first) continue;
-      ctx.moveTo(first.x, first.y);
-      for (let i = 1; i < stroke.length; i += 1) {
-        const point = stroke[i];
-        if (!point) continue;
-        ctx.lineTo(point.x, point.y);
-      }
-      ctx.stroke();
-    }
-  }, [isCoarsePointer, strokeWidth]);
-
-  useKangurCanvasRedraw({
-    canvasRef,
-    redraw: () => redrawCanvas(strokes),
-  });
-  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
-
-  const updateStrokes = useCallback(
-    (updater: (current: Point2d[][]) => Point2d[][]): void => {
-      setStrokes((current) => {
-        const next = updater(current);
-        redrawCanvas(next);
-        return next;
-      });
-    },
-    [redrawCanvas]
-  );
-
-  const clearDrawing = useCallback((): void => {
-    setStrokes(() => {
-      redrawCanvas([]);
-      return [];
-    });
-    setFeedback(null);
-  }, [redrawCanvas]);
-
-  const resolvePoint = useCallback(
-    (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
-      return resolveKangurCanvasPoint(event, canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-    },
-    []
-  );
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (feedback?.kind === 'success') return;
-    event.preventDefault();
-    if (feedback?.kind === 'error') {
-      setFeedback(null);
-    }
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const point = resolvePoint(event);
-    isDrawingRef.current = true;
-    setIsPointerDrawing(true);
-    canvas.setPointerCapture(event.pointerId);
-    updateStrokes((current) => [...current, [point]]);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current || feedback?.kind === 'success') return;
-    event.preventDefault();
-    const point = resolvePoint(event);
-    updateStrokes((current) => {
-      if (current.length === 0) return current;
-      const next = [...current];
-      const lastStroke = next[next.length - 1] ?? [];
-      const lastPoint = lastStroke[lastStroke.length - 1];
-      if (lastPoint && distance(lastPoint, point) < minPointDistance) {
-        return current;
-      }
-      next[next.length - 1] = [...lastStroke, point];
-      return next;
-    });
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current) return;
-    event.preventDefault();
-    const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.releasePointerCapture(event.pointerId);
-    }
-    isDrawingRef.current = false;
-    setIsPointerDrawing(false);
-  };
-
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
-    if (points.length < minDrawingPoints) {
-      return {
-        kind: 'error',
-        text: translateAlphabetBasics(
-          translations,
-          'feedback.error.traceMore',
-          'Rysuj po śladzie litery i spróbuj jeszcze raz.'
-        ),
-      };
-    }
-    if (strokeLength < minDrawingLength) {
-      return {
-        kind: 'error',
-        text: translateAlphabetBasics(
-          translations,
-          'feedback.error.keepGoing',
-          'Super start! Dorysuj jeszcze kawałek litery.'
-        ),
-      };
-    }
-    return {
-      kind: 'success',
-      text: translateAlphabetBasics(
+    return evaluateKangurTracingAttempt({
+      keepGoingText: translateAlphabetBasics(
+        translations,
+        'feedback.error.keepGoing',
+        'Super start! Dorysuj jeszcze kawałek litery.'
+      ),
+      minDrawingLength: tracingCanvasConfig.minDrawingLength,
+      minDrawingPoints: tracingCanvasConfig.minDrawingPoints,
+      pointCount: points.length,
+      strokeLength,
+      successText: translateAlphabetBasics(
         translations,
         'feedback.success',
         'Świetnie! Litera {letter} gotowa.',
         { letter: currentRound.label }
       ),
-    };
+      tooShortText: translateAlphabetBasics(
+        translations,
+        'feedback.error.traceMore',
+        'Rysuj po śladzie litery i spróbuj jeszcze raz.'
+      ),
+    });
   };
 
   const handleCheck = (): void => {
@@ -312,7 +314,7 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
   };
 
   return (
-    <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} w-full items-center`}>
+    <div className={`alphabet-basics-lesson ${KANGUR_STACK_ROOMY_CLASSNAME} w-full items-center`}>
       <KangurGlassPanel
         className='w-full max-w-3xl'
         padding='lg'
@@ -372,184 +374,90 @@ export default function AlphabetBasicsLesson(): React.JSX.Element {
             </KangurStatusChip>
           </div>
 
-          {isCoarsePointer ? (
-            <KangurInfoCard accent='sky' className='w-full rounded-[20px] text-sm' padding='sm' tone='neutral'>
-              <p
-                className='font-semibold text-slate-600'
-                data-testid='alphabet-basics-touch-hint'
-                role='status'
-                aria-live='polite'
-              >
-                {touchHint}
-              </p>
-            </KangurInfoCard>
-          ) : null}
-
-            <div
-              className={`relative w-full overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/80 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.45)] ${
-                isPointerDrawing ? 'ring-2 ring-sky-300/70 ring-offset-2 ring-offset-white' : ''
-              }`}
-              style={canvasSurfaceStyle}
-              data-testid='alphabet-basics-canvas-shell'
-            >
-            <svg
-              viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-              className='absolute inset-0 h-full w-full'
-              aria-hidden='true'
-            >
-              <defs>
-                <linearGradient id='alphabetBg' x1='0' x2='1' y1='0' y2='1'>
-                  <stop offset='0%' stopColor='#fef3c7' />
-                  <stop offset='50%' stopColor='#e0f2fe' />
-                  <stop offset='100%' stopColor='#fae8ff' />
-                </linearGradient>
-              </defs>
-              <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill='url(#alphabetBg)' />
-              <circle cx='58' cy='60' r='24' fill='#fde68a' opacity='0.6' />
-              <circle cx='310' cy='54' r='18' fill='#bae6fd' opacity='0.65' />
-              <circle cx='304' cy='190' r='22' fill='#fecaca' opacity='0.55' />
-              {currentRound.paths.map((path) => (
-                <path
-                  key={`guide-${path}`}
-                  d={path}
-                  className='letter-guide'
-                  stroke={currentRound.guideColor}
-                />
-              ))}
-              {currentRound.paths.map((path, index) => (
-                <path
-                  key={`glow-${index}`}
-                  d={path}
-                  className='letter-glow motion-reduce:animate-none'
-                  stroke={currentRound.glowColor}
-                />
-              ))}
-              <text
-                x='24'
-                y='220'
-                fontSize='26'
-                fontWeight='700'
-                fill='#0f172a'
-                opacity='0.2'
-              >
-                {currentRound.label}
-              </text>
-            </svg>
-
-            <canvas
-              ref={canvasRef}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-              data-drawing-active={isPointerDrawing ? 'true' : 'false'}
-              className='kangur-drawing-canvas relative z-10 h-full w-full touch-none'
-              aria-label={translateAlphabetBasics(
-                translations,
-                'canvasAria',
-                'Rysuj litere {letter}',
-                { letter: currentRound.label }
-              )}
-            />
-          </div>
-
-          <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600'>
-            <span>
-              {translateAlphabetBasics(
-                translations,
-                'footer.traceHint',
-                'Rysuj po grubych liniach i nie spiesz się.'
-              )}
-            </span>
-            <span>
-              {translateAlphabetBasics(
-                translations,
-                'footer.points',
-                '{count} punktów',
-                { count: points.length }
-              )}
-            </span>
-          </div>
+          <KangurTracingBoard
+            ariaKeyShortcuts={KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}
+            canvasAriaLabel={translateAlphabetBasics(
+              translations,
+              'canvasAria',
+              'Rysuj litere {letter}',
+              { letter: currentRound.label }
+            )}
+            canvasRef={canvasRef}
+            footerHint={traceHint}
+            footerPointsLabel={pointsLabel}
+            guideSurface={
+              <AlphabetBasicsGuideSurface
+                guideColor={currentRound.guideColor}
+                glowColor={currentRound.glowColor}
+                letter={currentRound.label}
+                paths={currentRound.paths}
+              />
+            }
+            height={CANVAS_HEIGHT}
+            isCoarsePointer={isCoarsePointer}
+            isPointerDrawing={isPointerDrawing}
+            onKeyDown={handleCanvasKeyDown}
+            onPointerCancel={handlePointerUp}
+            onPointerDown={handlePointerDown}
+            onPointerLeave={handlePointerUp}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            shellDataTestId='alphabet-basics-canvas-shell'
+            shellStyle={canvasSurfaceStyle}
+            touchHint={touchHint}
+            touchHintTestId='alphabet-basics-touch-hint'
+            width={CANVAS_WIDTH}
+          />
         </div>
       </KangurGlassPanel>
 
-      <KangurGlassPanel
-        className='w-full max-w-3xl'
-        padding='lg'
-        surface='playField'
-      >
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <div className='min-w-0'>
-            {feedback ? (
-              <p
-                className={`text-sm font-semibold ${
-                  feedback.kind === 'success' ? 'text-emerald-600' : 'text-rose-600'
-                }`}
-                role='status'
-                aria-live='polite'
-              >
-                {feedback.text}
-              </p>
-            ) : (
-              <p className='text-sm text-slate-600'>
-                {translateAlphabetBasics(
-                  translations,
-                  'footer.idlePrompt',
-                  'Kliknij Sprawdź, gdy skończysz rysować.'
-                )}
-              </p>
-            )}
-          </div>
-          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            <KangurButton
-              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-              size='sm'
-              type='button'
-              variant='surface'
-              onClick={clearDrawing}
-            >
-              {translateAlphabetBasics(translations, 'actions.clear', 'Wyczyść')}
-            </KangurButton>
-            {feedback?.kind === 'success' ? (
-              <KangurButton
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleNext}
-              >
-                {roundIndex + 1 >= totalRounds
-                  ? translateAlphabetBasics(translations, 'actions.restart', 'Zacznij od nowa')
-                  : translateAlphabetBasics(translations, 'actions.next', 'Dalej')}
-              </KangurButton>
-            ) : (
-              <KangurCheckButton
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleCheck}
-                feedbackTone={feedback?.kind === 'error' ? 'error' : null}
-              >
-                {translateAlphabetBasics(translations, 'actions.check', 'Sprawdź')}
-              </KangurCheckButton>
-            )}
-          </div>
-        </div>
-      </KangurGlassPanel>
+      <KangurTracingLessonFooter
+        checkLabel={translateAlphabetBasics(translations, 'actions.check', 'Sprawdź')}
+        clearLabel={translateAlphabetBasics(translations, 'actions.clear', 'Wyczyść')}
+        feedback={feedback}
+        utilityActions={
+          <KangurManagedDrawingUtilityActions
+            canExport={hasDrawableContent}
+            canRedo={canRedo}
+            canUndo={canUndo}
+            exportLabel={translateAlphabetBasics(translations, 'actions.export', 'Eksportuj PNG')}
+            exportTestId='alphabet-basics-export'
+            isCoarsePointer={isCoarsePointer}
+            layoutPreset='footer'
+            onExport={exportDrawing}
+            onRedo={redoDrawing}
+            onUndo={undoDrawing}
+            redoLabel={translateAlphabetBasics(translations, 'actions.redo', 'Ponów')}
+            undoLabel={translateAlphabetBasics(translations, 'actions.undo', 'Cofnij')}
+          />
+        }
+        idlePrompt={translateAlphabetBasics(
+          translations,
+          'footer.idlePrompt',
+          'Kliknij Sprawdź, gdy skończysz rysować.'
+        )}
+        isCoarsePointer={isCoarsePointer}
+        isLastRound={roundIndex + 1 >= totalRounds}
+        nextLabel={translateAlphabetBasics(translations, 'actions.next', 'Dalej')}
+        onCheck={handleCheck}
+        onClear={clearDrawing}
+        onNext={handleNext}
+        restartLabel={translateAlphabetBasics(
+          translations,
+          'actions.restart',
+          'Zacznij od nowa'
+        )}
+      />
 
-      <style jsx>{`
-        .letter-guide {
+      <style>{`
+        .alphabet-basics-lesson .letter-guide {
           fill: none;
           stroke-width: var(--guide-width, 14px);
           stroke-linecap: round;
           stroke-linejoin: round;
           opacity: 0.35;
         }
-        .letter-glow {
+        .alphabet-basics-lesson .letter-glow {
           fill: none;
           stroke-width: var(--glow-width, 8px);
           stroke-linecap: round;

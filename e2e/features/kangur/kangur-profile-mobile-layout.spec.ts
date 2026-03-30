@@ -25,6 +25,32 @@ const PROGRESS_FIXTURE = {
   bestWinStreak: 4,
   activityStats: {},
 } as const;
+const PROGRESS_FIXTURE_JSON = JSON.stringify(PROGRESS_FIXTURE);
+const SCORES_FIXTURE = [
+  {
+    id: 'score-1',
+    player_name: 'Jan',
+    score: 8,
+    operation: 'addition',
+    total_questions: 10,
+    correct_answers: 8,
+    time_taken: 42,
+    created_date: '2026-03-08T10:00:00.000Z',
+    created_by: 'jan@example.com',
+  },
+  {
+    id: 'score-2',
+    player_name: 'Jan',
+    score: 10,
+    operation: 'multiplication',
+    total_questions: 10,
+    correct_answers: 10,
+    time_taken: 38,
+    created_date: '2026-03-07T10:00:00.000Z',
+    created_by: 'jan@example.com',
+  },
+] as const;
+const SCORES_FIXTURE_JSON = JSON.stringify(SCORES_FIXTURE);
 
 type Box = {
   x: number;
@@ -145,11 +171,13 @@ const buildManagerUser = () => {
 };
 
 const mockKangurAuthMe = async (page: Page): Promise<void> => {
+  const managerUserResponse = JSON.stringify(buildManagerUser());
+
   await page.route('**/api/kangur/auth/me**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(buildManagerUser()),
+      body: managerUserResponse,
     });
   });
 };
@@ -159,30 +187,7 @@ const mockKangurScores = async (page: Page): Promise<void> => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        {
-          id: 'score-1',
-          player_name: 'Jan',
-          score: 8,
-          operation: 'addition',
-          total_questions: 10,
-          correct_answers: 8,
-          time_taken: 42,
-          created_date: '2026-03-08T10:00:00.000Z',
-          created_by: 'jan@example.com',
-        },
-        {
-          id: 'score-2',
-          player_name: 'Jan',
-          score: 10,
-          operation: 'multiplication',
-          total_questions: 10,
-          correct_answers: 10,
-          time_taken: 38,
-          created_date: '2026-03-07T10:00:00.000Z',
-          created_by: 'jan@example.com',
-        },
-      ]),
+      body: SCORES_FIXTURE_JSON,
     });
   });
 };
@@ -192,7 +197,7 @@ const mockKangurProgress = async (page: Page): Promise<void> => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(PROGRESS_FIXTURE),
+      body: PROGRESS_FIXTURE_JSON,
     });
   });
 };
@@ -200,11 +205,11 @@ const mockKangurProgress = async (page: Page): Promise<void> => {
 const seedKangurProgress = async (page: Page): Promise<void> => {
   await page.addInitScript(
     ({ key, value }) => {
-      window.localStorage.setItem(key, JSON.stringify(value));
+      window.localStorage.setItem(key, value);
     },
     {
       key: KANGUR_PROGRESS_STORAGE_KEY,
-      value: PROGRESS_FIXTURE,
+      value: PROGRESS_FIXTURE_JSON,
     }
   );
 };

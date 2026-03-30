@@ -14,34 +14,43 @@ import {
 } from './config';
 import { toPositiveInt, toRecord } from './utils';
 
+const decryptTrimmedSecret = (value: string | null | undefined): string =>
+  value ? decryptSecret(value).trim() : '';
+
+const requirePositiveCredential = (value: number | null, message: string): number => {
+  if (!value) {
+    throw internalError(message);
+  }
+  return value;
+};
+
+const requireSecretCredential = (value: string, message: string): string => {
+  if (!value) {
+    throw internalError(message);
+  }
+  return value;
+};
+
 export const resolveTraderaApiCredentials = (
   connection: IntegrationConnectionRecord
 ): TraderaApiCredentials => {
-  const appId = toPositiveInt(connection.traderaApiAppId);
-  const userId = toPositiveInt(connection.traderaApiUserId);
-  const appKey = connection.traderaApiAppKey
-    ? decryptSecret(connection.traderaApiAppKey).trim()
-    : '';
-  const token = connection.traderaApiToken ? decryptSecret(connection.traderaApiToken).trim() : '';
-
-  if (!appId) {
-    throw internalError('Tradera API App ID is missing. Update the connection credentials.');
-  }
-  if (!userId) {
-    throw internalError('Tradera API User ID is missing. Update the connection credentials.');
-  }
-  if (!appKey) {
-    throw internalError('Tradera API App Key is missing. Update the connection credentials.');
-  }
-  if (!token) {
-    throw internalError('Tradera API token is missing. Update the connection credentials.');
-  }
-
   return {
-    appId,
-    appKey,
-    userId,
-    token,
+    appId: requirePositiveCredential(
+      toPositiveInt(connection.traderaApiAppId),
+      'Tradera API App ID is missing. Update the connection credentials.'
+    ),
+    appKey: requireSecretCredential(
+      decryptTrimmedSecret(connection.traderaApiAppKey),
+      'Tradera API App Key is missing. Update the connection credentials.'
+    ),
+    userId: requirePositiveCredential(
+      toPositiveInt(connection.traderaApiUserId),
+      'Tradera API User ID is missing. Update the connection credentials.'
+    ),
+    token: requireSecretCredential(
+      decryptTrimmedSecret(connection.traderaApiToken),
+      'Tradera API token is missing. Update the connection credentials.'
+    ),
     sandbox: connection.traderaApiSandbox ?? false,
   };
 };

@@ -1,11 +1,20 @@
 import { auth } from './auth';
 import { registerSessionResolver } from '@/shared/lib/api/session-registry';
+import { isMissingRequestScopeError } from '@/shared/lib/auth/request-scope-error';
 
 // Register auth function to shared API handler registry
 if (typeof auth === 'function') {
   registerSessionResolver(async () => {
-    const session = await auth();
-    return session?.user ?? null;
+    try {
+      const session = await auth();
+      return session?.user ?? null;
+    } catch (error) {
+      if (isMissingRequestScopeError(error)) {
+        return null;
+      }
+
+      throw error;
+    }
   });
 }
 
@@ -26,6 +35,8 @@ export { normalizeAuthEmail, listAuthUsers } from './services/auth-user-reposito
 export * from './services/auth-user-service';
 export * from './services/user-preferences-repository';
 export * from './services/totp';
+export * from './optional-server-auth';
+export * from './settings-manage-access';
 export * from '@/shared/contracts/auth';
 export { AUTH_SETTINGS_KEYS } from './utils/auth-management';
 export type { AuthUserRoleMap } from './utils/auth-management';

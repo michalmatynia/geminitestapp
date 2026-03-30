@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ProductCategory, ProductFormData } from '@/shared/contracts/products';
 
-import { applyValidatorFieldReplacement } from './applyValidatorFieldReplacement';
+import {
+  applyValidatorFieldReplacement,
+  doesValidatorFieldReplacementMatchCurrentValue,
+} from './applyValidatorFieldReplacement';
 
 const categories: ProductCategory[] = [
   {
@@ -84,6 +87,45 @@ describe('applyValidatorFieldReplacement', () => {
 
     expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('stock', 7);
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+
+  it('preserves decimal replacements for dimension fields', () => {
+    const applyApi = createApplyApi({ sizeLength: 10 });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'sizeLength',
+        replacementValue: '12.5',
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('sizeLength', 12.5);
+    expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+
+  it('detects when a decimal dimension replacement is already applied', () => {
+    const applyApi = createApplyApi({ sizeLength: 12.5 });
+
+    expect(
+      doesValidatorFieldReplacementMatchCurrentValue({
+        fieldName: 'sizeLength',
+        replacementValue: '12.5',
+        ...applyApi,
+      })
+    ).toBe(true);
+  });
+
+  it('detects when a hydrated reset has undone a decimal dimension replacement', () => {
+    const applyApi = createApplyApi({ sizeLength: 10 });
+
+    expect(
+      doesValidatorFieldReplacementMatchCurrentValue({
+        fieldName: 'sizeLength',
+        replacementValue: '12.5',
+        ...applyApi,
+      })
+    ).toBe(false);
   });
 
   it('applies trimmed text replacements through setFormFieldValue', () => {

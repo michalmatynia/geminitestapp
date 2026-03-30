@@ -26,6 +26,7 @@ import {
   KangurLearnerProfileMasteryWidget,
   KangurLearnerProfileOverviewWidget,
   KangurLearnerProfilePerformanceWidget,
+  KangurLearnerProfileResultsWidget,
   KangurLearnerProfileRecommendationsWidget,
   KangurLearnerProfileSessionsWidget,
   KangurLessonNavigationWidget,
@@ -37,7 +38,6 @@ import {
   KangurParentDashboardHeroWidget,
   KangurParentDashboardLearnerManagementWidget,
   KangurParentDashboardProgressWidget,
-  KangurParentDashboardScoresWidget,
   KangurParentDashboardTabsWidget,
   KangurPriorityAssignments,
   Leaderboard,
@@ -48,7 +48,7 @@ import {
   useOptionalKangurLessonsRuntime,
   useOptionalKangurParentDashboardRuntime,
   useOptionalKangurRouting,
-} from '@/shared/lib/kangur-bridge';
+} from '@/shared/lib/kangur-cms-bridge';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockSettings } from './BlockContext';
@@ -109,6 +109,7 @@ const LEARNER_PROFILE_RUNTIME_WIDGET_IDS = new Set([
   'learner-profile-hero',
   'learner-profile-level-progress',
   'learner-profile-overview',
+  'learner-profile-results',
   'learner-profile-recommendations',
   'learner-profile-assignments',
   'learner-profile-mastery',
@@ -121,7 +122,6 @@ const PARENT_DASHBOARD_RUNTIME_WIDGET_IDS = new Set([
   'parent-dashboard-learner-management',
   'parent-dashboard-tabs',
   'parent-dashboard-progress',
-  'parent-dashboard-scores',
   'parent-dashboard-assignments',
   'parent-dashboard-monitoring',
 ]);
@@ -137,6 +137,19 @@ export function KangurWidgetBlock(): React.ReactNode {
   const widgetLabel = getKangurWidgetLabel(widgetId);
   const progress = useKangurProgressState();
   const gameScreenVisibility = resolveGameScreenVisibility(settings['gameScreen']);
+
+  if (widgetId === 'parent-dashboard-scores') {
+    if (learnerProfileRuntime) {
+      return <KangurLearnerProfileResultsWidget />;
+    }
+
+    return (
+      <KangurWidgetFallback
+        title='Learner Profile Results'
+        description='This legacy Parent Dashboard widget moved to the Learner Profile screen.'
+      />
+    );
+  }
 
   if (!routing) {
     return (
@@ -232,6 +245,8 @@ export function KangurWidgetBlock(): React.ReactNode {
       return <KangurLearnerProfileLevelProgressWidget />;
     case 'learner-profile-overview':
       return <KangurLearnerProfileOverviewWidget />;
+    case 'learner-profile-results':
+      return <KangurLearnerProfileResultsWidget />;
     case 'learner-profile-recommendations':
       return <KangurLearnerProfileRecommendationsWidget />;
     case 'learner-profile-assignments':
@@ -251,12 +266,6 @@ export function KangurWidgetBlock(): React.ReactNode {
     case 'parent-dashboard-progress':
       return (
         <KangurParentDashboardProgressWidget
-          displayMode={resolveParentDashboardDisplayMode(settings['displayMode'])}
-        />
-      );
-    case 'parent-dashboard-scores':
-      return (
-        <KangurParentDashboardScoresWidget
           displayMode={resolveParentDashboardDisplayMode(settings['displayMode'])}
         />
       );

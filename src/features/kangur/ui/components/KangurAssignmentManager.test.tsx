@@ -2,13 +2,14 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { AnchorHTMLAttributes } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import plMessages from '@/i18n/messages/pl.json';
 
 const useKangurProgressStateMock = vi.hoisted(() => vi.fn());
 const useKangurAssignmentsMock = vi.hoisted(() => vi.fn());
+const useKangurLessonsMock = vi.hoisted(() => vi.fn());
 const useSettingsStoreMock = vi.hoisted(() => vi.fn());
 const lessonsState = vi.hoisted(() => ({
   value: [] as Array<Record<string, unknown>>,
@@ -56,11 +57,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: () => ({
-    data: lessonsState.value,
-    isLoading: false,
-    error: null,
-  }),
+  useKangurLessons: useKangurLessonsMock,
 }));
 
 vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
@@ -81,7 +78,7 @@ vi.mock('@/features/kangur/ui/services/delegated-assignments', () => ({
     priority === 'high' ? 'rose' : priority === 'medium' ? 'amber' : 'emerald',
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurAssignmentsList', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentsList', () => ({
   default: ({
     title,
     items = [],
@@ -110,12 +107,14 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   KangurTransitionLink: ({
     children,
     href,
+    prefetch: _prefetch,
     targetPageKey: _targetPageKey,
     transitionAcknowledgeMs: _transitionAcknowledgeMs,
     transitionSourceId: _transitionSourceId,
     ...rest
   }: AnchorHTMLAttributes<HTMLAnchorElement> & {
     href: string;
+    prefetch?: boolean;
     targetPageKey?: string;
     transitionAcknowledgeMs?: number;
     transitionSourceId?: string | null;
@@ -161,6 +160,11 @@ describe('KangurAssignmentManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     lessonsState.value = [];
+    useKangurLessonsMock.mockReturnValue({
+      data: lessonsState.value,
+      isLoading: false,
+      error: null,
+    });
     useSettingsStoreMock.mockReturnValue({
       get: vi.fn(),
     });
@@ -184,6 +188,29 @@ describe('KangurAssignmentManager', () => {
 
     expect(screen.getByText(assignmentManagerMessages.lists.activeTitle)).toBeInTheDocument();
     expect(screen.getByText(assignmentManagerMessages.lists.completedTitle)).toBeInTheDocument();
+  });
+
+  it('reuses preloaded dashboard data in metrics view instead of enabling its own queries', () => {
+    render(
+      <KangurAssignmentManager
+        basePath='/kangur'
+        preloadedAssignments={[]}
+        preloadedLessons={[]}
+        view='metrics'
+      />
+    );
+
+    expect(useKangurAssignmentsMock).toHaveBeenCalledWith({
+      enabled: false,
+      query: {
+        includeArchived: false,
+      },
+    });
+    expect(useKangurLessonsMock).toHaveBeenCalledWith({
+      ageGroup: expect.anything(),
+      enabled: false,
+      enabledOnly: true,
+    });
   });
 
   it('toggles between active and completed lists in catalogWithLists view', () => {
@@ -253,12 +280,19 @@ describe('KangurAssignmentManager', () => {
     render(<KangurAssignmentManager basePath='/kangur' />);
 
     fireEvent.click(screen.getByTestId('open-time-limit-assignment-1'));
-    expect(screen.getByTestId('assignment-time-limit-modal')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(assignmentManagerMessages.timeLimitModal.inputAriaLabel), {
+    const timeLimitInput = await screen.findByLabelText(/minutach/i);
+    const dialog = timeLimitInput.closest('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+
+    fireEvent.change(timeLimitInput, {
       target: { value: '25' },
     });
-    fireEvent.click(screen.getByRole('button', { name: assignmentManagerMessages.actions.save }));
+    fireEvent.click(
+      within(dialog as HTMLElement).getByRole('button', {
+        name: assignmentManagerMessages.actions.save,
+      })
+    );
 
     await waitFor(() =>
       expect(updateAssignment).toHaveBeenCalledWith('assignment-1', {
@@ -267,7 +301,7 @@ describe('KangurAssignmentManager', () => {
     );
   });
 
-  it('allows unassigning catalog items that are already assigned', () => {
+  it('allows unassigning catalog items that are already assigned', async () => {
     const updateAssignment = vi.fn().mockResolvedValue({
       id: 'assignment-1',
     });
@@ -344,6 +378,9 @@ describe('KangurAssignmentManager', () => {
       name: assignmentManagerMessages.actions.unassign,
     });
     fireEvent.click(unassignButton);
-    expect(updateAssignment).toHaveBeenCalledWith('assignment-1', { archived: true });
+
+    await waitFor(() =>
+      expect(updateAssignment).toHaveBeenCalledWith('assignment-1', { archived: true })
+    );
   });
 });

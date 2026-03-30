@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   EnglishConnectorBridgeAnimation,
   EnglishQuestionFlipAnimation,
@@ -32,7 +33,11 @@ type SectionId =
   | 'questions'
   | 'connectors'
   | 'practice'
+  | 'game'
   | 'summary';
+const ENGLISH_SENTENCE_STRUCTURE_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_sentence_builder'
+);
 
 const buildEnglishSentenceStructureSlides = (
   translations: KangurIntlTranslate
@@ -48,14 +53,14 @@ const buildEnglishSentenceStructureSlides = (
           <KangurLessonVisual
             accent='violet'
             caption={translations('slides.blueprint.core.caption')}
+            supportingContent={
+              <p className='text-left text-sm font-semibold text-violet-700'>
+                The student solves the equation.
+              </p>
+            }
           >
             <EnglishSentenceBlueprintAnimation />
           </KangurLessonVisual>
-          <KangurLessonInset accent='violet' className='text-left'>
-            <p className='text-sm font-semibold text-violet-700'>
-              The student solves the equation.
-            </p>
-          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },
@@ -105,20 +110,25 @@ const buildEnglishSentenceStructureSlides = (
           <KangurLessonVisual
             accent='violet'
             caption={translations('slides.questions.doDoes.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'Do you understand the graph?',
+                  'Does he use a calculator?',
+                  'Do they check the steps?',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-violet-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-violet-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishQuestionFlipAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'Do you understand the graph?',
-              'Does he use a calculator?',
-              'Do they check the steps?',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='violet' className='text-left'>
-                <p className='font-semibold text-violet-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -134,20 +144,25 @@ const buildEnglishSentenceStructureSlides = (
           <KangurLessonVisual
             accent='amber'
             caption={translations('slides.connectors.linking.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
+                {[
+                  'I solved the equation, so I checked the graph.',
+                  'We repeated the task because the answer was wrong.',
+                  'She explains the steps, but he is still unsure.',
+                ].map((text) => (
+                  <div
+                    key={text}
+                    className='rounded-2xl border border-amber-200/70 bg-white/75 px-3 py-2 text-left font-semibold text-amber-700 shadow-sm'
+                  >
+                    {text}
+                  </div>
+                ))}
+              </div>
+            }
           >
             <EnglishConnectorBridgeAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} text-sm`}>
-            {[
-              'I solved the equation, so I checked the graph.',
-              'We repeated the task because the answer was wrong.',
-              'She explains the steps, but he is still unsure.',
-            ].map((text) => (
-              <KangurLessonInset key={text} accent='amber' className='text-left'>
-                <p className='font-semibold text-amber-700'>{text}</p>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -194,6 +209,7 @@ const buildEnglishSentenceStructureSlides = (
       ),
     },
   ],
+  game: [],
   summary: [
     {
       title: translations('slides.summary.recap.title'),
@@ -223,12 +239,14 @@ const SENTENCE_STRUCTURE_SECTION_META: Array<{
   id: SectionId;
   emoji: string;
   key: string;
+  isGame?: boolean;
 }> = [
   { id: 'blueprint', emoji: '🧩', key: 'blueprint' },
   { id: 'order', emoji: '🧭', key: 'order' },
   { id: 'questions', emoji: '❓', key: 'questions' },
   { id: 'connectors', emoji: '🔗', key: 'connectors' },
   { id: 'practice', emoji: '✅', key: 'practice' },
+  { id: 'game', emoji: '🎮', key: 'game', isGame: true },
   { id: 'summary', emoji: '🧠', key: 'summary' },
 ];
 
@@ -242,6 +260,7 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
         emoji: section.emoji,
         title: shellTranslations(`sections.${section.key}.title`),
         description: shellTranslations(`sections.${section.key}.description`),
+        isGame: section.isGame,
       })),
     [shellTranslations]
   );
@@ -265,6 +284,24 @@ export default function EnglishSentenceStructureLesson(): React.JSX.Element {
       completionSectionId='summary'
       autoRecordComplete
       scorePercent={120}
+      skipMarkFor={['game']}
+      games={[
+        {
+          sectionId: 'game',
+          shell: {
+            accent: 'violet',
+            title: shellTranslations('sections.game.title'),
+            description: shellTranslations('sections.game.description'),
+            icon: '🎮',
+            headerTestId: 'english-sentence-structure-game-header',
+            shellTestId: 'english-sentence-structure-game-shell',
+          },
+          launchableInstance: {
+            gameId: 'english_sentence_builder',
+            instanceId: ENGLISH_SENTENCE_STRUCTURE_INSTANCE_ID,
+          },
+        },
+      ]}
     />
   );
 }

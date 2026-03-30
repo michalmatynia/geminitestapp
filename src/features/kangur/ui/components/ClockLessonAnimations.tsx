@@ -1,13 +1,16 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useId } from 'react';
 
+import { KANGUR_CLOCK_THEME_COLORS } from './clock-theme';
 import { translateClockLesson } from './ClockLesson.i18n';
 
 type ClockFrameProps = {
   ariaLabel: string;
   children: React.ReactNode;
   className?: string;
+  testIdBase?: string;
 };
 
 const useClockAnimationAriaLabel = (key: string, fallback: string): string => {
@@ -15,22 +18,60 @@ const useClockAnimationAriaLabel = (key: string, fallback: string): string => {
   return translateClockLesson(translations, `animations.${key}.ariaLabel`, fallback);
 };
 
-function ClockFrame({ ariaLabel, children, className = 'h-full w-full' }: ClockFrameProps): React.JSX.Element {
+function ClockFrame({
+  ariaLabel,
+  children,
+  className = 'h-full w-full',
+  testIdBase,
+}: ClockFrameProps): React.JSX.Element {
+  const surfaceId = useId().replace(/:/g, '');
+  const faceGradientId = `${surfaceId}-face`;
+  const atmosphereId = `${surfaceId}-atmosphere`;
+
   return (
     <svg
       aria-label={ariaLabel}
       className={className}
+      data-testid={testIdBase ? `${testIdBase}-animation` : undefined}
       preserveAspectRatio='xMidYMid meet'
       role='img'
       viewBox='0 0 200 200'
     >
       <style>{`
-        .clock-face { fill: #eef2ff; stroke: #6366f1; stroke-width: 4; }
-        .tick { stroke: #4f46e5; stroke-width: 3; stroke-linecap: round; }
-        .minor { stroke: #c7d2fe; stroke-width: 2; }
-        .center { fill: #4f46e5; }
+        .clock-face { stroke: ${KANGUR_CLOCK_THEME_COLORS.faceStroke}; stroke-width: 4; }
+        .tick { stroke: ${KANGUR_CLOCK_THEME_COLORS.majorTick}; stroke-width: 3; stroke-linecap: round; }
+        .minor { stroke: ${KANGUR_CLOCK_THEME_COLORS.minorTick}; stroke-width: 2; }
+        .center { fill: ${KANGUR_CLOCK_THEME_COLORS.center}; }
+        .frame { fill: none; stroke: ${KANGUR_CLOCK_THEME_COLORS.frame}; stroke-width: 2; }
       `}</style>
-      <circle className='clock-face' cx='100' cy='100' r='92' />
+      <defs>
+        <linearGradient id={faceGradientId} x1='20' x2='180' y1='16' y2='184' gradientUnits='userSpaceOnUse'>
+          <stop offset='0%' stopColor={KANGUR_CLOCK_THEME_COLORS.faceGradientStart} />
+          <stop offset='55%' stopColor={KANGUR_CLOCK_THEME_COLORS.faceGradientMid} />
+          <stop offset='100%' stopColor={KANGUR_CLOCK_THEME_COLORS.faceGradientEnd} />
+        </linearGradient>
+        <radialGradient id={atmosphereId} cx='50%' cy='42%' r='74%'>
+          <stop offset='0%' stopColor={KANGUR_CLOCK_THEME_COLORS.atmosphereStart} />
+          <stop offset='100%' stopColor={KANGUR_CLOCK_THEME_COLORS.atmosphereEnd} />
+        </radialGradient>
+      </defs>
+      <ellipse
+        cx='72'
+        cy='42'
+        data-testid={testIdBase ? `${testIdBase}-atmosphere` : undefined}
+        fill={`url(#${atmosphereId})`}
+        opacity='0.95'
+        rx='68'
+        ry='28'
+      />
+      <circle className='clock-face' cx='100' cy='100' fill={`url(#${faceGradientId})`} r='92' />
+      <circle
+        className='frame'
+        cx='100'
+        cy='100'
+        data-testid={testIdBase ? `${testIdBase}-frame` : undefined}
+        r='84'
+      />
       {Array.from({ length: 12 }, (_, i) => {
         const angle = (i * 30 - 90) * (Math.PI / 180);
         const x1 = 100 + 72 * Math.cos(angle);
@@ -61,9 +102,9 @@ export function ClockHourHandSweepAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-hour-hand-sweep'>
       <style>{`
-        .hour-hand { stroke: #dc2626; stroke-width: 7; stroke-linecap: round; }
+        .hour-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.highlightHourHand}; stroke-width: 7; stroke-linecap: round; }
         .hour-sweep {
           transform-origin: 100px 100px;
           animation: hourSweep 7s ease-in-out infinite;
@@ -92,9 +133,9 @@ export function ClockMinuteHandSweepAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-minute-hand-sweep'>
       <style>{`
-        .minute-hand { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; }
+        .minute-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.highlightMinuteHand}; stroke-width: 5; stroke-linecap: round; }
         .minute-sweep {
           transform-origin: 100px 100px;
           animation: minuteSweep 5s linear infinite;
@@ -121,13 +162,13 @@ export function ClockFiveMinuteStepsAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-five-minute-steps'>
       <style>{`
-        .step { fill: #34d399; opacity: 0.2; animation: stepPulse 5s ease-in-out infinite; }
+        .step { fill: ${KANGUR_CLOCK_THEME_COLORS.stepFill}; opacity: 0.2; animation: stepPulse 5s ease-in-out infinite; }
         .s2 { animation-delay: 0.6s; }
         .s3 { animation-delay: 1.2s; }
         .s4 { animation-delay: 1.8s; }
-        .label { font: 700 12px/1.1 system-ui, sans-serif; fill: #0f766e; }
+        .label { font: 700 12px/1.1 system-ui, sans-serif; fill: ${KANGUR_CLOCK_THEME_COLORS.stepLabel}; }
         @keyframes stepPulse {
           0%, 20% { opacity: 0.2; transform: scale(0.9); }
           45%, 70% { opacity: 1; transform: scale(1); }
@@ -156,10 +197,10 @@ export function ClockCombinedHandsAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-combined-hands'>
       <style>{`
-        .hour-hand { stroke: #dc2626; stroke-width: 6; stroke-linecap: round; }
-        .minute-hand { stroke: #4f46e5; stroke-width: 4; stroke-linecap: round; }
+        .hour-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.highlightHourHand}; stroke-width: 6; stroke-linecap: round; }
+        .minute-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.lessonMinuteHand}; stroke-width: 4; stroke-linecap: round; }
         .hour-move { transform-origin: 100px 100px; animation: hourMove 8s ease-in-out infinite; }
         .minute-move { transform-origin: 100px 100px; animation: minuteMove 4s linear infinite; }
         @keyframes hourMove {
@@ -193,12 +234,12 @@ export function ClockQuarterAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-quarter'>
       <style>{`
-        .minute-hand { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; }
+        .minute-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.highlightMinuteHand}; stroke-width: 5; stroke-linecap: round; }
         .minute-a { transform-origin: 100px 100px; animation: quarterA 4.5s ease-in-out infinite; }
         .minute-b { transform-origin: 100px 100px; animation: quarterB 4.5s ease-in-out infinite; }
-        .hour-hand { stroke: #1e1b4b; stroke-width: 6; stroke-linecap: round; }
+        .hour-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.lessonHourHand}; stroke-width: 6; stroke-linecap: round; }
         @keyframes quarterA {
           0%, 45% { opacity: 1; transform: rotate(90deg); }
           55%, 100% { opacity: 0; transform: rotate(90deg); }
@@ -229,10 +270,10 @@ export function ClockHalfPastAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-half-past'>
       <style>{`
-        .hour-hand { stroke: #dc2626; stroke-width: 6; stroke-linecap: round; }
-        .minute-hand { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; }
+        .hour-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.highlightHourHand}; stroke-width: 6; stroke-linecap: round; }
+        .minute-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.highlightMinuteHand}; stroke-width: 5; stroke-linecap: round; }
         .minute-move { transform-origin: 100px 100px; animation: halfMinute 5.5s ease-in-out infinite; }
         .hour-move { transform-origin: 100px 100px; animation: halfHour 5.5s ease-in-out infinite; }
         @keyframes halfMinute {
@@ -265,9 +306,9 @@ export function ClockMinuteByMinuteAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-minute-by-minute'>
       <style>{`
-        .minute-hand { stroke: #16a34a; stroke-width: 4; stroke-linecap: round; }
+        .minute-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.highlightMinuteHand}; stroke-width: 4; stroke-linecap: round; }
         .minute-step {
           transform-origin: 100px 100px;
           animation: minuteTick 6s steps(60) infinite;
@@ -294,10 +335,10 @@ export function ClockFullHourStepAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-full-hour-step'>
       <style>{`
-        .hour-hand { stroke: #dc2626; stroke-width: 7; stroke-linecap: round; }
-        .minute-hand { stroke: #4f46e5; stroke-width: 4; stroke-linecap: round; }
+        .hour-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.highlightHourHand}; stroke-width: 7; stroke-linecap: round; }
+        .minute-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.lessonMinuteHand}; stroke-width: 4; stroke-linecap: round; }
         .hour-step {
           transform-origin: 100px 100px;
           animation: hourStep 8s ease-in-out infinite;
@@ -330,9 +371,9 @@ export function ClockSecondHandAnimation(): React.JSX.Element {
   );
 
   return (
-    <ClockFrame ariaLabel={ariaLabel}>
+    <ClockFrame ariaLabel={ariaLabel} testIdBase='clock-second-hand'>
       <style>{`
-        .second-hand { stroke: #ef4444; stroke-width: 2; stroke-linecap: round; }
+        .second-hand { stroke: ${KANGUR_CLOCK_THEME_COLORS.secondHand}; stroke-width: 2; stroke-linecap: round; }
         .second-sweep { transform-origin: 100px 100px; animation: secondSweep 1.8s linear infinite; }
         @keyframes secondSweep {
           0% { transform: rotate(0deg); }

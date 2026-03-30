@@ -12,6 +12,33 @@ import {
   isNameSecondSegmentDimensionPattern,
 } from './helpers';
 
+const buildDynamicReplacementRecipe = (
+  overrides: Partial<Parameters<typeof encodeDynamicReplacementRecipe>[0]>
+) =>
+  encodeDynamicReplacementRecipe({
+    version: 1,
+    sourceMode: 'latest_product_field',
+    sourceField: 'price',
+    sourceRegex: null,
+    sourceFlags: null,
+    sourceMatchGroup: null,
+    mathOperation: 'none',
+    mathOperand: null,
+    roundMode: 'none',
+    padLength: null,
+    padChar: null,
+    logicOperator: 'none',
+    logicOperand: null,
+    logicFlags: null,
+    logicWhenTrueAction: 'keep',
+    logicWhenTrueValue: null,
+    logicWhenFalseAction: 'keep',
+    logicWhenFalseValue: null,
+    resultAssembly: 'segment_only',
+    targetApply: 'replace_whole_field',
+    ...overrides,
+  });
+
 const buildPattern = (overrides: Partial<ProductValidationPattern>): ProductValidationPattern => ({
   id: overrides.id ?? 'pattern-1',
   createdAt: overrides.createdAt ?? '',
@@ -98,27 +125,8 @@ describe('validator settings helpers', () => {
     const pattern = buildPattern({
       target: 'price',
       semanticState: undefined,
-      replacementValue: encodeDynamicReplacementRecipe({
-        version: 1,
-        sourceMode: 'latest_product_field',
+      replacementValue: buildDynamicReplacementRecipe({
         sourceField: 'price',
-        sourceRegex: null,
-        sourceFlags: null,
-        sourceMatchGroup: null,
-        mathOperation: 'none',
-        mathOperand: null,
-        roundMode: 'none',
-        padLength: null,
-        padChar: null,
-        logicOperator: 'none',
-        logicOperand: null,
-        logicFlags: null,
-        logicWhenTrueAction: 'keep',
-        logicWhenTrueValue: null,
-        logicWhenFalseAction: 'keep',
-        logicWhenFalseValue: null,
-        resultAssembly: 'segment_only',
-        targetApply: 'replace_whole_field',
       }),
     });
 

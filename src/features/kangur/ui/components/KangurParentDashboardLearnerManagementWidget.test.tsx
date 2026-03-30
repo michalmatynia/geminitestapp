@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const runtimeState = vi.hoisted(() => ({
@@ -78,9 +78,40 @@ const runtimeState = vi.hoisted(() => ({
 }));
 const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 const learnerSessionsListMock = vi.hoisted(() => vi.fn());
+const localeState = vi.hoisted(() => ({ value: 'pl' }));
+
+vi.mock('next-intl', () => ({
+  useLocale: () => localeState.value,
+  useTranslations: () => (key: string) => key,
+}));
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
-  useKangurParentDashboardRuntime: () => runtimeState.value,
+  useKangurParentDashboardRuntimeActions: () => ({
+    handleCreateLearner: runtimeState.value.handleCreateLearner,
+    handleDeleteLearner: runtimeState.value.handleDeleteLearner,
+    handleSaveLearner: runtimeState.value.handleSaveLearner,
+    selectLearner: runtimeState.value.selectLearner,
+    setCreateLearnerModalOpen: runtimeState.value.setCreateLearnerModalOpen,
+    updateCreateField: runtimeState.value.updateCreateField,
+    updateEditField: runtimeState.value.updateEditField,
+  }),
+  useKangurParentDashboardRuntimeOverviewState: () => ({
+    activeLearner: runtimeState.value.activeLearner,
+    basePath: runtimeState.value.basePath,
+    canAccessDashboard: runtimeState.value.canAccessDashboard,
+    canManageLearners: runtimeState.value.canManageLearners,
+    createForm: runtimeState.value.createForm,
+    editForm: runtimeState.value.editForm,
+    feedback: runtimeState.value.feedback,
+    isAuthenticated: runtimeState.value.isAuthenticated,
+    isCreateLearnerModalOpen: runtimeState.value.isCreateLearnerModalOpen,
+    isSubmitting: runtimeState.value.isSubmitting,
+    learners: runtimeState.value.learners,
+    lessons: runtimeState.value.lessons,
+    progress: runtimeState.value.progress,
+    viewerName: runtimeState.value.viewerName,
+    viewerRoleLabel: runtimeState.value.viewerRoleLabel,
+  }),
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -103,6 +134,7 @@ import { KangurParentDashboardLearnerManagementWidget } from './KangurParentDash
 describe('KangurParentDashboardLearnerManagementWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localeState.value = 'pl';
     learnerSessionsListMock.mockResolvedValue({ sessions: [], totalSessions: 0 });
     useKangurPageContentEntryMock.mockReturnValue({
       data: undefined,
@@ -188,44 +220,56 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     };
   });
 
-  it('uses storefront text tokens across learner management cards and actions', () => {
+  it('uses storefront text tokens across learner management cards and actions', async () => {
     runtimeState.value = {
       ...runtimeState.value,
       isCreateLearnerModalOpen: true,
     };
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    render(<KangurParentDashboardLearnerManagementWidget />);
+    try {
+      render(<KangurParentDashboardLearnerManagementWidget />);
 
-    expect(screen.getByText('Zarządzaj profilami bez opuszczania panelu')).toHaveClass(
-      '[color:var(--kangur-page-text)]'
-    );
-    expect(
-      screen.getByText(
-        'Rodzic loguje się emailem, a uczniowie dostają osobne nazwy logowania i hasła.'
-      )
-    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(screen.getByText('Login: olek02')).toHaveClass('[color:var(--kangur-page-muted-text)]');
-    expect(screen.getByText('Kliknij, aby przełączyć profil')).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
-    );
-    expect(screen.getByText('Ada')).toHaveClass(
-      '[color:var(--kangur-page-text)]'
-    );
-    expect(screen.getByTestId('parent-create-learner-modal')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pokaż hasło' })).toHaveClass(
-      'h-11',
-      'w-11',
-      'touch-manipulation',
-      'select-none'
-    );
+      expect(screen.getByText('Zarządzaj profilami bez opuszczania panelu')).toHaveClass(
+        '[color:var(--kangur-page-text)]'
+      );
+      expect(
+        screen.getByText(
+          'Rodzic loguje się emailem, a uczniowie dostają osobne nazwy logowania i hasła.'
+        )
+      ).toHaveClass('[color:var(--kangur-page-muted-text)]');
+      expect(screen.getByText('Login: olek02')).toHaveClass('[color:var(--kangur-page-muted-text)]');
+      expect(screen.getByText('Kliknij, aby przełączyć profil')).toHaveClass(
+        '[color:var(--kangur-page-muted-text)]'
+      );
+      expect(screen.getByText('Ada')).toHaveClass(
+        '[color:var(--kangur-page-text)]'
+      );
+      expect(screen.getByTestId('parent-create-learner-modal')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Pokaż hasło' })).toHaveClass(
+        'h-11',
+        'w-11',
+        'touch-manipulation',
+        'select-none'
+      );
 
-    expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(
-      '[color:var(--kangur-page-muted-text)]'
-    );
+      expect(screen.getByText('Zapisano dane ucznia.')).toHaveClass(
+        '[color:var(--kangur-page-muted-text)]'
+      );
 
-    fireEvent.click(screen.getByTestId('parent-dashboard-learner-card-learner-2'));
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('parent-dashboard-learner-card-learner-2'));
+      });
 
-    expect(runtimeState.value.selectLearner).toHaveBeenCalledWith('learner-2');
+      expect(runtimeState.value.selectLearner).toHaveBeenCalledWith('learner-2');
+
+      const loggedOutput = consoleErrorSpy.mock.calls
+        .flatMap((call) => call.map((value) => String(value)))
+        .join('\n');
+      expect(loggedOutput).not.toContain('`DialogContent` requires a `DialogTitle`');
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it('keeps learner cards roomier on mobile layouts', () => {
@@ -319,7 +363,7 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       isCreateLearnerModalOpen: true,
     };
 
-    const { rerender } = render(<KangurParentDashboardLearnerManagementWidget />);
+    const { unmount } = render(<KangurParentDashboardLearnerManagementWidget />);
 
     expect(screen.getByRole('button', { name: 'Dodaj ucznia' })).toHaveClass(
       'min-h-11',
@@ -331,7 +375,8 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
       ...runtimeState.value,
       isCreateLearnerModalOpen: false,
     };
-    rerender(<KangurParentDashboardLearnerManagementWidget />);
+    unmount();
+    render(<KangurParentDashboardLearnerManagementWidget />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Ustawienia profilu ucznia' }));
 
@@ -390,5 +435,29 @@ describe('KangurParentDashboardLearnerManagementWidget', () => {
     expect(screen.getByText('Wybierz ucznia i popraw jego dane bez wychodzenia z panelu.')).toHaveClass(
       '[color:var(--kangur-page-muted-text)]'
     );
+  });
+
+  it('renders English fallback copy on the English route', async () => {
+    localeState.value = 'en';
+
+    render(<KangurParentDashboardLearnerManagementWidget />);
+
+    expect(screen.getByText('Manage profiles without leaving the dashboard')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'The parent signs in with email, and learners get separate login names and passwords.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Learner profile settings' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Learner profile settings' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Metrics' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Profile details')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Login sessions')).toBeInTheDocument();
+    expect(screen.getByText('No login sessions.')).toBeInTheDocument();
   });
 });

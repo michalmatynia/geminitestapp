@@ -121,4 +121,53 @@ describe('useKangurMobileHomeLessonCheckpoints', () => {
 
     expect(result.current.recentCheckpoints[0]?.title).toBe('Uhr');
   });
+
+  it('returns only the latest lesson checkpoint when the limit is one', () => {
+    const progressSnapshot = {
+      ...createDefaultKangurProgressState(),
+      lessonMastery: {
+        addition_story: {
+          attempts: 4,
+          bestScorePercent: 88,
+          completions: 2,
+          lastCompletedAt: '2026-03-21T09:00:00.000Z',
+          lastScorePercent: 82,
+          masteryPercent: 81,
+        },
+        clock: {
+          attempts: 5,
+          bestScorePercent: 100,
+          completions: 4,
+          lastCompletedAt: '2026-03-21T09:00:00.000Z',
+          lastScorePercent: 100,
+          masteryPercent: 96,
+        },
+        adding: {
+          attempts: 2,
+          bestScorePercent: 62,
+          completions: 1,
+          lastCompletedAt: '2026-03-21T08:00:00.000Z',
+          lastScorePercent: 55,
+          masteryPercent: 58,
+        },
+      },
+    };
+
+    useKangurMobileRuntimeMock.mockReturnValue({
+      progressStore: {
+        subscribeToProgress: () => () => {},
+        loadProgress: () => progressSnapshot,
+      },
+    });
+
+    const { result } = renderHook(
+      () => useKangurMobileHomeLessonCheckpoints({ limit: 1 }),
+      {
+        wrapper: createWrapper('en'),
+      },
+    );
+
+    expect(result.current.recentCheckpoints).toHaveLength(1);
+    expect(result.current.recentCheckpoints[0]?.componentId).toBe('clock');
+  });
 });

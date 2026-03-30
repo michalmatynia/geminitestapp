@@ -44,7 +44,12 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
-    const games = (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'core')).toMatchObject({
       title: 'Grundlagen der Ubereinstimmung',
@@ -55,9 +60,15 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
       description: 'Klicke in jedem Satz die richtige Verbform an.',
       isGame: true,
     });
-    expect(games.find((game) => game.sectionId === 'game_agreement')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game_agreement')?.shell).toMatchObject({
       title: 'Spiel: Subjekt-Verb-Ubereinstimmung',
       description: 'Klicke in jedem Satz die richtige Verbform an.',
+    });
+    expect(
+      games.find((game) => game.sectionId === 'game_agreement')?.launchableInstance
+    ).toMatchObject({
+      gameId: 'english_subject_verb_agreement',
+      instanceId: 'english_subject_verb_agreement:instance:default',
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
@@ -73,5 +84,11 @@ describe('EnglishSubjectVerbAgreementLesson i18n', () => {
     expect(
       screen.getByText('Singular → Verb + -s. Plural → Grundform.')
     ).toBeInTheDocument();
+    const singularMatchSentence = screen.getByText(
+      (_content, node) => node?.textContent === 'The coach talks before the match.'
+    );
+
+    expect(singularMatchSentence.closest('.kangur-lesson-visual-supporting')).toBeTruthy();
+    expect(singularMatchSentence.closest('.kangur-lesson-inset')).toBeNull();
   });
 });

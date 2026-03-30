@@ -15,7 +15,7 @@ import {
 } from '@/features/kangur/shared/contracts/kangur';
 import { sanitizeHtml, sanitizeSvg } from '@/features/kangur/shared/utils';
 
-import { applyKangurLessonActivityDefaults } from '../lesson-activities';
+import { applyKangurLessonActivityDefaults } from '../lessons/activities';
 import {
   createKangurLessonBlockId,
   createKangurLessonPage,

@@ -5,7 +5,7 @@ import { createContext, useCallback, useContext, useMemo, type ReactNode } from 
 import type { KangurQuestionIllustration, KangurTestChoice } from '@/features/kangur/shared/contracts/kangur-tests';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
-import type { QuestionFormData } from '../../test-questions';
+import type { QuestionFormData } from '../../test-suites/questions';
 
 type KangurTestQuestionEditorContextValue = {
   formData: QuestionFormData;

@@ -28,8 +28,9 @@ const settingsFetchErrorLoggedAt = new Map<string, number>();
 const normalizeScope = (scope?: SettingsScope): SettingsScope =>
   scope === 'heavy' || scope === 'light' || scope === 'all' ? scope : 'light';
 
-const cloneSettings = (data: SettingRecord[]): SettingRecord[] =>
-  data.map((item: SettingRecord) => ({ ...item }));
+function cloneSettings(data: SettingRecord[]): SettingRecord[] {
+  return data.map((item: SettingRecord) => ({ ...item }));
+}
 
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new Error(String(error));
@@ -123,6 +124,23 @@ function saveLiteSettingsSnapshot(data: SettingRecord[]): void {
   };
 }
 
+const hydrateLiteSettingsFromSSRIfPresent = (): boolean => {
+  if (typeof globalThis === 'undefined') return false;
+  const win = globalThis as typeof globalThis & { __LITE_SETTINGS__?: SettingRecord[] };
+  const ssrData = win.__LITE_SETTINGS__;
+  if (!Array.isArray(ssrData) || ssrData.length === 0) return false;
+  const data = cloneSettings(ssrData);
+  liteSettingsCache = { data, fetchedAt: Date.now() };
+  saveLiteSettingsSnapshot(data);
+  delete win.__LITE_SETTINGS__;
+  return true;
+};
+
+// SSR hydration: read lite settings injected by the server layout's <script> tag.
+// This seeds the client cache so the first fetchLiteSettingsCached() call returns
+// instantly without a network round-trip to /api/settings/lite.
+hydrateLiteSettingsFromSSRIfPresent();
+
 function getScopeSnapshot(scope: SettingsScope): SettingRecord[] | null {
   return settingsSnapshotByScope.get(scope)?.data ?? settingsSnapshotAny?.data ?? null;
 }
@@ -195,6 +213,9 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
     const res = await fetchWithRetry(url, {
       cache: bypassCache ? 'no-store' : 'default',
       credentials: 'include',
+      // Fetch Priority API — tells the browser to prioritise the settings
+      // request over lower-priority chunk downloads during initial boot.
+      priority: 'high',
     });
 
     if (!res.ok) {
@@ -278,6 +299,9 @@ export async function fetchLiteSettingsCached(options?: {
   bypassCache?: boolean;
 }): Promise<SettingRecord[]> {
   const bypassCache = options?.bypassCache === true;
+  if (!bypassCache) {
+    hydrateLiteSettingsFromSSRIfPresent();
+  }
   if (bypassCache) {
     const data = cloneSettings(await fetchLiteSettingsFromApi(true));
     liteSettingsCache = { data, fetchedAt: Date.now() };

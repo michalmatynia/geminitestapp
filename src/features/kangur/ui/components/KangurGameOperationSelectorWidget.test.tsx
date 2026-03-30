@@ -5,7 +5,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { KangurProgressState } from '@/features/kangur/ui/types';
+import {
+  buildProgress,
+  buildRuntime,
+  operationSelectorTranslations,
+} from './KangurGameOperationSelectorWidget.test-support';
 
 const {
   getCurrentKangurDailyQuestMock,
@@ -25,6 +29,10 @@ const { ageGroupState } = vi.hoisted(() => ({
   ageGroupState: {
     value: 'ten_year_old' as 'six_year_old' | 'ten_year_old' | 'grown_ups',
   },
+}));
+
+const { lessonsQueryRefetchMock } = vi.hoisted(() => ({
+  lessonsQueryRefetchMock: vi.fn(),
 }));
 
 const { localeState } = vi.hoisted(() => ({
@@ -50,35 +58,7 @@ vi.mock('next-intl', () => ({
     (key: string) =>
       translationState.missing
         ? key
-        : (
-            {
-              'KangurGameRecommendations.activityLabels.english_adjectives': {
-                de: 'Adjektive',
-                en: 'Adjectives',
-                pl: 'Przymiotniki',
-              },
-              'KangurGamePage.operationSelector.title': {
-                de: "Los geht's!",
-                en: "Let's play!",
-                pl: 'Grajmy!',
-              },
-              'KangurGamePage.screens.training.label': {
-                de: 'Training einrichten',
-                en: 'Training setup',
-                pl: 'Konfiguracja treningu',
-              },
-              'KangurGamePage.screens.training.wordmarkLabel': {
-                de: 'Training',
-                en: 'Training',
-                pl: 'Trening',
-              },
-              'KangurProgressRuntime.activityLabels.english_adjectives': {
-                de: 'Adjektive',
-                en: 'Adjectives',
-                pl: 'Przymiotniki',
-              },
-            } as const
-          )[`${namespace}.${key}`]?.[localeState.value] ?? key,
+        : operationSelectorTranslations[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
@@ -109,7 +89,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
       data,
       isLoading: false,
       isFetching: false,
-      refetch: vi.fn(),
+      refetch: lessonsQueryRefetchMock,
       error: null,
     };
   },
@@ -130,7 +110,7 @@ vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-library/KangurPageIntroCard', () => ({
   KangurPageIntroCard: ({
     description,
     title,
@@ -148,69 +128,16 @@ vi.mock('@/features/kangur/ui/components/KangurPageIntroCard', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   default: () => <div data-testid='mock-practice-assignment-banner'>assignment-banner</div>,
 }));
 
 import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
 
-const buildProgress = (
-  overrides: Partial<KangurProgressState> = {}
-): KangurProgressState => ({
-  totalXp: 420,
-  gamesPlayed: 8,
-  perfectGames: 2,
-  lessonsCompleted: 3,
-  clockPerfect: 0,
-  calendarPerfect: 0,
-  geometryPerfect: 0,
-  badges: ['first_game'],
-  operationsPlayed: ['division', 'clock'],
-  lessonMastery: {
-    division: {
-      attempts: 3,
-      completions: 3,
-      masteryPercent: 88,
-      bestScorePercent: 94,
-      lastScorePercent: 90,
-      lastCompletedAt: '2026-03-10T09:00:00.000Z',
-    },
-  },
-  totalCorrectAnswers: 24,
-  totalQuestionsAnswered: 30,
-  currentWinStreak: 3,
-  bestWinStreak: 4,
-  dailyQuestsCompleted: 1,
-  activityStats: {
-    'game:clock': {
-      sessionsPlayed: 4,
-      perfectSessions: 1,
-      totalXpEarned: 180,
-      totalCorrectAnswers: 16,
-      totalQuestionsAnswered: 20,
-      bestScorePercent: 100,
-      currentStreak: 2,
-      bestStreak: 3,
-    },
-  },
-  ...overrides,
-});
-
-const buildRuntime = (progress: KangurProgressState, overrides: Record<string, unknown> = {}) => ({
-  activePracticeAssignment: null,
-  basePath: '/kangur',
-  handleHome: vi.fn(),
-  handleSelectOperation: vi.fn(),
-  practiceAssignmentsByOperation: {},
-  progress,
-  screen: 'operation',
-  setScreen: vi.fn(),
-  ...overrides,
-});
-
 describe('KangurGameOperationSelectorWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    lessonsQueryRefetchMock.mockReset();
     ageGroupState.value = 'ten_year_old';
     localeState.value = 'pl';
     translationState.missing = false;
@@ -260,6 +187,15 @@ describe('KangurGameOperationSelectorWidget', () => {
     ];
   });
 
+  it('does not refetch lessons again when the current subject has no active lessons', () => {
+    lessonsState.value = [];
+    useKangurGameRuntimeMock.mockReturnValue(buildRuntime(buildProgress()));
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(lessonsQueryRefetchMock).not.toHaveBeenCalled();
+  });
+
   it('recommends the quest-mapped operation and forwards it to the selector cards', () => {
     const progress = buildProgress();
     const runtime = buildRuntime(progress);
@@ -302,6 +238,15 @@ describe('KangurGameOperationSelectorWidget', () => {
       expect.objectContaining({
         recommendedLabel: 'Misja dnia',
         recommendedOperation: 'division',
+      })
+    );
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        totalXp: 420,
+      }),
+      expect.objectContaining({
+        ownerKey: 'learner-1',
+        subject: 'maths',
       })
     );
     expect(screen.getByTestId('kangur-operation-recommendation-action')).toHaveClass(
@@ -841,6 +786,120 @@ describe('KangurGameOperationSelectorWidget', () => {
 
     expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
       'przymiotniki'
+    );
+  });
+
+  it('localizes bare adverb activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_adverbs_action_studio: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      'przysłówki'
+    );
+  });
+
+  it('localizes bare comparatives activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_compare_and_crown: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      /stopniowanie przymiotników/i
+    );
+  });
+
+  it('localizes bare adverbs-of-frequency activity labels inside badge-track recommendations', () => {
+    const progress = buildProgress({
+      lessonMastery: {
+        division: {
+          attempts: 3,
+          completions: 3,
+          masteryPercent: 92,
+          bestScorePercent: 98,
+          lastScorePercent: 96,
+          lastCompletedAt: '2026-03-10T09:00:00.000Z',
+        },
+      },
+      totalCorrectAnswers: 19,
+      totalQuestionsAnswered: 20,
+      currentWinStreak: 4,
+      activityStats: {
+        english_adverbs_frequency_routine_studio: {
+          sessionsPlayed: 4,
+          perfectSessions: 2,
+          totalXpEarned: 210,
+          totalCorrectAnswers: 19,
+          totalQuestionsAnswered: 20,
+          bestScorePercent: 100,
+          currentStreak: 3,
+          bestStreak: 4,
+        },
+      },
+    });
+    const runtime = buildRuntime(progress);
+    useKangurGameRuntimeMock.mockReturnValue(runtime);
+
+    render(<KangurGameOperationSelectorWidget />);
+
+    expect(screen.getByTestId('kangur-operation-recommendation-description')).toHaveTextContent(
+      'przysłówki częstotliwości'
     );
   });
 

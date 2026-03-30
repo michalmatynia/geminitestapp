@@ -7,7 +7,7 @@ import React from 'react';
 import { Button, FormField, Input, Textarea } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { nextChoiceLabel } from '../../test-questions';
+import { nextChoiceLabel } from '../../test-suites/questions';
 import { getQuestionEditorCopy, resolveQuestionEditorLocale } from '../question-editor.copy';
 import { useKangurTestQuestionEditorContext } from '../context/KangurTestQuestionEditorContext';
 import { moveItem } from '../utils';

@@ -70,5 +70,16 @@ describe('EnglishLesson i18n', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Hallo / Guten Tag')).toBeInTheDocument();
     expect(screen.getByText('Tschüss / Auf Wiedersehen')).toBeInTheDocument();
+
+    render(<>{slides.pronoun_remix?.[0]?.content}</>);
+
+    expect(
+      screen
+        .getByText('Subjektpronomen: I, you, he, she, it, we, they')
+        .closest('.kangur-lesson-visual-supporting')
+    ).toBeTruthy();
+    expect(
+      screen.getByText('Subjektpronomen: I, you, he, she, it, we, they').closest('.kangur-lesson-callout')
+    ).toBeNull();
   });
 });

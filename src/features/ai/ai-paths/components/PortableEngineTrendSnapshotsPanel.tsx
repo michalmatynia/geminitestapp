@@ -1,7 +1,7 @@
 'use client';
 
 import { RefreshCcwIcon } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Badge, Button, Card, Skeleton } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -92,11 +92,6 @@ const formatTimestamp = (value: string | null): string => {
 
 const formatPercent = (value: number): string => `${Math.round(value)}%`;
 
-type PortableEngineOutlineBadgeProps = {
-  children: React.ReactNode;
-  className?: string;
-} & Omit<React.ComponentProps<typeof Badge>, 'children'>;
-
 type PortableEngineInfoPanelProps = {
   children: React.ReactNode;
   className?: string;
@@ -132,37 +127,13 @@ type PortableEngineRecordCardProps = {
   stacked?: boolean;
 };
 
-function PortableEngineOutlineBadge({
-  children,
-  className,
-  variant = 'outline',
-  ...props
-}: PortableEngineOutlineBadgeProps): React.JSX.Element {
-  return (
-    <Badge
-      variant={variant}
-      className={cn(
-        variant === 'outline' ? portableEngineOutlineBadgeClassName : '',
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </Badge>
-  );
-}
-
-function PortableEngineInfoPanel({
-  children,
-  className,
-}: PortableEngineInfoPanelProps): React.JSX.Element {
+function PortableEngineInfoPanel(props: PortableEngineInfoPanelProps): React.JSX.Element {
+  const { children, className } = props;
   return <div className={cn(portableEngineInfoPanelClassName, className)}>{children}</div>;
 }
 
-function PortableEngineMutedLine({
-  children,
-  className,
-}: PortableEngineMutedLineProps): React.JSX.Element {
+function PortableEngineMutedLine(props: PortableEngineMutedLineProps): React.JSX.Element {
+  const { children, className } = props;
   return <div className={cn('mt-1 text-gray-400', className)}>{children}</div>;
 }
 
@@ -180,15 +151,19 @@ function PortableEngineReasonBadgeList({
   return (
     <div className='mt-1 flex flex-wrap gap-1.5'>
       {visibleEntries.map((entry) => (
-        <PortableEngineOutlineBadge key={entry.reason}>
+        <Badge
+          key={entry.reason}
+          variant='outline'
+          className={portableEngineOutlineBadgeClassName}
+        >
           {entry.reason} ({entry.count})
-        </PortableEngineOutlineBadge>
+        </Badge>
       ))}
     </div>
   );
 }
 
-function PortableEngineRecordCard({
+function renderPortableEngineRecordCard({
   title,
   description,
   className,
@@ -359,14 +334,22 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
         <div className='space-y-3'>
           <div className='flex flex-wrap gap-2'>
             {summaryBadges.map((badge) => (
-              <PortableEngineOutlineBadge key={badge.key}>{badge.label}</PortableEngineOutlineBadge>
+              <Badge
+                key={badge.key}
+                variant='outline'
+                className={portableEngineOutlineBadgeClassName}
+              >
+                {badge.label}
+              </Badge>
             ))}
-            <PortableEngineOutlineBadge
+            <Badge
               variant={data.autoRemediation.enabled ? 'success' : 'outline'}
-              className={data.autoRemediation.enabled ? '' : 'border-white/10 text-gray-300'}
+              className={
+                data.autoRemediation.enabled ? '' : portableEngineOutlineBadgeClassName
+              }
             >
               remediation {data.autoRemediation.enabled ? 'on' : 'off'}
-            </PortableEngineOutlineBadge>
+            </Badge>
           </div>
 
           <PortableEngineInfoPanel>
@@ -410,11 +393,12 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
             {runExecution.recentFailures.length > 0 ? (
               <div className='mt-2 space-y-1'>
                 {runExecution.recentFailures.slice(0, 3).map((entry) => (
-                  <PortableEngineRecordCard
-                    key={`${entry.at}-${entry.runner}-${entry.stage}-${entry.error}`}
-                    title={`${entry.runner}/${entry.surface}/${entry.stage}`}
-                    description={`· ${entry.error} · ${entry.durationMs}ms · ${formatTimestamp(entry.at)}`}
-                  />
+                  <Fragment key={`${entry.at}-${entry.runner}-${entry.stage}-${entry.error}`}>
+                    {renderPortableEngineRecordCard({
+                      title: `${entry.runner}/${entry.surface}/${entry.stage}`,
+                      description: `· ${entry.error} · ${entry.durationMs}ms · ${formatTimestamp(entry.at)}`,
+                    })}
+                  </Fragment>
                 ))}
               </div>
             ) : null}
@@ -425,12 +409,13 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
           ) : (
             <div className='space-y-2'>
               {latestSnapshots.map((snapshot) => (
-                <PortableEngineRecordCard
-                  key={`${snapshot.at}-${snapshot.trigger}`}
-                  title={formatTimestamp(snapshot.at)}
-                  description={`trigger=${snapshot.trigger} uses=${snapshot.usageTotals.uses} driftAlerts=${snapshot.driftAlerts.length} sinkFailed=${snapshot.sinkTotals.writesFailed}/${snapshot.sinkTotals.writesAttempted}`}
-                  stacked
-                />
+                <Fragment key={`${snapshot.at}-${snapshot.trigger}`}>
+                  {renderPortableEngineRecordCard({
+                    title: formatTimestamp(snapshot.at),
+                    description: `trigger=${snapshot.trigger} uses=${snapshot.usageTotals.uses} driftAlerts=${snapshot.driftAlerts.length} sinkFailed=${snapshot.sinkTotals.writesFailed}/${snapshot.sinkTotals.writesAttempted}`,
+                    stacked: true,
+                  })}
+                </Fragment>
               ))}
             </div>
           )}

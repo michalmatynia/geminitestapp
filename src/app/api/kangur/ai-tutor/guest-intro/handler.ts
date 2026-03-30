@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth, extractClientIp } from '@/features/auth/server';
+import { extractClientIp } from '@/features/auth/server';
 import { registerKangurGuestAiTutorIntroAppearance } from '@/features/kangur/server/guest-ai-tutor-intro';
 import { readKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { readTolerantServerAuthSession } from '@/features/auth/server';
 
 export async function getKangurAiTutorGuestIntroHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const [parentSession, learnerSession] = await Promise.all([
-    auth().catch((error) => {
-      void ErrorSystem.captureException(error);
-      return null;
+    readTolerantServerAuthSession({
+      onError: (error) => ErrorSystem.captureException(error),
     }),
     Promise.resolve(readKangurLearnerSession(req)),
   ]);

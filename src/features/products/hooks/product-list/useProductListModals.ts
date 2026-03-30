@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 
 import { useIntegrationModalOperations } from '@/features/integrations/public';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import type { Toast } from '@/shared/contracts/ui';
 
@@ -22,6 +23,8 @@ export function useProductListModals({
   toast: Toast;
 }) {
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
+  const [integrationsRecoveryContext, setIntegrationsRecoveryContext] =
+    useState<ProductListingsRecoveryContext | null>(null);
 
   const {
     integrationsProduct,
@@ -42,12 +45,21 @@ export function useProductListModals({
   }, [handleOpenCreateModal]);
 
   const handleOpenIntegrationsModal = useCallback(
-    (product: ProductWithImages) => {
+    (
+      product: ProductWithImages,
+      recoveryContext?: ProductListingsRecoveryContext
+    ) => {
       prefetchIntegrationSelectionData();
       prefetchProductListingsData(product.id);
+      setIntegrationsRecoveryContext(recoveryContext ?? null);
       setIntegrationsProduct(product);
     },
-    [prefetchIntegrationSelectionData, prefetchProductListingsData, setIntegrationsProduct]
+    [
+      prefetchIntegrationSelectionData,
+      prefetchProductListingsData,
+      setIntegrationsProduct,
+      setIntegrationsRecoveryContext,
+    ]
   );
 
   const handleOpenExportSettings = useCallback(
@@ -60,8 +72,9 @@ export function useProductListModals({
 
   const handleCloseIntegrations = useCallback(() => {
     setIntegrationsProduct(null);
+    setIntegrationsRecoveryContext(null);
     setShowListProductModal(false);
-  }, [setIntegrationsProduct, setShowListProductModal]);
+  }, [setIntegrationsProduct, setIntegrationsRecoveryContext, setShowListProductModal]);
 
   const handleCloseListProduct = useCallback(() => {
     setShowListProductModal(false);
@@ -147,6 +160,7 @@ export function useProductListModals({
     handleMassListSuccess,
     handleAddToMarketplace,
     integrationsProduct,
+    integrationsRecoveryContext,
     showListProductModal,
     listProductPreset,
     exportSettingsProduct,

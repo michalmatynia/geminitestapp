@@ -81,30 +81,34 @@ type TableDetailCardResolvedProps = {
   tableRow: DatabaseTablePreviewData | undefined;
   onQueryTable?: (tableName: string) => void;
   onManageTable?: (tableName: string) => void;
+  expanded: boolean;
+  setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  columnsTabContent: React.JSX.Element;
+  indexesTabContent: React.JSX.Element;
+  foreignKeysTabContent: React.JSX.Element;
+  dataTabContent: React.JSX.Element;
 };
 
-function TableDetailCardTitle({
+const renderTableDetailCardTitle = ({
   detail,
-}: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element {
-  return (
-    <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} flex-1`}>
-      <TableIcon className='size-4 text-emerald-300' />
-      <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
-      <Hint size='xxs' uppercase className='text-gray-500'>
-        {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
-      </Hint>
-    </div>
-  );
-}
+}: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element => (
+  <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} flex-1`}>
+    <TableIcon className='size-4 text-emerald-300' />
+    <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
+    <Hint size='xxs' uppercase className='text-gray-500'>
+      {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
+    </Hint>
+  </div>
+);
 
-function TableDetailCardActions({
+const renderTableDetailCardActions = ({
   detail,
   onQueryTable,
   onManageTable,
 }: Pick<
   TableDetailCardResolvedProps,
   'detail' | 'onQueryTable' | 'onManageTable'
->): React.ReactNode {
+>): React.ReactNode => {
   if (!onQueryTable && !onManageTable) return null;
 
   return (
@@ -139,7 +143,76 @@ function TableDetailCardActions({
       )}
     </div>
   );
-}
+};
+
+const renderTableDetailCard = ({
+  detail,
+  tableRow,
+  onQueryTable,
+  onManageTable,
+  expanded,
+  setExpanded,
+  columnsTabContent,
+  indexesTabContent,
+  foreignKeysTabContent,
+  dataTabContent,
+}: TableDetailCardResolvedProps): React.JSX.Element => (
+  <CollapsibleSection
+    open={expanded}
+    onOpenChange={setExpanded}
+    title={renderTableDetailCardTitle({ detail })}
+    actions={
+      renderTableDetailCardActions({
+        detail,
+        ...(onQueryTable !== undefined ? { onQueryTable } : {}),
+        ...(onManageTable !== undefined ? { onManageTable } : {}),
+      })
+    }
+    variant='card'
+    className='bg-card/60'
+    headerClassName='px-4 py-3'
+  >
+    <div className='border-t border-border bg-black/20'>
+      <Tabs defaultValue='columns' className='w-full'>
+        <div className='px-4 pt-2'>
+          <TabsList
+            className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'
+            aria-label='Table detail tabs'
+          >
+            <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
+              Columns ({detail.columns.length})
+            </TabsTrigger>
+            <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
+              Indexes ({detail.indexes.length})
+            </TabsTrigger>
+            <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
+              Foreign Keys ({detail.foreignKeys.length})
+            </TabsTrigger>
+            <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
+              Preview {tableRow ? `(${tableRow.totalRows})` : ''}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value='columns' className='mt-0'>
+          {columnsTabContent}
+        </TabsContent>
+
+        <TabsContent value='indexes' className='mt-0'>
+          {indexesTabContent}
+        </TabsContent>
+
+        <TabsContent value='foreignKeys' className='mt-0'>
+          {foreignKeysTabContent}
+        </TabsContent>
+
+        <TabsContent value='data' className='mt-0'>
+          {dataTabContent}
+        </TabsContent>
+      </Tabs>
+    </div>
+  </CollapsibleSection>
+);
 
 export function TableDetailCard({
   detail,
@@ -157,67 +230,28 @@ export function TableDetailCard({
     () => tableRows.find((r: DatabaseTablePreviewData) => r.name === detail.name),
     [tableRows, detail.name]
   );
+  const columnsTabContent = useColumnsTabContent(detail);
+  const indexesTabContent = useIndexesTabContent(detail);
+  const foreignKeysTabContent = useForeignKeysTabContent(detail);
+  const dataTabContent = useDataTabContent(tableRow);
 
-  return (
-    <CollapsibleSection
-      open={expanded}
-      onOpenChange={setExpanded}
-      title={<TableDetailCardTitle detail={detail} />}
-      actions={
-        <TableDetailCardActions
-          detail={detail}
-          {...(onQueryTable !== undefined ? { onQueryTable } : {})}
-          {...(onManageTable !== undefined ? { onManageTable } : {})}
-        />
-      }
-      variant='card'
-      className='bg-card/60'
-      headerClassName='px-4 py-3'
-    >
-      <div className='border-t border-border bg-black/20'>
-        <Tabs defaultValue='columns' className='w-full'>
-          <div className='px-4 pt-2'>
-            <TabsList
-              className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'
-              aria-label='Table detail tabs'
-            >
-              <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
-                Columns ({detail.columns.length})
-              </TabsTrigger>
-              <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
-                Indexes ({detail.indexes.length})
-              </TabsTrigger>
-              <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
-                Foreign Keys ({detail.foreignKeys.length})
-              </TabsTrigger>
-              <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
-                Preview {tableRow ? `(${tableRow.totalRows})` : ''}
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value='columns' className='mt-0'>
-            <ColumnsTab detail={detail} />
-          </TabsContent>
-
-          <TabsContent value='indexes' className='mt-0'>
-            <IndexesTab detail={detail} />
-          </TabsContent>
-
-          <TabsContent value='foreignKeys' className='mt-0'>
-            <ForeignKeysTab detail={detail} />
-          </TabsContent>
-
-          <TabsContent value='data' className='mt-0'>
-            <DataTab tableRow={tableRow} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </CollapsibleSection>
-  );
+  return renderTableDetailCard({
+    detail,
+    tableRow,
+    ...(onQueryTable !== undefined ? { onQueryTable } : {}),
+    ...(onManageTable !== undefined ? { onManageTable } : {}),
+    expanded,
+    setExpanded,
+    columnsTabContent,
+    indexesTabContent,
+    foreignKeysTabContent,
+    dataTabContent,
+  });
 }
 
-function ColumnsTab({ detail }: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element {
+function useColumnsTabContent(
+  detail: TableDetailCardResolvedProps['detail']
+): React.JSX.Element {
   const tableColumns = useMemo<ColumnDef<DatabaseColumnInfo>[]>(
     () => [
       {
@@ -280,7 +314,9 @@ function ColumnsTab({ detail }: Pick<TableDetailCardResolvedProps, 'detail'>): R
   );
 }
 
-function IndexesTab({ detail }: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element {
+function useIndexesTabContent(
+  detail: TableDetailCardResolvedProps['detail']
+): React.JSX.Element {
   const tableColumns = useMemo<ColumnDef<DatabaseIndexInfo>[]>(
     () => [
       {
@@ -328,9 +364,9 @@ function IndexesTab({ detail }: Pick<TableDetailCardResolvedProps, 'detail'>): R
   );
 }
 
-function ForeignKeysTab({
-  detail,
-}: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element {
+function useForeignKeysTabContent(
+  detail: TableDetailCardResolvedProps['detail']
+): React.JSX.Element {
   const tableColumns = useMemo<ColumnDef<DatabaseForeignKeyInfo>[]>(
     () => [
       {
@@ -370,9 +406,9 @@ function ForeignKeysTab({
   );
 }
 
-function DataTab({
-  tableRow: tableRows,
-}: Pick<TableDetailCardResolvedProps, 'tableRow'>): React.JSX.Element {
+function useDataTabContent(
+  tableRows: TableDetailCardResolvedProps['tableRow']
+): React.JSX.Element {
   const { page, pageSize } = useDatabasePreviewState();
 
   const columns = useMemo(() => {

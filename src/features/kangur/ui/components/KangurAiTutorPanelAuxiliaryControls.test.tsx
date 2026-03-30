@@ -16,6 +16,8 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
+const defaultTutorContentSnapshot = structuredClone(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
+
 const createPanelBodyContextValue = (
   overrides: Partial<KangurAiTutorPanelBodyContextValue> = {}
 ): KangurAiTutorPanelBodyContextValue => ({
@@ -102,6 +104,18 @@ const createPanelBodyContextValue = (
 });
 
 describe('KangurAiTutorPanelAuxiliaryControls', () => {
+  beforeEach(() => {
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = defaultTutorContentSnapshot.locale;
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxTitle =
+      defaultTutorContentSnapshot.auxiliaryControls.toolboxTitle;
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxDescription =
+      defaultTutorContentSnapshot.auxiliaryControls.toolboxDescription;
+    if (DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing && defaultTutorContentSnapshot.drawing) {
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.toggleLabel =
+        defaultTutorContentSnapshot.drawing.toggleLabel;
+    }
+  });
+
   it('renders the usage banner and never renders proactive nudges', () => {
     const handleQuickAction = vi.fn().mockResolvedValue(undefined);
 
@@ -225,6 +239,34 @@ describe('KangurAiTutorPanelAuxiliaryControls', () => {
         id: 'hint',
         label: 'Podpowiedź',
       })
+    );
+  });
+
+  it('falls back to English toolbox copy when the English tutor content is missing toolbox labels', () => {
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = 'en';
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxTitle = '';
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.auxiliaryControls.toolboxDescription = '';
+    if (DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing) {
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.drawing.toggleLabel = '';
+    }
+
+    render(
+      <KangurAiTutorPanelBodyProvider
+        value={createPanelBodyContextValue({
+          shouldRenderAuxiliaryPanelControls: false,
+          showToolboxLayout: true,
+        })}
+      >
+        <KangurAiTutorPanelAuxiliaryControls />
+      </KangurAiTutorPanelBodyProvider>
+    );
+
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent('Tutor tools');
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox')).toHaveTextContent(
+      'Shortcuts for hints, drawing, and the next steps in the current conversation.'
+    );
+    expect(screen.getByTestId('kangur-ai-tutor-toolbox-drawing-toggle')).toHaveTextContent(
+      'Draw'
     );
   });
 });

@@ -4,7 +4,20 @@
 
 import { render } from '@testing-library/react';
 import { useEffect } from 'react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { useKangurCoarsePointerMock, useKangurMobileBreakpointMock } = vi.hoisted(() => ({
+  useKangurCoarsePointerMock: vi.fn(),
+  useKangurMobileBreakpointMock: vi.fn(),
+}));
+
+vi.mock('./useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => useKangurCoarsePointerMock(),
+}));
+
+vi.mock('./useKangurMobileBreakpoint', () => ({
+  useKangurMobileBreakpoint: () => useKangurMobileBreakpointMock(),
+}));
 
 import { useKangurMobileInteractionScrollLock } from './useKangurMobileInteractionScrollLock';
 
@@ -41,20 +54,8 @@ describe('useKangurMobileInteractionScrollLock', () => {
     appContent.id = 'app-content';
     document.body.replaceChildren(appContent);
 
-    Object.defineProperty(window, 'matchMedia', {
-      configurable: true,
-      value: (query: string) => ({
-        matches: query === '(max-width: 639px)',
-        media: query,
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        addListener: () => {},
-        removeListener: () => {},
-        onchange: null,
-        dispatchEvent: () => false,
-      }),
-      writable: true,
-    });
+    useKangurCoarsePointerMock.mockReturnValue(false);
+    useKangurMobileBreakpointMock.mockReturnValue(true);
   });
 
   it('locks and unlocks scroll on mobile interactions', () => {
@@ -92,5 +93,37 @@ describe('useKangurMobileInteractionScrollLock', () => {
     expect(appContent?.style.overflow).toBe('');
     expect(appContent?.style.touchAction).toBe('');
     expect(appContent?.style.overscrollBehaviorY).toBe('');
+  });
+
+  it('locks and unlocks scroll on coarse-pointer devices outside the mobile breakpoint', () => {
+    useKangurCoarsePointerMock.mockReturnValue(true);
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+
+    const appContent = document.getElementById('app-content');
+    expect(appContent).not.toBeNull();
+
+    const { rerender } = render(<TouchLockProbe active={false} />);
+    rerender(<TouchLockProbe active />);
+
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(appContent?.style.overflow).toBe('hidden');
+
+    rerender(<TouchLockProbe active={false} />);
+
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.body.style.overflow).toBe('');
+    expect(appContent?.style.overflow).toBe('');
+  });
+
+  it('does not lock scroll on fine-pointer desktop layouts', () => {
+    useKangurCoarsePointerMock.mockReturnValue(false);
+    useKangurMobileBreakpointMock.mockReturnValue(false);
+
+    render(<TouchLockProbe active />);
+
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.documentElement.dataset.kangurMobileInteractionScrollLockActive).toBeUndefined();
+    expect(document.body.style.overflow).toBe('');
   });
 });

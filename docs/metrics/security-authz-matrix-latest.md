@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-23'
+last_reviewed: '2026-03-30'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Security Authorization Matrix Report
 
-Generated at: 2026-03-23T21:12:56.726Z
+Generated at: 2026-03-30T15:09:33.797Z
 
 ## Summary
 
 - Status: PASSED
-- Route files scanned: 285
+- Route files scanned: 298
 - Route methods scanned: 215
 - Public methods: 15
 - Protected methods: 199
@@ -145,11 +145,11 @@ Generated at: 2026-03-23T21:12:56.726Z
 | kangur/auth/learner-signin | POST | public | - |
 | kangur/auth/learner-signout | POST | public | `actor/session resolver` |
 | kangur/auth/me | GET | actor | `access helper`, `actor/session resolver` |
-| kangur/auth/parent-account/create | POST | protected | `auth()` |
-| kangur/auth/parent-account/resend | POST | protected | `auth()` |
-| kangur/auth/parent-email/verify | POST | protected | `auth()` |
-| kangur/auth/parent-magic-link/exchange | POST | protected | `auth()` |
-| kangur/auth/parent-magic-link/request | POST | protected | `auth()` |
+| kangur/auth/parent-account/create | POST | protected | `actor/session resolver` |
+| kangur/auth/parent-account/resend | POST | protected | `actor/session resolver` |
+| kangur/auth/parent-email/verify | POST | protected | `actor/session resolver` |
+| kangur/auth/parent-magic-link/exchange | POST | protected | `actor/session resolver` |
+| kangur/auth/parent-magic-link/request | POST | protected | `actor/session resolver` |
 | marketplace/[resource] | GET | protected | - |
 | marketplace/categories/fetch | POST | protected | - |
 | marketplace/mappings/[id] | GET | protected | - |

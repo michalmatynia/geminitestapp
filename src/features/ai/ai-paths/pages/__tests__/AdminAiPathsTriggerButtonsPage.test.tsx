@@ -298,15 +298,7 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
-  SettingsPanelBuilder: ({
-    open,
-    title,
-    fields,
-    values,
-    onChange,
-    onSave,
-    onClose,
-  }: {
+  SettingsPanelBuilder: (props: {
     open: boolean;
     title: string;
     fields: Array<Record<string, unknown>>;
@@ -314,8 +306,9 @@ vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
     onChange: (patch: Record<string, unknown>) => void;
     onSave: () => Promise<void>;
     onClose: () => void;
-  }): React.JSX.Element | null =>
-    open ? (
+  }): React.JSX.Element | null => {
+    const { open, title, fields, values, onChange, onSave, onClose } = props;
+    return open ? (
       <div>
         <h2>{title}</h2>
         {fields.map((field) => {
@@ -374,20 +367,12 @@ vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
           Close
         </button>
       </div>
-    ) : null,
+    ) : null;
+  },
 }));
 
 vi.mock('../../components/TriggerButtonListManager', () => ({
-  TriggerButtonListManager: ({
-    data,
-    onEdit,
-    onDelete,
-    onOrderChange,
-    onToggleVisibility,
-    onOpenPath,
-    isLoading,
-    isReordering,
-  }: {
+  TriggerButtonListManager: (props: {
     data: MockRow[];
     onEdit: (row: MockRow) => void;
     onDelete: (id: string) => void;
@@ -396,38 +381,53 @@ vi.mock('../../components/TriggerButtonListManager', () => ({
     onOpenPath?: (pathId: string) => void;
     isLoading: boolean;
     isReordering?: boolean;
-  }): React.JSX.Element => (
-    <div>
-      {isLoading ? <p>Loading rows</p> : null}
-      {isReordering ? <p>Reordering rows</p> : null}
-      <button type='button' onClick={() => onOrderChange([...data].reverse().map((row) => row.id))}>
-        Reorder
-      </button>
-      {data.map((row) => (
-        <div key={row.id}>
-          <span>{row.name}</span>
-          {row.usedPaths?.map((path) => (
-            <span key={path.id}>{path.name}</span>
-          ))}
-          <button type='button' onClick={() => onEdit(row)}>
-            Edit {row.id}
-          </button>
-          <button type='button' onClick={() => onDelete(row.id)}>
-            Delete {row.id}
-          </button>
-          <button type='button' onClick={() => onToggleVisibility(row, row.enabled === false)}>
-            Toggle {row.id}
-          </button>
-          <button
-            type='button'
-            onClick={() => onOpenPath?.(row.usedPaths?.[0]?.id ?? row.pathId ?? '')}
-          >
-            Open {row.id}
-          </button>
-        </div>
-      ))}
-    </div>
-  ),
+  }): React.JSX.Element => {
+    const {
+      data,
+      onEdit,
+      onDelete,
+      onOrderChange,
+      onToggleVisibility,
+      onOpenPath,
+      isLoading,
+      isReordering,
+    } = props;
+    return (
+      <div>
+        {isLoading ? <p>Loading rows</p> : null}
+        {isReordering ? <p>Reordering rows</p> : null}
+        <button
+          type='button'
+          onClick={() => onOrderChange([...data].reverse().map((row) => row.id))}
+        >
+          Reorder
+        </button>
+        {data.map((row) => (
+          <div key={row.id}>
+            <span>{row.name}</span>
+            {row.usedPaths?.map((path) => (
+              <span key={path.id}>{path.name}</span>
+            ))}
+            <button type='button' onClick={() => onEdit(row)}>
+              Edit {row.id}
+            </button>
+            <button type='button' onClick={() => onDelete(row.id)}>
+              Delete {row.id}
+            </button>
+            <button type='button' onClick={() => onToggleVisibility(row, row.enabled === false)}>
+              Toggle {row.id}
+            </button>
+            <button
+              type='button'
+              onClick={() => onOpenPath?.(row.usedPaths?.[0]?.id ?? row.pathId ?? '')}
+            >
+              Open {row.id}
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  },
 }));
 
 import { AdminAiPathsTriggerButtonsPage } from '../AdminAiPathsTriggerButtonsPage';

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
 import { CompactEmptyState } from '@/shared/ui';
-import { RuntimeEventEntry } from '../runtime-event-entry';
+import { renderRuntimeEventEntry } from '../runtime-event-entry';
 
 type AiPathsRuntimeEventLogProps = {
   events: AiPathRuntimeEvent[];
@@ -30,18 +30,20 @@ export function AiPathsRuntimeEventLog({
       <div className='max-h-[280px] space-y-2 overflow-y-auto pr-1'>
         {runtimeLogEvents.length > 0 ? (
           runtimeLogEvents.map((event) => (
-            <RuntimeEventEntry
-              key={event.id}
-              timestamp={new Date(event.timestamp).toLocaleTimeString()}
-              level={event.level}
-              kind={event.nodeType ?? event.type}
-              message={event.message}
-              className='rounded-md border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-300'
-              timeClassName='text-gray-500'
-              levelClassName='font-bold'
-              kindClassName='border-border/60 text-gray-400'
-              stacked
-            />
+            <React.Fragment key={event.id}>
+              {renderRuntimeEventEntry({
+                timestamp: new Date(event.timestamp).toLocaleTimeString(),
+                level: event.level,
+                kind: event.nodeType ?? event.type,
+                message: event.message,
+                className:
+                  'rounded-md border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-300',
+                timeClassName: 'text-gray-500',
+                levelClassName: 'font-bold',
+                kindClassName: 'border-border/60 text-gray-400',
+                stacked: true,
+              })}
+            </React.Fragment>
           ))
         ) : (
           <CompactEmptyState

@@ -1,10 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useMessages } from 'next-intl';
 
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-import { ArtShapesRotationGapGame } from '@/features/kangur/ui/components/ArtShapesRotationGapGame';
 
 import {
   ART_SHAPES_ROTATION_PUZZLE_SECTION_ID,
@@ -12,20 +14,46 @@ import {
   buildArtShapesBasicSlides,
   type ArtShapesBasicLessonTranslate,
 } from './ArtShapesBasicLesson.data';
+import {
+  createArtShapesBasicLessonMessageTranslate,
+  createArtShapesBasicLessonTranslate,
+  resolveArtShapesBasicLessonContent,
+} from './art-shapes-basic-lesson-content';
 
-export default function ArtShapesBasicLesson(): JSX.Element {
-  const translations = useTranslations('KangurStaticLessons.artShapesBasic');
-  const translate: ArtShapesBasicLessonTranslate = (key, values) =>
-    translations(key as never, values as never);
-  const sections = useMemo(() => buildArtShapesBasicSections(translate), [translations]);
-  const slides = useMemo(() => buildArtShapesBasicSlides(translate), [translations]);
+export default function ArtShapesBasicLesson({ lessonTemplate }: LessonProps): JSX.Element {
+  const messages = useMessages() as Record<string, unknown>;
+  const fallbackTranslate = useMemo<ArtShapesBasicLessonTranslate>(() => {
+    const staticLessons = messages['KangurStaticLessons'];
+    const lessonMessages =
+      staticLessons && typeof staticLessons === 'object' && !Array.isArray(staticLessons)
+        ? (((staticLessons as Record<string, unknown>)['artShapesBasic'] as
+            | Record<string, unknown>
+            | undefined) ??
+          {})
+        : {};
+
+    return createArtShapesBasicLessonMessageTranslate(lessonMessages);
+  }, [messages]);
+  const runtimeTemplate = useOptionalKangurLessonTemplate('art_shapes_basic');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
+  const resolvedContent = useMemo(
+    () => resolveArtShapesBasicLessonContent(resolvedTemplate, fallbackTranslate),
+    [fallbackTranslate, resolvedTemplate]
+  );
+  const translate = useMemo(
+    () => createArtShapesBasicLessonTranslate(resolvedContent),
+    [resolvedContent]
+  );
+  const sections = useMemo(() => buildArtShapesBasicSections(translate), [translate]);
+  const slides = useMemo(() => buildArtShapesBasicSlides(translate), [translate]);
+  const lessonTitle = resolvedTemplate?.title?.trim() || fallbackTranslate('lessonTitle');
 
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='art_shapes_basic'
       lessonEmoji='🧩'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={lessonTitle}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-amber'
@@ -39,14 +67,17 @@ export default function ArtShapesBasicLesson(): JSX.Element {
       games={[
         {
           sectionId: ART_SHAPES_ROTATION_PUZZLE_SECTION_ID,
-          stage: {
+          shell: {
             accent: 'amber',
-            title: translate('game.stageTitle'),
+            title: translate('game.gameTitle'),
             icon: '🌀',
             maxWidthClassName: 'max-w-4xl',
             shellTestId: 'art-shapes-rotation-gap-game-shell',
           },
-          render: ({ onFinish }) => <ArtShapesRotationGapGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'art_shape_rotation_puzzle',
+            instanceId: getKangurBuiltInGameInstanceId('art_shape_rotation_puzzle'),
+          },
         },
       ]}
     />

@@ -1,6 +1,6 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-26'
 status: 'active'
 related_components:
   - 'src/features/case-resolver/settings.ts'
@@ -20,6 +20,7 @@ Use this runbook for proactive or incident-driven integrity checks of Case Resol
    - `workspaceRevision`
    - `lastMutationId`
    - `lastMutationAt`
+   - shared settings records for the main workspace and detached documents/history payloads
 2. File hierarchy consistency:
    - valid `parentCaseId`
    - no self/looping parent references
@@ -39,7 +40,9 @@ Use this runbook for proactive or incident-driven integrity checks of Case Resol
 1. Run case resolver tests:
    - `npx vitest run src/features/case-resolver/__tests__ --reporter=dot`
 2. Validate normalization paths in `settings.ts` with known-bad fixture payloads.
-3. Validate OCR job records parse and defaults with missing/legacy fields.
+3. Validate sampled `/api/settings` payloads for light/heavy workspace fetches when the
+   incident involves hydration drift.
+4. Validate OCR job records parse and defaults with missing or legacy fields.
 
 ## Incident Workflow
 

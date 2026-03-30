@@ -109,4 +109,135 @@ describe('ScoreHistory i18n', () => {
     expect(screen.getAllByText('Adjectives').length).toBeGreaterThan(0);
     expect(screen.getByText('Games total')).toBeInTheDocument();
   });
+
+  it('renders English adverbs labels for both general and frequency sessions', async () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <ScoreHistory
+          prefetchedLoading={false}
+          prefetchedScores={[
+            createScore({
+              id: 'score-english-adverbs',
+              operation: 'english_adverbs',
+              subject: 'english',
+              created_date: '2026-03-06T12:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-english-adverbs-frequency',
+              operation: 'english_adverbs_frequency',
+              subject: 'english',
+              created_date: '2026-03-05T12:00:00.000Z',
+            }),
+          ]}
+        />
+      </NextIntlClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Results by operation')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByTestId('score-history-operation-progress-english_adverbs')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('score-history-operation-progress-english_adverbs_frequency')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('score-history-recent-row-score-english-adverbs')
+    ).toHaveTextContent('Adverbs');
+    expect(
+      screen.getByTestId('score-history-recent-row-score-english-adverbs-frequency')
+    ).toHaveTextContent('Adverbs of frequency');
+  });
+
+  it('renders English comparatives and superlatives labels in recent rows and operation breakdown', async () => {
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <ScoreHistory
+          prefetchedLoading={false}
+          prefetchedScores={[
+            createScore({
+              id: 'score-english-comparatives',
+              operation: 'english_comparatives_superlatives',
+              subject: 'english',
+              created_date: '2026-03-06T12:00:00.000Z',
+            }),
+          ]}
+        />
+      </NextIntlClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Results by operation')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByTestId('score-history-operation-progress-english_comparatives_superlatives')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('score-history-recent-row-score-english-comparatives')
+    ).toHaveTextContent('Comparatives & superlatives');
+  });
+
+  it('uses English fallback copy when messages are unavailable', () => {
+    render(
+      <NextIntlClientProvider
+        locale='en'
+        messages={{}}
+        getMessageFallback={({ namespace, key }) => `${namespace}.${key}`}
+        onError={() => {}}
+      >
+        <ScoreHistory
+          prefetchedLoading={false}
+          prefetchedScores={[
+            createScore({
+              id: 'score-1',
+              operation: 'division',
+              correct_answers: 4,
+              score: 4,
+              created_date: '2026-03-06T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-2',
+              operation: 'multiplication',
+              correct_answers: 10,
+              score: 10,
+              created_date: '2026-03-05T11:00:00.000Z',
+            }),
+            createScore({
+              id: 'score-3',
+              operation: 'division',
+              correct_answers: 5,
+              score: 5,
+              created_date: '2026-03-04T11:00:00.000Z',
+            }),
+          ]}
+          basePath='/kangur'
+        />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByText('Overview of the last 7 days')).toBeInTheDocument();
+    expect(screen.getByText('Weekly trend')).toBeInTheDocument();
+    expect(screen.getByText('Results by operation')).toBeInTheDocument();
+    expect(screen.getByText('Recent games')).toBeInTheDocument();
+    expect(screen.getAllByText('Division').length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Review lesson' })).toHaveAttribute(
+      'href',
+      '/en/kangur/lessons?focus=division'
+    );
+  });
 });

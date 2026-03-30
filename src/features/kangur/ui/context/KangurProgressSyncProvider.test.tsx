@@ -9,6 +9,7 @@ import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProg
 import {
   KANGUR_PROGRESS_OWNER_STORAGE_KEY,
   saveProgress,
+  saveProgressOwnerKey,
   setProgressPersistenceEnabled,
 } from '@/features/kangur/ui/services/progress';
 
@@ -57,6 +58,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 import { KangurProgressSyncProvider } from './KangurProgressSyncProvider';
+import { clearKangurProgressHydrationCache } from './KangurProgressSyncProvider';
 
 const createProgress = (
   overrides: Partial<ReturnType<typeof createDefaultKangurProgressState>> = {}
@@ -113,6 +115,7 @@ describe('KangurProgressSyncProvider', () => {
     localStorage.clear();
     vi.clearAllMocks();
     setProgressPersistenceEnabled(true);
+    clearKangurProgressHydrationCache();
 
     useKangurAuthMock.mockReturnValue(buildAuthState());
     useKangurSubjectFocusMock.mockReturnValue({
@@ -133,7 +136,8 @@ describe('KangurProgressSyncProvider', () => {
           totalXp: 120,
           gamesPlayed: 5,
           badges: ['first_game'],
-        })
+        }),
+        { ownerKey: 'learner-1' }
       );
     });
     progressGetMock.mockResolvedValue(
@@ -173,6 +177,78 @@ describe('KangurProgressSyncProvider', () => {
     expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBe('learner-1');
   });
 
+  it('catches deferred hydration sync failures instead of leaking an unhandled rejection', async () => {
+    act(() => {
+      saveProgress(
+        createProgress({
+          totalXp: 120,
+          gamesPlayed: 5,
+          badges: ['first_game'],
+        }),
+        { ownerKey: 'learner-1' }
+      );
+    });
+    progressGetMock.mockResolvedValue(
+      createProgress({
+        totalXp: 80,
+        gamesPlayed: 3,
+      })
+    );
+    progressUpdateMock.mockRejectedValue(
+      new Error('Kangur API request failed: 405 Method Not Allowed (/api/kangur/progress)')
+    );
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(trackKangurClientEventMock).toHaveBeenCalledWith(
+        'kangur_progress_hydration_remote_sync_failed',
+        expect.objectContaining({
+          userKey: 'learner-1',
+          totalXp: 120,
+          gamesPlayed: 5,
+          errorMessage: 'Kangur API request failed: 405 Method Not Allowed (/api/kangur/progress)',
+          subject: 'maths',
+        })
+      )
+    );
+    expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('120');
+  });
+
+  it('reuses cached remote hydration state across repeated mounts for the same learner and subject', async () => {
+    progressGetMock.mockResolvedValue(
+      createProgress({
+        totalXp: 80,
+        gamesPlayed: 3,
+      })
+    );
+
+    const firstRender = render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
+    firstRender.unmount();
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('80')
+    );
+    expect(progressGetMock).toHaveBeenCalledTimes(1);
+  });
+
   it('pushes later local progress changes back to the server after hydration', async () => {
     progressGetMock.mockResolvedValue(createProgress());
 
@@ -195,7 +271,8 @@ describe('KangurProgressSyncProvider', () => {
         createProgress({
           totalXp: 45,
           gamesPlayed: 2,
-        })
+        }),
+        { ownerKey: 'learner-1' }
       );
     });
 
@@ -209,6 +286,86 @@ describe('KangurProgressSyncProvider', () => {
       )
     );
     expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('45');
+  });
+
+  it('hydrates the signed-in learner from that learner scoped cache even when another learner was viewed last', async () => {
+    act(() => {
+      saveProgressOwnerKey('learner-1');
+      saveProgress(
+        createProgress({
+          totalXp: 120,
+          gamesPlayed: 5,
+        }),
+        { ownerKey: 'learner-1' }
+      );
+      saveProgressOwnerKey('learner-2');
+      saveProgress(
+        createProgress({
+          totalXp: 45,
+          gamesPlayed: 2,
+        }),
+        { ownerKey: 'learner-2' }
+      );
+      saveProgressOwnerKey('learner-1');
+    });
+
+    useKangurAuthMock.mockReturnValue(
+      buildAuthState({
+        user: {
+          activeLearner: {
+            ...baseAuthState.user.activeLearner,
+            id: 'learner-2',
+            displayName: 'Ben',
+            loginName: 'ben-child',
+          },
+        },
+      })
+    );
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'maths',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-2',
+    });
+
+    progressGetMock.mockResolvedValue(createProgress());
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() => expect(progressGetMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(progressUpdateMock).toHaveBeenCalledWith(
+        createProgress({
+          totalXp: 45,
+          gamesPlayed: 2,
+        }),
+        { subject: 'maths' }
+      )
+    );
+    expect(screen.getByTestId('kangur-progress-total-xp')).toHaveTextContent('45');
+    expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBe('learner-2');
+  });
+
+  it('clears the stored progress owner when auth resolves anonymous', async () => {
+    localStorage.setItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY, 'learner-stale');
+    useKangurAuthMock.mockReturnValue({
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      user: null,
+    });
+
+    render(
+      <KangurProgressSyncProvider>
+        <ProgressProbe />
+      </KangurProgressSyncProvider>
+    );
+
+    await waitFor(() =>
+      expect(localStorage.getItem(KANGUR_PROGRESS_OWNER_STORAGE_KEY)).toBeNull()
+    );
   });
 
   it('does not hydrate progress for parent accounts without an active learner', async () => {

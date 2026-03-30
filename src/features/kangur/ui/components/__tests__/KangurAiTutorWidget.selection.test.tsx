@@ -3,6 +3,7 @@
  */
 import { act, fireEvent, render, screen, waitFor } from '../../../../../../__tests__/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
 
@@ -15,6 +16,9 @@ import type {
   SVGProps,
 } from 'react';
 import { createContext } from 'react';
+import { useLayoutEffect, useRef } from 'react';
+import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
+import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 
 const GUIDED_SELECTION_SETTLE_MS = 1_000;
 
@@ -128,8 +132,19 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-vi.mock('../KangurAiTutorMoodAvatar', () => ({
-  KangurAiTutorMoodAvatar: ({
+type MoodAvatarMockProps = {
+  avatarImageUrl?: string | null;
+  className?: string;
+  fallbackIconClassName?: string;
+  imgClassName?: string;
+  label: string;
+  svgClassName?: string;
+  svgContent?: string | null;
+  'data-testid'?: string;
+};
+
+function MockKangurAiTutorMoodAvatar(props: MoodAvatarMockProps): React.JSX.Element {
+  const {
     avatarImageUrl,
     className,
     fallbackIconClassName,
@@ -138,16 +153,9 @@ vi.mock('../KangurAiTutorMoodAvatar', () => ({
     svgClassName,
     svgContent,
     'data-testid': dataTestId,
-  }: {
-    avatarImageUrl?: string | null;
-    className?: string;
-    fallbackIconClassName?: string;
-    imgClassName?: string;
-    label: string;
-    svgClassName?: string;
-    svgContent?: string | null;
-    'data-testid'?: string;
-  }) => (
+  } = props;
+
+  return (
     <div aria-label={label} className={className} data-testid={dataTestId} role='img'>
       {avatarImageUrl ? (
         <img alt={label} className={imgClassName} src={avatarImageUrl} />
@@ -157,7 +165,11 @@ vi.mock('../KangurAiTutorMoodAvatar', () => ({
         <svg aria-hidden='true' className={fallbackIconClassName} />
       )}
     </div>
-  ),
+  );
+}
+
+vi.mock('../KangurAiTutorMoodAvatar', () => ({
+  KangurAiTutorMoodAvatar: MockKangurAiTutorMoodAvatar,
 }));
 
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
@@ -167,6 +179,7 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutor: useKangurAiTutorMock,
   useOptionalKangurAiTutor: useKangurAiTutorMock,
+  useKangurAiTutorDeferredActivationBridge: vi.fn(),
   KangurAiTutorActivationContext: createContext(null),
 }));
 
@@ -226,8 +239,9 @@ vi.mock('next/link', () => ({
   default: ({
     href,
     children,
+    prefetch: _prefetch,
     ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; prefetch?: boolean }) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -247,6 +261,41 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 import { KangurAiTutorWidget } from '../KangurAiTutorWidget';
+
+const TestQuestionAnchor = ({
+  anchorId,
+  contentId,
+  label,
+  rect,
+}: {
+  anchorId: string;
+  contentId: string;
+  label: string;
+  rect: DOMRect;
+}) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useKangurTutorAnchor({
+    id: anchorId,
+    kind: 'question',
+    ref,
+    surface: 'test',
+    enabled: true,
+    priority: 100,
+    metadata: {
+      contentId,
+      label,
+    },
+  });
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      ref.current.getBoundingClientRect = () => rect;
+    }
+  }, [rect]);
+
+  return <div ref={ref} data-testid='kangur-test-question-anchor-fixture' />;
+};
 
 const mockWindowSelection = (node: Node, text: string) =>
   vi.spyOn(window, 'getSelection').mockReturnValue({
@@ -615,6 +664,112 @@ describe('KangurAiTutorWidget - Selection', () => {
 
     vi.clearAllTimers();
     
+  });
+
+  it('sends the test-question knowledge context when Zapytaj o to is used on a Test Kangur question', async () => {
+    vi.useFakeTimers();
+    const questionPrompt =
+      'Który kwadrat został rozcięty wzdłuż pogrubionych linii na dwie części o różnych kształtach?';
+    const questionRect = new DOMRect(80, 240, 720, 280);
+    const selectionRect = new DOMRect(120, 280, 560, 42);
+    const testsQuestionEntry =
+      buildDefaultKangurPageContentStore('pl').entries.find(
+        (candidate) => candidate.id === 'tests-question'
+      ) ?? null;
+
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+      pageKey: 'Tests',
+      requestedPath: '/kangur/tests',
+    });
+    useKangurPageContentEntryMock.mockReturnValue({
+      entry: testsQuestionEntry,
+    });
+    useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: {
+        enabled: true,
+        agentPersonaId: null,
+        motionPresetId: null,
+        uiMode: 'anchored',
+        allowCrossPagePersistence: true,
+        allowLessons: true,
+        testAccessMode: 'guided',
+        showSources: true,
+        allowSelectedTextSupport: true,
+        dailyMessageLimit: null,
+      },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      tutorBehaviorMoodId: 'neutral',
+      tutorBehaviorMoodLabel: 'Neutralny',
+      tutorBehaviorMoodDescription: 'Tutor czeka na kolejne pytanie.',
+      sessionContext: {
+        surface: 'test',
+        contentId: 'suite-add-1',
+        title: 'Mini test dodawania',
+      },
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: openChatMock,
+      closeChat: closeChatMock,
+      sendMessage: sendMessageMock,
+      setHighlightedText: setHighlightedTextMock,
+    });
+    useKangurTextHighlightMock.mockReturnValue({
+      activateSelectionGlow: activateSelectionGlowMock,
+      selectedText: questionPrompt,
+      selectionLineRects: [selectionRect],
+      selectionRect,
+      selectionContainerRect: questionRect,
+      clearSelection: clearSelectionMock,
+      clearSelectionGlow: clearSelectionGlowMock,
+      selectionGlowSupported: false,
+    });
+
+    render(
+      <KangurTutorAnchorProvider>
+        <TestQuestionAnchor
+          anchorId='kangur-test-question:suite-add-1:question-add-1'
+          contentId='suite-add-1'
+          label='Pytanie 1/1'
+          rect={questionRect}
+        />
+        <KangurAiTutorWidget />
+      </KangurTutorAnchorProvider>
+    );
+
+    const zapytajButton = screen.getByRole('button', { name: 'Zapytaj o to' });
+    fireEvent.mouseDown(zapytajButton);
+    fireEvent.click(zapytajButton);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(GUIDED_SELECTION_SETTLE_MS);
+    });
+
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      'Wyjaśnij zaznaczony fragment krok po kroku.',
+      expect.objectContaining({
+        promptMode: 'selected_text',
+        selectedText: questionPrompt,
+        contentId: 'suite-add-1',
+        focusKind: 'question',
+        focusId: 'kangur-test-question:suite-add-1:question-add-1',
+        focusLabel: 'Pytanie 1/1',
+        interactionIntent: 'explain',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'tests-question',
+          sourcePath: 'entry:tests-question#fragment:kangur-q1-squares',
+        },
+        surface: 'test',
+      })
+    );
   });
 
   

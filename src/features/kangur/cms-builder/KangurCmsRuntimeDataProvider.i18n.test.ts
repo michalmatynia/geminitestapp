@@ -58,4 +58,23 @@ describe('KangurCmsRuntimeDataProvider i18n helpers', () => {
     expect(formatKangurCmsResultStarsLabel(2, translate)).toBe('2 / 3 stars');
     expect(formatKangurCmsTimeTakenLabel(47, translate)).toBe('47s');
   });
+
+  it('uses locale-aware English fallbacks when translations are unavailable', () => {
+    const englishLocalizer = { locale: 'en' as const };
+
+    expect(resolveKangurCmsResultMessage(100, englishLocalizer)).toBe(
+      'Perfect result! You are a maths star.'
+    );
+    expect(resolveKangurCmsResultTitle('', englishLocalizer)).toBe('Great job, Player!');
+    expect(resolveKangurCmsGreetingLabel('Mila', englishLocalizer)).toBe('Hi, Mila! 👋');
+    expect(resolveKangurCmsAssignmentPriorityLabel('medium', englishLocalizer)).toBe(
+      'Medium priority'
+    );
+    expect(
+      resolveKangurCmsPracticeAssignmentHelperLabel('operation', 'Addition', englishLocalizer)
+    ).toBe('Closest priority in practice: Addition.');
+    expect(formatKangurCmsAssignmentCountLabel(3, englishLocalizer)).toBe('3 assignments');
+    expect(formatKangurCmsResultStarsLabel(2, englishLocalizer)).toBe('2 / 3 stars');
+    expect(formatKangurCmsTimeTakenLabel(47, englishLocalizer)).toBe('47s');
+  });
 });

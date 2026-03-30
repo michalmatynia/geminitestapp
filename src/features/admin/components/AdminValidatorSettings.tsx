@@ -4,4 +4,4 @@ export {
   ValidatorDocsTooltipsPanel,
   ValidatorDocsTooltipsProvider,
   ValidatorSettings,
-} from '@/features/products/public';
+} from '@/features/products';

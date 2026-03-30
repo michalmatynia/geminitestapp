@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { AiNode, NodeDefinition } from '@/shared/lib/ai-paths';
-import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
+import { createParserMappings } from '@/shared/lib/ai-paths';
 import {
   Button,
   Input,
@@ -28,6 +28,11 @@ import {
   useRuntimeActions,
 } from '../context';
 import { usePaletteWithTriggerButtons } from './ai-paths-settings/hooks/usePaletteWithTriggerButtons';
+import {
+  CanvasRunControlNotice,
+  CanvasSelectedWireDataPane,
+  CanvasSelectedWireEndpointCard,
+} from './canvas-sidebar-primitives';
 import { useCanvasSidebarActions } from './hooks/useCanvasSidebarActions';
 
 type PaletteMode = 'data' | 'sound';
@@ -36,37 +41,6 @@ type PaletteGroup = {
   title: string;
   types: NodeDefinition['type'][];
   icon: string;
-};
-
-type CanvasRunControlNoticeProps = {
-  variant: 'warning' | 'info';
-  title: string;
-  description: React.ReactNode;
-  children?: React.ReactNode;
-};
-
-type CanvasRunControlButtonProps = Omit<React.ComponentProps<typeof Button>, 'type' | 'size'>;
-
-type CanvasSelectedWireMetaLineProps = {
-  label: string;
-  value: React.ReactNode;
-  valueClassName: string;
-};
-
-type CanvasSelectedWireEndpointCardProps = {
-  title: string;
-  nodeLabel: string;
-  nodeType: string;
-  portLabel: string;
-  accentClassName: string;
-};
-
-type CanvasSelectedWireDataPaneProps = {
-  labelId: string;
-  label: string;
-  value: unknown;
-  emptyMessage: string;
-  labelClassName: string;
 };
 
 const readPortRuntimeValue = (
@@ -135,107 +109,6 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
     icon: '🎛',
   },
 ];
-
-function CanvasRunControlNotice({
-  variant,
-  title,
-  description,
-  children,
-}: CanvasRunControlNoticeProps): React.JSX.Element {
-  return (
-    <Card
-      variant={variant}
-      padding='sm'
-      className={cn(
-        'mb-3 space-y-1 text-[11px]',
-        variant === 'warning'
-          ? 'border-amber-500/30 bg-amber-500/10 text-amber-100'
-          : 'border-blue-500/30 bg-blue-500/10 text-blue-100'
-      )}
-    >
-      <div className='font-semibold text-white'>{title}</div>
-      <div>{description}</div>
-      {children}
-    </Card>
-  );
-}
-
-function CanvasRunControlButton({
-  children,
-  ...props
-}: CanvasRunControlButtonProps): React.JSX.Element {
-  return (
-    <Button type='button' size='sm' {...props}>
-      {children}
-    </Button>
-  );
-}
-
-function CanvasSelectedWireMetaLine({
-  label,
-  value,
-  valueClassName,
-}: CanvasSelectedWireMetaLineProps): React.JSX.Element {
-  return (
-    <div className='text-[11px] text-gray-400'>
-      {label}:{' '}
-      <span className={valueClassName}>{value}</span>
-    </div>
-  );
-}
-
-function CanvasSelectedWireEndpointCard({
-  title,
-  nodeLabel,
-  nodeType,
-  portLabel,
-  accentClassName,
-}: CanvasSelectedWireEndpointCardProps): React.JSX.Element {
-  return (
-    <Card
-      variant='subtle-compact'
-      padding='sm'
-      className='border-border/60 bg-card/50'
-    >
-      <Hint size='xxs' uppercase className='text-gray-500'>
-        {title}
-      </Hint>
-      <div className='text-sm text-white'>{nodeLabel}</div>
-      <CanvasSelectedWireMetaLine
-        label='Type'
-        value={nodeType}
-        valueClassName={accentClassName}
-      />
-      <CanvasSelectedWireMetaLine
-        label='Port'
-        value={portLabel}
-        valueClassName={accentClassName}
-      />
-    </Card>
-  );
-}
-
-function CanvasSelectedWireDataPane({
-  labelId,
-  label,
-  value,
-  emptyMessage,
-  labelClassName,
-}: CanvasSelectedWireDataPaneProps): React.JSX.Element {
-  return (
-    <div>
-      <div id={labelId} className={cn('text-[10px]', labelClassName)}>
-        {label}
-      </div>
-      <pre
-        className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'
-        aria-labelledby={labelId}
-      >
-        {value === undefined ? emptyMessage : formatRuntimeValue(value)}
-      </pre>
-    </div>
-  );
-}
 
 export function CanvasSidebar(): React.JSX.Element {
   const titleFieldId = React.useId();
@@ -751,74 +624,90 @@ export function CanvasSidebar(): React.JSX.Element {
                 className='font-bold'
               />
             </div>
-            {runStatus === 'blocked_on_lease' ? (
-              <CanvasRunControlNotice
-                variant='warning'
-                title='Execution lease blocked'
-                description='This run is waiting on another execution owner. Use the run history or run detail panel to inspect ownership and mark the run handoff-ready if work should change hands.'
-              >
-                {activeRunId ? (
-                  <div className='flex flex-wrap items-center gap-2 pt-1'>
-                    <CanvasRunControlButton
-                      variant='outline'
-                      onClick={handleMarkRunHandoffReady}
-                      disabled={isMarkingHandoff}
-                    >
-                      {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
-                    </CanvasRunControlButton>
-                    {handoffRequested ? (
-                      <span className='text-[10px] text-current/80'>
-                        Handoff requested. Refreshing run status...
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-              </CanvasRunControlNotice>
-            ) : null}
-            {runStatus === 'handoff_ready' ? (
-              <CanvasRunControlNotice
-                variant='info'
-                title='Ready for delegated continuation'
-                description='This run has been prepared for another operator or agent to continue. Resume it from the run history once the next owner is ready.'
-              />
-            ) : null}
+            {runStatus === 'blocked_on_lease'
+              ? (
+                <CanvasRunControlNotice
+                  variant='warning'
+                  title='Execution lease blocked'
+                  description='This run is waiting on another execution owner. Use the run history or run detail panel to inspect ownership and mark the run handoff-ready if work should change hands.'
+                >
+                  {activeRunId ? (
+                    <div className='flex flex-wrap items-center gap-2 pt-1'>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        onClick={handleMarkRunHandoffReady}
+                        disabled={isMarkingHandoff}
+                      >
+                        {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
+                      </Button>
+                      {handoffRequested ? (
+                        <span className='text-[10px] text-current/80'>
+                          Handoff requested. Refreshing run status...
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </CanvasRunControlNotice>
+                )
+              : null}
+            {runStatus === 'handoff_ready'
+              ? (
+                <CanvasRunControlNotice
+                  variant='info'
+                  title='Ready for delegated continuation'
+                  description='This run has been prepared for another operator or agent to continue. Resume it from the run history once the next owner is ready.'
+                />
+                )
+              : null}
             <div className='grid grid-cols-2 gap-2'>
               {isRunControlActive ? (
                 <>
-                  <CanvasRunControlButton
+                  <Button
+                    type='button'
+                    size='sm'
                     variant='warning'
                     onClick={pauseRun}
                     disabled={!pauseRun}
                   >
                   Pause
-                  </CanvasRunControlButton>
-                  <CanvasRunControlButton
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
                     variant='destructive'
                     onClick={cancelRun}
                     disabled={!cancelRun}
                   >
                   Cancel
-                  </CanvasRunControlButton>
+                  </Button>
                 </>
               ) : runStatus === 'blocked_on_lease' || runStatus === 'handoff_ready' ? (
-                <CanvasRunControlButton
+                <Button
+                  type='button'
+                  size='sm'
                   className='col-span-2'
                   variant='destructive'
                   onClick={cancelRun}
                   disabled={!cancelRun}
                 >
                 Cancel
-                </CanvasRunControlButton>
+                </Button>
               ) : runStatus === 'paused' ? (
                 <>
-                  <CanvasRunControlButton
+                  <Button
+                    type='button'
+                    size='sm'
                     variant='success'
                     onClick={resumeRun}
                     disabled={!resumeRun}
                   >
                   Resume
-                  </CanvasRunControlButton>
-                  <CanvasRunControlButton
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
                     variant='info'
                     onClick={() => {
                       const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
@@ -827,18 +716,22 @@ export function CanvasSidebar(): React.JSX.Element {
                     disabled={!stepRun}
                   >
                   Step
-                  </CanvasRunControlButton>
-                  <CanvasRunControlButton
+                  </Button>
+                  <Button
+                    type='button'
+                    size='sm'
                     className='col-span-2'
                     variant='destructive'
                     onClick={cancelRun}
                     disabled={!cancelRun}
                   >
                   Cancel
-                  </CanvasRunControlButton>
+                  </Button>
                 </>
               ) : (
-                <CanvasRunControlButton
+                <Button
+                  type='button'
+                  size='sm'
                   className='col-span-2'
                   variant='info'
                   onClick={() => {
@@ -848,7 +741,7 @@ export function CanvasSidebar(): React.JSX.Element {
                   disabled={!stepRun}
                 >
                 Step Run
-                </CanvasRunControlButton>
+                </Button>
               )}
             </div>
           </Card>

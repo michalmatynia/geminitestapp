@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { NextResponse } from 'next/server';
 
+import { resolveServiceFromSource } from '@/shared/lib/api/source-service';
 import { validationError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { reportError } from '@/shared/utils/observability/report-error';
@@ -35,27 +36,6 @@ const getRequestHeader = (request: Request | undefined, name: string): string | 
   } catch {
     return null;
   }
-};
-
-const resolveServiceFromSource = (source: string | undefined): string => {
-  const trimmed = source?.trim() ?? '';
-  if (!trimmed) return 'api.error';
-  const segments = trimmed.split('.').filter(Boolean);
-  const maybeMethod = segments[segments.length - 1];
-  const isMethod =
-    maybeMethod === 'GET' ||
-    maybeMethod === 'POST' ||
-    maybeMethod === 'PUT' ||
-    maybeMethod === 'PATCH' ||
-    maybeMethod === 'DELETE' ||
-    maybeMethod === 'HEAD' ||
-    maybeMethod === 'OPTIONS';
-  const base = isMethod ? segments.slice(0, -1) : segments;
-  const first = base[0];
-  const second = base[1];
-  if (first && second) return `${first}.${second}`;
-  if (first) return first;
-  return 'api.error';
 };
 
 const extractRequestDiagnostics = (
@@ -103,7 +83,7 @@ export const createErrorResponse = async (
     options?.correlationId ??
     getRequestHeader(options?.request, 'x-correlation-id') ??
     requestId;
-  const service = options?.service ?? resolveServiceFromSource(options?.source);
+  const service = options?.service ?? resolveServiceFromSource(options?.source, 'api.error');
   const requestDiagnostics = extractRequestDiagnostics(options?.request);
   const { resolved, userMessage, fingerprint } = await reportError({
     error,

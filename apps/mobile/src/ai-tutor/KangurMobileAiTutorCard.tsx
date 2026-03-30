@@ -1,115 +1,20 @@
-import { Link } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { StatusPill } from '../shared/KangurAssessmentUi';
+import {
+  KangurMobileActionButton,
+  KangurMobileCard,
+  KangurMobileInsetPanel,
+  KangurMobileLinkButton,
+} from '../shared/KangurMobileUi';
 import { useKangurMobileAiTutor } from './useKangurMobileAiTutor';
 
 type KangurMobileAiTutorCardProps = {
   context: KangurAiTutorConversationContext;
   gameTarget?: 'competition' | 'practice';
 };
-
-function StatusPill({
-  backgroundColor,
-  borderColor,
-  label,
-  textColor,
-}: {
-  backgroundColor: string;
-  borderColor: string;
-  label: string;
-  textColor: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        backgroundColor,
-        borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-      }}
-    >
-      <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
-  );
-}
-
-function ActionButton({
-  disabled = false,
-  label,
-  onPress,
-}: {
-  disabled?: boolean;
-  label: string;
-  onPress?: () => void;
-}): React.JSX.Element {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole='button'
-      disabled={disabled}
-      onPress={onPress}
-      style={{
-        alignItems: 'center',
-        backgroundColor: disabled ? '#e2e8f0' : '#eef2ff',
-        borderColor: disabled ? '#cbd5e1' : '#c7d2fe',
-        borderRadius: 999,
-        borderWidth: 1,
-        justifyContent: 'center',
-        minHeight: 44,
-        opacity: disabled ? 0.7 : 1,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-      }}
-    >
-      <Text
-        style={{
-          color: disabled ? '#64748b' : '#4338ca',
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function LinkButton({
-  href,
-  label,
-}: {
-  href: NonNullable<ReturnType<typeof useKangurMobileAiTutor>['responseActions'][number]['href']>;
-  label: string;
-}): React.JSX.Element {
-  return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityLabel={label}
-        accessibilityRole='button'
-        style={{
-          alignItems: 'center',
-          backgroundColor: '#ffffff',
-          borderColor: '#cbd5e1',
-          borderRadius: 999,
-          borderWidth: 1,
-          justifyContent: 'center',
-          minHeight: 44,
-          paddingHorizontal: 16,
-          paddingVertical: 10,
-        }}
-      >
-        <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
-  );
-}
 
 export function KangurMobileAiTutorCard({
   context,
@@ -120,6 +25,82 @@ export function KangurMobileAiTutorCard({
     context,
     gameTarget,
   });
+  const responseActionItems: React.JSX.Element[] = [];
+
+  for (const action of tutor.responseActions) {
+    if (action.href) {
+      responseActionItems.push(
+        <KangurMobileLinkButton
+          accessibilityLabel={action.label}
+          centered
+          href={action.href}
+          key={action.id}
+          label={action.label}
+          minHeight={44}
+        />,
+      );
+      continue;
+    }
+
+    responseActionItems.push(
+      <View key={action.id} style={{ gap: 4 }}>
+        <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>{action.label}</Text>
+        {action.reason ? (
+          <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>{action.reason}</Text>
+        ) : null}
+      </View>,
+    );
+  }
+  let websiteHelpTargetContent = null;
+  let nextStepSection = null;
+
+  if (tutor.websiteHelpTarget) {
+    if (tutor.websiteHelpTarget.href) {
+      websiteHelpTargetContent = (
+        <KangurMobileLinkButton
+          accessibilityLabel={
+            locale === 'de'
+              ? `Öffne: ${tutor.websiteHelpTarget.label}`
+              : locale === 'en'
+                ? `Open: ${tutor.websiteHelpTarget.label}`
+                : `Przejdź: ${tutor.websiteHelpTarget.label}`
+          }
+          href={tutor.websiteHelpTarget.href}
+          label={
+            locale === 'de'
+              ? `Öffne: ${tutor.websiteHelpTarget.label}`
+              : locale === 'en'
+                ? `Open: ${tutor.websiteHelpTarget.label}`
+                : `Przejdź: ${tutor.websiteHelpTarget.label}`
+          }
+          centered
+          minHeight={44}
+        />
+      );
+    } else {
+      websiteHelpTargetContent = (
+        <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+          {tutor.websiteHelpTarget.label}
+        </Text>
+      );
+    }
+  }
+
+  if (tutor.responseActions.length > 0 || tutor.websiteHelpTarget) {
+    nextStepSection = (
+      <View style={{ flexDirection: 'column', gap: 8 }}>
+        <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
+          {copy({
+            de: 'Kolejny krok',
+            en: 'Next step',
+            pl: 'Kolejny krok',
+          })}
+        </Text>
+        {responseActionItems}
+        {websiteHelpTargetContent}
+      </View>
+    );
+  }
 
   const availabilityTone =
     tutor.availabilityState === 'available'
@@ -180,19 +161,7 @@ export function KangurMobileAiTutorCard({
     : null;
 
   return (
-    <View
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        elevation: 3,
-        gap: 12,
-        padding: 20,
-        shadowColor: '#0f172a',
-        shadowOffset: { height: 10, width: 0 },
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-      }}
-    >
+    <KangurMobileCard gap={12} padding={20}>
       <View style={{ gap: 8 }}>
         <Text
           accessibilityRole='header'
@@ -201,13 +170,15 @@ export function KangurMobileAiTutorCard({
           {`${tutor.tutorName} · AI Tutor`}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          <StatusPill {...availabilityTone} label={availabilityLabel} />
+          <StatusPill label={availabilityLabel} tone={availabilityTone} />
           {usageLabel ? (
             <StatusPill
-              backgroundColor='#f8fafc'
-              borderColor='#cbd5e1'
               label={usageLabel}
-              textColor='#475569'
+              tone={{
+                backgroundColor: '#f8fafc',
+                borderColor: '#cbd5e1',
+                textColor: '#475569',
+              }}
             />
           ) : null}
         </View>
@@ -246,16 +217,7 @@ export function KangurMobileAiTutorCard({
       )}
 
       {tutor.guideEntry?.hints?.length ? (
-        <View
-          style={{
-            backgroundColor: '#f8fafc',
-            borderColor: '#cbd5e1',
-            borderRadius: 20,
-            borderWidth: 1,
-            gap: 8,
-            padding: 16,
-          }}
-        >
+        <KangurMobileInsetPanel gap={8} padding={16}>
           <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
             {copy({
               de: 'Wskazówki startowe',
@@ -268,7 +230,7 @@ export function KangurMobileAiTutorCard({
               {`• ${hint}`}
             </Text>
           ))}
-        </View>
+        </KangurMobileInsetPanel>
       ) : null}
 
       {tutor.availabilityMessage ? (
@@ -286,63 +248,34 @@ export function KangurMobileAiTutorCard({
       {tutor.quickActions.length > 0 ? (
         <View style={{ flexDirection: 'column', gap: 8 }}>
           {tutor.quickActions.map((action) => (
-            <ActionButton
+            <KangurMobileActionButton
+              accessibilityLabel={action.label}
+              centered
               disabled={!tutor.canSendMessages || tutor.isSending}
               key={action.id}
               label={action.label}
+              minHeight={44}
               onPress={() => {
                 void tutor.sendQuickAction(action.id);
               }}
+              style={{
+                borderWidth: 1,
+                opacity: !tutor.canSendMessages || tutor.isSending ? 0.7 : 1,
+                backgroundColor:
+                  !tutor.canSendMessages || tutor.isSending ? '#e2e8f0' : '#eef2ff',
+                borderColor:
+                  !tutor.canSendMessages || tutor.isSending ? '#cbd5e1' : '#c7d2fe',
+              }}
+              textStyle={{
+                color: !tutor.canSendMessages || tutor.isSending ? '#64748b' : '#4338ca',
+              }}
+              tone='secondary'
             />
           ))}
         </View>
       ) : null}
 
-      {tutor.responseActions.length > 0 || tutor.websiteHelpTarget ? (
-        <View style={{ flexDirection: 'column', gap: 8 }}>
-          <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
-            {copy({
-              de: 'Kolejny krok',
-              en: 'Next step',
-              pl: 'Kolejny krok',
-            })}
-          </Text>
-          {tutor.responseActions.map((action) =>
-            action.href ? (
-              <LinkButton href={action.href} key={action.id} label={action.label} />
-            ) : (
-              <View key={action.id} style={{ gap: 4 }}>
-                <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '700' }}>
-                  {action.label}
-                </Text>
-                {action.reason ? (
-                  <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-                    {action.reason}
-                  </Text>
-                ) : null}
-              </View>
-            ),
-          )}
-          {tutor.websiteHelpTarget ? (
-            tutor.websiteHelpTarget.href ? (
-              <LinkButton
-                href={tutor.websiteHelpTarget.href}
-                label={
-                  locale === 'de'
-                    ? `Öffne: ${tutor.websiteHelpTarget.label}`
-                    : locale === 'en'
-                      ? `Open: ${tutor.websiteHelpTarget.label}`
-                      : `Przejdź: ${tutor.websiteHelpTarget.label}`
-                }
-              />
-            ) : (
-              <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-                {tutor.websiteHelpTarget.label}
-              </Text>
-            )
-          ) : null}
-        </View>
-      ) : null}
-    </View>
+      {nextStepSection}
+    </KangurMobileCard>
   );
 }

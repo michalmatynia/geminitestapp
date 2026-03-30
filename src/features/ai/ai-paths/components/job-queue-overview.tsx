@@ -46,12 +46,7 @@ type QueueOverviewLineProps = {
   className?: string;
 };
 
-type QueueOverviewStateLineProps = QueueOverviewLineProps & {
-  showIndicator?: boolean;
-  indicatorLabel: string;
-};
-
-function QueueOverviewCard({
+function renderQueueOverviewCard({
   title,
   children,
   className,
@@ -68,7 +63,7 @@ function QueueOverviewCard({
   );
 }
 
-function QueueOverviewMiniCard({
+function renderQueueOverviewMiniCard({
   title,
   children,
   className,
@@ -144,22 +139,6 @@ function QueueOverviewCompactDetailLine({
   return <div className={cn('mt-1 text-[10px] text-gray-400', className)}>{children}</div>;
 }
 
-function QueueOverviewStateLine({
-  children,
-  className,
-  showIndicator = false,
-  indicatorLabel,
-}: QueueOverviewStateLineProps): React.JSX.Element {
-  return (
-    <QueueOverviewPrimaryLine className={cn('flex items-center gap-2', className)}>
-      <>
-        {children}
-        {showIndicator ? <RunningIndicator label={indicatorLabel} /> : null}
-      </>
-    </QueueOverviewPrimaryLine>
-  );
-}
-
 export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Element {
   const {
     queueStatus,
@@ -179,117 +158,143 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
   return (
     <>
       <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-6'>
-        <QueueOverviewCard title='Worker'>
-          <QueueOverviewStateLine
-            showIndicator={Boolean(queueStatus?.running)}
-            indicatorLabel='Active'
-          >
-            {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
-          </QueueOverviewStateLine>
-          <QueueOverviewDetailLine>
-            Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
-          </QueueOverviewDetailLine>
-        </QueueOverviewCard>
-        <QueueOverviewCard title='Concurrency'>
-          <QueueOverviewPrimaryLine>{queueStatus?.concurrency ?? '-'}</QueueOverviewPrimaryLine>
-          <QueueOverviewDetailLine className='flex items-center gap-2'>
-            <span>Active runs: {queueStatus?.activeRuns ?? 0}</span>
-            {(queueStatus?.activeRuns ?? 0) > 0 ? <RunningIndicator label='Busy' /> : null}
-          </QueueOverviewDetailLine>
-        </QueueOverviewCard>
-        <QueueOverviewCard title='Last poll'>
-          <QueueOverviewPrimaryLine>
-            {formatUtcClockTime(queueStatus?.lastPollTime)}
-          </QueueOverviewPrimaryLine>
-          <QueueOverviewDetailLine>
-            Age: {formatDurationMs(queueStatus?.timeSinceLastPoll ?? null)}
-          </QueueOverviewDetailLine>
-        </QueueOverviewCard>
-        <QueueOverviewCard title='Status'>
-          <QueueOverviewPrimaryLine>
-            {queueStatusFetching ? 'Refreshing...' : 'Live'}
-          </QueueOverviewPrimaryLine>
-          {queueStatusError ? (
-            <QueueOverviewDetailLine className='text-rose-200'>
-              {queueStatusError instanceof Error
-                ? queueStatusError.message
-                : 'Failed to load queue status.'}
-            </QueueOverviewDetailLine>
-          ) : (
-            <QueueOverviewDetailLine>
-              Polled every 5s while this panel is active
-            </QueueOverviewDetailLine>
-          )}
-          {queueStatus?.slo ? (
-            <StatusBadge
-              status={`SLO ${queueStatus.slo.overall} · ${queueStatus.slo.breachCount} breach${queueStatus.slo.breachCount === 1 ? '' : 'es'}`}
-              variant={getSloVariant(queueStatus.slo.overall)}
-              size='sm'
-              className='mt-2 font-bold'
-            />
-          ) : null}
-        </QueueOverviewCard>
-        <QueueOverviewCard title='Queue Depth'>
-          <QueueOverviewPrimaryLine>{queueStatus?.queuedCount ?? 0} queued</QueueOverviewPrimaryLine>
-          <QueueOverviewDetailLine>
-            Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
-          </QueueOverviewDetailLine>
-          <QueueDepthSparkline
-            entries={queueHistory}
-            maxItems={30}
-            className='mt-2 h-10 w-full rounded bg-foreground/5 px-1 py-1'
-            barClassName='w-[6px] rounded bg-sky-400/60'
-            minHeight={8}
-            titleFormatter={(entry: QueueHistoryEntry) => `${entry.queued} queued`}
-          />
-          <QueueOverviewCompactDetailLine className='mt-2 flex flex-wrap gap-2'>
-            <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
-            {runtimeAnalyticsEnabled ? (
-              <>
-                <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
-                <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
-              </>
-            ) : (
-              <span>Runtime analytics disabled</span>
-            )}
-          </QueueOverviewCompactDetailLine>
-        </QueueOverviewCard>
-        <QueueOverviewCard title='Brain Analytics Queue'>
-          <QueueOverviewStateLine
-            showIndicator={Boolean(queueStatus?.brainQueue?.running)}
-            indicatorLabel='Active'
-          >
-            {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
-          </QueueOverviewStateLine>
-          <QueueOverviewDetailLine className='flex items-center gap-2'>
-            <span>
-              Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting{' '}
-              {queueStatus?.brainQueue?.waitingJobs ?? 0}
-            </span>
-            {(queueStatus?.brainQueue?.activeJobs ?? 0) > 0 ? (
-              <RunningIndicator label='Busy' />
-            ) : null}
-          </QueueOverviewDetailLine>
-          {runtimeAnalyticsEnabled ? (
+        {renderQueueOverviewCard({
+          title: 'Worker',
+          children: (
             <>
-              <QueueOverviewCompactDetailLine className='mt-2'>
-                Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
-              </QueueOverviewCompactDetailLine>
-              <QueueOverviewCompactDetailLine>
-                Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs{' '}
-                {queueStatus?.brainAnalytics24h?.logReports ?? 0}
-              </QueueOverviewCompactDetailLine>
-              <QueueOverviewCompactDetailLine className='text-amber-200/90'>
-                Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors{' '}
-                {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
+              <QueueOverviewPrimaryLine className='flex items-center gap-2'>
+                {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
+                {queueStatus?.running ? <RunningIndicator label='Active' /> : null}
+              </QueueOverviewPrimaryLine>
+              <QueueOverviewDetailLine>
+                Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
+              </QueueOverviewDetailLine>
+            </>
+          ),
+        })}
+        {renderQueueOverviewCard({
+          title: 'Concurrency',
+          children: (
+            <>
+              <QueueOverviewPrimaryLine>{queueStatus?.concurrency ?? '-'}</QueueOverviewPrimaryLine>
+              <QueueOverviewDetailLine className='flex items-center gap-2'>
+                <span>Active runs: {queueStatus?.activeRuns ?? 0}</span>
+                {(queueStatus?.activeRuns ?? 0) > 0 ? <RunningIndicator label='Busy' /> : null}
+              </QueueOverviewDetailLine>
+            </>
+          ),
+        })}
+        {renderQueueOverviewCard({
+          title: 'Last poll',
+          children: (
+            <>
+              <QueueOverviewPrimaryLine>
+                {formatUtcClockTime(queueStatus?.lastPollTime)}
+              </QueueOverviewPrimaryLine>
+              <QueueOverviewDetailLine>
+                Age: {formatDurationMs(queueStatus?.timeSinceLastPoll ?? null)}
+              </QueueOverviewDetailLine>
+            </>
+          ),
+        })}
+        {renderQueueOverviewCard({
+          title: 'Status',
+          children: (
+            <>
+              <QueueOverviewPrimaryLine>
+                {queueStatusFetching ? 'Refreshing...' : 'Live'}
+              </QueueOverviewPrimaryLine>
+              {queueStatusError ? (
+                <QueueOverviewDetailLine className='text-rose-200'>
+                  {queueStatusError instanceof Error
+                    ? queueStatusError.message
+                    : 'Failed to load queue status.'}
+                </QueueOverviewDetailLine>
+              ) : (
+                <QueueOverviewDetailLine>
+                  Polled every 5s while this panel is active
+                </QueueOverviewDetailLine>
+              )}
+              {queueStatus?.slo ? (
+                <StatusBadge
+                  status={`SLO ${queueStatus.slo.overall} · ${queueStatus.slo.breachCount} breach${queueStatus.slo.breachCount === 1 ? '' : 'es'}`}
+                  variant={getSloVariant(queueStatus.slo.overall)}
+                  size='sm'
+                  className='mt-2 font-bold'
+                />
+              ) : null}
+            </>
+          ),
+        })}
+        {renderQueueOverviewCard({
+          title: 'Queue Depth',
+          children: (
+            <>
+              <QueueOverviewPrimaryLine>{queueStatus?.queuedCount ?? 0} queued</QueueOverviewPrimaryLine>
+              <QueueOverviewDetailLine>
+                Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
+              </QueueOverviewDetailLine>
+              <QueueDepthSparkline
+                entries={queueHistory}
+                maxItems={30}
+                className='mt-2 h-10 w-full rounded bg-foreground/5 px-1 py-1'
+                barClassName='w-[6px] rounded bg-sky-400/60'
+                minHeight={8}
+                titleFormatter={(entry: QueueHistoryEntry) => `${entry.queued} queued`}
+              />
+              <QueueOverviewCompactDetailLine className='mt-2 flex flex-wrap gap-2'>
+                <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
+                {runtimeAnalyticsEnabled ? (
+                  <>
+                    <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
+                    <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
+                  </>
+                ) : (
+                  <span>Runtime analytics disabled</span>
+                )}
               </QueueOverviewCompactDetailLine>
             </>
-          ) : (
-            <QueueOverviewCompactDetailLine className='mt-2'>
-              Runtime analytics disabled in AI Brain.
-            </QueueOverviewCompactDetailLine>
-          )}
-        </QueueOverviewCard>
+          ),
+        })}
+        {renderQueueOverviewCard({
+          title: 'Brain Analytics Queue',
+          children: (
+            <>
+              <QueueOverviewPrimaryLine className='flex items-center gap-2'>
+                {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
+                {queueStatus?.brainQueue?.running ? <RunningIndicator label='Active' /> : null}
+              </QueueOverviewPrimaryLine>
+              <QueueOverviewDetailLine className='flex items-center gap-2'>
+                <span>
+                  Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting{' '}
+                  {queueStatus?.brainQueue?.waitingJobs ?? 0}
+                </span>
+                {(queueStatus?.brainQueue?.activeJobs ?? 0) > 0 ? (
+                  <RunningIndicator label='Busy' />
+                ) : null}
+              </QueueOverviewDetailLine>
+              {runtimeAnalyticsEnabled ? (
+                <>
+                  <QueueOverviewCompactDetailLine className='mt-2'>
+                    Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
+                  </QueueOverviewCompactDetailLine>
+                  <QueueOverviewCompactDetailLine>
+                    Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs{' '}
+                    {queueStatus?.brainAnalytics24h?.logReports ?? 0}
+                  </QueueOverviewCompactDetailLine>
+                  <QueueOverviewCompactDetailLine className='text-amber-200/90'>
+                    Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors{' '}
+                    {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
+                  </QueueOverviewCompactDetailLine>
+                </>
+              ) : (
+                <QueueOverviewCompactDetailLine className='mt-2'>
+                  Runtime analytics disabled in AI Brain.
+                </QueueOverviewCompactDetailLine>
+              )}
+            </>
+          ),
+        })}
       </div>
 
       {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
@@ -351,22 +356,33 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
               }
             />
             <div className='grid gap-2 md:grid-cols-3'>
-              <QueueOverviewMiniCard title='Queue Depth'>
-                <QueueOverviewPrimaryLine>{queueStatus?.queuedCount ?? 0}</QueueOverviewPrimaryLine>
-                <QueueOverviewCompactDetailLine>
-                  Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
-                </QueueOverviewCompactDetailLine>
-              </QueueOverviewMiniCard>
-              <QueueOverviewMiniCard title='Throughput'>
-                <QueueOverviewPrimaryLine>
-                  {queueStatus?.throughputPerMinute ?? 0}/min
-                </QueueOverviewPrimaryLine>
-                <QueueOverviewCompactDetailLine>
-                  Completed: {queueStatus?.completedLastMinute ?? 0} (last min)
-                </QueueOverviewCompactDetailLine>
-              </QueueOverviewMiniCard>
-              <QueueOverviewMiniCard title='Runtime'>
-                {runtimeAnalyticsEnabled ? (
+              {renderQueueOverviewMiniCard({
+                title: 'Queue Depth',
+                children: (
+                  <>
+                    <QueueOverviewPrimaryLine>{queueStatus?.queuedCount ?? 0}</QueueOverviewPrimaryLine>
+                    <QueueOverviewCompactDetailLine>
+                      Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
+                    </QueueOverviewCompactDetailLine>
+                  </>
+                ),
+              })}
+              {renderQueueOverviewMiniCard({
+                title: 'Throughput',
+                children: (
+                  <>
+                    <QueueOverviewPrimaryLine>
+                      {queueStatus?.throughputPerMinute ?? 0}/min
+                    </QueueOverviewPrimaryLine>
+                    <QueueOverviewCompactDetailLine>
+                      Completed: {queueStatus?.completedLastMinute ?? 0} (last min)
+                    </QueueOverviewCompactDetailLine>
+                  </>
+                ),
+              })}
+              {renderQueueOverviewMiniCard({
+                title: 'Runtime',
+                children: runtimeAnalyticsEnabled ? (
                   <>
                     <QueueOverviewPrimaryLine>
                       avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
@@ -380,8 +396,8 @@ export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Elemen
                   <QueueOverviewCompactDetailLine>
                     Runtime analytics disabled.
                   </QueueOverviewCompactDetailLine>
-                )}
-              </QueueOverviewMiniCard>
+                ),
+              })}
             </div>
           </div>
         ) : null}

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'overview'
 scope: 'repository'
@@ -89,6 +89,22 @@ These are the canonical repo-facing Bun commands.
 The Bazel-exposed Bun targets remain available for teams that want the checks
 inside the Bazel execution graph, but they are not the primary Bun interface
 for the repo.
+
+## CI surfaces
+
+The current Bun-related CI surfaces are:
+
+- `.github/workflows/bun-repo-ci.yml`
+  - installs with `bun install --frozen-lockfile`
+  - runs `bun run bun:repo:ci`
+- `.github/workflows/toolchain-contract.yml`
+  - npm/Node-side fallback contract lane
+  - runs `npm run check:toolchain:contract:node` and
+    `npm run test:toolchain:contract`
+
+Treat the Bun repo CI workflow as compatibility coverage for the supported Bun
+lane, not as proof that the app runtime or primary merge gate has migrated to
+Bun.
 
 ## Intentional non-goals
 

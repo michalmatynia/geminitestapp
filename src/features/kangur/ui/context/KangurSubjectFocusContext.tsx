@@ -11,14 +11,18 @@ import {
 } from 'react';
 
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { resolveKangurUserScopeKey } from '@/features/kangur/ui/context/kangur-user-scope';
 import {
+  hasPersistedSubjectFocus,
   loadPersistedSubjectFocus,
   loadRemoteSubjectFocus,
+  normalizeKangurSubjectFocusSubject,
   persistSubjectFocus,
   persistRemoteSubjectFocus,
   subscribeToSubjectFocusChanges,
 } from '@/features/kangur/ui/services/subject-focus';
-import { setProgressSubject } from '@/features/kangur/ui/services/progress';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog-metadata';
+import { setProgressScope } from '@/features/kangur/ui/services/progress';
 import type { KangurLessonSubject } from '@/shared/contracts/kangur';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -37,20 +41,6 @@ const KangurSubjectFocusStateContext = createContext<KangurSubjectFocusStateCont
 const KangurSubjectFocusActionsContext =
   createContext<KangurSubjectFocusActionsContextValue | null>(null);
 
-const resolveSubjectFocusKey = (user: ReturnType<typeof useKangurAuth>['user']): string | null => {
-  const activeLearnerId = user?.activeLearner?.id?.trim();
-  if (activeLearnerId) {
-    return activeLearnerId;
-  }
-
-  if (user?.actorType === 'parent') {
-    return null;
-  }
-
-  const userId = user?.id?.trim();
-  return userId && userId.length > 0 ? userId : null;
-};
-
 const FALLBACK_SUBJECT_KEY = 'guest';
 
 export function KangurSubjectFocusProvider({
@@ -59,11 +49,9 @@ export function KangurSubjectFocusProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const { user, isAuthenticated, isLoadingAuth } = useKangurAuth();
-  const subjectKey = resolveSubjectFocusKey(user);
+  const subjectKey = resolveKangurUserScopeKey(user);
   const storageKey = subjectKey ?? FALLBACK_SUBJECT_KEY;
-  const [subject, setSubjectState] = useState<KangurLessonSubject>(() =>
-    loadPersistedSubjectFocus(storageKey)
-  );
+  const [subject, setSubjectState] = useState<KangurLessonSubject>(DEFAULT_KANGUR_SUBJECT);
   const canSyncRemote =
     !isLoadingAuth && isAuthenticated && typeof subjectKey === 'string' && subjectKey.length > 0;
 
@@ -74,7 +62,7 @@ export function KangurSubjectFocusProvider({
   useEffect(() => subscribeToSubjectFocusChanges(storageKey, setSubjectState), [storageKey]);
 
   useEffect(() => {
-    if (!canSyncRemote) {
+    if (!canSyncRemote || hasPersistedSubjectFocus(storageKey)) {
       return;
     }
 
@@ -100,18 +88,29 @@ export function KangurSubjectFocusProvider({
   }, [canSyncRemote, storageKey]);
 
   useEffect(() => {
-    setProgressSubject(subject);
-  }, [subject]);
+    setProgressScope({
+      subject,
+      ownerKey: subjectKey,
+    });
+  }, [subject, subjectKey]);
 
   const setSubject = useCallback(
     (nextSubject: KangurLessonSubject): void => {
-      setSubjectState(nextSubject);
-      persistSubjectFocus(storageKey, nextSubject);
+      const normalizedSubject = normalizeKangurSubjectFocusSubject(nextSubject);
+      if (!normalizedSubject) {
+        return;
+      }
+      if (normalizedSubject === subject) {
+        return;
+      }
+
+      setSubjectState(normalizedSubject);
+      persistSubjectFocus(storageKey, normalizedSubject);
       if (canSyncRemote) {
-        void persistRemoteSubjectFocus(nextSubject);
+        void persistRemoteSubjectFocus(storageKey, normalizedSubject);
       }
     },
-    [canSyncRemote, storageKey]
+    [canSyncRemote, storageKey, subject]
   );
 
   const stateValue = useMemo<KangurSubjectFocusStateContextValue>(
@@ -147,6 +146,10 @@ export const useKangurSubjectFocusState = (): KangurSubjectFocusStateContextValu
   }
   return context;
 };
+
+export const useOptionalKangurSubjectFocusState = ():
+  | KangurSubjectFocusStateContextValue
+  | null => useContext(KangurSubjectFocusStateContext);
 
 export const useKangurSubjectFocusActions = (): KangurSubjectFocusActionsContextValue => {
   const context = useContext(KangurSubjectFocusActionsContext);

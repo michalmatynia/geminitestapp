@@ -198,6 +198,11 @@ export const buildAdminNav = (handlers: {
             href: '/admin/products/producers',
           },
           {
+            id: 'commerce/products/orders-import',
+            label: 'Orders Import',
+            href: '/admin/products/orders-import',
+          },
+          {
             id: 'commerce/products/preferences',
             label: 'Preferences',
             href: '/admin/products/preferences',

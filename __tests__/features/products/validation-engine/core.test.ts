@@ -122,23 +122,25 @@ describe('validation-engine/core', () => {
   });
 
   it('merges issue maps deterministically and compares equivalence', () => {
+    const leftPricePattern = basePattern({ id: 'a' });
+    const leftPriceIssue = {
+      patternId: leftPricePattern.id,
+      message: leftPricePattern.message,
+      severity: leftPricePattern.severity,
+      matchText: '4',
+      index: 0,
+      length: 1,
+      regex: leftPricePattern.regex,
+      flags: leftPricePattern.flags,
+      replacementValue: '5',
+      replacementApplyMode: 'replace_whole_field' as const,
+      replacementScope: 'field' as const,
+      replacementActive: true,
+      postAcceptBehavior: 'revalidate' as const,
+      debounceMs: 0,
+    };
     const left = {
-      price: [basePattern({ id: 'a' })].map((pattern) => ({
-        patternId: pattern.id,
-        message: pattern.message,
-        severity: pattern.severity,
-        matchText: '4',
-        index: 0,
-        length: 1,
-        regex: pattern.regex,
-        flags: pattern.flags,
-        replacementValue: '5',
-        replacementApplyMode: 'replace_whole_field' as const,
-        replacementScope: 'field' as const,
-        replacementActive: true,
-        postAcceptBehavior: 'revalidate' as const,
-        debounceMs: 0,
-      })),
+      price: [leftPriceIssue],
     };
     const right = {
       stock: [

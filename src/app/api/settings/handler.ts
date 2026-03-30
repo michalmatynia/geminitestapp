@@ -1,8 +1,20 @@
+import { primeFrontPageSettingRuntime } from '@/app/(frontend)/home/home-helpers';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
+import {
+  invalidateKangurStorefrontInitialStateCache,
+  isKangurStorefrontInitialStateDependencyKey,
+} from '@/features/kangur/appearance/server/storefront-appearance';
+import {
+  KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
+  ensureKangurStorefrontAppearanceSettingsSeeded,
+} from '@/features/kangur/appearance/server/storefront-appearance-source';
+import { ensureKangurThemeCatalogSeeded } from '@/features/kangur/appearance/server/theme-catalog-source';
+import { ensureKangurThemePresetManifestSeeded } from '@/features/kangur/appearance/server/theme-preset-manifest-source';
+import { ensureKangurThemeSlotAssignmentsSeeded } from '@/features/kangur/appearance/server/theme-slot-assignments-source';
 import {
   isKangurSettingKey,
   listKangurSettings,
@@ -10,6 +22,11 @@ import {
   upsertKangurSettingValue,
 } from '@/features/kangur/services/kangur-settings-repository';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
+import {
+  KANGUR_SLOT_ASSIGNMENTS_KEY,
+  KANGUR_THEME_CATALOG_KEY,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
+} from '@/shared/contracts/kangur-settings-keys';
 import {
   type MongoPersistedStringSettingDocument,
   upsertSettingSchema as settingSchema,
@@ -21,7 +38,7 @@ import {
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import {
   APP_DB_PROVIDER_SETTING_KEY,
   getAppDbProvider,
@@ -42,7 +59,13 @@ import {
   FILE_STORAGE_SOURCE_SETTING_KEY,
 } from '@/shared/lib/files/constants';
 import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
+import {
+  getFrontPagePublicOwner,
+  getFrontPageRedirectPath,
+  normalizeFrontPageApp,
+} from '@/shared/lib/front-page-app';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { resetServerLoggingControlsCache } from '@/shared/lib/observability/logging-controls-server';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import {
   AI_PATHS_CONFIG_PREFIX,
@@ -86,6 +109,7 @@ const CASE_RESOLVER_DETACHED_WORKSPACE_KEYS = new Set<string>([
 
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_SCOPE: SettingsScope = 'light';
+const FRONT_PAGE_SETTING_KEY = 'front_page_app';
 let settingsIndexesEnsured: Promise<void> | null = null;
 
 const TRADERA_RELIST_SCHEDULER_SETTING_KEYS = new Set<string>([
@@ -130,10 +154,33 @@ const ensureSettingsIndexes = async (): Promise<void> => {
   await settingsIndexesEnsured;
 };
 
+const readSeededKangurAppearanceSettingValue = async (
+  key: string
+): Promise<string | null> => {
+  if (KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS.includes(key)) {
+    const settings = await ensureKangurStorefrontAppearanceSettingsSeeded();
+    return settings.find((setting) => setting.key === key)?.value ?? null;
+  }
+  if (key === KANGUR_THEME_CATALOG_KEY) {
+    return (await ensureKangurThemeCatalogSeeded()).value;
+  }
+  if (key === KANGUR_THEME_PRESET_MANIFEST_KEY) {
+    return (await ensureKangurThemePresetManifestSeeded()).value;
+  }
+  if (key === KANGUR_SLOT_ASSIGNMENTS_KEY) {
+    return (await ensureKangurThemeSlotAssignmentsSeeded()).value;
+  }
+  return null;
+};
+
 const readCurrentSettingValue = async (
   key: string
 ): Promise<string | null> => {
   if (isKangurSettingKey(key)) {
+    const seededCanonicalValue = await readSeededKangurAppearanceSettingValue(key);
+    if (seededCanonicalValue !== null) {
+      return seededCanonicalValue;
+    }
     return await readKangurSettingValue(key);
   }
   const readMongo = async (): Promise<string | null> => {
@@ -260,10 +307,14 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
     return baseSettings;
   }
 
-  const kangurSettings = await listKangurSettings();
-  if (kangurSettings.length === 0) {
-    return baseSettings;
-  }
+  const [kangurSettings, seededStorefrontAppearanceSettings, seededThemeCatalog, seededThemePresetManifest, seededThemeSlotAssignments] =
+    await Promise.all([
+      listKangurSettings(),
+      ensureKangurStorefrontAppearanceSettingsSeeded(),
+      ensureKangurThemeCatalogSeeded(),
+      ensureKangurThemePresetManifestSeeded(),
+      ensureKangurThemeSlotAssignmentsSeeded(),
+    ]);
 
   const merged = new Map<string, string>();
   baseSettings.forEach((setting) => {
@@ -271,6 +322,18 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
   });
   kangurSettings.forEach((setting) => {
     merged.set(setting.key, setting.value);
+  });
+  seededStorefrontAppearanceSettings.forEach((setting) => {
+    merged.set(setting.key, setting.value);
+  });
+  [
+    seededThemeCatalog,
+    seededThemePresetManifest,
+    seededThemeSlotAssignments,
+  ].forEach((setting) => {
+    if (setting) {
+      merged.set(setting.key, setting.value);
+    }
   });
   return Array.from(merged.entries()).map(([key, value]) => ({ key, value }));
 };
@@ -292,6 +355,64 @@ const upsertMongoSetting = async (key: string, value: string): Promise<SettingRe
     { upsert: true }
   );
   return { key, value: encodedValue };
+};
+
+const normalizeIncomingSettingValue = (
+  key: string,
+  value: string
+): { ok: true; value: string } | { ok: false; error: string } => {
+  if (key !== FRONT_PAGE_SETTING_KEY) {
+    return { ok: true, value };
+  }
+
+  const normalized = normalizeFrontPageApp(value);
+  if (!normalized) {
+    return {
+      ok: false,
+      error: 'front_page_app must be one of: cms, kangur, chatbot, notes.',
+    };
+  }
+
+  return { ok: true, value: normalized };
+};
+
+const logFrontPageSettingChange = async ({
+  previousValue,
+  nextValue,
+}: {
+  previousValue: string | null;
+  nextValue: string;
+}): Promise<void> => {
+  if (previousValue === nextValue) {
+    return;
+  }
+
+  const previousPublicOwner = getFrontPagePublicOwner(previousValue);
+  const nextPublicOwner = getFrontPagePublicOwner(nextValue);
+  const movedAwayFromKangur =
+    previousPublicOwner === 'kangur' && nextPublicOwner !== 'kangur';
+  const restoredToKangur =
+    previousPublicOwner !== 'kangur' && nextPublicOwner === 'kangur';
+
+  await logSystemEvent({
+    level: movedAwayFromKangur ? 'warn' : 'info',
+    source: 'api/settings',
+    service: 'api/settings',
+    message: movedAwayFromKangur
+      ? 'Front page app switched away from Kangur.'
+      : restoredToKangur
+        ? 'Front page app restored to Kangur.'
+        : 'Front page app changed.',
+    context: {
+      key: FRONT_PAGE_SETTING_KEY,
+      previousValue,
+      nextValue,
+      previousPublicOwner,
+      nextPublicOwner,
+      previousRedirectPath: getFrontPageRedirectPath(previousValue),
+      nextRedirectPath: getFrontPageRedirectPath(nextValue),
+    },
+  });
 };
 
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
@@ -666,6 +787,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });
   }
   clearSettingsCache();
+  resetServerLoggingControlsCache();
   const parsed = await parseJsonBody(req, settingSchema, {
     logPrefix: 'settings.POST',
   });
@@ -679,6 +801,36 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const expectedRevision = parsed.data.expectedRevision;
   const mutationId = parsed.data.mutationId;
   let value = parsed.data.value;
+  const normalizedIncomingValue = normalizeIncomingSettingValue(key, value);
+  if (!normalizedIncomingValue.ok) {
+    if (key === FRONT_PAGE_SETTING_KEY) {
+      await logSystemEvent({
+        level: 'warn',
+        source: 'api/settings',
+        service: 'api/settings',
+        message: 'Rejected invalid front page app update.',
+        context: {
+          key,
+          attemptedValue: value,
+        },
+      });
+    }
+    return NextResponse.json({ error: normalizedIncomingValue.error }, { status: 400 });
+  }
+  value = normalizedIncomingValue.value;
+  let previousFrontPageValue: string | null = null;
+  if (key === FRONT_PAGE_SETTING_KEY) {
+    try {
+      previousFrontPageValue = await readCurrentSettingValue(key);
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'api/settings',
+        source: 'api/settings',
+        action: 'readFrontPageSettingForAudit',
+        key,
+      });
+    }
+  }
   if (isAiPathsSettingKey(key)) {
     await upsertAiPathsSetting(key, value);
     return NextResponse.json({ success: true });
@@ -747,6 +899,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     key: setting.key,
     value: decodeSettingValue(setting.key, setting.value),
   };
+  if (isKangurStorefrontInitialStateDependencyKey(setting.key)) {
+    invalidateKangurStorefrontInitialStateCache();
+  }
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
   }
@@ -767,6 +922,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     invalidateCollectionProviderMapCache();
   }
   await syncTraderaRelistSchedulerWorker(setting.key);
+  if (setting.key === FRONT_PAGE_SETTING_KEY) {
+    primeFrontPageSettingRuntime(normalizedSetting.value);
+    await logFrontPageSettingChange({
+      previousValue: previousFrontPageValue,
+      nextValue: normalizedSetting.value,
+    });
+  }
   return NextResponse.json(normalizedSetting);
 }
 

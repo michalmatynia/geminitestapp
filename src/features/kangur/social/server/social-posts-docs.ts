@@ -1,0 +1,271 @@
+import 'server-only';
+
+import fs from 'fs/promises';
+import path from 'path';
+
+import {
+  KANGUR_DOC_CATALOG,
+  KANGUR_DOCUMENTATION_LIBRARY,
+  type KangurDocumentationGuide,
+  type KangurTooltipDocEntry,
+} from '@/shared/lib/documentation/catalogs/kangur';
+import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import {
+  kangurRecentFeaturesContextProvider,
+  createKangurRecentFeaturesRef,
+} from '@/features/ai/server';
+import { sanitizeKangurSocialPromptText } from '@/features/kangur/social/project-url';
+
+export type KangurDocEntry = KangurDocumentationGuide | KangurTooltipDocEntry;
+
+const normalizeKey = (value: string): string => value.trim().toLowerCase();
+const MAX_EXCERPT_DOCS = 3;
+const MAX_EXCERPT_CHARS = 1200;
+const MAX_CONTEXT_CHARS = 6000;
+const DOCS_ROOT = path.resolve(process.cwd(), 'docs', 'kangur');
+
+const normalizeDocRelativePath = (docPath: string): string | null => {
+  const normalized = docPath.trim().replace(/^\/+/, '');
+  if (!normalized) return null;
+
+  const withoutDocsPrefix = normalized.startsWith('docs/')
+    ? normalized.slice('docs/'.length)
+    : normalized;
+  if (!withoutDocsPrefix) return null;
+
+  const relative = withoutDocsPrefix.startsWith('kangur/')
+    ? withoutDocsPrefix.slice('kangur/'.length)
+    : withoutDocsPrefix;
+
+  return relative || null;
+};
+
+const isSafeKangurDocPath = (absolutePath: string): boolean => {
+  const relativeToDocs = path.relative(DOCS_ROOT, absolutePath);
+  return !(relativeToDocs.startsWith('..') || path.isAbsolute(relativeToDocs));
+};
+
+const isSupportedKangurDocExtension = (absolutePath: string): boolean => {
+  const ext = path.extname(absolutePath).toLowerCase();
+  return !ext || ext === '.md' || ext === '.mdx';
+};
+
+export const resolveKangurDocAbsolutePath = (docPath: string): string | null => {
+  const relative = normalizeDocRelativePath(docPath);
+  if (!relative) return null;
+
+  const absolute = path.resolve(DOCS_ROOT, relative);
+  if (!isSafeKangurDocPath(absolute)) return null;
+  if (!isSupportedKangurDocExtension(absolute)) return null;
+  return absolute;
+};
+
+export const resolveKangurDocReferences = (refs: string[]): KangurDocEntry[] => {
+  if (refs.length === 0) {
+    return KANGUR_DOCUMENTATION_LIBRARY.slice(0, 5);
+  }
+
+  const normalizedRefs = refs.map(normalizeKey);
+  const matches = new Map<string, KangurDocEntry>();
+
+  const addMatch = (entry: KangurDocEntry): void => {
+    if (!matches.has(entry.id)) {
+      matches.set(entry.id, entry);
+    }
+  };
+
+  KANGUR_DOCUMENTATION_LIBRARY.forEach((guide) => {
+    const candidate = [
+      guide.id,
+      guide.title,
+      guide.docPath,
+      guide.summary,
+      ...(guide.sectionsCovered ?? []),
+    ]
+      .map(normalizeKey)
+      .join(' ');
+    if (normalizedRefs.some((ref) => candidate.includes(ref))) {
+      addMatch(guide);
+    }
+  });
+
+  KANGUR_DOC_CATALOG.forEach((entry) => {
+    const candidate = [
+      entry.id,
+      entry.title,
+      entry.docPath,
+      entry.summary,
+      entry.section,
+      ...(entry.aliases ?? []),
+      ...(entry.tags ?? []),
+      ...(entry.uiTargets ?? []),
+    ]
+      .map(normalizeKey)
+      .join(' ');
+    if (normalizedRefs.some((ref) => candidate.includes(ref))) {
+      addMatch(entry);
+    }
+  });
+
+  return Array.from(matches.values());
+};
+
+const buildSummary = (entries: KangurDocEntry[]): string => {
+  if (entries.length === 0) return 'No documentation references provided.';
+  return entries
+    .map((entry) => {
+      const label = 'audience' in entry ? `Guide: ${entry.title}` : `Tooltip: ${entry.title}`;
+      return `- ${label}: ${entry.summary}`;
+    })
+    .join('\n');
+};
+
+const stripFrontMatter = (value: string): string => {
+  const trimmed = value.trimStart();
+  if (!trimmed.startsWith('---')) return value;
+  const endIndex = trimmed.indexOf('\n---', 3);
+  if (endIndex === -1) return value;
+  return trimmed.slice(endIndex + 4);
+};
+
+const truncateText = (value: string, maxChars: number): string => {
+  if (value.length <= maxChars) return value;
+  return `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+};
+
+type MarkdownHeading = {
+  title: string;
+  start: number;
+  contentStart: number;
+};
+
+const readMarkdownHeadings = (content: string): MarkdownHeading[] => {
+  const headingRegex = /^#{1,6}\s+(.+)$/gm;
+  const headings: MarkdownHeading[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    const lineEnd = content.indexOf('\n', match.index);
+    headings.push({
+      title: match[1]?.trim() ?? '',
+      start: match.index,
+      contentStart: lineEnd >= 0 ? lineEnd + 1 : content.length,
+    });
+  }
+
+  return headings;
+};
+
+const findMatchingHeadingIndex = (
+  headings: MarkdownHeading[],
+  normalizedKeywords: string[]
+): number =>
+  headings.findIndex((heading) =>
+    normalizedKeywords.some((keyword) => normalizeKey(heading.title).includes(keyword))
+  );
+
+const extractHeadingExcerpt = (
+  content: string,
+  headings: MarkdownHeading[],
+  matchIndex: number
+): string | null => {
+  if (matchIndex < 0) return null;
+
+  const start = headings[matchIndex]?.contentStart ?? 0;
+  const end =
+    matchIndex + 1 < headings.length
+      ? headings[matchIndex + 1]?.start ?? content.length
+      : content.length;
+  const excerpt = content.slice(start, end).trim();
+
+  return excerpt || null;
+};
+
+const extractMarkdownExcerpt = (content: string, keywords: string[]): string => {
+  const normalizedKeywords = keywords.map(normalizeKey).filter(Boolean);
+  const cleaned = stripFrontMatter(content);
+  if (normalizedKeywords.length === 0) {
+    return truncateText(cleaned.trim(), MAX_EXCERPT_CHARS);
+  }
+
+  const headings = readMarkdownHeadings(cleaned);
+  const matchIndex = findMatchingHeadingIndex(headings, normalizedKeywords);
+  const excerpt = extractHeadingExcerpt(cleaned, headings, matchIndex);
+  if (excerpt) {
+    return truncateText(excerpt, MAX_EXCERPT_CHARS);
+  }
+  return truncateText(cleaned.trim(), MAX_EXCERPT_CHARS);
+};
+
+const readDocExcerpt = async (entry: KangurDocEntry): Promise<string | null> => {
+  const docPath = entry.docPath?.trim();
+  if (!docPath) return null;
+  try {
+    const absolute = resolveKangurDocAbsolutePath(docPath);
+    if (!absolute) return null;
+    const content = await fs.readFile(absolute, 'utf8');
+    const keywords =
+      'audience' in entry
+        ? [entry.title, ...(entry.sectionsCovered ?? [])]
+        : [entry.title, entry.section, ...(entry.aliases ?? [])];
+    return extractMarkdownExcerpt(content, keywords);
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return null;
+  }
+};
+
+const loadRecentFeaturesContext = async (): Promise<string | null> => {
+  try {
+    const ref = createKangurRecentFeaturesRef();
+    const docs = await kangurRecentFeaturesContextProvider.resolveRefs([ref]);
+    if (docs.length === 0) return null;
+    const doc = docs[0];
+    if (!doc) return null;
+    const textSections = (doc.sections ?? [])
+      .filter((s) => s.kind === 'text' && s.text)
+      .map((s) => s.text?.trim() ?? '')
+      .filter(Boolean);
+    if (textSections.length === 0) return null;
+    return `### Recent Feature Updates (Context Registry)\n${textSections.join('\n\n')}`;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return null;
+  }
+};
+
+export const buildKangurDocContext = async (
+  entries: KangurDocEntry[]
+): Promise<{ summary: string; context: string }> => {
+  const [excerptEntries, recentFeaturesContext] = await Promise.all([
+    Promise.all(
+      entries.slice(0, MAX_EXCERPT_DOCS).map(async (entry) => {
+        const excerpt = await readDocExcerpt(entry);
+        if (!excerpt) return null;
+        return {
+          title: entry.title,
+          docPath: entry.docPath,
+          excerpt,
+        };
+      })
+    ),
+    loadRecentFeaturesContext(),
+  ]);
+
+  const summary = buildSummary(entries);
+  const excerpts = excerptEntries
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    .map((entry) =>
+      `### ${entry.title}${entry.docPath ? ` (${entry.docPath})` : ''}\n${entry.excerpt}`
+    )
+    .join('\n\n');
+
+  const combined = [summary, excerpts, recentFeaturesContext].filter(Boolean).join('\n\n');
+  const sanitizedContext = sanitizeKangurSocialPromptText(combined);
+  const trimmedContext = truncateText(sanitizedContext, MAX_CONTEXT_CHARS);
+
+  return {
+    summary: trimmedContext,
+    context: trimmedContext,
+  };
+};

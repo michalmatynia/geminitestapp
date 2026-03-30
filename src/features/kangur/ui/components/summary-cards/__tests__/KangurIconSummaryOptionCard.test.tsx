@@ -1,0 +1,51 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
+  useKangurCoarsePointer: () => true,
+}));
+
+import { KangurIconSummaryOptionCard } from '../KangurIconSummaryOptionCard';
+import { KangurIconSummaryCardContent } from '../KangurIconSummaryCardContent';
+
+describe('KangurIconSummaryOptionCard', () => {
+  it('renders the shared icon-summary content inside the shared option-card shell via composition', () => {
+    const handleClick = vi.fn();
+
+    render(
+      <KangurIconSummaryOptionCard
+        accent='indigo'
+        aria-label='Nagłówek'
+        buttonClassName='rounded-[28px]'
+        data-testid='summary-option-card'
+        emphasis='accent'
+        onClick={handleClick}
+      >
+        <KangurIconSummaryCardContent
+          aside={<span data-testid='summary-option-aside'>aside</span>}
+          description='Opis'
+          footer={<span data-testid='summary-option-footer'>footer</span>}
+          icon={<span data-testid='summary-option-icon'>icon</span>}
+          title='Nagłówek'
+        />
+      </KangurIconSummaryOptionCard>
+    );
+
+    const card = screen.getByTestId('summary-option-card');
+
+    expect(card).toHaveClass('soft-card', 'rounded-[28px]', 'min-h-11', 'px-4');
+    expect(screen.getByTestId('summary-option-icon')).toBeInTheDocument();
+    expect(screen.getByText('Nagłówek')).toBeInTheDocument();
+    expect(screen.getByText('Opis')).toBeInTheDocument();
+    expect(screen.getByTestId('summary-option-aside')).toBeInTheDocument();
+    expect(screen.getByTestId('summary-option-footer')).toBeInTheDocument();
+
+    fireEvent.click(card);
+
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+});

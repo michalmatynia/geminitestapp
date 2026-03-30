@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Operations'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -25,3 +25,13 @@ Use this directory for multi-feature or platform-wide operational procedures:
 ## Current Docs
 
 - [`application-performance-operations.md`](./application-performance-operations.md)
+- [`testing-operations.md`](./testing-operations.md)
+
+## Related Operational Surfaces
+
+- Generated quality and performance artifacts:
+  [`docs/metrics/README.md`](../metrics/README.md)
+- Platform-wide engineering policy and runtime guidance:
+  [`docs/platform/README.md`](../platform/README.md)
+- Kangur-specific operational guidance:
+  [`docs/kangur/observability-and-operations.md`](../kangur/observability-and-operations.md)

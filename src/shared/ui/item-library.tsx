@@ -6,7 +6,6 @@ import React, { useMemo, useState } from 'react';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { Button } from './button';
-import { ConfirmDialog } from './confirm-dialog';
 import { EmptyState } from './empty-state';
 import { FormModal } from './FormModal';
 import { InsetPanel } from './InsetPanel';
@@ -17,6 +16,7 @@ import { ResourceCard } from './ResourceCard';
 import { SectionHeader } from './section-header';
 import { Textarea } from './textarea';
 import { UI_GRID_RELAXED_CLASSNAME } from './layout';
+import { ConfirmModal } from './templates/modals';
 
 export interface LibraryItem {
   id: string;
@@ -241,10 +241,10 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
         </div>
       )}
 
-      <ConfirmDialog
-        open={!!itemToDelete}
-        onOpenChange={(open: boolean): void => {
-          if (!open) setItemToDelete(null);
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        onClose={(): void => {
+          setItemToDelete(null);
         }}
         onConfirm={(): void => {
           if (itemToDelete) {
@@ -254,9 +254,9 @@ export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): 
           }
         }}
         title={`Delete ${entityName}`}
-        description={`Are you sure you want to delete ${entityName.toLowerCase()} "${itemToDelete?.name}"? This cannot be undone.`}
+        message={`Are you sure you want to delete ${entityName.toLowerCase()} "${itemToDelete?.name}"? This cannot be undone.`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous
       />
 
       <FormModal

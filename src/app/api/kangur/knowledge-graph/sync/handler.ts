@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
-import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
-import { buildKangurKnowledgeGraph } from '@/features/kangur/server/knowledge-graph/build-kangur-knowledge-graph';
+import { buildKangurKnowledgeGraphFromRepositories } from '@/features/kangur/server/knowledge-graph/source-loader';
 import { syncKangurKnowledgeGraphToNeo4j } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
 import { enrichKangurKnowledgeGraphWithEmbeddings } from '@/features/kangur/server/knowledge-graph/semantic';
 import { getKangurKnowledgeGraphStatusSnapshot } from '@/features/kangur/server/knowledge-graph/status-loader';
-import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
-import { cmsService } from '@/features/cms/services/cms-service';
 import {
   kangurKnowledgeGraphSyncRequestSchema,
   kangurKnowledgeGraphSyncResponseSchema,
   type ApiHandlerContext,
 } from '@/shared/contracts';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -25,19 +21,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   }
 
   const payload = kangurKnowledgeGraphSyncRequestSchema.parse(ctx.body ?? {});
-  const [tutorContent, nativeGuideStore, pageContentStore, cmsPages] = await Promise.all([
-    getKangurAiTutorContent(payload.locale),
-    getKangurAiTutorNativeGuideStore(payload.locale),
-    getKangurPageContentStore(payload.locale),
-    cmsService.getPages(),
-  ]);
-
-  const baseSnapshot = buildKangurKnowledgeGraph({
+  const baseSnapshot = await buildKangurKnowledgeGraphFromRepositories({
     locale: payload.locale,
-    tutorContent,
-    nativeGuideStore,
-    pageContentStore,
-    cmsPages,
   });
   const snapshot = payload.withEmbeddings
     ? await enrichKangurKnowledgeGraphWithEmbeddings(baseSnapshot)

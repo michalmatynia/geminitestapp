@@ -2,12 +2,13 @@ import { DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE } from '@/shared/contracts/app-embe
 import {
   DEFAULT_KANGUR_LAUNCH_ROUTE,
   type KangurLaunchRoute,
-} from '@/features/kangur/launch-route';
+} from '@/features/kangur/config/launch-route';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 
 export const KANGUR_BASE_PATH = '/kangur';
 export const KANGUR_DEDICATED_APP_SCHEME = 'kangur';
+export const KANGUR_LAUNCH_INTENT_QUERY_PARAM = '__kangurLaunch';
 export const KANGUR_MAIN_PAGE_KEY = DEFAULT_KANGUR_APP_EMBED_ENTRY_PAGE;
 export const KANGUR_EMBED_QUERY_PARAM = 'kangur';
 export const KANGUR_EMBED_BASE_PATH_PREFIX = '__kangur_embed__:';
@@ -17,6 +18,8 @@ const KANGUR_EMBED_STATE_QUERY_PARAM_KEYS = [
   KANGUR_EMBED_QUERY_PARAM,
   'focus',
   'quickStart',
+  'screen',
+  'instanceId',
   'operation',
   'difficulty',
   'categories',
@@ -24,10 +27,12 @@ const KANGUR_EMBED_STATE_QUERY_PARAM_KEYS = [
 ] as const;
 export const KANGUR_INTERNAL_QUERY_PARAM_KEYS = KANGUR_EMBED_STATE_QUERY_PARAM_KEYS;
 export type KangurInternalQueryParamKey = (typeof KANGUR_INTERNAL_QUERY_PARAM_KEYS)[number];
+type KangurSearchParamsLike = Pick<URLSearchParams, 'get' | 'toString'> | null | undefined;
 
 export const KANGUR_PAGE_TO_SLUG: Record<string, string> = Object.freeze({
   Competition: 'competition',
   Game: 'game',
+  GamesLibrary: 'games',
   LearnerProfile: 'profile',
   Lessons: 'lessons',
   ParentDashboard: 'parent-dashboard',
@@ -393,13 +398,16 @@ const KANGUR_DEDICATED_APP_PATH_BY_SLUG: Record<string, string> = Object.freeze(
   duels: 'duels',
   leaderboard: 'leaderboard',
   lessons: 'lessons',
-  'parent-dashboard': 'parent',
   plan: 'plan',
   practice: 'practice',
   profile: 'profile',
   results: 'results',
   tests: 'tests',
 });
+
+export const KANGUR_DEDICATED_APP_STABLE_PATHS = Object.freeze(
+  ['', ...Object.values(KANGUR_DEDICATED_APP_PATH_BY_SLUG)].sort()
+);
 
 const toKangurSearchParams = (searchParams: KangurPublicSearchParams): URLSearchParams => {
   if (!searchParams) {
@@ -469,6 +477,52 @@ export const getKangurCanonicalPublicHref = (
   return query ? `${pathname}?${query}` : pathname;
 };
 
+export const getKangurPublicAliasHref = (
+  slugSegments: readonly string[] = [],
+  searchParams?: KangurPublicSearchParams
+): string => {
+  const pathname = normalizeKangurRequestedPath(slugSegments, KANGUR_BASE_PATH);
+  const query = toKangurSearchParams(searchParams).toString();
+
+  return query ? `${pathname}?${query}` : pathname;
+};
+
+const appendKangurLaunchIntent = (href: string, route: KangurLaunchRoute): string => {
+  if (route !== 'dedicated_app') {
+    return href;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'append-launch-intent',
+      description: 'Marks a public Kangur href for client-side native launch handoff.',
+      context: { href, route },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      parsed.searchParams.set(KANGUR_LAUNCH_INTENT_QUERY_PARAM, route);
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: href }
+  );
+};
+
+export const readKangurLaunchIntent = (
+  searchParams: KangurSearchParamsLike
+): KangurLaunchRoute | null => {
+  const normalized = searchParams?.get(KANGUR_LAUNCH_INTENT_QUERY_PARAM)?.trim().toLowerCase();
+  return normalized === 'dedicated_app' ? 'dedicated_app' : null;
+};
+
+export const stripKangurLaunchIntent = (
+  searchParams: KangurSearchParamsLike
+): URLSearchParams => {
+  const nextSearchParams = new URLSearchParams(searchParams?.toString() ?? '');
+  nextSearchParams.delete(KANGUR_LAUNCH_INTENT_QUERY_PARAM);
+  return nextSearchParams;
+};
+
 export type KangurLaunchTarget = {
   fallbackHref: string;
   href: string;
@@ -503,6 +557,19 @@ export const getKangurLaunchHref = (
   slugSegments: readonly string[] = [],
   searchParams?: KangurPublicSearchParams
 ): string => getKangurLaunchTarget(route, slugSegments, searchParams).href;
+
+export const getKangurPublicLaunchHref = (
+  route: KangurLaunchRoute = DEFAULT_KANGUR_LAUNCH_ROUTE,
+  slugSegments: readonly string[] = [],
+  searchParams?: KangurPublicSearchParams
+): string => {
+  const aliasHref = getKangurPublicAliasHref(slugSegments, searchParams);
+  if (!getKangurDedicatedAppHref(slugSegments, searchParams)) {
+    return aliasHref;
+  }
+
+  return appendKangurLaunchIntent(aliasHref, route);
+};
 
 export const getKangurLoginHref = (
   basePath: string = KANGUR_BASE_PATH,

@@ -9,7 +9,7 @@ import {
   questionDocumentNeedsRichRenderer,
   hasIllustration,
   hasRichChoiceContent,
-} from '@/features/kangur/test-questions';
+} from '@/features/kangur/test-suites/questions';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import { useOptionalKangurTestSuiteRuntime } from '@/features/kangur/ui/context/KangurTestSuiteRuntimeContext';
 import {
@@ -30,7 +30,7 @@ import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 import { cn } from '@/features/kangur/shared/utils';
 
-import { KangurLessonDocumentRenderer } from './KangurLessonDocumentRenderer';
+import { KangurLessonDocumentRenderer } from './lesson-runtime/KangurLessonDocumentRenderer';
 import { KangurLessonNarrator } from './KangurLessonNarrator';
 import { renderKangurQuestionIllustration } from './KangurQuestionIllustrationRenderer';
 import {
@@ -52,17 +52,19 @@ type Props = {
   showSectionIntro?: boolean;
 };
 
-export function KangurTestQuestionRenderer({
-  contentId = null,
-  question,
-  selectedLabel,
-  onSelect,
-  showAnswer,
-  questionIndex,
-  totalQuestions,
-  showReadControl = true,
-  showSectionIntro = true,
-}: Props): React.JSX.Element {
+export function KangurTestQuestionRenderer(props: Props): React.JSX.Element {
+  const {
+    contentId = null,
+    question,
+    selectedLabel,
+    onSelect,
+    showAnswer,
+    questionIndex,
+    totalQuestions,
+    showReadControl = true,
+    showSectionIntro = true,
+  } = props;
+
   const runtime = useOptionalKangurTestSuiteRuntime();
   const isCoarsePointer = useKangurCoarsePointer();
   const sectionEntryId = showSectionIntro ? (showAnswer ? 'tests-review' : 'tests-question') : null;
@@ -127,7 +129,7 @@ export function KangurTestQuestionRenderer({
   const stemContent = renderRichStem && stemDocument ? (
     <KangurLessonDocumentRenderer document={stemDocument} renderMode='lesson' />
   ) : (
-    <p className='text-sm font-medium leading-relaxed [color:var(--kangur-page-text)]'>
+    <p className='mx-auto max-w-2xl text-center text-sm font-medium leading-relaxed [color:var(--kangur-page-text)]'>
       {question.prompt}
     </p>
   );
@@ -174,20 +176,22 @@ export function KangurTestQuestionRenderer({
       </div>
       {showSectionIntro ? (
         <KangurPanelIntro
+          className='items-center text-center'
           data-testid='kangur-test-question-copy'
+          descriptionClassName='mx-auto max-w-2xl text-center'
           description={sectionDescription}
           title={sectionTitle}
           titleAs='h2'
-          titleClassName='text-lg font-bold tracking-[-0.02em]'
+          titleClassName='text-center text-lg font-bold tracking-[-0.02em]'
         />
       ) : null}
       {/* Header */}
       {questionIndex !== undefined && resolvedTotalQuestions !== undefined ? (
-        <KangurPanelRow className='sm:items-start sm:justify-between'>
-          <KangurSectionEyebrow as='span' className='pt-2 text-xs tracking-wide'>
+        <KangurPanelRow className='items-center text-center sm:justify-center'>
+          <KangurSectionEyebrow as='span' className='pt-2 text-center text-xs tracking-wide'>
             Question {questionIndex + 1} / {resolvedTotalQuestions}
           </KangurSectionEyebrow>
-          <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end'>
+          <div className='flex w-full flex-wrap items-center justify-center gap-2 sm:w-full'>
             {showReadControl ? (
               <KangurLessonNarrator
                 lesson={narratorLesson}

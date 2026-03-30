@@ -50,6 +50,9 @@ import * as productsImagesBase64 from '../images/base64/route-handler';
 import * as productsImagesBase64All from '../images/base64/all/route-handler';
 import * as productsImagesUpload from '../images/upload/route-handler';
 import * as productsImportCsv from '../import/csv/route-handler';
+import * as productsOrdersImportStatuses from '../orders-import/statuses/route-handler';
+import * as productsOrdersImportPreview from '../orders-import/preview/route-handler';
+import * as productsOrdersImportImport from '../orders-import/import/route-handler';
 import * as productsAiJobs from '../ai-jobs/route-handler';
 import * as productsAiJobsBulk from '../ai-jobs/bulk/route-handler';
 import * as productsAiJobsEnqueue from '../ai-jobs/enqueue/route-handler';
@@ -110,6 +113,9 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['images', 'base64', 'all'], module: productsImagesBase64All },
   { pattern: ['images', 'upload'], module: productsImagesUpload },
   { pattern: ['import', 'csv'], module: productsImportCsv },
+  { pattern: ['orders-import', 'statuses'], module: productsOrdersImportStatuses },
+  { pattern: ['orders-import', 'preview'], module: productsOrdersImportPreview },
+  { pattern: ['orders-import', 'import'], module: productsOrdersImportImport },
   { pattern: ['ai-jobs'], module: productsAiJobs },
   { pattern: ['ai-jobs', 'bulk'], module: productsAiJobsBulk },
   { pattern: ['ai-jobs', 'enqueue'], module: productsAiJobsEnqueue },

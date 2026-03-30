@@ -2,12 +2,13 @@
 
 import { useMemo, type CSSProperties } from 'react';
 
-import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
+import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor/section-knowledge';
 import type {
   KangurTutorAnchorKind,
   KangurTutorAnchorRegistration,
 } from '@/features/kangur/ui/context/kangur-tutor-types';
 import { selectBestTutorAnchor } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
+import { isKangurLaunchableGameContentId } from '@/features/kangur/ui/services/game-launch';
 
 import { getEstimatedBubbleHeight } from './KangurAiTutorGuidedLayout';
 import { selectBestSelectionAnchor } from './KangurAiTutorWidget.helpers';
@@ -501,18 +502,7 @@ const getAnchorKindsForSurface = (
     if (
       contentId === 'game:training-setup' ||
       contentId === 'game:operation-selector' ||
-      contentId === 'game:calendar_quiz' ||
-      contentId === 'game:geometry_quiz' ||
-      contentId === 'game:clock_quiz' ||
-      contentId === 'game:addition_quiz' ||
-      contentId === 'game:subtraction_quiz' ||
-      contentId === 'game:division_quiz' ||
-      contentId === 'game:multiplication_quiz' ||
-      contentId === 'game:logical_patterns_quiz' ||
-      contentId === 'game:logical_classification_quiz' ||
-      contentId === 'game:logical_analogies_quiz' ||
-      contentId === 'game:english_sentence_quiz' ||
-      contentId === 'game:english_parts_of_speech_quiz' ||
+      isKangurLaunchableGameContentId(contentId) ||
       contentId?.startsWith('game:kangur:')
     ) {
       return ['screen'];
@@ -733,14 +723,11 @@ export function useKangurAiTutorFocusLayoutState({
     }
 
     if (registeredAnchor) {
-      const registeredAnchorKnowledgeReference =
-        registeredAnchor.kind === 'selection'
-          ? resolveKangurTutorSectionKnowledgeReference({
-            anchorId: registeredAnchor.id,
-            contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
-            focusKind: 'selection',
-          })
-          : null;
+      const registeredAnchorKnowledgeReference = resolveKangurTutorSectionKnowledgeReference({
+        anchorId: registeredAnchor.id,
+        contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,
+        focusKind: registeredAnchor.kind,
+      });
       const conversationFocus: TutorConversationFocus = {
         assignmentId: registeredAnchor.metadata?.assignmentId ?? null,
         contentId: registeredAnchor.metadata?.contentId ?? sessionContext.contentId ?? null,

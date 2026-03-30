@@ -13,7 +13,7 @@ vi.mock('@/shared/lib/api/api-handler', () => ({
         }),
 }));
 
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
+vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 

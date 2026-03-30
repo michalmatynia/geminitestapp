@@ -27,6 +27,16 @@ interface ChatbotJobDocument {
   finishedAt?: Date | undefined;
 }
 
+const normalizeNullableString = (value: string | null | undefined): string | undefined =>
+  value ?? undefined;
+
+const normalizeNullableDate = (
+  value: string | Date | null | undefined
+): Date | undefined => {
+  if (value === null || value === undefined) return undefined;
+  return value instanceof Date ? value : new Date(value);
+};
+
 function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
   return {
     id: doc._id.toString(),
@@ -76,12 +86,14 @@ export const chatbotJobRepository: ChatbotJobRepository = {
     const doc: Omit<ChatbotJobDocument, '_id'> = {
       sessionId: input.sessionId,
       status: 'pending',
-      model: input.model,
+      model: normalizeNullableString(input.model),
       payload: input.payload,
-      resultText: input.resultText,
-      errorMessage: input.errorMessage,
+      resultText: normalizeNullableString(input.resultText),
+      errorMessage: normalizeNullableString(input.errorMessage),
       createdAt: now,
       updatedAt: null,
+      startedAt: normalizeNullableDate(input.startedAt),
+      finishedAt: normalizeNullableDate(input.finishedAt),
     };
 
     const result = await db
@@ -104,15 +116,23 @@ export const chatbotJobRepository: ChatbotJobRepository = {
   async update(id: string, update: ChatbotJobUpdateInput): Promise<ChatbotJob | null> {
     if (!ObjectId.isValid(id)) return null;
     const db = await getMongoDb();
-    const updateDoc: ChatbotJobUpdateInput = {};
+    const updateDoc: Partial<ChatbotJobDocument> = {};
 
     if (update.status !== undefined) updateDoc.status = update.status;
-    if (update.model !== undefined) updateDoc.model = update.model;
+    if (update.model !== undefined) updateDoc.model = normalizeNullableString(update.model);
     if (update.payload !== undefined) updateDoc.payload = update.payload;
-    if (update.resultText !== undefined) updateDoc.resultText = update.resultText;
-    if (update.errorMessage !== undefined) updateDoc.errorMessage = update.errorMessage;
-    if (update.startedAt !== undefined) updateDoc.startedAt = update.startedAt;
-    if (update.finishedAt !== undefined) updateDoc.finishedAt = update.finishedAt;
+    if (update.resultText !== undefined) {
+      updateDoc.resultText = normalizeNullableString(update.resultText);
+    }
+    if (update.errorMessage !== undefined) {
+      updateDoc.errorMessage = normalizeNullableString(update.errorMessage);
+    }
+    if (update.startedAt !== undefined) {
+      updateDoc.startedAt = normalizeNullableDate(update.startedAt);
+    }
+    if (update.finishedAt !== undefined) {
+      updateDoc.finishedAt = normalizeNullableDate(update.finishedAt);
+    }
 
     if (Object.keys(updateDoc).length === 0) {
       return this.findById(id);

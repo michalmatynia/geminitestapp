@@ -52,6 +52,24 @@ describe('shared Select native fallback', () => {
     expect(onValueChange).toHaveBeenCalledWith('oldest');
   });
 
+  it('extracts nested item text for native option labels', () => {
+    render(
+      <Select value='nested'>
+        <SelectTrigger aria-label='Nested select'>
+          <SelectValue placeholder='Pick one' />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value='nested'>
+            <span>Nested</span>
+            <span> label</span>
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    );
+
+    expect(screen.getByRole('option', { name: 'Nested label' })).toBeInTheDocument();
+  });
+
   it('renders a disabled native select when SelectTrigger is used without Select context', () => {
     render(<SelectTrigger aria-label='Standalone select' data-doc-id='standalone' />);
 

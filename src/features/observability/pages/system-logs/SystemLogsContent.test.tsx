@@ -83,35 +83,34 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </div>
   ),
-  Pagination: ({
-    page,
-    totalPages,
-    onPageChange,
-  }: {
+  Pagination: (props: {
     page: number;
     totalPages?: number;
     onPageChange: (page: number) => void;
-  }) => (
-    <div>
-      <button
-        type='button'
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-      >
-        Previous page
-      </button>
-      <button
-        type='button'
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= (totalPages ?? 1)}
-      >
-        Next page
-      </button>
-      <span>
-        pagination:{page}/{totalPages ?? 1}
-      </span>
-    </div>
-  ),
+  }) => {
+    const { page, totalPages, onPageChange } = props;
+    return (
+      <div>
+        <button
+          type='button'
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+        >
+          Previous page
+        </button>
+        <button
+          type='button'
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= (totalPages ?? 1)}
+        >
+          Next page
+        </button>
+        <span>
+          pagination:{page}/{totalPages ?? 1}
+        </span>
+      </div>
+    );
+  },
   RefreshButton: ({
     onRefresh,
     isRefreshing,
@@ -256,16 +255,7 @@ vi.mock('@/shared/ui/templates/FilterPanel', () => ({
 }));
 
 vi.mock('@/shared/ui/templates/modals', () => ({
-  ConfirmModal: ({
-    isOpen,
-    title,
-    children,
-    onClose,
-    onConfirm,
-    confirmText,
-    confirmDisabled,
-    loading,
-  }: {
+  ConfirmModal: (props: {
     isOpen: boolean;
     title: string;
     children?: React.ReactNode;
@@ -274,8 +264,18 @@ vi.mock('@/shared/ui/templates/modals', () => ({
     confirmText?: string;
     confirmDisabled?: boolean;
     loading?: boolean;
-  }) =>
-    isOpen ? (
+  }) => {
+    const {
+      isOpen,
+      title,
+      children,
+      onClose,
+      onConfirm,
+      confirmText,
+      confirmDisabled,
+      loading,
+    } = props;
+    return isOpen ? (
       <div role='dialog' aria-label={title}>
         <div>{title}</div>
         {children}
@@ -290,7 +290,8 @@ vi.mock('@/shared/ui/templates/modals', () => ({
           {confirmText ?? 'Confirm'}
         </button>
       </div>
-    ) : null,
+    ) : null;
+  },
 }));
 
 vi.mock('./SystemLogs.Context', () => ({
@@ -495,6 +496,13 @@ describe('SystemLogsContent', () => {
     const eventStreamPanel = screen.getByText('event-stream-panel:footer-off');
 
     expect(listPanel).toContainElement(heading);
+    expect(getLatestConnectionsQuery()).toMatchObject({
+      enabled: false,
+      page: 1,
+      range: '7d',
+      scope: 'all',
+      type: 'pageview',
+    });
     expect(listPanel).toContainElement(breadcrumbs);
     expect(overviewTab).toBeInTheDocument();
     expect(connectionsTab).toBeInTheDocument();
@@ -589,7 +597,7 @@ describe('SystemLogsContent', () => {
     });
   });
 
-  it('refreshes every data source and swaps export payloads between overview and connections', () => {
+  it('refreshes only the active tab data source and swaps export payloads between overview and connections', () => {
     connectionsQueryResult = {
       ...createConnectionsResult({
         events: [{ id: 'visit-1', path: '/pricing' }],
@@ -612,11 +620,12 @@ describe('SystemLogsContent', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
 
     expect(logsRefetchMock).toHaveBeenCalledTimes(1);
-    expect(metricsRefetchMock).toHaveBeenCalledTimes(1);
-    expect(connectionsRefetchMock).toHaveBeenCalledTimes(1);
+    expect(metricsRefetchMock).not.toHaveBeenCalled();
+    expect(connectionsRefetchMock).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Connections' }));
 
+    expect(getLatestConnectionsQuery()).toMatchObject({ enabled: true });
     expect(mocks.replaceMock).toHaveBeenCalledWith('/admin/system/logs?tab=connections', {
       scroll: false,
     });
@@ -624,6 +633,19 @@ describe('SystemLogsContent', () => {
       'data-copy-value',
       JSON.stringify([{ id: 'visit-1', path: '/pricing' }], null, 2)
     );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    expect(logsRefetchMock).toHaveBeenCalledTimes(1);
+    expect(metricsRefetchMock).not.toHaveBeenCalled();
+    expect(connectionsRefetchMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Metrics' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    expect(logsRefetchMock).toHaveBeenCalledTimes(1);
+    expect(metricsRefetchMock).toHaveBeenCalledTimes(1);
+    expect(connectionsRefetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('debounces overview log search and clears it immediately when requested', () => {
@@ -730,6 +752,7 @@ describe('SystemLogsContent', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Connections' }));
 
     expect(getLatestConnectionsQuery()).toMatchObject({
+      enabled: true,
       page: 1,
       search: '',
       country: '',
@@ -812,5 +835,37 @@ describe('SystemLogsContent', () => {
 
     connectionsFiltersToggle = screen.getByRole('button', { name: /Hide Filters/ });
     expect(connectionsFiltersToggle).not.toHaveTextContent(/\(\d+\)/);
+  });
+
+  it('keeps the connections query disabled until the connections tab is active', () => {
+    render(<SystemLogsContent />);
+
+    expect(getLatestConnectionsQuery()).toMatchObject({
+      enabled: false,
+      page: 1,
+      range: '7d',
+      scope: 'all',
+      type: 'pageview',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Connections' }));
+
+    expect(getLatestConnectionsQuery()).toMatchObject({
+      enabled: true,
+      page: 1,
+      range: '7d',
+      scope: 'all',
+      type: 'pageview',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Metrics' }));
+
+    expect(getLatestConnectionsQuery()).toMatchObject({
+      enabled: false,
+      page: 1,
+      range: '7d',
+      scope: 'all',
+      type: 'pageview',
+    });
   });
 });

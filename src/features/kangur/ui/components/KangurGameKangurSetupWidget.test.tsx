@@ -39,12 +39,12 @@ vi.mock('next-intl', () => ({
               'KangurGamePage.screens.kangur_setup.description': {
                 de: 'Bereite eine Mathe-Kanguru-Sitzung vor.',
                 en: 'Prepare a Mathematical Kangaroo session.',
-                pl: 'Przygotuj sesje Kangura Matematycznego.',
+                pl: 'Przygotuj sesje StudiQ Matematycznego.',
               },
               'KangurGamePage.screens.kangur_setup.label': {
                 de: 'Mathe-Kanguru-Sitzung einrichten',
                 en: 'Mathematical Kangaroo session setup',
-                pl: 'Konfiguracja sesji Kangura Matematycznego',
+                pl: 'Konfiguracja sesji StudiQ Matematycznego',
               },
             } as const
           )[`${namespace}.${key}`]?.[localeState.value] ?? key,
@@ -58,8 +58,8 @@ vi.mock('@/features/kangur/ui/services/game-setup-recommendations', () => ({
   getRecommendedKangurMode: getRecommendedKangurModeMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameSetupStage', () => ({
-  KangurGameSetupStage: ({
+vi.mock('@/features/kangur/ui/components/KangurGameSetupShell', () => ({
+  renderKangurGameSetupShell: ({
     children,
     description,
     testId,
@@ -74,7 +74,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameSetupStage', () => ({
   }) => (
     <section data-testid={testId}>
       <h1>{title}</h1>
-      <div data-testid='mock-kangur-stage-description'>{description}</div>
+      <div data-testid='mock-kangur-shell-description'>{description}</div>
       {visualTitle}
       {children}
     </section>
@@ -115,7 +115,7 @@ describe('KangurGameKangurSetupWidget', () => {
     const text = art.querySelector('text');
 
     expect(screen.getByRole('heading', { name: 'Mathematical Kangaroo session setup' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-kangur-stage-description')).toHaveTextContent(
+    expect(screen.getByTestId('mock-kangur-shell-description')).toHaveTextContent(
       'Prepare a Mathematical Kangaroo session.'
     );
     expect(text).not.toBeNull();
@@ -134,7 +134,7 @@ describe('KangurGameKangurSetupWidget', () => {
     const text = art.querySelector('text');
 
     expect(screen.getByRole('heading', { name: 'Mathe-Kanguru-Sitzung einrichten' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-kangur-stage-description')).toHaveTextContent(
+    expect(screen.getByTestId('mock-kangur-shell-description')).toHaveTextContent(
       'Bereite eine Mathe-Kanguru-Sitzung vor.'
     );
     expect(text).not.toBeNull();
@@ -156,7 +156,7 @@ describe('KangurGameKangurSetupWidget', () => {
     expect(
       screen.getByRole('heading', { name: 'Налаштування сесії Математичного Кенгуру' })
     ).toBeInTheDocument();
-    expect(screen.getByTestId('mock-kangur-stage-description')).toHaveTextContent(
+    expect(screen.getByTestId('mock-kangur-shell-description')).toHaveTextContent(
       'Підготуйте сесію Математичного Кенгуру.'
     );
     expect(text).not.toBeNull();
@@ -176,7 +176,7 @@ describe('KangurGameKangurSetupWidget', () => {
     const text = art.querySelector('text');
 
     expect(screen.getByRole('heading', { name: 'Mathe-Kanguru' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-kangur-stage-description')).toHaveTextContent(
+    expect(screen.getByTestId('mock-kangur-shell-description')).toHaveTextContent(
       'Wähle die Wettbewerbsedition und das Aufgabenset zum Lösen aus.'
     );
     expect(text).not.toBeNull();

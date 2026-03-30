@@ -52,6 +52,7 @@ export interface FilterPanelProps {
 
   // Styling
   className?: string;
+  idBase?: string;
 }
 
 const isActiveFilterValue = (value: unknown): boolean => {
@@ -96,6 +97,7 @@ interface FilterPanelMainFiltersProps {
   defaultExpanded?: boolean;
   filterSearchPlaceholder: string;
   filters: FilterField[];
+  idBase?: string;
   onFilterChange: (key: string, value: unknown) => void;
   onReset?: () => void;
   onSearchChange?: (search: string) => void;
@@ -104,7 +106,7 @@ interface FilterPanelMainFiltersProps {
   values: Record<string, unknown>;
 }
 
-function FilterPanelMainFilters({
+const renderFilterPanelMainFilters = ({
   actions,
   activeValues,
   collapsible,
@@ -112,32 +114,32 @@ function FilterPanelMainFilters({
   defaultExpanded,
   filterSearchPlaceholder,
   filters,
+  idBase,
   onFilterChange,
   onReset,
   onSearchChange,
   search,
   toggleButtonAlignment,
   values,
-}: FilterPanelMainFiltersProps): JSX.Element {
-  return (
-    <PanelFiltersSearchPlaceholderRuntimeContext.Provider value={filterSearchPlaceholder}>
-      <PanelFilters
-        filters={filters}
-        values={values}
-        {...(activeValues !== undefined ? { activeValues } : {})}
-        search={search}
-        onFilterChange={onFilterChange}
-        {...(onSearchChange !== undefined ? { onSearchChange } : {})}
-        {...(onReset !== undefined ? { onReset } : {})}
-        compact={compact}
-        collapsible={collapsible}
-        {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
-        toggleButtonAlignment={toggleButtonAlignment}
-        {...(actions !== undefined ? { actions } : {})}
-      />
-    </PanelFiltersSearchPlaceholderRuntimeContext.Provider>
-  );
-}
+}: FilterPanelMainFiltersProps): JSX.Element => (
+  <PanelFiltersSearchPlaceholderRuntimeContext.Provider value={filterSearchPlaceholder}>
+    <PanelFilters
+      {...(idBase !== undefined ? { idBase } : {})}
+      filters={filters}
+      values={values}
+      {...(activeValues !== undefined ? { activeValues } : {})}
+      search={search}
+      onFilterChange={onFilterChange}
+      {...(onSearchChange !== undefined ? { onSearchChange } : {})}
+      {...(onReset !== undefined ? { onReset } : {})}
+      compact={compact}
+      collapsible={collapsible}
+      {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
+      toggleButtonAlignment={toggleButtonAlignment}
+      {...(actions !== undefined ? { actions } : {})}
+    />
+  </PanelFiltersSearchPlaceholderRuntimeContext.Provider>
+);
 
 function FilterPanelChildrenSlot({ children }: { children?: ReactNode }): JSX.Element | null {
   if (!children) return null;
@@ -196,6 +198,82 @@ function FilterPanelActiveCount({
   );
 }
 
+const renderFilterPanelContent = ({
+  actions,
+  activeValues,
+  children,
+  className,
+  collapsible,
+  compact,
+  defaultExpanded,
+  filterSearchPlaceholder,
+  filters,
+  idBase,
+  headerAction,
+  headerTitle,
+  onApplyPreset,
+  onFilterChange,
+  onReset,
+  onSearchChange,
+  presets,
+  search,
+  showHeader,
+  toggleButtonAlignment,
+  values,
+}: {
+  actions?: ReactNode;
+  activeValues?: Record<string, unknown>;
+  children?: ReactNode;
+  className?: string;
+  collapsible: boolean;
+  compact: boolean;
+  defaultExpanded?: boolean;
+  filterSearchPlaceholder: string;
+  filters: FilterField[];
+  idBase?: string;
+  headerAction?: ReactNode;
+  headerTitle: string;
+  onApplyPreset?: (preset: Record<string, unknown>) => void;
+  onFilterChange: (key: string, value: unknown) => void;
+  onReset?: () => void;
+  onSearchChange?: (search: string) => void;
+  presets: Array<{
+    label: string;
+    values: Record<string, unknown>;
+  }>;
+  search: string;
+  showHeader: boolean;
+  toggleButtonAlignment: 'start' | 'end';
+  values: Record<string, unknown>;
+}): JSX.Element => (
+  <div className={className}>
+    <FilterPanelHeader
+      showHeader={showHeader}
+      headerTitle={headerTitle}
+      {...(headerAction !== undefined ? { headerAction } : {})}
+    />
+    {renderFilterPanelMainFilters({
+      actions,
+      activeValues,
+      collapsible,
+      compact,
+      defaultExpanded,
+      filterSearchPlaceholder,
+      filters,
+      idBase,
+      onFilterChange,
+      onReset,
+      onSearchChange,
+      search,
+      toggleButtonAlignment,
+      values,
+    })}
+    <FilterPanelChildrenSlot {...(children !== undefined ? { children } : {})} />
+    <FilterPanelPresets presets={presets} {...(onApplyPreset !== undefined ? { onApplyPreset } : {})} />
+    <FilterPanelActiveCount values={values} search={search} {...(activeValues !== undefined ? { activeValues } : {})} />
+  </div>
+);
+
 export const FilterPanel: React.FC<FilterPanelProps> = ({
   filters,
   values,
@@ -217,34 +295,31 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   actions,
   children,
   className,
+  idBase,
 }) => {
-  return (
-    <div className={className}>
-      <FilterPanelHeader
-        showHeader={showHeader}
-        headerTitle={headerTitle}
-        {...(headerAction !== undefined ? { headerAction } : {})}
-      />
-      <FilterPanelMainFilters
-        filters={filters}
-        values={values}
-        {...(activeValues !== undefined ? { activeValues } : {})}
-        search={search}
-        filterSearchPlaceholder={filterSearchPlaceholder}
-        onFilterChange={onFilterChange}
-        {...(onSearchChange !== undefined ? { onSearchChange } : {})}
-        {...(onReset !== undefined ? { onReset } : {})}
-        compact={compact}
-        collapsible={collapsible}
-        {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
-        toggleButtonAlignment={toggleButtonAlignment}
-        {...(actions !== undefined ? { actions } : {})}
-      />
-      <FilterPanelChildrenSlot {...(children !== undefined ? { children } : {})} />
-      <FilterPanelPresets presets={presets} {...(onApplyPreset !== undefined ? { onApplyPreset } : {})} />
-      <FilterPanelActiveCount values={values} search={search} {...(activeValues !== undefined ? { activeValues } : {})} />
-    </div>
-  );
+  return renderFilterPanelContent({
+    actions,
+    activeValues,
+    children,
+    className,
+    collapsible,
+    compact,
+    defaultExpanded,
+    filterSearchPlaceholder,
+    filters,
+    idBase,
+    headerAction,
+    headerTitle,
+    onApplyPreset,
+    onFilterChange,
+    onReset,
+    onSearchChange,
+    presets,
+    search,
+    showHeader,
+    toggleButtonAlignment,
+    values,
+  });
 };
 
 FilterPanel.displayName = 'FilterPanel';

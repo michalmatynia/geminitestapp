@@ -22,6 +22,24 @@ const { translationState } = vi.hoisted(() => ({
   },
 }));
 
+const trainingSetupTranslations = {
+  'KangurGamePage.screens.training.description': {
+    de: 'Konfiguriere das gemischte Training und wahl den Fragenbereich.',
+    en: 'Configure mixed training and choose the question range.',
+    pl: 'Skonfiguruj trening mieszany i dobierz zakres pytan.',
+  },
+  'KangurGamePage.screens.training.label': {
+    de: 'Training einrichten',
+    en: 'Training setup',
+    pl: 'Konfiguracja treningu',
+  },
+  'KangurGamePage.screens.training.wordmarkLabel': {
+    de: 'Training',
+    en: 'Training',
+    pl: 'Trening',
+  },
+} as const;
+
 vi.mock('next-intl', () => ({
   useLocale: () => localeState.value,
   useTranslations:
@@ -29,25 +47,7 @@ vi.mock('next-intl', () => ({
     (key: string) =>
       translationState.missing
         ? key
-        : (
-            {
-              'KangurGamePage.screens.training.description': {
-                de: 'Konfiguriere das gemischte Training und wahl den Fragenbereich.',
-                en: 'Configure mixed training and choose the question range.',
-                pl: 'Skonfiguruj trening mieszany i dobierz zakres pytan.',
-              },
-              'KangurGamePage.screens.training.label': {
-                de: 'Training einrichten',
-                en: 'Training setup',
-                pl: 'Konfiguracja treningu',
-              },
-              'KangurGamePage.screens.training.wordmarkLabel': {
-                de: 'Training',
-                en: 'Training',
-                pl: 'Trening',
-              },
-            } as const
-          )[`${namespace}.${key}`]?.[localeState.value] ?? key,
+        : trainingSetupTranslations[`${namespace}.${key}`]?.[localeState.value] ?? key,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
@@ -58,8 +58,8 @@ vi.mock('@/features/kangur/ui/services/game-setup-recommendations', () => ({
   getRecommendedTrainingSetup: getRecommendedTrainingSetupMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameSetupStage', () => ({
-  KangurGameSetupStage: ({
+vi.mock('@/features/kangur/ui/components/KangurGameSetupShell', () => ({
+  renderKangurGameSetupShell: ({
     children,
     description,
     testId,
@@ -74,7 +74,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameSetupStage', () => ({
   }) => (
     <section data-testid={testId}>
       <h1>{title}</h1>
-      <div data-testid='mock-training-stage-description'>{description}</div>
+      <div data-testid='mock-training-shell-description'>{description}</div>
       {visualTitle}
       {children}
     </section>
@@ -85,7 +85,7 @@ vi.mock('@/features/kangur/ui/components/KangurTrainingSetupPanel', () => ({
   KangurTrainingSetupPanel: () => <div data-testid='mock-training-setup-panel'>mock-training-setup-panel</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   default: () => <div data-testid='mock-practice-assignment-banner'>mock-practice-assignment-banner</div>,
 }));
 
@@ -125,7 +125,7 @@ describe('KangurGameTrainingSetupWidget', () => {
     const text = art.querySelector('text');
 
     expect(screen.getByRole('heading', { name: 'Training setup' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-training-stage-description')).toHaveTextContent(
+    expect(screen.getByTestId('mock-training-shell-description')).toHaveTextContent(
       'Configure mixed training and choose the question range.'
     );
     expect(text).not.toBeNull();
@@ -144,7 +144,7 @@ describe('KangurGameTrainingSetupWidget', () => {
     const text = art.querySelector('text');
 
     expect(screen.getByRole('heading', { name: 'Training einrichten' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-training-stage-description')).toHaveTextContent(
+    expect(screen.getByTestId('mock-training-shell-description')).toHaveTextContent(
       'Konfiguriere das gemischte Training und wahl den Fragenbereich.'
     );
     expect(text).not.toBeNull();
@@ -164,7 +164,7 @@ describe('KangurGameTrainingSetupWidget', () => {
     const text = art.querySelector('text');
 
     expect(screen.getByRole('heading', { name: 'Налаштування тренування' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-training-stage-description')).toHaveTextContent(
+    expect(screen.getByTestId('mock-training-shell-description')).toHaveTextContent(
       'Налаштуйте змішане тренування й виберіть діапазон запитань.'
     );
     expect(text).not.toBeNull();
@@ -184,7 +184,7 @@ describe('KangurGameTrainingSetupWidget', () => {
     const text = art.querySelector('text');
 
     expect(screen.getByRole('heading', { name: 'Mixed training' })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-training-stage-description')).toHaveTextContent(
+    expect(screen.getByTestId('mock-training-shell-description')).toHaveTextContent(
       'Choose the level, categories, and number of questions for one session.'
     );
     expect(text).not.toBeNull();

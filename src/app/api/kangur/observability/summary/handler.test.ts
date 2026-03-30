@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const { authMock, getKangurObservabilitySummaryMock } = vi.hoisted(() => ({
-  authMock: vi.fn(),
+const { assertSettingsManageAccessMock, getKangurObservabilitySummaryMock } = vi.hoisted(() => ({
+  assertSettingsManageAccessMock: vi.fn(),
   getKangurObservabilitySummaryMock: vi.fn(),
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+  assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
 vi.mock('@/features/kangur/observability/summary', () => ({
@@ -44,13 +44,7 @@ describe('kangur observability summary handler', () => {
   });
 
   it('rejects unauthorized users', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'user-1',
-        isElevated: false,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockRejectedValue(authError('Unauthorized.'));
 
     await expect(
       GET_handler(
@@ -61,13 +55,7 @@ describe('kangur observability summary handler', () => {
   });
 
   it('returns the Kangur summary for elevated users', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'admin-1',
-        isElevated: true,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
     getKangurObservabilitySummaryMock.mockResolvedValue({
       generatedAt: '2026-03-07T12:00:00.000Z',
       range: '7d',
@@ -223,13 +211,7 @@ describe('kangur observability summary handler', () => {
   });
 
   it('rejects invalid ranges', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'admin-1',
-        isElevated: true,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
 
     await expect(
       GET_handler(
@@ -240,13 +222,7 @@ describe('kangur observability summary handler', () => {
   });
 
   it('rejects invalid summary payloads that do not match the shared contract', async () => {
-    authMock.mockResolvedValue({
-      user: {
-        id: 'admin-1',
-        isElevated: true,
-        permissions: [],
-      },
-    });
+    assertSettingsManageAccessMock.mockResolvedValue(undefined);
     getKangurObservabilitySummaryMock.mockResolvedValue({
       generatedAt: '2026-03-07T12:00:00.000Z',
       range: '7d',

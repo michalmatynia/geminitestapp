@@ -1,16 +1,21 @@
 export { CmsPageShell } from './components/frontend/CmsPageShell';
 export { CmsPageRenderer } from './components/frontend/CmsPageRendererServer';
 export { CmsPageRenderer as CmsRuntimePageRenderer } from './components/frontend/CmsPageRenderer';
+export { HomeContentClient } from './components/frontend/home/HomeContentClient';
 export { ThemeProvider } from './components/frontend/ThemeProvider';
 export * from './components/frontend/CmsPageContext';
 export * from './components/frontend/CmsRuntimeContext';
 export {
   CmsStorefrontAppearanceButtons,
   CmsStorefrontAppearanceProvider,
-  resolveKangurStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
 } from './components/frontend/CmsStorefrontAppearance';
 export type { CmsStorefrontAppearanceMode } from './components/frontend/CmsStorefrontAppearance';
+export {
+  resolveCmsStorefrontAppearance,
+  resolveKangurStorefrontAppearance,
+  withFallbackTone,
+} from './components/frontend/CmsStorefrontAppearance.logic';
 export { MediaStylesProvider } from './components/frontend/media-styles-context';
 export * from './components/frontend/theme-styles';
 export { CmsBuilderLeftPanel } from './components/page-builder/CmsBuilderLeftPanel';
@@ -18,6 +23,8 @@ export type { LeftPanelMode } from './components/page-builder/CmsBuilderLeftPane
 export { ComponentSettingsPanel } from './components/page-builder/ComponentSettingsPanel';
 export { MediaLibraryPanel } from './components/page-builder/MediaLibraryPanel';
 export { PageBuilderPageSkeleton } from './components/page-builder/PageBuilderPageSkeleton';
+export { PageBuilderPolicyProvider } from './components/page-builder/PageBuilderPolicyContext';
+export type { PageBuilderPolicyConfig } from './components/page-builder/PageBuilderPolicyContext';
 export {
   PreviewSection,
   type MediaReplaceTarget,
@@ -42,5 +49,4 @@ export {
 } from './hooks/page-builder/section-hierarchy';
 export * from './hooks/useCmsQueries';
 export { isCmsSectionHidden } from './utils/page-builder-normalization';
-export { default as CmsEditorLayout } from './components/CmsEditorLayout';
 export { CmsDomainSelector } from './components/CmsDomainSelector';

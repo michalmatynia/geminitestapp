@@ -10,6 +10,33 @@ import {
   simulateValidatorPatternPreview,
 } from './validator-pattern-simulator';
 
+const buildDynamicReplacementRecipe = (
+  overrides: Partial<Parameters<typeof encodeDynamicReplacementRecipe>[0]>
+) =>
+  encodeDynamicReplacementRecipe({
+    version: 1,
+    sourceMode: 'latest_product_field',
+    sourceField: 'stock',
+    sourceRegex: null,
+    sourceFlags: null,
+    sourceMatchGroup: null,
+    mathOperation: 'none',
+    mathOperand: null,
+    roundMode: 'none',
+    padLength: null,
+    padChar: null,
+    logicOperator: 'none',
+    logicOperand: null,
+    logicFlags: null,
+    logicWhenTrueAction: 'keep',
+    logicWhenTrueValue: null,
+    logicWhenFalseAction: 'keep',
+    logicWhenFalseValue: null,
+    resultAssembly: 'segment_only',
+    targetApply: 'replace_whole_field',
+    ...overrides,
+  });
+
 const buildPattern = (overrides: Partial<ProductValidationPattern>): ProductValidationPattern => ({
   id: overrides.id ?? `pattern-${Math.random().toString(36).slice(2, 8)}`,
   createdAt: overrides.createdAt ?? '',
@@ -159,8 +186,8 @@ describe('validator pattern simulator', () => {
       status: 'ready',
       launchMatched: true,
       applied: true,
-      outputValue: 12,
-      outputDisplayValue: '12',
+      outputValue: 12.9,
+      outputDisplayValue: '12.9',
     });
   });
 
@@ -171,27 +198,8 @@ describe('validator pattern simulator', () => {
         target: 'stock',
         regex: '^$',
         replacementEnabled: true,
-        replacementValue: encodeDynamicReplacementRecipe({
-          version: 1,
-          sourceMode: 'latest_product_field',
+        replacementValue: buildDynamicReplacementRecipe({
           sourceField: 'stock',
-          sourceRegex: null,
-          sourceFlags: null,
-          sourceMatchGroup: null,
-          mathOperation: 'none',
-          mathOperand: null,
-          roundMode: 'none',
-          padLength: null,
-          padChar: null,
-          logicOperator: 'none',
-          logicOperand: null,
-          logicFlags: null,
-          logicWhenTrueAction: 'keep',
-          logicWhenTrueValue: null,
-          logicWhenFalseAction: 'keep',
-          logicWhenFalseValue: null,
-          resultAssembly: 'segment_only',
-          targetApply: 'replace_whole_field',
         }),
         replacementFields: ['stock'],
         locale: null,

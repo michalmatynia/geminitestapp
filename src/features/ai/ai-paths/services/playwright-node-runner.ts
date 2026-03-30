@@ -16,6 +16,7 @@ import {
 } from '@/shared/contracts/playwright';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/context-registry/system-prompt';
+import { sanitizePlaywrightStorageState } from '@/shared/lib/playwright/storage-state';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
@@ -133,6 +134,7 @@ export type PlaywrightNodeRunRequest = {
   settingsOverrides?: Record<string, unknown> | undefined;
   launchOptions?: Record<string, unknown> | undefined;
   contextOptions?: Record<string, unknown> | undefined;
+  policyAllowedHosts?: string[] | undefined;
   contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
   capture?:
     | {
@@ -274,7 +276,8 @@ const buildContextOptions = (
   settings: PlaywrightSettings,
   runArtifactsDir: string,
   contextOverrides: Record<string, unknown>,
-  capture: PlaywrightNodeRunRequest['capture']
+  capture: PlaywrightNodeRunRequest['capture'],
+  startUrl?: string
 ): BrowserContextOptions => {
   const devicePreset =
     settings.emulateDevice && settings.deviceName
@@ -292,10 +295,21 @@ const buildContextOptions = (
       },
     };
   }
-  return {
+  const merged = {
     ...base,
     ...(contextOverrides as BrowserContextOptions),
   };
+  if (typeof merged.storageState !== 'string' && merged.storageState) {
+    const sanitizedStorageState = sanitizePlaywrightStorageState(merged.storageState, {
+      fallbackOrigin: startUrl ?? null,
+    });
+    if (sanitizedStorageState) {
+      merged.storageState = sanitizedStorageState as BrowserContextOptions['storageState'];
+    } else {
+      delete merged.storageState;
+    }
+  }
+  return merged;
 };
 
 const parseUserScript = (
@@ -342,9 +356,40 @@ const parseUserScript = (
   return resolved as (context: Record<string, unknown>) => Promise<unknown>;
 };
 
+const normalizePolicyAllowedHosts = (hosts: string[] | undefined): Set<string> => {
+  if (!Array.isArray(hosts) || hosts.length === 0) {
+    return new Set<string>();
+  }
+
+  return new Set(
+    hosts
+      .map((host) => host.trim().toLowerCase())
+      .filter((host) => host.length > 0)
+  );
+};
+
+const isPolicyAllowedHost = (requestUrl: string, allowedHosts: Set<string>): boolean => {
+  if (allowedHosts.size === 0) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(requestUrl);
+    const protocol = parsed.protocol.toLowerCase();
+    if (protocol !== 'http:' && protocol !== 'https:') {
+      return false;
+    }
+
+    return allowedHosts.has(parsed.host.toLowerCase());
+  } catch {
+    return false;
+  }
+};
+
 const registerOutboundPolicyRoute = async (
   context: BrowserContext,
-  logs: string[]
+  logs: string[],
+  allowedHosts: Set<string>
 ): Promise<void> => {
   await context.route('**/*', async (route) => {
     const requestUrl = route.request().url();
@@ -357,6 +402,10 @@ const registerOutboundPolicyRoute = async (
       return;
     }
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      await route.continue();
+      return;
+    }
+    if (allowedHosts.has(parsed.host.toLowerCase())) {
       await route.continue();
       return;
     }
@@ -410,6 +459,24 @@ const executePlaywrightNodeRun = async (
     logs,
     artifacts,
   });
+  let liveStateWriteChain: Promise<void> = Promise.resolve();
+  let isFinalizingLiveState = false;
+  const queueLiveRunStateUpdate = (patchFactory: () => Partial<PlaywrightNodeRunRecord>): void => {
+    if (isFinalizingLiveState) return;
+    liveStateWriteChain = liveStateWriteChain
+      .then(async () => {
+        if (isFinalizingLiveState) return;
+        await updateRunState(runId, patchFactory());
+      })
+      .catch((error) => {
+        void ErrorSystem.captureException(error);
+      });
+  };
+  const flushLiveRunStateUpdates = async (): Promise<void> => {
+    await liveStateWriteChain.catch((error) => {
+      void ErrorSystem.captureException(error);
+    });
+  };
 
   const playwright = getPlaywright();
   const personaSettings = await resolvePersonaSettings(request.personaId);
@@ -428,10 +495,12 @@ const executePlaywrightNodeRun = async (
     effectiveSettings,
     runArtifactsDir,
     request.contextOptions ?? {},
-    request.capture
+    request.capture,
+    request.startUrl
   );
   const timeoutMs = Math.max(1_000, request.timeoutMs ?? 120_000);
   const browserEngine = request.browserEngine ?? 'chromium';
+  const policyAllowedHosts = normalizePolicyAllowedHosts(request.policyAllowedHosts);
   const contextRegistry = request.contextRegistry ?? null;
   const contextRegistryPrompt = buildAiPathsContextRegistrySystemPrompt(
     contextRegistry?.resolved ?? null
@@ -446,7 +515,7 @@ const executePlaywrightNodeRun = async (
     context = await browser.newContext(contextOptions);
     context.setDefaultTimeout(effectiveSettings.timeout);
     context.setDefaultNavigationTimeout(effectiveSettings.navigationTimeout);
-    await registerOutboundPolicyRoute(context, logs);
+    await registerOutboundPolicyRoute(context, logs, policyAllowedHosts);
 
     if (request.capture?.trace) {
       await context.tracing.start({
@@ -460,7 +529,10 @@ const executePlaywrightNodeRun = async (
     page = await context.newPage();
 
     if (request.startUrl?.trim()) {
-      const decision = evaluateOutboundUrlPolicy(request.startUrl);
+      const allowedByPolicyOverride = isPolicyAllowedHost(request.startUrl, policyAllowedHosts);
+      const decision = allowedByPolicyOverride
+        ? { allowed: true, reason: null }
+        : evaluateOutboundUrlPolicy(request.startUrl);
       if (!decision.allowed) {
         throw new Error(
           `Blocked outbound URL (${decision.reason ?? 'policy_violation'}): ${request.startUrl}`
@@ -483,6 +555,13 @@ const executePlaywrightNodeRun = async (
 
     const emittedOutputs: Record<string, unknown> = {};
     const inlineArtifacts: Array<{ name: string; value: unknown }> = [];
+    const buildLiveResultSnapshot = (): {
+      outputs: Record<string, unknown>;
+      inlineArtifacts: Array<{ name: string; value: unknown }>;
+    } => ({
+      outputs: { ...emittedOutputs },
+      inlineArtifacts: [...inlineArtifacts],
+    });
     const userScript = parseUserScript(request.script, logs);
     const userContext = {
       browser,
@@ -495,6 +574,9 @@ const executePlaywrightNodeRun = async (
         const normalizedPort = port.trim();
         if (!normalizedPort) return;
         emittedOutputs[normalizedPort] = value;
+        queueLiveRunStateUpdate(() => ({
+          result: buildLiveResultSnapshot(),
+        }));
       },
       artifacts: {
         screenshot: async (name: string = 'screenshot'): Promise<string> => {
@@ -556,6 +638,9 @@ const executePlaywrightNodeRun = async (
         },
         add: (name: string, value: unknown): void => {
           inlineArtifacts.push({ name: name.trim() || 'artifact', value });
+          queueLiveRunStateUpdate(() => ({
+            result: buildLiveResultSnapshot(),
+          }));
         },
       },
       log: (...args: unknown[]): void => {
@@ -611,6 +696,8 @@ const executePlaywrightNodeRun = async (
     }
 
     const completedAt = nowIso();
+    await flushLiveRunStateUpdates();
+    isFinalizingLiveState = true;
     const existingRun = await readPlaywrightNodeRun(runId);
     const result = {
       returnValue,
@@ -637,6 +724,8 @@ const executePlaywrightNodeRun = async (
   } catch (error) {
     void ErrorSystem.captureException(error);
     const completedAt = nowIso();
+    await flushLiveRunStateUpdates();
+    isFinalizingLiveState = true;
     const existingRun = await readPlaywrightNodeRun(runId);
     const message = error instanceof Error ? error.message : String(error);
     logs.push(`[runtime][error] ${message}`);

@@ -1,6 +1,3 @@
-
-import '@/app/(frontend)/kangur/kangur.css';
-
 import {
   getKangurHomeHref,
   resolveKangurFeaturePageRoute,
@@ -13,7 +10,7 @@ import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassS
 import type {
   KangurStorefrontAppearanceMode,
   KangurStorefrontThemeSettingsSnapshot,
-} from '@/features/kangur/storefront-appearance-settings';
+} from '@/features/kangur/appearance/storefront-appearance-settings';
 
 import type { JSX } from 'react';
 
@@ -21,26 +18,27 @@ export function KangurPublicApp({
   slug = [],
   basePath = '/',
   embedded = false,
-  initialMode,
-  initialThemeSettings,
+  initialAppearance,
 }: {
   slug?: string[];
   basePath?: string;
   embedded?: boolean;
-  initialMode?: KangurStorefrontAppearanceMode;
-  initialThemeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
+  initialAppearance?: {
+    mode?: KangurStorefrontAppearanceMode;
+    themeSettings?: Partial<KangurStorefrontThemeSettingsSnapshot>;
+  };
 }): JSX.Element {
-  const { normalizedBasePath, pageKey, requestedPath } = resolveKangurFeaturePageRoute(
-    slug,
-    basePath
-  );
+  const {
+    normalizedBasePath,
+    pageKey,
+    requestedPath,
+  } = resolveKangurFeaturePageRoute(slug, basePath);
   const homeHref = getKangurHomeHref(normalizedBasePath);
   const isEmbedded = embedded;
 
   return (
     <KangurStorefrontAppearanceProvider
-      initialMode={initialMode}
-      initialThemeSettings={initialThemeSettings}
+      initialAppearance={initialAppearance}
     >
       <KangurSurfaceClassSync>
         <KangurPublicErrorBoundary homeHref={homeHref}>

@@ -77,11 +77,17 @@ export async function ensureAdminSession(
     Math.max(initialNavigationTimeoutMs, transitionTimeoutMs),
     90_000
   );
+  const testAuthIp = `203.0.113.${Math.floor(Math.random() * 200) + 20}`;
   const destinationUrl = new URL(destination, 'http://localhost');
   const matchesDestination = (url: URL): boolean =>
     url.pathname === destinationUrl.pathname &&
     (destinationUrl.search ? url.search === destinationUrl.search : true);
   const getCurrentUrl = (): URL => new URL(page.url(), 'http://localhost');
+  const getCsrfCookieValue = async (): Promise<string> => {
+    const cookies = await page.context().cookies();
+    const csrfCookie = cookies.find((cookie) => cookie.name === 'csrf-token');
+    return csrfCookie?.value?.trim() ?? '';
+  };
   const hasSessionCookie = async (): Promise<boolean> => {
     const cookies = await page.context().cookies();
     return cookies.some(
@@ -163,19 +169,25 @@ export async function ensureAdminSession(
       () =>
         page.context().request.get('/api/auth/csrf', {
           failOnStatusCode: false,
+          headers: {
+            'x-forwarded-for': testAuthIp,
+            'x-real-ip': testAuthIp,
+          },
           timeout: authRequestTimeoutMs,
         }),
       3
     );
 
-    if (!response.ok()) {
-      throw new Error(`Unable to load auth CSRF token for ${destination}: ${response.status()}.`);
-    }
-
-    const body = (await response.json().catch(() => null)) as { csrfToken?: unknown } | null;
-    const csrfToken = typeof body?.csrfToken === 'string' ? body.csrfToken.trim() : '';
+    const body = response.ok()
+      ? ((await response.json().catch(() => null)) as { csrfToken?: unknown } | null)
+      : null;
+    const csrfTokenFromBody = typeof body?.csrfToken === 'string' ? body.csrfToken.trim() : '';
+    const csrfToken = csrfTokenFromBody || (response.status() === 429 ? await getCsrfCookieValue() : '');
 
     if (!csrfToken) {
+      if (!response.ok()) {
+        throw new Error(`Unable to load auth CSRF token for ${destination}: ${response.status()}.`);
+      }
       throw new Error(`Missing auth CSRF token for ${destination}.`);
     }
 
@@ -206,6 +218,8 @@ export async function ensureAdminSession(
             Referer: signInUrl,
             'X-Auth-Return-Redirect': '1',
             'X-CSRF-Token': csrfToken,
+            'x-forwarded-for': testAuthIp,
+            'x-real-ip': testAuthIp,
           },
           timeout: authRequestTimeoutMs,
         }),

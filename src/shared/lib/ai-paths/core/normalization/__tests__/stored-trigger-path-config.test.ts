@@ -45,4 +45,66 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.config).toEqual(config);
     expect(resolved.changed).toBe(false);
   });
+
+  it('preserves a trimmed stored selected node id when the node still exists', () => {
+    const config = createDefaultPathConfig('path-selected-node-preserved');
+    const selectedNodeId = config.nodes[0]?.id;
+    if (!selectedNodeId) {
+      throw new Error('Expected a default node id.');
+    }
+
+    const rawConfig = JSON.stringify({
+      ...config,
+      uiState: {
+        configOpen: true,
+        selectedNodeId: ` ${selectedNodeId} `,
+      },
+    });
+
+    mockResolvePortablePathInput.mockImplementation((value: unknown) => ({
+      ok: true,
+      value: {
+        pathConfig: value,
+        identityRepaired: false,
+        warnings: [],
+      },
+    }));
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: config.id,
+      rawConfig,
+      fallbackName: config.name,
+    });
+
+    expect(resolved.config.uiState?.selectedNodeId).toBe(selectedNodeId);
+    expect(resolved.config.uiState?.configOpen).toBe(true);
+    expect(resolved.changed).toBe(true);
+  });
+
+  it('clears a stored selected node id when the node no longer exists', () => {
+    const config = createDefaultPathConfig('path-selected-node-cleared');
+    const rawConfig = JSON.stringify({
+      ...config,
+      uiState: {
+        selectedNodeId: 'missing-node',
+      },
+    });
+
+    mockResolvePortablePathInput.mockImplementation((value: unknown) => ({
+      ok: true,
+      value: {
+        pathConfig: value,
+        identityRepaired: false,
+        warnings: [],
+      },
+    }));
+
+    const resolved = materializeStoredTriggerPathConfig({
+      pathId: config.id,
+      rawConfig,
+      fallbackName: config.name,
+    });
+
+    expect(resolved.config.uiState?.selectedNodeId).toBeNull();
+  });
 });

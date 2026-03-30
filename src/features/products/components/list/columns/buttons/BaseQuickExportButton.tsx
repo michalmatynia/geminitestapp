@@ -21,8 +21,9 @@ import {
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
   isBaseIntegrationSlug,
+  useGenericExportToBaseMutation,
 } from '@/features/integrations/public';
-import { useGenericExportToBaseMutation } from '@/features/integrations/public';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import {
   subscribeToTrackedAiPathRun,
   type TrackedAiPathRunSnapshot,
@@ -38,7 +39,11 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal, Button, InsetPanel, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { getMarketplaceButtonClass } from '../product-column-utils';
+import {
+  FAILURE_STATUSES,
+  getMarketplaceButtonClass,
+  normalizeMarketplaceStatus,
+} from '../product-column-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -264,7 +269,7 @@ export function BaseQuickExportButton(props: {
   status: string;
   prefetchListings: () => void;
   showMarketplaceBadge: boolean;
-  onOpenIntegrations?: (() => void) | undefined;
+  onOpenIntegrations?: ((recoveryContext?: ProductListingsRecoveryContext) => void) | undefined;
   onOpenExportSettings?: (() => void) | undefined;
 }): React.JSX.Element {
   const {
@@ -371,6 +376,7 @@ export function BaseQuickExportButton(props: {
       return;
     }
 
+    trackedExportRunIdRef.current = persistedFeedback.runId;
     setTrackedExportRunStatus(persistedFeedback.status);
     if (
       persistedFeedback.runId &&
@@ -379,6 +385,18 @@ export function BaseQuickExportButton(props: {
       startTrackingExportRun(persistedFeedback.runId, persistedFeedback.status);
     }
   }, [product.id, startTrackingExportRun]);
+
+  useEffect(() => {
+    if (!showMarketplaceBadge) return;
+    if (!trackedExportRunStatus) return;
+    if (!TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus)) return;
+
+    // Once the list runtime confirms the product is exported, the server-backed
+    // listing badge becomes the source of truth and stale terminal client-run
+    // feedback should no longer override the button tone.
+    stopTrackingExportRun();
+    setTrackedExportStatus(null);
+  }, [setTrackedExportStatus, showMarketplaceBadge, stopTrackingExportRun, trackedExportRunStatus]);
 
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
     try {
@@ -706,10 +724,23 @@ export function BaseQuickExportButton(props: {
     trackedExportRunStatus !== null && !TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus);
   const quickExportPending = quickExportMutation.isPending || quickExportLocked || trackedExportInFlight;
   const resolvedButtonStatus = trackedExportRunStatus ?? status;
+  const isFailureState = FAILURE_STATUSES.has(normalizeMarketplaceStatus(resolvedButtonStatus));
   const shouldUseFilledMarketplaceTone = showMarketplaceBadge || trackedExportRunStatus !== null;
-  const resolvedLabel = trackedExportPresentation
-    ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
-    : label;
+  const resolvedLabel = showMarketplaceBadge
+    ? `Open Base.com listing actions (${resolvedButtonStatus}).`
+    : isFailureState
+      ? `Open Base.com recovery options (${resolvedButtonStatus}).`
+      : trackedExportPresentation
+        ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
+        : label;
+  const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
+    ? {
+      source: 'base_quick_export_failed',
+      integrationSlug: 'baselinker',
+      status: resolvedButtonStatus,
+      runId: trackedExportRunIdRef.current,
+    }
+    : undefined;
 
   return (
     <>
@@ -719,6 +750,10 @@ export function BaseQuickExportButton(props: {
         onClick={(): void => {
           if (showMarketplaceBadge) {
             onOpenExportSettings?.();
+            return;
+          }
+          if (isFailureState) {
+            onOpenIntegrations?.(recoveryContext);
             return;
           }
           void runQuickExport();

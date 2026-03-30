@@ -6,11 +6,13 @@ import {
   FileUploadButton,
   Alert,
   StandardDataTablePanel,
+  DataTable,
 } from '@/shared/ui';
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-import { getDatabaseColumns } from '../components/DatabaseColumns';
+import { useDatabaseColumns } from '../components/DatabaseColumns';
+import { DatabaseMobileCards } from '../components/DatabaseMobileCards';
 import { LogModal } from '../components/LogModal';
 import { RestoreModal } from '../components/RestoreModal';
 import {
@@ -42,6 +44,7 @@ function DatabasesContentInner(): React.JSX.Element {
     handleConfirmDelete,
     handlePreviewCurrent,
   } = useDatabaseBackupsActionsContext();
+  const columns = useDatabaseColumns();
 
   return (
     <AdminDatabasePageLayout
@@ -125,13 +128,27 @@ function DatabasesContentInner(): React.JSX.Element {
       )}
 
       <StandardDataTablePanel
-        columns={getDatabaseColumns()}
+        columns={columns}
         data={data}
         isLoading={isLoading}
         initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
         sortingStorageKey='stardb:database-backups:mongodb:sorting'
         variant='flat'
-      />
+        showTable={false}
+      >
+        <div className='md:hidden px-4 pb-4'>
+          <DatabaseMobileCards />
+        </div>
+        <div className='hidden md:block'>
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
+            sortingStorageKey='stardb:database-backups:mongodb:sorting'
+          />
+        </div>
+      </StandardDataTablePanel>
     </AdminDatabasePageLayout>
   );
 }

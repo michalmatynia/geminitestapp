@@ -1,11 +1,19 @@
 'use client';
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import { useEffect, useRef, useState } from 'react';
+import { useLocale } from 'next-intl';
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { KangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/KangurCmsRuntimeScreen';
-import { KANGUR_MAIN_PAGE, kangurPages } from '@/features/kangur/config/pages';
+import {
+  LazyAnimatePresence,
+  LazyMotionDiv,
+  usePrefersReducedMotion,
+} from '@/features/kangur/ui/components/LazyAnimatePresence';
+
+import { KANGUR_CMS_PROJECT_SETTING_KEY } from '@/features/kangur/cms-builder/project-contracts';
+import { hasKangurCmsRuntimeScreen } from '@/features/kangur/cms-builder/runtime-screen-presence';
+import { KANGUR_MAIN_PAGE, kangurPages, preloadKangurPage } from '@/features/kangur/config/pages';
 import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
@@ -13,16 +21,26 @@ import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/Kan
 
 const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
 const KangurLoginModal = dynamic(() => import('@/features/kangur/ui/components/KangurLoginModal').then(m => ({ default: m.KangurLoginModal })), { ssr: false });
+const KangurCmsRuntimeScreen = dynamic(
+  () =>
+    import('@/features/kangur/cms-builder/KangurCmsRuntimeScreen').then((m) => ({
+      default: m.KangurCmsRuntimeScreen,
+    })),
+  { ssr: false }
+);
 import { KangurRouteAccessibilityAnnouncer } from '@/features/kangur/ui/components/KangurRouteAccessibilityAnnouncer';
-import { PageNotFound } from '@/features/kangur/ui/components/PageNotFound';
-import UserNotRegisteredError from '@/features/kangur/ui/components/UserNotRegisteredError';
+const PageNotFound = dynamic(() => import('@/features/kangur/ui/components/PageNotFound').then(m => ({ default: m.PageNotFound })), { ssr: false });
+const UserNotRegisteredError = dynamic(() => import('@/features/kangur/ui/components/UserNotRegisteredError'), { ssr: false });
 import { KangurAiTutorContentProvider } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { KangurAiTutorDeferredProvider } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
 import { KangurAgeGroupFocusProvider } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { KangurLoginModalProvider } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import {
+  KangurLoginModalProvider,
+  useKangurLoginModalState,
+} from '@/features/kangur/ui/context/KangurLoginModalContext';
 import { KangurProgressSyncProvider } from '@/features/kangur/ui/context/KangurProgressSyncProvider';
 import {
   KangurRouteTransitionProvider,
@@ -38,19 +56,54 @@ import {
 } from '@/features/kangur/ui/context/KangurTopNavigationContext';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
-import { useKangurPendingRouteLoadingSnapshot } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import {
+  useKangurPendingRouteLoadingSnapshot,
+} from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
+import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { resolveManagedKangurEmbeddedFromHref } from '@/features/kangur/ui/routing/managed-paths';
+import { isKangurSocialBatchCaptureHref } from '@/features/kangur/shared/capture-mode';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
 import { cn } from '@/features/kangur/shared/utils';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { JSX } from 'react';
 
-const BOOT_SKELETON_MIN_VISIBLE_MS = 120;
-const NAVIGATION_SKELETON_DELAY_MS = 60;
+const BOOT_SKELETON_MIN_VISIBLE_MS = 50;
+const NAVIGATION_SKELETON_DELAY_MS = 0;
 const LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID = 'kangur-language-switcher';
+const HOT_PAGE_CONTENT_PREFETCH_TIMEOUT_MS = 250;
+const HOT_ROUTE_PRELOAD_TIMEOUT_MS = 1_500;
+const HOT_ROUTE_PRELOAD_TIMEOUTS: Readonly<Partial<Record<KangurPreloadPageKey, number>>> =
+  Object.freeze({
+    Game: 250,
+    Lessons: 250,
+  });
+type KangurPreloadPageKey = Parameters<typeof preloadKangurPage>[0];
+const KANGUR_PRELOAD_PAGE_KEYS: ReadonlyArray<KangurPreloadPageKey> = [
+  'Competition',
+  'Game',
+  'GamesLibrary',
+  'Duels',
+  'LearnerProfile',
+  'Lessons',
+  'ParentDashboard',
+  'SocialUpdates',
+  'Tests',
+];
+
+const HOT_ROUTE_PRELOADS: Readonly<
+  Partial<Record<KangurPreloadPageKey, ReadonlyArray<KangurPreloadPageKey>>>
+> = Object.freeze({
+  Game: ['Lessons'],
+  Lessons: ['Game'],
+});
+
+const isKangurPreloadPageKey = (value: string | null): value is KangurPreloadPageKey =>
+  value !== null && KANGUR_PRELOAD_PAGE_KEYS.includes(value as KangurPreloadPageKey);
 
 type LatchedNavigationSkeletonState = {
   embedded: boolean;
@@ -58,10 +111,30 @@ type LatchedNavigationSkeletonState = {
   variant: KangurRouteTransitionSkeletonVariant | null;
 };
 
+const KangurLoginModalMount = (): JSX.Element | null => {
+  const loginModalState = useKangurLoginModalState();
+
+  if (!loginModalState.isOpen) {
+    return null;
+  }
+
+  return <KangurLoginModal />;
+};
+
 const AuthenticatedApp = (): JSX.Element | null => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } =
+  const {
+    isLoadingAuth,
+    isLoadingPublicSettings,
+    authError,
+    navigateToLogin,
+    isAuthenticated,
+    hasResolvedAuth = true,
+  } =
     useKangurAuth();
-  const { isLoading: isLoadingSettings } = useSettingsStore();
+  const { resolvePendingSnapshot } = useKangurRouteAccess();
+  const settingsStore = useSettingsStore();
+  const isLoadingSettings = settingsStore.isLoading;
+  const rawCmsProject = settingsStore.get(KANGUR_CMS_PROJECT_SETTING_KEY);
   const {
     isRouteAcknowledging,
     isRoutePending,
@@ -76,21 +149,29 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionSkeletonVariant,
   } = useKangurRouteTransitionState();
   const routeNavigator = useKangurRouteNavigator();
-  const pendingRouteLoadingSnapshot = useKangurPendingRouteLoadingSnapshot();
   const { pageKey, embedded, requestedPath, requestedHref, basePath } = useKangurRouting();
+  const queryClient = useQueryClient();
+  const routeLocale = normalizeSiteLocale(useLocale());
   const authErrorType = authError?.type;
   const resolvedPageKey = resolveKangurPageKey(pageKey, kangurPages, KANGUR_MAIN_PAGE);
   const homeHref = getKangurHomeHref(basePath);
   const shouldRedirectToHome =
     !embedded &&
+    hasResolvedAuth &&
     !isLoadingAuth &&
     !isAuthenticated &&
     !authErrorType &&
     resolvedPageKey === 'ParentDashboard';
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const routeContentMotionProps = createKangurPageTransitionMotionProps(prefersReducedMotion);
   const routeTransitionKey = requestedPath || (pageKey ? `page:${pageKey}` : 'page:unknown');
   const currentRequestedHref = requestedHref ?? requestedPath ?? null;
+  const isSyntheticKangurCapture = isKangurSocialBatchCaptureHref(currentRequestedHref);
+  const pendingRouteLoadingSnapshot = resolvePendingSnapshot({
+    currentHref: currentRequestedHref,
+    fallbackPageKey: KANGUR_MAIN_PAGE,
+    snapshot: useKangurPendingRouteLoadingSnapshot(),
+  });
   const isBootLoading = isLoadingPublicSettings || isLoadingAuth;
   const isThemeBootLoading = isLoadingSettings;
   const isNavigationTransitionActive =
@@ -100,27 +181,37 @@ const AuthenticatedApp = (): JSX.Element | null => {
     activeTransitionSourceId === LANGUAGE_SWITCHER_TRANSITION_SOURCE_ID;
   const shouldSkipNavigationSkeletonDelay = activeTransitionSourceId !== null;
   const shouldBlockRouteContent = shouldRedirectToHome;
-  let routeContent: JSX.Element | null = null;
-  if (authErrorType !== 'auth_required') {
-    if (shouldBlockRouteContent) {
-      routeContent = null;
-    } else if (!resolvedPageKey) {
-      routeContent = <PageNotFound />;
-    } else {
-      const ResolvedPage = kangurPages[resolvedPageKey];
-      routeContent = ResolvedPage ? (
-        <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
-      ) : (
-        <PageNotFound />
-      );
+  const shouldUseCmsRuntimeScreen = hasKangurCmsRuntimeScreen(rawCmsProject, resolvedPageKey);
+  const routeContent = useMemo<JSX.Element | null>(() => {
+    if (authErrorType === 'auth_required' || shouldBlockRouteContent) {
+      return null;
     }
-  }
+
+    if (!resolvedPageKey) {
+      return <PageNotFound />;
+    }
+
+    const ResolvedPage = kangurPages[resolvedPageKey];
+    if (!ResolvedPage) {
+      return <PageNotFound />;
+    }
+
+    return shouldUseCmsRuntimeScreen ? (
+      <KangurCmsRuntimeScreen pageKey={resolvedPageKey} fallback={<ResolvedPage />} />
+    ) : (
+      <ResolvedPage />
+    );
+  }, [authErrorType, resolvedPageKey, shouldBlockRouteContent, shouldUseCmsRuntimeScreen]);
   const [hasPresentedInteractiveShell, setHasPresentedInteractiveShell] = useState(false);
+  const [isRouteInteractionReady, setIsRouteInteractionReady] = useState(false);
+  const [hasInitialContentSettled, setHasInitialContentSettled] = useState(false);
   const shouldShowBootLoader = isThemeBootLoading && !hasPresentedInteractiveShell;
   const [isBootSkeletonVisible, setIsBootSkeletonVisible] = useState<boolean>(shouldShowBootLoader);
   const [isNavigationSkeletonVisible, setIsNavigationSkeletonVisible] = useState<boolean>(false);
   const [latchedNavigationTopBarHeightCssValue, setLatchedNavigationTopBarHeightCssValue] =
     useState<string | null>(null);
+  const preloadedHotRoutesRef = useRef<Set<string>>(new Set());
+  const prefetchedPageContentLocalesRef = useRef<Set<string>>(new Set());
   const bootSkeletonShownAtRef = useRef<number | null>(
     shouldShowBootLoader ? Date.now() : null
   );
@@ -138,6 +229,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     pendingRouteLoadingSnapshot !== null &&
     pendingRouteLoadingSnapshot.href !== null &&
     pendingRouteLoadingSnapshot.href !== currentRequestedHref;
+  const hasCommittedTargetRoute =
+    (activeTransitionRequestedHref !== null &&
+      activeTransitionRequestedHref !== currentRequestedHref) ||
+    (activeTransitionPageKey !== null && activeTransitionPageKey !== resolvedPageKey) ||
+    (pendingPageKey !== null && pendingPageKey !== resolvedPageKey);
+  const shouldShowAcknowledgingNavigationSkeleton =
+    isRouteAcknowledging && (isLanguageSwitcherTransition || hasCommittedTargetRoute);
   const snapshotTransitionPageKey =
     pendingRouteLoadingSnapshot?.pageKey ?? resolvedPageKey ?? KANGUR_MAIN_PAGE;
   const snapshotTransitionEmbedded =
@@ -147,7 +245,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }) ?? embedded;
   const snapshotTransitionTopBarHeightCssValue =
     pendingRouteLoadingSnapshot?.topBarHeightCssValue ?? null;
-  const isRouteSkeletonVisible = isNavigationSkeletonVisible || isPendingRouteSnapshotVisible;
+  const isInitialMountSkeletonVisible =
+    !hasInitialContentSettled && !hasPresentedInteractiveShell;
+  const isRouteSkeletonVisible =
+    shouldShowAcknowledgingNavigationSkeleton ||
+    isNavigationSkeletonVisible ||
+    isPendingRouteSnapshotVisible ||
+    isInitialMountSkeletonVisible;
   const visibleTransitionSkeletonPageKey =
     isPendingRouteSnapshotVisible
       ? snapshotTransitionPageKey
@@ -174,28 +278,205 @@ const AuthenticatedApp = (): JSX.Element | null => {
     : isRouteSkeletonVisible
     ? latchedNavigationTopBarHeightCssValue ?? currentNavigationTopBarHeightCssValue
     : null;
-  const shouldKeepRouteContentVisibleDuringTransition =
-    isLanguageSwitcherTransition && isRouteSkeletonVisible;
-  const isRouteContentVisuallyHidden =
+  const shouldPreserveOutgoingRouteContent =
     isPendingRouteSnapshotVisible ||
-    (!shouldKeepRouteContentVisibleDuringTransition &&
+    (isRouteSkeletonVisible &&
+      (transitionPhase === 'acknowledging' || transitionPhase === 'pending'));
+  const shouldKeepRouteContentVisibleDuringTransition =
+    shouldPreserveOutgoingRouteContent ||
+    (isLanguageSwitcherTransition && isRouteSkeletonVisible);
+  const shouldClipRouteContentDuringTransition =
+    !shouldKeepRouteContentVisibleDuringTransition &&
+    (isPendingRouteSnapshotVisible || isRouteSkeletonVisible);
+  const isRouteContentVisuallyHidden = !shouldKeepRouteContentVisibleDuringTransition &&
     (transitionPhase === 'waiting_for_ready' ||
       ((transitionPhase === 'pending' ||
-        (transitionPhase === 'acknowledging' && isLanguageSwitcherTransition)) &&
-        isRouteSkeletonVisible)));
+        (transitionPhase === 'acknowledging' &&
+          shouldShowAcknowledgingNavigationSkeleton)) &&
+        isRouteSkeletonVisible) ||
+      isPendingRouteSnapshotVisible);
   const isRouteContentInteractionBlocked =
+    !isRouteInteractionReady ||
     isPendingRouteSnapshotVisible ||
     (isRouteSkeletonVisible && transitionPhase !== 'revealing');
   const hasVisibleRouteContent = routeContent !== null && !isRouteContentVisuallyHidden;
+  const isRouteCaptureReady =
+    routeContent !== null &&
+    !isBootLoading &&
+    !isThemeBootLoading &&
+    !isNavigationTransitionActive &&
+    !isPendingRouteSnapshotVisible &&
+    !shouldRedirectToHome &&
+    authErrorType !== 'auth_required';
   const isBootLoaderBlockingNavigation =
     isBootSkeletonVisible && !isRouteSkeletonVisible && !hasVisibleRouteContent;
   const shouldHideTopNavigationDuringBoot = isBootLoaderBlockingNavigation;
+  const shouldKeepShellTopNavigationDuringTransition =
+    isRouteSkeletonVisible && isLanguageSwitcherTransition;
   const shouldRenderInlineRouteSkeletonTopNavigation =
     !visibleTransitionSkeletonEmbedded &&
     !shouldHideTopNavigationDuringBoot &&
-    isRouteSkeletonVisible;
-  const shouldHideTopNavigationHost =
-    !shouldHideTopNavigationDuringBoot && isRouteSkeletonVisible;
+    isRouteSkeletonVisible &&
+    !shouldKeepShellTopNavigationDuringTransition;
+  const shouldRenderTopNavigationHost =
+    !shouldHideTopNavigationDuringBoot &&
+    (!isRouteSkeletonVisible || shouldKeepShellTopNavigationDuringTransition);
+  const routeSkeletonMotionProps = prefersReducedMotion
+    ? {
+        initial: { opacity: 1 },
+        animate: { opacity: 1 },
+        exit: { opacity: 1 },
+        transition: { duration: 0 },
+      }
+    : isLanguageSwitcherTransition
+      ? {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          exit: { opacity: 0 },
+          transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] as const },
+        }
+      : {
+          initial: { opacity: 1 },
+          animate: { opacity: 1 },
+          exit: { opacity: 0 },
+          transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] as const },
+        };
+  const shouldSkipRouteContentPresence =
+    isNavigationTransitionActive || isPendingRouteSnapshotVisible;
+  const renderedRouteContent = routeContent ? (
+    <LazyMotionDiv
+      key={routeTransitionKey}
+      {...routeContentMotionProps}
+      aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
+      aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
+      className={cn(
+        'w-full min-w-0 kangur-shell-viewport-height',
+        embedded ? 'min-h-full' : null,
+        shouldClipRouteContentDuringTransition ? 'overflow-hidden' : null,
+        isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
+        isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
+      )}
+      data-route-transition-phase={transitionPhase}
+      data-route-interactive-ready={isRouteInteractionReady ? 'true' : 'false'}
+      data-route-capture-ready={isRouteCaptureReady ? 'true' : 'false'}
+      data-route-transition-key={routeTransitionKey}
+      data-route-transition-source-id={activeTransitionSourceId ?? undefined}
+      data-testid='kangur-route-content'
+    >
+      {routeContent}
+    </LazyMotionDiv>
+  ) : null;
+
+  useEffect(() => {
+    setIsRouteInteractionReady(true);
+  }, []);
+
+  // Wait one animation frame after mount before marking initial content as
+  // settled. This ensures the lazy-loaded main page (Game) has rendered its
+  // first meaningful frame before the skeleton overlay is removed.
+  useEffect(() => {
+    if (hasInitialContentSettled) return;
+    const frameId = requestAnimationFrame(() => {
+      setHasInitialContentSettled(true);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [hasInitialContentSettled]);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      isBootLoading ||
+      isThemeBootLoading ||
+      isNavigationTransitionActive ||
+      isSyntheticKangurCapture
+    ) {
+      return;
+    }
+
+    if (!isKangurPreloadPageKey(resolvedPageKey)) {
+      return;
+    }
+
+    const preloadTargets: ReadonlyArray<KangurPreloadPageKey> =
+      HOT_ROUTE_PRELOADS[resolvedPageKey] ?? [];
+    if (preloadTargets.length === 0) {
+      return;
+    }
+
+    const nextTargets: KangurPreloadPageKey[] = preloadTargets.filter(
+      (target: KangurPreloadPageKey) => !preloadedHotRoutesRef.current.has(target)
+    );
+    if (nextTargets.length === 0) {
+      return;
+    }
+    const preloadTimeoutMs = HOT_ROUTE_PRELOAD_TIMEOUTS[resolvedPageKey] ?? HOT_ROUTE_PRELOAD_TIMEOUT_MS;
+
+    const preload = (): void => {
+      nextTargets.forEach((target: KangurPreloadPageKey) => {
+        preloadKangurPage(target);
+        preloadedHotRoutesRef.current.add(target);
+      });
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(preload, {
+        timeout: preloadTimeoutMs,
+      });
+      return () => {
+        window.cancelIdleCallback?.(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(preload, 0);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    isBootLoading,
+    isSyntheticKangurCapture,
+    isNavigationTransitionActive,
+    isThemeBootLoading,
+    resolvedPageKey,
+  ]);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      isBootLoading ||
+      isThemeBootLoading ||
+      isNavigationTransitionActive ||
+      isSyntheticKangurCapture ||
+      prefetchedPageContentLocalesRef.current.has(routeLocale)
+    ) {
+      return;
+    }
+
+    const prefetch = (): void => {
+      prefetchedPageContentLocalesRef.current.add(routeLocale);
+      void prefetchKangurPageContentStore(queryClient, routeLocale);
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleId = window.requestIdleCallback(prefetch, {
+        timeout: HOT_PAGE_CONTENT_PREFETCH_TIMEOUT_MS,
+      });
+      return () => {
+        window.cancelIdleCallback?.(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(prefetch, 0);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    isBootLoading,
+    isSyntheticKangurCapture,
+    isNavigationTransitionActive,
+    isThemeBootLoading,
+    queryClient,
+    routeLocale,
+  ]);
 
   useEffect(() => {
     if (hasPresentedInteractiveShell) {
@@ -332,7 +613,7 @@ const AuthenticatedApp = (): JSX.Element | null => {
       return;
     }
 
-    if (isRouteAcknowledging && isLanguageSwitcherTransition) {
+    if (shouldShowAcknowledgingNavigationSkeleton) {
       navigationSkeletonShownRef.current = true;
       setIsNavigationSkeletonVisible(true);
       return;
@@ -387,78 +668,82 @@ const AuthenticatedApp = (): JSX.Element | null => {
     return undefined;
   }, [
     isBootLoading,
-    isLanguageSwitcherTransition,
     isNavigationTransitionActive,
     isRouteAcknowledging,
     isRoutePending,
     isRouteWaitingForReady,
     isRouteRevealing,
     shouldSkipNavigationSkeletonDelay,
+    shouldShowAcknowledgingNavigationSkeleton,
   ]);
 
   if (authErrorType === 'user_not_registered') {
     return <UserNotRegisteredError />;
   }
 
-  const topNavigationFallback = !embedded ? <KangurTopNavigationSkeleton /> : null;
-  const shouldReserveTopBarOffset = !embedded && !shouldHideTopNavigationDuringBoot;
+  const topNavigationFallback = <KangurTopNavigationSkeleton />;
+  const shouldReserveTopBarOffset = true;
 
   return (
     <>
       <KangurRouteAccessibilityAnnouncer />
-      {shouldHideTopNavigationDuringBoot ? null : shouldHideTopNavigationHost ? (
-        null
-      ) : (
+      {shouldHideTopNavigationDuringBoot ? (
+        topNavigationFallback
+      ) : shouldRenderTopNavigationHost ? (
         <KangurTopNavigationHost fallback={topNavigationFallback} />
-      )}
+      ) : null}
       <KangurAppLoader
         offsetTopBar={shouldReserveTopBarOffset}
         visible={isBootLoaderBlockingNavigation}
       />
-      <AnimatePresence mode='wait'>
-        {routeContent ? (
-          <motion.div
-            key={routeTransitionKey}
-            {...routeContentMotionProps}
-            aria-busy={isNavigationTransitionActive || isPendingRouteSnapshotVisible}
-            aria-hidden={isRouteContentVisuallyHidden ? 'true' : undefined}
-            className={cn(
-              'w-full min-w-0 kangur-shell-viewport-height',
-              embedded ? 'min-h-full' : null,
-              isRouteContentInteractionBlocked ? 'pointer-events-none' : null,
-              isRouteContentVisuallyHidden ? 'pointer-events-none opacity-0' : null
-            )}
-            data-route-transition-phase={transitionPhase}
-            data-route-transition-key={routeTransitionKey}
-            data-route-transition-source-id={activeTransitionSourceId ?? undefined}
-            data-testid='kangur-route-content'
-          >
-            {routeContent}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-      <AnimatePresence>
-        {isRouteSkeletonVisible ? (
-          <motion.div
-            key='kangur-page-transition-skeleton:navigation'
-            animate={{ opacity: 1 }}
-            className={transitionPhase === 'revealing' ? 'pointer-events-none' : undefined}
-            exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
-          >
+      <Suspense fallback={
+        <KangurPageTransitionSkeleton
+          pageKey={resolvedPageKey}
+          reason='navigation'
+          renderInlineTopNavigationSkeleton={false}
+        />
+      }>
+        <LazyAnimatePresence mode={shouldSkipRouteContentPresence ? 'sync' : 'wait'}>
+          {renderedRouteContent}
+        </LazyAnimatePresence>
+      </Suspense>
+      <LazyAnimatePresence>
+          {isRouteSkeletonVisible ? (
+            <LazyMotionDiv
+              key='kangur-page-transition-skeleton:navigation'
+              className={cn('pointer-events-none')}
+              data-testid='kangur-page-transition-skeleton-motion'
+              {...routeSkeletonMotionProps}
+            >
             <KangurPageTransitionSkeleton
               embeddedOverride={visibleTransitionSkeletonEmbedded}
               pageKey={visibleTransitionSkeletonPageKey}
               reason={isLanguageSwitcherTransition ? 'locale-switch' : 'navigation'}
               renderInlineTopNavigationSkeleton={shouldRenderInlineRouteSkeletonTopNavigation}
               topBarHeightCssValue={visibleTransitionSkeletonTopBarHeightCssValue}
-              variant={visibleTransitionSkeletonVariant}
+              variant={visibleTransitionSkeletonVariant ?? undefined}
             />
-          </motion.div>
+          </LazyMotionDiv>
         ) : null}
-      </AnimatePresence>
+      </LazyAnimatePresence>
     </>
+  );
+};
+
+const DeferredAiTutorProviders = ({ children }: { children: ReactNode }): JSX.Element => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  if (!mounted) return <>{children}</>;
+
+  return (
+    <KangurAiTutorContentProvider>
+      <KangurAiTutorDeferredProvider>
+        <KangurTutorAnchorProvider>
+          {children}
+        </KangurTutorAnchorProvider>
+      </KangurAiTutorDeferredProvider>
+    </KangurAiTutorContentProvider>
   );
 };
 
@@ -472,21 +757,15 @@ export function KangurFeatureApp(): JSX.Element {
               <KangurSubjectFocusProvider>
                 <KangurAgeGroupFocusProvider>
                   <KangurSubjectAgeGroupSync />
-                  <KangurProgressSyncProvider>
-                    <KangurScoreSyncProvider>
-                      <KangurContextRegistryPageBoundary>
-                        <KangurAiTutorContentProvider>
-                          <KangurAiTutorDeferredProvider>
-                            <KangurTutorAnchorProvider>
-                              <AuthenticatedApp />
-                              <KangurAiTutorWidget />
-                              <KangurLoginModal />
-                            </KangurTutorAnchorProvider>
-                          </KangurAiTutorDeferredProvider>
-                        </KangurAiTutorContentProvider>
-                      </KangurContextRegistryPageBoundary>
-                    </KangurScoreSyncProvider>
-                  </KangurProgressSyncProvider>
+                  <KangurProgressSyncProvider />
+                  <KangurScoreSyncProvider />
+                  <KangurContextRegistryPageBoundary>
+                    <DeferredAiTutorProviders>
+                      <AuthenticatedApp />
+                      <KangurAiTutorWidget />
+                      <KangurLoginModalMount />
+                    </DeferredAiTutorProviders>
+                  </KangurContextRegistryPageBoundary>
                 </KangurAgeGroupFocusProvider>
               </KangurSubjectFocusProvider>
             </KangurAuthProvider>

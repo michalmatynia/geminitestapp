@@ -104,7 +104,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameSetupMomentumCard', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   __esModule: true,
   default: () => <div data-testid='mock-practice-assignment-banner'>Mock assignment banner</div>,
 }));
@@ -290,14 +290,14 @@ describe('Kangur game entry top sections', () => {
       'text-center'
     );
     expect(
-      screen.getByRole('heading', { name: 'Konfiguracja sesji Kangura Matematycznego' })
+      screen.getByRole('heading', { name: 'Konfiguracja sesji StudiQ Matematycznego' })
     ).toHaveClass(
       'text-2xl',
       'sm:text-3xl'
     );
     expect(screen.getByTestId('kangur-kangur-heading-art')).toBeInTheDocument();
     expect(
-      screen.getByText('Przygotuj sesje Kangura Matematycznego.')
+      screen.getByText('Przygotuj sesje StudiQ Matematycznego.')
     ).toBeInTheDocument();
     expect(screen.getByTestId('mock-game-setup-momentum-kangur')).toBeInTheDocument();
     expect(screen.getByTestId('mock-kangur-setup')).toBeInTheDocument();
@@ -316,7 +316,7 @@ describe('Kangur game entry top sections', () => {
       {
         recommendation: {
           description:
-            'Latwiejszy zestaw treningowy pozwoli wejsc w formule Kangura bez zbyt ostrego progu trudnosci.',
+            'Latwiejszy zestaw treningowy pozwoli wejsc w formule StudiQ bez zbyt ostrego progu trudnosci.',
           label: 'Lagodny start',
           source: 'kangur_setup',
           title: 'Polecamy zaczac od treningu 3-punktowego',

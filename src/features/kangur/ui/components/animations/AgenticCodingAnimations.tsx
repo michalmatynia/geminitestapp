@@ -2,3 +2,6 @@
 
 export * from './AgenticCodingAnimations.Primary';
 export * from './AgenticCodingAnimations.Secondary';
+export * from './AgenticCodingAnimations.Tertiary';
+export * from './AgenticCodingAnimations.Quaternary';
+export * from './AgenticCodingAnimations.Quinary';

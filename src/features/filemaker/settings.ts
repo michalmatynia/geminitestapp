@@ -10,6 +10,7 @@ export * from './settings/database-getters';
 export * from './settings/party-getters';
 export * from './settings/upsert-logic';
 export * from './settings/removal-logic';
+export * from './settings/campaigns';
 
 export {
   normalizeFilemakerDatabase,

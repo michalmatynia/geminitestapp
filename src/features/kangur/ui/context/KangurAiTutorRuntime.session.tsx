@@ -3,7 +3,7 @@
 import {
   createContext,
   useContext,
-  useLayoutEffect,
+  useEffect,
   useMemo,
   useRef,
   type JSX,
@@ -11,7 +11,6 @@ import {
 
 import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context-registry/refs';
 import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import { useRegisterContextRegistryPageSource } from '@/shared/lib/ai-context-registry/page-context';
 
 import { useKangurAiTutorContent } from './KangurAiTutorContentContext';
@@ -21,6 +20,7 @@ import {
   type KangurAiTutorSessionRegistration,
 } from './kangur-ai-tutor-runtime.helpers';
 import type {
+  KangurAiTutorSessionSyncInput,
   KangurAiTutorSessionRegistryContextValue,
   KangurAiTutorSessionSyncProps,
 } from './KangurAiTutorRuntime.types';
@@ -40,7 +40,7 @@ export const useKangurAiTutorSessionSync = ({
   learnerId,
   sessionContext,
 }: KangurAiTutorSessionSyncProps): void => {
-  const tutorContent = useKangurAiTutorContent() ?? DEFAULT_KANGUR_AI_TUTOR_CONTENT;
+  const tutorContent = useKangurAiTutorContent();
   const registry = useContext(KangurAiTutorSessionRegistryContext);
   const tokenRef = useRef(Symbol('kangur-ai-tutor-session'));
   const setRegistration = registry?.setRegistration;
@@ -115,7 +115,7 @@ export const useKangurAiTutorSessionSync = ({
 
   useRegisterContextRegistryPageSource('kangur-ai-tutor-session', registrySource);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!setRegistration) {
       return undefined;
     }
@@ -139,13 +139,11 @@ export const useKangurAiTutorSessionSync = ({
 };
 
 export function KangurAiTutorSessionSyncInner({
-  learnerId,
-  sessionContext,
-}: KangurAiTutorSessionSyncProps): JSX.Element | null {
-  useKangurAiTutorSessionSync({
-    learnerId,
-    sessionContext,
-  });
+  sync,
+}: {
+  sync: KangurAiTutorSessionSyncInput;
+}): JSX.Element | null {
+  useKangurAiTutorSessionSync(sync);
 
   return null;
 }

@@ -35,7 +35,7 @@ const parseBoundedValidationNumber = (value: string): number | null => {
   return Math.max(0, Math.min(100, parsed));
 };
 
-function ValidationEngineField({
+function renderValidationEngineField({
   label,
   children,
   htmlFor,
@@ -96,7 +96,9 @@ export function ValidationEnginePanel(): React.JSX.Element {
         }
       />
       <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2`}>
-        <ValidationEngineField label='Status'>
+        {renderValidationEngineField({
+          label: 'Status',
+          children: (
           <SelectSimple
             size='sm'
             value={validationDraft.enabled === false ? 'disabled' : 'enabled'}
@@ -104,9 +106,13 @@ export function ValidationEnginePanel(): React.JSX.Element {
             options={ENABLE_OPTIONS}
             className='mt-2'
             ariaLabel='Status'
-           title='Select option'/>
-        </ValidationEngineField>
-        <ValidationEngineField label='Policy'>
+            title='Select option'
+          />
+          ),
+        })}
+        {renderValidationEngineField({
+          label: 'Policy',
+          children: (
           <SelectSimple
             size='sm'
             value={validationPolicyValue}
@@ -123,9 +129,14 @@ export function ValidationEnginePanel(): React.JSX.Element {
             options={VALIDATION_POLICY_OPTIONS}
             className='mt-2'
             ariaLabel='Policy'
-           title='Select option'/>
-        </ValidationEngineField>
-        <ValidationEngineField label='Base Score' htmlFor={baseScoreId}>
+            title='Select option'
+          />
+          ),
+        })}
+        {renderValidationEngineField({
+          label: 'Base Score',
+          htmlFor: baseScoreId,
+          children: (
           <Input
             id={baseScoreId}
             type='number'
@@ -134,9 +145,15 @@ export function ValidationEnginePanel(): React.JSX.Element {
             className='mt-2 h-9'
             value={String(validationDraft.baseScore ?? 100)}
             onChange={(event) => handleBoundedNumericChange('baseScore', event.target.value)}
-           aria-label={baseScoreId} title={baseScoreId}/>
-        </ValidationEngineField>
-        <ValidationEngineField label='Warn Threshold' htmlFor={warnThresholdId}>
+            aria-label={baseScoreId}
+            title={baseScoreId}
+          />
+          ),
+        })}
+        {renderValidationEngineField({
+          label: 'Warn Threshold',
+          htmlFor: warnThresholdId,
+          children: (
           <Input
             id={warnThresholdId}
             type='number'
@@ -145,9 +162,15 @@ export function ValidationEnginePanel(): React.JSX.Element {
             className='mt-2 h-9'
             value={String(validationDraft.warnThreshold ?? 70)}
             onChange={(event) => handleBoundedNumericChange('warnThreshold', event.target.value)}
-           aria-label={warnThresholdId} title={warnThresholdId}/>
-        </ValidationEngineField>
-        <ValidationEngineField label='Block Threshold' htmlFor={blockThresholdId}>
+            aria-label={warnThresholdId}
+            title={warnThresholdId}
+          />
+          ),
+        })}
+        {renderValidationEngineField({
+          label: 'Block Threshold',
+          htmlFor: blockThresholdId,
+          children: (
           <Input
             id={blockThresholdId}
             type='number'
@@ -156,16 +179,25 @@ export function ValidationEnginePanel(): React.JSX.Element {
             className='mt-2 h-9'
             value={String(validationDraft.blockThreshold ?? 50)}
             onChange={(event) => handleBoundedNumericChange('blockThreshold', event.target.value)}
-           aria-label={blockThresholdId} title={blockThresholdId}/>
-        </ValidationEngineField>
-        <ValidationEngineField label='Schema Version' htmlFor={schemaVersionId}>
+            aria-label={blockThresholdId}
+            title={blockThresholdId}
+          />
+          ),
+        })}
+        {renderValidationEngineField({
+          label: 'Schema Version',
+          htmlFor: schemaVersionId,
+          children: (
           <Input
             id={schemaVersionId}
             className='mt-2 h-9'
             value={String(validationDraft.schemaVersion ?? 2)}
             readOnly={true}
-           aria-label={schemaVersionId} title={schemaVersionId}/>
-        </ValidationEngineField>
+            aria-label={schemaVersionId}
+            title={schemaVersionId}
+          />
+          ),
+        })}
       </div>
     </ValidationPanel>
   );

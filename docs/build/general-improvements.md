@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'repository'
@@ -35,6 +35,7 @@ The initial orchestration is intentionally conservative:
 
 All commands are backed by:
 - [run-general-improvement-operations.ts](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/scripts/db/run-general-improvement-operations.ts)
+- [run-general-improvement-batch.ts](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/scripts/db/run-general-improvement-batch.ts)
 - [general-improvement-operations.ts](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/scripts/db/general-improvement-operations.ts)
 
 ## Tracks
@@ -45,6 +46,8 @@ Current tracks:
 - `repo-quality-baseline`
 
 Use `--track <id>` to scope a phase to one or more tracks.
+
+If `--track` is omitted, the runner uses the full default track set from the manifest.
 
 Examples:
 
@@ -72,6 +75,8 @@ npm run improvements:products
   - `products-category-schema-normalization`
 - this is the default broad entrypoint for product integrity and recovery planning work
 
+Both batch entrypoints accept `--report <path>` if you need to write the batch summary somewhere other than `artifacts/improvements/read-only-batch-report.json`.
+
 ## Phase semantics
 
 `audit`
@@ -83,6 +88,7 @@ npm run improvements:products
 `plan`
 - writes a plan report only
 - does not execute package scripts
+- keeps `executionMode` as `planned`
 
 `dry-run`
 - executes only safe automatic steps for the selected tracks
@@ -91,6 +97,8 @@ npm run improvements:products
 `apply`
 - allows write-side steps only when the orchestration layer explicitly permits them
 - current product recovery apply remains manual by design because it depends on curated override files
+
+If a step would write and `--allow-write` is not present, the runner records it as `blocked-by-write-policy` and exits non-cleanly instead of silently skipping it.
 
 ## Reports
 
@@ -105,9 +113,17 @@ Each report records:
 - selected tracks
 - phase
 - execution mode
+- allow-write policy
 - step statuses
 - output paths
 - manual instructions where automation intentionally stops
+
+Status values today are:
+- `planned`
+- `passed`
+- `failed`
+- `manual`
+- `blocked-by-write-policy`
 
 ## Current product-integrity flow
 
@@ -140,6 +156,18 @@ This track is intentionally decision-first:
 - then controlled apply
 
 It does not perform blind category or schema writes automatically.
+
+## Repo quality baseline track
+
+`repo-quality-baseline` is the repo-wide read-only lane in the current improvement manifest.
+
+It currently covers:
+- API error source coverage
+- canonical-sitewide validation
+- lint baseline
+- typecheck baseline
+
+Its planning step is intentionally conservative: review the baseline outputs first, then escalate to broader Bazel lanes such as `npm run bazel:smoke` or `npm run bazel:ci` only if the baseline indicates wider instability.
 
 ## Curated family-mapping bridge
 

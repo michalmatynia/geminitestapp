@@ -34,6 +34,56 @@ export type KangurOptionCardButtonProps = React.ButtonHTMLAttributes<HTMLButtonE
     accent?: KangurAccent;
   };
 
+const resolveKangurOptionCardCursorClassName = ({
+  disabled,
+  state,
+}: {
+  disabled?: boolean;
+  state?: KangurOptionCardButtonProps['state'];
+}): string | null => {
+  if (disabled) {
+    return 'cursor-not-allowed';
+  }
+
+  return state === 'muted' ? null : 'cursor-pointer';
+};
+
+const resolveKangurOptionCardStateClassName = ({
+  accent,
+  disabled,
+  emphasis,
+  state,
+}: {
+  accent: KangurAccent;
+  disabled?: boolean;
+  emphasis?: KangurOptionCardButtonProps['emphasis'];
+  state?: KangurOptionCardButtonProps['state'];
+}): string | null => {
+  const accentStyles = KANGUR_ACCENT_STYLES[accent];
+
+  if (disabled) {
+    return 'cursor-not-allowed [border-color:var(--kangur-text-field-disabled-border)] [background:var(--kangur-text-field-disabled-background)] [color:var(--kangur-page-muted-text)] opacity-70';
+  }
+
+  if (state === 'muted') {
+    return null;
+  }
+
+  return emphasis === 'accent'
+    ? cn(accentStyles.activeCard, accentStyles.hoverCard)
+    : accentStyles.hoverCard;
+};
+
+const resolveKangurOptionCardFallbackLabel = ({
+  dataDocAlias,
+  dataDocId,
+  dataTestId,
+}: {
+  dataDocAlias?: string;
+  dataDocId?: string;
+  dataTestId?: string;
+}): string | undefined => dataDocAlias || dataDocId || dataTestId;
+
 export const KangurOptionCardButton = React.forwardRef<
   HTMLButtonElement,
   KangurOptionCardButtonProps
@@ -57,21 +107,26 @@ export const KangurOptionCardButton = React.forwardRef<
     },
     ref
   ) => {
-  const accentStyles = KANGUR_ACCENT_STYLES[accent];
-  const cursorClassName = disabled
-    ? 'cursor-not-allowed'
-    : state === 'muted'
-      ? null
-      : 'cursor-pointer';
+  const cursorClassName = resolveKangurOptionCardCursorClassName({
+    disabled,
+    state,
+  });
+  const interactiveClassName = resolveKangurOptionCardStateClassName({
+    accent,
+    disabled,
+    emphasis,
+    state,
+  });
   const { hasText, ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
     children,
     ariaLabel: ariaLabelProp,
     ariaLabelledBy: ariaLabelledByProp,
     title,
-    fallbackLabel:
-      (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||
-      (typeof dataDocId === 'string' ? dataDocId : undefined) ||
-      (typeof dataTestId === 'string' ? dataTestId : undefined),
+    fallbackLabel: resolveKangurOptionCardFallbackLabel({
+      dataDocAlias: typeof dataDocAlias === 'string' ? dataDocAlias : undefined,
+      dataDocId: typeof dataDocId === 'string' ? dataDocId : undefined,
+      dataTestId: typeof dataTestId === 'string' ? dataTestId : undefined,
+    }),
   });
   if (!hasAccessibleLabel && !hasText) {
     warnMissingAccessibleLabel({ componentName: 'KangurOptionCardButton', hasAccessibleLabel });
@@ -83,13 +138,7 @@ export const KangurOptionCardButton = React.forwardRef<
       className={cn(
         kangurOptionCardButtonVariants({ emphasis, state }),
         cursorClassName,
-        disabled
-          ? 'cursor-not-allowed [border-color:var(--kangur-text-field-disabled-border)] [background:var(--kangur-text-field-disabled-background)] [color:var(--kangur-page-muted-text)] opacity-70'
-          : state === 'muted'
-            ? null
-            : emphasis === 'accent'
-              ? cn(accentStyles.activeCard, accentStyles.hoverCard)
-              : accentStyles.hoverCard,
+        interactiveClassName,
         className
       )}
       disabled={disabled}

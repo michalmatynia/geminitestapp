@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Delay Migration Sheet (`delay`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-28T14:11:54.225Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/delay.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/delay.scaffold.json`
 - v3 object id: `node_obj_delay_portable_v3`
-- v3 object hash: `b0e3ddc142991c5842e6f96f6b3b736ecf709ec85f61a2da89e620389e5dc1ce`
+- v3 object hash: `60cace6c3d05393fccd768d27f0b6f6406e486660f1227608429386551efcbc3`
 
 ## Ports
 

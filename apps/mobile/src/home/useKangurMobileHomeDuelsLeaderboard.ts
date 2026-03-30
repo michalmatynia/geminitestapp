@@ -15,6 +15,10 @@ type UseKangurMobileHomeDuelsLeaderboardResult = {
   refresh: () => Promise<void>;
 };
 
+type UseKangurMobileHomeDuelsLeaderboardOptions = {
+  enabled?: boolean;
+};
+
 const toLeaderboardErrorMessage = (
   error: unknown,
   copy: ReturnType<typeof useKangurMobileI18n>['copy'],
@@ -52,36 +56,42 @@ const toLeaderboardErrorMessage = (
   return message;
 };
 
-export const useKangurMobileHomeDuelsLeaderboard =
-  (): UseKangurMobileHomeDuelsLeaderboardResult => {
-    const { copy } = useKangurMobileI18n();
-    const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+export const useKangurMobileHomeDuelsLeaderboard = ({
+  enabled = true,
+}: UseKangurMobileHomeDuelsLeaderboardOptions = {}): UseKangurMobileHomeDuelsLeaderboardResult => {
+  const { copy } = useKangurMobileI18n();
+  const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
 
-    const leaderboardQuery = useQuery({
-      queryKey: [
-        'kangur-mobile',
-        'home',
-        'duels-leaderboard',
-        apiBaseUrl,
-      ] as const,
-      queryFn: async () =>
-        apiClient.getDuelLeaderboard(
-          {
-            limit: MOBILE_HOME_DUELS_LEADERBOARD_LIMIT,
-            lookbackDays: MOBILE_HOME_DUELS_LEADERBOARD_LOOKBACK_DAYS,
-          },
-          { cache: 'no-store' },
-        ),
-      refetchInterval: MOBILE_HOME_DUELS_LEADERBOARD_POLL_MS,
-      staleTime: 15_000,
-    });
+  const leaderboardQuery = useQuery({
+    enabled,
+    queryKey: [
+      'kangur-mobile',
+      'home',
+      'duels-leaderboard',
+      apiBaseUrl,
+    ] as const,
+    queryFn: async () =>
+      apiClient.getDuelLeaderboard(
+        {
+          limit: MOBILE_HOME_DUELS_LEADERBOARD_LIMIT,
+          lookbackDays: MOBILE_HOME_DUELS_LEADERBOARD_LOOKBACK_DAYS,
+        },
+        { cache: 'no-store' },
+      ),
+    refetchInterval: MOBILE_HOME_DUELS_LEADERBOARD_POLL_MS,
+    staleTime: 15_000,
+  });
 
-    return {
-      entries: leaderboardQuery.data?.entries ?? [],
-      error: toLeaderboardErrorMessage(leaderboardQuery.error, copy),
-      isLoading: leaderboardQuery.isLoading,
-      refresh: async () => {
-        await leaderboardQuery.refetch();
-      },
-    };
+  return {
+    entries: leaderboardQuery.data?.entries ?? [],
+    error: toLeaderboardErrorMessage(leaderboardQuery.error, copy),
+    isLoading: enabled && leaderboardQuery.isLoading,
+    refresh: async () => {
+      if (!enabled) {
+        return;
+      }
+
+      await leaderboardQuery.refetch();
+    },
   };
+};

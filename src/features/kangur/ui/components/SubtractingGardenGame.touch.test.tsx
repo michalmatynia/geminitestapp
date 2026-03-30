@@ -90,12 +90,22 @@ describe('SubtractingGardenGame touch interactions', () => {
       </NextIntlClientProvider>
     );
 
+    expect(screen.getByTestId('subtracting-garden-game-shell')).toHaveClass('w-full', 'max-w-none');
     expect(screen.getByTestId('subtracting-garden-touch-hint')).toHaveTextContent(
       'Tap a glowing point, then tap the basket or the cloud. You can still drag too.'
     );
+    expect(screen.getByText(/^Take away \d+ glowing points$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Target: take away \d+$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Taken away: 0\/\d+$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Left: \d+$/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'To basket' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'To cloud' })).toBeInTheDocument();
 
     const basketZone = screen.getByTestId('subtracting-garden-zone-basket');
-    const firstToken = within(basketZone).getAllByRole('button')[0];
+    const firstToken = within(basketZone).getAllByRole('button', {
+      name: 'Move glowing point',
+    })[0];
     const tokenEmoji = firstToken.textContent ?? '';
 
     expect(firstToken).toHaveClass('touch-manipulation');

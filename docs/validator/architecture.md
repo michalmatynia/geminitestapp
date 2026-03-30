@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-28'
 status: 'active'
 doc_type: 'architecture'
 scope: 'feature:validator'
@@ -11,7 +11,7 @@ canonical: true
 ## Validation Pipeline
 1. UI (`ValidatorSettings`) writes pattern definitions, launch rules, replacement strategy, and runtime config.
 2. Static engine (`buildFieldIssues`) evaluates regex patterns in deterministic sequence order.
-3. Runtime engine (`/api/products/validator-runtime/evaluate`) evaluates DB/AI runtime patterns.
+3. Runtime engine (`/api/v2/products/validator-runtime/evaluate`) evaluates DB/AI runtime patterns.
 4. Maps are merged by `mergeFieldIssueMaps` and consumed by form hooks/components.
 
 ## Function Layers

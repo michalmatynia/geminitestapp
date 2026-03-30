@@ -6,11 +6,28 @@ import { createGuestKangurScore } from '@/features/kangur/services/guest-kangur-
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
+import { clearKangurScopedScoresCache } from '@/features/kangur/ui/services/learner-profile-scores';
 import { resolveKangurScoreSubject, type KangurLessonSubject } from '@/shared/contracts/kangur';
 
 const KANGUR_GUEST_PLAYER_STORAGE_KEY = 'kangur.guest-player-name';
 
 const kangurPlatform = getKangurPlatform();
+
+const isKangurAnonymousSessionError = (error: unknown): boolean => {
+  if (isKangurAuthStatusError(error)) {
+    return true;
+  }
+
+  const message =
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message?: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : '';
+
+  return /authentication required/i.test(message);
+};
 
 type PersistKangurSessionScoreInput = {
   operation: string;
@@ -20,6 +37,17 @@ type PersistKangurSessionScoreInput = {
   timeTakenSeconds: number;
   xpEarned?: number | null;
   subject?: KangurLessonSubject;
+};
+
+type PersistedKangurSessionScorePayload = {
+  player_name: string;
+  score: number;
+  operation: string;
+  subject: ReturnType<typeof resolveKangurScoreSubject>;
+  total_questions: number;
+  correct_answers: number;
+  time_taken: number;
+  xp_earned?: number | undefined;
 };
 
 const readStoredGuestPlayerName = (): string => {
@@ -38,25 +66,54 @@ const readStoredGuestPlayerName = (): string => {
   );
 };
 
-const resolveSessionPlayerName = (user: KangurUser | null): string =>
-  user?.full_name?.trim() ||
-  user?.activeLearner?.displayName?.trim() ||
-  readStoredGuestPlayerName() ||
-  'Gracz';
+const pickFirstNonEmptyString = (...values: Array<string | null | undefined>): string | null => {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
 
-export async function persistKangurSessionScore({
+  return null;
+};
+
+const resolveSessionPlayerName = (user: KangurUser | null): string =>
+  pickFirstNonEmptyString(
+    user?.full_name,
+    user?.activeLearner?.displayName,
+    readStoredGuestPlayerName()
+  ) ?? 'Gracz';
+
+const isParentWithoutActiveLearner = (user: KangurUser | null): boolean =>
+  user?.actorType === 'parent' && !user.activeLearner?.id;
+
+const buildPersistedKangurSessionScorePayload = ({
+  correctAnswers,
   operation,
   score,
-  totalQuestions,
-  correctAnswers,
-  timeTakenSeconds,
-  xpEarned,
   subject,
-}: PersistKangurSessionScoreInput): Promise<void> {
-  let user: KangurUser | null = null;
-  let isGuestSession = false;
+  timeTakenSeconds,
+  totalQuestions,
+  user,
+  xpEarned,
+}: PersistKangurSessionScoreInput & { user: KangurUser | null }): PersistedKangurSessionScorePayload => ({
+  player_name: resolveSessionPlayerName(user),
+  score: Math.max(0, Math.round(score)),
+  operation,
+  subject: resolveKangurScoreSubject({ operation, subject }),
+  total_questions: Math.max(1, Math.round(totalQuestions)),
+  correct_answers: Math.max(0, Math.round(correctAnswers)),
+  time_taken: Math.max(0, Math.round(timeTakenSeconds)),
+  xp_earned:
+    typeof xpEarned === 'number' && Number.isFinite(xpEarned)
+      ? Math.max(0, Math.round(xpEarned))
+      : undefined,
+});
 
-  user = await withKangurClientError(
+const resolvePersistKangurSessionUser = async (
+  operation: string
+): Promise<{ user: KangurUser | null; isGuestSession: boolean }> => {
+  let isGuestSession = false;
+  const user = await withKangurClientError(
     {
       source: 'persistKangurSessionScore',
       action: 'resolveSessionUser',
@@ -67,36 +124,25 @@ export async function persistKangurSessionScore({
     {
       fallback: null,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (isKangurAnonymousSessionError(error)) {
           isGuestSession = true;
         }
       },
+      shouldReport: (error) => !isKangurAnonymousSessionError(error),
     }
   );
 
-  if (user?.actorType === 'parent' && !user?.activeLearner?.id) {
-    return;
-  }
+  return { user, isGuestSession };
+};
 
-  const payload = {
-    player_name: resolveSessionPlayerName(user),
-    score: Math.max(0, Math.round(score)),
-    operation,
-    subject: resolveKangurScoreSubject({ operation, subject }),
-    total_questions: Math.max(1, Math.round(totalQuestions)),
-    correct_answers: Math.max(0, Math.round(correctAnswers)),
-    time_taken: Math.max(0, Math.round(timeTakenSeconds)),
-    xp_earned:
-      typeof xpEarned === 'number' && Number.isFinite(xpEarned)
-        ? Math.max(0, Math.round(xpEarned))
-        : undefined,
-  };
-
-  if (isGuestSession) {
-    createGuestKangurScore(payload);
-    return;
-  }
-
+const persistPlatformKangurSessionScore = async ({
+  operation,
+  payload,
+}: {
+  operation: string;
+  payload: PersistedKangurSessionScorePayload;
+}): Promise<boolean> => {
+  let shouldStoreGuestScore = false;
   await withKangurClientError(
     {
       source: 'persistKangurSessionScore',
@@ -104,10 +150,58 @@ export async function persistKangurSessionScore({
       description: 'Persist a session score to the Kangur platform.',
       context: {
         operation,
-        totalQuestions: Math.max(1, Math.round(totalQuestions)),
+        totalQuestions: payload.total_questions,
       },
     },
     () => kangurPlatform.score.create(payload),
-    { fallback: undefined }
+    {
+      fallback: undefined,
+      onError: (error) => {
+        if (isKangurAnonymousSessionError(error)) {
+          shouldStoreGuestScore = true;
+        }
+      },
+      shouldReport: (error) => !isKangurAnonymousSessionError(error),
+    }
   );
+  return shouldStoreGuestScore;
+};
+
+export async function persistKangurSessionScore({
+  operation,
+  score,
+  totalQuestions,
+  correctAnswers,
+  timeTakenSeconds,
+  xpEarned,
+  subject,
+}: PersistKangurSessionScoreInput): Promise<void> {
+  const { user, isGuestSession } = await resolvePersistKangurSessionUser(operation);
+  if (isParentWithoutActiveLearner(user)) {
+    return;
+  }
+
+  const payload = buildPersistedKangurSessionScorePayload({
+    correctAnswers,
+    operation,
+    score,
+    subject,
+    timeTakenSeconds,
+    totalQuestions,
+    user,
+    xpEarned,
+  });
+
+  if (isGuestSession) {
+    createGuestKangurScore(payload);
+    return;
+  }
+
+  const shouldStoreGuestScore = await persistPlatformKangurSessionScore({ operation, payload });
+  if (shouldStoreGuestScore) {
+    createGuestKangurScore(payload);
+    return;
+  }
+
+  clearKangurScopedScoresCache();
 }

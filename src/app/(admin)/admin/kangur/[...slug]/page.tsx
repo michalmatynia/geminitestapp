@@ -1,6 +1,7 @@
 import { type JSX } from 'react';
 
 import { AdminKangurPageShell } from '@/features/kangur/admin/AdminKangurPageShell';
+import { requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 
 export default async function AdminKangurSlugPage({
   params,
@@ -8,5 +9,7 @@ export default async function AdminKangurSlugPage({
   params: Promise<{ slug: string[] }>;
 }): Promise<JSX.Element> {
   const resolvedParams = await params;
+  await requireAccessibleKangurSlugRoute(resolvedParams.slug);
+
   return <AdminKangurPageShell slug={resolvedParams.slug} />;
 }

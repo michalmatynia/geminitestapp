@@ -13,6 +13,7 @@ import { KANGUR_WRAP_ROW_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tok
 import { cn } from '@/features/kangur/shared/utils';
 import { AnalogClock } from './ClockLesson.visuals';
 import type { WidenLessonCopy } from './ClockLesson.i18n';
+import { KANGUR_CLOCK_THEME_COLORS } from './clock-theme';
 
 export const CLOCK_COMBINED_SLIDES_COPY_PL = {
   combineHands: {
@@ -63,7 +64,9 @@ export const buildClockCombinedSlides = (copy: ClockCombinedSlidesCopy): LessonS
           <p className='font-semibold [color:var(--kangur-page-text)]'>{copy.combineHands.stepsTitle}</p>
           <KangurLessonCaption align='left'>{copy.combineHands.step1}</KangurLessonCaption>
           <KangurLessonCaption align='left'>{copy.combineHands.step2}</KangurLessonCaption>
-          <p className='font-extrabold text-indigo-700'>{copy.combineHands.result}</p>
+          <p className='font-extrabold' style={{ color: KANGUR_CLOCK_THEME_COLORS.lessonMinuteHand }}>
+            {copy.combineHands.result}
+          </p>
         </KangurLessonCallout>
       </KangurLessonStack>
     ),

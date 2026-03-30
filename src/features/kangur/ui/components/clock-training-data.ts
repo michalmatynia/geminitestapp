@@ -1,9 +1,10 @@
+import type { KangurMiniGameTranslate } from '@/features/kangur/ui/constants/mini-game-i18n';
+
 import type {
   ClockTask,
   ClockTrainingSectionContent,
   ClockTrainingTaskPoolId,
 } from './clock-training/types';
-import type { ClockTrainingTranslate } from './clock-training-i18n';
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
 
 export const CLOCK_TRAINING_TASKS: Record<ClockTrainingTaskPoolId, ClockTask[]> = {
@@ -86,7 +87,7 @@ const CLOCK_TRAINING_SECTION_CONTENT: Record<ClockTrainingTaskPoolId, ClockTrain
 
 export function getClockTrainingSectionContent(
   section: ClockTrainingTaskPoolId,
-  translate?: ClockTrainingTranslate
+  translate?: KangurMiniGameTranslate
 ): ClockTrainingSectionContent {
   const baseContent = CLOCK_TRAINING_SECTION_CONTENT[section] ?? CLOCK_TRAINING_SECTION_CONTENT.mixed;
   const contentKey = `content.${section}`;

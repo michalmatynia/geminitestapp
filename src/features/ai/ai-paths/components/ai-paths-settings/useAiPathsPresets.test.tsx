@@ -42,6 +42,14 @@ const mocks = vi.hoisted(() => ({
   reportAiPathsErrorMock: vi.fn(),
   ensureNodeVisibleMock: vi.fn(),
 }));
+const graphActionsMock = {
+  setNodes: mocks.setNodesMock,
+  setEdges: mocks.setEdgesMock,
+};
+const selectionActionsMock = {
+  selectNode: mocks.selectNodeMock,
+  selectEdge: mocks.selectEdgeMock,
+};
 
 const basePresetDraft = {
   name: '',
@@ -50,112 +58,136 @@ const basePresetDraft = {
   template: '',
 };
 
+const setClusterPresets = (
+  next:
+    | Array<Record<string, unknown>>
+    | ((prev: Array<Record<string, unknown>>) => Array<Record<string, unknown>>)
+) => {
+  state.presetsState.clusterPresets =
+    typeof next === 'function' ? next(state.presetsState.clusterPresets) : next;
+};
+
+const setDbQueryPresets = (
+  next:
+    | Array<Record<string, unknown>>
+    | ((prev: Array<Record<string, unknown>>) => Array<Record<string, unknown>>)
+) => {
+  state.presetsState.dbQueryPresets =
+    typeof next === 'function' ? next(state.presetsState.dbQueryPresets) : next;
+};
+
+const setDbNodePresets = (
+  next:
+    | Array<Record<string, unknown>>
+    | ((prev: Array<Record<string, unknown>>) => Array<Record<string, unknown>>)
+) => {
+  state.presetsState.dbNodePresets =
+    typeof next === 'function' ? next(state.presetsState.dbNodePresets) : next;
+};
+
+const setPresetDraft = (
+  next:
+    | typeof state.presetsState.presetDraft
+    | ((prev: typeof state.presetsState.presetDraft) => typeof state.presetsState.presetDraft)
+) => {
+  state.presetsState.presetDraft =
+    typeof next === 'function' ? next(state.presetsState.presetDraft) : next;
+};
+
+const setPresetsModalOpen = (open: boolean) => {
+  state.presetsState.presetsModalOpen = open;
+};
+
+const setPresetsJson = (json: string) => {
+  state.presetsState.presetsJson = json;
+};
+
+const setExpandedPaletteGroups = (next: Set<string> | ((prev: Set<string>) => Set<string>)) => {
+  state.presetsState.expandedPaletteGroups =
+    typeof next === 'function' ? next(state.presetsState.expandedPaletteGroups) : next;
+};
+
+const setPaletteCollapsed = (collapsed: boolean) => {
+  state.presetsState.paletteCollapsed = collapsed;
+};
+
+const setEditingPresetId = (id: string | null) => {
+  state.presetsState.editingPresetId = id;
+};
+
+const resetPresetDraft = () => {
+  state.presetsState.editingPresetId = null;
+  state.presetsState.presetDraft = { ...basePresetDraft };
+};
+
+const setPresetPersistenceHandlers = (handlers: Record<string, unknown>) => {
+  state.persistenceHandlers = handlers;
+};
+
+const normalizeClusterPreset = (raw: Partial<Record<string, unknown>>) => ({
+  id: String(raw.id ?? 'normalized-preset'),
+  name: String(raw.name ?? 'Imported Preset'),
+  description: String(raw.description ?? ''),
+  bundlePorts: Array.isArray(raw.bundlePorts) ? raw.bundlePorts : ['bundle'],
+  template: String(raw.template ?? ''),
+  createdAt: String(raw.createdAt ?? '2026-03-19T00:00:00.000Z'),
+  updatedAt: String(raw.updatedAt ?? '2026-03-19T00:00:00.000Z'),
+});
+
+const normalizeDbQueryPreset = (raw: Partial<Record<string, unknown>>) => ({
+  id: String(raw.id ?? 'db-query'),
+  name: String(raw.name ?? 'DB Query'),
+  queryTemplate: String(raw.queryTemplate ?? ''),
+  updateTemplate: String(raw.updateTemplate ?? ''),
+  createdAt: String(raw.createdAt ?? '2026-03-19T00:00:00.000Z'),
+  updatedAt: String(raw.updatedAt ?? '2026-03-19T00:00:00.000Z'),
+});
+
+const normalizeDbNodePreset = (raw: Partial<Record<string, unknown>>) => ({
+  id: String(raw.id ?? 'db-node'),
+  name: String(raw.name ?? 'DB Node'),
+  collection: String(raw.collection ?? 'products'),
+  action: String(raw.action ?? 'find'),
+  createdAt: String(raw.createdAt ?? '2026-03-19T00:00:00.000Z'),
+  updatedAt: String(raw.updatedAt ?? '2026-03-19T00:00:00.000Z'),
+});
+
+const togglePaletteGroup = (title: string) => {
+  const next = new Set(state.presetsState.expandedPaletteGroups);
+  if (next.has(title)) next.delete(title);
+  else next.add(title);
+  state.presetsState.expandedPaletteGroups = next;
+};
+
+const presetsActionsMock = {
+  setClusterPresets,
+  setDbQueryPresets,
+  setDbNodePresets,
+  setPresetDraft,
+  setPresetsModalOpen,
+  setPresetsJson,
+  setExpandedPaletteGroups,
+  setPaletteCollapsed,
+  setEditingPresetId,
+  resetPresetDraft,
+  setPresetPersistenceHandlers,
+  normalizeClusterPreset,
+  normalizeDbQueryPreset,
+  normalizeDbNodePreset,
+  togglePaletteGroup,
+};
+
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
-  useGraphActions: () => ({
-    setNodes: mocks.setNodesMock,
-    setEdges: mocks.setEdgesMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/PresetsContext', () => ({
   usePresetsState: () => state.presetsState,
-  usePresetsActions: () => ({
-    setClusterPresets: (
-      next:
-        | Array<Record<string, unknown>>
-        | ((prev: Array<Record<string, unknown>>) => Array<Record<string, unknown>>)
-    ) => {
-      state.presetsState.clusterPresets =
-        typeof next === 'function' ? next(state.presetsState.clusterPresets) : next;
-    },
-    setDbQueryPresets: (
-      next:
-        | Array<Record<string, unknown>>
-        | ((prev: Array<Record<string, unknown>>) => Array<Record<string, unknown>>)
-    ) => {
-      state.presetsState.dbQueryPresets =
-        typeof next === 'function' ? next(state.presetsState.dbQueryPresets) : next;
-    },
-    setDbNodePresets: (
-      next:
-        | Array<Record<string, unknown>>
-        | ((prev: Array<Record<string, unknown>>) => Array<Record<string, unknown>>)
-    ) => {
-      state.presetsState.dbNodePresets =
-        typeof next === 'function' ? next(state.presetsState.dbNodePresets) : next;
-    },
-    setPresetDraft: (
-      next:
-        | typeof state.presetsState.presetDraft
-        | ((prev: typeof state.presetsState.presetDraft) => typeof state.presetsState.presetDraft)
-    ) => {
-      state.presetsState.presetDraft =
-        typeof next === 'function' ? next(state.presetsState.presetDraft) : next;
-    },
-    setPresetsModalOpen: (open: boolean) => {
-      state.presetsState.presetsModalOpen = open;
-    },
-    setPresetsJson: (json: string) => {
-      state.presetsState.presetsJson = json;
-    },
-    setExpandedPaletteGroups: (
-      next: Set<string> | ((prev: Set<string>) => Set<string>)
-    ) => {
-      state.presetsState.expandedPaletteGroups =
-        typeof next === 'function' ? next(state.presetsState.expandedPaletteGroups) : next;
-    },
-    setPaletteCollapsed: (collapsed: boolean) => {
-      state.presetsState.paletteCollapsed = collapsed;
-    },
-    setEditingPresetId: (id: string | null) => {
-      state.presetsState.editingPresetId = id;
-    },
-    resetPresetDraft: () => {
-      state.presetsState.editingPresetId = null;
-      state.presetsState.presetDraft = { ...basePresetDraft };
-    },
-    setPresetPersistenceHandlers: (handlers: Record<string, unknown>) => {
-      state.persistenceHandlers = handlers;
-    },
-    normalizeClusterPreset: (raw: Partial<Record<string, unknown>>) => ({
-      id: String(raw.id ?? 'normalized-preset'),
-      name: String(raw.name ?? 'Imported Preset'),
-      description: String(raw.description ?? ''),
-      bundlePorts: Array.isArray(raw.bundlePorts) ? raw.bundlePorts : ['bundle'],
-      template: String(raw.template ?? ''),
-      createdAt: String(raw.createdAt ?? '2026-03-19T00:00:00.000Z'),
-      updatedAt: String(raw.updatedAt ?? '2026-03-19T00:00:00.000Z'),
-    }),
-    normalizeDbQueryPreset: (raw: Partial<Record<string, unknown>>) => ({
-      id: String(raw.id ?? 'db-query'),
-      name: String(raw.name ?? 'DB Query'),
-      queryTemplate: String(raw.queryTemplate ?? ''),
-      updateTemplate: String(raw.updateTemplate ?? ''),
-      createdAt: String(raw.createdAt ?? '2026-03-19T00:00:00.000Z'),
-      updatedAt: String(raw.updatedAt ?? '2026-03-19T00:00:00.000Z'),
-    }),
-    normalizeDbNodePreset: (raw: Partial<Record<string, unknown>>) => ({
-      id: String(raw.id ?? 'db-node'),
-      name: String(raw.name ?? 'DB Node'),
-      collection: String(raw.collection ?? 'products'),
-      action: String(raw.action ?? 'find'),
-      createdAt: String(raw.createdAt ?? '2026-03-19T00:00:00.000Z'),
-      updatedAt: String(raw.updatedAt ?? '2026-03-19T00:00:00.000Z'),
-    }),
-    togglePaletteGroup: (title: string) => {
-      const next = new Set(state.presetsState.expandedPaletteGroups);
-      if (next.has(title)) next.delete(title);
-      else next.add(title);
-      state.presetsState.expandedPaletteGroups = next;
-    },
-  }),
+  usePresetsActions: () => presetsActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
-  useSelectionActions: () => ({
-    selectNode: mocks.selectNodeMock,
-    selectEdge: mocks.selectEdgeMock,
-  }),
+  useSelectionActions: () => selectionActionsMock,
 }));
 
 vi.mock('@/shared/lib/ai-paths', () => ({

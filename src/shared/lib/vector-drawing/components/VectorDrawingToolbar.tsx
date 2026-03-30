@@ -81,27 +81,30 @@ const VECTOR_TOOL_DOC_IDS: Partial<Record<VectorToolMode, string>> = {
   brush: 'vector_toolbar_tool_brush',
 };
 
-export function VectorDrawingToolbar({
-  tool: propTool,
-  onSelectTool: propOnSelectTool,
-  showSelectTool = true,
-  onUndo: propOnUndo,
-  onRedo: propOnRedo,
-  onClose: propOnClose,
-  onDetach: propOnDetach,
-  onClear: propOnClear,
-  onSmooth: propOnSmooth,
-  onSimplify: propOnSimplify,
-  disableUndo: propDisableUndo,
-  disableRedo: propDisableRedo,
-  disableClose: propDisableClose,
-  disableDetach: propDisableDetach,
-  disableClear: propDisableClear,
-  disableSmooth: propDisableSmooth,
-  disableSimplify: propDisableSimplify,
-  className,
-  variant = 'full',
-}: VectorDrawingToolbarProps): React.JSX.Element {
+export function VectorDrawingToolbar(
+  props: VectorDrawingToolbarProps
+): React.JSX.Element {
+  const {
+    tool: propTool,
+    onSelectTool: propOnSelectTool,
+    showSelectTool = true,
+    onUndo: propOnUndo,
+    onRedo: propOnRedo,
+    onClose: propOnClose,
+    onDetach: propOnDetach,
+    onClear: propOnClear,
+    onSmooth: propOnSmooth,
+    onSimplify: propOnSimplify,
+    disableUndo: propDisableUndo,
+    disableRedo: propDisableRedo,
+    disableClose: propDisableClose,
+    disableDetach: propDisableDetach,
+    disableClear: propDisableClear,
+    disableSmooth: propDisableSmooth,
+    disableSimplify: propDisableSimplify,
+    className,
+    variant = 'full',
+  } = props;
   const stateContext = useOptionalVectorDrawingState();
   const actionsContext = useOptionalVectorDrawingActions();
 

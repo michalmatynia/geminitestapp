@@ -16,10 +16,66 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelProgress', async () => {
+  const { useLessonHubProgress } =
+    await vi.importActual<typeof import('@/features/kangur/ui/hooks/useLessonHubProgress')>(
+      '@/features/kangur/ui/hooks/useLessonHubProgress'
+    );
+  return {
+    useKangurLessonPanelProgress: ({
+      slideSections,
+    }: {
+      slideSections: Partial<Record<string, readonly unknown[]>>;
+    }) => {
+      const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+        useLessonHubProgress(slideSections);
+      return {
+        markSectionOpened,
+        markSectionViewedCount,
+        recordPanelTime: vi.fn(),
+        sectionProgress,
+      };
+    },
+  };
+});
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
+  useKangurLessonGameSections: () => ({
+    data: [],
+    isPending: false,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
   __esModule: true,
   default: ({ section }: { section?: string }) => (
     <div data-testid='mock-clock-training-game'>{section ?? 'mixed'}</div>
+  ),
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  __esModule: true,
+  KangurLaunchableGameInstanceRuntime: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-kangur-launchable-game-instance-runtime'>
+      {gameId}:{instanceId}
+    </div>
+  ),
+  default: ({
+    gameId,
+    instanceId,
+  }: {
+    gameId: string;
+    instanceId: string;
+  }) => (
+    <div data-testid='mock-kangur-launchable-game-instance-runtime'>
+      {gameId}:{instanceId}
+    </div>
   ),
 }));
 
@@ -40,6 +96,8 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
       progressUpdates: {},
     })),
     loadProgress: vi.fn(() => createDefaultKangurProgressState()),
+    recordKangurLessonPanelProgress: vi.fn(),
+    recordKangurLessonPanelTime: vi.fn(),
   };
 });
 
@@ -109,7 +167,7 @@ describe('ClockLesson i18n', () => {
     expect(screen.getByText(/We jump by 5 minutes/i)).toBeInTheDocument();
   });
 
-  it('renders English practice stage copy', async () => {
+  it('renders English practice game copy', async () => {
     renderLesson();
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
@@ -119,7 +177,9 @@ describe('ClockLesson i18n', () => {
     });
 
     expect(screen.getByRole('button', { name: /Back to topics/i })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-clock-training-game')).toHaveTextContent('hours');
+    expect(
+      screen.getByTestId('mock-kangur-launchable-game-instance-runtime')
+    ).toHaveTextContent('clock_training:clock_training:instance:clock-hours');
   });
 
   it('renders German hub labels and lesson copy', async () => {
@@ -166,7 +226,7 @@ describe('ClockLesson i18n', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders German practice stage copy', async () => {
+  it('renders German practice game copy', async () => {
     renderLesson({ locale: 'de', messages: deMessages });
 
     fireEvent.click(screen.getByTestId('lesson-hub-section-game_hours'));
@@ -176,6 +236,8 @@ describe('ClockLesson i18n', () => {
     });
 
     expect(screen.getByRole('button', { name: /Zurück zu den Themen/i })).toBeInTheDocument();
-    expect(screen.getByTestId('mock-clock-training-game')).toHaveTextContent('hours');
+    expect(
+      screen.getByTestId('mock-kangur-launchable-game-instance-runtime')
+    ).toHaveTextContent('clock_training:clock_training:instance:clock-hours');
   });
 });

@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProductListingItem } from './ProductListingItem';
+import { renderProductListingItem } from './ProductListingItem';
 
 type MockListing = {
   id: string;
@@ -44,7 +44,7 @@ vi.mock(
   })
 );
 
-describe('ProductListingItem', () => {
+describe('renderProductListingItem', () => {
   beforeEach(() => {
     latestDetailsListing = null;
     latestActionsListing = null;
@@ -59,7 +59,7 @@ describe('ProductListingItem', () => {
       },
     } as MockListing;
 
-    render(<ProductListingItem listing={listing as never} />);
+    render(renderProductListingItem({ listing: listing as never }));
 
     expect(screen.getByTestId('listing-card')).toBeInTheDocument();
     expect(screen.getByTestId('listing-details')).toHaveTextContent('Base.com');

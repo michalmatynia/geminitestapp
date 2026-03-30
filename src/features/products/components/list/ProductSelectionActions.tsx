@@ -414,6 +414,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
               />
             ) : null}
             <ActionMenu
+              triggerId='product-filter-presets-menu'
               align='end'
               className='w-64'
               trigger={

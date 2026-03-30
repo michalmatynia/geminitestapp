@@ -4,12 +4,12 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { AiPathsValidationRule, AiPathsValidationStage } from '@/shared/lib/ai-paths';
-import { Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
+import { Badge, Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { ValidationActionButton } from './ValidationActionButton';
 import { ValidationItemCard } from './ValidationItemCard';
-import { ValidationMetaBadge } from './ValidationMetaBadge';
 import { ValidationPanel } from './ValidationPanel';
 import { ValidationPanelHeader } from './ValidationPanelHeader';
 
@@ -19,6 +19,20 @@ const VALIDATION_STAGE_OPTIONS: Array<LabeledOptionDto<AiPathsValidationStage>> 
   { value: 'node_pre_execute', label: 'Node Pre' },
   { value: 'node_post_execute', label: 'Node Post' },
 ];
+
+const renderValidationMetaBadge = ({
+  children,
+  className,
+  uppercase = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  uppercase?: boolean;
+}): React.JSX.Element => (
+  <Badge variant='outline' className={cn('text-[10px]', uppercase && 'uppercase', className)}>
+    {children}
+  </Badge>
+);
 
 export function ValidationRulesEditor(): React.JSX.Element {
   const {
@@ -82,18 +96,16 @@ export function ValidationRulesEditor(): React.JSX.Element {
                       {rule.description}
                     </div>
                     <div className='mt-2 flex flex-wrap items-center gap-1'>
-                      <ValidationMetaBadge uppercase>
-                        {rule.severity}
-                      </ValidationMetaBadge>
+                      {renderValidationMetaBadge({ uppercase: true, children: rule.severity })}
                       {rule.appliesToNodeTypes?.map((type: string) => (
-                        <ValidationMetaBadge key={type}>
-                          {type}
-                        </ValidationMetaBadge>
+                        <React.Fragment key={type}>
+                          {renderValidationMetaBadge({ children: type })}
+                        </React.Fragment>
                       ))}
                       {rule.appliesToStages?.map((stage: string) => (
-                        <ValidationMetaBadge key={`${rule.id}:${stage}`}>
-                          {stage}
-                        </ValidationMetaBadge>
+                        <React.Fragment key={`${rule.id}:${stage}`}>
+                          {renderValidationMetaBadge({ children: stage })}
+                        </React.Fragment>
                       ))}
                     </div>
                     <div className='mt-2 flex flex-wrap items-center gap-3'>

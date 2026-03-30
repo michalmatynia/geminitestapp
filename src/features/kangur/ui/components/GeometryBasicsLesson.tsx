@@ -1,10 +1,11 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
-import plMessages from '@/i18n/messages/pl.json';
-import GeometryBasicsWorkshopGame from '@/features/kangur/ui/components/GeometryBasicsWorkshopGame';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   GeometryAngleAnimation,
   GeometryAngleTypesAnimation,
@@ -13,7 +14,7 @@ import {
   GeometryRightAngleAnimation,
   GeometrySideHighlightAnimation,
   GeometryVerticesAnimation,
-} from '@/features/kangur/ui/components/GeometryLessonAnimations';
+} from './GeometryLessonAnimations';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -21,22 +22,22 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import type { LessonTranslate } from '@/features/kangur/ui/components/lesson-copy';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
+import {
+  createLessonFallbackTranslate,
+  type LessonTranslate,
+} from '@/features/kangur/ui/components/lesson-copy';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+import { GEOMETRY_BASICS_LESSON_COMPONENT_CONTENT as CONTENT } from '@/features/kangur/lessons/lesson-template-component-content';
+import {
+  createGeometryBasicsLessonTranslate,
+  resolveGeometryBasicsLessonContent,
+} from './geometry-basics-lesson-content';
 
 type SectionId = 'punkt' | 'bok' | 'kat' | 'podsumowanie' | 'game';
-
-const createStaticTranslator = (messages: Record<string, unknown>): LessonTranslate => (key) => {
-  const resolved = key.split('.').reduce<unknown>(
-    (current, segment) =>
-      typeof current === 'object' && current !== null
-        ? (current as Record<string, unknown>)[segment]
-        : undefined,
-    messages
-  );
-
-  return typeof resolved === 'string' ? resolved : key;
-};
+const GEOMETRY_BASICS_WORKSHOP_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_shape_workshop'
+);
 
 const buildGeometryBasicsSlides = (
   translations: LessonTranslate
@@ -311,25 +312,37 @@ const buildGeometryBasicsSections = (translations: LessonTranslate) => [
   },
 ] as const;
 
-const translateStaticGeometryBasics = createStaticTranslator(
-  plMessages.KangurStaticLessons.geometryBasics as Record<string, unknown>
-);
+const translateStaticGeometryBasics = createGeometryBasicsLessonTranslate(CONTENT);
 
 export const SLIDES = buildGeometryBasicsSlides(translateStaticGeometryBasics);
 export const HUB_SECTIONS = buildGeometryBasicsSections(translateStaticGeometryBasics);
+export { CONTENT };
 
-export default function GeometryBasicsLesson(): React.JSX.Element {
+export default function GeometryBasicsLesson({ lessonTemplate }: LessonProps): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.geometryBasics');
-  const translate = (key: string): string => translations(key as never);
-  const sections = buildGeometryBasicsSections(translate);
-  const slides = buildGeometryBasicsSlides(translate);
+  const fallbackTranslate = createLessonFallbackTranslate(
+    translations as LessonTranslate & { has?: (key: string) => boolean }
+  );
+  const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_basics');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
+  const resolvedContent = useMemo(
+    () => resolveGeometryBasicsLessonContent(resolvedTemplate, fallbackTranslate),
+    [fallbackTranslate, resolvedTemplate]
+  );
+  const translate = useMemo(
+    () => createGeometryBasicsLessonTranslate(resolvedContent),
+    [resolvedContent]
+  );
+  const sections = useMemo(() => buildGeometryBasicsSections(translate), [translate]);
+  const slides = useMemo(() => buildGeometryBasicsSlides(translate), [translate]);
+  const lessonTitle = resolvedTemplate?.title?.trim() || translate('lessonTitle');
 
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='geometry_basics'
       lessonEmoji='📐'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={lessonTitle}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-sky'
@@ -343,14 +356,17 @@ export default function GeometryBasicsLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game',
-          stage: {
+          shell: {
             accent: 'sky',
-            title: translate('game.stageTitle'),
+            title: translate('game.gameTitle'),
             icon: '🎯',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-basics-game-shell',
           },
-          render: ({ onFinish }) => <GeometryBasicsWorkshopGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'geometry_shape_workshop',
+            instanceId: GEOMETRY_BASICS_WORKSHOP_INSTANCE_ID,
+          },
         },
       ]}
     />

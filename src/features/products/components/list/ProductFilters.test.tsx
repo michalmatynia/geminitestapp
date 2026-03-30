@@ -147,4 +147,11 @@ describe('ProductFilters layout contract', () => {
     const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(filterPanelProps.defaultExpanded).toBe(false);
   });
+
+  it('passes a deterministic id base when rendered for a specific layout instance', () => {
+    render(<ProductFilters instanceId='mobile' />);
+
+    const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as Record<string, unknown>;
+    expect(filterPanelProps.idBase).toBe('products-mobile');
+  });
 });

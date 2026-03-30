@@ -5,6 +5,7 @@ import {
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
 } from '@/shared/contracts/kangur';
 import {
@@ -16,7 +17,7 @@ import {
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
 } from '@/shared/contracts/master-folder-tree';
-import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
+import { CLIENT_LOGGING_KEYS, OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
 import { folderTreeInstanceValues } from '@/shared/utils/folder-tree-profiles-v2';
 
@@ -43,6 +44,7 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
+  KANGUR_THEME_PRESET_MANIFEST_KEY,
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
   KANGUR_TEST_SUITES_SETTING_KEY,
@@ -53,6 +55,9 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,
   CLIENT_LOGGING_KEYS.tags,
+  OBSERVABILITY_LOGGING_KEYS.infoEnabled,
+  OBSERVABILITY_LOGGING_KEYS.activityEnabled,
+  OBSERVABILITY_LOGGING_KEYS.errorEnabled,
 ];
 
 const LITE_SETTINGS_KEY_SET = new Set<string>(LITE_SETTINGS_KEYS);

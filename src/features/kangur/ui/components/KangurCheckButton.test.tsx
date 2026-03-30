@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 
-import { KangurCheckButton } from './KangurCheckButton';
+import { KangurButton } from '@/features/kangur/ui/design/primitives/KangurButton';
+
+import { getKangurCheckButtonClassName } from './KangurCheckButton';
 
 describe('KangurCheckButton', () => {
   it('keeps the success state fully visible while disabled', () => {
     render(
-      <KangurCheckButton disabled feedbackTone='success'>
+      <KangurButton disabled className={getKangurCheckButtonClassName(undefined, 'success')}>
         Sprawdź
-      </KangurCheckButton>
+      </KangurButton>
     );
 
     expect(screen.getByRole('button', { name: 'Sprawdź' })).toHaveClass(
@@ -18,7 +20,11 @@ describe('KangurCheckButton', () => {
   });
 
   it('applies the error styling without changing the label', () => {
-    render(<KangurCheckButton feedbackTone='error'>Sprawdź</KangurCheckButton>);
+    render(
+      <KangurButton className={getKangurCheckButtonClassName(undefined, 'error')}>
+        Sprawdź
+      </KangurButton>
+    );
 
     expect(screen.getByRole('button', { name: 'Sprawdź' })).toHaveClass(
       'bg-rose-500',

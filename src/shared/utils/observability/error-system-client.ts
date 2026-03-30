@@ -10,6 +10,7 @@ import {
 import { isAppError } from '@/shared/errors/app-error';
 import { resolveErrorUserMessage } from '@/shared/errors/error-catalog';
 import type { ResolvedError } from '@/shared/contracts/base';
+import { isClientLoggingControlEnabled } from '@/shared/lib/observability/logging-controls-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logger } from '@/shared/utils/logger';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -41,6 +42,7 @@ export const ErrorSystem = {
    * @param context Contextual information (service name, IDs, etc.)
    */
   captureException: async (error: unknown, context: ErrorContext = {}): Promise<void> => {
+    if (!isClientLoggingControlEnabled('error')) return;
     try {
       const message = error instanceof Error ? error.message : String(error);
       const service = context.service || 'unknown';
@@ -69,6 +71,7 @@ export const ErrorSystem = {
    * Log a warning (non-fatal issue).
    */
   logWarning: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    if (!isClientLoggingControlEnabled('error')) return;
     try {
       const service = context.service || 'unknown';
       const category = context.category || classifySharedError(message);
@@ -92,6 +95,7 @@ export const ErrorSystem = {
    * Log a validation error.
    */
   logValidationError: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    if (!isClientLoggingControlEnabled('error')) return;
     try {
       const service = context.service || 'unknown';
 
@@ -114,6 +118,7 @@ export const ErrorSystem = {
    * Log an operational info event.
    */
   logInfo: async (message: string, context: ErrorContext = {}): Promise<void> => {
+    if (!isClientLoggingControlEnabled('info')) return;
     try {
       const service = context.service || 'unknown';
       const category = context.category || classifySharedError(message);

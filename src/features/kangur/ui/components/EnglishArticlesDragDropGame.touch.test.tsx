@@ -5,7 +5,9 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -50,12 +52,20 @@ vi.mock('@hello-pangea/dnd', () => ({
         draggableProps: {},
         dragHandleProps: {},
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => ({
+    subject: 'english',
+    setSubject: vi.fn(),
+    subjectKey: 'learner-1',
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/components/EnglishArticlesDragDropGame.data', () => ({
@@ -89,6 +99,10 @@ vi.mock('@/features/kangur/ui/components/EnglishArticlesDragDropGame.data', () =
 
 import enMessages from '@/i18n/messages/en.json';
 import EnglishArticlesDragDropGame from '@/features/kangur/ui/components/EnglishArticlesDragDropGame';
+
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+});
 
 describe('EnglishArticlesDragDropGame touch interactions', () => {
   it('supports tap-to-slot article placement and keeps the mobile drag-handle styling', () => {
@@ -124,5 +138,21 @@ describe('EnglishArticlesDragDropGame touch interactions', () => {
     expect(screen.getByTestId('english-articles-drag-selection-hint')).toHaveTextContent(
       'Tap an article, then tap a sentence or the bank.'
     );
+  });
+
+  it('keeps the coarse-pointer drag styling when the active token is portaled', () => {
+    draggableSnapshot = { isDragging: true };
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <EnglishArticlesDragDropGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    const draggedToken = within(document.body).getByRole('button', { name: 'a' });
+
+    expect(draggedToken).toHaveClass('touch-manipulation');
+    expect(draggedToken).toHaveClass('min-h-[3.75rem]');
+    expect(draggedToken).toHaveStyle({ touchAction: 'none' });
   });
 });

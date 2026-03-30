@@ -296,16 +296,13 @@ export function KangurCmsPreviewPanel({
           dispatch({
             type: 'UPDATE_NESTED_BLOCK_SETTINGS',
             sectionId: mediaTarget.sectionId,
-            columnId: mediaTarget.columnId,
-            parentBlockId: mediaTarget.parentBlockId,
             blockId: mediaTarget.blockId,
             settings: { [mediaTarget.key]: image },
           });
         } else if (mediaTarget.columnId) {
           dispatch({
-            type: 'UPDATE_BLOCK_IN_COLUMN',
+            type: 'UPDATE_NESTED_BLOCK_SETTINGS',
             sectionId: mediaTarget.sectionId,
-            columnId: mediaTarget.columnId,
             blockId: mediaTarget.blockId,
             settings: { [mediaTarget.key]: image },
           });
@@ -648,28 +645,26 @@ export function KangurCmsPreviewPanel({
                         <KangurGuestPlayerProvider>
                           <KangurLoginModalProvider>
                             <KangurAuthProvider>
-                              <KangurProgressSyncProvider>
-                                <KangurScoreSyncProvider>
-                                  <KangurGameRuntimeBoundary enabled={activeScreenKey === 'Game'}>
-                                    <KangurLessonsRuntimeBoundary enabled={activeScreenKey === 'Lessons'}>
-                                      <KangurLearnerProfileRuntimeBoundary
-                                        enabled={activeScreenKey === 'LearnerProfile'}
-                                      >
-                                        <KangurParentDashboardRuntimeBoundary
-                                          enabled={activeScreenKey === 'ParentDashboard'}
-                                        >
-                                          <KangurCmsRuntimeDataProvider>
-                                            <KangurCmsPreviewCanvasSections
-                                              hierarchy={hierarchy}
-                                              rootSectionIdsByZone={rootSectionIdsByZone}
-                                            />
-                                          </KangurCmsRuntimeDataProvider>
-                                        </KangurParentDashboardRuntimeBoundary>
-                                      </KangurLearnerProfileRuntimeBoundary>
-                                    </KangurLessonsRuntimeBoundary>
-                                  </KangurGameRuntimeBoundary>
-                                </KangurScoreSyncProvider>
-                              </KangurProgressSyncProvider>
+                              <KangurProgressSyncProvider />
+                              <KangurScoreSyncProvider />
+                              <KangurGameRuntimeBoundary enabled={activeScreenKey === 'Game'}>
+                                <KangurLessonsRuntimeBoundary enabled={activeScreenKey === 'Lessons'}>
+                                  <KangurLearnerProfileRuntimeBoundary
+                                    enabled={activeScreenKey === 'LearnerProfile'}
+                                  >
+                                    <KangurParentDashboardRuntimeBoundary
+                                      enabled={activeScreenKey === 'ParentDashboard'}
+                                    >
+                                      <KangurCmsRuntimeDataProvider>
+                                        <KangurCmsPreviewCanvasSections
+                                          hierarchy={hierarchy}
+                                          rootSectionIdsByZone={rootSectionIdsByZone}
+                                        />
+                                      </KangurCmsRuntimeDataProvider>
+                                    </KangurParentDashboardRuntimeBoundary>
+                                  </KangurLearnerProfileRuntimeBoundary>
+                                </KangurLessonsRuntimeBoundary>
+                              </KangurGameRuntimeBoundary>
                             </KangurAuthProvider>
                           </KangurLoginModalProvider>
                         </KangurGuestPlayerProvider>

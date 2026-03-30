@@ -6,6 +6,14 @@ import React from 'react';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { sessionMock } = vi.hoisted(() => ({
+  sessionMock: vi.fn(),
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
+}));
+
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import {
   KangurRouteTransitionProvider,
@@ -25,7 +33,7 @@ function RouteTransitionProbe({
 }: {
   acknowledgeMs?: number;
   sourceId?: string;
-  targetHref: string;
+  targetHref: string | null;
   targetPageKey: string;
   transitionKind?: 'navigation' | 'locale-switch';
 }): React.JSX.Element {
@@ -67,7 +75,7 @@ function RouteTransitionProbe({
             ...(typeof acknowledgeMs === 'number' ? { acknowledgeMs } : {}),
             ...(sourceId ? { sourceId } : {}),
             ...(transitionKind ? { transitionKind } : {}),
-            href: targetHref,
+            ...(targetHref !== null ? { href: targetHref } : {}),
             pageKey: targetPageKey,
           })
         }
@@ -79,7 +87,7 @@ function RouteTransitionProbe({
         onClick={() =>
           markRouteTransitionReady({
             pageKey: targetPageKey,
-            requestedHref: targetHref,
+            ...(targetHref !== null ? { requestedHref: targetHref } : {}),
           })
         }
       >
@@ -89,25 +97,31 @@ function RouteTransitionProbe({
   );
 }
 
-function renderRouteTransitionHarness({
-  acknowledgeMs,
-  pageKey,
-  requestedPath,
-  requestedHref = requestedPath,
-  sourceId,
-  targetHref = '/kangur/lessons',
-  targetPageKey = 'Lessons',
-  transitionKind,
-}: {
+type RouteTransitionHarnessOptions = {
   acknowledgeMs?: number;
   pageKey: string;
   requestedPath: string;
-  requestedHref?: string;
+  requestedHref?: string | null;
   sourceId?: string;
-  targetHref?: string;
+  targetHref?: string | null;
   targetPageKey?: string;
   transitionKind?: 'navigation' | 'locale-switch';
-}) {
+};
+
+function renderRouteTransitionHarness(
+  options: RouteTransitionHarnessOptions,
+) {
+  const {
+    acknowledgeMs,
+    pageKey,
+    requestedPath,
+    requestedHref = requestedPath,
+    sourceId,
+    targetHref = '/kangur/lessons',
+    targetPageKey = 'Lessons',
+    transitionKind,
+  } = options;
+
   return render(
     <KangurRoutingProvider
       basePath='/kangur'
@@ -132,6 +146,10 @@ describe('KangurRouteTransitionProvider', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     clearKangurPendingRouteLoadingSnapshot();
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
   });
 
   afterEach(() => {
@@ -149,7 +167,7 @@ describe('KangurRouteTransitionProvider', () => {
       targetPageKey: 'Lessons',
     });
 
-    await act(async () => {
+    act(() => {
       fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
     });
 
@@ -159,6 +177,169 @@ describe('KangurRouteTransitionProvider', () => {
       pageKey: 'Lessons',
       skeletonVariant: 'lessons-library',
     });
+  });
+
+  it('treats blocked GamesLibrary routes as the fallback page for non-super-admin transitions', async () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    renderRouteTransitionHarness({
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+      requestedHref: '/kangur/games',
+      targetHref: null,
+      targetPageKey: 'Game',
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('idle');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('none');
+    expect(getKangurPendingRouteLoadingSnapshot()).toBeNull();
+  });
+
+  it('downgrades raw /kangur/games transition targets to the fallback page for non-super-admin users', async () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      targetHref: '/kangur/games',
+      targetPageKey: 'GamesLibrary',
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('pending');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('Game');
+    expect(screen.getByTestId('route-transition-skeleton-variant')).toHaveTextContent(
+      'game-home'
+    );
+    expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      fromHref: '/kangur',
+      href: '/kangur/games',
+      pageKey: 'Game',
+      skeletonVariant: 'game-home',
+    });
+  });
+
+  it('keeps raw /kangur/games transition targets intact for exact super admins', async () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'super-admin@example.com',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      targetHref: '/kangur/games',
+      targetPageKey: 'GamesLibrary',
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    expect(screen.getByTestId('route-transition-phase')).toHaveTextContent('pending');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('GamesLibrary');
+    expect(screen.getByTestId('route-transition-skeleton-variant')).toHaveTextContent(
+      'lessons-library'
+    );
+    expect(getKangurPendingRouteLoadingSnapshot()).toMatchObject({
+      fromHref: '/kangur',
+      href: '/kangur/games',
+      pageKey: 'GamesLibrary',
+      skeletonVariant: 'lessons-library',
+    });
+  });
+
+  it('records route transition performance marks for start, commit, ready, and complete', async () => {
+    const performanceMarkSpy = vi
+      .spyOn(window.performance, 'mark')
+      .mockImplementation(() => undefined);
+    const performanceMeasureSpy = vi
+      .spyOn(window.performance, 'measure')
+      .mockImplementation(() => undefined as PerformanceMeasure);
+    const performanceClearMarksSpy = vi
+      .spyOn(window.performance, 'clearMarks')
+      .mockImplementation(() => undefined);
+
+    const { rerender } = renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      targetHref: '/kangur/lessons',
+      targetPageKey: 'Lessons',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/kangur/lessons'
+          requestedHref='/kangur/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe targetHref='/kangur/lessons' targetPageKey='Lessons' />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Mark ready' }));
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    expect(performanceMarkSpy.mock.calls.map((call) => call[0])).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('kangur:route-transition:start:'),
+        expect.stringContaining('kangur:route-transition:commit:'),
+        expect.stringContaining('kangur:route-transition:ready:'),
+        expect.stringContaining('kangur:route-transition:complete:'),
+      ])
+    );
+    expect(performanceMeasureSpy.mock.calls.map((call) => call[0])).toEqual(
+      expect.arrayContaining([
+        'kangur:route-transition:commit',
+        'kangur:route-transition:ready',
+        'kangur:route-transition:complete',
+      ])
+    );
+    expect(performanceClearMarksSpy).toHaveBeenCalled();
   });
 
   it('resets scroll after a Kangur route transition commits to a new requested path', async () => {
@@ -329,6 +510,51 @@ describe('KangurRouteTransitionProvider', () => {
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
   });
 
+  it('reveals standard navigation transitions sooner when page ready is delayed', async () => {
+    const { rerender } = renderRouteTransitionHarness({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+      requestedHref: '/kangur',
+      targetHref: '/kangur/lessons',
+      targetPageKey: 'Lessons',
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start transition' }));
+    });
+
+    await act(async () => {
+      rerender(
+        <KangurRoutingProvider
+          basePath='/kangur'
+          pageKey='Lessons'
+          requestedPath='/kangur/lessons'
+          requestedHref='/kangur/lessons'
+        >
+          <KangurRouteTransitionProvider>
+            <RouteTransitionProbe targetHref='/kangur/lessons' targetPageKey='Lessons' />
+          </KangurRouteTransitionProvider>
+        </KangurRoutingProvider>
+      );
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('true');
+
+    act(() => {
+      vi.advanceTimersByTime(1_199);
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(screen.getByTestId('route-transition-waiting')).toHaveTextContent('false');
+    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
+  });
+
   it('uses a shorter reveal window for locale-switch transitions', async () => {
     const { rerender } = renderRouteTransitionHarness({
       pageKey: 'Lessons',
@@ -366,16 +592,8 @@ describe('KangurRouteTransitionProvider', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Mark ready' }));
     });
 
-    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
-
     act(() => {
-      vi.advanceTimersByTime(119);
-    });
-
-    expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('true');
-
-    act(() => {
-      vi.advanceTimersByTime(1);
+      vi.advanceTimersByTime(0);
     });
 
     expect(screen.getByTestId('route-transition-revealing')).toHaveTextContent('false');
@@ -427,7 +645,7 @@ describe('KangurRouteTransitionProvider', () => {
     expect(screen.getByTestId('route-transition-active-href')).toHaveTextContent('/de/lessons');
   });
 
-  it('clears a pending transition if the navigation takes too long', () => {
+  it('keeps a pending transition latched longer before clearing it', () => {
     renderRouteTransitionHarness({
       pageKey: 'Game',
       requestedPath: '/kangur',
@@ -440,7 +658,14 @@ describe('KangurRouteTransitionProvider', () => {
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
 
     act(() => {
-      vi.advanceTimersByTime(4_000);
+      vi.advanceTimersByTime(9_999);
+    });
+
+    expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('true');
+    expect(screen.getByTestId('route-transition-page-key')).toHaveTextContent('LearnerProfile');
+
+    act(() => {
+      vi.advanceTimersByTime(1);
     });
 
     expect(screen.getByTestId('route-transition-pending')).toHaveTextContent('false');

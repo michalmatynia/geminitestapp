@@ -5,6 +5,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { KangurScoreRecord } from '@kangur/platform';
+import { clearKangurScopedScoresCache } from '@/features/kangur/ui/services/learner-profile-scores';
 
 const {
   logKangurClientErrorMock,
@@ -64,6 +65,7 @@ const createScore = (overrides: Partial<KangurScoreRecord>): KangurScoreRecord =
 describe('useKangurLeaderboardState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurScopedScoresCache();
     useOptionalKangurAuthMock.mockReturnValue({
       user: {
         email: 'ada@example.com',
@@ -139,5 +141,96 @@ describe('useKangurLeaderboardState', () => {
       timeLabel: '41s',
       xpLabel: '+24 XP',
     });
+  });
+
+  it('reuses cached leaderboard scores across remounts for the same subject', async () => {
+    const firstRender = renderHook(() => useKangurLeaderboardState());
+
+    await waitFor(() => {
+      expect(firstRender.result.current.loading).toBe(false);
+    });
+
+    expect(scoreFilterMock).toHaveBeenCalledTimes(1);
+
+    firstRender.unmount();
+
+    const secondRender = renderHook(() => useKangurLeaderboardState());
+
+    expect(secondRender.result.current.loading).toBe(false);
+    expect(secondRender.result.current.items.map((item) => item.playerName)).toEqual([
+      'Ada',
+      'Bartek',
+      'Olek',
+    ]);
+    expect(scoreFilterMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses learner-friendly labels for general and frequency adverbs on the English leaderboard', async () => {
+    scoreFilterMock.mockResolvedValue([
+      createScore({
+        id: 'score-english-adverbs',
+        player_name: 'Ada',
+        operation: 'english_adverbs',
+        subject: 'english',
+        created_by: 'ada@example.com',
+      }),
+      createScore({
+        id: 'score-english-adverbs-frequency',
+        player_name: 'Bartek',
+        operation: 'english_adverbs_frequency',
+        subject: 'english',
+        created_by: 'bartek@example.com',
+      }),
+    ]);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    const { result } = renderHook(() => useKangurLeaderboardState());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.items.map((item) => item.operationLabel)).toEqual([
+      'Przysłówki',
+      'Przysłówki częstotliwości',
+    ]);
+    expect(result.current.operationFilters.map((item) => item.label)).toEqual(
+      expect.arrayContaining(['Przysłówki', 'Przysłówki częstotliwości'])
+    );
+    expect(result.current.items[0]?.metaLabel).toContain('Przysłówki');
+    expect(result.current.items[1]?.metaLabel).toContain('Przysłówki częstotliwości');
+  });
+
+  it('uses learner-friendly labels for comparatives and superlatives on the English leaderboard', async () => {
+    scoreFilterMock.mockResolvedValue([
+      createScore({
+        id: 'score-english-comparatives',
+        player_name: 'Ada',
+        operation: 'english_comparatives_superlatives',
+        subject: 'english',
+        created_by: 'ada@example.com',
+      }),
+    ]);
+    useKangurSubjectFocusMock.mockReturnValue({
+      subject: 'english',
+      setSubject: vi.fn(),
+      subjectKey: 'learner-1',
+    });
+
+    const { result } = renderHook(() => useKangurLeaderboardState());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.items[0]?.operationLabel).toBe('Stopniowanie przymiotników');
+    expect(result.current.operationFilters.map((item) => item.label)).toEqual(
+      expect.arrayContaining(['Stopniowanie przymiotników'])
+    );
+    expect(result.current.items[0]?.metaLabel).toContain('Stopniowanie przymiotników');
   });
 });

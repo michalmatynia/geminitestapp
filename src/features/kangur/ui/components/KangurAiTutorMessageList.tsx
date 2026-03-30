@@ -19,7 +19,7 @@ import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state'
 
 import { type JSX, useMemo } from 'react';
 
-const AI_TUTOR_FOLLOW_UP_ROUTE_ACKNOWLEDGE_MS = 110;
+const AI_TUTOR_FOLLOW_UP_ROUTE_ACKNOWLEDGE_MS = 0;
 
 type TutorDrawingContent = {
   messageLabel?: string;

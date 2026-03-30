@@ -8,7 +8,6 @@ import {
   collectHighRiskCoverageTestFiles,
   highRiskCoverageDomains,
   HIGH_RISK_COVERAGE_SUMMARY_PATH,
-  mergeHighRiskCoverageSummaries,
   selectHighRiskCoverageDomains,
 } from './lib/high-risk-coverage-baseline.mjs';
 
@@ -161,32 +160,6 @@ const run = async () => {
   await Promise.all(
     Array.from({ length: Math.min(coverageConcurrency, coverageDomains.length) }, () => runWorker())
   );
-
-  const preservedSummaryPaths =
-    selectedTargetIds.length === 0
-      ? []
-      : highRiskCoverageDomains
-          .filter((domain) => !selectedTargetIds.includes(domain.id))
-          .map((domain) => `${domain.reportsDirectory}/coverage-summary.json`)
-          .filter((summaryPath) => fs.existsSync(path.join(root, summaryPath)));
-
-  const discoveredSummaryPaths = coverageRuns
-    .map((coverageRun) => coverageRun.coverageSummaryPath)
-    .filter((summaryPath) => fs.existsSync(path.join(root, summaryPath)));
-  const mergedSummaryPaths = [...preservedSummaryPaths, ...discoveredSummaryPaths];
-
-  if (mergedSummaryPaths.length > 0) {
-    const mergedCoverageSummary = mergeHighRiskCoverageSummaries({
-      root,
-      summaryPaths: mergedSummaryPaths,
-    });
-    fs.mkdirSync(coverageReportsAbsolutePath, { recursive: true });
-    fs.writeFileSync(
-      coverageSummaryAbsolutePath,
-      `${JSON.stringify(mergedCoverageSummary, null, 2)}\n`,
-      'utf8'
-    );
-  }
 
   const totalCoverageDurationMs = coverageRuns.reduce(
     (total, coverageRun) => total + coverageRun.durationMs,

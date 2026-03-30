@@ -1,6 +1,6 @@
 ---
 owner: 'Prompt Exploder Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:prompt-exploder'
@@ -8,6 +8,10 @@ canonical: true
 ---
 
 # Prompt Exploder Migration Plan (Newest Version, Legacy Prune)
+
+This is a retained migration record for the March 2026 hard cutover. Treat it as
+historical implementation context; current runtime guidance belongs in
+[`overview.md`](./overview.md) and [`operations-runbook.md`](./operations-runbook.md).
 
 Date: 2026-03-04
 Owner: Prompt Exploder + Validator maintainers
@@ -23,6 +27,12 @@ Status update (2026-03-04):
 - Bridge runtime alias normalization removed; canonical payloads are now required at runtime.
 - Post-cutover legacy cleanup delivered:
   - obsolete persistence migration runtime helper and migration script removed from active toolchain.
+
+Historical note:
+
+- The migration steps below describe the delivered cutover and remaining follow-up at that time.
+- New Prompt Exploder changes should not reopen legacy compatibility paths described here unless a
+  new decision record explicitly authorizes it.
 
 ## Goal
 

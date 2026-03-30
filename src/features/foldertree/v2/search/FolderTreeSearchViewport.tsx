@@ -39,7 +39,7 @@ type FolderTreeSearchViewportResolvedProps = {
   viewportProps: Omit<FolderTreeViewportV2Props, 'controller'>;
 };
 
-function FolderTreeSearchViewportSearchBar({
+const renderFolderTreeSearchViewportSearchBar = ({
   query,
   onQueryChange,
   searchEnabled,
@@ -47,14 +47,14 @@ function FolderTreeSearchViewportSearchBar({
 }: Pick<
   FolderTreeSearchViewportResolvedProps,
   'query' | 'onQueryChange' | 'searchEnabled' | 'searchPlaceholder'
->): React.JSX.Element | null {
+>): React.JSX.Element | null => {
   if (!searchEnabled) return null;
   return (
     <FolderTreeSearchBar value={query} onChange={onQueryChange} placeholder={searchPlaceholder} />
   );
-}
+};
 
-function FolderTreeSearchViewportTree({
+const renderFolderTreeSearchViewportTree = ({
   controller,
   viewportProps,
   searchEnabled,
@@ -62,15 +62,13 @@ function FolderTreeSearchViewportTree({
 }: Pick<
   FolderTreeSearchViewportResolvedProps,
   'controller' | 'viewportProps' | 'searchEnabled' | 'searchState'
->): React.JSX.Element {
-  return (
-    <FolderTreeViewportV2
-      controller={controller}
-      {...viewportProps}
-      searchState={searchEnabled ? searchState : undefined}
-    />
-  );
-}
+>): React.JSX.Element => (
+  <FolderTreeViewportV2
+    controller={controller}
+    {...viewportProps}
+    searchState={searchEnabled ? searchState : undefined}
+  />
+);
 
 /**
  * Combines a search bar with the tree viewport and drives viewport search state.
@@ -100,8 +98,8 @@ export function FolderTreeSearchViewport({
 
   return (
     <div className='flex flex-col gap-1'>
-      <FolderTreeSearchViewportSearchBar {...resolvedProps} />
-      <FolderTreeSearchViewportTree {...resolvedProps} />
+      {renderFolderTreeSearchViewportSearchBar(resolvedProps)}
+      {renderFolderTreeSearchViewportTree(resolvedProps)}
     </div>
   );
 }

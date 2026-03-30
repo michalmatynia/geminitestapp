@@ -88,28 +88,54 @@ const shouldNotifyForLevel = (
   minLevel: SloNotificationLevel
 ): boolean => levelPriority[level] >= levelPriority[minLevel];
 
-const getNotificationConfig = async (): Promise<SloNotificationConfig> => {
+type NotificationSettingsSnapshot = {
+  enabledSetting: string | null;
+  webhookSetting: string | null;
+  minLevelSetting: string | null;
+  cooldownSetting: string | null;
+};
+
+const readNotificationSettings = async (): Promise<NotificationSettingsSnapshot> => {
   const [enabledSetting, webhookSetting, minLevelSetting, cooldownSetting] = await Promise.all([
     readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.enabled),
     readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.webhookUrl),
     readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.minLevel),
     readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.cooldownSeconds),
   ]);
+  return {
+    enabledSetting,
+    webhookSetting,
+    minLevelSetting,
+    cooldownSetting,
+  };
+};
 
-  const enabled =
-    parseBoolean(enabledSetting) || parseBoolean(process.env['AI_PATHS_SLO_NOTIFICATIONS_ENABLED']);
-  const webhookUrl = webhookSetting ?? process.env['AI_PATHS_SLO_WEBHOOK_URL'] ?? null;
-  const minLevel = parseMinLevel(minLevelSetting ?? process.env['AI_PATHS_SLO_MIN_LEVEL']);
-  const cooldownSeconds = parseNumber(
-    cooldownSetting ?? process.env['AI_PATHS_SLO_COOLDOWN_SECONDS'],
+const resolveNotificationEnabled = (settings: NotificationSettingsSnapshot): boolean =>
+  parseBoolean(settings.enabledSetting) ||
+  parseBoolean(process.env['AI_PATHS_SLO_NOTIFICATIONS_ENABLED']);
+
+const resolveNotificationWebhookUrl = (settings: NotificationSettingsSnapshot): string | null =>
+  settings.webhookSetting ?? process.env['AI_PATHS_SLO_WEBHOOK_URL'] ?? null;
+
+const resolveNotificationMinLevel = (
+  settings: NotificationSettingsSnapshot
+): SloNotificationLevel =>
+  parseMinLevel(settings.minLevelSetting ?? process.env['AI_PATHS_SLO_MIN_LEVEL']);
+
+const resolveNotificationCooldownSeconds = (settings: NotificationSettingsSnapshot): number =>
+  parseNumber(
+    settings.cooldownSetting ?? process.env['AI_PATHS_SLO_COOLDOWN_SECONDS'],
     DEFAULT_COOLDOWN_SECONDS
   );
 
+const getNotificationConfig = async (): Promise<SloNotificationConfig> => {
+  const settings = await readNotificationSettings();
+
   return {
-    enabled,
-    webhookUrl,
-    minLevel,
-    cooldownSeconds,
+    enabled: resolveNotificationEnabled(settings),
+    webhookUrl: resolveNotificationWebhookUrl(settings),
+    minLevel: resolveNotificationMinLevel(settings),
+    cooldownSeconds: resolveNotificationCooldownSeconds(settings),
   };
 };
 

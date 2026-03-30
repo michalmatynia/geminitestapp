@@ -1,13 +1,13 @@
 import 'server-only';
 
-import type { Db, Document, Filter } from 'mongodb';
+import type { Collection, Db, Document, Filter } from 'mongodb';
 
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
-import { kangurLessonSectionSchema } from '@/shared/contracts/kangur-lesson-sections';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { KangurLessonSectionListInput, KangurLessonSectionRepository } from './types';
+import { normalizeKangurLessonSection } from './normalize-kangur-lesson-section';
 
 const COLLECTION = 'kangur_lesson_sections';
 const SUBJECT_SORT_INDEX = 'kangur_lesson_sections_subject_sort_idx';
@@ -22,6 +22,8 @@ type MongoKangurLessonSectionDocument = Document &
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
+let defaultsInitialized = false;
+let defaultsInFlight: Promise<void> | null = null;
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -65,23 +67,89 @@ const buildFilter = (
 };
 
 const toSection = (doc: MongoKangurLessonSectionDocument): KangurLessonSection => {
-  const parsed = kangurLessonSectionSchema.safeParse(doc);
-  if (parsed.success) {
-    return parsed.data;
+  return normalizeKangurLessonSection(doc);
+};
+
+const buildSectionUpdate = (section: KangurLessonSection, now: Date) => {
+  const normalizedSection = normalizeKangurLessonSection(section);
+  const unset: Record<string, ''> = {};
+
+  if (typeof normalizedSection.shortLabel !== 'string') {
+    unset['shortLabel'] = '';
   }
+  if (typeof normalizedSection.emoji !== 'string') {
+    unset['emoji'] = '';
+  }
+
   return {
-    id: doc.id,
-    subject: doc.subject,
-    ageGroup: doc.ageGroup,
-    label: doc.label,
-    shortLabel: doc.shortLabel,
-    typeLabel: doc.typeLabel ?? 'Section',
-    emoji: doc.emoji,
-    sortOrder: doc.sortOrder,
-    enabled: doc.enabled ?? true,
-    componentIds: Array.isArray(doc.componentIds) ? doc.componentIds : [],
-    subsections: Array.isArray(doc.subsections) ? doc.subsections : [],
+    filter: { _id: normalizedSection.id },
+    update: {
+      $set: {
+        ...normalizedSection,
+        id: normalizedSection.id,
+        updatedAt: now,
+      },
+      ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
+      $setOnInsert: {
+        createdAt: now,
+      },
+    },
+    upsert: true,
   };
+};
+
+const seedMissingSections = async (
+  collection: Collection<MongoKangurLessonSectionDocument>
+): Promise<boolean> => {
+  const defaults = createDefaultKangurSections();
+  if (defaults.length === 0) {
+    return false;
+  }
+
+  const now = new Date();
+  await collection.bulkWrite(
+    defaults.map((section) => {
+      const normalizedSection = normalizeKangurLessonSection(section);
+      return {
+        updateOne: {
+          filter: { _id: normalizedSection.id },
+          update: {
+            $setOnInsert: {
+              ...normalizedSection,
+              id: normalizedSection.id,
+              createdAt: now,
+              updatedAt: now,
+            },
+          },
+          upsert: true,
+        },
+      };
+    }),
+    { ordered: false }
+  );
+
+  return true;
+};
+
+const ensureDefaultSections = async (
+  collection: Collection<MongoKangurLessonSectionDocument>
+): Promise<void> => {
+  if (defaultsInitialized) return;
+  if (defaultsInFlight) {
+    await defaultsInFlight;
+    return;
+  }
+
+  defaultsInFlight = (async (): Promise<void> => {
+    await seedMissingSections(collection);
+    defaultsInitialized = true;
+  })();
+
+  try {
+    await defaultsInFlight;
+  } finally {
+    defaultsInFlight = null;
+  }
 };
 
 export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository = {
@@ -89,6 +157,7 @@ export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository =
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonSectionDocument>(COLLECTION);
+    await ensureDefaultSections(collection);
     const docs = await collection
       .find(buildFilter(input))
       .sort({ sortOrder: 1, id: 1 })
@@ -129,18 +198,7 @@ export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository =
     const ids = sections.map((s) => s.id);
     const operations = sections.map((section) => ({
       updateOne: {
-        filter: { _id: section.id },
-        update: {
-          $set: {
-            ...section,
-            id: section.id,
-            updatedAt: now,
-          },
-          $setOnInsert: {
-            createdAt: now,
-          },
-        },
-        upsert: true,
+        ...buildSectionUpdate(section, now),
       },
     }));
 
@@ -155,19 +213,11 @@ export const mongoKangurLessonSectionRepository: KangurLessonSectionRepository =
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonSectionDocument>(COLLECTION);
     const now = new Date();
+    const update = buildSectionUpdate(section, now);
 
     await collection.updateOne(
-      { _id: section.id },
-      {
-        $set: {
-          ...section,
-          id: section.id,
-          updatedAt: now,
-        },
-        $setOnInsert: {
-          createdAt: now,
-        },
-      },
+      update.filter,
+      update.update,
       { upsert: true }
     );
   },

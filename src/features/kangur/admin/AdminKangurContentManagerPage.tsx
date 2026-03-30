@@ -17,7 +17,7 @@ import { useKangurLessonDocuments, useKangurLessons } from '@/features/kangur/ui
 import {
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   parseKangurTestQuestionStore,
-} from '@/features/kangur/test-questions';
+} from '@/features/kangur/test-suites/questions';
 import { KANGUR_TEST_SUITES_SETTING_KEY, parseKangurTestSuites } from '@/features/kangur/test-suites';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Card } from '@/features/kangur/shared/ui';
@@ -31,9 +31,9 @@ import { AdminKangurLessonsManagerPage } from './AdminKangurLessonsManagerPage';
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
 import { KangurAdminCard } from './components/KangurAdminCard';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
-import { KangurAdminMetricCard } from './components/KangurAdminMetricCard';
+import { renderKangurAdminMetricCard } from './components/KangurAdminMetricCard';
 import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
-import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
+import { renderKangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { summarizeKangurContentCreator } from './content-creator-insights';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
@@ -161,11 +161,12 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
               'xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]'
             )}
           >
-            <KangurAdminWorkspaceIntroCard
-              title='Content workspace'
-              description='Manage Kangur lessons and tests from one shared admin surface, with the same page structure, spacing, and support tools used across the rest of Kangur admin.'
-              badge='Shared surface'
-            />
+            {renderKangurAdminWorkspaceIntroCard({
+              title: 'Content workspace',
+              description:
+                'Manage Kangur lessons and tests from one shared admin surface, with the same page structure, spacing, and support tools used across the rest of Kangur admin.',
+              badge: 'Shared surface',
+            })}
 
             <KangurAdminCard>
               <div className='flex flex-col gap-3'>
@@ -204,55 +205,55 @@ export function AdminKangurContentManagerPage(): React.JSX.Element {
               Content overview
             </div>
             <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7'>
-              <KangurAdminMetricCard
-                label='Lessons'
-                value={dashboardStats.lessonCount}
-                detail='Tracked in the Kangur lesson library'
-                Icon={BookOpen}
-                tone='info'
-              />
-              <KangurAdminMetricCard
-                label='Custom content'
-                value={dashboardStats.customContentCount}
-                detail='Lessons already using the document editor'
-                Icon={FileText}
-                tone='success'
-              />
-              <KangurAdminMetricCard
-                label='Needs import'
-                value={dashboardStats.legacyLessonCount}
-                detail='Lessons still relying on legacy component content'
-                Icon={ScrollText}
-                tone='warning'
-              />
-              <KangurAdminMetricCard
-                label='Needs fixes'
-                value={dashboardStats.needsFixesCount}
-                detail='Document lessons with structural issues that need editorial cleanup'
-                Icon={AlertTriangle}
-                tone='warning'
-              />
-              <KangurAdminMetricCard
-                label='Missing narration'
-                value={dashboardStats.missingNarrationCount}
-                detail='Document lessons without a usable narration script'
-                Icon={Volume2}
-                tone='warning'
-              />
-              <KangurAdminMetricCard
-                label='Hidden lessons'
-                value={dashboardStats.hiddenLessonCount}
-                detail='Disabled lessons not visible to learners'
-                Icon={EyeOff}
-                tone='neutral'
-              />
-              <KangurAdminMetricCard
-                label='Tests'
-                value={dashboardStats.testSuiteCount}
-                detail={`${dashboardStats.questionCount} questions across all test suites`}
-                Icon={Trophy}
-                tone='info'
-              />
+              {renderKangurAdminMetricCard({
+                label: 'Lessons',
+                value: dashboardStats.lessonCount,
+                detail: 'Tracked in the Kangur lesson library',
+                Icon: BookOpen,
+                tone: 'info',
+              })}
+              {renderKangurAdminMetricCard({
+                label: 'Custom content',
+                value: dashboardStats.customContentCount,
+                detail: 'Lessons already using the document editor',
+                Icon: FileText,
+                tone: 'success',
+              })}
+              {renderKangurAdminMetricCard({
+                label: 'Needs import',
+                value: dashboardStats.legacyLessonCount,
+                detail: 'Lessons still relying on legacy component content',
+                Icon: ScrollText,
+                tone: 'warning',
+              })}
+              {renderKangurAdminMetricCard({
+                label: 'Needs fixes',
+                value: dashboardStats.needsFixesCount,
+                detail: 'Document lessons with structural issues that need editorial cleanup',
+                Icon: AlertTriangle,
+                tone: 'warning',
+              })}
+              {renderKangurAdminMetricCard({
+                label: 'Missing narration',
+                value: dashboardStats.missingNarrationCount,
+                detail: 'Document lessons without a usable narration script',
+                Icon: Volume2,
+                tone: 'warning',
+              })}
+              {renderKangurAdminMetricCard({
+                label: 'Hidden lessons',
+                value: dashboardStats.hiddenLessonCount,
+                detail: 'Disabled lessons not visible to learners',
+                Icon: EyeOff,
+                tone: 'neutral',
+              })}
+              {renderKangurAdminMetricCard({
+                label: 'Tests',
+                value: dashboardStats.testSuiteCount,
+                detail: `${dashboardStats.questionCount} questions across all test suites`,
+                Icon: Trophy,
+                tone: 'info',
+              })}
             </div>
           </div>
 

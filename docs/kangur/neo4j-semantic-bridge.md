@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-12'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'guide'
 scope: 'feature:kangur'
@@ -84,7 +84,14 @@ Apply the sync to Neo4j:
 npm run kangur:knowledge-graph:sync
 ```
 
-To build a vector-backed graph snapshot for semantic Tutor-AI reranking, run:
+To build a vector-backed graph snapshot for semantic Tutor-AI reranking, prefer the
+package script:
+
+```bash
+npm run kangur:knowledge-graph:sync:embeddings
+```
+
+Equivalent direct command:
 
 ```bash
 node --import tsx scripts/db/sync-kangur-knowledge-graph.ts --with-embeddings

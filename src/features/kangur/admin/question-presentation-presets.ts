@@ -1,7 +1,7 @@
 import {
   createPanelIllustration,
   type QuestionFormData,
-} from '../test-questions';
+} from '../test-suites/questions';
 import { resolveKangurAdminLocale } from './kangur-admin-locale';
 
 export type QuestionPresentationPresetId =

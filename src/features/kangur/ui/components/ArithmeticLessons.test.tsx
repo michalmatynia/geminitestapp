@@ -54,6 +54,79 @@ vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonPanelProgress', async () => {
+  const { useLessonHubProgress } =
+    await vi.importActual<typeof import('@/features/kangur/ui/hooks/useLessonHubProgress')>(
+      '@/features/kangur/ui/hooks/useLessonHubProgress'
+    );
+  return {
+    useKangurLessonPanelProgress: ({
+      slideSections,
+    }: {
+      slideSections: Partial<Record<string, readonly unknown[]>>;
+    }) => {
+      const { markSectionOpened, markSectionViewedCount, sectionProgress } =
+        useLessonHubProgress(slideSections);
+      return {
+        markSectionOpened,
+        markSectionViewedCount,
+        recordPanelTime: vi.fn(),
+        sectionProgress,
+      };
+    },
+  };
+});
+
+vi.mock('@/features/kangur/ui/learner-activity/hooks', () => ({
+  useKangurLessonSubsectionProgress: () => ({
+    markSectionOpened: vi.fn(),
+    markSectionViewedCount: vi.fn(),
+    recordPanelTime: vi.fn(),
+    sectionProgress: {},
+  }),
+  useLessonTimeTracking: () => ({
+    recordComplete: vi.fn(async () => undefined),
+    recordPanelTime: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/ui/services/progress')>();
+  const { createDefaultKangurProgressState } =
+    await vi.importActual<typeof import('@/features/kangur/shared/contracts/kangur')>(
+      '@/features/kangur/shared/contracts/kangur'
+    );
+
+  return {
+    ...actual,
+    addXp: vi.fn(),
+    createLessonCompletionReward: vi.fn(() => ({
+      xp: 28,
+      scorePercent: 100,
+      progressUpdates: {},
+    })),
+    loadProgress: vi.fn(() => createDefaultKangurProgressState()),
+    recordKangurLessonPanelProgress: vi.fn(),
+    recordKangurLessonPanelTime: vi.fn(),
+  };
+});
+
+vi.mock('@/features/kangur/services/kangur-platform', async () => {
+  const { createDefaultKangurProgressState } =
+    await vi.importActual<typeof import('@/features/kangur/shared/contracts/kangur')>(
+      '@/features/kangur/shared/contracts/kangur'
+    );
+
+  return {
+    getKangurPlatform: () => ({
+      progress: {
+        get: vi.fn(async () => createDefaultKangurProgressState()),
+        update: vi.fn(async (progress: unknown) => progress),
+      },
+    }),
+  };
+});
+
 vi.mock('@/features/kangur/ui/components/AddingBallGame', () => ({
   default: () => <div>Mock Adding Ball Game</div>,
 }));
@@ -76,6 +149,29 @@ vi.mock('@/features/kangur/ui/components/DivisionGroupsGame', () => ({
 
 vi.mock('@/features/kangur/ui/components/MultiplicationArrayGame', () => ({
   default: () => <div>Mock Multiplication Array Game</div>,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
+  KangurLaunchableGameInstanceRuntime: ({ gameId }: { gameId: string }) => {
+    const labels: Record<string, string> = {
+      adding_ball: 'Mock Adding Ball Game',
+      division_groups: 'Mock Division Groups Game',
+      multiplication_array: 'Mock Multiplication Array Game',
+      subtracting_garden: 'Mock Subtracting Garden Game',
+    };
+
+    return <div>{labels[gameId] ?? `Mock ${gameId}`}</div>;
+  },
+  default: ({ gameId }: { gameId: string }) => {
+    const labels: Record<string, string> = {
+      adding_ball: 'Mock Adding Ball Game',
+      division_groups: 'Mock Division Groups Game',
+      multiplication_array: 'Mock Multiplication Array Game',
+      subtracting_garden: 'Mock Subtracting Garden Game',
+    };
+
+    return <div>{labels[gameId] ?? `Mock ${gameId}`}</div>;
+  },
 }));
 
 import AddingLesson from '@/features/kangur/ui/components/AddingLesson';
@@ -122,8 +218,8 @@ describe('Arithmetic lessons shared surfaces', () => {
     );
     expect(screen.getByText('Mock Adding Ball Game')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('adding-lesson-game-shell')).queryByText('Gra z piłkami!')
-    ).toBeNull();
+      within(screen.getByTestId('adding-lesson-game-shell')).getByText('Gra z piłkami!')
+    ).toBeInTheDocument();
   });
 
   it('uses shared equation and game header surfaces in the subtracting lesson', () => {
@@ -157,10 +253,10 @@ describe('Arithmetic lessons shared surfaces', () => {
     );
     expect(screen.getByText('Mock Subtracting Garden Game')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('subtracting-lesson-game-shell')).queryByText(
+      within(screen.getByTestId('subtracting-lesson-game-shell')).getByText(
         'Gra z odejmowaniem!'
       )
-    ).toBeNull();
+    ).toBeInTheDocument();
   });
 
   it('uses shared equation and game header surfaces in the division lesson', () => {
@@ -191,8 +287,8 @@ describe('Arithmetic lessons shared surfaces', () => {
     );
     expect(screen.getByText('Mock Division Groups Game')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('division-lesson-game-shell')).queryByText('Gra z dzieleniem!')
-    ).toBeNull();
+      within(screen.getByTestId('division-lesson-game-shell')).getByText('Gra z dzieleniem!')
+    ).toBeInTheDocument();
   });
 
   it('uses shared equation, chip, and game header surfaces in the multiplication lesson', () => {
@@ -228,12 +324,16 @@ describe('Arithmetic lessons shared surfaces', () => {
       'kangur-cta-pill',
       'surface-cta'
     );
+    expect(screen.getByText('Zobacz grupy')).toBeInTheDocument();
+    expect(
+      screen.getByText('Łącz równe grupy kropek, aby zobaczyć mnożenie.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Mock Multiplication Array Game')).toBeInTheDocument();
     expect(
-      within(screen.getByTestId('multiplication-lesson-game-array-shell')).queryByText(
+      within(screen.getByTestId('multiplication-lesson-game-array-shell')).getByText(
         'Gra z grupami!'
       )
-    ).toBeNull();
+    ).toBeInTheDocument();
 
   });
 });

@@ -185,3 +185,27 @@ export const resolveGlideSemitoneOffsetForMode = (
   glideMode: KangurMusicSynthGlideMode
 ): number =>
   glideMode === 'semitone' ? Number(Math.round(semitoneOffset).toFixed(2)) : semitoneOffset;
+
+export type KangurMusicSynthOsc1Config = {
+  volume: number;
+  waveform: KangurMusicSynthWaveform;
+};
+
+export type KangurMusicSynthOsc2Config = {
+  blend: number;
+  detuneCents: number;
+  enabled: boolean;
+  waveform: KangurMusicSynthWaveform;
+};
+
+export const KANGUR_MUSIC_SYNTH_DEFAULT_OSC1_CONFIG: KangurMusicSynthOsc1Config = {
+  volume: 1,
+  waveform: 'sawtooth',
+};
+
+export const KANGUR_MUSIC_SYNTH_DEFAULT_OSC2_CONFIG: KangurMusicSynthOsc2Config = {
+  blend: 0.3,
+  detuneCents: 0,
+  enabled: true,
+  waveform: 'sine',
+};

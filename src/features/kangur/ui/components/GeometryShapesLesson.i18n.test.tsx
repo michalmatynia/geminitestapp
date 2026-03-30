@@ -44,7 +44,14 @@ describe('GeometryShapesLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
-    const games = (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        launchableInstance?: { gameId?: string; instanceId?: string };
+        render?: unknown;
+        onShellEnter?: unknown;
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'podstawowe')).toMatchObject({
       title: 'Grundformen',
@@ -55,9 +62,17 @@ describe('GeometryShapesLesson i18n', () => {
       description: 'Zeichne eine Form und sammle XP',
       isGame: true,
     });
-    expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
+    const game = games.find((candidate) => candidate.sectionId === 'game');
+
+    expect(game?.shell).toMatchObject({
       title: 'Formen zeichnen',
     });
+    expect(game?.launchableInstance).toMatchObject({
+      gameId: 'geometry_shape_workshop',
+      instanceId: 'geometry_shape_workshop:instance:default',
+    });
+    expect(game).toHaveProperty('onShellEnter');
+    expect(game).not.toHaveProperty('render');
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
 
@@ -69,5 +84,27 @@ describe('GeometryShapesLesson i18n', () => {
     expect(
       screen.getByText('Formen können sich drehen und bleiben trotzdem dieselbe Figur.')
     ).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.geometryShapes.game.gameTitle =
+      'Benutzerdefinierte Formenwerkstatt';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <GeometryShapesLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
+      title: 'Benutzerdefinierte Formenwerkstatt',
+    });
   });
 });

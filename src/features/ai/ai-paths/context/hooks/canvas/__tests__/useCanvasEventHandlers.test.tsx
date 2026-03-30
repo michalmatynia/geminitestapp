@@ -9,20 +9,21 @@ const setViewportRect = (
   element: HTMLElement,
   rect: { left: number; top: number; width: number; height: number }
 ): void => {
+  const domRect = {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+    right: rect.left + rect.width,
+    bottom: rect.top + rect.height,
+    x: rect.left,
+    y: rect.top,
+    toJSON: () => ({}),
+  } as DOMRect;
+
   Object.defineProperty(element, 'getBoundingClientRect', {
     configurable: true,
-    value: (): DOMRect =>
-      ({
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-        right: rect.left + rect.width,
-        bottom: rect.top + rect.height,
-        x: rect.left,
-        y: rect.top,
-        toJSON: () => ({}),
-      }) as DOMRect,
+    value: (): DOMRect => domRect,
   });
 };
 

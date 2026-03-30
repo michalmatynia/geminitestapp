@@ -38,7 +38,7 @@ import {
 import { useThemeSettingsValue } from './ThemeSettingsContext';
 
 const buildSelectOptions = (
-  options?: SettingsFieldOption[]
+  options?: ReadonlyArray<SettingsFieldOption>
 ): Array<LabeledOptionDto<string>> =>
   (options ?? []).map((option: SettingsFieldOption) => ({
     label: option.label,

@@ -1,11 +1,12 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -17,12 +18,13 @@ import {
 } from '@/features/kangur/ui/components/KangurPracticeGameChrome';
 import { EnglishAgreementBalanceAnimation } from '@/features/kangur/ui/components/LessonAnimations';
 import {
+  KangurButton,
   KangurGlassPanel,
   KangurHeadline,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_PANEL_GAP_CLASSNAME,
@@ -132,6 +134,7 @@ export default function EnglishSubjectVerbAgreementGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
@@ -172,7 +175,7 @@ export default function EnglishSubjectVerbAgreementGame({
 
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, {
           activityKey: 'english_subject_verb_agreement_quiz',
           lessonKey: 'english_subject_verb_agreement',
@@ -180,7 +183,7 @@ export default function EnglishSubjectVerbAgreementGame({
           totalQuestions: TOTAL_ROUNDS,
           strongThresholdPercent: 75,
         });
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'english_subject_verb_agreement',
           score: nextScore,
@@ -251,10 +254,8 @@ export default function EnglishSubjectVerbAgreementGame({
     );
   }
 
-  const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
-
   return (
-    <KangurPracticeGameStage className='self-center max-w-sm'>
+    <KangurPracticeGameShell className='self-center max-w-sm'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -354,27 +355,21 @@ export default function EnglishSubjectVerbAgreementGame({
           </div>
         </div>
 
-        {feedback ? (
-          <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-            {feedback.text}
-          </KangurInfoCard>
-        ) : null}
-
-        <KangurCheckButton
+        <KangurButton
           type='button'
           size='lg'
           variant='primary'
-          className='w-full'
-          feedbackTone={
+          className={getKangurCheckButtonClassName(
+            'w-full',
             feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
-          }
+          )}
           disabled={!isReady || isChecking}
           onClick={handleCheck}
           data-testid='english-agreement-check'
         >
           {translations('englishSubjectVerbAgreement.inRound.check')}
-        </KangurCheckButton>
+        </KangurButton>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

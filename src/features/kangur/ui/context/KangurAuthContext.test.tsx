@@ -2,8 +2,10 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { SessionContext, type SessionContextValue } from 'next-auth/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -109,7 +111,12 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 import { getKangurLoginHref } from '@/features/kangur/config/routing';
-import { KangurAuthProvider, useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
+import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
+import {
+  clearKangurAuthBootstrapCache,
+  KangurAuthProvider,
+  useKangurAuth,
+} from '@/features/kangur/ui/context/KangurAuthContext';
 
 const AUTHENTICATED_USER = {
   id: 'parent-1',
@@ -132,14 +139,35 @@ const AUTHENTICATED_USER = {
   learners: [],
 };
 
+const SUPER_ADMIN_SESSION = {
+  expires: '2026-12-31T23:59:59.000Z',
+  user: {
+    id: 'super-admin-1',
+    name: 'Super Admin',
+    email: 'super-admin@example.com',
+    role: 'super_admin',
+  },
+} as const;
+
+const createSessionContextValue = (
+  session: typeof SUPER_ADMIN_SESSION | null = null
+): SessionContextValue<false> => ({
+  data: session,
+  status: session ? 'authenticated' : 'unauthenticated',
+  update: async () => session,
+});
+
 const AuthProbe = (): React.JSX.Element => {
   const {
     canAccessParentAssignments,
+    hasResolvedAuth,
     isLoadingAuth,
     isLoggingOut,
+    checkAppState,
     logout,
     navigateToLogin,
   } = useKangurAuth();
+  const [lastCheckResult, setLastCheckResult] = useState<string>('idle');
 
   return (
     <div>
@@ -155,18 +183,64 @@ const AuthProbe = (): React.JSX.Element => {
       <button type='button' onClick={() => logout(false)}>
         Logout
       </button>
+      <button
+        type='button'
+        onClick={async () => {
+          const nextUser = await checkAppState({ timeoutMs: 10_000 });
+          setLastCheckResult(nextUser?.id ?? 'anonymous');
+        }}
+      >
+        Refresh auth
+      </button>
       <div data-testid='kangur-auth-loading'>{String(isLoadingAuth)}</div>
+      <div data-testid='kangur-auth-resolved'>{String(hasResolvedAuth)}</div>
       <div data-testid='kangur-auth-logout-pending'>{String(Boolean(isLoggingOut))}</div>
       <div data-testid='kangur-parent-assignment-access'>
         {String(canAccessParentAssignments)}
       </div>
+      <div data-testid='kangur-auth-last-check'>{lastCheckResult}</div>
     </div>
+  );
+};
+
+const renderAuthHarness = ({
+  session = null,
+  basePath,
+  pageKey,
+  requestedPath,
+}: {
+  session?: typeof SUPER_ADMIN_SESSION | null;
+  basePath?: string;
+  pageKey?: string;
+  requestedPath?: string;
+} = {}): ReturnType<typeof render> => {
+  const content = (
+    <KangurAuthProvider>
+      <AuthProbe />
+    </KangurAuthProvider>
+  );
+
+  return render(
+    <SessionContext.Provider value={createSessionContextValue(session)}>
+      {typeof basePath === 'string' || typeof pageKey === 'string' || typeof requestedPath === 'string' ? (
+        <KangurRoutingProvider
+          basePath={basePath}
+          pageKey={pageKey}
+          requestedPath={requestedPath}
+        >
+          {content}
+        </KangurRoutingProvider>
+      ) : (
+        content
+      )}
+    </SessionContext.Provider>
   );
 };
 
 describe('KangurAuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurAuthBootstrapCache();
     window.history.replaceState({}, '', '/kangur');
     useRouterMock.mockReturnValue({
       push: routerPushMock,
@@ -180,11 +254,7 @@ describe('KangurAuthContext', () => {
   });
 
   it('exposes assignment access only when auth resolves an active learner session', async () => {
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
@@ -192,14 +262,54 @@ describe('KangurAuthContext', () => {
     });
   });
 
+  it('reuses the bootstrap auth session across provider remounts', async () => {
+    const firstRender = renderAuthHarness();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+    firstRender.unmount();
+
+    renderAuthHarness();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not background revalidate when the bootstrap cache already resolved to guest', async () => {
+    clearKangurAuthBootstrapCache();
+    meMock.mockRejectedValueOnce({ status: 401 });
+
+    const firstRender = renderAuthHarness();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+    firstRender.unmount();
+
+    renderAuthHarness();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+    });
+
+    expect(meMock).toHaveBeenCalledTimes(1);
+  });
+
   it('navigates to the Kangur login page using the current location as callback target', async () => {
     const user = userEvent.setup();
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(meMock).toHaveBeenCalledTimes(1);
@@ -209,7 +319,7 @@ describe('KangurAuthContext', () => {
     await user.click(screen.getByRole('button', { name: 'Open login' }));
 
     expect(routerPushMock).toHaveBeenCalledWith(
-      getKangurLoginHref('/kangur', window.location.href)
+      getKangurLoginHref('/kangur', '/kangur')
     );
     expect(prepareLoginHrefMock).not.toHaveBeenCalled();
     expect(redirectToLoginMock).not.toHaveBeenCalled();
@@ -218,11 +328,7 @@ describe('KangurAuthContext', () => {
   it('navigates to the Kangur login page in create-account mode when requested', async () => {
     const user = userEvent.setup();
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(meMock).toHaveBeenCalledTimes(1);
@@ -231,7 +337,7 @@ describe('KangurAuthContext', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open create-account' }));
 
-    const loginHref = getKangurLoginHref('/kangur', window.location.href);
+    const loginHref = getKangurLoginHref('/kangur', '/kangur');
     const parsed = new URL(loginHref, 'https://kangur.local');
     parsed.searchParams.set('authMode', 'create-account');
     expect(routerPushMock).toHaveBeenCalledWith(
@@ -241,14 +347,75 @@ describe('KangurAuthContext', () => {
     expect(redirectToLoginMock).not.toHaveBeenCalled();
   });
 
+  it('canonicalizes the login callback target when Kangur owns the public frontend root', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/en/kangur/profile?tab=stats#summary');
+
+    renderAuthHarness({
+      basePath: '/',
+      pageKey: 'LearnerProfile',
+      requestedPath: '/profile',
+    });
+
+    await waitFor(() => {
+      expect(meMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Open login' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      getKangurLoginHref('/', '/en/profile?tab=stats#summary')
+    );
+  });
+
+  it('sanitizes blocked GamesLibrary callbacks for non-super-admin login redirects', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/kangur/games?engine=shape-drawing#catalog');
+
+    renderAuthHarness({
+      basePath: '/kangur',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+    });
+
+    await waitFor(() => {
+      expect(meMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Open login' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(getKangurLoginHref('/kangur', '/kangur'));
+  });
+
+  it('preserves GamesLibrary callbacks for exact super-admin login redirects', async () => {
+    const user = userEvent.setup();
+    window.history.replaceState({}, '', '/kangur/games?engine=shape-drawing#catalog');
+
+    renderAuthHarness({
+      session: SUPER_ADMIN_SESSION,
+      basePath: '/kangur',
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+    });
+
+    await waitFor(() => {
+      expect(meMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Open login' }));
+
+    expect(routerPushMock).toHaveBeenCalledWith(
+      getKangurLoginHref('/kangur', '/kangur/games?engine=shape-drawing#catalog')
+    );
+  });
+
   it('drops parent-assignment access in anonymous mode', async () => {
     meMock.mockRejectedValueOnce({ status: 401 });
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
@@ -260,11 +427,7 @@ describe('KangurAuthContext', () => {
   it('still reports unexpected auth bootstrap failures', async () => {
     meMock.mockRejectedValueOnce(new Error('boom'));
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
@@ -273,26 +436,52 @@ describe('KangurAuthContext', () => {
     expect(logKangurClientErrorMock).toHaveBeenCalledTimes(1);
   });
 
-  it('skips auth bootstrap during synthetic social batch captures', async () => {
+  it('still resolves auth during synthetic social batch captures', async () => {
     window.history.replaceState(
       {},
       '',
       '/kangur/lessons?kangurCapture=social-batch'
     );
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
-      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+      expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
     });
 
-    expect(meMock).not.toHaveBeenCalled();
+    expect(meMock).toHaveBeenCalledTimes(1);
     expect(logKangurClientErrorMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps bootstrap auth unresolved after the soft timeout until the original request settles', async () => {
+    vi.useFakeTimers();
+    let resolveInitialAuth: ((value: typeof AUTHENTICATED_USER) => void) | null = null;
+
+    meMock.mockImplementationOnce(
+      () =>
+        new Promise<typeof AUTHENTICATED_USER>((resolve) => {
+          resolveInitialAuth = resolve;
+        })
+    );
+
+    renderAuthHarness();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-auth-resolved')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('false');
+
+    await act(async () => {
+      resolveInitialAuth?.(AUTHENTICATED_USER);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('kangur-auth-resolved')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
   });
 
   it('drops parent-assignment access immediately after logout', async () => {
@@ -300,11 +489,7 @@ describe('KangurAuthContext', () => {
     meMock.mockResolvedValueOnce(AUTHENTICATED_USER);
     meMock.mockRejectedValueOnce({ status: 401 });
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
@@ -331,11 +516,7 @@ describe('KangurAuthContext', () => {
     );
     meMock.mockRejectedValueOnce({ status: 401 });
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await user.click(screen.getByRole('button', { name: 'Logout' }));
 
@@ -364,11 +545,7 @@ describe('KangurAuthContext', () => {
         })
     );
 
-    render(
-      <KangurAuthProvider>
-        <AuthProbe />
-      </KangurAuthProvider>
-    );
+    renderAuthHarness();
 
     await waitFor(() => {
       expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
@@ -391,5 +568,53 @@ describe('KangurAuthContext', () => {
     });
 
     expect(routerRefreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows a manual auth refresh to resolve beyond the bootstrap timeout window', async () => {
+    vi.useFakeTimers();
+    let resolveManualAuth: ((value: typeof AUTHENTICATED_USER) => void) | null = null;
+
+    meMock.mockImplementationOnce(
+      () =>
+        new Promise<typeof AUTHENTICATED_USER>(() => {
+          // Keep bootstrap pending so the provider must rely on the timeout.
+        })
+    );
+    meMock.mockImplementationOnce(
+      () =>
+        new Promise<typeof AUTHENTICATED_USER>((resolve) => {
+          resolveManualAuth = resolve;
+        })
+    );
+
+    renderAuthHarness();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_000);
+    });
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-auth-resolved')).toHaveTextContent('false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh auth' }));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('true');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3_500);
+    });
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('true');
+
+    await act(async () => {
+      resolveManualAuth?.(AUTHENTICATED_USER);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('kangur-auth-loading')).toHaveTextContent('false');
+    expect(screen.getByTestId('kangur-auth-resolved')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-parent-assignment-access')).toHaveTextContent('true');
+    expect(screen.getByTestId('kangur-auth-last-check')).toHaveTextContent('parent-1');
   });
 });

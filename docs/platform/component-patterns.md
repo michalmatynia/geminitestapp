@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
@@ -10,6 +10,11 @@ canonical: true
 # Component Patterns & Consolidation Guide
 
 This document describes reusable component patterns to maintain consistency and reduce duplication across features.
+
+Scope note:
+
+- this reference covers the repo-wide shared template layer under `src/shared/ui/templates` and `src/shared/hooks`
+- Kangur also carries a feature-local settings template layer under `src/features/kangur/shared/ui/templates` when the product needs tighter local control without changing the global shared contract
 
 ## Table of Contents
 

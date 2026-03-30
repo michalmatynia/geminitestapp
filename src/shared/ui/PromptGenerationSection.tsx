@@ -70,29 +70,7 @@ type PromptGenerationSectionResolvedProps = PromptGenerationSectionProps & {
   finalResultLabelId: string;
 };
 
-function PromptGenerationSectionHeader({
-  badgeVariant,
-  badgeTextColor,
-  pathNumber,
-  pathTitle,
-}: Pick<
-  PromptGenerationSectionResolvedProps,
-  'badgeVariant' | 'badgeTextColor' | 'pathNumber' | 'pathTitle'
->): JSX.Element {
-  return (
-    <div className='flex items-center gap-2'>
-      <Badge
-        variant={badgeVariant}
-        className={`h-6 w-6 justify-center p-0 font-bold ${badgeTextColor}`}
-      >
-        {pathNumber}
-      </Badge>
-      <h3 className='text-md font-medium text-white'>{pathTitle}</h3>
-    </div>
-  );
-}
-
-function PromptGenerationInputPanel({
+function renderPromptGenerationInputPanel({
   inputId,
   inputLabel,
   inputValue,
@@ -116,7 +94,7 @@ function PromptGenerationInputPanel({
   );
 }
 
-function PromptGenerationInitialResultPanel({
+function renderPromptGenerationInitialResultPanel({
   initialResultId,
   initialResultLabel,
   initialResultLabelId,
@@ -165,7 +143,7 @@ function PromptGenerationInitialResultPanel({
   );
 }
 
-function PromptGenerationModelPanel({
+function renderPromptGenerationModelPanel({
   modelLabel,
   modelOptions,
   modelSelectId,
@@ -189,7 +167,7 @@ function PromptGenerationModelPanel({
   );
 }
 
-function PromptGenerationOutputToggle({
+function renderPromptGenerationOutputToggle({
   badgeTextColor,
   modelValue,
   onOutputEnabledChange,
@@ -217,7 +195,7 @@ function PromptGenerationOutputToggle({
   );
 }
 
-function PromptGenerationOutputPromptPanel({
+function renderPromptGenerationOutputPromptPanel({
   onOutputPromptChange,
   outputPlaceholder,
   outputPromptId,
@@ -248,7 +226,7 @@ function PromptGenerationOutputPromptPanel({
   );
 }
 
-function PromptGenerationFinalResultPanel({
+function renderPromptGenerationFinalResultPanel({
   finalResultId,
   finalResultLabel,
   finalResultLabelId,
@@ -297,45 +275,6 @@ function PromptGenerationFinalResultPanel({
   );
 }
 
-function PromptGenerationOutputPanels(
-  props: PromptGenerationSectionResolvedProps
-): JSX.Element | null {
-  const { outputEnabled } = props;
-  if (!outputEnabled) return null;
-  return (
-    <div
-      className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2 animate-in fade-in slide-in-from-top-2 duration-300`}
-    >
-      <PromptGenerationOutputPromptPanel {...props} />
-      <PromptGenerationFinalResultPanel {...props} />
-    </div>
-  );
-}
-
-function PromptGenerationSectionLayout(
-  props: PromptGenerationSectionResolvedProps
-): JSX.Element {
-  return (
-    <div className='space-y-4'>
-      <PromptGenerationSectionHeader {...props} />
-
-      <div className='pl-8 space-y-6'>
-        <div className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2`}>
-          <PromptGenerationInputPanel {...props} />
-          <PromptGenerationInitialResultPanel {...props} />
-        </div>
-
-        <PromptGenerationModelPanel {...props} />
-
-        <div className='pt-4 border-t border-border/50 space-y-4'>
-          <PromptGenerationOutputToggle {...props} />
-          <PromptGenerationOutputPanels {...props} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function PromptGenerationSection(props: PromptGenerationSectionProps): JSX.Element {
   const baseId = useId().replace(/:/g, '');
   const resolvedProps: PromptGenerationSectionResolvedProps = {
@@ -349,5 +288,38 @@ export function PromptGenerationSection(props: PromptGenerationSectionProps): JS
     finalResultLabelId: props.finalResultLabelId ?? `${baseId}-final-label`,
   };
 
-  return <PromptGenerationSectionLayout {...resolvedProps} />;
+  return (
+    <div className='space-y-4'>
+      <div className='flex items-center gap-2'>
+        <Badge
+          variant={resolvedProps.badgeVariant}
+          className={`h-6 w-6 justify-center p-0 font-bold ${resolvedProps.badgeTextColor}`}
+        >
+          {resolvedProps.pathNumber}
+        </Badge>
+        <h3 className='text-md font-medium text-white'>{resolvedProps.pathTitle}</h3>
+      </div>
+
+      <div className='pl-8 space-y-6'>
+        <div className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2`}>
+          {renderPromptGenerationInputPanel(resolvedProps)}
+          {renderPromptGenerationInitialResultPanel(resolvedProps)}
+        </div>
+
+        {renderPromptGenerationModelPanel(resolvedProps)}
+
+        <div className='pt-4 border-t border-border/50 space-y-4'>
+          {renderPromptGenerationOutputToggle(resolvedProps)}
+          {resolvedProps.outputEnabled ? (
+            <div
+              className={`${UI_GRID_ROOMY_CLASSNAME} grid-cols-1 lg:grid-cols-2 animate-in fade-in slide-in-from-top-2 duration-300`}
+            >
+              {renderPromptGenerationOutputPromptPanel(resolvedProps)}
+              {renderPromptGenerationFinalResultPanel(resolvedProps)}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
 }

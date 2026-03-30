@@ -10,7 +10,7 @@ import {
   KANGUR_HELP_SETTINGS_KEY,
   areKangurDocsTooltipsEnabled,
   parseKangurHelpSettings,
-} from '@/features/kangur/help-settings';
+} from '@/features/kangur/docs/help-settings';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { Badge, Button, Card, SkipToContentLink } from '@/features/kangur/shared/ui';
 import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';

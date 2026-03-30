@@ -30,6 +30,8 @@ type KangurGameSetupFocus = {
   title: string;
 };
 
+type KangurGameSetupMode = KangurGameSetupMomentumCardProps['mode'];
+
 type KangurSetupMomentumFallbackCopy = {
   quest: {
     label: string;
@@ -68,6 +70,18 @@ type KangurSetupMomentumFallbackCopy = {
     pace: (averageXpPerSession: number) => string;
     streak: (streak: number) => string;
   };
+};
+
+type KangurGameSetupFocusSignals = {
+  averageXpPerSession: number;
+  fallbackCopy: KangurSetupMomentumFallbackCopy;
+  gamesPlayed: number;
+  guidedMomentum: ReturnType<typeof getRecommendedSessionMomentum>;
+  mode: KangurGameSetupMode;
+  nextBadge: ReturnType<typeof getNextLockedBadge>;
+  quest: ReturnType<typeof getCurrentKangurDailyQuest>;
+  streak: number;
+  translate?: RecommendationTranslate;
 };
 
 const getSetupMomentumFallbackCopy = (
@@ -268,231 +282,288 @@ const getSetupMomentumFallbackCopy = (
   };
 };
 
+const resolveSetupMomentumModeCopy = (
+  mode: KangurGameSetupMode,
+  keys: { kangur: string; training: string }
+): string => (mode === 'kangur' ? keys.kangur : keys.training);
+
+const resolveSetupMomentumQuestTitle = ({
+  mode,
+  quest,
+  fallbackCopy,
+  translate,
+}: Pick<KangurGameSetupFocusSignals, 'mode' | 'quest' | 'fallbackCopy' | 'translate'>): string => {
+  if (!quest) {
+    return '';
+  }
+
+  if (quest.progress.status === 'completed') {
+    return translateRecommendationWithFallback(
+      translate,
+      'setupMomentum.quest.titleCompleted',
+      fallbackCopy.quest.titleCompleted
+    );
+  }
+
+  return translateRecommendationWithFallback(
+    translate,
+    resolveSetupMomentumModeCopy(mode, {
+      kangur: 'setupMomentum.quest.titleKangur',
+      training: 'setupMomentum.quest.titleTraining',
+    }),
+    mode === 'kangur' ? fallbackCopy.quest.titleKangur : fallbackCopy.quest.titleTraining
+  );
+};
+
+const resolveSetupMomentumQuestFocus = (
+  signals: KangurGameSetupFocusSignals
+): KangurGameSetupFocus | null => {
+  const { fallbackCopy, mode, quest, translate } = signals;
+
+  if (
+    !quest ||
+    quest.reward?.status === 'claimed' ||
+    quest.assignment.questMetric?.kind !== 'games_played'
+  ) {
+    return null;
+  }
+
+  return {
+    accent: 'emerald',
+    description: [quest.assignment.title, quest.progress.summary, quest.reward?.label ?? null]
+      .filter(Boolean)
+      .join('. ')
+      .concat('.'),
+    label: translateRecommendationWithFallback(
+      translate,
+      'setupMomentum.quest.label',
+      fallbackCopy.quest.label
+    ),
+    title: resolveSetupMomentumQuestTitle({ fallbackCopy, mode, quest, translate }),
+  };
+};
+
+const resolveSetupMomentumGuidedFocus = (
+  signals: KangurGameSetupFocusSignals
+): KangurGameSetupFocus | null => {
+  const { fallbackCopy, guidedMomentum, mode, translate } = signals;
+
+  if (!(guidedMomentum.completedSessions > 0 && guidedMomentum.nextBadgeName)) {
+    return null;
+  }
+
+  const description =
+    mode === 'kangur'
+      ? translateRecommendationWithFallback(
+          translate,
+          'setupMomentum.guided.descriptionKangur',
+          fallbackCopy.guided.descriptionKangur(
+            guidedMomentum.nextBadgeName,
+            guidedMomentum.summary
+          ),
+          {
+            nextBadgeName: guidedMomentum.nextBadgeName,
+            summary: guidedMomentum.summary,
+          }
+        )
+      : translateRecommendationWithFallback(
+          translate,
+          'setupMomentum.guided.descriptionTraining',
+          fallbackCopy.guided.descriptionTraining(
+            guidedMomentum.nextBadgeName,
+            guidedMomentum.summary
+          ),
+          {
+            badge: guidedMomentum.nextBadgeName,
+            summary: guidedMomentum.summary,
+          }
+        );
+
+  return {
+    accent: 'sky',
+    description,
+    label: translateRecommendationWithFallback(
+      translate,
+      'setupMomentum.guided.label',
+      fallbackCopy.guided.label
+    ),
+    title: translateRecommendationWithFallback(
+      translate,
+      resolveSetupMomentumModeCopy(mode, {
+        kangur: 'setupMomentum.guided.titleKangur',
+        training: 'setupMomentum.guided.titleTraining',
+      }),
+      mode === 'kangur' ? fallbackCopy.guided.titleKangur : fallbackCopy.guided.titleTraining
+    ),
+  };
+};
+
+const resolveSetupMomentumNextBadgeFocus = (
+  signals: KangurGameSetupFocusSignals
+): KangurGameSetupFocus | null => {
+  const { fallbackCopy, mode, nextBadge, translate } = signals;
+
+  if (!nextBadge) {
+    return null;
+  }
+
+  const description =
+    mode === 'kangur'
+      ? translateRecommendationWithFallback(
+          translate,
+          'setupMomentum.nextBadge.descriptionKangur',
+          fallbackCopy.nextBadge.descriptionKangur(nextBadge.name, nextBadge.summary),
+          {
+            badge: nextBadge.name,
+            summary: nextBadge.summary,
+          }
+        )
+      : translateRecommendationWithFallback(
+          translate,
+          'setupMomentum.nextBadge.descriptionTraining',
+          fallbackCopy.nextBadge.descriptionTraining(nextBadge.name, nextBadge.summary),
+          {
+            badge: nextBadge.name,
+            summary: nextBadge.summary,
+          }
+        );
+
+  return {
+    accent: mode === 'kangur' ? 'amber' : 'indigo',
+    description,
+    label: translateRecommendationWithFallback(
+      translate,
+      'setupMomentum.nextBadge.label',
+      fallbackCopy.nextBadge.label
+    ),
+    title: translateRecommendationWithFallback(
+      translate,
+      resolveSetupMomentumModeCopy(mode, {
+        kangur: 'setupMomentum.nextBadge.titleKangur',
+        training: 'setupMomentum.nextBadge.titleTraining',
+      }),
+      mode === 'kangur'
+        ? fallbackCopy.nextBadge.titleKangur
+        : fallbackCopy.nextBadge.titleTraining
+    ),
+  };
+};
+
+const resolveSetupMomentumStreakFocus = (
+  signals: KangurGameSetupFocusSignals
+): KangurGameSetupFocus | null => {
+  const { fallbackCopy, gamesPlayed, streak, translate } = signals;
+
+  if (!(gamesPlayed > 0 && streak < 2)) {
+    return null;
+  }
+
+  const isFreshStart = streak <= 0;
+
+  return {
+    accent: 'violet',
+    description: isFreshStart
+      ? translateRecommendationWithFallback(
+          translate,
+          'setupMomentum.streak.descriptionStart',
+          fallbackCopy.streak.descriptionStart
+        )
+      : translateRecommendationWithFallback(
+          translate,
+          'setupMomentum.streak.descriptionContinue',
+          fallbackCopy.streak.descriptionContinue(streak),
+          {
+            streak,
+          }
+        ),
+    label: translateRecommendationWithFallback(
+      translate,
+      'setupMomentum.streak.label',
+      fallbackCopy.streak.label
+    ),
+    title: isFreshStart
+      ? translateRecommendationWithFallback(
+          translate,
+          'setupMomentum.streak.titleStart',
+          fallbackCopy.streak.titleStart
+        )
+      : translateRecommendationWithFallback(
+          translate,
+          'setupMomentum.streak.titleContinue',
+          fallbackCopy.streak.titleContinue
+        ),
+  };
+};
+
+const resolveSetupMomentumPaceFocus = (
+  signals: KangurGameSetupFocusSignals
+): KangurGameSetupFocus | null => {
+  const { averageXpPerSession, fallbackCopy, mode, translate } = signals;
+
+  if (!(averageXpPerSession > 0)) {
+    return null;
+  }
+
+  return {
+    accent: 'amber',
+    description: translateRecommendationWithFallback(
+      translate,
+      'setupMomentum.pace.description',
+      fallbackCopy.pace.description(averageXpPerSession),
+      {
+        averageXpPerSession,
+      }
+    ),
+    label: translateRecommendationWithFallback(
+      translate,
+      'setupMomentum.pace.label',
+      fallbackCopy.pace.label
+    ),
+    title: translateRecommendationWithFallback(
+      translate,
+      resolveSetupMomentumModeCopy(mode, {
+        kangur: 'setupMomentum.pace.titleKangur',
+        training: 'setupMomentum.pace.titleTraining',
+      }),
+      mode === 'kangur' ? fallbackCopy.pace.titleKangur : fallbackCopy.pace.titleTraining
+    ),
+  };
+};
+
 const getSetupFocus = (
   mode: 'training' | 'kangur',
   progress: KangurProgressState,
   locale: string,
   subject: KangurLessonSubject,
+  ownerKey: string | null,
   fallbackCopy: KangurSetupMomentumFallbackCopy,
   translate?: RecommendationTranslate,
   progressTranslate?: KangurProgressTranslate
 ): KangurGameSetupFocus | null => {
-  const quest = getCurrentKangurDailyQuest(progress, {
-    locale,
-    subject,
-    translate: progressTranslate,
-  });
-  const nextBadge = getNextLockedBadge(progress, { translate: progressTranslate });
-  const guidedMomentum = getRecommendedSessionMomentum(progress, { translate: progressTranslate });
-  const averageXpPerSession = getProgressAverageXpPerSession(progress);
-  const streak = progress.currentWinStreak ?? 0;
-  const gamesPlayed = progress.gamesPlayed ?? 0;
+  const signals: KangurGameSetupFocusSignals = {
+    averageXpPerSession: getProgressAverageXpPerSession(progress),
+    fallbackCopy,
+    gamesPlayed: progress.gamesPlayed ?? 0,
+    guidedMomentum: getRecommendedSessionMomentum(progress, { translate: progressTranslate }),
+    mode,
+    nextBadge: getNextLockedBadge(progress, { translate: progressTranslate }),
+    quest: getCurrentKangurDailyQuest(progress, {
+      locale,
+      ownerKey,
+      subject,
+      translate: progressTranslate,
+    }),
+    streak: progress.currentWinStreak ?? 0,
+    translate,
+  };
 
-  if (
-    quest &&
-    quest.reward?.status !== 'claimed' &&
-    quest.assignment.questMetric?.kind === 'games_played'
-  ) {
-    const rewardLabel = quest.reward?.label;
-    const title =
-      quest.progress.status === 'completed'
-        ? translateRecommendationWithFallback(
-            translate,
-            'setupMomentum.quest.titleCompleted',
-            fallbackCopy.quest.titleCompleted
-          )
-        : mode === 'training'
-          ? translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.quest.titleTraining',
-              fallbackCopy.quest.titleTraining
-            )
-          : translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.quest.titleKangur',
-              fallbackCopy.quest.titleKangur
-            );
-
-    return {
-      accent: 'emerald',
-      description: [
-        quest.assignment.title,
-        quest.progress.summary,
-        rewardLabel ? `${rewardLabel}` : null,
-      ]
-        .filter(Boolean)
-        .join('. ') + '.',
-      label: translateRecommendationWithFallback(
-        translate,
-        'setupMomentum.quest.label',
-        fallbackCopy.quest.label
-      ),
-      title,
-    };
-  }
-
-  if (guidedMomentum.completedSessions > 0 && guidedMomentum.nextBadgeName) {
-    return {
-      accent: 'sky',
-      description:
-        mode === 'kangur'
-          ? translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.guided.descriptionKangur',
-              fallbackCopy.guided.descriptionKangur(
-                guidedMomentum.nextBadgeName,
-                guidedMomentum.summary
-              ),
-              {
-                nextBadgeName: guidedMomentum.nextBadgeName,
-                summary: guidedMomentum.summary,
-              }
-            )
-          : translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.guided.descriptionTraining',
-              fallbackCopy.guided.descriptionTraining(
-                guidedMomentum.nextBadgeName,
-                guidedMomentum.summary
-              ),
-              {
-                badge: guidedMomentum.nextBadgeName,
-                summary: guidedMomentum.summary,
-              }
-            ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'setupMomentum.guided.label',
-        fallbackCopy.guided.label
-      ),
-      title:
-        mode === 'kangur'
-          ? translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.guided.titleKangur',
-              fallbackCopy.guided.titleKangur
-            )
-          : translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.guided.titleTraining',
-              fallbackCopy.guided.titleTraining
-            ),
-    };
-  }
-
-  if (nextBadge) {
-    return {
-      accent: mode === 'kangur' ? 'amber' : 'indigo',
-      description:
-        mode === 'kangur'
-          ? translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.nextBadge.descriptionKangur',
-              fallbackCopy.nextBadge.descriptionKangur(nextBadge.name, nextBadge.summary),
-              {
-                badge: nextBadge.name,
-                summary: nextBadge.summary,
-              }
-            )
-          : translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.nextBadge.descriptionTraining',
-              fallbackCopy.nextBadge.descriptionTraining(nextBadge.name, nextBadge.summary),
-              {
-                badge: nextBadge.name,
-                summary: nextBadge.summary,
-              }
-            ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'setupMomentum.nextBadge.label',
-        fallbackCopy.nextBadge.label
-      ),
-      title:
-        mode === 'kangur'
-          ? translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.nextBadge.titleKangur',
-              fallbackCopy.nextBadge.titleKangur
-            )
-          : translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.nextBadge.titleTraining',
-              fallbackCopy.nextBadge.titleTraining
-            ),
-    };
-  }
-
-  if (gamesPlayed > 0 && streak < 2) {
-    return {
-      accent: 'violet',
-      description:
-        streak <= 0
-          ? translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.streak.descriptionStart',
-              fallbackCopy.streak.descriptionStart
-            )
-          : translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.streak.descriptionContinue',
-              fallbackCopy.streak.descriptionContinue(streak),
-              {
-                streak,
-              }
-            ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'setupMomentum.streak.label',
-        fallbackCopy.streak.label
-      ),
-      title:
-        streak <= 0
-          ? translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.streak.titleStart',
-              fallbackCopy.streak.titleStart
-            )
-          : translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.streak.titleContinue',
-              fallbackCopy.streak.titleContinue
-            ),
-    };
-  }
-
-  if (averageXpPerSession > 0) {
-    return {
-      accent: 'amber',
-      description: translateRecommendationWithFallback(
-        translate,
-        'setupMomentum.pace.description',
-        fallbackCopy.pace.description(averageXpPerSession),
-        {
-          averageXpPerSession,
-        }
-      ),
-      label: translateRecommendationWithFallback(
-        translate,
-        'setupMomentum.pace.label',
-        fallbackCopy.pace.label
-      ),
-      title:
-        mode === 'kangur'
-          ? translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.pace.titleKangur',
-              fallbackCopy.pace.titleKangur
-            )
-          : translateRecommendationWithFallback(
-              translate,
-              'setupMomentum.pace.titleTraining',
-              fallbackCopy.pace.titleTraining
-            ),
-    };
-  }
-
-  return null;
+  return (
+    resolveSetupMomentumQuestFocus(signals) ??
+    resolveSetupMomentumGuidedFocus(signals) ??
+    resolveSetupMomentumNextBadgeFocus(signals) ??
+    resolveSetupMomentumStreakFocus(signals) ??
+    resolveSetupMomentumPaceFocus(signals)
+  );
 };
 
 export default function KangurGameSetupMomentumCard({
@@ -503,7 +574,7 @@ export default function KangurGameSetupMomentumCard({
   const normalizedLocale = normalizeSiteLocale(locale);
   const translations = useTranslations('KangurGameRecommendations');
   const runtimeTranslations = useTranslations('KangurProgressRuntime');
-  const { subject } = useKangurSubjectFocus();
+  const { subject, subjectKey } = useKangurSubjectFocus();
   const modeKey = mode;
   const fallbackCopy = getSetupMomentumFallbackCopy(normalizedLocale);
   const focus = getSetupFocus(
@@ -511,6 +582,7 @@ export default function KangurGameSetupMomentumCard({
     progress,
     normalizedLocale,
     subject,
+    subjectKey,
     fallbackCopy,
     translations,
     runtimeTranslations

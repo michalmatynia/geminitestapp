@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
@@ -174,9 +174,13 @@ script domains:
   [`.bun-version`](../../.bun-version) instead of hardcoding tool versions.
 - Any workflow that resolves Bun should also read it from
   [`.bun-version`](../../.bun-version) instead of hardcoding a Bun release.
-- The repo workflows that intentionally follow the repo-pinned Node toolchain
-  now also resolve Node from [`.nvmrc`](../../.nvmrc) instead of repeating a
-  hardcoded major version.
+- Several general repo workflows now resolve Node from [`.nvmrc`](../../.nvmrc),
+  including `toolchain-contract.yml`, `bun-repo-ci.yml`, `codeql.yml`,
+  `weekly-quality-report.yml`, `architecture-guardrails.yml`, `ai-paths-node-docs.yml`,
+  and the main `test-matrix.yml`.
+- Some Bazel and agentic workflows still pin `node-version: 20` explicitly.
+  Treat that as current mixed-state reality, not as a repo-wide `.nvmrc`
+  rollout that is already complete.
 - Any path-filtered workflow that resolves Node from [`.nvmrc`](../../.nvmrc)
   should also include `.nvmrc` in its trigger paths so Node pin bumps rerun the
   affected check.

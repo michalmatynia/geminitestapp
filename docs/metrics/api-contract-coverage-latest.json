@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-23T21:12:57.338Z",
+  "generatedAt": "2026-03-30T15:09:34.339Z",
   "status": "passed",
   "summary": {
-    "total": 9,
+    "total": 0,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 9,
+    "infoCount": 0,
     "status": "passed",
-    "routeFileCount": 285,
+    "routeFileCount": 298,
     "methodCount": 215,
-    "methodsWithTests": 196,
+    "methodsWithTests": 206,
     "mutationValidationCount": 37,
     "queryValidationCount": 10
   },
@@ -22,7 +22,8 @@
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
-        "src/app/api/agent/approval-gates/route.ts"
+        "src/app/api/agent/approval-gates/route.ts",
+        "src/app/api/agent/approval-gates/handler.ts"
       ],
       "testFiles": [
         "src/app/api/agent/approval-gates/route.test.ts"
@@ -50,7 +51,8 @@
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
-        "src/app/api/agent/leases/route.ts"
+        "src/app/api/agent/leases/route.ts",
+        "src/app/api/agent/leases/handler.ts"
       ],
       "testFiles": [
         "src/app/api/agent/leases/route.test.ts"
@@ -64,7 +66,8 @@
       "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
-        "src/app/api/agent/leases/route.ts"
+        "src/app/api/agent/leases/route.ts",
+        "src/app/api/agent/leases/handler.ts"
       ],
       "testFiles": [
         "src/app/api/agent/leases/route.test.ts"
@@ -78,7 +81,8 @@
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
-        "src/app/api/agent/resources/route.ts"
+        "src/app/api/agent/resources/route.ts",
+        "src/app/api/agent/resources/handler.ts"
       ],
       "testFiles": [
         "src/app/api/agent/resources/route.test.ts"
@@ -196,20 +200,23 @@
         "src/app/api/ai/context/bundle/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/ai/context/bundle/route.test.ts"
+        "src/app/api/ai/context/bundle/route.test.ts",
+        "src/app/api/ai/context/bundle/handler.test.ts"
       ]
     },
     {
       "route": "ai/context/related/[id]",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/ai/context/related/[id]/route.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/ai/context/related/[id]/route.test.ts"
+      ]
     },
     {
       "route": "ai/context/resolve",
@@ -245,13 +252,15 @@
       "route": "ai/schema/[entity]",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/ai/schema/[entity]/route.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/ai/schema/[entity]/route.test.ts"
+      ]
     },
     {
       "route": "ai-insights/notifications",
@@ -919,14 +928,16 @@
       "route": "case-resolver/ocr/observability",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/case-resolver/ocr/observability/route.ts",
         "src/app/api/case-resolver/ocr/observability/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/case-resolver/ocr/observability/handler.test.ts"
+      ]
     },
     {
       "route": "chatbot/[[...path]]",
@@ -1002,14 +1013,16 @@
       "route": "client-errors",
       "method": "POST",
       "expectedAccess": "public",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": true,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/client-errors/route.ts",
         "src/app/api/client-errors/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/client-errors/handler.test.ts"
+      ]
     },
     {
       "route": "cms/css-ai/stream",
@@ -1535,27 +1548,31 @@
       "route": "files/preview",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/files/preview/route.ts",
         "src/app/api/files/preview/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/files/preview/handler.test.ts"
+      ]
     },
     {
       "route": "files",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/files/route.ts",
         "src/app/api/files/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/files/handler.test.ts"
+      ]
     },
     {
       "route": "health",
@@ -1818,13 +1835,15 @@
       "route": "marketplace/[resource]",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/marketplace/[resource]/route.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/marketplace/[resource]/route.test.ts"
+      ]
     },
     {
       "route": "marketplace/categories/fetch",
@@ -2205,14 +2224,16 @@
       "route": "notes/categories/tree",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/notes/categories/tree/route.ts",
         "src/app/api/notes/categories/tree/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/notes/categories/tree/handler.test.ts"
+      ]
     },
     {
       "route": "notes/import-folder",
@@ -2555,14 +2576,16 @@
       "route": "settings/cache",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/settings/cache/route.ts",
         "src/app/api/settings/cache/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/settings/cache/handler.test.ts"
+      ]
     },
     {
       "route": "settings/database/sync",
@@ -2583,14 +2606,16 @@
       "route": "settings/heavy",
       "method": "GET",
       "expectedAccess": "protected",
-      "hasTests": false,
+      "hasTests": true,
       "bodyValidated": null,
       "queryValidated": null,
       "sourceFiles": [
         "src/app/api/settings/heavy/route.ts",
         "src/app/api/settings/heavy/handler.ts"
       ],
-      "testFiles": []
+      "testFiles": [
+        "src/app/api/settings/heavy/handler.test.ts"
+      ]
     },
     {
       "route": "settings/lite",
@@ -2649,7 +2674,8 @@
         "src/app/api/settings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/settings/route.test.ts"
+        "src/app/api/settings/route.test.ts",
+        "src/app/api/settings/handler.test.ts"
       ]
     },
     {
@@ -2664,7 +2690,8 @@
         "src/app/api/settings/handler.ts"
       ],
       "testFiles": [
-        "src/app/api/settings/route.test.ts"
+        "src/app/api/settings/route.test.ts",
+        "src/app/api/settings/handler.test.ts"
       ]
     },
     {
@@ -3153,156 +3180,7 @@
       ]
     }
   ],
-  "issues": [
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET ai/context/related/[id] has no adjacent route/handler test coverage.",
-      "file": "src/app/api/ai/context/related/[id]/route.ts",
-      "line": 9,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/ai/context/related/[id]/route.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET ai/schema/[entity] has no adjacent route/handler test coverage.",
-      "file": "src/app/api/ai/schema/[entity]/route.ts",
-      "line": 9,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/ai/schema/[entity]/route.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET case-resolver/ocr/observability has no adjacent route/handler test coverage.",
-      "file": "src/app/api/case-resolver/ocr/observability/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/case-resolver/ocr/observability/route.ts",
-          "src/app/api/case-resolver/ocr/observability/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET files/preview has no adjacent route/handler test coverage.",
-      "file": "src/app/api/files/preview/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/files/preview/route.ts",
-          "src/app/api/files/preview/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET files has no adjacent route/handler test coverage.",
-      "file": "src/app/api/files/route.ts",
-      "line": 9,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/files/route.ts",
-          "src/app/api/files/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET marketplace/[resource] has no adjacent route/handler test coverage.",
-      "file": "src/app/api/marketplace/[resource]/route.ts",
-      "line": 29,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/marketplace/[resource]/route.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET notes/categories/tree has no adjacent route/handler test coverage.",
-      "file": "src/app/api/notes/categories/tree/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/notes/categories/tree/route.ts",
-          "src/app/api/notes/categories/tree/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET settings/cache has no adjacent route/handler test coverage.",
-      "file": "src/app/api/settings/cache/route.ts",
-      "line": 7,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/settings/cache/route.ts",
-          "src/app/api/settings/cache/handler.ts"
-        ]
-      }
-    },
-    {
-      "severity": "info",
-      "ruleId": "api-contract-route-missing-tests",
-      "message": "GET settings/heavy has no adjacent route/handler test coverage.",
-      "file": "src/app/api/settings/heavy/route.ts",
-      "line": 8,
-      "column": 14,
-      "snippet": null,
-      "context": {
-        "expectedAccess": "protected",
-        "sourceFiles": [
-          "src/app/api/settings/heavy/route.ts",
-          "src/app/api/settings/heavy/handler.ts"
-        ]
-      }
-    }
-  ],
-  "rules": [
-    {
-      "ruleId": "api-contract-route-missing-tests",
-      "errorCount": 0,
-      "warningCount": 0,
-      "infoCount": 9
-    }
-  ],
-  "durationMs": 179
+  "issues": [],
+  "rules": [],
+  "durationMs": 193
 }

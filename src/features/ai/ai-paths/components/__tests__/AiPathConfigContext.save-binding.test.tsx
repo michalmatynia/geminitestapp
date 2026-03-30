@@ -26,6 +26,25 @@ const runtimeActionsMock = vi.hoisted(() => ({
   sendToAi: vi.fn(async () => {}),
 }));
 
+const runtimeStateValue = vi.hoisted(() => ({
+  parserSamples: {},
+  parserSampleLoading: false,
+  updaterSamples: {},
+  updaterSampleLoading: false,
+  runtimeState: {
+    status: 'idle',
+    nodeStatuses: {},
+    nodeOutputs: {},
+    variables: {},
+    events: [],
+    currentRun: null,
+    inputs: {},
+    outputs: {},
+  },
+  pathDebugSnapshots: {},
+  sendingToAi: false,
+}));
+
 vi.mock('../../context', () => ({
   useSelectionState: () => ({ selectedNodeId: null, configOpen: false }),
   useSelectionActions: () => selectionActionsMock,
@@ -35,24 +54,7 @@ vi.mock('../../context', () => ({
     activePathId: 'path_72l57d',
     isPathLocked: false,
   }),
-  useRuntimeState: () => ({
-    parserSamples: {},
-    parserSampleLoading: false,
-    updaterSamples: {},
-    updaterSampleLoading: false,
-    runtimeState: {
-      status: 'idle',
-      nodeStatuses: {},
-      nodeOutputs: {},
-      variables: {},
-      events: [],
-      currentRun: null,
-      inputs: {},
-      outputs: {},
-    },
-    pathDebugSnapshots: {},
-    sendingToAi: false,
-  }),
+  useRuntimeState: () => runtimeStateValue,
   useRuntimeActions: () => runtimeActionsMock,
   usePresetsState: () => ({
     dbQueryPresets: [],

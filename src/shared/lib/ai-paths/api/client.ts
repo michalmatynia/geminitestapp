@@ -179,17 +179,24 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(record, key);
 
+const RUN_ID_KEYS = ['id', 'runId', '_id'] as const;
+
+const extractRunIdFromRecord = (record: Record<string, unknown>): string | null => {
+  for (const key of RUN_ID_KEYS) {
+    const runId = asNonEmptyString(record[key]);
+    if (runId) {
+      return runId;
+    }
+  }
+  return null;
+};
+
 const extractRunIdFromValue = (value: unknown): string | null => {
   const directString = asNonEmptyString(value);
   if (directString) return directString;
   const record = asRecord(value);
   if (!record) return null;
-  return (
-    asNonEmptyString(record['id']) ??
-    asNonEmptyString(record['runId']) ??
-    asNonEmptyString(record['_id']) ??
-    null
-  );
+  return extractRunIdFromRecord(record);
 };
 
 const isIdOnlyEnvelopeRecord = (record: Record<string, unknown>): boolean => {
@@ -243,6 +250,89 @@ const readEnqueueRunCandidates = (
   return { runCandidates, wrapperCandidates, hasPrimaryRunValue };
 };
 
+const selectRunCandidateRecord = (
+  runCandidates: unknown[]
+): { selectedRecord: Record<string, unknown> | null; runId: string | null } => {
+  for (const candidate of runCandidates) {
+    const candidateRecord = asRecord(candidate);
+    const candidateRunId = extractRunIdFromValue(candidate);
+    if (!candidateRunId) continue;
+    return {
+      selectedRecord: candidateRecord,
+      runId: candidateRunId,
+    };
+  }
+  return {
+    selectedRecord: null,
+    runId: null,
+  };
+};
+
+const selectWrapperRunRecord = (
+  wrapperCandidates: Record<string, unknown>[]
+): { selectedRecord: Record<string, unknown> | null; runId: string | null } => {
+  for (const candidate of wrapperCandidates) {
+    const candidateRunId = extractRunIdFromWrapperRecord(candidate);
+    if (!candidateRunId) continue;
+    return {
+      selectedRecord: candidate,
+      runId: candidateRunId,
+    };
+  }
+  return {
+    selectedRecord: null,
+    runId: null,
+  };
+};
+
+const shouldPreferPrimaryRunRecord = (input: {
+  runId: string | null;
+  selectedRecord: Record<string, unknown> | null;
+  primaryRunRecord: Record<string, unknown> | null;
+}): boolean =>
+  Boolean(
+    input.runId &&
+      input.selectedRecord &&
+      input.primaryRunRecord &&
+      input.selectedRecord !== input.primaryRunRecord &&
+      !extractRunIdFromValue(input.primaryRunRecord)
+  );
+
+const resolveFallbackRunSelection = (input: {
+  data: unknown;
+  runId: string | null;
+  primaryRunRecord: Record<string, unknown> | null;
+  selectedRecord: Record<string, unknown> | null;
+}): { runId: string | null; selectedRecord: Record<string, unknown> | null } => {
+  if (input.runId) {
+    return {
+      runId: input.runId,
+      selectedRecord: input.selectedRecord,
+    };
+  }
+  const fallbackRunId = extractAiPathRunIdFromEnqueueResponseData(input.data);
+  if (fallbackRunId && input.primaryRunRecord) {
+    return {
+      runId: fallbackRunId,
+      selectedRecord: input.primaryRunRecord,
+    };
+  }
+  return {
+    runId: fallbackRunId,
+    selectedRecord: input.selectedRecord,
+  };
+};
+
+const normalizeEnqueueRunRecord = (
+  selectedRecord: Record<string, unknown>,
+  runId: string
+): AiPathRunRecord =>
+  ({
+    ...selectedRecord,
+    id: runId,
+    status: asNonEmptyString(selectedRecord['status']) ?? 'queued',
+  }) as AiPathRunRecord;
+
 export const extractAiPathRunIdFromEnqueueResponseData = (data: unknown): string | null => {
   const { runCandidates, wrapperCandidates } = readEnqueueRunCandidates(data);
   for (const candidate of runCandidates) {
@@ -262,44 +352,30 @@ export const extractAiPathRunRecordFromEnqueueResponseData = (
   const { runCandidates, wrapperCandidates, hasPrimaryRunValue } = readEnqueueRunCandidates(data);
   const primaryRunRecord = hasPrimaryRunValue ? asRecord(runCandidates[0] ?? null) : null;
 
-  let selectedRecord: Record<string, unknown> | null = null;
-  let runId: string | null = null;
-  for (const candidate of runCandidates) {
-    const candidateRecord = asRecord(candidate);
-    const candidateRunId = extractRunIdFromValue(candidate);
-    if (!candidateRunId) continue;
-    selectedRecord = candidateRecord;
-    runId = candidateRunId;
-    break;
-  }
-  if (!runId) {
-    for (const candidate of wrapperCandidates) {
-      const candidateRunId = extractRunIdFromWrapperRecord(candidate);
-      if (!candidateRunId) continue;
-      selectedRecord = candidate;
-      runId = candidateRunId;
-      break;
-    }
-  }
+  const selectedRunCandidate = selectRunCandidateRecord(runCandidates);
+  const selectedWrapperCandidate = selectedRunCandidate.runId
+    ? null
+    : selectWrapperRunRecord(wrapperCandidates);
+  let selectedRecord = selectedRunCandidate.selectedRecord ?? selectedWrapperCandidate?.selectedRecord ?? null;
+  let runId = selectedRunCandidate.runId ?? selectedWrapperCandidate?.runId ?? null;
 
   if (
-    runId &&
-    selectedRecord &&
-    primaryRunRecord &&
-    selectedRecord !== primaryRunRecord &&
-    !extractRunIdFromValue(primaryRunRecord)
+    shouldPreferPrimaryRunRecord({
+      runId,
+      selectedRecord,
+      primaryRunRecord,
+    })
   ) {
     // Prefer the primary `run` object payload body when id lives on wrapper fields.
     selectedRecord = primaryRunRecord;
   }
 
-  if (!runId) {
-    // Mixed legacy payloads can expose id outside `run`, e.g. { run: { status }, runId: "..." }.
-    runId = extractAiPathRunIdFromEnqueueResponseData(data);
-    if (runId && primaryRunRecord) {
-      selectedRecord = primaryRunRecord;
-    }
-  }
+  ({ runId, selectedRecord } = resolveFallbackRunSelection({
+    data,
+    runId,
+    primaryRunRecord,
+    selectedRecord,
+  }));
 
   if (!runId) return null;
   if (!selectedRecord) {
@@ -307,12 +383,7 @@ export const extractAiPathRunRecordFromEnqueueResponseData = (
     return null;
   }
 
-  const normalizedStatus = asNonEmptyString(selectedRecord?.['status']) ?? 'queued';
-  return {
-    ...(selectedRecord ?? {}),
-    id: runId,
-    status: normalizedStatus,
-  } as AiPathRunRecord;
+  return normalizeEnqueueRunRecord(selectedRecord, runId);
 };
 
 export const resolveAiPathRunFromEnqueueResponseData = (
@@ -388,6 +459,71 @@ export const mergeEnqueuedAiPathRunForCache = (args: {
   };
 };
 
+const setListRunsStringParam = (
+  params: URLSearchParams,
+  key: string,
+  value: string | undefined
+): void => {
+  if (value) {
+    params.set(key, value);
+  }
+};
+
+const setListRunsNumberParam = (
+  params: URLSearchParams,
+  key: string,
+  value: number | undefined
+): void => {
+  if (typeof value === 'number') {
+    params.set(key, String(value));
+  }
+};
+
+const setListRunsBooleanParam = (
+  params: URLSearchParams,
+  key: string,
+  value: boolean | undefined,
+  formatter: (value: boolean) => string = (nextValue) => (nextValue ? '1' : '0')
+): void => {
+  if (typeof value === 'boolean') {
+    params.set(key, formatter(value));
+  }
+};
+
+const buildAiPathRunsListQuery = (
+  options:
+    | {
+        pathId?: string;
+        nodeId?: string;
+        requestId?: string;
+        source?: string;
+        sourceMode?: 'include' | 'exclude';
+        visibility?: 'scoped' | 'global';
+        status?: string;
+        query?: string;
+        limit?: number;
+        offset?: number;
+        includeTotal?: boolean;
+        fresh?: boolean;
+      }
+    | undefined
+): string => {
+  const params = new URLSearchParams();
+  setListRunsStringParam(params, 'pathId', options?.pathId);
+  setListRunsStringParam(params, 'nodeId', options?.nodeId);
+  setListRunsStringParam(params, 'requestId', options?.requestId);
+  setListRunsStringParam(params, 'source', options?.source);
+  setListRunsStringParam(params, 'sourceMode', options?.sourceMode);
+  setListRunsStringParam(params, 'visibility', options?.visibility);
+  setListRunsStringParam(params, 'status', options?.status);
+  setListRunsStringParam(params, 'query', options?.query);
+  setListRunsNumberParam(params, 'limit', options?.limit);
+  setListRunsNumberParam(params, 'offset', options?.offset);
+  setListRunsBooleanParam(params, 'includeTotal', options?.includeTotal);
+  setListRunsBooleanParam(params, 'fresh', options?.fresh, () => '1');
+  return params.toString();
+};
+
 export async function listAiPathRuns(options?: {
   pathId?: string;
   nodeId?: string;
@@ -404,23 +540,7 @@ export async function listAiPathRuns(options?: {
   timeoutMs?: number;
   signal?: AbortSignal;
 }): Promise<HttpResult<AiPathRunListResult>> {
-  const params = new URLSearchParams();
-  if (options?.pathId) params.set('pathId', options.pathId);
-  if (options?.nodeId) params.set('nodeId', options.nodeId);
-  if (options?.requestId) params.set('requestId', options.requestId);
-  if (options?.source) params.set('source', options.source);
-  if (options?.sourceMode) params.set('sourceMode', options.sourceMode);
-  if (options?.visibility) params.set('visibility', options.visibility);
-  if (options?.status) params.set('status', options.status);
-  if (options?.query) params.set('query', options.query);
-  if (typeof options?.limit === 'number') params.set('limit', String(options.limit));
-  if (typeof options?.offset === 'number') params.set('offset', String(options.offset));
-  if (typeof options?.includeTotal === 'boolean') {
-    params.set('includeTotal', options.includeTotal ? '1' : '0');
-  }
-  if (options?.fresh) params.set('fresh', '1');
-
-  const query = params.toString();
+  const query = buildAiPathRunsListQuery(options);
   const url = query ? `/api/ai-paths/runs?${query}` : '/api/ai-paths/runs';
   return apiFetch<AiPathRunListResult>(url, {
     ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),

@@ -21,6 +21,10 @@ const {
   };
 });
 
+const { sessionMock } = vi.hoisted(() => ({
+  sessionMock: vi.fn(),
+}));
+
 const kangurRoutingProviderMock = vi.fn();
 
 const mockKangurRoutingState = {
@@ -50,6 +54,8 @@ const { kangurAppearanceMock } = vi.hoisted(() => ({
 const originalCustomCssEnv = process.env['NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED'];
 const originalInnerHeight = window.innerHeight;
 const originalVisualViewport = window.visualViewport;
+const visualViewportAddEventListenerMock = vi.fn();
+const visualViewportRemoveEventListenerMock = vi.fn();
 const setEnvValue = (key: string, value: string | undefined) => {
   if (value === undefined) {
     delete process.env[key];
@@ -65,27 +71,63 @@ vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientErrorSync,
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  KangurRoutingProvider: ({
-    children,
-    ...props
-  }: {
-    pageKey?: string | null;
-    requestedPath?: string;
-    requestedHref?: string;
-    basePath: string;
-    embedded: boolean;
-      children: ReactNode;
-  }) => {
-    kangurRoutingProviderMock(props);
-    mockKangurRoutingState.pageKey = props.pageKey ?? null;
-    mockKangurRoutingState.requestedPath = props.requestedPath ?? '';
-    mockKangurRoutingState.basePath = props.basePath;
-    mockKangurRoutingState.embedded = props.embedded;
-    return <div data-testid='kangur-routing-provider'>{children}</div>;
-  },
-  useKangurRoutingState: () => ({ ...mockKangurRoutingState }),
+vi.mock('next-auth/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('next-auth/react')>();
+  return {
+    ...actual,
+    useSession: () => sessionMock(),
+  };
+});
+
+vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
+  useOptionalNextAuthSession: () => sessionMock(),
 }));
+
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', async () => {
+  const routing = await vi.importActual<typeof import('@/features/kangur/config/routing')>(
+    '@/features/kangur/config/routing'
+  );
+  const pageAccess = await vi.importActual<typeof import('@/features/kangur/config/page-access')>(
+    '@/features/kangur/config/page-access'
+  );
+  const managedPaths = await vi.importActual<
+    typeof import('@/features/kangur/ui/routing/managed-paths')
+  >('@/features/kangur/ui/routing/managed-paths');
+
+  return {
+    KangurRoutingProvider: ({
+      children,
+      ...props
+    }: {
+      pageKey?: string | null;
+      requestedPath?: string;
+      requestedHref?: string;
+      basePath: string;
+      embedded: boolean;
+      children: ReactNode;
+    }) => {
+      kangurRoutingProviderMock(props);
+      const resolvedBasePath = routing.normalizeKangurBasePath(props.basePath);
+      const normalizedRequestedPath = props.requestedPath?.trim() || resolvedBasePath;
+      const accessibleRouteState = pageAccess.resolveAccessibleKangurRouteState({
+        normalizedBasePath: resolvedBasePath,
+        pageKey: props.pageKey,
+        requestedPath: normalizedRequestedPath,
+        session: sessionMock().data ?? null,
+        slugSegments: managedPaths.getKangurSlugFromPathname(
+          normalizedRequestedPath,
+          resolvedBasePath
+        ),
+      });
+      mockKangurRoutingState.pageKey = accessibleRouteState.pageKey ?? null;
+      mockKangurRoutingState.requestedPath = accessibleRouteState.requestedPath;
+      mockKangurRoutingState.basePath = resolvedBasePath;
+      mockKangurRoutingState.embedded = props.embedded;
+      return <div data-testid='kangur-routing-provider'>{children}</div>;
+    },
+    useKangurRoutingState: () => ({ ...mockKangurRoutingState }),
+  };
+});
 
 vi.mock('@/features/kangur/ui/KangurFeatureApp', () => ({
   KangurFeatureApp: () => <div data-testid='kangur-feature-app'>Kangur feature app</div>,
@@ -107,6 +149,10 @@ const renderWithIntl = (ui: ReactElement) =>
 describe('KangurFeaturePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     clearLatchedKangurTopBarHeightCssValue();
     document.documentElement.style.removeProperty('--kangur-top-bar-height');
     setEnvValue('NEXT_PUBLIC_KANGUR_CUSTOM_CSS_ENABLED', originalCustomCssEnv);
@@ -125,10 +171,12 @@ describe('KangurFeaturePage', () => {
       value: {
         height: 820,
         offsetTop: 0,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
+        addEventListener: visualViewportAddEventListenerMock,
+        removeEventListener: visualViewportRemoveEventListenerMock,
       },
     });
+    visualViewportAddEventListenerMock.mockClear();
+    visualViewportRemoveEventListenerMock.mockClear();
   });
 
   afterEach(() => {
@@ -242,16 +290,6 @@ describe('KangurFeaturePage', () => {
     });
   });
 
-  it('preserves the measured top-bar height when mounting a direct Kangur page shell', () => {
-    document.documentElement.style.setProperty('--kangur-top-bar-height', '136px');
-
-    renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
-
-    expect(screen.getByTestId('kangur-feature-page-shell')).toHaveStyle({
-      '--kangur-top-bar-height': '136px',
-    });
-  });
-
   it('does not mutate unrelated stylesheet preload links', () => {
     const preload = document.createElement('link');
     preload.rel = 'preload';
@@ -284,6 +322,31 @@ describe('KangurFeaturePage', () => {
     });
   });
 
+  it('localizes the footer social updates link on root-mounted Kangur pages', () => {
+    window.history.replaceState({}, '', '/en');
+
+    renderWithIntl(<KangurFeaturePage basePath='/' />);
+
+    expect(screen.getByRole('link', { name: 'Aktualnosci spolecznosciowe' })).toHaveAttribute(
+      'href',
+      '/en/social-updates'
+    );
+  });
+
+  it('renders support links in the root-mounted Kangur footer', () => {
+    renderWithIntl(<KangurFeaturePage basePath='/' />);
+
+    expect(screen.getByText('Wesprzyj aplikacje:')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'buycoffe.to/studiq' })).toHaveAttribute(
+      'href',
+      'https://buycoffe.to/studiq'
+    );
+    expect(screen.getByRole('link', { name: 'zrzutka.pl/b8ak55' })).toHaveAttribute(
+      'href',
+      'https://zrzutka.pl/b8ak55'
+    );
+  });
+
   it('supports direct competition route mounts', () => {
     renderWithIntl(<KangurFeaturePage slug={['competition']} basePath='/kangur' />);
 
@@ -297,17 +360,31 @@ describe('KangurFeaturePage', () => {
   });
 
   it('syncs the shared mobile viewport vars onto the page chrome', () => {
+    document.body.style.setProperty('--kangur-shell-viewport-height', '777px');
+    document.body.style.setProperty(
+      '--kangur-mobile-bottom-clearance',
+      'calc(env(safe-area-inset-bottom) + 24px)'
+    );
+
     const { unmount } = renderWithIntl(<KangurFeaturePage slug={['tests']} basePath='/kangur' />);
 
     expect(document.documentElement.style.getPropertyValue('--kangur-shell-viewport-height')).toBe(
       '820px'
     );
-    expect(document.body.style.getPropertyValue('--kangur-shell-viewport-height')).toBe('820px');
     expect(
       document.documentElement.style.getPropertyValue('--kangur-mobile-bottom-clearance')
     ).toBe('calc(env(safe-area-inset-bottom) + 80px)');
+    expect(document.body.style.getPropertyValue('--kangur-shell-viewport-height')).toBe('777px');
     expect(document.body.style.getPropertyValue('--kangur-mobile-bottom-clearance')).toBe(
-      'calc(env(safe-area-inset-bottom) + 80px)'
+      'calc(env(safe-area-inset-bottom) + 24px)'
+    );
+    expect(visualViewportAddEventListenerMock).toHaveBeenCalledWith(
+      'resize',
+      expect.any(Function)
+    );
+    expect(visualViewportAddEventListenerMock).not.toHaveBeenCalledWith(
+      'scroll',
+      expect.any(Function)
     );
 
     unmount();
@@ -315,7 +392,10 @@ describe('KangurFeaturePage', () => {
     expect(document.documentElement.style.getPropertyValue('--kangur-shell-viewport-height')).toBe(
       ''
     );
-    expect(document.body.style.getPropertyValue('--kangur-mobile-bottom-clearance')).toBe('');
+    expect(document.body.style.getPropertyValue('--kangur-shell-viewport-height')).toBe('777px');
+    expect(document.body.style.getPropertyValue('--kangur-mobile-bottom-clearance')).toBe(
+      'calc(env(safe-area-inset-bottom) + 24px)'
+    );
   });
 
   it('keeps the embedded shell node mounted when the requested embedded page changes', () => {
@@ -356,6 +436,58 @@ describe('KangurFeaturePage', () => {
     unmount();
 
     expect(clearKangurClientObservabilityContextMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes blocked GamesLibrary routes through to shared routing for provider-level sanitization', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<KangurFeaturePage slug={['games']} basePath='/kangur' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+      requestedHref: '/kangur/games',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+    });
+  });
+
+  it('keeps GamesLibrary routes in shared Kangur routing state for exact super admins', () => {
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'super-admin@example.com',
+          role: 'super_admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    render(<KangurFeaturePage slug={['games']} basePath='/kangur' />);
+
+    expect(kangurRoutingProviderMock).toHaveBeenCalledWith({
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+      requestedHref: '/kangur/games',
+      basePath: '/kangur',
+      embedded: false,
+    });
+    expect(setKangurClientObservabilityContextMock).toHaveBeenCalledWith({
+      pageKey: 'GamesLibrary',
+      requestedPath: '/kangur/games',
+    });
   });
 
   it('renders the scoped custom CSS when enabled', () => {

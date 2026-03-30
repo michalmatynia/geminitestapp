@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import type { ActivityFilters } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getActivityRepository } from '@/shared/lib/observability/activity-repository';
 import { commonListQuerySchema } from '@/shared/validations/api-schemas';
 

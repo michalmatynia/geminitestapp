@@ -84,7 +84,7 @@ export function reducePageBuilderMoveActions(
         state.sections,
         action.fromSectionId,
         action.fromColumnId,
-        action.fromParentBlockId
+        action.fromParentBlockId ?? undefined
       );
       if (!removal.moved) {
         const found = findBlock(state.sections, action.blockId);
@@ -108,7 +108,7 @@ export function reducePageBuilderMoveActions(
             action.toColumnId,
             movedBlock,
             action.toIndex,
-            action.toParentBlockId
+            action.toParentBlockId ?? undefined
           );
         const hasMovedBlock = (blocks: BlockInstance[]): boolean =>
           Boolean(
@@ -199,7 +199,7 @@ export function reducePageBuilderMoveActions(
         state.sections,
         action.fromSectionId,
         action.fromColumnId,
-        action.fromParentBlockId
+        action.fromParentBlockId ?? undefined
       );
       if (!removal.moved) {
         const found = findBlock(state.sections, action.blockId);
@@ -307,7 +307,7 @@ export function reducePageBuilderMoveActions(
         state.sections,
         action.fromSectionId,
         action.fromColumnId,
-        action.fromParentBlockId
+        action.fromParentBlockId ?? undefined
       );
       if (!removal.moved) {
         const found = findBlock(state.sections, action.blockId);
@@ -401,7 +401,7 @@ export function reducePageBuilderMoveActions(
         state.sections,
         action.fromSectionId,
         action.fromColumnId,
-        action.fromParentBlockId
+        action.fromParentBlockId ?? undefined
       );
       if (!removal.moved) {
         const found = findBlock(state.sections, action.blockId);
@@ -669,7 +669,7 @@ export function reducePageBuilderMoveActions(
             action.toColumnId,
             convertedBlock,
             action.toIndex,
-            action.toParentBlockId
+            action.toParentBlockId ?? undefined
           ),
         };
       });

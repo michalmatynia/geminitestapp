@@ -4,18 +4,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const {
-  authMock,
+  readTolerantServerAuthSessionMock,
   registerKangurGuestAiTutorIntroAppearanceMock,
   readKangurLearnerSessionMock,
 } = vi.hoisted(() => ({
-  authMock: vi.fn(),
+  readTolerantServerAuthSessionMock: vi.fn(),
   registerKangurGuestAiTutorIntroAppearanceMock: vi.fn(),
   readKangurLearnerSessionMock: vi.fn(),
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
   extractClientIp: () => '203.0.113.10',
+  readTolerantServerAuthSession: readTolerantServerAuthSessionMock,
 }));
 
 vi.mock('@/features/kangur/server/guest-ai-tutor-intro', () => ({
@@ -40,7 +40,7 @@ const createRequestContext = (): ApiHandlerContext =>
 describe('kangur ai tutor guest intro handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authMock.mockResolvedValue(null);
+    readTolerantServerAuthSessionMock.mockResolvedValue(null);
     readKangurLearnerSessionMock.mockReturnValue(null);
   });
 
@@ -71,7 +71,7 @@ describe('kangur ai tutor guest intro handler', () => {
   });
 
   it('suppresses the prompt when a parent session exists', async () => {
-    authMock.mockResolvedValue({
+    readTolerantServerAuthSessionMock.mockResolvedValue({
       user: {
         id: 'parent-1',
       },

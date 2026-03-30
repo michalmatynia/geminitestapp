@@ -491,7 +491,7 @@ export function useKangurAiTutorPanelShellState(input: {
   const panelTransition: Transition = prefersReducedMotion
     ? reducedMotionTransitions.instant
     : panelOpenAnimation === 'fade'
-      ? { duration: 0.2, ease: 'easeOut' }
+      ? { duration: 0.2, ease: [0.16, 1, 0.3, 1] }
       : motionProfile.bubbleTransition;
 
   return {

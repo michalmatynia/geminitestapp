@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-21'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'guide'
 scope: 'platform'
@@ -26,7 +26,7 @@ The platform targets **WCAG 2.1 Level AA** compliance across all user-facing com
 | **2.4.3 Focus Order (A)** | DOM order matches visual order | Semantic HTML structure |
 | **2.4.7 Focus Visible (AA)** | All focused elements have visible indicator | Tailwind `focus-visible:ring-*` |
 | **4.1.2 Name, Role, Value (A)** | Proper ARIA roles and labels | ARIA patterns (below) |
-| **4.1.3 Status Messages (AAA)** | Live regions announce feedback | `aria-live` patterns (below) |
+| **4.1.3 Status Messages (AA)** | Live regions announce feedback | `aria-live` patterns (below) |
 
 ## Core Patterns
 
@@ -250,7 +250,7 @@ When adding a new interactive component, verify:
 - [ ] **Screen reader safe** — Proper ARIA labels, roles, and live regions
 - [ ] **Image alt text** — All images have meaningful alt text or `alt=""` + `aria-hidden`
 - [ ] **Color not alone** — Don't use color alone to convey information (focus rings help)
-- [ ] **Contrast sufficient** — Focus rings meet WCAG AA contrast ratios (7:1)
+- [ ] **Contrast sufficient** — Focus indicators and other non-text UI affordances meet WCAG AA non-text contrast expectations (typically 3:1)
 - [ ] **No keyboard trap** — Users can tab away from any focus state
 
 ---
@@ -259,12 +259,22 @@ When adding a new interactive component, verify:
 
 ### Automated Testing
 
-Run the accessibility test suite:
+Use the current repo-owned accessibility entrypoints:
 
 ```bash
-npm run quality:accessibility:smoke    # Smoke tests
-npm run test:accessibility             # Full test suite
-npm run quality:accessibility:crawl    # Route audit
+npm run check:accessibility:component-policies
+npm run check:accessibility:component-policies:strict
+npm run test:accessibility-smoke
+npm run test:accessibility-smoke:strict
+npm run test:accessibility:route-crawl
+npm run test:accessibility:route-crawl:strict
+npm run test:accessibility:gate
+```
+
+For CI-parity execution through the Bazel lane:
+
+```bash
+npm run bazel -- run //:accessibility_smoke
 ```
 
 ### Manual Testing
@@ -323,7 +333,7 @@ When adding a new accessibility pattern:
 
 1. Verify it meets WCAG 2.1 Level AA criteria
 2. Document it in this guide with code example
-3. Add test cases to the E2E suite
+3. Add or extend the relevant component-policy, smoke, or route-crawl test coverage
 4. Update relevant feature documentation
 5. Share with the team in standup/docs review
 
@@ -348,8 +358,8 @@ When adding a new accessibility pattern:
 
 ## Last Updated
 
+- **2026-03-26** — testing entrypoints aligned to the current accessibility gate and WCAG status-message level corrected
 - **2026-03-21** — WCAG 2.1 Level AA implementation complete across core features
 - Documentation aligned to 18 accessibility improvements across 19 component files
 - 100% image alt text compliance verified
 - All patterns tested and production-ready
-

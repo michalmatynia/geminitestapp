@@ -7,7 +7,7 @@ import {
   resolveKangurLessonDocumentPages,
   normalizeKangurLessonDocument,
 } from '@/features/kangur/lesson-documents';
-import { KANGUR_LESSON_ACTIVITY_DEFINITIONS } from '@/features/kangur/lesson-activities';
+import { KANGUR_LESSON_ACTIVITY_DEFINITIONS } from '@/features/kangur/lessons/activities';
 import { KANGUR_LESSON_ACTIVITY_IDS } from '@/features/kangur/shared/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

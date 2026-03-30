@@ -7,12 +7,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authMeMock, useKangurRoutingMock, usePathnameMock, routerPushMock } = vi.hoisted(() => ({
-  authMeMock: vi.fn(),
-  useKangurRoutingMock: vi.fn(),
-  usePathnameMock: vi.fn(),
-  routerPushMock: vi.fn(),
-}));
+const { authMeMock, sessionMock, useKangurRoutingMock, usePathnameMock, routerPushMock } =
+  vi.hoisted(() => ({
+    authMeMock: vi.fn(),
+    useKangurRoutingMock: vi.fn(),
+    usePathnameMock: vi.fn(),
+    routerPushMock: vi.fn(),
+  }));
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
@@ -62,6 +63,7 @@ describe('PageNotFound', () => {
     usePathnameMock.mockReturnValue('/kangur/missing-page');
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
+      pageKey: null,
       requestedPath: '/kangur/missing-page',
     });
   });
@@ -108,5 +110,23 @@ describe('PageNotFound', () => {
       'rounded-full',
       'border'
     );
+  });
+
+  it('uses the sanitized routing state instead of exposing a blocked GamesLibrary path', async () => {
+    usePathnameMock.mockReturnValue('/kangur');
+    useKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      pageKey: 'Game',
+      requestedPath: '/kangur',
+    });
+
+    render(<PageNotFound />, { wrapper: createWrapper() });
+
+    expect(
+      await screen.findByText('Nie udalo sie znalezc strony "nieznana" w tej aplikacji.')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Nie udalo sie znalezc strony "games" w tej aplikacji.')
+    ).not.toBeInTheDocument();
   });
 });

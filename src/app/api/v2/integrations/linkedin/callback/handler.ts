@@ -27,6 +27,23 @@ type StatePayload = {
   connectionId: string;
 };
 
+const parseStateRecord = (raw: string): Record<string, unknown> | null => {
+  try {
+    const json = Buffer.from(raw, 'base64url').toString('utf-8');
+    const parsed = JSON.parse(json) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const resolveStateField = (
+  record: Record<string, unknown>,
+  key: keyof StatePayload,
+): string | null => (typeof record[key] === 'string' ? record[key] : null);
+
 const toErrorRedirect = (origin: string, reason: string): string => {
   const url = new URL('/admin/integrations', origin);
   url.searchParams.set('linkedin', 'error');
@@ -42,28 +59,18 @@ export const querySchema = z.object({
 });
 
 const parseState = (raw: string): StatePayload | null => {
-  try {
-    const json = Buffer.from(raw, 'base64url').toString('utf-8');
-    const parsed = JSON.parse(json) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return null;
-    }
-
-    const record = parsed as Record<string, unknown>;
-    const nonce = typeof record['nonce'] === 'string' ? record['nonce'] : null;
-    const integrationId =
-      typeof record['integrationId'] === 'string' ? record['integrationId'] : null;
-    const connectionId =
-      typeof record['connectionId'] === 'string' ? record['connectionId'] : null;
-
-    if (nonce === null || integrationId === null || connectionId === null) {
-      return null;
-    }
-
-    return { nonce, integrationId, connectionId };
-  } catch {
+  const record = parseStateRecord(raw);
+  if (!record) {
     return null;
   }
+
+  const nonce = resolveStateField(record, 'nonce');
+  const integrationId = resolveStateField(record, 'integrationId');
+  const connectionId = resolveStateField(record, 'connectionId');
+
+  return nonce === null || integrationId === null || connectionId === null
+    ? null
+    : { nonce, integrationId, connectionId };
 };
 
 const fetchLinkedInProfile = async (

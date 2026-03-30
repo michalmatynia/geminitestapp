@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import type { IdLabelOptionDto } from '@/shared/contracts/base';
+import type { IdLabelOption } from '@/shared/contracts/base';
 
-export type AdminFavoriteCandidate = IdLabelOptionDto<string>;
+export type AdminFavoriteCandidate = IdLabelOption<string>;
 
 export type AdminFavoritesContextValue = {
   favoritesKey: string;

@@ -54,6 +54,95 @@ const KANGUR_TUTOR_MOOD_ACCENTS: Record<KangurTutorMoodId, KangurAccent> = {
 };
 
 const formatMoodConfidence = (value: number): string => `${Math.round(value * 100)}%`;
+type KangurAiTutorMoodLearnerIdentity = { displayName?: string | null } | null;
+
+const resolveKangurAiTutorMoodLearnerName = ({
+  learner,
+  localModeLabel,
+  user,
+}: {
+  learner: KangurAiTutorMoodLearnerIdentity;
+  localModeLabel: string;
+  user: ReturnType<typeof useKangurLearnerProfileRuntime>['user'];
+}): string => learner?.displayName?.trim() ?? user?.full_name?.trim() ?? localModeLabel;
+
+const resolveKangurAiTutorMoodSectionCopy = ({
+  learner,
+  learnerName,
+  moodContent,
+  tutorContent,
+}: {
+  learner: KangurAiTutorMoodLearnerIdentity;
+  learnerName: string;
+  moodContent: ReturnType<typeof useKangurPageContentEntry>['entry'];
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): { description: string; title: string } => ({
+  description:
+    moodContent?.summary ??
+    (learner
+      ? formatKangurAiTutorTemplate(
+          tutorContent.profileMoodWidget.descriptionWithLearnerTemplate,
+          { learnerName }
+        )
+      : tutorContent.profileMoodWidget.descriptionFallback),
+  title: moodContent?.title ?? tutorContent.profileMoodWidget.title,
+});
+
+const resolveKangurAiTutorMoodUpdatedLabel = ({
+  dateMissingLabel,
+  lastComputedAt,
+  locale,
+  tutorContent,
+}: {
+  dateMissingLabel: string;
+  lastComputedAt: string | null | undefined;
+  locale: string;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+}): string =>
+  lastComputedAt
+    ? formatKangurProfileDateTime(lastComputedAt, {
+        locale,
+        dateMissingLabel,
+      })
+    : tutorContent.profileMoodWidget.updatedFallback;
+
+function KangurLearnerProfileAiTutorMoodStats({
+  baselineLabel,
+  confidenceLabel,
+  tutorContent,
+  updatedLabel,
+}: {
+  baselineLabel: string;
+  confidenceLabel: string;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+  updatedLabel: string;
+}): React.JSX.Element {
+  return (
+    <div className='grid w-full kangur-panel-gap min-[420px]:grid-cols-2 xl:max-w-3xl xl:grid-cols-3'>
+      <KangurLabeledValueSummary
+        className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
+        description={tutorContent.profileMoodWidget.baselineDescription}
+        label={tutorContent.profileMoodWidget.baselineLabel}
+        valueTestId='learner-profile-ai-tutor-mood-baseline'
+        value={baselineLabel}
+      />
+      <KangurLabeledValueSummary
+        className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
+        description={tutorContent.profileMoodWidget.confidenceDescription}
+        label={tutorContent.profileMoodWidget.confidenceLabel}
+        valueTestId='learner-profile-ai-tutor-mood-confidence'
+        value={confidenceLabel}
+      />
+      <KangurLabeledValueSummary
+        className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
+        description={tutorContent.profileMoodWidget.updatedDescription}
+        label={tutorContent.profileMoodWidget.updatedLabel}
+        valueTestId='learner-profile-ai-tutor-mood-updated'
+        value={updatedLabel}
+      />
+    </div>
+  );
+}
 
 export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
   const locale = useLocale();
@@ -76,23 +165,24 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
     'dateMissing',
     'Brak daty'
   );
-  const learnerName =
-    learner?.displayName?.trim() ?? user?.full_name?.trim() ?? localModeLabel;
-  const sectionTitle = moodContent?.title ?? tutorContent.profileMoodWidget.title;
-  const sectionDescription =
-    moodContent?.summary ??
-    (learner
-      ? formatKangurAiTutorTemplate(
-          tutorContent.profileMoodWidget.descriptionWithLearnerTemplate,
-          { learnerName }
-        )
-      : tutorContent.profileMoodWidget.descriptionFallback);
-  const updatedLabel = learnerMood.lastComputedAt
-    ? formatKangurProfileDateTime(learnerMood.lastComputedAt, {
-        locale,
-        dateMissingLabel,
-      })
-    : tutorContent.profileMoodWidget.updatedFallback;
+  const learnerName = resolveKangurAiTutorMoodLearnerName({
+    learner,
+    localModeLabel,
+    user,
+  });
+  const { description: sectionDescription, title: sectionTitle } =
+    resolveKangurAiTutorMoodSectionCopy({
+      learner,
+      learnerName,
+      moodContent,
+      tutorContent,
+    });
+  const updatedLabel = resolveKangurAiTutorMoodUpdatedLabel({
+    dateMissingLabel,
+    lastComputedAt: learnerMood.lastComputedAt,
+    locale,
+    tutorContent,
+  });
 
   return (
     <KangurGlassPanel
@@ -134,29 +224,12 @@ export function KangurLearnerProfileAiTutorMoodWidget(): React.JSX.Element {
           </KangurPanelRow>
         </div>
 
-        <div className='grid w-full kangur-panel-gap min-[420px]:grid-cols-2 xl:max-w-3xl xl:grid-cols-3'>
-          <KangurLabeledValueSummary
-            className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
-            description={tutorContent.profileMoodWidget.baselineDescription}
-            label={tutorContent.profileMoodWidget.baselineLabel}
-            valueTestId='learner-profile-ai-tutor-mood-baseline'
-            value={baselinePreset.label}
-          />
-          <KangurLabeledValueSummary
-            className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
-            description={tutorContent.profileMoodWidget.confidenceDescription}
-            label={tutorContent.profileMoodWidget.confidenceLabel}
-            valueTestId='learner-profile-ai-tutor-mood-confidence'
-            value={formatMoodConfidence(learnerMood.confidence)}
-          />
-          <KangurLabeledValueSummary
-            className='soft-card rounded-[24px] border [border-color:var(--kangur-soft-card-border)] px-4 py-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.22)]'
-            description={tutorContent.profileMoodWidget.updatedDescription}
-            label={tutorContent.profileMoodWidget.updatedLabel}
-            valueTestId='learner-profile-ai-tutor-mood-updated'
-            value={updatedLabel}
-          />
-        </div>
+        <KangurLearnerProfileAiTutorMoodStats
+          baselineLabel={baselinePreset.label}
+          confidenceLabel={formatMoodConfidence(learnerMood.confidence)}
+          tutorContent={tutorContent}
+          updatedLabel={updatedLabel}
+        />
       </div>
     </KangurGlassPanel>
   );

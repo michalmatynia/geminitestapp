@@ -33,7 +33,6 @@ import {
   type KangurAiTutorUsageResponse,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import {
-  DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   getKangurAiTutorMoodCopy,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
@@ -108,7 +107,7 @@ const trimReplayableTelemetryText = (
 // ---------------------------------------------------------------------------
 
 export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
-  const tutorContent = useKangurAiTutorContent() ?? DEFAULT_KANGUR_AI_TUTOR_CONTENT;
+  const tutorContent = useKangurAiTutorContent();
   const settingsStore = useSettingsStore();
   const initialRuntimeStateRef = useRef<ReturnType<typeof loadPersistedRuntimeState> | null>(null);
   if (initialRuntimeStateRef.current === null) {

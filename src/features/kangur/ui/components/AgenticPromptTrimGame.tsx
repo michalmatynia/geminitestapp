@@ -50,6 +50,186 @@ type AgenticPromptTrimGameProps = {
   onFinish?: () => void;
 };
 
+type PromptTrimTokenButtonProps = {
+  token: PromptToken;
+  isActive: boolean;
+  checked: boolean;
+  isCoarsePointer: boolean;
+  onToggle: (id: string) => void;
+};
+
+const resolvePromptTrimProgress = (removedCount: number, removableCount: number): number =>
+  removableCount ? Math.round((removedCount / removableCount) * 100) : 0;
+
+const resolvePromptTrimTokenCorrectState = ({
+  token,
+  isActive,
+  checked,
+}: {
+  token: PromptToken;
+  isActive: boolean;
+  checked: boolean;
+}): boolean | undefined => {
+  if (!checked) {
+    return undefined;
+  }
+  return token.required ? isActive : !isActive;
+};
+
+const resolvePromptTrimTokenClassName = ({
+  isActive,
+  isCorrect,
+  isRequired,
+  isCoarsePointer,
+}: {
+  isActive: boolean;
+  isCorrect: boolean | undefined;
+  isRequired: boolean;
+  isCoarsePointer: boolean;
+}): string =>
+  cn(
+    'rounded-2xl border px-3 py-2 text-xs font-semibold shadow-sm transition touch-manipulation select-none',
+    isCoarsePointer && 'min-h-[3.5rem] px-4 active:scale-[0.98]',
+    isActive ? 'bg-white' : 'bg-slate-100 text-slate-400 line-through',
+    isRequired ? 'border-rose-200/90 text-rose-900' : 'border-slate-200/80',
+    isCorrect === undefined
+      ? ''
+      : isCorrect
+        ? 'border-emerald-200/80 bg-emerald-50 text-emerald-900'
+        : 'border-rose-200/80 bg-rose-50 text-rose-900'
+  );
+
+const resolvePromptTrimFeedback = ({
+  checked,
+  isComplete,
+  successMessage,
+}: {
+  checked: boolean;
+  isComplete: boolean;
+  successMessage: string;
+}): { className: string; text: string } | null => {
+  if (isComplete) {
+    return { className: 'mt-2 text-left text-emerald-700', text: successMessage };
+  }
+  if (checked) {
+    return {
+      className: 'mt-2 text-left text-rose-700',
+      text: 'Not yet. Double-check required tokens.',
+    };
+  }
+  return null;
+};
+
+function PromptTrimTouchHint({
+  isCoarsePointer,
+}: {
+  isCoarsePointer: boolean;
+}): React.JSX.Element | null {
+  if (!isCoarsePointer) {
+    return null;
+  }
+
+  return (
+    <KangurLessonCaption
+      className='w-full text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
+      data-testid='agentic-prompt-trim-touch-hint'
+    >
+      Tap a token to keep or remove it, then tap Check.
+    </KangurLessonCaption>
+  );
+}
+
+function PromptTrimTokenButton({
+  token,
+  isActive,
+  checked,
+  isCoarsePointer,
+  onToggle,
+}: PromptTrimTokenButtonProps): React.JSX.Element {
+  const isCorrect = resolvePromptTrimTokenCorrectState({ token, isActive, checked });
+
+  return (
+    <button
+      type='button'
+      aria-pressed={isActive}
+      onClick={() => onToggle(token.id)}
+      className={resolvePromptTrimTokenClassName({
+        isActive,
+        isCorrect,
+        isRequired: token.required,
+        isCoarsePointer,
+      })}
+    >
+      {token.label}
+    </button>
+  );
+}
+
+function PromptTrimTokenGrid(props: {
+  activeTokens: Record<string, boolean>;
+  checked: boolean;
+  isCoarsePointer: boolean;
+  onToggle: (id: string) => void;
+}): React.JSX.Element {
+  const { activeTokens, checked, isCoarsePointer, onToggle } = props;
+
+  return (
+    <div className={`flex flex-wrap gap-2 ${KANGUR_PANEL_GAP_CLASSNAME}`}>
+      {PROMPT_TOKENS.map((token) => (
+        <PromptTrimTokenButton
+          key={token.id}
+          token={token}
+          isActive={activeTokens[token.id] ?? false}
+          checked={checked}
+          isCoarsePointer={isCoarsePointer}
+          onToggle={onToggle}
+        />
+      ))}
+    </div>
+  );
+}
+
+function PromptTrimFeedback(props: {
+  checked: boolean;
+  isComplete: boolean;
+  successMessage: string;
+}): React.JSX.Element {
+  const { checked, isComplete, successMessage } = props;
+  const feedback = resolvePromptTrimFeedback({ checked, isComplete, successMessage });
+
+  return (
+    <KangurLessonInset accent={PROMPT_TRIM_CONFIG.accent}>
+      <KangurLessonCaption className='text-left text-slate-700'>
+        Keep: Goal, Context, Constraints, and Done when. Remove the extras.
+      </KangurLessonCaption>
+      {feedback ? (
+        <KangurLessonCaption className={feedback.className}>
+          {feedback.text}
+        </KangurLessonCaption>
+      ) : null}
+    </KangurLessonInset>
+  );
+}
+
+function PromptTrimActions(props: {
+  isComplete: boolean;
+  onCheck: () => void;
+  onReset: () => void;
+}): React.JSX.Element {
+  const { isComplete, onCheck, onReset } = props;
+
+  return (
+    <div className='flex flex-col gap-2'>
+      <KangurButton variant={isComplete ? 'success' : 'surface'} onClick={onCheck}>
+        {isComplete ? 'Done' : 'Check'}
+      </KangurButton>
+      <KangurButton variant='ghost' onClick={onReset}>
+        Reset
+      </KangurButton>
+    </div>
+  );
+}
+
 export default function AgenticPromptTrimGame({
   onFinish,
 }: AgenticPromptTrimGameProps): React.JSX.Element {
@@ -71,10 +251,7 @@ export default function AgenticPromptTrimGame({
   const allRequiredKept = requiredTokens.every((token) => activeTokens[token.id]);
   const allFluffRemoved = removableTokens.every((token) => !activeTokens[token.id]);
   const isComplete = checked && allRequiredKept && allFluffRemoved;
-
-  const progress = removableTokens.length
-    ? Math.round((removedCount / removableTokens.length) * 100)
-    : 0;
+  const progress = resolvePromptTrimProgress(removedCount, removableTokens.length);
 
   useEffect(() => {
     if (isComplete) {
@@ -124,72 +301,26 @@ export default function AgenticPromptTrimGame({
         </ul>
       </KangurLessonCallout>
 
-      {isCoarsePointer ? (
-        <KangurLessonCaption
-          className='w-full text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'
-          data-testid='agentic-prompt-trim-touch-hint'
-        >
-          Tap a token to keep or remove it, then tap Check.
-        </KangurLessonCaption>
-      ) : null}
+      <PromptTrimTouchHint isCoarsePointer={isCoarsePointer} />
 
-      <div className={`flex flex-wrap gap-2 ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-        {PROMPT_TOKENS.map((token) => {
-          const isActive = activeTokens[token.id];
-          const isCorrect = checked
-            ? token.required
-              ? isActive
-              : !isActive
-            : undefined;
-
-          return (
-            <button
-              key={token.id}
-              type='button'
-              aria-pressed={isActive}
-              onClick={() => toggleToken(token.id)}
-              className={cn(
-                'rounded-2xl border px-3 py-2 text-xs font-semibold shadow-sm transition touch-manipulation select-none',
-                isCoarsePointer && 'min-h-[3.5rem] px-4 active:scale-[0.98]',
-                isActive ? 'bg-white' : 'bg-slate-100 text-slate-400 line-through',
-                token.required ? 'border-rose-200/90 text-rose-900' : 'border-slate-200/80',
-                isCorrect === undefined
-                  ? ''
-                  : isCorrect
-                    ? 'border-emerald-200/80 bg-emerald-50 text-emerald-900'
-                    : 'border-rose-200/80 bg-rose-50 text-rose-900'
-              )}
-            >
-              {token.label}
-            </button>
-          );
-        })}
-      </div>
+      <PromptTrimTokenGrid
+        activeTokens={activeTokens}
+        checked={checked}
+        isCoarsePointer={isCoarsePointer}
+        onToggle={toggleToken}
+      />
 
       <div className={`grid w-full ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-[1fr_auto]`}>
-        <KangurLessonInset accent={PROMPT_TRIM_CONFIG.accent}>
-          <KangurLessonCaption className='text-left text-slate-700'>
-            Keep: Goal, Context, Constraints, and Done when. Remove the extras.
-          </KangurLessonCaption>
-          {checked && !isComplete ? (
-            <KangurLessonCaption className='mt-2 text-left text-rose-700'>
-              Not yet. Double-check required tokens.
-            </KangurLessonCaption>
-          ) : null}
-          {isComplete ? (
-            <KangurLessonCaption className='mt-2 text-left text-emerald-700'>
-              {PROMPT_TRIM_CONFIG.success}
-            </KangurLessonCaption>
-          ) : null}
-        </KangurLessonInset>
-        <div className='flex flex-col gap-2'>
-          <KangurButton variant={isComplete ? 'success' : 'surface'} onClick={() => setChecked(true)}>
-            {isComplete ? 'Done' : 'Check'}
-          </KangurButton>
-          <KangurButton variant='ghost' onClick={resetGame}>
-            Reset
-          </KangurButton>
-        </div>
+        <PromptTrimFeedback
+          checked={checked}
+          isComplete={isComplete}
+          successMessage={PROMPT_TRIM_CONFIG.success}
+        />
+        <PromptTrimActions
+          isComplete={isComplete}
+          onCheck={() => setChecked(true)}
+          onReset={resetGame}
+        />
       </div>
     </KangurLessonStack>
   );

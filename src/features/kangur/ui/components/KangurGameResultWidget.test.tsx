@@ -24,7 +24,7 @@ vi.mock('@/features/kangur/ui/components/ResultScreen', () => ({
   default: () => <div data-testid='kangur-result-screen'>result-screen</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurPracticeAssignmentBanner', () => ({
+vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner', () => ({
   default: ({ mode }: { mode: string }) => (
     <div data-testid='kangur-practice-assignment-banner'>assignment-banner:{mode}</div>
   ),

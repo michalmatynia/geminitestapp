@@ -21,6 +21,43 @@ vi.mock('@/features/products/server', async (importOriginal) => {
   };
 });
 
+const buildDatabaseQueryRuntimeConfig = (replacementPaths: string[]) => ({
+  version: 1,
+  operation: 'query',
+  payload: {
+    provider: 'auto',
+    collection: 'product_categories',
+    filter: { name: '[nameEnSegment4]' },
+  },
+  resultPath: 'item',
+  operator: 'truthy',
+  replacementPaths,
+});
+
+const buildValidatorPatternsPostRequest = (body: unknown) =>
+  new NextRequest('http://localhost/api/v2/products/validator-patterns', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+const buildValidatorPatternsPutRequest = (body: unknown) =>
+  new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+const createManualSaveAuditExpectation = () =>
+  expect.objectContaining({
+    semanticAuditSource: 'manual_save',
+  });
+
+const createReplacementAutoApplyExpectation = () =>
+  expect.objectContaining({
+    replacementAutoApply: true,
+  });
+
 describe('validator-pattern routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -90,20 +127,17 @@ describe('validator-pattern routes', () => {
       resultAssembly: 'source_replace_match',
       targetApply: 'replace_whole_field',
     });
+    const requestBody = {
+      label: 'Auto SKU',
+      target: 'sku',
+      regex: '^KEYCHA\\d{3}$',
+      message: 'Invalid SKU',
+      replacementEnabled: true,
+      replacementValue,
+    };
 
     const response = await POST(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          label: 'Auto SKU',
-          target: 'sku',
-          regex: '^KEYCHA\\d{3}$',
-          message: 'Invalid SKU',
-          replacementEnabled: true,
-          replacementValue,
-        }),
-      })
+      buildValidatorPatternsPostRequest(requestBody),
     );
     const data = await response.json();
 
@@ -113,20 +147,17 @@ describe('validator-pattern routes', () => {
   });
 
   it('POST rejects regex launch operator without pattern value', async () => {
+    const requestBody = {
+      label: 'Launch Guard',
+      target: 'sku',
+      regex: '^KEYCHA\\d{3}$',
+      message: 'Invalid SKU',
+      launchEnabled: true,
+      launchOperator: 'regex',
+      launchValue: '',
+    };
     const response = await POST(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          label: 'Launch Guard',
-          target: 'sku',
-          regex: '^KEYCHA\\d{3}$',
-          message: 'Invalid SKU',
-          launchEnabled: true,
-          launchOperator: 'regex',
-          launchValue: '',
-        }),
-      })
+      buildValidatorPatternsPostRequest(requestBody),
     );
     const data = await response.json();
 
@@ -136,55 +167,37 @@ describe('validator-pattern routes', () => {
   });
 
   it('POST allows runtime replacement without static replacementValue', async () => {
-    const response = await POST(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          label: 'Name Segment #4 -> Category',
-          target: 'category',
-          regex: '^.*$',
-          message: 'Resolve category from name segment.',
-          replacementEnabled: true,
-          replacementValue: null,
-          replacementFields: ['categoryId'],
-          runtimeEnabled: true,
-          runtimeType: 'database_query',
-          runtimeConfig: JSON.stringify({
-            version: 1,
-            operation: 'query',
-            payload: {
-              provider: 'auto',
-              collection: 'product_categories',
-              filter: { name: '[nameEnSegment4]' },
-            },
-            resultPath: 'item',
-            operator: 'truthy',
-            replacementPaths: ['item.id', 'item._id'],
-          }),
-        }),
-      })
-    );
+    const runtimeConfig = buildDatabaseQueryRuntimeConfig(['item.id', 'item._id']);
+    const requestBody = {
+      label: 'Name Segment #4 -> Category',
+      target: 'category',
+      regex: '^.*$',
+      message: 'Resolve category from name segment.',
+      replacementEnabled: true,
+      replacementValue: null,
+      replacementFields: ['categoryId'],
+      runtimeEnabled: true,
+      runtimeType: 'database_query',
+      runtimeConfig: JSON.stringify(runtimeConfig),
+    };
+    const response = await POST(buildValidatorPatternsPostRequest(requestBody));
 
     expect(response.status).toBe(201);
     expect(repositoryMock.createPattern).toHaveBeenCalledTimes(1);
   });
 
   it('POST rejects missing replacementValue when runtime replacement is disabled', async () => {
+    const requestBody = {
+      label: 'Static Replacement Missing',
+      target: 'sku',
+      regex: '^.*$',
+      message: 'Missing replacement',
+      replacementEnabled: true,
+      replacementValue: null,
+      runtimeEnabled: false,
+    };
     const response = await POST(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          label: 'Static Replacement Missing',
-          target: 'sku',
-          regex: '^.*$',
-          message: 'Missing replacement',
-          replacementEnabled: true,
-          replacementValue: null,
-          runtimeEnabled: false,
-        }),
-      })
+      buildValidatorPatternsPostRequest(requestBody),
     );
     const data = await response.json();
 
@@ -205,16 +218,13 @@ describe('validator-pattern routes', () => {
       resultAssembly: 'segment_only',
       targetApply: 'replace_whole_field',
     });
+    const requestBody = {
+      replacementEnabled: true,
+      replacementValue,
+    };
 
     const response = await PUT(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          replacementEnabled: true,
-          replacementValue,
-        }),
-      }),
+      buildValidatorPatternsPutRequest(requestBody),
       { params: Promise.resolve({ id: 'pattern-1' }) }
     );
     const data = await response.json();
@@ -225,17 +235,14 @@ describe('validator-pattern routes', () => {
   });
 
   it('PUT rejects launch regex with invalid regex flags/pattern', async () => {
+    const requestBody = {
+      launchEnabled: true,
+      launchOperator: 'regex',
+      launchValue: '(',
+      launchFlags: '',
+    };
     const response = await PUT(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          launchEnabled: true,
-          launchOperator: 'regex',
-          launchValue: '(',
-          launchFlags: '',
-        }),
-      }),
+      buildValidatorPatternsPutRequest(requestBody),
       { params: Promise.resolve({ id: 'pattern-1' }) }
     );
     const data = await response.json();
@@ -246,38 +253,25 @@ describe('validator-pattern routes', () => {
   });
 
   it('PUT allows runtime replacement without static replacementValue', async () => {
-    const response = await PUT(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          replacementEnabled: true,
-          replacementValue: null,
-          replacementFields: ['categoryId'],
-          runtimeEnabled: true,
-          runtimeType: 'database_query',
-          runtimeConfig: JSON.stringify({
-            version: 1,
-            operation: 'query',
-            payload: {
-              provider: 'auto',
-              collection: 'product_categories',
-              filter: { name: '[nameEnSegment4]' },
-            },
-            resultPath: 'item',
-            operator: 'truthy',
-            replacementPaths: ['item.id'],
-          }),
-        }),
-      }),
-      { params: Promise.resolve({ id: 'pattern-1' }) }
-    );
+    const runtimeConfig = buildDatabaseQueryRuntimeConfig(['item.id']);
+    const requestBody = {
+      replacementEnabled: true,
+      replacementValue: null,
+      replacementFields: ['categoryId'],
+      runtimeEnabled: true,
+      runtimeType: 'database_query',
+      runtimeConfig: JSON.stringify(runtimeConfig),
+    };
+    const response = await PUT(buildValidatorPatternsPutRequest(requestBody), {
+      params: Promise.resolve({ id: 'pattern-1' }),
+    });
 
     expect(response.status).toBe(200);
     expect(repositoryMock.updatePattern).toHaveBeenCalledTimes(1);
   });
 
   it('PUT allows enabling auto-apply on runtime pattern with null replacementValue', async () => {
+    const runtimeConfig = buildDatabaseQueryRuntimeConfig(['item.id']);
     repositoryMock.getPatternById.mockResolvedValueOnce({
       id: 'pattern-1',
       label: 'Name Segment #4 -> Category',
@@ -296,18 +290,7 @@ describe('validator-pattern routes', () => {
       replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
       runtimeEnabled: true,
       runtimeType: 'database_query',
-      runtimeConfig: JSON.stringify({
-        version: 1,
-        operation: 'query',
-        payload: {
-          provider: 'auto',
-          collection: 'product_categories',
-          filter: { name: '[nameEnSegment4]' },
-        },
-        resultPath: 'item',
-        operator: 'truthy',
-        replacementPaths: ['item.id'],
-      }),
+      runtimeConfig: JSON.stringify(runtimeConfig),
       postAcceptBehavior: 'revalidate',
       denyBehaviorOverride: null,
       validationDebounceMs: 500,
@@ -331,26 +314,19 @@ describe('validator-pattern routes', () => {
       updatedAt: new Date().toISOString(),
     });
 
+    const requestBody = {
+      replacementAutoApply: true,
+    };
     const response = await PUT(
-      new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          replacementAutoApply: true,
-        }),
-      }),
+      buildValidatorPatternsPutRequest(requestBody),
       { params: Promise.resolve({ id: 'pattern-1' }) }
     );
 
     expect(response.status).toBe(200);
     expect(repositoryMock.updatePattern).toHaveBeenCalledWith(
       'pattern-1',
-      expect.objectContaining({
-        replacementAutoApply: true,
-      }),
-      expect.objectContaining({
-        semanticAuditSource: 'manual_save',
-      })
+      createReplacementAutoApplyExpectation(),
+      createManualSaveAuditExpectation(),
     );
   });
 });

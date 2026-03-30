@@ -11,6 +11,7 @@ describe('SubtractingGame', () => {
   it('uses Kangur option-card styling for subtraction choices', () => {
     render(<SubtractingGame onFinish={() => undefined} />);
 
+    expect(screen.getByTestId('subtracting-game-shell')).toHaveClass('w-full', 'max-w-4xl');
     expect(screen.getByTestId('subtracting-game-round-shell')).toHaveClass(
       'glass-panel',
       'kangur-panel-soft',
@@ -37,5 +38,7 @@ describe('SubtractingGame', () => {
 
     const checkButton = screen.getByRole('button', { name: 'Sprawdź ✓' });
     expect(checkButton.className).toMatch(/bg-(emerald|rose)-500/);
+    expect(screen.queryByText(/Poprawna odpowiedź/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Niepoprawnie/i)).not.toBeInTheDocument();
   });
 });

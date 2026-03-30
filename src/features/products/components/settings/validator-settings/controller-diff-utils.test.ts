@@ -7,6 +7,33 @@ import { buildLatestFieldMirrorSemanticState } from '@/features/products/lib/val
 import { EMPTY_FORM } from './helpers';
 import { buildPatternPayloadDiff, buildValidationPayload } from './controller-diff-utils';
 
+const buildDynamicReplacementRecipe = (
+  overrides: Partial<Parameters<typeof encodeDynamicReplacementRecipe>[0]>
+) =>
+  encodeDynamicReplacementRecipe({
+    version: 1,
+    sourceMode: 'latest_product_field',
+    sourceField: 'price',
+    sourceRegex: null,
+    sourceFlags: null,
+    sourceMatchGroup: null,
+    mathOperation: 'none',
+    mathOperand: null,
+    roundMode: 'none',
+    padLength: null,
+    padChar: null,
+    logicOperator: 'none',
+    logicOperand: null,
+    logicFlags: null,
+    logicWhenTrueAction: 'keep',
+    logicWhenTrueValue: null,
+    logicWhenFalseAction: 'keep',
+    logicWhenFalseValue: null,
+    resultAssembly: 'segment_only',
+    targetApply: 'replace_whole_field',
+    ...overrides,
+  });
+
 const buildPattern = (overrides: Partial<ProductValidationPattern>): ProductValidationPattern => ({
   id: overrides.id ?? 'pattern-1',
   createdAt: overrides.createdAt ?? '',
@@ -73,27 +100,8 @@ describe('controller diff utils', () => {
       sequenceGroups: new Map(),
       editingPattern: null,
       semanticState,
-      replacementValue: encodeDynamicReplacementRecipe({
-        version: 1,
-        sourceMode: 'latest_product_field',
+      replacementValue: buildDynamicReplacementRecipe({
         sourceField: 'price',
-        sourceRegex: null,
-        sourceFlags: null,
-        sourceMatchGroup: null,
-        mathOperation: 'none',
-        mathOperand: null,
-        roundMode: 'none',
-        padLength: null,
-        padChar: null,
-        logicOperator: 'none',
-        logicOperand: null,
-        logicFlags: null,
-        logicWhenTrueAction: 'keep',
-        logicWhenTrueValue: null,
-        logicWhenFalseAction: 'keep',
-        logicWhenFalseValue: null,
-        resultAssembly: 'segment_only',
-        targetApply: 'replace_whole_field',
       }),
       parsedSequence: null,
       parsedMaxExecutions: 1,

@@ -23,7 +23,7 @@ import { RowNodeItem } from './RowNodeItem';
 import { SectionBlockNodeItem } from './SectionBlockNodeItem';
 import { SlideshowFrameNodeItem } from './SlideshowFrameNodeItem';
 import { TreeSectionProvider } from './TreeSectionContext';
-import { TreeSectionPicker } from './TreeSectionPicker';
+import { renderTreeSectionPicker } from './TreeSectionPicker';
 import { toCmsSectionNodeId } from '../utils/cms-master-tree';
 
 
@@ -342,12 +342,12 @@ export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element 
             </div>
             {showSectionLevelBlockPicker ? (
               <div className='mt-2'>
-                <TreeSectionPicker
-                  disabled={false}
-                  variant='blocks'
-                  sectionType={section.type}
-                  onSelect={(blockType: string) => blockActions.add(section.id, blockType)}
-                />
+                {renderTreeSectionPicker({
+                  disabled: false,
+                  variant: 'blocks',
+                  sectionType: section.type,
+                  onSelect: (blockType: string) => blockActions.add(section.id, blockType),
+                })}
               </div>
             ) : null}
           </div>

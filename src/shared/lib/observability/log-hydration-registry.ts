@@ -1,3 +1,5 @@
+import { logger } from '@/shared/utils/logger';
+
 export type LogHydrator = (
   ctx: Record<string, unknown> | null | undefined
 ) => Promise<Record<string, unknown> | null>;
@@ -20,7 +22,7 @@ export async function hydrateLogContext(
   try {
     return await currentHydrator(ctx);
   } catch (error) {
-    console.error('[LogHydrationRegistry] Hydrator failed:', error);
+    logger.error('[LogHydrationRegistry] Hydrator failed', error);
     return ctx ?? null;
   }
 }

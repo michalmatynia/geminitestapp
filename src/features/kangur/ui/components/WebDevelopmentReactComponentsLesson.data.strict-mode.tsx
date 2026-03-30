@@ -1,6 +1,6 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import { ReactStrictModeCycleAnimation, ReactStrictModeDoubleRenderAnimation } from '@/features/kangur/ui/components/LessonAnimations';
-import { KangurLessonCallout, KangurLessonCaption, KangurLessonInset, KangurLessonLead, KangurLessonStack, KangurLessonVisual } from '@/features/kangur/ui/design/lesson-primitives';
+import { KangurLessonCallout, KangurLessonCaption, KangurLessonLead, KangurLessonStack, KangurLessonVisual } from '@/features/kangur/ui/design/lesson-primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { LessonCodeBlock } from './WebDevelopmentReactComponentsLesson.data.shared';
 
@@ -30,18 +30,20 @@ root.render(
             accent='sky'
             caption='StrictMode uruchamia dodatkowy cykl setup/cleanup w dev.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className='text-left'>
+                <p className='text-sm font-semibold text-slate-900'>Co włącza StrictMode?</p>
+                <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
+                  <li>Podwójny render komponentów (wykrywa nieczyste renderowanie).</li>
+                  <li>Dodatkowy cykl setup/cleanup dla Effectów.</li>
+                  <li>Dodatkowy cykl dla callback refs.</li>
+                  <li>Ostrzeżenia o przestarzałych API.</li>
+                </ul>
+              </div>
+            }
           >
             <ReactStrictModeCycleAnimation />
           </KangurLessonVisual>
-          <KangurLessonInset accent='slate' className='text-left'>
-            <p className='text-sm font-semibold text-slate-900'>Co włącza StrictMode?</p>
-            <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
-              <li>Podwójny render komponentów (wykrywa nieczyste renderowanie).</li>
-              <li>Dodatkowy cykl setup/cleanup dla Effectów.</li>
-              <li>Dodatkowy cykl dla callback refs.</li>
-              <li>Ostrzeżenia o przestarzałych API.</li>
-            </ul>
-          </KangurLessonInset>
         </KangurLessonStack>
       ),
     },

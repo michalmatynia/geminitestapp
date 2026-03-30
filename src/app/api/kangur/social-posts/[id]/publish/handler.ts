@@ -2,16 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
+  hasKangurSocialLinkedInPublication,
   kangurSocialPublishModeSchema,
   type KangurSocialPublishMode,
 } from '@/shared/contracts/kangur-social-posts';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
-import { getKangurSocialPostById } from '@/features/kangur/server/social-posts-repository';
-import { publishKangurSocialPost } from '@/features/kangur/server/social-posts-publish';
+import { getKangurSocialPostById } from '@/features/kangur/social/server/social-posts-repository';
+import { publishKangurSocialPost } from '@/features/kangur/social/server/social-posts-publish';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
+import {
+  AppErrorCodes,
+  createAppError,
+  forbiddenError,
+  invalidStateError,
+  notFoundError,
+} from '@/shared/errors/app-error';
 
 const bodySchema = z.object({
   mode: kangurSocialPublishModeSchema.optional(),
@@ -35,6 +42,9 @@ export async function postKangurSocialPostPublishHandler(
 
   const parsed = bodySchema.parse(ctx.body ?? {});
   const mode: KangurSocialPublishMode = parsed.mode === 'draft' ? 'draft' : 'published';
+  if (hasKangurSocialLinkedInPublication(post)) {
+    throw invalidStateError('Social post is already published on LinkedIn.');
+  }
 
   const startedAt = Date.now();
   try {
@@ -62,6 +72,15 @@ export async function postKangurSocialPostPublishHandler(
       postId: post.id,
       durationMs: Date.now() - startedAt,
     });
+    const refreshedPost = await getKangurSocialPostById(post.id);
+    const publishError = refreshedPost?.publishError?.trim();
+    if (publishError) {
+      throw createAppError(publishError, {
+        code: AppErrorCodes.operationFailed,
+        httpStatus: 502,
+        expected: true,
+      });
+    }
     throw error;
   }
 }

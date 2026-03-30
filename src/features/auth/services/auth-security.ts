@@ -166,6 +166,83 @@ const clearAttempt = async (key: string): Promise<void> => {
 const isLocked = (record: AttemptRecord, now: Date): boolean =>
   record.lockedUntil ? record.lockedUntil.getTime() > now.getTime() : false;
 
+const readActiveAttempt = async (key: string, now: Date): Promise<AttemptRecord | null> => {
+  const existing = await getAttempt(key);
+  if (existing?.expiresAt && existing.expiresAt.getTime() <= now.getTime()) {
+    await clearAttempt(key);
+    return null;
+  }
+  return existing;
+};
+
+const resolveAttemptWindowState = (
+  existing: AttemptRecord | null,
+  now: Date,
+  windowMs: number
+): { count: number; firstAttemptAt: Date } => {
+  if (!existing) {
+    return { count: 1, firstAttemptAt: now };
+  }
+  const elapsed = now.getTime() - existing.firstAttemptAt.getTime();
+  if (elapsed <= windowMs) {
+    return {
+      count: existing.count + 1,
+      firstAttemptAt: existing.firstAttemptAt,
+    };
+  }
+  return { count: 1, firstAttemptAt: now };
+};
+
+const buildAttemptRecord = (input: {
+  key: string;
+  scope: 'email' | 'ip';
+  value: string;
+  count: number;
+  firstAttemptAt: Date;
+  lastAttemptAt: Date;
+  windowMs: number;
+  lockMs: number;
+}): AttemptRecord => {
+  const lockedUntil = input.count >= 1 && input.lockMs > 0
+    ? new Date(input.lastAttemptAt.getTime() + input.lockMs)
+    : null;
+  return {
+    _id: input.key,
+    scope: input.scope,
+    value: input.value,
+    count: input.count,
+    firstAttemptAt: input.firstAttemptAt,
+    lastAttemptAt: input.lastAttemptAt,
+    lockedUntil: input.count >= 1 ? lockedUntil : null,
+    expiresAt: new Date(input.lastAttemptAt.getTime() + input.windowMs + input.lockMs),
+  };
+};
+
+const resolveAttemptLockWindow = (
+  count: number,
+  maxAttempts: number,
+  now: Date,
+  lockMs: number
+): Date | null => (count >= maxAttempts ? new Date(now.getTime() + lockMs) : null);
+
+const readLockedAttemptStatus = async (input: {
+  scope: 'email' | 'ip';
+  value: string;
+  now: Date;
+  reason: 'EMAIL_LOCKED' | 'IP_RATE_LIMIT';
+}): Promise<{ allowed: false; reason: 'EMAIL_LOCKED' | 'IP_RATE_LIMIT'; lockedUntil: Date | null } | null> => {
+  const key = buildAttemptKey(input.scope, input.value);
+  const attempt = await readActiveAttempt(key, input.now);
+  if (!attempt || !isLocked(attempt, input.now)) {
+    return null;
+  }
+  return {
+    allowed: false,
+    reason: input.reason,
+    lockedUntil: attempt.lockedUntil ?? null,
+  };
+};
+
 const bumpAttempt = async (
   scope: 'email' | 'ip',
   value: string,
@@ -176,40 +253,26 @@ const bumpAttempt = async (
   await ensureAuthSecurityIndexes();
   const key = buildAttemptKey(scope, value);
   const now = new Date();
-  const existing = await getAttempt(key);
-  if (existing?.expiresAt && existing.expiresAt.getTime() <= now.getTime()) {
-    await clearAttempt(key);
-  }
+  const existing = await readActiveAttempt(key, now);
   if (existing && isLocked(existing, now)) {
     return { lockedUntil: existing.lockedUntil ?? null, count: existing.count };
   }
 
   const windowMs = windowMinutes * 60 * 1000;
   const lockMs = lockDurationMinutes * 60 * 1000;
-
-  let nextCount = 1;
-  let firstAttemptAt = now;
-  if (existing) {
-    const elapsed = now.getTime() - existing.firstAttemptAt.getTime();
-    if (elapsed <= windowMs) {
-      nextCount = existing.count + 1;
-      firstAttemptAt = existing.firstAttemptAt;
-    }
-  }
-
-  const lockedUntil = nextCount >= maxAttempts ? new Date(now.getTime() + lockMs) : null;
-  const expiresAt = new Date(now.getTime() + (windowMs + lockMs));
-
-  const record: AttemptRecord = {
-    _id: key,
+  const { count: nextCount, firstAttemptAt } = resolveAttemptWindowState(existing, now, windowMs);
+  const lockedUntil = resolveAttemptLockWindow(nextCount, maxAttempts, now, lockMs);
+  const record = buildAttemptRecord({
+    key,
     scope,
     value,
     count: nextCount,
     firstAttemptAt,
     lastAttemptAt: now,
-    lockedUntil,
-    expiresAt,
-  };
+    windowMs,
+    lockMs: lockedUntil ? lockMs : 0,
+  });
+  record.lockedUntil = lockedUntil;
 
   await saveAttempt(record);
   return { lockedUntil, count: nextCount };
@@ -230,28 +293,26 @@ export const checkLoginAllowed = async (input: {
   const now = new Date();
 
   if (emailKey) {
-    const emailAttempt = await getAttempt(buildAttemptKey('email', emailKey));
-    if (emailAttempt?.expiresAt && emailAttempt.expiresAt.getTime() <= now.getTime()) {
-      await clearAttempt(buildAttemptKey('email', emailKey));
-    } else if (emailAttempt && isLocked(emailAttempt, now)) {
-      return {
-        allowed: false,
-        reason: 'EMAIL_LOCKED',
-        lockedUntil: emailAttempt.lockedUntil ?? null,
-      };
+    const emailStatus = await readLockedAttemptStatus({
+      scope: 'email',
+      value: emailKey,
+      now,
+      reason: 'EMAIL_LOCKED',
+    });
+    if (emailStatus) {
+      return emailStatus;
     }
   }
 
   if (ipKey) {
-    const ipAttempt = await getAttempt(buildAttemptKey('ip', ipKey));
-    if (ipAttempt?.expiresAt && ipAttempt.expiresAt.getTime() <= now.getTime()) {
-      await clearAttempt(buildAttemptKey('ip', ipKey));
-    } else if (ipAttempt && isLocked(ipAttempt, now)) {
-      return {
-        allowed: false,
-        reason: 'IP_RATE_LIMIT',
-        lockedUntil: ipAttempt.lockedUntil ?? null,
-      };
+    const ipStatus = await readLockedAttemptStatus({
+      scope: 'ip',
+      value: ipKey,
+      now,
+      reason: 'IP_RATE_LIMIT',
+    });
+    if (ipStatus) {
+      return ipStatus;
     }
   }
 

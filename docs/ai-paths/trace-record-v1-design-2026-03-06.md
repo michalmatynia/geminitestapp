@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,15 @@ canonical: true
 ---
 
 # Trace Record V1 Design (2026-03-06)
+
+This is a retained design-baseline document from the March 2026 AI Paths sprint
+planning wave. Use it for the trace-record shape and rationale captured at that
+time, but use the maintained AI Paths docs for the current runtime surface and
+operator-facing endpoints:
+
+- [`./overview.md`](./overview.md)
+- [`./reference.md`](./reference.md)
+- [`./ai-paths-improvements-plan-2026-03-06.md`](./ai-paths-improvements-plan-2026-03-06.md)
 
 ## References
 

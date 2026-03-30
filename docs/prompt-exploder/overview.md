@@ -1,211 +1,132 @@
 ---
 owner: 'Prompt Exploder Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'overview'
 scope: 'feature:prompt-exploder'
 canonical: true
 ---
 
-# Prompt Exploder Feature Documentation
+# Prompt Exploder Overview
 
-## 1. Overview
+Prompt Exploder is the admin workflow for turning large prompt text into structured, editable segments, validating parser quality, and sending the edited result back to upstream tools such as Image Studio and Case Resolver.
 
-Prompt Exploder is an admin workflow for turning large prompt text into structured, editable segments, validating and improving runtime parsing quality, then reassembling and sending the updated prompt back to upstream tools.
-
-Primary routes:
+## Verified routes
 
 - `/admin/prompt-exploder`
 - `/admin/prompt-exploder/projects`
 - `/admin/prompt-exploder/settings`
 
-Primary in-app tabs (Prompt Exploder main page):
+## Verified page structure
+
+### Main workspace: `/admin/prompt-exploder`
+
+The main page mounts three tabs:
 
 - `Workspace`
+- `Library`
 - `Docs`
 
-## 2. Core Workflow
+The workspace tab includes the current operational panels:
 
-1. Paste or load source prompt in **Source Prompt**.
-2. Run **Explode Prompt** to parse into typed segments.
-3. Refine segment structure, list items, subsections, parameter controls, and inclusion.
-4. Review **Explosion Metrics** and **Warnings**.
-5. Review or edit **Bindings** (auto + manual references).
-6. Validate output in **Reassembled Prompt**.
-7. Save/organize in **Prompt Exploder Projects**.
-8. Tune runtime behavior in **Pattern Runtime**, **Parser Tuning**, and **Benchmark Report**.
-9. Apply final prompt back to Image Studio or Case Resolver.
+- Source Prompt
+- Explosion Metrics
+- Warnings
+- Prompt Projects
+- Segment Editor
+- Bindings
+- Reassembled Prompt
+- Pattern Runtime
+- Parser Tuning
+- Benchmark Report
 
-## 3. Feature Inventory
+The page also owns:
 
-### Main Page (`/admin/prompt-exploder`)
+- a docs-tooltips switch in the header
+- return-to-source navigation for Image Studio or Case Resolver launches
+- docs-backed tooltip enhancement via the shared documentation module
 
-- **Header Actions**
-  - Reload incoming draft payload from bridge context.
-  - Open settings.
-  - Return to source tool (Image Studio/Case Resolver).
-  - Toggle docs-driven tooltips (`Docs Tooltips`).
-- **Source Prompt Panel**
-  - Prompt text editor.
-  - Explode action.
-  - Apply action to return target.
-- **Explosion Metrics Panel**
-  - Segment count, confidence, typed coverage, type distribution.
-- **Warnings Panel**
-  - Runtime quality warnings from parser/exploder.
-- **Segments Panel**
-  - Select segment and reorder segments.
-  - Edit type, title, include/omit behavior.
-  - Edit parameter blocks (control type, value, comments, descriptions).
-  - Edit complex list structures and logical conditions.
-  - Edit subsection-level structures and list semantics.
-  - Approve learned patterns/templates from selected segment.
-- **Bindings Panel**
-  - Inspect auto-detected bindings.
-  - Create/remove manual bindings with source/target segment + subsection references.
-- **Reassembled Prompt Panel**
-  - Read-only final output preview.
-  - Apply output to return target.
-- **Prompt Projects Panel**
-  - Save current state to library.
-  - Create new project draft.
-  - Delete selected project.
-  - Load saved project state.
-- **Pattern Runtime Panel**
-  - Select validation stack.
-  - Select runtime rule profile.
-  - Control learning thresholds and template limits.
-  - Manage learned template states and deletions.
-  - Capture, restore, delete pattern snapshots.
-  - Save learning/runtime drafts.
-  - Observe runtime health and cache indicators.
-- **Parser Tuning Section**
-  - Expand/collapse parser tuning controls.
-  - Edit parser boundary/subsection tuning rules.
-  - Save/reset parser tuning.
-  - Open global Validation Patterns page.
-- **Benchmark Report Panel**
-  - Run benchmark suite.
-  - Configure suite, low-confidence threshold, suggestion cap.
-  - Manage custom benchmark JSON and templates.
-  - Review per-case precision/recall/f1 and gate status.
-  - Apply/dismiss low-confidence suggestions.
+### Projects page: `/admin/prompt-exploder/projects`
 
-### Projects Page (`/admin/prompt-exploder/projects`)
+The projects surface manages saved Prompt Exploder projects and lets operators open them back into the main workspace.
 
-- Create/edit/delete projects.
-- Open project directly in Prompt Exploder.
-- Table view for prompt preview, segment counts, timestamps.
+### Settings page: `/admin/prompt-exploder/settings`
 
-### Settings Page (`/admin/prompt-exploder/settings`)
+The settings surface manages runtime, learning, benchmark, and AI routing configuration for Prompt Exploder.
 
-- AI operation mode/provider/model settings.
-- Runtime defaults (rule stack/profile + benchmark defaults).
-- Learning defaults and auto-learning controls.
-- Save and reload behavior for persisted Prompt Exploder settings key.
+## Key integrations
 
-## 4. Integrations
+### Image Studio
 
-- **Image Studio bridge**
-  - Incoming draft prompt handoff.
-  - Apply-to-studio handoff for reassembled prompt.
-- **Case Resolver bridge**
-  - Incoming extracted content and context.
-  - Apply reassembled output back into Case Resolver flow.
-  - Payload carries transfer metadata:
-    - `transferId`
-    - `payloadVersion`
-    - `checksum`
-    - `status`
-    - `createdAt` / `expiresAt`
-  - Case Resolver side performs:
-    - document/session binding checks
-    - text apply
-    - optional capture mapping review + cleanup commit
-- **Prompt Validator pattern scopes**
-  - Supports Prompt Exploder-specific and Case Resolver Prompt Exploder stacks.
+- Prompt Exploder can be opened from Image Studio with `source=image-studio` and a `returnTo` target.
+- Prompt output can be applied back into Image Studio.
+- `/api/image-studio/prompt-extract` is the active extraction helper used in studio-side prompt flows.
 
-## 5. Data and Settings Keys
+### Case Resolver
+
+- Prompt Exploder can be launched against Case Resolver content and apply content back to a bound Case Resolver document.
+- Bridge payloads include transfer metadata such as `transferId`, `payloadVersion`, `checksum`, `status`, `createdAt`, and `expiresAt`.
+- Case Resolver apply flows validate document/session alignment before accepting returned content.
+
+### Prompt Validator / validation scopes
+
+Prompt Exploder resolves prompt-validation stacks against the prompt-validator system.
+
+Current canonical stack IDs:
+
+- `prompt-exploder`
+- `case-resolver-prompt-exploder`
+
+Current runtime scopes used inside the parser/runtime layer:
+
+- `prompt_exploder`
+- `case_resolver_prompt_exploder`
+
+Important distinction:
+
+- user-facing stack IDs are hyphenated
+- runtime scope enums are still snake_case
+- legacy alias normalization is no longer part of the runtime contract
+
+## Bridge contract status
+
+Prompt Exploder bridge sources and targets are validated against canonical enums in the shared prompt-exploder contracts.
+
+Common operational targets are:
+
+- `image-studio`
+- `case-resolver`
+- `prompt-exploder`
+
+The runtime no longer treats legacy aliases such as `studio` or `prompt_exploder` as canonical inputs.
+
+## Storage and persistence keys
 
 - Prompt Exploder settings: `prompt_exploder_settings`
 - Prompt Exploder project library: `image_studio_prompt_exploder_library`
-- Bridge keys:
-  - `prompt_exploder:draft_prompt`
-  - `prompt_exploder:apply_to_studio_prompt`
+- Draft prompt bridge key: `prompt_exploder:draft_prompt`
+- Apply-to-studio bridge key: `prompt_exploder:apply_to_studio_prompt`
 
-## 5.1 Contract Freeze (2026-03-04)
+## Verified supporting APIs
 
-Canonical IDs for migration:
+- `GET /api/prompt-runtime/health`
+- `GET /api/prompt-runtime/health?reset=true`
+- `POST /api/image-studio/prompt-extract`
 
-- Validation stack IDs:
-  - `prompt-exploder`
-  - `case-resolver-prompt-exploder`
-- Runtime scopes:
-  - `prompt_exploder`
-  - `case_resolver_prompt_exploder`
-- Bridge source canonical cross-tool values:
-  - `prompt-exploder`
-  - `image-studio`
-  - `case-resolver`
-- Bridge target canonical cross-tool values:
-  - `prompt-exploder`
-  - `image-studio`
-  - `case-resolver`
+## Docs tooltip system
 
-Legacy aliases still accepted during migration window:
+The docs-tooltip workflow is active on:
 
-- Validation stack aliases:
-  - `prompt_exploder -> prompt-exploder`
-  - `case_resolver_prompt_exploder -> case-resolver-prompt-exploder`
-- Bridge aliases:
-  - `prompt_exploder -> prompt-exploder`
-  - `studio -> image-studio`
+- `/admin/prompt-exploder`
+- `/admin/prompt-exploder/projects`
+- `/admin/prompt-exploder/settings`
 
-## 6. APIs and Observability
+Canonical tooltip content lives in [`./tooltip-catalog.ts`](./tooltip-catalog.ts), and the docs tab renders the same shared catalog.
 
-- Runtime health endpoint:
-  - `GET /api/prompt-runtime/health`
-  - Optional reset: `?reset=true`
-  - Returns observability, parser cache, selection cache, and runtime load snapshot.
-- Image Studio prompt extraction endpoint:
-  - `/api/image-studio/prompt-extract`
+## Maintenance rule
 
-## 7. Docs-Fed Tooltip System
+When Prompt Exploder gains a new operator control or panel:
 
-- Feature switch: **Docs Tooltips**.
-- Available on:
-  - `/admin/prompt-exploder`
-  - `/admin/prompt-exploder/projects`
-  - `/admin/prompt-exploder/settings`
-- Canonical source of tooltip docs:
-  - `docs/prompt-exploder/tooltip-catalog.ts`
-- In-app docs tab renders the same catalog.
-- When enabled, every interactive control receives a tooltip generated from the shared docs catalog.
-- Runtime docs catalog bridge:
-  - `src/features/prompt-exploder/docs/catalog.ts`
-- Tooltip resolver source file:
-  - `src/features/prompt-exploder/docs/tooltip-registry.ts`
-- Runtime enhancer component:
-  - `src/features/prompt-exploder/components/DocsTooltipEnhancer.tsx`
-- Docs tab component:
-  - `src/features/prompt-exploder/components/PromptExploderDocsTab.tsx`
-
-## 8. Troubleshooting
-
-- No segments after explode:
-  - Confirm source prompt is non-empty and runtime stack has active rules.
-- Unexpected segmentation:
-  - Check runtime profile, parser tuning, and recently applied benchmark suggestions.
-- Apply action disabled:
-  - Ensure document state exists (run explosion first).
-- Learning not reflected:
-  - Save learning settings, then re-run explosion/benchmark.
-- Runtime health degraded/critical:
-  - Inspect `/api/prompt-runtime/health`, then reset caches if necessary (`reset=true`).
-
-## 9. Maintenance Rules
-
-- Any new Prompt Exploder action/control must:
-  - Be documented in this file and in tooltip registry.
-  - Have a tooltip alias or `data-doc-id` mapping.
-  - Include tests for behavior-critical changes.
+- update the maintained docs in this folder
+- update tooltip mappings where needed
+- keep route, stack-ID, and bridge-contract language aligned with the shared prompt-exploder contracts

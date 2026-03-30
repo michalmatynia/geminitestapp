@@ -1,0 +1,109 @@
+'use client';
+
+import { Eraser } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import {
+  KangurButton,
+  KangurPanelRow,
+} from '@/features/kangur/ui/design/primitives';
+import { cn } from '@/features/kangur/shared/utils';
+import type { KangurMiniGameInformationalFeedback } from '@/features/kangur/ui/types';
+
+type KangurDrawingActionRowProps = {
+  clearDisabled?: boolean;
+  clearLabel: string;
+  clearTestId?: string;
+  feedback: KangurMiniGameInformationalFeedback | null;
+  isCoarsePointer?: boolean;
+  onClear: () => void;
+  onPrimary: () => void;
+  primaryDisabled?: boolean;
+  primaryLabel: string;
+  primaryTestId?: string;
+  utilityActions?: ReactNode;
+};
+
+const getPrimaryFeedbackClassName = (
+  feedback: KangurMiniGameInformationalFeedback | null
+): string =>
+  feedback
+    ? feedback.kind === 'success'
+      ? 'bg-emerald-500 border-emerald-500 text-white'
+      : feedback.kind === 'error'
+        ? 'bg-rose-500 border-rose-500 text-white'
+        : 'bg-amber-500 border-amber-500 text-white'
+    : '[background:var(--kangur-soft-card-background)] [border-color:var(--kangur-soft-card-border)] [color:var(--kangur-page-text)]';
+
+const renderKangurDrawingActionRow = ({
+  clearDisabled,
+  clearLabel,
+  clearTestId,
+  feedback,
+  isCoarsePointer,
+  onClear,
+  onPrimary,
+  primaryDisabled,
+  primaryLabel,
+  primaryTestId,
+  utilityActions,
+}: KangurDrawingActionRowProps): React.JSX.Element => (
+  <KangurPanelRow className='w-full'>
+    {utilityActions}
+    <KangurButton
+      className={cn('w-full sm:flex-1', isCoarsePointer && 'min-h-11')}
+      data-testid={clearTestId}
+      disabled={clearDisabled}
+      onClick={onClear}
+      size='lg'
+      type='button'
+      variant='surface'
+    >
+      <Eraser aria-hidden='true' className='w-4 h-4' />
+      {clearLabel}
+    </KangurButton>
+    <KangurButton
+      className={cn(
+        'w-full sm:flex-1',
+        isCoarsePointer && 'min-h-11',
+        getPrimaryFeedbackClassName(feedback)
+      )}
+      data-testid={primaryTestId}
+      disabled={primaryDisabled}
+      onClick={onPrimary}
+      size='lg'
+      type='button'
+      variant='primary'
+    >
+      {primaryLabel}
+    </KangurButton>
+  </KangurPanelRow>
+);
+
+export function KangurDrawingActionRow({
+  clearDisabled = false,
+  clearLabel,
+  clearTestId,
+  feedback,
+  isCoarsePointer = false,
+  onClear,
+  onPrimary,
+  primaryDisabled = false,
+  primaryLabel,
+  primaryTestId,
+  utilityActions,
+}: KangurDrawingActionRowProps): React.JSX.Element {
+  return renderKangurDrawingActionRow({
+    clearDisabled,
+    clearLabel,
+    clearTestId,
+    feedback,
+    isCoarsePointer,
+    onClear,
+    onPrimary,
+    primaryDisabled,
+    primaryLabel,
+    primaryTestId,
+    utilityActions,
+  });
+}

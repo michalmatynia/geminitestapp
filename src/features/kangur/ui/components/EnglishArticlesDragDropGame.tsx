@@ -5,10 +5,15 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { KangurDragDropContext, getKangurMobileDragHandleStyle } from '@/features/kangur/ui/components/KangurDragDropContext';
+import {
+  KangurDragDropContext,
+  getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
+} from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -38,6 +43,7 @@ import {
   KANGUR_WRAP_ROW_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
@@ -56,18 +62,18 @@ import {
   ENGLISH_ARTICLES_DRAG_DROP_ROUNDS,
   type EnglishArticleId,
   type EnglishArticlesDragDropRound,
-  type EnglishArticlesDragDropSentence,
 } from './EnglishArticlesDragDropGame.data';
+import type {
+  SlottedRoundStateDto,
+  SlottedRoundTokenExtractionDto,
+} from './round-state-contracts';
 
 type ArticleToken = {
   id: string;
   article: EnglishArticleId;
 };
 
-type RoundState = {
-  pool: ArticleToken[];
-  slots: Record<string, ArticleToken | null>;
-};
+type RoundState = SlottedRoundStateDto<ArticleToken>;
 
 const ARTICLE_META: Record<
   EnglishArticleId,
@@ -132,22 +138,10 @@ const slotDroppableId = (slotId: string): string => `slot-${slotId}`;
 const isSlotDroppable = (value: string): boolean => value.startsWith('slot-');
 const getSlotIdFromDroppable = (value: string): string => value.replace('slot-', '');
 
-const moveWithinList = <T,>(items: T[], from: number, to: number): T[] => {
-  const updated = [...items];
-  const [moved] = updated.splice(from, 1);
-  if (moved === undefined) return updated;
-  updated.splice(to, 0, moved);
-  return updated;
-};
-
 const takeTokenFromState = (
   state: RoundState,
   tokenId: string
-): {
-  token?: ArticleToken;
-  pool: ArticleToken[];
-  slots: Record<string, ArticleToken | null>;
-} => {
+): SlottedRoundTokenExtractionDto<ArticleToken> => {
   const poolIndex = state.pool.findIndex((token) => token.id === tokenId);
   if (poolIndex !== -1) {
     const nextPool = [...state.pool];
@@ -190,11 +184,12 @@ export default function EnglishArticlesDragDropGame({
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
   const translations = useTranslations('KangurMiniGames');
+  const { subjectKey } = useKangurSubjectFocus();
   const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundState, setRoundState] = useState<RoundState>(() =>
-    buildRoundState(ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0]!)
+    buildRoundState(ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0])
   );
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -206,7 +201,7 @@ export default function EnglishArticlesDragDropGame({
   const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
   const sessionStartedAtRef = useRef(Date.now());
 
-  const round = ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[roundIndex] ?? ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0]!;
+  const round = ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[roundIndex] ?? ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0];
   const selectedToken = useMemo(() => {
     if (!selectedTokenId) return null;
     return (
@@ -362,7 +357,7 @@ export default function EnglishArticlesDragDropGame({
     setTotalCorrect(nextTotal);
 
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const progress = loadProgress({ ownerKey: subjectKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: 'english_articles_drag_drop',
         lessonKey: 'english_articles',
@@ -370,7 +365,7 @@ export default function EnglishArticlesDragDropGame({
         totalQuestions: TOTAL_SENTENCES,
         strongThresholdPercent: 75,
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey: subjectKey });
       void persistKangurSessionScore({
         operation: 'english_articles',
         score: nextTotal,
@@ -390,7 +385,7 @@ export default function EnglishArticlesDragDropGame({
 
   const handleRestart = (): void => {
     setRoundIndex(0);
-    setRoundState(buildRoundState(ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0]!));
+    setRoundState(buildRoundState(ENGLISH_ARTICLES_DRAG_DROP_ROUNDS[0]));
     setChecked(false);
     setRoundCorrect(0);
     setTotalCorrect(0);
@@ -445,7 +440,7 @@ export default function EnglishArticlesDragDropGame({
   const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
-    <KangurPracticeGameStage className='mx-auto max-w-3xl'>
+    <KangurPracticeGameShell className='mx-auto max-w-3xl'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -496,17 +491,32 @@ export default function EnglishArticlesDragDropGame({
                     {(['a', 'an', 'the'] as const).map((article) => (
                       <div
                         key={article}
+                        data-testid={`english-articles-drag-topic-${article}`}
                         className={cn(
-                          'rounded-[16px] border px-3 py-2 text-xs shadow-sm',
-                          KANGUR_ACCENT_STYLES[ARTICLE_META[article].accent].softCard
+                          'relative overflow-hidden rounded-[16px] border px-3 py-2 text-xs shadow-sm',
+                          KANGUR_ACCENT_STYLES[ARTICLE_META[article].accent].activeCard
                         )}
                       >
+                        <div
+                          aria-hidden='true'
+                          className='pointer-events-none absolute inset-0 opacity-90'
+                          style={{
+                            background:
+                              article === 'a'
+                                ? 'radial-gradient(circle_at_14%_20%,rgba(251,191,36,0.2),transparent_36%), linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))'
+                                : article === 'an'
+                                  ? 'radial-gradient(circle_at_14%_20%,rgba(56,189,248,0.18),transparent_36%), linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))'
+                                  : 'radial-gradient(circle_at_14%_20%,rgba(139,92,246,0.18),transparent_36%), linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.08))',
+                          }}
+                        />
+                        <div className='relative z-10'>
                         <p className='font-black uppercase tracking-[0.16em] text-slate-700'>
                           {ARTICLE_META[article].label}
                         </p>
                         <p className='mt-1 text-slate-600'>
                           {getArticleDescription(translations, article)}
                         </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -526,7 +536,7 @@ export default function EnglishArticlesDragDropGame({
                   {...provided.droppableProps}
                   data-testid='english-articles-drag-pool-zone'
                   className={cn(
-                    'mt-3 flex flex-wrap items-center justify-center gap-2 rounded-[20px] border-2 border-dashed px-3 py-3 transition touch-manipulation',
+                    'relative mt-3 flex flex-wrap items-center justify-center gap-2 overflow-hidden rounded-[20px] border-2 border-dashed px-3 py-3 transition touch-manipulation',
                     isCoarsePointer ? 'min-h-[92px]' : 'min-h-[72px]',
                     snapshot.isDraggingOver
                       ? 'border-amber-300 bg-amber-50/70'
@@ -546,6 +556,16 @@ export default function EnglishArticlesDragDropGame({
                     }
                   }}
                 >
+                  <div
+                    aria-hidden='true'
+                    className='pointer-events-none absolute inset-0'
+                    data-testid='english-articles-drag-pool-atmosphere'
+                    style={{
+                      background:
+                        'radial-gradient(circle_at_12%_18%,rgba(251,191,36,0.16),transparent_34%), radial-gradient(circle_at_84%_20%,rgba(59,130,246,0.14),transparent_28%), linear-gradient(180deg,rgba(255,255,255,0.32),rgba(255,255,255,0.06))',
+                    }}
+                  />
+                  <div className='pointer-events-none absolute inset-[10px] rounded-[16px] border border-white/40' />
                   {roundState.pool.map((token, index) => (
                     <DraggableArticleToken
                       key={token.id}
@@ -611,6 +631,25 @@ export default function EnglishArticlesDragDropGame({
                         }
                       }}
                     >
+                      <div
+                        aria-hidden='true'
+                        className='pointer-events-none absolute inset-0 opacity-90'
+                        style={{
+                          background: assigned
+                            ? assigned.article === 'a'
+                              ? 'radial-gradient(circle_at_14%_18%,rgba(251,191,36,0.16),transparent_34%), linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.08))'
+                              : assigned.article === 'an'
+                                ? 'radial-gradient(circle_at_14%_18%,rgba(56,189,248,0.16),transparent_34%), linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.08))'
+                                : 'radial-gradient(circle_at_14%_18%,rgba(139,92,246,0.16),transparent_34%), linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0.08))'
+                            : 'radial-gradient(circle_at_84%_20%,rgba(255,255,255,0.72),transparent_24%), linear-gradient(180deg,rgba(255,255,255,0.38),rgba(255,255,255,0.08))',
+                        }}
+                      />
+                      <div
+                        aria-hidden='true'
+                        className='pointer-events-none absolute inset-[10px] rounded-[16px] border border-white/40'
+                        data-testid={`english-articles-drag-slot-frame-${sentence.id}`}
+                      />
+                      <div className='relative z-10'>
                       <div className='flex items-center justify-between gap-2'>
                         <KangurStatusChip accent={round.accent} size='sm'>
                           {translations('englishArticles.inRound.drag.sentenceLabel', {
@@ -665,6 +704,7 @@ export default function EnglishArticlesDragDropGame({
                           {translations('englishArticles.inRound.drag.missingArticle')}
                         </p>
                       ) : null}
+                      </div>
                     </div>
                   )}
                 </Droppable>
@@ -690,12 +730,6 @@ export default function EnglishArticlesDragDropGame({
             </KangurInfoCard>
           ) : null}
 
-          {feedback ? (
-            <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-              {feedback.text}
-            </KangurInfoCard>
-          ) : null}
-
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurButton
@@ -716,27 +750,30 @@ export default function EnglishArticlesDragDropGame({
                 </KangurStatusChip>
               ) : null}
             </div>
-            {!checked ? (
-              <KangurButton
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleCheck}
-                disabled={!isRoundComplete}
-              >
-                {translations('englishArticles.inRound.check')}
-              </KangurButton>
-            ) : (
+            <KangurButton
+              size='sm'
+              type='button'
+              variant='primary'
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+              )}
+            >
+              {translations('englishArticles.inRound.check')}
+            </KangurButton>
+            {checked ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
                 {roundIndex + 1 >= TOTAL_ROUNDS
                   ? translations('englishArticles.inRound.seeResult')
                   : translations('englishArticles.inRound.next')}
               </KangurButton>
-            )}
+            ) : null}
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }
 
@@ -754,7 +791,7 @@ function DraggableArticleToken({
   isSelected?: boolean;
   isCoarsePointer?: boolean;
   onClick?: () => void;
-}): React.JSX.Element {
+}): React.JSX.Element | React.ReactPortal {
   const articleMeta = ARTICLE_META[token.article];
   const selectedClass = isSelected ? 'ring-2 ring-amber-400/80 ring-offset-1 ring-offset-white' : '';
 
@@ -765,36 +802,42 @@ function DraggableArticleToken({
       isDragDisabled={isDragDisabled}
       disableInteractiveElementBlocking
     >
-      {(provided, snapshot) => (
-        <button
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          style={getKangurMobileDragHandleStyle(
-            provided.draggableProps.style,
-            isCoarsePointer
-          )}
-          type='button'
-          className={cn(
-            'rounded-[16px] border px-3 py-2 text-sm font-black uppercase tracking-[0.18em] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
-            isCoarsePointer ? 'min-h-[3.75rem] min-w-[4.5rem] px-4 py-3 touch-manipulation' : 'min-w-[4rem]',
-            KANGUR_ACCENT_STYLES[articleMeta.accent].badge,
-            snapshot.isDragging && 'scale-[1.02] shadow-lg',
-            selectedClass
-          )}
-          aria-label={articleMeta.label}
-          aria-disabled={isDragDisabled}
-          aria-pressed={isSelected}
-          title={articleMeta.label}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (snapshot.isDragging || isDragDisabled) return;
-            onClick?.();
-          }}
-        >
-          {articleMeta.label}
-        </button>
-      )}
+      {(provided, snapshot) => {
+        const content = (
+          <button
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={getKangurMobileDragHandleStyle(
+              provided.draggableProps.style,
+              isCoarsePointer
+            )}
+            type='button'
+            className={cn(
+              'rounded-[16px] border px-3 py-2 text-sm font-black uppercase tracking-[0.18em] shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
+              isCoarsePointer
+                ? 'min-h-[3.75rem] min-w-[4.5rem] px-4 py-3 touch-manipulation'
+                : 'min-w-[4rem]',
+              KANGUR_ACCENT_STYLES[articleMeta.accent].badge,
+              snapshot.isDragging && 'scale-[1.02] shadow-lg',
+              selectedClass
+            )}
+            aria-label={articleMeta.label}
+            aria-disabled={isDragDisabled}
+            aria-pressed={isSelected}
+            title={articleMeta.label}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (snapshot.isDragging || isDragDisabled) return;
+              onClick?.();
+            }}
+          >
+            {articleMeta.label}
+          </button>
+        );
+
+        return renderKangurDragPreview(content, snapshot.isDragging);
+      }}
     </Draggable>
   );
 }

@@ -17,24 +17,30 @@ export const toNumber = (value: string, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-export function safeStringify(value: unknown): string {
-  if (value === undefined || value === null) return '';
+const stringifyComplexObject = (value: object): string => {
+  try {
+    return JSON.stringify(value);
+  } catch (error) {
+    reportRuntimeUtilsError(error, 'safeStringify', {
+      valueType: typeof value,
+    });
+    return '[Complex Object]';
+  }
+};
+
+const stringifyNonObjectRuntimeValue = (value: unknown): string => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (typeof value === 'object') {
-    try {
-      return JSON.stringify(value);
-    } catch (error) {
-      reportRuntimeUtilsError(error, 'safeStringify', {
-        valueType: typeof value,
-      });
-      return '[Complex Object]';
-    }
-  }
   if (typeof value === 'symbol' || typeof value === 'function') {
     return value.toString();
   }
   return String(value as string);
+};
+
+export function safeStringify(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'object') return stringifyComplexObject(value);
+  return stringifyNonObjectRuntimeValue(value);
 }
 
 const normalizeForJsonClone = (value: unknown): unknown => {
@@ -76,7 +82,9 @@ export const safeJsonStringify = (value: unknown): string => {
   }
 };
 
-const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
+const NON_PRIMITIVE_HASH_VALUE = Symbol('non-primitive-hash-value');
+
+const normalizePrimitiveForHash = (value: unknown): unknown | typeof NON_PRIMITIVE_HASH_VALUE => {
   if (value === undefined) return undefined;
   if (value === null) return null;
   if (typeof value === 'string' || typeof value === 'boolean') return value;
@@ -87,45 +95,75 @@ const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
   if (typeof value === 'symbol' || typeof value === 'function') {
     return `[${typeof value}]`;
   }
-  if (value instanceof Date) return value.toISOString();
-  if (Array.isArray(value)) {
-    return value.map((item: unknown) => {
-      const normalized = normalizeForHash(item, seen);
-      return normalized === undefined ? null : normalized;
-    });
-  }
-  if (value instanceof Map) {
-    const entries = Array.from(value.entries()).map(([key, val]: [unknown, unknown]) => {
-      const normalizedKey = normalizeForHash(key, new WeakSet<object>());
-      const keyString =
-        typeof key === 'string' ? key : (JSON.stringify(normalizedKey) ?? String(key));
-      return [keyString, normalizeForHash(val, seen)] as [string, unknown];
-    });
-    entries.sort((a: [string, unknown], b: [string, unknown]) => a[0].localeCompare(b[0]));
-    return entries;
-  }
-  if (value instanceof Set) {
-    const entries = Array.from(value.values()).map((item: unknown) => normalizeForHash(item, seen));
-    const keyed = entries.map((entry: unknown) => ({
-      key: JSON.stringify(entry ?? null),
-      value: entry ?? null,
-    }));
-    keyed.sort((a: { key: string }, b: { key: string }) => a.key.localeCompare(b.key));
-    return keyed.map((item: { value: unknown }) => item.value);
-  }
-  if (typeof value === 'object') {
-    if (seen.has(value)) return '[Circular]';
-    seen.add(value);
-    const record = value as Record<string, unknown>;
-    const keys = Object.keys(record).sort();
-    const normalized: Record<string, unknown> = {};
-    keys.forEach((key: string): void => {
-      const next = normalizeForHash(record[key], seen);
+  return NON_PRIMITIVE_HASH_VALUE;
+};
+
+const normalizeHashArrayEntry = (value: unknown, seen: WeakSet<object>): unknown => {
+  const normalized = normalizeForHash(value, seen);
+  return normalized === undefined ? null : normalized;
+};
+
+const normalizeArrayForHash = (value: readonly unknown[], seen: WeakSet<object>): unknown[] =>
+  value.map((item: unknown) => normalizeHashArrayEntry(item, seen));
+
+const normalizeMapKeyForHash = (key: unknown): string => {
+  const normalizedKey = normalizeForHash(key, new WeakSet<object>());
+  return typeof key === 'string' ? key : (JSON.stringify(normalizedKey) ?? String(key));
+};
+
+const normalizeMapForHash = (
+  value: Map<unknown, unknown>,
+  seen: WeakSet<object>
+): [string, unknown][] => {
+  const entries = Array.from(value.entries()).map(
+    ([key, val]: [unknown, unknown]): [string, unknown] => [
+      normalizeMapKeyForHash(key),
+      normalizeForHash(val, seen),
+    ]
+  );
+  entries.sort((a: [string, unknown], b: [string, unknown]) => a[0].localeCompare(b[0]));
+  return entries;
+};
+
+const normalizeSetForHash = (value: Set<unknown>, seen: WeakSet<object>): unknown[] => {
+  const keyedEntries = Array.from(value.values()).map((item: unknown) => {
+    const normalized = normalizeForHash(item, seen) ?? null;
+    return {
+      key: JSON.stringify(normalized),
+      value: normalized,
+    };
+  });
+  keyedEntries.sort((a: { key: string }, b: { key: string }) => a.key.localeCompare(b.key));
+  return keyedEntries.map((item: { value: unknown }) => item.value);
+};
+
+const normalizeObjectForHash = (
+  value: Record<string, unknown>,
+  seen: WeakSet<object>
+): Record<string, unknown> | '[Circular]' => {
+  if (seen.has(value)) return '[Circular]';
+  seen.add(value);
+  const normalized: Record<string, unknown> = {};
+  Object.keys(value)
+    .sort()
+    .forEach((key: string): void => {
+      const next = normalizeForHash(value[key], seen);
       if (next !== undefined) normalized[key] = next;
     });
-    return normalized;
+  return normalized;
+};
+
+const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
+  const primitive = normalizePrimitiveForHash(value);
+  if (primitive !== NON_PRIMITIVE_HASH_VALUE) return primitive;
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return normalizeArrayForHash(value, seen);
+  if (value instanceof Map) return normalizeMapForHash(value, seen);
+  if (value instanceof Set) return normalizeSetForHash(value, seen);
+  if (value && typeof value === 'object') {
+    return normalizeObjectForHash(value as Record<string, unknown>, seen);
   }
-  return String(value as string | number | boolean | symbol | bigint);
+  return primitive;
 };
 
 export const stableStringify = (value: unknown): string => {

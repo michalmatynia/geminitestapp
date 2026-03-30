@@ -6,7 +6,7 @@ import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
   deleteKangurSocialPost,
   getKangurSocialPostById,
-} from '@/features/kangur/server/social-posts-repository';
+} from '@/features/kangur/social/server/social-posts-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 

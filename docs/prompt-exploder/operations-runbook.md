@@ -1,6 +1,6 @@
 ---
 owner: 'Prompt Exploder Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'feature:prompt-exploder'

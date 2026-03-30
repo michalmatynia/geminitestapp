@@ -32,15 +32,17 @@ type FilemakerEntityTableRuntimeValue = {
   emptyDescription: string;
 };
 
-function FilemakerEntityTableFilters({
+type FilemakerEntityTableFiltersProps = Pick<
+  FilemakerEntityTableRuntimeValue,
+  'badges' | 'query' | 'onQueryChange' | 'queryPlaceholder'
+>;
+
+function renderFilemakerEntityTableFilters({
   badges,
   query,
   onQueryChange,
   queryPlaceholder,
-}: Pick<
-  FilemakerEntityTableRuntimeValue,
-  'badges' | 'query' | 'onQueryChange' | 'queryPlaceholder'
->): React.JSX.Element {
+}: FilemakerEntityTableFiltersProps): React.JSX.Element {
   return (
     <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
       <div className='flex items-center gap-2'>{badges}</div>
@@ -58,13 +60,6 @@ function FilemakerEntityTableFilters({
       </div>
     </div>
   );
-}
-
-function FilemakerEntityTableEmptyState({
-  emptyTitle,
-  emptyDescription,
-}: Pick<FilemakerEntityTableRuntimeValue, 'emptyTitle' | 'emptyDescription'>): React.JSX.Element {
-  return <EmptyState title={emptyTitle} description={emptyDescription} />;
 }
 
 export function FilemakerEntityTablePage<TData>(
@@ -91,23 +86,16 @@ export function FilemakerEntityTablePage<TData>(
       <PanelHeader title={title} description={description} icon={icon} actions={actions} />
 
       <StandardDataTablePanel
-        filters={
-          <FilemakerEntityTableFilters
-            badges={badges}
-            query={query}
-            onQueryChange={onQueryChange}
-            queryPlaceholder={queryPlaceholder}
-          />
-        }
+        filters={renderFilemakerEntityTableFilters({
+          badges,
+          query,
+          onQueryChange,
+          queryPlaceholder,
+        })}
         columns={columns}
         data={data}
         isLoading={isLoading}
-        emptyState={
-          <FilemakerEntityTableEmptyState
-            emptyTitle={emptyTitle}
-            emptyDescription={emptyDescription}
-          />
-        }
+        emptyState={<EmptyState title={emptyTitle} description={emptyDescription} />}
       />
     </div>
   );

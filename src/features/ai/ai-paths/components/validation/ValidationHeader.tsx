@@ -5,6 +5,7 @@ import React from 'react';
 
 import {
   AdminAiPathsBreadcrumbs,
+  Badge,
   Card,
   Label,
   PanelHeader,
@@ -12,15 +13,10 @@ import {
   StatusBadge,
 } from '@/shared/ui';
 import type { StatusVariant } from '@/shared/contracts/ui';
+import { cn } from '@/shared/utils';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { ValidationActionButton } from './ValidationActionButton';
-import { ValidationMetaBadge } from './ValidationMetaBadge';
-
-type ValidationHeaderStatusIndicatorProps = {
-  status: string;
-  variant?: StatusVariant;
-};
 
 type ValidationStatusIndicator = {
   key: string;
@@ -56,21 +52,14 @@ const createValidationStatusIndicator = (
   indicator: ValidationStatusIndicator
 ): ValidationStatusIndicator => indicator;
 
-function ValidationHeaderStatusIndicator({
-  status,
-  variant,
-}: ValidationHeaderStatusIndicatorProps): React.JSX.Element {
-  return <StatusBadge status={status} variant={variant} size='sm' />;
-}
-
 function ValidationHeaderFocusBadge({
   label,
   value,
 }: ValidationHeaderFocusBadgeProps): React.JSX.Element {
   return (
-    <ValidationMetaBadge>
+    <Badge variant='outline' className={cn('text-[10px]')}>
       {label}: {value}
-    </ValidationMetaBadge>
+    </Badge>
   );
 }
 
@@ -171,10 +160,11 @@ export function ValidationHeader(): React.JSX.Element {
         </div>
         <div className='mt-3 flex flex-wrap items-center gap-2'>
           {statusIndicators.map((indicator) => (
-            <ValidationHeaderStatusIndicator
+            <StatusBadge
               key={indicator.key}
               status={indicator.status}
               variant={indicator.variant}
+              size='sm'
             />
           ))}
           {focusNodeType ? (

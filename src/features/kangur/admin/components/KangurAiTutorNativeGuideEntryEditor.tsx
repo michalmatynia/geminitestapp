@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Card } from '@/features/kangur/shared/ui';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
-import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor-onboarding-validation';
+import type { KangurAiTutorOnboardingValidationIssue } from '@/features/kangur/ai-tutor/onboarding-validation';
 import type { KangurAiTutorNativeGuideEntryTranslationStatus } from './observability/KangurAiTutorNativeGuideEntryEditorContext';
 
 import {

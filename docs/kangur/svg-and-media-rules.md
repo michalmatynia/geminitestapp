@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'feature:kangur'
@@ -18,6 +18,12 @@ Kangur lesson image references are SVG-only. This applies to:
 - question illustrations
 - imported or authored educational visuals that are rendered through Kangur lesson content
 
+This policy is intentionally narrow. It does not automatically apply to:
+
+- Kangur social-post media
+- admin chrome or marketing assets
+- unrelated non-lesson uploads elsewhere in the repo
+
 ## Rationale
 
 - SVG scales cleanly across learner devices
@@ -27,6 +33,9 @@ Kangur lesson image references are SVG-only. This applies to:
 ## Authoring impact
 
 Admins should author or upload SVG-based educational illustrations. Raster image extensions should not be treated as valid Kangur lesson media.
+
+If a workflow needs non-lesson media, document it in its own owning doc instead of
+silently weakening the lesson SVG rule.
 
 ## Documentation impact
 

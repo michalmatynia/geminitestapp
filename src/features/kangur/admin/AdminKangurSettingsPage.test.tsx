@@ -60,8 +60,9 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; prefetch?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -124,8 +125,8 @@ import {
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
-} from '@/features/kangur/settings-ai-tutor';
-import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
+} from '@/features/kangur/ai-tutor/settings';
+import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/ai-tutor/page-content-catalog';
 
 const expectInitialNarratorProbe = async (): Promise<void> => {
   await waitFor(() =>

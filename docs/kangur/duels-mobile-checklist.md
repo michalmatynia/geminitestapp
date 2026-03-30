@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:kangur'
@@ -10,6 +10,11 @@ canonical: true
 # Duels Mobile UX Checklist
 
 Scope: Kangur Duels lobby, waiting room, and active duel flows on small screens.
+
+This is a regression QA checklist for the current duels experience, not a full
+product overview. Use it with the broader route/runtime docs in
+[`learner-navigation.md`](./learner-navigation.md) and the continuous duels plan
+under `docs/kangur/plans/`.
 
 ## Setup
 1. Run the app with the Duels page available.

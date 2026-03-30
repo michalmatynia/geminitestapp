@@ -20,6 +20,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 }));
 
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import EnglishSentenceStructureLesson from '@/features/kangur/ui/components/EnglishSentenceStructureLesson';
 
 type CapturedSlide = {
@@ -44,6 +45,12 @@ describe('EnglishSentenceStructureLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'blueprint')).toMatchObject({
       title: 'Bauplan',
@@ -53,9 +60,18 @@ describe('EnglishSentenceStructureLesson i18n', () => {
       title: 'Fragen',
       description: 'Do/Does in der Praxis',
     });
+    expect(sections.find((section) => section.id === 'game')).toMatchObject({
+      title: 'Satzbau-Spiel',
+      description: 'Baue und korrigiere englische Sätze',
+      isGame: true,
+    });
     expect(sections.find((section) => section.id === 'summary')).toMatchObject({
       title: 'Zusammenfassung',
       description: 'Die wichtigsten Regeln',
+    });
+    expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({
+      gameId: 'english_sentence_builder',
+      instanceId: getKangurBuiltInGameInstanceId('english_sentence_builder'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
@@ -67,5 +83,12 @@ describe('EnglishSentenceStructureLesson i18n', () => {
       screen.getByText('Die häufigste Satzordnung ist Subject → Verb → Object.')
     ).toBeInTheDocument();
     expect(screen.getByText('Subject + Verb + Object')).toBeInTheDocument();
+
+    render(<>{slides.questions?.[0]?.content}</>);
+
+    expect(
+      screen.getByText('Do you understand the graph?').closest('.kangur-lesson-visual-supporting')
+    ).toBeTruthy();
+    expect(screen.getByText('Do you understand the graph?').closest('.kangur-lesson-inset')).toBeNull();
   });
 });

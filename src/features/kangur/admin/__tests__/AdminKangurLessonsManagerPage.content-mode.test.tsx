@@ -7,21 +7,32 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
-import { useLessonContentEditorContext } from '../context/LessonContentEditorContext';
+type UseLessonContentEditorContextType =
+  typeof import('../context/LessonContentEditorContext')['useLessonContentEditorContext'];
+type AdminKangurLessonsManagerPageType =
+  typeof import('@/features/kangur/admin/AdminKangurLessonsManagerPage')['AdminKangurLessonsManagerPage'];
+
+let useLessonContentEditorContext: UseLessonContentEditorContextType;
+let AdminKangurLessonsManagerPage: AdminKangurLessonsManagerPageType;
 
 const { withKangurClientError, withKangurClientErrorSync } = globalThis.__kangurClientErrorMocks();
 const {
   updateLessonsMock,
   updateLessonDocumentsMock,
+  updateLessonTemplatesMock,
   apiPostMock,
   toastMock,
   lessonsState,
   lessonDocumentsState,
+  lessonTemplatesState,
   useMasterFolderTreeShellMock,
   latestNodesState,
+  lessonTemplateLocaleMock,
+  lessonDocumentLocaleMock,
 } = vi.hoisted(() => ({
   updateLessonsMock: vi.fn(),
   updateLessonDocumentsMock: vi.fn(),
+  updateLessonTemplatesMock: vi.fn(),
   apiPostMock: vi.fn(),
   toastMock: vi.fn(),
   lessonsState: {
@@ -30,10 +41,15 @@ const {
   lessonDocumentsState: {
     value: {} as Record<string, unknown>,
   },
+  lessonTemplatesState: {
+    value: [] as Array<Record<string, unknown>>,
+  },
   useMasterFolderTreeShellMock: vi.fn(),
   latestNodesState: {
     value: [] as Array<Record<string, unknown>>,
   },
+  lessonTemplateLocaleMock: vi.fn(),
+  lessonDocumentLocaleMock: vi.fn(),
 }));
 
 vi.mock('@/features/foldertree/public', async (importOriginal) => {
@@ -88,11 +104,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
     isLoading: false,
     error: null,
   }),
-  useKangurLessonDocuments: () => ({
-    data: lessonDocumentsState.value,
-    isLoading: false,
-    error: null,
-  }),
+  useKangurLessonDocuments: (options?: { locale?: string | null }) => {
+    lessonDocumentLocaleMock(options?.locale ?? null);
+    return {
+      data: lessonDocumentsState.value,
+      isLoading: false,
+      error: null,
+    };
+  },
   useUpdateKangurLessons: () => ({
     mutateAsync: updateLessonsMock,
     isPending: false,
@@ -104,7 +123,14 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
-  useKangurLessonTemplates: () => ({ data: [] }),
+  useKangurLessonTemplates: (options?: { locale?: string | null }) => {
+    lessonTemplateLocaleMock(options?.locale ?? null);
+    return { data: lessonTemplatesState.value };
+  },
+  useUpdateKangurLessonTemplates: () => ({
+    mutateAsync: updateLessonTemplatesMock,
+    isPending: false,
+  }),
 }));
 
 vi.mock('@/features/kangur/admin/KangurLessonDocumentEditor', () => ({
@@ -185,17 +211,7 @@ vi.mock('@/features/kangur/shared/ui', () => ({
       </label>
     );
   },
-  FormModal: ({
-    isOpen,
-    title,
-    titleTestId,
-    subtitle,
-    children,
-    onSave,
-    onClose,
-    saveText = 'Save',
-    actions,
-  }: {
+  FormModal: (props: {
     isOpen?: boolean;
     title: string;
     titleTestId?: string;
@@ -206,7 +222,18 @@ vi.mock('@/features/kangur/shared/ui', () => ({
     saveText?: string;
     actions?: React.ReactNode;
   }) => {
-    console.log('FormModal render:', { isOpen, title });
+    const {
+      isOpen,
+      title,
+      titleTestId,
+      subtitle,
+      children,
+      onSave,
+      onClose,
+      saveText = 'Save',
+      actions,
+    } = props;
+
     return isOpen ? (
       <div data-testid='mock-form-modal'>
         <h2 data-testid={titleTestId}>{title}</h2>
@@ -227,15 +254,30 @@ vi.mock('@/features/kangur/shared/ui', () => ({
   SelectSimple: ({
     value,
     onValueChange,
+    onChange,
     options,
     id,
+    ariaLabel,
+    title,
   }: {
     value?: string;
     onValueChange?: (value: string) => void;
+    onChange?: (value: string) => void;
     options: Array<LabeledOptionDto<string>>;
     id?: string;
+    ariaLabel?: string;
+    title?: string;
   }) => (
-    <select id={id} value={value} onChange={(event): void => onValueChange?.(event.target.value)}>
+    <select
+      id={id}
+      aria-label={ariaLabel}
+      title={title}
+      value={value}
+      onChange={(event): void => {
+        onValueChange?.(event.target.value);
+        onChange?.(event.target.value);
+      }}
+    >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -275,10 +317,19 @@ vi.mock('@/features/kangur/observability/client', () => ({
 }));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
-  KangurAdminContentShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  KangurAdminContentShell: ({
+    children,
+    headerActions,
+  }: {
+    children: React.ReactNode;
+    headerActions?: React.ReactNode;
+  }) => (
+    <div>
+      {headerActions}
+      {children}
+    </div>
+  ),
 }));
-
-import { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKangurLessonsManagerPage';
 
 const baseLessons = [
   {
@@ -306,15 +357,20 @@ vi.mock('@/features/kangur/settings', async (importOriginal) => {
 });
 
 describe('AdminKangurLessonsManagerPage content mode flow', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
     updateLessonsMock.mockReset();
     updateLessonDocumentsMock.mockReset();
+    updateLessonTemplatesMock.mockReset();
     apiPostMock.mockReset();
     toastMock.mockReset();
+    lessonTemplateLocaleMock.mockReset();
+    lessonDocumentLocaleMock.mockReset();
     useMasterFolderTreeShellMock.mockReset();
     latestNodesState.value = [];
     lessonsState.value = [...baseLessons];
     lessonDocumentsState.value = {};
+    lessonTemplatesState.value = [];
 
     useMasterFolderTreeShellMock.mockReturnValue({
       capabilities: {
@@ -342,6 +398,10 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
       message: 'Audio has not been generated for this lesson draft yet.',
       segments: [],
     });
+    ({ useLessonContentEditorContext } = await import('../context/LessonContentEditorContext'));
+    ({ AdminKangurLessonsManagerPage } = await import(
+      '@/features/kangur/admin/AdminKangurLessonsManagerPage'
+    ));
   });
 
   it('opens the content editor after creating a document-mode lesson and preserves the new lesson on content save', async () => {
@@ -367,6 +427,7 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /create lesson/i }));
 
     await waitFor(() => expect(updateLessonsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(updateLessonTemplatesMock).toHaveBeenCalledTimes(1));
 
     const createdLessons = updateLessonsMock.mock.calls[0]?.[0] as Array<{
       title: string;
@@ -390,6 +451,7 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
 
     await waitFor(() => expect(updateLessonDocumentsMock).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(updateLessonsMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(updateLessonTemplatesMock).toHaveBeenCalledTimes(2));
 
     const documentStore = updateLessonDocumentsMock.mock.calls[0]?.[0] as Record<
       string,
@@ -402,6 +464,73 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
       title: string;
     }>;
     expect(followupLessons.some((lesson) => lesson.title === 'SVG Playground Updated')).toBe(true);
+  });
+
+  it('saves localized template copy without overwriting the structural lesson when editing a non-default locale', async () => {
+    lessonTemplatesState.value = [
+      {
+        componentId: 'clock',
+        subject: 'maths',
+        ageGroup: 'ten_year_old',
+        label: 'Clock',
+        title: 'Clock basics',
+        description: 'Learn to tell time',
+        emoji: '🕐',
+        color: 'kangur-gradient-accent-indigo-reverse',
+        activeBg: 'bg-indigo-500',
+        sortOrder: 100,
+      },
+    ];
+    updateLessonsMock.mockResolvedValue(undefined);
+    updateLessonTemplatesMock.mockResolvedValue(undefined);
+
+    render(<AdminKangurLessonsManagerPage />);
+
+    fireEvent.change(screen.getByLabelText('Content locale'), {
+      target: { value: 'en' },
+    });
+    expect(lessonTemplateLocaleMock).toHaveBeenLastCalledWith('en');
+    expect(lessonDocumentLocaleMock).toHaveBeenLastCalledWith('en');
+
+    fireEvent.click(screen.getByRole('button', { name: /^edit lesson$/i }));
+    expect(screen.getByDisplayValue('Clock basics')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Title'), {
+      target: { value: 'Clock mastery' },
+    });
+    fireEvent.change(screen.getByLabelText('Description'), {
+      target: { value: 'Practice reading clocks in English' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save lesson/i }));
+
+    await waitFor(() => expect(updateLessonsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(updateLessonTemplatesMock).toHaveBeenCalledTimes(1));
+
+    const persistedLessons = updateLessonsMock.mock.calls[0]?.[0] as Array<{
+      id: string;
+      title: string;
+      description: string;
+    }>;
+    expect(
+      persistedLessons.find((lesson) => lesson.id === 'kangur-lesson-clock')
+    ).toMatchObject({
+      title: 'Nauka zegara',
+      description: 'Odczytuj godziny',
+    });
+
+    const persistedTemplates = updateLessonTemplatesMock.mock.calls[0]?.[0] as Array<{
+      componentId: string;
+      title: string;
+      description: string;
+      label: string;
+    }>;
+    expect(
+      persistedTemplates.find((template) => template.componentId === 'clock')
+    ).toMatchObject({
+      label: 'Clock',
+      title: 'Clock mastery',
+      description: 'Practice reading clocks in English',
+    });
   });
 
   it('clears custom content and returns the lesson to component mode', async () => {
@@ -485,7 +614,7 @@ describe('AdminKangurLessonsManagerPage content mode flow', () => {
     );
     expect(screen.getByTestId('mock-doc-editor-json')).toHaveTextContent('"type":"activity"');
     expect(toastMock).toHaveBeenCalledWith(
-      expect.stringContaining('Legacy lesson imported'),
+      expect.stringContaining('Legacy content imported'),
       expect.objectContaining({ variant: 'success' })
     );
   });

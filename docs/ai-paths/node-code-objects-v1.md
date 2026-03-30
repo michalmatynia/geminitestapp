@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -10,6 +10,14 @@ canonical: true
 # AI-Paths Node Code Objects (v1)
 
 > `v2` portable semantic node objects are available at [`docs/ai-paths/node-code-objects-v2.md`](./node-code-objects-v2.md).
+
+This is the retained legacy baseline for the earliest node code-object format.
+Use it only for historical context and migration comparison. The maintained
+portable contract and migration surfaces are:
+
+- [`./node-code-objects-v2.md`](./node-code-objects-v2.md)
+- [`./node-code-objects-v3.md`](./node-code-objects-v3.md)
+- [`./node-code-objects-v3/README.md`](./node-code-objects-v3/README.md)
 
 ## Purpose
 

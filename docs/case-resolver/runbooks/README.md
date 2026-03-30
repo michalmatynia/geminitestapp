@@ -1,6 +1,6 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:case-resolver'
@@ -12,6 +12,12 @@ canonical: true
 This folder contains the operational runbooks for the Case Resolver feature.
 Use these docs for incident response, operational diagnosis, and release-safe
 change handling.
+
+The current incident surface is concentrated in three lanes:
+
+- shared-settings-backed workspace persistence and conflict recovery
+- OCR runtime job creation, status, retry, and observability
+- Prompt Exploder handoff and capture-apply lifecycle
 
 ## Current Runbooks
 
@@ -27,3 +33,4 @@ change handling.
 
 - Keep feature-specific operational procedures in this folder.
 - Promote cross-feature operational procedures into [`docs/runbooks/`](../../runbooks/README.md).
+- Update [`docs/case-resolver/changelog.md`](../changelog.md) after incidents that result in a code or process change.

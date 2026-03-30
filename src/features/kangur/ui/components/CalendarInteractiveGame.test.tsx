@@ -109,6 +109,19 @@ describe('CalendarInteractiveGame', () => {
     expect(screen.queryByTestId('calendar-season-0')).toBeNull();
   });
 
+  it('accepts calendarSection as a legacy lesson alias for section', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    render(<CalendarInteractiveGame onFinish={() => undefined} calendarSection='dni' />);
+
+    expect(screen.getByTestId('calendar-interactive-guidance-title')).toHaveTextContent(
+      'Trening dni tygodnia'
+    );
+    expect(screen.getByText('Znajdź właściwy dzień tygodnia')).toBeInTheDocument();
+    expect(screen.getByTestId('calendar-weekday-0')).toBeInTheDocument();
+    expect(screen.queryByTestId('calendar-season-0')).toBeNull();
+  });
+
   it('uses the shared display emoji on the summary screen', () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0);

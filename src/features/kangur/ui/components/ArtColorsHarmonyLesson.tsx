@@ -2,7 +2,8 @@
 
 import type { JSX } from 'react';
 
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -13,7 +14,7 @@ import {
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
 
-type SectionId = 'warmCool' | 'pairing' | 'lookAround' | 'summary';
+type SectionId = 'warmCool' | 'pairing' | 'gameHarmony' | 'lookAround' | 'summary';
 
 type ColorCardProps = {
   accent: 'amber' | 'rose' | 'sky' | 'emerald';
@@ -22,7 +23,7 @@ type ColorCardProps = {
   note: string;
 };
 
-const ColorCard = ({
+const renderColorCard = ({
   accent,
   colorClassName,
   label,
@@ -49,6 +50,12 @@ const sections = [
     description: 'Practice making calm and happy color pairs.',
   },
   {
+    id: 'gameHarmony',
+    emoji: '🎮',
+    title: 'Color studio game',
+    description: 'Pick the palette that feels warm, cool, or balanced.',
+  },
+  {
     id: 'lookAround',
     emoji: '👀',
     title: 'Find colors around you',
@@ -62,7 +69,7 @@ const sections = [
   },
 ] as const;
 
-const slides: Record<SectionId, LessonSlide[]> = {
+const slides: Partial<Record<SectionId, LessonSlide[]>> = {
   warmCool: [
     {
       title: 'Warm colors feel sunny',
@@ -72,24 +79,24 @@ const slides: Record<SectionId, LessonSlide[]> = {
             Reds, oranges, and yellows can feel bright, warm, and energetic.
           </KangurLessonLead>
           <div className='grid w-full gap-4 sm:grid-cols-3'>
-            <ColorCard
-              accent='rose'
-              colorClassName='bg-gradient-to-br from-rose-300 via-rose-400 to-orange-400'
-              label='Red'
-              note='Strong and lively'
-            />
-            <ColorCard
-              accent='amber'
-              colorClassName='bg-gradient-to-br from-orange-300 via-orange-400 to-amber-400'
-              label='Orange'
-              note='Playful and cozy'
-            />
-            <ColorCard
-              accent='amber'
-              colorClassName='bg-gradient-to-br from-amber-200 via-yellow-300 to-amber-400'
-              label='Yellow'
-              note='Sunny and cheerful'
-            />
+            {renderColorCard({
+              accent: 'rose',
+              colorClassName: 'bg-gradient-to-br from-rose-300 via-rose-400 to-orange-400',
+              label: 'Red',
+              note: 'Strong and lively',
+            })}
+            {renderColorCard({
+              accent: 'amber',
+              colorClassName: 'bg-gradient-to-br from-orange-300 via-orange-400 to-amber-400',
+              label: 'Orange',
+              note: 'Playful and cozy',
+            })}
+            {renderColorCard({
+              accent: 'amber',
+              colorClassName: 'bg-gradient-to-br from-amber-200 via-yellow-300 to-amber-400',
+              label: 'Yellow',
+              note: 'Sunny and cheerful',
+            })}
           </div>
         </KangurLessonStack>
       ),
@@ -102,24 +109,24 @@ const slides: Record<SectionId, LessonSlide[]> = {
             Blues, greens, and violets can feel fresh, quiet, and peaceful.
           </KangurLessonLead>
           <div className='grid w-full gap-4 sm:grid-cols-3'>
-            <ColorCard
-              accent='sky'
-              colorClassName='bg-gradient-to-br from-sky-200 via-sky-400 to-cyan-500'
-              label='Blue'
-              note='Light and airy'
-            />
-            <ColorCard
-              accent='emerald'
-              colorClassName='bg-gradient-to-br from-emerald-200 via-emerald-400 to-lime-400'
-              label='Green'
-              note='Natural and restful'
-            />
-            <ColorCard
-              accent='rose'
-              colorClassName='bg-gradient-to-br from-violet-200 via-violet-400 to-fuchsia-400'
-              label='Violet'
-              note='Dreamy and soft'
-            />
+            {renderColorCard({
+              accent: 'sky',
+              colorClassName: 'bg-gradient-to-br from-sky-200 via-sky-400 to-cyan-500',
+              label: 'Blue',
+              note: 'Light and airy',
+            })}
+            {renderColorCard({
+              accent: 'emerald',
+              colorClassName: 'bg-gradient-to-br from-emerald-200 via-emerald-400 to-lime-400',
+              label: 'Green',
+              note: 'Natural and restful',
+            })}
+            {renderColorCard({
+              accent: 'rose',
+              colorClassName: 'bg-gradient-to-br from-violet-200 via-violet-400 to-fuchsia-400',
+              label: 'Violet',
+              note: 'Dreamy and soft',
+            })}
           </div>
         </KangurLessonStack>
       ),
@@ -174,6 +181,7 @@ const slides: Record<SectionId, LessonSlide[]> = {
       ),
     },
   ],
+  gameHarmony: [],
   lookAround: [
     {
       title: 'Where can you see harmony?',
@@ -242,6 +250,23 @@ export default function ArtColorsHarmonyLesson(): JSX.Element {
       completionSectionId='summary'
       autoRecordComplete
       scorePercent={100}
+      skipMarkFor={['gameHarmony']}
+      games={[
+        {
+          sectionId: 'gameHarmony',
+          shell: {
+            accent: 'rose',
+            icon: '🎮',
+            shellTestId: 'art-colors-harmony-game-shell',
+            title: 'Color studio game',
+            description: 'Choose the palette that feels warm, calm, smooth, or balanced.',
+          },
+          launchableInstance: {
+            gameId: 'art_color_harmony_studio',
+            instanceId: getKangurBuiltInGameInstanceId('art_color_harmony_studio'),
+          },
+        },
+      ]}
     />
   );
 }

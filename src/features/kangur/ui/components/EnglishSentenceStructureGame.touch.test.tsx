@@ -2,9 +2,11 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -45,7 +47,7 @@ vi.mock('@hello-pangea/dnd', () => ({
         draggableProps: {},
         dragHandleProps: {},
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
@@ -59,6 +61,10 @@ vi.mock('@/features/kangur/ui/services/round-transition', () => ({
 
 import enMessages from '@/i18n/messages/en.json';
 import EnglishSentenceStructureGame from '@/features/kangur/ui/components/EnglishSentenceStructureGame';
+
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+});
 
 describe('EnglishSentenceStructureGame touch interactions', () => {
   it('supports tap-based word reordering on coarse pointers', () => {
@@ -90,5 +96,23 @@ describe('EnglishSentenceStructureGame touch interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Word: time' }));
 
     expect(screen.getByTestId('english-structure-order-preview').textContent).not.toBe(previewBefore);
+  });
+
+  it('renders the active dragged word through the shared body portal preview', () => {
+    draggableSnapshot = { isDragging: true };
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <EnglishSentenceStructureGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'The drummer plays the rhythm.' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    const orderList = screen.getByTestId('english-structure-order-list');
+
+    expect(within(orderList).queryByRole('button', { name: 'Word: My' })).not.toBeInTheDocument();
+    expect(within(document.body).getByRole('button', { name: 'Word: My' })).toBeInTheDocument();
   });
 });

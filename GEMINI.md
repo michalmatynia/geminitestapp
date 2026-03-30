@@ -1,4 +1,4 @@
-# GEMINI.md - Project Reference (Scanned 2026-03-16)
+# GEMINI.md - Project Reference (Scanned 2026-03-26)
 
 This file is a code-backed reference for this repository. It is based on the
 current `package.json`, `src/`, `docs/`, and runtime/bootstrap files.
@@ -14,19 +14,25 @@ This is a large Next.js App Router application with:
 - a large REST-style API surface under `src/app/api`
 - feature modules under `src/features`
 - shared platform code under `src/shared`
+- an active Expo Router mobile app under `apps/mobile`
+- shared Kangur contracts/core/transport/platform packages under `packages/kangur-*`
 - MongoDB as the primary application database, with optional Redis
 - AI-heavy workflows: AI Paths, chatbot, agent runtime, image studio, AI insights
+
+`apps/mobile-web` exists as a reserved workspace boundary for a future dedicated
+React Native Web target; the current learner web runtime still lives in the
+root Next.js app.
 
 ## Current Scale Snapshot
 
 Verified from the repository scan:
 
-- `28` top-level feature domains in `src/features`
-- `277` `route.ts` API route files in `src/app/api`
-- `152` `page.tsx` files in `src/app`
-- `422` test files under top-level `__tests__`
-- `49` Playwright specs in `e2e/features`
-- `325` files in `scripts`
+- `27` top-level feature domains in `src/features`
+- `285` `route.ts` API route files in `src/app/api`
+- `164` `page.tsx` files in `src/app`
+- `439` test files under top-level `__tests__`
+- `59` Playwright specs in `e2e/features`
+- `381` files in `scripts`
 
 ## Stack
 
@@ -163,7 +169,6 @@ Top-level feature domains under `src/features`:
 - `app-embeds`
 - `auth`
 - `case-resolver`
-- `case-resolver-capture`
 - `cms`
 - `data-import-export`
 - `database`
@@ -200,6 +205,27 @@ Top-level feature domains under `src/features`:
 - `insights`
 
 AI is a first-class platform concern, not a thin addon.
+
+## Workspace Topology
+
+Beyond the root web/admin/API app, the repository also contains active Kangur
+workspace boundaries:
+
+- `apps/mobile`
+  - Expo Router native app for iOS, Android, and Expo web preview
+- `apps/mobile-web`
+  - reserved workspace for a future dedicated React Native Web target
+- `packages/kangur-contracts`
+  - shared DTOs, schemas, and cross-runtime contracts
+- `packages/kangur-core`
+  - shared learner/game/profile domain logic
+- `packages/kangur-api-client`
+  - shared transport layer for Kangur HTTP APIs
+- `packages/kangur-platform`
+  - platform ports and runtime integration boundaries
+
+For the lighter repo entrypoint, start with `README.md`; use this file as the
+deeper scanned reference when architecture details or repository scale matter.
 
 ## Shared Architecture
 
@@ -592,16 +618,23 @@ SCRAPER_GUARD_PAGE_MAX=
 SCRAPER_GUARD_API_MAX=
 ```
 
-## Locked Build Configuration — DO NOT MODIFY
+## Locked Build & Vercel Deploy Configuration — DO NOT MODIFY
 
-The following files are locked and must NOT be modified by AI agents without explicit user approval:
+The Vercel deployment was stabilised on 2026-03-29. The following files must
+NOT be modified by AI agents without explicit user approval:
 
-- `next.config.mjs` — Next.js build config
-- `package.json` `"build"` script — heap size tuned for Vercel
+- `next.config.mjs` — serverExternalPackages (29), compiler, experimental, webpack cache
+- `scripts/build/run-next-build.cjs` — heap (3584 MB on Vercel), bundler (webpack on Vercel)
+- `scripts/build/prebuild-cleanup.cjs` — Vercel-safe minimal cleanup
+- `vercel.json` — install/build commands
 - `tsconfig.json` — TypeScript compiler config
-- `vercel.json` — Vercel deployment settings (if present)
 
-Key constraints: `--max-old-space-size=3584`, `experimental.cpus: 2`, conditional `output: 'standalone'` (disabled on Vercel), `typescript.ignoreBuildErrors: true`.
+Key constraints: heap `3584 MB` on Vercel (main + worker must fit 8 GB),
+webpack bundler on Vercel (turbopack cold builds exceed 45-min limit),
+webpack cache disabled on Vercel, `compiler.removeConsole` disabled on Vercel,
+`experimental.cpus: 1` for webpack, `output: 'standalone'` only for non-Vercel.
+
+See `docs/build/vercel-deployment.md` for full rationale.
 
 If you need to change any of these files, stop and ask the user for permission first.
 
@@ -623,4 +656,4 @@ If you need to change any of these files, stop and ask the user for permission f
 
 ## Last Reviewed
 
-Scanned against the repository on `2026-03-16`.
+Scanned against the repository on `2026-03-26`.

@@ -1,5 +1,8 @@
+'use client';
+
 import { Trophy, User, Ghost } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 
 import {
   KangurButton,
@@ -36,12 +39,25 @@ const renderUserFilterIcon = (icon: KangurLeaderboardUserFilterIcon): React.Reac
   return null;
 };
 
+const LEADERBOARD_LOAD_DEFER_MS = 0;
+
 export default function Leaderboard(): React.JSX.Element {
   const translations = useTranslations('KangurGameWidgets.leaderboard');
   const isCoarsePointer = useKangurCoarsePointer();
   const { entry: leaderboardContent } = useKangurPageContentEntry('game-home-leaderboard');
-  const { emptyStateLabel, items, loading, operationFilters, userFilters } =
-    useKangurLeaderboardState();
+  const [isLeaderboardQueryReady, setIsLeaderboardQueryReady] = useState(false);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setIsLeaderboardQueryReady(true);
+    }, LEADERBOARD_LOAD_DEFER_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+  const { emptyStateLabel, items, loading: isLeaderboardLoading, operationFilters, userFilters } =
+    useKangurLeaderboardState({ enabled: isLeaderboardQueryReady });
+  const loading = !isLeaderboardQueryReady || isLeaderboardLoading;
   const segmentedItemClassName = isCoarsePointer
     ? 'min-h-12 min-w-[4.75rem] flex-1 justify-center px-4 text-xs touch-manipulation select-none active:scale-[0.985] sm:flex-none'
     : 'h-10 flex-1 justify-center px-3 text-xs sm:flex-none';

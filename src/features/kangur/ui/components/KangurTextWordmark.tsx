@@ -8,7 +8,7 @@ export type KangurTextWordmarkProps = React.SVGProps<SVGSVGElement> & {
   textProps?: React.SVGProps<SVGTextElement>;
 };
 
-export function KangurTextWordmark({
+export function renderKangurTextWordmark({
   arcPath = 'M104 118C208 140 322 140 442 112',
   idPrefix = 'kangur-text-wordmark',
   label,

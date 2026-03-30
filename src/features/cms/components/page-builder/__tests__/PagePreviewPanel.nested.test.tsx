@@ -13,6 +13,26 @@ const { pageBuilderStateRef, dispatchMock, toastMock } = vi.hoisted(() => ({
   toastMock: vi.fn(),
 }));
 
+const mockThemeSettingsValue = vi.hoisted(() => ({
+  colorSchemes: [],
+  enableAnimations: false,
+  hoverEffect: 'none',
+  hoverScale: 1,
+  fullWidth: false,
+  pagePadding: 0,
+  pageMargin: 0,
+  pagePaddingTop: 0,
+  pagePaddingRight: 0,
+  pagePaddingBottom: 0,
+  pagePaddingLeft: 0,
+  pageMarginTop: 0,
+  pageMarginRight: 0,
+  pageMarginBottom: 0,
+  pageMarginLeft: 0,
+  borderRadius: 0,
+  backgroundColor: 'transparent',
+}));
+
 vi.mock('@/shared/hooks/useUserPreferences', () => ({
   useUserPreferences: () => ({ data: {} }),
 }));
@@ -53,25 +73,7 @@ vi.mock('@/features/cms/components/page-builder/PreviewBlock', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/ThemeSettingsContext', () => ({
-  useThemeSettingsValue: () => ({
-    colorSchemes: [],
-    enableAnimations: false,
-    hoverEffect: 'none',
-    hoverScale: 1,
-    fullWidth: false,
-    pagePadding: 0,
-    pageMargin: 0,
-    pagePaddingTop: 0,
-    pagePaddingRight: 0,
-    pagePaddingBottom: 0,
-    pagePaddingLeft: 0,
-    pageMarginTop: 0,
-    pageMarginRight: 0,
-    pageMarginBottom: 0,
-    pageMarginLeft: 0,
-    borderRadius: 0,
-    backgroundColor: 'transparent',
-  }),
+  useThemeSettingsValue: () => mockThemeSettingsValue,
 }));
 
 vi.mock('@/features/cms/hooks/useCmsDomainSelection', () => ({

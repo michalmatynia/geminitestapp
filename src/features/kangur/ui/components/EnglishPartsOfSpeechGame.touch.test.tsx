@@ -4,7 +4,11 @@
 
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+let draggableSnapshot = { isDragging: false };
+const lockMock = vi.fn();
+const unlockMock = vi.fn();
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -32,13 +36,15 @@ vi.mock('@hello-pangea/dnd', () => ({
       { isDraggingOver: false }
     ),
   Draggable: ({
+    draggableId,
     children,
   }: {
+    draggableId: string;
     children: (
       provided: {
         innerRef: (element: HTMLElement | null) => void;
         draggableProps: Record<string, never>;
-        dragHandleProps: Record<string, never>;
+        dragHandleProps: Record<string, string>;
       },
       snapshot: { isDragging: boolean }
     ) => React.ReactNode;
@@ -47,14 +53,23 @@ vi.mock('@hello-pangea/dnd', () => ({
       {
         innerRef: () => undefined,
         draggableProps: {},
-        dragHandleProps: {},
+        dragHandleProps: {
+          'data-rfd-drag-handle-draggable-id': draggableId,
+        },
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () => ({
+  useKangurMobileInteractionScrollLock: () => ({
+    lock: lockMock,
+    unlock: unlockMock,
+  }),
 }));
 
 import enMessages from '@/i18n/messages/en.json';
@@ -66,6 +81,12 @@ const renderGame = () =>
       <EnglishPartsOfSpeechGame onFinish={vi.fn()} />
     </NextIntlClientProvider>
   );
+
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+  lockMock.mockClear();
+  unlockMock.mockClear();
+});
 
 describe('EnglishPartsOfSpeechGame touch interactions', () => {
   it('shows coarse-pointer guidance and supports tap-to-assign fallback', () => {
@@ -93,5 +114,29 @@ describe('EnglishPartsOfSpeechGame touch interactions', () => {
     expect(screen.getByTestId('english-parts-of-speech-selection-hint')).toHaveTextContent(
       'Tap a word, then tap a category or the pool.'
     );
+  });
+
+  it('renders the active dragged word through the shared body portal path', () => {
+    draggableSnapshot = { isDragging: true };
+
+    renderGame();
+
+    const pool = screen.getByRole('button', { name: 'Pool of words to sort' });
+
+    expect(within(pool).queryByRole('button', { name: 'equation' })).not.toBeInTheDocument();
+    expect(within(document.body).getByRole('button', { name: 'equation' })).toBeInTheDocument();
+  });
+
+  it('locks mobile scroll when touching a real draggable word handle', () => {
+    renderGame();
+
+    const token = screen.getByRole('button', { name: 'equation' });
+    expect(token).toHaveAttribute('data-rfd-drag-handle-draggable-id');
+
+    fireEvent.touchStart(token);
+    expect(lockMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.touchEnd(document);
+    expect(unlockMock).toHaveBeenCalledTimes(1);
   });
 });

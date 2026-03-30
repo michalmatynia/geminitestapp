@@ -36,16 +36,27 @@ const singularize = (value: string): string => {
   return value;
 };
 
+const DATABASE_SCHEMA_TYPE_ALIASES: Record<string, string> = {
+  string: 'string',
+  int: 'number',
+  float: 'number',
+  decimal: 'number',
+  number: 'number',
+  boolean: 'boolean',
+  bool: 'boolean',
+  datetime: 'string',
+  date: 'string',
+  json: 'Record<string, unknown>',
+};
+
+const resolveSchemaTypeAlias = (value: string): string | null => {
+  const normalizedValue = value.trim().toLowerCase();
+  return DATABASE_SCHEMA_TYPE_ALIASES[normalizedValue] ?? null;
+};
+
 const normalizeSchemaType = (value: string): string => {
   const normalized = value.trim();
-  const lower = normalized.toLowerCase();
-  if (lower === 'string') return 'string';
-  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number')
-    return 'number';
-  if (lower === 'boolean' || lower === 'bool') return 'boolean';
-  if (lower === 'datetime' || lower === 'date') return 'string';
-  if (lower === 'json') return 'Record<string, unknown>';
-  return normalized || 'unknown';
+  return (resolveSchemaTypeAlias(normalized) ?? normalized) || 'unknown';
 };
 
 const formatCollectionSchema = (

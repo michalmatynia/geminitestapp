@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:ai-paths'
@@ -17,6 +17,10 @@ It captures:
 - execution/validation metadata
 - provenance for cross-system copy/paste
 - deterministic per-node-type hashes for traceable docs inference
+
+This hub is the maintained contract reference for portable canvas JSON. Use
+[`../overview.md`](../overview.md) and [`../reference.md`](../reference.md) for
+the broader runtime, queue, and operator surface around that contract.
 
 Main references:
 

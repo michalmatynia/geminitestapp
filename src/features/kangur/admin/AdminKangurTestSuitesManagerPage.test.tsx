@@ -19,12 +19,27 @@ const { settingsStoreMock, mutateAsyncMock, useMasterFolderTreeShellMock, toastM
     folderTreeViewportMock: vi.fn(),
   }));
 
+const emptyPageContentEntryMock = {
+  data: undefined,
+  entry: null,
+  error: null,
+  isError: false,
+  isFetched: true,
+  isFetching: false,
+  isLoading: false,
+  isPending: false,
+  isSuccess: true,
+  refetch: vi.fn(),
+  status: 'success',
+} as const;
+
 vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; prefetch?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -75,24 +90,12 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
 });
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({
-    data: undefined,
-    entry: null,
-    error: null,
-    isError: false,
-    isFetched: true,
-    isFetching: false,
-    isLoading: false,
-    isPending: false,
-    isSuccess: true,
-    refetch: vi.fn(),
-    status: 'success',
-  }),
+  useKangurPageContentEntry: () => emptyPageContentEntryMock,
 }));
 
 import { AdminKangurTestSuitesManagerPage } from './AdminKangurTestSuitesManagerPage';
 import { toKangurTestSuiteNodeId } from './kangur-test-suites-master-tree';
-import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-questions';
+import { KANGUR_TEST_QUESTIONS_SETTING_KEY } from '../test-suites/questions';
 import { KANGUR_TEST_GROUPS_SETTING_KEY, KANGUR_TEST_SUITES_SETTING_KEY } from '../test-suites';
 
 const getLatestViewportProps = (): FolderTreeViewportV2Props => {

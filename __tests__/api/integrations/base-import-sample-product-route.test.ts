@@ -24,6 +24,13 @@ vi.mock('@/features/integrations/server', () => ({
 
 import { POST as sampleProductPost } from '@/app/api/v2/integrations/imports/base/sample-product/route';
 
+const buildSampleProductRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/v2/integrations/imports/base/sample-product', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
 type SampleProductResponse = {
   productId: string | null;
   inventoryId: string | null;
@@ -45,31 +52,19 @@ describe('base import sample-product route', () => {
   });
 
   it('requires explicit connectionId when productId is not provided', async () => {
-    const response = await sampleProductPost(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base/sample-product', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          inventoryId: 'inventory-1',
-        }),
-      })
-    );
+    const response = await sampleProductPost(buildSampleProductRequest({
+      inventoryId: 'inventory-1',
+    }));
 
     expect(response.status).toBe(400);
     expect(callBaseApiMock).not.toHaveBeenCalled();
   });
 
   it('loads sample product using selected connection', async () => {
-    const response = await sampleProductPost(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base/sample-product', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          inventoryId: 'inventory-1',
-          connectionId: 'conn-1',
-        }),
-      })
-    );
+    const response = await sampleProductPost(buildSampleProductRequest({
+      inventoryId: 'inventory-1',
+      connectionId: 'conn-1',
+    }));
     const payload = (await response.json()) as SampleProductResponse;
 
     expect(response.status).toBe(200);

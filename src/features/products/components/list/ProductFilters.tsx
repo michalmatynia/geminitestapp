@@ -52,7 +52,13 @@ import {
 
 export { ProductSelectionActions } from './ProductSelectionActions';
 
-export const ProductFilters = memo(function ProductFilters(): React.JSX.Element {
+type ProductFiltersProps = {
+  instanceId?: string;
+};
+
+export const ProductFilters = memo(function ProductFilters({
+  instanceId,
+}: ProductFiltersProps): React.JSX.Element {
   const {
     search,
     setSearch,
@@ -341,6 +347,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
   return (
     <>
       <FilterPanel
+        {...(instanceId ? { idBase: `products-${instanceId}` } : {})}
         filters={filterConfig}
         values={filterValues}
         search={search}

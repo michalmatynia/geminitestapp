@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -23,19 +23,19 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 describe('KangurPracticeGameChrome', () => {
-  it('renders the shared practice game stage and progress row', () => {
+  it('renders the shared practice game shell and progress row', () => {
     render(
-      <KangurPracticeGameStage data-testid='practice-stage'>
+      <KangurPracticeGameShell data-testid='practice-shell'>
         <KangurPracticeGameProgress
           accent='amber'
           currentRound={2}
           dataTestId='practice-progress'
           totalRounds={6}
         />
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     );
 
-    expect(screen.getByTestId('practice-stage')).toHaveClass(
+    expect(screen.getByTestId('practice-shell')).toHaveClass(
       'flex',
       'w-full',
       'max-w-sm',
@@ -49,7 +49,10 @@ describe('KangurPracticeGameChrome', () => {
 
   it('renders the shared practice game summary shell with granular components', () => {
     render(
-      <KangurPracticeGameSummary dataTestId='practice-summary-shell'>
+      <KangurPracticeGameSummary
+        dataTestId='practice-summary-shell'
+        wrapperClassName='w-full max-w-3xl'
+      >
         <KangurPracticeGameSummaryEmoji dataTestId='practice-summary-emoji' emoji='🏆' />
         <KangurPracticeGameSummaryTitle dataTestId='practice-summary-title' title='Wynik: 6/6' />
         <KangurPracticeGameSummaryXP accent='indigo' xpEarned={12} />
@@ -79,6 +82,10 @@ describe('KangurPracticeGameChrome', () => {
       'glass-panel',
       'kangur-panel-soft',
       'kangur-glass-surface-solid'
+    );
+    expect(screen.getByTestId('practice-summary-shell').parentElement).toHaveClass(
+      'w-full',
+      'max-w-3xl'
     );
     expect(screen.getByTestId('practice-summary-emoji')).toHaveClass('text-6xl');
     expect(screen.getByTestId('practice-summary-title')).toHaveTextContent('Wynik: 6/6');

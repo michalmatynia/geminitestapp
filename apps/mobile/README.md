@@ -8,6 +8,7 @@
 - Consume the same Kangur backend and contracts as the root web app instead of hosting a separate API.
 - Reuse shared domain logic from `@kangur/core`, transport types from `@kangur/contracts`, HTTP access from `@kangur/api-client`, and auth/storage interfaces from `@kangur/platform`.
 - Keep admin authoring, CMS composition, and most operations tooling in the root web app.
+- Own the native startup experience: splash handoff, mobile auth bootstrap, cached startup state, and staged first-paint behavior.
 - Treat the branch-local `/parent` route and `src/parent/*` files as in-progress work until their typecheck contract is stabilized.
 
 ## Route inventory
@@ -33,8 +34,17 @@
 - API base URL resolution prefers `EXPO_PUBLIC_KANGUR_API_URL`, then Expo `extra.kangurApiUrl`, then falls back to `http://10.0.2.2:3000` on Android and `http://localhost:3000` elsewhere.
 - Auth mode resolution prefers `EXPO_PUBLIC_KANGUR_AUTH_MODE`, then Expo `extra.kangurAuthMode`. Supported modes are `development` and `learner-session`.
 - Developer auto sign-in is controlled through Expo `extra.kangurDevAutoSignIn`, `extra.kangurDevLearnerLogin`, and `extra.kangurDevLearnerPassword`.
-- `KangurMobileAuthProvider` refreshes session state on boot and invalidates auth-scoped React Query data when sign-in or sign-out completes.
+- `KangurMobileAuthProvider` seeds session state from persisted learner data, then refreshes in the background and invalidates auth-scoped React Query data only when the auth query identity actually changes.
 - Home and lessons boot shells intentionally fail open after a bounded interaction wait so the initial mobile skeleton cannot hang indefinitely if native interactions never drain.
+
+## Startup and performance model
+
+- Expo splash is kept under app control until a branded JS bootstrap screen is ready.
+- The initial route shell mounts before heavy home content and progresses through bounded boot gates.
+- Tiny persisted bootstrap snapshots are reused for learner auth, lesson checkpoints, recent results, training focus, and duel invites when available.
+- The home route restores essential UI first, then wakes secondary sections in staged deferred waves after interactions settle.
+- Duel, score, lesson-insight, account, and navigation sections are intentionally split so the first visible frame avoids the full network and render burst.
+- The development storage adapter caches its native JSON snapshot in memory after the first read, which avoids repeated boot-time disk reads.
 
 ## Shared package boundaries
 
@@ -76,4 +86,8 @@
 - `../../docs/kangur/README.md`
 - `../../docs/kangur/studiq-application.md`
 - `../../docs/kangur/react-native-monorepo-scaffold.md`
+- `../../packages/kangur-contracts/README.md`
+- `../../packages/kangur-core/README.md`
+- `../../packages/kangur-api-client/README.md`
+- `../../packages/kangur-platform/README.md`
 - `../mobile-web/README.md`

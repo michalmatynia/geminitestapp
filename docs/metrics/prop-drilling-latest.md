@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-18'
+last_reviewed: '2026-03-27'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,541 +8,295 @@ canonical: true
 ---
 # Prop Drilling Scan
 
-Generated at: 2026-03-18T09:22:13.839Z
+Generated at: 2026-03-27T02:20:40.107Z
 
 ## Snapshot
 
-- Scanned source files: 5394
-- JSX files scanned: 1979
-- Components detected: 3312
-- Components forwarding parent props (hotspot threshold): 45
-- Components forwarding parent props (any): 55
-- Resolved forwarded transitions: 276
-- Candidate chains (depth >= 2): 276
-- Candidate chains (depth >= 3): 42
+- Scanned source files: 5876
+- JSX files scanned: 2137
+- Components detected: 3492
+- Components forwarding parent props (hotspot threshold): 0
+- Components forwarding parent props (any): 62
+- Resolved forwarded transitions: 72
+- Candidate chains (depth >= 2): 72
+- Candidate chains (depth >= 3): 0
 - High-priority chains (depth >= 4): 0
-- Unknown spread forwarding edges: 11
-- Hotspot forwarding components backlog size: 45
+- Unknown spread forwarding edges: 0
+- Hotspot forwarding components backlog size: 0
 
 ## Hot Features
 
 | Feature Scope | Forwarding Components |
 | --- | ---: |
-| `feature:kangur` | 50 |
+| `feature:kangur` | 48 |
+| `shared-ui` | 6 |
+| `feature:products` | 2 |
 | `feature:cms` | 2 |
-| `shared-ui` | 2 |
-| `app` | 1 |
+| `feature:integrations` | 1 |
+| `feature:notesapp` | 1 |
+| `feature:admin` | 1 |
+| `feature:observability` | 1 |
 
 ## Top Prop-Drilling Components
 
 | Rank | Component | File | Forwarded Props | Outgoing Transitions | Unknown Spread Forwarding | Hotspot |
 | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | `SocialPostEditor` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx` | 56 | 62 | no | yes |
-| 2 | `SocialPostVisuals` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx` | 32 | 39 | no | yes |
-| 3 | `KangurNavAction` | `src/features/kangur/ui/components/KangurNavAction.tsx` | 12 | 13 | no | yes |
-| 4 | `HomeContentClient` | `src/features/cms/components/frontend/home/HomeContentClient.tsx` | 10 | 13 | no | yes |
-| 5 | `ExamNavigation` | `src/features/kangur/ui/components/ExamNavigation.tsx` | 9 | 13 | no | yes |
-| 6 | `KangurGameQuizStage` | `src/features/kangur/ui/components/KangurGameQuizStage.tsx` | 8 | 8 | no | yes |
-| 7 | `KangurGameSetupStage` | `src/features/kangur/ui/components/KangurGameSetupStage.tsx` | 8 | 8 | no | yes |
-| 8 | `KangurUnifiedLessonBase` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 6 | 7 | no | yes |
-| 9 | `KangurNarratorSettingsPanel` | `src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx` | 5 | 6 | no | yes |
-| 10 | `KangurDialogHeader` | `src/features/kangur/ui/components/KangurDialogHeader.tsx` | 4 | 4 | no | yes |
-| 11 | `KangurLessonVisual` | `src/features/kangur/ui/design/lesson-primitives.tsx` | 4 | 4 | yes | yes |
-| 12 | `KangurChoiceDialog` | `src/features/kangur/ui/components/KangurChoiceDialog.tsx` | 3 | 5 | no | yes |
-| 13 | `SocialPostList` | `src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx` | 3 | 3 | no | yes |
-| 14 | `KangurUnifiedLessonPanel` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 3 | 3 | yes | yes |
-| 15 | `FocusModeTogglePortal` | `src/shared/ui/FocusModeTogglePortal.tsx` | 3 | 3 | no | yes |
-| 16 | `AgenticDrawGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx` | 2 | 7 | no | yes |
-| 17 | `KangurTrainingSetupPanel` | `src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx` | 2 | 6 | no | yes |
-| 18 | `AgenticSequenceGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx` | 2 | 5 | no | yes |
-| 19 | `AgenticSortGame` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx` | 2 | 5 | no | yes |
-| 20 | `SocialPostPipeline` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Pipeline.tsx` | 2 | 4 | no | yes |
-| 21 | `HomeFallbackContent` | `src/features/cms/components/frontend/home/home-fallback-content.tsx` | 2 | 3 | no | yes |
-| 22 | `CalendarGameBody` | `src/features/kangur/ui/components/CalendarLesson.tsx` | 2 | 3 | no | yes |
-| 23 | `PasswordInput` | `src/shared/ui/password-input.tsx` | 2 | 3 | yes | yes |
-| 24 | `Error` | `src/app/(frontend)/kangur/error.tsx` | 2 | 2 | no | yes |
-| 25 | `ParentVerificationCard` | `src/features/kangur/ui/KangurLoginPage.tsx` | 2 | 2 | no | yes |
-| 26 | `KangurPublicAppEntry` | `src/features/kangur/ui/KangurPublicAppEntry.tsx` | 2 | 2 | no | yes |
-| 27 | `AgenticLessonCodeBlock` | `src/features/kangur/ui/components/AgenticLessonCodeBlock.tsx` | 2 | 2 | no | yes |
-| 28 | `ClockTrainingSlide` | `src/features/kangur/ui/components/ClockLesson.tsx` | 2 | 2 | no | yes |
-| 29 | `EnglishPartsOfSpeechGame` | `src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx` | 2 | 2 | no | yes |
-| 30 | `EnglishPrepositionsGame` | `src/features/kangur/ui/components/EnglishPrepositionsGame.tsx` | 2 | 2 | no | yes |
-| 31 | `EnglishPrepositionsOrderGame` | `src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx` | 2 | 2 | no | yes |
-| 32 | `EnglishPrepositionsSortGame` | `src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx` | 2 | 2 | no | yes |
-| 33 | `EnglishPronounsGame` | `src/features/kangur/ui/components/EnglishPronounsGame.tsx` | 2 | 2 | no | yes |
-| 34 | `EnglishPronounsWarmupGame` | `src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx` | 2 | 2 | no | yes |
-| 35 | `EnglishSentenceStructureGame` | `src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx` | 2 | 2 | no | yes |
-| 36 | `EnglishSubjectVerbAgreementGame` | `src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx` | 2 | 2 | no | yes |
-| 37 | `KangurStandardPageLayout` | `src/features/kangur/ui/components/KangurStandardPageLayout.tsx` | 2 | 2 | no | yes |
-| 38 | `KangurUnifiedLessonSubsection` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 2 | 2 | yes | yes |
-| 39 | `KangurWidgetIntro` | `src/features/kangur/ui/design/primitives/KangurWidgetIntro.tsx` | 2 | 2 | yes | yes |
-| 40 | `SignupForm` | `src/features/kangur/ui/login-page/signup-forms.tsx` | 2 | 2 | no | yes |
-| 41 | `AgenticDocsHierarchyGame` | `src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx` | 1 | 2 | no | no |
-| 42 | `FrontendPublicOwnerShellClient` | `src/features/kangur/ui/FrontendPublicOwnerShellClient.tsx` | 1 | 1 | no | no |
-| 43 | `KangurPublicApp` | `src/features/kangur/ui/KangurPublicApp.tsx` | 1 | 1 | no | no |
-| 44 | `AgenticApprovalGateGame` | `src/features/kangur/ui/components/AgenticApprovalGateGame.tsx` | 1 | 1 | no | no |
-| 45 | `AgenticLessonQuickCheck` | `src/features/kangur/ui/components/AgenticLessonQuickCheck.tsx` | 1 | 1 | no | no |
-| 46 | `AgenticReasoningRouterGame` | `src/features/kangur/ui/components/AgenticReasoningRouterGame.tsx` | 1 | 1 | no | no |
-| 47 | `AgenticSurfaceMatchGame` | `src/features/kangur/ui/components/AgenticSurfaceMatchGame.tsx` | 1 | 1 | no | no |
-| 48 | `GeometryDrawingGame` | `src/features/kangur/ui/components/GeometryDrawingGame.tsx` | 1 | 1 | no | no |
-| 49 | `GeometryShapesGameStage` | `src/features/kangur/ui/components/GeometryShapesLesson.tsx` | 1 | 1 | no | no |
-| 50 | `KangurGrajmyWordmark` | `src/features/kangur/ui/components/KangurGrajmyWordmark.tsx` | 1 | 1 | yes | yes |
-| 51 | `KangurKangurWordmark` | `src/features/kangur/ui/components/KangurKangurWordmark.tsx` | 1 | 1 | yes | yes |
-| 52 | `KangurLessonsWordmark` | `src/features/kangur/ui/components/KangurLessonsWordmark.tsx` | 1 | 1 | yes | yes |
-| 53 | `KangurTreningWordmark` | `src/features/kangur/ui/components/KangurTreningWordmark.tsx` | 1 | 1 | yes | yes |
-| 54 | `LoginForm` | `src/features/kangur/ui/login-page/login-forms.tsx` | 1 | 1 | no | no |
-| 55 | `KangurUnifiedLesson` | `src/features/kangur/ui/components/KangurUnifiedLesson.tsx` | 0 | 0 | yes | yes |
+| 1 | `ProductListingItem` | `src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx` | 1 | 2 | no | no |
+| 2 | `AdminKangurLessonsManagerPage` | `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 1 | 2 | no | no |
+| 3 | `KangurCmsBuilderInner` | `src/features/kangur/cms-builder/KangurCmsBuilderWorkspace.tsx` | 1 | 2 | no | no |
+| 4 | `AgenticDocsHierarchyGame` | `src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx` | 1 | 2 | no | no |
+| 5 | `AlphabetLiteracyStageGame` | `src/features/kangur/ui/components/AlphabetLiteracyStageGame.tsx` | 1 | 2 | no | no |
+| 6 | `ColorHarmonyStageGame` | `src/features/kangur/ui/components/ColorHarmonyStageGame.tsx` | 1 | 2 | no | no |
+| 7 | `LogicalReasoningIfThenGame` | `src/features/kangur/ui/components/LogicalReasoningIfThenGame.tsx` | 1 | 2 | no | no |
+| 8 | `ShapeRecognitionStageGame` | `src/features/kangur/ui/components/ShapeRecognitionStageGame.tsx` | 1 | 2 | no | no |
+| 9 | `NoteCardBase` | `src/features/notesapp/components/NoteCard.tsx` | 1 | 2 | no | no |
+| 10 | `EditableCell` | `src/features/products/components/EditableCell.tsx` | 1 | 2 | no | no |
+| 11 | `AdminLayout` | `src/features/admin/layout/AdminLayout.tsx` | 1 | 1 | no | no |
+| 12 | `CmsDomainSelector` | `src/features/cms/components/CmsDomainSelector.tsx` | 1 | 1 | no | no |
+| 13 | `AttachSlugModal` | `src/features/cms/components/slugs/AttachSlugModal.tsx` | 1 | 1 | no | no |
+| 14 | `KangurSocialPipelineQueuePanel` | `src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx` | 1 | 1 | no | no |
+| 15 | `SocialPostEditor` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx` | 1 | 1 | no | no |
+| 16 | `FrontendPublicOwnerKangurShell` | `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx` | 1 | 1 | no | no |
+| 17 | `KangurFeaturePage` | `src/features/kangur/ui/KangurFeaturePage.tsx` | 1 | 1 | no | no |
+| 18 | `KangurFeatureRouteShell` | `src/features/kangur/ui/KangurFeatureRouteShell.tsx` | 1 | 1 | no | no |
+| 19 | `KangurPublicApp` | `src/features/kangur/ui/KangurPublicApp.tsx` | 1 | 1 | no | no |
+| 20 | `AgenticLessonQuickCheck` | `src/features/kangur/ui/components/AgenticLessonQuickCheck.tsx` | 1 | 1 | no | no |
+| 21 | `ArtShapesRotationGapGame` | `src/features/kangur/ui/components/ArtShapesRotationGapGame.tsx` | 1 | 1 | no | no |
+| 22 | `EnglishAdjectivesSceneGame` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx` | 1 | 1 | no | no |
+| 23 | `EnglishAdverbsFrequencyRoutineGame` | `src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx` | 1 | 1 | no | no |
+| 24 | `EnglishArticlesDragDropGame` | `src/features/kangur/ui/components/EnglishArticlesDragDropGame.tsx` | 1 | 1 | no | no |
+| 25 | `EnglishPartsOfSpeechGame` | `src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx` | 1 | 1 | no | no |
+| 26 | `EnglishPrepositionsGame` | `src/features/kangur/ui/components/EnglishPrepositionsGame.tsx` | 1 | 1 | no | no |
+| 27 | `EnglishPrepositionsOrderGame` | `src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx` | 1 | 1 | no | no |
+| 28 | `EnglishPrepositionsSortGame` | `src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx` | 1 | 1 | no | no |
+| 29 | `EnglishPronounsGame` | `src/features/kangur/ui/components/EnglishPronounsGame.tsx` | 1 | 1 | no | no |
+| 30 | `EnglishPronounsWarmupGame` | `src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx` | 1 | 1 | no | no |
+| 31 | `EnglishSentenceStructureGame` | `src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx` | 1 | 1 | no | no |
+| 32 | `EnglishSubjectVerbAgreementGame` | `src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx` | 1 | 1 | no | no |
+| 33 | `GeometryDrawingGame` | `src/features/kangur/ui/components/GeometryDrawingGame.tsx` | 1 | 1 | no | no |
+| 34 | `KangurLanguageSwitcher` | `src/features/kangur/ui/components/KangurLanguageSwitcher.tsx` | 1 | 1 | no | no |
+| 35 | `LessonsCatalogCardSkeleton` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx` | 1 | 1 | no | no |
+| 36 | `KangurPrimaryNavigation` | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 1 | 1 | no | no |
+| 37 | `KangurRouteLoadingFallback` | `src/features/kangur/ui/components/KangurRouteLoadingFallback.tsx` | 1 | 1 | no | no |
+| 38 | `LessonActivityStage` | `src/features/kangur/ui/components/LessonActivityStage.tsx` | 1 | 1 | no | no |
+| 39 | `InsightList` | `src/features/kangur/ui/components/LessonMasteryInsights.tsx` | 1 | 1 | no | no |
+| 40 | `SubtractingSvgAnimation` | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1 | 1 | no | no |
+| 41 | `SubtractingNumberLineAnimation` | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1 | 1 | no | no |
+| 42 | `SubtractingTenFrameAnimation` | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1 | 1 | no | no |
+| 43 | `SubtractingDifferenceBarAnimation` | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1 | 1 | no | no |
+| 44 | `SubtractingAbacusAnimation` | `src/features/kangur/ui/components/SubtractingLesson.tsx` | 1 | 1 | no | no |
+| 45 | `CompleteEquationMobile` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.CompleteEquation.tsx` | 1 | 1 | no | no |
+| 46 | `CompleteEquationDesktop` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.CompleteEquation.tsx` | 1 | 1 | no | no |
+| 47 | `GroupSum` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.GroupSum.tsx` | 1 | 1 | no | no |
+| 48 | `DragOverlay` | `src/features/kangur/ui/components/adding-ball-game/PointerDragProvider.tsx` | 1 | 1 | no | no |
+| 49 | `KangurMusicPianoRoll` | `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx` | 1 | 1 | no | no |
+| 50 | `MusicMelodyRepeatGame` | `src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx` | 1 | 1 | no | no |
+| 51 | `MusicPianoRollFreePlayGame` | `src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx` | 1 | 1 | no | no |
+| 52 | `LoginForm` | `src/features/kangur/ui/login-page/login-forms.tsx` | 1 | 1 | no | no |
+| 53 | `ParentDashboardResolvedContent` | `src/features/kangur/ui/pages/ParentDashboard.tsx` | 1 | 1 | no | no |
+| 54 | `ParentDashboardAuthLoadingState` | `src/features/kangur/ui/pages/ParentDashboard.tsx` | 1 | 1 | no | no |
+| 55 | `EventStreamPanel` | `src/features/observability/pages/system-logs/SystemLogs.Table.tsx` | 1 | 1 | no | no |
+| 56 | `ValidatorPatternSemanticHistoryPanel` | `src/features/products/components/settings/validator-settings/ValidatorPatternSemanticHistoryPanel.tsx` | 1 | 1 | no | no |
+| 57 | `JsonViewer` | `src/shared/ui/JsonViewer.tsx` | 1 | 1 | no | no |
+| 58 | `PageLayoutTabs` | `src/shared/ui/PageLayout.tsx` | 1 | 1 | no | no |
+| 59 | `AlertDialogContent` | `src/shared/ui/alert-dialog.tsx` | 1 | 1 | no | no |
+| 60 | `DialogContent` | `src/shared/ui/dialog.tsx` | 1 | 1 | no | no |
+| 61 | `DocumentationSection` | `src/shared/ui/documentation-section.tsx` | 1 | 1 | no | no |
+| 62 | `ConfirmModalDescription` | `src/shared/ui/templates/modals/ConfirmModal.tsx` | 1 | 1 | no | no |
 
 ## Prioritized Transition Backlog (Depth = 2)
 
 | Rank | Score | From | To | Fanout | Features | Prop Mapping | Location |
 | ---: | ---: | --- | --- | ---: | ---: | --- | --- |
-| 1 | 92 | `KangurTrainingSetupPanel` | `TrainingSetup` | 5 | 1 | `suggestedTraining -> onStart` | `src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20` |
-| 2 | 92 | `KangurTrainingSetupPanel` | `TrainingSetup` | 5 | 1 | `suggestedTraining -> suggestedSelection` | `src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20` |
-| 3 | 92 | `KangurTrainingSetupPanel` | `TrainingSetup` | 5 | 1 | `suggestedTraining -> suggestionDescription` | `src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20` |
-| 4 | 92 | `KangurTrainingSetupPanel` | `TrainingSetup` | 5 | 1 | `suggestedTraining -> suggestionLabel` | `src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20` |
-| 5 | 92 | `KangurTrainingSetupPanel` | `TrainingSetup` | 5 | 1 | `suggestedTraining -> suggestionTitle` | `src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20` |
-| 6 | 78 | `SocialPostVisuals` | `Input` | 3 | 2 | `addonForm -> value` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:132` |
-| 7 | 78 | `SocialPostVisuals` | `Textarea` | 3 | 2 | `addonForm -> value` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:163` |
-| 8 | 78 | `SocialPostVisuals` | `Button` | 3 | 2 | `addonForm -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:172` |
-| 9 | 74 | `AgenticSequenceGame` | `KangurLessonVisual` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:543` |
-| 10 | 74 | `AgenticSequenceGame` | `KangurLessonCallout` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:550` |
-| 11 | 74 | `AgenticSequenceGame` | `KangurLessonChip` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:552` |
-| 12 | 74 | `AgenticSequenceGame` | `KangurLessonInset` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:583` |
-| 13 | 74 | `AgenticSortGame` | `KangurLessonVisual` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:628` |
-| 14 | 74 | `AgenticSortGame` | `KangurLessonCallout` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:635` |
-| 15 | 74 | `AgenticSortGame` | `KangurLessonChip` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:637` |
-| 16 | 74 | `AgenticSortGame` | `KangurLessonInset` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:695` |
-| 17 | 74 | `AgenticDrawGame` | `KangurLessonVisual` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:808` |
-| 18 | 74 | `AgenticDrawGame` | `KangurLessonCallout` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:824` |
-| 19 | 74 | `AgenticDrawGame` | `KangurLessonChip` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:826` |
-| 20 | 74 | `AgenticDrawGame` | `KangurLessonInset` | 4 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:833` |
-| 21 | 72 | `HomeContentClient` | `LazyHomeCmsDefaultContent` | 3 | 1 | `theme -> themeSettings` | `src/features/cms/components/frontend/home/HomeContentClient.tsx:71` |
-| 22 | 72 | `HomeContentClient` | `LazyHomeFallbackContent` | 3 | 1 | `theme -> themeSettings` | `src/features/cms/components/frontend/home/HomeContentClient.tsx:79` |
-| 23 | 72 | `AgenticDrawGame` | `KangurLessonVisual` | 3 | 1 | `config -> caption` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:808` |
-| 24 | 72 | `AgenticDrawGame` | `DrawGameSvg` | 3 | 1 | `config -> checkpoints` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:813` |
-| 25 | 72 | `AgenticDrawGame` | `DrawGameSvg` | 3 | 1 | `config -> guide` | `src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:813` |
-| 26 | 72 | `KangurChoiceDialog` | `KangurPanelCloseButton` | 3 | 1 | `onOpenChange -> onClick` | `src/features/kangur/ui/components/KangurChoiceDialog.tsx:71` |
-| 27 | 72 | `KangurChoiceDialog` | `KangurButton` | 3 | 1 | `onOpenChange -> onClick` | `src/features/kangur/ui/components/KangurChoiceDialog.tsx:98` |
-| 28 | 68 | `SocialPostEditor` | `Input` | 2 | 2 | `editorState -> value` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:183` |
-| 29 | 68 | `SocialPostEditor` | `Input` | 2 | 2 | `setEditorState -> onChange` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:183` |
-| 30 | 68 | `SocialPostEditor` | `Textarea` | 2 | 2 | `editorState -> value` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:190` |
-| 31 | 68 | `SocialPostEditor` | `Textarea` | 2 | 2 | `setEditorState -> onChange` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:190` |
-| 32 | 68 | `SocialPostEditor` | `SelectSimple` | 2 | 2 | `linkedInOptions -> options` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:280` |
-| 33 | 68 | `SocialPostEditor` | `SelectSimple` | 2 | 2 | `linkedinIntegration -> placeholder` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:280` |
-| 34 | 68 | `SocialPostEditor` | `SelectSimple` | 2 | 2 | `linkedinIntegration -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:280` |
-| 35 | 68 | `SocialPostEditor` | `SelectSimple` | 2 | 2 | `linkedInOptions -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:280` |
-| 36 | 68 | `SocialPostEditor` | `Button` | 2 | 2 | `activePost -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:320` |
-| 37 | 68 | `SocialPostEditor` | `Button` | 2 | 2 | `scheduledAt -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:330` |
-| 38 | 68 | `SocialPostPipeline` | `FormSection` | 2 | 2 | `handleRunFullPipeline -> actions` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Pipeline.tsx:19` |
-| 39 | 68 | `SocialPostPipeline` | `FormSection` | 2 | 2 | `activePostId -> actions` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Pipeline.tsx:19` |
-| 40 | 68 | `SocialPostPipeline` | `Button` | 2 | 2 | `handleRunFullPipeline -> onClick` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Pipeline.tsx:25` |
-| 41 | 68 | `SocialPostPipeline` | `Button` | 2 | 2 | `activePostId -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Pipeline.tsx:25` |
-| 42 | 68 | `SocialPostVisuals` | `Input` | 2 | 2 | `setAddonForm -> onChange` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:132` |
-| 43 | 68 | `SocialPostVisuals` | `Textarea` | 2 | 2 | `setAddonForm -> onChange` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:163` |
-| 44 | 68 | `SocialPostVisuals` | `Input` | 2 | 2 | `batchCaptureBaseUrl -> value` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:193` |
-| 45 | 68 | `SocialPostVisuals` | `Button` | 2 | 2 | `batchCaptureBaseUrl -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:254` |
-| 46 | 68 | `SocialPostVisuals` | `Button` | 2 | 2 | `setShowMediaLibrary -> onClick` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:456` |
-| 47 | 68 | `SocialPostVisuals` | `MediaLibraryPanel` | 2 | 2 | `setShowMediaLibrary -> onOpenChange` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:466` |
-| 48 | 68 | `SocialPostVisuals` | `Button` | 2 | 2 | `handleLoadContext -> onClick` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:499` |
-| 49 | 68 | `SocialPostVisuals` | `Button` | 2 | 2 | `activePost -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:499` |
-| 50 | 68 | `SocialPostVisuals` | `Button` | 2 | 2 | `handleLoadContext -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:499` |
-| 51 | 68 | `SocialPostVisuals` | `Textarea` | 2 | 2 | `activePost -> value` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:540` |
-| 52 | 68 | `KangurNarratorSettingsPanel` | `Alert` | 2 | 2 | `narratorProbe -> variant` | `src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx:206` |
-| 53 | 68 | `KangurNarratorSettingsPanel` | `Alert` | 2 | 2 | `narratorProbe -> title` | `src/features/kangur/admin/components/KangurNarratorSettingsPanel.tsx:206` |
-| 54 | 64 | `HomeContentClient` | `LazyCmsPageShell` | 3 | 1 | `theme -> theme` | `src/features/cms/components/frontend/home/HomeContentClient.tsx:64` |
-| 55 | 64 | `KangurChoiceDialog` | `KangurDialog` | 3 | 1 | `onOpenChange -> onOpenChange` | `src/features/kangur/ui/components/KangurChoiceDialog.tsx:50` |
-| 56 | 62 | `CalendarGameBody` | `CalendarInteractiveGame` | 2 | 1 | `section -> key` | `src/features/kangur/ui/components/CalendarLesson.tsx:455` |
-| 57 | 62 | `ExamNavigation` | `KangurButton` | 2 | 1 | `prevDisabled -> onClick` | `src/features/kangur/ui/components/ExamNavigation.tsx:36` |
-| 58 | 62 | `ExamNavigation` | `KangurButton` | 2 | 1 | `prevDisabled -> disabled` | `src/features/kangur/ui/components/ExamNavigation.tsx:36` |
-| 59 | 62 | `ExamNavigation` | `KangurButton` | 2 | 1 | `prevLabel -> aria-label` | `src/features/kangur/ui/components/ExamNavigation.tsx:36` |
-| 60 | 62 | `ExamNavigation` | `KangurButton` | 2 | 1 | `prevLabel -> title` | `src/features/kangur/ui/components/ExamNavigation.tsx:36` |
-| 61 | 62 | `ExamNavigation` | `KangurButton` | 2 | 1 | `nextDisabled -> onClick` | `src/features/kangur/ui/components/ExamNavigation.tsx:49` |
-| 62 | 62 | `ExamNavigation` | `KangurButton` | 2 | 1 | `nextDisabled -> disabled` | `src/features/kangur/ui/components/ExamNavigation.tsx:49` |
-| 63 | 62 | `ExamNavigation` | `KangurButton` | 2 | 1 | `nextLabel -> aria-label` | `src/features/kangur/ui/components/ExamNavigation.tsx:49` |
-| 64 | 62 | `ExamNavigation` | `KangurButton` | 2 | 1 | `nextLabel -> title` | `src/features/kangur/ui/components/ExamNavigation.tsx:49` |
-| 65 | 62 | `KangurNavAction` | `KangurTransitionLink` | 2 | 1 | `transition -> transitionAcknowledgeMs` | `src/features/kangur/ui/components/KangurNavAction.tsx:66` |
-| 66 | 62 | `KangurNavAction` | `KangurTransitionLink` | 2 | 1 | `transition -> transitionSourceId` | `src/features/kangur/ui/components/KangurNavAction.tsx:66` |
-| 67 | 58 | `SocialPostEditor` | `SelectSimple` | 1 | 2 | `linkedinConnectionId -> value` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:280` |
-| 68 | 58 | `SocialPostEditor` | `SelectSimple` | 1 | 2 | `handleLinkedInConnectionChange -> onValueChange` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:280` |
-| 69 | 58 | `SocialPostEditor` | `Button` | 1 | 2 | `handleSave -> onClick` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:320` |
-| 70 | 58 | `SocialPostEditor` | `Button` | 1 | 2 | `saveMutationPending -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:320` |
-| 71 | 58 | `SocialPostEditor` | `Button` | 1 | 2 | `patchMutationPending -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:330` |
-| 72 | 58 | `SocialPostEditor` | `Button` | 1 | 2 | `handlePublish -> onClick` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:341` |
-| 73 | 58 | `SocialPostEditor` | `Button` | 1 | 2 | `publishMutationPending -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:341` |
-| 74 | 58 | `SocialPostList` | `DropdownMenuItem` | 1 | 2 | `onPublishPost -> onSelect` | `src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx:141` |
-| 75 | 58 | `SocialPostList` | `DropdownMenuItem` | 1 | 2 | `onUnpublishPost -> onSelect` | `src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx:188` |
-| 76 | 58 | `SocialPostList` | `Button` | 1 | 2 | `onDeletePost -> onClick` | `src/features/kangur/admin/admin-kangur-social/SocialPost.List.tsx:201` |
-| 77 | 58 | `SocialPostVisuals` | `Button` | 1 | 2 | `handleCreateAddon -> onClick` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:172` |
-| 78 | 58 | `SocialPostVisuals` | `Button` | 1 | 2 | `createAddonPending -> disabled` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:172` |
-| 79 | 58 | `SocialPostVisuals` | `Input` | 1 | 2 | `setBatchCaptureBaseUrl -> onChange` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:193` |
-| 80 | 58 | `SocialPostVisuals` | `Button` | 1 | 2 | `selectAllCapturePresets -> onClick` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:199` |
+| 1 | 68 | `EditableCell` | `Input` | 2 | 2 | `field -> step` | `src/features/products/components/EditableCell.tsx:95` |
+| 2 | 68 | `EditableCell` | `Input` | 2 | 2 | `field -> aria-label` | `src/features/products/components/EditableCell.tsx:95` |
+| 3 | 62 | `KangurCmsBuilderInner` | `KangurCmsBuilderRightPanel` | 2 | 1 | `themePreviewMode -> themePreviewTheme` | `src/features/kangur/cms-builder/KangurCmsBuilderWorkspace.tsx:233` |
+| 4 | 62 | `AlphabetLiteracyStageGame` | `KangurButton` | 2 | 1 | `onFinish -> onClick` | `src/features/kangur/ui/components/AlphabetLiteracyStageGame.tsx:74` |
+| 5 | 62 | `AlphabetLiteracyStageGame` | `KangurButton` | 2 | 1 | `onFinish -> variant` | `src/features/kangur/ui/components/AlphabetLiteracyStageGame.tsx:86` |
+| 6 | 62 | `ColorHarmonyStageGame` | `KangurButton` | 2 | 1 | `onFinish -> onClick` | `src/features/kangur/ui/components/ColorHarmonyStageGame.tsx:254` |
+| 7 | 62 | `ColorHarmonyStageGame` | `KangurButton` | 2 | 1 | `onFinish -> variant` | `src/features/kangur/ui/components/ColorHarmonyStageGame.tsx:266` |
+| 8 | 62 | `LogicalReasoningIfThenGame` | `KangurInfoCard` | 2 | 1 | `copy -> aria-label` | `src/features/kangur/ui/components/LogicalReasoningIfThenGame.tsx:505` |
+| 9 | 62 | `ShapeRecognitionStageGame` | `KangurButton` | 2 | 1 | `onFinish -> onClick` | `src/features/kangur/ui/components/ShapeRecognitionStageGame.tsx:107` |
+| 10 | 62 | `ShapeRecognitionStageGame` | `KangurButton` | 2 | 1 | `onFinish -> variant` | `src/features/kangur/ui/components/ShapeRecognitionStageGame.tsx:119` |
+| 11 | 58 | `AttachSlugModal` | `FormModal` | 1 | 2 | `isOpen -> open` | `src/features/cms/components/slugs/AttachSlugModal.tsx:80` |
+| 12 | 58 | `KangurSocialPipelineQueuePanel` | `ListPanel` | 1 | 2 | `variant -> header` | `src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx:252` |
+| 13 | 58 | `EventStreamPanel` | `StandardDataTablePanel` | 1 | 2 | `showFooterPagination -> footer` | `src/features/observability/pages/system-logs/SystemLogs.Table.tsx:676` |
+| 14 | 58 | `ValidatorPatternSemanticHistoryPanel` | `Button` | 1 | 2 | `onClose -> onClick` | `src/features/products/components/settings/validator-settings/ValidatorPatternSemanticHistoryPanel.tsx:93` |
+| 15 | 54 | `ProductListingItem` | `ProductListingDetails` | 2 | 1 | `listing -> listing` | `src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:18` |
+| 16 | 54 | `ProductListingItem` | `ProductListingActions` | 2 | 1 | `listing -> listing` | `src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:19` |
+| 17 | 54 | `AdminKangurLessonsManagerPage` | `AdminKangurLessonSectionsPanel` | 2 | 1 | `standalone -> standalone` | `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx:731` |
+| 18 | 54 | `AdminKangurLessonsManagerPage` | `AdminKangurLessonsManagerTreePanel` | 2 | 1 | `standalone -> standalone` | `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx:733` |
+| 19 | 54 | `KangurCmsBuilderInner` | `KangurCmsBuilderRightPanel` | 2 | 1 | `themePreviewMode -> themePreviewMode` | `src/features/kangur/cms-builder/KangurCmsBuilderWorkspace.tsx:233` |
+| 20 | 54 | `AgenticDocsHierarchyGame` | `KangurLessonCallout` | 2 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx:130` |
+| 21 | 54 | `AgenticDocsHierarchyGame` | `KangurStatusChip` | 2 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticDocsHierarchyGame.tsx:133` |
+| 22 | 54 | `LogicalReasoningIfThenGame` | `DraggableCase` | 2 | 1 | `copy -> copy` | `src/features/kangur/ui/components/LogicalReasoningIfThenGame.tsx:480` |
+| 23 | 54 | `NoteCardBase` | `NoteCardHeader` | 2 | 1 | `note -> note` | `src/features/notesapp/components/NoteCard.tsx:161` |
+| 24 | 54 | `NoteCardBase` | `NoteCardFooter` | 2 | 1 | `note -> note` | `src/features/notesapp/components/NoteCard.tsx:169` |
+| 25 | 52 | `ArtShapesRotationGapGame` | `KangurButton` | 1 | 1 | `onFinish -> onClick` | `src/features/kangur/ui/components/ArtShapesRotationGapGame.tsx:196` |
+| 26 | 52 | `LessonsCatalogCardSkeleton` | `KangurIconSummaryCardContent` | 1 | 1 | `chips -> aside` | `src/features/kangur/ui/components/KangurPageTransitionSkeleton.tsx:744` |
+| 27 | 52 | `KangurPrimaryNavigation` | `KangurVisualCueContent` | 1 | 1 | `className -> icon` | `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx:1035` |
+| 28 | 52 | `KangurRouteLoadingFallback` | `KangurPageTransitionSkeleton` | 1 | 1 | `includeTopNavigationSkeleton -> renderInlineTopNavigationSkeleton` | `src/features/kangur/ui/components/KangurRouteLoadingFallback.tsx:106` |
+| 29 | 52 | `LessonActivityStage` | `KangurGlassPanel` | 1 | 1 | `title -> data-kangur-print-panel-title` | `src/features/kangur/ui/components/LessonActivityStage.tsx:306` |
+| 30 | 52 | `InsightList` | `KangurEmptyState` | 1 | 1 | `emptyState -> description` | `src/features/kangur/ui/components/LessonMasteryInsights.tsx:182` |
+| 31 | 52 | `CompleteEquationMobile` | `KangurButton` | 1 | 1 | `onResult -> onClick` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.CompleteEquation.tsx:130` |
+| 32 | 52 | `CompleteEquationDesktop` | `KangurButton` | 1 | 1 | `onResult -> onClick` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.CompleteEquation.tsx:369` |
+| 33 | 52 | `GroupSum` | `KangurButton` | 1 | 1 | `onResult -> onClick` | `src/features/kangur/ui/components/adding-ball-game/AddingBallGame.GroupSum.tsx:213` |
+| 34 | 52 | `DragOverlay` | `Ball` | 1 | 1 | `state -> ball` | `src/features/kangur/ui/components/adding-ball-game/PointerDragProvider.tsx:220` |
+| 35 | 52 | `KangurMusicPianoRoll` | `KangurButton` | 1 | 1 | `stepTestIdPrefix -> data-testid` | `src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx:1385` |
+| 36 | 52 | `MusicPianoRollFreePlayGame` | `KangurButton` | 1 | 1 | `onFinish -> onClick` | `src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx:262` |
+| 37 | 52 | `LoginForm` | `KangurButton` | 1 | 1 | `isLoading -> disabled` | `src/features/kangur/ui/login-page/login-forms.tsx:145` |
+| 38 | 52 | `PageLayoutTabs` | `TabsList` | 1 | 1 | `tabs -> style` | `src/shared/ui/PageLayout.tsx:75` |
+| 39 | 52 | `AlertDialogContent` | `RadixOverlayContentShell` | 1 | 1 | `className -> contentProps` | `src/shared/ui/alert-dialog.tsx:31` |
+| 40 | 52 | `DialogContent` | `RadixOverlayContentShell` | 1 | 1 | `className -> contentProps` | `src/shared/ui/dialog.tsx:39` |
+| 41 | 52 | `ConfirmModalDescription` | `AlertDialogDescription` | 1 | 1 | `hasSubtitle -> className` | `src/shared/ui/templates/modals/ConfirmModal.tsx:52` |
+| 42 | 50 | `AdminLayout` | `SettingsStoreProvider` | 1 | 2 | `canReadAdminSettings -> canReadAdminSettings` | `src/features/admin/layout/AdminLayout.tsx:309` |
+| 43 | 50 | `CmsDomainSelector` | `SelectSimple` | 1 | 2 | `triggerClassName -> triggerClassName` | `src/features/cms/components/CmsDomainSelector.tsx:76` |
+| 44 | 44 | `SocialPostEditor` | `SocialPostVisuals` | 1 | 1 | `showImagesPanel -> showImagesPanel` | `src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:68` |
+| 45 | 44 | `FrontendPublicOwnerKangurShell` | `KangurStorefrontAppearanceProvider` | 1 | 1 | `initialAppearance -> initialAppearance` | `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx:39` |
+| 46 | 44 | `KangurFeaturePage` | `KangurFeaturePageShell` | 1 | 1 | `forceBodyScrollLock -> forceBodyScrollLock` | `src/features/kangur/ui/KangurFeaturePage.tsx:215` |
+| 47 | 44 | `KangurFeatureRouteShell` | `KangurFeaturePageShell` | 1 | 1 | `forceBodyScrollLock -> forceBodyScrollLock` | `src/features/kangur/ui/KangurFeatureRouteShell.tsx:104` |
+| 48 | 44 | `KangurPublicApp` | `KangurStorefrontAppearanceProvider` | 1 | 1 | `initialAppearance -> initialAppearance` | `src/features/kangur/ui/KangurPublicApp.tsx:43` |
+| 49 | 44 | `AgenticLessonQuickCheck` | `KangurLessonCallout` | 1 | 1 | `accent -> accent` | `src/features/kangur/ui/components/AgenticLessonQuickCheck.tsx:59` |
+| 50 | 44 | `EnglishAdjectivesSceneGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishAdjectivesSceneGame.tsx:786` |
+| 51 | 44 | `EnglishAdverbsFrequencyRoutineGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishAdverbsFrequencyRoutineGame.tsx:674` |
+| 52 | 44 | `EnglishArticlesDragDropGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishArticlesDragDropGame.tsx:432` |
+| 53 | 44 | `EnglishPartsOfSpeechGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishPartsOfSpeechGame.tsx:699` |
+| 54 | 44 | `EnglishPrepositionsGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishPrepositionsGame.tsx:324` |
+| 55 | 44 | `EnglishPrepositionsOrderGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishPrepositionsOrderGame.tsx:391` |
+| 56 | 44 | `EnglishPrepositionsSortGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishPrepositionsSortGame.tsx:513` |
+| 57 | 44 | `EnglishPronounsGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishPronounsGame.tsx:232` |
+| 58 | 44 | `EnglishPronounsWarmupGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishPronounsWarmupGame.tsx:224` |
+| 59 | 44 | `EnglishSentenceStructureGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishSentenceStructureGame.tsx:459` |
+| 60 | 44 | `EnglishSubjectVerbAgreementGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/EnglishSubjectVerbAgreementGame.tsx:247` |
+| 61 | 44 | `GeometryDrawingGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `finishLabel -> finishLabel` | `src/features/kangur/ui/components/GeometryDrawingGame.tsx:674` |
+| 62 | 44 | `KangurLanguageSwitcher` | `KangurButton` | 1 | 1 | `className -> className` | `src/features/kangur/ui/components/KangurLanguageSwitcher.tsx:352` |
+| 63 | 44 | `SubtractingSvgAnimation` | `SubtractingAnimationSurface` | 1 | 1 | `ariaLabel -> ariaLabel` | `src/features/kangur/ui/components/SubtractingLesson.tsx:344` |
+| 64 | 44 | `SubtractingNumberLineAnimation` | `SubtractingAnimationSurface` | 1 | 1 | `ariaLabel -> ariaLabel` | `src/features/kangur/ui/components/SubtractingLesson.tsx:411` |
+| 65 | 44 | `SubtractingTenFrameAnimation` | `SubtractingAnimationSurface` | 1 | 1 | `ariaLabel -> ariaLabel` | `src/features/kangur/ui/components/SubtractingLesson.tsx:478` |
+| 66 | 44 | `SubtractingDifferenceBarAnimation` | `SubtractingAnimationSurface` | 1 | 1 | `ariaLabel -> ariaLabel` | `src/features/kangur/ui/components/SubtractingLesson.tsx:592` |
+| 67 | 44 | `SubtractingAbacusAnimation` | `SubtractingAnimationSurface` | 1 | 1 | `ariaLabel -> ariaLabel` | `src/features/kangur/ui/components/SubtractingLesson.tsx:680` |
+| 68 | 44 | `MusicMelodyRepeatGame` | `KangurPracticeGameSummaryActions` | 1 | 1 | `onFinish -> onFinish` | `src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx:534` |
+| 69 | 44 | `ParentDashboardResolvedContent` | `KangurStandardPageLayout` | 1 | 1 | `docsTooltipsEnabled -> docsTooltipsEnabled` | `src/features/kangur/ui/pages/ParentDashboard.tsx:361` |
+| 70 | 44 | `ParentDashboardAuthLoadingState` | `KangurStandardPageLayout` | 1 | 1 | `docsTooltipsEnabled -> docsTooltipsEnabled` | `src/features/kangur/ui/pages/ParentDashboard.tsx:476` |
+| 71 | 44 | `JsonViewer` | `InsetPanel` | 1 | 1 | `className -> className` | `src/shared/ui/JsonViewer.tsx:57` |
+| 72 | 44 | `DocumentationSection` | `InsetPanel` | 1 | 1 | `className -> className` | `src/shared/ui/documentation-section.tsx:17` |
 
 ## Ranked Chain Backlog (Depth >= 3)
 
 | Rank | Score | Depth | Root | Sink | Root Fanout | Features | Prop Path |
 | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
-| 1 | 113 | 3 | `AgenticSequenceGame` | `KangurLessonCallout` | 4 | 1 | `accent -> accent -> accent` |
-| 2 | 113 | 3 | `AgenticSortGame` | `KangurLessonCallout` | 4 | 1 | `accent -> accent -> accent` |
-| 3 | 113 | 3 | `AgenticDrawGame` | `KangurLessonCallout` | 4 | 1 | `accent -> accent -> accent` |
-| 4 | 99 | 3 | `SocialPostEditor` | `Button` | 2 | 2 | `activePost -> activePost -> disabled` |
-| 5 | 99 | 3 | `SocialPostEditor` | `Textarea` | 2 | 2 | `activePost -> activePost -> value` |
-| 6 | 99 | 3 | `SocialPostEditor` | `Input` | 2 | 2 | `scheduledAt -> scheduledAt -> value` |
-| 7 | 89 | 3 | `SocialPostEditor` | `Input` | 1 | 2 | `addonForm -> addonForm -> value` |
-| 8 | 89 | 3 | `SocialPostEditor` | `Textarea` | 1 | 2 | `addonForm -> addonForm -> value` |
-| 9 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `addonForm -> addonForm -> disabled` |
-| 10 | 89 | 3 | `SocialPostEditor` | `Input` | 1 | 2 | `setAddonForm -> setAddonForm -> onChange` |
-| 11 | 89 | 3 | `SocialPostEditor` | `Textarea` | 1 | 2 | `setAddonForm -> setAddonForm -> onChange` |
-| 12 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleCreateAddon -> handleCreateAddon -> onClick` |
-| 13 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `createAddonPending -> createAddonPending -> disabled` |
-| 14 | 89 | 3 | `SocialPostEditor` | `Input` | 1 | 2 | `batchCaptureBaseUrl -> batchCaptureBaseUrl -> value` |
-| 15 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `batchCaptureBaseUrl -> batchCaptureBaseUrl -> disabled` |
-| 16 | 89 | 3 | `SocialPostEditor` | `Input` | 1 | 2 | `setBatchCaptureBaseUrl -> setBatchCaptureBaseUrl -> onChange` |
-| 17 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `batchCapturePresetIds -> batchCapturePresetIds -> disabled` |
-| 18 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `selectAllCapturePresets -> selectAllCapturePresets -> onClick` |
-| 19 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `clearCapturePresets -> clearCapturePresets -> onClick` |
-| 20 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleBatchCapture -> handleBatchCapture -> onClick` |
-| 21 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `batchCapturePending -> batchCapturePending -> disabled` |
-| 22 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleSelectAddon -> handleSelectAddon -> onClick` |
-| 23 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleRemoveAddon -> handleRemoveAddon -> onClick` |
-| 24 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleRemoveImage -> handleRemoveImage -> onClick` |
-| 25 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `setShowMediaLibrary -> setShowMediaLibrary -> onClick` |
-| 26 | 89 | 3 | `SocialPostEditor` | `MediaLibraryPanel` | 1 | 2 | `setShowMediaLibrary -> setShowMediaLibrary -> onOpenChange` |
-| 27 | 89 | 3 | `SocialPostEditor` | `MediaLibraryPanel` | 1 | 2 | `showMediaLibrary -> showMediaLibrary -> open` |
-| 28 | 89 | 3 | `SocialPostEditor` | `MediaLibraryPanel` | 1 | 2 | `handleAddImages -> handleAddImages -> onSelect` |
-| 29 | 89 | 3 | `SocialPostEditor` | `Input` | 1 | 2 | `docReferenceInput -> docReferenceInput -> value` |
-| 30 | 89 | 3 | `SocialPostEditor` | `Input` | 1 | 2 | `setDocReferenceInput -> setDocReferenceInput -> onChange` |
-| 31 | 89 | 3 | `SocialPostEditor` | `Textarea` | 1 | 2 | `generationNotes -> generationNotes -> value` |
-| 32 | 89 | 3 | `SocialPostEditor` | `Textarea` | 1 | 2 | `setGenerationNotes -> setGenerationNotes -> onChange` |
-| 33 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleGenerate -> handleGenerate -> onClick` |
-| 34 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleLoadContext -> handleLoadContext -> onClick` |
-| 35 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleLoadContext -> handleLoadContext -> disabled` |
-| 36 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `contextLoading -> contextLoading -> disabled` |
-| 37 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `hasVisualDocUpdates -> hasVisualDocUpdates -> disabled` |
-| 38 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handlePreviewDocUpdates -> handlePreviewDocUpdates -> onClick` |
-| 39 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `previewDocUpdatesPending -> previewDocUpdatesPending -> disabled` |
-| 40 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `handleApplyDocUpdates -> handleApplyDocUpdates -> onClick` |
-| 41 | 89 | 3 | `SocialPostEditor` | `Button` | 1 | 2 | `applyDocUpdatesPending -> applyDocUpdatesPending -> disabled` |
-| 42 | 89 | 3 | `SocialPostEditor` | `Input` | 1 | 2 | `setScheduledAt -> setScheduledAt -> onChange` |
+| 1 | 0 | 0 | _none_ | _none_ | 0 | 0 | _none_ |
 
 ## Top Chain Details (Depth >= 3)
 
-### 1. AgenticSequenceGame -> KangurLessonCallout
-
-- Score: 113
-- Depth: 3
-- Root fanout: 4
-- Prop path: accent -> accent -> accent
-- Component path:
-  - `AgenticSequenceGame` (src/features/kangur/ui/components/AgenticCodingMiniGames.tsx)
-  - `KangurLessonVisual` (src/features/kangur/ui/design/lesson-primitives.tsx)
-  - `KangurLessonCallout` (src/features/kangur/ui/design/lesson-primitives.tsx)
-- Transition lines:
-  - `AgenticSequenceGame` -> `KangurLessonVisual`: `accent` -> `accent` at src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:543
-  - `KangurLessonVisual` -> `KangurLessonCallout`: `accent` -> `accent` at src/features/kangur/ui/design/lesson-primitives.tsx:177
-
-### 2. AgenticSortGame -> KangurLessonCallout
-
-- Score: 113
-- Depth: 3
-- Root fanout: 4
-- Prop path: accent -> accent -> accent
-- Component path:
-  - `AgenticSortGame` (src/features/kangur/ui/components/AgenticCodingMiniGames.tsx)
-  - `KangurLessonVisual` (src/features/kangur/ui/design/lesson-primitives.tsx)
-  - `KangurLessonCallout` (src/features/kangur/ui/design/lesson-primitives.tsx)
-- Transition lines:
-  - `AgenticSortGame` -> `KangurLessonVisual`: `accent` -> `accent` at src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:628
-  - `KangurLessonVisual` -> `KangurLessonCallout`: `accent` -> `accent` at src/features/kangur/ui/design/lesson-primitives.tsx:177
-
-### 3. AgenticDrawGame -> KangurLessonCallout
-
-- Score: 113
-- Depth: 3
-- Root fanout: 4
-- Prop path: accent -> accent -> accent
-- Component path:
-  - `AgenticDrawGame` (src/features/kangur/ui/components/AgenticCodingMiniGames.tsx)
-  - `KangurLessonVisual` (src/features/kangur/ui/design/lesson-primitives.tsx)
-  - `KangurLessonCallout` (src/features/kangur/ui/design/lesson-primitives.tsx)
-- Transition lines:
-  - `AgenticDrawGame` -> `KangurLessonVisual`: `accent` -> `accent` at src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:808
-  - `KangurLessonVisual` -> `KangurLessonCallout`: `accent` -> `accent` at src/features/kangur/ui/design/lesson-primitives.tsx:177
-
-### 4. SocialPostEditor -> Button
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: activePost -> activePost -> disabled
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Button` (src/shared/ui/button.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `activePost` -> `activePost` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Button`: `activePost` -> `disabled` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:499
-
-### 5. SocialPostEditor -> Textarea
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: activePost -> activePost -> value
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Textarea` (src/shared/ui/textarea.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `activePost` -> `activePost` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Textarea`: `activePost` -> `value` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:540
-
-### 6. SocialPostEditor -> Input
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: scheduledAt -> scheduledAt -> value
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Input` (src/shared/ui/input.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `scheduledAt` -> `scheduledAt` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Input`: `scheduledAt` -> `value` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:478
-
-### 7. SocialPostEditor -> Input
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: addonForm -> addonForm -> value
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Input` (src/shared/ui/input.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `addonForm` -> `addonForm` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Input`: `addonForm` -> `value` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:132
-
-### 8. SocialPostEditor -> Textarea
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: addonForm -> addonForm -> value
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Textarea` (src/shared/ui/textarea.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `addonForm` -> `addonForm` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Textarea`: `addonForm` -> `value` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:163
-
-### 9. SocialPostEditor -> Button
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: addonForm -> addonForm -> disabled
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Button` (src/shared/ui/button.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `addonForm` -> `addonForm` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Button`: `addonForm` -> `disabled` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:172
-
-### 10. SocialPostEditor -> Input
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: setAddonForm -> setAddonForm -> onChange
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Input` (src/shared/ui/input.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `setAddonForm` -> `setAddonForm` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Input`: `setAddonForm` -> `onChange` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:132
-
-### 11. SocialPostEditor -> Textarea
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: setAddonForm -> setAddonForm -> onChange
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Textarea` (src/shared/ui/textarea.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `setAddonForm` -> `setAddonForm` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Textarea`: `setAddonForm` -> `onChange` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:163
-
-### 12. SocialPostEditor -> Button
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: handleCreateAddon -> handleCreateAddon -> onClick
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Button` (src/shared/ui/button.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `handleCreateAddon` -> `handleCreateAddon` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Button`: `handleCreateAddon` -> `onClick` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:172
-
-### 13. SocialPostEditor -> Button
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: createAddonPending -> createAddonPending -> disabled
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Button` (src/shared/ui/button.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `createAddonPending` -> `createAddonPending` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Button`: `createAddonPending` -> `disabled` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:172
-
-### 14. SocialPostEditor -> Input
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: batchCaptureBaseUrl -> batchCaptureBaseUrl -> value
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Input` (src/shared/ui/input.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `batchCaptureBaseUrl` -> `batchCaptureBaseUrl` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Input`: `batchCaptureBaseUrl` -> `value` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:193
-
-### 15. SocialPostEditor -> Button
-
-- Score: 89
-- Depth: 3
-- Root fanout: 1
-- Prop path: batchCaptureBaseUrl -> batchCaptureBaseUrl -> disabled
-- Component path:
-  - `SocialPostEditor` (src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx)
-  - `SocialPostVisuals` (src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx)
-  - `Button` (src/shared/ui/button.tsx)
-- Transition lines:
-  - `SocialPostEditor` -> `SocialPostVisuals`: `batchCaptureBaseUrl` -> `batchCaptureBaseUrl` at src/features/kangur/admin/admin-kangur-social/SocialPost.Editor.tsx:231
-  - `SocialPostVisuals` -> `Button`: `batchCaptureBaseUrl` -> `disabled` at src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:254
+- No depth >= 3 chains were detected in this scan. Use the depth = 2 transition backlog for refactor wave planning.
 
 ## Top Transition Details (Depth = 2)
 
-### 1. KangurTrainingSetupPanel -> TrainingSetup
+### 1. EditableCell -> Input
 
-- Score: 92
-- Root fanout: 5
-- Prop mapping: suggestedTraining -> onStart
-- Location: src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20
+- Score: 68
+- Root fanout: 2
+- Prop mapping: field -> step
+- Location: src/features/products/components/EditableCell.tsx:95
 
-### 2. KangurTrainingSetupPanel -> TrainingSetup
+### 2. EditableCell -> Input
 
-- Score: 92
-- Root fanout: 5
-- Prop mapping: suggestedTraining -> suggestedSelection
-- Location: src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20
+- Score: 68
+- Root fanout: 2
+- Prop mapping: field -> aria-label
+- Location: src/features/products/components/EditableCell.tsx:95
 
-### 3. KangurTrainingSetupPanel -> TrainingSetup
+### 3. KangurCmsBuilderInner -> KangurCmsBuilderRightPanel
 
-- Score: 92
-- Root fanout: 5
-- Prop mapping: suggestedTraining -> suggestionDescription
-- Location: src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20
+- Score: 62
+- Root fanout: 2
+- Prop mapping: themePreviewMode -> themePreviewTheme
+- Location: src/features/kangur/cms-builder/KangurCmsBuilderWorkspace.tsx:233
 
-### 4. KangurTrainingSetupPanel -> TrainingSetup
+### 4. AlphabetLiteracyStageGame -> KangurButton
 
-- Score: 92
-- Root fanout: 5
-- Prop mapping: suggestedTraining -> suggestionLabel
-- Location: src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20
+- Score: 62
+- Root fanout: 2
+- Prop mapping: onFinish -> onClick
+- Location: src/features/kangur/ui/components/AlphabetLiteracyStageGame.tsx:74
 
-### 5. KangurTrainingSetupPanel -> TrainingSetup
+### 5. AlphabetLiteracyStageGame -> KangurButton
 
-- Score: 92
-- Root fanout: 5
-- Prop mapping: suggestedTraining -> suggestionTitle
-- Location: src/features/kangur/ui/components/KangurTrainingSetupPanel.tsx:20
+- Score: 62
+- Root fanout: 2
+- Prop mapping: onFinish -> variant
+- Location: src/features/kangur/ui/components/AlphabetLiteracyStageGame.tsx:86
 
-### 6. SocialPostVisuals -> Input
+### 6. ColorHarmonyStageGame -> KangurButton
 
-- Score: 78
-- Root fanout: 3
-- Prop mapping: addonForm -> value
-- Location: src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:132
+- Score: 62
+- Root fanout: 2
+- Prop mapping: onFinish -> onClick
+- Location: src/features/kangur/ui/components/ColorHarmonyStageGame.tsx:254
 
-### 7. SocialPostVisuals -> Textarea
+### 7. ColorHarmonyStageGame -> KangurButton
 
-- Score: 78
-- Root fanout: 3
-- Prop mapping: addonForm -> value
-- Location: src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:163
+- Score: 62
+- Root fanout: 2
+- Prop mapping: onFinish -> variant
+- Location: src/features/kangur/ui/components/ColorHarmonyStageGame.tsx:266
 
-### 8. SocialPostVisuals -> Button
+### 8. LogicalReasoningIfThenGame -> KangurInfoCard
 
-- Score: 78
-- Root fanout: 3
-- Prop mapping: addonForm -> disabled
-- Location: src/features/kangur/admin/admin-kangur-social/SocialPost.Visuals.tsx:172
+- Score: 62
+- Root fanout: 2
+- Prop mapping: copy -> aria-label
+- Location: src/features/kangur/ui/components/LogicalReasoningIfThenGame.tsx:505
 
-### 9. AgenticSequenceGame -> KangurLessonVisual
+### 9. ShapeRecognitionStageGame -> KangurButton
 
-- Score: 74
-- Root fanout: 4
-- Prop mapping: accent -> accent
-- Location: src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:543
+- Score: 62
+- Root fanout: 2
+- Prop mapping: onFinish -> onClick
+- Location: src/features/kangur/ui/components/ShapeRecognitionStageGame.tsx:107
 
-### 10. AgenticSequenceGame -> KangurLessonCallout
+### 10. ShapeRecognitionStageGame -> KangurButton
 
-- Score: 74
-- Root fanout: 4
-- Prop mapping: accent -> accent
-- Location: src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:550
+- Score: 62
+- Root fanout: 2
+- Prop mapping: onFinish -> variant
+- Location: src/features/kangur/ui/components/ShapeRecognitionStageGame.tsx:119
 
-### 11. AgenticSequenceGame -> KangurLessonChip
+### 11. AttachSlugModal -> FormModal
 
-- Score: 74
-- Root fanout: 4
-- Prop mapping: accent -> accent
-- Location: src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:552
+- Score: 58
+- Root fanout: 1
+- Prop mapping: isOpen -> open
+- Location: src/features/cms/components/slugs/AttachSlugModal.tsx:80
 
-### 12. AgenticSequenceGame -> KangurLessonInset
+### 12. KangurSocialPipelineQueuePanel -> ListPanel
 
-- Score: 74
-- Root fanout: 4
-- Prop mapping: accent -> accent
-- Location: src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:583
+- Score: 58
+- Root fanout: 1
+- Prop mapping: variant -> header
+- Location: src/features/kangur/admin/admin-kangur-social/KangurSocialPipelineQueuePanel.tsx:252
 
-### 13. AgenticSortGame -> KangurLessonVisual
+### 13. EventStreamPanel -> StandardDataTablePanel
 
-- Score: 74
-- Root fanout: 4
-- Prop mapping: accent -> accent
-- Location: src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:628
+- Score: 58
+- Root fanout: 1
+- Prop mapping: showFooterPagination -> footer
+- Location: src/features/observability/pages/system-logs/SystemLogs.Table.tsx:676
 
-### 14. AgenticSortGame -> KangurLessonCallout
+### 14. ValidatorPatternSemanticHistoryPanel -> Button
 
-- Score: 74
-- Root fanout: 4
-- Prop mapping: accent -> accent
-- Location: src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:635
+- Score: 58
+- Root fanout: 1
+- Prop mapping: onClose -> onClick
+- Location: src/features/products/components/settings/validator-settings/ValidatorPatternSemanticHistoryPanel.tsx:93
 
-### 15. AgenticSortGame -> KangurLessonChip
+### 15. ProductListingItem -> ProductListingDetails
 
-- Score: 74
-- Root fanout: 4
-- Prop mapping: accent -> accent
-- Location: src/features/kangur/ui/components/AgenticCodingMiniGames.tsx:637
+- Score: 54
+- Root fanout: 2
+- Prop mapping: listing -> listing
+- Location: src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:18
 
 ## Execution Notes
 

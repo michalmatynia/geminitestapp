@@ -10,7 +10,6 @@ const {
   createGameSessionRewardMock,
   getCurrentKangurDailyQuestMock,
   getNextLockedBadgeMock,
-  getProgressSubjectMock,
   loadProgressMock,
 } = vi.hoisted(() => ({
   addXpMock: vi.fn(),
@@ -18,7 +17,6 @@ const {
   createGameSessionRewardMock: vi.fn(),
   getCurrentKangurDailyQuestMock: vi.fn(),
   getNextLockedBadgeMock: vi.fn(),
-  getProgressSubjectMock: vi.fn(),
   loadProgressMock: vi.fn(),
 }));
 
@@ -31,7 +29,6 @@ vi.mock('@/features/kangur/ui/services/progress', () => ({
   addXp: addXpMock,
   createGameSessionReward: createGameSessionRewardMock,
   getNextLockedBadge: getNextLockedBadgeMock,
-  getProgressSubject: getProgressSubjectMock,
   loadProgress: loadProgressMock,
 }));
 
@@ -48,6 +45,7 @@ describe('buildKangurCompletedGameOutcome', () => {
       difficulty: 'medium',
       nextScore: 6,
       operation: 'addition',
+      subject: 'maths',
       taken: 42,
       totalQuestions: 10,
       allowRewards: false,
@@ -84,7 +82,6 @@ describe('buildKangurCompletedGameOutcome', () => {
     };
 
     loadProgressMock.mockReturnValue(storedProgress);
-    getProgressSubjectMock.mockReturnValue('maths');
     createGameSessionRewardMock.mockReturnValue({
       xp: 30,
       progressUpdates: { gamesPlayed: 1 },
@@ -130,6 +127,8 @@ describe('buildKangurCompletedGameOutcome', () => {
       difficulty: 'medium',
       nextScore: 8,
       operation: 'division',
+      ownerKey: 'learner-1',
+      subject: 'maths',
       taken: 38,
       totalQuestions: 10,
       progressTranslate: (key) => {
@@ -152,5 +151,35 @@ describe('buildKangurCompletedGameOutcome', () => {
       summary: '1/1 rounds today',
       xpAwarded: 55,
     });
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: 'learner-1' });
+    expect(addXpMock).toHaveBeenNthCalledWith(
+      1,
+      30,
+      { gamesPlayed: 1 },
+      { ownerKey: 'learner-1' }
+    );
+    expect(addXpMock).toHaveBeenNthCalledWith(
+      2,
+      55,
+      { dailyQuestsCompleted: 1 },
+      { ownerKey: 'learner-1' }
+    );
+    expect(getCurrentKangurDailyQuestMock).toHaveBeenCalledWith(
+      storedProgress,
+      expect.objectContaining({
+        ownerKey: 'learner-1',
+        persist: false,
+        subject: 'maths',
+      })
+    );
+    expect(claimCurrentKangurDailyQuestRewardMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        gamesPlayed: 9,
+      }),
+      expect.objectContaining({
+        ownerKey: 'learner-1',
+        subject: 'maths',
+      })
+    );
   });
 });

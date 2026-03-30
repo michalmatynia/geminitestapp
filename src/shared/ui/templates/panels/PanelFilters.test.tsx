@@ -128,4 +128,29 @@ describe('PanelFilters layout contract', () => {
     const expandedCountSlot = hideFiltersButton.querySelector('span');
     expect(expandedCountSlot?.className).toContain('inline-flex min-w-[3ch] justify-center');
   });
+
+  it('uses deterministic input ids when an id base is provided', () => {
+    render(
+      <PanelFilters
+        idBase='products-mobile'
+        filters={filters}
+        values={{ sku: 'sku-1' }}
+        search=''
+        searchPlaceholder='Search by product name...'
+        onFilterChange={vi.fn()}
+        onSearchChange={vi.fn()}
+        collapsible
+        defaultExpanded
+      />
+    );
+
+    expect(screen.getByLabelText('Search by product name...')).toHaveAttribute(
+      'id',
+      'panel-filters-search-products-mobile'
+    );
+    expect(screen.getByLabelText('SKU')).toHaveAttribute(
+      'id',
+      'panel-filter-sku-products-mobile'
+    );
+  });
 });

@@ -1,10 +1,7 @@
-import {
-  getLocalizedKangurMetadataBadgeName,
-  getKangurPortableLessonBody,
-} from '@kangur/core';
+import { getKangurPortableLessonBody } from '@kangur/core';
+import { getLocalizedKangurMetadataBadgeName } from '@kangur/core';
 import { Link, type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 
 import type { KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
@@ -44,742 +41,30 @@ import {
   getKangurMobileScoreAccuracyPercent,
 } from '../scores/mobileScoreSummary';
 import { createKangurResultsHref } from '../scores/resultsHref';
+import {
+  KangurMobileActionButton as ActionButton,
+  KangurMobileCard as Card,
+  KangurMobileFilterChip as FilterChip,
+  KangurMobileInsetPanel as InsetPanel,
+  KangurMobileLinkButton as LinkButton,
+  KangurMobilePendingActionButton,
+  KangurMobileMutedActionChip as MutedActionChip,
+  KangurMobilePill as Pill,
+  KangurMobileScrollScreen,
+  KangurMobileSkeletonBlock as SkeletonBlock,
+  type KangurMobileTone as Tone,
+} from '../shared/KangurMobileUi';
 
-type Tone = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-};
+import {
+  LessonsLoadingCatalogCard,
+  LessonsLoadingDetailCard,
+  getMasteryTone,
+} from './lessons-screen-primitives';
+import { LessonsSecondarySections } from './lessons-screen-secondary-sections';
 
 const PROFILE_ROUTE = '/profile' as const;
 const PLAN_ROUTE = '/plan' as const;
 const RESULTS_ROUTE = createKangurResultsHref();
-
-function Card({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        borderRadius: 24,
-        backgroundColor: '#ffffff',
-        padding: 18,
-        gap: 12,
-        shadowColor: '#0f172a',
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
-        elevation: 3,
-      }}
-    >
-      {children}
-    </View>
-  );
-}
-
-function SkeletonBlock({
-  height,
-  width = '100%',
-  radius = 14,
-}: {
-  height: number;
-  width?: number | `${number}%`;
-  radius?: number;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        height,
-        width,
-        borderRadius: radius,
-        backgroundColor: '#e2e8f0',
-      }}
-    />
-  );
-}
-
-function LessonsLoadingDetailCard(): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
-
-  return (
-    <Card>
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        {copy({
-          de: 'Lektionen werden geladen',
-          en: 'Loading lessons',
-          pl: 'Ładowanie lekcji',
-        })}
-      </Text>
-      <SkeletonBlock height={28} width='68%' radius={16} />
-      <SkeletonBlock height={18} width='100%' />
-      <SkeletonBlock height={18} width='92%' />
-      <View style={{ flexDirection: 'column', gap: 8 }}>
-        <SkeletonBlock height={34} width={132} radius={999} />
-        <SkeletonBlock height={34} width={144} radius={999} />
-      </View>
-      <View
-        style={{
-          borderRadius: 20,
-          borderWidth: 1,
-          borderColor: '#e2e8f0',
-          backgroundColor: '#f8fafc',
-          padding: 14,
-          gap: 10,
-        }}
-      >
-        <SkeletonBlock height={18} width='40%' />
-        <SkeletonBlock height={22} width='62%' />
-        <SkeletonBlock height={16} width='100%' />
-        <SkeletonBlock height={16} width='88%' />
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <SkeletonBlock height={34} width={104} radius={999} />
-          <SkeletonBlock height={34} width={96} radius={999} />
-          <SkeletonBlock height={34} width={114} radius={999} />
-        </View>
-      </View>
-      <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>
-        {copy({
-          de: 'Die Lektion und ihre Abschnitte werden vorbereitet.',
-          en: 'Preparing the lesson and its reading sections.',
-          pl: 'Przygotowujemy lekcję i sekcje do czytania.',
-        })}
-      </Text>
-    </Card>
-  );
-}
-
-function LessonsLoadingCatalogCard(): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
-
-  return (
-    <Card>
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        {copy({
-          de: 'Lektionskatalog',
-          en: 'Lesson catalog',
-          pl: 'Katalog lekcji',
-        })}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {copy({
-          de: 'Die Themenliste und der Beherrschungsstand werden geladen.',
-          en: 'Loading the topic list and mastery state.',
-          pl: 'Wczytujemy listę tematów i stan opanowania.',
-        })}
-      </Text>
-
-      <View style={{ gap: 12 }}>
-        {Array.from({ length: 4 }).map((_, index) => (
-          <View
-            key={`lessons-skeleton-row-${index}`}
-            style={{
-              borderRadius: 22,
-              borderWidth: 1,
-              borderColor: '#e2e8f0',
-              backgroundColor: '#f8fafc',
-              padding: 16,
-              gap: 10,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: 12,
-              }}
-            >
-              <View style={{ flex: 1, gap: 8 }}>
-                <SkeletonBlock height={22} width='64%' radius={14} />
-                <SkeletonBlock height={16} width='100%' />
-                <SkeletonBlock height={16} width='84%' />
-              </View>
-              <SkeletonBlock height={32} width={110} radius={999} />
-            </View>
-
-            <SkeletonBlock height={14} width='58%' />
-          </View>
-        ))}
-      </View>
-    </Card>
-  );
-}
-
-function Pill({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: Tone;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: tone.borderColor,
-        backgroundColor: tone.backgroundColor,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
-  );
-}
-
-function LessonCheckpointRow({
-  item,
-}: {
-  item: KangurMobileLessonCheckpointItem;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {item.emoji} {item.title}
-          </Text>
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: `Letztes Ergebnis ${item.lastScorePercent}% • Beherrschung ${item.masteryPercent}%`,
-              en: `Last score ${item.lastScorePercent}% • mastery ${item.masteryPercent}%`,
-              pl: `Ostatni wynik ${item.lastScorePercent}% • opanowanie ${item.masteryPercent}%`,
-            })}
-          </Text>
-        </View>
-        <Pill
-          label={`${item.bestScorePercent}%`}
-          tone={{
-            backgroundColor: '#eef2ff',
-            borderColor: '#c7d2fe',
-            textColor: '#4338ca',
-          }}
-        />
-      </View>
-
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: 'Zuletzt gespeichert',
-          en: 'Last saved',
-          pl: 'Ostatni zapis',
-        })}{' '}
-        {new Intl.DateTimeFormat(getKangurMobileLocaleTag(locale), {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }).format(new Date(item.lastCompletedAt))}
-      </Text>
-
-      <View style={{ flexDirection: 'column', gap: 8 }}>
-        <Link href={item.lessonHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'stretch',
-              width: '100%',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {copy({
-                de: 'Zur Lektion zurück',
-                en: 'Return to lesson',
-                pl: 'Wróć do lekcji',
-              })}
-              {`: ${item.title}`}
-            </Text>
-          </Pressable>
-        </Link>
-        {item.practiceHref ? (
-          <Link href={item.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'stretch',
-                width: '100%',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-                {`: ${item.title}`}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-function LessonsAssignmentRow({
-  item,
-}: {
-  item: KangurMobileLessonsAssignmentItem;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const priorityTone =
-    item.assignment.priority === 'high'
-      ? {
-          backgroundColor: '#fef2f2',
-          borderColor: '#fecaca',
-          textColor: '#b91c1c',
-        }
-      : item.assignment.priority === 'medium'
-        ? {
-            backgroundColor: '#fffbeb',
-            borderColor: '#fde68a',
-            textColor: '#b45309',
-          }
-        : {
-            backgroundColor: '#eff6ff',
-            borderColor: '#bfdbfe',
-            textColor: '#1d4ed8',
-          };
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 8,
-      }}
-    >
-      <Pill
-        label={copy({
-          de:
-            item.assignment.priority === 'high'
-              ? 'Hohe Priorität'
-              : item.assignment.priority === 'medium'
-                ? 'Mittlere Priorität'
-                : 'Niedrige Priorität',
-          en:
-            item.assignment.priority === 'high'
-              ? 'High priority'
-              : item.assignment.priority === 'medium'
-                ? 'Medium priority'
-                : 'Low priority',
-          pl:
-            item.assignment.priority === 'high'
-              ? 'Priorytet wysoki'
-              : item.assignment.priority === 'medium'
-                ? 'Priorytet średni'
-                : 'Priorytet niski',
-        })}
-        tone={priorityTone}
-      />
-      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-        {item.assignment.title}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {item.assignment.description}
-      </Text>
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Ziel: ${item.assignment.target}`,
-          en: `Goal: ${item.assignment.target}`,
-          pl: `Cel: ${item.assignment.target}`,
-        })}
-      </Text>
-      {item.href ? (
-        <Link href={item.href} asChild>
-        <Pressable
-          accessibilityRole='button'
-          style={{
-            alignSelf: 'stretch',
-            width: '100%',
-            borderRadius: 999,
-            backgroundColor: '#0f172a',
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-          }}
-        >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {translateKangurMobileActionLabel(item.assignment.action.label, locale)}
-            </Text>
-          </Pressable>
-        </Link>
-      ) : (
-        <Pill
-          label={`${translateKangurMobileActionLabel(item.assignment.action.label, locale)} · ${copy({
-            de: 'bald',
-            en: 'soon',
-            pl: 'wkrotce',
-          })}`}
-          tone={{
-            backgroundColor: '#e2e8f0',
-            borderColor: '#cbd5e1',
-            textColor: '#475569',
-          }}
-        />
-      )}
-    </View>
-  );
-}
-
-const getMasteryTone = (badgeAccent: string): Tone => {
-  if (badgeAccent === 'emerald') {
-    return {
-      backgroundColor: '#ecfdf5',
-      borderColor: '#a7f3d0',
-      textColor: '#047857',
-    };
-  }
-
-  if (badgeAccent === 'amber') {
-    return {
-      backgroundColor: '#fffbeb',
-      borderColor: '#fde68a',
-      textColor: '#b45309',
-    };
-  }
-
-  if (badgeAccent === 'rose') {
-    return {
-      backgroundColor: '#fef2f2',
-      borderColor: '#fecaca',
-      textColor: '#b91c1c',
-    };
-  }
-
-  return {
-    backgroundColor: '#f8fafc',
-    borderColor: '#e2e8f0',
-    textColor: '#64748b',
-  };
-};
-
-const getLessonMasteryTone = (masteryPercent: number): Tone => {
-  if (masteryPercent >= 90) {
-    return {
-      backgroundColor: '#ecfdf5',
-      borderColor: '#a7f3d0',
-      textColor: '#047857',
-    };
-  }
-
-  if (masteryPercent >= 70) {
-    return {
-      backgroundColor: '#fffbeb',
-      borderColor: '#fde68a',
-      textColor: '#b45309',
-    };
-  }
-
-  return {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
-    textColor: '#b91c1c',
-  };
-};
-
-function LessonMasteryRow({
-  insight,
-  title,
-}: {
-  insight: KangurMobileLessonsLessonMasteryItem;
-  title: string;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const masteryTone = getLessonMasteryTone(insight.masteryPercent);
-  const lastAttemptLabel = insight.lastCompletedAt
-    ? new Intl.DateTimeFormat(getKangurMobileLocaleTag(locale), {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }).format(new Date(insight.lastCompletedAt))
-    : copy({
-        de: 'kein Datum',
-        en: 'no date',
-        pl: 'brak daty',
-      });
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
-          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {insight.emoji} {insight.title}
-          </Text>
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: `Versuche ${insight.attempts} • letztes Ergebnis ${insight.lastScorePercent}%`,
-              en: `Attempts ${insight.attempts} • last score ${insight.lastScorePercent}%`,
-              pl: `Próby ${insight.attempts} • ostatni wynik ${insight.lastScorePercent}%`,
-            })}
-          </Text>
-        </View>
-        <Pill label={`${insight.masteryPercent}%`} tone={masteryTone} />
-      </View>
-
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Bestes Ergebnis ${insight.bestScorePercent}% • letzter Versuch ${lastAttemptLabel}`,
-          en: `Best score ${insight.bestScorePercent}% • last attempt ${lastAttemptLabel}`,
-          pl: `Najlepszy wynik ${insight.bestScorePercent}% • ostatnia próba ${lastAttemptLabel}`,
-        })}
-      </Text>
-
-      <View style={{ flexDirection: 'column', gap: 8 }}>
-        <Link href={insight.lessonHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'stretch',
-              width: '100%',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {copy({
-                de: 'Lektion öffnen',
-                en: 'Open lesson',
-                pl: 'Otwórz lekcję',
-              })}
-            </Text>
-          </Pressable>
-        </Link>
-        {insight.practiceHref ? (
-          <Link href={insight.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'stretch',
-                width: '100%',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-function LessonBadgeChip({
-  item,
-}: {
-  item: KangurMobileLessonsBadgeItem;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: '#c7d2fe',
-        backgroundColor: '#eef2ff',
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-        {item.emoji} {item.name}
-      </Text>
-    </View>
-  );
-}
-
-function LessonRecentResultRow({
-  item,
-}: {
-  item: KangurMobileLessonsRecentResultItem;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const accuracyPercent = getKangurMobileScoreAccuracyPercent(item.result);
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 8,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {formatKangurMobileScoreOperation(item.result.operation, locale)}
-          </Text>
-          <Text style={{ color: '#64748b', fontSize: 12 }}>
-            {formatKangurMobileScoreDateTime(item.result.created_date, locale)}
-          </Text>
-        </View>
-        <Pill
-          label={`${item.result.correct_answers}/${item.result.total_questions}`}
-          tone={{
-            backgroundColor: '#ecfdf5',
-            borderColor: '#a7f3d0',
-            textColor: '#047857',
-          }}
-        />
-      </View>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Pill
-          label={copy({
-            de: `Trefferquote ${accuracyPercent}%`,
-            en: `Accuracy ${accuracyPercent}%`,
-            pl: `Skuteczność ${accuracyPercent}%`,
-          })}
-          tone={{
-            backgroundColor: '#f1f5f9',
-            borderColor: '#cbd5e1',
-            textColor: '#475569',
-          }}
-        />
-      </View>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={item.practiceHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {copy({
-                de: 'Erneut trainieren',
-                en: 'Train again',
-                pl: 'Trenuj ponownie',
-              })}
-            </Text>
-          </Pressable>
-        </Link>
-
-        {item.lessonHref ? (
-          <Link href={item.lessonHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Lektion öffnen',
-                  en: 'Open lesson',
-                  pl: 'Otwórz lekcję',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
-
-        <Link href={item.historyHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: '#cbd5e1',
-              backgroundColor: '#ffffff',
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-            }}
-          >
-            <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-              {copy({
-                de: 'Modusverlauf',
-                en: 'Mode history',
-                pl: 'Historia trybu',
-              })}
-            </Text>
-          </Pressable>
-        </Link>
-      </View>
-    </View>
-  );
-}
 
 export function KangurLessonsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -881,6 +166,21 @@ export function KangurLessonsScreen(): React.JSX.Element {
     null;
   const selectedPracticeHref: Href | null =
     !isPreparingLessonsView && selectedLesson ? selectedLesson.practiceHref : null;
+  const selectedLessonPracticeAction =
+    selectedPracticeHref && selectedLesson ? (
+      <LinkButton
+        href={selectedPracticeHref}
+        label={copy({
+          de: `Training starten: ${selectedLesson.lesson.title}`,
+          en: `Start practice: ${selectedLesson.lesson.title}`,
+          pl: `Uruchom trening: ${selectedLesson.lesson.title}`,
+        })}
+        stretch
+        style={{ borderRadius: 16 }}
+        tone='primary'
+        verticalPadding={12}
+      />
+    ) : null;
   const selectedLessonCheckpoint =
     !isPreparingLessonsView && selectedLesson && selectedLessonBody
       ? (() => {
@@ -921,38 +221,23 @@ export function KangurLessonsScreen(): React.JSX.Element {
       };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 18,
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-        }}
-      >
+    <KangurMobileScrollScreen
+      contentContainerStyle={{
+        gap: 18,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+    >
         <View style={{ gap: 14 }}>
-          <Link href='/' asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'stretch',
-                width: '100%',
-                borderRadius: 999,
-                backgroundColor: '#ffffff',
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Zurück',
-                  en: 'Back',
-                  pl: 'Wróć',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          <LinkButton
+            href='/'
+            label={copy({
+              de: 'Zurück',
+              en: 'Back',
+              pl: 'Wróć',
+            })}
+            stretch
+          />
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -1043,91 +328,29 @@ export function KangurLessonsScreen(): React.JSX.Element {
             )}
 
             <View style={{ gap: 10 }}>
-              {!isPreparingLessonsView && selectedLesson?.practiceHref ? (
-                <Link href={selectedLesson.practiceHref} asChild>
-                  <Pressable
-                    accessibilityRole='button'
-                    style={{
-                      alignSelf: 'stretch',
-                      width: '100%',
-                      borderRadius: 16,
-                      backgroundColor: '#0f172a',
-                      paddingHorizontal: 14,
-                      paddingVertical: 12,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: '#ffffff',
-                        fontWeight: '700',
-                        textAlign: 'center',
-                      }}
-                    >
-                      {copy({
-                        de: `Training starten: ${selectedLesson.lesson.title}`,
-                        en: `Start practice: ${selectedLesson.lesson.title}`,
-                        pl: `Uruchom trening: ${selectedLesson.lesson.title}`,
-                      })}
-                    </Text>
-                  </Pressable>
-                </Link>
-              ) : null}
+              {selectedLessonPracticeAction}
 
-              <Link href={RESULTS_ROUTE} asChild>
-                <Pressable
-                  accessibilityRole='button'
-                  style={{
-                    alignSelf: 'stretch',
-                    width: '100%',
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: '#cbd5e1',
-                    backgroundColor: '#ffffff',
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: '#0f172a',
-                      fontWeight: '700',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {copy({
-                      de: 'Vollständigen Verlauf öffnen',
-                      en: 'Open full history',
-                      pl: 'Otwórz pełną historię',
-                    })}
-                  </Text>
-                </Pressable>
-              </Link>
+              <LinkButton
+                href={RESULTS_ROUTE}
+                label={copy({
+                  de: 'Vollständigen Verlauf öffnen',
+                  en: 'Open full history',
+                  pl: 'Otwórz pełną historię',
+                })}
+                stretch
+                style={{ borderRadius: 16 }}
+                tone='secondary'
+                verticalPadding={12}
+              />
 
-              <Link href={PLAN_ROUTE} asChild>
-                <Pressable
-                  accessibilityRole='button'
-                  style={{
-                    alignSelf: 'stretch',
-                    width: '100%',
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: '#cbd5e1',
-                    backgroundColor: '#ffffff',
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: '#0f172a',
-                      fontWeight: '700',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {translateKangurMobileActionLabel('Open daily plan', locale)}
-                  </Text>
-                </Pressable>
-              </Link>
+              <LinkButton
+                href={PLAN_ROUTE}
+                label={translateKangurMobileActionLabel('Open daily plan', locale)}
+                stretch
+                style={{ borderRadius: 16 }}
+                tone='secondary'
+                verticalPadding={12}
+              />
             </View>
           </Card>
 
@@ -1190,48 +413,35 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       </Text>
                     <View style={{ flexDirection: 'column', gap: 8 }}>
                       {selectedLessonBody.sections.map((section, index) => (
-                        <Pressable
+                        <FilterChip
                           key={section.id}
-                          accessibilityRole='button'
+                          horizontalPadding={12}
+                          idleTextColor='#475569'
+                          label={`${index + 1}. ${section.title}`}
                           onPress={() => {
                             setActiveSectionIndex(index);
                           }}
-                          style={{
-                            borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor:
-                              index === activeSectionIndex ? '#1d4ed8' : '#e2e8f0',
-                            backgroundColor:
-                              index === activeSectionIndex ? '#eff6ff' : '#f8fafc',
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: index === activeSectionIndex ? '#1d4ed8' : '#475569',
-                              fontSize: 12,
-                              fontWeight: '700',
-                            }}
-                          >
-                            {index + 1}. {section.title}
-                          </Text>
-                        </Pressable>
+                          selected={index === activeSectionIndex}
+                          selectedBackgroundColor='#eff6ff'
+                          selectedBorderColor='#1d4ed8'
+                          selectedTextColor='#1d4ed8'
+                          style={
+                            index === activeSectionIndex
+                              ? undefined
+                              : {
+                                  backgroundColor: '#f8fafc',
+                                  borderColor: '#e2e8f0',
+                                }
+                          }
+                          textStyle={{ fontSize: 12 }}
+                          verticalPadding={8}
+                        />
                       ))}
                     </View>
                   </View>
 
                   {activeSection ? (
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: '#e2e8f0',
-                        backgroundColor: '#f8fafc',
-                        padding: 14,
-                        gap: 10,
-                      }}
-                    >
+                    <InsetPanel gap={10}>
                       <View style={{ gap: 4 }}>
                         <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                           {copy({
@@ -1250,14 +460,13 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       </Text>
 
                       {activeSection.example ? (
-                        <View
+                        <InsetPanel
+                          gap={6}
+                          padding={12}
                           style={{
                             borderRadius: 18,
                             backgroundColor: '#fff7ed',
-                            borderWidth: 1,
                             borderColor: '#fdba74',
-                            padding: 12,
-                            gap: 6,
                           }}
                         >
                           <Text style={{ color: '#c2410c', fontSize: 12, fontWeight: '700' }}>
@@ -1269,7 +478,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           <Text style={{ color: '#7c2d12', fontSize: 13, lineHeight: 18 }}>
                             {activeSection.example.explanation}
                           </Text>
-                        </View>
+                        </InsetPanel>
                       ) : null}
 
                       {activeSection.reminders && activeSection.reminders.length > 0 ? (
@@ -1292,82 +501,76 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           gap: 10,
                         }}
                       >
-                        <Pressable
-                          accessibilityRole='button'
+                        <ActionButton
+                          centered
                           disabled={activeSectionIndex === 0}
+                          disabledOpacity={1}
+                          label={copy({
+                            de: 'Zurück',
+                            en: 'Previous',
+                            pl: 'Poprzednia',
+                          })}
                           onPress={() => {
                             setActiveSectionIndex((current) => Math.max(0, current - 1));
                           }}
                           style={{
-                            borderRadius: 999,
+                            flex: 1,
                             backgroundColor:
                               activeSectionIndex === 0 ? '#e2e8f0' : '#ffffff',
-                            borderWidth: 1,
                             borderColor: '#cbd5e1',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
                           }}
-                        >
-                          <Text
-                            style={{
-                              color: activeSectionIndex === 0 ? '#94a3b8' : '#0f172a',
-                              fontWeight: '700',
-                            }}
-                          >
-                            {copy({
-                              de: 'Zurück',
-                              en: 'Previous',
-                              pl: 'Poprzednia',
-                            })}
-                          </Text>
-                        </Pressable>
+                          textStyle={{
+                            color: activeSectionIndex === 0 ? '#94a3b8' : '#0f172a',
+                          }}
+                          tone='secondary'
+                        />
 
-                        <Pressable
-                          accessibilityRole='button'
+                        <ActionButton
+                          centered
                           disabled={activeSectionIndex >= selectedLessonBody.sections.length - 1}
+                          disabledOpacity={1}
+                          label={copy({
+                            de: 'Weiter',
+                            en: 'Next',
+                            pl: 'Następna',
+                          })}
                           onPress={() => {
                             setActiveSectionIndex((current) =>
                               Math.min(selectedLessonBody.sections.length - 1, current + 1),
                             );
                           }}
                           style={{
-                            borderRadius: 999,
+                            flex: 1,
                             backgroundColor:
                               activeSectionIndex >= selectedLessonBody.sections.length - 1
                                 ? '#e2e8f0'
                                 : '#0f172a',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
+                            borderWidth:
+                              activeSectionIndex >= selectedLessonBody.sections.length - 1 ? 1 : 0,
+                            borderColor:
+                              activeSectionIndex >= selectedLessonBody.sections.length - 1
+                                ? '#cbd5e1'
+                                : 'transparent',
                           }}
-                        >
-                          <Text
-                            style={{
-                              color:
-                                activeSectionIndex >= selectedLessonBody.sections.length - 1
-                                  ? '#94a3b8'
-                                  : '#ffffff',
-                              fontWeight: '700',
-                            }}
-                          >
-                            {copy({
-                              de: 'Weiter',
-                              en: 'Next',
-                              pl: 'Następna',
-                            })}
-                          </Text>
-                        </Pressable>
+                          textStyle={{
+                            color:
+                              activeSectionIndex >= selectedLessonBody.sections.length - 1
+                                ? '#94a3b8'
+                                : '#ffffff',
+                          }}
+                          tone='primary'
+                        />
                       </View>
-                    </View>
+                    </InsetPanel>
                   ) : null}
 
-                  <View
+                  <InsetPanel
+                    gap={6}
+                    padding={14}
                     style={{
                       borderRadius: 18,
                       backgroundColor: '#eef2ff',
-                      borderWidth: 1,
                       borderColor: '#c7d2fe',
-                      padding: 14,
-                      gap: 6,
                     }}
                   >
                     <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
@@ -1380,17 +583,16 @@ export function KangurLessonsScreen(): React.JSX.Element {
                     <Text style={{ color: '#3730a3', fontSize: 14, lineHeight: 20 }}>
                       {selectedLessonBody.practiceNote}
                     </Text>
-                  </View>
+                  </InsetPanel>
 
                   {selectedLessonCheckpoint ? (
-                    <View
+                    <InsetPanel
+                      gap={10}
+                      padding={14}
                       style={{
                         borderRadius: 18,
                         backgroundColor: '#ecfeff',
-                        borderWidth: 1,
                         borderColor: '#a5f3fc',
-                        padding: 14,
-                        gap: 10,
                       }}
                     >
                       <View
@@ -1457,45 +659,44 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           {savedLessonCheckpoint.newBadges.length > 0 ? (
                             <View style={{ flexDirection: 'column', gap: 8 }}>
                               {savedLessonCheckpoint.newBadges.map((badgeId) => (
-                                <View
+                                <Pill
                                   key={badgeId}
-                                  style={{
-                                    borderRadius: 999,
-                                    borderWidth: 1,
+                                  label={`${copy({
+                                    de: 'Neues Abzeichen',
+                                    en: 'New badge',
+                                    pl: 'Nowa odznaka',
+                                  })}: ${getLocalizedKangurMetadataBadgeName(
+                                    badgeId,
+                                    locale,
+                                    badgeId,
+                                  )}`}
+                                  tone={{
                                     borderColor: '#c7d2fe',
                                     backgroundColor: '#eef2ff',
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 7,
+                                    textColor: '#4338ca',
                                   }}
-                                >
-                                  <Text
-                                    style={{
-                                      color: '#4338ca',
-                                      fontSize: 12,
-                                      fontWeight: '700',
-                                    }}
-                                  >
-                                    {copy({
-                                      de: 'Neues Abzeichen',
-                                      en: 'New badge',
-                                      pl: 'Nowa odznaka',
-                                    })}
-                                    :{' '}
-                                    {getLocalizedKangurMetadataBadgeName(
-                                      badgeId,
-                                      locale,
-                                      badgeId,
-                                    )}
-                                  </Text>
-                                </View>
+                                />
                               ))}
                             </View>
                           ) : null}
                         </View>
                       ) : null}
 
-                      <Pressable
-                        accessibilityRole='button'
+                      <ActionButton
+                        centered
+                        label={
+                          selectedLessonCheckpoint.countsAsLessonCompletion
+                            ? copy({
+                                de: 'Lektion abschliessen',
+                                en: 'Complete lesson',
+                                pl: 'Ukończ lekcję',
+                              })
+                            : copy({
+                                de: 'Checkpoint speichern',
+                                en: 'Save checkpoint',
+                                pl: 'Zapisz checkpoint',
+                              })
+                        }
                         onPress={() => {
                           if (!selectedLesson) {
                             return;
@@ -1509,43 +710,15 @@ export function KangurLessonsScreen(): React.JSX.Element {
                           });
                           setSavedLessonCheckpoint(savedCheckpoint);
                         }}
-                        style={{
-                          alignSelf: 'stretch',
-                          width: '100%',
-                          borderRadius: 999,
-                          backgroundColor: '#0f766e',
-                          paddingHorizontal: 14,
-                          paddingVertical: 10,
-                        }}
-                      >
-                        <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                          {selectedLessonCheckpoint.countsAsLessonCompletion
-                            ? copy({
-                                de: 'Lektion abschliessen',
-                                en: 'Complete lesson',
-                                pl: 'Ukończ lekcję',
-                              })
-                            : copy({
-                                de: 'Checkpoint speichern',
-                                en: 'Save checkpoint',
-                                pl: 'Zapisz checkpoint',
-                              })}
-                        </Text>
-                      </Pressable>
-                    </View>
+                        stretch
+                        style={{ backgroundColor: '#0f766e' }}
+                        tone='primary'
+                      />
+                    </InsetPanel>
                   ) : null}
                 </View>
               ) : (
-                <View
-                  style={{
-                    borderRadius: 18,
-                    borderWidth: 1,
-                    borderColor: '#e2e8f0',
-                    backgroundColor: '#f8fafc',
-                    padding: 14,
-                    gap: 10,
-                  }}
-                >
+                <InsetPanel gap={10} padding={14} style={{ borderRadius: 18 }}>
                   <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
                     {copy({
                       de: 'Lektionsbrief',
@@ -1627,50 +800,29 @@ export function KangurLessonsScreen(): React.JSX.Element {
                       })}
                     </Text>
                   )}
-                </View>
+                </InsetPanel>
               )}
-              <Pressable
-                accessibilityRole='button'
+              <ActionButton
+                label={copy({
+                  de: 'Zurück zur Lektionsliste',
+                  en: 'Back to lesson list',
+                  pl: 'Wróć do listy lekcji',
+                })}
                 onPress={openLessonCatalog}
-                style={{
-                  alignSelf: 'stretch',
-                  width: '100%',
-                  borderRadius: 999,
-                  backgroundColor: '#0f172a',
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                }}
-              >
-                <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                  {copy({
-                    de: 'Zurück zur Lektionsliste',
-                    en: 'Back to lesson list',
-                    pl: 'Wróć do listy lekcji',
-                  })}
-                </Text>
-              </Pressable>
+                stretch
+                tone='primary'
+              />
               {selectedPracticeHref ? (
-                <Link href={selectedPracticeHref!} asChild>
-                  <Pressable
-                    accessibilityRole='button'
-                    style={{
-                      alignSelf: 'stretch',
-                      width: '100%',
-                      borderRadius: 999,
-                      backgroundColor: '#1d4ed8',
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                      {copy({
-                        de: 'Training starten',
-                        en: 'Start practice',
-                        pl: 'Uruchom trening',
-                      })}
-                    </Text>
-                  </Pressable>
-                </Link>
+                <LinkButton
+                  href={selectedPracticeHref}
+                  label={copy({
+                    de: 'Training starten',
+                    en: 'Start practice',
+                    pl: 'Uruchom trening',
+                  })}
+                  stretch
+                  tone='brand'
+                />
               ) : null}
             </Card>
           ) : focusToken ? (
@@ -1696,945 +848,39 @@ export function KangurLessonsScreen(): React.JSX.Element {
                   pl: 'Pełny katalog tematów pozostaje widoczny, więc możesz od razu wybrać najbliższą lekcję albo wrócić do nauki przez plan dnia.',
                 })}
               </Text>
-              <Pressable
-                accessibilityRole='button'
+              <ActionButton
+                label={copy({
+                  de: 'Vollen Katalog öffnen',
+                  en: 'Open full catalog',
+                  pl: 'Otwórz pełny katalog',
+                })}
                 onPress={openLessonCatalog}
-                style={{
-                  alignSelf: 'stretch',
-                  width: '100%',
-                  borderRadius: 999,
-                  backgroundColor: '#0f172a',
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                }}
-              >
-                <Text style={{ color: '#ffffff', fontWeight: '700', textAlign: 'center' }}>
-                  {copy({
-                    de: 'Vollen Katalog öffnen',
-                    en: 'Open full catalog',
-                    pl: 'Otwórz pełny katalog',
-                  })}
-                </Text>
-              </Pressable>
+                stretch
+                tone='primary'
+              />
             </Card>
           ) : null}
-
-          {!isPreparingLessonsView ? (
-            <Card>
-              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                {copy({
-                  de: 'Nach den Lektionen',
-                  en: 'After lessons',
-                  pl: 'Po lekcjach',
-                })}
-              </Text>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                {copy({
-                  de: 'Ergebniszentrale',
-                  en: 'Results hub',
-                  pl: 'Centrum wyników',
-                })}
-              </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {copy({
-                  de: 'Die letzten Ergebnisse bleiben hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.',
-                  en: 'The latest results stay close here so you can jump right back into practice, the matching lesson, or the mode history.',
-                  pl: 'Ostatnie wyniki są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
-                })}
-              </Text>
-
-              <Link href={RESULTS_ROUTE} asChild>
-                <Pressable
-                  accessibilityRole='button'
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    borderWidth: 1,
-                    borderColor: '#cbd5e1',
-                    backgroundColor: '#ffffff',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Vollständigen Verlauf öffnen',
-                      en: 'Open full history',
-                      pl: 'Otwórz pełną historię',
-                    })}
-                  </Text>
-                </Pressable>
-              </Link>
-
-              {lessonRecentResults.isLoading || lessonRecentResults.isRestoringAuth ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Die letzten Ergebnisse werden geladen.',
-                    en: 'Loading recent results.',
-                    pl: 'Ładujemy ostatnie wyniki.',
-                  })}
-                </Text>
-              ) : !lessonRecentResults.isEnabled ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Melde dich an, um hier Ergebnisse zu sehen.',
-                    en: 'Sign in to see results here.',
-                    pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.',
-                  })}
-                </Text>
-              ) : lessonRecentResults.error ? (
-                <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-                  {lessonRecentResults.error}
-                </Text>
-              ) : lessonRecentResults.recentResultItems.length === 0 ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Es gibt hier noch keine Ergebnisse. Beende einen Lauf, um diesen Bereich zu füllen.',
-                    en: 'There are no results here yet. Finish a run to fill this section.',
-                    pl: 'Nie ma tu jeszcze wyników. Ukończ serię, aby wypełnić tę sekcję.',
-                  })}
-                </Text>
-              ) : (
-                <View style={{ gap: 10 }}>
-                  {lessonRecentResults.recentResultItems.map((item) => (
-                    <LessonRecentResultRow key={item.result.id} item={item} />
-                  ))}
-                </View>
-              )}
-            </Card>
-          ) : null}
-
-          {!isPreparingLessonsView ? (
-            <Card>
-              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                {copy({
-                  de: 'Abzeichen',
-                  en: 'Badges',
-                  pl: 'Odznaki',
-                })}
-              </Text>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                {copy({
-                  de: 'Abzeichen-Zentrale',
-                  en: 'Badge hub',
-                  pl: 'Centrum odznak',
-                })}
-              </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {copy({
-                  de: 'Behalte im Blick, was bereits freigeschaltet ist und welches lokale Ziel am nächsten an der nächsten Abzeichenstufe liegt.',
-                  en: 'Keep track of what is already unlocked and which local goal is closest to the next badge threshold.',
-                  pl: 'Śledź, co jest już odblokowane i który lokalny cel jest najbliżej kolejnego progu odznaki.',
-                })}
-              </Text>
-
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                <Pill
-                  label={copy({
-                    de: `Freigeschaltet ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
-                    en: `Unlocked ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
-                    pl: `Odblokowane ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
-                  })}
-                  tone={{
-                    backgroundColor: '#eef2ff',
-                    borderColor: '#c7d2fe',
-                    textColor: '#4338ca',
-                  }}
-                />
-                <Pill
-                  label={copy({
-                    de: `Offen ${lessonBadges.remainingBadges}`,
-                    en: `Remaining ${lessonBadges.remainingBadges}`,
-                    pl: `Do zdobycia ${lessonBadges.remainingBadges}`,
-                  })}
-                  tone={{
-                    backgroundColor: '#fffbeb',
-                    borderColor: '#fde68a',
-                    textColor: '#b45309',
-                  }}
-                />
-              </View>
-
-              {lessonBadges.recentBadges.length === 0 ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.',
-                    en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.',
-                    pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.',
-                  })}
-                </Text>
-              ) : (
-                <View style={{ gap: 10 }}>
-                  <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-                    {copy({
-                      de: 'Zuletzt freigeschaltet',
-                      en: 'Recently unlocked',
-                      pl: 'Ostatnio odblokowane',
-                    })}
-                  </Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    {lessonBadges.recentBadges.map((item) => (
-                      <LessonBadgeChip key={item.id} item={item} />
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              <Link href={PROFILE_ROUTE} asChild>
-                <Pressable
-                  accessibilityRole='button'
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    borderWidth: 1,
-                    borderColor: '#cbd5e1',
-                    backgroundColor: '#ffffff',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Profil und Abzeichen öffnen',
-                      en: 'Open profile and badges',
-                      pl: 'Otwórz profil i odznaki',
-                    })}
-                  </Text>
-                </Pressable>
-              </Link>
-            </Card>
-          ) : null}
-
-          {!isPreparingLessonsView ? (
-            <Card>
-              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                {copy({
-                  de: 'Lektionsbeherrschung',
-                  en: 'Lesson mastery',
-                  pl: 'Opanowanie lekcji',
-                })}
-              </Text>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                {copy({
-                  de: 'Lektionsplan nach dem Lesen',
-                  en: 'Post-reading lesson plan',
-                  pl: 'Plan lekcji po czytaniu',
-                })}
-              </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {copy({
-                  de: 'Verbinde den Katalog und die letzten Checkpoints direkt mit lokal gespeichertem Beherrschungsstand und entscheide sofort, was wiederholt und was nur gehalten werden soll.',
-                  en: 'Connect the catalog and recent checkpoints directly with saved mastery and decide right away what needs review and what only needs maintaining.',
-                  pl: 'Na ekranie lekcji możesz od razu połączyć katalog i ostatnie checkpointy z lokalnie zapisanym poziomem opanowania, aby szybciej wybrać powtórkę.',
-                })}
-              </Text>
-
-              <View style={{ flexDirection: 'column', gap: 8 }}>
-                <Pill
-                  label={copy({
-                    de: `Verfolgt ${lessonMastery.trackedLessons}`,
-                    en: `Tracked ${lessonMastery.trackedLessons}`,
-                    pl: `Śledzone ${lessonMastery.trackedLessons}`,
-                  })}
-                  tone={{
-                    backgroundColor: '#eef2ff',
-                    borderColor: '#c7d2fe',
-                    textColor: '#4338ca',
-                  }}
-                />
-                <Pill
-                  label={copy({
-                    de: `Beherrscht ${lessonMastery.masteredLessons}`,
-                    en: `Mastered ${lessonMastery.masteredLessons}`,
-                    pl: `Opanowane ${lessonMastery.masteredLessons}`,
-                  })}
-                  tone={{
-                    backgroundColor: '#ecfdf5',
-                    borderColor: '#a7f3d0',
-                    textColor: '#047857',
-                  }}
-                />
-                <Pill
-                  label={copy({
-                    de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
-                    en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
-                    pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
-                  })}
-                  tone={{
-                    backgroundColor: '#fffbeb',
-                    borderColor: '#fde68a',
-                    textColor: '#b45309',
-                  }}
-                />
-              </View>
-
-              {lessonMastery.trackedLessons === 0 ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-                    en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-                    pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
-                  })}
-                </Text>
-              ) : (
-                <View style={{ gap: 10 }}>
-                  {lessonFocusSummary ? (
-                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      {lessonFocusSummary}
-                    </Text>
-                  ) : null}
-
-                  <View style={{ alignSelf: 'stretch', gap: 10 }}>
-                    {weakestLesson ? (
-                      <Link href={weakestLesson.lessonHref} asChild>
-                        <Pressable
-                          accessibilityRole='button'
-                          style={{
-                            alignSelf: 'stretch',
-                            width: '100%',
-                            borderRadius: 999,
-                            backgroundColor: '#0f172a',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
-                          }}
-                        >
-                          <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                            {copy({
-                              de: `Fokus: ${weakestLesson.title}`,
-                              en: `Focus: ${weakestLesson.title}`,
-                              pl: `Skup się: ${weakestLesson.title}`,
-                            })}
-                          </Text>
-                        </Pressable>
-                      </Link>
-                    ) : null}
-                    {strongestLesson ? (
-                      <Link href={strongestLesson.lessonHref} asChild>
-                        <Pressable
-                          accessibilityRole='button'
-                          style={{
-                            alignSelf: 'stretch',
-                            width: '100%',
-                            borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor: '#cbd5e1',
-                            backgroundColor: '#ffffff',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
-                          }}
-                        >
-                          <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                            {copy({
-                              de: `Stärke halten: ${strongestLesson.title}`,
-                              en: `Maintain strength: ${strongestLesson.title}`,
-                              pl: `Podtrzymaj: ${strongestLesson.title}`,
-                            })}
-                          </Text>
-                        </Pressable>
-                      </Link>
-                    ) : null}
-                  </View>
-
-                  {lessonMastery.weakest[0] ? (
-                    <LessonMasteryRow
-                      insight={lessonMastery.weakest[0]}
-                      title={copy({
-                        de: 'Zum Wiederholen',
-                        en: 'Needs review',
-                        pl: 'Do powtórki',
-                      })}
-                    />
-                  ) : null}
-                  {lessonMastery.strongest[0] ? (
-                    <LessonMasteryRow
-                      insight={lessonMastery.strongest[0]}
-                      title={copy({
-                        de: 'Stärkste Lektion',
-                        en: 'Strongest lesson',
-                        pl: 'Najmocniejsza lekcja',
-                      })}
-                    />
-                  ) : null}
-                </View>
-              )}
-            </Card>
-          ) : null}
-
-          {!isPreparingLessonsView ? (
-            <Card>
-              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                {copy({
-                  de: 'Letzte Lektions-Checkpoints',
-                  en: 'Recent lesson checkpoints',
-                  pl: 'Ostatnie checkpointy lekcji',
-                })}
-              </Text>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                {copy({
-                  de: 'Weiter mit Lektionen',
-                  en: 'Continue with lessons',
-                  pl: 'Kontynuuj lekcje',
-                })}
-              </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {copy({
-                  de: 'Die zuletzt lokal gespeicherten Lektionen bleiben hier griffbereit, damit du direkt in das naechste Lesen oder passende Training wechseln kannst.',
-                  en: 'The most recently saved lessons stay visible here so you can jump straight into the next reading block or matching practice.',
-                  pl: 'Ostatnio zapisane lekcje są tutaj pod ręką, aby można było od razu przejść do kolejnego czytania albo pasującego treningu.',
-                })}
-              </Text>
-
-              {lessonCheckpoints.recentCheckpoints.length === 0 ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Es gibt noch keine gespeicherten Checkpoints. Oeffne eine Lektion und speichere den ersten Stand, damit er hier erscheint.',
-                    en: 'There are no saved checkpoints yet. Open a lesson and save the first state so it appears here.',
-                    pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby pojawił się tutaj.',
-                  })}
-                </Text>
-              ) : (
-                <View style={{ gap: 10 }}>
-                  {lessonCheckpoints.recentCheckpoints.map((item) => (
-                    <LessonCheckpointRow key={item.componentId} item={item} />
-                  ))}
-                  <Link href='/lessons' asChild>
-                    <Pressable
-                      accessibilityRole='button'
-                      style={{
-                        alignSelf: 'stretch',
-                        width: '100%',
-                        borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: '#cbd5e1',
-                        backgroundColor: '#ffffff',
-                        paddingHorizontal: 14,
-                        paddingVertical: 10,
-                      }}
-                    >
-                      <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                        {copy({
-                          de: 'Lektionen öffnen',
-                          en: 'Open lessons',
-                          pl: 'Otwórz lekcje',
-                        })}
-                      </Text>
-                    </Pressable>
-                  </Link>
-                </View>
-              )}
-            </Card>
-          ) : null}
-
-          {!isPreparingLessonsView ? (
-            <Card>
-              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                {copy({
-                  de: 'Nach den Lektionen',
-                  en: 'After lessons',
-                  pl: 'Po lekcjach',
-                })}
-              </Text>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                {copy({
-                  de: 'Plan nach den Lektionen',
-                  en: 'Post-lesson plan',
-                  pl: 'Plan po lekcjach',
-                })}
-              </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {copy({
-                  de: 'Wandle das Lesen der Lektionen direkt in die nächsten Schritte um, ohne den Lernfluss zu verlieren.',
-                  en: 'Turn lesson reading directly into the next steps without losing the study flow.',
-                  pl: 'Zamień czytanie lekcji od razu w kolejne kroki, bez gubienia rytmu nauki.',
-                })}
-              </Text>
-
-              {lessonsAssignments.assignmentItems.length === 0 ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Es gibt noch keine nächsten Schritte. Öffne weitere Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.',
-                    en: 'There are no next steps yet. Open more lessons or complete more practice to build the next plan.',
-                    pl: 'Nie ma jeszcze kolejnych kroków. Otwórz kolejne lekcje albo wykonaj więcej treningów, aby zbudować następny plan.',
-                  })}
-                </Text>
-              ) : (
-                <View style={{ gap: 10 }}>
-                  {lessonsAssignments.assignmentItems.map((item) => (
-                    <LessonsAssignmentRow key={item.assignment.id} item={item} />
-                  ))}
-                </View>
-              )}
-            </Card>
-          ) : null}
-
-          {!isPreparingLessonsView ? (
-            <Card>
-              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                {copy({
-                  de: 'Nach der Lektion',
-                  en: 'After the lesson',
-                  pl: 'Po lekcji',
-                })}
-              </Text>
-              <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-                {copy({
-                  de: 'Schneller Rückweg zu Rivalen',
-                  en: 'Quick return to rivals',
-                  pl: 'Szybki powrót do rywali',
-                })}
-              </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {duelSectionDescription}
-              </Text>
-
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                <Pill
-                  label={copy({
-                    de: `Rivalen ${lessonDuels.opponents.length}`,
-                    en: `Rivals ${lessonDuels.opponents.length}`,
-                    pl: `Rywale ${lessonDuels.opponents.length}`,
-                  })}
-                  tone={{
-                    backgroundColor: '#eef2ff',
-                    borderColor: '#c7d2fe',
-                    textColor: '#4338ca',
-                  }}
-                />
-                <Pill
-                  label={
-                    lessonDuels.currentRank
-                      ? copy({
-                          de: `Deine Position #${lessonDuels.currentRank}`,
-                          en: `Your rank #${lessonDuels.currentRank}`,
-                          pl: `Twoja pozycja #${lessonDuels.currentRank}`,
-                        })
-                      : copy({
-                          de: 'Wartet auf Sichtbarkeit',
-                          en: 'Waiting for visibility',
-                          pl: 'Czeka na widoczność',
-                        })
-                  }
-                  tone={{
-                    backgroundColor: '#ecfdf5',
-                    borderColor: '#a7f3d0',
-                    textColor: '#047857',
-                  }}
-                />
-              </View>
-
-              {lessonDuels.isRestoringAuth || lessonDuels.isLoading ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Der Duellstand nach der Lektion wird geladen.',
-                    en: 'Loading the post-lesson duel standing.',
-                    pl: 'Pobieramy stan pojedynków po lekcji.',
-                  })}
-                </Text>
-              ) : lessonDuels.error ? (
-                <View style={{ gap: 10 }}>
-                  <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-                    {lessonDuels.error}
-                  </Text>
-                  <Pressable
-                    accessibilityRole='button'
-                    onPress={() => {
-                      void lessonDuels.refresh();
-                    }}
-                    style={{
-                      alignSelf: 'stretch',
-                      width: '100%',
-                      borderRadius: 999,
-                      backgroundColor: '#0f172a',
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                      {copy({
-                        de: 'Duelle aktualisieren',
-                        en: 'Refresh duels',
-                        pl: 'Odśwież pojedynki',
-                      })}
-                    </Text>
-                  </Pressable>
-                </View>
-              ) : !lessonDuels.isAuthenticated ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                  {copy({
-                    de: 'Melde dich an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
-                    en: 'Sign in to see duel standing, recent rivals, and quick rematches here.',
-                    pl: 'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
-                  })}
-                </Text>
-              ) : (
-                <View style={{ gap: 12 }}>
-                  {lessonDuels.currentEntry ? (
-                    <View
-                      style={{
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: '#bfdbfe',
-                        backgroundColor: '#eff6ff',
-                        padding: 14,
-                        gap: 8,
-                      }}
-                    >
-                      <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                        {copy({
-                          de: 'DEIN DUELLSTAND',
-                          en: 'YOUR DUEL SNAPSHOT',
-                          pl: 'TWÓJ WYNIK W POJEDYNKACH',
-                        })}
-                      </Text>
-                      <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                        #{lessonDuels.currentRank} {lessonDuels.currentEntry.displayName}
-                      </Text>
-                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                        {copy({
-                          de: `Siege ${lessonDuels.currentEntry.wins} • Niederlagen ${lessonDuels.currentEntry.losses} • Unentschieden ${lessonDuels.currentEntry.ties}`,
-                          en: `Wins ${lessonDuels.currentEntry.wins} • Losses ${lessonDuels.currentEntry.losses} • Ties ${lessonDuels.currentEntry.ties}`,
-                          pl: `Wygrane ${lessonDuels.currentEntry.wins} • Porażki ${lessonDuels.currentEntry.losses} • Remisy ${lessonDuels.currentEntry.ties}`,
-                        })}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      {copy({
-                        de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                        en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
-                        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
-                      })}
-                    </Text>
-                  )}
-
-                  {lessonDuels.actionError ? (
-                    <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-                      {lessonDuels.actionError}
-                    </Text>
-                  ) : null}
-
-                  {lessonDuels.opponents.length === 0 ? (
-                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      {copy({
-                        de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
-                        en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
-                        pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
-                      })}
-                    </Text>
-                  ) : (
-                    <View style={{ gap: 12 }}>
-                      {lessonDuels.opponents.map((opponent) => (
-                        <View
-                          key={opponent.learnerId}
-                          style={{
-                            borderRadius: 20,
-                            borderWidth: 1,
-                            borderColor: '#e2e8f0',
-                            backgroundColor: '#f8fafc',
-                            padding: 14,
-                            gap: 8,
-                          }}
-                        >
-                          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-                            {opponent.displayName}
-                          </Text>
-                          <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                            {copy({
-                              de: `Letztes Duell ${new Intl.DateTimeFormat(locale, {
-                                dateStyle: 'medium',
-                                timeStyle: 'short',
-                              }).format(new Date(opponent.lastPlayedAt))}`,
-                              en: `Last duel ${new Intl.DateTimeFormat(locale, {
-                                dateStyle: 'medium',
-                                timeStyle: 'short',
-                              }).format(new Date(opponent.lastPlayedAt))}`,
-                              pl: `Ostatni pojedynek ${new Intl.DateTimeFormat(locale, {
-                                dateStyle: 'medium',
-                                timeStyle: 'short',
-                              }).format(new Date(opponent.lastPlayedAt))}`,
-                            })}
-                          </Text>
-                          <Pressable
-                            accessibilityRole='button'
-                            disabled={lessonDuels.isActionPending}
-                            onPress={() => {
-                              void lessonDuels.createRematch(opponent.learnerId).then((sessionId) => {
-                                if (sessionId) {
-                                  openDuelSession(sessionId);
-                                }
-                              });
-                            }}
-                            style={{
-                              alignSelf: 'stretch',
-                              width: '100%',
-                              borderRadius: 999,
-                              backgroundColor: lessonDuels.isActionPending ? '#94a3b8' : '#1d4ed8',
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                            }}
-                          >
-                            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                              {lessonDuels.pendingOpponentLearnerId === opponent.learnerId
-                                ? copy({
-                                    de: 'Rückkampf wird gesendet...',
-                                    en: 'Sending rematch...',
-                                    pl: 'Wysyłanie rewanżu...',
-                                  })
-                                : copy({
-                                    de: 'Schneller Rückkampf',
-                                    en: 'Quick rematch',
-                                    pl: 'Szybki rewanż',
-                                  })}
-                            </Text>
-                          </Pressable>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  <View style={{ alignSelf: 'stretch', gap: 10 }}>
-                    <Pressable
-                      accessibilityRole='button'
-                      onPress={() => {
-                        void lessonDuels.refresh();
-                      }}
-                      style={{
-                        alignSelf: 'stretch',
-                        width: '100%',
-                        borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: '#cbd5e1',
-                        backgroundColor: '#ffffff',
-                        paddingHorizontal: 14,
-                        paddingVertical: 10,
-                      }}
-                    >
-                      <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                        {copy({
-                          de: 'Duelle aktualisieren',
-                          en: 'Refresh duels',
-                          pl: 'Odśwież pojedynki',
-                        })}
-                      </Text>
-                    </Pressable>
-
-                    <Link href={createKangurDuelsHref()} asChild>
-                      <Pressable
-                        accessibilityRole='button'
-                        style={{
-                          alignSelf: 'stretch',
-                          width: '100%',
-                          borderRadius: 999,
-                          borderWidth: 1,
-                          borderColor: '#cbd5e1',
-                          backgroundColor: '#ffffff',
-                          paddingHorizontal: 14,
-                          paddingVertical: 10,
-                        }}
-                      >
-                        <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                          {copy({
-                            de: 'Duelle öffnen',
-                            en: 'Open duels',
-                            pl: 'Otwórz pojedynki',
-                          })}
-                        </Text>
-                      </Pressable>
-                    </Link>
-                  </View>
-                </View>
-              )}
-            </Card>
-          ) : null}
-
-          {!isPreparingLessonsView ? (
-            <Card>
-              <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                {copy({
-                  de: 'Lektionskatalog',
-                  en: 'Lesson catalog',
-                  pl: 'Katalog lekcji',
-                })}
-              </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {copy({
-                  de: 'Beginne mit neuen Themen oder kehre zu Bereichen zurück, die Wiederholung brauchen.',
-                  en: 'Start with new topics or return to the areas that need review.',
-                  pl: 'Zacznij od nowych tematów albo wróć do obszarów wymagających powtórki.',
-                })}
-              </Text>
-
-              <View style={{ gap: 12 }}>
-                {lessons.map((item) => {
-                  const masteryTone = getMasteryTone(item.mastery.badgeAccent);
-                  const href: Href = {
-                    pathname: '/lessons',
-                    params: {
-                      focus: item.lesson.componentId,
-                    },
-                  };
-
-                  return (
-                    <View
-                      key={item.lesson.id}
-                      style={{
-                        borderRadius: 22,
-                        borderWidth: 1,
-                        borderColor: item.isFocused ? '#1d4ed8' : '#e2e8f0',
-                        backgroundColor: item.isFocused ? '#eff6ff' : '#f8fafc',
-                        padding: 16,
-                        gap: 10,
-                      }}
-                    >
-                      <Link href={href} asChild>
-                        <Pressable
-                          accessibilityRole='button'
-                          onPress={() => {
-                            setDismissedFocusToken(null);
-                          }}
-                          style={{
-                            gap: 10,
-                          }}
-                        >
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              justifyContent: 'space-between',
-                              alignItems: 'flex-start',
-                              gap: 12,
-                            }}
-                          >
-                            <View style={{ flex: 1, gap: 4 }}>
-                              <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                                {item.lesson.emoji} {item.lesson.title}
-                              </Text>
-                              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                                {item.lesson.description}
-                              </Text>
-                            </View>
-                            <Pill label={item.mastery.statusLabel} tone={masteryTone} />
-                          </View>
-
-                          <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                            {item.mastery.summaryLabel}
-                          </Text>
-
-                          {item.checkpointSummary ? (
-                            <View
-                              style={{
-                                borderRadius: 18,
-                                borderWidth: 1,
-                                borderColor: '#bfdbfe',
-                                backgroundColor: '#eff6ff',
-                                padding: 12,
-                                gap: 6,
-                              }}
-                            >
-                              <Text
-                                style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '700' }}
-                              >
-                                {copy({
-                                  de: 'Letzter Checkpoint',
-                                  en: 'Latest checkpoint',
-                                  pl: 'Ostatni checkpoint',
-                                })}
-                              </Text>
-                              <Text style={{ color: '#0f172a', fontSize: 13, lineHeight: 18 }}>
-                                {copy({
-                                  de: `Zuletzt gespeichert ${new Intl.DateTimeFormat(
-                                    getKangurMobileLocaleTag(locale),
-                                    {
-                                      dateStyle: 'medium',
-                                      timeStyle: 'short',
-                                    },
-                                  ).format(new Date(item.checkpointSummary.lastCompletedAt))}`,
-                                  en: `Last saved ${new Intl.DateTimeFormat(
-                                    getKangurMobileLocaleTag(locale),
-                                    {
-                                      dateStyle: 'medium',
-                                      timeStyle: 'short',
-                                    },
-                                  ).format(new Date(item.checkpointSummary.lastCompletedAt))}`,
-                                  pl: `Ostatni zapis ${new Intl.DateTimeFormat(
-                                    getKangurMobileLocaleTag(locale),
-                                    {
-                                      dateStyle: 'medium',
-                                      timeStyle: 'short',
-                                    },
-                                  ).format(new Date(item.checkpointSummary.lastCompletedAt))}`,
-                                })}
-                              </Text>
-                              <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-                                {copy({
-                                  de: `Ergebnis ${item.checkpointSummary.lastScorePercent}% • bestes ${item.checkpointSummary.bestScorePercent}%`,
-                                  en: `Score ${item.checkpointSummary.lastScorePercent}% • best ${item.checkpointSummary.bestScorePercent}%`,
-                                  pl: `Wynik ${item.checkpointSummary.lastScorePercent}% • najlepszy ${item.checkpointSummary.bestScorePercent}%`,
-                                })}
-                              </Text>
-                            </View>
-                          ) : null}
-                        </Pressable>
-                      </Link>
-
-                      <View style={{ flexDirection: 'column', gap: 8 }}>
-                        <Link href={href} asChild>
-                          <Pressable
-                            accessibilityRole='button'
-                            onPress={() => {
-                              setDismissedFocusToken(null);
-                            }}
-                            style={{
-                              alignSelf: 'stretch',
-                              width: '100%',
-                              borderRadius: 999,
-                              backgroundColor: '#0f172a',
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                            }}
-                          >
-                            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                              {`${copy({
-                                de: 'Lektion öffnen',
-                                en: 'Open lesson',
-                                pl: 'Otwórz lekcję',
-                              })}: ${item.lesson.title}`}
-                            </Text>
-                          </Pressable>
-                        </Link>
-                        {item.practiceHref ? (
-                          <Link href={item.practiceHref} asChild>
-                          <Pressable
-                            accessibilityRole='button'
-                            style={{
-                              alignSelf: 'stretch',
-                              width: '100%',
-                              borderRadius: 999,
-                              borderWidth: 1,
-                              borderColor: '#cbd5e1',
-                              backgroundColor: '#ffffff',
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                            }}
-                          >
-                              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                                {`${copy({
-                                  de: 'Training starten',
-                                  en: 'Start practice',
-                                  pl: 'Uruchom trening',
-                                })}: ${item.lesson.title}`}
-                              </Text>
-                            </Pressable>
-                          </Link>
-                        ) : null}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </Card>
-          ) : null}
+          <LessonsSecondarySections
+            copy={copy}
+            duelSectionDescription={duelSectionDescription}
+            isPreparingLessonsView={isPreparingLessonsView}
+            lessonBadges={lessonBadges}
+            lessonCheckpoints={lessonCheckpoints}
+            lessonDuels={lessonDuels}
+            lessonFocusSummary={lessonFocusSummary}
+            lessonMastery={lessonMastery}
+            lessonRecentResults={lessonRecentResults}
+            lessons={lessons}
+            lessonsAssignments={lessonsAssignments}
+            locale={locale}
+            onOpenCatalogLesson={() => {
+              setDismissedFocusToken(null);
+            }}
+            openDuelSession={openDuelSession}
+            profileHref={PROFILE_ROUTE}
+            resultsHref={RESULTS_ROUTE}
+          />
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }

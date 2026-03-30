@@ -1,4 +1,4 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -32,27 +32,46 @@ type ShapeCardProps = {
   clue: string;
 };
 
-const ShapeIcon = ({ shape, color }: { shape: ShapeId; color: string }): JSX.Element => (
-  <svg aria-hidden='true' className='h-20 w-20' viewBox='0 0 120 120'>
-    {shape === 'circle' ? (
-      <circle cx='60' cy='60' r='34' fill={color} stroke='#0f172a' strokeWidth='4' />
-    ) : null}
-    {shape === 'square' ? (
-      <rect x='28' y='28' width='64' height='64' rx='10' fill={color} stroke='#0f172a' strokeWidth='4' />
-    ) : null}
-    {shape === 'triangle' ? (
-      <polygon points='60,20 100,96 20,96' fill={color} stroke='#0f172a' strokeWidth='4' />
-    ) : null}
-    {shape === 'rectangle' ? (
-      <rect x='18' y='36' width='84' height='48' rx='10' fill={color} stroke='#0f172a' strokeWidth='4' />
-    ) : null}
-  </svg>
-);
-
 const ShapeCard = ({ shape, color, label, clue }: ShapeCardProps): JSX.Element => (
   <KangurLessonCallout accent='amber' className='text-center'>
     <div className='flex justify-center'>
-      <ShapeIcon shape={shape} color={color} />
+      <svg aria-hidden='true' className='h-20 w-20' viewBox='0 0 120 120'>
+        {shape === 'circle' ? (
+          <circle cx='60' cy='60' r='34' fill={color} stroke='#0f172a' strokeWidth='4' />
+        ) : null}
+        {shape === 'square' ? (
+          <rect
+            x='28'
+            y='28'
+            width='64'
+            height='64'
+            rx='10'
+            fill={color}
+            stroke='#0f172a'
+            strokeWidth='4'
+          />
+        ) : null}
+        {shape === 'triangle' ? (
+          <polygon
+            points='60,20 100,96 20,96'
+            fill={color}
+            stroke='#0f172a'
+            strokeWidth='4'
+          />
+        ) : null}
+        {shape === 'rectangle' ? (
+          <rect
+            x='18'
+            y='36'
+            width='84'
+            height='48'
+            rx='10'
+            fill={color}
+            stroke='#0f172a'
+            strokeWidth='4'
+          />
+        ) : null}
+      </svg>
     </div>
     <div className='mt-3 text-lg font-bold [color:var(--kangur-page-text)]'>{label}</div>
     <KangurLessonCaption className='mt-2'>{clue}</KangurLessonCaption>

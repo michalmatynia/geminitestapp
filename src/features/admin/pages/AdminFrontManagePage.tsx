@@ -2,8 +2,9 @@
 
 import { SaveIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   FRONT_PAGE_OPTIONS,
@@ -26,6 +27,9 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 type FrontAppOption = FrontPageSelectableApp;
 
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
+const FRONT_PAGE_OPTION_LABELS = new Map(
+  FRONT_PAGE_OPTIONS.map((option: FrontPageOption) => [option.id, option.title])
+);
 
 export function AdminFrontManagePage(): React.ReactNode {
   const settingsQuery = useSettingsMap();
@@ -50,20 +54,50 @@ function AdminFrontManageContent({
   initialSelected: FrontAppOption;
 }): React.ReactNode {
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const [selected, setSelected] = useState<FrontAppOption>(initialSelected);
   const updateSetting = useUpdateSetting();
+  const isDirty = selected !== initialSelected;
+  const currentLabel = useMemo(
+    () => FRONT_PAGE_OPTION_LABELS.get(initialSelected) ?? initialSelected,
+    [initialSelected]
+  );
+  const pendingLabel = useMemo(
+    () => FRONT_PAGE_OPTION_LABELS.get(selected) ?? selected,
+    [selected]
+  );
 
-  const handleSave = async (): Promise<void> => {
+  const persistSelection = async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({
         key: FRONT_PAGE_SETTING_KEY,
         value: selected,
       });
-      toast('Front page updated', { variant: 'success' });
+      toast(`Front page updated to ${pendingLabel}`, { variant: 'success' });
     } catch (error) {
       logClientCatch(error, { source: 'AdminFrontManagePage', action: 'saveSettings' });
       toast('Failed to save front page setting', { variant: 'error' });
     }
+  };
+
+  const handleSave = async (): Promise<void> => {
+    if (!isDirty) {
+      return;
+    }
+
+    if (initialSelected !== 'cms' && selected === 'cms') {
+      confirm({
+        title: 'Switch HOME to CMS?',
+        message:
+          'This will stop mounting StudiQ at HOME and restore the CMS-owned page with zoning. Continue only if you want the CMS page to own /.',
+        confirmText: 'Switch to CMS',
+        isDangerous: true,
+        onConfirm: persistSelection,
+      });
+      return;
+    }
+
+    await persistSelection();
   };
 
   return (
@@ -85,6 +119,20 @@ function AdminFrontManageContent({
         className='p-6'
       >
         <div className='space-y-4'>
+          <div className='rounded-xl border border-border/40 bg-card/20 px-4 py-3 text-sm text-gray-300'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <span className='text-gray-400'>Current live HOME:</span>
+              <Badge variant='outline' className='border-white/10 text-white'>
+                {currentLabel}
+              </Badge>
+              {isDirty ? (
+                <Badge variant='active' className='border-blue-500/60 text-blue-200'>
+                  Unsaved change: {pendingLabel}
+                </Badge>
+              ) : null}
+            </div>
+          </div>
+
           <div className='grid gap-3'>
             {FRONT_PAGE_OPTIONS.map(
               (option: FrontPageOption) => (
@@ -92,6 +140,8 @@ function AdminFrontManageContent({
                   key={option.id}
                   type='button'
                   onClick={() => setSelected(option.id)}
+                  aria-pressed={selected === option.id}
+                  data-front-page-option-id={option.id}
                   className={cn(
                     'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors',
                     selected === option.id
@@ -141,13 +191,11 @@ function AdminFrontManageContent({
           <div className='flex justify-end pt-4'>
             <Button
               onClick={() => void handleSave()}
-              disabled={updateSetting.isPending}
+              disabled={updateSetting.isPending || !isDirty}
               variant='solid'
               className='min-w-[140px]'
             >
-              {updateSetting.isPending ? (
-                'Saving...'
-              ) : (
+              {updateSetting.isPending ? 'Saving...' : !isDirty ? 'Saved' : (
                 <>
                   <SaveIcon className='mr-2 size-4' />
                   Save Selection
@@ -157,6 +205,7 @@ function AdminFrontManageContent({
           </div>
         </div>
       </FormSection>
+      <ConfirmationModal />
     </div>
   );
 }

@@ -4,13 +4,19 @@ import { z } from 'zod';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
-  generateKangurSocialPostDraft,
-} from '@/features/kangur/server/social-posts-generation';
-import { updateKangurSocialPost } from '@/features/kangur/server/social-posts-repository';
-import { findKangurSocialImageAddonsByIds } from '@/features/kangur/server/social-image-addons-repository';
+  enqueueKangurSocialPipelineJob,
+  recoverKangurSocialPipelineQueue,
+  startKangurSocialPipelineQueue,
+} from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
+import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { forbiddenError, notFoundError } from '@/shared/errors/app-error';
+import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
+import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 
 const bodySchema = z.object({
   docReferences: z.array(z.string().trim().min(1)).optional(),
@@ -20,6 +26,8 @@ const bodySchema = z.object({
   visionModelId: z.string().trim().optional(),
   imageAddonIds: z.array(z.string().trim().min(1)).optional(),
   projectUrl: z.string().trim().optional(),
+  prefetchedVisualAnalysis: kangurSocialVisualAnalysisSchema.optional(),
+  requireVisualAnalysisInBody: z.boolean().optional(),
 });
 
 export async function postKangurSocialPostGenerateHandler(
@@ -33,81 +41,76 @@ export async function postKangurSocialPostGenerateHandler(
 
   const parsed = bodySchema.parse(ctx.body ?? {});
   const startedAt = Date.now();
+  const normalizedProjectUrl = normalizeKangurSocialProjectUrl(parsed.projectUrl);
+  const projectUrlError = getKangurSocialProjectUrlError(normalizedProjectUrl);
 
   const imageAddonIds = (parsed.imageAddonIds ?? []).map((id) => id.trim()).filter(Boolean);
-  const imageAddons =
-    imageAddonIds.length > 0 ? await findKangurSocialImageAddonsByIds(imageAddonIds) : [];
 
   try {
-    const draft = await generateKangurSocialPostDraft({
-      docReferences: parsed.docReferences,
-      notes: parsed.notes,
-      modelId: parsed.modelId,
-      visionModelId: parsed.visionModelId,
-      imageAddons,
-      projectUrl: parsed.projectUrl,
-    });
-
-    if (parsed.postId) {
-      const updated = await updateKangurSocialPost(parsed.postId, {
-        titlePl: draft.titlePl,
-        titleEn: draft.titleEn,
-        bodyPl: draft.bodyPl,
-        bodyEn: draft.bodyEn,
-        combinedBody: draft.combinedBody,
-        generatedSummary: draft.summary,
-        docReferences: draft.docReferences,
-        visualSummary: draft.visualSummary,
-        visualHighlights: draft.visualHighlights,
-        visualDocUpdates: draft.visualDocUpdates,
-        docUpdatesAppliedAt: null,
-        docUpdatesAppliedBy: null,
-        imageAddonIds,
-        ...(parsed.modelId ? { brainModelId: parsed.modelId } : {}),
-        ...(parsed.visionModelId ? { visionModelId: parsed.visionModelId } : {}),
-        status: 'draft',
-      });
-
-      if (!updated) {
-        throw notFoundError('Social post not found.');
-      }
-      void logKangurServerEvent({
-        source: 'kangur.social-posts.generate',
-        message: 'Kangur social post generated and updated',
-        request: req,
-        requestContext: ctx,
-        actor,
-        statusCode: 200,
-        context: {
-          postId: updated.id,
-          docReferenceCount: parsed.docReferences?.length ?? 0,
-          imageAddonCount: imageAddonIds.length,
-          notesLength: parsed.notes?.trim().length ?? 0,
-          durationMs: Date.now() - startedAt,
-          updated: true,
-        },
-      });
-      return NextResponse.json(updated, { headers: { 'Cache-Control': 'no-store' } });
+    if (projectUrlError) {
+      throw operationFailedError(projectUrlError);
     }
+
+    if (!isRedisAvailable()) {
+      throw operationFailedError(
+        'Social pipeline queue is not available. Configure REDIS_URL and start Redis.'
+      );
+    }
+
+    const redisReachable = await isRedisReachable();
+    if (!redisReachable) {
+      throw operationFailedError(
+        'Social pipeline queue is not available. Redis is configured but unreachable.'
+      );
+    }
+
+    await recoverKangurSocialPipelineQueue();
+    startKangurSocialPipelineQueue();
+
+    const jobId = await enqueueKangurSocialPipelineJob({
+      type: 'manual-post-generation',
+      input: {
+        postId: parsed.postId?.trim() || null,
+        docReferences: parsed.docReferences ?? [],
+        notes: parsed.notes ?? '',
+        modelId: parsed.modelId?.trim() || null,
+        visionModelId: parsed.visionModelId?.trim() || null,
+        imageAddonIds,
+        projectUrl: normalizedProjectUrl,
+        prefetchedVisualAnalysis: parsed.prefetchedVisualAnalysis,
+        requireVisualAnalysisInBody: parsed.requireVisualAnalysisInBody ?? false,
+        actorId: actor.actorId,
+      },
+    });
 
     void logKangurServerEvent({
       source: 'kangur.social-posts.generate',
-      message: 'Kangur social post draft generated',
+      message: 'Kangur social post generation queued',
       request: req,
       requestContext: ctx,
       actor,
-      statusCode: 200,
+      statusCode: 202,
       context: {
-        postId: null,
+        postId: parsed.postId ?? null,
         docReferenceCount: parsed.docReferences?.length ?? 0,
         imageAddonCount: imageAddonIds.length,
         notesLength: parsed.notes?.trim().length ?? 0,
         durationMs: Date.now() - startedAt,
-        updated: false,
+        jobId,
       },
     });
 
-    return NextResponse.json(draft, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json(
+      {
+        success: true,
+        jobId,
+        jobType: 'manual-post-generation',
+      },
+      {
+        status: 202,
+        headers: { 'Cache-Control': 'no-store' },
+      }
+    );
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'kangur.social-posts.generate',

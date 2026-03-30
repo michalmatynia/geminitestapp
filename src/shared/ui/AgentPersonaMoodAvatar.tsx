@@ -18,16 +18,17 @@ type AgentPersonaMoodAvatarProps = {
 
 const AGENT_PERSONA_MOOD_AVATAR_IMAGE_SIZES = '64px';
 
-export function AgentPersonaMoodAvatar({
-  svgContent,
-  avatarImageUrl,
-  label,
-  className,
-  imgClassName,
-  svgClassName,
-  fallbackIconClassName,
-  'data-testid': dataTestId,
-}: AgentPersonaMoodAvatarProps): React.JSX.Element {
+export function AgentPersonaMoodAvatar(props: AgentPersonaMoodAvatarProps): React.JSX.Element {
+  const {
+    svgContent,
+    avatarImageUrl,
+    label,
+    className,
+    imgClassName,
+    svgClassName,
+    fallbackIconClassName,
+    'data-testid': dataTestId,
+  } = props;
   const normalizedImageUrl = typeof avatarImageUrl === 'string' ? avatarImageUrl.trim() : '';
   const hasImage = normalizedImageUrl.length > 0;
   const hasSvg = typeof svgContent === 'string' && svgContent.trim().length > 0;

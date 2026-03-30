@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const settingsStoreProviderPropsMock = vi.fn();
 const mutateAsyncMock = vi.fn();
+const adminFavoritesRuntimeProviderPropsMock = vi.fn();
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/admin/products',
@@ -31,6 +32,13 @@ vi.mock('@/features/admin/components/Menu', () => ({
 
 vi.mock('@/features/admin/components/UserNav', () => ({
   UserNav: () => <div data-testid='user-nav' />,
+}));
+
+vi.mock('@/features/admin/components/AdminFavoritesRuntimeProvider', () => ({
+  AdminFavoritesRuntimeProvider: ({ children }: { children: React.ReactNode }) => {
+    adminFavoritesRuntimeProviderPropsMock({ mounted: true });
+    return <div data-testid='admin-favorites-runtime-provider'>{children}</div>;
+  },
 }));
 
 vi.mock('@/features/admin/context/AdminLayoutContext', () => ({
@@ -113,6 +121,7 @@ describe('AdminLayout', () => {
     settingsStoreProviderPropsMock.mockClear();
     mutateAsyncMock.mockReset();
     mutateAsyncMock.mockResolvedValue(undefined);
+    adminFavoritesRuntimeProviderPropsMock.mockClear();
   });
 
   it('mounts the admin settings store under QueryProvider', () => {
@@ -125,6 +134,12 @@ describe('AdminLayout', () => {
     expect(screen.getByTestId('query-provider')).toContainElement(
       screen.getByTestId('settings-store-provider')
     );
+    expect(screen.getByTestId('settings-store-provider')).toContainElement(
+      screen.getByTestId('admin-favorites-runtime-provider')
+    );
+    expect(adminFavoritesRuntimeProviderPropsMock).toHaveBeenCalledWith({
+      mounted: true,
+    });
     expect(settingsStoreProviderPropsMock).toHaveBeenCalledWith({
       mode: 'admin',
       canReadAdminSettings: false,

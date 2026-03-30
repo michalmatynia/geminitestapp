@@ -8,6 +8,7 @@ import {
   clearStoredActiveLearnerId,
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
+import { saveProgressOwnerKey } from '@/features/kangur/ui/services/progress';
 import { kangurAuthUserSchema } from '@kangur/contracts';
 
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';
@@ -22,9 +23,14 @@ type SessionUserCacheEntry = {
   expiresAt: number;
 };
 
+type KangurBootstrapWindow = Window & {
+  __KANGUR_AUTH_BOOTSTRAP__?: KangurUser | null;
+};
+
 let sessionUserCache: SessionUserCacheEntry | null = null;
 let sessionUserInFlight: Promise<KangurUser> | null = null;
 let sessionUserCacheEpoch = 0;
+let sessionUserBootstrapHydrated = false;
 
 const kangurAuthApiClient = createKangurApiClient({
   fetchImpl: fetch,
@@ -36,6 +42,10 @@ const unauthorizedError = (): Error & { status: number } => {
   const error = new Error('Authentication required') as Error & { status: number };
   error.status = 401;
   return error;
+};
+
+const clearStoredProgressOwnerKey = (): void => {
+  saveProgressOwnerKey(null);
 };
 
 export const clearSessionUserCache = (): void => {
@@ -54,6 +64,7 @@ export const prepareLoginHref = (returnUrl: string): string => {
 const cacheResolvedUser = (user: KangurUser | null, anonymous = false): void => {
   if (!user || anonymous) {
     clearStoredActiveLearnerId();
+    clearStoredProgressOwnerKey();
   }
 
   sessionUserCache = {
@@ -70,9 +81,33 @@ const syncActiveLearnerStorage = (user: KangurUser): void => {
     return;
   }
   clearStoredActiveLearnerId();
+  clearStoredProgressOwnerKey();
 };
 
+function hydrateSessionUserCacheFromBootstrap(): void {
+  if (sessionUserBootstrapHydrated || typeof window === 'undefined') {
+    return;
+  }
+
+  sessionUserBootstrapHydrated = true;
+  const bootstrapWindow = window as KangurBootstrapWindow;
+  const bootstrapUser = bootstrapWindow.__KANGUR_AUTH_BOOTSTRAP__;
+
+  if (typeof bootstrapUser === 'undefined') {
+    return;
+  }
+
+  if (bootstrapUser) {
+    syncActiveLearnerStorage(bootstrapUser);
+  }
+
+  cacheResolvedUser(bootstrapUser, bootstrapUser === null);
+}
+
+hydrateSessionUserCacheFromBootstrap();
+
 export const resolveSessionUser = async (): Promise<KangurUser> => {
+  hydrateSessionUserCacheFromBootstrap();
   const now = Date.now();
   if (sessionUserCache && sessionUserCache.expiresAt > now) {
     if (sessionUserCache.isAnonymous) {
@@ -92,6 +127,9 @@ export const resolveSessionUser = async (): Promise<KangurUser> => {
     try {
       const payload = await kangurAuthApiClient.getAuthMe({
         cache: 'no-store',
+        // Fetch Priority API — prioritise the auth request over chunk downloads
+        // during initial boot. Progressive enhancement (ignored by older browsers).
+        priority: 'high',
       });
       const parsed = kangurAuthUserSchema.safeParse(payload);
       if (!parsed.success) {

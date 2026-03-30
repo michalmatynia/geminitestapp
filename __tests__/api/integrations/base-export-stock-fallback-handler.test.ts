@@ -22,6 +22,13 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const buildStockFallbackPostRequest = (enabled: boolean) =>
+  new NextRequest('http://localhost/api/v2/integrations/exports/base/stock-fallback', {
+    method: 'POST',
+    body: JSON.stringify({ enabled }),
+    headers: { 'content-type': 'application/json' },
+  });
+
 describe('api/v2/integrations/exports/base/stock-fallback handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -44,11 +51,7 @@ describe('api/v2/integrations/exports/base/stock-fallback handler', () => {
 
   it('stores the stock fallback flag on POST and returns the centralized response', async () => {
     const response = await POST_handler(
-      new NextRequest('http://localhost/api/v2/integrations/exports/base/stock-fallback', {
-        method: 'POST',
-        body: JSON.stringify({ enabled: true }),
-        headers: { 'content-type': 'application/json' },
-      }),
+      buildStockFallbackPostRequest(true),
       mockContext
     );
     const payload = (await response.json()) as BaseStockFallbackPreferenceResponse;

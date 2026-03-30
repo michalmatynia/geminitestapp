@@ -93,47 +93,74 @@ const stripMarkdownCodeFences = (value: string): string => {
   return value;
 };
 
+type JsonCloserScanState = {
+  stack: string[];
+  inString: boolean;
+  escaped: boolean;
+};
+
+const isJsonContainerOpener = (char: string): boolean => char === '{' || char === '[';
+
+const isJsonContainerCloser = (char: string): boolean => char === '}' || char === ']';
+
+const isMatchingJsonContainerPair = (open: string | undefined, close: string): boolean =>
+  (open === '{' && close === '}') || (open === '[' && close === ']');
+
+const advanceJsonCloserStringState = (
+  state: JsonCloserScanState,
+  char: string
+): JsonCloserScanState => {
+  if (!state.inString) {
+    return char === '"'
+      ? { ...state, inString: true, escaped: false }
+      : state;
+  }
+  if (state.escaped) {
+    return { ...state, escaped: false };
+  }
+  if (char === '\\') {
+    return { ...state, escaped: true };
+  }
+  if (char === '"') {
+    return { ...state, inString: false, escaped: false };
+  }
+  return state;
+};
+
+const advanceJsonCloserContainerState = (
+  state: JsonCloserScanState,
+  char: string
+): JsonCloserScanState => {
+  if (state.inString) return state;
+  if (isJsonContainerOpener(char)) {
+    return { ...state, stack: [...state.stack, char] };
+  }
+  if (!isJsonContainerCloser(char)) {
+    return state;
+  }
+  const open = state.stack[state.stack.length - 1];
+  if (!isMatchingJsonContainerPair(open, char)) {
+    return state;
+  }
+  return { ...state, stack: state.stack.slice(0, -1) };
+};
+
 const computeMissingClosers = (value: string): string => {
-  const stack: string[] = [];
-  let inString = false;
-  let escaped = false;
+  let state: JsonCloserScanState = {
+    stack: [],
+    inString: false,
+    escaped: false,
+  };
 
   for (let index = 0; index < value.length; index += 1) {
     const char = value[index];
     if (!char) continue;
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-        continue;
-      }
-      if (char === '\\') {
-        escaped = true;
-        continue;
-      }
-      if (char === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (char === '"') {
-      inString = true;
-      continue;
-    }
-    if (char === '{' || char === '[') {
-      stack.push(char);
-      continue;
-    }
-    if (char !== '}' && char !== ']') continue;
-
-    const open = stack.at(-1);
-    if (!open) continue;
-    if ((open === '{' && char === '}') || (open === '[' && char === ']')) {
-      stack.pop();
-    }
+    state = advanceJsonCloserStringState(state, char);
+    state = advanceJsonCloserContainerState(state, char);
   }
 
-  if (stack.length === 0) return '';
-  return stack
+  if (state.stack.length === 0) return '';
+  return state.stack
     .reverse()
     .map((open: string): string => (open === '{' ? '}' : ']'))
     .join('');

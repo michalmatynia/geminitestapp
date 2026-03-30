@@ -5,6 +5,12 @@ import {
   isKangurSettingKey,
   listKangurSettingsByKeys,
 } from '@/features/kangur/services/kangur-settings-repository';
+import {
+  KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
+  ensureKangurStorefrontAppearanceSettingsSeeded,
+} from '@/features/kangur/appearance/server/storefront-appearance-source';
+import { ensureKangurThemePresetManifestSeeded } from '@/features/kangur/appearance/server/theme-preset-manifest-source';
+import { KANGUR_THEME_PRESET_MANIFEST_KEY } from '@/shared/contracts/kangur-settings-keys';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
@@ -20,10 +26,12 @@ import {
 } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
 type SettingRecord = LiteSettingRecord;
 
 const SETTINGS_COLLECTION = 'settings';
+const KANGUR_STOREFRONT_APPEARANCE_KEY_SET = new Set(
+  KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS
+);
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
@@ -84,15 +92,43 @@ const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
     }
     otherKeys.push(key);
   });
-  const [otherSettings, kangurSettings] = await Promise.all([
-    readMongoSettings(otherKeys),
-    listKangurSettingsByKeys(kangurKeys),
-  ]);
-  if (kangurSettings.length === 0) return otherSettings;
-  if (otherSettings.length === 0) return kangurSettings;
+  const appearanceKeys = kangurKeys.filter((key) =>
+    KANGUR_STOREFRONT_APPEARANCE_KEY_SET.has(key) || key === KANGUR_THEME_PRESET_MANIFEST_KEY
+  );
+  const remainingKangurKeys = kangurKeys.filter(
+    (key) =>
+      !KANGUR_STOREFRONT_APPEARANCE_KEY_SET.has(key) && key !== KANGUR_THEME_PRESET_MANIFEST_KEY
+  );
+  const needsStorefrontAppearanceSeed = appearanceKeys.some((key) =>
+    KANGUR_STOREFRONT_APPEARANCE_KEY_SET.has(key)
+  );
+  const needsThemePresetManifestSeed = appearanceKeys.includes(KANGUR_THEME_PRESET_MANIFEST_KEY);
+  const [otherSettings, appearanceSettings, themePresetManifest, kangurSettings] =
+    await Promise.all([
+      readMongoSettings(otherKeys),
+      needsStorefrontAppearanceSeed
+        ? ensureKangurStorefrontAppearanceSettingsSeeded()
+        : Promise.resolve<SettingRecord[]>([]),
+      needsThemePresetManifestSeed
+        ? ensureKangurThemePresetManifestSeeded()
+        : Promise.resolve<SettingRecord | null>(null),
+      listKangurSettingsByKeys(remainingKangurKeys),
+    ]);
+  const selectedAppearanceSettings =
+    needsStorefrontAppearanceSeed
+      ? appearanceSettings.filter((item) => appearanceKeys.includes(item.key))
+      : [];
+  const specialAppearanceSettings = themePresetManifest ? [themePresetManifest] : [];
+  const allKangurSettings = [
+    ...selectedAppearanceSettings,
+    ...specialAppearanceSettings,
+    ...kangurSettings,
+  ];
+  if (allKangurSettings.length === 0) return otherSettings;
+  if (otherSettings.length === 0) return allKangurSettings;
   const merged = new Map<string, string>();
   otherSettings.forEach((item) => merged.set(item.key, item.value));
-  kangurSettings.forEach((item) => merged.set(item.key, item.value));
+  allKangurSettings.forEach((item) => merged.set(item.key, item.value));
   return Array.from(merged.entries()).map(([key, value]) => ({ key, value }));
 };
 

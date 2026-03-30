@@ -27,6 +27,45 @@ export type DuelsLobbyOptions = {
   isPageActive: boolean;
 };
 
+const beginAbortableLobbyLoad = (input: {
+  errorReset: () => void;
+  loadingRef: React.MutableRefObject<AbortController | null>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  pollingRef: React.MutableRefObject<boolean>;
+  showLoading: boolean;
+}): AbortController => {
+  if (input.loadingRef.current && input.showLoading) {
+    input.loadingRef.current.abort();
+  }
+
+  const controller = new AbortController();
+  input.loadingRef.current = controller;
+  input.pollingRef.current = true;
+  if (input.showLoading) {
+    input.setIsLoading(true);
+  }
+  input.errorReset();
+  return controller;
+};
+
+const finishAbortableLobbyLoad = (input: {
+  controller: AbortController;
+  loadingRef: React.MutableRefObject<AbortController | null>;
+  pollingRef: React.MutableRefObject<boolean>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  showLoading: boolean;
+}): void => {
+  if (input.loadingRef.current !== input.controller) {
+    return;
+  }
+
+  input.loadingRef.current = null;
+  input.pollingRef.current = false;
+  if (input.showLoading) {
+    input.setIsLoading(false);
+  }
+};
+
 export function useDuelsLobby(options: DuelsLobbyOptions) {
   const {
     canBrowseLobby,
@@ -104,35 +143,158 @@ export function useDuelsLobby(options: DuelsLobbyOptions) {
     [abortLobbyPresenceLoad]
   );
 
+  const handleLobbyLoadBlocker = useCallback((): boolean => {
+    if (!canBrowseLobby) {
+      resetLobbyState({ clearEntries: true });
+      return true;
+    }
+
+    if (!isOnline) {
+      abortLobbyLoad();
+      setIsLobbyLoading(false);
+      setLobbyError('Brak połączenia z internetem.');
+      return true;
+    }
+
+    return false;
+  }, [abortLobbyLoad, canBrowseLobby, isOnline, resetLobbyState]);
+
+  const handleLobbyPresenceLoadBlocker = useCallback((): boolean => {
+    if (!canBrowseLobby || !canPlay) {
+      resetLobbyPresenceState({ clearEntries: true });
+      return true;
+    }
+
+    if (!isOnline) {
+      abortLobbyPresenceLoad();
+      setIsLobbyPresenceLoading(false);
+      setLobbyPresenceError('Brak połączenia z internetem.');
+      return true;
+    }
+
+    return false;
+  }, [abortLobbyPresenceLoad, canBrowseLobby, canPlay, isOnline, resetLobbyPresenceState]);
+
+  const queueLobbyRefreshIfNeeded = useCallback((showLoading: boolean): boolean => {
+    if (!lobbyPollingRef.current) {
+      return false;
+    }
+    if (!showLoading) {
+      lobbyRefreshQueuedRef.current = true;
+      return true;
+    }
+    lobbyAbortRef.current?.abort();
+    return false;
+  }, []);
+
+  const queueLobbyPresenceRefreshIfNeeded = useCallback((showLoading: boolean): boolean => {
+    if (!lobbyPresencePollingRef.current) {
+      return false;
+    }
+    if (!showLoading) {
+      return true;
+    }
+    lobbyPresenceAbortRef.current?.abort();
+    return false;
+  }, []);
+
+  const applyLobbyResponse = useCallback((response: { entries: KangurDuelLobbyEntry[]; serverTime?: string | null }) => {
+    const nextEntries = response.entries;
+    const nowMs = Date.now();
+    setLobbyLastUpdatedAt(response.serverTime ?? new Date(nowMs).toISOString());
+    setRelativeNow(nowMs);
+
+    const activeIds = new Set<string>();
+    nextEntries.forEach((entry) => {
+      activeIds.add(entry.sessionId);
+      const prevUpdatedAt = lobbySeenRef.current.get(entry.sessionId);
+      if (!prevUpdatedAt || prevUpdatedAt !== entry.updatedAt) {
+        lobbyFreshRef.current.set(entry.sessionId, nowMs);
+      }
+      lobbySeenRef.current.set(entry.sessionId, entry.updatedAt);
+    });
+
+    [...lobbySeenRef.current.keys()].forEach((sessionId) => {
+      if (!activeIds.has(sessionId)) {
+        lobbySeenRef.current.delete(sessionId);
+        lobbyFreshRef.current.delete(sessionId);
+      }
+    });
+
+    const nextHash = `${nextEntries.length}:${nextEntries
+      .map((entry) => `${entry.sessionId}:${entry.updatedAt}`)
+      .join('|')}`;
+    if (nextHash !== lastLobbyHashRef.current) {
+      lastLobbyHashRef.current = nextHash;
+      setLobbyEntries(nextEntries);
+    }
+    setLobbyFailureCount(0);
+  }, []);
+
+  const handleLobbyLoadError = useCallback((error: unknown, controller: AbortController): void => {
+    if (isAbortLikeError(error, controller.signal)) {
+      return;
+    }
+    setLobbyError('Nie udało się pobrać lobby. Spróbuj ponownie.');
+    setLobbyFailureCount((current) => Math.min(current + 1, 4));
+  }, []);
+
+  const fetchLobbyPresenceResponse = useCallback(
+    async (controller: AbortController) =>
+      canPlay
+        ? await kangurPlatform.duels.lobbyPresencePing({
+            limit: 40,
+            signal: controller.signal,
+          })
+        : await kangurPlatform.duels.lobbyPresence({
+            limit: 40,
+            signal: controller.signal,
+          }),
+    [canPlay]
+  );
+
+  const applyLobbyPresenceResponse = useCallback(
+    (response: { entries: KangurDuelLobbyPresenceEntry[]; serverTime?: string | null }) => {
+      const nextEntries = response.entries;
+      const nextHash = `${nextEntries.length}:${nextEntries
+        .map((entry) => `${entry.learnerId}:${entry.lastSeenAt}`)
+        .join('|')}`;
+      if (nextHash !== lastLobbyPresenceHashRef.current) {
+        lastLobbyPresenceHashRef.current = nextHash;
+        setLobbyPresenceEntries(nextEntries);
+      }
+      setLobbyPresenceLastUpdatedAt(response.serverTime ?? new Date().toISOString());
+    },
+    []
+  );
+
+  const handleLobbyPresenceLoadError = useCallback(
+    (error: unknown, controller: AbortController): void => {
+      if (isAbortLikeError(error, controller.signal)) {
+        return;
+      }
+      setLobbyPresenceError('Nie udało się pobrać listy uczniów.');
+    },
+    []
+  );
+
   const loadLobby = useCallback(
     async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
-      if (!canBrowseLobby) {
-        resetLobbyState({ clearEntries: true });
+      if (handleLobbyLoadBlocker()) {
         return;
       }
 
-      if (!isOnline) {
-        abortLobbyLoad();
-        setIsLobbyLoading(false);
-        setLobbyError('Brak połączenia z internetem.');
+      if (queueLobbyRefreshIfNeeded(showLoading)) {
         return;
       }
 
-      if (lobbyPollingRef.current) {
-        if (!showLoading) {
-          lobbyRefreshQueuedRef.current = true;
-          return;
-        }
-        lobbyAbortRef.current?.abort();
-      }
-
-      const controller = new AbortController();
-      lobbyAbortRef.current = controller;
-      lobbyPollingRef.current = true;
-      if (showLoading) {
-        setIsLobbyLoading(true);
-      }
-      setLobbyError(null);
+      const controller = beginAbortableLobbyLoad({
+        errorReset: () => setLobbyError(null),
+        loadingRef: lobbyAbortRef,
+        pollingRef: lobbyPollingRef,
+        setIsLoading: setIsLobbyLoading,
+        showLoading,
+      });
       await withKangurClientError(
         {
           source: 'kangur-duels-lobby',
@@ -148,89 +310,52 @@ export function useDuelsLobby(options: DuelsLobbyOptions) {
             limit: KANGUR_DUELS_DEFAULT_LOBBY_LIMIT,
             signal: controller.signal,
           });
-          const nextEntries = response.entries;
-          const nowMs = Date.now();
-          setLobbyLastUpdatedAt(response.serverTime ?? new Date(nowMs).toISOString());
-          setRelativeNow(nowMs);
-          const activeIds = new Set<string>();
-          nextEntries.forEach((entry) => {
-            activeIds.add(entry.sessionId);
-            const prevUpdatedAt = lobbySeenRef.current.get(entry.sessionId);
-            if (!prevUpdatedAt || prevUpdatedAt !== entry.updatedAt) {
-              lobbyFreshRef.current.set(entry.sessionId, nowMs);
-            }
-            lobbySeenRef.current.set(entry.sessionId, entry.updatedAt);
-          });
-          [...lobbySeenRef.current.keys()].forEach((sessionId) => {
-            if (!activeIds.has(sessionId)) {
-              lobbySeenRef.current.delete(sessionId);
-              lobbyFreshRef.current.delete(sessionId);
-            }
-          });
-          const nextHash = `${nextEntries.length}:${nextEntries
-            .map((entry) => `${entry.sessionId}:${entry.updatedAt}`)
-            .join('|')}`;
-          if (nextHash !== lastLobbyHashRef.current) {
-            lastLobbyHashRef.current = nextHash;
-            setLobbyEntries(nextEntries);
-          }
-          setLobbyFailureCount(0);
+          applyLobbyResponse(response);
         },
         {
           fallback: undefined,
           shouldReport: (err) => !isAbortLikeError(err, controller.signal),
-          onError: (err) => {
-            if (isAbortLikeError(err, controller.signal)) {
-              return;
-            }
-            setLobbyError('Nie udało się pobrać lobby. Spróbuj ponownie.');
-            setLobbyFailureCount((current) => Math.min(current + 1, 4));
-          },
+          onError: (err) => handleLobbyLoadError(err, controller),
         }
       );
-      if (lobbyAbortRef.current === controller) {
-        lobbyAbortRef.current = null;
-        lobbyPollingRef.current = false;
-        if (showLoading) {
-          setIsLobbyLoading(false);
-        }
-      }
+      finishAbortableLobbyLoad({
+        controller,
+        loadingRef: lobbyAbortRef,
+        pollingRef: lobbyPollingRef,
+        setIsLoading: setIsLobbyLoading,
+        showLoading,
+      });
       if (lobbyRefreshQueuedRef.current) {
         lobbyRefreshQueuedRef.current = false;
         void loadLobby();
       }
     },
-    [abortLobbyLoad, canBrowseLobby, isGuest, isOnline, resetLobbyState]
+    [
+      applyLobbyResponse,
+      handleLobbyLoadBlocker,
+      handleLobbyLoadError,
+      isGuest,
+      queueLobbyRefreshIfNeeded,
+    ]
   );
 
   const loadLobbyPresence = useCallback(
     async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
-      if (!canBrowseLobby || !canPlay) {
-        resetLobbyPresenceState({ clearEntries: true });
+      if (handleLobbyPresenceLoadBlocker()) {
         return;
       }
 
-      if (!isOnline) {
-        abortLobbyPresenceLoad();
-        setIsLobbyPresenceLoading(false);
-        setLobbyPresenceError('Brak połączenia z internetem.');
+      if (queueLobbyPresenceRefreshIfNeeded(showLoading)) {
         return;
       }
 
-      if (lobbyPresencePollingRef.current) {
-        if (!showLoading) {
-          return;
-        }
-        lobbyPresenceAbortRef.current?.abort();
-      }
-
-      const controller = new AbortController();
-      lobbyPresenceAbortRef.current = controller;
-      lobbyPresencePollingRef.current = true;
-      if (showLoading) {
-        setIsLobbyPresenceLoading(true);
-      }
-      setLobbyPresenceError(null);
+      const controller = beginAbortableLobbyLoad({
+        errorReset: () => setLobbyPresenceError(null),
+        loadingRef: lobbyPresenceAbortRef,
+        pollingRef: lobbyPresencePollingRef,
+        setIsLoading: setIsLobbyPresenceLoading,
+        showLoading,
+      });
       await withKangurClientError(
         {
           source: 'kangur-duels-lobby',
@@ -241,45 +366,31 @@ export function useDuelsLobby(options: DuelsLobbyOptions) {
           },
         },
         async () => {
-          const response = canPlay
-            ? await kangurPlatform.duels.lobbyPresencePing({
-                limit: 40,
-                signal: controller.signal,
-              })
-            : await kangurPlatform.duels.lobbyPresence({
-                limit: 40,
-                signal: controller.signal,
-              });
-          const nextEntries = response.entries;
-          const nextHash = `${nextEntries.length}:${nextEntries
-            .map((entry) => `${entry.learnerId}:${entry.lastSeenAt}`)
-            .join('|')}`;
-          if (nextHash !== lastLobbyPresenceHashRef.current) {
-            lastLobbyPresenceHashRef.current = nextHash;
-            setLobbyPresenceEntries(nextEntries);
-          }
-          setLobbyPresenceLastUpdatedAt(response.serverTime ?? new Date().toISOString());
+          const response = await fetchLobbyPresenceResponse(controller);
+          applyLobbyPresenceResponse(response);
         },
         {
           fallback: undefined,
           shouldReport: (err) => !isAbortLikeError(err, controller.signal),
-          onError: (err) => {
-            if (isAbortLikeError(err, controller.signal)) {
-              return;
-            }
-            setLobbyPresenceError('Nie udało się pobrać listy uczniów.');
-          },
+          onError: (err) => handleLobbyPresenceLoadError(err, controller),
         }
       );
-      if (lobbyPresenceAbortRef.current === controller) {
-        lobbyPresenceAbortRef.current = null;
-        lobbyPresencePollingRef.current = false;
-        if (showLoading) {
-          setIsLobbyPresenceLoading(false);
-        }
-      }
+      finishAbortableLobbyLoad({
+        controller,
+        loadingRef: lobbyPresenceAbortRef,
+        pollingRef: lobbyPresencePollingRef,
+        setIsLoading: setIsLobbyPresenceLoading,
+        showLoading,
+      });
     },
-    [abortLobbyPresenceLoad, canBrowseLobby, canPlay, isOnline, resetLobbyPresenceState]
+    [
+      applyLobbyPresenceResponse,
+      canPlay,
+      fetchLobbyPresenceResponse,
+      handleLobbyPresenceLoadBlocker,
+      handleLobbyPresenceLoadError,
+      queueLobbyPresenceRefreshIfNeeded,
+    ]
   );
 
   useEffect(() => {

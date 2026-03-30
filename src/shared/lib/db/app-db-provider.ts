@@ -82,8 +82,10 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
     return resolvedProviderCache.value;
   }
 
-  const policy = await getDatabaseEnginePolicy();
-  const routeProvider = await getDatabaseEngineServiceProvider('app');
+  const [policy, routeProvider] = await Promise.all([
+    getDatabaseEnginePolicy(),
+    getDatabaseEngineServiceProvider('app'),
+  ]);
   let result: AppDbProvider;
 
   if (routeProvider) {

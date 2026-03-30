@@ -1,5 +1,6 @@
 import { type FormEvent, type JSX, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { Eye, EyeOff } from 'lucide-react';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { useKangurLoginPageProps } from './login-context';
@@ -19,6 +20,153 @@ type LoginFormProps = {
   defaultIdentifier?: string;
 };
 
+type LoginFormFeedbackProps = Pick<LoginFormProps, 'error' | 'notice'>;
+
+const resolveKangurLoginFormParentMode = (
+  parentAuthMode: ReturnType<typeof useKangurLoginPageProps>['parentAuthMode']
+): boolean => parentAuthMode === 'sign-in' || parentAuthMode === 'create-account';
+
+const resolveKangurLoginShouldShowPasswordField = ({
+  identifier,
+  isParentMode,
+}: {
+  identifier: string;
+  isParentMode: boolean;
+}): boolean =>
+  isParentMode ||
+  (identifier.trim().length > 0 &&
+    !KANGUR_LEARNER_LOGIN_PATTERN.test(identifier));
+
+const resolveKangurLoginSubmitDisabled = ({
+  identifier,
+  isLoading,
+  password,
+  shouldShowPasswordField,
+}: {
+  identifier: string;
+  isLoading: boolean;
+  password: string;
+  shouldShowPasswordField: boolean;
+}): boolean =>
+  isLoading || !identifier.trim() || (shouldShowPasswordField && !password);
+
+function LoginIdentifierField(props: {
+  identifier: string;
+  identifierInputRef: React.RefObject<HTMLInputElement | null>;
+  isLoading: boolean;
+  setIdentifier: (value: string) => void;
+  translations: ReturnType<typeof useTranslations>;
+}): JSX.Element {
+  const {
+    identifier,
+    identifierInputRef,
+    isLoading,
+    setIdentifier,
+    translations,
+  } = props;
+
+  return (
+    <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
+      <label htmlFor='identifier' className='text-sm font-medium text-slate-700'>
+        {translations('identifierLabel')}
+      </label>
+      <input
+        ref={identifierInputRef}
+        id='identifier'
+        type='text'
+        aria-label={translations('identifierLabel')}
+        value={identifier}
+        onChange={(event) => setIdentifier(event.target.value)}
+        disabled={isLoading}
+        className='rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+        placeholder={translations('identifierPlaceholder')}
+        autoComplete='username'
+        autoCapitalize='off'
+        autoCorrect='off'
+      />
+    </div>
+  );
+}
+
+function LoginPasswordField(props: {
+  isLoading: boolean;
+  isPasswordVisible: boolean;
+  password: string;
+  setIsPasswordVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  setPassword: (value: string) => void;
+  translations: ReturnType<typeof useTranslations>;
+}): JSX.Element {
+  const {
+    isLoading,
+    isPasswordVisible,
+    password,
+    setIsPasswordVisible,
+    setPassword,
+    translations,
+  } = props;
+
+  return (
+    <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
+      <label htmlFor='password' className='text-sm font-medium text-slate-700'>
+        {translations('passwordLabel')}
+      </label>
+      <div className='relative'>
+        <input
+          id='password'
+          type={isPasswordVisible ? 'text' : 'password'}
+          aria-label={translations('passwordLabel')}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          disabled={isLoading}
+          className='w-full rounded-xl border border-slate-200 px-4 py-3 pr-11 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+          placeholder={translations('passwordPlaceholder')}
+          autoComplete='current-password'
+        />
+        <button
+          type='button'
+          onClick={() => setIsPasswordVisible((visible) => !visible)}
+          className='absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600'
+          aria-label={
+            isPasswordVisible
+              ? translations('hidePassword')
+              : translations('showPassword')
+          }
+          tabIndex={-1}
+        >
+          {isPasswordVisible ? (
+            <EyeOff className='h-4 w-4' aria-hidden='true' />
+          ) : (
+            <Eye className='h-4 w-4' aria-hidden='true' />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LoginFormFeedback({
+  error,
+  notice,
+}: LoginFormFeedbackProps): JSX.Element | null {
+  if (error) {
+    return (
+      <div className='rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600' role='alert'>
+        {error}
+      </div>
+    );
+  }
+
+  if (notice) {
+    return (
+      <div className='rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-600' role='status'>
+        {notice}
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export function LoginForm({
   onSubmit,
   isLoading,
@@ -30,9 +178,10 @@ export function LoginForm({
   const { parentAuthMode } = useKangurLoginPageProps();
   const [identifier, setIdentifier] = useState(defaultIdentifier);
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const loginFormRef = useRef<HTMLFormElement>(null);
   const identifierInputRef = useRef<HTMLInputElement>(null);
-  
+
   useKangurTutorAnchor({
     id: 'kangur-auth-login-form',
     kind: 'login_form',
@@ -63,8 +212,17 @@ export function LoginForm({
     onSubmit(identifier, password);
   };
 
-  const isParentMode = parentAuthMode === 'sign-in' || parentAuthMode === 'create-account';
-  const showPassword = isParentMode || (identifier.trim().length > 0 && !KANGUR_LEARNER_LOGIN_PATTERN.test(identifier));
+  const isParentMode = resolveKangurLoginFormParentMode(parentAuthMode);
+  const shouldShowPasswordField = resolveKangurLoginShouldShowPasswordField({
+    identifier,
+    isParentMode,
+  });
+  const submitDisabled = resolveKangurLoginSubmitDisabled({
+    identifier,
+    isLoading,
+    password,
+    shouldShowPasswordField,
+  });
 
   return (
     <form
@@ -73,62 +231,32 @@ export function LoginForm({
       className={`${KANGUR_STACK_RELAXED_CLASSNAME} w-full`}
       aria-label={translations('loginFormAriaLabel')}
     >
-      <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-        <label htmlFor='identifier' className='text-sm font-medium text-slate-700'>
-          {translations('identifierLabel')}
-        </label>
-        <input
-          ref={identifierInputRef}
-          id='identifier'
-          type='text'
-          aria-label={translations('identifierLabel')}
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
-          disabled={isLoading}
-          className='rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-          placeholder={translations('identifierPlaceholder')}
-          autoComplete='username'
-          autoCapitalize='off'
-          autoCorrect='off'
+      <LoginIdentifierField
+        identifier={identifier}
+        identifierInputRef={identifierInputRef}
+        isLoading={isLoading}
+        setIdentifier={setIdentifier}
+        translations={translations}
+      />
+
+      {shouldShowPasswordField && (
+        <LoginPasswordField
+          isLoading={isLoading}
+          isPasswordVisible={isPasswordVisible}
+          password={password}
+          setIsPasswordVisible={setIsPasswordVisible}
+          setPassword={setPassword}
+          translations={translations}
         />
-      </div>
-
-      {showPassword && (
-        <div className={KANGUR_STACK_COMPACT_CLASSNAME}>
-          <label htmlFor='password' className='text-sm font-medium text-slate-700'>
-            {translations('passwordLabel')}
-          </label>
-          <input
-            id='password'
-            type='password'
-            aria-label={translations('passwordLabel')}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            className='rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
-            placeholder={translations('passwordPlaceholder')}
-            autoComplete='current-password'
-          />
-        </div>
       )}
 
-      {error && (
-        <div className='rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-600' role='alert'>
-          {error}
-        </div>
-      )}
-
-      {notice && (
-        <div className='rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-600' role='status'>
-          {notice}
-        </div>
-      )}
+      <LoginFormFeedback error={error} notice={notice} />
 
       <KangurButton
         type='submit'
         variant='primary'
         size='lg'
-        disabled={isLoading || !identifier.trim() || (showPassword && !password)}
+        disabled={submitDisabled}
         className='mt-2 w-full justify-center rounded-xl font-bold'
       >
         {isLoading ? translations('loginSubmitting') : translations('loginSubmit')}

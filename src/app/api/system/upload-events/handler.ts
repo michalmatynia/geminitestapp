@@ -8,7 +8,7 @@ import {
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 
 const parseDateParam = (value: string | null, endOfDay: boolean = false): Date | null => {
   if (!value) return null;

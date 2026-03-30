@@ -6,6 +6,7 @@ import { SessionProvider, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
+import { AdminFavoritesRuntimeProvider } from '@/features/admin/components/AdminFavoritesRuntimeProvider';
 import Menu from '@/features/admin/components/Menu';
 import { UserNav } from '@/features/admin/components/UserNav';
 import {
@@ -309,9 +310,11 @@ export function AdminLayout({
         <SettingsStoreProvider mode='admin' canReadAdminSettings={canReadAdminSettings}>
           <ToastProvider>
             <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
-              <NoteSettingsProvider>
-                <AdminLayoutContent>{children}</AdminLayoutContent>
-              </NoteSettingsProvider>
+              <AdminFavoritesRuntimeProvider>
+                <NoteSettingsProvider>
+                  <AdminLayoutContent>{children}</AdminLayoutContent>
+                </NoteSettingsProvider>
+              </AdminFavoritesRuntimeProvider>
             </AdminLayoutProvider>
           </ToastProvider>
         </SettingsStoreProvider>

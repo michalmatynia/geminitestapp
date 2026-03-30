@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SectionDropTarget } from '@/features/cms/components/page-builder/tree/SectionDropTarget';
 import type { SectionInstance } from '@/shared/contracts/cms';
 
-const { pageBuilderStateRef, dragStateRef } = vi.hoisted(() => ({
+const { pageBuilderStateRef, dragStateRef, componentTreePanelState } = vi.hoisted(() => ({
   pageBuilderStateRef: {
     current: {
       sections: [] as SectionInstance[],
@@ -21,10 +21,7 @@ const { pageBuilderStateRef, dragStateRef } = vi.hoisted(() => ({
       },
     },
   },
-}));
-
-vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext', () => ({
-  useComponentTreePanelState: () => ({
+  componentTreePanelState: {
     currentPage: { id: 'page-1' },
     clipboard: null,
     showExtractPlaceholder: true,
@@ -42,7 +39,11 @@ vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext',
     treeInlineDropLabel: 'Drop here',
     treeRootDropLabel: 'Drop section',
     draggedMasterSectionId: null,
-  }),
+  },
+}));
+
+vi.mock('@/features/cms/components/page-builder/tree/ComponentTreePanelContext', () => ({
+  useComponentTreePanelState: () => componentTreePanelState,
   useComponentTreePanelActions: () => ({
     startSectionMasterDrag: vi.fn(),
     endSectionMasterDrag: vi.fn(),

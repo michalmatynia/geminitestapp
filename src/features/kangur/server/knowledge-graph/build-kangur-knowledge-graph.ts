@@ -14,7 +14,7 @@ import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   type KangurAiTutorNativeGuideStore,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';
-import { buildDefaultKangurPageContentStore } from '@/features/kangur/page-content-catalog';
+import { buildDefaultKangurPageContentStore } from '@/features/kangur/ai-tutor/page-content-catalog';
 import type { KangurPageContentStore } from '@/features/kangur/shared/contracts/kangur-page-content';
 import type { Page } from '@/shared/contracts/cms';
 import {
@@ -34,7 +34,7 @@ import {
 
 import { buildKangurKnowledgeNodeSemanticText } from './semantic';
 
-type BuildKangurKnowledgeGraphOptions = {
+export type BuildKangurKnowledgeGraphOptions = {
   locale?: string;
   tutorContent?: KangurAiTutorContent;
   nativeGuideStore?: KangurAiTutorNativeGuideStore;
@@ -72,6 +72,12 @@ const ROOT_DEFINITIONS = {
       'Lesson-library navigation, lesson context, and tutor policy references for lesson-mode guidance.',
     relatedFlowId: 'flow:kangur:lesson-help',
   },
+  gameLibraryContext: {
+    title: 'Games and practice help',
+    summary:
+      'Game-home navigation, reusable game catalog references, and tutor context for practice-mode guidance.',
+    relatedFlowId: 'flow:kangur:game-help',
+  },
   testContext: {
     title: 'Tests help',
     summary:
@@ -104,6 +110,9 @@ const FLOW_TARGETS: Partial<Record<string, {
   'flow:kangur:create-account': {
     route: KANGUR_HOME_ROUTE,
     anchorId: 'kangur-primary-nav-login',
+  },
+  'flow:kangur:game-help': {
+    route: toRelativeKangurPageRoute('Game'),
   },
 };
 
@@ -184,6 +193,10 @@ const REFERENCE_DETAILS: Partial<Record<string, ReferenceDetail>> = {
   'collection:kangur-lessons': {
     title: 'Lessons collection',
     summary: 'Lesson metadata and library entries referenced by the tutor.',
+  },
+  'collection:kangur-games': {
+    title: 'Games collection',
+    summary: 'Available Kangur games and practice metadata referenced by the tutor.',
   },
   'policy:kangur-ai-tutor-socratic': {
     title: 'Socratic tutor policy',
@@ -267,6 +280,12 @@ const FLOW_DEFINITIONS = [
     title: 'Lessons help',
     summary: 'How to find lessons, open them, and understand lesson-mode navigation.',
     tags: ['lessons', 'navigation'],
+  },
+  {
+    id: 'flow:kangur:game-help',
+    title: 'Games and practice help',
+    summary: 'How to find games and start practice activities in Kangur.',
+    tags: ['games', 'navigation', 'practice'],
   },
   {
     id: 'flow:kangur:test-help',
@@ -378,6 +397,7 @@ const buildReferenceNode = (
 
 const SURFACE_FLOW_IDS: Partial<Record<string, string>> = {
   lesson: 'flow:kangur:lesson-help',
+  game: 'flow:kangur:game-help',
   test: 'flow:kangur:test-help',
   assignment: 'flow:kangur:assignment-help',
 };

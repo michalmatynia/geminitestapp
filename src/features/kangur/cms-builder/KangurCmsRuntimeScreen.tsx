@@ -9,7 +9,7 @@ import {
   getMediaStyleVars,
 } from '@/features/cms/public';
 import {
-} from '@/features/kangur/theme-settings';
+} from '@/features/kangur/appearance/theme-settings';
 import { buildKangurScopedCustomCss } from '@/features/kangur/utils/custom-css';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { KangurGameRuntimeBoundary } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
@@ -24,8 +24,8 @@ import { KangurCmsRuntimeDataProvider } from './KangurCmsRuntimeDataProvider';
 import {
   KANGUR_CMS_PROJECT_SETTING_KEY,
   parseKangurCmsProject,
-  resolveKangurCmsScreenKey,
 } from './project';
+import { resolveKangurCmsScreenKey } from './runtime-screen-presence';
 
 import type { CSSProperties, ReactNode } from 'react';
 

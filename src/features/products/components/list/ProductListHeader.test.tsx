@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -128,6 +129,21 @@ describe('ProductListHeader', () => {
     expect(screen.queryByRole('button', { name: 'Show trigger run pills' })).toBeNull();
   });
 
+  it('mounts the focus-mode toggle after hydration and toggles admin side panels', async () => {
+    const user = userEvent.setup();
+    const setIsMenuHidden = vi.fn();
+    useAdminLayoutActionsMock.mockReturnValue({ setIsMenuHidden });
+
+    render(<ProductListHeader />);
+
+    const button = await screen.findByRole('button', { name: 'Show side panels' });
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(button);
+
+    expect(setIsMenuHidden).toHaveBeenCalledWith(true);
+  });
+
   it('keeps the breadcrumb under a plain heading and moves create actions into the header rail', () => {
     const { container } = render(<ProductListHeader />);
 
@@ -199,5 +215,20 @@ describe('ProductListHeader', () => {
     expect(within(desktopFiltersRow as HTMLElement).getByTestId('filters-content')).toHaveTextContent(
       'Filters content'
     );
+  });
+
+  it('provides stable layout instance ids to non-DOM filter components', () => {
+    function FiltersProbe({
+      instanceId,
+    }: {
+      instanceId?: string;
+    }): React.JSX.Element {
+      return <div data-testid={`filters-probe-${instanceId ?? 'missing'}`}>{instanceId}</div>;
+    }
+
+    render(<ProductListHeader filtersContent={<FiltersProbe />} />);
+
+    expect(screen.getByTestId('filters-probe-mobile')).toBeInTheDocument();
+    expect(screen.getByTestId('filters-probe-desktop')).toBeInTheDocument();
   });
 });

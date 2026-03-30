@@ -255,6 +255,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     if (authLoggingEnabled) {
       await ErrorSystem.logInfo('[AUTH] Starting configuration...', { service: 'auth' });
     }
+    const providersPromise = buildProviders();
     const provider = requireAuthProvider(await getAuthDataProvider());
     let adapter: ReturnType<typeof MongoDBAdapter> | undefined;
     try {
@@ -280,7 +281,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     return {
       ...authConfig,
       ...(adapter && { adapter }),
-      providers: await buildProviders(),
+      providers: await providersPromise,
       callbacks: {
         ...(authConfig.callbacks ?? {}),
         async jwt({ token, user }: { token: JWT; user?: User }): Promise<JWT> {

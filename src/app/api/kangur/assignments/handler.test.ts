@@ -41,6 +41,7 @@ vi.mock('@/features/kangur/observability/server', () => ({
 }));
 
 import { getKangurAssignmentsHandler, postKangurAssignmentsHandler } from './handler';
+import { clearKangurAssignmentSnapshotsCache } from './shared';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -77,6 +78,7 @@ const createAssignment = (overrides: Partial<KangurAssignment> = {}): KangurAssi
 describe('kangur assignments handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurAssignmentSnapshotsCache();
 
     getKangurAssignmentRepositoryMock.mockResolvedValue({
       listAssignments: listAssignmentsMock,
@@ -161,6 +163,24 @@ describe('kangur assignments handler', () => {
     ).rejects.toThrow('Authentication required.');
     expect(listAssignmentsMock).not.toHaveBeenCalled();
     expect(getProgressMock).not.toHaveBeenCalled();
+  });
+
+  it('reuses cached assignment snapshots across repeated list requests', async () => {
+    listAssignmentsMock.mockResolvedValue([createAssignment()]);
+    getProgressMock.mockResolvedValue(createDefaultKangurProgressState());
+
+    await getKangurAssignmentsHandler(
+      new NextRequest('http://localhost/api/kangur/assignments'),
+      createRequestContext()
+    );
+    await getKangurAssignmentsHandler(
+      new NextRequest('http://localhost/api/kangur/assignments'),
+      createRequestContext()
+    );
+
+    expect(listAssignmentsMock).toHaveBeenCalledTimes(2);
+    expect(getProgressMock).toHaveBeenCalledTimes(1);
+    expect(listScoresMock).toHaveBeenCalledTimes(2);
   });
 
   it('creates a lesson assignment with the current completion baseline', async () => {

@@ -1,4 +1,4 @@
-import { AgentTeachingAgentsPage } from '@/features/ai/agentcreator/teaching/pages/AgentTeachingAgentsPage';
+import { AgentTeachingAgentsPage } from '@/features/ai/agentcreator/teaching/public';
 
 export default function AgentTeachingAgentsRoute(): React.JSX.Element {
   return <AgentTeachingAgentsPage />;

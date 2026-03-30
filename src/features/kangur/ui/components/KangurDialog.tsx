@@ -2,8 +2,12 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 
-import { KangurDialogShell } from '@/features/kangur/ui/components/KangurDialogShell';
+import {
+  KANGUR_DIALOG_CONTENT_BASE_CLASSNAME,
+  KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME,
+} from '@/features/kangur/ui/components/KangurDialogShell';
 import { cn } from '@/features/kangur/shared/utils';
+import { RadixOverlayContentShell } from '@/shared/ui/radix-overlay-content-shell';
 
 import type { ComponentPropsWithoutRef, ReactNode, CSSProperties } from 'react';
 
@@ -59,6 +63,39 @@ type KangurDialogProps = {
   children: ReactNode;
 };
 
+const resolveKangurDialogOverlayProps = ({
+  overlayProps,
+  overlayVariant,
+}: {
+  overlayProps: ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> | undefined;
+  overlayVariant: KangurDialogOverlayVariant | undefined;
+}): ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> => {
+  const variantProps = overlayVariant ? OVERLAY_VARIANT_PROPS[overlayVariant] : undefined;
+  return {
+    ...variantProps,
+    ...overlayProps,
+    className: cn(variantProps?.className, overlayProps?.className),
+    style: { ...variantProps?.style, ...overlayProps?.style },
+  };
+};
+
+const resolveKangurDialogContentProps = ({
+  contentProps,
+  contentSize,
+  contentVariant,
+}: {
+  contentProps: KangurDialogContentProps | undefined;
+  contentSize: KangurDialogContentSize | undefined;
+  contentVariant: KangurDialogContentVariant;
+}): KangurDialogContentProps => ({
+  ...contentProps,
+  className: cn(
+    CONTENT_VARIANT_CLASSNAMES[contentVariant],
+    contentSize ? CONTENT_SIZE_CLASSNAMES[contentSize] : null,
+    contentProps?.className
+  ),
+});
+
 export function KangurDialog({
   open,
   onOpenChange,
@@ -70,28 +107,26 @@ export function KangurDialog({
   contentProps,
   children,
 }: KangurDialogProps): React.JSX.Element {
-  const variantProps = overlayVariant ? OVERLAY_VARIANT_PROPS[overlayVariant] : undefined;
-  const mergedOverlayProps = {
-    ...variantProps,
-    ...overlayProps,
-    className: cn(variantProps?.className, overlayProps?.className),
-    style: { ...variantProps?.style, ...overlayProps?.style },
-  };
-
-  const mergedContentProps = {
-    ...contentProps,
-    className: cn(
-      CONTENT_VARIANT_CLASSNAMES[contentVariant],
-      contentSize ? CONTENT_SIZE_CLASSNAMES[contentSize] : null,
-      contentProps?.className
-    ),
-  };
+  const mergedOverlayProps = resolveKangurDialogOverlayProps({ overlayProps, overlayVariant });
+  const mergedContentProps = resolveKangurDialogContentProps({
+    contentProps,
+    contentSize,
+    contentVariant,
+  });
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal={modal}>
-      <KangurDialogShell overlayProps={mergedOverlayProps} contentProps={mergedContentProps}>
+      <RadixOverlayContentShell
+        Portal={DialogPrimitive.Portal}
+        Overlay={DialogPrimitive.Overlay}
+        Content={DialogPrimitive.Content}
+        overlayBaseClassName={KANGUR_DIALOG_OVERLAY_BASE_CLASSNAME}
+        contentBaseClassName={KANGUR_DIALOG_CONTENT_BASE_CLASSNAME}
+        overlayProps={mergedOverlayProps}
+        contentProps={mergedContentProps}
+      >
         {children}
-      </KangurDialogShell>
+      </RadixOverlayContentShell>
     </DialogPrimitive.Root>
   );
 }

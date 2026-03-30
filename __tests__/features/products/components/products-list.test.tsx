@@ -43,6 +43,8 @@ vi.mock('next/navigation', () => ({
     get: vi.fn(),
   }),
   usePathname: () => '/',
+  permanentRedirect: vi.fn(),
+  redirect: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
@@ -207,6 +209,7 @@ const buildContextValue = (
   onEditSuccess: vi.fn(),
   onEditSave: vi.fn(),
   integrationsProduct: null,
+  integrationsRecoveryContext: null,
   onCloseIntegrations: vi.fn(),
   onStartListing: vi.fn(),
   showListProductModal: false,
@@ -486,5 +489,49 @@ describe('Admin Products List UI', () => {
       inventoryId: 'inv-1',
       templateId: 'tpl-1',
     });
+  });
+
+  it('opens integration recovery options instead of auto-exporting when the Base badge is failed', async () => {
+    let exportCalls = 0;
+    const onIntegrationsClick = vi.fn();
+    window.sessionStorage.setItem(
+      'base-quick-export-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          runId: 'run-failed-recovery',
+          status: 'failed',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    server.use(
+      http.post('/api/v2/integrations/products/:id/export-to-base', () => {
+        exportCalls += 1;
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    renderProductTable({
+      onIntegrationsClick,
+    });
+
+    const user = userEvent.setup();
+    const recoveryButton = await screen.findByRole('button', {
+      name: 'Open Base.com recovery options (failed).',
+    });
+    await user.click(recoveryButton);
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      {
+        source: 'base_quick_export_failed',
+        integrationSlug: 'baselinker',
+        status: 'failed',
+        runId: 'run-failed-recovery',
+      }
+    );
+    expect(exportCalls).toBe(0);
   });
 });

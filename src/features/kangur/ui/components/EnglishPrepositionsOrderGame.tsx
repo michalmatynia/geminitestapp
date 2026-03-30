@@ -1,17 +1,19 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -181,7 +183,6 @@ const ROUNDS: OrderRound[] = [
 
 const TOTAL_ROUNDS = ROUNDS.length;
 const TOTAL_TOKENS = ROUNDS.reduce((sum, round) => sum + round.tokens.length, 0);
-const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const getPrepositionsOrderPrompt = (
   translate: KangurMiniGameTranslate,
@@ -221,6 +222,7 @@ export default function EnglishPrepositionsOrderGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'topics');
@@ -317,7 +319,7 @@ export default function EnglishPrepositionsOrderGame({
     setTotalCorrect(nextTotal);
 
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      const progress = loadProgress();
+      const progress = loadProgress({ ownerKey });
       const reward = createLessonPracticeReward(progress, {
         activityKey: 'english_prepositions_order',
         lessonKey: 'english_prepositions_time_place',
@@ -325,7 +327,7 @@ export default function EnglishPrepositionsOrderGame({
         totalQuestions: TOTAL_TOKENS,
         strongThresholdPercent: 75,
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'english_prepositions_time_place',
         score: nextTotal,
@@ -400,7 +402,7 @@ export default function EnglishPrepositionsOrderGame({
   const feedbackAccent: KangurAccent = feedback?.kind === 'success' ? 'emerald' : 'rose';
 
   return (
-    <KangurPracticeGameStage className='mx-auto max-w-3xl'>
+    <KangurPracticeGameShell className='mx-auto max-w-3xl'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -515,12 +517,6 @@ export default function EnglishPrepositionsOrderGame({
             </Droppable>
           </KangurInfoCard>
 
-          {feedback ? (
-            <KangurInfoCard accent={feedbackAccent} tone='accent' padding='sm' className='text-sm'>
-              {feedback.text}
-            </KangurInfoCard>
-          ) : null}
-
           <div className='flex w-full flex-wrap items-center justify-between gap-3'>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
               <KangurButton size='sm' type='button' variant='surface' onClick={handleReset} disabled={checked}>
@@ -535,21 +531,30 @@ export default function EnglishPrepositionsOrderGame({
                 </KangurStatusChip>
               ) : null}
             </div>
-            {!checked ? (
-              <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck}>
-                {translations('englishPrepositions.inRound.check')}
-              </KangurButton>
-            ) : (
+            <KangurButton
+              size='sm'
+              type='button'
+              variant='primary'
+              onClick={handleCheck}
+              disabled={checked}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+              )}
+            >
+              {translations('englishPrepositions.inRound.check')}
+            </KangurButton>
+            {checked ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={handleNext}>
                 {roundIndex + 1 >= TOTAL_ROUNDS
                   ? translations('englishPrepositions.inRound.seeResult')
                   : translations('englishPrepositions.inRound.next')}
               </KangurButton>
-            )}
+            ) : null}
           </div>
         </KangurGlassPanel>
       </KangurDragDropContext>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }
 
@@ -633,11 +638,7 @@ function DraggableToken({
           </button>
         );
 
-        if (snapshot.isDragging && dragPortal) {
-          return createPortal(content, dragPortal);
-        }
-
-        return content;
+        return renderKangurDragPreview(content, snapshot.isDragging);
       }}
     </Draggable>
   );

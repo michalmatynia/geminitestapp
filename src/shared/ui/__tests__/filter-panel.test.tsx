@@ -4,22 +4,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/shared/ui/templates/panels/PanelFilters', () => ({
-  PanelFiltersSearchPlaceholderRuntimeContext: React.createContext<string | undefined>(undefined),
-  PanelFilters: ({
-    actions,
-    activeValues,
-    collapsible,
-    compact,
-    defaultExpanded,
-    filters,
-    onFilterChange,
-    onReset,
-    onSearchChange,
-    search,
-    toggleButtonAlignment,
-    values,
-  }: {
+vi.mock('@/shared/ui/templates/panels/PanelFilters', async () => {
+  const ReactModule = await import('react');
+  const PanelFiltersSearchPlaceholderRuntimeContext =
+    ReactModule.createContext<string | undefined>(undefined);
+  type PanelFiltersMockProps = {
     actions?: React.ReactNode;
     activeValues?: Record<string, unknown>;
     collapsible?: boolean;
@@ -32,10 +21,25 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', () => ({
     search?: string;
     toggleButtonAlignment?: 'start' | 'end';
     values: Record<string, unknown>;
-  }) => {
-    const placeholder = React.useContext(
-      React.createContext<string | undefined>(undefined)
-    );
+  };
+
+  function MockPanelFilters(props: PanelFiltersMockProps): React.JSX.Element {
+    const {
+      actions,
+      activeValues,
+      collapsible,
+      compact,
+      defaultExpanded,
+      filters,
+      onFilterChange,
+      onReset,
+      onSearchChange,
+      search,
+      toggleButtonAlignment,
+      values,
+    } = props;
+    const placeholder = ReactModule.useContext(PanelFiltersSearchPlaceholderRuntimeContext);
+
     return (
       <div
         data-testid='panel-filters'
@@ -61,8 +65,13 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', () => ({
         {actions}
       </div>
     );
-  },
-}));
+  }
+
+  return {
+    PanelFiltersSearchPlaceholderRuntimeContext,
+    PanelFilters: MockPanelFilters,
+  };
+});
 
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 

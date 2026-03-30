@@ -29,6 +29,16 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+function getSlotsStateMock() {
+  return {
+    selectedFolder: 'Folder A',
+    selectedSlotId: 'slot-123',
+    workingSlotId: 'slot-123',
+    compositeAssetIds: ['composite-1'],
+    previewMode: 'single' as const,
+  };
+}
+
 vi.mock('@/shared/ui', async () => {
   const shared = await import('./rightSidebarRuntimeMockComponents');
   return {
@@ -123,13 +133,7 @@ vi.mock('@/features/ai/image-studio/context/ProjectsContext', () => ({
 }));
 
 vi.mock('@/features/ai/image-studio/context/SlotsContext', () => ({
-  useSlotsState: () => ({
-    selectedFolder: 'Folder A',
-    selectedSlotId: 'slot-123',
-    workingSlotId: 'slot-123',
-    compositeAssetIds: ['composite-1'],
-    previewMode: 'single',
-  }),
+  useSlotsState: getSlotsStateMock,
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({

@@ -8,7 +8,7 @@ import {
   type ApiHandlerContext,
 } from '@/shared/contracts';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
 export const querySchema = z.object({

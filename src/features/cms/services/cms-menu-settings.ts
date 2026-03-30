@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { ObjectId } from 'mongodb';
+import { cache } from 'react';
 
 import {
   DEFAULT_MENU_SETTINGS,
@@ -37,7 +38,7 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
-export const getCmsMenuSettings = async (
+export const getCmsMenuSettings = cache(async (
   domainId?: string | null,
   locale?: string | null
 ): Promise<MenuSettings> => {
@@ -45,15 +46,12 @@ export const getCmsMenuSettings = async (
   const scopedDomainId = zoningEnabled ? (domainId ?? null) : null;
   const fallbackKeys = getCmsMenuSettingsFallbackKeys(scopedDomainId, locale);
 
-  for (const key of fallbackKeys) {
-    const stored = await readSettingValue(key);
-    if (!stored) {
-      continue;
-    }
-
+  const results = await Promise.all(fallbackKeys.map(readSettingValue));
+  for (const stored of results) {
+    if (!stored) continue;
     const parsed = parseJsonSetting<unknown>(stored, null);
     return normalizeMenuSettings(parsed);
   }
 
   return DEFAULT_MENU_SETTINGS;
-};
+});

@@ -27,7 +27,7 @@ describe('UserNotRegisteredError', () => {
       '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-accent-amber-start,#fb923c))]',
       '[color:color-mix(in_srgb,var(--kangur-page-text)_72%,var(--kangur-accent-amber-end,#facc15))]'
     );
-    expect(screen.getByText('To konto nie ma jeszcze dostepu do Kangura')).toBeInTheDocument();
+    expect(screen.getByText('To konto nie ma jeszcze dostepu do StudiQ')).toBeInTheDocument();
     expect(screen.getByText('Jesli to pomylka, sprawdz:').parentElement).toHaveClass(
       'soft-card',
       'kangur-panel-shell',

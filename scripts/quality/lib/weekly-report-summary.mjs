@@ -1,16 +1,22 @@
 import { truncateWeeklyCheckOutput } from './weekly-report-checks.mjs';
+import { getCanonicalTestingSuiteMetadata } from '../../testing/config/test-suite-registry.mjs';
 
-export const toSummaryJsonCheckResult = (check, { maxOutputBytes = 4_000 } = {}) => ({
-  id: check.id,
-  label: check.label,
-  command: check.command,
-  status: check.status,
-  exitCode: check.exitCode,
-  signal: check.signal,
-  durationMs: check.durationMs,
-  scanSummary: check.scanSummary ?? null,
-  outputPreview: check.output ? truncateWeeklyCheckOutput(check.output, maxOutputBytes) : '',
-});
+export const toSummaryJsonCheckResult = (check, { maxOutputBytes = 4_000 } = {}) => {
+  const canonicalTestingSuite = getCanonicalTestingSuiteMetadata(check.id);
+
+  return {
+    id: check.id,
+    label: check.label,
+    command: check.command,
+    status: check.status,
+    exitCode: check.exitCode,
+    signal: check.signal,
+    durationMs: check.durationMs,
+    canonicalTestingSuite,
+    scanSummary: check.scanSummary ?? null,
+    outputPreview: check.output ? truncateWeeklyCheckOutput(check.output, maxOutputBytes) : '',
+  };
+};
 
 export const buildWeeklyReportSummaryJsonDetails = (
   report,

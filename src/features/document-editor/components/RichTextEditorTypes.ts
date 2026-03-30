@@ -24,7 +24,11 @@ export interface RichTextEditorProps {
   loadingLabel?: string | undefined;
   containerClassName?: string | undefined;
   toolbarClassName?: string | undefined;
-  surfaceClassName?: string | undefined;
-  editorContentClassName?: string | undefined;
-  surfaceStyle?: React.CSSProperties | undefined;
+  surfaceOptions?:
+    | {
+        className?: string | undefined;
+        editorContentClassName?: string | undefined;
+        style?: React.CSSProperties | undefined;
+      }
+    | undefined;
 }

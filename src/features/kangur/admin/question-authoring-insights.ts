@@ -8,7 +8,7 @@ import type {
 
 import type { KangurAdminLocaleDto } from './kangur-admin-locale';
 import { resolveKangurAdminLocale } from './kangur-admin-locale';
-import type { QuestionFormData } from '../test-questions';
+import type { QuestionFormData } from '../test-suites/questions';
 
 type QuestionAuthoringDraftLike = Pick<
   QuestionFormData,

@@ -1,0 +1,80 @@
+name: nightly-deep-tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
+
+env:
+  BAZEL_REMOTE_CACHE_URL: ${{ secrets.BAZEL_REMOTE_CACHE_URL }}
+  BAZEL_REMOTE_CACHE_HEADER: ${{ secrets.BAZEL_REMOTE_CACHE_HEADER }}
+  BAZEL_REMOTE_CACHE_UPLOAD_LOCAL_RESULTS: 'true'
+
+jobs:
+  nightly-deep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_DB_PROVIDER: mongodb
+      PRODUCT_DB_PROVIDER: mongodb
+      NOTE_DB_PROVIDER: mongodb
+      INTEGRATION_DB_PROVIDER: mongodb
+      AUTH_DB_PROVIDER: mongodb
+      MONGODB_URI: mongodb://localhost:27017
+      MONGODB_DB: app_test
+      HIGH_RISK_COVERAGE_CONCURRENCY: '2'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run nightly-deep testing lane
+        run: npm run test:lane:nightly-deep
+
+      - name: Upload nightly-deep artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-deep-testing
+          if-no-files-found: warn
+          path: |
+            docs/metrics/lint-domain-checks-latest.json
+            docs/metrics/lint-domain-checks-latest.md
+            docs/metrics/unit-domain-timings-latest.json
+            docs/metrics/unit-domain-timings-latest.md
+            docs/metrics/critical-flow-tests-latest.json
+            docs/metrics/critical-flow-tests-latest.md
+            docs/metrics/security-smoke-latest.json
+            docs/metrics/security-smoke-latest.md
+            docs/metrics/accessibility-smoke-latest.json
+            docs/metrics/accessibility-smoke-latest.md
+            docs/metrics/accessibility-route-crawl-latest.json
+            docs/metrics/accessibility-route-crawl-latest.md
+            docs/metrics/integration-mongo-latest.json
+            docs/metrics/integration-mongo-latest.md
+            docs/metrics/high-risk-coverage-latest.json
+            docs/metrics/high-risk-coverage-latest.md
+            docs/metrics/testing-run-ledger-latest.json
+            docs/metrics/testing-run-ledger-latest.md

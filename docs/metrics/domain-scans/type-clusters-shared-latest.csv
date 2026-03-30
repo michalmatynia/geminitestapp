@@ -1,1 +1,6 @@
-clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signatureKind
+clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signaturePreview,declarations
+exact-0002,exact-shape,20,3,shared|shared:contracts,,a38c2e730457,StringRecordDto,src/shared/lib/api/catch-all-router.ts:8:CatchAllRouteParams|src/shared/lib/ai-paths/core/utils/collection-mapping.ts:3:AiPathsCollectionMap|src/shared/contracts/base.ts:26:StringRecord
+near-0001,near-shape,16,3,feature:kangur|shared,,4ca7be7bf5a8,prop:kind:'success' | 'error'; prop:text:string,src/shared/utils/prompt-params/scanner.ts:17:Segment|src/features/kangur/ui/types.ts:82:KangurMiniGameFeedbackDto|src/features/kangur/ui/types.ts:91:KangurMiniGameInformationalFeedbackDto
+near-0005,near-shape,14,2,shared,,f29799e1c9b0,prop:type:'alert-tick',src/shared/lib/queue/scheduler-queue-types.ts:1:ScheduledTickJobData|src/shared/lib/observability/workers/system-log-alerts/types.ts:4:SystemLogAlertsJobData
+exact-0011,exact-shape,13,2,shared|shared:contracts,,cabeb613a9ab,UnknownRecordDto,src/shared/utils/observability/client-error-logger.ts:18:ClientErrorContext|src/shared/contracts/base.ts:24:UnknownRecord
+exact-0010,exact-shape,11,2,feature:kangur|shared,,32b509c4d84b,IdLabelOptionDto<string>,src/shared/providers/AdminFavoritesProvider.tsx:6:AdminFavoriteCandidate|src/features/kangur/ui/components/AgenticCodingMiniGames.types.ts:14:SortGameBin

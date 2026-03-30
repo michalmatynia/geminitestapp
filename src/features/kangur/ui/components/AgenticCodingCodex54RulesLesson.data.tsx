@@ -1,4 +1,4 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -10,6 +10,7 @@ import {
 import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
+import { useId } from 'react';
 
 type SectionId = 'rules-execpolicy';
 
@@ -53,39 +54,96 @@ const EXEC_POLICY_CHECK = [
   '  -- gh pr view 7888 --json title,body,comments',
 ].join('\n');
 
-const RulesDecisionVisual = (): JSX.Element => (
-  <svg
-    aria-label='Diagram: decyzje rules (allow, prompt, forbidden).'
-    className='h-auto w-full'
-    role='img'
-    viewBox='0 0 360 140'
-  >
-    <style>{`
-      .panel {
-        fill: #f8fafc;
-        stroke: #e2e8f0;
-        stroke-width: 2;
-      }
-      .label {
-        font: 700 10px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #0f172a;
-      }
-      .arrow {
-        stroke: #94a3b8;
-        stroke-width: 2;
-        fill: none;
-      }
-    `}</style>
-    <rect className='panel' height='36' rx='10' width='90' x='20' y='52' />
-    <rect className='panel' height='36' rx='10' width='90' x='135' y='52' />
-    <rect className='panel' height='36' rx='10' width='90' x='250' y='52' />
-    <text className='label' x='38' y='74'>Allow</text>
-    <text className='label' x='155' y='74'>Prompt</text>
-    <text className='label' x='262' y='74'>Block</text>
-    <path className='arrow' d='M110 70 H135' />
-    <path className='arrow' d='M225 70 H250' />
-  </svg>
-);
+export const RulesDecisionVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-rules-decision-${baseId}-clip`;
+  const panelGradientId = `agentic-rules-decision-${baseId}-panel`;
+  const frameGradientId = `agentic-rules-decision-${baseId}-frame`;
+
+  return (
+    <svg
+      aria-label='Diagram: decyzje rules (allow, prompt, forbidden).'
+      className='h-auto w-full'
+      data-testid='agentic-rules-decision-animation'
+      role='img'
+      viewBox='0 0 360 160'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='10' y='10' width='340' height='140' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2='342'
+          y1='16'
+          y2='148'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#faf5ff' />
+          <stop offset='52%' stopColor='#f5f3ff' />
+          <stop offset='100%' stopColor='#f8fafc' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='342'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(168,85,247,0.82)' />
+          <stop offset='50%' stopColor='rgba(196,181,253,0.82)' />
+          <stop offset='100%' stopColor='rgba(168,85,247,0.8)' />
+        </linearGradient>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-rules-decision-atmosphere'>
+        <rect
+          x='10'
+          y='10'
+          width='340'
+          height='140'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(168,85,247,0.16)'
+          strokeWidth='2'
+        />
+        <ellipse cx='84' cy='32' rx='76' ry='18' fill='rgba(196,181,253,0.18)' />
+        <ellipse cx='286' cy='36' rx='74' ry='18' fill='rgba(168,85,247,0.12)' />
+        <ellipse cx='184' cy='132' rx='96' ry='20' fill='rgba(139,92,246,0.1)' />
+
+        <rect x='20' y='52' width='90' height='40' rx='14' fill='rgba(255,255,255,0.9)' stroke='#c4b5fd' strokeWidth='2' />
+        <rect x='135' y='52' width='90' height='40' rx='14' fill='rgba(255,255,255,0.92)' stroke='#a78bfa' strokeWidth='2' />
+        <rect x='250' y='52' width='90' height='40' rx='14' fill='rgba(245,243,255,0.94)' stroke='#8b5cf6' strokeWidth='2' />
+        <rect x='34' y='64' width='22' height='8' rx='4' fill='rgba(168,85,247,0.18)' />
+        <rect x='149' y='64' width='28' height='8' rx='4' fill='rgba(168,85,247,0.18)' />
+        <rect x='264' y='64' width='24' height='8' rx='4' fill='rgba(139,92,246,0.18)' />
+
+        <path d='M110 72 H135' stroke='#94a3b8' strokeWidth='2.5' fill='none' />
+        <polygon points='135,72 127,67 127,77' fill='#94a3b8' />
+        <path d='M225 72 H250' stroke='#8b5cf6' strokeWidth='2.5' fill='none' />
+        <polygon points='250,72 242,67 242,77' fill='#8b5cf6' />
+
+        <text x='38' y='76' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Allow</text>
+        <text x='155' y='76' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Prompt</text>
+        <text x='262' y='76' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Block</text>
+      </g>
+
+      <rect
+        x='18'
+        y='18'
+        width='324'
+        height='124'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-rules-decision-frame'
+      />
+    </svg>
+  );
+};
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   'rules-execpolicy': [

@@ -32,6 +32,11 @@ type KangurMobileWebsiteHelpTargetLike = {
 
 const COMPETITION_MODE_HINTS = ['2024', '3pt', '4pt', '5pt', 'full', 'kangur', 'original'];
 
+type ResolveWebsiteHelpHrefArgs = {
+  options: ResolveKangurMobileActionHrefOptions;
+  parsedRoute: URL;
+};
+
 const normalizeQueryToken = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') {
     return null;
@@ -124,50 +129,33 @@ export const resolveKangurMobileWebsiteHelpHref = (
     return '/' as Href;
   }
 
-  if (leadSegment === 'competition') {
-    return createKangurCompetitionHref();
-  }
+  const routeResolvers: Partial<
+    Record<string, (args: ResolveWebsiteHelpHrefArgs) => Href | null>
+  > = {
+    competition: () => createKangurCompetitionHref(),
+    duels: () => createKangurDuelsHref(),
+    game: ({ options: resolverOptions }) =>
+      resolverOptions.gameTarget === 'competition'
+        ? createKangurCompetitionHref()
+        : createKangurPracticeHref('mixed'),
+    practice: ({ options: resolverOptions }) =>
+      resolverOptions.gameTarget === 'competition'
+        ? createKangurCompetitionHref()
+        : createKangurPracticeHref('mixed'),
+    lesson: ({ parsedRoute: route }) =>
+      createKangurLessonHref(route.searchParams.get('focus')),
+    lessons: ({ parsedRoute: route }) =>
+      createKangurLessonHref(route.searchParams.get('focus')),
+    leaderboard: () => '/leaderboard' as Href,
+    'learner-profile': () => '/profile' as Href,
+    'parent-dashboard': () => createKangurParentDashboardHref(),
+    plan: () => createKangurPlanHref(),
+    profile: () => '/profile' as Href,
+    results: () => createKangurResultsHref(),
+    scores: () => createKangurResultsHref(),
+    test: () => createKangurTestsHref(),
+    tests: () => createKangurTestsHref(),
+  };
 
-  if (leadSegment === 'duels') {
-    return createKangurDuelsHref();
-  }
-
-  if (leadSegment === 'game' || leadSegment === 'practice') {
-    return options.gameTarget === 'competition'
-      ? createKangurCompetitionHref()
-      : createKangurPracticeHref('mixed');
-  }
-
-  if (leadSegment === 'lessons' || leadSegment === 'lesson') {
-    return createKangurLessonHref(parsedRoute.searchParams.get('focus'));
-  }
-
-  if (leadSegment === 'leaderboard') {
-    return '/leaderboard' as Href;
-  }
-
-  if (leadSegment === 'plan') {
-    return createKangurPlanHref();
-  }
-
-  if (
-    leadSegment === 'profile' ||
-    leadSegment === 'learner-profile'
-  ) {
-    return '/profile' as Href;
-  }
-
-  if (leadSegment === 'parent-dashboard') {
-    return createKangurParentDashboardHref();
-  }
-
-  if (leadSegment === 'results' || leadSegment === 'scores') {
-    return createKangurResultsHref();
-  }
-
-  if (leadSegment === 'tests' || leadSegment === 'test') {
-    return createKangurTestsHref();
-  }
-
-  return null;
+  return routeResolvers[leadSegment]?.({ options, parsedRoute }) ?? null;
 };

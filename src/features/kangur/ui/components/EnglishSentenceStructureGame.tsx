@@ -1,17 +1,18 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
+  renderKangurDragPreview,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -29,7 +30,7 @@ import {
   KangurStatusChip,
   KangurTextField,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 import {
   KANGUR_ACCENT_STYLES,
   KANGUR_CENTER_ROW_SPACED_CLASSNAME,
@@ -146,7 +147,6 @@ const ROUNDS: Round[] = [
 ];
 
 const TOTAL_ROUNDS = ROUNDS.length;
-const dragPortal = typeof document === 'undefined' ? null : document.body;
 
 const getSentenceStructurePrompt = (
   translate: KangurMiniGameTranslate,
@@ -223,6 +223,7 @@ export default function EnglishSentenceStructureGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const resolvedFinishLabel = finishLabel ?? getKangurMiniGameFinishLabel(translations, 'play');
@@ -350,7 +351,7 @@ export default function EnglishSentenceStructureGame({
 
     scheduleKangurRoundFeedback(() => {
       if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(progress, {
           activityKey: 'english_sentence_structure_quiz',
           lessonKey: 'english_sentence_structure',
@@ -358,7 +359,7 @@ export default function EnglishSentenceStructureGame({
           totalQuestions: TOTAL_ROUNDS,
           strongThresholdPercent: 75,
         });
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'english_sentence_structure',
           score: nextScore,
@@ -466,7 +467,7 @@ export default function EnglishSentenceStructureGame({
   }
 
   return (
-    <KangurPracticeGameStage className='max-w-sm' data-testid='english-structure-game-stage'>
+    <KangurPracticeGameShell className='max-w-sm' data-testid='english-structure-game-shell'>
       <KangurPracticeGameProgress
         accent={round.accent}
         currentRound={roundIndex}
@@ -569,6 +570,7 @@ export default function EnglishSentenceStructureGame({
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
+                    data-testid='english-structure-order-list'
                     className={KANGUR_GRID_TIGHT_CLASSNAME}
                   >
                     {orderTokens.map((token, index) => (
@@ -644,11 +646,7 @@ export default function EnglishSentenceStructureGame({
                             </button>
                           );
 
-                          if (snapshot.isDragging && dragPortal) {
-                            return createPortal(content, dragPortal);
-                          }
-
-                          return content;
+                          return renderKangurDragPreview(content, snapshot.isDragging);
                         }}
                       </Draggable>
                     ))}
@@ -674,23 +672,24 @@ export default function EnglishSentenceStructureGame({
           </KangurInfoCard>
         )}
         <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-          <KangurCheckButton
-            onClick={() => handleCheck()}
-            disabled={!isReady || isChecking}
-            aria-busy={isChecking}
-            feedbackTone={
-              feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
-            }
-          >
-            {isChecking
-              ? translations('englishSentenceStructure.inRound.checking')
-              : translations('englishSentenceStructure.inRound.check')}
-          </KangurCheckButton>
+        <KangurButton
+          onClick={() => handleCheck()}
+          disabled={!isReady || isChecking}
+          aria-busy={isChecking}
+          className={getKangurCheckButtonClassName(
+            undefined,
+            feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+          )}
+        >
+          {isChecking
+            ? translations('englishSentenceStructure.inRound.checking')
+            : translations('englishSentenceStructure.inRound.check')}
+        </KangurButton>
           <KangurButton onClick={handleRestart} variant='ghost'>
             {translations('shared.restart')}
           </KangurButton>
         </div>
       </KangurGlassPanel>
-    </KangurPracticeGameStage>
+    </KangurPracticeGameShell>
   );
 }

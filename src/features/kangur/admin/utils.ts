@@ -5,7 +5,12 @@ import type {
   KangurLessonDocumentStore,
   KangurLessonPage,
 } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
+import {
+  serializeKangurLessonTemplateComponentContent,
+  supportsKangurLessonTemplateComponentContent,
+} from '../lessons/lesson-template-component-content';
 import { hasKangurLessonDocumentContent } from '../lesson-documents';
 import { createKangurLessonDraft } from '../settings';
 import { TREE_MODE_STORAGE_KEY } from './constants';
@@ -68,6 +73,50 @@ export const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
   activeBg: lesson.activeBg,
   enabled: lesson.enabled,
 });
+
+export const toLocalizedLessonFormData = (
+  lesson: KangurLesson,
+  template?: KangurLessonTemplate | null
+): LessonFormData => ({
+  ...toLessonFormData(lesson),
+  subject: template?.subject ?? lesson.subject,
+  ageGroup: template?.ageGroup ?? lesson.ageGroup,
+  title: template?.title ?? lesson.title,
+  description: template?.description ?? lesson.description,
+  emoji: template?.emoji ?? lesson.emoji,
+  color: template?.color ?? lesson.color,
+  activeBg: template?.activeBg ?? lesson.activeBg,
+});
+
+export const applyLessonTemplateToFormData = (
+  formData: LessonFormData,
+  template?: KangurLessonTemplate | null
+): LessonFormData => {
+  if (!template) {
+    return formData;
+  }
+
+  return {
+    ...formData,
+    componentId: template.componentId,
+    subject: template.subject ?? formData.subject,
+    ageGroup: template.ageGroup ?? formData.ageGroup,
+    title: template.title,
+    description: template.description,
+    emoji: template.emoji,
+    color: template.color,
+    activeBg: template.activeBg,
+  };
+};
+
+export const resolveLessonComponentContentJson = (
+  componentId: KangurLessonComponentId,
+  template?: KangurLessonTemplate | null,
+): string => serializeKangurLessonTemplateComponentContent(componentId, template?.componentContent);
+
+export const supportsLessonComponentContentAuthoring = (
+  componentId: KangurLessonComponentId | null | undefined,
+): boolean => supportsKangurLessonTemplateComponentContent(componentId);
 
 export const createInitialLessonFormData = (): LessonFormData => createKangurLessonDraft('clock');
 

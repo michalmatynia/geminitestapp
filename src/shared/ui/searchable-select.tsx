@@ -4,12 +4,12 @@ import * as React from 'react';
 
 import type { SearchableSelectProps } from '@/shared/contracts/ui';
 
-import { MultiSelect, type MultiSelectOption } from './multi-select';
+import { MultiSelect } from './multi-select';
 
 export type { SearchableSelectProps };
 
-type SearchableSelectControlProps = {
-  options: ReadonlyArray<MultiSelectOption>;
+type SearchableSelectResolvedProps = {
+  options: SearchableSelectProps['options'];
   selected: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
@@ -21,18 +21,20 @@ type SearchableSelectControlProps = {
   emptyMessage?: string;
 };
 
-function SearchableSelectControl({
-  options,
-  selected,
-  onChange,
-  placeholder,
-  searchPlaceholder,
-  label,
-  disabled,
-  className,
-  loading,
-  emptyMessage,
-}: SearchableSelectControlProps): React.JSX.Element {
+const renderSearchableSelect = (resolvedProps: SearchableSelectResolvedProps): React.JSX.Element => {
+  const {
+    options,
+    selected,
+    onChange,
+    placeholder,
+    searchPlaceholder,
+    label,
+    disabled,
+    className,
+    loading,
+    emptyMessage,
+  } = resolvedProps;
+
   return (
     <MultiSelect
       options={options}
@@ -48,20 +50,21 @@ function SearchableSelectControl({
       emptyMessage={emptyMessage}
     />
   );
-}
+};
 
-export function SearchableSelect({
-  options,
-  value,
-  onChange,
-  placeholder,
-  searchPlaceholder,
-  label,
-  disabled,
-  className,
-  loading,
-  emptyMessage,
-}: SearchableSelectProps): React.JSX.Element {
+export function SearchableSelect(props: SearchableSelectProps): React.JSX.Element {
+  const {
+    options,
+    value,
+    onChange,
+    placeholder,
+    searchPlaceholder,
+    label,
+    disabled,
+    className,
+    loading,
+    emptyMessage,
+  } = props;
   const selected = React.useMemo(() => (value ? [value] : []), [value]);
 
   const handleChange = React.useCallback(
@@ -71,18 +74,16 @@ export function SearchableSelect({
     [onChange]
   );
 
-  return (
-    <SearchableSelectControl
-      options={options}
-      selected={selected}
-      onChange={handleChange}
-      placeholder={placeholder}
-      searchPlaceholder={searchPlaceholder}
-      label={label}
-      disabled={disabled}
-      className={className}
-      loading={loading}
-      emptyMessage={emptyMessage}
-    />
-  );
+  return renderSearchableSelect({
+    options,
+    selected,
+    onChange: handleChange,
+    placeholder,
+    searchPlaceholder,
+    label,
+    disabled,
+    className,
+    loading,
+    emptyMessage,
+  });
 }

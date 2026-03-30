@@ -5,7 +5,7 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const addXpMock = vi.fn();
 const createLessonPracticeRewardMock = vi.fn(() => ({
@@ -15,6 +15,12 @@ const createLessonPracticeRewardMock = vi.fn(() => ({
 }));
 const loadProgressMock = vi.fn(() => ({}));
 const persistKangurSessionScoreMock = vi.fn();
+const useKangurSubjectFocusMock = vi.fn(() => ({
+  subject: 'english',
+  setSubject: vi.fn(),
+  subjectKey: 'learner-1',
+}));
+let draggableSnapshot = { isDragging: false };
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -59,12 +65,16 @@ vi.mock('@hello-pangea/dnd', () => ({
         draggableProps: {},
         dragHandleProps: {},
       },
-      { isDragging: false }
+      draggableSnapshot
     ),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => false,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
@@ -73,7 +83,7 @@ vi.mock('@/features/kangur/ui/services/progress', async (importOriginal) => {
     ...actual,
     addXp: (...args: unknown[]) => addXpMock(...args),
     createLessonPracticeReward: (...args: unknown[]) => createLessonPracticeRewardMock(...args),
-    loadProgress: () => loadProgressMock(),
+    loadProgress: (...args: unknown[]) => loadProgressMock(...args),
   };
 });
 
@@ -149,6 +159,11 @@ const placeArticle = (article: 'a' | 'an' | 'the', slotId: string): void => {
   fireEvent.click(screen.getByTestId(`english-articles-drag-slot-${slotId}`));
 };
 
+afterEach(() => {
+  draggableSnapshot = { isDragging: false };
+  useKangurSubjectFocusMock.mockClear();
+});
+
 describe('EnglishArticlesDragDropGame', () => {
   it('plays through the rounds, scores the placements, and shows the summary', () => {
     renderGame();
@@ -156,15 +171,23 @@ describe('EnglishArticlesDragDropGame', () => {
     expect(screen.getByText('School bag')).toBeInTheDocument();
     expect(screen.getByText('Article bank')).toBeInTheDocument();
     expect(screen.getByText('Drag and drop')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-topic-a')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-topic-an')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-topic-the')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-pool-atmosphere')).toBeInTheDocument();
+    expect(screen.getByTestId('english-articles-drag-slot-frame-school-bag-book')).toBeInTheDocument();
 
     placeArticle('a', 'school-bag-book');
     placeArticle('an', 'school-bag-eraser');
     placeArticle('the', 'school-bag-window');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
 
-    expect(screen.getByText('Perfect! Each article fits the sentence.')).toBeInTheDocument();
+    expect(checkButton).toHaveClass('bg-emerald-500', 'border-emerald-500');
+    expect(screen.queryByText('Perfect! Each article fits the sentence.')).not.toBeInTheDocument();
     expect(screen.getByText('3/3 correct')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
@@ -181,7 +204,8 @@ describe('EnglishArticlesDragDropGame', () => {
       'Score: 6/6'
     );
     expect(screen.getByText('Perfect! Articles are in the right places.')).toBeInTheDocument();
-    expect(addXpMock).toHaveBeenCalledWith(12, {});
+    expect(loadProgressMock).toHaveBeenCalledWith({ ownerKey: 'learner-1' });
+    expect(addXpMock).toHaveBeenCalledWith(12, {}, { ownerKey: 'learner-1' });
     expect(persistKangurSessionScoreMock).toHaveBeenCalledWith(
       expect.objectContaining({
         correctAnswers: 6,
@@ -199,17 +223,29 @@ describe('EnglishArticlesDragDropGame', () => {
     placeArticle('a', 'school-bag-eraser');
     placeArticle('an', 'school-bag-window');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    const checkButton = screen.getByRole('button', { name: 'Check' });
+    fireEvent.click(checkButton);
 
-    expect(
-      screen.getByText('Check the specific noun and the first sound again.')
-    ).toBeInTheDocument();
+    expect(checkButton).toHaveClass('bg-rose-500', 'border-rose-500');
+    expect(screen.queryByText('Check the specific noun and the first sound again.')).not.toBeInTheDocument();
     expect(screen.getByText('0/3 correct')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
     expect(
       within(screen.getByTestId('english-articles-drag-slot-school-bag-book')).getByRole(
         'button',
         { name: 'the' }
       )
     ).toBeInTheDocument();
+  });
+
+  it('renders the active draggable article in a body portal during dragging', () => {
+    draggableSnapshot = { isDragging: true };
+
+    renderGame();
+
+    const pool = screen.getByTestId('english-articles-drag-pool-zone');
+
+    expect(within(pool).queryByRole('button', { name: 'a' })).not.toBeInTheDocument();
+    expect(within(document.body).getByRole('button', { name: 'a' })).toBeInTheDocument();
   });
 });

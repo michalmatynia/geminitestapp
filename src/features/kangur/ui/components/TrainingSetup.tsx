@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Dumbbell } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { useId } from 'react';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
@@ -20,6 +21,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { useKangurTrainingSetupState } from '@/features/kangur/ui/hooks/useKangurTrainingSetupState';
 import type { KangurTrainingSelection } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 type TrainingSetupProps = {
   onStart: (selection: KangurTrainingSelection) => void;
@@ -29,6 +31,66 @@ type TrainingSetupProps = {
   suggestionTitle?: string;
 };
 
+type TrainingSetupFallbackCopy = {
+  categoryHeading: string;
+  countAriaLabel: (value: number) => string;
+  countHeading: string;
+  description: string;
+  recommendationLabel: string;
+  startLabel: string;
+  title: string;
+};
+
+const getTrainingSetupFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): TrainingSetupFallbackCopy => {
+  if (locale === 'uk') {
+    return {
+      categoryHeading: 'Категорії запитань',
+      countAriaLabel: (value) => `${value} запитань`,
+      countHeading: 'Кількість запитань',
+      description: 'Оберіть рівень, категорії та кількість запитань для однієї сесії.',
+      recommendationLabel: 'Рекомендуємо зараз',
+      startLabel: 'Старт! 🚀',
+      title: 'Налаштуй тренування',
+    };
+  }
+
+  if (locale === 'de') {
+    return {
+      categoryHeading: 'Fragenkategorien',
+      countAriaLabel: (value) => `${value} Fragen`,
+      countHeading: 'Anzahl der Fragen',
+      description: 'Wahle Stufe, Kategorien und Fragenzahl fur eine Sitzung aus.',
+      recommendationLabel: 'Jetzt empfohlen',
+      startLabel: 'Start! 🚀',
+      title: 'Stelle dein Training ein',
+    };
+  }
+
+  if (locale === 'en') {
+    return {
+      categoryHeading: 'Question categories',
+      countAriaLabel: (value) => `${value} questions`,
+      countHeading: 'Question count',
+      description: 'Choose the level, categories, and number of questions for one session.',
+      recommendationLabel: 'Recommended now',
+      startLabel: 'Start! 🚀',
+      title: 'Build your training',
+    };
+  }
+
+  return {
+    categoryHeading: 'Kategorie pytań',
+    countAriaLabel: (value) => `${value} pytań`,
+    countHeading: 'Liczba pytań',
+    description: 'Dobierz poziom, kategorie i liczbę pytań do jednej sesji.',
+    recommendationLabel: 'Polecamy teraz',
+    startLabel: 'Start! 🚀',
+    title: 'Dobierz trening',
+  };
+};
+
 export default function TrainingSetup({
   onStart,
   suggestedSelection,
@@ -36,9 +98,11 @@ export default function TrainingSetup({
   suggestionLabel,
   suggestionTitle,
 }: TrainingSetupProps): React.JSX.Element {
+  const locale = normalizeSiteLocale(useLocale());
   const isCoarsePointer = useKangurCoarsePointer();
   const recommendationDescription = suggestionDescription;
-  const recommendationLabel = suggestionLabel ?? 'Polecamy teraz';
+  const fallbackCopy = getTrainingSetupFallbackCopy(locale);
+  const recommendationLabel = suggestionLabel ?? fallbackCopy.recommendationLabel;
   const recommendationTitle = suggestionTitle;
 
   const {
@@ -80,14 +144,14 @@ export default function TrainingSetup({
           align='left'
           className='w-full'
           data-testid='training-setup-heading'
-          description='Dobierz poziom, kategorie i liczbę pytań do jednej sesji.'
+          description={fallbackCopy.description}
           headingAs='h3'
           headingSize='md'
           icon={<Dumbbell aria-hidden='true' className='h-6 w-6' />}
           iconAccent='indigo'
           iconSize='lg'
           layout='inline'
-          title='Dobierz trening'
+          title={fallbackCopy.title}
         />
 
         <div id={summaryId} aria-live='polite' aria-atomic='true' className='sr-only'>
@@ -112,7 +176,7 @@ export default function TrainingSetup({
         <section aria-labelledby={categoryHeadingId}>
           <div className={`mb-2 ${KANGUR_TIGHT_ROW_CLASSNAME} items-start sm:items-center sm:justify-between`}>
             <h3 id={categoryHeadingId} className='text-sm font-bold [color:var(--kangur-page-text)]'>
-              Kategorie pytań
+              {fallbackCopy.categoryHeading}
             </h3>
             <KangurButton
               className={
@@ -163,7 +227,7 @@ export default function TrainingSetup({
             id={countHeadingId}
             className='mb-2 block text-sm font-bold [color:var(--kangur-page-text)]'
           >
-            Liczba pytań
+            {fallbackCopy.countHeading}
           </h3>
           <div
             aria-labelledby={countHeadingId}
@@ -174,7 +238,7 @@ export default function TrainingSetup({
             {countOptions.map((option) => (
               <KangurButton
                 key={option.id}
-                aria-label={`${option.value} pytań`}
+                aria-label={fallbackCopy.countAriaLabel(option.value)}
                 aria-pressed={option.selected}
                 onClick={option.select}
                 className={cn(
@@ -203,7 +267,7 @@ export default function TrainingSetup({
             type='button'
             variant='primary'
           >
-            Start! 🚀
+            {fallbackCopy.startLabel}
           </KangurButton>
         </div>
       </KangurGlassPanel>

@@ -29,8 +29,16 @@ describe('front-page-app helpers', () => {
     expect(normalizeFrontPageApp('notes')).toBe('notes');
   });
 
+  it('normalizes casing, whitespace, and the StudiQ brand alias', () => {
+    expect(normalizeFrontPageApp(' Kangur ')).toBe('kangur');
+    expect(normalizeFrontPageApp(' CMS ')).toBe('cms');
+    expect(normalizeFrontPageApp('StudiQ')).toBe('kangur');
+    expect(normalizeFrontPageApp('  studiq  ')).toBe('kangur');
+  });
+
   it('returns null for unsupported values', () => {
     expect(normalizeFrontPageApp('unknown')).toBeNull();
+    expect(normalizeFrontPageApp('   ')).toBeNull();
     expect(normalizeFrontPageApp(null)).toBeNull();
     expect(normalizeFrontPageApp(undefined)).toBeNull();
   });
@@ -69,5 +77,7 @@ describe('front-page-app helpers', () => {
     expect(getFrontPagePublicOwner('chatbot')).toBe('cms');
     expect(getFrontPagePublicOwner('notes')).toBe('cms');
     expect(getFrontPagePublicOwner('unknown')).toBe('cms');
+    expect(getFrontPagePublicOwner(null)).toBe('cms');
+    expect(getFrontPagePublicOwner(undefined)).toBe('cms');
   });
 });

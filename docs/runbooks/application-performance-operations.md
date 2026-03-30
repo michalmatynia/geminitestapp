@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Operations'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'cross-feature'
@@ -15,6 +15,11 @@ Use this runbook to execute the app-level performance operations workflow for
 this repository. It covers the fast regression gate, the local baseline pass,
 the weekly trend run, and live incident telemetry surfaces already wired into
 the app.
+
+For the stable generated artifact hub, use
+[`docs/metrics/README.md`](../metrics/README.md). This runbook focuses on how
+to run and interpret the operational lanes, not on indexing every generated
+history file.
 
 ## Prerequisites
 
@@ -102,6 +107,16 @@ Successful runs update these files:
 - `docs/metrics/weekly-quality-trend-latest.md`
 - `docs/metrics/trend-index-latest.json`
 - `docs/metrics/trend-index-latest.md`
+
+For operators, the most useful stable markdown entrypoints are usually:
+
+- [`docs/metrics/critical-path-performance-latest.md`](../metrics/critical-path-performance-latest.md)
+- [`docs/metrics/critical-flow-tests-latest.md`](../metrics/critical-flow-tests-latest.md)
+- [`docs/metrics/unit-domain-timings-latest.md`](../metrics/unit-domain-timings-latest.md)
+- [`docs/metrics/weekly-quality-latest.md`](../metrics/weekly-quality-latest.md)
+- [`docs/metrics/weekly-quality-trend-latest.md`](../metrics/weekly-quality-trend-latest.md)
+- [`docs/metrics/trend-index-latest.md`](../metrics/trend-index-latest.md)
+- [`docs/metrics/route-hotspots.md`](../metrics/route-hotspots.md)
 
 ## Live Telemetry Surfaces
 

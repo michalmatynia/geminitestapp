@@ -4,15 +4,15 @@ import React from 'react';
 
 import { AiPathsValidationRule } from '@/shared/lib/ai-paths';
 import { Badge, Card, Hint, SelectSimple, StatusBadge } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { getCandidateTags, type CandidateChangeKind } from '../../pages/AdminAiPathsValidationUtils';
 import { ValidationActionButton } from './ValidationActionButton';
 import { ValidationItemCard } from './ValidationItemCard';
-import { ValidationMetaBadge } from './ValidationMetaBadge';
 import { ValidationPanel } from './ValidationPanel';
 import { ValidationPanelHeader } from './ValidationPanelHeader';
-import { ValidationSubpanel } from './ValidationSubpanel';
+import { validationSubpanelClassName } from './ValidationSubpanel';
 
 type CentralDocsSyncSummaryBadgeProps = {
   label: string;
@@ -32,20 +32,36 @@ const getCandidateChangeVariant = (
 ): React.ComponentProps<typeof Badge>['variant'] =>
   changeKind === 'existing' ? 'neutral' : 'warning';
 
-function CentralDocsSyncSummaryBadge({
+const renderValidationMetaBadge = ({
+  children,
+  className,
+  uppercase = false,
+  variant = 'outline',
+}: {
+  children: React.ReactNode;
+  className?: string;
+  uppercase?: boolean;
+  variant?: React.ComponentProps<typeof Badge>['variant'];
+}): React.JSX.Element => (
+  <Badge variant={variant} className={cn('text-[10px]', uppercase && 'uppercase', className)}>
+    {children}
+  </Badge>
+);
+
+const renderCentralDocsSyncSummaryBadge = ({
   label,
   value,
   variant = 'neutral',
-}: CentralDocsSyncSummaryBadgeProps): React.JSX.Element {
-  return <StatusBadge status={`${label}: ${value}`} variant={variant} size='sm' />;
-}
+}: CentralDocsSyncSummaryBadgeProps): React.JSX.Element => (
+  <StatusBadge status={`${label}: ${value}`} variant={variant} size='sm' />
+);
 
-function CentralDocsSyncCandidateCard({
+const renderCentralDocsSyncCandidateCard = ({
   rule,
   changeKind,
   onApprove,
   onReject,
-}: CentralDocsSyncCandidateCardProps): React.JSX.Element {
+}: CentralDocsSyncCandidateCardProps): React.JSX.Element => {
   const candidateTags = getCandidateTags(rule).slice(0, 3);
 
   return (
@@ -56,16 +72,16 @@ function CentralDocsSyncCandidateCard({
           <div className='text-[10px] text-gray-500'>{rule.id}</div>
           <div className='text-[10px] text-gray-500'>{rule.inference?.sourcePath ?? 'central docs'}</div>
           <div className='mt-1 flex flex-wrap items-center gap-1'>
-            <ValidationMetaBadge uppercase>
-              {rule.module}
-            </ValidationMetaBadge>
-            <ValidationMetaBadge variant={getCandidateChangeVariant(changeKind)} uppercase>
-              {changeKind}
-            </ValidationMetaBadge>
+            {renderValidationMetaBadge({ uppercase: true, children: rule.module })}
+            {renderValidationMetaBadge({
+              variant: getCandidateChangeVariant(changeKind),
+              uppercase: true,
+              children: changeKind,
+            })}
             {candidateTags.map((tag: string) => (
-              <ValidationMetaBadge key={`${rule.id}:${tag}`}>
-                {tag}
-              </ValidationMetaBadge>
+              <React.Fragment key={`${rule.id}:${tag}`}>
+                {renderValidationMetaBadge({ children: tag })}
+              </React.Fragment>
             ))}
           </div>
         </div>
@@ -86,7 +102,7 @@ function CentralDocsSyncCandidateCard({
       </div>
     </ValidationItemCard>
   );
-}
+};
 
 export function CentralDocsSyncPanel(): React.JSX.Element {
   const {
@@ -184,12 +200,13 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
 
       <div className='mb-3 flex flex-wrap items-center gap-2'>
         {summaryBadges.map((badge) => (
-          <CentralDocsSyncSummaryBadge
-            key={badge.key}
-            label={badge.label}
-            value={badge.value}
-            variant={badge.variant}
-          />
+          <React.Fragment key={badge.key}>
+            {renderCentralDocsSyncSummaryBadge({
+              label: badge.label,
+              value: badge.value,
+              variant: badge.variant,
+            })}
+          </React.Fragment>
         ))}
       </div>
 
@@ -209,7 +226,11 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
       ) : null}
 
       {centralSnapshot?.sources?.length ? (
-        <ValidationSubpanel className='mb-3 max-h-28 space-y-1 overflow-y-auto'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className={validationSubpanelClassName('mb-3 max-h-28 space-y-1 overflow-y-auto')}
+        >
           {centralSnapshot.sources.map((source) => (
             <div
               key={`${source.id}:${source.hash}`}
@@ -222,7 +243,7 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
               </span>
             </div>
           ))}
-        </ValidationSubpanel>
+        </Card>
       ) : null}
 
       <div className='mb-3 grid gap-2 sm:grid-cols-2'>
@@ -244,26 +265,39 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
           Inferred Candidates ({candidateRules.length})
         </Hint>
         {candidateRules.length > 0 ? (
-          <ValidationSubpanel className='max-h-60 space-y-2 overflow-y-auto'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className={validationSubpanelClassName('max-h-60 space-y-2 overflow-y-auto')}
+          >
             {candidateRules.map((rule: AiPathsValidationRule) => (
-              <CentralDocsSyncCandidateCard
-                key={rule.id}
-                rule={rule}
-                changeKind={candidateChangeKindById.get(rule.id) ?? 'new'}
-                onApprove={handleApproveCandidate}
-                onReject={handleRejectCandidate}
-              />
+              <React.Fragment key={rule.id}>
+                {renderCentralDocsSyncCandidateCard({
+                  rule,
+                  changeKind: candidateChangeKindById.get(rule.id) ?? 'new',
+                  onApprove: handleApproveCandidate,
+                  onReject: handleRejectCandidate,
+                })}
+              </React.Fragment>
             ))}
-          </ValidationSubpanel>
+          </Card>
         ) : (
-          <ValidationSubpanel padding='md' className='text-xs text-gray-500'>
+          <Card
+            variant='subtle-compact'
+            padding='md'
+            className={validationSubpanelClassName('text-xs text-gray-500')}
+          >
             Sync from central docs to generate inference candidates.
-          </ValidationSubpanel>
+          </Card>
         )}
       </div>
 
       {rejectedCandidates.length > 0 ? (
-        <ValidationSubpanel className='mt-3 space-y-1'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className={validationSubpanelClassName('mt-3 space-y-1')}
+        >
           <div className='text-[11px] font-medium text-gray-300'>Rejected candidates</div>
           <div className='max-h-20 space-y-1 overflow-y-auto'>
             {rejectedCandidates.map((rule: AiPathsValidationRule) => (
@@ -272,7 +306,7 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
               </div>
             ))}
           </div>
-        </ValidationSubpanel>
+        </Card>
       ) : null}
     </ValidationPanel>
   );

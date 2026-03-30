@@ -105,6 +105,24 @@ const createProduct = () => ({
   updatedAt: '2026-02-13T10:05:00.000Z',
 });
 
+const buildStudioPutRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/products/prod-1/studio', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+
+const buildStudioPostRequest = (path: string, payload: Record<string, unknown>) =>
+  new NextRequest(`http://localhost/api/products/prod-1/studio/${path}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+const sendToStudioArgsExpectation = expect.objectContaining({
+  productId: 'prod-1',
+  imageSlotIndex: 0,
+  projectId: 'studio-a',
+});
+
 describe('Product Studio API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -144,10 +162,7 @@ describe('Product Studio API', () => {
     });
 
     const response = await PUT_STUDIO_CONFIG(
-      new NextRequest('http://localhost/api/products/prod-1/studio', {
-        method: 'PUT',
-        body: JSON.stringify({ projectId: 'studio-b' }),
-      }),
+      buildStudioPutRequest({ projectId: 'studio-b' }),
       mockContext,
       { id: 'prod-1' }
     );
@@ -167,16 +182,13 @@ describe('Product Studio API', () => {
     });
 
     const response = await PUT_STUDIO_CONFIG(
-      new NextRequest('http://localhost/api/products/prod-1/studio', {
-        method: 'PUT',
-        body: JSON.stringify({
-          sequencing: {
-            enabled: true,
-            cropCenterBeforeGeneration: true,
-            upscaleOnAccept: false,
-            upscaleScale: 2,
-          },
-        }),
+      buildStudioPutRequest({
+        sequencing: {
+          enabled: true,
+          cropCenterBeforeGeneration: true,
+          upscaleOnAccept: false,
+          upscaleScale: 2,
+        },
       }),
       mockContext,
       { id: 'prod-1' }
@@ -244,10 +256,7 @@ describe('Product Studio API', () => {
     });
 
     const response = await POST_SEND(
-      new NextRequest('http://localhost/api/products/prod-1/studio/send', {
-        method: 'POST',
-        body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
-      }),
+      buildStudioPostRequest('send', { imageSlotIndex: 0, projectId: 'studio-a' }),
       mockContext,
       { id: 'prod-1' }
     );
@@ -257,13 +266,7 @@ describe('Product Studio API', () => {
       sequencingDiagnostics?: { selectedScope?: string };
     };
     expect(payload.sequencingDiagnostics?.selectedScope).toBe('project');
-    expect(sendProductImageToStudio).toHaveBeenCalledWith(
-      expect.objectContaining({
-        productId: 'prod-1',
-        imageSlotIndex: 0,
-        projectId: 'studio-a',
-      })
-    );
+    expect(sendProductImageToStudio).toHaveBeenCalledWith(sendToStudioArgsExpectation);
   });
 
   it('POST /api/products/[id]/studio/send surfaces sequencing readiness errors', async () => {
@@ -276,10 +279,7 @@ describe('Product Studio API', () => {
     let response: Response;
     try {
       response = await POST_SEND(
-        new NextRequest('http://localhost/api/products/prod-1/studio/send', {
-          method: 'POST',
-          body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
-        }),
+        buildStudioPostRequest('send', { imageSlotIndex: 0, projectId: 'studio-a' }),
         mockContext,
         { id: 'prod-1' }
       );
@@ -303,10 +303,7 @@ describe('Product Studio API', () => {
     });
 
     const response = await POST_LINK(
-      new NextRequest('http://localhost/api/products/prod-1/studio/link', {
-        method: 'POST',
-        body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
-      }),
+      buildStudioPostRequest('link', { imageSlotIndex: 0, projectId: 'studio-a' }),
       mockContext,
       { id: 'prod-1' }
     );
@@ -496,13 +493,10 @@ describe('Product Studio API', () => {
     vi.mocked(acceptProductStudioVariant).mockResolvedValue(createProduct() as any);
 
     const response = await POST_ACCEPT(
-      new NextRequest('http://localhost/api/products/prod-1/studio/accept', {
-        method: 'POST',
-        body: JSON.stringify({
-          imageSlotIndex: 0,
-          generationSlotId: 'variant-1',
-          projectId: 'studio-a',
-        }),
+      buildStudioPostRequest('accept', {
+        imageSlotIndex: 0,
+        generationSlotId: 'variant-1',
+        projectId: 'studio-a',
       }),
       mockContext,
       { id: 'prod-1' }

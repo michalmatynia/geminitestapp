@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/page-content-catalog';
+import { DEFAULT_KANGUR_PAGE_CONTENT_STORE } from '@/features/kangur/ai-tutor/page-content-catalog';
 import {
   parseKangurPageContentStore,
   type KangurPageContentEntry,
@@ -16,6 +16,12 @@ import {
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
 const AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE = 'pl';
+const EMPTY_PAGE_CONTENT_EDITOR_VALUE = '';
+const EMPTY_KANGUR_PAGE_CONTENT_STORE = parseKangurPageContentStore({
+  locale: AI_TUTOR_PAGE_CONTENT_EDITOR_LOCALE,
+  version: DEFAULT_KANGUR_PAGE_CONTENT_STORE.version,
+  entries: [],
+});
 
 const stringifyPageContentStore = (store: KangurPageContentStore): string =>
   `${JSON.stringify(store, null, 2)}
@@ -83,22 +89,25 @@ type ParsedEditorState = {
 
 export function useKangurPageContentMutations() {
   const { toast } = useToast();
-  const [editorValue, setEditorValue] = useState(() =>
-    stringifyPageContentStore(DEFAULT_KANGUR_PAGE_CONTENT_STORE)
-  );
-  const [persistedEditorValue, setPersistedEditorValue] = useState(() =>
-    stringifyPageContentStore(DEFAULT_KANGUR_PAGE_CONTENT_STORE)
+  const [editorValue, setEditorValue] = useState(() => EMPTY_PAGE_CONTENT_EDITOR_VALUE);
+  const [persistedEditorValue, setPersistedEditorValue] = useState(
+    () => EMPTY_PAGE_CONTENT_EDITOR_VALUE
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(
-    DEFAULT_KANGUR_PAGE_CONTENT_STORE.entries[0]?.id ?? null
-  );
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [selectedFragmentId, setSelectedFragmentId] = useState<string | null>(null);
 
   const isDirty = editorValue !== persistedEditorValue;
 
   const parsedState = useMemo<ParsedEditorState>(() => {
+    if (editorValue.trim().length === 0) {
+      return {
+        store: null,
+        error: null,
+      };
+    }
+
     return withKangurClientErrorSync(
       {
         source: 'kangur.admin.page-content',
@@ -197,7 +206,7 @@ export function useKangurPageContentMutations() {
   }, [applyStore, parsedState.store, selectedEntry]);
 
   const handleAddEntry = useCallback((): void => {
-    const baseStore = parsedState.store ?? DEFAULT_KANGUR_PAGE_CONTENT_STORE;
+    const baseStore = parsedState.store ?? EMPTY_KANGUR_PAGE_CONTENT_STORE;
     const nextEntries = normalizeEntries([
       ...baseStore.entries,
       createEmptyEntry((baseStore.entries.length + 1) * 10),

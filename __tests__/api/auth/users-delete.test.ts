@@ -36,6 +36,15 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const deleteFailureLogExpectation = (outcome: string) =>
+  expect.objectContaining({
+    action: 'auth.users.delete',
+    stage: 'failure',
+    outcome,
+  });
+
+const STORED_USER_ROLES_JSON = JSON.stringify({ 'user-2': 'viewer' });
+
 describe('Auth Users delete handler', () => {
   const usersCollection = {
     findOne: vi.fn(),
@@ -93,11 +102,7 @@ describe('Auth Users delete handler', () => {
     ).rejects.toThrow('You cannot delete your own account while signed in.');
 
     expect(logAuthEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'auth.users.delete',
-        stage: 'failure',
-        outcome: 'self_delete_blocked',
-      })
+      deleteFailureLogExpectation('self_delete_blocked')
     );
   });
 
@@ -110,7 +115,7 @@ describe('Auth Users delete handler', () => {
     authSecurityProfilesCollection.deleteMany.mockResolvedValue({ deletedCount: 1 });
     userPreferencesCollection.deleteMany.mockResolvedValue({ deletedCount: 1 });
     settingsCollection.findOne.mockResolvedValue({
-      value: JSON.stringify({ 'user-2': 'viewer' }),
+      value: STORED_USER_ROLES_JSON,
     });
     settingsCollection.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
@@ -142,11 +147,7 @@ describe('Auth Users delete handler', () => {
     ).rejects.toThrow('Missing user id.');
 
     expect(logAuthEventMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'auth.users.delete',
-        stage: 'failure',
-        outcome: 'missing_user_id',
-      })
+      deleteFailureLogExpectation('missing_user_id')
     );
   });
 });

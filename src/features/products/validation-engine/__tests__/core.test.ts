@@ -11,6 +11,7 @@ import {
   allowsPatternExecutionWithoutRegexMatch,
   areIssueMapsEquivalent,
   buildFieldIssues,
+  isPatternConfiguredForFormatterAutoApply,
   isLatestPriceStockMirrorPattern,
 } from '@/features/products/validation-engine/core';
 
@@ -92,6 +93,33 @@ const CATEGORY_FIXTURES: ProductCategory[] = [
   },
 ];
 
+const buildDynamicReplacementRecipe = (
+  overrides: Partial<Parameters<typeof encodeDynamicReplacementRecipe>[0]>
+) =>
+  encodeDynamicReplacementRecipe({
+    version: 1,
+    sourceMode: 'latest_product_field',
+    sourceField: 'stock',
+    sourceRegex: null,
+    sourceFlags: null,
+    sourceMatchGroup: null,
+    mathOperation: 'none',
+    mathOperand: null,
+    roundMode: 'none',
+    padLength: null,
+    padChar: null,
+    logicOperator: 'none',
+    logicOperand: null,
+    logicFlags: null,
+    logicWhenTrueAction: 'keep',
+    logicWhenTrueValue: null,
+    logicWhenFalseAction: 'keep',
+    logicWhenFalseValue: null,
+    resultAssembly: 'segment_only',
+    targetApply: 'replace_whole_field',
+    ...overrides,
+  });
+
 // -----------------------------------------------------------------------
 
 describe('buildFieldIssues', () => {
@@ -122,27 +150,8 @@ describe('buildFieldIssues', () => {
       regex: '^.*$',
       target: 'stock',
       replacementEnabled: true,
-      replacementValue: encodeDynamicReplacementRecipe({
-        version: 1,
-        sourceMode: 'latest_product_field',
+      replacementValue: buildDynamicReplacementRecipe({
         sourceField: 'stock',
-        sourceRegex: null,
-        sourceFlags: null,
-        sourceMatchGroup: null,
-        mathOperation: 'none',
-        mathOperand: null,
-        roundMode: 'none',
-        padLength: null,
-        padChar: null,
-        logicOperator: 'none',
-        logicOperand: null,
-        logicFlags: null,
-        logicWhenTrueAction: 'keep',
-        logicWhenTrueValue: null,
-        logicWhenFalseAction: 'keep',
-        logicWhenFalseValue: null,
-        resultAssembly: 'segment_only',
-        targetApply: 'replace_whole_field',
       }),
       semanticState: undefined,
     });
@@ -313,6 +322,46 @@ describe('buildFieldIssues', () => {
       validationScope: SCOPE,
     });
     expect(issues['price']).toHaveLength(1);
+  });
+
+  it('treats matching SKU auto-apply formatter patterns as eligible for automatic replacement', () => {
+    const pattern = makePattern({
+      regex: '^AUTO$',
+      target: 'sku',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementValue: 'SKU-101',
+      replacementFields: ['sku'],
+      replacementAppliesToScopes: ['product_create'],
+      appliesToScopes: ['product_create'],
+    });
+
+    expect(
+      isPatternConfiguredForFormatterAutoApply({
+        pattern,
+        fieldName: 'sku',
+        validationScope: 'product_create',
+      })
+    ).toBe(true);
+  });
+
+  it('keeps proposal-only formatter patterns out of automatic replacement', () => {
+    const pattern = makePattern({
+      regex: '^AUTO$',
+      target: 'sku',
+      replacementEnabled: true,
+      replacementAutoApply: false,
+      replacementValue: 'SKU-101',
+      replacementFields: ['sku'],
+    });
+
+    expect(
+      isPatternConfiguredForFormatterAutoApply({
+        pattern,
+        fieldName: 'sku',
+        validationScope: 'product_create',
+      })
+    ).toBe(false);
   });
 
   it('supports category inference driven by Name EN segment #4', () => {

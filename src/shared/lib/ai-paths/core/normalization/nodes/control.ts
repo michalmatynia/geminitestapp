@@ -45,7 +45,7 @@ export const normalizePollNode = (node: AiNode): AiNode => {
   const pollConfig = node.config?.poll;
   const pollQuery = {
     ...DEFAULT_DB_QUERY,
-    ...(pollConfig?.dbQuery ?? {}),
+    ...((pollConfig?.dbQuery as Record<string, unknown> | undefined) ?? {}),
   };
   return {
     ...node,

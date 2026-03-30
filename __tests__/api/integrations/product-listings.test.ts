@@ -17,6 +17,12 @@ vi.mock('@/features/integrations/server', () => ({
   }),
 }));
 
+const buildProductListingsPostRequest = (productIds: string[]) =>
+  new NextRequest('http://localhost/api/v2/integrations/product-listings', {
+    method: 'POST',
+    body: JSON.stringify({ productIds }),
+  });
+
 describe('api/integrations/product-listings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -91,12 +97,7 @@ describe('api/integrations/product-listings', () => {
     ]);
 
     const response = await POST(
-      new NextRequest('http://localhost/api/v2/integrations/product-listings', {
-        method: 'POST',
-        body: JSON.stringify({
-          productIds: ['product-3', 'product-3'],
-        }),
-      })
+      buildProductListingsPostRequest(['product-3', 'product-3'])
     );
     const payload = await response.json();
 
@@ -111,12 +112,7 @@ describe('api/integrations/product-listings', () => {
 
   it('returns 400 for invalid POST payload', async () => {
     const response = await POST(
-      new NextRequest('http://localhost/api/v2/integrations/product-listings', {
-        method: 'POST',
-        body: JSON.stringify({
-          productIds: [],
-        }),
-      })
+      buildProductListingsPostRequest([])
     );
 
     expect(response.status).toBe(400);

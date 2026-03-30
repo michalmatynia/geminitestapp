@@ -22,6 +22,8 @@ const {
   checkAppStateMock,
   useKangurPageContentEntryMock,
   useKangurLearnerProfileRuntimeMock,
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
@@ -35,7 +37,14 @@ const {
   checkAppStateMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
   useKangurLearnerProfileRuntimeMock: vi.fn(),
+  disabledDocsTooltipsMock: {
+    enabled: false,
+    helpSettings: {},
+  } as const,
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
+
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: () => ({ basePath: '/kangur' }),
@@ -62,10 +71,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => ({
-    enabled: false,
-    helpSettings: {},
-  }),
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -92,6 +98,21 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRouteNavigator', () => ({
       replace: vi.fn(),
     }),
 }));
+
+vi.mock('@/features/kangur/ui/services/delegated-assignments', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/kangur/ui/services/delegated-assignments')>();
+
+  return {
+    ...actual,
+    formatKangurAssignmentPriorityLabel: (priority: 'high' | 'medium' | 'low') =>
+      ({
+        high: 'Priorytet wysoki',
+        medium: 'Priorytet średni',
+        low: 'Priorytet niski',
+      })[priority],
+  };
+});
 
 vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', async (importOriginal) => {
   const actual =
@@ -244,6 +265,7 @@ const buildRuntimeValue = ({
 describe('LearnerProfile page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
@@ -334,8 +356,8 @@ describe('LearnerProfile page', () => {
     expect(screen.getByText('Opanowanie lekcji')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     expect(screen.getByText('🕐 Nauka zegara')).toBeInTheDocument();
-    expect(screen.getByText('Priorytet średni')).toBeInTheDocument();
-    expect(screen.getByTestId('learner-profile-recommendation-focus_weakest_operation')).toHaveClass(
+    expect(screen.getAllByText('Priorytet średni').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('learner-profile-recommendation-daily_goal')).toHaveClass(
       'soft-card'
     );
     expect(
@@ -343,18 +365,16 @@ describe('LearnerProfile page', () => {
         .getAllByRole('link', { name: 'Otwórz lekcję' })
         .map((link) => link.getAttribute('href'))
     ).toContain('/kangur/lessons?focus=division');
-    const lessonLinks = screen.getAllByRole('link', { name: 'Otwórz lekcję' });
+    const recommendationActionLinks = screen.getAllByRole('link', { name: 'Uruchom trening' });
     expect(
-      lessonLinks.some((link) => link.classList.contains('primary-cta'))
+      recommendationActionLinks.some(
+        (link) =>
+          link.getAttribute('href') ===
+            '/kangur/game?quickStart=operation&operation=division&difficulty=easy' &&
+          link.classList.contains('kangur-cta-pill') &&
+          link.classList.contains('primary-cta')
+      )
     ).toBe(true);
-    expect(screen.getByRole('link', { name: /zagraj/i })).toHaveAttribute(
-      'href',
-      '/kangur/game?quickStart=training'
-    );
-    expect(screen.getByRole('link', { name: /zagraj/i })).toHaveClass(
-      'kangur-cta-pill',
-      'primary-cta'
-    );
     expect(screen.getByText('➕ Dodawanie')).toBeInTheDocument();
     expect(screen.getAllByText('➗ Dzielenie').length).toBeGreaterThan(0);
     const operationTrainingHrefs = screen
@@ -368,6 +388,29 @@ describe('LearnerProfile page', () => {
       ])
     );
     expect(screen.queryByRole('button', { name: /Zaloguj się/i })).not.toBeInTheDocument();
+  });
+
+  it('supports keyboard navigation between learner profile tabs', async () => {
+    renderLearnerProfilePage();
+
+    const overviewTab = screen.getByRole('tab', { name: /profil ucznia/i });
+    const aiMoodTab = screen.getByRole('tab', { name: /relacja z ai tutorem/i });
+
+    expect(overviewTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute(
+      'id',
+      'kangur-learner-profile-panel-overview'
+    );
+
+    overviewTab.focus();
+    await userEvent.keyboard('{ArrowRight}');
+
+    expect(aiMoodTab).toHaveFocus();
+    expect(aiMoodTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute(
+      'id',
+      'kangur-learner-profile-panel-ai-mood'
+    );
   });
 
   it('keeps profile in local mode when user is not authenticated', async () => {

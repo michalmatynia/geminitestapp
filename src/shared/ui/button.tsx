@@ -1,4 +1,4 @@
-import { Slot } from '@radix-ui/react-slot';
+import { Slot, Slottable } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -19,6 +19,7 @@ const buttonVariants = cva(
         destructive: 'bg-destructive/15 text-destructive hover:bg-destructive/25',
         outline: 'border-foreground/15 bg-transparent hover:bg-foreground/8',
         secondary: 'bg-muted/30 hover:bg-muted/45',
+        surface: 'bg-muted/30 hover:bg-muted/45',
         success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20',
         warning: 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20',
         info: 'bg-sky-500/10 text-sky-500 border-sky-500/20 hover:bg-sky-500/20',
@@ -47,6 +48,7 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants>,
     DataAttributes {
   asChild?: boolean;
+  icon?: React.ReactNode;
   loading?: boolean;
   loadingText?: string;
 }
@@ -58,6 +60,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant,
       size,
       asChild = false,
+      icon,
       loading = false,
       loadingText,
       children,
@@ -113,7 +116,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loadingText || children}
       </>
     ) : (
-      children
+      <>
+        {icon}
+        {children}
+      </>
     );
 
     return (
@@ -122,7 +128,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         onClick={isDisabled || onClick ? handleClick : undefined}
         tabIndex={resolvedTabIndex}
         className={cn(buttonVariants({ variant, size, className }), loading && 'gap-2', disabledClassName)}
-        disabled={isDisabled}
+        disabled={asChild ? undefined : isDisabled}
         aria-disabled={isDisabled ? 'true' : undefined}
         aria-busy={resolvedAriaBusy}
         aria-label={resolvedAriaLabel}
@@ -136,7 +142,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type={resolvedType}
         ref={ref}
       >
-        {content}
+        {asChild ? (loading ? <Loader2 className='size-4 animate-spin' aria-hidden='true' /> : icon) : null}
+        {asChild ? <Slottable>{children}</Slottable> : content}
       </Comp>
     );
   }

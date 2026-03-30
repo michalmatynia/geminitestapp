@@ -7,6 +7,7 @@ import { GET_handler, PATCH_handler, updateSchema } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'auth.roles.GET',
+  resolveSessionUser: false,
 });
 
 export const PATCH = apiHandler(PATCH_handler, {
@@ -17,4 +18,5 @@ export const PATCH = apiHandler(PATCH_handler, {
   maxBodyBytes: 500_000,
   allowedMethods: ['PATCH'],
   requireCsrf: false,
+  resolveSessionUser: false,
 });

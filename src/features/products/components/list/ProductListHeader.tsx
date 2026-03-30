@@ -1,9 +1,16 @@
 'use client';
 
-import { Eye, EyeOff, PlusIcon, Package } from 'lucide-react';
+import { PlusIcon, Package } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, useEffect, useMemo, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
+import {
+  cloneElement,
+  isValidElement,
+  memo,
+  useEffect,
+  useMemo,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 
 import {
   useProductListFiltersContext,
@@ -16,6 +23,7 @@ import type { ProductDraft } from '@/shared/contracts/products';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
+import { FocusModeTogglePortal } from '@/shared/ui/FocusModeTogglePortal';
 import { AdminProductsBreadcrumbs, Button, SelectSimple, Pagination } from '@/shared/ui';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 
@@ -97,30 +105,21 @@ export const ProductListHeader = memo(function ProductListHeader({
       currencyOptions.map((code: string) => ({ value: code, label: code })),
     [currencyOptions]
   );
+  const renderFiltersContent = (instanceId: 'mobile' | 'desktop'): ReactNode => {
+    if (!filtersContent) return null;
+    if (isValidElement(filtersContent) && typeof filtersContent.type !== 'string') {
+      return cloneElement(filtersContent as ReactElement<Record<string, unknown>>, {
+        instanceId,
+      });
+    }
+    return filtersContent;
+  };
 
   useEffect(() => {
     return (): void => {
       setIsMenuHidden(false);
     };
   }, [setIsMenuHidden]);
-
-  const menuToggleButton =
-    typeof document === 'undefined'
-      ? null
-      : createPortal(
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          onClick={() => setIsMenuHidden(!isMenuHidden)}
-          title={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
-          aria-label={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
-          className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
-        >
-          {isMenuHidden ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
-        </Button>,
-        document.body
-      );
 
   const renderHeaderBreadcrumb = (): React.JSX.Element => (
     <AdminProductsBreadcrumbs current='Product List' />
@@ -243,7 +242,12 @@ export const ProductListHeader = memo(function ProductListHeader({
 
   return (
     <div className='space-y-4'>
-      {showHeader ? menuToggleButton : null}
+      {showHeader ? (
+        <FocusModeTogglePortal
+          isFocusMode={!isMenuHidden}
+          onToggleFocusMode={() => setIsMenuHidden(!isMenuHidden)}
+        />
+      ) : null}
       {showHeader && (
         <div className='space-y-3'>
           <div className='space-y-3 lg:hidden'>
@@ -254,7 +258,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               <div className='flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end'>
                 {renderSelectorsAndTriggers()}
               </div>
-              {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
+              {filtersContent ? <div className='w-full'>{renderFiltersContent('mobile')}</div> : null}
             </div>
           </div>
 
@@ -268,7 +272,7 @@ export const ProductListHeader = memo(function ProductListHeader({
               </>,
               'relative z-0 min-w-0 flex-1 justify-end'
             )}
-            {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
+            {filtersContent ? <div className='w-full'>{renderFiltersContent('desktop')}</div> : null}
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import {
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
 } from '@/shared/contracts/master-folder-tree';
 import { KANGUR_AI_TUTOR_APP_SETTINGS_KEY } from '@/shared/contracts/kangur-ai-tutor';
+import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { LITE_SETTINGS_KEYS, isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { folderTreeInstanceValues } from '@/shared/utils/folder-tree-profiles-v2';
 
@@ -24,5 +25,14 @@ describe('settings-lite-keys', () => {
   it('includes Kangur AI tutor app settings so anonymous pages receive onboarding mode updates', () => {
     expect(LITE_SETTINGS_KEYS).toContain(KANGUR_AI_TUTOR_APP_SETTINGS_KEY);
     expect(isLiteSettingsKey(KANGUR_AI_TUTOR_APP_SETTINGS_KEY)).toBe(true);
+  });
+
+  it('includes observation-post logging controls so client diagnostics can react without admin settings fetches', () => {
+    expect(LITE_SETTINGS_KEYS).toContain(OBSERVABILITY_LOGGING_KEYS.infoEnabled);
+    expect(LITE_SETTINGS_KEYS).toContain(OBSERVABILITY_LOGGING_KEYS.activityEnabled);
+    expect(LITE_SETTINGS_KEYS).toContain(OBSERVABILITY_LOGGING_KEYS.errorEnabled);
+    expect(isLiteSettingsKey(OBSERVABILITY_LOGGING_KEYS.infoEnabled)).toBe(true);
+    expect(isLiteSettingsKey(OBSERVABILITY_LOGGING_KEYS.activityEnabled)).toBe(true);
+    expect(isLiteSettingsKey(OBSERVABILITY_LOGGING_KEYS.errorEnabled)).toBe(true);
   });
 });

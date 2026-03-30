@@ -101,7 +101,7 @@ function RunComparisonChip({
   return <span className={cn('rounded-full border px-2 py-px', className)}>{children}</span>;
 }
 
-function RunComparisonStatLine({
+function renderRunComparisonStatLine({
   label,
   value,
   valueClassName,
@@ -113,7 +113,7 @@ function RunComparisonStatLine({
   );
 }
 
-function RunComparisonSummaryCard({
+function renderRunComparisonSummaryCard({
   run,
   label,
 }: RunComparisonSummaryCardProps): React.JSX.Element {
@@ -198,12 +198,13 @@ function RunComparisonSummaryCard({
         </RunComparisonChip>
       </div>
       {summaryRows.map((row) => (
-        <RunComparisonStatLine
-          key={`${run.id}-${row.label}`}
-          label={row.label}
-          value={row.value}
-          valueClassName={row.valueClassName}
-        />
+        <React.Fragment key={`${run.id}-${row.label}`}>
+          {renderRunComparisonStatLine({
+            label: row.label,
+            value: row.value,
+            valueClassName: row.valueClassName,
+          })}
+        </React.Fragment>
       ))}
     </div>
   );
@@ -230,13 +231,13 @@ function RunComparisonLabeledCodeBlock({
   );
 }
 
-function RunComparisonRowSummary({
+const renderRunComparisonRowSummary = ({
   row,
   hasPayloadInspectorData,
   compareInspectorRowKey,
   onSetCompareInspectorRowKey,
   formatResumeComparisonLabel,
-}: RunComparisonRowSummaryProps): React.JSX.Element {
+}: RunComparisonRowSummaryProps): React.JSX.Element => {
   return (
     <div className='flex flex-wrap items-center justify-between gap-2'>
       <div className='min-w-[180px] flex-1'>
@@ -301,9 +302,9 @@ function RunComparisonRowSummary({
       </div>
     </div>
   );
-}
+};
 
-function RunComparisonInlineDiffSection({
+function renderRunComparisonInlineDiffSection({
   row,
 }: RunComparisonInlineDiffSectionProps): React.JSX.Element | null {
   if (!row.inputDiff?.hasChanges && !row.outputDiff?.hasChanges) {
@@ -461,7 +462,11 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
         {[primaryRun, secondaryRun].map(
           (run: AiPathRunRecord, index: number): React.JSX.Element => {
             const label = index === 0 ? 'Run A' : 'Run B';
-            return <RunComparisonSummaryCard key={run.id} run={run} label={label} />;
+            return (
+              <React.Fragment key={run.id}>
+                {renderRunComparisonSummaryCard({ run, label })}
+              </React.Fragment>
+            );
           }
         )}
       </div>
@@ -543,14 +548,14 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
                     key={row.key}
                     className='rounded-md border border-border/50 bg-black/20 px-3 py-2'
                   >
-                    <RunComparisonRowSummary
-                      row={row}
-                      hasPayloadInspectorData={hasPayloadInspectorData}
-                      compareInspectorRowKey={compareInspectorRowKey}
-                      onSetCompareInspectorRowKey={onSetCompareInspectorRowKey}
-                      formatResumeComparisonLabel={formatResumeComparisonLabel}
-                    />
-                    <RunComparisonInlineDiffSection row={row} />
+                    {renderRunComparisonRowSummary({
+                      row,
+                      hasPayloadInspectorData,
+                      compareInspectorRowKey,
+                      onSetCompareInspectorRowKey,
+                      formatResumeComparisonLabel,
+                    })}
+                    {renderRunComparisonInlineDiffSection({ row })}
                     {compareInspectorRowKey === row.key ? (
                       <CollapsibleSection
                         title='Payload Inspector'

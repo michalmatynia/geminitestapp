@@ -67,6 +67,22 @@ jobs:
         if: always()
         run: npm run metrics:test-quality
 
+      - name: Generate testing suite inventory
+        if: always()
+        run: npm run metrics:test-suite-inventory
+
+      - name: Record weekly audit ledger entry
+        if: always()
+        env:
+          WEEKLY_JOB_STATUS: ${{ job.status }}
+        run: |
+          if [ "$WEEKLY_JOB_STATUS" = "success" ]; then
+            LEDGER_STATUS="ok"
+          else
+            LEDGER_STATUS="failed"
+          fi
+          npm run testing:record -- --lane=weekly-audit --status="$LEDGER_STATUS" --note="Recorded by weekly-quality-report workflow" --artifact=docs/metrics/weekly-quality-latest.json --artifact=docs/metrics/testing-quality-snapshot-latest.json --artifact=docs/metrics/testing-suite-inventory-latest.json
+
       - name: Generate trend index snapshot
         if: always()
         run: npm run bazel -- run //:weekly_trend_index
@@ -85,6 +101,10 @@ jobs:
           path: |
             docs/metrics/weekly-quality-latest.json
             docs/metrics/weekly-quality-latest.md
+            docs/metrics/testing-suite-inventory-latest.json
+            docs/metrics/testing-suite-inventory-latest.md
+            docs/metrics/testing-run-ledger-latest.json
+            docs/metrics/testing-run-ledger-latest.md
             docs/metrics/testing-quality-snapshot-latest.json
             docs/metrics/testing-quality-snapshot-latest.md
             docs/metrics/test-distribution-latest.json
@@ -138,6 +158,10 @@ jobs:
             echo "### Trend Index Files"
             echo "- \`docs/metrics/trend-index-latest.md\`"
             echo "- \`docs/metrics/trend-index-latest.json\`"
+            echo "- \`docs/metrics/testing-suite-inventory-latest.md\`"
+            echo "- \`docs/metrics/testing-suite-inventory-latest.json\`"
+            echo "- \`docs/metrics/testing-run-ledger-latest.md\`"
+            echo "- \`docs/metrics/testing-run-ledger-latest.json\`"
             echo "- \`docs/metrics/testing-quality-snapshot-latest.md\`"
             echo "- \`docs/metrics/testing-quality-snapshot-latest.json\`"
             echo "- \`docs/metrics/test-distribution-latest.md\`"

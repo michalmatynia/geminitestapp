@@ -1,16 +1,12 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET_handler } from './handler';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
-
-vi.mock('@/shared/lib/auth/settings-manage-access', () => ({
-  assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
-}));
 
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
   getAppDbProvider: vi.fn().mockResolvedValue('mongodb'),
@@ -21,6 +17,7 @@ vi.mock('@/features/auth/server', () => ({
   getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
   requireAuthProvider: vi.fn((v) => v),
   AUTH_SETTINGS_KEYS: { provider: 'auth_provider' },
+  assertSettingsManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/shared/lib/products/services/product-provider', () => ({

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'policy'
 scope: 'platform'
@@ -11,7 +11,7 @@ canonical: true
 
 **Purpose:** Essential guidelines for using consolidated UI templates
 **Audience:** All frontend developers
-**Last Updated:** February 13, 2026
+**Last Updated:** March 26, 2026
 
 ---
 
@@ -786,6 +786,7 @@ it('calls onSelect when item is selected', async () => {
 
 ---
 
-**Last Updated:** February 13, 2026
-**Version:** 1.0
-**Questions?** See DEVELOPER_HANDBOOK.md or check examples in `/src/features/`
+**Last Updated:** March 26, 2026
+**Status:** Maintained policy reference
+**Questions?** See [`docs/platform/developer-handbook.md`](./developer-handbook.md)
+or check examples in `/src/features/`

@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,22 @@ canonical: true
 ---
 
 # AI Paths V1 Sprint 1 Execution Brief (2026-03-06)
+
+This is a retained sprint execution brief for the V1 contract/trace work. Keep it
+as historical delivery context, not as the primary current-state doc.
+
+For the current runtime map and active operator surface, use:
+
+- [`overview.md`](./overview.md)
+- [`reference.md`](./reference.md)
+- [`parameter-inference-workflow.md`](./parameter-inference-workflow.md)
+- [`portable-engine-receiver-runbook.md`](./portable-engine-receiver-runbook.md)
+
+For the current validation bundle, use:
+
+- `npm run ai-paths:check:canonical`
+- `npm run docs:ai-paths:node-docs:check`
+- `npm run docs:ai-paths:kernel-transition:check`
 
 ## References
 
@@ -28,6 +44,9 @@ canonical: true
 1. Start: 2026-03-09
 2. End: 2026-03-20
 3. Track: `v1`
+
+This sprint window is complete and retained here as a planning-and-delivery
+record, not as an active execution tracker.
 
 ## Sprint Objective
 

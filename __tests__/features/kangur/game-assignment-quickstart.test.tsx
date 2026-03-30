@@ -18,6 +18,8 @@ const {
   authMeMock,
   redirectToLoginMock,
   logoutMock,
+  disabledDocsTooltipsMock,
+  getDisabledDocsTooltipsMock,
 } = vi.hoisted(() => ({
   useKangurRoutingMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
@@ -28,7 +30,25 @@ const {
   authMeMock: vi.fn(),
   redirectToLoginMock: vi.fn(),
   logoutMock: vi.fn(),
+  disabledDocsTooltipsMock: {
+    enabled: false,
+    helpSettings: {
+      version: 1,
+      docsTooltips: {
+        enabled: false,
+        homeEnabled: false,
+        lessonsEnabled: false,
+        testsEnabled: false,
+        profileEnabled: false,
+        parentDashboardEnabled: false,
+        adminEnabled: false,
+      },
+    },
+  } as const,
+  getDisabledDocsTooltipsMock: vi.fn(),
 }));
+
+getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
@@ -56,23 +76,32 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: useKangurPageContentEntryMock,
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: [],
+    isLoading: false,
+    isFetching: false,
+    refetch: vi.fn(),
+    error: null,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/services/delegated-assignments', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/kangur/ui/services/delegated-assignments')>();
+
+  return {
+    ...actual,
+    filterKangurAssignmentsBySubject: (
+      assignments: Array<{ subject?: string | null }>,
+      subject: string
+    ) => assignments.filter((assignment) => (assignment.subject ?? 'maths') === subject),
+  };
+});
+
 vi.mock('@/features/kangur/docs/tooltips', () => ({
   KangurDocsTooltipEnhancer: () => null,
-  useKangurDocsTooltips: () => ({
-    enabled: false,
-    helpSettings: {
-      version: 1,
-      docsTooltips: {
-        enabled: false,
-        homeEnabled: false,
-        lessonsEnabled: false,
-        testsEnabled: false,
-        profileEnabled: false,
-        parentDashboardEnabled: false,
-        adminEnabled: false,
-      },
-    },
-  }),
+  useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
@@ -146,6 +175,7 @@ const baseProgress: KangurProgressState = {
 describe('Game delegated quick starts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDisabledDocsTooltipsMock.mockReturnValue(disabledDocsTooltipsMock);
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurProgressStateMock.mockReturnValue(baseProgress);
     useKangurAssignmentsMock.mockReturnValue({

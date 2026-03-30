@@ -16,7 +16,7 @@ import { KangurAdminStatusCard } from './components/KangurAdminStatusCard';
 import { KangurAiTutorNativeGuideSettingsPanel } from './components/KangurAiTutorNativeGuideSettingsPanel';
 import { KangurAiTutorSettingsPanel } from './components/KangurAiTutorSettingsPanel';
 import { KangurAdminCard } from './components/KangurAdminCard';
-import { KangurNarratorSettingsPanel } from './components/KangurNarratorSettingsPanel';
+import { renderKangurNarratorSettingsPanel } from './components/KangurNarratorSettingsPanel';
 import { KangurPageContentSettingsPanel } from './components/KangurPageContentSettingsPanel';
 import { KangurParentVerificationSettingsPanel } from './components/KangurParentVerificationSettingsPanel';
 import { useKangurSettings } from './hooks/useKangurSettings';
@@ -39,7 +39,7 @@ const KANGUR_LAUNCH_ROUTE_OPTIONS = [
     value: 'dedicated_app',
     label: 'Dedicated app',
     description:
-      'Uses the native Kangur deep link so the installed mobile app can open directly.',
+      'Offers a native Kangur app handoff on supported learner routes and keeps the web shell as fallback.',
   },
 ] as const;
 
@@ -235,20 +235,20 @@ export function AdminKangurSettingsPage(): ReactElement {
 
         </div>
 
-        <KangurNarratorSettingsPanel
-          engine={engine}
-          voice={voice}
-          setEngine={setEngine}
-          setVoice={setVoice}
-          copyStatus={copyStatus}
-          onCopyTemplateText={() => void handleCopyTemplateText()}
-          isProbingNarrator={isProbingNarrator}
-          onProbeNarrator={() => {
+        {renderKangurNarratorSettingsPanel({
+          engine,
+          voice,
+          setEngine,
+          setVoice,
+          copyStatus,
+          onCopyTemplateText: () => void handleCopyTemplateText(),
+          isProbingNarrator,
+          onProbeNarrator: () => {
             void handleProbeNarrator();
-          }}
-          narratorProbe={narratorProbe}
-          className={SETTINGS_SECTION_CLASS_NAME}
-        />
+          },
+          narratorProbe,
+          className: SETTINGS_SECTION_CLASS_NAME,
+        })}
 
         <KangurAiTutorSettingsPanel
           agentPersonaId={agentPersonaId}

@@ -1,23 +1,13 @@
 // @ts-nocheck
 'use client';
 
+import { Printer } from 'lucide-react';
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import {
-  KangurButton,
-  KangurInfoCard,
-  KangurInlineFallback,
-  KangurStatusChip,
-  KangurSummaryPanel,
-} from '@/features/kangur/ui/design/primitives';
-import {
-  KANGUR_PENDING_STEP_PILL_CLASSNAME,
-  KANGUR_PANEL_GAP_CLASSNAME,
-  KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-  KANGUR_STEP_PILL_CLASSNAME,
-  KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
+import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
+import { KangurButton, KangurInlineFallback } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   addXp,
@@ -29,8 +19,8 @@ import type {
   KangurMiniGameBinaryFeedbackState,
   KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
-import { cn } from '@/features/kangur/shared/utils';
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
+import { ClockTrainingGameView } from './ClockTrainingGame.views';
 
 import type {
   ClockChallengeMedal,
@@ -46,16 +36,12 @@ import {
   buildClockTimeoutFeedback,
   buildClockWrongFeedback,
   createClockTaskSet,
+  getClockTrainingSummaryMessage,
   resolveClockChallengeMedal,
   resolveClockPracticeTaskSet,
   scheduleRetryTask,
-  taskToKey,
-  pad,
 } from './clock-training-utils';
 import { getClockTrainingSectionContent } from './clock-training-data';
-
-import { DraggableClock } from './clock-training/DraggableClock';
-import { ClockTrainingSummary } from './clock-training/ClockTrainingSummary';
 
 type ClockTrainingGameProps = {
   completionPrimaryActionLabel?: string;
@@ -70,6 +56,8 @@ type ClockTrainingGameProps = {
   onChallengeSuccess?: (result: ClockChallengeResult) => void;
   practiceTasks?: ClockTask[];
   section?: ClockTrainingTaskPoolId;
+  showHourHand?: boolean;
+  showMinuteHand?: boolean;
   showTaskTitle?: boolean;
   showTimeDisplay?: boolean;
 };
@@ -81,12 +69,360 @@ type ClockFeedback = {
   tone?: 'near' | 'far';
 };
 
+type ResolvedClockTrainingGameProps = {
+  completionPrimaryActionLabel?: string;
+  enableAdaptiveRetry: boolean;
+  hideModeSwitch: boolean;
+  initialMode: ClockGameMode;
+  onChallengeSuccess?: (result: ClockChallengeResult) => void;
+  onCompletionPrimaryAction?: () => void;
+  onFinish: () => void;
+  onModeChange?: (mode: ClockGameMode) => void;
+  onPracticeCompleted?: (result: { correctCount: number; totalCount: number }) => void;
+  onPracticeSuccess?: () => void;
+  practiceTasks?: ClockTask[];
+  section: ClockTrainingTaskPoolId;
+  showHourHand: boolean;
+  showMinuteHand: boolean;
+  showTaskTitle: boolean;
+  showTimeDisplay: boolean;
+};
+
+const resolveClockTrainingGameBehaviorDefaults = (
+  props: ClockTrainingGameProps
+): Pick<
+  ResolvedClockTrainingGameProps,
+  'enableAdaptiveRetry' | 'hideModeSwitch' | 'initialMode' | 'section'
+> => ({
+  enableAdaptiveRetry: props.enableAdaptiveRetry ?? true,
+  hideModeSwitch: props.hideModeSwitch ?? false,
+  initialMode: props.initialMode ?? 'practice',
+  section: props.section ?? 'mixed',
+});
+
+const resolveClockTrainingGameVisualDefaults = (
+  props: ClockTrainingGameProps
+): Pick<
+  ResolvedClockTrainingGameProps,
+  'showHourHand' | 'showMinuteHand' | 'showTaskTitle' | 'showTimeDisplay'
+> => ({
+  showHourHand: props.showHourHand ?? true,
+  showMinuteHand: props.showMinuteHand ?? true,
+  showTaskTitle: props.showTaskTitle ?? true,
+  showTimeDisplay: props.showTimeDisplay ?? true,
+});
+
+const resolveClockTrainingGameProps = (
+  props: ClockTrainingGameProps
+): ResolvedClockTrainingGameProps => ({
+  completionPrimaryActionLabel: props.completionPrimaryActionLabel,
+  ...resolveClockTrainingGameBehaviorDefaults(props),
+  onChallengeSuccess: props.onChallengeSuccess,
+  onCompletionPrimaryAction: props.onCompletionPrimaryAction,
+  onFinish: props.onFinish,
+  onModeChange: props.onModeChange,
+  onPracticeCompleted: props.onPracticeCompleted,
+  onPracticeSuccess: props.onPracticeSuccess,
+  practiceTasks: props.practiceTasks,
+  ...resolveClockTrainingGameVisualDefaults(props),
+});
+
+const resolveClockTrainingResolvedCompletionPrimaryActionLabel = ({
+  completionPrimaryActionLabel,
+  translations,
+}: {
+  completionPrimaryActionLabel?: string;
+  translations: ReturnType<typeof useTranslations>;
+}): string =>
+  completionPrimaryActionLabel ??
+  translateClockTrainingWithFallback(
+    translations,
+    'actions.finish',
+    'Zakończ ćwiczenie ✅'
+  );
+
+const resolveClockTrainingShowStandalonePracticeSummary = ({
+  done,
+  gameMode,
+  onPracticeCompleted,
+}: {
+  done: boolean;
+  gameMode: ClockGameMode;
+  onPracticeCompleted?: (result: { correctCount: number; totalCount: number }) => void;
+}): boolean => done && gameMode === 'practice' && !onPracticeCompleted;
+
+const resolveClockTrainingStrongThresholdPercent = (gameMode: ClockGameMode): number =>
+  gameMode === 'challenge' ? 80 : 60;
+
+const resolveClockTrainingTaskSet = ({
+  gameMode,
+  practiceTasks,
+  section,
+}: {
+  gameMode: ClockGameMode;
+  practiceTasks?: ClockTask[];
+  section: ClockTrainingTaskPoolId;
+}): ClockTask[] =>
+  gameMode === 'challenge'
+    ? createClockTaskSet(section)
+    : resolveClockPracticeTaskSet(section, practiceTasks);
+
+const resolveClockTrainingFeedbackDelay = (
+  correct: boolean,
+  gameMode: ClockGameMode
+): number => (correct ? 1200 : gameMode === 'challenge' ? 1400 : 2100);
+
+const resolveClockTrainingSubmitNextStep = ({
+  gameMode,
+  isLastTask,
+  onPracticeCompleted,
+}: {
+  gameMode: ClockGameMode;
+  isLastTask: boolean;
+  onPracticeCompleted?: (result: { correctCount: number; totalCount: number }) => void;
+}): 'next-stage' | 'next-task' | 'summary' => {
+  if (!isLastTask) {
+    return 'next-task';
+  }
+
+  return gameMode === 'challenge' || !onPracticeCompleted ? 'summary' : 'next-stage';
+};
+
+const handleClockTrainingCorrectAttempt = ({
+  challengeStreak,
+  expectedTask,
+  feedbackOverride,
+  gameMode,
+  onPracticeCompleted,
+  onPracticeSuccess,
+  section,
+  setChallengeBestStreak,
+  setChallengeStreak,
+  setFeedback,
+  setScore,
+  translations,
+}: {
+  challengeStreak: number;
+  expectedTask: ClockTask;
+  feedbackOverride?: ClockFeedback;
+  gameMode: ClockGameMode;
+  onPracticeCompleted?: (result: { correctCount: number; totalCount: number }) => void;
+  onPracticeSuccess?: () => void;
+  section: ClockTrainingTaskPoolId;
+  setChallengeBestStreak: React.Dispatch<React.SetStateAction<number>>;
+  setChallengeStreak: React.Dispatch<React.SetStateAction<number>>;
+  setFeedback: React.Dispatch<React.SetStateAction<ClockFeedback | null>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
+  translations: ReturnType<typeof useTranslations>;
+}): void => {
+  setScore((prevScore) => prevScore + 1);
+  if (gameMode === 'challenge') {
+    const nextStreak = challengeStreak + 1;
+    setChallengeStreak(nextStreak);
+    setChallengeBestStreak((value) => Math.max(value, nextStreak));
+  } else if (!onPracticeCompleted) {
+    onPracticeSuccess?.();
+  }
+
+  setFeedback(
+    feedbackOverride ??
+      buildClockCorrectFeedback(
+        section,
+        expectedTask,
+        {
+          gameMode,
+          streak: challengeStreak + 1,
+        },
+        translations
+      )
+  );
+};
+
+const resolveClockTrainingWrongAttemptFeedback = ({
+  actualHours,
+  actualMinutes,
+  enableAdaptiveRetry,
+  expectedTask,
+  feedbackOverride,
+  gameMode,
+  retryCounts,
+  section,
+  tasks,
+  translations,
+}: {
+  actualHours: number;
+  actualMinutes: number;
+  enableAdaptiveRetry: boolean;
+  expectedTask: ClockTask;
+  feedbackOverride?: ClockFeedback;
+  gameMode: ClockGameMode;
+  retryCounts: Record<string, number>;
+  section: ClockTrainingTaskPoolId;
+  tasks: ClockTask[];
+  translations: ReturnType<typeof useTranslations>;
+}): {
+  nextTaskCount: number;
+  retryPlan:
+    | ReturnType<typeof scheduleRetryTask>
+    | null;
+  selectedFeedback: ClockFeedback;
+} => {
+  const selectedBaseFeedback =
+    feedbackOverride ??
+    buildClockWrongFeedback(
+      actualHours,
+      actualMinutes,
+      expectedTask.hours,
+      expectedTask.minutes,
+      section,
+      translations
+    );
+
+  if (gameMode !== 'practice' || !enableAdaptiveRetry) {
+    return {
+      nextTaskCount: tasks.length,
+      retryPlan: null,
+      selectedFeedback: selectedBaseFeedback,
+    };
+  }
+
+  const retryPlan = scheduleRetryTask(tasks, retryCounts, expectedTask);
+  if (!retryPlan.added) {
+    return {
+      nextTaskCount: retryPlan.tasks.length,
+      retryPlan,
+      selectedFeedback: selectedBaseFeedback,
+    };
+  }
+
+  return {
+    nextTaskCount: retryPlan.tasks.length,
+    retryPlan,
+    selectedFeedback: {
+      ...selectedBaseFeedback,
+      details: `${selectedBaseFeedback.details} ${translateClockTrainingWithFallback(
+        translations,
+        'adaptiveRetryAdded',
+        'Dodaliśmy krótką powtórkę tego zadania.'
+      )}`,
+    },
+  };
+};
+
+const handleClockTrainingWrongAttempt = ({
+  actualHours,
+  actualMinutes,
+  enableAdaptiveRetry,
+  expectedTask,
+  feedbackOverride,
+  gameMode,
+  retryCounts,
+  section,
+  setChallengeStreak,
+  setFeedback,
+  setRetryAddedCount,
+  setRetryCounts,
+  setTasks,
+  tasks,
+  translations,
+}: {
+  actualHours: number;
+  actualMinutes: number;
+  enableAdaptiveRetry: boolean;
+  expectedTask: ClockTask;
+  feedbackOverride?: ClockFeedback;
+  gameMode: ClockGameMode;
+  retryCounts: Record<string, number>;
+  section: ClockTrainingTaskPoolId;
+  setChallengeStreak: React.Dispatch<React.SetStateAction<number>>;
+  setFeedback: React.Dispatch<React.SetStateAction<ClockFeedback | null>>;
+  setRetryAddedCount: React.Dispatch<React.SetStateAction<number>>;
+  setRetryCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  setTasks: React.Dispatch<React.SetStateAction<ClockTask[]>>;
+  tasks: ClockTask[];
+  translations: ReturnType<typeof useTranslations>;
+}): number => {
+  if (gameMode === 'challenge') {
+    setChallengeStreak(0);
+  }
+
+  const { nextTaskCount, retryPlan, selectedFeedback } = resolveClockTrainingWrongAttemptFeedback({
+    actualHours,
+    actualMinutes,
+    enableAdaptiveRetry,
+    expectedTask,
+    feedbackOverride,
+    gameMode,
+    retryCounts,
+    section,
+    tasks,
+    translations,
+  });
+
+  if (retryPlan?.added) {
+    setTasks(retryPlan.tasks);
+    setRetryCounts(retryPlan.retryCounts);
+    setRetryAddedCount((value) => value + 1);
+  }
+
+  setFeedback(selectedFeedback);
+  return nextTaskCount;
+};
+
+const scheduleClockTrainingAdvance = ({
+  clearAdvanceTimeout,
+  delayMs,
+  gameMode,
+  handleDone,
+  isLastTask,
+  scoreAfterAttempt,
+  setChallengeTimeLeft,
+  setCurrent,
+  setFeedback,
+  setSubmitNextStep,
+}: {
+  clearAdvanceTimeout: () => void;
+  delayMs: number;
+  gameMode: ClockGameMode;
+  handleDone: (finalScore: number) => void;
+  isLastTask: boolean;
+  scoreAfterAttempt: number;
+  setChallengeTimeLeft: React.Dispatch<React.SetStateAction<number>>;
+  setCurrent: React.Dispatch<React.SetStateAction<number>>;
+  setFeedback: React.Dispatch<React.SetStateAction<ClockFeedback | null>>;
+  setSubmitNextStep: React.Dispatch<
+    React.SetStateAction<'next-stage' | 'next-task' | 'summary' | null>
+  >;
+}): number => {
+  clearAdvanceTimeout();
+  return window.setTimeout(() => {
+    if (isLastTask) {
+      if (gameMode === 'challenge') {
+        setFeedback(null);
+      }
+      setSubmitNextStep(null);
+      handleDone(scoreAfterAttempt);
+      return;
+    }
+
+    setFeedback(null);
+    setSubmitNextStep(null);
+    setCurrent((prev) => prev + 1);
+    if (gameMode === 'challenge') {
+      setChallengeTimeLeft(CHALLENGE_TIME_LIMIT_SECONDS);
+    }
+  }, delayMs);
+};
+
 export default function ClockTrainingGame(props: ClockTrainingGameProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
+  const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
+  const gamePageTranslations = useTranslations('KangurGamePage');
   const {
     completionPrimaryActionLabel,
-    enableAdaptiveRetry = true,
-    hideModeSwitch = false,
-    initialMode = 'practice',
+    enableAdaptiveRetry,
+    hideModeSwitch,
+    initialMode,
     onCompletionPrimaryAction,
     onFinish,
     onPracticeCompleted,
@@ -94,15 +430,22 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
     onModeChange,
     onChallengeSuccess,
     practiceTasks,
-    section = 'mixed',
-    showTaskTitle = true,
-    showTimeDisplay = true,
-  } = props;
+    section,
+    showHourHand,
+    showMinuteHand,
+    showTaskTitle,
+    showTimeDisplay,
+  } = resolveClockTrainingGameProps(props);
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
+  const lessonPrint = useOptionalKangurLessonPrint();
   const [gameMode, setGameMode] = useState<ClockGameMode>(initialMode);
   const [tasks, setTasks] = useState<ClockTask[]>(() =>
-    resolveClockPracticeTaskSet(section, practiceTasks)
+    resolveClockTrainingTaskSet({
+      gameMode: 'practice',
+      practiceTasks,
+      section,
+    })
   );
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
@@ -122,13 +465,13 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
   const sessionStartedAtRef = useRef(Date.now());
   const advanceTimeoutRef = useRef<number | null>(null);
   const trainingSectionContent = getClockTrainingSectionContent(section, translations);
+  const printPanelId = `clock-training-${section}`;
   const resolvedCompletionPrimaryActionLabel =
-    completionPrimaryActionLabel ??
-    translateClockTrainingWithFallback(
+    resolveClockTrainingResolvedCompletionPrimaryActionLabel({
+      completionPrimaryActionLabel,
       translations,
-      'actions.finish',
-      'Zakończ ćwiczenie ✅'
-    );
+    });
+  const printPanelLabel = lessonNavigationTranslations('printPanel');
 
   const task = tasks[current];
   if (!task) {
@@ -139,21 +482,24 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
       />
     );
   }
-  const currentTaskNumber = Math.min(current + 1, tasks.length);
-  const showStandalonePracticeSummary = done && gameMode === 'practice' && !onPracticeCompleted;
+  const showStandalonePracticeSummary = resolveClockTrainingShowStandalonePracticeSummary({
+    done,
+    gameMode,
+    onPracticeCompleted,
+  });
 
   const handleDone = useCallback(
     (finalScore: number): void => {
-      const progress = loadProgress();
+      const progress = loadProgress({ ownerKey });
       const reward = createTrainingReward(progress, {
         activityKey: `training:clock:${section}`,
         lessonKey: 'clock',
         correctAnswers: finalScore,
         totalQuestions: tasks.length,
-        strongThresholdPercent: gameMode === 'challenge' ? 80 : 60,
+        strongThresholdPercent: resolveClockTrainingStrongThresholdPercent(gameMode),
         perfectCounterKey: 'clockPerfect',
       });
-      addXp(reward.xp, reward.progressUpdates);
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
       void persistKangurSessionScore({
         operation: 'clock',
         score: finalScore,
@@ -181,7 +527,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
         });
       }
     },
-    [gameMode, onChallengeSuccess, onPracticeCompleted, section, tasks.length]
+    [gameMode, onChallengeSuccess, onPracticeCompleted, ownerKey, section, tasks.length]
   );
 
   const clearAdvanceTimeout = useCallback((): void => {
@@ -196,11 +542,7 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
       clearAdvanceTimeout();
       onModeChange?.(mode);
       setGameMode(mode);
-      setTasks(
-        mode === 'challenge'
-          ? createClockTaskSet(section)
-          : resolveClockPracticeTaskSet(section, practiceTasks)
-      );
+      setTasks(resolveClockTrainingTaskSet({ gameMode: mode, practiceTasks, section }));
       setCurrent(0);
       setScore(0);
       setFeedback(null);
@@ -237,92 +579,60 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
       let nextTaskCount = tasks.length;
 
       if (correct) {
-        setScore((prevScore) => prevScore + 1);
-        if (gameMode === 'challenge') {
-          const nextStreak = challengeStreak + 1;
-          setChallengeStreak(nextStreak);
-          setChallengeBestStreak((value) => Math.max(value, nextStreak));
-        } else if (!onPracticeCompleted) {
-          onPracticeSuccess?.();
-        }
-        setFeedback(
-          feedbackOverride ??
-            buildClockCorrectFeedback(
-              section,
-              expectedTask,
-              {
-                gameMode,
-                streak: challengeStreak + 1,
-              },
-              translations
-            )
-        );
+        handleClockTrainingCorrectAttempt({
+          challengeStreak,
+          expectedTask,
+          feedbackOverride,
+          gameMode,
+          onPracticeCompleted,
+          onPracticeSuccess,
+          section,
+          setChallengeBestStreak,
+          setChallengeStreak,
+          setFeedback,
+          setScore,
+          translations,
+        });
       } else {
-        if (gameMode === 'challenge') {
-          setChallengeStreak(0);
-        }
-
-        let selectedFeedback =
-          feedbackOverride ??
-          buildClockWrongFeedback(
-            actualHours,
-            actualMinutes,
-            expectedTask.hours,
-            expectedTask.minutes,
-            section,
-            translations
-          );
-
-        if (gameMode === 'practice' && enableAdaptiveRetry) {
-          const retryPlan = scheduleRetryTask(tasks, retryCounts, expectedTask);
-          nextTaskCount = retryPlan.tasks.length;
-          if (retryPlan.added) {
-            setTasks(retryPlan.tasks);
-            setRetryCounts(retryPlan.retryCounts);
-            setRetryAddedCount((value) => value + 1);
-            selectedFeedback = {
-              ...selectedFeedback,
-              details: `${selectedFeedback.details} ${translateClockTrainingWithFallback(
-                translations,
-                'adaptiveRetryAdded',
-                'Dodaliśmy krótką powtórkę tego zadania.'
-              )}`,
-            };
-          }
-        }
-
-        setFeedback(selectedFeedback);
+        nextTaskCount = handleClockTrainingWrongAttempt({
+          actualHours,
+          actualMinutes,
+          enableAdaptiveRetry,
+          expectedTask,
+          feedbackOverride,
+          gameMode,
+          retryCounts,
+          section,
+          setChallengeStreak,
+          setFeedback,
+          setRetryAddedCount,
+          setRetryCounts,
+          setTasks,
+          tasks,
+          translations,
+        });
       }
 
-      const feedbackDelay = correct ? 1200 : gameMode === 'challenge' ? 1400 : 2100;
       const isLastTask = current + 1 >= nextTaskCount;
       setSubmitNextStep(
-        isLastTask
-          ? gameMode === 'challenge' || !onPracticeCompleted
-            ? 'summary'
-            : 'next-stage'
-          : 'next-task'
+        resolveClockTrainingSubmitNextStep({
+          gameMode,
+          isLastTask,
+          onPracticeCompleted,
+        })
       );
-      clearAdvanceTimeout();
-      advanceTimeoutRef.current = window.setTimeout(() => {
-        if (isLastTask) {
-          if (gameMode === 'challenge') {
-            setFeedback(null);
-          }
-          setSubmitNextStep(null);
-          advanceTimeoutRef.current = null;
-          handleDone(scoreAfterAttempt);
-          return;
-        }
-
-        setFeedback(null);
-        setSubmitNextStep(null);
-        setCurrent((prev) => prev + 1);
-        if (gameMode === 'challenge') {
-          setChallengeTimeLeft(CHALLENGE_TIME_LIMIT_SECONDS);
-        }
-        advanceTimeoutRef.current = null;
-      }, feedbackDelay);
+      advanceTimeoutRef.current = scheduleClockTrainingAdvance({
+        clearAdvanceTimeout,
+        delayMs: resolveClockTrainingFeedbackDelay(correct, gameMode),
+        gameMode,
+        handleDone,
+        isLastTask,
+        scoreAfterAttempt,
+        setChallengeTimeLeft,
+        setCurrent,
+        setFeedback,
+        setSubmitNextStep,
+      });
     },
     [
       challengeStreak,
@@ -380,250 +690,102 @@ export default function ClockTrainingGame(props: ClockTrainingGameProps): React.
   useEffect(() => () => clearAdvanceTimeout(), [clearAdvanceTimeout]);
 
   const completionAction = onCompletionPrimaryAction ?? onFinish;
-
-  if (done && (gameMode === 'challenge' || showStandalonePracticeSummary)) {
-    return (
-      <ClockTrainingSummary
-        score={score}
-        tasksCount={tasks.length}
-        gameMode={gameMode}
-        xpEarned={xpEarned}
-        xpBreakdown={xpBreakdown}
-        challengeMedal={challengeMedal}
-        challengeBestStreak={challengeBestStreak}
-        retryAddedCount={retryAddedCount}
-        section={section}
-        completionPrimaryActionLabel={resolvedCompletionPrimaryActionLabel}
-        onFinish={completionAction}
-        onRestart={() => resetSession(gameMode)}
-      />
-    );
-  }
-
-  const taskSummaryTitle = showTaskTitle ? `${task.hours}:${pad(task.minutes)}` : undefined;
+  const printPanelTitle = trainingSectionContent.promptLabel;
+  const printTaskPrompt = buildClockTaskPrompt(task, section, translations);
+  const printHint = gamePageTranslations('practiceQuestion.printHint');
+  const printTargetTime = `${task.hours}:${String(task.minutes).padStart(2, '0')}`;
+  const printScoreLabel = `${score}/${tasks.length}`;
+  const printSummaryMessage = getClockTrainingSummaryMessage(
+    section,
+    score,
+    tasks.length,
+    translations
+  );
 
   return (
-    <div className={`flex flex-col items-center w-full ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      {!hideModeSwitch ? (
-        <div
-          data-testid='clock-mode-switch'
-          className={cn(
-            KANGUR_SEGMENTED_CONTROL_CLASSNAME,
-            'w-full sm:w-auto sm:flex-wrap sm:justify-center'
-          )}
-        >
-          <KangurButton
-            data-testid='clock-mode-practice'
-            onClick={() => resetSession('practice')}
-            className={cn(
-              'h-10 flex-1 px-4 text-xs touch-manipulation select-none sm:flex-none',
-              isCoarsePointer && 'min-h-12 active:scale-[0.98]'
-            )}
-            size='sm'
-            variant={gameMode === 'practice' ? 'segmentActive' : 'segment'}
-          >
-            {translateClockTrainingWithFallback(
-              translations,
-              'mode.practice',
-              'Tryb Nauka'
-            )}
-          </KangurButton>
-          <KangurButton
-            data-testid='clock-mode-challenge'
-            onClick={() => resetSession('challenge')}
-            className={cn(
-              'h-10 flex-1 px-4 text-xs touch-manipulation select-none sm:flex-none',
-              isCoarsePointer && 'min-h-12 active:scale-[0.98]'
-            )}
-            size='sm'
-            variant={gameMode === 'challenge' ? 'segmentActive' : 'segment'}
-          >
-            {translateClockTrainingWithFallback(
-              translations,
-              'mode.challenge',
-              'Tryb Wyzwanie'
-            )}
-          </KangurButton>
-        </div>
-      ) : null}
-      {section !== 'mixed' &&
-      gameMode !== 'challenge' &&
-      trainingSectionContent.guidanceTitle &&
-      trainingSectionContent.guidance &&
-      trainingSectionContent.legend ? (
-        <KangurInfoCard
-          accent={trainingSectionContent.accent}
-          className='w-full max-w-md'
-          data-testid='clock-training-guidance'
-          padding='md'
-          tone='accent'
-        >
-          <p
-            className='text-sm font-semibold [color:var(--kangur-page-text)]'
-            data-testid='clock-training-guidance-title'
-          >
-            {trainingSectionContent.guidanceTitle}
-          </p>
-          <p className='mt-2 text-sm font-normal leading-relaxed [color:var(--kangur-page-text)]'>
-            {trainingSectionContent.guidance}
-          </p>
-          <p className='mt-2 text-xs font-normal [color:var(--kangur-page-muted-text)]'>
-            {trainingSectionContent.legend}
-          </p>
-        </KangurInfoCard>
-      ) : null}
-      {gameMode === 'challenge' ? (
-        <div className={KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME}>
-          <KangurStatusChip
-            accent='amber'
-            className='text-xs font-bold uppercase tracking-[0.16em]'
-            data-testid='clock-challenge-pill'
-          >
-            {translateClockTrainingWithFallback(
-              translations,
-              'challengePill',
-              'Wyzwanie'
-            )}
-          </KangurStatusChip>
-          <KangurStatusChip
-            accent='amber'
-            className='gap-2 text-xs font-bold'
-            data-testid='clock-challenge-timer'
-          >
-            ⏱ {challengeTimeLeft}s
-          </KangurStatusChip>
-          <KangurStatusChip
-            accent='amber'
-            className='gap-2 text-xs font-bold'
-            data-testid='clock-challenge-streak'
-          >
-            🔥{' '}
-            {translateClockTrainingWithFallback(
-              translations,
-              'seriesProgress',
-              `Seria ${Math.min(current + 1, tasks.length)}/${tasks.length}`,
-              {
-                current: Math.min(current + 1, tasks.length),
-                total: tasks.length,
-              }
-            )}
-          </KangurStatusChip>
-        </div>
-      ) : (
-        <div className={KANGUR_INLINE_WRAP_CENTER_ROW_CLASSNAME}>
-          <KangurStatusChip
-            accent='indigo'
-            className='gap-2 text-xs font-bold'
-            data-testid='clock-practice-series'
-          >
-            {translateClockTrainingWithFallback(
-              translations,
-              'seriesProgress',
-              `Seria ${Math.min(current + 1, tasks.length)}/${tasks.length}`,
-              {
-                current: Math.min(current + 1, tasks.length),
-                total: tasks.length,
-              }
-            )}
-          </KangurStatusChip>
-          {retryAddedCount > 0 ? (
-            <KangurStatusChip
-              accent='indigo'
-              className='text-xs font-semibold'
-              data-testid='clock-retry-count'
-            >
-              {translateClockTrainingWithFallback(
-                translations,
-                'adaptiveRetriesWithCount',
-                `Powtórki adaptacyjne: ${retryAddedCount}`,
-                { count: retryAddedCount }
-              )}
-            </KangurStatusChip>
-          ) : null}
-        </div>
-      )}
-      <div className='flex flex-col items-center gap-2' data-testid='clock-task-progress'>
-        <p
-          className='text-[11px] font-bold uppercase tracking-[0.18em] [color:var(--kangur-page-muted-text)]'
-          data-testid='clock-task-progress-label'
-        >
-          {translateClockTrainingWithFallback(
-            translations,
-            'taskProgress',
-            `Zadanie ${currentTaskNumber} z ${tasks.length}`,
-            {
-              current: currentTaskNumber,
-              total: tasks.length,
-            }
-          )}
-        </p>
-        <div className='flex items-center gap-1.5' data-testid='clock-task-progress-pills'>
-          {tasks.map((_, index) => {
-            const isCompleted = index < current || (done && index === current);
-            const isActive = !done && index === current;
-            return (
-              <span
-                key={`${taskToKey(tasks[index]!)}-${index}`}
-                className={cn(
-                  KANGUR_STEP_PILL_CLASSNAME,
-                  'h-[12px] min-w-[12px]',
-                  isActive
-                    ? [gameMode === 'challenge' ? 'w-7 bg-amber-500' : 'w-7 bg-indigo-500']
-                    : isCompleted
-                      ? [gameMode === 'challenge' ? 'w-4 bg-amber-200' : 'w-4 bg-indigo-200']
-                      : KANGUR_PENDING_STEP_PILL_CLASSNAME
-                )}
-                data-testid={`clock-task-progress-pill-${index}`}
-              />
-            );
-          })}
-        </div>
-      </div>
-
-      <KangurSummaryPanel
-        accent='amber'
-        align='center'
-        className='w-full max-w-md'
-        label={trainingSectionContent.promptLabel}
-        padding='md'
-        title={taskSummaryTitle}
-        tone='accent'
+    <div
+      data-kangur-print-panel='true'
+      data-kangur-print-paged-panel='true'
+      data-kangur-print-preferred-target='true'
+      data-kangur-print-panel-id={printPanelId}
+      data-kangur-print-panel-title={printPanelTitle}
+      data-testid='clock-training-print-panel'
+    >
+      <div
+        className='kangur-print-only space-y-3 border-b border-slate-200 pb-4'
+        data-testid='clock-training-print-summary'
       >
-        <p data-testid='clock-task-prompt' className='text-xs font-semibold text-amber-700/80 mt-1'>
-          {buildClockTaskPrompt(task, section, translations)}
-        </p>
-      </KangurSummaryPanel>
-
-      {isCoarsePointer ? (
-        <p
-          className='text-center text-xs font-semibold uppercase tracking-[0.16em] [color:var(--kangur-page-muted-text)]'
-          data-testid='clock-training-touch-hint'
-        >
-          {translateClockTrainingWithFallback(
-            translations,
-            'touchHint',
-            'Przesuwaj wskazówki palcem, aby ustawić czas.'
-          )}
-        </p>
-      ) : null}
-
-      <div role='status' aria-live='polite' aria-atomic='true' className='sr-only'>
-        {feedback ? feedback.title : ''}
+        <div className='text-xs font-semibold uppercase tracking-[0.16em] text-slate-500'>
+          {printPanelTitle}
+        </div>
+        {done ? (
+          <>
+            <p className='text-base font-semibold leading-relaxed text-slate-900'>
+              {printSummaryMessage}
+            </p>
+            <p className='text-sm text-slate-700'>{printScoreLabel}</p>
+          </>
+        ) : (
+          <>
+            <p className='text-base font-semibold leading-relaxed text-slate-900'>
+              {printTaskPrompt}
+            </p>
+            <p className='text-sm text-slate-700'>{printTargetTime}</p>
+          </>
+        )}
+        <p className='text-sm text-slate-600'>{printHint}</p>
       </div>
 
-      <DraggableClock
-        onSubmit={handleSubmit}
-        showChallengeRing={gameMode === 'challenge'}
-        challengeTimeLeft={challengeTimeLeft}
-        challengeTimeLimit={CHALLENGE_TIME_LIMIT_SECONDS}
-        section={section}
-        showTimeDisplay={showTimeDisplay}
-        submitFeedback={feedback?.kind ?? (done && gameMode === 'practice' ? 'correct' : null)}
-        submitFeedbackDetails={feedback?.details ?? null}
-        submitFeedbackTitle={feedback?.title ?? null}
-        submitNextStep={submitNextStep}
-        submitLocked={feedback !== null || done}
-      />
+      <div data-kangur-print-exclude='true' data-testid='clock-training-live-ui'>
+        {lessonPrint?.onPrintPanel ? (
+          <div className='mb-4 flex justify-end'>
+            <KangurButton
+              onClick={() => lessonPrint.onPrintPanel?.(printPanelId)}
+              className={isCoarsePointer ? 'min-h-11 touch-manipulation select-none active:scale-[0.97]' : undefined}
+              data-testid='clock-training-print-button'
+              size='sm'
+              type='button'
+              variant='surface'
+              aria-label={printPanelLabel}
+              title={printPanelLabel}
+            >
+              <Printer className='h-4 w-4 flex-shrink-0' aria-hidden='true' />
+              <span className='sr-only'>{printPanelLabel}</span>
+            </KangurButton>
+          </div>
+        ) : null}
+
+        <ClockTrainingGameView
+          challengeBestStreak={challengeBestStreak}
+          challengeMedal={challengeMedal}
+          challengeTimeLeft={challengeTimeLeft}
+          completionAction={completionAction}
+          current={current}
+          done={done}
+          feedback={feedback}
+          gameMode={gameMode}
+          handleSubmit={handleSubmit}
+          hideModeSwitch={hideModeSwitch}
+          isCoarsePointer={isCoarsePointer}
+          onResetSession={resetSession}
+          resolvedCompletionPrimaryActionLabel={resolvedCompletionPrimaryActionLabel}
+          retryAddedCount={retryAddedCount}
+          score={score}
+          section={section}
+          showHourHand={showHourHand}
+          showMinuteHand={showMinuteHand}
+          showStandalonePracticeSummary={showStandalonePracticeSummary}
+          showTaskTitle={showTaskTitle}
+          showTimeDisplay={showTimeDisplay}
+          submitNextStep={submitNextStep}
+          task={task}
+          tasks={tasks}
+          trainingSectionContent={trainingSectionContent}
+          translations={translations}
+          xpBreakdown={xpBreakdown}
+          xpEarned={xpEarned}
+        />
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { createPortal } from 'react-dom';
@@ -8,10 +9,11 @@ import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -57,13 +59,11 @@ import {
   type ClassificationRound,
   type ClassificationSortRound,
 } from './logical-classification-game-data';
+import type { BinnedRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type RoundState = {
-  pool: ClassificationItem[];
-  bins: Record<string, ClassificationItem[]>;
-};
+type RoundState = BinnedRoundStateDto<ClassificationItem>;
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
 
@@ -93,7 +93,7 @@ const buildRoundState = (round: ClassificationRound): RoundState => {
     return { pool: [], bins: {} };
   }
   const pool = shuffle(round.items);
-  const bins = round.bins.reduce<Record<string, ClassificationItem[]>>((acc, bin) => {
+  const bins = round.bins.reduce<RoundState['bins']>((acc, bin) => {
     acc[bin.id] = [];
     return acc;
   }, {});
@@ -296,6 +296,7 @@ export default function LogicalClassificationGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const summaryFinishLabel =
@@ -359,14 +360,14 @@ export default function LogicalClassificationGame({
   const goToNextRound = (): void => {
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
       if (TOTAL_TARGETS > 0) {
-        const progress = loadProgress();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(
           progress,
           'logical_classification',
           score,
           TOTAL_TARGETS
         );
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'logical',
           score,
@@ -589,8 +590,8 @@ export default function LogicalClassificationGame({
     );
   }
 
-  const stageContent = (
-    <KangurPracticeGameStage className='mx-auto max-w-2xl'>
+  const gameContent = (
+    <KangurPracticeGameShell className='mx-auto max-w-2xl'>
         <KangurPracticeGameProgress
           accent='teal'
           currentRound={roundIndex}
@@ -781,21 +782,6 @@ export default function LogicalClassificationGame({
                 );
               })}
             </div>
-            {checked ? (
-              <p
-                className={cn(
-                  'mt-3 text-sm font-semibold text-center',
-                  roundCorrect ? 'text-emerald-600' : 'text-rose-600'
-                )}
-                role='status'
-                aria-live='polite'
-                aria-atomic='true'
-              >
-                {roundCorrect
-                  ? `${translations('logicalClassification.feedback.correct')} ${round.explain}`
-                  : `${translations('logicalClassification.feedback.wrong')} ${round.explain}`}
-              </p>
-            ) : null}
           </KangurInfoCard>
         )}
 
@@ -812,25 +798,38 @@ export default function LogicalClassificationGame({
               </KangurStatusChip>
             ) : null}
           </div>
-          {!checked ? (
-            round.type === 'sort' ? (
-              <KangurButton size='sm' type='button' variant='primary' onClick={handleCheck} disabled={!isRoundComplete}>
-                Sprawdź
-              </KangurButton>
-            ) : (
-              <KangurStatusChip accent='teal'>Wybierz intruza</KangurStatusChip>
-            )
-          ) : (
+          {round.type === 'sort' ? (
+            <KangurButton
+              size='sm'
+              type='button'
+              variant='primary'
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                checked
+                  ? roundCorrect === round.items.length
+                    ? 'success'
+                    : 'error'
+                  : null
+              )}
+            >
+              Sprawdź
+            </KangurButton>
+          ) : !checked ? (
+            <KangurStatusChip accent='teal'>Wybierz intruza</KangurStatusChip>
+          ) : null}
+          {checked ? (
             <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
               {roundIndex + 1 >= TOTAL_ROUNDS ? 'Zobacz wynik' : 'Dalej'}
             </KangurButton>
-          )}
+          ) : null}
         </div>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
   );
 
   if (round.type !== 'sort') {
-    return stageContent;
+    return gameContent;
   }
 
   return (
@@ -840,7 +839,7 @@ export default function LogicalClassificationGame({
         setSelectedTokenId(null);
       }}
     >
-      {stageContent}
+      {gameContent}
     </KangurDragDropContext>
   );
 }

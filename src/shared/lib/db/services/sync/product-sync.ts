@@ -2,11 +2,54 @@ import type { MongoProductDoc } from '../database-sync-types';
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
+type BatchResult = { count: number };
+type EntityWithId = { id: string };
+
+type ProductDraftSeed = {
+  id: string;
+  name: string;
+  description: string | null;
+  sku: string | null;
+  ean: string | null;
+  gtin: string | null;
+  asin: string | null;
+  name_en: string | null;
+  name_pl: string | null;
+  name_de: string | null;
+  description_en: string | null;
+  description_pl: string | null;
+  description_de: string | null;
+  weight: number | null;
+  sizeLength: number | null;
+  sizeWidth: number | null;
+  length: number | null;
+  price: number | null;
+  supplierName: string | null;
+  supplierLink: string | null;
+  priceComment: string | null;
+  stock: number | null;
+  catalogIds: unknown;
+  categoryId: string | null;
+  tagIds: unknown;
+  producerIds: unknown;
+  parameters: unknown;
+  defaultPriceGroupId: string | null;
+  active: boolean;
+  icon: string | null;
+  iconColorMode: 'custom' | 'theme';
+  iconColor: string | null;
+  imageLinks: unknown;
+  baseProductId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
+  const availableProducerRows = (await prisma.producer.findMany({
+    select: { id: true },
+  })) as EntityWithId[];
   const availableProducerIds = new Set<string>(
-    (await prisma.producer.findMany({ select: { id: true } })).map(
-      (entry: { id: string }) => entry.id
-    )
+    availableProducerRows.map((entry) => entry.id)
   );
   const warnings: string[] = [];
   const docs = (await mongo
@@ -78,13 +121,15 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
   await prisma.productProducerAssignment.deleteMany();
   await prisma.productListing.deleteMany();
   await prisma.productAiJob.deleteMany();
-  const deleted = await prisma.product.deleteMany();
+  const deleted = (await prisma.product.deleteMany()) as BatchResult;
 
   const productData = data.map(
     ({ images: _i, catalogs: _cat, categories: _c, tags: _t, producers: _p, ...rest }) => rest
   );
-  const created = productData.length
-    ? await prisma.product.createMany({ data: productData as Prisma.ProductCreateManyInput[] })
+  const created: BatchResult = productData.length
+    ? ((await prisma.product.createMany({
+      data: productData as Prisma.ProductCreateManyInput[],
+    })) as BatchResult)
     : { count: 0 };
 
   type SyncedProduct = (typeof data)[number];
@@ -168,7 +213,7 @@ export const syncProducts: DatabaseSyncHandler = async ({ mongo, prisma, normali
 export const syncProductDrafts: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs = await mongo.collection('product_drafts').find({}).toArray();
   const data = docs
-    .map((doc: Record<string, unknown>): Prisma.ProductDraftCreateManyInput | null => {
+    .map((doc: Record<string, unknown>): ProductDraftSeed | null => {
       const id = normalizeId(doc);
       if (!id) return null;
       return {
@@ -221,9 +266,13 @@ export const syncProductDrafts: DatabaseSyncHandler = async ({ mongo, prisma, no
         updatedAt: toDate((doc as { updatedAt?: Date }).updatedAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.ProductDraftCreateManyInput => item !== null);
-  const deleted = await prisma.productDraft.deleteMany();
-  const created = data.length ? await prisma.productDraft.createMany({ data }) : { count: 0 };
+    .filter((item): item is ProductDraftSeed => item !== null);
+  const deleted = (await prisma.productDraft.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.productDraft.createMany({
+      data: data as Prisma.ProductDraftCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 

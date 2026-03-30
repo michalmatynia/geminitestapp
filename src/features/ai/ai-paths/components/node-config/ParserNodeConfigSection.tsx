@@ -69,29 +69,6 @@ type ParserSampleUpdater =
   | Partial<ParserSampleState>
   | ((current: ParserSampleState) => ParserSampleState);
 
-type ParserActionButtonProps = {
-  children: React.ReactNode;
-  baseClassName?: string;
-  inactiveClassName?: string;
-} & Omit<React.ComponentProps<typeof AiPathsPillButton>, 'children'>;
-
-function ParserActionButton({
-  children,
-  baseClassName = 'rounded-md border px-2 py-1 text-[10px]',
-  inactiveClassName = 'text-gray-200 hover:bg-muted/60',
-  ...props
-}: ParserActionButtonProps): React.JSX.Element {
-  return (
-    <AiPathsPillButton
-      baseClassName={baseClassName}
-      inactiveClassName={inactiveClassName}
-      {...props}
-    >
-      {children}
-    </AiPathsPillButton>
-  );
-}
-
 export function ParserNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = useAiPathSelection();
   const { nodes } = useAiPathGraph();
@@ -463,6 +440,10 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
   const imageEntryIndex = entries.findIndex(([key]: [string, string]) =>
     key.toLowerCase().includes('image')
   );
+  const parserActionButtonProps = {
+    baseClassName: 'rounded-md border px-2 py-1 text-[10px]',
+    inactiveClassName: 'text-gray-200 hover:bg-muted/60',
+  } as const;
 
   return (
     <div className='space-y-4'>
@@ -479,25 +460,27 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             commitMappingsImmediate(draftMappings, outputMode, value)
           }
           options={presetSelectOptions}
-          placeholder='Select preset'
-          ariaLabel='Preset'
-          variant='subtle'
+            placeholder='Select preset'
+            ariaLabel='Preset'
+            variant='subtle'
          title='Select preset'/>
         <div className='mt-3 flex flex-wrap gap-2'>
-          <ParserActionButton
+          <AiPathsPillButton
+            {...parserActionButtonProps}
             variant='outline'
             baseClassName='h-7 rounded-md border px-2 py-1 text-[10px]'
             onClick={() => applyPreset('replace')}
           >
             Replace mappings
-          </ParserActionButton>
-          <ParserActionButton
+          </AiPathsPillButton>
+          <AiPathsPillButton
+            {...parserActionButtonProps}
             variant='outline'
             baseClassName='h-7 rounded-md border px-2 py-1 text-[10px]'
             onClick={() => applyPreset('merge')}
           >
             Add missing fields
-          </ParserActionButton>
+          </AiPathsPillButton>
         </div>
       </FormField>
 
@@ -549,7 +532,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                title='Use simulation ID'/>
             )}
           </div>
-          <ParserActionButton
+          <AiPathsPillButton
+            {...parserActionButtonProps}
             variant='outline'
             baseClassName='h-8 rounded-md border px-2 py-1 text-[10px]'
             disabled={parserSampleLoading}
@@ -562,7 +546,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             }
           >
             {parserSampleLoading ? 'Loading...' : 'Fetch sample'}
-          </ParserActionButton>
+          </AiPathsPillButton>
         </div>
         <Textarea
           variant='subtle'
@@ -597,7 +581,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             ariaLabel='Sample depth'
             className='w-[160px]'
            title='Sample JSON'/>
-          <ParserActionButton
+          <AiPathsPillButton
+            {...parserActionButtonProps}
             active={sampleState.includeContainers}
             baseClassName='rounded-md border px-3 py-1 text-[10px]'
             onClick={() =>
@@ -608,7 +593,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             }
           >
             {sampleState.includeContainers ? 'Containers: On' : 'Containers: Off'}
-          </ParserActionButton>
+          </AiPathsPillButton>
           {sampleState.mappingMode === 'flatten' && (
             <SelectSimple
               size='sm'
@@ -628,17 +613,17 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         <div className='mt-3 flex flex-wrap gap-2'>
           {Object.keys(sampleMappings).length > 0 && (
             <>
-              <ParserActionButton onClick={() => applySampleMappings('replace')}>
+              <AiPathsPillButton {...parserActionButtonProps} onClick={() => applySampleMappings('replace')}>
                 Auto-map from sample
-              </ParserActionButton>
-              <ParserActionButton onClick={() => applySampleMappings('merge')}>
+              </AiPathsPillButton>
+              <AiPathsPillButton {...parserActionButtonProps} onClick={() => applySampleMappings('merge')}>
                 Add missing from sample
-              </ParserActionButton>
+              </AiPathsPillButton>
             </>
           )}
-          <ParserActionButton onClick={handleDetectImages}>
+          <AiPathsPillButton {...parserActionButtonProps} onClick={handleDetectImages}>
             Detect images
-          </ParserActionButton>
+          </AiPathsPillButton>
         </div>
       </FormField>
 
@@ -660,12 +645,13 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
 
       <div className='flex flex-wrap gap-2'>
         {PARSER_QUICK_ADD_MAPPINGS.map((mapping) => (
-          <ParserActionButton
+          <AiPathsPillButton
+            {...parserActionButtonProps}
             key={mapping.key}
             onClick={() => addMapping(mapping.key, mapping.path)}
           >
             {mapping.label}
-          </ParserActionButton>
+          </AiPathsPillButton>
         ))}
       </div>
 
@@ -750,12 +736,13 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           <div className='text-gray-300'>Image helpers</div>
           <div className='mt-2 flex flex-wrap gap-2'>
             {PARSER_IMAGE_HELPER_PATHS.map((helper) => (
-              <ParserActionButton
+              <AiPathsPillButton
+                {...parserActionButtonProps}
                 key={helper.path}
                 onClick={() => updateMappingPath(imageEntryIndex, helper.path)}
               >
                 {helper.label}
-              </ParserActionButton>
+              </AiPathsPillButton>
             ))}
           </div>
         </div>

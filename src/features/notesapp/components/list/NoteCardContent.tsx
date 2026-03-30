@@ -14,17 +14,15 @@ export type NoteCardContentProps = {
   note: NoteWithRelations;
 };
 
-export function NoteCardContent(props: NoteCardContentProps): React.JSX.Element {
+export function renderNoteCardContent(props: NoteCardContentProps): React.JSX.Element {
   const { note } = props;
-  const sanitizedContentHtml = React.useMemo((): string => {
-    let html =
-      (note.editorType as string) === 'wysiwyg' ? note.content : renderMarkdownToHtml(note.content);
-    // Remove image tags from preview to avoid duplication with thumbnail
-    html = html.replace(/<img[^>]*>/g, '');
-    // Also remove image paragraphs (markdown renders images in <p> tags)
-    html = html.replace(/<p>\s*<\/p>/g, '');
-    return sanitizeHtml(html);
-  }, [note.content, note.editorType]);
+  let html =
+    (note.editorType as string) === 'wysiwyg' ? note.content : renderMarkdownToHtml(note.content);
+  // Remove image tags from preview to avoid duplication with thumbnail
+  html = html.replace(/<img[^>]*>/g, '');
+  // Also remove image paragraphs (markdown renders images in <p> tags)
+  html = html.replace(/<p>\s*<\/p>/g, '');
+  const sanitizedContentHtml = sanitizeHtml(html);
 
   const thumbnailFile = note.files?.find(
     (file: NoteFileRecord) => file.mimetype?.startsWith('image/') && file.filepath

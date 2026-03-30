@@ -1,7 +1,7 @@
 import type {
   KangurAiTutorAppSettings,
   KangurAiTutorLearnerSettings,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorFocusKind,
@@ -70,10 +70,13 @@ export type KangurAiTutorContextValue = {
   selectionExplainRequest?: { id: number; selectedText: string } | null;
 };
 
-export type KangurAiTutorSessionSyncProps = {
+export type KangurAiTutorSessionSyncInput = {
   learnerId: string | null;
-  sessionContext?: KangurAiTutorConversationContext | null;
+  sessionContext: KangurAiTutorConversationContext | null;
 };
+
+export type KangurAiTutorSessionSyncProps = Partial<KangurAiTutorSessionSyncInput> &
+  Pick<KangurAiTutorSessionSyncInput, 'learnerId'>;
 
 export type KangurAiTutorSessionRegistryContextValue = {
   setRegistration: (registration: KangurAiTutorSessionRegistrationSetter) => void;

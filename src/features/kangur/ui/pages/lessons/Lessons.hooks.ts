@@ -4,9 +4,6 @@ import {
   getKangurInternalQueryParamName,
   readKangurUrlParam,
 } from '@/features/kangur/config/routing';
-import {
-  hasKangurLessonDocumentContent,
-} from '@/features/kangur/lesson-documents';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
@@ -14,34 +11,43 @@ import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/cont
 import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
-import {
-  useKangurLessonDocument,
-  useKangurLessons,
-} from '@/features/kangur/ui/hooks/useKangurLessons';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
+import {
+  resolveFocusedLessonId,
+  resolveFocusedLessonScope,
+} from '@/features/kangur/lessons/lesson-focus-utils';
 import type {
   KangurLesson,
   KangurLessonComponentId,
+  KangurLessonDocumentStore,
 } from '@/features/kangur/shared/contracts/kangur';
-import { LESSON_COMPONENTS } from '@/features/kangur/lessons/lesson-ui-registry';
-import { resolveFocusedLessonScope } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext.shared';
 import {
   KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX,
   KANGUR_TOP_BAR_HEIGHT_VAR_NAME,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurLessonTemplates } from '@/features/kangur/ui/hooks/useKangurLessonTemplates';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import {
   ACTIVE_LESSON_HEADER_SCROLL_MAX_FRAMES,
 } from './Lessons.constants';
 import {
   getLessonAssignmentTimestamp,
   LESSON_ASSIGNMENT_PRIORITY_ORDER,
-  resolveFocusedLessonId,
 } from './Lessons.utils';
+
+const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
+  KangurLessonComponentId,
+  KangurAssignmentSnapshot
+>();
+const EMPTY_LESSON_TEMPLATE_MAP = new Map<
+  KangurLessonComponentId,
+  import('@/shared/contracts/kangur-lesson-templates').KangurLessonTemplate
+>();
+const EMPTY_LESSON_DOCUMENTS = {} as KangurLessonDocumentStore;
 
 export function useLessonsLogic() {
   const routeNavigator = useKangurRouteNavigator();
@@ -55,17 +61,33 @@ export function useLessonsLogic() {
   const canAccessParentAssignments =
     auth.canAccessParentAssignments ?? Boolean(user?.activeLearner?.id);
   const isMobile = useKangurMobileBreakpoint();
-  const { data: lessonTemplates = [] } = useKangurLessonTemplates();
-  const lessonTemplateMap = useMemo(
-    () => new Map(lessonTemplates.map((t) => [t.componentId, t])),
-    [lessonTemplates],
-  );
-
   const [isDeferredContentReady, setIsDeferredContentReady] = useState(false);
+  const [requestedLessonComponentIds, setRequestedLessonComponentIds] = useState<
+    KangurLessonComponentId[]
+  >([]);
+  const [pendingLessonComponentIdBatches, setPendingLessonComponentIdBatches] = useState<
+    KangurLessonComponentId[][]
+  >([]);
+  const [activeLessonComponentIdBatch, setActiveLessonComponentIdBatch] = useState<
+    KangurLessonComponentId[] | null
+  >(null);
+  const [loadedLessonsByComponent, setLoadedLessonsByComponent] = useState<
+    Map<KangurLessonComponentId, KangurLesson>
+  >(new Map());
+  const [shouldLoadCompleteLessonsCatalog, setShouldLoadCompleteLessonsCatalog] = useState(false);
   const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
-  const progress = useKangurProgressState();
+  const [focusToken, setFocusToken] = useState<string | null>(null);
+  const [isAssignmentsReady, setIsAssignmentsReady] = useState(false);
+  const lessonTemplateMap = EMPTY_LESSON_TEMPLATE_MAP;
+  const shouldLoadLessonCatalogDetails =
+    shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0;
+  const shouldLoadLessonRuntimeMetadata =
+    shouldLoadLessonCatalogDetails || activeLessonId !== null;
+  const progress = useKangurProgressState({
+    enabled: shouldLoadLessonRuntimeMetadata,
+  });
   
   const activeLessonNavigationRef = useRef<HTMLDivElement | null>(null);
   const activeLessonHeaderRef = useRef<HTMLDivElement | null>(null);
@@ -73,47 +95,116 @@ export function useLessonsLogic() {
   const activeLessonScrollRef = useRef<HTMLDivElement | null>(null);
 
   const { assignments } = useKangurAssignments({
-    enabled: isDeferredContentReady && canAccessParentAssignments,
+    enabled: isAssignmentsReady && canAccessParentAssignments,
     query: {
       includeArchived: false,
     },
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const frameId = window.requestAnimationFrame(() => setIsDeferredContentReady(true));
-    return () => window.cancelAnimationFrame(frameId);
+    if (typeof window === 'undefined') {
+      setIsDeferredContentReady(true);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    const frameId =
+      typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame(() => {
+            setIsDeferredContentReady(true);
+          })
+        : window.setTimeout(() => {
+            timeoutId = null;
+            setIsDeferredContentReady(true);
+          }, 0);
+
+    return () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        return;
+      }
+
+      if (typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(frameId);
+      } else {
+        window.clearTimeout(frameId);
+      }
+    };
   }, []);
 
-  const lessonsQuery = useKangurLessons({
-    subject,
-    ageGroup,
-    enabledOnly: true,
-    enabled: isDeferredContentReady,
-  });
+  useEffect((): void => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const currentUrl = new URL(window.location.href);
+    const nextFocusToken =
+      readKangurUrlParam(currentUrl.searchParams, 'focus', basePath)?.trim().toLowerCase() ?? null;
+    setFocusToken(nextFocusToken && nextFocusToken.length > 0 ? nextFocusToken : null);
+  }, [basePath]);
+
+  useEffect((): (() => void) | void => {
+    if (
+      !isDeferredContentReady ||
+      !canAccessParentAssignments ||
+      !shouldLoadLessonRuntimeMetadata
+    ) {
+      setIsAssignmentsReady(false);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    const frameId =
+      typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame(() => {
+            setIsAssignmentsReady(true);
+          })
+        : window.setTimeout(() => {
+            timeoutId = null;
+            setIsAssignmentsReady(true);
+          }, 0);
+
+    return () => {
+      setIsAssignmentsReady(false);
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        return;
+      }
+
+      if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(frameId);
+      } else {
+        window.clearTimeout(frameId);
+      }
+    };
+  }, [canAccessParentAssignments, isDeferredContentReady, shouldLoadLessonRuntimeMetadata]);
+
   const lessonSectionsQuery = useKangurLessonSections({
     subject,
     ageGroup,
     enabledOnly: true,
-    enabled: isDeferredContentReady,
   });
-  const shouldLoadLessonDocument = isDeferredContentReady && activeLessonId !== null;
-  const activeLessonDocumentQuery = useKangurLessonDocument(activeLessonId, {
-    enabled: shouldLoadLessonDocument,
+  const requestedLessonsCatalogComponentIds =
+    shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length === 0
+      ? undefined
+      : requestedLessonComponentIds;
+  const completeLessonsQuery = useKangurLessons({
+    subject,
+    ageGroup,
+    enabledOnly: true,
+    enabled: shouldLoadCompleteLessonsCatalog,
   });
-  const isLessonsDataMissing = typeof lessonsQuery.data === 'undefined';
+  const incrementalLessonsQuery = useKangurLessons({
+    subject,
+    ageGroup,
+    componentIds: activeLessonComponentIdBatch ?? undefined,
+    enabledOnly: true,
+    enabled: !shouldLoadCompleteLessonsCatalog && activeLessonComponentIdBatch !== null,
+  });
+  const isLessonSectionsPlaceholderData = lessonSectionsQuery.isPlaceholderData === true;
   const isLessonSectionsDataMissing = typeof lessonSectionsQuery.data === 'undefined';
-  const isLessonsCatalogLoading =
-    isDeferredContentReady &&
-    Boolean(
-      (lessonsQuery.isPending ||
-        lessonsQuery.isLoading ||
-        lessonsQuery.isFetching ||
-        lessonsQuery.isRefetching) &&
-        isLessonsDataMissing
-    );
+  const isCompleteLessonsCatalogDataMissing = typeof completeLessonsQuery.data === 'undefined';
   const isLessonSectionsLoading =
-    isDeferredContentReady &&
     Boolean(
       (lessonSectionsQuery.isPending ||
         lessonSectionsQuery.isLoading ||
@@ -121,34 +212,182 @@ export function useLessonsLogic() {
         lessonSectionsQuery.isRefetching) &&
         isLessonSectionsDataMissing
     );
-  const shouldShowLessonsCatalogSkeleton = !isDeferredContentReady || isLessonsCatalogLoading || isLessonSectionsLoading;
-  
+  const hasPendingIncrementalLessonLoads =
+    activeLessonComponentIdBatch !== null || pendingLessonComponentIdBatches.length > 0;
+  const isLessonsCatalogLoading =
+    shouldLoadCompleteLessonsCatalog
+      ? Boolean(
+          (completeLessonsQuery.isPending ||
+            completeLessonsQuery.isLoading ||
+            completeLessonsQuery.isFetching ||
+            completeLessonsQuery.isRefetching) &&
+            isCompleteLessonsCatalogDataMissing
+        )
+      : hasPendingIncrementalLessonLoads;
+  const shouldShowLessonsCatalogSkeleton =
+    isLessonSectionsPlaceholderData || isLessonSectionsLoading;
+  const lessonSections = useMemo(
+    () => lessonSectionsQuery.data ?? [],
+    [lessonSectionsQuery.data]
+  );
+  const incrementalLessons = useMemo((): KangurLesson[] => {
+    const next = new Map(loadedLessonsByComponent);
+    (incrementalLessonsQuery.data ?? []).forEach((lesson) => {
+      next.set(lesson.componentId, lesson);
+    });
+    return [...next.values()];
+  }, [incrementalLessonsQuery.data, loadedLessonsByComponent]);
+  const shouldExposeStandaloneLessons =
+    !isLessonSectionsDataMissing && lessonSections.length === 0;
+  const shouldExposeLessonCatalogDetails =
+    shouldLoadLessonCatalogDetails ||
+    activeLessonId !== null ||
+    shouldExposeStandaloneLessons;
   const lessons = useMemo(
     (): KangurLesson[] =>
-      isDeferredContentReady
-        ? (lessonsQuery.data ?? []).filter(
-            (lesson) => lesson.subject === subject && lesson.ageGroup === ageGroup
-          )
+      shouldExposeLessonCatalogDetails
+        ? shouldLoadCompleteLessonsCatalog
+          ? completeLessonsQuery.data ?? []
+          : incrementalLessons
         : [],
-    [ageGroup, isDeferredContentReady, lessonsQuery.data, subject]
-  );
-  const lessonSections = useMemo(
-    () => (isDeferredContentReady ? lessonSectionsQuery.data ?? [] : []),
-    [isDeferredContentReady, lessonSectionsQuery.data]
-  );
-  const activeLessonDocument = useMemo(
-    () => (isDeferredContentReady ? activeLessonDocumentQuery.data ?? null : null),
-    [activeLessonDocumentQuery.data, isDeferredContentReady]
-  );
-  const lessonDocuments = useMemo(
-    () =>
-      isDeferredContentReady && activeLessonId && activeLessonDocument
-        ? { [activeLessonId]: activeLessonDocument }
-        : {},
-    [activeLessonDocument, activeLessonId, isDeferredContentReady]
+    [
+      completeLessonsQuery.data,
+      incrementalLessons,
+      shouldExposeLessonCatalogDetails,
+      shouldLoadCompleteLessonsCatalog,
+    ]
   );
 
+  useEffect((): void => {
+    if (shouldLoadCompleteLessonsCatalog) {
+      if (activeLessonComponentIdBatch !== null) {
+        setActiveLessonComponentIdBatch(null);
+      }
+      if (pendingLessonComponentIdBatches.length > 0) {
+        setPendingLessonComponentIdBatches([]);
+      }
+      return;
+    }
+
+    if (activeLessonComponentIdBatch !== null || pendingLessonComponentIdBatches.length === 0) {
+      return;
+    }
+
+    setActiveLessonComponentIdBatch(pendingLessonComponentIdBatches[0] ?? null);
+    setPendingLessonComponentIdBatches((current) => current.slice(1));
+  }, [
+    activeLessonComponentIdBatch,
+    pendingLessonComponentIdBatches,
+    shouldLoadCompleteLessonsCatalog,
+  ]);
+
+  useEffect((): void => {
+    if (activeLessonComponentIdBatch === null) {
+      return;
+    }
+
+    if (
+      incrementalLessonsQuery.isPending ||
+      incrementalLessonsQuery.isLoading ||
+      incrementalLessonsQuery.isFetching ||
+      incrementalLessonsQuery.isRefetching ||
+      typeof incrementalLessonsQuery.data === 'undefined'
+    ) {
+      return;
+    }
+
+    setLoadedLessonsByComponent((current) => {
+      const next = new Map(current);
+      incrementalLessonsQuery.data.forEach((lesson) => {
+        next.set(lesson.componentId, lesson);
+      });
+      return next;
+    });
+    setActiveLessonComponentIdBatch(null);
+  }, [
+    activeLessonComponentIdBatch,
+    incrementalLessonsQuery.data,
+    incrementalLessonsQuery.isFetching,
+    incrementalLessonsQuery.isLoading,
+    incrementalLessonsQuery.isPending,
+    incrementalLessonsQuery.isRefetching,
+  ]);
+
+  const ensureLessonsCatalogLoaded = useCallback(
+    (componentIds?: readonly KangurLessonComponentId[] | null): void => {
+      if (!componentIds || componentIds.length === 0) {
+        setActiveLessonComponentIdBatch(null);
+        setPendingLessonComponentIdBatches([]);
+        setShouldLoadCompleteLessonsCatalog(true);
+        return;
+      }
+
+      const existingComponentIds = new Set<KangurLessonComponentId>([
+        ...requestedLessonComponentIds,
+        ...loadedLessonsByComponent.keys(),
+        ...(activeLessonComponentIdBatch ?? []),
+        ...pendingLessonComponentIdBatches.flat(),
+      ]);
+      const missingComponentIds = componentIds.filter(
+        (componentId) => !existingComponentIds.has(componentId)
+      );
+
+      if (missingComponentIds.length === 0) {
+        return;
+      }
+
+      setRequestedLessonComponentIds((current) => {
+        const next = new Set(current);
+        missingComponentIds.forEach((componentId) => {
+          next.add(componentId);
+        });
+        return [...next];
+      });
+
+      setPendingLessonComponentIdBatches((current) => [...current, [...missingComponentIds]]);
+    },
+    [
+      activeLessonComponentIdBatch,
+      loadedLessonsByComponent,
+      pendingLessonComponentIdBatches,
+      requestedLessonComponentIds,
+    ]
+  );
+
+  useEffect((): void => {
+    setRequestedLessonComponentIds([]);
+    setPendingLessonComponentIdBatches([]);
+    setActiveLessonComponentIdBatch(null);
+    setLoadedLessonsByComponent(new Map());
+    setShouldLoadCompleteLessonsCatalog(false);
+  }, [ageGroup, subject]);
+
+  useEffect((): void => {
+    if (!focusToken) {
+      return;
+    }
+
+    const focusScope = resolveFocusedLessonScope(focusToken, lessonTemplateMap);
+    if (!focusScope) {
+      setShouldLoadCompleteLessonsCatalog(true);
+      return;
+    }
+
+    if (focusScope.ageGroup && focusScope.ageGroup !== ageGroup) {
+      return;
+    }
+
+    if (focusScope.subject !== subject) {
+      return;
+    }
+
+    ensureLessonsCatalogLoaded([focusScope.componentId]);
+  }, [ageGroup, ensureLessonsCatalogLoaded, focusToken, lessonTemplateMap, subject]);
   const lessonAssignmentsByComponent = useMemo(() => {
+    if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
+      return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
+    }
+
     const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
     assignments
       .filter((assignment) => !assignment.archived)
@@ -165,9 +404,13 @@ export function useLessonsLogic() {
         }
       });
     return nextMap;
-  }, [assignments]);
+  }, [assignments, isAssignmentsReady, lessons.length]);
 
   const completedLessonAssignmentsByComponent = useMemo(() => {
+    if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
+      return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
+    }
+
     const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
     assignments
       .filter((assignment) => !assignment.archived)
@@ -190,9 +433,13 @@ export function useLessonsLogic() {
         }
       });
     return nextMap;
-  }, [assignments]);
+  }, [assignments, isAssignmentsReady, lessons.length]);
 
   const orderedLessons = useMemo(() => {
+    if (lessons.length <= 1 || lessonAssignmentsByComponent.size === 0) {
+      return lessons;
+    }
+
     return [...lessons].sort((left, right) => {
       const leftAssignment = lessonAssignmentsByComponent.get(left.componentId);
       const rightAssignment = lessonAssignmentsByComponent.get(right.componentId);
@@ -212,6 +459,7 @@ export function useLessonsLogic() {
     const focusParamName = getKangurInternalQueryParamName('focus', basePath);
     if (!currentUrl.searchParams.has(focusParamName)) return;
     currentUrl.searchParams.delete(focusParamName);
+    setFocusToken(null);
     window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
   }, [basePath]);
   const handleSelectLesson = useCallback(
@@ -239,9 +487,8 @@ export function useLessonsLogic() {
 
   useEffect((): void => {
     if (activeLessonId || typeof window === 'undefined') return;
-    const currentUrl = new URL(window.location.href);
-    const focusToken = readKangurUrlParam(currentUrl.searchParams, 'focus', basePath)?.trim().toLowerCase();
     if (!focusToken) return;
+    const currentUrl = new URL(window.location.href);
     const focusScope = resolveFocusedLessonScope(focusToken, lessonTemplateMap);
     if (focusScope?.ageGroup && focusScope.ageGroup !== ageGroup) {
       setAgeGroup(focusScope.ageGroup);
@@ -256,12 +503,14 @@ export function useLessonsLogic() {
     if (!focusedLessonId) return;
     setIsActiveLessonComponentReady(false);
     setActiveLessonId(focusedLessonId);
+    setFocusToken(null);
     currentUrl.searchParams.delete(getKangurInternalQueryParamName('focus', basePath));
     window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
   }, [
     activeLessonId,
     ageGroup,
     basePath,
+    focusToken,
     lessons,
     lessonTemplateMap,
     setAgeGroup,
@@ -270,50 +519,40 @@ export function useLessonsLogic() {
     subject,
   ]);
 
-  const activeIdx = orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
+  const activeIdx =
+    activeLessonId === null
+      ? -1
+      : orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
   const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
-  const ActiveLessonComponent = activeLesson ? LESSON_COMPONENTS[activeLesson.componentId] : null;
-  const hasActiveLessonDocContent = hasKangurLessonDocumentContent(activeLessonDocument);
-  const isActiveLessonDocumentLoading =
-    Boolean(activeLesson && activeLesson.contentMode === 'document' && shouldLoadLessonDocument) &&
-    Boolean(
-      (activeLessonDocumentQuery.isPending ||
-        activeLessonDocumentQuery.isLoading ||
-        activeLessonDocumentQuery.isFetching ||
-        activeLessonDocumentQuery.isRefetching) &&
-        typeof activeLessonDocumentQuery.data === 'undefined'
-    );
-  
+  const isCompleteLessonsCatalogLoaded =
+    shouldExposeLessonCatalogDetails &&
+    requestedLessonsCatalogComponentIds === undefined &&
+    lessons.length > 0;
+  const lessonDocuments = EMPTY_LESSON_DOCUMENTS;
   const isActiveLessonSurfaceReady =
     !activeLesson ||
     isSecretLessonActive ||
-    (activeLesson.contentMode === 'document' && !isActiveLessonDocumentLoading) ||
-    (activeLesson.contentMode !== 'document' &&
-      (!ActiveLessonComponent || isActiveLessonComponentReady));
+    isActiveLessonComponentReady;
   const isLocaleSwitchTransition =
     routeTransitionState?.activeTransitionKind === 'locale-switch';
-  const shouldHoldLessonsLibraryTransition =
-    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
-    routeTransitionState.activeTransitionSkeletonVariant === 'lessons-library';
-
   const expectsFocusedLesson =
     routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
     routeTransitionState.activeTransitionSkeletonVariant === 'lessons-focus';
   const isLessonsShellReady = expectsFocusedLesson
     ? Boolean(activeLesson) && isActiveLessonSurfaceReady
     : isActiveLessonSurfaceReady;
-  const isLessonsCatalogTransitionReady =
+  const isLessonsLibraryRouteReady =
     !expectsFocusedLesson &&
     activeLesson === null &&
     !isSecretLessonActive &&
-    (!shouldHoldLessonsLibraryTransition || !shouldShowLessonsCatalogSkeleton);
+    isLessonsShellReady;
 
   const isLessonsPageReady =
     isLocaleSwitchTransition
       ? isLessonsShellReady
-      : shouldHoldLessonsLibraryTransition
-        ? isLessonsCatalogTransitionReady && isLessonsShellReady
-        : (isDeferredContentReady || isLessonsCatalogTransitionReady) && isLessonsShellReady;
+      : expectsFocusedLesson
+        ? isLessonsShellReady
+        : isLessonsLibraryRouteReady;
 
   useKangurRoutePageReady({
     pageKey: 'Lessons',
@@ -372,17 +611,19 @@ export function useLessonsLogic() {
     setAgeGroup,
     lessons,
     lessonSections,
-    orderedLessons,
-    isLessonsCatalogLoading,
-    isLessonSectionsLoading,
-    shouldShowLessonsCatalogSkeleton,
-    lessonDocuments,
+      lessonTemplateMap,
+      orderedLessons,
+      isCompleteLessonsCatalogLoaded,
+      lessonDocuments,
+      isLessonsCatalogLoading,
+      ensureLessonsCatalogLoaded,
+      isLessonSectionsLoading,
+      shouldShowLessonsCatalogSkeleton,
     activeLesson,
     activeLessonId,
     handleSelectLesson,
     isDeferredContentReady,
     isLessonsPageReady,
-    isActiveLessonDocumentLoading,
     handleGoBack,
     progress,
     lessonAssignmentsByComponent,

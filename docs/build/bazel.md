@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'overview'
 scope: 'repository'
@@ -86,9 +86,11 @@ The main repo aggregation lanes are now:
 npm install
 ```
 
-`npm install` remains the canonical path for Bazel and CI because
-`npm_translate_lock` is still sourced from
-[package-lock.json](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/package-lock.json).
+`npm install` remains the canonical path for Bazel and CI because the current
+Bazel layer still executes JS/TS tools against repo-local `node_modules`
+instead of a Bazel-native JS dependency graph. The active module layer is the
+explicit `MODULE.bazel` + `rules_shell` orchestration setup, not a
+`npm_translate_lock`/`rules_js` dependency import pipeline.
 
 For local toolchain and Bun parity checks, use:
 
@@ -311,6 +313,7 @@ npm run bazel -- run //tools/js:next -- --version
 - `//:case_resolver_capture_mapping_e2e`
 - `//:products_trigger_queue_unit`
 - `//:products_trigger_queue_e2e`
+- `//:kangur_ai_tutor_selection_handoff_e2e`
 - `//:critical_flows`
 - `//:security_smoke`
 - `//:accessibility_smoke`
@@ -361,16 +364,6 @@ npm run bazel -- run //tools/js:next -- --version
 - `next_build` now executes directly as a Bazel target while preserving the existing Next.js build contract.
 - Remote cache support is injected by the repo-owned Bazel wrapper rather than hard-coding provider-specific settings into `.bazelrc`.
 - The next migration step is to decide whether deeper Bazel-native JS dependency modeling is worth the complexity, now that the core CI/build entry surface is already Bazel-executed.
-
-## Agentic engineering entrypoints
-
-The Bazel lanes are now paired with repo-owned agentic routing commands:
-- `npm run agentic:classify -- <changed files...>`
-- `npm run agentic:preflight -- <changed files...>`
-
-Those commands read `config/agentic/domains/*.json`, derive the impacted doc generators, scanners, and validation targets, and write `artifacts/agent-work-order.json` for downstream agent runs.
-
-See [agentic-engineering.md](./agentic-engineering.md) for the routing contract.
 
 ## Agentic engineering entrypoints
 

@@ -21,63 +21,65 @@ import type { MapStatusOptions } from '@/shared/contracts/base';
 const safeMessage = (message: string | null | undefined, fallback: string): string =>
   message?.trim() ? message : fallback;
 
+const resolveFallbackMessage = (
+  code: (typeof AppErrorCodes)[keyof typeof AppErrorCodes],
+  fallback: string
+): string => resolveErrorCatalogMessage(code, fallback);
+
+const resolveMappedStatusMessage = (
+  message: string,
+  code: (typeof AppErrorCodes)[keyof typeof AppErrorCodes],
+  fallback: string
+): string => safeMessage(message, resolveFallbackMessage(code, fallback));
+
+type StatusErrorFactory = (message: string, options?: MapStatusOptions) => AppError;
+
+const STATUS_ERROR_FACTORIES: Partial<Record<number, StatusErrorFactory>> = {
+  400: (message) =>
+    badRequestError(resolveMappedStatusMessage(message, AppErrorCodes.badRequest, 'Request failed')),
+  401: (message) =>
+    authError(resolveMappedStatusMessage(message, AppErrorCodes.unauthorized, 'Unauthorized')),
+  403: (message) =>
+    forbiddenError(resolveMappedStatusMessage(message, AppErrorCodes.forbidden, 'Forbidden')),
+  404: (message) =>
+    notFoundError(resolveMappedStatusMessage(message, AppErrorCodes.notFound, 'Not found')),
+  409: (message) =>
+    conflictError(resolveMappedStatusMessage(message, AppErrorCodes.conflict, 'Conflict')),
+  422: (message) =>
+    unprocessableEntityError(
+      resolveMappedStatusMessage(message, AppErrorCodes.unprocessableEntity, 'Unprocessable entity')
+    ),
+  429: (message, options) =>
+    rateLimitedError(
+      resolveMappedStatusMessage(message, AppErrorCodes.rateLimited, 'Too many requests'),
+      options?.retryAfterMs
+    ),
+  503: (message, options) =>
+    serviceUnavailableError(
+      resolveMappedStatusMessage(
+        message,
+        AppErrorCodes.serviceUnavailable,
+        'Service temporarily unavailable'
+      ),
+      options?.retryAfterMs
+    ),
+  504: (message) =>
+    timeoutError(resolveMappedStatusMessage(message, AppErrorCodes.timeout, 'Operation timed out')),
+};
+
 export const mapStatusToAppError = (
   message: string,
   status: number,
   options?: MapStatusOptions
 ): AppError => {
-  const resolveFallback = (
-    code: (typeof AppErrorCodes)[keyof typeof AppErrorCodes],
-    fallback: string
-  ) => resolveErrorCatalogMessage(code, fallback);
-  const msg = safeMessage(message, resolveFallback(AppErrorCodes.badRequest, 'Request failed'));
-  if (status === 400) return badRequestError(msg);
-  if (status === 401)
-    return authError(
-      safeMessage(message, resolveFallback(AppErrorCodes.unauthorized, 'Unauthorized'))
-    );
-  if (status === 403)
-    return forbiddenError(
-      safeMessage(message, resolveFallback(AppErrorCodes.forbidden, 'Forbidden'))
-    );
-  if (status === 404)
-    return notFoundError(
-      safeMessage(message, resolveFallback(AppErrorCodes.notFound, 'Not found'))
-    );
-  if (status === 409)
-    return conflictError(
-      safeMessage(message, resolveFallback(AppErrorCodes.conflict, 'Conflict'))
-    );
-  if (status === 422)
-    return unprocessableEntityError(
-      safeMessage(
-        message,
-        resolveFallback(AppErrorCodes.unprocessableEntity, 'Unprocessable entity')
-      )
-    );
-  if (status === 429)
-    return rateLimitedError(
-      safeMessage(message, resolveFallback(AppErrorCodes.rateLimited, 'Too many requests')),
-      options?.retryAfterMs
-    );
-  if (status === 503)
-    return serviceUnavailableError(
-      safeMessage(
-        message,
-        resolveFallback(AppErrorCodes.serviceUnavailable, 'Service temporarily unavailable')
-      ),
-      options?.retryAfterMs
-    );
-  if (status === 504)
-    return timeoutError(
-      safeMessage(message, resolveFallback(AppErrorCodes.timeout, 'Operation timed out'))
-    );
+  const mappedFactory = STATUS_ERROR_FACTORIES[status];
+  if (mappedFactory) {
+    return mappedFactory(message, options);
+  }
+  const msg = resolveMappedStatusMessage(message, AppErrorCodes.badRequest, 'Request failed');
   if (status >= 500) {
     return externalServiceError(
-      safeMessage(
-        message,
-        resolveFallback(AppErrorCodes.externalService, 'External service error')
-      ),
+      resolveMappedStatusMessage(message, AppErrorCodes.externalService, 'External service error'),
       { status }
     );
   }
@@ -104,6 +106,15 @@ const NETWORK_ERROR_CODES = new Set([
   'ECONNABORTED',
 ]);
 
+const resolveRetryAfterMs = (error: {
+  retryAfterMs?: number;
+  retryAfter?: number;
+}): number | undefined => {
+  if (typeof error.retryAfterMs === 'number') return error.retryAfterMs;
+  if (typeof error.retryAfter === 'number') return error.retryAfter * 1000;
+  return undefined;
+};
+
 export const mapErrorToAppError = (error: unknown, fallbackMessage?: string): AppError | null => {
   if (isAppError(error)) return error;
 
@@ -126,12 +137,7 @@ export const mapErrorToAppError = (error: unknown, fallbackMessage?: string): Ap
           : null;
 
     if (status !== null) {
-      const retryAfterMs =
-        typeof err.retryAfterMs === 'number'
-          ? err.retryAfterMs
-          : typeof err.retryAfter === 'number'
-            ? err.retryAfter * 1000
-            : undefined;
+      const retryAfterMs = resolveRetryAfterMs(err);
       return mapStatusToAppError(err.message ?? fallbackMessage ?? 'Request failed', status, {
         ...(typeof retryAfterMs === 'number' ? { retryAfterMs } : {}),
       });

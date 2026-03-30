@@ -1,17 +1,16 @@
 'use client';
 
 import { Draggable, Droppable } from '@hello-pangea/dnd';
-import { useTranslations } from 'next-intl';
-import { useMemo, useRef, useState } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import {
   KangurDragDropContext,
-  getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -31,828 +30,189 @@ import {
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  KANGUR_ACCENT_STYLES,
   KANGUR_STACK_ROW_CLASSNAME,
   KANGUR_WRAP_CENTER_ROW_CLASSNAME,
-  KANGUR_WRAP_ROW_CLASSNAME,
-  type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import {
-  addXp,
-  createLessonPracticeReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
-import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
   KangurMiniGameFinishProps,
-  KangurRewardBreakdownEntry,
 } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-import {
-  LOGICAL_PATTERNS_WORKSHOP_ROUNDS,
-  LOGICAL_PATTERNS_WORKSHOP_TILES,
-  type LogicalPatternCell,
-  type LogicalPatternRound,
-  type LogicalPatternTile,
+import type {
+  LogicalPatternSetId,
+  LogicalPatternTile,
 } from './logical-patterns-workshop-data';
-
-import type { DropResult } from '@hello-pangea/dnd';
-
-type RoundState = {
-  pool: LogicalPatternTile[];
-  slots: Record<string, LogicalPatternTile[]>;
-};
-
-type BlankCell = Extract<LogicalPatternCell, { type: 'blank' }>;
-
-const TOTAL_ROUNDS = Math.max(LOGICAL_PATTERNS_WORKSHOP_ROUNDS.length, 1);
-const TOTAL_TARGETS = LOGICAL_PATTERNS_WORKSHOP_ROUNDS.reduce(
-  (sum, round) => sum + round.sequence.filter((cell) => cell.type === 'blank').length,
-  0
-);
-const FALLBACK_ROUND: LogicalPatternRound = {
-  id: 'fallback',
-  title: 'Wzorce i ciągi',
-  prompt: 'Brak danych do gry.',
-  ruleHint: 'Uzupełnij brakujące elementy.',
-  ruleSummary: 'Uzupełnij brakujące elementy.',
-  stepHint: 'Najpierw znajdź powtarzający się fragment.',
-  pool: [],
-  sequence: [],
-};
-const FIRST_ROUND = LOGICAL_PATTERNS_WORKSHOP_ROUNDS[0] ?? FALLBACK_ROUND;
-
-const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
-
-const buildRoundState = (round: LogicalPatternRound): RoundState => {
-  const pool = shuffle(
-    round.pool
-      .map((tileId) => LOGICAL_PATTERNS_WORKSHOP_TILES[tileId])
-      .filter((tile): tile is LogicalPatternTile => Boolean(tile))
-  );
-  const slots = round.sequence
-    .filter((cell): cell is BlankCell => cell.type === 'blank')
-    .reduce<Record<string, LogicalPatternTile[]>>((acc, blank) => {
-      acc[blank.id] = [];
-      return acc;
-    }, {});
-  return { pool, slots };
-};
-
-const slotIdForBlank = (blankId: string): string => `slot-${blankId}`;
-const isSlotId = (value: string): boolean => value.startsWith('slot-');
-const getBlankIdFromSlot = (slotId: string): string => slotId.replace('slot-', '');
-
-const removeTokenById = (
-  items: LogicalPatternTile[],
-  tokenId: string
-): { updated: LogicalPatternTile[]; token?: LogicalPatternTile } => {
-  const index = items.findIndex((item) => item.id === tokenId);
-  if (index < 0) {
-    return { updated: items };
-  }
-  const updated = [...items];
-  const [token] = updated.splice(index, 1);
-  return { updated, token };
-};
-
-const ringClasses: Record<KangurAccent, string> = {
-  indigo: 'ring-indigo-400/70',
-  violet: 'ring-violet-400/70',
-  emerald: 'ring-emerald-400/70',
-  sky: 'ring-sky-400/70',
-  amber: 'ring-amber-400/70',
-  rose: 'ring-rose-400/70',
-  teal: 'ring-teal-400/70',
-  slate: 'ring-slate-400/70',
-};
+import {
+  buildTileClassName,
+  getSlotSurface,
+  slotIdForBlank,
+} from './logical-patterns/LogicalPatternsGame.utils';
+import { useLogicalPatternsGameState } from './logical-patterns/LogicalPatternsGame.hooks';
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
 
-const buildTileClassName = ({
-  accent,
-  isSelected,
-  isDragging,
-  isCompact,
-  isDisabled,
-  isCoarsePointer,
-  isMuted,
-}: {
-  accent: KangurAccent;
-  isSelected: boolean;
-  isDragging: boolean;
-  isCompact: boolean;
-  isDisabled: boolean;
-  isCoarsePointer: boolean;
-  isMuted: boolean;
-}): string =>
-  cn(
-    'inline-flex items-center justify-center gap-2 rounded-[18px] border font-semibold transition touch-manipulation select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white',
-    isCompact ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-base',
-    isCoarsePointer && (isCompact ? 'min-h-[3rem] min-w-[3rem] active:scale-[0.98] active:shadow-sm' : 'min-h-[4rem] min-w-[4rem] active:scale-[0.98] active:shadow-sm'),
-    KANGUR_ACCENT_STYLES[accent].badge,
-    !isDisabled && KANGUR_ACCENT_STYLES[accent].hoverCard,
-    isSelected && `ring-2 ${ringClasses[accent]} ring-offset-1 ring-offset-transparent`,
-    isDragging && 'scale-[1.02] shadow-[0_18px_40px_-24px_rgba(124,58,237,0.35)]',
-    isDisabled ? 'cursor-default' : 'cursor-pointer',
-    isMuted && 'opacity-70'
-  );
-
-const getSlotSurface = ({
-  checked,
-  isDraggingOver,
-  isCorrect,
-  hasToken,
-}: {
-  checked: boolean;
-  isDraggingOver: boolean;
-  isCorrect: boolean;
-  hasToken: boolean;
-}): { accent: KangurAccent; className: string } => {
-  const focusRingClassName =
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 focus-visible:ring-offset-2 ring-offset-white';
-  if (checked && hasToken) {
-    return {
-      accent: isCorrect ? 'emerald' : 'rose',
-      className: cn(
-        'flex min-h-[56px] min-w-[64px] items-center justify-center rounded-[20px] border px-2 py-2 transition',
-        focusRingClassName,
-        isCorrect
-          ? KANGUR_ACCENT_STYLES.emerald.activeCard
-          : KANGUR_ACCENT_STYLES.rose.activeCard
-      ),
-    };
+const getTileNoun = (tile: LogicalPatternTile): string => {
+  if (tile.kind === 'number') {
+    return 'liczba';
   }
-
-  if (isDraggingOver) {
-    return {
-      accent: 'violet',
-      className: cn(
-        'flex min-h-[56px] min-w-[64px] items-center justify-center rounded-[20px] border border-violet-300 bg-violet-100/70 px-2 py-2 transition scale-[1.02]',
-        focusRingClassName
-      ),
-    };
+  if (tile.kind === 'letter') {
+    return 'litera';
   }
-
-  return {
-    accent: 'violet',
-    className: cn(
-      'flex min-h-[56px] min-w-[64px] items-center justify-center rounded-[20px] border border-dashed border-violet-300/70 px-2 py-2 text-xs font-semibold text-violet-600/80 transition',
-      focusRingClassName,
-      KANGUR_ACCENT_STYLES.violet.hoverCard
-    ),
-  };
-};
-
-const resolveTileByValue = (
-  tiles: Record<string, LogicalPatternTile>
-): Map<string, LogicalPatternTile> => {
-  const byValue = new Map<string, LogicalPatternTile>();
-  Object.values(tiles).forEach((tile) => {
-    if (!byValue.has(tile.value)) {
-      byValue.set(tile.value, tile);
-    }
-  });
-  return byValue;
+  return 'symbol';
 };
 
 export default function LogicalPatternsWorkshopGame({
   finishLabel = 'Wróć do tematów',
   onFinish,
-}: KangurMiniGameFinishProps): React.JSX.Element {
-  const translations = useTranslations('KangurMiniGames');
-  const isCoarsePointer = useKangurCoarsePointer();
-  const summaryFinishLabel =
-    finishLabel === 'Wróć do tematów'
-      ? getKangurMiniGameFinishLabel(translations, 'topics')
-      : finishLabel;
-  const handleFinish = onFinish;
-  const [roundIndex, setRoundIndex] = useState(0);
-  const [roundState, setRoundState] = useState<RoundState>(() =>
-    buildRoundState(FIRST_ROUND)
-  );
-  const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
-  const [checked, setChecked] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-  const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [completedAt, setCompletedAt] = useState<number | null>(null);
-  const [usedHint, setUsedHint] = useState(false);
-  const [roundCorrect, setRoundCorrect] = useState(0);
-  const [score, setScore] = useState(0);
-  const [done, setDone] = useState(false);
-  const [xpEarned, setXpEarned] = useState(0);
-  const [xpBreakdown, setXpBreakdown] = useState<KangurRewardBreakdownEntry[]>([]);
-  const sessionStartedAtRef = useRef(Date.now());
+  patternSetId = 'logical_patterns_workshop',
+}: KangurMiniGameFinishProps & {
+  patternSetId?: LogicalPatternSetId;
+}): React.JSX.Element {
+  const state = useLogicalPatternsGameState(patternSetId);
+  const {
+    translations, isCoarsePointer, roundIndex, roundState, selectedTokenId, setSelectedTokenId, checked,
+    showHint, setShowHint, setUsedHint, score, done, xpEarned, xpBreakdown,
+    round, blanks, tiles, selectedToken, isRoundComplete,
+    handleCheck, goToNextRound, restart, onDragEnd, handleSlotClick,
+  } = state;
 
-  const round = LOGICAL_PATTERNS_WORKSHOP_ROUNDS[roundIndex] ?? FIRST_ROUND;
-  const blanks = useMemo(
-    () => round.sequence.filter((cell): cell is BlankCell => cell.type === 'blank'),
-    [round.sequence]
-  );
-  const tileByValue = useMemo(
-    () => resolveTileByValue(LOGICAL_PATTERNS_WORKSHOP_TILES),
-    []
-  );
-  const selectedToken = selectedTokenId
-    ? roundState.pool.find((token) => token.id === selectedTokenId) ?? null
-    : null;
-  const touchHint = selectedToken
-    ? `Wybrany kafelek: ${selectedToken.label}. Dotknij pustego pola.`
-    : 'Dotknij kafelka, a potem pustego pola.';
-
-  const isRoundComplete = blanks.every((blank) => roundState.slots[blank.id]?.length);
-
-  const resetRound = (): void => {
-    setRoundState(buildRoundState(round));
-    setSelectedTokenId(null);
-    setChecked(false);
-    setShowHint(false);
-    setUsedHint(false);
-    setStartedAt(null);
-    setCompletedAt(null);
-    setRoundCorrect(0);
-  };
-
-  const handleCheck = (): void => {
-    if (checked || !isRoundComplete) return;
-    setSelectedTokenId(null);
-    const correctCount = blanks.reduce((acc, blank) => {
-      const assigned = roundState.slots[blank.id]?.[0];
-      return acc + (assigned?.value === blank.correctValue ? 1 : 0);
-    }, 0);
-    const resolvedStart = startedAt ?? Date.now();
-    const resolvedEnd = Date.now();
-    setRoundCorrect(correctCount);
-    setStartedAt(resolvedStart);
-    setCompletedAt(resolvedEnd);
-    setChecked(true);
-  };
-
-  const goToNextRound = (): void => {
-    const completionTimeMs =
-      startedAt && completedAt ? Math.max(0, completedAt - startedAt) : null;
-    const roundMax = blanks.length;
-    const roundScore = Math.max(
-      0,
-      roundCorrect - (usedHint ? 1 : 0) - (completionTimeMs && completionTimeMs > 45000 ? 1 : 0)
-    );
-    const nextScore = score + Math.min(roundScore, roundMax);
-    setScore(nextScore);
-
-    if (roundIndex + 1 >= TOTAL_ROUNDS) {
-      if (TOTAL_TARGETS > 0) {
-        const progress = loadProgress();
-        const reward = createLessonPracticeReward(
-          progress,
-          'logical_patterns',
-          nextScore,
-          TOTAL_TARGETS
-        );
-        addXp(reward.xp, reward.progressUpdates);
-        void persistKangurSessionScore({
-          operation: 'logical',
-          score: nextScore,
-          totalQuestions: TOTAL_TARGETS,
-          correctAnswers: nextScore,
-          timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
-          xpEarned: reward.xp,
-        });
-        setXpEarned(reward.xp);
-        setXpBreakdown(reward.breakdown ?? []);
-      }
-      setDone(true);
-      return;
-    }
-    const nextIndex = roundIndex + 1;
-    const nextRound = LOGICAL_PATTERNS_WORKSHOP_ROUNDS[nextIndex] ?? FIRST_ROUND;
-    setRoundIndex(nextIndex);
-    setRoundState(buildRoundState(nextRound));
-    setSelectedTokenId(null);
-    setChecked(false);
-    setShowHint(false);
-    setUsedHint(false);
-    setStartedAt(null);
-    setCompletedAt(null);
-    setRoundCorrect(0);
-  };
-
-  const restart = (): void => {
-    setRoundIndex(0);
-    setRoundState(buildRoundState(FIRST_ROUND));
-    setSelectedTokenId(null);
-    setChecked(false);
-    setShowHint(false);
-    setUsedHint(false);
-    setStartedAt(null);
-    setCompletedAt(null);
-    setRoundCorrect(0);
-    setScore(0);
-    setDone(false);
-    setXpEarned(0);
-    setXpBreakdown([]);
-    sessionStartedAtRef.current = Date.now();
-  };
-
-  const handleAssignToken = (blankId: string): void => {
-    if (checked || !selectedTokenId) return;
-    setStartedAt((current) => current ?? Date.now());
-    setRoundState((prev) => {
-      const { updated: nextPool, token } = removeTokenById(prev.pool, selectedTokenId);
-      if (!token) return prev;
-      const existing = prev.slots[blankId]?.[0] ?? null;
-      const updatedPool = existing ? [...nextPool, existing] : nextPool;
-      return {
-        pool: updatedPool,
-        slots: {
-          ...prev.slots,
-          [blankId]: [token],
-        },
-      };
-    });
-    setSelectedTokenId(null);
-  };
-
-  const handleSlotClick = (blankId: string): void => {
-    if (checked) return;
-    if (selectedTokenId) {
-      handleAssignToken(blankId);
-      return;
-    }
-    setRoundState((prev) => {
-      const existing = prev.slots[blankId]?.[0] ?? null;
-      if (!existing) return prev;
-      return {
-        pool: [...prev.pool, existing],
-        slots: {
-          ...prev.slots,
-          [blankId]: [],
-        },
-      };
-    });
-  };
-
-  const onDragEnd = (result: DropResult): void => {
-    if (checked) return;
-    const { source, destination } = result;
-    if (!destination) return;
-    setStartedAt((current) => current ?? Date.now());
-    const sourceId = source.droppableId;
-    const destinationId = destination.droppableId;
-    if (sourceId === destinationId && source.index === destination.index) return;
-    if (sourceId !== 'pool' && !isSlotId(sourceId)) return;
-    if (destinationId !== 'pool' && !isSlotId(destinationId)) return;
-
-    setRoundState((prev) => {
-      const sourceList =
-        sourceId === 'pool'
-          ? [...prev.pool]
-          : [...(prev.slots[getBlankIdFromSlot(sourceId)] ?? [])];
-      const [moved] = sourceList.splice(source.index, 1);
-      if (!moved) return prev;
-
-      const nextSlots = { ...prev.slots };
-      let nextPool = prev.pool;
-
-      if (sourceId === 'pool') {
-        nextPool = sourceList;
-      } else {
-        nextSlots[getBlankIdFromSlot(sourceId)] = sourceList;
-      }
-
-      if (destinationId === 'pool') {
-        const updatedPool = [...nextPool];
-        updatedPool.splice(destination.index, 0, moved);
-        return {
-          pool: updatedPool,
-          slots: nextSlots,
-        };
-      }
-
-      const blankId = getBlankIdFromSlot(destinationId);
-      const existing = nextSlots[blankId]?.[0] ?? null;
-      if (existing) {
-        nextPool = [...nextPool, existing];
-      }
-
-      nextSlots[blankId] = [moved];
-      return {
-        pool: nextPool,
-        slots: nextSlots,
-      };
-    });
-    setSelectedTokenId(null);
-  };
+  const summaryFinishLabel = finishLabel === 'Wróć do tematów' ? getKangurMiniGameFinishLabel(translations, 'topics') : finishLabel;
 
   if (done) {
-    const percent = TOTAL_TARGETS ? Math.round((score / TOTAL_TARGETS) * 100) : 0;
+    const totalTargets = state.totalTargets;
+    const percent = totalTargets ? Math.round((score / totalTargets) * 100) : 0;
     return (
       <KangurPracticeGameSummary dataTestId='logical-patterns-summary-shell'>
         <KangurPracticeGameSummaryEmoji
-          ariaHidden
           dataTestId='logical-patterns-summary-emoji'
           emoji={percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪'}
         />
-        <KangurPracticeGameSummaryTitle
-          accent='violet'
-          title={getKangurMiniGameScoreLabel(translations, score, TOTAL_TARGETS)}
-        />
+        <KangurPracticeGameSummaryTitle accent='violet' title={getKangurMiniGameScoreLabel(translations, score, totalTargets)} />
         <KangurPracticeGameSummaryXP accent='violet' xpEarned={xpEarned} />
         <KangurPracticeGameSummaryBreakdown
           breakdown={xpBreakdown}
           dataTestId='logical-patterns-summary-breakdown'
           itemDataTestIdPrefix='logical-patterns-summary-breakdown'
         />
-        <KangurPracticeGameSummaryProgress
-          accent='violet'
-          dataTestId='logical-patterns-summary-progress-bar'
-          percent={percent}
-        />
-        <KangurPracticeGameSummaryMessage>
-          {percent === 100
-            ? translations('logicalPatterns.summary.perfect')
-            : percent >= 70
-              ? translations('logicalPatterns.summary.good')
-              : translations('logicalPatterns.summary.retry')}
-        </KangurPracticeGameSummaryMessage>
-        <KangurPracticeGameSummaryActions
-          className={KANGUR_STACK_ROW_CLASSNAME}
-          finishButtonClassName='w-full sm:flex-1'
-          finishLabel={summaryFinishLabel}
-          onFinish={handleFinish}
-          onRestart={restart}
-          restartLabel={translations('shared.restart')}
-          restartButtonClassName='w-full sm:flex-1'
-        />
+        <KangurPracticeGameSummaryProgress accent='violet' percent={percent} />
+        <KangurPracticeGameSummaryMessage>{percent === 100 ? translations('logicalPatterns.summary.perfect') : percent >= 70 ? translations('logicalPatterns.summary.good') : translations('logicalPatterns.summary.retry')}</KangurPracticeGameSummaryMessage>
+        <KangurPracticeGameSummaryActions className={KANGUR_STACK_ROW_CLASSNAME} finishLabel={summaryFinishLabel} onFinish={onFinish} onRestart={restart} restartLabel={translations('shared.restart')} />
       </KangurPracticeGameSummary>
     );
   }
 
-  const elapsedMs =
-    checked && startedAt && completedAt ? Math.max(0, completedAt - startedAt) : null;
+  const touchHint = selectedToken ? `Wybrany kafelek: ${selectedToken.label}. Dotknij pustego pola.` : 'Dotknij kafelka, a potem pustego pola.';
 
   return (
-    <KangurDragDropContext
-      onDragEnd={onDragEnd}
-      onDragStart={() => setSelectedTokenId(null)}
-    >
-      <KangurPracticeGameStage className='mx-auto max-w-3xl'>
-        <KangurPracticeGameProgress
-          accent='violet'
-          currentRound={roundIndex}
-          dataTestId='logical-patterns-progress-bar'
-          totalRounds={TOTAL_ROUNDS}
-        />
+    <KangurDragDropContext onDragEnd={onDragEnd} onDragStart={() => setSelectedTokenId(null)}>
+      <KangurPracticeGameShell className='mx-auto max-w-3xl'>
+        <KangurPracticeGameProgress accent='violet' currentRound={roundIndex} totalRounds={state.totalRounds} />
 
         <KangurInfoCard accent='violet' className='w-full' padding='sm' tone='accent'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <div>
               <p className='text-sm font-bold'>Warsztat wzorców</p>
-              <p className='text-xs [color:var(--kangur-page-muted-text)]'>{round.prompt}</p>
+              <p className='text-xs font-semibold text-violet-700'>{round.title}</p>
+              <p className='text-xs text-slate-500'>{round.prompt}</p>
             </div>
-            <KangurStatusChip accent='violet' size='sm'>
-              Runda {roundIndex + 1}/{TOTAL_ROUNDS}
-            </KangurStatusChip>
+            <KangurStatusChip accent='violet' size='sm'>Runda {roundIndex + 1}/{state.totalRounds}</KangurStatusChip>
           </div>
-          <p className='mt-2 text-[11px] [color:var(--kangur-page-muted-text)]'>
-            {isCoarsePointer
-              ? 'Dotknij kafelka, a potem pustego pola. Możesz też przeciągać.'
-              : 'Przeciągnij kafelki do pustych pól albo kliknij kafelek i potem kliknij puste pole.'}
-          </p>
-          {isCoarsePointer && !checked ? (
+          <p className='mt-2 text-[11px] text-slate-500'>{isCoarsePointer ? 'Dotknij kafelka, a potem pustego pola. Możesz też przeciągać.' : 'Przeciągnij kafelki do pustych pól.'}</p>
+          {isCoarsePointer && !checked && (
             <div
               aria-live='polite'
-              className='mt-3 rounded-2xl border border-violet-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-violet-950 shadow-sm'
+              className='mt-3 rounded-2xl border border-violet-200 bg-white/80 px-4 py-3 text-sm font-semibold text-violet-950 shadow-sm'
               data-testid='logical-patterns-touch-hint'
             >
               {touchHint}
             </div>
-          ) : null}
+          )}
           <div className={`mt-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}>
-            <KangurButton
-              size='sm'
-              type='button'
-              variant='surface'
-              onClick={() => {
-                setShowHint((current) => !current);
-                setUsedHint(true);
-              }}
-              disabled={checked}
-            >
-              {showHint ? 'Ukryj podpowiedź' : 'Pokaż podpowiedź'}
-            </KangurButton>
-            {showHint && !checked ? (
-              <span className='text-[11px] font-semibold text-violet-700'>{round.ruleHint}</span>
-            ) : null}
+            <KangurButton size='sm' variant='surface' onClick={() => { setShowHint(!showHint); setUsedHint(true); }} disabled={checked}>{showHint ? 'Ukryj podpowiedź' : 'Pokaż podpowiedź'}</KangurButton>
+            {showHint && !checked && <span className='text-[11px] font-semibold text-violet-700'>{round.ruleHint}</span>}
           </div>
         </KangurInfoCard>
 
-        <div className='flex w-full flex-col kangur-panel-gap'>
-          <div className='flex items-center justify-between'>
-            <p className='text-xs font-semibold uppercase tracking-[0.16em] text-violet-700'>
-              Sekwencja
-            </p>
-            <KangurStatusChip accent='slate' size='sm'>
-              {blanks.length} brakujące
-            </KangurStatusChip>
-          </div>
+        <div className='flex w-full flex-col gap-4'>
+          <div className='flex items-center justify-between'><p className='text-xs font-semibold uppercase tracking-[0.16em] text-violet-700'>Sekwencja</p><KangurStatusChip accent='slate' size='sm'>{blanks.length} brakujące</KangurStatusChip></div>
           <div className='flex flex-wrap items-center justify-center gap-2'>
-            {round.sequence.map((cell, index) => {
+            {round.sequence.map((cell, idx) => {
               if (cell.type === 'fixed') {
-                const tile = LOGICAL_PATTERNS_WORKSHOP_TILES[cell.tileId];
+                const tile = tiles[cell.tileId];
                 if (!tile) return null;
-                return (
-                  <div
-                    key={`fixed-${cell.tileId}-${index}`}
-                    className={buildTileClassName({
-                      accent: tile.accent ?? 'violet',
-                      isSelected: false,
-                      isDragging: false,
-                      isCompact: false,
-                      isDisabled: true,
-                      isCoarsePointer: false,
-                      isMuted: false,
-                    })}
-                  >
-                    <span className={tile.kind === 'number' ? 'text-lg font-bold' : 'text-xl'}>
-                      {tile.label}
-                    </span>
-                  </div>
-                );
+                return <div key={idx} className={buildTileClassName({ accent: tile.accent ?? 'violet', isSelected: false, isDragging: false, isCompact: false, isDisabled: true, isCoarsePointer: false, isMuted: false })}>{tile.label}</div>;
               }
-
-              const assigned = roundState.slots[cell.id]?.[0] ?? null;
-              const isCorrect = assigned?.value === cell.correctValue;
-              const correctTile =
-                checked && !isCorrect ? tileByValue.get(cell.correctValue) : null;
+              const slotted = roundState.slots[cell.id]?.[0];
               return (
-                <div key={cell.id} className='flex flex-col items-center gap-1'>
-                  <Droppable droppableId={slotIdForBlank(cell.id)}>
-                    {(provided, snapshot) => {
-                      const slotSurface = getSlotSurface({
-                        checked,
-                        isDraggingOver: snapshot.isDraggingOver,
-                        isCorrect,
-                        hasToken: Boolean(assigned),
-                      });
-                      return (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.droppableProps}
-                          className={cn(
-                            slotSurface.className,
-                            'touch-manipulation',
-                            isCoarsePointer &&
-                              selectedTokenId &&
-                              'ring-2 ring-violet-300/80 ring-offset-2 ring-offset-white'
-                          )}
-                          data-testid={`logical-patterns-slot-${cell.id}`}
-                          onClick={() => handleSlotClick(cell.id)}
-                          role='button'
-                          tabIndex={checked ? -1 : 0}
-                          aria-disabled={checked}
-                          aria-label={
-                            assigned
-                              ? `Pole sekwencji: ${assigned.label}`
-                              : 'Puste pole sekwencji'
+                <Droppable key={cell.id} droppableId={slotIdForBlank(cell.id)} isDropDisabled={checked}>
+                  {(provided, snapshot) => {
+                    const surface = getSlotSurface({ checked, isDraggingOver: snapshot.isDraggingOver, isCorrect: slotted?.value === cell.correctValue, hasToken: !!slotted });
+                    return (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        aria-disabled={checked}
+                        aria-label={slotted ? `Pole sekwencji: ${slotted.label}` : 'Puste pole sekwencji'}
+                        className={surface.className}
+                        data-testid={`logical-patterns-slot-${cell.id}`}
+                        onClick={() => handleSlotClick(cell.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            handleSlotClick(cell.id);
                           }
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                              event.preventDefault();
-                              handleSlotClick(cell.id);
-                            }
-                          }}
-                        >
-                            {assigned ? (
-                              <Draggable
-                                draggableId={assigned.id}
-                                index={0}
-                                key={assigned.id}
-                                isDragDisabled={checked}
-                                disableInteractiveElementBlocking
-                              >
-                              {(tokenProvided, tokenSnapshot) => {
-                                const content = (
-                                  <button
-                                    type='button'
-                                    ref={tokenProvided.innerRef}
-                                    {...tokenProvided.draggableProps}
-                                    {...tokenProvided.dragHandleProps}
-                                    style={getKangurMobileDragHandleStyle(
-                                      tokenProvided.draggableProps.style,
-                                      isCoarsePointer
-                                    )}
-                                    className={buildTileClassName({
-                                      accent: assigned.accent ?? 'violet',
-                                      isSelected: false,
-                                      isDragging: tokenSnapshot.isDragging,
-                                      isCompact: true,
-                                      isDisabled: checked,
-                                      isCoarsePointer,
-                                      isMuted: checked,
-                                    })}
-                                    aria-label={
-                                      assigned.kind === 'number'
-                                        ? `Usuń liczbę ${assigned.label} z sekwencji`
-                                        : `Usuń symbol ${assigned.label} z sekwencji`
-                                    }
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      if (checked) return;
-                                      setRoundState((prev) => ({
-                                        pool: [...prev.pool, assigned],
-                                        slots: {
-                                          ...prev.slots,
-                                          [cell.id]: [],
-                                        },
-                                      }));
-                                    }}
-                                  >
-                                    <span
-                                      className={
-                                        assigned.kind === 'number'
-                                          ? 'text-sm font-bold'
-                                          : 'text-base'
-                                      }
-                                    >
-                                      {assigned.label}
-                                    </span>
-                                  </button>
-                                );
-
-                                if (tokenSnapshot.isDragging && dragPortal) {
-                                  return createPortal(content, dragPortal);
-                                }
-
-                                return content;
-                              }}
-                            </Draggable>
-                          ) : (
-                            <span>Upuść</span>
-                          )}
-                          {provided.placeholder}
-                        </div>
-                      );
-                    }}
-                  </Droppable>
-                  {correctTile ? (
-                    <span className='text-[11px] font-semibold text-rose-600'>
-                      Poprawnie: {correctTile.label}
-                    </span>
-                  ) : null}
-                </div>
+                        }}
+                        role='button'
+                        tabIndex={checked ? -1 : 0}
+                      >
+                        {slotted ? (
+                          <Draggable draggableId={`slotted-${slotted.id}`} index={0} isDragDisabled={checked}>
+                            {(p, s) => (
+                              <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className={buildTileClassName({ accent: slotted.accent ?? 'violet', isSelected: false, isDragging: s.isDragging, isCompact: true, isDisabled: checked, isCoarsePointer, isMuted: false })}>
+                                {slotted.label}
+                              </div>
+                            )}
+                          </Draggable>
+                        ) : '?'}
+                        {provided.placeholder}
+                      </div>
+                    );
+                  }}
+                </Droppable>
               );
             })}
           </div>
-
-          {checked ? (
-            <KangurInfoCard accent='violet' padding='sm' tone='accent' className='w-full'>
-              <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
-                <KangurStatusChip accent='violet' size='sm' labelStyle='caps'>
-                  Reguła
-                </KangurStatusChip>
-                <p className='text-xs font-semibold [color:var(--kangur-page-text)]'>
-                  {round.ruleSummary}
-                </p>
-              </div>
-              <p className='mt-1 text-[11px] [color:var(--kangur-page-muted-text)]'>
-                {round.stepHint}
-              </p>
-              <div className={`mt-2 ${KANGUR_WRAP_CENTER_ROW_CLASSNAME}`}>
-                {usedHint ? (
-                  <KangurStatusChip accent='rose' size='sm'>
-                    Podpowiedź użyta
-                  </KangurStatusChip>
-                ) : (
-                  <KangurStatusChip accent='emerald' size='sm'>
-                    Bez podpowiedzi
-                  </KangurStatusChip>
-                )}
-                {elapsedMs !== null ? (
-                  elapsedMs > 45000 ? (
-                    <KangurStatusChip accent='amber' size='sm'>
-                      Wolne tempo
-                    </KangurStatusChip>
-                  ) : (
-                    <KangurStatusChip accent='sky' size='sm'>
-                      Szybkie tempo
-                    </KangurStatusChip>
-                  )
-                ) : null}
-              </div>
-              <div className='mt-2 flex flex-wrap items-center justify-center gap-2'>
-                {round.sequence.map((cell, index) => {
-                  const tile =
-                    cell.type === 'fixed'
-                      ? LOGICAL_PATTERNS_WORKSHOP_TILES[cell.tileId]
-                      : tileByValue.get(cell.correctValue);
-                  if (!tile) return null;
-                  return (
-                    <div
-                      key={`solution-${cell.type}-${index}`}
-                    className={buildTileClassName({
-                      accent: tile.accent ?? 'violet',
-                      isSelected: false,
-                      isDragging: false,
-                      isCompact: true,
-                      isDisabled: true,
-                      isCoarsePointer,
-                      isMuted: false,
-                    })}
-                    >
-                      <span
-                        className={tile.kind === 'number' ? 'text-sm font-bold' : 'text-base'}
-                      >
-                        {tile.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </KangurInfoCard>
-          ) : null}
         </div>
 
-        <div className='flex w-full flex-col kangur-panel-gap'>
-          <div className='flex items-center justify-between'>
-            <p className='text-xs font-semibold uppercase tracking-[0.16em] text-violet-700'>
-              Kafelki
-            </p>
-            <KangurStatusChip accent='slate' size='sm'>
-              {roundState.pool.length} w puli
-            </KangurStatusChip>
-          </div>
-          <Droppable droppableId='pool' direction='horizontal'>
-            {(provided) => (
+        <div className='flex w-full flex-col gap-4'>
+          <p className='text-xs font-semibold uppercase tracking-[0.16em] text-violet-700'>Twoje kafelki</p>
+          <Droppable droppableId='pool' direction='horizontal' isDropDisabled={checked}>
+            {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={cn(
-                  'flex min-h-[72px] flex-wrap items-center justify-center gap-2 rounded-[22px] border border-dashed px-3 py-3 text-center text-xs touch-manipulation',
-                  roundState.pool.length === 0
-                    ? 'text-violet-600'
-                    : '[color:var(--kangur-page-muted-text)]',
-                  isCoarsePointer && selectedTokenId && 'ring-2 ring-violet-200/80 ring-offset-2 ring-offset-white'
-                )}
+                className={cn('flex flex-wrap items-center justify-center gap-2 rounded-[24px] border border-dashed border-slate-200 p-6 transition-colors', snapshot.isDraggingOver && 'bg-slate-50 border-slate-300')}
                 data-testid='logical-patterns-pool'
               >
-                {roundState.pool.length === 0 ? <span>Wszystkie kafelki użyte!</span> : null}
-                {roundState.pool.map((token, index) => (
-                  <Draggable
-                    key={token.id}
-                    draggableId={token.id}
-                    index={index}
-                    isDragDisabled={checked}
-                    disableInteractiveElementBlocking
-                  >
-                    {(draggableProvided, snapshot) => {
-                      const content = (
+                {roundState.pool.map((tile, idx) => (
+                  <Draggable key={tile.id} draggableId={tile.id} index={idx} isDragDisabled={checked}>
+                    {(p, s) => {
+                      const element = (
                         <button
+                          ref={p.innerRef}
+                          {...p.draggableProps}
+                          {...p.dragHandleProps}
+                          aria-label={`Kafelek: ${getTileNoun(tile)} ${tile.label}`}
+                          aria-pressed={selectedTokenId === tile.id}
+                          className={buildTileClassName({ accent: tile.accent ?? 'violet', isSelected: tile.id === selectedTokenId, isDragging: s.isDragging, isCompact: false, isDisabled: checked, isCoarsePointer, isMuted: !!selectedTokenId && tile.id !== selectedTokenId })}
+                          onClick={() => !checked && setSelectedTokenId(tile.id === selectedTokenId ? null : tile.id)}
+                          style={isCoarsePointer ? { touchAction: 'none' } : undefined}
                           type='button'
-                          ref={draggableProvided.innerRef}
-                          {...draggableProvided.draggableProps}
-                          {...draggableProvided.dragHandleProps}
-                          style={getKangurMobileDragHandleStyle(
-                            draggableProvided.draggableProps.style,
-                            isCoarsePointer
-                          )}
-                          className={buildTileClassName({
-                            accent: token.accent ?? 'violet',
-                            isSelected: selectedTokenId === token.id,
-                            isDragging: snapshot.isDragging,
-                            isCompact: false,
-                            isDisabled: checked,
-                            isCoarsePointer,
-                            isMuted: checked,
-                          })}
-                          aria-label={
-                            token.kind === 'number'
-                              ? `Kafelek: liczba ${token.label}`
-                              : `Kafelek: symbol ${token.label}`
-                          }
-                          aria-pressed={selectedTokenId === token.id}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            if (snapshot.isDragging || checked) return;
-                            setSelectedTokenId((current) =>
-                              current === token.id ? null : token.id
-                            );
-                          }}
                         >
-                          <span
-                            className={token.kind === 'number' ? 'text-lg font-bold' : 'text-xl'}
-                          >
-                            {token.label}
-                          </span>
+                          {tile.label}
                         </button>
                       );
-
-                      if (snapshot.isDragging && dragPortal) {
-                        return createPortal(content, dragPortal);
-                      }
-
-                      return content;
+                      return s.isDragging ? createPortal(element, dragPortal!) : element;
                     }}
                   </Draggable>
                 ))}
@@ -862,40 +222,42 @@ export default function LogicalPatternsWorkshopGame({
           </Droppable>
         </div>
 
-        <div className='flex w-full flex-wrap items-center justify-between kangur-panel-gap'>
-          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            <KangurButton
-              size='sm'
-              type='button'
-              variant='surface'
-              onClick={resetRound}
-              disabled={checked}
-            >
-              Wyczyść rundę
-            </KangurButton>
+        <div className='flex items-center justify-center'>
+          <div className='flex flex-col items-center gap-4'>
             {checked ? (
-              <KangurStatusChip accent={roundCorrect === blanks.length ? 'emerald' : 'rose'}>
-                {roundCorrect}/{blanks.length} trafień
+              <KangurStatusChip
+                accent={state.roundCorrect === blanks.length ? 'emerald' : 'amber'}
+                size='lg'
+              >
+                Trafienia: {state.roundCorrect}/{blanks.length}
               </KangurStatusChip>
             ) : null}
+            <div className='flex flex-col items-center gap-3 sm:flex-row'>
+              <KangurButton
+                onClick={handleCheck}
+                disabled={checked || !isRoundComplete}
+                variant='primary'
+                size='lg'
+                className={getKangurCheckButtonClassName(
+                  'min-w-[200px]',
+                  checked
+                    ? state.roundCorrect === blanks.length
+                      ? 'success'
+                      : 'error'
+                    : null
+                )}
+              >
+                Sprawdź
+              </KangurButton>
+              {checked ? (
+                <KangurButton onClick={goToNextRound} variant='primary' size='lg' className='min-w-[200px]'>
+                  Dalej
+                </KangurButton>
+              ) : null}
+            </div>
           </div>
-          {!checked ? (
-            <KangurButton
-              size='sm'
-              type='button'
-              variant='primary'
-              onClick={handleCheck}
-              disabled={!isRoundComplete}
-            >
-              Sprawdź
-            </KangurButton>
-          ) : (
-            <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
-              {roundIndex + 1 >= TOTAL_ROUNDS ? 'Zobacz wynik' : 'Dalej'}
-            </KangurButton>
-          )}
         </div>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     </KangurDragDropContext>
   );
 }

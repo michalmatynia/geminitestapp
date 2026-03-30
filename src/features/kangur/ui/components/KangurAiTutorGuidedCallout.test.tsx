@@ -10,6 +10,8 @@ import { KangurAiTutorGuidedCallout } from './KangurAiTutorGuidedCallout';
 
 import type { HTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
 
+const defaultTutorContentSnapshot = structuredClone(DEFAULT_KANGUR_AI_TUTOR_CONTENT);
+
 const widgetStateContextMock = vi.hoisted(() => ({
   guidedTutorTarget: null,
   homeOnboardingStepIndex: 1,
@@ -138,6 +140,11 @@ vi.mock('./KangurAiTutorChrome', () => ({
 
 describe('KangurAiTutorGuidedCallout', () => {
   beforeEach(() => {
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = defaultTutorContentSnapshot.locale;
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.guidedCallout.selectionSketchCtaLabel =
+      defaultTutorContentSnapshot.guidedCallout.selectionSketchCtaLabel;
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.guidedCallout.selectionSketchHint =
+      defaultTutorContentSnapshot.guidedCallout.selectionSketchHint;
     widgetStateContextMock.guidedTutorTarget = null;
     widgetStateContextMock.homeOnboardingStepIndex = 1;
     widgetStateContextMock.selectionConversationContext = null;
@@ -342,7 +349,7 @@ describe('KangurAiTutorGuidedCallout', () => {
     );
   });
 
-  it('replaces the resolved page-content answer with a hint follow-up on test surfaces', () => {
+  it('renders the resolved page-content answer on test surfaces for knowledge-backed selections', () => {
     pageContentQueryMock.entry = {
       fragments: [
         {
@@ -440,20 +447,19 @@ describe('KangurAiTutorGuidedCallout', () => {
     );
 
     expect(
-      screen.queryByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('kangur-ai-tutor-selection-guided-answer')
-    ).not.toBeInTheDocument();
-    expect(screen.getByTestId('kangur-ai-tutor-selection-hint-followup')).toHaveTextContent(
-      'Potrzebujesz kolejnej podpowiedzi?'
+      screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
+    ).toHaveTextContent('Zapisana treść strony');
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-answer')).toHaveTextContent(
+      'To zadanie sprawdza, czy po rozcięciu powstają dwie identyczne części.'
     );
-    expect(screen.getByRole('button', { name: 'Tak, pomóż mi' })).toHaveClass(
+    expect(
+      screen.queryByTestId('kangur-ai-tutor-selection-hint-followup')
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rozumiem' })).toHaveClass(
       'min-h-11',
       'px-4',
       'touch-manipulation'
     );
-    expect(screen.queryByRole('button', { name: 'Rozumiem' })).not.toBeInTheDocument();
   });
 
   it('shows the saved page-content fragment in the first guided modal before the answer resolves', () => {
@@ -560,5 +566,119 @@ describe('KangurAiTutorGuidedCallout', () => {
     expect(
       screen.queryByText('Za chwilę otworzę wyjaśnienie dokładnie dla zaznaczonego tekstu.')
     ).not.toBeInTheDocument();
+  });
+
+  it('uses English fallback labels when the English tutor content is missing sketch copy', () => {
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.locale = 'en';
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.guidedCallout.selectionSketchCtaLabel = '';
+    DEFAULT_KANGUR_AI_TUTOR_CONTENT.guidedCallout.selectionSketchHint = '';
+
+    pageContentQueryMock.entry = {
+      fragments: [
+        {
+          aliases: ['Mastery 67%'],
+          enabled: true,
+          explanation: 'This fragment explains the current mastery track.',
+          id: 'badge-track-mastery',
+          nativeGuideIds: [],
+          sortOrder: 0,
+          text: 'Mastery 67%',
+          triggerPhrases: [],
+        },
+      ],
+      summary: 'See the current mastery path.',
+      title: 'Learner progress',
+    };
+    widgetStateContextMock.guidedTutorTarget = {
+      kind: 'selection_excerpt',
+      mode: 'selection',
+      selectedText: 'Mastery 67%',
+    };
+    widgetStateContextMock.selectionConversationContext = {
+      focusLabel: 'Learner progress',
+      knowledgeReference: {
+        sourceCollection: 'kangur_page_content',
+        sourceRecordId: 'game-home-progress',
+        sourcePath: 'entry:game-home-progress#fragment:badge-track-mastery',
+      },
+      messageStartIndex: 0,
+      selectedText: 'Mastery 67%',
+    };
+    panelBodyContextMock.activeFocus = {
+      assignmentId: null,
+      rect: null,
+      kind: 'selection',
+      id: 'selection',
+      label: 'Learner progress',
+      conversationFocus: {
+        assignmentId: null,
+        contentId: 'game:home',
+        id: 'game-home-progress',
+        kind: 'selection',
+        knowledgeReference: {
+          sourceCollection: 'kangur_page_content',
+          sourceRecordId: 'game-home-progress',
+          sourcePath: 'entry:game-home-progress#fragment:badge-track-mastery',
+        },
+        label: 'Learner progress',
+        surface: 'game',
+      },
+    };
+    panelBodyContextMock.activeSelectedText = 'Mastery 67%';
+    panelBodyContextMock.sessionSurface = 'game';
+    panelBodyContextMock.messages = [
+      {
+        content: 'Explain the selected fragment step by step.',
+        role: 'user',
+      },
+      {
+        answerResolutionMode: 'page_content',
+        content: 'This mastery track shows how close you are to the next badge.',
+        role: 'assistant',
+      },
+    ];
+
+    render(
+      <KangurAiTutorGuidedCallout
+        avatarPlacement='left'
+        calloutKey='selection-en'
+        calloutTestId='kangur-ai-tutor-selection-guided-callout'
+        detail={null}
+        entryDirection='left'
+        headerLabel='Jamie'
+        mode='selection'
+        onAction={vi.fn()}
+        placement='right'
+        prefersReducedMotion
+        reducedMotionTransitions={{
+          instant: { duration: 0 },
+          stableState: { opacity: 1, scale: 1, y: 0 },
+        }}
+        sectionGuidanceLabel={null}
+        sectionResponsePendingKind={null}
+        selectionPreview='Mastery 67%'
+        shouldRender
+        showSectionGuidanceCallout={false}
+        showSelectionGuidanceCallout
+        stepLabel={null}
+        style={{ left: 16, position: 'fixed', top: 24, width: 320 }}
+        title='I am explaining this fragment.'
+        transitionDuration={0}
+        transitionEase={[0.22, 1, 0.36, 1]}
+      />
+    );
+
+    expect(
+      screen.getByTestId('kangur-ai-tutor-selection-guided-page-content-badge')
+    ).toHaveTextContent('Saved page content');
+    expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toHaveTextContent(
+      'Knowledge base fragment'
+    );
+    expect(
+      screen.getByRole('button', { name: 'Sketch it out for me' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('The explanation uses the saved page content for this selection.')
+    ).toBeInTheDocument();
   });
 });

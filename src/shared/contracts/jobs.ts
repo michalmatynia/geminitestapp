@@ -63,9 +63,35 @@ export const queueNameSchema = z.string();
 export type QueueNameDto = z.infer<typeof queueNameSchema>;
 export type QueueName = QueueNameDto;
 
+export const queueDeliveryModeSchema = z.enum(['queue', 'inline']);
+
+export type QueueDeliveryModeDto = z.infer<typeof queueDeliveryModeSchema>;
+export type QueueDeliveryMode = QueueDeliveryModeDto;
+
+export const queueWorkerStateSchema = z.enum(['running', 'idle', 'paused', 'inline', 'offline']);
+
+export type QueueWorkerStateDto = z.infer<typeof queueWorkerStateSchema>;
+export type QueueWorkerState = QueueWorkerStateDto;
+
+export const queueHealthReasonSchema = z.enum([
+  'missing_redis',
+  'redis_unreachable',
+  'worker_inactive',
+]);
+
+export type QueueHealthReasonDto = z.infer<typeof queueHealthReasonSchema>;
+export type QueueHealthReason = QueueHealthReasonDto;
+
 export const queueHealthStatusSchema = z.object({
   name: queueNameSchema.optional(),
   isPaused: z.boolean().optional(),
+  deliveryMode: queueDeliveryModeSchema.optional(),
+  workerState: queueWorkerStateSchema.optional(),
+  statusReason: queueHealthReasonSchema.optional(),
+  redisAvailable: z.boolean().optional(),
+  workerLocal: z.boolean().optional(),
+  workerHeartbeatTime: z.number().optional(),
+  timeSinceWorkerHeartbeat: z.number().optional(),
   running: z.boolean().optional(),
   healthy: z.boolean().optional(),
   processing: z.boolean().optional(),

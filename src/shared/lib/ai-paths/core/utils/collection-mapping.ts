@@ -1,6 +1,4 @@
-import type { StringRecordDto } from '@/shared/contracts/base';
-
-export type AiPathsCollectionMap = StringRecordDto;
+import type { StringRecord } from '@/shared/contracts/base';
 
 export const AI_PATHS_RUNTIME_COLLECTION_MAP_INPUT_KEY = '__aiPathsCollectionMap';
 
@@ -9,11 +7,11 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
-export const normalizeAiPathsCollectionMap = (value: unknown): AiPathsCollectionMap => {
+export const normalizeAiPathsCollectionMap = (value: unknown): StringRecord => {
   const record = asRecord(value);
   if (!record) return {};
 
-  const normalized: AiPathsCollectionMap = {};
+  const normalized: StringRecord = {};
   for (const [rawKey, rawValue] of Object.entries(record)) {
     if (typeof rawValue !== 'string') continue;
     const key = rawKey.trim();
@@ -26,7 +24,7 @@ export const normalizeAiPathsCollectionMap = (value: unknown): AiPathsCollection
 
 export const resolveAiPathsCollectionName = (
   requestedCollection: string,
-  collectionMap?: AiPathsCollectionMap | null
+  collectionMap?: StringRecord | null
 ): { collection: string; mappedFrom?: string } => {
   const requested = typeof requestedCollection === 'string' ? requestedCollection.trim() : '';
   if (!requested) return { collection: requested };
@@ -59,7 +57,7 @@ export const resolveAiPathsCollectionName = (
 
 export const extractAiPathsCollectionMapFromRunMeta = (
   runMeta: unknown
-): AiPathsCollectionMap | undefined => {
+): StringRecord | undefined => {
   const metaRecord = asRecord(runMeta);
   if (!metaRecord) return undefined;
   const validationRecord = asRecord(metaRecord['aiPathsValidation']);
@@ -70,7 +68,7 @@ export const extractAiPathsCollectionMapFromRunMeta = (
 
 export const withAiPathsCollectionMapInput = (
   inputs: Record<string, unknown>,
-  collectionMap?: AiPathsCollectionMap | null
+  collectionMap?: StringRecord | null
 ): Record<string, unknown> => {
   if (!collectionMap || Object.keys(collectionMap).length === 0) {
     return inputs;
@@ -83,7 +81,7 @@ export const withAiPathsCollectionMapInput = (
 
 export const getAiPathsCollectionMapFromInputs = (
   inputs: Record<string, unknown> | null | undefined
-): AiPathsCollectionMap | undefined => {
+): StringRecord | undefined => {
   if (!inputs) return undefined;
   const map = normalizeAiPathsCollectionMap(inputs[AI_PATHS_RUNTIME_COLLECTION_MAP_INPUT_KEY]);
   return Object.keys(map).length > 0 ? map : undefined;

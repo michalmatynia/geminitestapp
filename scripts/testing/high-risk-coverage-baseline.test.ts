@@ -43,6 +43,9 @@ describe('high-risk coverage baseline helper', () => {
     expect(args).toContain('src/app/api/example/handler.test.ts');
     expect(args).toContain('src/features/kangur/example.test.tsx');
     expect(args).toContain('src/app/api/**');
+    expect(args).toEqual(
+      expect.arrayContaining(['--coverage.exclude', '**/*.md', '--coverage.exclude', '**/*.markdown'])
+    );
     expect(args).not.toContain('src/features/kangur/**');
     expect(args).not.toContain('src/app/api');
     expect(args).not.toContain('src/shared/lib');

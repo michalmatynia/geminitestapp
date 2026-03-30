@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Bundle Migration Sheet (`bundle`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-28T14:11:54.225Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/bundle.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/bundle.scaffold.json`
 - v3 object id: `node_obj_bundle_portable_v3`
-- v3 object hash: `128dc8b581e6fa336c213a421a0863032cb065d373fd9e2c5d99557f6b8fca75`
+- v3 object hash: `b805f5060a8c46e4455b423c5ce489e70018235926beeb4a19256222636f11b0`
 
 ## Ports
 

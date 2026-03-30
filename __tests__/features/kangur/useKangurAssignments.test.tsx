@@ -3,6 +3,7 @@
  */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { KANGUR_PROGRESS_EVENT_NAME } from '@/features/kangur/ui/services/progress';
@@ -31,6 +32,20 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 }));
 
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
+
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
 
 const createAssignmentSnapshot = (id: string, percent = 0) => ({
   id,
@@ -74,7 +89,9 @@ describe('useKangurAssignments', () => {
       .mockResolvedValueOnce(initialAssignments)
       .mockResolvedValueOnce(refreshedAssignments);
 
-    const { result } = renderHook(() => useKangurAssignments({ enabled: true }));
+    const { result } = renderHook(() => useKangurAssignments({ enabled: true }), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.assignments).toEqual(initialAssignments);
@@ -96,25 +113,37 @@ describe('useKangurAssignments', () => {
     assignmentsListMock
       .mockResolvedValueOnce(initialAssignments)
       .mockResolvedValueOnce(refreshedAssignments);
+    let now = Date.now();
+    const dateNowSpy = vi.spyOn(Date, 'now').mockImplementation(() => now);
 
-    const { result } = renderHook(() => useKangurAssignments({ enabled: true }));
+    try {
+      const { result } = renderHook(() => useKangurAssignments({ enabled: true }), {
+        wrapper: createWrapper(),
+      });
 
-    await waitFor(() => {
-      expect(result.current.assignments).toEqual(initialAssignments);
-    });
+      await waitFor(() => {
+        expect(result.current.assignments).toEqual(initialAssignments);
+      });
 
-    act(() => {
-      window.dispatchEvent(new Event('focus'));
-    });
+      now += 1000 * 60 * 2 + 1;
 
-    await waitFor(() => {
-      expect(assignmentsListMock).toHaveBeenCalledTimes(2);
-      expect(result.current.assignments).toEqual(refreshedAssignments);
-    });
+      act(() => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      await waitFor(() => {
+        expect(assignmentsListMock).toHaveBeenCalledTimes(2);
+        expect(result.current.assignments).toEqual(refreshedAssignments);
+      });
+    } finally {
+      dateNowSpy.mockRestore();
+    }
   });
 
   it('does not subscribe to revalidation events when disabled', async () => {
-    const { result } = renderHook(() => useKangurAssignments({ enabled: false }));
+    const { result } = renderHook(() => useKangurAssignments({ enabled: false }), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

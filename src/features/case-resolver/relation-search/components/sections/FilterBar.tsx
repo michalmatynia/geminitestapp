@@ -1,9 +1,9 @@
 'use client';
 
-import { X } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { Input, SelectSimple, Button } from '@/shared/ui';
+import { FilterPanel } from '@/shared/ui';
+import type { FilterField } from '@/shared/contracts/ui';
 
 import { TAG_NONE, CAT_NONE } from './document-relation-search-utils';
 import {
@@ -19,74 +19,63 @@ export function FilterBar(): React.JSX.Element {
     dateTo,
     tagIdFilter,
     categoryIdFilter,
-    filtersActiveCount,
   } = useDocumentRelationSearchStateContext();
   const { setDateFrom, setDateTo, setTagIdFilter, setCategoryIdFilter, resetFilters } =
     useDocumentRelationSearchActionsContext();
 
-  const tagOpts = useMemo(
-    () => [{ value: TAG_NONE, label: 'Any tag' }, ...caseTagOptions],
-    [caseTagOptions]
+  const filterFields = useMemo<FilterField[]>(
+    () => [
+      {
+        key: 'dateFrom',
+        label: 'From',
+        type: 'date',
+      },
+      {
+        key: 'dateTo',
+        label: 'To',
+        type: 'date',
+      },
+      {
+        key: 'tagId',
+        label: 'Tag',
+        type: 'select',
+        options: [{ value: TAG_NONE, label: 'Any tag' }, ...caseTagOptions],
+      },
+      {
+        key: 'categoryId',
+        label: 'Category',
+        type: 'select',
+        options: [{ value: CAT_NONE, label: 'Any category' }, ...caseCategoryOptions],
+      },
+    ],
+    [caseTagOptions, caseCategoryOptions]
   );
-  const catOpts = useMemo(
-    () => [{ value: CAT_NONE, label: 'Any category' }, ...caseCategoryOptions],
-    [caseCategoryOptions]
+
+  const filterValues = useMemo(
+    () => ({
+      dateFrom: dateFrom ?? '',
+      dateTo: dateTo ?? '',
+      tagId: tagIdFilter ?? TAG_NONE,
+      categoryId: categoryIdFilter ?? CAT_NONE,
+    }),
+    [dateFrom, dateTo, tagIdFilter, categoryIdFilter]
   );
 
   return (
-    <div className='flex flex-wrap items-center gap-2 border-b border-border/40 bg-card/10 px-3 py-1.5'>
-      <div className='flex items-center gap-1'>
-        <span className='text-[10px] text-gray-500'>From:</span>
-        <Input
-          type='date'
-          size='xs'
-          className='w-[130px]'
-          value={dateFrom ?? ''}
-          onChange={(e) => setDateFrom(e.target.value || null)}
-         aria-label='Input field' title='Input field'/>
-      </div>
-      <div className='flex items-center gap-1'>
-        <span className='text-[10px] text-gray-500'>To:</span>
-        <Input
-          type='date'
-          size='xs'
-          className='w-[130px]'
-          value={dateTo ?? ''}
-          onChange={(e) => setDateTo(e.target.value || null)}
-         aria-label='Input field' title='Input field'/>
-      </div>
-      <SelectSimple
-        size='xs'
-        variant='subtle'
-        placeholder='Any tag'
-        value={tagIdFilter ?? undefined}
-        onValueChange={(v) => setTagIdFilter(v === TAG_NONE ? null : v)}
-        options={tagOpts}
-        className='w-[130px]'
-        ariaLabel='Filter by tag'
-       title='Any tag'/>
-      <SelectSimple
-        size='xs'
-        variant='subtle'
-        placeholder='Any category'
-        value={categoryIdFilter ?? undefined}
-        onValueChange={(v) => setCategoryIdFilter(v === CAT_NONE ? null : v)}
-        options={catOpts}
-        className='w-[130px]'
-        ariaLabel='Filter by category'
-       title='Any category'/>
-      <div className='flex-1' />
-      {filtersActiveCount > 0 && (
-        <Button
-          variant='ghost'
-          size='xs'
-          onClick={resetFilters}
-          className='flex items-center gap-1 h-7 text-gray-400 hover:text-gray-200'
-        >
-          <X className='size-3' />
-          Reset
-        </Button>
-      )}
-    </div>
+    <FilterPanel
+      filters={filterFields}
+      values={filterValues}
+      onFilterChange={(key, val) => {
+        const value = typeof val === 'string' ? (val.length > 0 ? val : null) : null;
+        if (key === 'dateFrom') setDateFrom(value);
+        if (key === 'dateTo') setDateTo(value);
+        if (key === 'tagId') setTagIdFilter(val === TAG_NONE ? null : (val as string));
+        if (key === 'categoryId') setCategoryIdFilter(val === CAT_NONE ? null : (val as string));
+      }}
+      onReset={resetFilters}
+      showHeader={false}
+      compact
+      className='border-b border-border/40 bg-card/10'
+    />
   );
 }

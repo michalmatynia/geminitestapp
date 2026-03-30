@@ -61,15 +61,23 @@ describe('KangurBadgeTrackSummaryCard', () => {
 
     expect(screen.getByTestId('badge-track-card')).toHaveTextContent('⚡ Wyzwania');
     expect(screen.getByTestId('badge-track-card')).toHaveTextContent('2/4 odznak');
-    expect(screen.getByTestId('badge-track-card')).toHaveTextContent('Start wyzwań · 2/4 zadania');
+    expect(screen.getByTestId('badge-track-card')).toHaveTextContent('Następny kamień milowy');
+    expect(screen.getByTestId('badge-track-card')).toHaveTextContent('Start wyzwań');
+    expect(screen.getByTestId('badge-track-card')).toHaveTextContent('2/4 zadania');
     expect(screen.getByTestId('badge-track-card')).toHaveClass(
       'soft-card',
       'kangur-card-surface',
       'kangur-card-padding-md'
     );
     expect(screen.getByTestId('badge-track-card-bar')).toHaveAttribute('aria-valuenow', '50');
-    expect(screen.getByText('2/4 odznak')).toHaveClass('w-full');
-    expect(screen.getByText('Start wyzwań · 2/4 zadania')).toHaveClass('w-full', 'leading-5');
+    expect(screen.getByText('2/4 odznak')).toHaveClass('w-full', 'leading-tight');
+    expect(screen.getByText('Następny kamień milowy')).toHaveClass(
+      'w-full',
+      'text-[10px]',
+      'uppercase'
+    );
+    expect(screen.getByText('Start wyzwań')).toHaveClass('mt-1', 'w-full', 'text-sm');
+    expect(screen.getByText('2/4 zadania')).toHaveClass('mt-1', 'w-full', 'leading-5');
     expect(screen.getByText('50%')).toHaveClass(
       'shrink-0',
       'self-start',
@@ -81,11 +89,11 @@ describe('KangurBadgeTrackSummaryCard', () => {
     expect(screen.getByText('50%').parentElement).toHaveClass(
       'flex',
       'w-full',
+      'flex-wrap',
       'items-start',
       'justify-between',
-      'kangur-panel-gap',
     );
-    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('space-y-1');
+    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('space-y-3');
   });
 
   it('accepts variant classes for highlight-style layouts', () => {
@@ -114,6 +122,6 @@ describe('KangurBadgeTrackSummaryCard', () => {
     expect(screen.getByTestId('badge-track-card')).toHaveClass('rounded-[24px]', 'text-left');
     expect(screen.getByText('50%')).toHaveClass('text-[11px]');
     expect(screen.getByText('⚡ Wyzwania')).toHaveClass('tracking-[0.16em]');
-    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('space-y-1');
+    expect(screen.getByText('2/4 odznak').parentElement).toHaveClass('space-y-3');
   });
 });

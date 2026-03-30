@@ -1,11 +1,15 @@
 'use client';
 
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './AgenticCodingCodex54ModelsLesson.data';
-import AgenticReasoningRouterGame from './AgenticReasoningRouterGame';
 
 export { HUB_SECTIONS, SLIDES };
+
+const AGENTIC_REASONING_ROUTER_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'agentic_reasoning_router'
+);
 
 export default function AgenticCodingCodex54ModelsLesson(): JSX.Element {
   return (
@@ -23,14 +27,18 @@ export default function AgenticCodingCodex54ModelsLesson(): JSX.Element {
       games={[
         {
           sectionId: 'reasoning_router_game',
-          stage: {
+          shell: {
             accent: 'teal',
             icon: '🎛️',
             title: 'Reasoning Router',
             description: 'Route tasks to the right reasoning effort.',
             maxWidthClassName: 'max-w-4xl',
+            shellTestId: 'agentic-reasoning-router-game-shell',
           },
-          render: ({ onFinish }) => <AgenticReasoningRouterGame onFinish={onFinish} />,
+          launchableInstance: {
+            gameId: 'agentic_reasoning_router',
+            instanceId: AGENTIC_REASONING_ROUTER_INSTANCE_ID,
+          },
         },
       ]}
       completionSectionId='models'

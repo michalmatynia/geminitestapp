@@ -13,6 +13,7 @@ import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME, type KangurAccent } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 
+import { createAgenticCodingMiniGameComponent } from './AgenticCodingMiniGames.factory';
 import type { TrimGameConfig, TrimGameToken } from './AgenticCodingMiniGames.types';
 
 const buildTrimState = (tokens: TrimGameToken[]): Record<string, boolean> => {
@@ -23,13 +24,14 @@ const buildTrimState = (tokens: TrimGameToken[]): Record<string, boolean> => {
   return base;
 };
 
-export function AgenticTrimGame({
-  accent,
-  config,
-}: {
+type AgenticTrimGameProps = {
   accent: KangurAccent;
   config: TrimGameConfig;
-}): React.JSX.Element {
+};
+
+type AgenticTrimGameModel = ReturnType<typeof useAgenticTrimGameModel>;
+
+function useAgenticTrimGameModel(config: TrimGameConfig) {
   const isCoarsePointer = useKangurCoarsePointer();
   const [removed, setRemoved] = useState<Record<string, boolean>>(() => buildTrimState(config.tokens));
   const [checked, setChecked] = useState(false);
@@ -57,6 +59,39 @@ export function AgenticTrimGame({
     setChecked(false);
   };
 
+  return {
+    allCorrect,
+    checked,
+    isRemoved,
+    isCoarsePointer,
+    preview,
+    progress,
+    removableCount,
+    removedCount,
+    reset,
+    setChecked,
+    toggleToken,
+  };
+}
+
+function renderAgenticTrimGame(
+  { accent, config }: AgenticTrimGameProps,
+  model: AgenticTrimGameModel
+): React.JSX.Element {
+  const {
+    allCorrect,
+    checked,
+    isRemoved,
+    isCoarsePointer,
+    preview,
+    progress,
+    removableCount,
+    removedCount,
+    reset,
+    setChecked,
+    toggleToken,
+  } = model;
+
   return (
     <KangurLessonStack align='start' className='w-full'>
       <KangurLessonVisual
@@ -66,83 +101,201 @@ export function AgenticTrimGame({
       >
         <TrimGameSvg />
       </KangurLessonVisual>
-      <KangurLessonCallout accent={accent} padding='sm' className='text-left'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <KangurLessonChip accent={accent}>{config.title}</KangurLessonChip>
-          <span className='text-xs font-semibold text-slate-500'>
-            Removed {removedCount}/{removableCount}
-          </span>
-        </div>
-        <KangurLessonCaption className='mt-2 text-left'>{config.prompt}</KangurLessonCaption>
-        {isCoarsePointer ? (
-          <KangurLessonCaption className='mt-2 text-left' data-testid='agentic-trim-touch-hint'>
-            Dotykaj zbędnych słów, aby je wykreślić. Ponowne dotknięcie przywraca wyraz.
-          </KangurLessonCaption>
-        ) : null}
-      </KangurLessonCallout>
-      <div className='soft-card border border-slate-200/80 bg-white px-4 py-4'>
-        <div className='flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500'>
-          <span>Extended prompt</span>
-          <span>{progress}% trimmed</span>
-        </div>
-        <div className='mt-3 flex flex-wrap gap-2'>
-          {config.tokens.map((token) => (
-            <TrimTokenButton
-              key={token.id}
-              checked={checked}
-              removed={isRemoved(token.id)}
-              token={token}
-              onToggle={toggleToken}
-            />
-          ))}
-        </div>
-        <div className='mt-4 h-1 w-full overflow-hidden rounded-full bg-slate-200'>
-          <div
-            className='h-full rounded-full bg-gradient-to-r from-rose-400 via-amber-300 to-sky-300 transition-all'
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+      <AgenticTrimGameCallout
+        accent={accent}
+        config={config}
+        isCoarsePointer={isCoarsePointer}
+        removedCount={removedCount}
+        removableCount={removableCount}
+      />
+      <AgenticTrimTokenPanel
+        checked={checked}
+        config={config}
+        isRemoved={isRemoved}
+        progress={progress}
+        toggleToken={toggleToken}
+      />
       <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} lg:grid-cols-[1.2fr_0.8fr]`}>
-        <KangurLessonInset accent={accent} className='flex flex-col gap-2'>
-          <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>
-            Clean prompt preview
-          </p>
-          <p className='text-sm font-semibold text-slate-900'>{preview}</p>
-        </KangurLessonInset>
-        <KangurLessonInset accent={accent} className='flex flex-col gap-3'>
-          <KangurLessonCaption className='text-left text-slate-700'>
-            Click every extra word. Keep the core contract blocks intact.
-          </KangurLessonCaption>
-          <div className='flex flex-wrap items-center gap-2'>
-            <KangurButton
-              variant={checked && allCorrect ? 'success' : 'surface'}
-              onClick={() => setChecked(true)}
-              className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
-            >
-              {checked && allCorrect ? 'Perfect' : 'Check'}
-            </KangurButton>
-            <KangurButton
-              variant='surface'
-              onClick={reset}
-              className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
-            >
-              Reset
-            </KangurButton>
-          </div>
-          {checked && allCorrect ? (
-            <KangurLessonCaption className='text-left text-emerald-800'>
-              {config.success}
-            </KangurLessonCaption>
-          ) : null}
-          {checked && !allCorrect ? (
-            <KangurLessonCaption className='text-left text-rose-700'>
-              Some tokens are missing or extra. Try trimming again.
-            </KangurLessonCaption>
-          ) : null}
-        </KangurLessonInset>
+        <AgenticTrimPreviewPanel accent={accent} preview={preview} />
+        <AgenticTrimActionsPanel
+          accent={accent}
+          allCorrect={allCorrect}
+          checked={checked}
+          config={config}
+          isCoarsePointer={isCoarsePointer}
+          onCheck={() => setChecked(true)}
+          onReset={reset}
+        />
       </div>
     </KangurLessonStack>
+  );
+}
+
+export const AgenticTrimGame = createAgenticCodingMiniGameComponent({
+  displayName: 'AgenticTrimGame',
+  render: renderAgenticTrimGame,
+  useModel: useAgenticTrimGameModel,
+});
+
+function AgenticTrimGameCallout({
+  accent,
+  config,
+  isCoarsePointer,
+  removedCount,
+  removableCount,
+}: {
+  accent: KangurAccent;
+  config: TrimGameConfig;
+  isCoarsePointer: boolean;
+  removedCount: number;
+  removableCount: number;
+}): React.JSX.Element {
+  return (
+    <KangurLessonCallout accent={accent} padding='sm' className='text-left'>
+      <div className='flex flex-wrap items-center gap-2'>
+        <KangurLessonChip accent={accent}>{config.title}</KangurLessonChip>
+        <span className='text-xs font-semibold text-slate-500'>
+          Removed {removedCount}/{removableCount}
+        </span>
+      </div>
+      <KangurLessonCaption className='mt-2 text-left'>{config.prompt}</KangurLessonCaption>
+      {isCoarsePointer ? (
+        <KangurLessonCaption className='mt-2 text-left' data-testid='agentic-trim-touch-hint'>
+          Dotykaj zbędnych słów, aby je wykreślić. Ponowne dotknięcie przywraca wyraz.
+        </KangurLessonCaption>
+      ) : null}
+    </KangurLessonCallout>
+  );
+}
+
+function AgenticTrimTokenPanel({
+  checked,
+  config,
+  isRemoved,
+  progress,
+  toggleToken,
+}: {
+  checked: boolean;
+  config: TrimGameConfig;
+  isRemoved: (id: string) => boolean;
+  progress: number;
+  toggleToken: (id: string) => void;
+}): React.JSX.Element {
+  return (
+    <div className='soft-card border border-slate-200/80 bg-white px-4 py-4'>
+      <div className='flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500'>
+        <span>Extended prompt</span>
+        <span>{progress}% trimmed</span>
+      </div>
+      <div className='mt-3 flex flex-wrap gap-2'>
+        {config.tokens.map((token) => (
+          <TrimTokenButton
+            key={token.id}
+            checked={checked}
+            removed={isRemoved(token.id)}
+            token={token}
+            onToggle={toggleToken}
+          />
+        ))}
+      </div>
+      <div className='mt-4 h-1 w-full overflow-hidden rounded-full bg-slate-200'>
+        <div
+          className='h-full rounded-full bg-gradient-to-r from-rose-400 via-amber-300 to-sky-300 transition-all'
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AgenticTrimPreviewPanel({
+  accent,
+  preview,
+}: {
+  accent: KangurAccent;
+  preview: string;
+}): React.JSX.Element {
+  return (
+    <KangurLessonInset accent={accent} className='flex flex-col gap-2'>
+      <p className='text-xs font-semibold uppercase tracking-wide text-slate-500'>
+        Clean prompt preview
+      </p>
+      <p className='text-sm font-semibold text-slate-900'>{preview}</p>
+    </KangurLessonInset>
+  );
+}
+
+function resolveAgenticTrimFeedback({
+  checked,
+  allCorrect,
+  successMessage,
+}: {
+  checked: boolean;
+  allCorrect: boolean;
+  successMessage: string;
+}): { className: string; text: string } | null {
+  if (checked && allCorrect) {
+    return { className: 'text-left text-emerald-800', text: successMessage };
+  }
+  if (checked) {
+    return {
+      className: 'text-left text-rose-700',
+      text: 'Some tokens are missing or extra. Try trimming again.',
+    };
+  }
+  return null;
+}
+
+function AgenticTrimActionsPanel({
+  accent,
+  allCorrect,
+  checked,
+  config,
+  isCoarsePointer,
+  onCheck,
+  onReset,
+}: {
+  accent: KangurAccent;
+  allCorrect: boolean;
+  checked: boolean;
+  config: TrimGameConfig;
+  isCoarsePointer: boolean;
+  onCheck: () => void;
+  onReset: () => void;
+}): React.JSX.Element {
+  const feedback = resolveAgenticTrimFeedback({
+    checked,
+    allCorrect,
+    successMessage: config.success,
+  });
+
+  return (
+    <KangurLessonInset accent={accent} className='flex flex-col gap-3'>
+      <KangurLessonCaption className='text-left text-slate-700'>
+        Click every extra word. Keep the core contract blocks intact.
+      </KangurLessonCaption>
+      <div className='flex flex-wrap items-center gap-2'>
+        <KangurButton
+          variant={checked && allCorrect ? 'success' : 'surface'}
+          onClick={onCheck}
+          className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
+        >
+          {checked && allCorrect ? 'Perfect' : 'Check'}
+        </KangurButton>
+        <KangurButton
+          variant='surface'
+          onClick={onReset}
+          className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
+        >
+          Reset
+        </KangurButton>
+      </div>
+      {feedback ? (
+        <KangurLessonCaption className={feedback.className}>
+          {feedback.text}
+        </KangurLessonCaption>
+      ) : null}
+    </KangurLessonInset>
   );
 }
 

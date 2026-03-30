@@ -11,6 +11,19 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
+const { downloadKangurDataUrl } = vi.hoisted(() => ({
+  downloadKangurDataUrl: vi.fn(),
+}));
+vi.mock('@/features/kangur/ui/components/drawing-engine/canvas-export', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/features/kangur/ui/components/drawing-engine/canvas-export')
+  >('@/features/kangur/ui/components/drawing-engine/canvas-export');
+
+  return {
+    ...actual,
+    downloadKangurDataUrl,
+  };
+});
 
 import GeometrySymmetryGame from '@/features/kangur/ui/components/GeometrySymmetryGame';
 import enMessages from '@/i18n/messages/en.json';
@@ -42,8 +55,13 @@ describe('GeometrySymmetryGame touch interactions', () => {
   const originalGetBoundingClientRect = HTMLCanvasElement.prototype.getBoundingClientRect;
 
   beforeEach(() => {
+    window.sessionStorage.clear();
+    downloadKangurDataUrl.mockReset();
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
       canvasContextStub as unknown as CanvasRenderingContext2D
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+      'data:image/png;base64,SYMMETRY'
     );
     HTMLCanvasElement.prototype.getBoundingClientRect = vi.fn(() => ({
       width: 320,
@@ -68,6 +86,7 @@ describe('GeometrySymmetryGame touch interactions', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    window.sessionStorage.clear();
     HTMLCanvasElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   });
 
@@ -93,6 +112,44 @@ describe('GeometrySymmetryGame touch interactions', () => {
 
     expect(canvas).toHaveAttribute('data-drawing-active', 'true');
     expect(board).toHaveClass('ring-2');
+  });
+
+  it('exports the current symmetry drawing through the shared snapshot action', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometrySymmetryGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const exportButton = screen.getByRole('button', { name: /export png/i });
+    const canvas = screen.getByTestId('geometry-symmetry-canvas');
+
+    expect(exportButton).toBeDisabled();
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 12,
+      clientX: 96,
+      clientY: 80,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 12,
+      clientX: 148,
+      clientY: 126,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 12,
+      clientX: 148,
+      clientY: 126,
+    });
+
+    expect(exportButton).not.toBeDisabled();
+
+    fireEvent.click(exportButton);
+
+    expect(downloadKangurDataUrl).toHaveBeenCalledWith(
+      'data:image/png;base64,SYMMETRY',
+      'geometry-symmetry-axis-butterfly.png'
+    );
   });
 
   it('allows drawing immediately after the too-short warning', () => {
@@ -176,5 +233,43 @@ describe('GeometrySymmetryGame touch interactions', () => {
     fireEvent.click(clearButton);
 
     expect(screen.queryByTestId('geometry-symmetry-feedback')).not.toBeInTheDocument();
+  });
+
+  it('restores the saved drawing draft when the symmetry board remounts on the same round', () => {
+    const { unmount } = render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometrySymmetryGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const canvas = screen.getByTestId('geometry-symmetry-canvas');
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 10,
+      clientX: 96,
+      clientY: 80,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 10,
+      clientX: 148,
+      clientY: 126,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 10,
+      clientX: 148,
+      clientY: 126,
+    });
+
+    expect(screen.getByRole('button', { name: 'Clear' })).not.toBeDisabled();
+
+    unmount();
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometrySymmetryGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByRole('button', { name: 'Clear' })).not.toBeDisabled();
   });
 });

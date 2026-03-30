@@ -42,8 +42,15 @@ vi.mock('@/features/kangur/ui/learner-activity/hooks', async (importOriginal) =>
   };
 });
 
-vi.mock('@/features/kangur/ui/components/EnglishAdjectivesSceneGame', () => ({
+vi.mock('@/features/kangur/ui/components/KangurLaunchableGameInstanceRuntime', () => ({
   __esModule: true,
+  KangurLaunchableGameInstanceRuntime: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
+    <div data-testid='mock-english-adjectives-scene-game'>
+      <button type='button' onClick={onFinish}>
+        Finish adjectives scene game
+      </button>
+    </div>
+  ),
   default: ({ onFinish }: { onFinish: () => void }): React.JSX.Element => (
     <div data-testid='mock-english-adjectives-scene-game'>
       <button type='button' onClick={onFinish}>
@@ -64,6 +71,23 @@ const renderWithIntl = (element: ReactElement) =>
   );
 
 describe('EnglishAdjectivesLesson', () => {
+  it('keeps adjective phrase examples inside the visual support area instead of separate inset cards', async () => {
+    renderWithIntl(
+      <KangurLessonNavigationProvider onBack={vi.fn()}>
+        <EnglishAdjectivesLesson />
+      </KangurLessonNavigationProvider>
+    );
+
+    fireEvent.click(screen.getByTestId('lesson-hub-section-order'));
+
+    await waitFor(() => {
+      expect(screen.getByText('red train')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('red train').closest('.kangur-lesson-visual-supporting')).toBeTruthy();
+    expect(screen.queryByText('red train')?.closest('.kangur-lesson-inset')).toBeNull();
+  });
+
   it('opens the adjective studio game section and returns to the lesson hub', async () => {
     renderWithIntl(
       <KangurLessonNavigationProvider onBack={vi.fn()}>

@@ -6,6 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -44,7 +45,12 @@ describe('GeometryBasicsLesson i18n', () => {
     );
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
-    const games = (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'punkt')).toMatchObject({
       title: 'Punkt und Strecke',
@@ -54,8 +60,12 @@ describe('GeometryBasicsLesson i18n', () => {
       title: 'Winkel',
       description: 'Spitz, recht und stumpf',
     });
-    expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
       title: 'Geo-Mission',
+    });
+    expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({
+      gameId: 'geometry_shape_workshop',
+      instanceId: getKangurBuiltInGameInstanceId('geometry_shape_workshop'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
@@ -67,5 +77,26 @@ describe('GeometryBasicsLesson i18n', () => {
     expect(
       screen.getByText('Eine Strecke hat einen Anfang und ein Ende — zwei Punkte.')
     ).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.geometryBasics.game.gameTitle = 'Benutzerdefinierte Geo-Mission';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <GeometryBasicsLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
+      title: 'Benutzerdefinierte Geo-Mission',
+    });
   });
 });

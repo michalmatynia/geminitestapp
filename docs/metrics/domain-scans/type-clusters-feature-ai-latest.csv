@@ -1,1 +1,2 @@
-clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signatureKind
+clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signaturePreview,declarations
+exact-0003,exact-shape,11,2,feature:ai|shared:contracts,,726ca3d63c38,LabeledOptionDto<string>,src/features/ai/ai-paths/config/query-presets.ts:5:DatabaseTemplateSnippet|src/shared/contracts/base.ts:70:LabelValueOptionDto

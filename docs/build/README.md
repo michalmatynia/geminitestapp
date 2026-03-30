@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -12,6 +12,10 @@ canonical: true
 This directory holds cross-feature documentation for build orchestration and
 shared toolchain surfaces.
 
+For repo-wide entrypoints, start with [`README.md`](../../README.md),
+[`docs/README.md`](../README.md), and [`GEMINI.md`](../../GEMINI.md). This hub
+is specifically for shared build, CI, and package-manager workflow guidance.
+
 ## Placement Rule
 
 - Use this directory for repo-wide build and package-manager workflow docs.
@@ -21,6 +25,7 @@ shared toolchain surfaces.
 
 ## Current Docs
 
+- [`vercel-deployment.md`](./vercel-deployment.md) — **Vercel deploy config (DO NOT MODIFY without approval)**
 - [`agentic-ci.md`](./agentic-ci.md)
 - [`agentic-engineering.md`](./agentic-engineering.md)
 - [`bazel.md`](./bazel.md)
@@ -74,6 +79,10 @@ shared toolchain surfaces.
   split-domain coverage sweep bounded.
 - Shared feature test-distribution quality scan:
   `npm run check:test-distribution`
+- Shared test suite inventory snapshot:
+  `npm run metrics:test-suite-inventory`
+- Shared major-run testing ledger surface:
+  `npm run metrics:test-run-ledger`, `npm run testing:record -- --label="..." --status=ok --suite=...`
 - Shared testing quality baseline snapshot check:
   `npm run check:test-quality`
 - Shared Bun config contract check:

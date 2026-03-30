@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-05'
+last_reviewed: '2026-03-28'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Playwright Migration Sheet (`playwright`)
 
-Generated at: 2026-03-05T00:00:00.000Z
+Generated at: 2026-03-28T14:11:54.225Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-05T00:00:00.000Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/playwright.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/playwright.scaffold.json`
 - v3 object id: `node_obj_playwright_portable_v3`
-- v3 object hash: `3c448f15426f46d9fc942dc37863fc357de4603bd2ffdae718ef54154952e71e`
+- v3 object hash: `fc05d6bd37c37ade77dc1f8d3fb54ea37a7645e4563c5577d0de74b0372f9c9c`
 
 ## Ports
 

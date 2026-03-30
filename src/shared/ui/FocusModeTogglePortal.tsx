@@ -19,22 +19,39 @@ type FocusModeTogglePortalProps = {
 const DEFAULT_LABEL_ON = 'Show side panels';
 const DEFAULT_LABEL_OFF = 'Show canvas only';
 
-export function FocusModeTogglePortal({
+type FocusModeTogglePortalModel = {
+  label: string;
+  mounted: boolean;
+};
+
+function useFocusModeTogglePortalModel({
   isFocusMode,
-  onToggleFocusMode,
   labelOn = DEFAULT_LABEL_ON,
   labelOff = DEFAULT_LABEL_OFF,
-  className,
-}: FocusModeTogglePortalProps): React.JSX.Element | null {
+}: FocusModeTogglePortalProps): FocusModeTogglePortalModel {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
-
   const label = isFocusMode ? labelOn : labelOff;
+
+  return {
+    label,
+    mounted,
+  };
+}
+
+function renderFocusModeTogglePortal(
+  {
+    className,
+    isFocusMode,
+    onToggleFocusMode,
+  }: FocusModeTogglePortalProps,
+  { label, mounted }: FocusModeTogglePortalModel
+): React.JSX.Element | null {
+  if (!mounted) return null;
 
   return createPortal(
     <Button
@@ -54,4 +71,11 @@ export function FocusModeTogglePortal({
     </Button>,
     document.body
   );
+}
+
+export function FocusModeTogglePortal(
+  props: FocusModeTogglePortalProps
+): React.JSX.Element | null {
+  const model = useFocusModeTogglePortalModel(props);
+  return renderFocusModeTogglePortal(props, model);
 }

@@ -1,625 +1,614 @@
-export function ClassificationSortByColorAnimation(): React.JSX.Element {
+import { useId } from 'react';
+
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
+
+type LogicalAnimationFrameProps = {
+  ariaLabel: string;
+  viewBox?: string;
+  children: React.ReactNode;
+  styles: string;
+  testIdPrefix: string;
+};
+
+function LogicalAnimationFrame({
+  ariaLabel,
+  viewBox = '0 0 320 160',
+  children,
+  styles,
+  testIdPrefix,
+}: LogicalAnimationFrameProps): React.JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `${testIdPrefix}-${baseId}-clip`;
+  const panelGradientId = `${testIdPrefix}-${baseId}-panel`;
+  const frameGradientId = `${testIdPrefix}-${baseId}-frame-gradient`;
+  const atmosphereOvalId = `${testIdPrefix}-${baseId}-soft-oval`;
+
   return (
     <svg
-      aria-label='Animacja klasyfikacji według koloru: czerwone elementy idą do lewej grupy, niebieskie do prawej.'
+      aria-label={ariaLabel}
       className='h-auto w-full'
+      data-testid={`${testIdPrefix}-animation`}
       role='img'
-      viewBox='0 0 420 140'
+      viewBox={viewBox}
     >
-      <style>{`
-        .bin { fill: none; stroke: #cbd5f5; stroke-width: 2; stroke-dasharray: 6 6; }
-        .label { font: 600 12px/1.1 system-ui, sans-serif; fill: #0f766e; }
-        .dot-red { fill: #fb7185; }
-        .dot-blue { fill: #60a5fa; }
-        .group-left, .group-right {
-          transform-box: fill-box;
-          transform-origin: center;
-        }
-        .group-left { animation: classifyColorLeft 6s ease-in-out infinite; }
-        .group-right { animation: classifyColorRight 6s ease-in-out infinite; }
-        @keyframes classifyColorLeft {
-          0%, 20% { transform: translateX(120px); opacity: 0.35; }
-          50%, 80% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(120px); opacity: 0.35; }
-        }
-        @keyframes classifyColorRight {
-          0%, 20% { transform: translateX(-120px); opacity: 0.35; }
-          50%, 80% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(-120px); opacity: 0.35; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .group-left, .group-right { animation: none; }
-        }
-      `}</style>
-      <rect className='bin' height='80' rx='16' width='140' x='40' y='30' />
-      <rect className='bin' height='80' rx='16' width='140' x='240' y='30' />
-      <text className='label' x='70' y='26'>Czerwone</text>
-      <text className='label' x='270' y='26'>Niebieskie</text>
-      <g className='group-left'>
-        <circle className='dot-red' cx='80' cy='60' r='10' />
-        <circle className='dot-red' cx='115' cy='60' r='10' />
-        <circle className='dot-red' cx='100' cy='90' r='10' />
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='8' y='8' width='304' height='144' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='20'
+          x2='300'
+          y1='12'
+          y2='148'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='55%' stopColor='#eff6ff' />
+          <stop offset='100%' stopColor='#ecfeff' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='16'
+          x2='304'
+          y1='16'
+          y2='16'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(45,212,191,0.78)' />
+          <stop offset='50%' stopColor='rgba(56,189,248,0.78)' />
+          <stop offset='100%' stopColor='rgba(167,139,250,0.82)' />
+        </linearGradient>
+        {renderSoftAtmosphereGradients(atmosphereOvalId, [
+          { key: 'left', cx: 76, cy: 40, rx: 64, ry: 24, color: '#2dd4bf', opacity: 0.08, glowBias: '42%' },
+          { key: 'bottom', cx: 244, cy: 126, rx: 88, ry: 36, color: '#38bdf8', opacity: 0.07, glowBias: '58%' },
+          { key: 'top', cx: 246, cy: 34, rx: 58, ry: 20, color: '#a78bfa', opacity: 0.075, glowBias: '40%' },
+        ])}
+      </defs>
+      <style>{styles}</style>
+      <g clipPath={`url(#${clipId})`} data-testid={`${testIdPrefix}-atmosphere`}>
+        <rect
+          x='8'
+          y='8'
+          width='304'
+          height='144'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(148,163,184,0.16)'
+          strokeWidth='2'
+        />
+        {renderSoftAtmosphereOvals(atmosphereOvalId, [
+          { key: 'left', cx: 76, cy: 40, rx: 64, ry: 24, color: '#2dd4bf', opacity: 0.08, glowBias: '42%' },
+          { key: 'bottom', cx: 244, cy: 126, rx: 88, ry: 36, color: '#38bdf8', opacity: 0.07, glowBias: '58%' },
+          { key: 'top', cx: 246, cy: 34, rx: 58, ry: 20, color: '#a78bfa', opacity: 0.075, glowBias: '40%' },
+        ])}
+        {children}
       </g>
-      <g className='group-right'>
-        <circle className='dot-blue' cx='280' cy='60' r='10' />
-        <circle className='dot-blue' cx='315' cy='60' r='10' />
-        <circle className='dot-blue' cx='300' cy='90' r='10' />
-      </g>
+      <rect
+        x='16'
+        y='16'
+        width='288'
+        height='128'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid={`${testIdPrefix}-frame`}
+      />
     </svg>
   );
 }
 
-export function ClassificationSortBySizeAnimation(): React.JSX.Element {
+export function ClassificationSortByColorAnimation(): React.JSX.Element {
   return (
-    <svg
-      aria-label='Animacja klasyfikacji według rozmiaru: duże elementy idą na górę, małe na dół.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 140'
-    >
-      <style>{`
-        .bin { fill: none; stroke: #bae6fd; stroke-width: 2; stroke-dasharray: 6 6; }
-        .label { font: 600 12px/1.1 system-ui, sans-serif; fill: #0284c7; }
-        .dot-big { fill: #facc15; }
-        .dot-small { fill: #38bdf8; }
-        .group-top, .group-bottom {
-          transform-box: fill-box;
-          transform-origin: center;
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: przedmioty są grupowane według koloru.'
+      testIdPrefix='logical-classification-color'
+      styles={`
+        .bin { fill: #f8fafc; stroke-width: 2; stroke-dasharray: 6 6; }
+        .left-bin { stroke: #ec4899; }
+        .right-bin { stroke: #38bdf8; }
+        .pink { fill: #f472b6; }
+        .blue { fill: #38bdf8; }
+        .drop-left { animation: colorLeft 4.8s ease-in-out infinite; }
+        .drop-right { animation: colorRight 4.8s ease-in-out infinite; }
+        .delay-a { animation-delay: 0.4s; }
+        .delay-b { animation-delay: 0.8s; }
+        .delay-c { animation-delay: 1.2s; }
+        @keyframes colorLeft {
+          0%, 20% { transform: translate(80px, 0); opacity: 0.35; }
+          55%, 80% { transform: translate(0, 30px); opacity: 1; }
+          100% { transform: translate(80px, 0); opacity: 0.35; }
         }
-        .group-top { animation: classifySizeTop 6s ease-in-out infinite; }
-        .group-bottom { animation: classifySizeBottom 6s ease-in-out infinite; }
-        @keyframes classifySizeTop {
-          0%, 20% { transform: translateY(40px); opacity: 0.35; }
-          50%, 80% { transform: translateY(0); opacity: 1; }
-          100% { transform: translateY(40px); opacity: 0.35; }
-        }
-        @keyframes classifySizeBottom {
-          0%, 20% { transform: translateY(-40px); opacity: 0.35; }
-          50%, 80% { transform: translateY(0); opacity: 1; }
-          100% { transform: translateY(-40px); opacity: 0.35; }
+        @keyframes colorRight {
+          0%, 20% { transform: translate(-80px, 0); opacity: 0.35; }
+          55%, 80% { transform: translate(0, 30px); opacity: 1; }
+          100% { transform: translate(-80px, 0); opacity: 0.35; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .group-top, .group-bottom { animation: none; }
+          .drop-left, .drop-right { animation: none; opacity: 1; transform: translateY(30px); }
         }
-      `}</style>
-      <rect className='bin' height='46' rx='14' width='300' x='60' y='20' />
-      <rect className='bin' height='46' rx='14' width='300' x='60' y='78' />
-      <text className='label' x='70' y='16'>Duże</text>
-      <text className='label' x='70' y='74'>Małe</text>
-      <g className='group-top'>
-        <circle className='dot-big' cx='140' cy='42' r='12' />
-        <circle className='dot-big' cx='200' cy='42' r='12' />
-        <circle className='dot-big' cx='260' cy='42' r='12' />
-      </g>
-      <g className='group-bottom'>
-        <circle className='dot-small' cx='150' cy='100' r='7' />
-        <circle className='dot-small' cx='200' cy='100' r='7' />
-        <circle className='dot-small' cx='250' cy='100' r='7' />
-      </g>
-    </svg>
+      `}
+    >
+      <rect className='bin left-bin bin' x='24' y='64' width='112' height='72' rx='16' />
+      <rect className='bin right-bin bin' x='184' y='64' width='112' height='72' rx='16' />
+      <circle className='pink drop-left' cx='92' cy='38' r='12' />
+      <circle className='pink drop-left delay-a' cx='124' cy='34' r='10' />
+      <rect className='blue drop-right' x='194' y='28' width='24' height='24' rx='7' />
+      <rect className='blue drop-right delay-b' x='234' y='30' width='20' height='20' rx='6' />
+      <circle className='pink drop-left delay-c' cx='108' cy='38' r='8' />
+      <rect className='blue drop-right delay-c' x='214' y='34' width='16' height='16' rx='5' />
+    </LogicalAnimationFrame>
   );
 }
 
 export function ClassificationSortByShapeAnimation(): React.JSX.Element {
   return (
-    <svg
-      aria-label='Animacja klasyfikacji według kształtu: koła trafiają do lewej grupy, kwadraty do prawej.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 140'
-    >
-      <style>{`
-        .bin { fill: none; stroke: #c4b5fd; stroke-width: 2; stroke-dasharray: 6 6; }
-        .label { font: 600 12px/1.1 system-ui, sans-serif; fill: #6d28d9; }
-        .shape-circle { fill: #a78bfa; }
-        .shape-square { fill: #60a5fa; }
-        .group-left, .group-right {
-          transform-box: fill-box;
-          transform-origin: center;
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: figury trafiają do grup według kształtu.'
+      testIdPrefix='logical-classification-shape'
+      styles={`
+        .bin { fill: #f8fafc; stroke: #a78bfa; stroke-width: 2; stroke-dasharray: 6 6; }
+        .circle-shape { fill: #a855f7; }
+        .square-shape { fill: #0ea5e9; }
+        .circle-flow { animation: shapeLeft 4.6s ease-in-out infinite; }
+        .square-flow { animation: shapeRight 4.6s ease-in-out infinite; }
+        .late { animation-delay: 0.8s; }
+        @keyframes shapeLeft {
+          0%, 25% { transform: translate(76px, 0); opacity: 0.35; }
+          55%, 80% { transform: translate(0, 28px); opacity: 1; }
+          100% { transform: translate(76px, 0); opacity: 0.35; }
         }
-        .group-left { animation: classifyShapeLeft 6s ease-in-out infinite; }
-        .group-right { animation: classifyShapeRight 6s ease-in-out infinite; }
-        @keyframes classifyShapeLeft {
-          0%, 20% { transform: translateX(110px); opacity: 0.3; }
-          50%, 80% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(110px); opacity: 0.3; }
-        }
-        @keyframes classifyShapeRight {
-          0%, 20% { transform: translateX(-110px); opacity: 0.3; }
-          50%, 80% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(-110px); opacity: 0.3; }
+        @keyframes shapeRight {
+          0%, 25% { transform: translate(-76px, 0); opacity: 0.35; }
+          55%, 80% { transform: translate(0, 28px); opacity: 1; }
+          100% { transform: translate(-76px, 0); opacity: 0.35; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .group-left, .group-right { animation: none; opacity: 1; }
+          .circle-flow, .square-flow { animation: none; opacity: 1; transform: translateY(28px); }
         }
-      `}</style>
-      <rect className='bin' height='80' rx='16' width='150' x='35' y='30' />
-      <rect className='bin' height='80' rx='16' width='150' x='235' y='30' />
-      <text className='label' x='72' y='26'>Koła</text>
-      <text className='label' x='270' y='26'>Kwadraty</text>
-      <g className='group-left'>
-        <circle className='shape-circle' cx='95' cy='64' r='12' />
-        <circle className='shape-circle' cx='130' cy='64' r='10' />
-        <circle className='shape-circle' cx='112' cy='92' r='11' />
-      </g>
-      <g className='group-right'>
-        <rect className='shape-square' height='20' rx='4' width='20' x='270' y='52' />
-        <rect className='shape-square' height='18' rx='4' width='18' x='302' y='54' />
-        <rect className='shape-square' height='22' rx='4' width='22' x='286' y='82' />
-      </g>
-    </svg>
+      `}
+    >
+      <rect className='bin' x='24' y='64' width='112' height='72' rx='16' />
+      <rect className='bin' x='184' y='64' width='112' height='72' rx='16' />
+      <circle className='circle-shape circle-flow' cx='94' cy='36' r='12' />
+      <circle className='circle-shape circle-flow late' cx='122' cy='34' r='9' />
+      <rect className='square-shape square-flow' x='196' y='26' width='24' height='24' rx='6' />
+      <rect
+        className='square-shape square-flow late'
+        x='232'
+        y='28'
+        width='18'
+        height='18'
+        rx='5'
+      />
+    </LogicalAnimationFrame>
+  );
+}
+
+export function ClassificationSortBySizeAnimation(): React.JSX.Element {
+  return (
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: elementy są porządkowane według rozmiaru.'
+      testIdPrefix='logical-classification-size'
+      styles={`
+        .guide { stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 4 6; }
+        .small { fill: #22c55e; animation: growUp 4.2s ease-in-out infinite; }
+        .medium { fill: #14b8a6; animation: growUp 4.2s ease-in-out infinite 0.6s; }
+        .large { fill: #0ea5e9; animation: growUp 4.2s ease-in-out infinite 1.2s; }
+        @keyframes growUp {
+          0%, 25% { transform: translateY(10px); opacity: 0.4; }
+          55%, 80% { transform: translateY(0); opacity: 1; }
+          100% { transform: translateY(10px); opacity: 0.4; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .small, .medium, .large { animation: none; opacity: 1; transform: none; }
+        }
+      `}
+    >
+      <line className='guide' x1='40' x2='280' y1='126' y2='126' />
+      <rect className='small' x='56' y='92' width='44' height='34' rx='8' />
+      <rect className='medium' x='132' y='70' width='52' height='56' rx='10' />
+      <rect className='large' x='218' y='42' width='60' height='84' rx='12' />
+    </LogicalAnimationFrame>
   );
 }
 
 export function ClassificationCategoryBinsAnimation(): React.JSX.Element {
   return (
-    <svg
-      aria-label='Animacja kategoryzacji: elementy trafiają do koszyków owoców, warzyw i zabawek.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 150'
-    >
-      <style>{`
-        .bin { fill: none; stroke: #fcd34d; stroke-width: 2; stroke-dasharray: 6 6; }
-        .label { font: 600 12px/1.1 system-ui, sans-serif; fill: #b45309; }
-        .drop {
-          transform-box: fill-box;
-          transform-origin: center;
-          animation: categoryDrop 6s ease-in-out infinite;
-          opacity: 0.25;
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: przedmioty trafiają do odpowiednich kategorii.'
+      testIdPrefix='logical-classification-category'
+      styles={`
+        .bin { fill: #fffbeb; stroke: #f59e0b; stroke-width: 2; stroke-dasharray: 6 6; }
+        .token { opacity: 0.35; animation: sink 5s ease-in-out infinite; }
+        .fruit { fill: #f97316; }
+        .veg { fill: #22c55e; animation-delay: 0.6s; }
+        .toy { fill: #8b5cf6; animation-delay: 1.2s; }
+        @keyframes sink {
+          0%, 20% { transform: translateY(-12px); opacity: 0.35; }
+          55%, 80% { transform: translateY(16px); opacity: 1; }
+          100% { transform: translateY(-12px); opacity: 0.35; }
         }
-        .drop-1 { animation-delay: 0s; }
-        .drop-2 { animation-delay: 0.6s; }
-        .drop-3 { animation-delay: 1.2s; }
-        @keyframes categoryDrop {
-          0%, 25% { opacity: 0.2; transform: translateY(-18px); }
-          45%, 80% { opacity: 1; transform: translateY(0); }
-          100% { opacity: 0.2; transform: translateY(-18px); }
-        }
+        .label { fill: #92400e; font: 700 11px/1 system-ui, sans-serif; }
         @media (prefers-reduced-motion: reduce) {
-          .drop { animation: none; opacity: 1; transform: none; }
+          .token { animation: none; opacity: 1; transform: translateY(16px); }
         }
-      `}</style>
-      <rect className='bin' height='76' rx='16' width='110' x='28' y='48' />
-      <rect className='bin' height='76' rx='16' width='110' x='155' y='48' />
-      <rect className='bin' height='76' rx='16' width='110' x='282' y='48' />
-      <text className='label' x='46' y='40'>Owoce</text>
-      <text className='label' x='173' y='40'>Warzywa</text>
-      <text className='label' x='298' y='40'>Zabawki</text>
-      <g className='drop drop-1'>
-        <circle cx='72' cy='88' r='10' fill='#fb7185' />
-        <circle cx='100' cy='88' r='10' fill='#f97316' />
-      </g>
-      <g className='drop drop-2'>
-        <rect x='182' y='78' width='18' height='20' rx='5' fill='#34d399' />
-        <rect x='212' y='78' width='18' height='20' rx='5' fill='#22c55e' />
-      </g>
-      <g className='drop drop-3'>
-        <polygon points='322,78 334,88 322,98 310,88' fill='#60a5fa' />
-        <polygon points='352,78 364,88 352,98 340,88' fill='#a78bfa' />
-      </g>
-    </svg>
-  );
-}
-
-export function ClassificationParityAnimation(): React.JSX.Element {
-  return (
-    <svg
-      aria-label='Animacja klasyfikacji parzyste i nieparzyste: liczby wchodzą do odpowiednich kolumn.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 130'
+      `}
     >
-      <style>{`
-        .bin { fill: none; stroke: #93c5fd; stroke-width: 2; stroke-dasharray: 6 6; }
-        .label { font: 600 12px/1.1 system-ui, sans-serif; fill: #1d4ed8; }
-        .bubble { fill: #dbeafe; stroke: #60a5fa; stroke-width: 2; }
-        .bubble-odd { fill: #fee2e2; stroke: #fb7185; }
-        .num { font: 700 12px/1.1 system-ui, sans-serif; fill: #1e3a8a; }
-        .num-odd { fill: #9f1239; }
-        .even-group, .odd-group {
-          transform-box: fill-box;
-          transform-origin: center;
-        }
-        .even-group { animation: parityEven 6s ease-in-out infinite; }
-        .odd-group { animation: parityOdd 6s ease-in-out infinite; }
-        @keyframes parityEven {
-          0%, 20% { transform: translateX(80px); opacity: 0.3; }
-          50%, 80% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(80px); opacity: 0.3; }
-        }
-        @keyframes parityOdd {
-          0%, 20% { transform: translateX(-80px); opacity: 0.3; }
-          50%, 80% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(-80px); opacity: 0.3; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .even-group, .odd-group { animation: none; opacity: 1; }
-        }
-      `}</style>
-      <rect className='bin' height='70' rx='16' width='150' x='40' y='36' />
-      <rect className='bin' height='70' rx='16' width='150' x='230' y='36' />
-      <text className='label' x='70' y='30'>Parzyste</text>
-      <text className='label' x='255' y='30'>Nieparzyste</text>
-      <g className='even-group'>
-        <circle className='bubble' cx='90' cy='66' r='12' />
-        <circle className='bubble' cx='132' cy='66' r='12' />
-        <circle className='bubble' cx='111' cy='94' r='12' />
-        <text className='num' x='86' y='70'>2</text>
-        <text className='num' x='128' y='70'>4</text>
-        <text className='num' x='107' y='98'>6</text>
-      </g>
-      <g className='odd-group'>
-        <circle className='bubble bubble-odd' cx='280' cy='66' r='12' />
-        <circle className='bubble bubble-odd' cx='322' cy='66' r='12' />
-        <circle className='bubble bubble-odd' cx='301' cy='94' r='12' />
-        <text className='num num-odd' x='276' y='70'>1</text>
-        <text className='num num-odd' x='318' y='70'>3</text>
-        <text className='num num-odd' x='297' y='98'>5</text>
-      </g>
-    </svg>
+      <rect className='bin' x='18' y='62' width='86' height='74' rx='16' />
+      <rect className='bin' x='117' y='62' width='86' height='74' rx='16' />
+      <rect className='bin' x='216' y='62' width='86' height='74' rx='16' />
+      <text className='label' x='61' y='86' textAnchor='middle'>OWOCE</text>
+      <text className='label' x='160' y='86' textAnchor='middle'>WARZYWA</text>
+      <text className='label' x='259' y='86' textAnchor='middle'>ZABAWKI</text>
+      <circle className='token fruit' cx='61' cy='38' r='11' />
+      <rect className='token veg' x='148' y='28' width='24' height='18' rx='8' />
+      <polygon className='token toy' points='259,24 271,46 247,46' />
+    </LogicalAnimationFrame>
   );
 }
 
 export function ClassificationTwoCriteriaGridAnimation(): React.JSX.Element {
   return (
-    <svg
-      aria-label='Animacja klasyfikacji według dwóch cech: elementy trafiają do czterech pól siatki.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 150'
-    >
-      <style>{`
-        .grid { stroke: #a7f3d0; stroke-width: 2; }
-        .cell-dot { transform-box: fill-box; transform-origin: center; }
-        .cell-a { fill: #34d399; animation: classifyGridPop 6s ease-in-out infinite; animation-delay: 0s; }
-        .cell-b { fill: #22d3ee; animation: classifyGridPop 6s ease-in-out infinite; animation-delay: 0.4s; }
-        .cell-c { fill: #f59e0b; animation: classifyGridPop 6s ease-in-out infinite; animation-delay: 0.8s; }
-        .cell-d { fill: #f97316; animation: classifyGridPop 6s ease-in-out infinite; animation-delay: 1.2s; }
-        @keyframes classifyGridPop {
-          0%, 20% { opacity: 0.2; transform: scale(0.9); }
-          45%, 80% { opacity: 1; transform: scale(1); }
-          100% { opacity: 0.2; transform: scale(0.9); }
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: przedmioty układają się w siatce dwóch kryteriów.'
+      testIdPrefix='logical-classification-grid'
+      styles={`
+        .cell { fill: #f8fafc; stroke: #2dd4bf; stroke-width: 2; }
+        .token {
+          fill: #0f766e;
+          opacity: 0.35;
+          animation: settle 4.8s ease-in-out infinite;
+        }
+        .d1 { animation-delay: 0.3s; }
+        .d2 { animation-delay: 0.6s; }
+        .d3 { animation-delay: 0.9s; }
+        .axis { fill: #0f766e; font: 700 11px/1 system-ui, sans-serif; }
+        @keyframes settle {
+          0%, 20% { transform: translateY(-10px); opacity: 0.35; }
+          55%, 80% { transform: translateY(0); opacity: 1; }
+          100% { transform: translateY(-10px); opacity: 0.35; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .cell-a, .cell-b, .cell-c, .cell-d { animation: none; opacity: 1; transform: none; }
+          .token { animation: none; opacity: 1; transform: none; }
         }
-      `}</style>
-      <rect className='grid' fill='none' height='104' rx='16' width='260' x='80' y='24' />
-      <line className='grid' x1='210' x2='210' y1='24' y2='128' />
-      <line className='grid' x1='80' x2='340' y1='76' y2='76' />
-      <circle className='cell-dot cell-a' cx='150' cy='52' r='10' />
-      <circle className='cell-dot cell-b' cx='270' cy='52' r='10' />
-      <circle className='cell-dot cell-c' cx='150' cy='100' r='10' />
-      <circle className='cell-dot cell-d' cx='270' cy='100' r='10' />
-    </svg>
-  );
-}
-
-export function ClassificationVennOverlapAnimation(): React.JSX.Element {
-  return (
-    <svg
-      aria-label='Animacja diagramu Venna: elementy przechodzą do lewej, prawej i wspólnej części.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 150'
+      `}
     >
-      <style>{`
-        .ring-left { fill: rgba(125, 211, 252, 0.35); stroke: #38bdf8; stroke-width: 2; }
-        .ring-right { fill: rgba(253, 186, 116, 0.35); stroke: #fb923c; stroke-width: 2; }
-        .dot-left { fill: #38bdf8; }
-        .dot-right { fill: #fb923c; }
-        .dot-mid { fill: #34d399; }
-        .group-left, .group-right, .group-mid {
-          transform-box: fill-box;
-          transform-origin: center;
-        }
-        .group-left { animation: vennLeft 6s ease-in-out infinite; }
-        .group-right { animation: vennRight 6s ease-in-out infinite; }
-        .group-mid { animation: vennMid 6s ease-in-out infinite; }
-        @keyframes vennLeft {
-          0%, 25% { transform: translateX(40px); opacity: 0.25; }
-          45%, 80% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(40px); opacity: 0.25; }
-        }
-        @keyframes vennRight {
-          0%, 25% { transform: translateX(-40px); opacity: 0.25; }
-          45%, 80% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(-40px); opacity: 0.25; }
-        }
-        @keyframes vennMid {
-          0%, 35% { opacity: 0.2; transform: scale(0.9); }
-          55%, 80% { opacity: 1; transform: scale(1); }
-          100% { opacity: 0.2; transform: scale(0.9); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .group-left, .group-right, .group-mid { animation: none; }
-        }
-      `}</style>
-      <circle className='ring-left' cx='170' cy='80' r='46' />
-      <circle className='ring-right' cx='250' cy='80' r='46' />
-      <g className='group-left'>
-        <circle className='dot-left' cx='150' cy='70' r='8' />
-        <circle className='dot-left' cx='140' cy='92' r='8' />
-      </g>
-      <g className='group-right'>
-        <circle className='dot-right' cx='270' cy='70' r='8' />
-        <circle className='dot-right' cx='280' cy='92' r='8' />
-      </g>
-      <g className='group-mid'>
-        <circle className='dot-mid' cx='210' cy='80' r='9' />
-      </g>
-    </svg>
-  );
-}
-
-export function ClassificationOddOneOutAnimation(): React.JSX.Element {
-  return (
-    <svg
-      aria-label='Animacja intruza: jeden element wybija się z szeregu.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 120'
-    >
-      <style>{`
-        .item { fill: #94a3b8; }
-        .intruder { fill: #fb7185; animation: intruderShift 4.5s ease-in-out infinite; }
-        @keyframes intruderShift {
-          0%, 30% { transform: translateY(0); opacity: 0.6; }
-          55% { transform: translateY(16px); opacity: 1; }
-          80% { transform: translateY(0); opacity: 0.8; }
-          100% { transform: translateY(0); opacity: 0.6; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .intruder { animation: none; opacity: 1; }
-        }
-      `}</style>
-      <rect className='item' height='26' rx='6' width='26' x='70' y='46' />
-      <rect className='item' height='26' rx='6' width='26' x='130' y='46' />
-      <rect className='intruder' height='26' rx='6' width='26' x='190' y='46' />
-      <rect className='item' height='26' rx='6' width='26' x='250' y='46' />
-      <rect className='item' height='26' rx='6' width='26' x='310' y='46' />
-    </svg>
-  );
-}
-
-export function ClassificationOddOneOutPatternAnimation(): React.JSX.Element {
-  return (
-    <svg
-      aria-label='Animacja intruza w szeregu: jeden element łamie powtarzający się wzór.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 120'
-    >
-      <style>{`
-        .item { fill: #94a3b8; }
-        .intruder { fill: #f97316; animation: intruderPulse 4.8s ease-in-out infinite; }
-        @keyframes intruderPulse {
-          0%, 30% { opacity: 0.5; transform: translateY(0) scale(0.95); }
-          55% { opacity: 1; transform: translateY(-8px) scale(1.05); }
-          85% { opacity: 0.8; transform: translateY(0) scale(1); }
-          100% { opacity: 0.5; transform: translateY(0) scale(0.95); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .intruder { animation: none; opacity: 1; transform: none; }
-        }
-      `}</style>
-      <circle className='item' cx='70' cy='64' r='12' />
-      <rect className='item' height='24' rx='5' width='24' x='110' y='52' />
-      <circle className='item' cx='170' cy='64' r='12' />
-      <polygon className='intruder' points='210,50 230,82 190,82' />
-      <circle className='item' cx='270' cy='64' r='12' />
-      <rect className='item' height='24' rx='5' width='24' x='310' y='52' />
-    </svg>
-  );
-}
-
-export function ClassificationHiddenRuleAnimation(): React.JSX.Element {
-  return (
-    <svg
-      aria-label='Animacja ukrytej reguły: elementy pasujące do reguły podświetlają się.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 130'
-    >
-      <style>{`
-        .rule { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
-        .rule-text { font: 700 12px/1.1 system-ui, sans-serif; fill: #b45309; }
-        .item { fill: #cbd5f5; }
-        .match { fill: #fbbf24; animation: matchGlow 5s ease-in-out infinite; }
-        .hint { animation: rulePulse 5s ease-in-out infinite; }
-        @keyframes matchGlow {
-          0%, 30% { opacity: 0.4; transform: scale(0.95); }
-          55%, 80% { opacity: 1; transform: scale(1); }
-          100% { opacity: 0.4; transform: scale(0.95); }
-        }
-        @keyframes rulePulse {
-          0%, 35% { opacity: 0.3; }
-          55%, 80% { opacity: 1; }
-          100% { opacity: 0.3; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .match, .hint { animation: none; opacity: 1; }
-        }
-      `}</style>
-      <rect className='rule hint' height='28' rx='10' width='180' x='120' y='12' />
-      <text className='rule-text hint' x='150' y='31'>Reguła: ma rogi</text>
-      <rect className='item' height='30' rx='6' width='30' x='80' y='70' />
-      <rect className='match' height='30' rx='6' width='30' x='150' y='70' />
-      <rect className='item' height='30' rx='6' width='30' x='220' y='70' />
-      <rect className='match' height='30' rx='6' width='30' x='290' y='70' />
-    </svg>
-  );
-}
-
-export function ClassificationRecapSequenceAnimation(): React.JSX.Element {
-  return (
-    <svg
-      aria-label='Animacja podsumowania: kolejne zasady pojawiają się po sobie.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 120'
-    >
-      <style>{`
-        .pill { fill: #e0f2fe; stroke: #38bdf8; stroke-width: 2; }
-        .label { font: 700 11px/1.1 system-ui, sans-serif; fill: #0f766e; }
-        .step { animation: recapStep 6s ease-in-out infinite; opacity: 0.2; }
-        .step-1 { animation-delay: 0s; }
-        .step-2 { animation-delay: 0.5s; }
-        .step-3 { animation-delay: 1s; }
-        .step-4 { animation-delay: 1.5s; }
-        @keyframes recapStep {
-          0%, 15% { opacity: 0.2; transform: translateY(6px); }
-          35%, 70% { opacity: 1; transform: translateY(0); }
-          100% { opacity: 0.2; transform: translateY(6px); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .step { animation: none; opacity: 1; transform: none; }
-        }
-      `}</style>
-      <g className='step step-1'>
-        <rect className='pill' height='26' rx='12' width='110' x='30' y='24' />
-        <text className='label' x='45' y='41'>Jedna cecha</text>
-      </g>
-      <g className='step step-2'>
-        <rect className='pill' height='26' rx='12' width='110' x='160' y='24' />
-        <text className='label' x='175' y='41'>Wiele cech</text>
-      </g>
-      <g className='step step-3'>
-        <rect className='pill' height='26' rx='12' width='110' x='290' y='24' />
-        <text className='label' x='308' y='41'>Venn</text>
-      </g>
-      <g className='step step-4'>
-        <rect className='pill' height='26' rx='12' width='160' x='130' y='66' />
-        <text className='label' x='150' y='83'>Intruz i reguła</text>
-      </g>
-    </svg>
+      <text className='axis' x='118' y='22'>DUZE</text>
+      <text className='axis' x='204' y='22'>MALE</text>
+      <text className='axis' x='20' y='66'>CZERWONE</text>
+      <text className='axis' x='26' y='116'>NIEBIESKIE</text>
+      {[0, 1].flatMap((row) =>
+        [0, 1].map((col) => (
+          <rect
+            key={`cell-${row}-${col}`}
+            className='cell'
+            x={104 + col * 84}
+            y={32 + row * 52}
+            width='72'
+            height='40'
+            rx='10'
+          />
+        ))
+      )}
+      <circle className='token' cx='128' cy='52' r='8' />
+      <circle className='token d1' cx='212' cy='52' r='6' />
+      <rect className='token d2' x='120' y='93' width='18' height='18' rx='5' />
+      <rect className='token d3' x='205' y='96' width='14' height='14' rx='4' />
+    </LogicalAnimationFrame>
   );
 }
 
 export function ClassificationCriteriaAxesAnimation(): React.JSX.Element {
   return (
-    <svg
-      aria-label='Animacja dwóch kryteriów: oś pozioma to kolor, oś pionowa to rozmiar.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 150'
-    >
-      <style>{`
-        .axis { stroke: #38bdf8; stroke-width: 3; stroke-linecap: round; }
-        .axis-label { font: 700 12px/1.1 system-ui, sans-serif; fill: #0f766e; }
-        .tick { stroke: #94a3b8; stroke-width: 2; }
-        .pulse { animation: axesPulse 5.5s ease-in-out infinite; }
-        @keyframes axesPulse {
-          0%, 25% { opacity: 0.4; }
-          45%, 80% { opacity: 1; }
-          100% { opacity: 0.4; }
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: osie pomagają czytać dwa kryteria naraz.'
+      testIdPrefix='logical-classification-axes'
+      styles={`
+        .axis { stroke: #14b8a6; stroke-width: 3; stroke-linecap: round; }
+        .hint { stroke: #99f6e4; stroke-width: 2; stroke-dasharray: 5 5; }
+        .label { fill: #0f766e; font: 700 11px/1 system-ui, sans-serif; }
+        .dot { fill: #0ea5e9; animation: orbit 4.4s ease-in-out infinite; }
+        @keyframes orbit {
+          0%, 20% { transform: translate(-8px, 6px); opacity: 0.45; }
+          55%, 80% { transform: translate(0, 0); opacity: 1; }
+          100% { transform: translate(-8px, 6px); opacity: 0.45; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .pulse { animation: none; opacity: 1; }
+          .dot { animation: none; opacity: 1; transform: none; }
         }
-      `}</style>
-      <line className='axis' x1='90' x2='330' y1='120' y2='120' />
-      <line className='axis' x1='110' x2='110' y1='40' y2='120' />
-      <line className='tick' x1='170' x2='170' y1='114' y2='126' />
-      <line className='tick' x1='230' x2='230' y1='114' y2='126' />
-      <line className='tick' x1='110' x2='98' y1='70' y2='70' />
-      <line className='tick' x1='110' x2='98' y1='95' y2='95' />
-      <text className='axis-label pulse' x='190' y='142'>Kolor</text>
-      <text className='axis-label pulse' x='24' y='84' transform='rotate(-90 24 84)'>Rozmiar</text>
-      <circle cx='170' cy='70' r='8' fill='#34d399' />
-      <circle cx='230' cy='95' r='8' fill='#f59e0b' />
-    </svg>
+      `}
+    >
+      <line className='axis' x1='64' y1='126' x2='256' y2='126' />
+      <line className='axis' x1='64' y1='126' x2='64' y2='28' />
+      <line className='hint' x1='160' y1='126' x2='160' y2='48' />
+      <line className='hint' x1='64' y1='82' x2='236' y2='82' />
+      <text className='label' x='246' y='144'>ROZMIAR</text>
+      <text className='label' x='16' y='34'>KOLOR</text>
+      <circle className='dot' cx='160' cy='82' r='9' />
+    </LogicalAnimationFrame>
   );
 }
 
-export function ClassificationCriteriaSwitchAnimation(): React.JSX.Element {
+export function ClassificationVennOverlapAnimation(): React.JSX.Element {
   return (
-    <svg
-      aria-label='Animacja zmiany kryterium: te same elementy sortujemy najpierw według koloru, potem według kształtu.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 150'
-    >
-      <style>{`
-        .badge { fill: #e0f2fe; stroke: #38bdf8; stroke-width: 2; }
-        .badge-alt { fill: #ede9fe; stroke: #a78bfa; }
-        .badge-text { font: 700 11px/1.1 system-ui, sans-serif; fill: #0f766e; }
-        .badge-text-alt { fill: #6d28d9; }
-        .badge-color { animation: badgeOn 6s ease-in-out infinite; }
-        .badge-shape { animation: badgeOff 6s ease-in-out infinite; }
-        .state-color, .state-shape { transform-box: fill-box; transform-origin: center; }
-        .state-color { animation: showColor 6s ease-in-out infinite; }
-        .state-shape { animation: showShape 6s ease-in-out infinite; }
-        @keyframes showColor {
-          0%, 45% { opacity: 1; transform: translateY(0); }
-          55%, 100% { opacity: 0; transform: translateY(8px); }
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: część wspólna dwóch zbiorów jest podświetlona.'
+      testIdPrefix='logical-classification-venn-overlap'
+      styles={`
+        .left { fill: rgba(56, 189, 248, 0.32); stroke: #38bdf8; stroke-width: 3; }
+        .right { fill: rgba(250, 204, 21, 0.32); stroke: #f59e0b; stroke-width: 3; }
+        .overlap { fill: rgba(45, 212, 191, 0.5); animation: vennPulse 4.2s ease-in-out infinite; }
+        @keyframes vennPulse {
+          0%, 100% { opacity: 0.45; transform: scale(0.96); }
+          50% { opacity: 0.95; transform: scale(1); }
         }
-        @keyframes showShape {
-          0%, 45% { opacity: 0; transform: translateY(-8px); }
-          55%, 100% { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes badgeOn {
-          0%, 45% { opacity: 1; }
-          55%, 100% { opacity: 0.35; }
-        }
-        @keyframes badgeOff {
-          0%, 45% { opacity: 0.35; }
-          55%, 100% { opacity: 1; }
-        }
+        .label { font: 700 11px/1 system-ui, sans-serif; }
+        .l1 { fill: #0369a1; }
+        .l2 { fill: #b45309; }
+        .l3 { fill: #0f766e; }
         @media (prefers-reduced-motion: reduce) {
-          .state-color, .state-shape, .badge-color, .badge-shape { animation: none; opacity: 1; transform: none; }
+          .overlap { animation: none; opacity: 0.95; transform: none; }
         }
-      `}</style>
-      <rect className='badge badge-color' height='24' rx='12' width='140' x='60' y='18' />
-      <rect className='badge badge-alt badge-shape' height='24' rx='12' width='140' x='220' y='18' />
-      <text className='badge-text badge-color' textAnchor='middle' x='130' y='34'>Kryterium: kolor</text>
-      <text className='badge-text badge-text-alt badge-shape' textAnchor='middle' x='290' y='34'>Kryterium: kształt</text>
-      <g className='state-color'>
-        <circle cx='120' cy='80' r='11' fill='#38bdf8' />
-        <circle cx='160' cy='80' r='11' fill='#38bdf8' />
-        <circle cx='260' cy='80' r='11' fill='#fb7185' />
-        <circle cx='300' cy='80' r='11' fill='#fb7185' />
-      </g>
-      <g className='state-shape'>
-        <circle cx='140' cy='94' r='11' fill='#a78bfa' />
-        <rect x='230' y='84' width='22' height='22' rx='5' fill='#facc15' />
-        <circle cx='180' cy='110' r='11' fill='#a78bfa' />
-        <rect x='270' y='94' width='22' height='22' rx='5' fill='#facc15' />
-      </g>
-    </svg>
+      `}
+    >
+      <circle className='left' cx='124' cy='82' r='52' />
+      <circle className='right' cx='196' cy='82' r='52' />
+      <rect className='overlap' x='144' y='40' width='32' height='84' rx='16' />
+      <text className='label l1' x='92' y='30'>SPORT</text>
+      <text className='label l2' x='184' y='30'>MUZYKA</text>
+      <text className='label l3' x='160' y='148' textAnchor='middle'>WSPOLNE</text>
+    </LogicalAnimationFrame>
   );
 }
 
 export function ClassificationVennUnionAnimation(): React.JSX.Element {
   return (
-    <svg
-      aria-label='Animacja zbioru unii: oba koła podświetlają się jako całość.'
-      className='h-auto w-full'
-      role='img'
-      viewBox='0 0 420 150'
-    >
-      <style>{`
-        .ring-left { stroke: #60a5fa; stroke-width: 2; }
-        .ring-right { stroke: #f59e0b; stroke-width: 2; }
-        .fill-left { fill: rgba(96, 165, 250, 0.22); }
-        .fill-right { fill: rgba(245, 158, 11, 0.22); }
-        .union { animation: unionGlow 5.5s ease-in-out infinite; }
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: oba zbiory razem tworzą sumę.'
+      testIdPrefix='logical-classification-venn-union'
+      styles={`
+        .shell { fill: rgba(59, 130, 246, 0.08); stroke: #cbd5e1; stroke-width: 2; }
+        .left { fill: rgba(96, 165, 250, 0.38); }
+        .right { fill: rgba(250, 204, 21, 0.4); }
+        .halo { fill: rgba(45, 212, 191, 0.18); animation: unionGlow 4.6s ease-in-out infinite; }
+        .label { fill: #0f172a; font: 700 11px/1 system-ui, sans-serif; }
         @keyframes unionGlow {
-          0%, 25% { opacity: 0.35; }
-          50%, 80% { opacity: 1; }
-          100% { opacity: 0.35; }
+          0%, 100% { opacity: 0.28; transform: scale(0.97); }
+          50% { opacity: 0.65; transform: scale(1); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .union { animation: none; opacity: 1; }
+          .halo { animation: none; opacity: 0.65; transform: none; }
         }
-      `}</style>
-      <circle className='fill-left union' cx='170' cy='80' r='48' />
-      <circle className='fill-right union' cx='250' cy='80' r='48' />
-      <circle className='ring-left' cx='170' cy='80' r='48' fill='none' />
-      <circle className='ring-right' cx='250' cy='80' r='48' fill='none' />
-      <text x='118' y='30' fontSize='12' fontWeight='700' fill='#2563eb'>Zbiór A</text>
-      <text x='258' y='30' fontSize='12' fontWeight='700' fill='#b45309'>Zbiór B</text>
-    </svg>
+      `}
+    >
+      <rect className='shell' x='60' y='24' width='200' height='112' rx='28' />
+      <circle className='left' cx='128' cy='80' r='44' />
+      <circle className='right' cx='192' cy='80' r='44' />
+      <rect className='halo' x='74' y='34' width='172' height='92' rx='24' />
+      <text className='label' x='160' y='148' textAnchor='middle'>SUMA ZBIOROW</text>
+    </LogicalAnimationFrame>
+  );
+}
+
+export function ClassificationCriteriaSwitchAnimation(): React.JSX.Element {
+  return (
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: to samo zadanie zmienia aktywne kryterium klasyfikacji.'
+      testIdPrefix='logical-classification-switch'
+      styles={`
+        .pill {
+          fill: #eef2ff;
+          stroke: #818cf8;
+          stroke-width: 2;
+          opacity: 0.35;
+          animation: criterionSwitch 5s ease-in-out infinite;
+        }
+        .p2 { animation-delay: 1.2s; }
+        .p3 { animation-delay: 2.4s; }
+        .label { fill: #4338ca; font: 700 12px/1 system-ui, sans-serif; }
+        .token { fill: #0f172a; opacity: 0.75; }
+        @keyframes criterionSwitch {
+          0%, 20% { opacity: 0.3; transform: scale(0.96); }
+          35%, 55% { opacity: 1; transform: scale(1); }
+          80%, 100% { opacity: 0.3; transform: scale(0.96); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pill { animation: none; opacity: 1; transform: none; }
+        }
+      `}
+    >
+      <rect className='pill p1' x='24' y='28' width='84' height='34' rx='17' />
+      <rect className='pill p2' x='118' y='28' width='84' height='34' rx='17' />
+      <rect className='pill p3' x='212' y='28' width='84' height='34' rx='17' />
+      <text className='label' x='66' y='49' textAnchor='middle'>KOLOR</text>
+      <text className='label' x='160' y='49' textAnchor='middle'>KSZTALT</text>
+      <text className='label' x='254' y='49' textAnchor='middle'>ROZMIAR</text>
+      <circle className='token' cx='106' cy='114' r='16' />
+      <rect className='token' x='146' y='98' width='28' height='28' rx='8' />
+      <polygon className='token' points='234,126 254,92 274,126' />
+    </LogicalAnimationFrame>
+  );
+}
+
+export function ClassificationOddOneOutAnimation(): React.JSX.Element {
+  return (
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: jeden element odstaje od reszty.'
+      testIdPrefix='logical-classification-odd'
+      styles={`
+        .common { fill: #38bdf8; opacity: 0.55; }
+        .odd {
+          fill: #f43f5e;
+          animation: oddPulse 4s ease-in-out infinite;
+        }
+        @keyframes oddPulse {
+          0%, 100% { transform: scale(0.94); opacity: 0.5; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .odd { animation: none; opacity: 1; transform: none; }
+        }
+      `}
+    >
+      <circle className='common' cx='56' cy='80' r='16' />
+      <circle className='common' cx='120' cy='80' r='16' />
+      <circle className='common' cx='184' cy='80' r='16' />
+      <rect className='odd' x='236' y='64' width='32' height='32' rx='9' />
+    </LogicalAnimationFrame>
+  );
+}
+
+export function ClassificationHiddenRuleAnimation(): React.JSX.Element {
+  return (
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: ukryta reguła odsłania poprawne dopasowanie.'
+      testIdPrefix='logical-classification-hidden-rule'
+      styles={`
+        .card { fill: #fff7ed; stroke: #fb923c; stroke-width: 2; }
+        .question { fill: #f97316; font: 700 28px/1 system-ui, sans-serif; }
+        .glow {
+          fill: rgba(251, 146, 60, 0.22);
+          animation: hiddenGlow 4.4s ease-in-out infinite;
+        }
+        @keyframes hiddenGlow {
+          0%, 100% { opacity: 0.2; transform: scale(0.94); }
+          50% { opacity: 0.7; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .glow { animation: none; opacity: 0.7; transform: none; }
+        }
+      `}
+    >
+      <rect className='card' x='42' y='42' width='64' height='64' rx='16' />
+      <rect className='card' x='128' y='42' width='64' height='64' rx='16' />
+      <rect className='card' x='214' y='42' width='64' height='64' rx='16' />
+      <circle className='glow' cx='246' cy='74' r='38' />
+      <text className='question' x='74' y='83' textAnchor='middle'>2</text>
+      <text className='question' x='160' y='83' textAnchor='middle'>4</text>
+      <text className='question' x='246' y='83' textAnchor='middle'>?</text>
+    </LogicalAnimationFrame>
+  );
+}
+
+export function ClassificationOddOneOutPatternAnimation(): React.JSX.Element {
+  return (
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: w szeregu wzorców jeden element łamie regułę.'
+      testIdPrefix='logical-classification-pattern'
+      styles={`
+        .pattern { fill: #c4b5fd; }
+        .breaker {
+          fill: #fb7185;
+          animation: breakPulse 4.4s ease-in-out infinite;
+        }
+        @keyframes breakPulse {
+          0%, 100% { opacity: 0.45; transform: translateY(0); }
+          50% { opacity: 1; transform: translateY(-6px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .breaker { animation: none; opacity: 1; transform: none; }
+        }
+      `}
+    >
+      {[0, 1, 2, 4].map((index) => (
+        <g key={index} className='pattern'>
+          <rect x={34 + index * 54} y='58' width='16' height='16' rx='4' />
+          <circle cx={60 + index * 54} cy='66' r='8' />
+        </g>
+      ))}
+      <g className='breaker'>
+        <circle cx='228' cy='66' r='8' />
+        <circle cx='252' cy='66' r='8' />
+      </g>
+    </LogicalAnimationFrame>
+  );
+}
+
+export function ClassificationParityAnimation(): React.JSX.Element {
+  return (
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: liczby parzyste i nieparzyste rozchodzą się do dwóch grup.'
+      testIdPrefix='logical-classification-parity'
+      styles={`
+        .left { fill: #dbeafe; stroke: #3b82f6; stroke-width: 2; }
+        .right { fill: #ffe4e6; stroke: #f43f5e; stroke-width: 2; }
+        .even { fill: #2563eb; animation: parityLeft 4.6s ease-in-out infinite; }
+        .odd { fill: #e11d48; animation: parityRight 4.6s ease-in-out infinite; }
+        .d1 { animation-delay: 0.7s; }
+        .label { font: 700 12px/1 system-ui, sans-serif; }
+        .left-label { fill: #1d4ed8; }
+        .right-label { fill: #be123c; }
+        @keyframes parityLeft {
+          0%, 25% { transform: translate(70px, 0); opacity: 0.35; }
+          55%, 80% { transform: translate(0, 22px); opacity: 1; }
+          100% { transform: translate(70px, 0); opacity: 0.35; }
+        }
+        @keyframes parityRight {
+          0%, 25% { transform: translate(-70px, 0); opacity: 0.35; }
+          55%, 80% { transform: translate(0, 22px); opacity: 1; }
+          100% { transform: translate(-70px, 0); opacity: 0.35; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .even, .odd { animation: none; opacity: 1; transform: translateY(22px); }
+        }
+      `}
+    >
+      <rect className='left' x='30' y='70' width='110' height='60' rx='14' />
+      <rect className='right' x='180' y='70' width='110' height='60' rx='14' />
+      <text className='label left-label' x='85' y='92' textAnchor='middle'>PARZYSTE</text>
+      <text className='label right-label' x='235' y='92' textAnchor='middle'>NIEPARZYSTE</text>
+      <text className='even' x='82' y='48'>2</text>
+      <text className='even d1' x='112' y='42'>8</text>
+      <text className='odd' x='220' y='48'>3</text>
+      <text className='odd d1' x='250' y='42'>7</text>
+    </LogicalAnimationFrame>
+  );
+}
+
+export function ClassificationRecapSequenceAnimation(): React.JSX.Element {
+  return (
+    <LogicalAnimationFrame
+      ariaLabel='Animacja: podsumowanie etapów klasyfikowania.'
+      testIdPrefix='logical-classification-recap'
+      styles={`
+        .card {
+          fill: #f8fafc;
+          stroke: #cbd5e1;
+          stroke-width: 2;
+          opacity: 0.35;
+          animation: recapPulse 6s ease-in-out infinite;
+        }
+        .c2 { animation-delay: 1s; }
+        .c3 { animation-delay: 2s; }
+        .c4 { animation-delay: 3s; }
+        .label { fill: #334155; font: 700 10px/1 system-ui, sans-serif; }
+        .arrow { stroke: #94a3b8; stroke-width: 3; stroke-linecap: round; }
+        @keyframes recapPulse {
+          0%, 15% { opacity: 0.28; transform: scale(0.96); }
+          35%, 55% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0.28; transform: scale(0.96); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .card { animation: none; opacity: 1; transform: none; }
+        }
+      `}
+    >
+      <rect className='card c1' x='12' y='52' width='64' height='40' rx='12' />
+      <rect className='card c2' x='88' y='52' width='64' height='40' rx='12' />
+      <rect className='card c3' x='164' y='52' width='64' height='40' rx='12' />
+      <rect className='card c4' x='240' y='52' width='64' height='40' rx='12' />
+      <line className='arrow' x1='76' y1='72' x2='88' y2='72' />
+      <line className='arrow' x1='152' y1='72' x2='164' y2='72' />
+      <line className='arrow' x1='228' y1='72' x2='240' y2='72' />
+      <text className='label' x='44' y='76' textAnchor='middle'>CECHA</text>
+      <text className='label' x='120' y='76' textAnchor='middle'>GRUPA</text>
+      <text className='label' x='196' y='76' textAnchor='middle'>SPRAWDZ</text>
+      <text className='label' x='272' y='76' textAnchor='middle'>WYNIK</text>
+    </LogicalAnimationFrame>
   );
 }

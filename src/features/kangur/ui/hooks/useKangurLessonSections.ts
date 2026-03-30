@@ -5,8 +5,10 @@ import {
   kangurLessonSectionsSchema,
   type KangurLessonSection,
 } from '@/shared/contracts/kangur-lesson-sections';
-import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
-import { withKangurClientError } from '@/features/kangur/observability/client';
+import {
+  isRecoverableKangurClientFetchError,
+  withKangurClientError,
+} from '@/features/kangur/observability/client';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -15,6 +17,17 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 type LessonSectionsQueryOptions = KangurLessonCollectionFilterDto & {
   enabled?: boolean;
 };
+
+const resolveLessonSectionsQueryFilters = (
+  options?: LessonSectionsQueryOptions
+): KangurLessonCollectionFilterDto => ({
+  subject: options?.subject ?? undefined,
+  ageGroup: options?.ageGroup ?? undefined,
+  enabledOnly: options?.enabledOnly ?? undefined,
+});
+
+const isLessonSectionsQueryEnabled = (options?: LessonSectionsQueryOptions): boolean =>
+  options?.enabled ?? true;
 
 const filterSections = (
   sections: KangurLessonSection[],
@@ -33,10 +46,7 @@ const filterSections = (
   return next;
 };
 
-const buildSectionsFallback = (options?: LessonSectionsQueryOptions): KangurLessonSection[] =>
-  filterSections(createDefaultKangurSections(), options);
-
-const fetchLessonSections = async (
+export const fetchKangurLessonSections = async (
   options?: LessonSectionsQueryOptions
 ): Promise<KangurLessonSection[]> =>
   await withKangurClientError(
@@ -61,25 +71,24 @@ const fetchLessonSections = async (
       });
       return kangurLessonSectionsSchema.parse(payload);
     },
-    { fallback: () => buildSectionsFallback(options) }
+    {
+      fallback: () => [],
+      shouldReport: (error) => !isRecoverableKangurClientFetchError(error),
+    }
   );
 
-export const useKangurLessonSections = (
+const createLessonSectionsQuery = (
   options?: LessonSectionsQueryOptions
 ): ListQuery<KangurLessonSection, KangurLessonSection[]> =>
   createListQueryV2<KangurLessonSection, KangurLessonSection[]>({
     queryKey: [
       ...QUERY_KEYS.kangur.lessonSections(),
-      {
-        subject: options?.subject ?? null,
-        ageGroup: options?.ageGroup ?? null,
-        enabledOnly: options?.enabledOnly ?? null,
-      },
+      resolveLessonSectionsQueryFilters(options),
     ],
-    queryFn: async (): Promise<KangurLessonSection[]> => await fetchLessonSections(options),
+    queryFn: async (): Promise<KangurLessonSection[]> =>
+      await fetchKangurLessonSections(options),
     select: (sections) => filterSections(sections, options),
-    placeholderData: () => buildSectionsFallback(options),
-    enabled: options?.enabled ?? true,
+    enabled: isLessonSectionsQueryEnabled(options),
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -94,6 +103,11 @@ export const useKangurLessonSections = (
       description: 'Loads Kangur lesson sections from Mongo.',
     },
   });
+
+export const useKangurLessonSections = (
+  options?: LessonSectionsQueryOptions
+): ListQuery<KangurLessonSection, KangurLessonSection[]> =>
+  createLessonSectionsQuery(options);
 
 const invalidateKangurLessonSections = (queryClient: {
   invalidateQueries: (args: { queryKey: readonly unknown[] }) => void;

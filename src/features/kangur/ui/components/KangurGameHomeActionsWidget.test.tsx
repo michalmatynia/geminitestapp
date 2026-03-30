@@ -182,7 +182,7 @@ describe('KangurGameHomeActionsWidget', () => {
       'href',
       '/kangur/duels'
     );
-    expect(screen.getByRole('button', { name: 'Kangur Matematyczny' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'StudiQ Matematyczny' })).toBeEnabled();
   });
 
   it('wires the lessons home action through the managed Kangur transition contract', () => {
@@ -222,7 +222,7 @@ describe('KangurGameHomeActionsWidget', () => {
 
     render(<KangurGameHomeActionsWidget />);
 
-    expect(screen.queryByRole('button', { name: 'Kangur Matematyczny' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'StudiQ Matematyczny' })).toBeNull();
   });
 
   it('stacks the front-page actions into a single mobile column', () => {
@@ -309,6 +309,36 @@ describe('KangurGameHomeActionsWidget', () => {
     expect(screen.getByTestId('kangur-home-action-lessons')).toHaveAttribute(
       'data-nav-state',
       'transitioning'
+    );
+  });
+
+  it('hides the home actions shell once the lessons handoff starts', () => {
+    useKangurGameRuntimeMock.mockReturnValue({
+      basePath: '/kangur',
+      canStartFromHome: true,
+      handleStartGame: vi.fn(),
+      screen: 'home',
+      setScreen: vi.fn(),
+    });
+    useOptionalKangurRouteTransitionStateMock.mockReturnValue({
+      activeTransitionPageKey: 'Lessons',
+      activeTransitionSourceId: 'game-home-action:lessons',
+      isRouteAcknowledging: false,
+      isRoutePending: true,
+      isRouteRevealing: false,
+      pendingPageKey: 'Lessons',
+      transitionPhase: 'pending',
+    });
+
+    render(<KangurGameHomeActionsWidget />);
+
+    expect(screen.getByTestId('kangur-home-actions-shell')).toHaveAttribute(
+      'data-home-actions-transition-hidden',
+      'true'
+    );
+    expect(screen.getByTestId('kangur-home-actions-shell')).toHaveClass(
+      'pointer-events-none',
+      'opacity-0'
     );
   });
 });

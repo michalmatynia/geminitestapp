@@ -52,6 +52,7 @@ const getMultiSelectValues = (value: unknown): string[] => {
 };
 
 interface PanelFiltersProps {
+  idBase?: string;
   filters: FilterField[];
   values: Record<string, unknown>;
   activeValues?: Record<string, unknown>;
@@ -78,6 +79,7 @@ export const PanelFiltersSearchPlaceholderRuntimeContext = React.createContext<s
  */
 export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersProps) => {
   const {
+    idBase,
     filters,
     values,
     activeValues,
@@ -98,7 +100,11 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
   const effectiveSearchPlaceholder = runtimeSearchPlaceholder ?? searchPlaceholder ?? 'Search...';
   const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
   const [localSearch, setLocalSearch] = useState(externalSearch);
-  const searchInputId = React.useId().replace(/:/g, '');
+  const resolvedIdBase = React.useMemo(
+    () => (idBase ? idBase.replace(/[^a-zA-Z0-9_-]+/g, '-') : null),
+    [idBase]
+  );
+  const searchInputId = resolvedIdBase ? `panel-filters-search-${resolvedIdBase}` : undefined;
   const userToggledRef = useRef(false);
 
   // Sync local search with external search (e.g. on reset)
@@ -147,7 +153,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
             <div className='relative flex-1'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-400' />
               <Input
-                id={`panel-filters-search-${searchInputId}`}
+                {...(searchInputId ? { id: searchInputId } : {})}
                 type='text'
                 placeholder={effectiveSearchPlaceholder}
                 aria-label={effectiveSearchPlaceholder}
@@ -205,6 +211,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
                 <PanelFilterControl
                   key={field.key}
                   field={field}
+                  idBase={resolvedIdBase}
                   values={values}
                   onFilterChange={onFilterChange}
                 />
@@ -226,6 +233,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
 
 interface PanelFilterControlProps {
   field: FilterField;
+  idBase?: string | null;
   values: Record<string, unknown>;
   onFilterChange: (key: string, value: unknown) => void;
 }
@@ -234,10 +242,11 @@ interface PanelFilterControlProps {
  * PanelFilterControl - Renders individual filter input based on field type
  */
 const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilterControlProps) => {
-  const { field, values, onFilterChange } = props;
+  const { field, idBase, values, onFilterChange } = props;
   const value = values[field.key];
-  const fieldId = React.useId().replace(/:/g, '');
-  const inputId = `panel-filter-${field.key}-${fieldId}`;
+  const inputId = idBase
+    ? `panel-filter-${field.key}-${idBase}`
+    : `panel-filter-${field.key}`;
   const labelId = `${inputId}-label`;
   const onChange = useCallback(
     (nextValue: unknown): void => {

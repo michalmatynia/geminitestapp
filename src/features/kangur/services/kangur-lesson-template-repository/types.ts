@@ -1,15 +1,23 @@
 import type {
+  KangurLessonAgeGroup,
+  KangurLessonComponentId,
   KangurLessonSubject,
 } from '@kangur/contracts';
 import type { KangurLessonTemplate } from '@/shared/contracts/kangur-lesson-templates';
 
 export type KangurLessonTemplateListInput = {
+  locale?: string;
+  componentId?: KangurLessonComponentId;
   subject?: KangurLessonSubject;
+  ageGroup?: KangurLessonAgeGroup;
 };
 
 export type KangurLessonTemplateRepository = {
   listTemplates: (input?: KangurLessonTemplateListInput) => Promise<KangurLessonTemplate[]>;
-  replaceTemplates: (templates: KangurLessonTemplate[]) => Promise<KangurLessonTemplate[]>;
-  saveTemplate: (template: KangurLessonTemplate) => Promise<void>;
-  removeTemplate: (componentId: string) => Promise<void>;
+  replaceTemplates: (
+    templates: KangurLessonTemplate[],
+    locale?: string
+  ) => Promise<KangurLessonTemplate[]>;
+  saveTemplate: (template: KangurLessonTemplate, locale?: string) => Promise<void>;
+  removeTemplate: (componentId: string, locale?: string) => Promise<void>;
 };

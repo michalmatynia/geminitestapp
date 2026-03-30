@@ -20,8 +20,13 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...rest
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children?: ReactNode }) => (
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    children?: ReactNode;
+    prefetch?: boolean;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -52,7 +57,7 @@ describe('Kangur error boundary', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
     expect(reset).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('link', { name: 'Wróć do Kangura' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Wróć do StudiQ' })).toHaveAttribute(
       'href',
       '/kangur'
     );

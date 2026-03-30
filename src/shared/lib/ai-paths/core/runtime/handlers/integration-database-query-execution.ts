@@ -1,8 +1,8 @@
 import type { DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { StringRecord } from '@/shared/contracts/base';
 import type { HttpResult } from '@/shared/contracts/http';
 import { dbApi } from '@/shared/lib/ai-paths/api';
-import type { AiPathsCollectionMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import {
@@ -25,7 +25,7 @@ export type ExecuteDatabaseQueryInput = {
   queryConfig: DbQueryConfig;
   query: Record<string, unknown>;
   querySource?: string;
-  collectionMap?: AiPathsCollectionMap;
+  collectionMap?: StringRecord;
   templateInputs?: RuntimePortValues;
   dryRun: boolean;
   aiPrompt: string;

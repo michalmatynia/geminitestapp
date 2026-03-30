@@ -1,49 +1,49 @@
 {
-  "generatedAt": "2026-03-05T04:21:27.732Z",
+  "generatedAt": "2026-03-26T13:27:58.840Z",
   "domains": [
     {
       "domain": "feature:ai",
-      "generatedAt": "2026-03-05T04:20:36.089Z",
-      "exact": 0,
-      "near": 0,
-      "after": 0,
-      "risk": 0,
+      "generatedAt": "2026-03-26T13:27:11.590Z",
+      "exact": 12,
+      "near": 5,
+      "after": 1,
+      "risk": 11,
       "source": "docs/metrics/domain-scans/type-clusters-feature-ai-latest.json"
     },
     {
       "domain": "feature:integrations",
-      "generatedAt": "2026-03-05T04:20:40.302Z",
-      "exact": 0,
-      "near": 0,
-      "after": 0,
-      "risk": 0,
+      "generatedAt": "2026-03-26T13:27:22.862Z",
+      "exact": 12,
+      "near": 5,
+      "after": 1,
+      "risk": 8,
       "source": "docs/metrics/domain-scans/type-clusters-feature-integrations-latest.json"
     },
     {
       "domain": "feature:case-resolver",
-      "generatedAt": "2026-03-05T04:20:44.667Z",
-      "exact": 0,
-      "near": 0,
-      "after": 0,
-      "risk": 0,
+      "generatedAt": "2026-03-26T13:27:40.083Z",
+      "exact": 12,
+      "near": 5,
+      "after": 1,
+      "risk": 12,
       "source": "docs/metrics/domain-scans/type-clusters-feature-case-resolver-latest.json"
     },
     {
       "domain": "shared:contracts",
-      "generatedAt": "2026-03-05T04:20:49.036Z",
-      "exact": 0,
-      "near": 0,
-      "after": 0,
-      "risk": 0,
+      "generatedAt": "2026-03-26T13:27:49.517Z",
+      "exact": 12,
+      "near": 5,
+      "after": 5,
+      "risk": 20,
       "source": "docs/metrics/domain-scans/type-clusters-shared-contracts-latest.json"
     },
     {
       "domain": "shared",
-      "generatedAt": "2026-03-05T04:20:53.299Z",
-      "exact": 0,
-      "near": 0,
-      "after": 0,
-      "risk": 0,
+      "generatedAt": "2026-03-26T13:27:58.830Z",
+      "exact": 12,
+      "near": 5,
+      "after": 5,
+      "risk": 20,
       "source": "docs/metrics/domain-scans/type-clusters-shared-latest.json"
     }
   ]

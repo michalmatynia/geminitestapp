@@ -25,6 +25,9 @@ vi.mock('@/features/products/performance', () => ({
 
 import { GET } from '@/app/api/v2/products/paged/route-handler';
 
+const buildPagedProductsExpectation = (overrides: Record<string, unknown>) =>
+  expect.objectContaining(overrides);
+
 describe('GET /api/v2/products/paged', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -70,7 +73,7 @@ describe('GET /api/v2/products/paged', () => {
     await GET(new NextRequest('http://localhost/api/v2/products/paged?page=3&pageSize=10'));
 
     expect(getCachedProductsWithCountMock).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 3, pageSize: 10 })
+      buildPagedProductsExpectation({ page: 3, pageSize: 10 })
     );
     expect(getProductsWithCountMock).not.toHaveBeenCalled();
   });
@@ -79,7 +82,7 @@ describe('GET /api/v2/products/paged', () => {
     await GET(new NextRequest('http://localhost/api/v2/products/paged?catalogId=cat-123'));
 
     expect(getCachedProductsWithCountMock).toHaveBeenCalledWith(
-      expect.objectContaining({ catalogId: 'cat-123' })
+      buildPagedProductsExpectation({ catalogId: 'cat-123' })
     );
   });
 
@@ -87,7 +90,7 @@ describe('GET /api/v2/products/paged', () => {
     await GET(new NextRequest('http://localhost/api/v2/products/paged?fresh=1&page=1&pageSize=20'));
 
     expect(getProductsWithCountMock).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 1, pageSize: 20 })
+      buildPagedProductsExpectation({ page: 1, pageSize: 20 })
     );
     expect(getCachedProductsWithCountMock).not.toHaveBeenCalled();
   });

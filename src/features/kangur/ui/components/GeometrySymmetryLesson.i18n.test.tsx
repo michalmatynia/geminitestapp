@@ -20,6 +20,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 }));
 
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import GeometrySymmetryLesson from '@/features/kangur/ui/components/GeometrySymmetryLesson';
 
 type CapturedSlide = {
@@ -44,8 +45,12 @@ describe('GeometrySymmetryLesson i18n', () => {
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ??
-      [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'os')).toMatchObject({
       title: 'Symmetrieachse',
@@ -56,8 +61,12 @@ describe('GeometrySymmetryLesson i18n', () => {
       description: 'Zeichne die Achse und ergänze die Spiegelung',
       isGame: true,
     });
-    expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
       title: 'Symmetrie-Spiegel',
+    });
+    expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({
+      gameId: 'geometry_symmetry_studio',
+      instanceId: getKangurBuiltInGameInstanceId('geometry_symmetry_studio'),
     });
 
     expect(slides.intro?.[0]?.title).toBe('Was ist Symmetrie?');
@@ -72,5 +81,27 @@ describe('GeometrySymmetryLesson i18n', () => {
     expect(
       screen.getByText('Symmetrie bedeutet: linke Seite = rechte Seite (oder oben = unten).')
     ).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.geometrySymmetry.game.gameTitle =
+      'Benutzerdefinierter Symmetriespiegel';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <GeometrySymmetryLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
+      title: 'Benutzerdefinierter Symmetriespiegel',
+    });
   });
 });

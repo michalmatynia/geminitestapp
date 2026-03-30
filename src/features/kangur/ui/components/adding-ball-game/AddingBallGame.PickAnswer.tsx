@@ -22,6 +22,7 @@ import {
   BALL_COLORS,
   BALL_POOL_CLASSNAME,
   getAnswerSlotSurface,
+  getBallSurfaceStyle,
 } from './utils';
 import { DraggableBall } from './AddingBallGame.Shared';
 
@@ -57,9 +58,7 @@ export function PickAnswer({
     setTimeout(() => onResult(ok), 1400);
   };
 
-  const selectedBall = selectedBallId
-    ? balls.find((entry) => entry.id === selectedBallId) ?? null
-    : null;
+  const selectedBall = resolveSelectedBall(balls, selectedBallId);
 
   const applySelectedBall = (): void => {
     if (checked || !selectedBall) return;
@@ -80,84 +79,23 @@ export function PickAnswer({
           Przeciągnij piłkę z właściwą odpowiedzią do pola poniżej
         </p>
 
-        <Droppable droppableId='answer-slot'>
-          {(provided, snapshot) => {
-            const surface = getAnswerSlotSurface({
-              isDraggingOver: snapshot.isDraggingOver,
-              checked,
-              correct: dropped?.num === round.correct,
-            });
+        <PickAnswerSlot
+          checked={checked}
+          dropped={dropped}
+          correctAnswer={round.correct}
+          isCoarsePointer={isCoarsePointer}
+          selectedBall={selectedBall}
+          onApplySelectedBall={applySelectedBall}
+        />
 
-            return (
-              <KangurInfoCard
-                ref={provided.innerRef}
-                accent={surface.accent}
-                className={cn(
-                  surface.className,
-                  'touch-manipulation select-none transition',
-                  isCoarsePointer && 'h-28 w-28',
-                  selectedBall && !dropped && 'border-amber-200 bg-amber-50/50'
-                )}
-                data-testid='adding-ball-answer-slot'
-                padding='sm'
-                tone={surface.tone}
-                onClick={() => {
-                  if (!isCoarsePointer || checked || dropped || !selectedBall) return;
-                  applySelectedBall();
-                }}
-                {...provided.droppableProps}
-              >
-                {dropped ? (
-                  <div
-                    className={`w-16 h-16 rounded-full ${dropped.color} flex items-center justify-center`}
-                  >
-                    <span className='text-white font-extrabold text-xl'>{dropped.num}</span>
-                  </div>
-                ) : (
-                  <span className='text-3xl [color:var(--kangur-page-muted-text)]'>?</span>
-                )}
-                {provided.placeholder}
-              </KangurInfoCard>
-            );
-          }}
-        </Droppable>
+        <PickAnswerFeedback checked={checked} dropped={dropped} correctAnswer={round.correct} />
 
-        {checked && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className={`text-xl font-extrabold ${dropped?.num === round.correct ? 'text-green-600' : 'text-red-500'}`}
-          >
-            {dropped?.num === round.correct ? '🎉 Brawo!' : `❌ Odpowiedź: ${round.correct}`}
-          </motion.div>
-        )}
-
-        <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
-          <span
-            data-testid='adding-ball-answer-touch-hint'
-            className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
-            role='status'
-            aria-live='polite'
-            aria-atomic='true'
-          >
-            {selectedBall
-              ? isCoarsePointer
-                ? `Wybrana piłka: ${selectedBall.num}. Dotknij pole odpowiedzi, aby ją ustawić.`
-                : `Wybrana piłka: ${selectedBall.num}`
-              : isCoarsePointer
-                ? 'Dotknij piłkę, a potem pole odpowiedzi.'
-                : 'Wybierz piłkę, aby ustawić odpowiedź klawiaturą.'}
-          </span>
-          <KangurButton
-            size='sm'
-            type='button'
-            variant='surface'
-            onClick={applySelectedBall}
-            disabled={!selectedBall || checked}
-          >
-            Ustaw jako odpowiedź
-          </KangurButton>
-        </div>
+        <PickAnswerSelectionControls
+          checked={checked}
+          isCoarsePointer={isCoarsePointer}
+          selectedBall={selectedBall}
+          onApplySelectedBall={applySelectedBall}
+        />
 
         <Droppable droppableId='balls-pool' direction='horizontal'>
           {(provided) => (
@@ -192,5 +130,178 @@ export function PickAnswer({
         </Droppable>
       </div>
     </KangurDragDropContext>
+  );
+}
+
+function resolveSelectedBall(
+  balls: BallItem[],
+  selectedBallId: string | null
+): BallItem | null {
+  if (!selectedBallId) {
+    return null;
+  }
+  return balls.find((entry) => entry.id === selectedBallId) ?? null;
+}
+
+function resolvePickAnswerSelectionHint({
+  selectedBall,
+  isCoarsePointer,
+}: {
+  selectedBall: BallItem | null;
+  isCoarsePointer: boolean;
+}): string {
+  if (selectedBall) {
+    return isCoarsePointer
+      ? `Wybrana piłka: ${selectedBall.num}. Dotknij pole odpowiedzi, aby ją ustawić.`
+      : `Wybrana piłka: ${selectedBall.num}`;
+  }
+  return isCoarsePointer
+    ? 'Dotknij piłkę, a potem pole odpowiedzi.'
+    : 'Wybierz piłkę, aby ustawić odpowiedź klawiaturą.';
+}
+
+function resolvePickAnswerFeedback(props: {
+  dropped: BallItem | null;
+  correctAnswer: number;
+}): { className: string; text: string } {
+  const { dropped, correctAnswer } = props;
+  if (dropped?.num === correctAnswer) {
+    return { className: 'text-xl font-extrabold text-green-600', text: '🎉 Brawo!' };
+  }
+  return {
+    className: 'text-xl font-extrabold text-red-500',
+    text: `❌ Odpowiedź: ${correctAnswer}`,
+  };
+}
+
+function PickAnswerBallPreview({
+  dropped,
+}: {
+  dropped: BallItem | null;
+}): React.JSX.Element {
+  if (!dropped) {
+    return <span className='text-3xl [color:var(--kangur-page-muted-text)]'>?</span>;
+  }
+
+  return (
+    <div
+      className='relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border text-white'
+      style={getBallSurfaceStyle(dropped.color)}
+    >
+      <span className='pointer-events-none absolute inset-x-[18%] top-[14%] h-[20%] rounded-full bg-white/55 blur-[1px]' />
+      <span className='pointer-events-none absolute inset-x-[20%] bottom-[14%] h-[28%] rounded-full bg-black/10 blur-[7px]' />
+      <span className='relative z-10 text-xl font-extrabold drop-shadow-[0_1px_2px_rgba(15,23,42,0.35)]'>
+        {dropped.num}
+      </span>
+    </div>
+  );
+}
+
+function PickAnswerSlot(props: {
+  checked: boolean;
+  dropped: BallItem | null;
+  correctAnswer: number;
+  isCoarsePointer: boolean;
+  selectedBall: BallItem | null;
+  onApplySelectedBall: () => void;
+}): React.JSX.Element {
+  const {
+    checked,
+    dropped,
+    correctAnswer,
+    isCoarsePointer,
+    selectedBall,
+    onApplySelectedBall,
+  } = props;
+
+  return (
+    <Droppable droppableId='answer-slot'>
+      {(provided, snapshot) => {
+        const surface = getAnswerSlotSurface({
+          isDraggingOver: snapshot.isDraggingOver,
+          checked,
+          correct: dropped?.num === correctAnswer,
+        });
+        const handleClick = (): void => {
+          if (!isCoarsePointer || checked || dropped || !selectedBall) {
+            return;
+          }
+          onApplySelectedBall();
+        };
+
+        return (
+          <KangurInfoCard
+            ref={provided.innerRef}
+            accent={surface.accent}
+            className={cn(
+              surface.className,
+              'touch-manipulation select-none transition',
+              isCoarsePointer && 'h-28 w-28',
+              selectedBall && !dropped && 'border-amber-200 bg-amber-50/50'
+            )}
+            data-testid='adding-ball-answer-slot'
+            padding='sm'
+            tone={surface.tone}
+            onClick={handleClick}
+            {...provided.droppableProps}
+          >
+            <PickAnswerBallPreview dropped={dropped} />
+            {provided.placeholder}
+          </KangurInfoCard>
+        );
+      }}
+    </Droppable>
+  );
+}
+
+function PickAnswerFeedback(props: {
+  checked: boolean;
+  dropped: BallItem | null;
+  correctAnswer: number;
+}): React.JSX.Element | null {
+  const { checked, dropped, correctAnswer } = props;
+
+  if (!checked) {
+    return null;
+  }
+
+  const feedback = resolvePickAnswerFeedback({ dropped, correctAnswer });
+
+  return (
+    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className={feedback.className}>
+      {feedback.text}
+    </motion.div>
+  );
+}
+
+function PickAnswerSelectionControls(props: {
+  checked: boolean;
+  isCoarsePointer: boolean;
+  selectedBall: BallItem | null;
+  onApplySelectedBall: () => void;
+}): React.JSX.Element {
+  const { checked, isCoarsePointer, selectedBall, onApplySelectedBall } = props;
+
+  return (
+    <div className='flex flex-wrap items-center justify-center gap-2 text-xs'>
+      <span
+        data-testid='adding-ball-answer-touch-hint'
+        className='text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500'
+        role='status'
+        aria-live='polite'
+        aria-atomic='true'
+      >
+        {resolvePickAnswerSelectionHint({ selectedBall, isCoarsePointer })}
+      </span>
+      <KangurButton
+        size='sm'
+        type='button'
+        variant='surface'
+        onClick={onApplySelectedBall}
+        disabled={!selectedBall || checked}
+      >
+        Ustaw jako odpowiedź
+      </KangurButton>
+    </div>
   );
 }

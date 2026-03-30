@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,12 @@ canonical: true
 ---
 
 # Node Validator Node-Path-Code Parser Patterns
+
+This is the maintained pattern pack for kernel parsing of full path-code
+payloads. Use [`./node-validator-central-patterns.md`](./node-validator-central-patterns.md)
+for the full validator-pack index and [`./node-code-objects-v2.md`](./node-code-objects-v2.md)
+plus [`./node-code-objects-v3.md`](./node-code-objects-v3.md) for the contract
+surfaces these assertions validate.
 
 Pattern list id: `kernel-node-path-code-parser-v1`
 

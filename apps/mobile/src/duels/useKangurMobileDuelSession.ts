@@ -8,7 +8,7 @@ import type {
   KangurDuelStateResponse,
 } from '@kangur/contracts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import {
@@ -45,6 +45,50 @@ type UseKangurMobileDuelSessionResult = {
 const createMobileDuelSpectatorId = (): string =>
   `mobile_spectator_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
+const readSessionErrorStatus = (error: unknown): number | null => {
+  if (typeof error !== 'object' || !error || !('status' in error)) {
+    return null;
+  }
+
+  return typeof (error as { status?: unknown }).status === 'number'
+    ? ((error as { status: number }).status)
+    : null;
+};
+
+const readSessionErrorMessage = (error: unknown): string | null => {
+  if (!(error instanceof Error)) {
+    return null;
+  }
+
+  const message = error.message.trim();
+  return message.length > 0 ? message : null;
+};
+
+const isFallbackSessionErrorMessage = (message: string): boolean => {
+  const normalized = message.toLowerCase();
+  return normalized === 'failed to fetch' || normalized.includes('networkerror');
+};
+
+const getUnauthorizedSessionErrorMessage = (
+  copy: (value: KangurMobileLocalizedValue<string>) => string,
+): string =>
+  copy({
+    de: 'Melde dich an, um dieses Duell zu öffnen.',
+    en: 'Sign in to open this duel.',
+    pl: 'Zaloguj się, aby otworzyć ten pojedynek.',
+  });
+
+const resolveSessionMessageWithFallback = (
+  message: string | null,
+  fallback: string,
+): string => {
+  if (!message || isFallbackSessionErrorMessage(message)) {
+    return fallback;
+  }
+
+  return message;
+};
+
 const toSessionErrorMessage = (
   error: unknown,
   fallback: string,
@@ -54,33 +98,47 @@ const toSessionErrorMessage = (
     return null;
   }
 
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um dieses Duell zu öffnen.',
-        en: 'Sign in to open this duel.',
-        pl: 'Zaloguj się, aby otworzyć ten pojedynek.',
-      });
-    }
+  if (readSessionErrorStatus(error) === 401) {
+    return getUnauthorizedSessionErrorMessage(copy);
   }
 
-  if (!(error instanceof Error)) {
-    return fallback;
+  return resolveSessionMessageWithFallback(readSessionErrorMessage(error), fallback);
+};
+
+const resolveCurrentQuestionIndex = (
+  duelSession: KangurDuelSession | null,
+  isSpectating: boolean,
+  player: KangurDuelPlayer | null,
+): number | null => {
+  if (!duelSession) {
+    return null;
   }
 
-  const message = error.message.trim();
-  if (!message) {
-    return fallback;
+  const currentQuestionIndex = isSpectating
+    ? duelSession.currentQuestionIndex ?? 0
+    : player?.currentQuestionIndex ?? 0;
+
+  return currentQuestionIndex >= duelSession.questionCount
+    ? null
+    : currentQuestionIndex;
+};
+
+const resolveCurrentQuestion = (
+  duelSession: KangurDuelSession | null,
+  isSpectating: boolean,
+  player: KangurDuelPlayer | null,
+): KangurDuelQuestion | null => {
+  const currentQuestionIndex = resolveCurrentQuestionIndex(
+    duelSession,
+    isSpectating,
+    player,
+  );
+
+  if (!duelSession || currentQuestionIndex === null) {
+    return null;
   }
 
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return fallback;
-  }
-
-  return message;
+  return duelSession.questions[currentQuestionIndex] ?? null;
 };
 
 export const useKangurMobileDuelSession = (
@@ -149,21 +207,7 @@ export const useKangurMobileDuelSession = (
     ? spectatorState?.session ?? null
     : sessionState?.session ?? null;
   const player = isSpectating ? null : sessionState?.player ?? null;
-  const currentQuestion = useMemo(() => {
-    if (!duelSession) {
-      return null;
-    }
-
-    const currentQuestionIndex = isSpectating
-      ? duelSession.currentQuestionIndex ?? 0
-      : player?.currentQuestionIndex ?? 0;
-
-    if (currentQuestionIndex >= duelSession.questionCount) {
-      return null;
-    }
-
-    return duelSession.questions[currentQuestionIndex] ?? null;
-  }, [duelSession, isSpectating, player]);
+  const currentQuestion = resolveCurrentQuestion(duelSession, isSpectating, player);
 
   useEffect(() => {
     if (isSpectating || !hasSessionId || !isAuthenticated || !duelSession) {

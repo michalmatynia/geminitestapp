@@ -3,7 +3,10 @@
  */
 
 import React from 'react';
-import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts';
+import {
+  createDefaultKangurAiTutorLearnerMood,
+  type KangurDuelStateResponse,
+} from '@kangur/contracts';
 import type {
   KangurAuthSession,
   KangurUser,
@@ -89,65 +92,82 @@ const createSession = (user: KangurUser | null): KangurAuthSession => ({
   lastResolvedAt: '2026-03-20T00:00:00.000Z',
 });
 
-const createPlayerStateResponse = () => ({
-  player: {
-    displayName: 'Ada Learner',
-    learnerId: 'learner-1',
-    status: 'playing' as const,
-    score: 3,
-    bonusPoints: 0,
-    currentQuestionIndex: 0,
-    joinedAt: '2026-03-21T08:00:00.000Z',
-  },
-  serverTime: '2026-03-21T08:02:00.000Z',
-  session: {
-    createdAt: '2026-03-21T08:00:00.000Z',
-    currentQuestionIndex: 0,
-    difficulty: 'medium' as const,
-    endedAt: null,
-    id: 'duel-1',
-    invitedLearnerId: null,
-    invitedLearnerName: null,
-    maxPlayers: 2,
-    minPlayersToStart: 2,
-    mode: 'challenge' as const,
-    operation: 'addition' as const,
-    players: [
-      {
-        displayName: 'Ada Learner',
-        learnerId: 'learner-1',
-        status: 'playing' as const,
-        score: 3,
-        bonusPoints: 0,
-        currentQuestionIndex: 0,
-        joinedAt: '2026-03-21T08:00:00.000Z',
-      },
-      {
-        displayName: 'Leo Mentor',
-        learnerId: 'learner-2',
-        status: 'playing' as const,
-        score: 2,
-        bonusPoints: 0,
-        currentQuestionIndex: 0,
-        joinedAt: '2026-03-21T08:00:10.000Z',
-      },
-    ],
-    questionCount: 5,
-    questions: [
-      {
-        choices: [2, 3, 4],
-        id: 'question-1',
-        prompt: '1 + 1 = ?',
-      },
-    ],
-    recentReactions: [],
-    startedAt: '2026-03-21T08:01:00.000Z',
-    status: 'in_progress' as const,
-    timePerQuestionSec: 15,
-    updatedAt: '2026-03-21T08:02:00.000Z',
-    visibility: 'public' as const,
-  },
-});
+const createPlayerStateResponse = (overrides?: {
+  player?: Partial<KangurDuelStateResponse['player']>;
+  session?: Partial<KangurDuelStateResponse['session']>;
+}): KangurDuelStateResponse => {
+  const baseResponse = {
+    player: {
+      displayName: 'Ada Learner',
+      learnerId: 'learner-1',
+      status: 'playing' as const,
+      score: 3,
+      bonusPoints: 0,
+      currentQuestionIndex: 0,
+      joinedAt: '2026-03-21T08:00:00.000Z',
+    },
+    serverTime: '2026-03-21T08:02:00.000Z',
+    session: {
+      createdAt: '2026-03-21T08:00:00.000Z',
+      currentQuestionIndex: 0,
+      difficulty: 'medium' as const,
+      endedAt: null,
+      id: 'duel-1',
+      invitedLearnerId: null,
+      invitedLearnerName: null,
+      maxPlayers: 2,
+      minPlayersToStart: 2,
+      mode: 'challenge' as const,
+      operation: 'addition' as const,
+      players: [
+        {
+          displayName: 'Ada Learner',
+          learnerId: 'learner-1',
+          status: 'playing' as const,
+          score: 3,
+          bonusPoints: 0,
+          currentQuestionIndex: 0,
+          joinedAt: '2026-03-21T08:00:00.000Z',
+        },
+        {
+          displayName: 'Leo Mentor',
+          learnerId: 'learner-2',
+          status: 'playing' as const,
+          score: 2,
+          bonusPoints: 0,
+          currentQuestionIndex: 0,
+          joinedAt: '2026-03-21T08:00:10.000Z',
+        },
+      ],
+      questionCount: 5,
+      questions: [
+        {
+          choices: [2, 3, 4],
+          id: 'question-1',
+          prompt: '1 + 1 = ?',
+        },
+      ],
+      recentReactions: [],
+      startedAt: '2026-03-21T08:01:00.000Z',
+      status: 'in_progress' as const,
+      timePerQuestionSec: 15,
+      updatedAt: '2026-03-21T08:02:00.000Z',
+      visibility: 'public' as const,
+    },
+  };
+
+  return {
+    ...baseResponse,
+    player: {
+      ...baseResponse.player,
+      ...overrides?.player,
+    },
+    session: {
+      ...baseResponse.session,
+      ...overrides?.session,
+    },
+  };
+};
 
 const createWrapper =
   (queryClient: QueryClient, locale?: 'pl' | 'en' | 'de') =>
@@ -313,6 +333,50 @@ describe('useKangurMobileDuelSession', () => {
       expect(result.current.error).toBe(
         'Das öffentliche Duell konnte nicht geladen werden.',
       );
+    });
+  });
+
+  it('returns no active question when the tracked question index is past the duel length', async () => {
+    getDuelStateMock.mockResolvedValueOnce(
+      createPlayerStateResponse({
+        player: {
+          currentQuestionIndex: 1,
+        },
+        session: {
+          currentQuestionIndex: 1,
+          questionCount: 1,
+        },
+      }),
+    );
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileDuelSession('duel-finished-question'),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.session?.id).toBe('duel-1');
+    });
+
+    expect(result.current.currentQuestion).toBeNull();
+  });
+
+  it('falls back to the generic duel-state message for network fetch failures', async () => {
+    getDuelStateMock.mockRejectedValueOnce(new Error('Failed to fetch'));
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileDuelSession('duel-network-error'),
+      {
+        wrapper: createWrapper(queryClient, 'en'),
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('Could not load the duel state.');
     });
   });
 });

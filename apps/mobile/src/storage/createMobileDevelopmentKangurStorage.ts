@@ -161,6 +161,8 @@ const createNativeFileBackedMobileStorage = (
     listeners.forEach((listener) => listener(change));
   };
 
+  let cachedSnapshot: Record<string, string> | null = null;
+
   const ensureStorageFile = (): void => {
     if (!storageDirectory.exists) {
       storageDirectory.create({
@@ -177,24 +179,38 @@ const createNativeFileBackedMobileStorage = (
     }
   };
 
+  const loadSnapshot = (): Record<string, string> => {
+    if (cachedSnapshot) {
+      return cachedSnapshot;
+    }
+
+    cachedSnapshot = readNativeStorageSnapshot(storageFile);
+    return cachedSnapshot;
+  };
+
   const writeSnapshot = (snapshot: Record<string, string>): void => {
     ensureStorageFile();
     storageFile.write(JSON.stringify(snapshot));
+    cachedSnapshot = snapshot;
   };
 
   return {
     getItem: (key) => {
-      const snapshot = readNativeStorageSnapshot(storageFile);
+      const snapshot = loadSnapshot();
       return snapshot[key] ?? null;
     },
     setItem: (key, value) => {
-      const snapshot = readNativeStorageSnapshot(storageFile);
+      const snapshot = {
+        ...loadSnapshot(),
+      };
       snapshot[key] = value;
       writeSnapshot(snapshot);
       notifyListeners({ key, value });
     },
     removeItem: (key) => {
-      const snapshot = readNativeStorageSnapshot(storageFile);
+      const snapshot = {
+        ...loadSnapshot(),
+      };
       if (!(key in snapshot)) {
         return;
       }
@@ -204,6 +220,7 @@ const createNativeFileBackedMobileStorage = (
         if (storageFile.exists) {
           storageFile.delete();
         }
+        cachedSnapshot = {};
       } else {
         writeSnapshot(snapshot);
       }

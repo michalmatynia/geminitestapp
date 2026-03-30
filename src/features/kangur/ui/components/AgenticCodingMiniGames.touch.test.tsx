@@ -137,5 +137,23 @@ describe('Agentic coding mini-games touch mode', () => {
       'select-none',
       'min-h-11'
     );
+
+    const board = screen.getByRole('img', { name: 'Rysuj, aby połączyć checkpointy.' });
+
+    fireEvent.pointerDown(board, {
+      pointerId: 11,
+      clientX: 84,
+      clientY: 72,
+    });
+
+    expect(board).toHaveAttribute('data-drawing-active', 'true');
+
+    fireEvent.pointerUp(board, {
+      pointerId: 11,
+      clientX: 280,
+      clientY: 72,
+    });
+
+    expect(board).toHaveAttribute('data-drawing-active', 'false');
   });
 });

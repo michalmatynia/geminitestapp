@@ -140,6 +140,13 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Not used (menu nodes are folder-type entries).',
     folderHint: 'Example: folder',
   },
+  filemaker_mail: {
+    title: 'Filemaker Mail',
+    description: 'Controls the mailbox account and folder tree shown in Filemaker mail.',
+    fileHint: 'Example: mail_attention_account, mail_thread, mail_recent_thread',
+    folderHint:
+      'Example: mail_attention, mail_new_account, mail_account, mail_account_compose, mail_account_sync, mail_account_status_toggle, mail_account_recent, mail_account_settings, mail_folder',
+  },
   kangur_lessons_manager: {
     title: 'StudiQ Lessons Manager',
     description: 'Controls drag/drop ordering for StudiQ lessons in admin.',
@@ -251,6 +258,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Admin menu layout updated.',
+  },
+  filemaker_mail: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Mail tree updated.',
   },
   kangur_lessons_manager: {
     notifySuccess: false,

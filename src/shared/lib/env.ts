@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '@/shared/utils/logger';
 import { reportRuntimeCatch } from '@/shared/utils/observability/runtime-error-reporting';
 
 
@@ -14,7 +15,7 @@ const captureException = async (
       ...(context.context ?? {}),
     });
   } catch (reportingError) {
-    console.error('[env-validation] Failed to capture exception', reportingError, {
+    logger.error('[env-validation] Failed to capture exception', reportingError, {
       originalError: error,
       context,
     });

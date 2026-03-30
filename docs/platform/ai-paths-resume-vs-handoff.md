@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
@@ -22,6 +22,15 @@ Typical cases:
 
 `resume` assumes the run can re-enter normal execution without changing ownership expectations.
 
+Operator/API entrypoint:
+
+- `POST /api/ai-paths/runs/[runId]/resume`
+
+The request body accepts `mode: 'resume' | 'replay'`:
+
+- `resume`: continue from the current checkpoint lineage
+- `replay`: queue the run again through normal orchestration while preserving the same run identity
+
 ## Use `handoff`
 
 Choose `handoff` when the current execution context should be delegated.
@@ -33,13 +42,17 @@ Typical cases:
 
 `handoff` moves the run into `handoff_ready` and preserves continuation context in run metadata.
 
+Operator/API entrypoint:
+
+- `POST /api/ai-paths/runs/[runId]/handoff`
+
 ## Recommended operator flow
 
 1. Inspect the run status.
 2. If the run is `blocked_on_lease`, inspect ownership with `GET /api/agent/leases?resourceId=ai-paths.run.execution&scopeId=<runId>`.
 3. If the current owner is expected to complete soon, wait or retry with `resume` after the lease is released.
 4. If ownership contention is durable or work should change hands, mark the run handoff-ready from the run history list or run detail dialog, or call `POST /api/ai-paths/runs/[runId]/handoff`.
-5. Resume delegated work from the preserved checkpoint lineage.
+5. Resume delegated work from the preserved checkpoint lineage with `POST /api/ai-paths/runs/[runId]/resume`.
 
 ## Current operator entry points
 

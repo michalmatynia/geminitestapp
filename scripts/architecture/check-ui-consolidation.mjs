@@ -19,7 +19,7 @@ const scanPropDrillingScriptPath = fileURLToPath(new URL('./scan-prop-drilling.m
 const scanUiConsolidationScriptPath = fileURLToPath(
   new URL('./scan-ui-consolidation.mjs', import.meta.url)
 );
-const { summaryJson } = parseCommonCheckArgs(argv);
+const { noWrite, summaryJson } = parseCommonCheckArgs(argv);
 
 const buildUiConsolidationSummary = (snapshot, failures, { configurationError = false } = {}) => ({
   totalRules: UI_CONSOLIDATION_GUARDRAIL_RULES.length,
@@ -56,23 +56,26 @@ const writeUiConsolidationSummaryJson = ({
     },
     filters: {
       ...buildStaticCheckFilters(),
+      noWrite,
       ci: args.has('--ci'),
     },
     notes: ['ui consolidation guardrail result'],
   });
 };
 
+const buildScannerArgs = (scriptPath) => {
+  const commandArgs = [scriptPath, '--ci', '--no-history', '--summary-json'];
+  if (noWrite) {
+    commandArgs.splice(3, 0, '--no-write');
+  }
+  return commandArgs;
+};
+
 const run = async () => {
   const [propDrilling, uiConsolidation] = await Promise.all([
     collectNumericSummaryMetrics({
       cwd: root,
-      commandArgs: [
-        scanPropDrillingScriptPath,
-        '--ci',
-        '--no-history',
-        '--no-write',
-        '--summary-json',
-      ],
+      commandArgs: buildScannerArgs(scanPropDrillingScriptPath),
       sourceName: 'scan-prop-drilling',
       fields: {
         componentsWithForwarding: 'componentsWithForwarding',
@@ -81,13 +84,7 @@ const run = async () => {
     }),
     collectNumericSummaryMetrics({
       cwd: root,
-      commandArgs: [
-        scanUiConsolidationScriptPath,
-        '--ci',
-        '--no-history',
-        '--no-write',
-        '--summary-json',
-      ],
+      commandArgs: buildScannerArgs(scanUiConsolidationScriptPath),
       sourceName: 'scan-ui-consolidation',
       fields: {
         totalOpportunities: 'totalOpportunities',

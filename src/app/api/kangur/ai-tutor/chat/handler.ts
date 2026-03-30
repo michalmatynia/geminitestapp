@@ -12,7 +12,6 @@ import {
   buildKangurAiTutorLearnerMood,
   requireActiveLearner,
   resolveKangurActor,
-  setKangurLearnerAiTutorState,
 } from '@/features/kangur/server';
 import { buildKangurAiTutorAdaptiveGuidance } from '@/features/kangur/server/ai-tutor-adaptive';
 import { resolveKangurAiTutorNativeGuideResolution } from '@/features/kangur/server/ai-tutor-native-guide';
@@ -26,11 +25,10 @@ import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   parseKangurAiTutorSettings,
   getKangurAiTutorSettingsForLearner,
-  KANGUR_AI_TUTOR_SETTINGS_KEY,
-  resolveKangurAiTutorAvailability,
   resolveKangurAiTutorAppSettings,
-  type KangurAiTutorAvailabilityReason,
-} from '@/features/kangur/settings-ai-tutor';
+  resolveKangurAiTutorAvailability,
+  KANGUR_AI_TUTOR_SETTINGS_KEY,
+} from '@/features/kangur/ai-tutor/settings';
 import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
@@ -38,7 +36,6 @@ import {
   kangurAiTutorChatRequestSchema,
   type KangurAiTutorChatResponse,
   type KangurAiTutorCoachingMode,
-  type KangurAiTutorConversationContext,
 } from '@/shared/contracts/kangur-ai-tutor';
 import { createDefaultKangurAiTutorLearnerMood } from '@/shared/contracts/kangur-ai-tutor-mood';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -82,53 +79,15 @@ import {
   mergeFollowUpActions,
 } from './sources';
 import { persistConversationExchange } from './conversation-history';
+import {
+  AVAILABILITY_ERROR_MESSAGES,
+  buildKgTelemetry,
+  buildMoodTelemetry,
+  buildSettingsTelemetry,
+  KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
+  persistTutorMoodState,
+} from './handler.helpers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-
-const AVAILABILITY_ERROR_MESSAGES: Record<KangurAiTutorAvailabilityReason, string> = {
-  disabled: 'AI Tutor is not enabled for this learner.',
-  email_unverified: 'Verify your parent email to unlock AI Tutor.',
-  missing_context: 'AI Tutor context is required for Kangur tutoring sessions.',
-  lessons_disabled: 'AI Tutor is disabled for lessons for this learner.',
-  games_disabled: 'AI Tutor is disabled for games for this learner.',
-  tests_disabled: 'AI Tutor is disabled for tests for this learner.',
-  review_after_answer_only:
-    'AI Tutor is available in tests only after the answer has been revealed.',
-};
-const KANGUR_AI_TUTOR_BRAIN_CAPABILITY = 'kangur_ai_tutor.chat';
-const persistTutorMoodState = async (input: {
-  learnerId: string;
-  tutorMood: ReturnType<typeof createDefaultKangurAiTutorLearnerMood>;
-  actor: Awaited<ReturnType<typeof resolveKangurActor>>;
-  context: KangurAiTutorConversationContext | undefined;
-  req: NextRequest;
-  ctx: ApiHandlerContext;
-}): Promise<void> => {
-  try {
-    await setKangurLearnerAiTutorState(input.learnerId, input.tutorMood);
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    await logKangurServerEvent({
-      source: 'kangur.ai-tutor.chat.mood-persist-failed',
-      service: 'kangur.ai-tutor',
-      message: 'Failed to persist learner-specific Kangur tutor mood.',
-      level: 'warn',
-      request: input.req,
-      requestContext: input.ctx,
-      actor: input.actor,
-      error,
-      statusCode: 500,
-      context: {
-        learnerId: input.learnerId,
-        tutorMoodId: input.tutorMood.currentMoodId,
-        tutorBaselineMoodId: input.tutorMood.baselineMoodId,
-        tutorMoodReasonCode: input.tutorMood.lastReasonCode,
-        surface: input.context?.surface ?? null,
-        contentId: input.context?.contentId ?? null,
-      },
-      });
-  }
-};
 
 export async function postKangurAiTutorChatHandler(
   req: NextRequest,
@@ -347,7 +306,10 @@ export async function postKangurAiTutorChatHandler(
     }
     const shouldAttemptPageContentAnswer =
       !learnerDrawingImageData &&
-      context?.interactionIntent === 'explain' &&
+      (
+        context?.interactionIntent === 'explain' ||
+        context?.promptMode === 'selected_text'
+      ) &&
       (
         context?.knowledgeReference?.sourceCollection === 'kangur_page_content' ||
         context?.promptMode === 'selected_text'
@@ -535,9 +497,7 @@ export async function postKangurAiTutorChatHandler(
     const knowledgeGraphFollowUpActions =
       knowledgeGraphContext.status === 'hit' ? knowledgeGraphContext.graphFollowUpActions : [];
 
-    // Telemetry helpers — capture the resolved KG/settings state once so each
-    // log callsite can spread them instead of repeating 15+ fields verbatim.
-    const buildKgTelemetry = () => ({
+    const kgTelemetry = buildKgTelemetry({
       knowledgeGraphApplied,
       knowledgeGraphQueryMode,
       knowledgeGraphRecallStrategy,
@@ -548,29 +508,12 @@ export async function postKangurAiTutorChatHandler(
       knowledgeGraphSourceCollections,
       knowledgeGraphHydrationSources,
       websiteHelpGraphApplied,
-      websiteHelpGraphNodeIds: websiteHelpGraphApplied ? knowledgeGraphNodeIds : [],
-      websiteHelpGraphSourceCollections: websiteHelpGraphApplied ? knowledgeGraphSourceCollections : [],
-      websiteHelpGraphHydrationSources: websiteHelpGraphApplied ? knowledgeGraphHydrationSources : [],
-      websiteHelpGraphTargetNodeId: websiteHelpGraphApplied ? knowledgeGraphWebsiteHelpTargetNodeId : null,
-      websiteHelpGraphTargetRoute: websiteHelpGraphApplied ? knowledgeGraphWebsiteHelpTargetRoute : null,
-      websiteHelpGraphTargetAnchorId: websiteHelpGraphApplied ? knowledgeGraphWebsiteHelpTargetAnchorId : null,
+      knowledgeGraphWebsiteHelpTargetNodeId,
+      knowledgeGraphWebsiteHelpTargetRoute,
+      knowledgeGraphWebsiteHelpTargetAnchorId,
     });
-    const buildSettingsTelemetry = () => ({
-      showSources: tutorSettings.showSources,
-      allowSelectedTextSupport: tutorSettings.allowSelectedTextSupport,
-      allowLessons: tutorSettings.allowLessons,
-      allowGames: tutorSettings.allowGames,
-      testAccessMode: tutorSettings.testAccessMode,
-      hintDepth: tutorSettings.hintDepth,
-      proactiveNudges: tutorSettings.proactiveNudges,
-      rememberTutorContext: tutorSettings.rememberTutorContext,
-    });
-    const buildMoodTelemetry = () => ({
-      tutorMoodId: tutorMood.currentMoodId,
-      tutorBaselineMoodId: tutorMood.baselineMoodId,
-      tutorMoodReasonCode: tutorMood.lastReasonCode,
-      tutorMoodConfidence: tutorMood.confidence,
-    });
+    const settingsTelemetry = buildSettingsTelemetry(tutorSettings);
+    const moodTelemetry = buildMoodTelemetry(tutorMood);
 
     if (nativeGuideResolution.status === 'hit') {
       const nativeGuideResponse = extractTutorDrawingArtifactsFromResponse(
@@ -632,7 +575,7 @@ export async function postKangurAiTutorChatHandler(
             nativeGuideCoverageLevel: nativeGuideResolution.coverageLevel,
             nativeGuideEntryId: nativeGuideResolution.entryId,
             nativeGuideMatchSignals: nativeGuideResolution.matchedSignals,
-            ...buildKgTelemetry(),
+            ...kgTelemetry,
           },
         });
       }
@@ -653,16 +596,16 @@ export async function postKangurAiTutorChatHandler(
           interactionIntent: context?.interactionIntent ?? null,
           retrievedSourceCount: resolvedSources.length,
           returnedSourceCount: responseSources.length,
-          ...buildSettingsTelemetry(),
+          ...settingsTelemetry,
           nativeGuideApplied: true,
           nativeGuideCoverageLevel: nativeGuideResolution.coverageLevel,
           nativeGuideEntryId: nativeGuideResolution.entryId,
           nativeGuideMatchSignals: nativeGuideResolution.matchedSignals,
-          ...buildKgTelemetry(),
+          ...kgTelemetry,
           contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
           contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
           followUpActionCount: nativeGuideResolution.followUpActions.length,
-          ...buildMoodTelemetry(),
+          ...moodTelemetry,
           dailyMessageLimit: usage.dailyMessageLimit,
           dailyUsageCount: usage.messageCount,
           dailyUsageRemaining: usage.remainingMessages,
@@ -719,7 +662,7 @@ export async function postKangurAiTutorChatHandler(
           promptMode: resolvedPromptMode,
           interactionIntent: context?.interactionIntent ?? null,
           nativeGuideApplied: false,
-          ...buildKgTelemetry(),
+          ...kgTelemetry,
         },
       });
     }
@@ -943,9 +886,9 @@ export async function postKangurAiTutorChatHandler(
         brainCapability: KANGUR_AI_TUTOR_BRAIN_CAPABILITY,
         retrievedSourceCount: resolvedSources.length,
         returnedSourceCount: responseSources.length,
-        ...buildSettingsTelemetry(),
+        ...settingsTelemetry,
         adaptiveGuidanceApplied,
-        ...buildKgTelemetry(),
+        ...kgTelemetry,
         contextRegistryRefCount: contextRegistryBundle?.refs.length ?? 0,
         contextRegistryDocumentCount: contextRegistryBundle?.documents.length ?? 0,
         followUpActionCount: adaptiveGuidance.followUpActions.length,
@@ -958,7 +901,7 @@ export async function postKangurAiTutorChatHandler(
         personaId: tutorSettings.agentPersonaId,
         suggestedPersonaMoodId,
         personaMemorySessionId,
-        ...buildMoodTelemetry(),
+        ...moodTelemetry,
         dailyMessageLimit: usage.dailyMessageLimit,
         dailyUsageCount: usage.messageCount,
         dailyUsageRemaining: usage.remainingMessages,

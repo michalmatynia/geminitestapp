@@ -16,6 +16,7 @@ import {
   createDefaultParentDashboardScreenComponents,
 } from './project-defaults';
 import {
+  KANGUR_HIDDEN_WIDGET_IDS,
   KANGUR_CMS_SCREEN_KEYS,
   type KangurCmsScreenKey,
   type KangurCmsScreen,
@@ -23,6 +24,7 @@ import {
   kangurCmsProjectSchema,
 } from './project-contracts';
 import { withOrders } from './project-factories';
+import { sanitizeKangurScreenComponents } from './kangur-page-builder-policy';
 
 // Re-export contracts and constants
 export * from './project-contracts';
@@ -32,6 +34,108 @@ export * from './project-leaderboard';
 export * from './project-defaults';
 
 const now = (): string => new Date().toISOString();
+const PARENT_DASHBOARD_SCORES_WIDGET_ID = 'parent-dashboard-scores';
+const LEARNER_PROFILE_RESULTS_WIDGET_ID = 'learner-profile-results';
+
+const getBlockWidgetId = (block: BlockInstance): string | null =>
+  block.type === 'KangurWidget' && typeof block.settings['widgetId'] === 'string'
+    ? block.settings['widgetId']
+    : null;
+
+const blockContainsWidgetId = (block: BlockInstance, widgetId: string): boolean =>
+  getBlockWidgetId(block) === widgetId ||
+  Boolean(block.blocks?.some((child) => blockContainsWidgetId(child, widgetId)));
+
+const componentContainsWidgetId = (component: PageComponentInput, widgetId: string): boolean =>
+  component.content.blocks.some((block) => blockContainsWidgetId(block, widgetId));
+
+const screenContainsWidgetId = (screen: KangurCmsScreen, widgetId: string): boolean =>
+  screen.components.some((component) => componentContainsWidgetId(component, widgetId));
+
+const stripWidgetBlocks = (blocks: BlockInstance[], widgetId: string): BlockInstance[] =>
+  blocks.flatMap((block) => {
+    if (getBlockWidgetId(block) === widgetId) {
+      return [];
+    }
+
+    if (!block.blocks?.length) {
+      return [block];
+    }
+
+    const nextBlocks = stripWidgetBlocks(block.blocks, widgetId);
+    if (nextBlocks.length === 0) {
+      return [];
+    }
+
+    return [{ ...block, blocks: nextBlocks }];
+  });
+
+const removeWidgetFromScreen = (screen: KangurCmsScreen, widgetId: string): KangurCmsScreen => ({
+  ...screen,
+  components: withOrders(
+    screen.components.flatMap((component) => {
+      const nextBlocks = stripWidgetBlocks(component.content.blocks, widgetId);
+      if (nextBlocks.length === 0) {
+        return [];
+      }
+
+      return [
+        {
+          ...component,
+          content: {
+            ...component.content,
+            blocks: nextBlocks,
+          },
+        },
+      ];
+    })
+  ),
+});
+
+const cloneComponentInput = (component: PageComponentInput): PageComponentInput =>
+  JSON.parse(JSON.stringify(component)) as PageComponentInput;
+
+const buildLearnerProfileResultsComponent = (): PageComponentInput | null => {
+  const defaultResultsComponent = createDefaultLearnerProfileScreenComponents().find((component) =>
+    componentContainsWidgetId(component, LEARNER_PROFILE_RESULTS_WIDGET_ID)
+  );
+  return defaultResultsComponent ? cloneComponentInput(defaultResultsComponent) : null;
+};
+
+const ensureLearnerProfileResultsScreen = (screen: KangurCmsScreen): KangurCmsScreen => {
+  if (screenContainsWidgetId(screen, LEARNER_PROFILE_RESULTS_WIDGET_ID)) {
+    return screen;
+  }
+
+  const resultsComponent = buildLearnerProfileResultsComponent();
+  if (!resultsComponent) {
+    return screen;
+  }
+
+  const overviewIndex = screen.components.findIndex((component) =>
+    componentContainsWidgetId(component, 'learner-profile-overview')
+  );
+  const insertAt = overviewIndex >= 0 ? overviewIndex + 1 : screen.components.length;
+  const components = [...screen.components];
+  components.splice(insertAt, 0, resultsComponent);
+
+  return {
+    ...screen,
+    components: withOrders(components),
+  };
+};
+
+const normalizeResultsOwnership = (project: KangurCmsProject): KangurCmsProject => ({
+  ...project,
+  screens: {
+    ...project.screens,
+    LearnerProfile: ensureLearnerProfileResultsScreen(project.screens.LearnerProfile),
+    ParentDashboard: removeWidgetFromScreen(
+      project.screens.ParentDashboard,
+      PARENT_DASHBOARD_SCORES_WIDGET_ID
+    ),
+  },
+});
 
 const resolveSingleWidgetId = (screen: KangurCmsScreen): string | null => {
   if (screen.components.length !== 1) {
@@ -51,7 +155,7 @@ const resolveSingleWidgetId = (screen: KangurCmsScreen): string | null => {
   return typeof block.settings['widgetId'] === 'string' ? block.settings['widgetId'] : null;
 };
 
-const HIDDEN_KANGUR_WIDGET_IDS = new Set(['game-home-hero']);
+const HIDDEN_KANGUR_WIDGET_IDS = new Set<string>(KANGUR_HIDDEN_WIDGET_IDS);
 
 const sectionContainsHiddenWidget = (blocks: BlockInstance[]): boolean => {
   for (const block of blocks) {
@@ -91,6 +195,35 @@ const pruneHiddenWidgetsFromProject = (project: KangurCmsProject): KangurCmsProj
     ParentDashboard: {
       ...project.screens.ParentDashboard,
       components: pruneHiddenWidgetSections(project.screens.ParentDashboard.components),
+    },
+  },
+});
+
+const sanitizeDisallowedBlocksFromProject = (project: KangurCmsProject): KangurCmsProject => ({
+  ...project,
+  screens: {
+    ...project.screens,
+    Game: {
+      ...project.screens.Game,
+      components: sanitizeKangurScreenComponents('Game', project.screens.Game.components),
+    },
+    Lessons: {
+      ...project.screens.Lessons,
+      components: sanitizeKangurScreenComponents('Lessons', project.screens.Lessons.components),
+    },
+    LearnerProfile: {
+      ...project.screens.LearnerProfile,
+      components: sanitizeKangurScreenComponents(
+        'LearnerProfile',
+        project.screens.LearnerProfile.components
+      ),
+    },
+    ParentDashboard: {
+      ...project.screens.ParentDashboard,
+      components: sanitizeKangurScreenComponents(
+        'ParentDashboard',
+        project.screens.ParentDashboard.components
+      ),
     },
   },
 });
@@ -181,7 +314,11 @@ export function parseKangurCmsProject(
     return fallbackToDefault ? createDefaultKangurCmsProject(locale) : null;
   }
 
-  return pruneHiddenWidgetsFromProject(upgradeLegacyScreenComponents(result.data, locale));
+  return sanitizeDisallowedBlocksFromProject(
+    pruneHiddenWidgetsFromProject(
+      normalizeResultsOwnership(upgradeLegacyScreenComponents(result.data, locale))
+    )
+  );
 }
 
 export function buildKangurCmsSyntheticPage(
@@ -203,7 +340,7 @@ export function buildKangurCmsSyntheticPage(
     publishedAt: undefined,
     themeId: null,
     showMenu: false,
-    components: withOrders(screen.components),
+    components: withOrders(sanitizeKangurScreenComponents(screen.key, screen.components)),
     slugs: [],
     seoTitle: `Kangur ${screen.name}`,
     seoDescription: '',
@@ -228,7 +365,14 @@ export function buildKangurCmsBuilderState(
   locale?: string | null
 ): PageBuilderState {
   const screen = project.screens[screenKey];
-  const currentPage = buildKangurCmsSyntheticPage(screen, locale);
+  const sanitizedComponents = sanitizeKangurScreenComponents(screenKey, screen.components);
+  const currentPage = buildKangurCmsSyntheticPage(
+    {
+      ...screen,
+      components: sanitizedComponents,
+    },
+    locale
+  );
   const sections: SectionInstance[] = currentPage.components.map(
     (component: PageComponentInput) => ({
       id: component.content.sectionId,
@@ -242,7 +386,7 @@ export function buildKangurCmsBuilderState(
 
   return {
     pages: KANGUR_CMS_SCREEN_KEYS.map((key: KangurCmsScreenKey) =>
-      buildKangurCmsPageSummary(project.screens[key])
+      buildKangurCmsSyntheticPage(project.screens[key], locale)
     ),
     currentPage,
     sections,

@@ -27,7 +27,7 @@ import {
   KANGUR_TEST_SUITE_SORT_ORDER_GAP,
 } from '../test-suites';
 import { KangurAdminContentShell } from './components/KangurAdminContentShell';
-import { KangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
+import { renderKangurAdminWorkspaceIntroCard } from './components/KangurAdminWorkspaceIntroCard';
 import { renderKangurTestSuiteMetricsGrid } from './components/KangurTestSuiteMetricsGrid';
 import { TestSuiteTreeRow } from './components/TestSuiteTreeRow';
 import {
@@ -162,11 +162,12 @@ function TestSuitesManagerInner({ standalone }: { standalone: boolean }) {
 
   const mainWorkspace = (
     <div className={`${KANGUR_STACK_ROOMY_CLASSNAME} h-full overflow-hidden`}>
-      <KangurAdminWorkspaceIntroCard
-        title='Question bank'
-        description='Manage Kangur test suites with the same editorial health model used inside the question workspace. Review-fix pressure and live publish readiness are visible before you open each suite.'
-        badge='Shared triage'
-      />
+      {renderKangurAdminWorkspaceIntroCard({
+        title: 'Question bank',
+        description:
+          'Manage Kangur test suites with the same editorial health model used inside the question workspace. Review-fix pressure and live publish readiness are visible before you open each suite.',
+        badge: 'Shared triage',
+      })}
 
       {renderKangurTestSuiteMetricsGrid({
         libraryHealthSummary: logic.libraryHealthSummary,

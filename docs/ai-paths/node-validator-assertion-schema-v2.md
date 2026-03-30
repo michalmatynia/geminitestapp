@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,11 @@ canonical: true
 ---
 
 # AI-Paths Node Validator Assertion Schema v2
+
+This is the maintained schema contract for fenced `ai-paths-assertion` blocks.
+Use [`./node-validator-central-patterns.md`](./node-validator-central-patterns.md)
+for the validator-pack hub and [`./reference.md`](./reference.md) for the
+broader AI Paths runtime surface those assertions protect.
 
 Centralized docs provide machine-readable assertions in fenced `ai-paths-assertion` blocks.
 The Node Validator sync consumes these assertions and compiles rule candidates.

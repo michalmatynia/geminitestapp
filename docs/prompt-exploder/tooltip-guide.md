@@ -1,6 +1,6 @@
 ---
 owner: 'Prompt Exploder Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:prompt-exploder'
@@ -27,7 +27,9 @@ Provide in-product documentation hints for Prompt Exploder controls. Users can e
 
 - Canonical docs catalog:
   - `docs/prompt-exploder/tooltip-catalog.ts`
-- Runtime docs catalog bridge:
+- Shared runtime documentation catalog:
+  - `src/shared/lib/documentation/catalogs/prompt-exploder.ts`
+- Prompt Exploder runtime bridge:
   - `src/features/prompt-exploder/docs/catalog.ts`
 - Tooltip registry (resolver):
   - `src/features/prompt-exploder/docs/tooltip-registry.ts`
@@ -39,6 +41,12 @@ Provide in-product documentation hints for Prompt Exploder controls. Users can e
   - `src/features/prompt-exploder/components/PromptExploderDocsTooltipSwitch.tsx`
 - Toggle persistence hook:
   - `src/features/prompt-exploder/hooks/usePromptExploderDocsTooltips.ts`
+
+## Runtime Note
+
+Prompt Exploder no longer owns a completely isolated tooltip-doc system. The feature
+publishes its docs catalog into the shared documentation module, and the runtime
+tooltip resolver reads Prompt Exploder entries back through that shared layer.
 - Route wiring:
   - `src/features/prompt-exploder/components/PromptExploderHeaderBar.tsx`
   - `src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx`

@@ -8,11 +8,9 @@ import {
   useProductListingsData,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type {
-  ProductListingExportEvent,
-  ProductListingWithDetails,
-} from '@/shared/contracts/integrations';
+import type { ProductListingExportEvent } from '@/shared/contracts/integrations';
 import { StatusBadge, Card, MetadataItem, Hint, Button } from '@/shared/ui';
+import type { ProductListingWithDetailsProps } from './types';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {
   if (!value) return '—';
@@ -26,9 +24,7 @@ const formatListValue = (value: string | null | undefined): string => (value ? v
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-export type ProductListingDetailsProps = {
-  listing: ProductListingWithDetails;
-};
+type ProductListingDetailsProps = ProductListingWithDetailsProps;
 
 export function ProductListingDetails(props: ProductListingDetailsProps): React.JSX.Element {
   const { listing } = props;

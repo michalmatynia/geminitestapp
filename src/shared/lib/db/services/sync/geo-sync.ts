@@ -2,6 +2,44 @@ import type { MongoCurrencyDoc, MongoCountryDoc, MongoLanguageDoc } from '../dat
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma, CurrencyCode } from '@prisma/client';
 
+type BatchResult = { count: number };
+
+type CurrencySeed = {
+  id: string;
+  code: CurrencyCode;
+  name: string;
+  symbol: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CountrySeed = {
+  id: string;
+  code: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  currencyIds: string[];
+};
+
+type LanguageSeed = {
+  id: string;
+  code: string;
+  name: string;
+  nativeName: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  countries: Array<{ countryId: string }>;
+};
+
+type CurrencyRow = CurrencySeed;
+type CountryRow = Omit<CountrySeed, 'currencyIds'> & {
+  currencies: Array<{ currencyId: string }>;
+};
+type LanguageRow = Omit<LanguageSeed, 'countries'> & {
+  countries: Array<{ countryId: string; country: { id: string; code: string; name: string } }>;
+};
+
 export const syncCurrencies: DatabaseSyncHandler = async ({ mongo, prisma, currencyCodes }) => {
   // Clear dependent data so currency deletes don't fail on FK constraints.
   await prisma.product.deleteMany();
@@ -12,7 +50,7 @@ export const syncCurrencies: DatabaseSyncHandler = async ({ mongo, prisma, curre
     .toArray()) as MongoCurrencyDoc[];
   const warnings: string[] = [];
   const data = docs
-    .map((doc: MongoCurrencyDoc): Prisma.CurrencyCreateManyInput | null => {
+    .map((doc: MongoCurrencyDoc): CurrencySeed | null => {
       const code = String(doc.code ?? '').toUpperCase();
       if (currencyCodes && !currencyCodes.has(code)) {
         warnings.push(`Skipped currency code: ${code || 'unknown'}`);
@@ -28,9 +66,13 @@ export const syncCurrencies: DatabaseSyncHandler = async ({ mongo, prisma, curre
         updatedAt: (doc.updatedAt as Date) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.CurrencyCreateManyInput => item !== null);
-  const deleted = await prisma.currency.deleteMany();
-  const created = data.length ? await prisma.currency.createMany({ data }) : { count: 0 };
+    .filter((item): item is CurrencySeed => item !== null);
+  const deleted = (await prisma.currency.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.currency.createMany({
+      data: data as Prisma.CurrencyCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -46,7 +88,7 @@ export const syncCountries: DatabaseSyncHandler = async ({ mongo, prisma, countr
     .toArray()) as MongoCountryDoc[];
   const warnings: string[] = [];
   const data = docs
-    .map((doc: MongoCountryDoc) => {
+    .map((doc: MongoCountryDoc): CountrySeed | null => {
       const code = String(doc.code ?? '').toUpperCase();
       if (countryCodes && !countryCodes.has(code)) {
         warnings.push(`Skipped country code: ${code || 'unknown'}`);
@@ -62,13 +104,13 @@ export const syncCountries: DatabaseSyncHandler = async ({ mongo, prisma, countr
         currencyIds: Array.isArray(doc.currencyIds) ? doc.currencyIds : [],
       };
     })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+    .filter((item): item is CountrySeed => item !== null);
 
-  const deleted = await prisma.country.deleteMany();
-  const created = data.length
-    ? await prisma.country.createMany({
+  const deleted = (await prisma.country.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.country.createMany({
       data: data.map(({ currencyIds: _, ...rest }) => rest) as Prisma.CountryCreateManyInput[],
-    })
+    })) as BatchResult)
     : { count: 0 };
 
   const joinRows = data.flatMap((country) =>
@@ -98,7 +140,7 @@ export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
     .find({})
     .toArray()) as MongoLanguageDoc[];
   const data = docs
-    .map((doc: MongoLanguageDoc) => {
+    .map((doc: MongoLanguageDoc): LanguageSeed | null => {
       const code = String(doc.code ?? '').toUpperCase();
       if (!code) return null;
       return {
@@ -111,13 +153,13 @@ export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
         countries: Array.isArray(doc.countries) ? doc.countries : [],
       };
     })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+    .filter((item): item is LanguageSeed => item !== null);
 
-  const deleted = await prisma.language.deleteMany();
-  const created = data.length
-    ? await prisma.language.createMany({
+  const deleted = (await prisma.language.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.language.createMany({
       data: data.map(({ countries: _, ...rest }) => rest) as Prisma.LanguageCreateManyInput[],
-    })
+    })) as BatchResult)
     : { count: 0 };
 
   const joinRows = data.flatMap((lang) =>
@@ -137,7 +179,7 @@ export const syncLanguages: DatabaseSyncHandler = async ({ mongo, prisma }) => {
 // --- Prisma to Mongo handlers ---
 
 export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.currency.findMany();
+  const rows = (await prisma.currency.findMany()) as CurrencyRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -158,9 +200,9 @@ export const syncCurrenciesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncCountriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.country.findMany({
+  const rows = (await prisma.country.findMany({
     include: { currencies: true },
-  });
+  })) as CountryRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
@@ -181,9 +223,9 @@ export const syncCountriesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, p
 };
 
 export const syncLanguagesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.language.findMany({
+  const rows = (await prisma.language.findMany({
     include: { countries: { include: { country: true } } },
-  });
+  })) as LanguageRow[];
   const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,

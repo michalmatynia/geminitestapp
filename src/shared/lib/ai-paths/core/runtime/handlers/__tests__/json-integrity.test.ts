@@ -88,4 +88,15 @@ describe('json-integrity helper', () => {
     expect(normalized.diagnostic.parseError).toBeDefined();
     expect(normalized.diagnostic.truncationDetected).toBe(true);
   });
+
+  it('does not treat braces inside quoted strings as missing container closers', () => {
+    const input = '{"message":"literal } text","items":[{"value":"["}]}';
+    const normalized = normalizeJsonLikeValue(input, 'repair');
+
+    expect(normalized.state).toBe('parsed');
+    expect(normalized.value).toEqual({
+      message: 'literal } text',
+      items: [{ value: '[' }],
+    });
+  });
 });

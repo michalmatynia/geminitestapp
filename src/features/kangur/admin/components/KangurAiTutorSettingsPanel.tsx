@@ -8,13 +8,14 @@ import {
   KANGUR_AI_TUTOR_MOTION_PRESET_OPTIONS,
   type KangurAiTutorGuestIntroMode,
   type KangurAiTutorHomeOnboardingMode,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import { resolveAgentPersonaMood } from '@/shared/lib/agent-personas';
 import {
   AgentPersonaMoodAvatar,
   Alert,
   Badge,
   Button,
+  Card,
   FormField,
   FormSection,
   Input,
@@ -27,7 +28,7 @@ import {
   KANGUR_GRID_RELAXED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 
-import { KangurAdminCard, KangurAdminInsetCard } from './KangurAdminCard';
+import { KangurAdminCard } from './KangurAdminCard';
 
 const DEFAULT_AGENT_PERSONA_OPTION = '__default_agent_persona__';
 const DEFAULT_MOTION_PRESET_OPTION = '__default_motion_preset__';
@@ -208,7 +209,7 @@ function AgentPersonaSelect() {
         />
       </FormField>
 
-      <KangurAdminInsetCard padding='sm' className='mt-4'>
+      <Card variant='subtle' padding='sm' className='mt-4 rounded-2xl border-border/60 bg-background/60 shadow-sm'>
         <div className={KANGUR_CENTER_ROW_CLASSNAME}>
           <Badge variant='outline'>Current persona</Badge>
         </div>
@@ -231,7 +232,7 @@ function AgentPersonaSelect() {
             </div>
           </div>
         </div>
-      </KangurAdminInsetCard>
+      </Card>
     </>
   );
 }

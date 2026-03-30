@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
-import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   CalendarDateFormatAnimation,
   CalendarDateHighlightAnimation,
@@ -19,6 +20,7 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import { KangurDisplayEmoji } from '@/features/kangur/ui/design/primitives';
+import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   addXp,
   createLessonCompletionReward,
@@ -26,10 +28,7 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
-
-import CalendarInteractiveGame, {
-  type CalendarInteractiveSectionId,
-} from './CalendarInteractiveGame';
+import type { CalendarInteractiveSectionId } from './CalendarInteractiveGame';
 
 type LessonSectionId = 'intro' | 'dni' | 'miesiace' | 'data';
 type TrainingCardId = 'game_days' | 'game_months' | 'game_dates';
@@ -553,26 +552,19 @@ const CALENDAR_GAME_SECTION_MAP: Record<TrainingCardId, CalendarInteractiveSecti
   game_months: 'miesiace',
   game_dates: 'data',
 };
-
-const CalendarGameBody = ({
-  section,
-  onFinish,
-  onAward,
-}: {
-  section: CalendarInteractiveSectionId;
-  onFinish: () => void;
-  onAward: () => void;
-}): React.JSX.Element => {
-  useEffect(() => {
-    onAward();
-  }, [onAward]);
-
-  return <CalendarInteractiveGame key={section} onFinish={onFinish} section={section} />;
+const CALENDAR_INSTANCE_ID_BY_SECTION: Record<CalendarInteractiveSectionId, string> = {
+  dni: getKangurBuiltInGameInstanceId('calendar_interactive', 'calendar_interactive:calendar-days'),
+  miesiace: getKangurBuiltInGameInstanceId(
+    'calendar_interactive',
+    'calendar_interactive:calendar-months'
+  ),
+  data: getKangurBuiltInGameInstanceId('calendar_interactive', 'calendar_interactive:calendar-dates'),
 };
 
 export default function CalendarLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.calendar');
   const miniGameTranslations = useTranslations('KangurMiniGames');
+  const { subjectKey } = useKangurSubjectFocus();
   const lessonCompletionAwardedRef = useRef(false);
 
   const awardLessonCompletionOnce = useCallback(() => {
@@ -580,11 +572,11 @@ export default function CalendarLesson(): React.JSX.Element {
       return;
     }
 
-    const progress = loadProgress();
+    const progress = loadProgress({ ownerKey: subjectKey });
     const reward = createLessonCompletionReward(progress, 'calendar', 60);
-    addXp(reward.xp, reward.progressUpdates);
+    addXp(reward.xp, reward.progressUpdates, { ownerKey: subjectKey });
     lessonCompletionAwardedRef.current = true;
-  }, []);
+  }, [subjectKey]);
 
   const sections = buildCalendarHubSections(translations);
   const slides = buildCalendarSectionSlides(translations, miniGameTranslations);
@@ -598,7 +590,7 @@ export default function CalendarLesson(): React.JSX.Element {
 
     return {
       sectionId: trainingId,
-      stage: {
+      shell: {
         accent: 'emerald' as const,
         description: section.description,
         headerTestId: 'calendar-lesson-game-header',
@@ -607,13 +599,11 @@ export default function CalendarLesson(): React.JSX.Element {
         shellTestId: 'calendar-lesson-game-shell',
         title: section.title,
       },
-      render: ({ onBack }: { onBack: () => void }) => (
-        <CalendarGameBody
-          section={interactiveSection}
-          onFinish={onBack}
-          onAward={awardLessonCompletionOnce}
-        />
-      ),
+      onShellEnter: awardLessonCompletionOnce,
+      lessonActivityInstance: {
+        gameId: 'calendar_interactive',
+        instanceId: CALENDAR_INSTANCE_ID_BY_SECTION[interactiveSection],
+      },
     };
   });
 

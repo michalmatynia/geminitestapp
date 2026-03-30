@@ -1,7 +1,12 @@
 'use client';
-import dynamic from 'next/dynamic';
 import { Profiler, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  ProductFilters,
+  ProductSelectionActions,
+} from '@/features/products/components/list/ProductFilters';
+import { ProductListHeader } from '@/features/products/components/list/ProductListHeader';
+import { ProductListMobileCards } from '@/features/products/components/list/ProductListMobileCards';
 import {
   useProductListAlertsContext,
   useProductListModalsContext,
@@ -12,53 +17,10 @@ import { logProductListDebug } from '@/features/products/lib/product-list-observ
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 import { Alert, Button, DataTable, EmptyState, StandardDataTablePanel } from '@/shared/ui';
+import { PromptModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { Row } from '@tanstack/react-table';
-
-const ProductListHeader = dynamic(
-  () =>
-    import('@/features/products/components/list/ProductListHeader').then(
-      (mod: typeof import('@/features/products/components/list/ProductListHeader')) =>
-        mod.ProductListHeader
-    ),
-  { ssr: false }
-);
-
-const ProductFilters = dynamic(
-  () =>
-    import('@/features/products/components/list/ProductFilters').then(
-      (mod: typeof import('@/features/products/components/list/ProductFilters')) =>
-        mod.ProductFilters
-    ),
-  { ssr: false }
-);
-
-const ProductSelectionActions = dynamic(
-  () =>
-    import('@/features/products/components/list/ProductFilters').then(
-      (mod: typeof import('@/features/products/components/list/ProductFilters')) =>
-        mod.ProductSelectionActions
-    ),
-  { ssr: false }
-);
-
-const ProductListMobileCards = dynamic(
-  () =>
-    import('@/features/products/components/list/ProductListMobileCards').then(
-      (mod: typeof import('@/features/products/components/list/ProductListMobileCards')) =>
-        mod.ProductListMobileCards
-    ),
-  { ssr: false }
-);
-
-const PromptModal = dynamic(
-  () =>
-    import('@/shared/ui/templates/modals').then(
-      (mod: typeof import('@/shared/ui/templates/modals')) => mod.PromptModal
-    ),
-  { ssr: false }
-);
 
 const PRODUCT_LIST_BOTTOM_GAP = 24;
 
@@ -243,37 +205,37 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
         skeletonRows={tableProps.skeletonRows}
         stickyHeader={tableProps.stickyHeader}
         enableVirtualization={false}
+        maxHeight={resolvedTableMaxHeight}
+        showTable={false}
       >
-        <div className='space-y-4'>
-          <div className='lg:hidden'>
-            {isEmpty ? (
-              <EmptyState
-                title='No results'
-                description="Try adjusting your filters to find what you're looking for."
-                className='border-none p-0'
-              />
-            ) : (
-              <ProductListMobileCards />
-            )}
-          </div>
-          <div ref={desktopTableRef} className='hidden lg:block'>
-            <DataTable
-              columns={tableProps.columns}
-              data={tableProps.data}
-              isLoading={tableProps.isLoading}
-              getRowId={tableProps.getRowId}
-              getRowClassName={
-                tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
-              }
-              rowSelection={tableProps.rowSelection}
-              onRowSelectionChange={tableProps.onRowSelectionChange}
-              skeletonRows={tableProps.skeletonRows}
-              maxHeight={resolvedTableMaxHeight}
-              stickyHeader={tableProps.stickyHeader}
-              enableVirtualization={false}
-              tableLayout='fixed'
+        <div className='lg:hidden'>
+          {isEmpty ? (
+            <EmptyState
+              title='No results'
+              description="Try adjusting your filters to find what you're looking for."
+              className='border-none p-0'
             />
-          </div>
+          ) : (
+            <ProductListMobileCards />
+          )}
+        </div>
+        <div ref={desktopTableRef} className='hidden lg:block'>
+          <DataTable
+            columns={tableProps.columns}
+            data={tableProps.data}
+            isLoading={tableProps.isLoading}
+            getRowId={tableProps.getRowId}
+            getRowClassName={
+              tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
+            }
+            rowSelection={tableProps.rowSelection}
+            onRowSelectionChange={tableProps.onRowSelectionChange}
+            skeletonRows={tableProps.skeletonRows}
+            maxHeight={resolvedTableMaxHeight}
+            stickyHeader={tableProps.stickyHeader}
+            enableVirtualization={false}
+            tableLayout='fixed'
+          />
         </div>
       </StandardDataTablePanel>
     </Profiler>

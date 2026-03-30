@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { ObjectId } from 'mongodb';
+import { cache } from 'react';
 
 import {
   CMS_THEME_SETTINGS_KEY,
@@ -12,6 +13,15 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+const CMS_THEME_SETTINGS_CACHE_TTL_MS = 30_000;
+
+type CmsThemeSettingsCacheEntry = {
+  expiresAt: number;
+  value: ThemeSettings;
+};
+
+let cmsThemeSettingsCacheEntry: CmsThemeSettingsCacheEntry | null = null;
+let cmsThemeSettingsInFlight: Promise<ThemeSettings> | null = null;
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -34,8 +44,37 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
 
 const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
-export const getCmsThemeSettings = async (): Promise<ThemeSettings> => {
+const getCmsThemeSettingsUncached = async (): Promise<ThemeSettings> => {
   const stored = await readSettingValue(CMS_THEME_SETTINGS_KEY);
   const parsed = parseJsonSetting<Partial<ThemeSettings> | null>(stored, null);
   return normalizeThemeSettings(parsed);
 };
+
+const getCmsThemeSettingsHotCached = async (): Promise<ThemeSettings> => {
+  const now = Date.now();
+  if (cmsThemeSettingsCacheEntry && cmsThemeSettingsCacheEntry.expiresAt > now) {
+    return cmsThemeSettingsCacheEntry.value;
+  }
+
+  if (cmsThemeSettingsInFlight) {
+    return cmsThemeSettingsInFlight;
+  }
+
+  cmsThemeSettingsInFlight = getCmsThemeSettingsUncached()
+    .then((value) => {
+      cmsThemeSettingsCacheEntry = {
+        value,
+        expiresAt: Date.now() + CMS_THEME_SETTINGS_CACHE_TTL_MS,
+      };
+      return value;
+    })
+    .finally(() => {
+      cmsThemeSettingsInFlight = null;
+    });
+
+  return cmsThemeSettingsInFlight;
+};
+
+export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
+  return await getCmsThemeSettingsHotCached();
+});

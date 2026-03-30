@@ -1,4 +1,4 @@
-import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide as LessonSlideSectionSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import type {
   ClockChallengeMedal as SharedClockChallengeMedal,
   ClockTask as SharedClockTask,
@@ -6,7 +6,7 @@ import type {
 } from './clock-training/types';
 
 export type SectionId = SharedClockTrainingSectionId;
-export type TrainingCardId = 'game_hours' | 'game_minutes' | 'game_combined';
+export type TrainingCardId = string;
 export type ClockHubId = SectionId | TrainingCardId;
 export type ClockTrainingPanelId = 'learn' | 'pick_one' | 'pick_two' | 'challenge';
 export type ClockChallengeMedal = SharedClockChallengeMedal;

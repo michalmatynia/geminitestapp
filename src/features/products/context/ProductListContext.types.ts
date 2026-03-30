@@ -6,6 +6,7 @@ import type {
 } from '@/shared/contracts/products';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductAiRunFeedback } from '@/features/products/lib/product-ai-run-feedback';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ReactNode, ProfilerOnRenderCallback } from 'react';
@@ -87,7 +88,10 @@ export interface ProductListContextType {
   onProductEditClick: (row: ProductWithImages) => void;
   onProductDeleteClick: (row: ProductWithImages) => void;
   onDuplicateProduct: (row: ProductWithImages) => void;
-  onIntegrationsClick: (row: ProductWithImages) => void;
+  onIntegrationsClick: (
+    row: ProductWithImages,
+    recoveryContext?: ProductListingsRecoveryContext
+  ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;
   integrationBadgeStatuses: Map<string, string>;
@@ -115,6 +119,7 @@ export interface ProductListContextType {
   onEditSuccess: (info?: { queued?: boolean }) => void;
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
+  integrationsRecoveryContext: ProductListingsRecoveryContext | null;
   onCloseIntegrations: () => void;
   onStartListing: (integrationId: string, connectionId: string) => void;
   showListProductModal: boolean;
@@ -224,7 +229,10 @@ export interface ProductListActionsContextType {
   onProductEditClick: (row: ProductWithImages) => void;
   onProductDeleteClick: (row: ProductWithImages) => void;
   onDuplicateProduct: (row: ProductWithImages) => void;
-  onIntegrationsClick: (row: ProductWithImages) => void;
+  onIntegrationsClick: (
+    row: ProductWithImages,
+    recoveryContext?: ProductListingsRecoveryContext
+  ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
@@ -245,7 +253,10 @@ export interface ProductListRowActionsContextType {
   onProductEditClick: (row: ProductWithImages) => void;
   onProductDeleteClick: (row: ProductWithImages) => void;
   onDuplicateProduct: (row: ProductWithImages) => void;
-  onIntegrationsClick: (row: ProductWithImages) => void;
+  onIntegrationsClick: (
+    row: ProductWithImages,
+    recoveryContext?: ProductListingsRecoveryContext
+  ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
 }
 
@@ -283,6 +294,7 @@ export interface ProductListModalsContextType {
   onEditSuccess: (info?: { queued?: boolean }) => void;
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
+  integrationsRecoveryContext: ProductListingsRecoveryContext | null;
   onCloseIntegrations: () => void;
   onStartListing: (integrationId: string, connectionId: string) => void;
   showListProductModal: boolean;

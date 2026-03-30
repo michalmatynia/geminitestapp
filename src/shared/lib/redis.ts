@@ -1,28 +1,8 @@
 import 'server-only';
 
 import { Redis } from 'ioredis';
+import { isTransientRedisTransportError } from '@/shared/lib/redis-error-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-
-const TRANSIENT_REDIS_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT']);
-
-const isTransientRedisTransportError = (error: unknown): boolean => {
-  if (!(error instanceof Error)) return false;
-  const code = (error as NodeJS.ErrnoException).code;
-  if (typeof code === 'string' && TRANSIENT_REDIS_ERROR_CODES.has(code.toUpperCase())) {
-    return true;
-  }
-  const message = error.message.toLowerCase();
-  return (
-    message.includes('write epipe') ||
-    message.includes('read econnreset') ||
-    message.includes('econnreset') ||
-    message.includes('econnrefused') ||
-    message.includes('connection is closed') ||
-    message.includes('socket closed unexpectedly') ||
-    message.includes('timeout')
-  );
-};
 
 const captureException = async (
   error: unknown,

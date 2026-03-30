@@ -8,6 +8,7 @@ import {
   listTriggerButtonRunFeedback,
   persistTriggerButtonRunFeedback,
   readTriggerButtonRunFeedback,
+  resolveTriggerButtonRunFeedbackPresentation,
 } from './trigger-button-run-feedback';
 
 describe('trigger-button-run-feedback', () => {
@@ -222,6 +223,13 @@ describe('trigger-button-run-feedback', () => {
     ).toBeNull();
   });
 
+  it('resolves the presentation for blocked-on-lease runs', () => {
+    expect(resolveTriggerButtonRunFeedbackPresentation('blocked_on_lease')).toEqual({
+      label: 'Awaiting resource',
+      variant: 'warning',
+    });
+  });
+
   it('lists deduped active run feedback records for product entities', () => {
     window.localStorage.setItem(
       'ai-paths-trigger-button-run-feedback',
@@ -278,6 +286,60 @@ describe('trigger-button-run-feedback', () => {
         runId: 'run-1',
         status: 'running',
         updatedAt: '2026-03-11T12:00:03.000Z',
+        finishedAt: null,
+        errorMessage: null,
+      },
+    ]);
+  });
+
+  it('filters listed feedback by entity id when requested', () => {
+    window.localStorage.setItem(
+      'ai-paths-trigger-button-run-feedback',
+      JSON.stringify({
+        'path::shared::product::product-1': {
+          buttonId: 'button-product-modal',
+          pathId: 'shared',
+          location: 'product_modal',
+          entityType: 'product',
+          entityId: 'product-1',
+          runId: 'run-1',
+          status: 'running',
+          updatedAt: '2026-03-11T12:00:03.000Z',
+          finishedAt: null,
+          errorMessage: null,
+          expiresAt: Date.now() + 60_000,
+        },
+        'path::shared::product::product-2': {
+          buttonId: 'button-product-modal',
+          pathId: 'shared',
+          location: 'product_modal',
+          entityType: 'product',
+          entityId: 'product-2',
+          runId: 'run-2',
+          status: 'running',
+          updatedAt: '2026-03-11T12:00:04.000Z',
+          finishedAt: null,
+          errorMessage: null,
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    expect(
+      listTriggerButtonRunFeedback({
+        entityType: 'product',
+        entityId: 'product-2',
+      })
+    ).toEqual([
+      {
+        buttonId: 'button-product-modal',
+        pathId: 'shared',
+        location: 'product_modal',
+        entityType: 'product',
+        entityId: 'product-2',
+        runId: 'run-2',
+        status: 'running',
+        updatedAt: '2026-03-11T12:00:04.000Z',
         finishedAt: null,
         errorMessage: null,
       },

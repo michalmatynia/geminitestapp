@@ -29,21 +29,23 @@ type IconGridItem = GridPickerItem<string> & {
   item: IconLibraryItem;
 };
 
-export function IconSelector({
-  value,
-  onChange,
-  items = ICON_LIBRARY,
-  columns = 6,
-  showSearch = true,
-  searchPlaceholder = 'Search icons...',
-  allowClear = true,
-  className,
-  gridClassName,
-  buttonClassName,
-  iconClassName,
-  emptyLabel = 'No icons found.',
-  helperText,
-}: IconSelectorProps): React.JSX.Element {
+export function IconSelector(props: IconSelectorProps): React.JSX.Element {
+  const {
+    value,
+    onChange,
+    items = ICON_LIBRARY,
+    columns = 6,
+    showSearch = true,
+    searchPlaceholder = 'Search icons...',
+    allowClear = true,
+    className,
+    gridClassName,
+    buttonClassName,
+    iconClassName,
+    emptyLabel = 'No icons found.',
+    helperText,
+  } = props;
+
   const gridItems = useMemo<IconGridItem[]>(
     () =>
       items.map((item) => ({

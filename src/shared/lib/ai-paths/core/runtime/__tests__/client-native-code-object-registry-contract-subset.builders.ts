@@ -3,93 +3,111 @@ import path from 'node:path';
 
 import { vi } from 'vitest';
 
-const hoistedMocks = vi.hoisted(() => ({
-  mockDbApiSchema: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      provider: 'mongodb',
-      collections: [
-        {
-          name: 'products',
-          fields: [
-            {
-              name: 'id',
-              type: 'String',
-              isId: true,
-              isRequired: true,
-              isUnique: true,
-              hasDefault: false,
-            },
-          ],
-          relations: ['categories'],
-        },
-      ],
-    },
-  })),
-  mockAiJobsEnqueue: vi.fn(async () => ({
-    ok: true as const,
-    data: { jobId: 'job-model-1' },
-  })),
-  mockAiJobsPoll: vi.fn(async () => ({
-    ok: true as const,
-    data: {
+const buildDbApiSchemaResponse = () => ({
+  ok: true as const,
+  data: {
+    provider: 'mongodb',
+    collections: [
+      {
+        name: 'products',
+        fields: [
+          {
+            name: 'id',
+            type: 'String',
+            isId: true,
+            isRequired: true,
+            isUnique: true,
+            hasDefault: false,
+          },
+        ],
+        relations: ['categories'],
+      },
+    ],
+  },
+});
+
+const buildAiJobsEnqueueResponse = () => ({
+  ok: true as const,
+  data: { jobId: 'job-model-1' },
+});
+
+const buildAiJobsPollResponse = () => ({
+  ok: true as const,
+  data: {
+    status: 'completed',
+    result: 'model-result',
+  },
+});
+
+const buildAgentEnqueueResponse = () => ({
+  ok: true as const,
+  data: { runId: 'agent-run-1' },
+});
+
+const buildAgentPollResponse = () => ({
+  ok: true as const,
+  data: {
+    run: {
+      id: 'agent-run-1',
       status: 'completed',
-      result: 'model-result',
+      errorMessage: null,
+      logLines: ['done'],
     },
-  })),
-  mockAgentEnqueue: vi.fn(async () => ({
-    ok: true as const,
-    data: { runId: 'agent-run-1' },
-  })),
-  mockAgentPoll: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      run: {
-        id: 'agent-run-1',
-        status: 'completed',
-        errorMessage: null,
-        logLines: ['done'],
-      },
+  },
+});
+
+const buildSettingsListResponse = () => ({
+  ok: true as const,
+  data: [],
+});
+
+const buildLearnerAgentsChatResponse = () => ({
+  ok: true as const,
+  data: { message: 'learner-response', sources: [{ id: 'source-1' }] },
+});
+
+const buildPlaywrightEnqueueResponse = () => ({
+  ok: true as const,
+  data: {
+    run: {
+      runId: 'pw-run-1',
+      status: 'queued',
+      result: null,
+      error: null,
+      artifacts: [],
+      logs: [],
+      startedAt: null,
+      completedAt: null,
     },
-  })),
-  mockSettingsList: vi.fn(async () => ({
-    ok: true as const,
-    data: [],
-  })),
-  mockLearnerAgentsChat: vi.fn(async () => ({
-    ok: true as const,
-    data: { message: 'learner-response', sources: [{ id: 'source-1' }] },
-  })),
-  mockPlaywrightEnqueue: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      run: {
-        runId: 'pw-run-1',
-        status: 'queued',
-        result: null,
-        error: null,
-        artifacts: [],
-        logs: [],
-        startedAt: null,
-        completedAt: null,
-      },
+  },
+});
+
+const buildPlaywrightPollResponse = () => ({
+  ok: true as const,
+  data: {
+    run: {
+      runId: 'pw-run-1',
+      status: 'completed',
+      result: { outputs: { result: 'ok' } },
+      error: null,
+      artifacts: [],
+      logs: [],
+      startedAt: null,
+      completedAt: null,
     },
-  })),
-  mockPlaywrightPoll: vi.fn(async () => ({
-    ok: true as const,
-    data: {
-      run: {
-        runId: 'pw-run-1',
-        status: 'completed',
-        result: { outputs: { result: 'ok' } },
-        error: null,
-        artifacts: [],
-        logs: [],
-        startedAt: null,
-        completedAt: null,
-      },
-    },
-  })),
+  },
+});
+
+const hoistedMocks = vi.hoisted(() => ({
+  mockDbApiSchema: vi.fn(async () => buildDbApiSchemaResponse()),
+  mockAiJobsEnqueue: vi.fn(async () => buildAiJobsEnqueueResponse()),
+  mockAiJobsPoll: vi.fn(async () => buildAiJobsPollResponse()),
+  mockAgentEnqueue: vi.fn(async () => buildAgentEnqueueResponse()),
+  mockAgentPoll: vi.fn(async () => buildAgentPollResponse()),
+  mockSettingsList: vi.fn(async () => buildSettingsListResponse()),
+  mockLearnerAgentsChat: vi.fn(async () => buildLearnerAgentsChatResponse()),
+  mockPlaywrightEnqueue: vi.fn(async () => buildPlaywrightEnqueueResponse()),
+  mockPlaywrightPoll: vi.fn(async () => buildPlaywrightPollResponse()),
 }));
 
 export const mockDbApiSchema = hoistedMocks.mockDbApiSchema;
@@ -551,19 +569,23 @@ export const buildHttpNode = (): AiNode => ({
   position: { x: 480, y: 0 },
 });
 
-export const buildPollNode = (): AiNode => ({
-  id: 'node-poll',
-  type: 'poll',
-  title: 'Poll',
-  description: '',
-  inputs: ['jobId'],
-  outputs: ['result', 'status', 'jobId', 'bundle'],
-  config: {
-    poll: {
-      intervalMs: 1000,
-      maxAttempts: 2,
-      mode: 'job',
+export const buildPollNode = (): AiNode => {
+  const node: AiNode = {
+    id: 'node-poll',
+    type: 'poll',
+    title: 'Poll',
+    description: '',
+    inputs: ['jobId'],
+    outputs: ['result', 'status', 'jobId', 'bundle'],
+    config: {
+      poll: {
+        intervalMs: 1000,
+        maxAttempts: 2,
+        mode: 'job',
+      },
     },
-  },
-  position: { x: 600, y: 0 },
-});
+    position: { x: 600, y: 0 },
+  };
+
+  return node;
+};

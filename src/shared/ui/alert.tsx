@@ -9,6 +9,7 @@ export type { AlertVariant };
 interface AlertProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   variant?: AlertVariant;
   title?: React.ReactNode;
+  description?: React.ReactNode;
   icon?: React.ReactNode;
   onDismiss?: () => void;
 }
@@ -34,8 +35,12 @@ const iconMap: Record<AlertVariant, React.ReactNode> = {
  * Supports multiple variants, titles, custom icons, and dismissal.
  */
 export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
-  ({ className, variant = 'default', title, icon, onDismiss, children, ...props }, ref) => {
+  (
+    { className, variant = 'default', title, description, icon, onDismiss, children, ...props },
+    ref
+  ) => {
     const resolvedIcon = icon ?? iconMap[variant];
+    const content = children ?? description;
 
     return (
       <div
@@ -55,9 +60,11 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         )}
         <div className='flex-1 min-w-0'>
           {title && <div className='font-semibold mb-1 leading-none tracking-tight'>{title}</div>}
-          <div className={cn('text-xs opacity-90 leading-relaxed', !title && 'text-sm')}>
-            {children}
-          </div>
+          {content ? (
+            <div className={cn('text-xs opacity-90 leading-relaxed', !title && 'text-sm')}>
+              {content}
+            </div>
+          ) : null}
         </div>
         {onDismiss && (
           <button

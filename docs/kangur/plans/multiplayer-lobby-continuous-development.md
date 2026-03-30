@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-16'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:kangur'
@@ -8,6 +8,15 @@ canonical: true
 ---
 
 # Multiplayer Lobby Continuous Development Plan
+
+This is the active Kangur feature plan for ongoing duels lobby evolution. Use
+the broader Kangur docs for current runtime and operator truth outside this
+feature-local roadmap:
+
+- [`../README.md`](../README.md)
+- [`../learner-navigation.md`](../learner-navigation.md)
+- [`../observability-and-operations.md`](../observability-and-operations.md)
+- [`../duels-mobile-checklist.md`](../duels-mobile-checklist.md)
 
 ## Purpose
 

@@ -1,11 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { runNeo4jStatementsMock } = vi.hoisted(() => ({
+vi.mock('server-only', () => ({}));
+
+const { runNeo4jStatementsMock, captureExceptionMock } = vi.hoisted(() => ({
   runNeo4jStatementsMock: vi.fn(),
+  captureExceptionMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/neo4j/client', () => ({
   runNeo4jStatements: runNeo4jStatementsMock,
+}));
+
+vi.mock('@/features/kangur/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
 }));
 
 import { buildKangurKnowledgeGraph } from '@/features/kangur/server/knowledge-graph/build-kangur-knowledge-graph';
@@ -20,6 +29,7 @@ import {
 describe('buildKangurKnowledgeGraphSyncPayload', () => {
   beforeEach(() => {
     runNeo4jStatementsMock.mockReset();
+    captureExceptionMock.mockReset();
   });
 
   it('serializes Kangur graph nodes and edges into Neo4j-safe payloads', () => {

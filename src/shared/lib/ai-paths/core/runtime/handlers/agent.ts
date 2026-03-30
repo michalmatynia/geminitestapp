@@ -42,6 +42,17 @@ type PersonaModelSettings = {
   outputNormalizationModel?: string;
 };
 
+const AGENT_PROMPT_INPUT_KEYS = [
+  'prompt',
+  'value',
+  'result',
+  'bundle',
+  'context',
+  'entityJson',
+  'title',
+  'content_en',
+] as const;
+
 const toOptionalModelSetting = (
   settings: Record<string, unknown>,
   key: keyof PersonaModelSettings
@@ -115,36 +126,91 @@ const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
   return parseAgentPersonas(record.value);
 };
 
-const pollAgentRun = async (
+const AGENT_TERMINAL_POLL_STATUSES = new Set(['completed', 'waiting_human']);
+const AGENT_FAILED_POLL_STATUSES = new Set(['failed', 'stopped']);
+
+const assertAgentPollResponse = (
+  response: Awaited<ReturnType<typeof agentApi.poll>>
+): AgentRunRecord => {
+  if (!response.ok) {
+    throw new Error(response.error || 'Failed to poll agent run.');
+  }
+
+  return (response.data.run as AgentRunRecord | undefined) ?? {};
+};
+
+const sleepForAgentPoll = async (intervalMs: number): Promise<void> => {
+  await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) =>
+    setTimeout(resolve, intervalMs)
+  );
+};
+
+const shouldPollAgentAgain = (attempt: number, maxAttempts: number): boolean =>
+  attempt < maxAttempts - 1;
+
+export const pollAgentRun = async (
   runId: string,
   options?: { intervalMs?: number; maxAttempts?: number }
 ): Promise<{ run?: AgentRunRecord; status?: string }> => {
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
+
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const response = await agentApi.poll(runId);
-    if (!response.ok) {
-      throw new Error(response.error || 'Failed to poll agent run.');
-    }
-    const run = response.data.run as AgentRunRecord | undefined;
+    const run = assertAgentPollResponse(await agentApi.poll(runId));
     const status = run?.status ?? '';
-    if (status === 'completed') {
-      return { run: run!, status };
+
+    if (AGENT_TERMINAL_POLL_STATUSES.has(status)) {
+      return { run, status };
     }
-    if (status === 'failed' || status === 'stopped') {
+
+    if (AGENT_FAILED_POLL_STATUSES.has(status)) {
       throw new Error(run?.errorMessage || 'Agent run failed.');
     }
-    if (status === 'waiting_human') {
-      return { run: run!, status };
-    }
-    if (attempt < maxAttempts - 1) {
-      await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) =>
-        setTimeout(resolve, intervalMs)
-      );
+
+    if (shouldPollAgentAgain(attempt, maxAttempts)) {
+      await sleepForAgentPoll(intervalMs);
     }
   }
+
   throw new Error('Agent run timed out.');
 };
+
+const resolveAgentPromptValue = (nodeInputs: RuntimePortValues): unknown => {
+  for (const key of AGENT_PROMPT_INPUT_KEYS) {
+    const value = coerceInput(nodeInputs[key]);
+
+    if (value !== undefined && value !== null) {
+      return value;
+    }
+  }
+
+  return undefined;
+};
+
+const resolveAgentPrompt = (args: {
+  promptTemplate?: string | null;
+  nodeInputs: RuntimePortValues;
+}): string => {
+  const template = args.promptTemplate?.trim();
+  const rawPrompt = template?.length
+    ? buildPromptOutput({ template }, args.nodeInputs).promptOutput
+    : resolveAgentPromptValue(args.nodeInputs);
+
+  return typeof rawPrompt === 'string' ? rawPrompt.trim() : formatRuntimeValue(rawPrompt);
+};
+
+const buildLearnerAgentMessages = (args: {
+  prompt: string;
+  runId: string;
+}): ChatMessage[] => [
+  {
+    id: `msg_${args.runId}_${Date.now()}`,
+    sessionId: args.runId,
+    role: 'user',
+    content: args.prompt,
+    timestamp: new Date().toISOString(),
+  },
+];
 
 export const handleAgent: NodeHandler = async ({
   node,
@@ -175,22 +241,10 @@ export const handleAgent: NodeHandler = async ({
     waitForResult: true,
   };
 
-  const template = agentConfig.promptTemplate?.trim();
-  const promptFromTemplate = template
-    ? buildPromptOutput({ template }, nodeInputs).promptOutput
-    : '';
-  const rawPrompt = template?.length
-    ? promptFromTemplate
-    : (coerceInput(nodeInputs['prompt']) ??
-      coerceInput(nodeInputs['value']) ??
-      coerceInput(nodeInputs['result']) ??
-      coerceInput(nodeInputs['bundle']) ??
-      coerceInput(nodeInputs['context']) ??
-      coerceInput(nodeInputs['entityJson']) ??
-      coerceInput(nodeInputs['title']) ??
-      coerceInput(nodeInputs['content_en']));
-
-  const prompt = typeof rawPrompt === 'string' ? rawPrompt.trim() : formatRuntimeValue(rawPrompt);
+  const prompt = resolveAgentPrompt({
+    promptTemplate: agentConfig.promptTemplate,
+    nodeInputs,
+  });
 
   if (!prompt || prompt === '—') {
     return buildAiTerminalOutputs({
@@ -359,22 +413,10 @@ export const handleLearnerAgent: NodeHandler = async ({
     });
   }
 
-  const template = learnerConfig.promptTemplate?.trim();
-  const promptFromTemplate = template
-    ? buildPromptOutput({ template }, nodeInputs).promptOutput
-    : '';
-  const rawPrompt = template?.length
-    ? promptFromTemplate
-    : (coerceInput(nodeInputs['prompt']) ??
-      coerceInput(nodeInputs['value']) ??
-      coerceInput(nodeInputs['result']) ??
-      coerceInput(nodeInputs['bundle']) ??
-      coerceInput(nodeInputs['context']) ??
-      coerceInput(nodeInputs['entityJson']) ??
-      coerceInput(nodeInputs['title']) ??
-      coerceInput(nodeInputs['content_en']));
-
-  const prompt = typeof rawPrompt === 'string' ? rawPrompt.trim() : formatRuntimeValue(rawPrompt);
+  const prompt = resolveAgentPrompt({
+    promptTemplate: learnerConfig.promptTemplate,
+    nodeInputs,
+  });
 
   if (!prompt || prompt === '—') {
     return buildAiTerminalOutputs({
@@ -390,15 +432,7 @@ export const handleLearnerAgent: NodeHandler = async ({
     });
   }
 
-  const messages: ChatMessage[] = [
-    {
-      id: `msg_${runId}_${Date.now()}`,
-      sessionId: runId,
-      role: 'user',
-      content: prompt,
-      timestamp: new Date().toISOString(),
-    },
-  ];
+  const messages = buildLearnerAgentMessages({ prompt, runId });
   const payload = { agentId, messages };
   const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
   const prevPayloadHash =

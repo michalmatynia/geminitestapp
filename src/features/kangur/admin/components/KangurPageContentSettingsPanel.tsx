@@ -94,7 +94,13 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
               onClick={() => {
                 void handleSave();
               }}
-              disabled={isLoading || isSaving || !isDirty || Boolean(parsedState.error)}
+              disabled={
+                isLoading ||
+                isSaving ||
+                !isDirty ||
+                Boolean(parsedState.error) ||
+                !parsedState.store
+              }
             >
               {isSaving ? 'Saving page content...' : 'Save page content'}
             </Button>
@@ -109,6 +115,16 @@ export function KangurPageContentSettingsPanel(): React.JSX.Element {
 
         {parsedState.store ? (
           <KangurPageContentManifestCoverage store={parsedState.store} />
+        ) : isLoading ? (
+          <Alert variant='info' title='Loading page content from Mongo' className='mt-4'>
+            Waiting for the canonical Kangur page-content store.
+          </Alert>
+        ) : null}
+
+        {!parsedState.store && !parsedState.error && !isLoading ? (
+          <Alert variant='info' title='No page content loaded' className='mt-4'>
+            Reload the Mongo-backed page-content store or reset to defaults to begin editing.
+          </Alert>
         ) : null}
 
         {parsedState.store ? (

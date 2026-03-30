@@ -12,8 +12,10 @@ import {
 export type { CmsDbProvider };
 
 export const getCmsDataProvider = async (): Promise<CmsDbProvider> => {
-  const policy = await getDatabaseEnginePolicy();
-  const routeProvider = await getDatabaseEngineServiceProvider('cms');
+  const [policy, routeProvider] = await Promise.all([
+    getDatabaseEnginePolicy(),
+    getDatabaseEngineServiceProvider('cms'),
+  ]);
   if (routeProvider) {
     if (routeProvider === 'redis') {
       throw internalError('Database Engine route "cms" cannot target Redis. Configure MongoDB.');

@@ -1,13 +1,25 @@
 ---
-title: 'March 2026 Platform Enhancement — Deployment Guide'
+title: 'March 2026 Platform Enhancement — Historical Deployment Report'
 date: '2026-03-21'
-status: 'ready-for-review'
-scope: 'accessibility + ai-documentation'
+status: 'historical'
+scope: 'accessibility + ai-documentation session report'
 ---
 
-# Platform Enhancement Deployment Guide
+# Platform Enhancement Historical Deployment Report
 
-Comprehensive overview of work completed, quality metrics, and deployment recommendations.
+This file is a historical session report for a specific March 2026 workstream.
+It is not the canonical current deployment guide for the repository.
+
+For current repo entrypoints and architecture:
+
+- [`README.md`](./README.md)
+- [`docs/README.md`](./docs/README.md)
+- [`docs/platform/README.md`](./docs/platform/README.md)
+- [`GEMINI.md`](./GEMINI.md)
+
+The remainder of this file is preserved as the original session-specific
+summary of work completed, quality metrics, and deployment recommendations at
+that point in time.
 
 ## Executive Summary
 
@@ -544,4 +556,3 @@ Updated:
 **Status:** Ready for Review and Deployment
 **Sign-Off:** All quality checks passed, all documentation complete
 **Next Action:** Code review and merge to main
-

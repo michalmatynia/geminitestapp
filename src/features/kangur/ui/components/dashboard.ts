@@ -1,5 +1,5 @@
 
-import { AssignmentPanel as AssignmentPanelView } from '@/features/kangur/ui/components/AssignmentPanel';
+import { AssignmentPanel as AssignmentPanelView } from '@/features/kangur/ui/components/assignments/AssignmentPanel';
 import ProgressOverviewView from '@/features/kangur/ui/components/ProgressOverview';
 import ScoreHistoryView from '@/features/kangur/ui/components/ScoreHistory';
 import type { KangurDailyQuestState } from '@/features/kangur/shared/contracts/kangur-quests';

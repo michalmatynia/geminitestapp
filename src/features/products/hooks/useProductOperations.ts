@@ -9,6 +9,7 @@ import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutati
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ProductDraft } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
+import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { useToast } from '@/shared/ui';
@@ -144,10 +145,9 @@ export function useProductOperations(
     }
   };
 
-  const handleOpenCreateFromDraft = (draft: ProductDraft): void => {
-    const draftSku = typeof draft.sku === 'string' ? draft.sku.trim().toUpperCase() : '';
+  const handleOpenCreateFromDraft = (_draft: ProductDraft): void => {
     setDuplicateSourceProduct(null);
-    setInitialSku(draftSku);
+    setInitialSku(PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER);
     setIsCreateOpen(true);
   };
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-23T21:12:56.726Z",
+  "generatedAt": "2026-03-30T15:09:33.797Z",
   "status": "passed",
   "summary": {
     "total": 0,
@@ -7,7 +7,7 @@
     "warningCount": 0,
     "infoCount": 0,
     "status": "passed",
-    "routeFileCount": 285,
+    "routeFileCount": 298,
     "methodCount": 215,
     "publicRouteCount": 15,
     "protectedRouteCount": 199,
@@ -912,7 +912,7 @@
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
-        "auth()"
+        "actor/session resolver"
       ]
     },
     {
@@ -921,7 +921,7 @@
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
-        "auth()"
+        "actor/session resolver"
       ]
     },
     {
@@ -930,7 +930,7 @@
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
-        "auth()"
+        "actor/session resolver"
       ]
     },
     {
@@ -939,7 +939,7 @@
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
-        "auth()"
+        "actor/session resolver"
       ]
     },
     {
@@ -948,7 +948,7 @@
       "policyId": "default-protected",
       "expectedAccess": "protected",
       "evidence": [
-        "auth()"
+        "actor/session resolver"
       ]
     },
     {
@@ -1640,5 +1640,5 @@
   ],
   "issues": [],
   "rules": [],
-  "durationMs": 156
+  "durationMs": 172
 }

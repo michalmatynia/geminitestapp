@@ -1,8 +1,4 @@
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import {
-  KangurLessonCaption,
-  KangurLessonInset,
-} from '@/features/kangur/ui/design/lesson-primitives';
 import { cn } from '@/features/kangur/shared/utils';
 
 type AccentStyle = {
@@ -72,9 +68,13 @@ export default function AgenticLessonCodeBlock({
   const styles = ACCENT_STYLES[accent];
 
   return (
-    <KangurLessonInset
-      accent={accent}
-      className={cn(styles.border, 'bg-slate-950 text-slate-100', className)}
+    <div
+      className={cn(
+        'soft-card kangur-lesson-inset w-full border kangur-card-padding-sm shadow-[0_16px_32px_-28px_rgba(15,23,42,0.28)] [color:var(--kangur-page-text)]',
+        styles.border,
+        'bg-slate-950 text-slate-100',
+        className
+      )}
     >
       {title ? (
         <div className={cn('text-[11px] font-semibold uppercase tracking-[0.2em]', styles.title)}>
@@ -85,10 +85,10 @@ export default function AgenticLessonCodeBlock({
         <code>{code}</code>
       </pre>
       {caption ? (
-        <KangurLessonCaption className={cn('mt-3 text-xs', styles.caption)}>
+        <p className={cn('mt-3 text-xs text-sm [color:var(--kangur-page-muted-text)]', styles.caption)}>
           {caption}
-        </KangurLessonCaption>
+        </p>
       ) : null}
-    </KangurLessonInset>
+    </div>
   );
 }

@@ -33,7 +33,7 @@ import {
   DEFAULT_KANGUR_LAUNCH_ROUTE,
   isKangurLaunchRoute,
   type KangurLaunchRoute,
-} from '@/features/kangur/launch-route';
+} from '@/features/kangur/config/launch-route';
 import { parseJsonSetting } from '@/features/kangur/utils/settings-json';
 
 export {
@@ -42,12 +42,12 @@ export {
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
 };
 export { KANGUR_LESSON_COMPONENT_ORDER, KANGUR_LESSON_LIBRARY };
-export * from './help-settings';
+export * from './docs/help-settings';
 export {
   DEFAULT_KANGUR_LAUNCH_ROUTE,
   KANGUR_LAUNCH_ROUTE_VALUES,
   type KangurLaunchRoute,
-} from './launch-route';
+} from './config/launch-route';
 
 export const KANGUR_LESSON_SORT_ORDER_GAP = 1000;
 export const KANGUR_NARRATOR_SETTINGS_KEY = 'kangur_narrator_settings_v1';
@@ -133,6 +133,10 @@ const KANGUR_LEGACY_COMPONENT_ID_BY_ID: Record<string, KangurLessonComponentId> 
   english_sentence_structure: 'english_sentence_structure',
   english_subject_verb_agreement: 'english_subject_verb_agreement',
   english_articles: 'english_articles',
+  english_adjectives: 'english_adjectives',
+  english_comparatives_superlatives: 'english_comparatives_superlatives',
+  english_adverbs: 'english_adverbs',
+  english_adverbs_frequency: 'english_adverbs_frequency',
   english_prepositions_time_place: 'english_prepositions_time_place',
   webdev_react_components: 'webdev_react_components',
   webdev_react_dom_components: 'webdev_react_dom_components',
@@ -524,7 +528,6 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
     return createDefaultKangurLessons();
   }
 
-  const usedIds = new Set<string>();
   const normalized = value
     .map((entry, index): KangurLesson | null => {
       if (!isRecord(entry)) return null;
@@ -535,8 +538,7 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
       if (!componentId) return null;
 
       const template = getKangurLessonTemplate(componentId);
-      const requestedId = normalizeText(entry['id'], `kangur-lesson-${componentId}`, 120);
-      const lessonId = ensureUniqueLessonId(requestedId, usedIds);
+      const lessonId = normalizeText(entry['id'], `kangur-lesson-${componentId}`, 120);
 
       return {
         id: lessonId,
@@ -560,6 +562,12 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
           (index + 1) * KANGUR_LESSON_SORT_ORDER_GAP
         ),
         enabled: entry['enabled'] !== false,
+        ...(typeof entry['sectionId'] === 'string' && entry['sectionId'].trim().length > 0
+          ? { sectionId: entry['sectionId'].trim().slice(0, 120) }
+          : {}),
+        ...(typeof entry['subsectionId'] === 'string' && entry['subsectionId'].trim().length > 0
+          ? { subsectionId: entry['subsectionId'].trim().slice(0, 120) }
+          : {}),
       };
     })
     .filter((entry): entry is KangurLesson => Boolean(entry));
@@ -591,10 +599,15 @@ export const normalizeKangurLessons = (value: unknown): KangurLesson[] => {
       if (orderDelta !== 0) return orderDelta;
       return left.id.localeCompare(right.id);
     })
-    .map((lesson, index) => ({
-      ...lesson,
-      sortOrder: (index + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
-    }));
+    .reduce<KangurLesson[]>((acc, lesson, index) => {
+      const usedIds = new Set(acc.map((entry) => entry.id));
+      acc.push({
+        ...lesson,
+        id: ensureUniqueLessonId(lesson.id, usedIds),
+        sortOrder: (index + 1) * KANGUR_LESSON_SORT_ORDER_GAP,
+      });
+      return acc;
+    }, []);
 };
 
 export const canonicalizeKangurLessons = (lessons: KangurLesson[]): KangurLesson[] =>

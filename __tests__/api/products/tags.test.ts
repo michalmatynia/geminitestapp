@@ -21,6 +21,12 @@ vi.mock('@/features/products/server', async (importOriginal) => {
 
 import { GET, POST } from '@/app/api/v2/products/tags/route-handler';
 
+const buildCreateTagRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/products/tags', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
 describe('Product Tags API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,10 +60,7 @@ describe('Product Tags API', () => {
     });
 
     const res = await POST(
-      new NextRequest('http://localhost/api/products/tags', {
-        method: 'POST',
-        body: JSON.stringify({ name: 'New Tag', color: '#0000ff', catalogId: 'cat1' }),
-      })
+      buildCreateTagRequest({ name: 'New Tag', color: '#0000ff', catalogId: 'cat1' })
     );
     const data = await res.json();
 

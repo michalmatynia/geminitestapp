@@ -1,15 +1,23 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  DEFAULT_AI_PATHS_DOCS_GENERATED_AT,
+  getDefaultAiPathsDocsGeneratedAt,
   resolveDocsGeneratedAt,
 } from '../../../scripts/docs/docs-generated-at';
 
 describe('docs-generated-at', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('returns default timestamp when env value is empty', () => {
-    expect(resolveDocsGeneratedAt(undefined)).toBe(DEFAULT_AI_PATHS_DOCS_GENERATED_AT);
-    expect(resolveDocsGeneratedAt('')).toBe(DEFAULT_AI_PATHS_DOCS_GENERATED_AT);
-    expect(resolveDocsGeneratedAt('   ')).toBe(DEFAULT_AI_PATHS_DOCS_GENERATED_AT);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-26T12:34:56.000Z'));
+
+    expect(getDefaultAiPathsDocsGeneratedAt()).toBe('2026-03-26T12:34:56.000Z');
+    expect(resolveDocsGeneratedAt(undefined)).toBe('2026-03-26T12:34:56.000Z');
+    expect(resolveDocsGeneratedAt('')).toBe('2026-03-26T12:34:56.000Z');
+    expect(resolveDocsGeneratedAt('   ')).toBe('2026-03-26T12:34:56.000Z');
   });
 
   it('parses and normalizes valid timestamps', () => {

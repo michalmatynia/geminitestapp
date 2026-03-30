@@ -1,0 +1,88 @@
+import { kangurScoreSchema, type KangurScore } from '@kangur/contracts';
+import type { KangurClientStorageAdapter } from '@kangur/platform';
+
+const KANGUR_MOBILE_RECENT_RESULTS_STORAGE_KEY = 'kangur.mobile.scores.recent';
+const KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT = 3;
+
+const parsePersistedRecentResultsStore = (
+  rawSnapshot: string | null,
+): Record<string, KangurScore[]> => {
+  const normalizedRawSnapshot = rawSnapshot?.trim() ?? '';
+  if (!normalizedRawSnapshot) {
+    return {};
+  }
+
+  try {
+    const parsedSnapshot = JSON.parse(normalizedRawSnapshot) as unknown;
+    if (
+      !parsedSnapshot ||
+      typeof parsedSnapshot !== 'object' ||
+      Array.isArray(parsedSnapshot)
+    ) {
+      return {};
+    }
+
+    return Object.entries(parsedSnapshot).reduce<Record<string, KangurScore[]>>(
+      (snapshot, [identityKey, value]) => {
+        const parsedResults = kangurScoreSchema
+          .array()
+          .max(KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT)
+          .safeParse(value);
+        if (parsedResults.success) {
+          snapshot[identityKey] = parsedResults.data;
+        }
+        return snapshot;
+      },
+      {},
+    );
+  } catch {
+    return {};
+  }
+};
+
+export const resolvePersistedKangurMobileRecentResults = ({
+  identityKey,
+  limit,
+  storage,
+}: {
+  identityKey: string;
+  limit: number;
+  storage: KangurClientStorageAdapter;
+}): KangurScore[] | null => {
+  const store = parsePersistedRecentResultsStore(
+    storage.getItem(KANGUR_MOBILE_RECENT_RESULTS_STORAGE_KEY),
+  );
+  const persistedResults = store[identityKey];
+  if (!persistedResults) {
+    return null;
+  }
+
+  return persistedResults.slice(
+    0,
+    Math.min(limit, KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT),
+  );
+};
+
+export const persistKangurMobileRecentResults = ({
+  identityKey,
+  results,
+  storage,
+}: {
+  identityKey: string;
+  results: KangurScore[];
+  storage: KangurClientStorageAdapter;
+}): void => {
+  const store = parsePersistedRecentResultsStore(
+    storage.getItem(KANGUR_MOBILE_RECENT_RESULTS_STORAGE_KEY),
+  );
+
+  store[identityKey] = results.slice(
+    0,
+    KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT,
+  );
+
+  storage.setItem(
+    KANGUR_MOBILE_RECENT_RESULTS_STORAGE_KEY,
+    JSON.stringify(store),
+  );
+};

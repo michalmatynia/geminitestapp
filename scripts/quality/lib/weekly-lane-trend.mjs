@@ -1,3 +1,5 @@
+import { getCanonicalTestingSuiteMetadata } from '../../testing/config/test-suite-registry.mjs';
+
 export const CHECK_IDS = [
   'build',
   'lint',
@@ -354,11 +356,13 @@ const buildCheckSnapshot = (checkId, check) => {
   }
 
   const scanSummary = check.scanSummary ?? null;
+  const canonicalTestingSuite = getCanonicalTestingSuiteMetadata(checkId);
 
   return {
     status: check.status,
     durationMs: check.durationMs,
     exitCode: check.exitCode,
+    canonicalTestingSuite,
     scanSummary,
     structuredSummaryText: summarizeStructuredCheck(checkId, scanSummary),
   };

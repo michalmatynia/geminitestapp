@@ -11,7 +11,7 @@ import {
   listKangurSocialPosts,
   listPublishedKangurSocialPosts,
   upsertKangurSocialPost,
-} from '@/features/kangur/server/social-posts-repository';
+} from '@/features/kangur/social/server/social-posts-repository';
 import { kangurSocialPostSchema } from '@/shared/contracts/kangur-social-posts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError, notFoundError } from '@/shared/errors/app-error';

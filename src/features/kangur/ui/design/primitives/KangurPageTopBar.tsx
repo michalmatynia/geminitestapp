@@ -19,6 +19,7 @@ export const KangurPageTopBar = ({
   contentClassName,
   fixedHeightCssValue,
   publishHeight = true,
+  role,
 }: {
   left: React.ReactNode;
   right?: React.ReactNode;
@@ -26,6 +27,7 @@ export const KangurPageTopBar = ({
   contentClassName?: string;
   fixedHeightCssValue?: string | null;
   publishHeight?: boolean;
+  role?: React.AriaRole;
 }): React.JSX.Element => {
   const topBarRef = useRef<HTMLDivElement | null>(null);
 
@@ -73,6 +75,7 @@ export const KangurPageTopBar = ({
       ref={topBarRef}
       className={cn(KANGUR_TOP_BAR_CLASSNAME, className)}
       data-testid='kangur-page-top-bar'
+      role={role}
       style={
         fixedHeightCssValue
           ? {

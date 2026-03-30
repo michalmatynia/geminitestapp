@@ -3,39 +3,21 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { internalError } from '@/features/kangur/shared/errors/app-error';
+import {
+  resolveLessonNavigationActionsValue,
+  resolveLessonNavigationStateValue,
+  type KangurLessonBackAction,
+  type KangurLessonNavigationActionsValue,
+  type KangurLessonNavigationContextValue,
+  type KangurLessonNavigationStateValue,
+  type KangurLessonSecretPill,
+  type KangurLessonSubsectionSummary,
+} from '@/features/kangur/ui/context/KangurLessonNavigationContext.shared';
 
-type KangurLessonBackAction = () => void;
-
-export type KangurLessonSubsectionSummary = {
-  emoji: string;
-  title: string;
-  description: string;
-  isGame?: boolean;
-};
-
-export type KangurLessonSecretPill = {
-  isUnlocked: boolean;
-  onOpen: () => void;
-};
-
-type KangurLessonNavigationContextValue = {
-  onBack: KangurLessonBackAction;
-  isSubsectionNavigationActive: boolean;
-  registerSubsectionNavigation: () => () => void;
-  subsectionSummary: KangurLessonSubsectionSummary | null;
-  setSubsectionSummary: (summary: KangurLessonSubsectionSummary | null) => void;
-  secretLessonPill: KangurLessonSecretPill | null;
-};
-
-type KangurLessonNavigationStateValue = Pick<
-  KangurLessonNavigationContextValue,
-  'isSubsectionNavigationActive' | 'onBack' | 'secretLessonPill' | 'subsectionSummary'
->;
-
-type KangurLessonNavigationActionsValue = Pick<
-  KangurLessonNavigationContextValue,
-  'registerSubsectionNavigation' | 'setSubsectionSummary'
->;
+export type {
+  KangurLessonSecretPill,
+  KangurLessonSubsectionSummary,
+} from '@/features/kangur/ui/context/KangurLessonNavigationContext.shared';
 
 const KangurLessonNavigationContext = createContext<KangurLessonNavigationContextValue | null>(null);
 
@@ -127,26 +109,12 @@ export const useKangurLessonSecretPill = (): KangurLessonSecretPill | null =>
 
 export const useKangurLessonNavigationState = (): KangurLessonNavigationStateValue => {
   const context = useContext(KangurLessonNavigationContext);
-  return useMemo(
-    () => ({
-      isSubsectionNavigationActive: context?.isSubsectionNavigationActive ?? false,
-      onBack: context?.onBack ?? (() => undefined),
-      secretLessonPill: context?.secretLessonPill ?? null,
-      subsectionSummary: context?.subsectionSummary ?? null,
-    }),
-    [context]
-  );
+  return useMemo(() => resolveLessonNavigationStateValue(context), [context]);
 };
 
 export const useKangurLessonNavigationActions = (): KangurLessonNavigationActionsValue => {
   const context = useContext(KangurLessonNavigationContext);
-  return useMemo(
-    () => ({
-      registerSubsectionNavigation: context?.registerSubsectionNavigation ?? (() => () => undefined),
-      setSubsectionSummary: context?.setSubsectionSummary ?? (() => undefined),
-    }),
-    [context]
-  );
+  return useMemo(() => resolveLessonNavigationActionsValue(context), [context]);
 };
 
 export const useKangurRegisterLessonSubsectionNavigation = (): (() => () => void) => {

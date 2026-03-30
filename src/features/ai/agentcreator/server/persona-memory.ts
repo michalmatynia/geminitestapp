@@ -120,10 +120,12 @@ const toIsoString = (value: Date | string | null | undefined): string | null => 
   return value instanceof Date ? value.toISOString() : value;
 };
 
+const withEllipsis = (value: string, maxLength: number): string =>
+  `${value.slice(0, maxLength - 1)}...`;
+
 const truncateText = (value: string, maxLength: number): string => {
   const normalized = normalizeText(value);
-  if (normalized.length <= maxLength) return normalized;
-  return `${normalized.slice(0, maxLength - 1)}...`;
+  return normalized.length <= maxLength ? normalized : withEllipsis(normalized, maxLength);
 };
 
 const toTimestamp = (value?: string | null): number => {
@@ -269,13 +271,15 @@ const buildSearchTerms = (value?: string | null): string[] =>
     ...extractTopicHints(value ?? ''),
   ]);
 
-const normalizeTopicFilter = (value?: string | null): string | null => {
-  const extractedHints = extractTopicHints(value ?? '');
-  if (extractedHints.length > 0) {
-    return extractedHints[0] ?? null;
-  }
+const resolvePrimaryExtractedTopicHint = (value?: string | null): string | null =>
+  extractTopicHints(value ?? '')[0] ?? null;
 
-  return uniqueLowercaseStrings([value ?? null])[0] ?? null;
+const normalizeTopicFilter = (value?: string | null): string | null => {
+  return (
+    resolvePrimaryExtractedTopicHint(value) ??
+    uniqueLowercaseStrings([value ?? null])[0] ??
+    null
+  );
 };
 
 const matchesExactOrPartial = (values: string[], expected: string): boolean => {

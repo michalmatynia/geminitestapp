@@ -9,19 +9,21 @@ const {
   resolveKangurActorMock,
   startKangurSocialPipelineQueueMock,
   isRedisAvailableMock,
+  isRedisReachableMock,
 } = vi.hoisted(() => ({
   enqueueKangurSocialPipelineJobMock: vi.fn(),
   recoverKangurSocialPipelineQueueMock: vi.fn(),
   resolveKangurActorMock: vi.fn(),
   startKangurSocialPipelineQueueMock: vi.fn(),
   isRedisAvailableMock: vi.fn(),
+  isRedisReachableMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/services/kangur-actor', () => ({
   resolveKangurActor: (...args: unknown[]) => resolveKangurActorMock(...args),
 }));
 
-vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
+vi.mock('@/features/kangur/social/workers/kangurSocialPipelineQueue', () => ({
   enqueueKangurSocialPipelineJob: (...args: unknown[]) =>
     enqueueKangurSocialPipelineJobMock(...args),
   recoverKangurSocialPipelineQueue: (...args: unknown[]) =>
@@ -32,6 +34,7 @@ vi.mock('@/features/kangur/workers/kangurSocialPipelineQueue', () => ({
 
 vi.mock('@/shared/lib/queue', () => ({
   isRedisAvailable: (...args: unknown[]) => isRedisAvailableMock(...args),
+  isRedisReachable: (...args: unknown[]) => isRedisReachableMock(...args),
 }));
 
 import { POST_handler } from './handler';
@@ -56,6 +59,7 @@ describe('social pipeline trigger handler', () => {
     recoverKangurSocialPipelineQueueMock.mockResolvedValue([]);
     enqueueKangurSocialPipelineJobMock.mockResolvedValue('job-123');
     isRedisAvailableMock.mockReturnValue(true);
+    isRedisReachableMock.mockResolvedValue(true);
   });
 
   it('recovers stale jobs, starts the worker, and enqueues the scheduled tick job by default', async () => {
@@ -128,5 +132,273 @@ describe('social pipeline trigger handler', () => {
       jobId: 'job-123',
       jobType: 'manual-post-pipeline',
     });
+  });
+
+  it('accepts more than 12 attached images for a manual post pipeline job', async () => {
+    const imageAssets = Array.from({ length: 13 }, (_, index) => ({
+      id: `asset-${index + 1}`,
+      url: `/asset-${index + 1}.png`,
+    }));
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+        method: 'POST',
+      }),
+      createContext({
+        jobType: 'manual-post-pipeline',
+        input: {
+          postId: 'post-1',
+          captureMode: 'existing_assets',
+          editorState: {
+            titlePl: 'Tytul',
+            titleEn: 'Title',
+            bodyPl: 'Body PL',
+            bodyEn: 'Body EN',
+          },
+          imageAssets,
+          imageAddonIds: ['addon-1'],
+          linkedinConnectionId: null,
+          brainModelId: 'brain-1',
+          visionModelId: 'vision-1',
+          projectUrl: 'https://example.com/project',
+          generationNotes: 'Focus on visuals',
+          docReferences: ['docs/kangur/example.mdx'],
+        },
+      })
+    );
+
+    expect(enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-pipeline',
+      input: expect.objectContaining({
+        postId: 'post-1',
+        captureMode: 'existing_assets',
+        imageAssets,
+        imageAddonIds: ['addon-1'],
+        actorId: 'admin-1',
+        forwardCookies: '',
+      }),
+    });
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-123',
+      jobType: 'manual-post-pipeline',
+    });
+  });
+
+  it('fails fast when Redis is configured but unreachable', async () => {
+    isRedisReachableMock.mockResolvedValueOnce(false);
+
+    await expect(
+      POST_handler(
+        new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+          method: 'POST',
+        }),
+        createContext()
+      )
+    ).rejects.toMatchObject({
+      message: 'Social pipeline queue is not available. Redis is configured but unreachable.',
+    });
+
+    expect(recoverKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(startKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(enqueueKangurSocialPipelineJobMock).not.toHaveBeenCalled();
+  });
+
+  it('enqueues a manual visual analysis job', async () => {
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+        method: 'POST',
+      }),
+      createContext({
+        jobType: 'manual-post-visual-analysis',
+        input: {
+          postId: 'post-1',
+          visionModelId: 'vision-1',
+          imageAddonIds: ['addon-1'],
+        },
+      })
+    );
+
+    expect(enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-visual-analysis',
+      input: {
+        postId: 'post-1',
+        visionModelId: 'vision-1',
+        imageAddonIds: ['addon-1'],
+        actorId: 'admin-1',
+      },
+    });
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-123',
+      jobType: 'manual-post-visual-analysis',
+    });
+  });
+
+  it('rejects manual pipeline jobs when Project URL is missing or localhost-only', async () => {
+    await expect(
+      POST_handler(
+        new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+          method: 'POST',
+        }),
+        createContext({
+          jobType: 'manual-post-pipeline',
+          input: {
+            postId: 'post-1',
+            captureMode: 'existing_assets',
+            editorState: {
+              titlePl: 'Tytul',
+              titleEn: 'Title',
+              bodyPl: 'Body PL',
+              bodyEn: 'Body EN',
+            },
+            imageAssets: [],
+            imageAddonIds: ['addon-1'],
+            linkedinConnectionId: null,
+            brainModelId: 'brain-1',
+            visionModelId: 'vision-1',
+            generationNotes: 'Focus on visuals',
+            docReferences: ['docs/kangur/example.mdx'],
+          },
+        })
+      )
+    ).rejects.toMatchObject({
+      message: 'Set Settings Project URL before generating social posts.',
+    });
+
+    await expect(
+      POST_handler(
+        new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+          method: 'POST',
+        }),
+        createContext({
+          jobType: 'manual-post-pipeline',
+          input: {
+            postId: 'post-1',
+            captureMode: 'existing_assets',
+            editorState: {
+              titlePl: 'Tytul',
+              titleEn: 'Title',
+              bodyPl: 'Body PL',
+              bodyEn: 'Body EN',
+            },
+            imageAssets: [],
+            imageAddonIds: ['addon-1'],
+            linkedinConnectionId: null,
+            brainModelId: 'brain-1',
+            visionModelId: 'vision-1',
+            projectUrl: 'http://localhost:3000',
+            generationNotes: 'Focus on visuals',
+            docReferences: ['docs/kangur/example.mdx'],
+          },
+        })
+      )
+    ).rejects.toMatchObject({
+      message:
+        'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+    });
+
+    expect(recoverKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(startKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(enqueueKangurSocialPipelineJobMock).not.toHaveBeenCalled();
+  });
+
+  it('enqueues a manual post generation job', async () => {
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+        method: 'POST',
+      }),
+      createContext({
+        jobType: 'manual-post-generation',
+        input: {
+          postId: 'post-1',
+          docReferences: ['overview'],
+          notes: 'Focus on the updated hero.',
+          modelId: 'brain-1',
+          visionModelId: 'vision-1',
+          imageAddonIds: ['addon-1'],
+          projectUrl: 'https://studiq.example.com/project',
+          prefetchedVisualAnalysis: {
+            summary: 'Updated hero card',
+            highlights: ['Updated hero card'],
+          },
+          requireVisualAnalysisInBody: true,
+        },
+      })
+    );
+
+    expect(enqueueKangurSocialPipelineJobMock).toHaveBeenCalledWith({
+      type: 'manual-post-generation',
+      input: {
+        postId: 'post-1',
+        docReferences: ['overview'],
+        notes: 'Focus on the updated hero.',
+        modelId: 'brain-1',
+        visionModelId: 'vision-1',
+        imageAddonIds: ['addon-1'],
+        projectUrl: 'https://studiq.example.com/project',
+        prefetchedVisualAnalysis: {
+          summary: 'Updated hero card',
+          highlights: ['Updated hero card'],
+        },
+        requireVisualAnalysisInBody: true,
+        actorId: 'admin-1',
+      },
+    });
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      jobId: 'job-123',
+      jobType: 'manual-post-generation',
+    });
+  });
+
+  it('rejects manual post generation jobs when Project URL is missing or localhost-only', async () => {
+    await expect(
+      POST_handler(
+        new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+          method: 'POST',
+        }),
+        createContext({
+          jobType: 'manual-post-generation',
+          input: {
+            postId: 'post-1',
+            docReferences: ['overview'],
+            notes: 'Focus on the updated hero.',
+            modelId: 'brain-1',
+            visionModelId: 'vision-1',
+            imageAddonIds: ['addon-1'],
+          },
+        })
+      )
+    ).rejects.toMatchObject({
+      message: 'Set Settings Project URL before generating social posts.',
+    });
+
+    await expect(
+      POST_handler(
+        new NextRequest('http://localhost/api/kangur/social-pipeline/trigger', {
+          method: 'POST',
+        }),
+        createContext({
+          jobType: 'manual-post-generation',
+          input: {
+            postId: 'post-1',
+            docReferences: ['overview'],
+            notes: 'Focus on the updated hero.',
+            modelId: 'brain-1',
+            visionModelId: 'vision-1',
+            imageAddonIds: ['addon-1'],
+            projectUrl: 'http://localhost:3000',
+          },
+        })
+      )
+    ).rejects.toMatchObject({
+      message:
+        'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+    });
+
+    expect(recoverKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(startKangurSocialPipelineQueueMock).not.toHaveBeenCalled();
+    expect(enqueueKangurSocialPipelineJobMock).not.toHaveBeenCalled();
   });
 });

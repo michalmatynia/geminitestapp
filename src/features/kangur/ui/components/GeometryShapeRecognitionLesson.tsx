@@ -1,11 +1,13 @@
 'use client';
 
+import type { LessonProps } from '@/features/kangur/lessons/lesson-ui-registry';
+import { useOptionalKangurLessonTemplate } from '@/features/kangur/ui/context/KangurLessonsRuntimeContext';
 import type * as React from 'react';
-import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+import { useMessages } from 'next-intl';
 
-import GeometryDrawingGame from '@/features/kangur/ui/components/GeometryDrawingGame';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -14,94 +16,31 @@ import {
   KangurLessonLead,
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
-import {
-  KangurButton,
-  KangurGlassPanel,
-  KangurStatusChip,
-} from '@/features/kangur/ui/design/primitives';
-import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';
 import { KangurUnifiedLesson } from '@/features/kangur/ui/lessons/lesson-components';
+
+import {
+  buildGeometryShapeDefinitions,
+  ShapeIcon,
+  type ShapeDefinition,
+} from './GeometryShapeRecognition.shared';
+import {
+  createGeometryShapeRecognitionMessageTranslate,
+  createGeometryShapeRecognitionLessonTranslate,
+  resolveGeometryShapeRecognitionLessonContent,
+} from './geometry-shape-recognition-lesson-content';
 import type { LessonTranslate } from './lesson-copy';
 
+export { ShapeIcon } from './GeometryShapeRecognition.shared';
+
 type SectionId = 'intro' | 'practice' | 'draw' | 'summary';
-type ShapeId = 'circle' | 'square' | 'triangle' | 'rectangle' | 'oval' | 'diamond';
 
-type ShapeDefinition = {
-  id: ShapeId;
-  label: string;
-  clue: string;
-  color: string;
-};
-
-type ShapeRound = {
-  id: ShapeId;
-  shape: ShapeId;
-  correct: ShapeId;
-  options: readonly ShapeId[];
-};
-
-const SHAPE_META: Array<{ id: ShapeId; color: string }> = [
-  {
-    id: 'circle',
-    color: '#38bdf8',
-  },
-  {
-    id: 'square',
-    color: '#4ade80',
-  },
-  {
-    id: 'triangle',
-    color: '#fbbf24',
-  },
-  {
-    id: 'rectangle',
-    color: '#fb7185',
-  },
-  {
-    id: 'oval',
-    color: '#a78bfa',
-  },
-  {
-    id: 'diamond',
-    color: '#f97316',
-  },
-];
-
-const SHAPE_ROUNDS: ShapeRound[] = [
-  { id: 'circle', shape: 'circle', correct: 'circle', options: ['circle', 'square', 'triangle'] },
-  {
-    id: 'triangle',
-    shape: 'triangle',
-    correct: 'triangle',
-    options: ['triangle', 'rectangle', 'circle'],
-  },
-  {
-    id: 'square',
-    shape: 'square',
-    correct: 'square',
-    options: ['square', 'diamond', 'rectangle'],
-  },
-  {
-    id: 'rectangle',
-    shape: 'rectangle',
-    correct: 'rectangle',
-    options: ['rectangle', 'square', 'oval'],
-  },
-  { id: 'oval', shape: 'oval', correct: 'oval', options: ['oval', 'circle', 'diamond'] },
-  {
-    id: 'diamond',
-    shape: 'diamond',
-    correct: 'diamond',
-    options: ['diamond', 'square', 'triangle'],
-  },
-];
-
-const buildShapes = (translate: LessonTranslate): ShapeDefinition[] =>
-  SHAPE_META.map((shape) => ({
-    ...shape,
-    label: translate(`shapes.${shape.id}.label`),
-    clue: translate(`shapes.${shape.id}.clue`),
-  }));
+const GEOMETRY_SHAPE_SPOTTER_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_shape_spotter'
+);
+const GEOMETRY_SHAPE_DRAWING_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'geometry_shape_workshop'
+);
 
 const buildSections = (translate: LessonTranslate) =>
   [
@@ -114,8 +53,9 @@ const buildSections = (translate: LessonTranslate) =>
     {
       id: 'practice',
       emoji: '🎯',
-      title: translate('sections.practice.title'),
+      title: translate('practice.slideTitle'),
       description: translate('sections.practice.description'),
+      isGame: true,
     },
     {
       id: 'draw',
@@ -131,51 +71,6 @@ const buildSections = (translate: LessonTranslate) =>
       description: translate('sections.summary.description'),
     },
   ] as const;
-
-const ShapeIcon = ({
-  shape,
-  color,
-  className,
-}: {
-  shape: ShapeId;
-  color: string;
-  className?: string;
-}): React.JSX.Element => {
-  const stroke = '#0f172a';
-
-  return (
-    <svg
-      aria-hidden='true'
-      className={className ?? 'h-20 w-20'}
-      viewBox='0 0 120 120'
-    >
-      {shape === 'circle' ? (
-        <circle cx='60' cy='60' r='34' fill={color} stroke={stroke} strokeWidth='4' />
-      ) : null}
-      {shape === 'square' ? (
-        <rect x='28' y='28' width='64' height='64' rx='10' fill={color} stroke={stroke} strokeWidth='4' />
-      ) : null}
-      {shape === 'triangle' ? (
-        <polygon points='60,20 100,96 20,96' fill={color} stroke={stroke} strokeWidth='4' />
-      ) : null}
-      {shape === 'rectangle' ? (
-        <rect x='22' y='36' width='76' height='48' rx='10' fill={color} stroke={stroke} strokeWidth='4' />
-      ) : null}
-      {shape === 'oval' ? (
-        <ellipse cx='60' cy='60' rx='40' ry='26' fill={color} stroke={stroke} strokeWidth='4' />
-      ) : null}
-      {shape === 'diamond' ? (
-        <polygon
-          points='60,14 104,60 60,106 16,60'
-          fill={color}
-          stroke={stroke}
-          strokeWidth='4'
-          strokeLinejoin='round'
-        />
-      ) : null}
-    </svg>
-  );
-};
 
 const ShapeGrid = ({ shapes }: { shapes: ShapeDefinition[] }): React.JSX.Element => (
   <div className='grid gap-4 sm:grid-cols-2'>
@@ -200,166 +95,23 @@ const ShapeClues = ({
   translate: LessonTranslate;
 }): React.JSX.Element => (
   <KangurLessonStack align='start' gap='md'>
-    <KangurLessonLead align='left'>
-      {translate('clues.lead')}
-    </KangurLessonLead>
+    <KangurLessonLead align='left'>{translate('clues.lead')}</KangurLessonLead>
     <div className='flex flex-wrap gap-2'>
       <KangurLessonChip accent='sky'>{translate('clues.chips.corners')}</KangurLessonChip>
       <KangurLessonChip accent='emerald'>{translate('clues.chips.sides')}</KangurLessonChip>
       <KangurLessonChip accent='amber'>{translate('clues.chips.curves')}</KangurLessonChip>
-      <KangurLessonChip accent='rose'>{translate('clues.chips.longShortSides')}</KangurLessonChip>
+      <KangurLessonChip accent='rose'>
+        {translate('clues.chips.longShortSides')}
+      </KangurLessonChip>
     </div>
-    <KangurLessonInset accent='emerald'>
-      {translate('clues.inset')}
-    </KangurLessonInset>
+    <KangurLessonInset accent='emerald'>{translate('clues.inset')}</KangurLessonInset>
   </KangurLessonStack>
 );
 
-const ShapeRecognitionGame = ({
-  shapes,
-  translate,
-}: {
-  shapes: ShapeDefinition[];
-  translate: LessonTranslate;
-}): React.JSX.Element => {
-  const isCoarsePointer = useKangurCoarsePointer();
-  const [roundIndex, setRoundIndex] = useState(0);
-  const [selected, setSelected] = useState<ShapeId | null>(null);
-  const [score, setScore] = useState(0);
-  const shapeLabels = useMemo(
-    () =>
-      Object.fromEntries(
-        shapes.map((shape) => [shape.id, shape.label]),
-      ) as Record<ShapeId, string>,
-    [shapes],
-  );
-
-  if (SHAPE_ROUNDS.length === 0) {
-    return (
-      <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
-        <div className='text-sm text-slate-500'>{translate('practice.emptyRounds')}</div>
-      </KangurGlassPanel>
-    );
-  }
-
-  const isFinished = roundIndex >= SHAPE_ROUNDS.length;
-  const safeIndex = Math.min(roundIndex, SHAPE_ROUNDS.length - 1);
-  const round = SHAPE_ROUNDS[safeIndex]!;
-  const shape = shapes.find((item) => item.id === round.shape) ?? shapes[0]!;
-  const isCorrect = selected === round.correct;
-  const correctLabel = shapeLabels[round.correct] ?? round.correct;
-
-  const handleSelect = (option: ShapeId): void => {
-    if (selected) return;
-    setSelected(option);
-    if (option === round.correct) {
-      setScore((prev) => prev + 1);
-    }
-  };
-
-  const handleNext = (): void => {
-    setSelected(null);
-    setRoundIndex((prev) => prev + 1);
-  };
-
-  const handleRestart = (): void => {
-    setSelected(null);
-    setRoundIndex(0);
-    setScore(0);
-  };
-
-  if (isFinished) {
-    return (
-      <KangurGlassPanel className='w-full text-center' padding='lg' surface='playField'>
-        <KangurStatusChip accent='emerald' size='sm'>
-          {translate('practice.finished.status')}
-        </KangurStatusChip>
-        <div className='mt-4 text-xl font-semibold'>
-          {translate('practice.finished.title', {
-            score,
-            total: SHAPE_ROUNDS.length,
-          })}
-        </div>
-        <div className='mt-2 text-sm text-slate-500'>
-          {translate('practice.finished.subtitle')}
-        </div>
-        <KangurButton
-          className={isCoarsePointer ? 'mt-5 touch-manipulation select-none min-h-11 active:scale-[0.98]' : 'mt-5'}
-          variant='primary'
-          onClick={handleRestart}
-        >
-          {translate('practice.finished.restart')}
-        </KangurButton>
-      </KangurGlassPanel>
-    );
-  }
-
-  return (
-    <KangurGlassPanel className='w-full' padding='lg' surface='playField'>
-      <div className='flex items-center justify-between'>
-        <KangurStatusChip accent='emerald' size='sm'>
-          {translate('practice.progress.round', {
-            current: roundIndex + 1,
-            total: SHAPE_ROUNDS.length,
-          })}
-        </KangurStatusChip>
-        <div className='text-xs text-slate-500'>
-          {translate('practice.progress.score', { score })}
-        </div>
-      </div>
-      <div className='mt-5 flex flex-col items-center gap-4'>
-        <ShapeIcon shape={shape.id} color={shape.color} className='h-28 w-28' />
-        <div className='text-lg font-semibold'>{translate('practice.question')}</div>
-      </div>
-      <div className='mt-5 grid gap-3 sm:grid-cols-2'>
-        {round.options.map((option) => {
-          const isSelected = selected === option;
-          const variant = isSelected
-            ? option === round.correct
-              ? 'success'
-              : 'warning'
-            : 'surface';
-          return (
-            <KangurButton
-              key={option}
-              fullWidth
-              variant={variant}
-              onClick={() => handleSelect(option)}
-              className={isCoarsePointer ? 'touch-manipulation select-none min-h-[4rem] active:scale-[0.98]' : undefined}
-            >
-              {shapeLabels[option] ?? option}
-            </KangurButton>
-          );
-        })}
-      </div>
-      {selected ? (
-        <div className='mt-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between'>
-          <KangurStatusChip accent={isCorrect ? 'emerald' : 'rose'} size='sm'>
-            {isCorrect
-              ? translate('practice.feedback.correct')
-              : translate('practice.feedback.incorrect', {
-                  shape: correctLabel,
-                })}
-          </KangurStatusChip>
-          <KangurButton
-            variant='primary'
-            onClick={handleNext}
-            className={isCoarsePointer ? 'touch-manipulation select-none min-h-11 active:scale-[0.98]' : undefined}
-          >
-            {roundIndex + 1 >= SHAPE_ROUNDS.length
-              ? translate('practice.actions.finish')
-              : translate('practice.actions.next')}
-          </KangurButton>
-        </div>
-      ) : null}
-    </KangurGlassPanel>
-  );
-};
-
 const buildSlides = (
   shapes: ShapeDefinition[],
-  translate: LessonTranslate,
-): Record<Exclude<SectionId, 'draw'>, LessonSlide[]> => ({
+  translate: LessonTranslate
+): Record<Exclude<SectionId, 'practice' | 'draw'>, LessonSlide[]> => ({
   intro: [
     {
       title: translate('intro.title'),
@@ -373,13 +125,6 @@ const buildSlides = (
     {
       title: translate('clues.title'),
       content: <ShapeClues translate={translate} />,
-    },
-  ],
-  practice: [
-    {
-      title: translate('practiceSlide.title'),
-      content: <ShapeRecognitionGame shapes={shapes} translate={translate} />,
-      panelClassName: 'w-full',
     },
   ],
   summary: [
@@ -398,47 +143,79 @@ const buildSlides = (
   ],
 });
 
-export default function GeometryShapeRecognitionLesson(): React.JSX.Element {
-  const translations = useTranslations('KangurStaticLessons.geometryShapeRecognition');
-  const translate: LessonTranslate = (key, values) => translations(key as never, values as never);
-  const shapes = useMemo(() => buildShapes(translate), [translations]);
-  const sections = useMemo(() => buildSections(translate), [translations]);
-  const slides = useMemo(() => buildSlides(shapes, translate), [shapes, translations]);
+export default function GeometryShapeRecognitionLesson({
+  lessonTemplate,
+}: LessonProps): React.JSX.Element {
+  const runtimeTemplate = useOptionalKangurLessonTemplate('geometry_shape_recognition');
+  const resolvedTemplate = lessonTemplate ?? runtimeTemplate;
+  const messages = useMessages() as Record<string, unknown>;
+  const fallbackTranslate = useMemo<LessonTranslate>(() => {
+    const staticLessons = messages['KangurStaticLessons'];
+    const lessonMessages =
+      staticLessons && typeof staticLessons === 'object' && !Array.isArray(staticLessons)
+        ? (((staticLessons as Record<string, unknown>)['geometryShapeRecognition'] as
+            | Record<string, unknown>
+            | undefined) ??
+          {})
+        : {};
+
+    return createGeometryShapeRecognitionMessageTranslate(lessonMessages);
+  }, [messages]);
+  const resolvedContent = useMemo(
+    () => resolveGeometryShapeRecognitionLessonContent(resolvedTemplate, fallbackTranslate),
+    [fallbackTranslate, resolvedTemplate],
+  );
+  const translate = useMemo(
+    () => createGeometryShapeRecognitionLessonTranslate(resolvedContent),
+    [resolvedContent],
+  );
+  const shapes = useMemo(() => buildGeometryShapeDefinitions(translate), [translate]);
+  const sections = useMemo(() => buildSections(translate), [translate]);
+  const slides = useMemo(() => buildSlides(shapes, translate), [shapes, translate]);
 
   return (
     <KangurUnifiedLesson
       progressMode='panel'
       lessonId='geometry_shape_recognition'
       lessonEmoji='🔷'
-      lessonTitle={translate('lessonTitle')}
+      lessonTitle={resolvedTemplate?.title?.trim() || translate('lessonTitle')}
       sections={sections}
       slides={slides}
       gradientClass='kangur-gradient-accent-emerald'
       progressDotClassName='bg-emerald-300'
       dotActiveClass='bg-emerald-400'
       dotDoneClass='bg-emerald-200'
-      skipMarkFor={['draw']}
+      skipMarkFor={['practice', 'draw']}
       games={[
         {
-          sectionId: 'draw',
-          stage: {
+          sectionId: 'practice',
+          shell: {
             accent: 'emerald',
-            title: translate('draw.stageTitle'),
+            title: translate('practice.slideTitle'),
+            description: translate('sections.practice.description'),
+            icon: '🎯',
+            maxWidthClassName: 'max-w-3xl',
+            shellTestId: 'geometry-shape-recognition-practice-shell',
+          },
+          launchableInstance: {
+            gameId: 'geometry_shape_spotter',
+            instanceId: GEOMETRY_SHAPE_SPOTTER_INSTANCE_ID,
+          },
+        },
+        {
+          sectionId: 'draw',
+          shell: {
+            accent: 'emerald',
+            title: translate('draw.gameTitle'),
+            description: translate('sections.draw.description'),
             icon: '✍️',
             maxWidthClassName: 'max-w-3xl',
             shellTestId: 'geometry-shape-recognition-draw-shell',
           },
-          render: ({ onFinish }) => (
-            <GeometryDrawingGame
-              activityKey='training:geometry_shape_recognition:draw'
-              difficultyLabelOverride={translate('draw.difficultyLabel')}
-              finishLabel={translate('draw.finishLabel')}
-              lessonKey='geometry_shape_recognition'
-              onFinish={onFinish}
-              shapeIds={['circle', 'oval', 'triangle', 'diamond', 'square', 'rectangle']}
-              showDifficultySelector={false}
-            />
-          ),
+          launchableInstance: {
+            gameId: 'geometry_shape_workshop',
+            instanceId: GEOMETRY_SHAPE_DRAWING_INSTANCE_ID,
+          },
         },
       ]}
     />

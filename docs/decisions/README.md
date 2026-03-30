@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'cross-feature'
@@ -29,6 +29,19 @@ decision is backed by JSON or another tooling-facing format.
 
 - [`canonical-contract-matrix-2026-03-05.md`](./canonical-contract-matrix-2026-03-05.md)
 - [`legacy-compatibility-exception-register-2026-03-05.md`](./legacy-compatibility-exception-register-2026-03-05.md)
+
+The active cross-feature decisions surface is intentionally small. Execution
+records, migration logs, and implementation closeouts should usually live under
+`docs/migrations/` or `docs/plans/` unless they establish a durable
+cross-feature policy baseline.
+
+In practice, the two files here play different roles:
+
+- the contract matrix defines the durable canonical boundary
+- the exception register defines the only allowed temporary escape hatch
+
+Migration progress, stabilization status, and closeout evidence should point at
+these decisions, not duplicate them.
 
 ## Structure Notes
 

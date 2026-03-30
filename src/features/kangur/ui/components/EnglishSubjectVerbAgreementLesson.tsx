@@ -1,15 +1,19 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
-import EnglishSubjectVerbAgreementGame from '@/features/kangur/ui/components/EnglishSubjectVerbAgreementGame';
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   EnglishAgreementBalanceAnimation,
   EnglishBeVerbSwitchAnimation,
   EnglishThirdPersonSAnimation,
 } from '@/features/kangur/ui/components/LessonAnimations';
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -40,6 +44,135 @@ type SectionId =
   | 'game_agreement';
 
 type SlideSectionId = Exclude<SectionId, 'game_agreement'>;
+const ENGLISH_SUBJECT_VERB_AGREEMENT_INSTANCE_ID = getKangurBuiltInGameInstanceId(
+  'english_subject_verb_agreement'
+);
+
+export function EnglishSubjectVerbGuideAnimation(): React.JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `english-agreement-subject-verb-link-${baseId}-clip`;
+  const panelGradientId = `english-agreement-subject-verb-link-${baseId}-panel`;
+  const frameGradientId = `english-agreement-subject-verb-link-${baseId}-frame`;
+  const atmosphereId = `english-agreement-subject-verb-link-${baseId}-atmosphere-oval`;
+
+  return (
+    <svg
+      aria-label='Diagram: the subject leads to the verb.'
+      className='h-auto w-full'
+      data-testid='english-agreement-subject-verb-link-animation'
+      role='img'
+      viewBox='0 0 420 90'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='8' y='8' width='404' height='74' rx='20' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2='404'
+          y1='12'
+          y2='82'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='55%' stopColor='#ecfeff' />
+          <stop offset='100%' stopColor='#eff6ff' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='16'
+          x2='404'
+          y1='16'
+          y2='16'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(45,212,191,0.78)' />
+          <stop offset='50%' stopColor='rgba(56,189,248,0.82)' />
+          <stop offset='100%' stopColor='rgba(129,140,248,0.82)' />
+        </linearGradient>
+        {renderSoftAtmosphereGradients(atmosphereId, [
+          { key: 'left', cx: 78, cy: 24, rx: 64, ry: 16, color: '#2dd4bf', opacity: 0.05, glowBias: '40%' },
+          { key: 'bottom', cx: 324, cy: 66, rx: 88, ry: 22, color: '#38bdf8', opacity: 0.05, glowBias: '58%' },
+          { key: 'top', cx: 314, cy: 22, rx: 58, ry: 14, color: '#818cf8', opacity: 0.04, glowBias: '38%' },
+        ])}
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='english-agreement-subject-verb-link-atmosphere'>
+        <rect
+          x='8'
+          y='8'
+          width='404'
+          height='74'
+          rx='20'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(148,163,184,0.16)'
+          strokeWidth='2'
+        />
+        {renderSoftAtmosphereOvals(atmosphereId, [
+          { key: 'left', cx: 78, cy: 24, rx: 64, ry: 16, color: '#2dd4bf', opacity: 0.05, glowBias: '40%' },
+          { key: 'bottom', cx: 324, cy: 66, rx: 88, ry: 22, color: '#38bdf8', opacity: 0.05, glowBias: '58%' },
+          { key: 'top', cx: 314, cy: 22, rx: 58, ry: 14, color: '#818cf8', opacity: 0.04, glowBias: '38%' },
+        ])}
+
+        <rect
+          x='20'
+          y='18'
+          rx='14'
+          width='150'
+          height='54'
+          fill='rgba(255,255,255,0.84)'
+          stroke='#cbd5f5'
+          strokeWidth='2'
+        />
+        <rect
+          x='250'
+          y='18'
+          rx='14'
+          width='150'
+          height='54'
+          fill='rgba(255,255,255,0.84)'
+          stroke='#cbd5f5'
+          strokeWidth='2'
+        />
+        <rect x='36' y='28' width='92' height='10' rx='5' fill='rgba(45,212,191,0.18)' />
+        <rect x='268' y='28' width='78' height='10' rx='5' fill='rgba(56,189,248,0.18)' />
+        <text
+          x='45'
+          y='52'
+          fontSize='13'
+          fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif'
+          fill='#0f172a'
+        >
+          Subject
+        </text>
+        <text
+          x='285'
+          y='52'
+          fontSize='13'
+          fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif'
+          fill='#0f172a'
+        >
+          Verb
+        </text>
+        <line x1='170' y1='45' x2='250' y2='45' stroke='#0d9488' strokeWidth='3' strokeLinecap='round' />
+        <polygon points='250,45 242,40 242,50' fill='#0d9488' />
+      </g>
+
+      <rect
+        x='16'
+        y='16'
+        width='388'
+        height='58'
+        rx='16'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid='english-agreement-subject-verb-link-frame'
+      />
+    </svg>
+  );
+}
 
 const buildEnglishSubjectVerbAgreementSlides = (
   translations: KangurIntlTranslate
@@ -55,33 +188,35 @@ const buildEnglishSubjectVerbAgreementSlides = (
           <KangurLessonVisual
             accent='teal'
             caption={translations('slides.core.match.caption')}
+            supportingContent={
+              <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm w-full`}>
+                <div className='rounded-2xl border border-teal-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'>
+                  <p className='text-xs uppercase tracking-wide text-teal-600'>
+                    {translations('slides.core.match.labels.singular')}
+                  </p>
+                  <p className='font-semibold text-slate-900'>
+                    The coach <span className='text-teal-700'>talks</span> before the match.
+                  </p>
+                  <p className='text-xs text-slate-500'>
+                    {translations('slides.core.match.notes.singular')}
+                  </p>
+                </div>
+                <div className='rounded-2xl border border-teal-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'>
+                  <p className='text-xs uppercase tracking-wide text-teal-600'>
+                    {translations('slides.core.match.labels.plural')}
+                  </p>
+                  <p className='font-semibold text-slate-900'>
+                    The coaches <span className='text-teal-700'>talk</span> before the match.
+                  </p>
+                  <p className='text-xs text-slate-500'>
+                    {translations('slides.core.match.notes.plural')}
+                  </p>
+                </div>
+              </div>
+            }
           >
             <EnglishAgreementBalanceAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-sm w-full`}>
-            <KangurLessonInset accent='teal' className='text-left'>
-              <p className='text-xs uppercase tracking-wide text-teal-600'>
-                {translations('slides.core.match.labels.singular')}
-              </p>
-              <p className='font-semibold text-slate-900'>
-                The coach <span className='text-teal-700'>talks</span> before the match.
-              </p>
-              <p className='text-xs text-slate-500'>
-                {translations('slides.core.match.notes.singular')}
-              </p>
-            </KangurLessonInset>
-            <KangurLessonInset accent='teal' className='text-left'>
-              <p className='text-xs uppercase tracking-wide text-teal-600'>
-                {translations('slides.core.match.labels.plural')}
-              </p>
-              <p className='font-semibold text-slate-900'>
-                The coaches <span className='text-teal-700'>talk</span> before the match.
-              </p>
-              <p className='text-xs text-slate-500'>
-                {translations('slides.core.match.notes.plural')}
-              </p>
-            </KangurLessonInset>
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -116,23 +251,7 @@ const buildEnglishSubjectVerbAgreementSlides = (
               </KangurLessonCaption>
             </div>
             <div className='mt-4'>
-              <svg
-                aria-label='Rysunek: podmiot prowadzi do czasownika.'
-                className='h-auto w-full'
-                role='img'
-                viewBox='0 0 420 90'
-              >
-                <rect x='20' y='18' rx='12' width='150' height='54' fill='#f8fafc' stroke='#cbd5f5' strokeWidth='2' />
-                <rect x='250' y='18' rx='12' width='150' height='54' fill='#f8fafc' stroke='#cbd5f5' strokeWidth='2' />
-                <text x='45' y='50' fontSize='13' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>
-                  Subject
-                </text>
-                <text x='285' y='50' fontSize='13' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>
-                  Verb
-                </text>
-                <line x1='170' y1='45' x2='250' y2='45' stroke='#0d9488' strokeWidth='3' strokeLinecap='round' />
-                <polygon points='250,45 242,40 242,50' fill='#0d9488' />
-              </svg>
+              <EnglishSubjectVerbGuideAnimation />
             </div>
           </KangurLessonCallout>
         </KangurLessonStack>
@@ -150,25 +269,31 @@ const buildEnglishSubjectVerbAgreementSlides = (
           <KangurLessonVisual
             accent='teal'
             caption={translations('slides.thirdPerson.endings.caption')}
+            supportingContent={
+              <div className='space-y-4'>
+                <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
+                  <KangurLessonChip accent='teal'>I play</KangurLessonChip>
+                  <KangurLessonChip accent='teal'>She plays</KangurLessonChip>
+                  <KangurLessonChip accent='teal'>They play</KangurLessonChip>
+                </div>
+                <div className='rounded-2xl border border-slate-200/70 bg-white/75 px-3 py-3 text-left text-sm shadow-sm'>
+                  <p className='font-semibold text-slate-700'>
+                    {translations('slides.thirdPerson.endings.ruleTitle')}
+                  </p>
+                  <div
+                    className={`mt-2 ${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-slate-600`}
+                  >
+                    <span>go → go<strong>es</strong></span>
+                    <span>watch → watch<strong>es</strong></span>
+                    <span>study → stud<strong>ies</strong></span>
+                    <span>try → tr<strong>ies</strong></span>
+                  </div>
+                </div>
+              </div>
+            }
           >
             <EnglishThirdPersonSAnimation />
           </KangurLessonVisual>
-          <div className={`${KANGUR_WRAP_ROW_CLASSNAME} text-xs font-semibold`}>
-            <KangurLessonChip accent='teal'>I play</KangurLessonChip>
-            <KangurLessonChip accent='teal'>She plays</KangurLessonChip>
-            <KangurLessonChip accent='teal'>They play</KangurLessonChip>
-          </div>
-          <KangurLessonCallout accent='slate' className='text-sm' padding='sm'>
-            <p className='font-semibold text-slate-700'>
-              {translations('slides.thirdPerson.endings.ruleTitle')}
-            </p>
-            <div className={`mt-2 ${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2 text-slate-600`}>
-              <span>go → go<strong>es</strong></span>
-              <span>watch → watch<strong>es</strong></span>
-              <span>study → stud<strong>ies</strong></span>
-              <span>try → tr<strong>ies</strong></span>
-            </div>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -515,7 +640,7 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
       games={[
         {
           sectionId: 'game_agreement',
-          stage: {
+          shell: {
             accent: 'teal',
             title: sectionTitles.game_agreement,
             icon: '🎮',
@@ -523,9 +648,10 @@ export default function EnglishSubjectVerbAgreementLesson(): React.JSX.Element {
             headerTestId: 'english-agreement-game-header',
             shellTestId: 'english-agreement-game-shell',
           },
-          render: ({ onFinish }) => (
-            <EnglishSubjectVerbAgreementGame onFinish={onFinish} />
-          ),
+          launchableInstance: {
+            gameId: 'english_subject_verb_agreement',
+            instanceId: ENGLISH_SUBJECT_VERB_AGREEMENT_INSTANCE_ID,
+          },
         },
       ]}
     />

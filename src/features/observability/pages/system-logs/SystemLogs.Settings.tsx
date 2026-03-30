@@ -2,13 +2,19 @@
 
 import { useState, type ChangeEvent } from 'react';
 
-import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
+import {
+  CLIENT_LOGGING_KEYS,
+  type ObservabilityLoggingControls,
+  OBSERVABILITY_LOGGING_KEYS,
+} from '@/shared/contracts/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { resolveObservabilityLoggingControls } from '@/shared/lib/observability/logging-controls';
 import {
   Button,
   FormField,
   FormSection,
   Textarea,
+  ToggleRow,
   UI_GRID_ROOMY_CLASSNAME,
   useToast,
 } from '@/shared/ui';
@@ -18,13 +24,20 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 function ObservationPostSettingsForm({
   initialTags,
   initialFlags,
+  initialControls,
 }: {
   initialTags: string;
   initialFlags: string;
+  initialControls: ObservabilityLoggingControls;
 }): React.JSX.Element {
   const { toast } = useToast();
   const [clientTags, setClientTags] = useState(initialTags);
   const [clientFlags, setClientFlags] = useState(initialFlags);
+  const [infoLoggingEnabled, setInfoLoggingEnabled] = useState(initialControls.infoEnabled);
+  const [activityLoggingEnabled, setActivityLoggingEnabled] = useState(
+    initialControls.activityEnabled
+  );
+  const [errorLoggingEnabled, setErrorLoggingEnabled] = useState(initialControls.errorEnabled);
   const [dirty, setDirty] = useState(false);
 
   const saveSettingsMutation = useUpdateSettingsBulk();
@@ -39,6 +52,18 @@ function ObservationPostSettingsForm({
         : {};
 
       await saveSettingsMutation.mutateAsync([
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.infoEnabled,
+          value: serializeSetting(infoLoggingEnabled),
+        },
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.activityEnabled,
+          value: serializeSetting(activityLoggingEnabled),
+        },
+        {
+          key: OBSERVABILITY_LOGGING_KEYS.errorEnabled,
+          value: serializeSetting(errorLoggingEnabled),
+        },
         {
           key: CLIENT_LOGGING_KEYS.tags,
           value: serializeSetting(parsedTags),
@@ -61,11 +86,46 @@ function ObservationPostSettingsForm({
 
   return (
     <FormSection
-      title='Client logging context'
-      description='Provide feature flags and tags attached to client errors.'
+      title='Observation Post logging settings'
+      description='Control observability logging and attach feature flags and tags to client diagnostics.'
       className='p-6'
     >
-      <div className={`${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
+      <div className='grid gap-4 md:grid-cols-3'>
+        <ToggleRow
+          id='info-logging-enabled'
+          label='Info logging'
+          description='Controls info-level system log events across the application.'
+          variant='switch'
+          checked={infoLoggingEnabled}
+          onCheckedChange={(checked: boolean) => {
+            setInfoLoggingEnabled(checked);
+            setDirty(true);
+          }}
+        />
+        <ToggleRow
+          id='activity-logging-enabled'
+          label='Activity logging'
+          description='Controls persisted activity records such as auth and entity events.'
+          variant='switch'
+          checked={activityLoggingEnabled}
+          onCheckedChange={(checked: boolean) => {
+            setActivityLoggingEnabled(checked);
+            setDirty(true);
+          }}
+        />
+        <ToggleRow
+          id='error-logging-enabled'
+          label='Error logging'
+          description='Controls warning and error diagnostics, including client error reports.'
+          variant='switch'
+          checked={errorLoggingEnabled}
+          onCheckedChange={(checked: boolean) => {
+            setErrorLoggingEnabled(checked);
+            setDirty(true);
+          }}
+        />
+      </div>
+      <div className={`mt-6 ${UI_GRID_ROOMY_CLASSNAME} md:grid-cols-2`}>
         <FormField
           label='Feature flags (JSON)'
           description='Key-value pairs representing active experiment flags.'
@@ -121,11 +181,15 @@ export function ObservationPostSettingsPanel(): React.JSX.Element {
     settingsQuery.data.get(CLIENT_LOGGING_KEYS.featureFlags),
     null
   );
+  const controls = resolveObservabilityLoggingControls((key: string) =>
+    settingsQuery.data.get(key)
+  );
 
   return (
     <ObservationPostSettingsForm
       initialTags={JSON.stringify(tags ?? {}, null, 2)}
       initialFlags={JSON.stringify(flags ?? {}, null, 2)}
+      initialControls={controls}
     />
   );
 }

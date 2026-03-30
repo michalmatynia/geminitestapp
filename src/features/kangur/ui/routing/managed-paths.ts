@@ -1,7 +1,15 @@
+import type { Session } from 'next-auth';
+
 import {
+  KANGUR_BASE_PATH,
+  getKangurCanonicalPublicHref,
+  getKangurPublicAliasHref,
   normalizeKangurBasePath,
   resolveKangurPageKeyFromSlug,
 } from '@/features/kangur/config/routing';
+import {
+  resolveAccessibleKangurPageKey,
+} from '@/features/kangur/config/page-access';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import {
   buildLocalizedPathname,
@@ -29,6 +37,178 @@ export const normalizeManagedKangurPathname = (
   const withoutHash = withoutQuery.split('#')[0] ?? withoutQuery;
   const localeStrippedPath = stripSiteLocalePrefix(withoutHash);
   return localeStrippedPath.replace(/\/+$/, '') || '/';
+};
+
+const ABSOLUTE_URL_SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:/;
+
+const canonicalizeKangurPublicAliasPathnameUnsafe = (pathname: string): string => {
+  const normalizedPathname = stripSiteLocalePrefix(pathname);
+
+  if (normalizedPathname !== '/kangur' && !normalizedPathname.startsWith('/kangur/')) {
+    return pathname;
+  }
+
+  const slugSegments = normalizedPathname
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .slice(1);
+  const localizedAliasLocale = getPathLocale(pathname);
+  const canonicalPathname = getKangurCanonicalPublicHref(slugSegments);
+
+  return localizedAliasLocale
+    ? buildLocalizedPathname(canonicalPathname, localizedAliasLocale)
+    : canonicalPathname;
+};
+
+export const canonicalizeKangurPublicAliasPathname = (pathname: string): string =>
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'canonicalize-public-alias-pathname',
+      description: 'Canonicalizes /kangur alias pathnames to the public Kangur route space.',
+      context: { pathname },
+    },
+    () => canonicalizeKangurPublicAliasPathnameUnsafe(pathname),
+    { fallback: pathname }
+  );
+
+export const canonicalizeKangurPublicAliasHref = (href: string): string => {
+  if (!isManagedLocalHref(href)) {
+    return href;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'canonicalize-public-alias-href',
+      description: 'Canonicalizes /kangur alias hrefs to the public Kangur route space.',
+      context: { href },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const canonicalPathname = canonicalizeKangurPublicAliasPathnameUnsafe(parsed.pathname);
+      return `${canonicalPathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: href }
+  );
+};
+
+const preferKangurPublicAliasPathnameUnsafe = (pathname: string): string => {
+  const normalizedPathname = stripSiteLocalePrefix(pathname);
+
+  if (normalizedPathname === '/kangur' || normalizedPathname.startsWith('/kangur/')) {
+    return pathname;
+  }
+
+  const slugSegments = normalizedPathname
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  const localizedAliasLocale = getPathLocale(pathname);
+  const aliasPathname = getKangurPublicAliasHref(slugSegments);
+
+  return localizedAliasLocale
+    ? buildLocalizedPathname(aliasPathname, localizedAliasLocale)
+    : aliasPathname;
+};
+
+export const preferKangurPublicAliasPathname = (pathname: string): string =>
+  withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'prefer-public-alias-pathname',
+      description: 'Normalizes public Kangur pathnames into the /kangur alias route space.',
+      context: { pathname },
+    },
+    () => preferKangurPublicAliasPathnameUnsafe(pathname),
+    { fallback: pathname }
+  );
+
+export const preferKangurPublicAliasHref = (href: string): string => {
+  if (!isManagedLocalHref(href)) {
+    return href;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'prefer-public-alias-href',
+      description: 'Normalizes public Kangur hrefs into the /kangur alias route space.',
+      context: { href },
+    },
+    () => {
+      const parsed = new URL(href, 'https://kangur.local');
+      const aliasPathname = preferKangurPublicAliasPathnameUnsafe(parsed.pathname);
+      return `${aliasPathname}${parsed.search}${parsed.hash}`;
+    },
+    { fallback: href }
+  );
+};
+
+export const resolveRouteAwareManagedKangurHref = ({
+  href,
+  pathname,
+  currentOrigin,
+  canonicalizePublicAlias = false,
+}: {
+  href: string | null | undefined;
+  pathname: string | null;
+  currentOrigin?: string | null;
+  canonicalizePublicAlias?: boolean;
+}): string | undefined => {
+  const trimmedHref = typeof href === 'string' ? href.trim() : '';
+
+  if (!trimmedHref) {
+    return undefined;
+  }
+
+  return withKangurClientErrorSync(
+    {
+      source: 'kangur.routing',
+      action: 'resolve-route-aware-href',
+      description:
+        'Resolves managed Kangur hrefs against the active locale and public alias mode.',
+      context: {
+        href: trimmedHref,
+        pathname,
+        currentOrigin,
+        canonicalizePublicAlias,
+      },
+    },
+    () => {
+      let managedHref = trimmedHref;
+
+      if (!managedHref.startsWith('/')) {
+        if (!ABSOLUTE_URL_SCHEME_PATTERN.test(managedHref)) {
+          return managedHref;
+        }
+
+        if (!currentOrigin) {
+          return managedHref;
+        }
+
+        const parsed = new URL(managedHref);
+
+        if (parsed.origin !== currentOrigin) {
+          return managedHref;
+        }
+
+        managedHref = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+
+      const localizedHref = localizeManagedKangurHref({
+        href: managedHref,
+        locale: normalizeSiteLocale(getPathLocale(pathname)),
+        pathname,
+      });
+
+      return canonicalizePublicAlias
+        ? canonicalizeKangurPublicAliasHref(localizedHref)
+        : localizedHref;
+    },
+    { fallback: trimmedHref }
+  );
 };
 
 export const getKangurSlugFromPathname = (
@@ -102,6 +282,44 @@ export const resolveManagedKangurPageKeyFromHref = (
   );
 };
 
+export const resolveManagedKangurBasePath = (hrefOrPathname: string | null): string => {
+  const normalizedPathname = normalizeManagedKangurPathname(hrefOrPathname);
+
+  if (!normalizedPathname) {
+    return '/';
+  }
+
+  return normalizedPathname === KANGUR_BASE_PATH ||
+    normalizedPathname.startsWith(`${KANGUR_BASE_PATH}/`)
+    ? KANGUR_BASE_PATH
+    : '/';
+};
+
+export const resolveAccessibleManagedKangurTargetPageKey = <TPageKey extends string>(input: {
+  basePath: string;
+  fallbackPageKey: TPageKey;
+  href?: string | null;
+  pageKey?: TPageKey | null;
+  session?: Session | null;
+}): TPageKey => {
+  const { basePath, fallbackPageKey, href, pageKey, session } = input;
+
+  if (pageKey) {
+    return resolveAccessibleKangurPageKey(pageKey, session, fallbackPageKey);
+  }
+
+  if (href) {
+    const resolvedPageKey = resolveManagedKangurPageKeyFromHref(href, basePath);
+    return resolveAccessibleKangurPageKey(
+      resolvedPageKey as TPageKey | null,
+      session,
+      fallbackPageKey
+    );
+  }
+
+  return fallbackPageKey;
+};
+
 export const resolveManagedKangurEmbeddedFromHref = ({
   href,
   basePath,
@@ -138,6 +356,83 @@ export const resolveManagedKangurEmbeddedFromHref = ({
     },
     { fallback: null }
   );
+};
+
+const shouldPreserveAccessibleManagedKangurHref = ({
+  accessibleResolvedPageKey,
+  resolvedPageKey,
+}: {
+  accessibleResolvedPageKey: string;
+  resolvedPageKey: string | null;
+}): boolean => !resolvedPageKey || accessibleResolvedPageKey === resolvedPageKey;
+
+const resolveAccessibleManagedKangurFallbackHref = ({
+  canonicalizePublicAlias,
+  currentOrigin,
+  fallbackHref,
+  pathname,
+}: {
+  canonicalizePublicAlias: boolean;
+  currentOrigin?: string | null;
+  fallbackHref: string;
+  pathname: string | null;
+}): string =>
+  resolveRouteAwareManagedKangurHref({
+    href: fallbackHref,
+    pathname,
+    currentOrigin,
+    canonicalizePublicAlias,
+  }) ?? fallbackHref;
+
+export const sanitizeAccessibleManagedKangurHref = ({
+  href,
+  pathname,
+  currentOrigin,
+  canonicalizePublicAlias = false,
+  basePath = KANGUR_BASE_PATH,
+  fallbackHref,
+  session,
+}: {
+  href: string | null | undefined;
+  pathname: string | null;
+  currentOrigin?: string | null;
+  canonicalizePublicAlias?: boolean;
+  basePath?: string | null;
+  fallbackHref: string;
+  session?: Session | null;
+}): string | undefined => {
+  const resolvedHref = resolveRouteAwareManagedKangurHref({
+    href,
+    pathname,
+    currentOrigin,
+    canonicalizePublicAlias,
+  });
+
+  if (!resolvedHref) {
+    return undefined;
+  }
+
+  const effectiveBasePath = normalizeKangurBasePath(basePath ?? KANGUR_BASE_PATH);
+  const resolvedPageKey = resolveManagedKangurPageKeyFromHref(resolvedHref, effectiveBasePath);
+  const fallbackPageKey =
+    resolveManagedKangurPageKeyFromHref(fallbackHref, effectiveBasePath) ?? 'Game';
+  const accessibleResolvedPageKey = resolveAccessibleManagedKangurTargetPageKey({
+    basePath: effectiveBasePath,
+    fallbackPageKey,
+    href: resolvedHref,
+    session,
+  });
+
+  if (shouldPreserveAccessibleManagedKangurHref({ accessibleResolvedPageKey, resolvedPageKey })) {
+    return resolvedHref;
+  }
+
+  return resolveAccessibleManagedKangurFallbackHref({
+    fallbackHref,
+    pathname,
+    currentOrigin,
+    canonicalizePublicAlias,
+  });
 };
 
 export const localizeManagedKangurHref = ({

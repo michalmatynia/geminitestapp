@@ -11,7 +11,7 @@ import {
   ProductListingExportEventRecord,
   ProductListingRepository,
   ProductListingWithDetails,
-} from '../types/listings';
+} from '@/shared/contracts/integrations';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

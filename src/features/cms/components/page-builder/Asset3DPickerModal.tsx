@@ -2,8 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 
-import { Viewer3D } from '@/features/viewer3d/public';
-import { Asset3DPreviewModal } from '@/features/viewer3d/public';
+import { Viewer3D, Asset3DPreviewModal } from '@/features/viewer3d/public';
 import {
   useAssets3D,
   useAsset3DCategories,

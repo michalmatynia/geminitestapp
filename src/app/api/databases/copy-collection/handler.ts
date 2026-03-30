@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { badRequestError } from '@/shared/errors/app-error';
-import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 
 export async function POST_handler(req: NextRequest): Promise<Response> {
   await assertDatabaseEngineManageAccess();

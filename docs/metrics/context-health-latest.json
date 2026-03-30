@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-23T21:12:51.104Z",
-  "status": "passed",
+  "generatedAt": "2026-03-30T15:09:27.939Z",
+  "status": "warn",
   "summary": {
-    "total": 0,
+    "total": 5,
     "errorCount": 0,
-    "warningCount": 0,
-    "infoCount": 0,
-    "status": "passed",
-    "contextFileCount": 241
+    "warningCount": 3,
+    "infoCount": 2,
+    "status": "warn",
+    "contextFileCount": 244
   },
   "scope": {
     "sourceDirs": [
@@ -17,7 +17,71 @@
     "providerValueFieldThreshold": 15,
     "oversizedLocThreshold": 500
   },
-  "issues": [],
-  "rules": [],
-  "durationMs": 227
+  "issues": [
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 617 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/kangur/ui/context/KangurAuthContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 585 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/kangur/ui/context/KangurLearnerProfileRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "context-oversized",
+      "message": "Context file is 810 lines (threshold: 500). Consider extracting logic into hooks or splitting the context.",
+      "file": "src/features/kangur/ui/context/KangurLessonsRuntimeContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/cms/components/page-builder/PageBuilderPolicyContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "info",
+      "ruleId": "context-missing-split",
+      "message": "Context has no companion useXxxState/useXxxActions hooks. Consider the state/actions split pattern for re-render optimization.",
+      "file": "src/features/kangur/social/admin/workspace/SocialPostContext.tsx",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "context-oversized",
+      "errorCount": 0,
+      "warningCount": 3,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "context-missing-split",
+      "errorCount": 0,
+      "warningCount": 0,
+      "infoCount": 2
+    }
+  ],
+  "durationMs": 274
 }

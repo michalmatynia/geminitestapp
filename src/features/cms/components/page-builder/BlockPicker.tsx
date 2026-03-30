@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+import { usePageBuilderPolicy } from './PageBuilderPolicyContext';
 import { getAllowedBlockTypes } from './section-registry';
 
 import type { BlockDefinition } from '../../types/page-builder';
@@ -19,15 +20,19 @@ interface BlockPickerProps {
 
 export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.ReactNode {
   const settingsStore = useSettingsStore();
+  const policy = usePageBuilderPolicy();
   const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledEmbeds = useMemo<AppEmbedId[]>(() => {
     return parseJsonSetting<AppEmbedId[]>(enabledEmbedsRaw, []);
   }, [enabledEmbedsRaw]);
   const hasAppEmbeds = enabledEmbeds.length > 0;
-  const blockTypes = getAllowedBlockTypes(sectionType).filter((def: BlockDefinition) => {
-    if (def.type !== 'AppEmbed') return true;
-    return hasAppEmbeds;
-  });
+  const blockTypes = useMemo(
+    () =>
+      policy
+        .filterBlockDefinitions(getAllowedBlockTypes(sectionType))
+        .filter((def: BlockDefinition) => def.type !== 'AppEmbed' || hasAppEmbeds),
+    [hasAppEmbeds, policy, sectionType]
+  );
 
   const groups = useMemo(
     () => [

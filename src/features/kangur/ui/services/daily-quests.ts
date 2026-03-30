@@ -3,7 +3,7 @@ import type {
   KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import { kangurLessonSubjectSchema } from '@/features/kangur/shared/contracts/kangur';
-import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
+import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import type {
   KangurAssignmentPlan,
@@ -14,7 +14,6 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-quests';
 
 import { buildKangurAssignments } from './assignments';
-import { getProgressSubject, loadProgressOwnerKey } from './progress';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import {
   translateKangurProgressWithFallback,
@@ -40,9 +39,9 @@ type KangurDailyQuestStoredState = {
 type KangurDailyQuestOptions = {
   locale?: string | null;
   now?: Date;
-  ownerKey?: string | null;
+  ownerKey: string | null;
   persist?: boolean;
-  subject?: KangurLessonSubject;
+  subject: KangurLessonSubject;
   translate?: KangurProgressTranslate;
 };
 
@@ -130,11 +129,41 @@ const getDailyQuestFallbackCopy = (
 
 const canUseStorage = (): boolean => typeof window !== 'undefined' && Boolean(window.localStorage);
 
-const resolveQuestSubject = (options?: KangurDailyQuestOptions): KangurLessonSubject =>
-  options?.subject ?? getProgressSubject();
+const normalizeQuestOwnerKey = (ownerKey: string | null | undefined): string | null => {
+  const normalized = typeof ownerKey === 'string' ? ownerKey.trim() : '';
+  return normalized.length > 0 ? normalized : null;
+};
 
-const buildDailyQuestStorageKey = (subject: KangurLessonSubject): string =>
+const buildDailyQuestStorageKey = (
+  subject: KangurLessonSubject,
+  ownerKey?: string | null
+): string => `${KANGUR_DAILY_QUEST_STORAGE_KEY}:${subject}:${normalizeQuestOwnerKey(ownerKey) ?? 'guest'}`;
+
+const buildLegacyDailyQuestStorageKey = (subject: KangurLessonSubject): string =>
   `${KANGUR_DAILY_QUEST_STORAGE_KEY}:${subject}`;
+
+const getDailyQuestStorageCandidates = (
+  subject: KangurLessonSubject,
+  ownerKey: string | null
+): string[] => {
+  const keys = [buildDailyQuestStorageKey(subject, ownerKey), buildLegacyDailyQuestStorageKey(subject)];
+  if (subject === 'maths') {
+    keys.push(KANGUR_DAILY_QUEST_STORAGE_KEY);
+  }
+
+  return Array.from(new Set(keys));
+};
+
+const clearLegacyDailyQuestStorageKeys = (subject: KangurLessonSubject): void => {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  window.localStorage.removeItem(buildLegacyDailyQuestStorageKey(subject));
+  if (subject === 'maths') {
+    window.localStorage.removeItem(KANGUR_DAILY_QUEST_STORAGE_KEY);
+  }
+};
 
 const toLocalDateKey = (date: Date): string => {
   const year = date.getFullYear();
@@ -149,18 +178,39 @@ const buildQuestExpiry = (now: Date): string => {
   return expiry.toISOString();
 };
 
-const resolveQuestOwnerKey = (ownerKeyOverride?: string | null): string | null => {
-  if (typeof ownerKeyOverride === 'string') {
-    const normalized = ownerKeyOverride.trim();
-    return normalized.length > 0 ? normalized : null;
-  }
-
-  return loadProgressOwnerKey();
-};
+const resolveQuestOwnerKey = (ownerKey: string | null): string | null =>
+  normalizeQuestOwnerKey(ownerKey);
 
 const isQuestMetric = (
   value: KangurAssignmentPlan['questMetric']
 ): value is KangurAssignmentQuestMetric => Boolean(value);
+
+const hasStoredQuestSubject = (
+  candidate: Partial<KangurDailyQuestStoredState>
+): boolean =>
+  candidate.subject === undefined || kangurLessonSubjectSchema.safeParse(candidate.subject).success;
+
+const hasStoredQuestClaimedAt = (
+  candidate: Partial<KangurDailyQuestStoredState>
+): boolean =>
+  candidate.claimedAt === null ||
+  typeof candidate.claimedAt === 'string' ||
+  candidate.claimedAt === undefined;
+
+const hasStoredQuestMetadata = (
+  candidate: Partial<KangurDailyQuestStoredState>
+): boolean =>
+  candidate.version === 1 &&
+  typeof candidate.dateKey === 'string' &&
+  typeof candidate.createdAt === 'string' &&
+  typeof candidate.expiresAt === 'string' &&
+  hasStoredQuestClaimedAt(candidate) &&
+  typeof candidate.baselineGamesPlayed === 'number' &&
+  typeof candidate.baselineLessonsCompleted === 'number';
+
+const hasStoredQuestAssignment = (
+  candidate: Partial<KangurDailyQuestStoredState>
+): boolean => Boolean(candidate.assignment?.id) && isQuestMetric(candidate.assignment?.questMetric);
 
 const isStoredQuestState = (value: unknown): value is KangurDailyQuestStoredState => {
   if (!value || typeof value !== 'object') {
@@ -168,20 +218,10 @@ const isStoredQuestState = (value: unknown): value is KangurDailyQuestStoredStat
   }
 
   const candidate = value as Partial<KangurDailyQuestStoredState>;
-  const subjectValid =
-    candidate.subject === undefined ||
-    kangurLessonSubjectSchema.safeParse(candidate.subject).success;
   return (
-    candidate.version === 1 &&
-    typeof candidate.dateKey === 'string' &&
-    typeof candidate.createdAt === 'string' &&
-    typeof candidate.expiresAt === 'string' &&
-    (candidate.claimedAt === null || typeof candidate.claimedAt === 'string' || candidate.claimedAt === undefined) &&
-    typeof candidate.baselineGamesPlayed === 'number' &&
-    typeof candidate.baselineLessonsCompleted === 'number' &&
-    Boolean(candidate.assignment?.id) &&
-    isQuestMetric(candidate.assignment?.questMetric) &&
-    subjectValid
+    hasStoredQuestMetadata(candidate) &&
+    hasStoredQuestAssignment(candidate) &&
+    hasStoredQuestSubject(candidate)
   );
 };
 
@@ -198,8 +238,81 @@ const normalizeStoredQuest = (
   };
 };
 
+const readStoredDailyQuestCandidate = (
+  storageKey: string,
+  subject: KangurLessonSubject
+): KangurDailyQuestStoredState | null => {
+  const raw = window.localStorage.getItem(storageKey);
+  if (!raw) {
+    return null;
+  }
+
+  const parsed = JSON.parse(raw) as unknown;
+  return isStoredQuestState(parsed) ? normalizeStoredQuest(parsed, subject) : null;
+};
+
+const matchesStoredDailyQuestScope = (
+  normalized: KangurDailyQuestStoredState,
+  ownerKey: string | null,
+  subject: KangurLessonSubject
+): boolean =>
+  normalized.subject === subject && normalizeQuestOwnerKey(normalized.ownerKey) === ownerKey;
+
+const persistNormalizedStoredDailyQuest = ({
+  normalized,
+  persist,
+  scopedStorageKey,
+  storageKey,
+  subject,
+}: {
+  normalized: KangurDailyQuestStoredState;
+  persist?: boolean;
+  scopedStorageKey: string;
+  storageKey: string;
+  subject: KangurLessonSubject;
+}): void => {
+  if (persist === false) {
+    return;
+  }
+
+  window.localStorage.setItem(scopedStorageKey, JSON.stringify(normalized));
+  if (storageKey !== scopedStorageKey) {
+    clearLegacyDailyQuestStorageKeys(subject);
+  }
+};
+
+const readStoredDailyQuestFromStorage = ({
+  ownerKey,
+  persist,
+  subject,
+}: {
+  ownerKey: string | null;
+  persist?: boolean;
+  subject: KangurLessonSubject;
+}): KangurDailyQuestStoredState | null => {
+  const scopedStorageKey = buildDailyQuestStorageKey(subject, ownerKey);
+  for (const storageKey of getDailyQuestStorageCandidates(subject, ownerKey)) {
+    const normalized = readStoredDailyQuestCandidate(storageKey, subject);
+    if (!normalized || !matchesStoredDailyQuestScope(normalized, ownerKey, subject)) {
+      continue;
+    }
+
+    persistNormalizedStoredDailyQuest({
+      normalized,
+      persist,
+      scopedStorageKey,
+      storageKey,
+      subject,
+    });
+    return normalized;
+  }
+
+  return null;
+};
+
 const loadStoredDailyQuest = (
   subject: KangurLessonSubject,
+  ownerKey: string | null,
   options?: { persist?: boolean }
 ): KangurDailyQuestStoredState | null => {
   if (!canUseStorage()) {
@@ -212,34 +325,7 @@ const loadStoredDailyQuest = (
       action: 'load-storage',
       description: 'Loads the daily quest state from local storage.',
     },
-    () => {
-      const subjectKey = buildDailyQuestStorageKey(subject);
-      const raw =
-        window.localStorage.getItem(subjectKey) ||
-        (subject === 'maths' ? window.localStorage.getItem(KANGUR_DAILY_QUEST_STORAGE_KEY) : null);
-      if (!raw) {
-        return null;
-      }
-
-      const parsed = JSON.parse(raw) as unknown;
-      if (!isStoredQuestState(parsed)) {
-        return null;
-      }
-
-      const normalized = normalizeStoredQuest(parsed, subject);
-      if (normalized.subject !== subject) {
-        return null;
-      }
-
-      if (options?.persist !== false) {
-        window.localStorage.setItem(subjectKey, JSON.stringify(normalized));
-        if (subject === 'maths') {
-          window.localStorage.removeItem(KANGUR_DAILY_QUEST_STORAGE_KEY);
-        }
-      }
-
-      return normalized;
-    },
+    () => readStoredDailyQuestFromStorage({ ownerKey, persist: options?.persist, subject }),
     { fallback: null }
   );
 };
@@ -252,7 +338,7 @@ const saveStoredDailyQuest = (quest: KangurDailyQuestStoredState): void => {
   const subject = kangurLessonSubjectSchema.safeParse(quest.subject).success
     ? (quest.subject as KangurLessonSubject)
     : DEFAULT_KANGUR_SUBJECT;
-  const storageKey = buildDailyQuestStorageKey(subject);
+  const storageKey = buildDailyQuestStorageKey(subject, quest.ownerKey);
 
   withKangurClientErrorSync(
     {
@@ -321,6 +407,55 @@ const createStoredQuest = (
   subject,
 });
 
+const buildQuestProgressStatus = (
+  current: number,
+  target: number
+): KangurDailyQuestProgress['status'] =>
+  current >= target ? 'completed' : current > 0 ? 'in_progress' : 'not_started';
+
+const buildQuestProgressState = ({
+  current,
+  summary,
+  target,
+}: {
+  current: number;
+  summary: string;
+  target: number;
+}): KangurDailyQuestProgress => ({
+  current,
+  target,
+  percent: Math.min(100, Math.round((Math.min(current, target) / target) * 100)),
+  summary,
+  status: buildQuestProgressStatus(current, target),
+});
+
+const buildTranslatedQuestProgress = ({
+  clampCurrentForLabel = true,
+  current,
+  fallbackSummary,
+  summaryKey,
+  target,
+  translate,
+}: {
+  clampCurrentForLabel?: boolean;
+  current: number;
+  fallbackSummary: string;
+  summaryKey:
+    | 'dailyQuest.progress.gamesPlayed'
+    | 'dailyQuest.progress.lessonsCompleted'
+    | 'dailyQuest.progress.lessonMastery';
+  target: number;
+  translate?: KangurProgressTranslate;
+}): KangurDailyQuestProgress =>
+  buildQuestProgressState({
+    current,
+    target,
+    summary: translateKangurProgressWithFallback(translate, summaryKey, fallbackSummary, {
+      current: clampCurrentForLabel ? Math.min(current, target) : current,
+      target,
+    }),
+  });
+
 const resolveQuestProgress = (
   metric: KangurAssignmentQuestMetric,
   stored: KangurDailyQuestStoredState,
@@ -331,43 +466,25 @@ const resolveQuestProgress = (
   if (metric.kind === 'games_played') {
     const current = Math.max(0, progress.gamesPlayed - stored.baselineGamesPlayed);
     const target = Math.max(1, metric.targetDelta);
-    const percent = Math.min(100, Math.round((Math.min(current, target) / target) * 100));
-    return {
+    return buildTranslatedQuestProgress({
       current,
       target,
-      percent,
-      summary: translateKangurProgressWithFallback(
-        translate,
-        'dailyQuest.progress.gamesPlayed',
-        fallbackCopy.progress.gamesPlayed(Math.min(current, target), target),
-        {
-          current: Math.min(current, target),
-          target,
-        }
-      ),
-      status: current >= target ? 'completed' : current > 0 ? 'in_progress' : 'not_started',
-    };
+      summaryKey: 'dailyQuest.progress.gamesPlayed',
+      fallbackSummary: fallbackCopy.progress.gamesPlayed(Math.min(current, target), target),
+      translate,
+    });
   }
 
   if (metric.kind === 'lessons_completed') {
     const current = Math.max(0, progress.lessonsCompleted - stored.baselineLessonsCompleted);
     const target = Math.max(1, metric.targetDelta);
-    const percent = Math.min(100, Math.round((Math.min(current, target) / target) * 100));
-    return {
+    return buildTranslatedQuestProgress({
       current,
       target,
-      percent,
-      summary: translateKangurProgressWithFallback(
-        translate,
-        'dailyQuest.progress.lessonsCompleted',
-        fallbackCopy.progress.lessonsCompleted(Math.min(current, target), target),
-        {
-          current: Math.min(current, target),
-          target,
-        }
-      ),
-      status: current >= target ? 'completed' : current > 0 ? 'in_progress' : 'not_started',
-    };
+      summaryKey: 'dailyQuest.progress.lessonsCompleted',
+      fallbackSummary: fallbackCopy.progress.lessonsCompleted(Math.min(current, target), target),
+      translate,
+    });
   }
 
   const current = Math.max(
@@ -375,22 +492,14 @@ const resolveQuestProgress = (
     progress.lessonMastery[metric.lessonComponentId]?.masteryPercent ?? 0
   );
   const target = Math.max(1, metric.targetPercent);
-  const percent = Math.min(100, Math.round((Math.min(current, target) / target) * 100));
-  return {
+  return buildTranslatedQuestProgress({
+    clampCurrentForLabel: false,
     current,
     target,
-    percent,
-    summary: translateKangurProgressWithFallback(
-      translate,
-      'dailyQuest.progress.lessonMastery',
-      fallbackCopy.progress.lessonMastery(current, target),
-      {
-        current,
-        target,
-      }
-    ),
-    status: current >= target ? 'completed' : current > 0 ? 'in_progress' : 'not_started',
-  };
+    summaryKey: 'dailyQuest.progress.lessonMastery',
+    fallbackSummary: fallbackCopy.progress.lessonMastery(current, target),
+    translate,
+  });
 };
 
 const toDailyQuestState = (
@@ -455,14 +564,14 @@ const toDailyQuestState = (
 
 export const getCurrentKangurDailyQuest = (
   progress: KangurProgressState,
-  options: KangurDailyQuestOptions = {}
+  options: KangurDailyQuestOptions
 ): KangurDailyQuestState | null => {
   const fallbackCopy = getDailyQuestFallbackCopy(options.locale);
   const { now = new Date(), persist = true } = options;
-  const subject = resolveQuestSubject(options);
+  const { subject } = options;
   const ownerKey = resolveQuestOwnerKey(options.ownerKey);
   const dateKey = toLocalDateKey(now);
-  const stored = loadStoredDailyQuest(subject, { persist });
+  const stored = loadStoredDailyQuest(subject, ownerKey, { persist });
 
   if (stored?.dateKey === dateKey && stored.ownerKey === ownerKey) {
     return toDailyQuestState(stored, progress, fallbackCopy, options.translate);
@@ -489,21 +598,44 @@ export const getCurrentKangurDailyQuest = (
 };
 
 export const getKangurDailyQuestStorageKey = (
-  subject?: KangurLessonSubject
-): string => buildDailyQuestStorageKey(subject ?? getProgressSubject());
+  subject: KangurLessonSubject,
+  ownerKey: string | null
+): string => buildDailyQuestStorageKey(subject, resolveQuestOwnerKey(ownerKey));
+
+const shouldUseCurrentQuestFallback = (
+  stored: KangurDailyQuestStoredState | null,
+  dateKey: string,
+  ownerKey: string | null
+): boolean => stored?.dateKey !== dateKey || stored?.ownerKey !== ownerKey;
+
+const canClaimQuestReward = ({
+  quest,
+  rewardXp,
+  stored,
+}: {
+  quest: KangurDailyQuestState;
+  rewardXp: number;
+  stored: KangurDailyQuestStoredState;
+}): boolean => quest.progress.status === 'completed' && !stored.claimedAt && rewardXp > 0;
 
 export const claimCurrentKangurDailyQuestReward = (
   progress: KangurProgressState,
-  options: KangurDailyQuestOptions = {}
+  options: KangurDailyQuestOptions
 ): KangurDailyQuestClaimResult => {
   const fallbackCopy = getDailyQuestFallbackCopy(options.locale);
   const { now = new Date() } = options;
-  const subject = resolveQuestSubject(options);
+  const { subject } = options;
   const ownerKey = resolveQuestOwnerKey(options.ownerKey);
   const dateKey = toLocalDateKey(now);
-  const stored = loadStoredDailyQuest(subject, { persist: options.persist });
+  const stored = loadStoredDailyQuest(subject, ownerKey, { persist: options.persist });
 
-  if (stored?.dateKey !== dateKey || stored?.ownerKey !== ownerKey) {
+  if (shouldUseCurrentQuestFallback(stored, dateKey, ownerKey)) {
+    return {
+      quest: getCurrentKangurDailyQuest(progress, { ...options, persist: false }),
+      xpAwarded: 0,
+    };
+  }
+  if (!stored) {
     return {
       quest: getCurrentKangurDailyQuest(progress, { ...options, persist: false }),
       xpAwarded: 0,
@@ -512,7 +644,7 @@ export const claimCurrentKangurDailyQuestReward = (
 
   const quest = toDailyQuestState(stored, progress, fallbackCopy, options.translate);
   const rewardXp = Math.max(0, stored.assignment.rewardXp ?? 0);
-  if (quest.progress.status !== 'completed' || stored.claimedAt || rewardXp <= 0) {
+  if (!canClaimQuestReward({ quest, rewardXp, stored })) {
     return { quest, xpAwarded: 0 };
   }
 

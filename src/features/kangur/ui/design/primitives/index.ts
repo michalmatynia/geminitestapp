@@ -33,7 +33,6 @@ export * from './KangurPageContainer';
 export * from './KangurTopNavGroup';
 export * from './KangurSectionEyebrow';
 export * from './KangurPanelIntro';
-export * from './KangurWidgetIntro';
 export * from './KangurSectionHeading';
 export * from './KangurGradientHeading';
 export * from './KangurFeatureHeader';

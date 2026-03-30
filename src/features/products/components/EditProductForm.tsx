@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import ProductForm from '@/features/products/components/ProductForm';
 import {
@@ -23,6 +23,11 @@ function EditProductForm(): React.JSX.Element {
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
   const router = useRouter();
   const isSaveDisabled = uploading || !hasUnsavedChanges;
+  const [validatorSessionKey] = useState<string>(() =>
+    typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : `edit-product-validator-${Date.now().toString(36)}`
+  );
 
   return (
     <AdminProductsPageLayout
@@ -57,7 +62,11 @@ function EditProductForm(): React.JSX.Element {
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} showFileManager={showFileManager} />
       ) : (
-        <ProductForm submitButtonText='Update' validationInstanceScopeOverride='product_edit' />
+        <ProductForm
+          submitButtonText='Update'
+          validationInstanceScopeOverride='product_edit'
+          validatorSessionKey={validatorSessionKey}
+        />
       )}
     </AdminProductsPageLayout>
   );

@@ -22,6 +22,9 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: () => <div data-testid='geometry-drawing-game' />,
 }));
+vi.mock('@/features/kangur/ui/components/ShapeRecognitionGame', () => ({
+  default: () => <div data-testid='shape-recognition-game' />,
+}));
 
 import deMessages from '@/i18n/messages/de.json';
 import GeometryShapeRecognitionLesson from '@/features/kangur/ui/components/GeometryShapeRecognitionLesson';
@@ -48,12 +51,20 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ??
-      [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
       title: 'Formen kennenlernen',
       description: 'Sieh dir die häufigsten Formen an.',
+    });
+    expect(sections.find((section) => section.id === 'practice')).toMatchObject({
+      title: 'Formen-Challenge',
+      description: 'Benenne die Form, die du siehst.',
+      isGame: true,
     });
     expect(sections.find((section) => section.id === 'draw')).toMatchObject({
       title: 'Spiel: Formen zeichnen',
@@ -61,8 +72,20 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
       isGame: true,
     });
 
-    expect(games.find((game) => game.sectionId === 'draw')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'practice')?.shell).toMatchObject({
+      title: 'Formen-Challenge',
+      shellTestId: 'geometry-shape-recognition-practice-shell',
+    });
+    expect(games.find((game) => game.sectionId === 'practice')?.launchableInstance).toMatchObject({
+      gameId: 'geometry_shape_spotter',
+      instanceId: 'geometry_shape_spotter:instance:default',
+    });
+    expect(games.find((game) => game.sectionId === 'draw')?.shell).toMatchObject({
       title: 'Spiel: Formen zeichnen',
+    });
+    expect(games.find((game) => game.sectionId === 'draw')?.launchableInstance).toMatchObject({
+      gameId: 'geometry_shape_workshop',
+      instanceId: 'geometry_shape_workshop:instance:default',
     });
 
     expect(slides.intro?.[0]?.title).toBe('Formen kennenlernen');
@@ -72,5 +95,27 @@ describe('GeometryShapeRecognitionLesson i18n', () => {
     expect(screen.getByText('Rund, ohne Ecken.')).toBeInTheDocument();
     expect(screen.getByText('Quadrat')).toBeInTheDocument();
     expect(screen.getByText('4 gleich lange Seiten.')).toBeInTheDocument();
+  });
+
+  it('prefers the draw gameTitle locale key for the draw shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.geometryShapeRecognition.draw.gameTitle =
+      'Benutzerdefiniertes Formenzeichnen';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <GeometryShapeRecognitionLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'draw')?.shell).toMatchObject({
+      title: 'Benutzerdefiniertes Formenzeichnen',
+    });
   });
 });

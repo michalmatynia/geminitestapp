@@ -13,6 +13,7 @@ import {
 import { useKangurMobileScoreHistory } from './useKangurMobileScoreHistory';
 
 type UseKangurMobileResultsOptions = {
+  enabled?: boolean;
   family?: KangurMobileScoreFamily;
   operation?: string | null;
 };
@@ -34,6 +35,7 @@ export const useKangurMobileResults = (
 ): UseKangurMobileResultsResult => {
   const { copy } = useKangurMobileI18n();
   const scoresQuery = useKangurMobileScoreHistory({
+    enabled: options.enabled,
     limit: 40,
     sort: '-created_date',
   });

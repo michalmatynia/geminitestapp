@@ -4,8 +4,9 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
-import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor-section-knowledge';
-import { isPublishedKangurTestQuestion } from '@/features/kangur/test-questions';
+import { resolveKangurTutorSectionKnowledgeReference } from '@/features/kangur/ai-tutor/section-knowledge';
+import { isPublishedKangurTestQuestion } from '@/features/kangur/test-suites/questions';
+import { renderKangurLessonNavigationIconButton } from '@/features/kangur/ui/components/KangurLessonNavigationIconButton';
 import {
   useKangurAiTutorSessionSync,
   useOptionalKangurAiTutor,
@@ -17,7 +18,6 @@ import {
   KangurButton,
   KangurEmptyState,
   KangurInfoCard,
-  KangurPanelRow,
   KangurPanelIntro,
   KangurProgressBar,
   KangurSummaryPanel,
@@ -28,7 +28,12 @@ import { useKangurLearnerActivityPing } from '@/features/kangur/ui/hooks/useKang
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import type { KangurTestQuestion, KangurTestSuite } from '@/features/kangur/shared/contracts/kangur-tests';
+import { cn } from '@/features/kangur/shared/utils';
 
 import { KangurTestQuestionRenderer } from './KangurTestQuestionRenderer';
 
@@ -282,7 +287,7 @@ export function KangurTestSuitePlayer({
 
   if (totalQuestions === 0) {
     return (
-      <div ref={emptyStateAnchorRef}>
+      <div ref={emptyStateAnchorRef} className='mx-auto w-full max-w-4xl'>
         <KangurEmptyState
           accent='slate'
           data-testid='kangur-test-suite-empty'
@@ -301,17 +306,19 @@ export function KangurTestSuitePlayer({
     return (
       <>
         <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
-          <div ref={summaryAnchorRef}>
-            <div className='space-y-6'>
+          <div ref={summaryAnchorRef} className='mx-auto w-full max-w-4xl'>
+            <div className='flex w-full flex-col items-center space-y-6 text-center'>
               <KangurPanelIntro
+                className='items-center text-center'
                 data-testid='kangur-test-suite-summary-copy'
+                descriptionClassName='mx-auto max-w-2xl text-center'
                 description={
                   summaryContent?.summary ??
                   'Sprawdź wynik końcowy i wróć do pytań, aby przeanalizować odpowiedzi.'
                 }
                 title={summaryContent?.title ?? 'Podsumowanie testu'}
                 titleAs='h2'
-                titleClassName='text-lg font-bold tracking-[-0.02em]'
+                titleClassName='text-center text-lg font-bold tracking-[-0.02em]'
               />
               <KangurSummaryPanel
                 accent='indigo'
@@ -326,7 +333,7 @@ export function KangurTestSuitePlayer({
                 <div className='mt-2 text-sm text-indigo-500'>{suiteTitle}</div>
               </KangurSummaryPanel>
 
-              <div className='space-y-4'>
+              <div className='w-full space-y-4 text-left'>
                 {publishedQuestions.map((question, index) => {
                   const selected = answers[question.id] ?? null;
                   return (
@@ -351,18 +358,20 @@ export function KangurTestSuitePlayer({
                 })}
               </div>
 
-              <KangurButton
-                type='button'
-                onClick={handleRestart}
-                fullWidth
-                className={summaryActionClassName}
-                size='lg'
-                variant='surface'
-                data-doc-id='tests_suite_player'
-              >
-                <RotateCcw aria-hidden='true' className='size-4' />
-                Try again
-              </KangurButton>
+              <div className='flex w-full justify-center'>
+                <KangurButton
+                  type='button'
+                  onClick={handleRestart}
+                  fullWidth
+                  className={summaryActionClassName}
+                  size='lg'
+                  variant='surface'
+                  data-doc-id='tests_suite_player'
+                >
+                  <RotateCcw aria-hidden='true' className='size-4' />
+                  Try again
+                </KangurButton>
+              </div>
             </div>
           </div>
         </KangurTestSuiteRuntimeProvider>
@@ -373,9 +382,9 @@ export function KangurTestSuitePlayer({
   return (
     <>
       <KangurTestSuiteRuntimeProvider totalQuestions={totalQuestions}>
-        <div className='space-y-4'>
+        <div className='mx-auto flex w-full max-w-4xl flex-col items-center space-y-4 text-center'>
           {/* Progress bar */}
-          <div className='flex items-center kangur-panel-gap'>
+          <div className='flex w-full max-w-2xl items-center kangur-panel-gap'>
             <KangurProgressBar
               accent='indigo'
               className='flex-1'
@@ -393,6 +402,7 @@ export function KangurTestSuitePlayer({
             <motion.div
               ref={questionAnchorRef}
               key={currentIndex}
+              className='w-full'
               data-testid='kangur-test-question-anchor'
               {...questionMotionProps}
             >
@@ -411,21 +421,26 @@ export function KangurTestSuitePlayer({
           </AnimatePresence>
 
           {/* Navigation */}
-          <KangurPanelRow className='pt-2 sm:items-center sm:justify-between'>
-            <KangurButton
-              type='button'
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-              className={compactActionClassName}
-              size='sm'
-              variant='surface'
-              data-doc-id='tests_suite_player'
+          <nav
+            aria-label='Test suite navigation'
+            className={LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME}
+            data-testid='kangur-test-suite-navigation'
+          >
+            <div
+              className={cn(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME, 'pt-2')}
+              role='group'
+              aria-label='Test suite navigation'
             >
-              <ChevronLeft aria-hidden='true' className='size-4' />
-              Previous
-            </KangurButton>
+              {renderKangurLessonNavigationIconButton({
+                onClick: handlePrev,
+                disabled: currentIndex === 0,
+                className: compactActionClassName,
+                'aria-label': 'Previous',
+                'data-doc-id': 'tests_suite_player',
+                icon: ChevronLeft,
+                title: 'Previous',
+              })}
 
-            <div className={`w-full ${KANGUR_TIGHT_ROW_CLASSNAME} sm:w-auto sm:flex-wrap sm:items-center sm:justify-end`}>
               {canAskAboutSelectedChoice ? (
                 <KangurButton
                   type='button'
@@ -443,7 +458,16 @@ export function KangurTestSuitePlayer({
                 </KangurButton>
               ) : null}
 
-              {isAnswered ? (
+              {isAnswered && showAnswer && currentIndex < totalQuestions - 1 ? (
+                renderKangurLessonNavigationIconButton({
+                  onClick: handleNext,
+                  className: compactActionClassName,
+                  'aria-label': 'Next',
+                  'data-doc-id': 'tests_suite_player',
+                  icon: ChevronRight,
+                  title: 'Next',
+                })
+              ) : isAnswered ? (
                 <KangurButton
                   type='button'
                   onClick={showAnswer ? handleNext : handleRevealAnswer}
@@ -452,18 +476,21 @@ export function KangurTestSuitePlayer({
                   variant='primary'
                   data-doc-id='tests_suite_player'
                 >
-                  {showAnswer
-                    ? currentIndex < totalQuestions - 1
-                      ? 'Next'
-                      : 'Finish'
-                    : 'Check answer'}
+                  {showAnswer ? 'Finish' : 'Check answer'}
                   <ChevronRight aria-hidden='true' className='size-4' />
                 </KangurButton>
               ) : (
-                <div className='text-xs text-slate-400'>Select an answer to continue</div>
+                <div
+                  className={cn(
+                    KANGUR_TIGHT_ROW_CLASSNAME,
+                    'w-full justify-center text-center text-xs text-slate-400'
+                  )}
+                >
+                  Select an answer to continue
+                </div>
               )}
             </div>
-          </KangurPanelRow>
+          </nav>
         </div>
       </KangurTestSuiteRuntimeProvider>
     </>

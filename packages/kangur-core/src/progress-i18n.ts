@@ -674,88 +674,73 @@ const formatLocalizedFraction = (
   plural: string,
 ): string => `${current}/${target} ${target === 1 ? singular : plural}`;
 
+type KangurBadgeSummaryKind =
+  | 'game'
+  | 'perfectGame'
+  | 'lesson'
+  | 'perfect'
+  | 'streak'
+  | 'questions'
+  | 'percentGoal'
+  | 'games'
+  | 'xp'
+  | 'quest'
+  | 'round'
+  | 'types'
+  | 'sessions';
+
+type KangurBadgeSummaryFormatter = (current: number, target: number) => string;
+
+const KANGUR_BADGE_SUMMARY_FORMATTERS: Record<
+  'default' | 'en',
+  Record<KangurBadgeSummaryKind, KangurBadgeSummaryFormatter>
+> = {
+  default: {
+    game: (current, target) => formatLocalizedFraction(current, target, 'Spiel', 'Spiele'),
+    games: (current, target) => formatLocalizedFraction(current, target, 'Spiel', 'Spiele'),
+    perfectGame: (current, target) =>
+      formatLocalizedFraction(current, target, 'perfektes Spiel', 'perfekte Spiele'),
+    lesson: (current, target) => formatLocalizedFraction(current, target, 'Lektion', 'Lektionen'),
+    perfect: (current, target) => `${current}/${target} perfekt`,
+    streak: (current, target) => `${current}/${target} in Folge`,
+    questions: (current, target) => formatLocalizedFraction(current, target, 'Frage', 'Fragen'),
+    percentGoal: (current, target) => `${current}% / ${target}%`,
+    xp: (current, target) => `${current}/${target} XP`,
+    quest: (current, target) => formatLocalizedFraction(current, target, 'Mission', 'Missionen'),
+    round: (current, target) => formatLocalizedFraction(current, target, 'Runde', 'Runden'),
+    types: (current, target) => `${current}/${target} Typen`,
+    sessions: (current, target) => formatLocalizedFraction(current, target, 'Sitzung', 'Sitzungen'),
+  },
+  en: {
+    game: (current, target) => formatLocalizedFraction(current, target, 'game', 'games'),
+    games: (current, target) => formatLocalizedFraction(current, target, 'game', 'games'),
+    perfectGame: (current, target) =>
+      formatLocalizedFraction(current, target, 'perfect game', 'perfect games'),
+    lesson: (current, target) => formatLocalizedFraction(current, target, 'lesson', 'lessons'),
+    perfect: (current, target) => `${current}/${target} perfect`,
+    streak: (current, target) => `${current}/${target} in a row`,
+    questions: (current, target) => formatLocalizedFraction(current, target, 'question', 'questions'),
+    percentGoal: (current, target) => `${current}% / ${target}%`,
+    xp: (current, target) => `${current}/${target} XP`,
+    quest: (current, target) => formatLocalizedFraction(current, target, 'mission', 'missions'),
+    round: (current, target) => formatLocalizedFraction(current, target, 'round', 'rounds'),
+    types: (current, target) => `${current}/${target} types`,
+    sessions: (current, target) => formatLocalizedFraction(current, target, 'session', 'sessions'),
+  },
+};
+
 const getLocalizedKangurBadgeSummaryByKind = ({
   kind,
   current,
   target,
   locale,
 }: {
-  kind:
-    | 'game'
-    | 'perfectGame'
-    | 'lesson'
-    | 'perfect'
-    | 'streak'
-    | 'questions'
-    | 'percentGoal'
-    | 'games'
-    | 'xp'
-    | 'quest'
-    | 'round'
-    | 'types'
-    | 'sessions';
+  kind: KangurBadgeSummaryKind;
   current: number;
   target: number;
   locale: KangurCoreLocale;
-}): string => {
-  if (locale === 'en') {
-    switch (kind) {
-      case 'game':
-      case 'games':
-        return formatLocalizedFraction(current, target, 'game', 'games');
-      case 'perfectGame':
-        return formatLocalizedFraction(current, target, 'perfect game', 'perfect games');
-      case 'lesson':
-        return formatLocalizedFraction(current, target, 'lesson', 'lessons');
-      case 'perfect':
-        return `${current}/${target} perfect`;
-      case 'streak':
-        return `${current}/${target} in a row`;
-      case 'questions':
-        return formatLocalizedFraction(current, target, 'question', 'questions');
-      case 'percentGoal':
-        return `${current}% / ${target}%`;
-      case 'xp':
-        return `${current}/${target} XP`;
-      case 'quest':
-        return formatLocalizedFraction(current, target, 'mission', 'missions');
-      case 'round':
-        return formatLocalizedFraction(current, target, 'round', 'rounds');
-      case 'types':
-        return `${current}/${target} types`;
-      case 'sessions':
-        return formatLocalizedFraction(current, target, 'session', 'sessions');
-    }
-  }
-
-  switch (kind) {
-    case 'game':
-    case 'games':
-      return formatLocalizedFraction(current, target, 'Spiel', 'Spiele');
-    case 'perfectGame':
-      return formatLocalizedFraction(current, target, 'perfektes Spiel', 'perfekte Spiele');
-    case 'lesson':
-      return formatLocalizedFraction(current, target, 'Lektion', 'Lektionen');
-    case 'perfect':
-      return `${current}/${target} perfekt`;
-    case 'streak':
-      return `${current}/${target} in Folge`;
-    case 'questions':
-      return formatLocalizedFraction(current, target, 'Frage', 'Fragen');
-    case 'percentGoal':
-      return `${current}% / ${target}%`;
-    case 'xp':
-      return `${current}/${target} XP`;
-    case 'quest':
-      return formatLocalizedFraction(current, target, 'Mission', 'Missionen');
-    case 'round':
-      return formatLocalizedFraction(current, target, 'Runde', 'Runden');
-    case 'types':
-      return `${current}/${target} Typen`;
-    case 'sessions':
-      return formatLocalizedFraction(current, target, 'Sitzung', 'Sitzungen');
-  }
-};
+}): string =>
+  KANGUR_BADGE_SUMMARY_FORMATTERS[locale === 'en' ? 'en' : 'default'][kind](current, target);
 
 const resolveKangurBadgeSummaryKind = (
   badgeId: string,

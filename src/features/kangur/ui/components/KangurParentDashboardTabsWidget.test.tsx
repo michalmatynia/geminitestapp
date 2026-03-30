@@ -13,14 +13,15 @@ const runtimeState = vi.hoisted(() => ({
     setActiveTab: vi.fn<(tabId: string) => void>(),
   },
 }));
-const useKangurPageContentEntryMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
-  useKangurParentDashboardRuntime: () => runtimeState.value,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: useKangurPageContentEntryMock,
+  useKangurParentDashboardRuntimeShellActions: () => ({
+    setActiveTab: runtimeState.value.setActiveTab,
+  }),
+  useKangurParentDashboardRuntimeShellState: () => ({
+    activeTab: runtimeState.value.activeTab,
+    canAccessDashboard: runtimeState.value.canAccessDashboard,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
@@ -32,27 +33,19 @@ import { KangurParentDashboardTabsWidget } from './KangurParentDashboardTabsWidg
 describe('KangurParentDashboardTabsWidget', () => {
   beforeEach(() => {
     runtimeState.value = {
-      activeTab: 'scores',
+      activeTab: 'progress',
       canAccessDashboard: true,
       setActiveTab: vi.fn<(tabId: string) => void>(),
     };
-    useKangurPageContentEntryMock.mockReturnValue({
-      data: undefined,
-      entry: null,
-      error: null,
-      isError: false,
-      isFetched: true,
-      isFetching: false,
-      isLoading: false,
-      isPending: false,
-      isSuccess: true,
-      refetch: vi.fn(),
-      status: 'success',
-    });
   });
 
   it('prevents pointer focus on tab buttons while still switching tabs', () => {
     const onBeforeTabChange = vi.fn<(tabId: string) => void>();
+    runtimeState.value = {
+      activeTab: 'assign',
+      canAccessDashboard: true,
+      setActiveTab: vi.fn<(tabId: string) => void>(),
+    };
 
     render(<KangurParentDashboardTabsWidget onBeforeTabChange={onBeforeTabChange} />);
 
@@ -73,7 +66,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
     render(<KangurParentDashboardTabsWidget onBeforeTabChange={onBeforeTabChange} />);
 
-    fireEvent.click(screen.getByRole('tab', { name: /wyniki/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /postęp/i }));
     fireEvent.click(screen.getByRole('tab', { name: /zadania/i }));
 
     expect(onBeforeTabChange).toHaveBeenCalledTimes(1);
@@ -82,7 +75,7 @@ describe('KangurParentDashboardTabsWidget', () => {
 
   it('does not render for viewers without dashboard access', () => {
     runtimeState.value = {
-      activeTab: 'scores',
+      activeTab: 'progress',
       canAccessDashboard: false,
       setActiveTab: vi.fn<(tabId: string) => void>(),
     };
@@ -92,30 +85,12 @@ describe('KangurParentDashboardTabsWidget', () => {
     expect(screen.queryByRole('tab', { name: /postęp/i })).not.toBeInTheDocument();
   });
 
-  it('renders Mongo-backed intro copy when available', () => {
-    useKangurPageContentEntryMock.mockReturnValue({
-      data: undefined,
-      entry: {
-        id: 'parent-dashboard-tabs',
-        title: 'Zakładki panelu',
-        summary: 'Wybierz rodzaj danych potrzebnych do kolejnej decyzji.',
-      },
-      error: null,
-      isError: false,
-      isFetched: true,
-      isFetching: false,
-      isLoading: false,
-      isPending: false,
-      isSuccess: true,
-      refetch: vi.fn(),
-      status: 'success',
-    });
-
+  it('renders only the tab strip without the dashboard tabs intro copy', () => {
     render(<KangurParentDashboardTabsWidget />);
 
-    expect(screen.getByText('Zakładki panelu')).toHaveClass('[color:var(--kangur-page-text)]');
+    expect(screen.queryByText('Zakładki panelu')).not.toBeInTheDocument();
     expect(
-      screen.getByText('Wybierz rodzaj danych potrzebnych do kolejnej decyzji.')
-    ).toHaveClass('[color:var(--kangur-page-muted-text)]');
+      screen.queryByText('Przełączaj między wynikami, postępem, zadaniami, monitoringiem i ustawieniami Tutor-AI.')
+    ).not.toBeInTheDocument();
   });
 });

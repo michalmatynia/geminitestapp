@@ -76,6 +76,32 @@ type ChromeTextButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
     children: ReactNode;
   };
 
+const resolveKangurAiTutorChromeButtonFallbackLabel = ({
+  dataDocAlias,
+  dataDocId,
+  dataTestId,
+}: {
+  dataDocAlias: string | undefined;
+  dataDocId: string | undefined;
+  dataTestId: string | undefined;
+}): string | undefined =>
+  dataDocAlias || dataDocId || dataTestId;
+
+const warnOnMissingKangurAiTutorChromeButtonLabel = ({
+  hasAccessibleLabel,
+  hasText,
+}: {
+  hasAccessibleLabel: boolean;
+  hasText: boolean;
+}): void => {
+  if (!hasAccessibleLabel && !hasText) {
+    warnMissingAccessibleLabel({
+      componentName: 'KangurAiTutorChromeTextButton',
+      hasAccessibleLabel,
+    });
+  }
+};
+
 export function KangurAiTutorChromeTextButton({
   children,
   className,
@@ -93,14 +119,18 @@ export function KangurAiTutorChromeTextButton({
     ariaLabel: ariaLabelProp,
     ariaLabelledBy: ariaLabelledByProp,
     title,
-    fallbackLabel:
-      (typeof dataDocAlias === 'string' ? dataDocAlias : undefined) ||
-      (typeof dataDocId === 'string' ? dataDocId : undefined) ||
-      (typeof dataTestId === 'string' ? dataTestId : undefined),
+    fallbackLabel: resolveKangurAiTutorChromeButtonFallbackLabel({
+      dataDocAlias: typeof dataDocAlias === 'string' ? dataDocAlias : undefined,
+      dataDocId: typeof dataDocId === 'string' ? dataDocId : undefined,
+      dataTestId: typeof dataTestId === 'string' ? dataTestId : undefined,
+    }),
   });
-  if (!hasAccessibleLabel && !hasText) {
-    warnMissingAccessibleLabel({ componentName: 'KangurAiTutorChromeTextButton', hasAccessibleLabel });
-  }
+
+  warnOnMissingKangurAiTutorChromeButtonLabel({
+    hasAccessibleLabel,
+    hasText,
+  });
+
   return (
     <button
       className={cn(textButtonClassName, className)}

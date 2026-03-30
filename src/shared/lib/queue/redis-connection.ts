@@ -5,6 +5,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 let connection: Redis | null = null;
+const REDIS_PING_TIMEOUT_MS = 1_500;
 
 const TRANSIENT_REDIS_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT']);
 
@@ -63,6 +64,35 @@ export const getRedisConnection = (): Redis | null => {
 
 export const isRedisAvailable = (): boolean => {
   return !!process.env['REDIS_URL'];
+};
+
+export const isRedisReachable = async (): Promise<boolean> => {
+  const url = process.env['REDIS_URL'];
+  if (!url) return false;
+
+  const probe = new Redis(url, {
+    maxRetriesPerRequest: 1,
+    enableReadyCheck: false,
+    lazyConnect: true,
+    connectTimeout: REDIS_PING_TIMEOUT_MS,
+    retryStrategy: () => null,
+    ...(process.env['REDIS_TLS'] === 'true' ? { tls: {} } : {}),
+  });
+
+  probe.on('error', () => {
+    // Expected when Redis is unavailable; handled by returning false from this probe.
+  });
+
+  try {
+    await probe.connect();
+    const response = await probe.ping();
+    return response === 'PONG';
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return false;
+  } finally {
+    probe.disconnect();
+  }
 };
 
 export const closeRedisConnection = async (): Promise<void> => {

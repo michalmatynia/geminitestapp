@@ -1,0 +1,604 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import React from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  cleanupSocialPostPipelineTestHarness,
+  resetSocialPostPipelineTestHarness,
+  mockSocialPostContextReturnValue,
+} from './SocialPost.Pipeline.test-support';
+
+import { SocialPostPipeline } from './SocialPost.Pipeline';
+
+describe('SocialPostPipeline', () => {
+  beforeEach(() => {
+    resetSocialPostPipelineTestHarness();
+  });
+
+  afterEach(() => {
+    cleanupSocialPostPipelineTestHarness();
+  });
+
+  it('disables the pipeline when no social or AI Brain post model is configured', () => {
+    const handleRunFullPipeline = vi.fn();
+    const handleRunFullPipelineWithFreshCapture = vi.fn();
+    const handleCaptureImagesOnly = vi.fn();
+
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline,
+      handleRunFullPipelineWithFreshCapture,
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly,
+      canGenerateSocialDraft: false,
+      canRunVisualAnalysisPipeline: false,
+      canRunFreshCapturePipeline: false,
+      batchCaptureBaseUrl: '',
+      batchCapturePresetIds: ['home', 'pricing', 'faq'],
+      socialDraftBlockedReason:
+        'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.',
+      socialBatchCaptureBlockedReason: 'Set a batch capture base URL in Social Settings first.',
+      socialVisualAnalysisBlockedReason:
+        'Select at least one image add-on before running image analysis.',
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 2,
+      hasBatchCaptureConfig: false,
+    });
+
+    render(<SocialPostPipeline />);
+
+    const button = screen.getByRole('button', { name: 'Run full pipeline' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute(
+      'title',
+      'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
+    );
+    expect(screen.getByRole('button', { name: 'Image analysis' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Choose a StudiQ Social post model in Settings or assign AI Brain routing in /admin/brain?tab=routing.'
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.click(button);
+    expect(handleRunFullPipeline).not.toHaveBeenCalled();
+    expect(handleRunFullPipelineWithFreshCapture).not.toHaveBeenCalled();
+    expect(handleCaptureImagesOnly).not.toHaveBeenCalled();
+  });
+
+  it('surfaces the Project URL validation error when generation is blocked by settings', () => {
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: false,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: false,
+      batchCaptureBaseUrl: 'https://capture.example.com',
+      batchCapturePresetIds: ['home', 'pricing'],
+      socialDraftBlockedReason: 'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+      socialBatchCaptureBlockedReason: 'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.',
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 2,
+      hasBatchCaptureConfig: true,
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toHaveAttribute(
+      'title',
+      'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+    );
+    expect(
+      screen.getByText(
+        'Settings Project URL must be a valid public URL. Localhost, loopback, and private network URLs are not allowed.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('shows capture progress details and screenshot failure reasons', () => {
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      pipelineStep: 'error',
+      pipelineProgress: {
+        type: 'manual-post-pipeline',
+        step: 'capturing',
+        captureMode: 'fresh_capture',
+        message: 'Pipeline stopped: no screenshots captured.',
+        updatedAt: 1_700_000_001_000,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 0,
+        captureFailureCount: 2,
+        captureFailures: [
+          { id: 'home', reason: 'Timeout' },
+          { id: 'pricing', reason: 'Navigation failed' },
+        ],
+        requestedPresetCount: 2,
+        usedPresetCount: 2,
+        usedPresetIds: ['home', 'pricing'],
+        captureCompletedCount: 0,
+        captureRemainingCount: 0,
+        captureTotalCount: 2,
+        runId: null,
+      },
+      pipelineErrorMessage: 'Pipeline stopped: no screenshots captured.',
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home', 'pricing', 'faq', 'pricing-mobile'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: 'Captured 2 screenshots from 2 presets and linked them to the draft.',
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 2,
+      hasBatchCaptureConfig: true,
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText('Pipeline stopped: no screenshots captured.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Captured 2 screenshots from 2 presets and linked them to the draft.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Fresh capture: Triggers Playwright batch capture \(4 presets, limit: 2\) before generation\./)
+    ).toBeInTheDocument();
+  });
+
+  it('shows live Playwright capture counts in the pipeline info while screenshots are running', () => {
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Draft',
+        titleEn: '',
+      },
+      pipelineStep: 'capturing',
+      pipelineProgress: {
+        type: 'manual-post-pipeline',
+        step: 'capturing',
+        captureMode: 'fresh_capture',
+        message: 'Playwright capture in progress: 1 captured, 2 left of 3 presets. 1 failed.',
+        updatedAt: 1_700_000_001_500,
+        contextDocCount: 1,
+        contextSummary: 'summary',
+        addonsCreated: 1,
+        captureFailureCount: 1,
+        captureFailures: [{ id: 'profile', reason: 'Timeout' }],
+        requestedPresetCount: 3,
+        usedPresetCount: 3,
+        usedPresetIds: ['home', 'lessons', 'profile'],
+        captureCompletedCount: 1,
+        captureRemainingCount: 2,
+        captureTotalCount: 3,
+        runId: 'run-capture',
+      },
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home', 'lessons', 'profile'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 3,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(
+      screen.getByText('Playwright capture in progress: 1 captured, 2 left of 3 presets. 1 failed.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Live Playwright capture: 1 captured, 2 left. 1 failed.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows live Playwright capture counts for capture-only batch jobs', () => {
+    mockSocialPostContextReturnValue({
+      activePost: { id: 'post-1' },
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Draft',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      currentPipelineJob: null,
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home', 'lessons', 'profile'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: true,
+      captureOnlyBatchCaptureJob: {
+        id: 'capture-job-1',
+        runId: 'capture-run-1',
+        status: 'running',
+        progress: {
+          processedCount: 2,
+          completedCount: 1,
+          failureCount: 1,
+          remainingCount: 2,
+          totalCount: 3,
+          message: 'Playwright capture in progress: 1 captured, 2 left of 3 targets. 1 failed.',
+        },
+        result: null,
+        error: null,
+        createdAt: '2026-03-29T10:00:00.000Z',
+        updatedAt: '2026-03-29T10:00:01.000Z',
+      },
+      captureOnlyMessage: 'Playwright capture in progress: 1 captured, 2 left of 3 targets. 1 failed.',
+      captureOnlyErrorMessage: null,
+      programmableCapturePending: false,
+      programmableCaptureBatchCaptureJob: null,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      batchCapturePresetLimit: 3,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(
+      screen.getByText('Playwright capture in progress: 1 captured, 2 left of 3 targets. 1 failed.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Live Playwright capture: 1 captured, 2 left. 1 failed.')
+    ).toBeInTheDocument();
+  });
+
+  it('disables pipeline actions until a draft is selected', () => {
+    const handleRunFullPipeline = vi.fn();
+    const handleRunFullPipelineWithFreshCapture = vi.fn();
+    const handleCaptureImagesOnly = vi.fn();
+
+    mockSocialPostContextReturnValue({
+      activePostId: null,
+      editorState: {
+        titlePl: '',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline,
+      handleRunFullPipelineWithFreshCapture,
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly,
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Image analysis' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
+    expect(
+      screen.getByText('Create or select a draft before running the social pipeline.')
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run full pipeline' }));
+    expect(handleRunFullPipeline).not.toHaveBeenCalled();
+    expect(handleRunFullPipelineWithFreshCapture).not.toHaveBeenCalled();
+    expect(handleCaptureImagesOnly).not.toHaveBeenCalled();
+  });
+
+  it('shows the active draft target when a post is selected for the pipeline', () => {
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText('Active draft:')).toBeInTheDocument();
+    expect(screen.getByText('Selected pipeline target')).toBeInTheDocument();
+  });
+
+  it('opens the visual-analysis flow from the dedicated pipeline button', () => {
+    const handleOpenVisualAnalysisModal = vi.fn();
+
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal,
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Image analysis' }));
+
+    expect(handleOpenVisualAnalysisModal).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Image analysis' })).toHaveAttribute(
+      'title',
+      'Analyze the selected visuals first, then use Generate post with analysis as the follow-up AI pass.'
+    );
+  });
+
+  it('shows live runtime job pills for the active draft workflows', () => {
+    mockSocialPostContextReturnValue({
+      activePost: {
+        visualAnalysisStatus: 'queued',
+        visualAnalysisUpdatedAt: '2026-03-20T12:00:00.000Z',
+        visualAnalysisModelId: 'vision-1',
+        visualAnalysisJobId: 'job-analysis-7',
+      },
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'capturing',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-7',
+        status: 'active',
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'analyzing',
+          message: 'Running Redis-backed image analysis...',
+          updatedAt: 1_700_000_000_500,
+          postId: 'post-1',
+          imageAddonCount: 2,
+          highlightCount: null,
+        },
+        result: null,
+        failedReason: null,
+      },
+      currentGenerationJob: {
+        id: 'job-generate-3',
+        status: 'waiting',
+        progress: null,
+        result: null,
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-5',
+        status: 'active',
+        progress: {
+          type: 'manual-post-pipeline',
+          step: 'capturing',
+          captureMode: 'existing_assets',
+          message: 'Generating from the selected visuals...',
+          updatedAt: 1_700_000_000_600,
+          contextDocCount: 1,
+          contextSummary: null,
+          addonsCreated: 0,
+          captureFailureCount: 0,
+          captureFailures: [],
+          requestedPresetCount: 0,
+          usedPresetCount: 0,
+          usedPresetIds: [],
+          captureCompletedCount: 0,
+          captureRemainingCount: 0,
+          captureTotalCount: 0,
+          runId: null,
+        },
+        result: null,
+        failedReason: null,
+      },
+      visualAnalysisResult: null,
+      hasSavedVisualAnalysis: false,
+      isSavedVisualAnalysisStale: false,
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByText('Runtime jobs:')).toBeInTheDocument();
+    expect(screen.getByText('Image analysis: Running')).toBeInTheDocument();
+    expect(screen.getByText('Generate post: Queued')).toBeInTheDocument();
+    expect(screen.getByText('Full pipeline: Running')).toBeInTheDocument();
+  });
+
+  it('blocks new launch actions while Redis Social jobs are still in flight', () => {
+    mockSocialPostContextReturnValue({
+      activePostId: 'post-1',
+      editorState: {
+        titlePl: 'Selected pipeline target',
+        titleEn: '',
+      },
+      pipelineStep: 'idle',
+      pipelineProgress: null,
+      pipelineErrorMessage: null,
+      currentVisualAnalysisJob: {
+        id: 'job-analysis-live-7',
+        status: 'active',
+        progress: {
+          type: 'manual-post-visual-analysis',
+          step: 'analyzing',
+          message: 'Running Redis-backed image analysis...',
+          updatedAt: 1_700_000_000_500,
+          postId: 'post-1',
+          imageAddonCount: 2,
+          highlightCount: null,
+        },
+        result: null,
+        failedReason: null,
+      },
+      currentGenerationJob: {
+        id: 'job-generate-3',
+        status: 'waiting',
+        progress: null,
+        result: null,
+        failedReason: null,
+      },
+      handleRunFullPipeline: vi.fn(),
+      handleRunFullPipelineWithFreshCapture: vi.fn(),
+      handleOpenVisualAnalysisModal: vi.fn(),
+      handleOpenProgrammablePlaywrightModal: vi.fn(),
+      handleCaptureImagesOnly: vi.fn(),
+      canGenerateSocialDraft: true,
+      canRunVisualAnalysisPipeline: true,
+      canRunFreshCapturePipeline: true,
+      batchCaptureBaseUrl: 'https://kangur.app',
+      batchCapturePresetIds: ['home'],
+      socialDraftBlockedReason: null,
+      socialBatchCaptureBlockedReason: null,
+      socialVisualAnalysisBlockedReason: null,
+      captureOnlyPending: false,
+      captureOnlyMessage: null,
+      captureOnlyErrorMessage: null,
+      programmableCapturePending: false,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      batchCapturePresetLimit: 1,
+      hasBatchCaptureConfig: true,
+      setIsPostEditorModalOpen: vi.fn(),
+    });
+
+    render(<SocialPostPipeline />);
+
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Run full pipeline' })).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByRole('button', { name: 'Fresh capture & pipeline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Capture images only' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Review image analysis' })).toBeEnabled();
+  });
+
+});

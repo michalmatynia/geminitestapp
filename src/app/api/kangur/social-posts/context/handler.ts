@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
-import { buildKangurDocContext, resolveKangurDocReferences } from '@/features/kangur/server/social-posts-docs';
+import { buildKangurDocContext, resolveKangurDocReferences } from '@/features/kangur/social/server/social-posts-docs';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';

@@ -126,6 +126,145 @@ const parseQueryInputValue = (args: {
   };
 };
 
+const buildQueryResolutionFailure = (args: {
+  toast: NodeHandlerContext['toast'];
+  aiPrompt: string;
+  collection: string;
+  error: string;
+  querySource: QueryResolutionSource;
+  rawInput?: unknown;
+  rawTemplate?: string;
+}): ResolveDatabaseQueryResult => {
+  args.toast(args.error, { variant: 'error' });
+  return buildResolutionErrorOutput({
+    aiPrompt: args.aiPrompt,
+    collection: args.collection,
+    error: args.error,
+    querySource: args.querySource,
+    ...(args.rawInput !== undefined ? { rawInput: args.rawInput } : {}),
+    ...(args.rawTemplate !== undefined ? { rawTemplate: args.rawTemplate } : {}),
+  });
+};
+
+const resolveParsedInputQuery = (args: {
+  value: unknown;
+  label: string;
+  templateContext: Record<string, unknown>;
+  inputValue: unknown;
+  toast: NodeHandlerContext['toast'];
+  aiPrompt: string;
+  collection: string;
+  querySource: QueryResolutionSource;
+}): ResolveDatabaseQueryResult | { query: Record<string, unknown>; querySource: QueryResolutionSource } => {
+  const parsedQuery = parseQueryInputValue({
+    value: args.value,
+    label: args.label,
+    templateContext: args.templateContext,
+    inputValue: args.inputValue,
+  });
+
+  if (!parsedQuery.ok) {
+    return buildQueryResolutionFailure({
+      toast: args.toast,
+      aiPrompt: args.aiPrompt,
+      collection: args.collection,
+      error: parsedQuery.error,
+      querySource: args.querySource,
+      rawInput: args.value,
+    });
+  }
+
+  return {
+    query: parsedQuery.query,
+    querySource: args.querySource,
+  };
+};
+
+const resolveAiQueryPayload = (args: {
+  query: Record<string, unknown>;
+  queryConfig: DbQueryConfig;
+}): { query: Record<string, unknown>; queryConfig: DbQueryConfig } => {
+  if (!isObjectRecord(args.query['query'])) {
+    return {
+      query: args.query,
+      queryConfig: args.queryConfig,
+    };
+  }
+
+  return {
+    query: args.query['query'],
+    queryConfig:
+      typeof args.query['collection'] === 'string'
+        ? {
+            ...args.queryConfig,
+            collection: args.query['collection'],
+          }
+        : args.queryConfig,
+  };
+};
+
+const resolveCustomTemplateQuery = (args: {
+  queryConfig: DbQueryConfig;
+  toast: NodeHandlerContext['toast'];
+  aiPrompt: string;
+  templateContext: Record<string, unknown>;
+  inputValue: unknown;
+}): ResolveDatabaseQueryResult | {
+  query: Record<string, unknown>;
+  queryConfig: DbQueryConfig;
+  querySource: QueryResolutionSource;
+} => {
+  if (args.queryConfig.mode === 'preset') {
+    const error =
+      'Preset query mode is disabled. Define an explicit query template or connect an explicit query input.';
+    return buildQueryResolutionFailure({
+      toast: args.toast,
+      aiPrompt: args.aiPrompt,
+      collection: args.queryConfig.collection,
+      error,
+      querySource: 'customTemplate',
+    });
+  }
+
+  const template = args.queryConfig.queryTemplate ?? '';
+  if (!template.trim()) {
+    const error =
+      'No explicit query provided. Define queryTemplate or connect query/queryCallback/aiQuery input.';
+    return buildQueryResolutionFailure({
+      toast: args.toast,
+      aiPrompt: args.aiPrompt,
+      collection: args.queryConfig.collection,
+      error,
+      querySource: 'customTemplate',
+      rawTemplate: template,
+    });
+  }
+
+  const parsedTemplateQuery = parseRenderedQueryTemplate({
+    template,
+    label: 'Query template',
+    templateContext: args.templateContext,
+    inputValue: args.inputValue,
+  });
+
+  if (!parsedTemplateQuery.ok) {
+    return buildQueryResolutionFailure({
+      toast: args.toast,
+      aiPrompt: args.aiPrompt,
+      collection: args.queryConfig.collection,
+      error: parsedTemplateQuery.error,
+      querySource: 'customTemplate',
+      rawTemplate: template,
+    });
+  }
+
+  return {
+    query: parsedTemplateQuery.query,
+    queryConfig: args.queryConfig,
+    querySource: 'customTemplate',
+  };
+};
+
 export function resolveDatabaseQuery({
   nodeInputs,
   toast,
@@ -143,138 +282,90 @@ export function resolveDatabaseQuery({
 
   const inputValue: unknown = templateInputValue;
 
-  let query: Record<string, unknown>;
-  let nextQueryConfig: DbQueryConfig = { ...queryConfig };
-  let querySource: QueryResolutionSource;
-
   if (aiQueryInput !== undefined && aiQueryInput !== null) {
-    const parsedAiQuery = parseQueryInputValue({
+    const resolvedAiQuery = resolveParsedInputQuery({
       value: aiQueryInput,
       label: 'AI query',
       templateContext,
       inputValue,
+      toast,
+      aiPrompt,
+      collection: queryConfig.collection,
+      querySource: 'aiQuery',
     });
-
-    if (!parsedAiQuery.ok) {
-      toast(parsedAiQuery.error, {
-        variant: 'error',
-      });
-      return buildResolutionErrorOutput({
-        aiPrompt,
-        collection: nextQueryConfig.collection,
-        error: parsedAiQuery.error,
-        querySource: 'aiQuery',
-        rawInput: aiQueryInput,
-      });
+    if ('output' in resolvedAiQuery) {
+      return resolvedAiQuery;
     }
 
-    if (isObjectRecord(parsedAiQuery.query['query'])) {
-      query = parsedAiQuery.query['query'];
-      if (typeof parsedAiQuery.query['collection'] === 'string') {
-        nextQueryConfig = {
-          ...nextQueryConfig,
-          collection: parsedAiQuery.query['collection'],
-        };
-      }
-    } else {
-      query = parsedAiQuery.query;
-    }
+    const aiQueryPayload = resolveAiQueryPayload({
+      query: resolvedAiQuery.query,
+      queryConfig: { ...queryConfig },
+    });
+    return {
+      query: aiQueryPayload.query,
+      queryConfig: aiQueryPayload.queryConfig,
+      querySource: resolvedAiQuery.querySource,
+    };
+  }
 
-    querySource = 'aiQuery';
-  } else if (inputQuery !== undefined && inputQuery !== null) {
-    const parsedInputQuery = parseQueryInputValue({
+  if (inputQuery !== undefined && inputQuery !== null) {
+    const resolvedInputQuery = resolveParsedInputQuery({
       value: inputQuery,
       label: 'Query input',
       templateContext,
       inputValue,
+      toast,
+      aiPrompt,
+      collection: queryConfig.collection,
+      querySource: 'input',
     });
-
-    if (!parsedInputQuery.ok) {
-      toast(parsedInputQuery.error, { variant: 'error' });
-      return buildResolutionErrorOutput({
-        aiPrompt,
-        collection: nextQueryConfig.collection,
-        error: parsedInputQuery.error,
-        querySource: 'input',
-        rawInput: inputQuery,
-      });
+    if ('output' in resolvedInputQuery) {
+      return resolvedInputQuery;
     }
 
-    query = parsedInputQuery.query;
-    querySource = 'input';
-  } else if (callbackInput !== undefined && callbackInput !== null) {
-    const parsedCallbackQuery = parseQueryInputValue({
+    return {
+      query: resolvedInputQuery.query,
+      queryConfig: { ...queryConfig },
+      querySource: resolvedInputQuery.querySource,
+    };
+  }
+
+  if (callbackInput !== undefined && callbackInput !== null) {
+    const resolvedCallbackQuery = resolveParsedInputQuery({
       value: callbackInput,
       label: 'Query callback',
       templateContext,
       inputValue,
+      toast,
+      aiPrompt,
+      collection: queryConfig.collection,
+      querySource: 'callback',
     });
-
-    if (!parsedCallbackQuery.ok) {
-      toast(parsedCallbackQuery.error, { variant: 'error' });
-      return buildResolutionErrorOutput({
-        aiPrompt,
-        collection: nextQueryConfig.collection,
-        error: parsedCallbackQuery.error,
-        querySource: 'callback',
-        rawInput: callbackInput,
-      });
+    if ('output' in resolvedCallbackQuery) {
+      return resolvedCallbackQuery;
     }
 
-    query = parsedCallbackQuery.query;
-    querySource = 'callback';
-  } else {
-    if (nextQueryConfig.mode === 'preset') {
-      const error =
-        'Preset query mode is disabled. Define an explicit query template or connect an explicit query input.';
-      toast(error, { variant: 'error' });
-      return buildResolutionErrorOutput({
-        aiPrompt,
-        collection: nextQueryConfig.collection,
-        error,
-        querySource: 'customTemplate',
-      });
-    }
+    return {
+      query: resolvedCallbackQuery.query,
+      queryConfig: { ...queryConfig },
+      querySource: resolvedCallbackQuery.querySource,
+    };
+  }
 
-    const template = nextQueryConfig.queryTemplate ?? '';
-    if (!template.trim()) {
-      const error =
-        'No explicit query provided. Define queryTemplate or connect query/queryCallback/aiQuery input.';
-      toast(error, { variant: 'error' });
-      return buildResolutionErrorOutput({
-        aiPrompt,
-        collection: nextQueryConfig.collection,
-        error,
-        querySource: 'customTemplate',
-        rawTemplate: template,
-      });
-    }
-
-    const parsedTemplateQuery = parseRenderedQueryTemplate({
-      template,
-      label: 'Query template',
-      templateContext,
-      inputValue,
-    });
-
-    if (!parsedTemplateQuery.ok) {
-      toast(parsedTemplateQuery.error, { variant: 'error' });
-      return buildResolutionErrorOutput({
-        aiPrompt,
-        collection: nextQueryConfig.collection,
-        error: parsedTemplateQuery.error,
-        querySource: 'customTemplate',
-        rawTemplate: template,
-      });
-    }
-
-    query = parsedTemplateQuery.query;
-    querySource = 'customTemplate';
+  const resolvedTemplateQuery = resolveCustomTemplateQuery({
+    queryConfig: { ...queryConfig },
+    toast,
+    aiPrompt,
+    templateContext,
+    inputValue,
+  });
+  if ('output' in resolvedTemplateQuery) {
+    return resolvedTemplateQuery;
   }
 
   return {
-    query,
-    queryConfig: nextQueryConfig,
-    querySource,
+    query: resolvedTemplateQuery.query,
+    queryConfig: resolvedTemplateQuery.queryConfig,
+    querySource: resolvedTemplateQuery.querySource,
   };
 }

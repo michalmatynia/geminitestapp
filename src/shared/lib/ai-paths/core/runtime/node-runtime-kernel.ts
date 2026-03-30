@@ -132,6 +132,158 @@ export const toNodeRuntimeResolutionTelemetry = (
   runtimeCodeObjectId: descriptor.codeObjectId,
 });
 
+type ResolveDescriptorContext = {
+  nodeType: string;
+  resolveCodeObjectHandler?: CreateNodeRuntimeKernelArgs['resolveCodeObjectHandler'];
+  resolveLegacyHandler: CreateNodeRuntimeKernelArgs['resolveLegacyHandler'];
+  resolveOverrideHandler?: CreateNodeRuntimeKernelArgs['resolveOverrideHandler'];
+  runtimeKernelNodeTypes: Set<string>;
+};
+
+type BuildKernelDescriptor = (args: {
+  handler: NodeHandler | null;
+  nodeType: string;
+  source: NodeRuntimeResolutionSource;
+}) => NodeRuntimeKernelDescriptor;
+
+const createDescriptorBuilder =
+  (runtimeKernelNodeTypes: Set<string>) =>
+  (
+    args: {
+      handler: NodeHandler | null;
+      nodeType: string;
+      source: NodeRuntimeResolutionSource;
+    }
+  ): NodeRuntimeKernelDescriptor =>
+    buildDescriptor({
+      ...args,
+      runtimeKernelNodeTypes,
+    });
+
+const resolveOverrideDescriptor = ({
+  buildDescriptor,
+  nodeType,
+  resolveOverrideHandler,
+}: {
+  buildDescriptor: BuildKernelDescriptor;
+  nodeType: string;
+  resolveOverrideHandler?: CreateNodeRuntimeKernelArgs['resolveOverrideHandler'];
+}): NodeRuntimeKernelDescriptor | null => {
+  if (typeof resolveOverrideHandler !== 'function') {
+    return null;
+  }
+
+  const override = resolveOverrideHandler(nodeType);
+
+  return override
+    ? buildDescriptor({
+        nodeType,
+        handler: override,
+        source: 'override',
+      })
+    : null;
+};
+
+const resolveCodeObjectDescriptor = ({
+  buildDescriptor,
+  nodeType,
+  resolveCodeObjectHandler,
+  runtimeKernelNodeTypes,
+}: {
+  buildDescriptor: BuildKernelDescriptor;
+  nodeType: string;
+  resolveCodeObjectHandler?: CreateNodeRuntimeKernelArgs['resolveCodeObjectHandler'];
+  runtimeKernelNodeTypes: Set<string>;
+}): NodeRuntimeKernelDescriptor | null => {
+  const strategy = resolveStrategy({
+    nodeType,
+    runtimeKernelNodeTypes,
+  });
+
+  if (strategy !== 'code_object_v3') {
+    return null;
+  }
+
+  const codeObjectId = buildV3CodeObjectId(nodeType);
+
+  if (typeof resolveCodeObjectHandler === 'function') {
+    const codeObjectHandler = resolveCodeObjectHandler({
+      nodeType,
+      codeObjectId,
+    });
+
+    if (codeObjectHandler) {
+      return buildDescriptor({
+        nodeType,
+        handler: codeObjectHandler,
+        source: 'registry',
+      });
+    }
+  }
+
+  return resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId)
+    ? buildDescriptor({
+        nodeType,
+        handler: null,
+        source: 'missing',
+      })
+    : null;
+};
+
+const resolveLegacyDescriptor = ({
+  buildDescriptor,
+  nodeType,
+  resolveLegacyHandler,
+}: {
+  buildDescriptor: BuildKernelDescriptor;
+  nodeType: string;
+  resolveLegacyHandler: CreateNodeRuntimeKernelArgs['resolveLegacyHandler'];
+}): NodeRuntimeKernelDescriptor => {
+  const handler = resolveLegacyHandler(nodeType);
+
+  return buildDescriptor({
+    nodeType,
+    handler,
+    source: handler ? 'registry' : 'missing',
+  });
+};
+
+const resolveNodeRuntimeDescriptor = ({
+  nodeType,
+  resolveCodeObjectHandler,
+  resolveLegacyHandler,
+  resolveOverrideHandler,
+  runtimeKernelNodeTypes,
+}: ResolveDescriptorContext): NodeRuntimeKernelDescriptor => {
+  const buildKernelDescriptor = createDescriptorBuilder(runtimeKernelNodeTypes);
+  const overrideDescriptor = resolveOverrideDescriptor({
+    buildDescriptor: buildKernelDescriptor,
+    nodeType,
+    resolveOverrideHandler,
+  });
+
+  if (overrideDescriptor) {
+    return overrideDescriptor;
+  }
+
+  const codeObjectDescriptor = resolveCodeObjectDescriptor({
+    buildDescriptor: buildKernelDescriptor,
+    nodeType,
+    resolveCodeObjectHandler,
+    runtimeKernelNodeTypes,
+  });
+
+  if (codeObjectDescriptor) {
+    return codeObjectDescriptor;
+  }
+
+  return resolveLegacyDescriptor({
+    buildDescriptor: buildKernelDescriptor,
+    nodeType,
+    resolveLegacyHandler,
+  });
+};
+
 export const createNodeRuntimeKernel = ({
   resolveLegacyHandler,
   resolveCodeObjectHandler,
@@ -146,65 +298,21 @@ export const createNodeRuntimeKernel = ({
 
   const resolveDescriptor = (nodeTypeInput: string): NodeRuntimeKernelDescriptor => {
     const nodeType = normalizeNodeType(nodeTypeInput);
+    const buildKernelDescriptor = createDescriptorBuilder(resolvedRuntimeKernelNodeTypes);
+
     if (!nodeType) {
-      return buildDescriptor({
+      return buildKernelDescriptor({
         nodeType: '',
         handler: null,
         source: 'missing',
-        runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
       });
     }
 
-    if (typeof resolveOverrideHandler === 'function') {
-      const override = resolveOverrideHandler(nodeType);
-      if (override) {
-        return buildDescriptor({
-          nodeType,
-          handler: override,
-          source: 'override',
-          runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
-        });
-      }
-    }
-
-    const strategy = resolveStrategy({
+    return resolveNodeRuntimeDescriptor({
       nodeType,
-      runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
-    });
-
-    if (strategy === 'code_object_v3') {
-      const codeObjectId = buildV3CodeObjectId(nodeType);
-      if (typeof resolveCodeObjectHandler === 'function') {
-        const codeObjectHandler = resolveCodeObjectHandler({
-          nodeType,
-          codeObjectId,
-        });
-        if (codeObjectHandler) {
-          return buildDescriptor({
-            nodeType,
-            handler: codeObjectHandler,
-            source: 'registry',
-            runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
-          });
-        }
-      }
-
-      if (resolveNodeCodeObjectV3ContractByCodeObjectId(codeObjectId)) {
-        return buildDescriptor({
-          nodeType,
-          handler: null,
-          source: 'missing',
-          runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
-        });
-      }
-    }
-
-    // Fallback to legacy handler
-    const handler = resolveLegacyHandler(nodeType);
-    return buildDescriptor({
-      nodeType,
-      handler,
-      source: handler ? 'registry' : 'missing',
+      resolveCodeObjectHandler,
+      resolveLegacyHandler,
+      resolveOverrideHandler,
       runtimeKernelNodeTypes: resolvedRuntimeKernelNodeTypes,
     });
   };

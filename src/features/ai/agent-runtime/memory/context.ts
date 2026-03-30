@@ -1,17 +1,6 @@
 import { validateAndAddAgentLongTermMemory } from '@/features/ai/agent-runtime/memory';
 
-export async function addProblemSolutionMemory({
-  memoryKey,
-  runId,
-  personaId,
-  problem,
-  countermeasure,
-  context,
-  tags = [],
-  model,
-  prompt,
-  summaryModel,
-}: {
+type AddProblemSolutionMemoryOptions = {
   memoryKey: string;
   runId: string;
   personaId?: string | null;
@@ -22,7 +11,24 @@ export async function addProblemSolutionMemory({
   model?: string | null;
   prompt?: string | null;
   summaryModel?: string | null;
-}): Promise<void> {
+};
+
+export async function addProblemSolutionMemory(
+  options: AddProblemSolutionMemoryOptions,
+): Promise<void> {
+  const {
+    memoryKey,
+    runId,
+    personaId,
+    problem,
+    countermeasure,
+    context,
+    tags = [],
+    model,
+    prompt,
+    summaryModel,
+  } = options;
+
   if (!memoryKey || !problem || !countermeasure) return;
   const summary = `Problem: ${problem} \u00b7 Countermeasure: ${countermeasure}`;
   await validateAndAddAgentLongTermMemory({

@@ -1,8 +1,11 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
+import {
+  KangurDrawingActionRow,
+} from '@/features/kangur/ui/components/drawing-engine/KangurDrawingActionRow';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -10,22 +13,23 @@ import {
   KangurLessonStack,
 } from '@/features/kangur/ui/design/lesson-primitives';
 import {
-  KangurButton,
   KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
+import { KangurDrawingCanvasSurface } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingCanvasSurface';
+import {
+  createKangurDrawingDraftStorageKey,
+  createKangurDrawingExportFilename,
+} from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
+import { getKangurPointDistance } from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import { useKangurManagedStoredPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing';
+import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
+import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_SPACED_CLASSNAME,
   type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
-import {
-  resolveKangurCanvasPoint,
-  syncKangurCanvasContext,
-} from '@/features/kangur/ui/services/drawing-canvas';
-import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
-import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurMiniGameInformationalFeedback } from '@/features/kangur/ui/types';
 import type { Point2d } from '@/shared/contracts/geometry';
@@ -92,8 +96,6 @@ type AgenticDiagramFillGameProps = {
 const CANVAS_WIDTH = 360;
 const CANVAS_HEIGHT = 200;
 const MIN_POINTS = 12;
-
-const distance = (a: Point2d, b: Point2d): number => Math.hypot(a.x - b.x, a.y - b.y);
 
 const isPointInRect = (point: Point2d, rect: Rect, padding = 0): boolean =>
   point.x >= rect.x - padding &&
@@ -222,7 +224,7 @@ const evaluateDiagramDrawing = (
     };
   }
 
-  if (distance(center, targetCenter) > centerTolerance) {
+  if (getKangurPointDistance(center, targetCenter) > centerTolerance) {
     return {
       kind: 'error',
       text: 'Przesuń rysunek w miejsce brakującego bloku.',
@@ -586,117 +588,53 @@ export function AgenticDiagramFillGame({
   const resolvedAccent = accent ?? config.accent;
   const isCoarsePointer = useKangurCoarsePointer();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const isDrawingRef = useRef(false);
-
-  const [strokes, setStrokes] = useState<Point2d[][]>([]);
   const [feedback, setFeedback] = useState<KangurMiniGameInformationalFeedback | null>(null);
-  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
-
   const strokeWidth = isCoarsePointer ? 6 : 4;
   const minPointDistance = isCoarsePointer ? 4 : 2.5;
-
-  const redrawCanvas = useCallback(
-    (currentStrokes: Point2d[][]): void => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (!ctx) return;
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = config.stroke;
-      ctx.lineWidth = strokeWidth;
-
-      currentStrokes.forEach((stroke) => {
-        const firstPoint = stroke[0];
-        if (!firstPoint) return;
-        ctx.beginPath();
-        ctx.moveTo(firstPoint.x, firstPoint.y);
-        stroke.slice(1).forEach((point) => {
-          ctx.lineTo(point.x, point.y);
-        });
-        ctx.stroke();
-      });
-    },
-    [config.stroke, strokeWidth]
-  );
-
-  useKangurCanvasRedraw({
-    canvasRef,
-    redraw: () => redrawCanvas(strokes),
-  });
-  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
-
-  const updateStrokes = useCallback(
-    (updater: (current: Point2d[][]) => Point2d[][]): void => {
-      setStrokes((current) => {
-        const next = updater(current);
-        redrawCanvas(next);
-        return next;
-      });
-    },
-    [redrawCanvas]
-  );
-
-  const clearDrawing = useCallback((): void => {
-    setStrokes([]);
-    redrawCanvas([]);
-    setFeedback(null);
-  }, [redrawCanvas]);
-
-  const resolvePoint = useCallback(
-    (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
-      return resolveKangurCanvasPoint(event, canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-    },
-    []
-  );
-
   const isSolved = feedback?.kind === 'success';
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (isSolved) return;
-    event.preventDefault();
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const point = resolvePoint(event);
-    isDrawingRef.current = true;
-    setIsPointerDrawing(true);
-    canvas.setPointerCapture(event.pointerId);
-    setFeedback(null);
-    updateStrokes((current) => [...current, [point]]);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current || isSolved) return;
-    event.preventDefault();
-    const point = resolvePoint(event);
-    updateStrokes((current) => {
-      if (current.length === 0) return current;
-      const next = [...current];
-      const lastStroke = next[next.length - 1] ?? [];
-      const lastPoint = lastStroke[lastStroke.length - 1];
-      if (lastPoint && distance(lastPoint, point) < minPointDistance) {
-        return current;
-      }
-      next[next.length - 1] = [...lastStroke, point];
-      return next;
-    });
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current) return;
-    isDrawingRef.current = false;
-    setIsPointerDrawing(false);
-    const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.releasePointerCapture(event.pointerId);
-    }
-  };
+  const {
+    canRedo,
+    canUndo,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    hasDrawableContent,
+    isPointerDrawing,
+    strokes,
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedStoredPointDrawing({
+    actions: {
+      clearFeedback: () => {
+        setFeedback(null);
+      },
+      exportFilename: createKangurDrawingExportFilename(config.id, 'diagram'),
+      resolveCanRedo: (drawing) => !isSolved && drawing.canRedo,
+      resolveCanUndo: (drawing) => !isSolved && drawing.canUndo,
+    },
+    drawing: {
+      canvasRef,
+      enabled: !isSolved,
+      logicalHeight: CANVAS_HEIGHT,
+      logicalWidth: CANVAS_WIDTH,
+      minPointDistance,
+      onPointerStart: () => {
+        setFeedback(null);
+      },
+      resolveStyle: () => ({
+        lineWidth: strokeWidth,
+        strokeStyle: config.stroke,
+      }),
+      storageKey: createKangurDrawingDraftStorageKey('agentic-diagram', gameId),
+      touchLockEnabled: isCoarsePointer,
+    },
+  });
+  const points = useMemo(() => strokes.flatMap((stroke) => stroke), [strokes]);
 
   const handleCheck = (): void => {
-    const points = strokes.flatMap((stroke) => stroke);
     const result = evaluateDiagramDrawing(config.target, points);
     setFeedback(result);
   };
@@ -740,54 +678,52 @@ export function AgenticDiagramFillGame({
             style={{ aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}` }}
             data-testid='agentic-diagram-board'
           >
-            <div className='absolute inset-0'>
-              {config.renderSvg()}
-            </div>
-            <canvas
-              ref={canvasRef}
-              className='absolute inset-0 h-full w-full cursor-crosshair touch-none'
+            <KangurDrawingCanvasSurface
+              ariaKeyShortcuts={KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}
+              ariaLabel='Pole rysowania schematu'
+              beforeCanvas={<div className='absolute inset-0'>{config.renderSvg()}</div>}
+              canvasClassName='absolute inset-0 h-full w-full cursor-crosshair'
+              canvasDataTestId='agentic-diagram-canvas'
+              canvasRef={canvasRef}
               height={CANVAS_HEIGHT}
-              width={CANVAS_WIDTH}
+              isPointerDrawing={isPointerDrawing}
+              onKeyDown={handleCanvasKeyDown}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
-              data-drawing-active={isPointerDrawing ? 'true' : 'false'}
-              data-testid='agentic-diagram-canvas'
-              aria-label='Pole rysowania schematu'
+              tabIndex={0}
+              width={CANVAS_WIDTH}
             />
           </div>
-          <div className={cn('mt-4 items-center justify-between', KANGUR_WRAP_ROW_SPACED_CLASSNAME)}>
-            <KangurButton
-              size='sm'
-              variant='surface'
-              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-              onClick={clearDrawing}
-            >
-              Wyczyść
-            </KangurButton>
-            <KangurCheckButton
-              size='sm'
-              variant='primary'
-              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-              feedbackTone={
-                feedback?.kind === 'success' ? 'success' : feedback?.kind === 'error' ? 'error' : null
+          <div className={cn('mt-4', KANGUR_WRAP_ROW_SPACED_CLASSNAME)}>
+            <KangurDrawingActionRow
+              clearDisabled={!hasDrawableContent && feedback === null}
+              clearLabel='Wyczyść'
+              feedback={feedback}
+              utilityActions={
+                <KangurManagedDrawingUtilityActions
+                  canExport={hasDrawableContent}
+                  canRedo={canRedo}
+                  canUndo={canUndo}
+                  exportLabel='Eksportuj PNG'
+                  exportTestId='agentic-diagram-export'
+                  historyLocked={isSolved}
+                  isCoarsePointer={isCoarsePointer}
+                  layoutPreset='inline-board'
+                  onExport={exportDrawing}
+                  onRedo={redoDrawing}
+                  onUndo={undoDrawing}
+                  redoLabel='Ponów'
+                  undoLabel='Cofnij'
+                />
               }
-              onClick={handleCheck}
-              disabled={strokes.length === 0 || isSolved}
-            >
-              Sprawdź
-            </KangurCheckButton>
-            {isSolved ? (
-              <KangurButton
-                size='sm'
-                variant='success'
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                onClick={clearDrawing}
-              >
-                Rysuj ponownie
-              </KangurButton>
-            ) : null}
+              isCoarsePointer={isCoarsePointer}
+              onClear={clearDrawing}
+              onPrimary={isSolved ? clearDrawing : handleCheck}
+              primaryDisabled={!hasDrawableContent && !isSolved}
+              primaryLabel={isSolved ? 'Rysuj ponownie' : 'Sprawdź'}
+            />
           </div>
         </div>
         <div className='flex flex-col gap-3'>

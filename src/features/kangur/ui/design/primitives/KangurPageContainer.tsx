@@ -17,6 +17,62 @@ export const KANGUR_MAIN_CONTENT_ID = 'kangur-main-content';
 
 const KangurMainRoleContext = React.createContext<boolean>(false);
 
+type KangurPageContainerElement = NonNullable<KangurPageContainerProps['as']>;
+
+const resolveKangurPageContainerEmbedded = ({
+  embeddedOverride,
+  routingEmbedded,
+}: {
+  embeddedOverride?: boolean | null;
+  routingEmbedded?: boolean;
+}): boolean => embeddedOverride ?? routingEmbedded ?? false;
+
+const resolveKangurPageContainerRouteMain = ({
+  as,
+  dataKangurRouteMain,
+}: {
+  as: KangurPageContainerElement;
+  dataKangurRouteMain?: KangurPageContainerProps['data-kangur-route-main'];
+}): boolean => as === 'main' || dataKangurRouteMain === true || dataKangurRouteMain === 'true';
+
+const resolveKangurPageContainerComponent = ({
+  as,
+  suppressMainRole,
+}: {
+  as: KangurPageContainerElement;
+  suppressMainRole: boolean;
+}): KangurPageContainerElement => (suppressMainRole && as === 'main' ? 'div' : as);
+
+const resolveKangurPageContainerRole = ({
+  explicitRole,
+  resolvedComponent,
+  shouldMarkRouteMain,
+  suppressMainRole,
+}: {
+  explicitRole?: string;
+  resolvedComponent: KangurPageContainerElement;
+  shouldMarkRouteMain: boolean;
+  suppressMainRole: boolean;
+}): string | undefined => {
+  if (explicitRole) {
+    return explicitRole;
+  }
+
+  return shouldMarkRouteMain && !suppressMainRole && resolvedComponent !== 'main' ? 'main' : undefined;
+};
+
+const resolveKangurPageContainerId = ({
+  id,
+  shouldMarkRouteMain,
+}: {
+  id?: string;
+  shouldMarkRouteMain: boolean;
+}): string | undefined => {
+  const normalizedId = typeof id === 'string' && id.trim().length > 0 ? id : undefined;
+
+  return normalizedId ?? (shouldMarkRouteMain ? KANGUR_MAIN_CONTENT_ID : undefined);
+};
+
 export const KangurMainRoleProvider = ({
   suppressMainRole = false,
   children,
@@ -41,18 +97,29 @@ export const KangurPageContainer = ({
 }: KangurPageContainerProps): React.JSX.Element => {
   const routing = useOptionalKangurRouting();
   const suppressMainRole = React.useContext(KangurMainRoleContext);
-  const effectiveEmbedded = embeddedOverride ?? routing?.embedded ?? false;
+  const effectiveEmbedded = resolveKangurPageContainerEmbedded({
+    embeddedOverride,
+    routingEmbedded: routing?.embedded,
+  });
   const shouldSuppressMain = effectiveEmbedded || suppressMainRole;
-  const shouldSuppressMainTag = shouldSuppressMain && Comp === 'main';
-  const ResolvedComp = shouldSuppressMainTag ? 'div' : Comp;
-  const explicitRouteMain =
-    props['data-kangur-route-main'] === 'true' || props['data-kangur-route-main'] === true;
-  const shouldMarkRouteMain = Comp === 'main' || explicitRouteMain;
-  const shouldSetMainRole = (Comp === 'main' || explicitRouteMain) && !shouldSuppressMain;
-  const resolvedRole =
-    role ?? (shouldSetMainRole && ResolvedComp !== 'main' ? 'main' : undefined);
-  const normalizedId = typeof id === 'string' && id.trim().length > 0 ? id : undefined;
-  const resolvedId = normalizedId ?? (shouldMarkRouteMain ? KANGUR_MAIN_CONTENT_ID : undefined);
+  const shouldMarkRouteMain = resolveKangurPageContainerRouteMain({
+    as: Comp,
+    dataKangurRouteMain: props['data-kangur-route-main'],
+  });
+  const ResolvedComp = resolveKangurPageContainerComponent({
+    as: Comp,
+    suppressMainRole: shouldSuppressMain,
+  });
+  const resolvedRole = resolveKangurPageContainerRole({
+    explicitRole: role,
+    resolvedComponent: ResolvedComp,
+    shouldMarkRouteMain,
+    suppressMainRole: shouldSuppressMain,
+  });
+  const resolvedId = resolveKangurPageContainerId({
+    id,
+    shouldMarkRouteMain,
+  });
 
   return (
     <ResolvedComp

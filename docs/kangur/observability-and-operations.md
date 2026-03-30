@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-29'
 status: 'active'
 doc_type: 'runbook'
 scope: 'feature:kangur'
@@ -17,6 +17,9 @@ related_components:
 ## Purpose
 
 Use this runbook when Kangur shows elevated sign-in failures, progress sync issues, narration/TTS degradation, or feature-level regressions that need a fast operational read.
+
+This runbook now covers both the canonical web shell and the native mobile app,
+because they share the same `/api/kangur/*` backend and observability sources.
 
 ## Primary Surfaces
 
@@ -36,6 +39,12 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 - Performance artifact:
   - `docs/metrics/kangur-performance-latest.json`
   - `docs/metrics/kangur-performance-latest.md`
+- Public web analytics mount:
+  - `src/app/(frontend)/kangur/layout.tsx`
+  - `src/features/kangur/ui/FrontendPublicOwnerKangurShell.tsx`
+  - uses `@vercel/analytics` for pageview coverage on canonical Kangur web routes and root-owned public-owner routes only
+- Startup behavior:
+  - mobile startup and home-shell regressions should be correlated with the Kangur performance artifact before treating them as isolated client bugs
 
 ## Alert Thresholds
 
@@ -80,6 +89,10 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
    - apply the `Kangur TTS` preset
    - verify `POST /api/kangur/tts/status` still returns expected states for affected lessons
 6. Check `performanceBaseline` to rule out a broader feature regression or missing local stack.
+7. If lessons or sections are missing in production but present locally:
+   - verify the content baseline with `npm run verify:kangur:content -- --strict`
+   - repair the Mongo-backed Kangur catalog with `npm run repair:kangur:content`
+   - re-check `/api/kangur/lessons-catalog?subject=<subject>&enabledOnly=true` after the command completes
 
 ## Signal Map
 
@@ -106,6 +119,10 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
   - `kangur.progress.update`
 - Route metrics:
   - `kangur.progress.PATCH`
+
+Mobile startup also depends on this surface indirectly because persisted lesson
+and progress-derived snapshots are refreshed after the deferred home progress
+stage opens.
 
 ### Scores, Learners, Assignments
 
@@ -158,6 +175,29 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
   - `AI Tutor Bridge Snapshot` on `/admin/kangur/observability`
   - `kangur-ai-tutor-bridge-completion-rate` alert when bridge suggestions stop converting into completed cross-surface follow-ups
 
+### Social updates and publishing
+
+- Server sources:
+  - `kangur.social-posts.*`
+  - `kangur.social-pipeline.*`
+- Operational surfaces:
+  - `/admin/kangur/social`
+  - `/api/kangur/social-pipeline/status`
+  - `/api/kangur/social-posts/*`
+
+### Lessons and content catalog
+
+- Operational surfaces:
+  - `/api/kangur/lessons?subject=<subject>&enabledOnly=true`
+  - `/api/kangur/lessons-catalog?subject=<subject>&enabledOnly=true`
+  - `npm run verify:kangur:content -- --strict`
+  - `npm run repair:kangur:content`
+- Primary data stores:
+  - `kangur_lessons`
+  - `kangur_lesson_sections`
+  - `kangur_lesson_documents`
+  - `kangur_lesson_templates`
+
 ## Mitigation Paths
 
 ### Learner sign-in failures spike
@@ -199,7 +239,16 @@ Use this runbook when Kangur shows elevated sign-in failures, progress sync issu
 
 1. Re-run `npm run metrics:kangur:baseline:strict`.
 2. Distinguish real test failures from infra failures such as a missing local server on `http://localhost:3000`.
-3. If unit status regresses after a release, treat it as a feature stability incident rather than a telemetry-only issue.
+3. If the regression is mobile-startup-specific, compare the change against the staged home/bootstrap path before blaming the backend.
+4. If unit status regresses after a release, treat it as a feature stability incident rather than a telemetry-only issue.
+
+### Lessons or sections are missing in production
+
+1. Confirm the gap through `/api/kangur/lessons-catalog` for the affected subject and age group instead of relying only on UI screenshots.
+2. Run `npm run verify:kangur:content -- --strict` in the production environment.
+3. If verification reports missing lessons, sections, templates, or lesson documents, run `npm run repair:kangur:content`.
+4. Recheck the lessons-catalog API and confirm the missing lesson now appears under the expected section/subsection.
+5. If the API is correct but the UI is still stale, restart the app process or wait for the short in-process cache to expire.
 
 ## Escalation
 

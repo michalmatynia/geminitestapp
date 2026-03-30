@@ -11,7 +11,7 @@ import {
   resolveCountryFromCandidateValue,
 } from '../party-matching';
 
-import type { FilemakerDatabase } from '@/features/filemaker/types';
+import type { FilemakerDatabase } from '@/features/filemaker/public';
 
 const NOW = '2026-02-16T00:00:00.000Z';
 

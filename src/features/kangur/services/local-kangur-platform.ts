@@ -1,4 +1,5 @@
 import {
+  isRecoverableKangurClientFetchError,
   withKangurClientError,
   withKangurClientErrorSync,
 } from '@/features/kangur/observability/client';
@@ -11,6 +12,7 @@ import {
   resetGuestKangurScoreSession,
 } from '@/features/kangur/services/guest-kangur-scores';
 import { clearStoredActiveLearnerId } from '@/features/kangur/services/kangur-active-learner';
+import { saveProgressOwnerKey } from '@/features/kangur/ui/services/progress';
 import type {
   KangurAssignmentCreateInput,
   KangurAssignmentListQuery,
@@ -154,10 +156,14 @@ const requestProgressFromApi = async (
     },
     {
       fallback: createKangurClientFallback('progress.get'),
-      shouldReport: (error) => !isKangurAuthStatusError(error),
+      shouldReport: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('progress.get', error, {
@@ -256,10 +262,14 @@ const requestLearnerActivityStatus = async (): Promise<KangurLearnerActivityStat
     },
     {
       fallback: createKangurClientFallback('learnerActivity.get'),
-      shouldReport: (error) => !isKangurAuthStatusError(error),
+      shouldReport: (error) =>
+        !isKangurAuthStatusError(error) && !isRecoverableKangurClientFetchError(error),
       shouldRethrow: () => true,
       onError: (error) => {
-        if (isKangurAuthStatusError(error)) {
+        if (
+          isKangurAuthStatusError(error) ||
+          isRecoverableKangurClientFetchError(error)
+        ) {
           return;
         }
         trackReadFailure('learnerActivity.get', error, {
@@ -326,6 +336,7 @@ export const createLocalKangurPlatform = (): KangurPlatform => {
         clearSessionUserCache();
         clearScoreQueryCache();
         clearStoredActiveLearnerId();
+        saveProgressOwnerKey(null);
         resetGuestKangurScoreSession();
         await requestKangurLogout({
           headers: withCsrfHeaders(),

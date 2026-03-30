@@ -20,8 +20,9 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; prefetch?: boolean }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -50,7 +51,7 @@ vi.mock('@/features/kangur/shared/ui', async (importOriginal) => {
 });
 
 import { AdminKangurDocumentationPage } from '@/features/kangur/admin/AdminKangurDocumentationPage';
-import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/help-settings';
+import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/docs/help-settings';
 
 describe('AdminKangurDocumentationPage', () => {
   beforeEach(() => {

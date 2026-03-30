@@ -13,6 +13,8 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 const TOTAL_IMAGE_SLOTS = 15;
 
 const isDataUrl = (value: string): boolean => value.startsWith('data:');
+const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value);
+const isLocalPublicPath = (value: string): boolean => value.startsWith('/');
 
 const guessMimeType = (filepath: string): string => {
   const ext = path.extname(filepath).toLowerCase();
@@ -25,6 +27,20 @@ const guessMimeType = (filepath: string): string => {
 const toDataUrl = (buffer: Buffer, mimetype: string): string =>
   `data:${mimetype};base64,${buffer.toString('base64')}`;
 
+const handleFetchAsDataUrlError = async (url: string, error: unknown): Promise<string | null> => {
+  logClientError(error);
+  if (error instanceof OutboundUrlPolicyError) {
+    await ErrorSystem.logWarning('Blocked outbound image fetch by URL policy.', {
+      service: 'product-image-base64',
+      url,
+      reason: error.decision.reason ?? 'unknown',
+      hostname: error.decision.hostname ?? null,
+    });
+    return null;
+  }
+  throw error;
+};
+
 const fetchAsDataUrl = async (url: string): Promise<string | null> => {
   try {
     const res = await fetchWithOutboundUrlPolicy(url, { method: 'GET', maxRedirects: 3 });
@@ -33,17 +49,7 @@ const fetchAsDataUrl = async (url: string): Promise<string | null> => {
     const contentType = res.headers.get('content-type') || 'image/jpeg';
     return toDataUrl(buffer, contentType);
   } catch (error) {
-    logClientError(error);
-    if (error instanceof OutboundUrlPolicyError) {
-      await ErrorSystem.logWarning('Blocked outbound image fetch by URL policy.', {
-        service: 'product-image-base64',
-        url,
-        reason: error.decision.reason ?? 'unknown',
-        hostname: error.decision.hostname ?? null,
-      });
-      return null;
-    }
-    throw error;
+    return handleFetchAsDataUrlError(url, error);
   }
 };
 
@@ -91,6 +97,66 @@ export type ProductImageBase64Source = {
   imageBase64s?: string[] | null;
 };
 
+const readImageFileAsDataUrl = async (
+  filepath: string,
+  mimetype: string | null
+): Promise<string | null> => {
+  if (isDataUrl(filepath)) {
+    return filepath;
+  }
+  if (isHttpUrl(filepath)) {
+    return fetchAsDataUrl(filepath);
+  }
+  return readLocalAsDataUrl(filepath, mimetype);
+};
+
+const readImageLinkAsDataUrl = async (
+  linkValue: string
+): Promise<{ dataUrl: string | null; clearLink: boolean }> => {
+  if (isDataUrl(linkValue)) {
+    return {
+      dataUrl: linkValue,
+      clearLink: true,
+    };
+  }
+  if (isHttpUrl(linkValue)) {
+    return {
+      dataUrl: await fetchAsDataUrl(linkValue),
+      clearLink: false,
+    };
+  }
+  if (isLocalPublicPath(linkValue)) {
+    return {
+      dataUrl: await readLocalAsDataUrl(linkValue, null),
+      clearLink: false,
+    };
+  }
+  return {
+    dataUrl: null,
+    clearLink: false,
+  };
+};
+
+const resolveImageSlotDataUrl = async (input: {
+  slotFilepath: string | null;
+  slotMimetype: string | null;
+  linkValue: string;
+}): Promise<{ dataUrl: string | null; clearLink: boolean }> => {
+  if (input.slotFilepath) {
+    return {
+      dataUrl: await readImageFileAsDataUrl(input.slotFilepath, input.slotMimetype),
+      clearLink: false,
+    };
+  }
+  if (!input.linkValue) {
+    return {
+      dataUrl: null,
+      clearLink: false,
+    };
+  }
+  return readImageLinkAsDataUrl(input.linkValue);
+};
+
 export const buildImageBase64Slots = async (
   product: ProductImageBase64Source
 ): Promise<{ imageBase64s: string[]; imageLinks: string[] }> => {
@@ -104,35 +170,16 @@ export const buildImageBase64Slots = async (
     const slotFilepath = slots[i]?.imageFile?.filepath ?? null;
     const slotMimetype = slots[i]?.imageFile?.mimetype ?? null;
     const linkValue = imageLinks[i] ?? '';
-
-    if (slotFilepath) {
-      if (isDataUrl(slotFilepath)) {
-        imageBase64s[i] = slotFilepath;
-        continue;
-      }
-      if (/^https?:\/\//i.test(slotFilepath)) {
-        const dataUrl = await fetchAsDataUrl(slotFilepath);
-        if (dataUrl) imageBase64s[i] = dataUrl;
-        continue;
-      }
-      const dataUrl = await readLocalAsDataUrl(slotFilepath, slotMimetype);
-      if (dataUrl) imageBase64s[i] = dataUrl;
-      continue;
+    const { dataUrl, clearLink } = await resolveImageSlotDataUrl({
+      slotFilepath,
+      slotMimetype,
+      linkValue,
+    });
+    if (dataUrl) {
+      imageBase64s[i] = dataUrl;
     }
-
-    if (linkValue) {
-      if (isDataUrl(linkValue)) {
-        imageBase64s[i] = linkValue;
-        imageLinks[i] = '';
-        continue;
-      }
-      if (/^https?:\/\//i.test(linkValue)) {
-        const dataUrl = await fetchAsDataUrl(linkValue);
-        if (dataUrl) imageBase64s[i] = dataUrl;
-      } else if (linkValue.startsWith('/')) {
-        const dataUrl = await readLocalAsDataUrl(linkValue, null);
-        if (dataUrl) imageBase64s[i] = dataUrl;
-      }
+    if (clearLink) {
+      imageLinks[i] = '';
     }
   }
 

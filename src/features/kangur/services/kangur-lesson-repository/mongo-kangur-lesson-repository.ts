@@ -1,8 +1,14 @@
 import 'server-only';
 
-import type { Db, Document, Filter } from 'mongodb';
+import type { Collection, Db, Document, Filter } from 'mongodb';
 
-import { canonicalizeKangurLessons, createDefaultKangurLessons } from '@/features/kangur/settings';
+import {
+  canonicalizeKangurLessons,
+  createDefaultKangurLessons,
+  KANGUR_LESSONS_SETTING_KEY,
+  parseKangurLessons,
+} from '@/features/kangur/settings';
+import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
 import type { KangurLesson } from '@kangur/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -22,6 +28,8 @@ type MongoKangurLessonDocument = Document &
 
 let indexesInitialized = false;
 let indexesInFlight: Promise<void> | null = null;
+let defaultsInitialized = false;
+let defaultsInFlight: Promise<void> | null = null;
 
 const ensureIndexes = async (db: Db): Promise<void> => {
   if (indexesInitialized) return;
@@ -64,6 +72,9 @@ const buildFilter = (input?: KangurLessonListInput): Filter<MongoKangurLessonDoc
   if (input.ageGroup) {
     filter.ageGroup = input.ageGroup;
   }
+  if (input.componentIds && input.componentIds.length > 0) {
+    filter.componentId = { $in: input.componentIds };
+  }
   if (input.enabledOnly) {
     filter.enabled = true;
   }
@@ -87,11 +98,104 @@ const toLesson = (doc: MongoKangurLessonDocument): KangurLesson => ({
   ...(doc.subsectionId ? { subsectionId: doc.subsectionId } : {}),
 });
 
+const seedMissingLessons = async (
+  collection: Collection<MongoKangurLessonDocument>,
+  lessons: readonly KangurLesson[]
+): Promise<boolean> => {
+  if (lessons.length === 0) {
+    return false;
+  }
+
+  const existingLessonKeys = new Set(
+    (
+      await collection
+        .find(
+          {},
+          {
+            projection: {
+              componentId: 1,
+              ageGroup: 1,
+            },
+          }
+        )
+        .toArray()
+    ).map((lesson) => `${lesson.componentId}:${lesson.ageGroup}`)
+  );
+  const missingLessons = lessons.filter(
+    (lesson) => !existingLessonKeys.has(`${lesson.componentId}:${lesson.ageGroup}`)
+  );
+
+  if (missingLessons.length === 0) {
+    return false;
+  }
+
+  const now = new Date();
+  await collection.bulkWrite(
+    missingLessons.map((lesson) => ({
+      updateOne: {
+        filter: { _id: lesson.id },
+        update: {
+          $setOnInsert: {
+            ...lesson,
+            id: lesson.id,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+
+  return true;
+};
+
+const seedLessonsFromLegacySettingsOrDefaults = async (
+  collection: Collection<MongoKangurLessonDocument>
+): Promise<boolean> => {
+  const rawLessons = await readKangurSettingValue(KANGUR_LESSONS_SETTING_KEY);
+  const defaults = createDefaultKangurLessons();
+  const sourceLessons =
+    rawLessons !== null
+      ? canonicalizeKangurLessons([
+          ...defaults,
+          ...parseKangurLessons(rawLessons),
+        ])
+      : defaults;
+
+  return await seedMissingLessons(collection, sourceLessons);
+};
+
+const ensureDefaultLessons = async (
+  collection: Collection<MongoKangurLessonDocument>
+): Promise<void> => {
+  if (defaultsInitialized) {
+    return;
+  }
+  if (defaultsInFlight) {
+    await defaultsInFlight;
+    return;
+  }
+
+  defaultsInFlight = (async (): Promise<void> => {
+    await seedLessonsFromLegacySettingsOrDefaults(collection);
+    defaultsInitialized = true;
+  })();
+
+  try {
+    await defaultsInFlight;
+  } finally {
+    defaultsInFlight = null;
+  }
+};
+
 export const mongoKangurLessonRepository: KangurLessonRepository = {
   async listLessons(input?: KangurLessonListInput): Promise<KangurLesson[]> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const collection = db.collection<MongoKangurLessonDocument>(COLLECTION);
+    await ensureDefaultLessons(collection);
     const docs = await collection.find(buildFilter(input)).sort({ sortOrder: 1, id: 1 }).toArray();
     if (docs.length === 0) {
       const fallbackFilter: Filter<MongoKangurLessonDocument> = {};

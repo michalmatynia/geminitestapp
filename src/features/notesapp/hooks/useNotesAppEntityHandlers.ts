@@ -30,9 +30,9 @@ export function useNotesAppEntityHandlers({
   filters,
   queryClient,
   selectedNote,
+  setNotes,
   setIsCreating,
   setIsEditing,
-  setNotes,
   setSelectedFolderId,
   setSelectedNote,
   toast,
@@ -47,9 +47,9 @@ export function useNotesAppEntityHandlers({
   filters: NotesAppStateValue['filters'];
   queryClient: QueryClient;
   selectedNote: NotesAppStateValue['selectedNote'];
+  setNotes: UseNoteDataResult['setNotes'];
   setIsCreating: NotesAppActionsValue['setIsCreating'];
   setIsEditing: NotesAppActionsValue['setIsEditing'];
-  setNotes: UseNoteDataResult['setNotes'];
   setSelectedFolderId: NotesAppActionsValue['setSelectedFolderId'];
   setSelectedNote: NotesAppActionsValue['setSelectedNote'];
   toast: Toast;
@@ -126,11 +126,26 @@ export function useNotesAppEntityHandlers({
           isFavorite: nextFavorite,
         });
 
-        setNotes((prev: NoteWithRelations[] | undefined): NoteWithRelations[] =>
-          (prev || []).map(
-            (item: NoteWithRelations): NoteWithRelations =>
+        setNotes((prev): NoteWithRelations[] => {
+          return (
+            prev?.map((item: NoteWithRelations): NoteWithRelations =>
               item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
-          )
+            ) ?? []
+          );
+        });
+
+        queryClient.setQueriesData<NoteWithRelations[]>(
+          { queryKey: QUERY_KEYS.notes.lists() },
+          (prev): NoteWithRelations[] | undefined =>
+            prev?.map((item: NoteWithRelations): NoteWithRelations =>
+              item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
+            )
+        );
+
+        queryClient.setQueryData<NoteWithRelations | null>(
+          QUERY_KEYS.notes.detail(note.id),
+          (prev): NoteWithRelations | null | undefined =>
+            prev ? { ...prev, isFavorite: nextFavorite } : prev
         );
 
         if (selectedNote?.id === note.id) {
@@ -145,7 +160,7 @@ export function useNotesAppEntityHandlers({
         toast('Failed to update favorite', { variant: 'error' });
       }
     },
-    [selectedNote, setNotes, setSelectedNote, toast, updateNote]
+    [queryClient, selectedNote, setNotes, setSelectedNote, toast, updateNote]
   );
 
   const handleUnlinkRelatedNote = useCallback(

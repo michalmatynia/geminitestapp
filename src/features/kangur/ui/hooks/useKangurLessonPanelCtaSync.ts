@@ -7,6 +7,7 @@ import type { KangurProgressUpdateContext } from '@kangur/platform';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { loadProgress } from '@/features/kangur/ui/services/progress';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
+import { useKangurOptionalSubjectKey } from '@/features/kangur/ui/hooks/useKangurOptionalSubjectKey';
 
 const kangurPlatform = getKangurPlatform();
 
@@ -16,6 +17,7 @@ const CTA_PROGRESS_CONTEXT: Required<Pick<KangurProgressUpdateContext, 'source'>
 
 export const useKangurLessonPanelCtaSync = (): ((ctaId: string) => void) => {
   const { isAuthenticated, user } = useKangurAuth();
+  const subjectKey = useKangurOptionalSubjectKey();
 
   return useCallback(
     (ctaId: string): void => {
@@ -29,7 +31,7 @@ export const useKangurLessonPanelCtaSync = (): ((ctaId: string) => void) => {
         return;
       }
 
-      const progress = loadProgress();
+      const progress = loadProgress({ ownerKey: subjectKey });
       const normalizedCtaId = ctaId.trim();
       const context =
         normalizedCtaId.length > 0
@@ -42,6 +44,6 @@ export const useKangurLessonPanelCtaSync = (): ((ctaId: string) => void) => {
           // Avoid throwing on CTA-triggered sync failures.
         });
     },
-    [isAuthenticated, user]
+    [isAuthenticated, subjectKey, user]
   );
 };

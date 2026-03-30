@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'cross-feature'
@@ -13,6 +13,10 @@ Date opened: 2026-03-05
 Status: Draft (stabilization window in progress)  
 Owner: Platform Architecture + Domain Maintainers  
 Scope source: `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md`
+
+This plan is still the active closeout umbrella. The matching migration docs under
+[`docs/migrations/`](../migrations/README.md) are the execution and stabilization
+companions, not parallel sources of truth.
 
 ## Executive Summary
 

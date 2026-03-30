@@ -1,4 +1,5 @@
 import React from 'react';
+import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
 import { ProductListHeader } from '@/features/products/components/list/ProductListHeader';
@@ -148,6 +149,7 @@ describe('ProductListHeader Component', () => {
     onEditSuccess: vi.fn(),
     onEditSave: vi.fn(),
     integrationsProduct: null,
+    integrationsRecoveryContext: null,
     onCloseIntegrations: vi.fn(),
     onStartListing: vi.fn(),
     showListProductModal: false,
@@ -215,13 +217,15 @@ describe('ProductListHeader Component', () => {
     expect(mockContextValue.setPage).toHaveBeenCalledWith(3);
   });
 
-  it('toggles side panel visibility button label', () => {
+  it('mounts the focus-mode toggle after hydration and toggles side panels', async () => {
+    const user = userEvent.setup();
+
     renderWithContext(<ProductListHeader />);
-    const toggleButton = screen.getByLabelText('Show canvas only');
-    if (!toggleButton) {
-      throw new Error('Expected side panel visibility toggle button');
-    }
-    fireEvent.click(toggleButton);
-    expect(screen.getByLabelText('Show side panels')).toBeInTheDocument();
+
+    const toggleButton = await screen.findByRole('button', { name: 'Show side panels' });
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(toggleButton);
+    expect(await screen.findByRole('button', { name: 'Show canvas only' })).toBeInTheDocument();
   });
 });

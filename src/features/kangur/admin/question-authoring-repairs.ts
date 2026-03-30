@@ -1,6 +1,6 @@
 import type { IdLabelOption } from '@/shared/contracts';
 
-import type { QuestionFormData } from '../test-questions';
+import type { QuestionFormData } from '../test-suites/questions';
 import { resolveKangurAdminLocale } from './kangur-admin-locale';
 import type { QuestionAuthoringIssue } from './question-authoring-insights';
 

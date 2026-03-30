@@ -228,36 +228,38 @@
     "siteAppearance": "Seitendarstellung"
   },
   "KangurPublic": {
-    "routeLoading": "Kangur wird geladen...",
-    "entryLoading": "Kangur wird geladen...",
+    "routeLoading": "Wird geladen...",
+    "entryLoading": "Wird geladen...",
     "loaderStatus": "Wird geladen",
-    "loaderSrLabel": "Kangur-Anwendung wird geladen",
-    "errorTitle": "In Kangur ist ein Fehler aufgetreten",
-    "errorDescription": "Beim Laden der Kangur-Anwendung ist ein Fehler aufgetreten.",
+    "loaderSrLabel": "Anwendung wird geladen",
+    "errorTitle": "In StudiQ ist ein Fehler aufgetreten",
+    "errorDescription": "Beim Laden der StudiQ-Anwendung ist ein Fehler aufgetreten.",
     "tryAgain": "Erneut versuchen",
-    "backToHome": "Zuruck zu Kangur",
-    "loadingApp": "Kangur-App wird geladen",
-    "loadingPage": "Kangur-Seite wird geladen",
-    "loadingLanguage": "Kangur-Sprache wird gewechselt",
+    "backToHome": "Zuruck zu StudiQ",
+    "loadingApp": "Anwendung wird geladen",
+    "loadingPage": "Seite wird geladen",
+    "loadingLanguage": "Sprache wird gewechselt",
     "accessibility": {
       "pageAnnouncement": "Ansicht: {label}",
       "languageSwitchAnnouncement": "Sprache wird gewechselt: {label}",
       "pages": {
-        "Competition": "Mathe-Kanguru",
+        "Competition": "Mathe-StudiQ",
         "Game": "Startseite",
+        "GamesLibrary": "Spielebibliothek",
         "Lessons": "Lektionen",
         "Tests": "Tests",
         "LearnerProfile": "Lernendenprofil",
         "ParentDashboard": "Elterndashboard",
         "Duels": "Duelle",
-        "default": "Kangur-Seite"
+        "default": "StudiQ-Seite"
       }
     }
   },
   "KangurShell": {
     "creatorCredentials": "Erstellt von: {name} · erstellt {year} ·",
     "socialUpdates": "Social Updates",
-    "contactLabel": "Kontakt: {email}"
+    "contactLabel": "Kontakt: {email}",
+    "supportLabel": "Unterstutze die App:"
   },
   "KangurLessonsPage": {
     "pageTitle": "Lektionen",
@@ -309,12 +311,48 @@
         "description": "Konfiguriere das gemischte Training und wahl den Fragenbereich."
       },
       "kangur_setup": {
-        "label": "Mathe-Kanguru-Sitzung einrichten",
-        "description": "Bereite eine Mathe-Kanguru-Sitzung vor."
+        "label": "Mathe-StudiQ-Sitzung einrichten",
+        "description": "Bereite eine Mathe-StudiQ-Sitzung vor."
       },
       "kangur": {
-        "label": "Mathe-Kanguru-Sitzung",
-        "description": "Lose Mathe-Kanguru-Aufgaben Schritt fur Schritt."
+        "label": "Mathe-StudiQ-Sitzung",
+        "description": "Lose Mathe-StudiQ-Aufgaben Schritt fur Schritt."
+      },
+      "agentic_approval_gate_quiz": {
+        "label": "Freigabe-Quiz",
+        "description": "Ube, welche Aktionen vor dem Start eine Freigabe brauchen."
+      },
+      "agentic_prompt_trim_quiz": {
+        "label": "Prompt-Kurzungsquiz",
+        "description": "Ube, Prompts auf die kurzeste nutzliche Form zu kuerzen."
+      },
+      "agentic_reasoning_router_quiz": {
+        "label": "Reasoning-Router-Quiz",
+        "description": "Wahle fur jede Aufgabe den passenden Denkmodus."
+      },
+      "agentic_surface_match_quiz": {
+        "label": "Surface-Match-Quiz",
+        "description": "Ordne jede Aufgabe der richtigen Oberflache oder dem richtigen Interface zu."
+      },
+      "alphabet_first_words_quiz": {
+        "label": "Erste-Worter-Quiz",
+        "description": "Verbinde Buchstaben und Bilder zu ersten Wortern."
+      },
+      "alphabet_letter_matching_quiz": {
+        "label": "Buchstaben-Matching-Quiz",
+        "description": "Ordne Buchstaben in kurzen Alphabet-Runden zu."
+      },
+      "alphabet_letter_order_quiz": {
+        "label": "Buchstabenfolge-Quiz",
+        "description": "Bringe Buchstaben wieder in die richtige Reihenfolge."
+      },
+      "art_color_harmony_quiz": {
+        "label": "Farbharmonie-Quiz",
+        "description": "Ube warme und kuhle Farbharmonien."
+      },
+      "art_shape_rotation_quiz": {
+        "label": "Formdrehungs-Quiz",
+        "description": "Erkenne, wie Formen nach einer Drehung aussehen."
       },
       "calendar_quiz": {
         "label": "Kalenderubung",
@@ -324,17 +362,37 @@
         "label": "Formenubung",
         "description": "Ube Formen und raumliche Beziehungen."
       },
+      "geometry_shape_spotter_quiz": {
+        "label": "Formensucher-Quiz",
+        "description": "Erkenne und benenne Formen in kurzen Runden."
+      },
       "clock_quiz": {
         "label": "Uhrzeitubung",
         "description": "Ube das Lesen von Stunden und Minuten."
+      },
+      "music_melody_repeat_quiz": {
+        "label": "Melodie wiederholen",
+        "description": "Hore eine Melodie und spiele sie Ton fur Ton nach."
+      },
+      "music_piano_roll_free_play_quiz": {
+        "label": "Freies Piano-Roll-Spiel",
+        "description": "Erkunde die Klaviatur und die Synth-Steuerung im freien Spiel."
       },
       "addition_quiz": {
         "label": "Additionsquiz",
         "description": "Ein schnelles Additionsquiz."
       },
+      "adding_synthesis_quiz": {
+        "label": "Additionssynthese-Quiz",
+        "description": "Baue Rechenflussigkeit im Addieren in kurzen Rhythmusrunden auf."
+      },
       "subtraction_quiz": {
         "label": "Subtraktionsquiz",
         "description": "Ein schnelles Subtraktionsquiz."
+      },
+      "multiplication_array_quiz": {
+        "label": "Multiplikationsfelder",
+        "description": "Baue gleich grosse Gruppen und sieh Multiplikation als Reihen und Spalten."
       },
       "division_quiz": {
         "label": "Divisionsquiz",
@@ -356,6 +414,46 @@
         "label": "Analogiequiz",
         "description": "Ube Analogien und Beziehungen in kurzen Runden."
       },
+      "english_subject_verb_agreement_quiz": {
+        "label": "Subjekt-Verb-Ubereinstimmung",
+        "description": "Ordne Subjekt und Verb so zu, dass der Satz richtig klingt."
+      },
+      "english_going_to_quiz": {
+        "label": "Going-to-Planparade",
+        "description": "Bilde in kurzen Runden Satze uber Zukunftsplane mit going to."
+      },
+      "english_adjectives_quiz": {
+        "label": "Adjektiv-Quiz",
+        "description": "Wahle Adjektive fur Personen, Orte und Dinge."
+      },
+      "english_compare_and_crown_quiz": {
+        "label": "Vergleichen-und-Kronen-Studio",
+        "description": "Vergleiche zwei Dinge und krone das beste mit Komparativ und Superlativ."
+      },
+      "english_adverbs_frequency_quiz": {
+        "label": "Haufigkeitsadverbien-Quiz",
+        "description": "Ube Alltagssatze mit always, often und never."
+      },
+      "english_articles_quiz": {
+        "label": "Artikel-Quiz",
+        "description": "Wahle a, an oder the in kurzen Grammatikrunden."
+      },
+      "english_prepositions_quiz": {
+        "label": "Prapositionen-Quiz",
+        "description": "Ube englische Prapositionen fur Zeit und Ort."
+      },
+      "english_prepositions_sort_quiz": {
+        "label": "Prapositionen-Sortierquiz",
+        "description": "Sortiere Prapositionen in die richtigen Grammatikgruppen."
+      },
+      "english_prepositions_order_quiz": {
+        "label": "Prapositionen-Reihenfolge-Quiz",
+        "description": "Baue kurze Phrasen mit Prapositionen in der richtigen Reihenfolge."
+      },
+      "english_pronouns_warmup_quiz": {
+        "label": "Pronomen-Warm-up",
+        "description": "Starte mit kurzen Runden zu englischen Pronomen."
+      },
       "english_sentence_quiz": {
         "label": "Satzbauquiz",
         "description": "Ube Satzstellung, Fragen und Konjunktionen auf Englisch."
@@ -375,6 +473,10 @@
       "result": {
         "label": "Spielergebnis",
         "description": "Sieh dir das Ergebnis an und entscheide, was du als Nachstes uben willst."
+      },
+      "english_adverbs_quiz": {
+        "label": "Adverbien-Studio",
+        "description": "Steuere Aktionsszenen mit Adverbien, die beschreiben, wie etwas passiert."
       }
     },
     "home": {
@@ -408,6 +510,7 @@
       "label": "Frage {number}",
       "pointChip": "⭐ {points} Pkt. ({difficulty})",
       "touchHint": "Tippe eine Antwort an und danach auf den Bestätigen-Knopf.",
+      "printHint": "Öffne diese Lektion auf dem Bildschirm, um die Frage interaktiv zu beantworten.",
       "difficulty": {
         "easy": "leicht",
         "medium": "mittel",
@@ -419,6 +522,8 @@
       },
       "confirm": "Antwort bestätigen ✓"
     },
+    "examPrintHint": "Öffne diese Lektion auf dem Bildschirm, um die Mathe-Känguru-Frage interaktiv zu beantworten.",
+    "examResultPrintHint": "Öffne diese Lektion auf dem Bildschirm, um die Antworten und Lösungen des Mathe-Känguru zu überprüfen.",
     "operationSelector": {
       "title": "Los geht's!",
       "intro": {
@@ -582,6 +687,43 @@
           "activeTitle": "Aktive Aufgaben",
           "activeEmpty": "Keine aktiven Aufgaben für den Lernenden."
         },
+        "analytics": {
+          "label": "Lernüberblick",
+          "description": "Die wichtigsten Zahlen aus den letzten Sitzungen und dem aktuellen Lernrhythmus.",
+          "averageAccuracyLabel": "Durchschnittliche Genauigkeit",
+          "averageAccuracyDescription": "Bestes Ergebnis: {best}%",
+          "streakLabel": "Tagesserie",
+          "streakDescription": "Längste Serie: {longest} Tage",
+          "xpLabel": "XP heute",
+          "xpDescription": "{weeklyXp} XP in 7 Tagen · durchschnittlich {averageXp} XP / Sitzung",
+          "dailyGoalLabel": "Tagesziel",
+          "dailyGoalDescription": "{percent}% des heutigen Plans"
+        },
+        "weeklyActivity": {
+          "label": "Wöchentliche Aktivität",
+          "description": "Spiele pro Tag und deren durchschnittliche Genauigkeit in der letzten Woche.",
+          "loading": "Sitzungsverlauf wird geladen",
+          "error": "Der vollständige Ergebnisverlauf konnte nicht geladen werden",
+          "barTitle": "{count} Spiele · {accuracy}% Genauigkeit"
+        },
+        "operationFocus": {
+          "label": "Arbeitsbereiche",
+          "description": "Die am häufigsten geübten Bereiche mit Genauigkeit und XP-Tempo.",
+          "progressAria": "Genauigkeit im Bereich {title}",
+          "attempts": "{count} Versuche",
+          "averageXp": "{xp} XP / Sitzung",
+          "empty": "Noch keine Bereichsdaten. Ergebnisse erscheinen nach den ersten Spielen."
+        },
+        "masterySummary": {
+          "label": "Lernlandkarte",
+          "description": "Welche Lektionen schon stabil sind und welche noch Unterstützung brauchen.",
+          "trackedLabel": "Verfolgte Lektionen",
+          "masteredLabel": "Beherrscht",
+          "needsPracticeLabel": "Zum Wiederholen",
+          "weakestLabel": "Brauchen Unterstützung",
+          "strongestLabel": "Am stärksten",
+          "empty": "Noch keine Mastery-Daten zu Lektionen. Daten erscheinen nach der Arbeit in Lektionen."
+        },
         "lessonProgress": {
           "label": "Lektionsfortschritt",
           "description": "Lektionsfortschritt, Abschnitt für Abschnitt gespeichert.",
@@ -610,6 +752,28 @@
           "dateFromLabel": "Datum von",
           "dateToLabel": "Datum bis",
           "clear": "Filter zurücksetzen"
+        },
+        "overview": {
+          "label": "Aktivitätsüberblick",
+          "description": "Die wichtigsten Zahlen für den aktuell sichtbaren Aktivitätsbereich.",
+          "totalInteractionsLabel": "Interaktionen",
+          "sessionsLabel": "Sitzungen",
+          "openedTasksLabel": "Geöffnete Aufgaben",
+          "lessonPanelsLabel": "Lektionspanels",
+          "averageSessionDuration": "Durchschnittliche Sitzung: {duration}",
+          "latestActivity": "Letzte Aktivität: {timestamp}"
+        },
+        "activityMix": {
+          "label": "Aktivitätsmix",
+          "description": "Vergleich von Sitzungen, Aufgabenöffnungen und Besuchen in Lektionspanels.",
+          "barTitle": "{label}: {count}"
+        },
+        "lessonFocus": {
+          "label": "Meiste Zeit verbracht",
+          "description": "Lektionen, in denen der Lernende in Panels die meiste Zeit verbracht hat.",
+          "progressAria": "Zeitanteil für die Lektion {title}",
+          "sectionCount": "{count} Abschnitte mit Aktivität",
+          "empty": "Noch keine Panel-Zeitdaten für einen Vergleich."
         },
         "lessonPanelTime": {
           "label": "Zeit in Lektionspanels",
@@ -678,7 +842,7 @@
   },
   "KangurUserAccess": {
     "restricted": "Eingeschränkter Zugriff",
-    "title": "Dieses Konto hat noch keinen Zugriff auf Kangur",
+    "title": "Dieses Konto hat noch keinen Zugriff auf StudiQ",
     "description": "Es sieht so aus, als wäre dein Konto noch nicht zur App hinzugefügt worden. Kontaktiere einen Administrator, um Zugriff anzufordern.",
     "checkLabel": "Falls das ein Fehler ist, prüfe:",
     "checkCurrentAccount": "ob du mit dem richtigen Konto angemeldet bist,",
@@ -687,7 +851,7 @@
   },
   "KangurLogin": {
     "defaultLoginTitle": "Anmelden",
-    "defaultSessionTitle": "Anmeldung bei Kangur",
+    "defaultSessionTitle": "Anmeldung bei StudiQ",
     "defaultSessionDescription": "Eltern melden sich mit E-Mail und Passwort an. Schüler melden sich mit Nickname und Passwort an.",
     "checkInboxLabel": "Postfach prüfen: {email}",
     "checkInboxTitle": "Postfach prüfen",
@@ -696,8 +860,18 @@
     "cooldownSeconds": "{count} Sek.",
     "magicLinkDeprecatedNotice": "Die Anmeldung per E-Mail-Link ist nicht mehr verfügbar. Melden Sie sich mit E-Mail und Passwort an oder erstellen Sie ein Konto.",
     "verifyParentEmailFailed": "Die E-Mail der Eltern konnte nicht bestätigt werden.",
+    "captchaVerificationFailed": "Captcha konnte nicht verifiziert werden. Versuchen Sie es erneut.",
     "fillEmailAndPassword": "E-Mail und Passwort eingeben.",
+    "invalidParentEmailNotice": "Geben Sie eine gültige E-Mail-Adresse der Eltern ein.",
     "completeSecurityVerification": "Sicherheitsprüfung abschließen.",
+    "sessionResettingNotice": "Sichere Anmeldung wird vorbereitet...",
+    "verifyingCredentialsNotice": "Anmeldedaten werden geprüft...",
+    "signingInParentNotice": "Eltern werden angemeldet...",
+    "signingInStudentNotice": "Schüler wird angemeldet...",
+    "refreshingSessionNotice": "Sitzung wird aktualisiert...",
+    "redirectingNotice": "Ihr Bereich wird geöffnet...",
+    "creatingAccountNotice": "Elternkonto wird vorbereitet...",
+    "sendingVerificationNotice": "Bestätigungs-E-Mail wird gesendet...",
     "createAccountInstruction": "Klicken Sie auf den Bestätigungslink in der E-Mail. Danach melden Sie sich mit derselben E-Mail und demselben Passwort an.",
     "createParentAccountFailed": "Das Elternkonto konnte nicht erstellt werden.",
     "createParentAccountUnexpected": "Beim Erstellen des Kontos ist ein Fehler aufgetreten.",
@@ -713,15 +887,24 @@
     "studentLoginUnexpected": "Beim Anmelden des Schülers ist ein Fehler aufgetreten.",
     "resendEmailIn": "E-Mail erneut senden in {label}",
     "resendEmail": "E-Mail erneut senden",
+    "changeEmailAction": "E-Mail ändern",
+    "continueToSignInAction": "Ich habe meine E-Mail schon bestätigt",
     "resendHelper": "Eine neue E-Mail kann in {label} gesendet werden.",
     "createAccountIdentifierLabel": "E-Mail",
     "identifierLabel": "E-Mail oder Nickname des Schülers",
     "createAccountIdentifierPlaceholder": "eltern@example.com",
     "identifierPlaceholder": "E-Mail oder Nickname eingeben",
+    "signInModeHint": "Geben Sie die E-Mail der Eltern oder den Nickname des Schülers ein. StudiQ wählt den passenden Anmeldeweg.",
+    "parentLoginModeHint": "Das sieht nach einer Eltern-Anmeldung aus. Verwenden Sie die E-Mail der Eltern und das Kontopasswort.",
+    "studentLoginModeHint": "Das sieht nach einer Schüler-Anmeldung aus. Verwenden Sie den Nickname des Schülers, nicht die E-Mail.",
+    "createAccountModeHint": "Erstellen Sie ein Elternkonto mit einer E-Mail-Adresse und bestätigen Sie die Adresse danach in der E-Mail.",
     "haveAccount": "Ich habe ein Konto",
     "createAccount": "Konto erstellen",
     "passwordLabel": "Passwort",
     "passwordPlaceholder": "Passwort eingeben",
+    "parentPasswordHint": "Dies ist das Passwort für das Elternkonto.",
+    "studentPasswordHint": "Dies ist das Passwort für den Nickname des Schülers.",
+    "createAccountPasswordHint": "Legen Sie ein neues Eltern-Passwort fest. Mindestens 8 Zeichen.",
     "securityVerificationLabel": "Sicherheitsprüfung",
     "submitCreateAccount": "Elternkonto erstellen",
     "submitParentLogin": "Eltern anmelden",
@@ -732,6 +915,7 @@
     "loginFormAriaLabel": "Anmeldeformular",
     "loginSubmit": "Anmelden",
     "loginSubmitting": "Anmeldung läuft...",
+    "openingSpaceButtonLabel": "StudiQ wird geöffnet...",
     "continueWith": "Oder weiter mit",
     "signupFormAriaLabel": "Registrierungsformular für Eltern",
     "parentEmailLabel": "E-Mail der Eltern",
@@ -741,7 +925,9 @@
     "createAccountSubmitting": "Konto wird erstellt...",
     "verificationSentTo": "Wir haben einen Bestätigungslink gesendet an:",
     "verificationAction": "Klicken Sie auf den Link in der E-Mail, um das Konto zu aktivieren.",
-    "debugLinkLabel": "Debug-Link (nur Dev)"
+    "debugLinkLabel": "Debug-Link (nur Dev)",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen"
   },
   "AuthApi": {
     "invalidPayload": "Ungültige Nutzlast.",
@@ -842,13 +1028,17 @@
         "english_parts_of_speech": "Wortarten",
         "english_sentence_structure": "Satzbau",
         "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
+        "english_going_to": "Going to",
         "english_articles": "Artikel",
         "english_adjectives": "Adjektive",
+        "english_comparatives_superlatives": "Komparativ und Superlativ",
+        "english_adverbs_frequency": "Adverbien der Häufigkeit",
         "english_prepositions_time_place": "Zeit- und Ortspräpositionen",
         "alphabet_basics": "Alphabet-Grundlagen",
         "alphabet_copy": "Buchstaben abschreiben",
         "alphabet_syllables": "Silben",
-        "geometry_shape_recognition": "Geometrie"
+        "geometry_shape_recognition": "Geometrie",
+        "english_adverbs": "Adverbien"
       }
     }
   },
@@ -986,12 +1176,20 @@
   },
   "KangurNavigation": {
     "home": "Startseite",
+    "gamesLibrary": "Spielebibliothek",
     "lessons": "Lektionen",
     "duels": "Duelle",
     "parent": "Eltern",
+    "parentDashboard": "Elternbereich",
     "languageSwitcher": {
       "triggerAriaLabel": "Aktuelle Sprache: {language}. Sprachmenü öffnen.",
       "triggerTitle": "Sprache: {language}"
+    },
+    "mobileMenu": {
+      "open": "Menü öffnen",
+      "close": "Menü schließen",
+      "title": "StudiQ-Menü",
+      "description": "Verwende Tab, um durch die Navigationsoptionen zu wechseln, und Escape, um das Menü zu schließen."
     },
     "subject": {
       "label": "Fach auswahlen",
@@ -1008,13 +1206,574 @@
       "groupAriaLabel": "Altersgruppenauswahl"
     }
   },
+  "KangurGamesLibraryPage": {
+    "introEyebrow": "Gemeinsame Spiele-Domäne",
+    "title": "Spielebibliothek",
+    "description": "Ein gemeinsamer Katalog für alle StudiQ-Spiele, geordnet nach Engines, Mechaniken, Varianten und Lektion-Verknüpfungen.",
+    "groupEyebrow": "Lernbereich",
+    "groupDescription": "{count, plural, one {# Spiel in diesem Bereich.} other {# Spiele in diesem Bereich.}}",
+    "engineGroupsEyebrow": "Konsolidierungsansicht",
+    "engineGroupsTitle": "Engine-Familien",
+    "engineGroupsDescription": "{count, plural, one {# Engine-Familie aktuell im Katalog gruppiert.} other {# Engine-Familien aktuell im Katalog gruppiert.}}",
+    "variantGroupsEyebrow": "Variantenoberflachen",
+    "variantGroupsTitle": "Variantenkatalog",
+    "variantGroupsDescription": "{count, plural, one {# sichtbare Variante uber {surfaceCount} Oberflachen gruppiert.} other {# sichtbare Varianten uber {surfaceCount} Oberflachen gruppiert.}}",
+    "emptyTitle": "Keine Spiele in der Bibliothek",
+    "emptyDescription": "Füge die ersten Spieldefinitionen hinzu, um Engines und Varianten zu klassifizieren.",
+    "emptyFilteredTitle": "Keine Spiele passen zu diesen Filtern",
+    "emptyFilteredDescription": "Entferne einen oder mehrere Filter, um den restlichen Katalog zu sehen.",
+    "focus": {
+      "eyebrow": "Deep-Link-Fokus",
+      "gameTitle": "Fokussierter Katalogeintrag",
+      "gameDescription": "Diese Ansicht ist derzeit auf {game} eingegrenzt.",
+      "clear": "Spielfokus entfernen",
+      "engineTitle": "Fokussierte Engine-Familie",
+      "engineDescription": "Diese Ansicht ist derzeit auf die Engine-Familie {engine} eingegrenzt.",
+      "clearEngine": "Engine-Fokus entfernen"
+    },
+    "tabs": {
+      "eyebrow": "Abschnittslayout",
+      "title": "Per Tabs durchsuchen",
+      "description": "Wechsle zwischen Spielekatalog, gemeinsamer Strukturansicht und Runtime-Serialisierung.",
+      "listLabel": "Bereiche der Spielebibliothek",
+      "catalog": "Katalog",
+      "structure": "Struktur",
+      "runtime": "Runtime"
+    },
+    "metrics": {
+      "games": "Spiele",
+      "gamesDescription": "Sichtbare Katalogeinträge.",
+      "engines": "Engines",
+      "enginesDescription": "Sichtbare Engine-Familien.",
+      "variants": "Varianten",
+      "variantsDescription": "Sichtbare Einbettungs- und Startmodi.",
+      "lessonLinked": "Mit Lektionen verknüpft",
+      "lessonLinkedDescription": "Sichtbare Spiele, die bereits mit Lektionskomponenten verbunden sind."
+    },
+    "serializationAuditEyebrow": "Runtime-Vertrag",
+    "serializationAuditTitle": "Runtime-Serialisierung",
+    "serializationAuditDescription": "Zeigt, welche runtime-tragenden Varianten explizite IDs verwenden und welche noch auf Kompatibilitäts-Fallbacks beruhen.",
+    "serializationAudit": {
+      "statusClean": "Explizite Runtime-IDs",
+      "statusAttention": "Kompatibilitätsbereinigung",
+      "explicitLabel": "Explizite Runtimes",
+      "explicitDescription": "{count} von {total} runtime-tragenden Varianten verwenden explizite Runtime-IDs.",
+      "fallbackLabel": "Nur Fallback",
+      "fallbackDescription": "Varianten, die weiterhin nur über Kompatibilitäts-IDs aufgelöst werden.",
+      "duplicatesLabel": "Doppelte Legacy-IDs",
+      "duplicatesDescription": "Varianten, die noch sowohl explizite als auch Legacy-Runtime-IDs tragen.",
+      "legacyGameFallbackLabel": "Legacy-Startspiele",
+      "legacyGameFallbackDescription": "Spiele, die in der gemeinsamen Definition noch legacyScreenIds tragen.",
+      "backlogEyebrow": "Bereinigungs-Backlog",
+      "backlogDescription": "Listet die genauen Katalog-IDs auf, die noch Kompatibilitätsbereinigung brauchen.",
+      "fallbackBacklogLabel": "Nur-Fallback-Varianten",
+      "duplicatesBacklogLabel": "Varianten mit Legacy-Duplikat",
+      "missingBacklogLabel": "Varianten ohne Runtime",
+      "legacyGameBacklogLabel": "Legacy-Startspiele",
+      "nonSharedBacklogLabel": "Nicht-geteilte Engines",
+      "nonSharedEnginesLabel": "Nicht-geteilte Engines",
+      "nonSharedEnginesDescription": "Engine-Familien, die noch nicht als Shared Runtime markiert sind.",
+      "surfaceDescription": "{count} runtime-tragende Varianten nutzen aktuell diese Oberfläche.",
+      "totalVariantsLabel": "Runtime-tragende Varianten",
+      "explicitVariantsLabel": "Explizit",
+      "fallbackVariantsLabel": "Nur Fallback",
+      "duplicatesVariantsLabel": "Doppelte Legacy",
+      "missingVariantsLabel": "Fehlende Runtime"
+    },
+    "coverageGroupsEyebrow": "Abdeckungspolitik",
+    "coverageGroupsTitle": "Lektions-Abdeckungsplan",
+    "coverageGroupsDescription": "{count, plural, one {# Abdeckungspfad wird in der gemeinsamen Spiele-Domäne verfolgt.} other {# Abdeckungspfade werden in der gemeinsamen Spiele-Domäne verfolgt.}}",
+    "coverageGroups": {
+      "completeChip": "Vollstandig",
+      "gapsChip": "{count, plural, one {# Lucke} other {# Lucken}}",
+      "lessonsLabel": "Lektionen",
+      "coveredLabel": "Abgedeckt",
+      "gamesLabel": "Spiele",
+      "cohortsLabel": "Kohorten",
+      "subjectsLabel": "Facher",
+      "coveredLessonsLabel": "Abgedeckte Lektionen",
+      "uncoveredLessonsLabel": "Nicht abgedeckte Lektionen",
+      "groups": {
+        "library_backed": {
+          "eyebrow": "Gemeinsamer Katalog",
+          "title": "Bibliotheksgestutzte Lektionen",
+          "description": "Lektionskomponenten, die auf eine oder mehrere gemeinsame Spieldefinitionen in der Spielebibliothek zeigen sollen."
+        },
+        "launchable": {
+          "eyebrow": "Vollbild-Runtime",
+          "title": "Startbare Lektionen",
+          "description": "Lektionskomponenten, die neben ihrem gemeinsamen Katalogeintrag einen direkten Vollbild-Spielpfad behalten sollen."
+        }
+      }
+    },
+    "cohortGroupsEyebrow": "Alterskohorten",
+    "cohortGroupsTitle": "Katalog nach Kohorten",
+    "cohortGroupsDescription": "{count, plural, one {# Alterskohorte ist im aktuellen Katalog sichtbar.} other {# Alterskohorten sind im aktuellen Katalog sichtbar.}}",
+    "cohortGroups": {
+      "groupDescription": "{count, plural, one {# Spiel ist aktuell in dieser Kohorte sichtbar.} other {# Spiele sind aktuell in dieser Kohorte sichtbar.}}",
+      "gamesLabel": "Spiele",
+      "enginesLabel": "Engines",
+      "launchableLabel": "Startbar",
+      "lessonLinkedLabel": "Mit Lektionen verknüpft",
+      "subjectsLabel": "Fächer"
+    },
+    "implementationGroupsEyebrow": "Extraktionsstatus",
+    "implementationGroupsTitle": "Implementierungsbesitz",
+    "implementationGroupsDescription": "{count, plural, one {# Besitzspur wird aktuell im Engine-Katalog verfolgt.} other {# Besitzspuren werden aktuell im Engine-Katalog verfolgt.}}",
+    "implementationGroups": {
+      "eyebrow": "Besitzspur",
+      "groupDescription": "{count, plural, one {# Engine-Familie ist aktuell diesem Besitzstatus zugeordnet.} other {# Engine-Familien sind aktuell diesem Besitzstatus zugeordnet.}}",
+      "enginesLabel": "Engines",
+      "gamesLabel": "Spiele",
+      "runtimeComponentsLabel": "Runtime-Komponenten",
+      "lessonsLabel": "Lektionen",
+      "engineTitlesLabel": "Engine-Familien",
+      "lessonLinksLabel": "Lektionsverknüpfungen"
+    },
+    "drawingGroupsEyebrow": "Zeichenmechaniken",
+    "drawingGroupsTitle": "Zeichen-Engines",
+    "drawingGroupsDescription": "{count, plural, one {# Zeichen-Engine-Familie ist im aktuellen Katalog sichtbar.} other {# Zeichen-Engine-Familien sind im aktuellen Katalog sichtbar.}}",
+    "drawingGroups": {
+      "gamesLabel": "Spiele",
+      "variantsLabel": "Varianten",
+      "cohortsLabel": "Kohorten",
+      "lessonsLabel": "Lektionen",
+      "ownershipLabel": "Implementierungsbesitz",
+      "runtimeComponentsLabel": "Runtime-Komponenten",
+      "subjectsLabel": "Fächer",
+      "lessonLinksLabel": "Lektionsverknüpfungen",
+      "gameTitlesLabel": "Spieltitel"
+    },
+    "filters": {
+      "eyebrow": "Klassifizierungssteuerung",
+      "title": "Katalog filtern",
+      "activeEyebrow": "Aktive Filter",
+      "summaryAll": "{count, plural, one {# Spiel aus dem gemeinsamen Katalog wird angezeigt.} other {# Spiele aus dem gemeinsamen Katalog werden angezeigt.}}",
+      "summaryFiltered": "{visible} von {total} Spielen aus dem gemeinsamen Katalog werden angezeigt.",
+      "clear": "Filter zurücksetzen",
+      "game": {
+        "label": "Spiel",
+        "aria": "Spiele nach exaktem Spiel filtern",
+        "all": "Alle Spiele"
+      },
+      "subject": {
+        "label": "Fach",
+        "aria": "Spiele nach Fach filtern",
+        "all": "Alle Fächer"
+      },
+      "ageGroup": {
+        "label": "Altersgruppe",
+        "aria": "Spiele nach Altersgruppe filtern",
+        "all": "Alle Altersgruppen"
+      },
+      "mechanic": {
+        "label": "Mechanik",
+        "aria": "Spiele nach Mechanik filtern",
+        "all": "Alle Mechaniken"
+      },
+      "surface": {
+        "label": "Oberfläche",
+        "aria": "Spiele nach Oberfläche filtern",
+        "all": "Alle Oberflächen"
+      },
+      "status": {
+        "label": "Status",
+        "aria": "Spiele nach Status filtern",
+        "all": "Alle Statuswerte"
+      },
+      "variantSurface": {
+        "label": "Variantenoberflache",
+        "aria": "Varianten nach Oberflache filtern",
+        "all": "Alle Variantenoberflachen"
+      },
+      "variantStatus": {
+        "label": "Variantenstatus",
+        "aria": "Varianten nach Status filtern",
+        "all": "Alle Variantenstatus"
+      },
+      "engine": {
+        "label": "Engine-Familie",
+        "aria": "Spiele nach Engine-Familie filtern",
+        "all": "Alle Engines"
+      },
+      "engineCategory": {
+        "label": "Engine-Kategorie",
+        "aria": "Spiele nach Engine-Kategorie filtern",
+        "all": "Alle Engine-Kategorien"
+      },
+      "implementationOwnership": {
+        "label": "Implementierungsbesitz",
+        "aria": "Spiele nach Implementierungsbesitz filtern",
+        "all": "Alle Besitzstatus"
+      },
+      "launchability": {
+        "label": "Startpfad",
+        "aria": "Spiele nach Startpfad filtern",
+        "all": "Alle Spiele",
+        "launchable": "Startbarer Vollbildmodus"
+      }
+    },
+    "actions": {
+      "previewGame": "Vorschau & Zuordnung",
+      "openGame": "Spiel öffnen",
+      "openLessons": "Lektionen öffnen"
+    },
+    "modal": {
+      "eyebrow": "Spiel-Scaffold",
+      "scaffoldBadge": "Scaffold",
+      "description": "Sieh dir die Runtime-Vorschau an, ordne das Spiel einem Lesson-Hub zu und verwalte gespeicherte Hub-Sektionen.",
+      "settingsButton": "Spieleinstellungen",
+      "hideSettingsButton": "Einstellungen ausblenden",
+      "closeButton": "Schließen",
+      "lessonEyebrow": "Lesson-Hub",
+      "lessonTitle": "Spiel an einen Lesson-Hub anhängen",
+      "lessonSelectLabel": "Verknüpfter Lesson-Hub",
+      "lessonPlaceholder": "Lesson-Hub auswählen",
+      "lessonSearchPlaceholder": "Lesson-Hubs durchsuchen",
+      "lessonEmpty": "Keine Lesson-Hubs gefunden.",
+      "lessonUnassigned": "Noch keine Lektion verknüpft",
+      "scaffoldHint": "Der aktuelle Editor ist {lesson} zugeordnet.",
+      "previewEyebrow": "Live-Runtime",
+      "previewTitle": "Spielvorschau",
+      "previewFallback": "Zuerst wird das Uhrspiel scaffolded. Weitere Spiele folgen in diesem Modal.",
+      "draftEyebrow": "Hub-Sektionsentwurf",
+      "draftTitle": "Neue Hub-Spielsektion erstellen",
+      "editDraftTitle": "Gespeicherte Hub-Spielsektion bearbeiten",
+      "draftNameLabel": "Sektionsname",
+      "draftNamePlaceholder": "Uhr-Challenge",
+      "draftSubtextLabel": "Sektionsuntertext",
+      "draftSubtextPlaceholder": "Kurzen Text für die Lesson-Hub-Karte schreiben.",
+      "draftIconLabel": "Spielsymbol",
+      "draftEnabledLabel": "Im Lesson-Hub sichtbar",
+      "draftEnabledDescription": "Steuert, ob diese Hub-Sektion nach dem Speichern im Lesson-Flow erscheint.",
+      "customIconInputLabel": "Eigenes Spielsymbol",
+      "customIconInputPlaceholder": "Emoji oder kurzes Icon einfügen",
+      "customIconPreviewLabel": "Vorschau des gewählten Spielsymbols",
+      "draftIconAria": "{icon} als Spielsymbol wählen",
+      "addDraftButton": "Hub-Sektionsentwurf hinzufügen",
+      "saveDraftButton": "Hub-Sektion speichern",
+      "newDraftButton": "Neue Hub-Sektion",
+      "draftListEyebrow": "Entwurfsliste",
+      "draftListTitle": "Gespeicherte Hub-Sektionen",
+      "draftListSearchLabel": "Gespeicherte Hub-Sektionen durchsuchen",
+      "draftListSearchPlaceholder": "Gespeicherte Hub-Sektionen durchsuchen",
+      "draftListClearFiltersButton": "Listenfilter zurucksetzen",
+      "draftListStatusFilterLabel": "Gespeicherte Hub-Sektionen nach Status filtern",
+      "draftListStatusFilterAll": "Alle",
+      "draftListStatusFilterEnabled": "Aktiv",
+      "draftListStatusFilterDisabled": "Deaktiviert",
+      "draftListSearchEmpty": "Keine gespeicherten Hub-Sektionen passen zu den aktuellen Filtern.",
+      "draftListEmpty": "Noch keine Hub-Sektionen entworfen.",
+      "editDraftButton": "Bearbeiten",
+      "duplicateDraftButton": "Duplizieren",
+      "duplicateDraftSuffix": "Kopie",
+      "moveDraftUpButton": "Nach oben",
+      "moveDraftDownButton": "Nach unten",
+      "enableDraftButton": "Aktivieren",
+      "disableDraftButton": "Deaktivieren",
+      "enabledBadge": "Aktiv",
+      "disabledBadge": "Deaktiviert",
+      "dirtyBadge": "Ungespeicherte Anderungen",
+      "editingBadge": "In Bearbeitung",
+      "discardChangesButton": "Anderungen verwerfen",
+      "removeDraftButton": "Entfernen",
+      "syncPending": "Hub-Abschnitte werden gespeichert...",
+      "syncError": "Die letzte Hub-Anderung konnte nicht gespeichert werden. Der Editorzustand wurde wiederhergestellt.",
+      "sectionsLoading": "Gespeicherte Hub-Abschnitte werden geladen...",
+      "settingsEyebrow": "Vorschau-Einstellungen",
+      "settingsTitle": "Uhr-Vorschau-Einstellungen",
+      "resetPreviewSettingsButton": "Standardvorschau wiederherstellen",
+      "settingsDescription": "Diese Optionen steuern aktuell das Uhr-Scaffold im Modal.",
+      "settings": {
+        "showModeSwitchLabel": "Modusumschalter anzeigen",
+        "showModeSwitchDescription": "Tabs für Übung und Challenge in der Vorschau anzeigen.",
+        "showTaskTitleLabel": "Aufgabentitel anzeigen",
+        "showTaskTitleDescription": "Die Zielzeit über der Uhr anzeigen.",
+        "showTimeDisplayLabel": "Digitale Zeit anzeigen",
+        "showTimeDisplayDescription": "Die blaue digitale Zeitanzeige über dem Zifferblatt anzeigen.",
+        "showHourHandLabel": "Stundenzeiger anzeigen",
+        "showHourHandDescription": "Den kurzen roten Stundenzeiger ein- oder ausblenden.",
+        "showMinuteHandLabel": "Minutenzeiger anzeigen",
+        "showMinuteHandDescription": "Den langen grünen Minutenzeiger ein- oder ausblenden.",
+        "clockSectionLabel": "Uhrfokus",
+        "clockSectionHours": "Stunden",
+        "clockSectionMinutes": "Minuten",
+        "clockSectionCombined": "Stunden und Minuten",
+        "initialModeLabel": "Startmodus",
+        "initialModePractice": "Übung",
+        "initialModeChallenge": "Challenge"
+      },
+      "settingsSummary": {
+        "hourHandHidden": "Stundenzeiger ausgeblendet",
+        "minuteHandHidden": "Minutenzeiger ausgeblendet",
+        "modeSwitchHidden": "Modusumschalter ausgeblendet",
+        "taskTitleHidden": "Aufgabentitel ausgeblendet",
+        "timeDisplayHidden": "Digitale Zeit ausgeblendet"
+      },
+      "validation": {
+        "attachedLessonRequired": "Ordne diesen Spielabschnitt vor dem Speichern einem Lesson-Hub zu.",
+        "sectionNameRequired": "Füge vor dem Speichern einen Sektionsnamen hinzu.",
+        "gameIconRequired": "Wähle oder gib vor dem Speichern ein Spielsymbol ein.",
+        "visibleClockHandRequired": "Mindestens ein Uhrzeiger muss sichtbar bleiben, um diesen Hub-Abschnitt zu speichern."
+      },
+      "instances": {
+        "eyebrow": "Launchable instances",
+        "title": "Create game instances",
+        "description": "Combine the current engine settings with a reusable content set and save that launchable setup as a reusable game instance.",
+        "unavailable": "This game does not expose a launchable runtime yet, so instance creation is unavailable here.",
+        "engineLabel": "Engine",
+        "runtimeLabel": "Runtime screen",
+        "contentSetLabel": "Content set",
+        "contentSetSearchLabel": "Search content sets",
+        "contentSetSearchPlaceholder": "Search content sets",
+        "contentSetSourceFilterLabel": "Filter content sets by source",
+        "contentSetSourceFilterAll": "All",
+        "contentSetSourceFilterBuiltIn": "Built-in",
+        "contentSetSourceFilterCustom": "Custom",
+        "contentSetUsageFilterLabel": "Filter content sets by usage",
+        "contentSetUsageFilterAll": "All",
+        "contentSetUsageFilterInUse": "In use",
+        "contentSetUsageFilterUnused": "Unused",
+        "contentSetClearFiltersButton": "Clear content-set filters",
+        "contentSetSelectionOutsideFilters": "The current selection stays available while filters narrow the list.",
+        "contentSetListTitle": "Available content sets",
+        "contentSetListDescription": "Browse built-in and custom feeds, then select the one you want to mix into the current instance.",
+        "contentSetListEmpty": "No content sets match the current filters.",
+        "contentSetSourceBuiltIn": "Built-in",
+        "contentSetSourceCustom": "Custom",
+        "contentSetUsageBadgeInUse": "Used by {count}",
+        "contentSetUsageBadgeUnused": "Unused",
+        "selectContentSetButton": "Select",
+        "selectedContentSetButton": "Selected",
+        "showLinkedInstancesButton": "Show linked instances",
+        "showingLinkedInstancesButton": "Showing linked instances",
+        "contentSetLinkedInstancesLabel": "Linked instances",
+        "contentSetLinkedInstancesMore": "+{count} more",
+        "openLinkedInstanceButton": "Edit linked instance: {title}",
+        "contentSourceLabel": "Content source",
+        "engineSourceLabel": "Engine source",
+        "contentSourceBadge": "Content source",
+        "engineSourceBadge": "Engine source",
+        "sourceCustomDraft": "Current draft",
+        "contentSetComposerTitle": "Create custom content set",
+        "contentSetComposerEditTitle": "Edit custom content set",
+        "contentSetComposerDescription": "Save a reusable content feed separately from the engine so it can be mixed into any compatible instance.",
+        "contentSetDraftLabel": "Content-set name",
+        "contentSetDraftLabelPlaceholder": "Hours review pack",
+        "contentSetDraftDescriptionLabel": "Content-set description",
+        "contentSetDraftDescriptionPlaceholder": "Explain what content this reusable set feeds into the engine.",
+        "contentSetDraftFeedLabel": "Content feed",
+        "contentSetDraftShapesLabel": "Included shapes",
+        "contentSetDraftPatternSetLabel": "Pattern set",
+        "geometryShape": {
+          "circle": "Circle",
+          "oval": "Oval",
+          "triangle": "Triangle",
+          "diamond": "Diamond",
+          "square": "Square",
+          "rectangle": "Rectangle",
+          "pentagon": "Pentagon",
+          "hexagon": "Hexagon"
+        },
+        "logicalPatternSet": {
+          "logical_patterns_workshop": "Logical workshop",
+          "alphabet_letter_order": "Alphabet order"
+        },
+        "contentSetPlaceholder": "Select a content set",
+        "contentSetHint": "Choose which content payload is fed into the engine for this saved instance.",
+        "contentSetFallback": "Default content set",
+        "contentKind": {
+          "default_content": "Bundled content",
+          "calendar_section": "Calendar section",
+          "clock_section": "Clock section",
+          "logical_pattern_set": "Pattern set",
+          "geometry_shape_pack": "Shape pack"
+        },
+        "feedSummary": {
+          "defaultContent": "Bundled runtime content",
+          "calendarDays": "Days of week",
+          "calendarMonths": "Months",
+          "calendarDates": "Dates",
+          "logicalPatternsWorkshop": "Logical workshop",
+          "alphabetOrder": "Alphabet order",
+          "geometryShapeCount": "{count} shapes"
+        },
+        "contentSetDraftCalendarSectionLabel": "Calendar section",
+        "calendarSection": {
+          "dni": "Days of week",
+          "miesiace": "Months",
+          "data": "Dates"
+        },
+        "titleLabel": "Instance title",
+        "titlePlaceholder": "Hours only clock drill",
+        "descriptionLabel": "Instance description",
+        "descriptionPlaceholder": "Explain what content and engine setup this instance should launch with.",
+        "emojiLabel": "Instance icon",
+        "emojiPlaceholder": "🕐",
+        "enabledLabel": "Instance visible in the library",
+        "enabledDescription": "Disable the instance without deleting its saved engine and content configuration.",
+        "currentEngineSettingsTitle": "Current engine settings",
+        "currentEngineSettingsDescription": "Saving an instance captures the current engine settings from this modal separately from the selected content set.",
+        "usePreviewSettingsButton": "Use hub preview settings",
+        "currentEngineSettingsDefault": "Default engine settings",
+        "previewTitle": "Instance preview",
+        "previewDescription": "Review the current content payload and engine behavior that will be saved together as one launchable instance.",
+        "mode": {
+          "editing_saved": "Editing saved instance",
+          "draft_from_saved": "Draft from saved instance",
+          "mixed_draft": "Mixed draft",
+          "custom_draft": "Custom draft"
+        },
+        "initialModeAriaLabel": "Instance initial mode",
+        "showModeSwitchAriaLabel": "Instance show mode switch",
+        "showTaskTitleAriaLabel": "Instance show task title",
+        "showTimeDisplayAriaLabel": "Instance show time display",
+        "showHourHandAriaLabel": "Instance show hour hand",
+        "showMinuteHandAriaLabel": "Instance show minute hand",
+        "createButton": "Create instance",
+        "saveButton": "Save instance",
+        "newButton": "New instance",
+        "forkDraftButton": "Fork to new draft",
+        "createAndOpenButton": "Create and open instance",
+        "saveAndOpenButton": "Save and open instance",
+        "openButton": "Open instance",
+        "editButton": "Edit",
+        "useContentSetButton": "Use content set",
+        "usingContentSetButton": "Using content set",
+        "detachContentSourceButton": "Detach content source",
+        "useEngineSettingsButton": "Use engine settings",
+        "usingEngineSettingsButton": "Using engine settings",
+        "detachEngineSourceButton": "Detach engine source",
+        "contentSetSaveButton": "Save content set",
+        "contentSetUpdateButton": "Update content set",
+        "contentSetResetButton": "Reset content-set draft",
+        "contentSetDuplicateSuffix": "Copy",
+        "forkSelectedContentSetButton": "Fork selected content set",
+        "forkDraftContentSetButton": "Fork to new content set",
+        "discardContentSetChangesButton": "Discard content-set changes",
+        "editSelectedContentSetButton": "Edit selected content set",
+        "removeSelectedContentSetButton": "Remove selected content set",
+        "contentSetUsageSummaryUnused": "This custom content set is not used by any saved instance yet.",
+        "contentSetUsageSummaryInUse": "Used by {count} saved instance(s). Remove or retarget those instances first.",
+        "duplicateButton": "Duplicate",
+        "duplicateSuffix": "Copy",
+        "enableButton": "Enable",
+        "disableButton": "Disable",
+        "moveUpButton": "Move up",
+        "moveDownButton": "Move down",
+        "removeButton": "Remove",
+        "discardChangesButton": "Discard instance changes",
+        "dirtyBadge": "Unsaved instance changes",
+        "enabledBadge": "Enabled",
+        "disabledBadge": "Disabled",
+        "listTitle": "Saved instances",
+        "listDescription": "Each saved instance combines the chosen content set with the current engine settings.",
+        "listSearchLabel": "Search saved instances",
+        "listSearchPlaceholder": "Search saved instances",
+        "listClearFiltersButton": "Clear instance filters",
+        "listStatusFilterLabel": "Filter saved instances by status",
+        "listStatusFilterAll": "All",
+        "listStatusFilterEnabled": "Enabled",
+        "listStatusFilterDisabled": "Disabled",
+        "listContentSetFilterLabel": "Filter saved instances by content set",
+        "listContentSetFilterAll": "All content sets",
+        "listSearchEmpty": "No saved instances match the current filters.",
+        "listEmpty": "No saved launchable instances yet.",
+        "contentSetSyncError": "We couldn't save the last content-set change. Try again.",
+        "contentSetInUseError": "This content set is still used by saved instances. Remove or retarget those instances first.",
+        "syncError": "We couldn't save the last game-instance change. Try again.",
+        "validation": {
+          "contentSetRequired": "Choose a content set before saving this instance.",
+          "titleRequired": "Add an instance title before saving.",
+          "emojiRequired": "Choose or enter an instance icon before saving."
+        }
+      }
+    },
+    "statuses": {
+      "active": "Aktiv",
+      "draft": "Entwurf",
+      "legacy": "Legacy"
+    },
+    "surfaces": {
+      "lesson": "Lektion",
+      "library": "Bibliothek",
+      "game": "Spiel",
+      "duel": "Duell"
+    },
+    "variantSurfaces": {
+      "lesson_inline": "Lektion inline",
+      "lesson_stage": "Lektionsvariante",
+      "library_preview": "Bibliotheksvorschau",
+      "game_screen": "Spielbildschirm"
+    },
+    "labels": {
+      "engineId": "Engine-ID",
+      "engineCategory": "Engine-Kategorie",
+      "mechanic": "Mechanik",
+      "ageGroup": "Altersgruppe",
+      "allAgeGroups": "Alle",
+      "variants": "Varianten",
+      "variantCount": "{count, plural, one {# Variante} other {# Varianten}}",
+      "legacyScreens": "Legacy-Screens",
+      "lessonLinks": "Verknüpfte Lektionen",
+      "none": "Keine"
+    },
+    "engineCategories": {
+      "foundational": "Grundlagen",
+      "early_learning": "Frühes Lernen",
+      "adult_learning": "Erwachsenenlernen"
+    },
+    "implementationOwnership": {
+      "shared_runtime": "Gemeinsame Runtime",
+      "lesson_embedded": "In Lektion eingebettet",
+      "mixed_runtime": "Gemischte Runtime"
+    },
+    "lessonCoverageStatuses": {
+      "launchable": "startbar",
+      "library_backed": "bibliotheksgestutzt",
+      "lesson_only": "nur Lektion"
+    },
+    "mechanics": {
+      "drag_drop": "Ziehen und Ablegen",
+      "multiple_choice": "Multiple Choice",
+      "tap_select": "Tippen und Auswahlen",
+      "drawing": "Zeichnen",
+      "rhythm": "Rhythmus",
+      "clock_training": "Uhrentraining",
+      "calendar_interactive": "Interaktiver Kalender",
+      "logic_pattern": "Logische Muster",
+      "logic_classification": "Logische Klassifikation",
+      "logic_relation": "Beziehungen und Analogien",
+      "sentence_building": "Satze bauen"
+    },
+    "engineGroups": {
+      "gameCount": "{count, plural, one {# Spiel nutzt diese Engine.} other {# Spiele nutzen diese Engine.}}",
+      "sharedChip": "Geteilte Engine",
+      "singleChip": "Ein Spiel",
+      "gamesLabel": "Spiele",
+      "subjectsLabel": "Facher",
+      "ownershipLabel": "Implementierungsbesitz",
+      "mechanicsLabel": "Mechaniken",
+      "surfacesLabel": "Oberflachen",
+      "runtimeComponentsLabel": "Runtime-Komponenten"
+    },
+    "variantGroups": {
+      "surfaceLabel": "Variantenoberflache",
+      "groupDescription": "{count, plural, one {# Variante nutzt aktuell diese Oberflache.} other {# Varianten nutzen aktuell diese Oberflache.}}",
+      "gamesLabel": "Spiele",
+      "enginesLabel": "Engines",
+      "defaultsLabel": "Standardvarianten",
+      "launchableLabel": "Startbar",
+      "variantsLabel": "Varianten"
+    }
+  },
   "KangurGameHomeActions": {
     "sectionLabel": "Aktivitat auswahlen",
     "actions": {
       "lessons": "Lektionen",
       "play": "Los geht's!",
       "duels": "Duelle",
-      "kangur": "Mathe-Kanguru"
+      "kangur": "Mathe-StudiQ"
     }
   },
   "KangurTests": {
@@ -1216,9 +1975,14 @@
       "guidedChipPrefix": "Empfohlen: {count} ·",
       "guidedChipUnlocked": "alle Abzeichen des Pfads freigeschaltet",
       "activityBarTitle": "{count} Spiele, Durchschnitt {accuracy}%",
-      "operationsHeading": "Ergebnisse nach Operation",
+      "operationsHeading": "Geübte Operationen",
       "emptyTitle": "Keine Operationsdaten.",
       "emptyDescription": "Spiele ein paar Aufgaben, um die Genauigkeit fur einzelne Operationen zu sehen.",
+      "accuracyLabel": "durchschnittliche Genauigkeit",
+      "attemptsLabel": "Versuche",
+      "averageXpLabel": "XP pro Sitzung",
+      "totalXpLabel": "Insgesamt",
+      "bestAccuracyLabel": "Beste Genauigkeit",
       "train": "Trainieren",
       "operationStats": "Versuche: {attempts} · XP pro Sitzung: {averageXp} · Insgesamt: {totalXp} XP · Beste Genauigkeit: {bestScore}%"
     },
@@ -1268,7 +2032,10 @@
       "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
       "english_articles": "Artikel",
       "english_adjectives": "Adjektive",
-      "english_prepositions_time_place": "Praepositionen fuer Zeit und Ort"
+      "english_comparatives_superlatives": "Komparativ und Superlativ",
+      "english_adverbs_frequency": "Adverbien der Häufigkeit",
+      "english_prepositions_time_place": "Praepositionen fuer Zeit und Ort",
+      "english_adverbs": "Adverbien"
     },
     "weeklyActivity": {
       "sun": "So.",
@@ -1353,10 +2120,9 @@
       "ariaLabel": "Lektionsnavigation",
       "previousLesson": "Vorherige Lektion: {title}",
       "noPreviousLesson": "Keine vorherige Lektion",
-      "previousShort": "Zuruck",
       "nextLesson": "Nachste Lektion: {title}",
       "noNextLesson": "Keine nachste Lektion",
-      "nextShort": "Weiter"
+      "printPanel": "Panel drucken"
     },
     "activeHeader": {
       "narrator": {
@@ -1395,6 +2161,8 @@
   "KangurMiniGames": {
     "shared": {
       "restart": "Noch einmal",
+      "check": "Prüfen",
+      "next": "Weiter",
       "scoreLabel": "Ergebnis",
       "pointsShort": "Pkt.",
       "correctAnswersSuffix": "richtige Antworten",
@@ -1406,6 +2174,22 @@
         "menu": "Zurück zum Menü",
         "done": "Lektion beenden ✅",
         "end": "Beenden"
+      }
+    },
+    "musicPianoRoll": {
+      "adsr": {
+        "button": "ADSR",
+        "buttonAriaLabel": "ADSR: {summary}",
+        "title": "Synth-ADSR",
+        "description": "Stelle Attack, Decay, Sustain und Release des Synths ein.",
+        "closeAriaLabel": "ADSR-Einstellungen schließen",
+        "reset": "Zurücksetzen",
+        "close": "Schließen",
+        "attack": "Attack",
+        "decay": "Decay",
+        "sustain": "Sustain",
+        "release": "Release",
+        "summary": "A {attackMs} ms · D {decayMs} ms · S {sustainPercent}% · R {releaseMs} ms"
       }
     },
     "questionCard": {
@@ -1581,7 +2365,13 @@
     },
     "division": {
       "inRound": {
-        "touchHint": "Tippe eine Antwort an und danach auf Prüfen."
+        "touchHint": "Tippe eine Antwort an und danach auf Prüfen.",
+        "prompt": "Teile die Elemente in gleich große Gruppen.",
+        "roundLabel": "Runde {current}/{total}",
+        "groupLabel": "Gruppe {index}",
+        "remainderLabel": "Rest",
+        "poolLabel": "Pool",
+        "tokenAria": "Element verschieben"
       },
       "summary": {
         "perfect": "Perfekt! Division sitzt.",
@@ -1602,7 +2392,15 @@
         "correct": "Gut gemacht! Die Gruppen sind gleich groß.",
         "idle": "Ziehe oder klicke die Elemente, um sie in Gruppen aufzuteilen.",
         "touchIdle": "Tippe ein Element an und dann eine Gruppe, den Pool oder das Restfeld. Ziehen geht weiterhin auch.",
-        "touchSelected": "Ausgewähltes Element: {emoji}. Tippe eine Gruppe, den Pool oder das Restfeld an."
+        "touchSelected": "Ausgewähltes Element: {emoji}. Tippe eine Gruppe, den Pool oder das Restfeld an.",
+        "keyboardIdle": "Wähle ein Element aus, gehe dann zu einer Gruppe, dem Pool oder dem Restfeld und drücke Enter oder Leertaste.",
+        "keyboardSelected": "Ausgewähltes Element: {emoji}. Gehe zu einer Gruppe, dem Pool oder dem Restfeld und drücke Enter oder Leertaste."
+      },
+      "aria": {
+        "token": "Element verschieben",
+        "pool": "Das ausgewählte Element in den Pool verschieben",
+        "group": "Das ausgewählte Element in Gruppe {group} verschieben",
+        "remainder": "Das ausgewählte Element in das Restfeld verschieben"
       }
     },
     "calendarTraining": {
@@ -1653,6 +2451,7 @@
         }
       },
       "inRound": {
+        "taskLabel": "Aufgabe",
         "previousMonth": "Vorheriger Monat",
         "nextMonth": "Nächster Monat",
         "tryAgain": "Ups, das war es nicht. Versuch es noch einmal!",
@@ -1753,7 +2552,7 @@
         "rushMode": "Bridge Rush",
         "rushModeHint": "Bridge-Rush-Modus: Schaffe es vor Ablauf der Zeit. Ein Moduswechsel startet das Spiel neu.",
         "modeResetHint": "Ein Moduswechsel startet das Spiel neu.",
-        "stageTitle": "Beziehungsbruecke",
+        "title": "Beziehungsbruecke",
         "roundLabel": "Runde {current}/{total}",
         "timeExpired": "Zeit ist abgelaufen",
         "instructions": "Ziehe eine Beziehung auf die Kartenpaarung oder klicke zuerst eine Beziehung und dann ein Paar an. Die Symbole geben Hinweise auf den Beziehungstyp.",
@@ -2297,11 +3096,230 @@
         }
       }
     },
+    "englishAdverbsFrequency": {
+      "summary": {
+        "perfect": "Perfekt! Der Wochenplan passt zu jedem Häufigkeitswort.",
+        "good": "Gute Arbeit! Der größte Teil der Woche hat schon den richtigen Rhythmus.",
+        "retry": "Versuche es noch einmal und beobachte, wie oft jede Handlung aufleuchtet.",
+        "guideLabel": "Häufigkeitsübersicht",
+        "guideHint": "Lies jedes Wort als Wochenmuster.",
+        "orderLabel": "Von am häufigsten bis am seltensten",
+        "ruleGuideLabel": "Satzbau-Überblick",
+        "ruleGuideHint": "Behalte diese zwei Satzmuster im Kopf.",
+        "mainVerbLabel": "Vor dem Hauptverb",
+        "beVerbLabel": "Nach am/is/are",
+        "starterLabel": "Sag es über deine Woche",
+        "starterHint": "Nutze einen dieser Rahmen für deinen eigenen Satz.",
+        "starters": {
+          "alwaysHabit": "I always do my homework after school.",
+          "sometimesPlace": "I sometimes go to the park with my friends.",
+          "neverLate": "I am never late for school."
+        },
+        "questionLabel": "Wie oft...?",
+        "questionHint": "Wähle eine Frage und beantworte sie mit einem Häufigkeitswort.",
+        "questions": {
+          "homework": {
+            "prompt": "How often do you do your homework?",
+            "starter": "Try: I always..."
+          },
+          "park": {
+            "prompt": "How often do you go to the park?",
+            "starter": "Try: I sometimes..."
+          },
+          "late": {
+            "prompt": "How often are you late for school?",
+            "starter": "Try: I am never..."
+          }
+        },
+        "badges": {
+          "rounds": "Runden {current}/{total}",
+          "patterns": "Muster {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        }
+      },
+      "inRound": {
+        "roundLabel": "Runde {current}/{total}",
+        "hitsLabel": "{hits}/{total} richtig",
+        "check": "Prüfen",
+        "next": "Weiter",
+        "seeResult": "Ergebnis ansehen",
+        "studio": {
+          "modeLabel": "Häufigkeitskarten ziehen",
+          "modeLabelTouch": "Tippen oder ziehen",
+          "targetLabel": "Zielroutine",
+          "plannerLabel": "Wochenplan",
+          "watchLabel": "Sieh der Woche beim Bewegen zu",
+          "poolLabel": "Häufigkeitsbank",
+          "poolAria": "Häufigkeitsbank",
+          "poolHint": "In jeder Runde darf eine Karte unbenutzt bleiben.",
+          "laneAria": "Routinebahn für {action}",
+          "dropLabel": "Lege hier eine Häufigkeitskarte ab oder tippe sie an.",
+          "currentSentenceLabel": "Dein Satz",
+          "yourFrequencyLabel": "Deine Häufigkeit",
+          "yourWeekLabel": "Deine Woche",
+          "targetFrequencyLabel": "Zielhäufigkeit",
+          "targetSentenceLabel": "Zielsatz",
+          "targetWeekLabel": "Zielwoche",
+          "changeDaysLabel": "Zu ändernde Tage",
+          "turnOnLabel": "Einschalten",
+          "turnOffLabel": "Ausschalten",
+          "daysLitLabel": "Aktive Tage",
+          "matchedLabel": "Passt",
+          "sentenceLabel": "Satz",
+          "patternLabel": "Wortstellung:",
+          "previewEmpty": "Wähle eine Häufigkeitskarte, um den Satz zu bauen.",
+          "weekAria": "Wochenroutine für {action}: {frequency}",
+          "touchIdle": "Tippe eine Häufigkeitskarte an und danach eine Bahn oder die Bank.",
+          "touchSelected": "Gewählte Häufigkeit: {frequency}. Tippe eine Bahn oder die Bank an.",
+          "clearRound": "Runde leeren",
+          "patterns": {
+            "mainVerb": "Adverb vor dem Hauptverb",
+            "beVerb": "Adverb nach am/is/are"
+          },
+          "feedback": {
+            "perfect": "Perfekt! Der Plan passt zur Zielroutine.",
+            "retry": "Versuche es noch einmal und vergleiche, an wie vielen Tagen jede Handlung passieren soll."
+          },
+          "rounds": {
+            "cinema-sunday": {
+              "title": "Kino-Sonntag",
+              "prompt": "Baue die Sonntagsroutine neu auf, indem du die Häufigkeitskarten dem Wochenplan zuordnest.",
+              "hint": "Eine Sache passiert jede Woche, eine an den meisten Wochen und eine nie."
+            },
+            "school-week": {
+              "title": "Schulwoche",
+              "prompt": "Ordne die Häufigkeitskarten den Schulgewohnheiten zu.",
+              "hint": "Überlege, was jeden Tag, was oft und was nie passieren sollte."
+            },
+            "weekend-club": {
+              "title": "Wochenend-Club",
+              "prompt": "Gib dem Plan des Wochenend-Clubs den richtigen Wochenrhythmus.",
+              "hint": "Eine Aktivität ist Gewohnheit, eine passiert nur manchmal und eine nie."
+            },
+            "after-school": {
+              "title": "Nach der Schule",
+              "prompt": "Ordne die Karten dem Ablauf nach der Schule zu.",
+              "hint": "Hausaufgaben passieren jeden Tag, der Park nur manchmal und Schwimmen nie."
+            },
+            "morning-check": {
+              "title": "Morgenroutine",
+              "prompt": "Baue die Morgenroutine für einen guten Schultag.",
+              "hint": "Um sieben aufstehen passiert meistens, zu spät kommen nie und Fernsehen nur manchmal."
+            }
+          },
+          "frequencies": {
+            "always": {
+              "label": "always",
+              "description": "jeden Tag oder jedes Mal"
+            },
+            "usually": {
+              "label": "usually",
+              "description": "an den meisten Tagen"
+            },
+            "sometimes": {
+              "label": "sometimes",
+              "description": "nur an einigen Tagen"
+            },
+            "never": {
+              "label": "never",
+              "description": "an keinem Tag"
+            }
+          },
+          "actions": {
+            "go_to_cinema": "go to the cinema",
+            "go_with_friends": "go with friends",
+            "eat_popcorn": "eat popcorn",
+            "do_homework": "do homework",
+            "get_up_at_seven": "get up at seven",
+            "be_late_for_school": "be late for school",
+            "go_to_park": "go to the park",
+            "watch_tv": "watch TV",
+            "go_swimming": "go swimming"
+          }
+        }
+      }
+    },
     "englishAdjectives": {
       "summary": {
         "perfect": "Perfekt! Die ganze Szene passt zu den Adjektiven.",
         "good": "Gute Arbeit! Der größte Teil der Szene stimmt schon.",
-        "retry": "Versuche es noch einmal und achte darauf, wie jedes Adjektiv das Objekt verändert."
+        "retry": "Versuche es noch einmal und achte darauf, wie jedes Adjektiv das Objekt verändert.",
+        "badges": {
+          "rounds": "Runden {current}/{total}",
+          "targets": "Ziele {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        },
+        "guideLabel": "Adjektiv-Überblick",
+        "guideHint": "Ordne Adjektive danach, was sie im Bild verändern.",
+        "groups": {
+          "color": {
+            "label": "Farbe",
+            "lead": "Farbadjektive verändern das Aussehen eines Objekts.",
+            "examples": "red train, brown eyes"
+          },
+          "sizeColor": {
+            "label": "Größe + Farbe",
+            "lead": "Mehrere Adjektive können zusammen eine klare Nomen-Gruppe bauen.",
+            "examples": "big yellow cupboard, small blue teddy, long black hair"
+          },
+          "texture": {
+            "label": "Oberfläche",
+            "lead": "Manche Adjektive sagen, wie sich etwas anfühlt.",
+            "examples": "soft rug"
+          },
+          "opinionAge": {
+            "label": "Meinung + Alter",
+            "lead": "Manche Adjektive zeigen eine Meinung oder ob etwas new wirkt.",
+            "examples": "beautiful picture, new games"
+          }
+        },
+        "orderGuideLabel": "Satzbau-Überblick",
+        "orderGuideHint": "Im Englischen stehen describing words meistens vor dem Nomen.",
+        "orderCards": {
+          "clear": {
+            "label": "Klare Gruppe",
+            "phrase": "a small blue teddy",
+            "rule": "adjective + adjective + noun"
+          },
+          "fix": {
+            "label": "Korrigiere es",
+            "phrase": "a teddy small blue → a small blue teddy",
+            "rule": "schiebe die Adjektive vor das Nomen"
+          }
+        },
+        "starterLabel": "Sag es über die Szene",
+        "starterHint": "Nutze diese Satzanfänge für dein eigenes Bild.",
+        "starters": {
+          "room": "There is a big yellow cupboard in the room.",
+          "toy": "I have a small blue teddy on the shelf.",
+          "portrait": "She has long black hair and brown eyes.",
+          "study": "There is a new desk by the wall.",
+          "playground": "It is an old bench near the slide."
+        },
+        "questionLabel": "Was kannst du sehen?",
+        "questionHint": "Wähle eine Frage und antworte mit einer Adjektivgruppe.",
+        "questions": {
+          "room": {
+            "prompt": "What can you see in the room?",
+            "starter": "Try: There is a..."
+          },
+          "toy": {
+            "prompt": "What toy can you see on the shelf?",
+            "starter": "Try: It is a..."
+          },
+          "person": {
+            "prompt": "What can you say about the person?",
+            "starter": "Try: She has..."
+          },
+          "study": {
+            "prompt": "What can you see in the study corner?",
+            "starter": "Try: There is a..."
+          },
+          "playground": {
+            "prompt": "What can you see in the playground?",
+            "starter": "Try: It is a..."
+          }
+        }
       },
       "inRound": {
         "roundLabel": "Runde {current}/{total}",
@@ -2319,12 +3337,29 @@
           "poolAria": "Adjektivbank",
           "objectSlotAria": "Objektfeld für {object}",
           "dropLabel": "Lege hier ein Adjektiv ab oder tippe es an.",
+          "describePrompt": "Wie kannst du {object} beschreiben?",
+          "describeStarter": "Baue: adjective + noun",
+          "yourPhraseLabel": "Deine Wortgruppe",
+          "yourSentenceLabel": "Dein Satz",
+          "targetPhraseLabel": "Ziel-Wortgruppe",
+          "targetSentenceLabel": "Zielsatz",
+          "categoryCompareLabel": "Kategorie-Wechsel",
+          "clueLabel": "Hinweis",
+          "matchedLabel": "Passt",
+          "typeLabel": "Typ",
           "touchIdle": "Tippe ein Adjektiv an und dann ein Objekt oder die Bank.",
           "touchSelected": "Ausgewähltes Adjektiv: {adjective}. Tippe ein Objekt oder die Bank an.",
           "clearRound": "Runde leeren",
           "feedback": {
             "perfect": "Perfekt! Die Szene passt zur Beschreibung.",
             "retry": "Versuche es noch einmal und prüfe, welches Adjektiv welches Objekt verändert."
+          },
+          "focus": {
+            "color": "ändere die Farbe",
+            "size_color": "ändere Größe und Farbe",
+            "texture": "ändere die Oberfläche",
+            "age": "ändere, wie neu es wirkt",
+            "opinion": "ändere das Gefühl oder die Meinung"
           },
           "rounds": {
             "bedroom": {
@@ -2337,10 +3372,20 @@
               "prompt": "Gib den Spielsachen die richtigen describing words.",
               "hint": "Ein Zug ist red, ein Teddy ist small blue und die Spiele sind new."
             },
+            "study_corner": {
+              "title": "Lernecke",
+              "prompt": "Ordne die Adjektivkarten zu, um die Lernecke wieder aufzubauen.",
+              "hint": "Achte auf den new desk, die small red lamp und das bright green book."
+            },
             "portrait": {
               "title": "Porträt-Details",
               "prompt": "Füge dem Porträt die richtigen Adjektive hinzu.",
               "hint": "Brown eyes, long black hair und beautiful picture."
+            },
+            "playground": {
+              "title": "Spielplatzszene",
+              "prompt": "Nutze die Adjektivkarten, um den Spielplatz wieder aufzubauen.",
+              "hint": "Achte auf die big yellow slide, den long blue kite und die old bench."
             }
           },
           "tokens": {
@@ -2348,8 +3393,11 @@
             "soft": "soft",
             "long_blue": "long blue",
             "red": "red",
+            "small_red": "small red",
             "small_blue": "small blue",
+            "bright_green": "bright green",
             "new": "new",
+            "old": "old",
             "brown": "brown",
             "long_black": "long black",
             "beautiful": "beautiful"
@@ -2363,12 +3411,21 @@
             "games": "games",
             "eyes": "eyes",
             "hair": "hair",
-            "picture": "picture"
+            "picture": "picture",
+            "desk": "desk",
+            "lamp": "lamp",
+            "book": "book",
+            "slide": "slide",
+            "kite": "kite",
+            "bench": "bench"
           },
           "sceneAria": {
+            "room": "Animierte Schlafzimmerszene",
             "bedroom": "Animierte Schlafzimmerszene",
             "toyShelf": "Animierte Spielzeugregal-Szene",
-            "portrait": "Animierte Porträtszene"
+            "studyCorner": "Animierte Lernecke",
+            "portrait": "Animierte Porträtszene",
+            "playground": "Animierte Spielplatzszene"
           }
         }
       }
@@ -2605,6 +3662,9 @@
         "drawHere": "Hier zeichnen",
         "inputHelp": "Die Zeichenfläche unterstützt Maus, Berührung oder Tastatur. Enter oder Leertaste starten und beenden einen Strich, die Pfeiltasten bewegen den Cursor und Escape leert das Brett.",
         "clear": "Leeren",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "export": "PNG exportieren",
         "check": "Prüfen",
         "tooShort": "Zeichne die Form etwas länger, damit sie geprüft werden kann.",
         "keyboard": {
@@ -2752,6 +3812,9 @@
         "drawOnGrid": "Auf dem Raster zeichnen",
         "inputHelp": "Die Zeichenfläche unterstützt Maus, Berührung oder Tastatur. Enter oder Leertaste starten und beenden einen Strich, die Pfeiltasten bewegen den Cursor, Escape leert das Brett.",
         "clear": "Leeren",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "export": "PNG exportieren",
         "checkDrawing": "Zeichnung prüfen",
         "checkPerimeter": "Umfang prüfen",
         "rounds": {
@@ -2834,6 +3897,9 @@
         "canvasAria": "Zeichenfläche für Symmetrieachsen und Spiegelungen.",
         "inputHelp": "Die Zeichenfläche unterstützt Maus, Berührung oder Tastatur. Enter oder Leertaste starten und beenden einen Strich, die Pfeiltasten bewegen den Cursor und Escape leert das Brett.",
         "clear": "Leeren",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "export": "PNG exportieren",
         "check": "Prüfen",
         "rounds": {
           "axis-butterfly": {
@@ -2871,11 +3937,40 @@
     },
     "subtractingGarden": {
       "feedback": {
-        "correct": "Gut gemacht! Übrig:"
+        "correct": "Gut gemacht! Übrig:",
+        "tooFew": "Zu wenig. Nimm noch {count} weg.",
+        "tooMany": "Zu viel. Gib {count} zurück."
+      },
+      "inRound": {
+        "idle": "Ziehe oder tippe die Objekte an, um zu subtrahieren.",
+        "takeAwayInstruction": "Nimm {count} leuchtende Punkte weg",
+        "target": "Ziel: nimm {count} weg",
+        "removed": "Weggenommen: {current}/{total}",
+        "remaining": "Übrig: {count}",
+        "check": "Prüfen",
+        "zones": {
+          "basket": {
+            "title": "Startkorb",
+            "empty": "Leerer Korb"
+          },
+          "cloud": {
+            "title": "Die Wolke nimmt weg",
+            "empty": "Hier ablegen"
+          }
+        }
       },
       "touch": {
         "idle": "Tippe einen leuchtenden Punkt an und danach den Korb oder die Wolke. Ziehen geht weiterhin auch.",
-        "selected": "Ausgewählter Punkt: {emoji}. Tippe den Korb oder die Wolke an."
+        "selected": "Ausgewählter Punkt: {emoji}. Tippe den Korb oder die Wolke an.",
+        "keyboardIdle": "Wähle einen leuchtenden Punkt aus, gehe dann zum Korb oder zur Wolke und drücke Enter oder Leertaste.",
+        "keyboardSelected": "Ausgewählter Punkt: {emoji}. Gehe zum Korb oder zur Wolke und drücke Enter oder Leertaste.",
+        "moveToBasket": "Zum Korb",
+        "moveToCloud": "Zur Wolke"
+      },
+      "aria": {
+        "token": "Leuchtenden Punkt verschieben",
+        "basket": "Den ausgewählten Punkt in den Korb verschieben",
+        "sky": "Den ausgewählten Punkt in die Wolke verschieben"
       },
       "summary": {
         "perfect": "Perfekt! Subtraktion sitzt.",
@@ -2962,7 +4057,7 @@
         "menu": "Menü"
       },
       "summary": {
-        "perfect": "Perfektes Ergebnis! Du bist ein Kangur-Champion! 🦘",
+        "perfect": "Perfektes Ergebnis! Du bist ein StudiQ-Champion! 🦘",
         "good": "Stark! Bereit für den Wettbewerb!",
         "fair": "Gute Arbeit! Übe weiter!",
         "retry": "Gib nicht auf! Versuch es noch einmal!"
@@ -2972,9 +4067,9 @@
       "actions": {
         "backToMenu": "Zurück zum Menü"
       },
-      "progressAriaLabel": "Genauigkeit im Kangur-Test",
+      "progressAriaLabel": "Genauigkeit im StudiQ-Test",
       "summary": {
-        "perfect": "Perfektes Ergebnis! Du bist ein Kangur-Champion! 🦘",
+        "perfect": "Perfektes Ergebnis! Du bist ein StudiQ-Champion! 🦘",
         "good": "Stark! Bereit für den Wettbewerb!",
         "fair": "Gute Arbeit! Übe weiter!",
         "retry": "Gib nicht auf! Versuch es noch einmal!"
@@ -3186,6 +4281,163 @@
         "default": {
           "perfect": "Perfekt! Du kennst die Uhr sehr gut!",
           "retry": "Uebe weiter und du wirst zum Uhr-Profi!"
+        }
+      }
+    },
+    "englishAdverbs": {
+      "summary": {
+        "perfect": "Perfect! Every action matches the right adverb.",
+        "good": "Good job! Most of the action scenes already sound right.",
+        "retry": "Try one more round and watch how the action style changes.",
+        "guideLabel": "Adverb guide",
+        "guideHint": "Each adverb changes the style of the action in a different way.",
+        "formGuideLabel": "Word-building guide",
+        "formGuideHint": "Remember the adjective → adverb change.",
+        "starterLabel": "Say it about yourself",
+        "starterHint": "Use one of these frames to build your own sentence.",
+        "starters": {
+          "carefully": "I work carefully in class.",
+          "happily": "I sing happily with my friends.",
+          "fast": "I run fast in PE."
+        },
+        "examples": {
+          "fast": "He runs fast.",
+          "carefully": "She carries the books carefully.",
+          "beautifully": "She paints beautifully.",
+          "happily": "They dance happily.",
+          "well": "She plays football well.",
+          "badly": "He writes badly."
+        },
+        "formPairs": {
+          "careful": {
+            "adjective": "careful",
+            "adverb": "carefully",
+            "hint": "Add -ly"
+          },
+          "beautiful": {
+            "adjective": "beautiful",
+            "adverb": "beautifully",
+            "hint": "Add -ly"
+          },
+          "good": {
+            "adjective": "good",
+            "adverb": "well",
+            "hint": "Special word"
+          },
+          "fast": {
+            "adjective": "fast",
+            "adverb": "fast",
+            "hint": "Same word"
+          }
+        },
+        "badges": {
+          "rounds": "Rounds {current}/{total}",
+          "actions": "Actions {current}/{total}",
+          "studio": "Studio {current}/{total}"
+        }
+      },
+      "inRound": {
+        "roundLabel": "Round {current}/{total}",
+        "hitsLabel": "{hits}/{total} correct",
+        "check": "Check",
+        "next": "Next",
+        "seeResult": "See result",
+        "studio": {
+          "modeLabel": "Drag adverb cards",
+          "modeLabelTouch": "Tap or drag cards",
+          "targetLabel": "Target actions",
+          "plannerLabel": "Action planner",
+          "poolLabel": "Adverb bank",
+          "poolAria": "Adverb bank",
+          "poolHint": "Two cards can stay unused in each round.",
+          "laneAria": "Action lane for {action}",
+          "dropLabel": "Drop or tap an adverb card here.",
+          "currentSentenceLabel": "Sentence",
+          "yourAdverbLabel": "Your adverb",
+          "targetAdverbLabel": "Target adverb",
+          "yourSentenceLabel": "Your sentence",
+          "targetSentenceLabel": "Target sentence",
+          "styleChangeLabel": "Style change",
+          "matchedLabel": "Matched",
+          "correctionLabel": "Fix this lane",
+          "actionAria": "Action scene for {action}: {adverb}",
+          "touchIdle": "Tap an adverb card, then tap an action lane or the bank.",
+          "touchSelected": "Selected adverb: {adverb}. Tap an action lane or the bank.",
+          "clearRound": "Clear round",
+          "feedback": {
+            "perfect": "Perfect! The action cards match every target scene.",
+            "retry": "Try again and compare how each action should happen."
+          },
+          "rounds": {
+            "race-day": {
+              "title": "Race day",
+              "prompt": "Match each action with the adverb that changes its style in the right way.",
+              "hint": "One action needs speed, one needs care, and one needs beauty."
+            },
+            "school-studio": {
+              "title": "School studio",
+              "prompt": "Direct the classroom actions with the best adverb card.",
+              "hint": "One action sounds strong, one joyful, and one not very successful."
+            },
+            "talent-corner": {
+              "title": "Talent corner",
+              "prompt": "Give each small performance the right action style.",
+              "hint": "Listen for speed, care, and beauty in the sentences."
+            },
+            "playground-show": {
+              "title": "Playground show",
+              "prompt": "Build the right adverb scenes for the playground performance.",
+              "hint": "One action is happy, one is poor, and one sounds strong."
+            },
+            "homework-club": {
+              "title": "Homework club",
+              "prompt": "Pick the adverbs that fit these club actions best.",
+              "hint": "Writing can go well, carrying needs care, and running stays fast."
+            }
+          },
+          "adverbs": {
+            "fast": {
+              "label": "fast",
+              "description": "with a lot of speed"
+            },
+            "carefully": {
+              "label": "carefully",
+              "description": "with care and attention"
+            },
+            "beautifully": {
+              "label": "beautifully",
+              "description": "in a very pretty way"
+            },
+            "happily": {
+              "label": "happily",
+              "description": "with joy"
+            },
+            "well": {
+              "label": "well",
+              "description": "in a strong or correct way"
+            },
+            "badly": {
+              "label": "badly",
+              "description": "in a poor or wrong way"
+            }
+          },
+          "actions": {
+            "run_race": "run the race",
+            "paint_picture": "paint the picture",
+            "carry_books": "carry the books",
+            "play_football": "play football",
+            "write_story": "write the story",
+            "sing_song": "sing the song",
+            "dance_show": "dance in the show"
+          },
+          "styleChanges": {
+            "speed": "change the speed",
+            "care": "change the care",
+            "beauty": "change the beauty",
+            "joy": "change the feeling",
+            "skill": "change the quality",
+            "mistake": "change the result"
+          }
         }
       }
     }
@@ -3459,7 +4711,7 @@
       },
       "mode": {
         "gentle": {
-          "description": "Ein leichteres Trainingsset ist der sicherste Einstieg in den Kanguru-Modus ohne zu starken Schwierigkeitssprung.",
+          "description": "Ein leichteres Trainingsset ist der sicherste Einstieg in den StudiQ-Modus ohne zu starken Schwierigkeitssprung.",
           "label": "Sanfter Start",
           "title": "Wir empfehlen den Einstieg mit dem 3-Punkte-Trainingsset"
         },
@@ -3503,7 +4755,10 @@
         "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
         "english_articles": "Artikel",
         "english_adjectives": "Adjektive",
-        "english_prepositions_time_place": "Zeit- und Ortsprapositionen"
+        "english_comparatives_superlatives": "Komparativ und Superlativ",
+        "english_adverbs_frequency": "Adverbien der Häufigkeit",
+        "english_prepositions_time_place": "Zeit- und Ortsprapositionen",
+        "english_adverbs": "Adverbien"
       }
     },
     "setupMomentum": {
@@ -3646,7 +4901,10 @@
       "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
       "english_articles": "Artikel",
       "english_adjectives": "Adjektive",
-      "english_prepositions_time_place": "Zeit- und Ortsprapositionen"
+      "english_comparatives_superlatives": "Komparativ und Superlativ",
+      "english_adverbs_frequency": "Adverbien der Häufigkeit",
+      "english_prepositions_time_place": "Zeit- und Ortsprapositionen",
+      "english_adverbs": "Adverbien"
     }
   },
   "KangurProgressRuntime": {
@@ -3878,7 +5136,8 @@
     },
     "badgeTrackCard": {
       "count": "{unlocked}/{total} Abzeichen",
-      "allUnlocked": "Alle Abzeichen freigeschaltet"
+      "allUnlocked": "Alle Abzeichen freigeschaltet",
+      "nextEyebrow": "Nächster Meilenstein"
     },
     "badgeTrackHighlights": {
       "placeholders": {
@@ -4146,10 +5405,10 @@
         }
       },
       "game": {
-        "stageTitle": "Ballspiel!"
+        "gameTitle": "Ballspiel!"
       },
       "synthesis": {
-        "stageTitle": "Addition im Überblick"
+        "gameTitle": "Addition im Überblick"
       }
     },
     "subtracting": {
@@ -4309,7 +5568,7 @@
         }
       },
       "game": {
-        "stageTitle": "Subtraktionsspiel!"
+        "gameTitle": "Subtraktionsspiel!"
       }
     },
     "geometryPerimeter": {
@@ -4375,7 +5634,7 @@
         }
       },
       "game": {
-        "stageTitle": "Spiel: Zeichne den Umfang"
+        "gameTitle": "Spiel: Zeichne den Umfang"
       }
     },
     "clock": {
@@ -4685,7 +5944,7 @@
         }
       },
       "game": {
-        "stageTitle": "Geo-Mission"
+        "gameTitle": "Geo-Mission"
       }
     },
     "geometryShapes": {
@@ -4790,7 +6049,7 @@
         }
       },
       "game": {
-        "stageTitle": "Formen zeichnen"
+        "gameTitle": "Formen zeichnen"
       }
     },
     "artShapesBasic": {
@@ -4893,7 +6152,7 @@
         }
       },
       "game": {
-        "stageTitle": "Vervollständige das Drehmuster",
+        "gameTitle": "Vervollständige das Drehmuster",
         "progress": {
           "round": "Runde {current}/{total}",
           "score": "Punkte: {score}"
@@ -5023,7 +6282,7 @@
         "caption": "Suche zu Hause nach Kreisen, Quadraten, Dreiecken, Rechtecken, Ovalen und Rauten."
       },
       "draw": {
-        "stageTitle": "Spiel: Formen zeichnen",
+        "gameTitle": "Spiel: Formen zeichnen",
         "difficultyLabel": "Basis",
         "finishLabel": "Zurück zu den Themen"
       }
@@ -5130,7 +6389,7 @@
         }
       },
       "game": {
-        "stageTitle": "Symmetrie-Spiegel"
+        "gameTitle": "Symmetrie-Spiegel"
       }
     },
     "calendar": {
@@ -5734,6 +6993,10 @@
           "title": "Ubung",
           "description": "Kurzes Warm-up"
         },
+        "game": {
+          "title": "Satzbau-Spiel",
+          "description": "Baue und korrigiere englische Sätze"
+        },
         "summary": {
           "title": "Zusammenfassung",
           "description": "Die wichtigsten Regeln"
@@ -5877,6 +7140,11 @@
             "title": "Adjektive malen ein Bild",
             "lead": "Adjektive beschreiben Personen, Orte und Dinge. Sie geben einem Nomen Farbe, Größe, Gefühl und Detail.",
             "caption": "big yellow cupboard, soft rug, long blue curtains"
+          },
+          "peoplePlacesThings": {
+            "title": "Personen, Orte, Dinge",
+            "lead": "Du kannst Adjektive für Personen, Orte oder einzelne Dinge benutzen. Sie funktionieren fast überall im Satz.",
+            "caption": "Frag: Welche Art? Welche Farbe? Welche Größe?"
           }
         },
         "order": {
@@ -5884,6 +7152,11 @@
             "title": "Setze Adjektive vor das Nomen",
             "lead": "Im Englischen stehen Adjektive meistens vor dem Nomen: red train, brown eyes, small blue teddy.",
             "caption": "adjective + adjective + noun"
+          },
+          "clearPicture": {
+            "title": "Baue eine klare Wortgruppe",
+            "lead": "Setze die describing words vor das Nomen, damit das Bild sofort klar klingt.",
+            "caption": "small + blue + teddy"
           }
         },
         "repair": {
@@ -5898,6 +7171,16 @@
             "title": "Beschreibe ein Zimmer",
             "lead": "Lies die kleine Zimmergeschichte und entdecke, wie Adjektive das Bild klarer machen.",
             "caption": "Jedes Adjektiv fügt der Szene ein weiteres Detail hinzu."
+          },
+          "peopleAndPlaces": {
+            "title": "Beschreibe Personen und Orte",
+            "lead": "Dieselben Regeln helfen dir, über Gesichter, Haare, Zimmer, Spielsachen und Bilder zu sprechen.",
+            "caption": "Setze das Adjektiv jedes Mal vor das Nomen."
+          },
+          "studyAndPlay": {
+            "title": "Beschreibe Lernen und Spielen",
+            "lead": "Dieselben Regeln funktionieren auch, wenn du über desk, lamp, book, slide, kite und bench sprichst.",
+            "caption": "Ein Adjektiv kann in jeder Szene Farbe, Größe, Alter oder Gefühl verändern."
           },
           "wordBank": {
             "title": "Wortbank",
@@ -5944,6 +7227,135 @@
         "summary": {
           "title": "Zusammenfassung",
           "description": "Regeln im Überblick"
+        }
+      }
+    },
+    "englishAdverbsFrequency": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Wie oft passiert das?",
+            "lead": "Adverbien der Häufigkeit sagen uns, wie oft eine Handlung passiert. Mit ihnen sprechen wir über Routinen und Gewohnheiten.",
+            "caption": "always = immer, usually = meistens, sometimes = manchmal, never = nie"
+          }
+        },
+        "routine": {
+          "cinemaStory": {
+            "title": "Eine Kino-Routine",
+            "lead": "Lies die kleine Routine und beobachte, wie die Adverbien das Bild der Woche verändern.",
+            "caption": "Always, usually und never verändern, wie viele Tage in der Woche aufleuchten."
+          },
+          "frequencyStrip": {
+            "title": "Lies den Wochenstreifen",
+            "lead": "Du kannst dir jedes Adverb wie eine Reihe von sieben Tagen vorstellen. Mehr Lichter bedeuten eine häufigere Handlung.",
+            "items": {
+              "always": "always = 7 Tage",
+              "usually": "usually = die meisten Tage",
+              "sometimes": "sometimes = einige Tage",
+              "never": "never = 0 Tage"
+            }
+          }
+        },
+        "position": {
+          "mainVerb": {
+            "title": "Setze das Adverb vor das Hauptverb",
+            "lead": "Bei den meisten Verben steht das Adverb der Häufigkeit vor dem Hauptverb.",
+            "caption": "She always checks her notes."
+          },
+          "beVerb": {
+            "title": "Setze das Adverb nach be",
+            "lead": "Bei am, is und are steht das Adverb normalerweise nach dem Verb be.",
+            "caption": "He is never late."
+          },
+          "repairOrder": {
+            "title": "Ordnung reparieren",
+            "lead": "Manchmal landet das Adverb an der falschen Stelle. Schiebe es dorthin zurück, wo es im Englischen hingehört.",
+            "caption": "I always do my homework. He is never late."
+          }
+        },
+        "answer": {
+          "howOften": {
+            "title": "Antworte auf How often...?",
+            "lead": "Benutze ein Häufigkeitsadverb, um Fragen zu Routinen und Gewohnheiten zu beantworten.",
+            "caption": "How often do you go to the park? I sometimes go after school."
+          },
+          "wordBank": {
+            "title": "Wortbank der Häufigkeit",
+            "lead": "Halte diese vier Wörter bereit, wenn du deine Woche beschreibst."
+          },
+          "chooseWord": {
+            "title": "Wähle das beste Häufigkeitswort",
+            "lead": "Ordne den Hinweis dem Adverb zu, das am besten passt, bevor du deine eigene Routine baust.",
+            "items": {
+              "homework": {
+                "clue": "Ich mache jeden Tag nach der Schule meine Hausaufgaben.",
+                "answer": "always"
+              },
+              "seven": {
+                "clue": "Sie steht an den meisten Schultagen um sieben Uhr auf.",
+                "answer": "usually"
+              },
+              "late": {
+                "clue": "Er kommt an null Tagen zu spät zur Schule.",
+                "answer": "never"
+              },
+              "tv": {
+                "clue": "Wir sehen an ein paar Abenden fern.",
+                "answer": "sometimes"
+              }
+            }
+          },
+          "myWeek": {
+            "title": "Baue deine eigene Woche",
+            "lead": "Verwandle die Häufigkeitswörter jetzt in deine eigene Gewohnheitskarte. Wähle einfache Tätigkeiten und sage, wie oft sie passieren.",
+            "caption": "I always do my homework. I sometimes go to the park. I never arrive late."
+          },
+          "favoritePlace": {
+            "title": "Sprich über einen Ort",
+            "lead": "Wähle einen Ort, den du kennst, und sage, wie oft du dorthin gehst. Häufigkeitswörter machen deinen Satz viel klarer.",
+            "caption": "I usually go to the library. I sometimes go to the park. I never go to the swimming pool on school days."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Kurze Wiederholung",
+            "lead": "Merke dir diese Regeln, wenn du über Routinen sprichst.",
+            "items": {
+              "meaning": "Always, usually, sometimes und never zeigen, wie oft etwas passiert.",
+              "mainVerb": "Vor dem Hauptverb: I always do my homework.",
+              "beVerb": "Nach be: She is never late.",
+              "answer": "Benutze sie in Antworten auf How often...? Fragen."
+            }
+          }
+        }
+      }
+    },
+    "englishAdverbsFrequencyShell": {
+      "lessonTitle": "Englisch: Adverbien der Häufigkeit",
+      "sections": {
+        "intro": {
+          "title": "Einführung",
+          "description": "Was Häufigkeitswörter bedeuten"
+        },
+        "routine": {
+          "title": "Routine",
+          "description": "Häufigkeit über eine ganze Woche sehen"
+        },
+        "position": {
+          "title": "Position",
+          "description": "Wo das Adverb im Satz steht"
+        },
+        "answer": {
+          "title": "Antworten",
+          "description": "Über Gewohnheiten sprechen"
+        },
+        "gameFrequencyStudio": {
+          "title": "Frequency Studio",
+          "description": "Baue einen animierten Wochenplan"
+        },
+        "summary": {
+          "title": "Zusammenfassung",
+          "description": "Die wichtigsten Regeln an einem Ort"
         }
       }
     },
@@ -6226,7 +7638,7 @@
         }
       },
       "game": {
-        "stageTitle": "Beziehungsbruecke"
+        "gameTitle": "Beziehungsbruecke"
       },
       "animations": {
         "analogyBridge": "Animation: Beziehung A:B = C:D.",
@@ -6422,7 +7834,7 @@
         }
       },
       "game": {
-        "stageTitle": "Musterwerkstatt"
+        "gameTitle": "Musterwerkstatt"
       }
     },
     "logicalClassification": {
@@ -6675,7 +8087,7 @@
         }
       },
       "game": {
-        "stageTitle": "Klassifikationslabor"
+        "gameTitle": "Klassifikationslabor"
       }
     },
     "logicalReasoning": {
@@ -7339,6 +8751,9 @@
       },
       "actions": {
         "clear": "Loeschen",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "export": "PNG exportieren",
         "check": "Pruefen",
         "next": "Weiter",
         "restart": "Von vorn"
@@ -7385,6 +8800,9 @@
       },
       "actions": {
         "clear": "Loeschen",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "export": "PNG exportieren",
         "check": "Pruefen",
         "next": "Weiter",
         "restart": "Von vorn"
@@ -7408,6 +8826,126 @@
           "word": "Mond"
         }
       }
+    },
+    "englishAdverbs": {
+      "slides": {
+        "intro": {
+          "overview": {
+            "title": "Adverbs show how actions happen",
+            "lead": "We use adverbs to describe how somebody does something. They help us hear the style of the action.",
+            "caption": "run fast, carry books carefully, paint beautifully, sing happily"
+          },
+          "howQuestion": {
+            "title": "Ask: How?",
+            "lead": "A good adverb answer often comes after the verb. Ask How does she paint? How does he run?"
+          }
+        },
+        "form": {
+          "changeWords": {
+            "title": "Change the word into an adverb",
+            "lead": "Many adjectives become adverbs with -ly. This helps us describe the action, not the person or thing.",
+            "caption": "careful → carefully, beautiful → beautifully, happy → happily"
+          },
+          "specialWords": {
+            "title": "Remember the special words",
+            "lead": "A few important adverbs do not follow the simple -ly pattern. Learn them as special pairs.",
+            "caption": "good → well, fast → fast, hard → hard"
+          }
+        },
+        "repair": {
+          "makeItRight": {
+            "title": "Make it right",
+            "lead": "Some words look almost correct, but English uses a different adverb form. Spot the mistake and repair it.",
+            "caption": "bad → badly, fastly → fast, good → well"
+          }
+        },
+        "answer": {
+          "schoolDay": {
+            "title": "Talk about your school day",
+            "lead": "Use short action sentences to say how you work, play, or learn.",
+            "caption": "I work carefully. I write well. I run fast."
+          },
+          "wordBank": {
+            "title": "Adverb word bank",
+            "lead": "Keep these adverbs ready when you build a sentence about yourself."
+          },
+          "writeAndDraw": {
+            "title": "Write and draw",
+            "lead": "Draw your classroom or yourself in action, then write two or three short sentences with adverbs.",
+            "caption": "I listen carefully. I sing happily. I paint beautifully."
+          }
+        },
+        "summary": {
+          "recap": {
+            "title": "Quick recap",
+            "lead": "Keep these adverb rules in mind when you describe actions.",
+            "items": {
+              "meaning": "Adverbs tell us how an action happens.",
+              "ly": "Many adjectives change into adverbs with -ly.",
+              "special": "Some forms are special: good → well, fast → fast.",
+              "use": "Adverbs often come after the verb: She sings beautifully."
+            }
+          }
+        }
+      }
+    },
+    "englishAdverbsShell": {
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "What adverbs do"
+        },
+        "form": {
+          "title": "Form",
+          "description": "Build adverbs from describing words"
+        },
+        "repair": {
+          "title": "Repair",
+          "description": "Fix the wrong adverb form"
+        },
+        "answer": {
+          "title": "Answer",
+          "description": "Use adverbs in your own sentences"
+        },
+        "gameActionStudio": {
+          "title": "Action Studio",
+          "description": "Direct animated actions with adverb cards"
+        },
+        "summary": {
+          "title": "Summary",
+          "description": "Key rules in one place"
+        }
+      },
+      "lessonTitle": "Englisch: Adverbien"
+    },
+    "englishComparativesSuperlativesShell": {
+      "sections": {
+        "intro": {
+          "title": "Intro",
+          "description": "Zwei Dinge vergleichen und einen Sieger wahlen"
+        },
+        "form": {
+          "title": "Form",
+          "description": "Komparativ- und Superlativformen bilden"
+        },
+        "repair": {
+          "title": "Reparieren",
+          "description": "Die falsche Form verbessern"
+        },
+        "answer": {
+          "title": "Antwort",
+          "description": "Vergleiche in eigenen Satzen benutzen"
+        },
+        "gameCompareAndCrown": {
+          "title": "Compare & Crown",
+          "description": "Animierte Szenen mit Vergleichskarten steuern"
+        },
+        "summary": {
+          "title": "Zusammenfassung",
+          "description": "Die wichtigsten Regeln an einem Ort"
+        }
+      },
+      "lessonTitle": "Englisch: Komparativ und Superlativ"
     }
   },
   "KangurLessonChrome": {
@@ -7415,6 +8953,7 @@
     "openSecretPanel": "Geheimes Panel öffnen",
     "secretPanelTitle": "Geheimes Panel",
     "backToTopics": "Zurück zu den Themen",
+    "printInteractiveHint": "Öffne diese Lektion auf dem Bildschirm, um diese interaktive Aktivität auszuführen.",
     "panelsNavigation": "Panelnavigation",
     "previousPanel": "Vorheriges Panel",
     "nextPanel": "Nächstes Panel",
@@ -7627,7 +9166,10 @@
       "english_subject_verb_agreement": "Subjekt-Verb-Ubereinstimmung",
       "english_articles": "Artikel",
       "english_adjectives": "Adjektive",
-      "english_prepositions_time_place": "Präpositionen für Zeit und Ort"
+      "english_comparatives_superlatives": "Komparativ und Superlativ",
+      "english_adverbs_frequency": "Adverbien der Häufigkeit",
+      "english_prepositions_time_place": "Präpositionen für Zeit und Ort",
+      "english_adverbs": "Adverbien"
     }
   },
   "KangurCmsRuntime": {
@@ -7693,7 +9235,7 @@
         "showCanvasOnly": "Show canvas only"
       },
       "toolbar": {
-        "backToKangur": "Back to Kangur",
+        "backToKangur": "Back to StudiQ",
         "status": {
           "saved": "Saved",
           "unsaved": "Unsaved"
@@ -7717,7 +9259,7 @@
         "saveProject": "Save project"
       },
       "empty": {
-        "selectScreen": "Select a Kangur screen to edit.",
+        "selectScreen": "Select a StudiQ screen to edit.",
         "noSections": "No sections yet. Use the structure panel to add sections."
       }
     },
@@ -7805,7 +9347,7 @@
           "lessons": "Lessons",
           "play": "Play",
           "training": "Training",
-          "kangur": "Kangur"
+          "kangur": "StudiQ"
         }
       },
       "inputs": {
@@ -7813,7 +9355,7 @@
         "ariaLabel": "Input preview"
       },
       "typography": {
-        "heading": "Kangur Heading",
+        "heading": "StudiQ Heading",
         "bodySample": "Body text sample with the current base size and line height.",
         "layout": "Layout"
       },

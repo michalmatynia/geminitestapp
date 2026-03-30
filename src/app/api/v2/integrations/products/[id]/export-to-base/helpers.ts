@@ -1,8 +1,9 @@
 export * from './segments/index';
 export { exportSchema, type BaseExportRequestData, type BaseFieldMapping } from './segments/common';
-
-export const BASE_EXPORT_RUN_PATH_ID = 'integration-base-export';
-export const BASE_EXPORT_RUN_PATH_NAME = 'Base.com Export Jobs';
+export {
+  BASE_EXPORT_RUN_PATH_ID,
+  BASE_EXPORT_RUN_PATH_NAME,
+} from '@/features/integrations/services/base-export-segments/constants';
 export const BASE_EXPORT_SOURCE = 'integration_base_export';
 
 export const inFlightExportRequests = new Map<string, number>();

@@ -4,21 +4,37 @@ import { z } from 'zod';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
+  findKangurSocialImageAddonsByIds,
   listKangurSocialImageAddons,
-} from '@/features/kangur/server/social-image-addons-repository';
-import { createKangurSocialImageAddonFromPlaywright } from '@/features/kangur/server/social-image-addons-service';
+} from '@/features/kangur/social/server/social-image-addons-repository';
+import { createKangurSocialImageAddonFromPlaywright } from '@/features/kangur/social/server/social-image-addons-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { kangurSocialCaptureAppearanceModeSchema } from '@/shared/contracts/kangur-social-image-addons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { forbiddenError } from '@/shared/errors/app-error';
 import {
+  optionalCsvQueryStringArray,
   optionalIntegerQuerySchema,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
 
 export const querySchema = z.object({
+  ids: optionalCsvQueryStringArray(z.string().trim().min(1).max(200)),
   limit: optionalIntegerQuerySchema(z.number().int().min(1).max(50)),
   scope: optionalTrimmedQueryString(z.enum(['admin'])).optional(),
 });
+
+const dedupeAddonsById = <T extends { id: string }>(addons: T[]): T[] => {
+  const seen = new Set<string>();
+  return addons.filter((addon) => {
+    const normalizedId = addon.id.trim();
+    if (!normalizedId || seen.has(normalizedId)) {
+      return false;
+    }
+    seen.add(normalizedId);
+    return true;
+  });
+};
 
 const bodySchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -27,11 +43,45 @@ const bodySchema = z.object({
   selector: z.string().trim().optional(),
   waitForMs: z.number().int().min(0).max(15000).optional(),
   waitForSelectorMs: z.number().int().min(1000).max(20000).optional(),
+  appearanceMode: kangurSocialCaptureAppearanceModeSchema.optional(),
 });
 
 const toSourceHost = (sourceUrl: string): string | null => {
   try {
     return new URL(sourceUrl).host || null;
+  } catch {
+    return null;
+  }
+};
+
+const LOOPBACK_HOSTNAMES = new Set(['localhost', 'localhost.localdomain', '127.0.0.1', '::1']);
+
+const isLoopbackHostname = (hostname: string): boolean =>
+  LOOPBACK_HOSTNAMES.has(hostname.trim().toLowerCase());
+
+const resolveTrustedSelfOriginHost = (params: {
+  requestUrl: string;
+  sourceUrl: string;
+}): string | null => {
+  try {
+    const request = new URL(params.requestUrl);
+    const source = new URL(params.sourceUrl);
+    const requestHost = request.host.trim().toLowerCase();
+    const sourceHost = source.host.trim().toLowerCase();
+    if (!requestHost || !sourceHost) {
+      return null;
+    }
+
+    if (requestHost === sourceHost) {
+      return sourceHost;
+    }
+
+    const portsMatch = request.port === source.port;
+    if (portsMatch && isLoopbackHostname(request.hostname) && isLoopbackHostname(source.hostname)) {
+      return sourceHost;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -48,7 +98,20 @@ export async function getKangurSocialImageAddonsHandler(
 
   const query = querySchema.parse(ctx.query ?? {});
   const limit = query.limit ?? 12;
-  const addons = await listKangurSocialImageAddons(limit);
+  const requestedIds = Array.from(
+    new Set((query.ids ?? []).map((value) => value.trim()).filter(Boolean))
+  );
+  const [recentAddons, selectedAddons] = await Promise.all([
+    listKangurSocialImageAddons(limit),
+    requestedIds.length > 0 ? findKangurSocialImageAddonsByIds(requestedIds) : Promise.resolve([]),
+  ]);
+  const selectedAddonMap = new Map(selectedAddons.map((addon) => [addon.id.trim(), addon]));
+  const addons = dedupeAddonsById([
+    ...requestedIds
+      .map((addonId) => selectedAddonMap.get(addonId))
+      .filter((addon): addon is NonNullable<typeof addon> => Boolean(addon)),
+    ...recentAddons,
+  ]);
   void logKangurServerEvent({
     source: 'kangur.social-image-addons.list',
     message: 'Kangur social image add-ons listed',
@@ -59,6 +122,7 @@ export async function getKangurSocialImageAddonsHandler(
     context: {
       count: addons.length,
       limit,
+      requestedIdCount: requestedIds.length,
     },
   });
   return NextResponse.json(addons, { headers: { 'Cache-Control': 'no-store' } });
@@ -87,8 +151,13 @@ export async function postKangurSocialImageAddonsHandler(
       selector: parsed.selector,
       waitForMs: parsed.waitForMs,
       waitForSelectorMs: parsed.waitForSelectorMs,
+      appearanceMode: parsed.appearanceMode,
       createdBy: actor.actorId,
       forwardCookies: requestCookies || null,
+      trustedSelfOriginHost: resolveTrustedSelfOriginHost({
+        requestUrl: req.url,
+        sourceUrl: parsed.sourceUrl,
+      }),
     });
 
     void logKangurServerEvent({

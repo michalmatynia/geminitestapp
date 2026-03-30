@@ -21,6 +21,7 @@ vi.mock('@/features/kangur/ui/lessons/lesson-components', () => ({
 
 import LogicalClassificationLesson from '@/features/kangur/ui/components/LogicalClassificationLesson';
 import deMessages from '@/i18n/messages/de.json';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 
 type CapturedSlide = {
   title: string;
@@ -43,7 +44,12 @@ describe('LogicalClassificationLesson i18n', () => {
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        runtime?: { runtimeId?: string; rendererId?: string };
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
       title: 'Klassifikation - Einstieg',
@@ -53,8 +59,12 @@ describe('LogicalClassificationLesson i18n', () => {
       title: 'Mehrere Merkmale und das Venn-Diagramm',
       description: 'Gruppieren nach mehreren Kriterien und Schnittmengen',
     });
-    expect(games.find((game) => game.sectionId === 'game')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
       title: 'Klassifikationslabor',
+    });
+    expect(games.find((game) => game.sectionId === 'game')?.launchableInstance).toMatchObject({
+      gameId: 'logical_classification_lab',
+      instanceId: getKangurBuiltInGameInstanceId('logical_classification_lab'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
@@ -64,5 +74,27 @@ describe('LogicalClassificationLesson i18n', () => {
 
     expect(screen.getByText('Wir klassifizieren nach:')).toBeInTheDocument();
     expect(screen.getByText('🎨 Farbe - rot vs. blau')).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the game shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.logicalClassification.game.gameTitle =
+      'Benutzerdefiniertes Klassifikationslabor';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <LogicalClassificationLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game')?.shell).toMatchObject({
+      title: 'Benutzerdefiniertes Klassifikationslabor',
+    });
   });
 });

@@ -65,13 +65,13 @@ vi.mock('@/shared/ui', () => ({
       <div>{value}</div>
     </div>
   ),
-  Pagination: ({
-    page,
-    totalPages,
-  }: {
+  Pagination: (props: {
     page: number;
     totalPages?: number;
-  }) => <div>{`pagination:${page}/${totalPages ?? 1}`}</div>,
+  }) => {
+    const { page, totalPages } = props;
+    return <div>{`pagination:${page}/${totalPages ?? 1}`}</div>;
+  },
   SectionHeader: ({
     title,
     description,

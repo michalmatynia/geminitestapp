@@ -1,292 +1,39 @@
-import { Link, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, Text, View } from 'react-native';
 
 import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
-import { createKangurPlanHref } from '../plan/planHref';
-import { createKangurResultsHref } from '../scores/resultsHref';
 import {
   formatKangurMobileScoreDateTime,
   formatKangurMobileScoreOperation,
   getKangurMobileScoreAccuracyPercent,
 } from '../scores/mobileScoreSummary';
+import {
+  BASE_TONE,
+  INDIGO_TONE,
+  SUCCESS_TONE,
+} from '../shared/KangurAssessmentUi';
+import {
+  KangurMobileCard as Card,
+  KangurMobileInsetPanel as InsetPanel,
+  KangurMobileLinkButton as LinkButton,
+  KangurMobileMetric as Metric,
+  KangurMobilePill as Pill,
+  KangurMobileScrollScreen,
+} from '../shared/KangurMobileUi';
+import {
+  ActionButton,
+  formatAssignmentPriorityLabel,
+  getAssignmentTone,
+  HOME_ROUTE,
+  OutlineLink,
+  ParentDashboardTabId,
+  PLAN_ROUTE,
+  PROFILE_ROUTE,
+  RESULTS_ROUTE,
+  TabButton,
+} from './parent-dashboard-primitives';
 import { useKangurMobileParentDashboard } from './useKangurMobileParentDashboard';
-
-type Tone = {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-};
-
-type ParentDashboardTabId =
-  | 'progress'
-  | 'results'
-  | 'assignments'
-  | 'monitoring'
-  | 'aiTutor';
-
-const BASE_TONE: Tone = {
-  backgroundColor: '#f8fafc',
-  borderColor: '#cbd5e1',
-  textColor: '#475569',
-};
-
-const SUCCESS_TONE: Tone = {
-  backgroundColor: '#ecfdf5',
-  borderColor: '#a7f3d0',
-  textColor: '#047857',
-};
-
-const WARNING_TONE: Tone = {
-  backgroundColor: '#fffbeb',
-  borderColor: '#fde68a',
-  textColor: '#b45309',
-};
-
-const INDIGO_TONE: Tone = {
-  backgroundColor: '#eef2ff',
-  borderColor: '#c7d2fe',
-  textColor: '#4338ca',
-};
-
-const HOME_ROUTE = '/' as const;
-const PROFILE_ROUTE = '/profile' as const;
-const PLAN_ROUTE = createKangurPlanHref();
-const RESULTS_ROUTE = createKangurResultsHref();
-
-function Card({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        elevation: 3,
-        gap: 12,
-        padding: 20,
-        shadowColor: '#0f172a',
-        shadowOffset: { height: 10, width: 0 },
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-      }}
-    >
-      {children}
-    </View>
-  );
-}
-
-function Pill({
-  label,
-  tone = BASE_TONE,
-}: {
-  label: string;
-  tone?: Tone;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        backgroundColor: tone.backgroundColor,
-        borderColor: tone.borderColor,
-        borderRadius: 999,
-        borderWidth: 1,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-      }}
-    >
-      <Text style={{ color: tone.textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
-  );
-}
-
-function Metric({
-  description,
-  label,
-  value,
-}: {
-  description: string;
-  label: string;
-  value: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        backgroundColor: '#f8fafc',
-        borderColor: '#e2e8f0',
-        borderRadius: 20,
-        borderWidth: 1,
-        flexBasis: '48%',
-        gap: 6,
-        padding: 14,
-      }}
-    >
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{label}</Text>
-      <Text style={{ color: '#0f172a', fontSize: 22, fontWeight: '800' }}>{value}</Text>
-      <Text style={{ color: '#475569', fontSize: 12, lineHeight: 18 }}>{description}</Text>
-    </View>
-  );
-}
-
-function ActionButton({
-  disabled = false,
-  label,
-  onPress,
-  tone = 'primary',
-}: {
-  disabled?: boolean;
-  label: string;
-  onPress: () => void | Promise<void>;
-  tone?: 'primary' | 'secondary';
-}): React.JSX.Element {
-  const isPrimary = tone === 'primary';
-
-  return (
-    <Pressable
-      accessibilityRole='button'
-      disabled={disabled}
-      onPress={onPress}
-      style={{
-        alignItems: 'center',
-        alignSelf: 'stretch',
-        backgroundColor: disabled ? '#e2e8f0' : isPrimary ? '#0f172a' : '#ffffff',
-        borderColor: isPrimary ? 'transparent' : '#cbd5e1',
-        borderRadius: 16,
-        borderWidth: 1,
-        justifyContent: 'center',
-        minHeight: 46,
-        opacity: disabled ? 0.7 : 1,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-      }}
-    >
-      <Text
-        style={{
-          color: isPrimary ? '#ffffff' : '#0f172a',
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function OutlineLink({
-  href,
-  label,
-}: {
-  href: Href;
-  label: string;
-}): React.JSX.Element {
-  return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityRole='button'
-        style={{
-          alignItems: 'center',
-          alignSelf: 'stretch',
-          backgroundColor: '#ffffff',
-          borderColor: '#cbd5e1',
-          borderRadius: 16,
-          borderWidth: 1,
-          justifyContent: 'center',
-          minHeight: 46,
-          paddingHorizontal: 14,
-          paddingVertical: 12,
-        }}
-      >
-        <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
-  );
-}
-
-function TabButton({
-  active,
-  label,
-  onPress,
-}: {
-  active: boolean;
-  label: string;
-  onPress: () => void;
-}): React.JSX.Element {
-  return (
-    <Pressable
-      accessibilityRole='button'
-      onPress={onPress}
-      style={{
-        alignItems: 'center',
-        backgroundColor: active ? '#0f172a' : '#ffffff',
-        borderColor: active ? '#0f172a' : '#cbd5e1',
-        borderRadius: 999,
-        borderWidth: 1,
-        minHeight: 40,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-      }}
-    >
-      <Text
-        style={{
-          color: active ? '#ffffff' : '#0f172a',
-          fontSize: 13,
-          fontWeight: '700',
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-const formatAssignmentPriorityLabel = (
-  priority: 'high' | 'low' | 'medium',
-  locale: 'de' | 'en' | 'pl',
-): string => {
-  if (priority === 'high') {
-    return {
-      de: 'Hohe Priorität',
-      en: 'High priority',
-      pl: 'Wysoki priorytet',
-    }[locale];
-  }
-
-  if (priority === 'medium') {
-    return {
-      de: 'Mittlere Priorität',
-      en: 'Medium priority',
-      pl: 'Średni priorytet',
-    }[locale];
-  }
-
-  return {
-    de: 'Niedrige Priorität',
-    en: 'Low priority',
-    pl: 'Niski priorytet',
-  }[locale];
-};
-
-const getAssignmentTone = (
-  priority: 'high' | 'low' | 'medium',
-): Tone => {
-  if (priority === 'high') {
-    return WARNING_TONE;
-  }
-
-  if (priority === 'medium') {
-    return INDIGO_TONE;
-  }
-
-  return SUCCESS_TONE;
-};
 
 export function KangurParentDashboardScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -356,38 +103,23 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
               });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 18,
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-        }}
-      >
+    <KangurMobileScrollScreen
+      contentContainerStyle={{
+        gap: 18,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+    >
         <View style={{ gap: 14 }}>
-          <Link href={HOME_ROUTE} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'stretch',
-                width: '100%',
-                borderRadius: 999,
-                backgroundColor: '#ffffff',
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Zurück',
-                  en: 'Back',
-                  pl: 'Wróć',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          <LinkButton
+            href={HOME_ROUTE}
+            label={copy({
+              de: 'Zurück',
+              en: 'Back',
+              pl: 'Wróć',
+            })}
+            stretch
+          />
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -885,16 +617,10 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                 ) : (
                   <View style={{ gap: 10 }}>
                     {dashboard.recentResultItems.map((item) => (
-                      <View
+                      <InsetPanel
                         key={item.result.id}
-                        style={{
-                          backgroundColor: '#f8fafc',
-                          borderColor: '#e2e8f0',
-                          borderRadius: 18,
-                          borderWidth: 1,
-                          gap: 8,
-                          padding: 14,
-                        }}
+                        gap={8}
+                        style={{ borderRadius: 18 }}
                       >
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                           <Pill
@@ -916,7 +642,7 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                         <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
                           {formatKangurMobileScoreDateTime(item.result.created_date, locale)}
                         </Text>
-                      </View>
+                      </InsetPanel>
                     ))}
                     <OutlineLink
                       href={RESULTS_ROUTE}
@@ -984,16 +710,10 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                 ) : (
                   <View style={{ gap: 10 }}>
                     {dashboard.assignmentItems.map((item) => (
-                      <View
+                      <InsetPanel
                         key={item.assignment.id}
-                        style={{
-                          backgroundColor: '#f8fafc',
-                          borderColor: '#e2e8f0',
-                          borderRadius: 18,
-                          borderWidth: 1,
-                          gap: 10,
-                          padding: 14,
-                        }}
+                        gap={10}
+                        style={{ borderRadius: 18 }}
                       >
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                           <Pill
@@ -1026,7 +746,7 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
                             }
                           />
                         ) : null}
-                      </View>
+                      </InsetPanel>
                     ))}
                   </View>
                 )}
@@ -1243,7 +963,6 @@ export function KangurParentDashboardScreen(): React.JSX.Element {
             </>
           ) : null}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }

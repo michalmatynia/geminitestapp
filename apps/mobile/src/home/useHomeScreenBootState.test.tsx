@@ -5,6 +5,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KangurAppBootstrapProvider } from '../boot/KangurAppBootstrapContext';
+
 const { runAfterInteractionsMock, cancelInteractionTaskMock } = vi.hoisted(() => ({
   runAfterInteractionsMock: vi.fn(),
   cancelInteractionTaskMock: vi.fn(),
@@ -69,6 +71,27 @@ describe('useHomeScreenBootState', () => {
     expect(runAfterInteractionsMock).toHaveBeenCalledTimes(1);
   });
 
+  it('skips the initial home shell after the app bootstrap hands off control', () => {
+    const consumeInitialRouteBootstrapBypass = vi.fn(() => true);
+    const wrapper = ({ children }: React.PropsWithChildren) => (
+      <KangurAppBootstrapProvider
+        value={{
+          consumeInitialRouteBootstrapBypass,
+        }}
+      >
+        {children}
+      </KangurAppBootstrapProvider>
+    );
+
+    const { result } = renderHook(() => useHomeScreenBootState('home'), {
+      wrapper,
+    });
+
+    expect(result.current).toBe(false);
+    expect(consumeInitialRouteBootstrapBypass).toHaveBeenCalledTimes(1);
+    expect(runAfterInteractionsMock).not.toHaveBeenCalled();
+  });
+
   it('cancels the pending interaction task on unmount', () => {
     const { unmount } = renderHook(() => useHomeScreenBootState('home'));
 
@@ -116,7 +139,7 @@ describe('useHomeScreenBootState', () => {
     expect(result.current).toBe(true);
 
     act(() => {
-      vi.advanceTimersByTime(480);
+      vi.advanceTimersByTime(240);
       vi.runAllTimers();
     });
 

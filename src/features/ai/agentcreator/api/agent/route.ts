@@ -9,7 +9,7 @@ import {
   type AgentRuntimeRunRecord,
   getChatbotAgentRunDelegate,
 } from '@/features/ai/agent-runtime/store-delegates';
-import { startAgentQueue } from '@/features/ai/server';
+import { startAgentQueue } from '@/features/ai/agent-runtime/workers/agentQueue';
 import type {
   AgentRunEnqueueResponse,
   AgentRunRecord,

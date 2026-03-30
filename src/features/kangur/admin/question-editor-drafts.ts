@@ -1,6 +1,6 @@
 import type { KangurTestQuestion } from '@/features/kangur/shared/contracts/kangur-tests';
 
-import type { QuestionFormData } from '../test-questions';
+import type { QuestionFormData } from '../test-suites/questions';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
 const QUESTION_EDITOR_DRAFT_STORAGE_PREFIX = 'kangur-question-editor-draft:v1:';

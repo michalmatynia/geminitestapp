@@ -9,11 +9,12 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 import { UI_GRID_RELAXED_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 
 export function HomeFallbackSignature({
-  featuredProducts,
+  products,
 }: {
-  featuredProducts: ProductWithImages[];
+  products: ProductWithImages[];
 }): React.JSX.Element {
   const translations = useTranslations('FallbackHome.Signature');
+  const featuredProducts = React.useMemo(() => products.slice(0, 3), [products]);
   const impactStats = [
     {
       label: translations('launchKitLabel'),

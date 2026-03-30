@@ -117,7 +117,9 @@ describe('AdminFrontManagePage', () => {
         key: 'front_page_app',
         value: 'notes',
       });
-      expect(mockToast).toHaveBeenCalledWith('Front page updated', { variant: 'success' });
+      expect(mockToast).toHaveBeenCalledWith('Front page updated to Notes', {
+        variant: 'success',
+      });
     });
   });
 

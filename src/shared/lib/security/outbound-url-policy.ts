@@ -94,41 +94,100 @@ const matchesHostRule = (hostname: string, rule: OutboundHostRule): boolean => {
 
 const IPV4_PATTERN = /^(\d{1,3})(\.\d{1,3}){3}$/;
 
-const isPrivateIpv4 = (hostname: string): boolean => {
-  if (!IPV4_PATTERN.test(hostname)) return false;
+type Ipv4Octets = [number, number, number, number];
+
+const parseIpv4Octets = (hostname: string): Ipv4Octets | null => {
+  if (!IPV4_PATTERN.test(hostname)) {
+    return null;
+  }
+
   const octets = hostname.split('.').map((entry: string): number => Number.parseInt(entry, 10));
-  if (octets.length !== 4) return false;
   if (
+    octets.length !== 4 ||
     octets.some((entry: number): boolean => !Number.isFinite(entry) || entry < 0 || entry > 255)
   ) {
+    return null;
+  }
+
+  return [octets[0]!, octets[1]!, octets[2]!, octets[3]!];
+};
+
+const IPV4_PRIVATE_RANGE_MATCHERS: ReadonlyArray<(octets: Ipv4Octets) => boolean> = [
+  ([a]) => a === 10,
+  ([a]) => a === 127,
+  ([a]) => a === 0,
+  ([a, b]) => a === 169 && b === 254,
+  ([a, b]) => a === 172 && b >= 16 && b <= 31,
+  ([a, b]) => a === 192 && b === 168,
+  ([a, b]) => a === 100 && b >= 64 && b <= 127,
+];
+
+const isPrivateIpv4 = (hostname: string): boolean => {
+  const octets = parseIpv4Octets(hostname);
+  return octets ? IPV4_PRIVATE_RANGE_MATCHERS.some((matches) => matches(octets)) : false;
+};
+
+const isLoopbackIpv6 = (hostname: string): boolean =>
+  hostname === '::1' || hostname === '::';
+
+const isLinkLocalIpv6 = (hostname: string): boolean =>
+  hostname.startsWith('fe80:');
+
+const isUniqueLocalIpv6 = (hostname: string): boolean =>
+  hostname.startsWith('fc') || hostname.startsWith('fd');
+
+const decodeMappedIpv6HexToIpv4 = (value: string): string | null => {
+  const parts = value.split(':');
+  if (
+    parts.length !== 2 ||
+    parts.some((part) => !/^[\da-f]{1,4}$/i.test(part))
+  ) {
+    return null;
+  }
+
+  const high = Number.parseInt(parts[0] ?? '', 16);
+  const low = Number.parseInt(parts[1] ?? '', 16);
+  if (!Number.isFinite(high) || !Number.isFinite(low)) {
+    return null;
+  }
+
+  return [
+    (high >> 8) & 0xff,
+    high & 0xff,
+    (low >> 8) & 0xff,
+    low & 0xff,
+  ].join('.');
+};
+
+const isMappedPrivateIpv6 = (hostname: string): boolean => {
+  if (!hostname.startsWith('::ffff:')) {
     return false;
   }
-  const [a, b] = octets;
-  if (a === undefined || b === undefined) return false;
-  if (a === 10) return true;
-  if (a === 127) return true;
-  if (a === 0) return true;
-  if (a === 169 && b === 254) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 100 && b >= 64 && b <= 127) return true;
-  return false;
+
+  const mapped = hostname.slice('::ffff:'.length);
+  if (!mapped) {
+    return false;
+  }
+
+  return isPrivateIpv4(mapped) || isPrivateIpv4(decodeMappedIpv6HexToIpv4(mapped) ?? '');
 };
 
-const isPrivateIpv6 = (hostname: string): boolean => {
-  const normalized = hostname.toLowerCase();
-  if (normalized === '::1' || normalized === '::') return true;
-  if (normalized.startsWith('fe80:')) return true;
-  if (normalized.startsWith('fc') || normalized.startsWith('fd')) return true;
-  if (normalized.startsWith('::ffff:')) {
-    const mapped = normalized.slice('::ffff:'.length);
-    if (mapped && isPrivateIpv4(mapped)) return true;
-  }
-  return false;
-};
+const IPV6_PRIVATE_MATCHERS: ReadonlyArray<(hostname: string) => boolean> = [
+  isLoopbackIpv6,
+  isLinkLocalIpv6,
+  isUniqueLocalIpv6,
+  isMappedPrivateIpv6,
+];
+
+const isPrivateIpv6 = (hostname: string): boolean =>
+  IPV6_PRIVATE_MATCHERS.some((matches) => matches(hostname.toLowerCase()));
 
 const normalizeHostname = (hostname: string): string => {
-  return hostname.trim().toLowerCase().replace(/\.$/, '');
+  return hostname
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '');
 };
 
 const isRedirectStatus = (status: number): boolean =>
@@ -268,34 +327,61 @@ export const assertOutboundUrlAllowed = (rawUrl: string): OutboundUrlPolicyDecis
   );
 };
 
+const buildOutboundFetchRequestInit = (
+  init?: Omit<RequestInit, 'redirect'> & { maxRedirects?: number; fetchImpl?: typeof fetch }
+): RequestInit => {
+  const requestInit: RequestInit = {
+    ...init,
+    redirect: 'manual',
+  };
+
+  delete (requestInit as Record<string, unknown>)['maxRedirects'];
+  delete (requestInit as Record<string, unknown>)['fetchImpl'];
+
+  return requestInit;
+};
+
+const resolveRedirectLocation = (response: Response): string | null =>
+  response.headers.get('location');
+
+const resolveNextOutboundRedirectUrl = (args: {
+  currentUrl: string;
+  location: string;
+}): string => new URL(args.location, args.currentUrl).toString();
+
+const assertRedirectLimitNotExceeded = (args: {
+  maxRedirects: number;
+  redirectCount: number;
+}): void => {
+  if (args.redirectCount === args.maxRedirects) {
+    throw new Error(`Outbound fetch exceeded redirect limit (${args.maxRedirects}).`);
+  }
+};
+
 export const fetchWithOutboundUrlPolicy = async (
   rawUrl: string,
   init?: Omit<RequestInit, 'redirect'> & { maxRedirects?: number; fetchImpl?: typeof fetch }
 ): Promise<Response> => {
   const maxRedirects = Math.max(0, Math.trunc(init?.maxRedirects ?? 5));
   const fetchImpl = init?.fetchImpl ?? fetch;
-  const requestInit: RequestInit = {
-    ...init,
-    redirect: 'manual',
-  };
-  delete (requestInit as Record<string, unknown>)['maxRedirects'];
-  delete (requestInit as Record<string, unknown>)['fetchImpl'];
+  const requestInit = buildOutboundFetchRequestInit(init);
 
   let currentUrl = rawUrl;
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
     assertOutboundUrlAllowed(currentUrl);
     const response = await fetchImpl(currentUrl, requestInit);
+
     if (!isRedirectStatus(response.status)) {
       return response;
     }
-    const location = response.headers.get('location');
+
+    const location = resolveRedirectLocation(response);
     if (!location) {
       return response;
     }
-    if (redirectCount === maxRedirects) {
-      throw new Error(`Outbound fetch exceeded redirect limit (${maxRedirects}).`);
-    }
-    currentUrl = new URL(location, currentUrl).toString();
+
+    assertRedirectLimitNotExceeded({ maxRedirects, redirectCount });
+    currentUrl = resolveNextOutboundRedirectUrl({ currentUrl, location });
   }
 
   throw new Error('Outbound fetch failed before completion.');

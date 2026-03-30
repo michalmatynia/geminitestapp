@@ -26,7 +26,7 @@ export const translateKangurMiniGameWithFallback = (
   }
 
   const translated = translate(key, values);
-  return translated === key
+  return translated === key || translated.endsWith(`.${key}`)
     ? interpolateMiniGameTemplate(fallback, values)
     : interpolateMiniGameTemplate(translated, values);
 };

@@ -29,6 +29,19 @@ vi.mock('@/features/integrations/services/integration-repository', () => ({
   })),
 }));
 
+const buildBaseImportRequestPayload = (
+  overrides: Record<string, unknown>
+): Record<string, unknown> => ({
+  ...overrides,
+});
+
+const buildBaseImportsPostRequest = (url: string, payload: Record<string, unknown>) =>
+  new NextRequest(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
 describe('base import route unification', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -76,59 +89,53 @@ describe('base import route unification', () => {
   });
 
   it('rejects legacy action=import on root imports endpoint', async () => {
-    const response = await importsBasePost(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action: 'import',
-          connectionId: 'connection-1',
-          inventoryId: 'inventory-1',
-          catalogId: 'catalog-1',
-        }),
-      })
-    );
+    const requestPayload = buildBaseImportRequestPayload({
+      action: 'import',
+      connectionId: 'connection-1',
+      inventoryId: 'inventory-1',
+      catalogId: 'catalog-1',
+    });
+    const response = await importsBasePost(buildBaseImportsPostRequest(
+      'http://localhost/api/v2/integrations/imports/base',
+      requestPayload
+    ));
 
     expect(response.status).toBe(400);
     expect(startBaseImportRunResponseMock).not.toHaveBeenCalled();
   });
 
   it('requires explicit connectionId for inventories action', async () => {
-    const response = await importsBasePost(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action: 'inventories',
-        }),
-      })
-    );
+    const requestPayload = buildBaseImportRequestPayload({
+      action: 'inventories',
+    });
+    const response = await importsBasePost(buildBaseImportsPostRequest(
+      'http://localhost/api/v2/integrations/imports/base',
+      requestPayload
+    ));
 
     expect(response.status).toBe(400);
     expect(startBaseImportRunResponseMock).not.toHaveBeenCalled();
   });
 
   it('runs endpoint delegates to the same run starter payload contract', async () => {
-    const response = await runsPost(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          connectionId: 'connection-2',
-          inventoryId: 'inventory-2',
-          catalogId: 'catalog-2',
-          templateId: 'template-2',
-          limit: 25,
-          imageMode: 'links',
-          uniqueOnly: true,
-          allowDuplicateSku: false,
-          selectedIds: ['2001'],
-          dryRun: false,
-          mode: 'upsert_on_base_id',
-          requestId: 'request-runs-1',
-        }),
-      })
-    );
+    const requestPayload = buildBaseImportRequestPayload({
+      connectionId: 'connection-2',
+      inventoryId: 'inventory-2',
+      catalogId: 'catalog-2',
+      templateId: 'template-2',
+      limit: 25,
+      imageMode: 'links',
+      uniqueOnly: true,
+      allowDuplicateSku: false,
+      selectedIds: ['2001'],
+      dryRun: false,
+      mode: 'upsert_on_base_id',
+      requestId: 'request-runs-1',
+    });
+    const response = await runsPost(buildBaseImportsPostRequest(
+      'http://localhost/api/v2/integrations/imports/base/runs',
+      requestPayload
+    ));
     const payload = (await response.json()) as BaseImportStartResponse;
 
     expect(response.status).toBe(200);
@@ -155,19 +162,17 @@ describe('base import route unification', () => {
   });
 
   it('requires explicit connectionId on runs endpoint', async () => {
-    const response = await runsPost(
-      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          inventoryId: 'inventory-2',
-          catalogId: 'catalog-2',
-          imageMode: 'links',
-          uniqueOnly: true,
-          allowDuplicateSku: false,
-        }),
-      })
-    );
+    const requestPayload = buildBaseImportRequestPayload({
+      inventoryId: 'inventory-2',
+      catalogId: 'catalog-2',
+      imageMode: 'links',
+      uniqueOnly: true,
+      allowDuplicateSku: false,
+    });
+    const response = await runsPost(buildBaseImportsPostRequest(
+      'http://localhost/api/v2/integrations/imports/base/runs',
+      requestPayload
+    ));
 
     expect(response.status).toBe(400);
     expect(startBaseImportRunResponseMock).not.toHaveBeenCalled();

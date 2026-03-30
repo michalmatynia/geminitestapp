@@ -1,36 +1,42 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authMock } = vi.hoisted(() => ({
-  authMock: vi.fn(),
+const { readOptionalServerAuthSessionMock } = vi.hoisted(() => ({
+  readOptionalServerAuthSessionMock: vi.fn(),
 }));
 
-vi.mock('@/features/auth/server', () => ({
-  auth: authMock,
+vi.mock('@/features/auth/optional-server-auth', () => ({
+  readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 
-import { assertSettingsManageAccess } from './settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/settings-manage-access';
 
 describe('assertSettingsManageAccess', () => {
   beforeEach(() => {
-    authMock.mockReset();
+    readOptionalServerAuthSessionMock.mockReset();
   });
 
   it('allows elevated users or users with settings.manage permission', async () => {
-    authMock.mockResolvedValueOnce({
+    readOptionalServerAuthSessionMock.mockResolvedValueOnce({
       user: { isElevated: true, permissions: [] },
     });
     await expect(assertSettingsManageAccess()).resolves.toBeUndefined();
 
-    authMock.mockResolvedValueOnce({
+    readOptionalServerAuthSessionMock.mockResolvedValueOnce({
       user: { isElevated: false, permissions: ['settings.manage'] },
     });
     await expect(assertSettingsManageAccess()).resolves.toBeUndefined();
   });
 
   it('rejects users without settings management access', async () => {
-    authMock.mockResolvedValue({
+    readOptionalServerAuthSessionMock.mockResolvedValue({
       user: { isElevated: false, permissions: ['products.read'] },
     });
+
+    await expect(assertSettingsManageAccess()).rejects.toThrow(/Unauthorized/);
+  });
+
+  it('treats missing request scope as unauthorized instead of surfacing the auth runtime error', async () => {
+    readOptionalServerAuthSessionMock.mockResolvedValue(null);
 
     await expect(assertSettingsManageAccess()).rejects.toThrow(/Unauthorized/);
   });

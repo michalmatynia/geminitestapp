@@ -1,15 +1,10 @@
 'use client';
-
-import { QueryClientContext } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
-  useCallback,
-  useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
 } from 'react';
@@ -20,7 +15,6 @@ import {
   buildLocalizedPathname,
   getPathLocale,
   normalizeSiteLocale,
-  stripSiteLocalePrefix,
 } from '@/shared/lib/i18n/site-locale';
 import {
   DropdownMenu,
@@ -31,7 +25,6 @@ import {
 } from '@/shared/ui/dropdown-menu';
 
 import {
-  getKangurCanonicalPublicHref,
   getKangurHomeHref,
   getKangurPageHref,
   isKangurEmbeddedBasePath,
@@ -40,28 +33,29 @@ import { useOptionalFrontendPublicOwner } from '@/features/kangur/ui/FrontendPub
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
+import { canonicalizeKangurPublicAliasPathname } from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 const LANGUAGE_SWITCHER_SOURCE_ID = 'kangur-language-switcher';
 const LANGUAGE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
-const HARD_NAVIGATION_RECOVERY_TIMEOUT_MS = 10_000;
 const ENABLED_LOCALES = DEFAULT_SITE_I18N_CONFIG.locales.filter((locale) => locale.enabled);
 const DEFAULT_SITE_LOCALE = normalizeSiteLocale(DEFAULT_SITE_I18N_CONFIG.defaultLocale);
 
 type KangurLanguageSwitcherProps = {
   basePath: string;
   className?: string;
-  currentPage:
+  currentPage?:
     | 'Competition'
     | 'Game'
+    | 'GamesLibrary'
     | 'Lessons'
     | 'Tests'
     | 'LearnerProfile'
     | 'ParentDashboard'
     | 'Duels'
     | 'SocialUpdates';
+  forceFallbackPath?: boolean;
 };
 
 type KangurLanguageMenuPalette = {
@@ -75,8 +69,54 @@ type KangurLanguageMenuPalette = {
   shadow: string;
   text: string;
 };
+type KangurLanguageMenuStyle = CSSProperties & {
+  '--kangur-language-menu-active-bg': string;
+  '--kangur-language-menu-active-border': string;
+  '--kangur-language-menu-active-shadow': string;
+  '--kangur-language-menu-bg': string;
+  '--kangur-language-menu-border': string;
+  '--kangur-language-menu-hover-bg': string;
+  '--kangur-language-menu-inner-bg': string;
+  '--kangur-language-menu-shadow': string;
+  '--kangur-language-menu-text': string;
+};
 
 type KangurAppearanceValue = ReturnType<typeof useKangurStorefrontAppearance>;
+type KangurLanguageOption = {
+  code: string;
+  href: string;
+  label: string;
+  nativeLabel: string;
+};
+type KangurLanguageActionClassNameKind = 'option' | 'trigger';
+type KangurLanguageSwitcherText = {
+  currentLanguageLabel: string;
+  triggerAriaLabel: string;
+  triggerTitle: string;
+};
+type KangurLanguageSwitcherMenuProps = {
+  currentPage: KangurLanguageSwitcherProps['currentPage'];
+  isCoarsePointer: boolean;
+  isPending: boolean;
+  localeOptions: KangurLanguageOption[];
+  menuStyle: CSSProperties;
+  routeNavigator: ReturnType<typeof useKangurRouteNavigator>;
+  selectedLocale: string;
+  setAnnouncement: React.Dispatch<React.SetStateAction<string | null>>;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setOptimisticPendingLocale: React.Dispatch<React.SetStateAction<string | null>>;
+};
+type KangurLocaleSwitchSelectionInput = {
+  currentPage: KangurLanguageSwitcherProps['currentPage'];
+  isPending: boolean;
+  localeOptions: KangurLanguageOption[];
+  nextLocale: string;
+  routeNavigator: ReturnType<typeof useKangurRouteNavigator>;
+  selectedLocale: string;
+  setAnnouncement: React.Dispatch<React.SetStateAction<string | null>>;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setOptimisticPendingLocale: React.Dispatch<React.SetStateAction<string | null>>;
+};
 
 const getLocaleCodeLabel = (locale: string): string => locale.trim().slice(0, 2).toUpperCase();
 
@@ -174,23 +214,11 @@ const buildCurrentPageFallbackPath = (
     return getKangurHomeHref(basePath);
   }
 
-  return getKangurPageHref(currentPage, basePath);
-};
-
-const canonicalizeKangurPublicAliasPath = (pathname: string): string => {
-  const normalizedPathname = stripSiteLocalePrefix(pathname);
-
-  if (normalizedPathname !== '/kangur' && !normalizedPathname.startsWith('/kangur/')) {
-    return pathname;
+  if (typeof currentPage !== 'string' || currentPage.trim().length === 0) {
+    return getKangurHomeHref(basePath);
   }
 
-  const slugSegments = normalizedPathname
-    .split('/')
-    .map((segment) => segment.trim())
-    .filter(Boolean)
-    .slice(1);
-
-  return getKangurCanonicalPublicHref(slugSegments);
+  return getKangurPageHref(currentPage, basePath);
 };
 
 const buildLocalizedHref = ({
@@ -222,39 +250,451 @@ const resolveLocaleFromHref = (href: string | null | undefined): string | null =
   }
 };
 
-const resolveLanguageMenuPalette = (
-  kangurAppearance: KangurAppearanceValue
-): KangurLanguageMenuPalette => {
-  const { theme, tone } = kangurAppearance;
-  const background = theme.dropdownBg || theme.surfaceColor || tone.background || '#ffffff';
-  const border = theme.dropdownBorder || tone.border || theme.borderColor || '#d1d5db';
-  const text = tone.text || theme.textColor || '#111827';
-  const accent = tone.accent || theme.accentColor || theme.primaryColor || text;
-  const pageBackground = tone.background || theme.backgroundColor || background;
+const resolveLanguageMenuBackground = (kangurAppearance: KangurAppearanceValue): string =>
+  kangurAppearance.theme.dropdownBg ??
+  kangurAppearance.theme.surfaceColor ??
+  kangurAppearance.tone.background ??
+  '#ffffff';
+
+const resolveLanguageMenuBorder = (kangurAppearance: KangurAppearanceValue): string =>
+  kangurAppearance.theme.dropdownBorder ??
+  kangurAppearance.tone.border ??
+  kangurAppearance.theme.borderColor ??
+  '#d1d5db';
+
+const resolveLanguageMenuText = (kangurAppearance: KangurAppearanceValue): string =>
+  kangurAppearance.tone.text ?? kangurAppearance.theme.textColor ?? '#111827';
+
+const resolveLanguageMenuAccent = (
+  kangurAppearance: KangurAppearanceValue,
+  text: string
+): string =>
+  kangurAppearance.tone.accent ??
+  kangurAppearance.theme.accentColor ??
+  kangurAppearance.theme.primaryColor ??
+  text;
+
+const resolveLanguageMenuPageBackground = (
+  kangurAppearance: KangurAppearanceValue,
+  background: string
+): string => kangurAppearance.tone.background ?? kangurAppearance.theme.backgroundColor ?? background;
+
+const resolveLanguageMenuBaseColors = (kangurAppearance: KangurAppearanceValue) => {
+  const background = resolveLanguageMenuBackground(kangurAppearance);
+  const border = resolveLanguageMenuBorder(kangurAppearance);
+  const text = resolveLanguageMenuText(kangurAppearance);
+  const accent = resolveLanguageMenuAccent(kangurAppearance, text);
+  const pageBackground = resolveLanguageMenuPageBackground(kangurAppearance, background);
+  return { accent, background, border, pageBackground, text };
+};
+
+const resolveLanguageMenuShadow = (kangurAppearance: KangurAppearanceValue): string => {
+  const { theme } = kangurAppearance;
   const isDark = Boolean(theme.darkMode);
   const shadowBlur = theme.dropdownShadowBlur ?? (isDark ? 38 : 34);
   const shadowY = theme.dropdownShadowY ?? (isDark ? 16 : 14);
   const shadowColor = isDark ? 'rgba(5, 8, 18, 0.58)' : 'rgba(47, 59, 82, 0.18)';
+  return `0 ${shadowY}px ${shadowBlur}px -${Math.round(shadowBlur * 0.42)} ${shadowColor}`;
+};
+
+const resolveLanguageMenuSurface = ({
+  accent,
+  background,
+  isDark,
+  pageBackground,
+}: {
+  accent: string;
+  background: string;
+  isDark: boolean;
+  pageBackground: string;
+}) => ({
+  activeBackground: `linear-gradient(180deg, color-mix(in srgb, ${accent} ${isDark ? 28 : 20}%, ${background}) 0%, color-mix(in srgb, ${accent} ${isDark ? 18 : 14}%, ${pageBackground}) 100%)`,
+  hoverBackground: `linear-gradient(180deg, color-mix(in srgb, ${accent} ${isDark ? 16 : 12}%, ${background}) 0%, color-mix(in srgb, ${accent} ${isDark ? 10 : 8}%, ${pageBackground}) 100%)`,
+  innerBackground: `color-mix(in srgb, ${background} ${isDark ? 92 : 97}%, ${pageBackground})`,
+});
+
+const resolveLanguageMenuActiveTone = ({
+  accent,
+  border,
+  isDark,
+}: {
+  accent: string;
+  border: string;
+  isDark: boolean;
+}) => ({
+  activeBorder: `color-mix(in srgb, ${accent} ${isDark ? 44 : 34}%, ${border})`,
+  activeShadow: isDark
+    ? `0 16px 30px -24px color-mix(in srgb, ${accent} 42%, rgba(5,8,18,0.72))`
+    : `0 14px 26px -22px color-mix(in srgb, ${accent} 30%, rgba(47,59,82,0.28))`,
+});
+
+const resolveLanguageMenuPalette = (
+  kangurAppearance: KangurAppearanceValue
+): KangurLanguageMenuPalette => {
+  const { accent, background, border, pageBackground, text } =
+    resolveLanguageMenuBaseColors(kangurAppearance);
+  const isDark = Boolean(kangurAppearance.theme.darkMode);
+  const surface = resolveLanguageMenuSurface({
+    accent,
+    background,
+    isDark,
+    pageBackground,
+  });
+  const activeTone = resolveLanguageMenuActiveTone({
+    accent,
+    border,
+    isDark,
+  });
 
   return {
+    ...activeTone,
+    ...surface,
     background,
     border,
+    shadow: resolveLanguageMenuShadow(kangurAppearance),
     text,
-    innerBackground: `color-mix(in srgb, ${background} ${isDark ? 92 : 97}%, ${pageBackground})`,
-    hoverBackground: `linear-gradient(180deg, color-mix(in srgb, ${accent} ${isDark ? 16 : 12}%, ${background}) 0%, color-mix(in srgb, ${accent} ${isDark ? 10 : 8}%, ${pageBackground}) 100%)`,
-    activeBackground: `linear-gradient(180deg, color-mix(in srgb, ${accent} ${isDark ? 28 : 20}%, ${background}) 0%, color-mix(in srgb, ${accent} ${isDark ? 18 : 14}%, ${pageBackground}) 100%)`,
-    activeBorder: `color-mix(in srgb, ${accent} ${isDark ? 44 : 34}%, ${border})`,
-    activeShadow: isDark
-      ? `0 16px 30px -24px color-mix(in srgb, ${accent} 42%, rgba(5,8,18,0.72))`
-      : `0 14px 26px -22px color-mix(in srgb, ${accent} 30%, rgba(47,59,82,0.28))`,
-    shadow: `0 ${shadowY}px ${shadowBlur}px -${Math.round(shadowBlur * 0.42)} ${shadowColor}`,
   };
+};
+
+const resolveCurrentKangurLanguagePathname = ({
+  basePath,
+  currentPage,
+  forceFallbackPath,
+  frontendPublicOwner,
+  pathname,
+}: {
+  basePath: string;
+  currentPage: KangurLanguageSwitcherProps['currentPage'];
+  forceFallbackPath: boolean;
+  frontendPublicOwner: ReturnType<typeof useOptionalFrontendPublicOwner>;
+  pathname: string | null;
+}): string => {
+  const fallbackPath = buildCurrentPageFallbackPath(currentPage, basePath);
+  const rawCurrentPathname = forceFallbackPath ? fallbackPath : pathname?.trim() || fallbackPath;
+  return frontendPublicOwner?.publicOwner === 'kangur'
+    ? canonicalizeKangurPublicAliasPathname(rawCurrentPathname)
+    : rawCurrentPathname;
+};
+
+const resolveKangurLanguageSearch = (
+  searchParams: ReturnType<typeof useSearchParams>
+): string => searchParams?.toString() ?? '';
+
+const resolveCurrentHash = (): string =>
+  typeof window === 'undefined' ? '' : window.location.hash;
+
+const buildKangurLanguageLocaleOptions = ({
+  currentHash,
+  currentPathname,
+  search,
+}: {
+  currentHash: string;
+  currentPathname: string;
+  search: string;
+}): KangurLanguageOption[] =>
+  ENABLED_LOCALES.map((entry) => {
+    const code = normalizeSiteLocale(entry.code);
+    return {
+      code,
+      href: buildLocalizedHref({
+        hash: currentHash,
+        locale: code,
+        pathname: currentPathname,
+        search,
+      }),
+      label: entry.label,
+      nativeLabel: entry.nativeLabel,
+    };
+  });
+
+const resolveTransitionPendingLocale = (
+  routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>
+): string | null => {
+  if (
+    routeTransitionState?.activeTransitionKind !== 'locale-switch' ||
+    routeTransitionState.activeTransitionSourceId !== LANGUAGE_SWITCHER_SOURCE_ID
+  ) {
+    return null;
+  }
+
+  return resolveLocaleFromHref(routeTransitionState.activeTransitionRequestedHref);
+};
+
+const resolveSelectedLocale = ({
+  currentLocale,
+  optimisticPendingLocale,
+  transitionPendingLocale,
+}: {
+  currentLocale: string;
+  optimisticPendingLocale: string | null;
+  transitionPendingLocale: string | null;
+}): string => optimisticPendingLocale ?? transitionPendingLocale ?? currentLocale;
+
+const resolveCurrentLocaleEntry = (
+  selectedLocale: string
+): (typeof ENABLED_LOCALES)[number] =>
+  ENABLED_LOCALES.find((entry) => normalizeSiteLocale(entry.code) === selectedLocale) ??
+  ENABLED_LOCALES[0]!;
+
+const buildLanguageMenuStyle = (palette: KangurLanguageMenuPalette): KangurLanguageMenuStyle => ({
+  '--kangur-language-menu-active-bg': palette.activeBackground,
+  '--kangur-language-menu-active-border': palette.activeBorder,
+  '--kangur-language-menu-active-shadow': palette.activeShadow,
+  '--kangur-language-menu-bg': palette.background,
+  '--kangur-language-menu-border': palette.border,
+  '--kangur-language-menu-hover-bg': palette.hoverBackground,
+  '--kangur-language-menu-inner-bg': palette.innerBackground,
+  '--kangur-language-menu-shadow': palette.shadow,
+  '--kangur-language-menu-text': palette.text,
+});
+
+const resolveKangurLanguageSwitcherText = ({
+  selectedLocale,
+  translations,
+}: {
+  selectedLocale: string;
+  translations: ReturnType<typeof useTranslations<'KangurNavigation'>>;
+}): KangurLanguageSwitcherText => {
+  const currentLocaleEntry = resolveCurrentLocaleEntry(selectedLocale);
+  const currentLanguageLabel = currentLocaleEntry?.nativeLabel ?? selectedLocale.toUpperCase();
+
+  return {
+    currentLanguageLabel,
+    triggerAriaLabel: translations('languageSwitcher.triggerAriaLabel', {
+      language: currentLanguageLabel,
+    }),
+    triggerTitle: translations('languageSwitcher.triggerTitle', {
+      language: currentLanguageLabel,
+    }),
+  };
+};
+
+const resolveKangurLanguageActionClassName = (
+  isCoarsePointer: boolean,
+  kind: KangurLanguageActionClassNameKind
+): string | null => {
+  if (!isCoarsePointer) {
+    return null;
+  }
+
+  return kind === 'trigger'
+    ? 'min-h-12 px-4 touch-manipulation select-none active:scale-[0.985]'
+    : 'min-h-[3.75rem] touch-manipulation select-none active:scale-[0.985]';
+};
+
+const shouldHideKangurLanguageSwitcher = (basePath: string): boolean =>
+  ENABLED_LOCALES.length < 2 || isKangurEmbeddedBasePath(basePath);
+
+const resolveKangurPendingLocale = ({
+  optimisticPendingLocale,
+  transitionPendingLocale,
+}: {
+  optimisticPendingLocale: string | null;
+  transitionPendingLocale: string | null;
+}): string | null => optimisticPendingLocale ?? transitionPendingLocale;
+
+const shouldClearOptimisticPendingLocale = ({
+  currentLocale,
+  optimisticPendingLocale,
+  transitionPendingLocale,
+}: {
+  currentLocale: string;
+  optimisticPendingLocale: string | null;
+  transitionPendingLocale: string | null;
+}): boolean =>
+  Boolean(optimisticPendingLocale) &&
+  (optimisticPendingLocale === currentLocale ||
+    optimisticPendingLocale === transitionPendingLocale);
+
+const resolveTargetLanguageOption = ({
+  isPending,
+  localeOptions,
+  nextLocale,
+  selectedLocale,
+}: Pick<
+  KangurLocaleSwitchSelectionInput,
+  'isPending' | 'localeOptions' | 'nextLocale' | 'selectedLocale'
+>): KangurLanguageOption | null => {
+  if (isPending || nextLocale === selectedLocale) {
+    return null;
+  }
+
+  return localeOptions.find((option) => option.code === nextLocale) ?? null;
+};
+
+const resolveKangurLanguageTriggerClassName = ({
+  className,
+  isCoarsePointer,
+  isPending,
+}: {
+  className?: string;
+  isCoarsePointer: boolean;
+  isPending: boolean;
+}): string =>
+  [
+    'min-w-[8.75rem] max-w-full shrink-0 justify-start gap-2 overflow-hidden px-3 text-left',
+    resolveKangurLanguageActionClassName(isCoarsePointer, 'trigger'),
+    isPending ? 'pointer-events-none opacity-70' : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+const resolveKangurLanguageMenuContentStyle = (menuStyle: CSSProperties): CSSProperties => ({
+  ...menuStyle,
+  background: 'var(--kangur-language-menu-bg)',
+  borderColor: 'var(--kangur-language-menu-border)',
+  boxShadow: 'var(--kangur-language-menu-shadow)',
+  color: 'var(--kangur-language-menu-text)',
+  overflow: 'hidden',
+});
+
+const KangurLanguageSwitcherTriggerIcon = ({
+  isPending,
+}: {
+  isPending: boolean;
+}): React.JSX.Element =>
+  isPending ? (
+    <span
+      aria-hidden='true'
+      className='inline-flex h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent'
+    />
+  ) : (
+    <ChevronDown
+      aria-hidden='true'
+      className='h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 data-[state=open]:rotate-180'
+    />
+  );
+
+const KangurLanguageSwitcherMenu = ({
+  currentPage,
+  isCoarsePointer,
+  isPending,
+  localeOptions,
+  menuStyle,
+  routeNavigator,
+  selectedLocale,
+  setAnnouncement,
+  setOpen,
+  setOptimisticPendingLocale,
+}: KangurLanguageSwitcherMenuProps): React.JSX.Element => (
+  <DropdownMenuContent
+    align='end'
+    className='w-fit max-w-[calc(100vw-1rem)] overflow-hidden rounded-[26px] border p-2'
+    data-testid='kangur-language-switcher-menu'
+    sideOffset={10}
+    style={resolveKangurLanguageMenuContentStyle(menuStyle)}
+  >
+    <div
+      className='rounded-[20px] p-1'
+      data-testid='kangur-language-switcher-menu-container'
+      style={{
+        background: 'var(--kangur-language-menu-inner-bg)',
+      }}
+    >
+      <DropdownMenuRadioGroup
+        className='flex flex-col gap-1.5'
+        data-testid='kangur-language-switcher-options'
+        onValueChange={(nextLocale) =>
+          handleKangurLanguageSelection({
+            currentPage,
+            isPending,
+            localeOptions,
+            nextLocale,
+            routeNavigator,
+            selectedLocale,
+            setAnnouncement,
+            setOpen,
+            setOptimisticPendingLocale,
+          })
+        }
+        value={selectedLocale}
+      >
+        {localeOptions.map((option) => {
+          const optionActionClassName = resolveKangurLanguageActionClassName(
+            isCoarsePointer,
+            'option'
+          );
+
+          return (
+            <DropdownMenuRadioItem
+              className={[
+                'relative min-h-[3.1rem] cursor-pointer rounded-[18px] border border-transparent py-2.5 pl-3.5 pr-3.5 text-left outline-none transition-[background,border-color,box-shadow] duration-200 [color:var(--kangur-language-menu-text)] hover:[background:var(--kangur-language-menu-hover-bg)] focus:[background:var(--kangur-language-menu-hover-bg)] data-[highlighted]:[background:var(--kangur-language-menu-hover-bg)] data-[highlighted]:[color:var(--kangur-language-menu-text)] data-[state=checked]:cursor-default data-[state=checked]:[background:var(--kangur-language-menu-active-bg)] data-[state=checked]:[border-color:var(--kangur-language-menu-active-border)] data-[state=checked]:[box-shadow:var(--kangur-language-menu-active-shadow)] data-[state=checked]:[color:var(--kangur-language-menu-text)] [&>span:first-child]:hidden',
+                optionActionClassName,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              data-testid={`kangur-language-switcher-option-${option.code}`}
+              disabled={isPending}
+              key={option.code}
+              value={option.code}
+            >
+              <div className='flex min-w-0 items-center gap-3'>
+                <span
+                  aria-hidden='true'
+                  className='inline-flex h-5 w-7 shrink-0 items-center justify-center overflow-hidden rounded-[7px] border [border-color:color-mix(in_srgb,var(--kangur-language-menu-border)_76%,transparent)] [background:color-mix(in_srgb,var(--kangur-language-menu-bg)_78%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]'
+                >
+                  <KangurLocaleFlag className='h-full w-full' locale={option.code} />
+                </span>
+                <span
+                  className='min-w-0 flex-1 truncate text-sm font-semibold'
+                  style={{ color: 'var(--kangur-language-menu-text)' }}
+                >
+                  {option.nativeLabel}
+                </span>
+              </div>
+            </DropdownMenuRadioItem>
+          );
+        })}
+      </DropdownMenuRadioGroup>
+    </div>
+  </DropdownMenuContent>
+);
+
+const handleKangurLanguageSelection = ({
+  currentPage,
+  isPending,
+  localeOptions,
+  nextLocale,
+  routeNavigator,
+  selectedLocale,
+  setAnnouncement,
+  setOpen,
+  setOptimisticPendingLocale,
+}: KangurLocaleSwitchSelectionInput): void => {
+  const target = resolveTargetLanguageOption({
+    isPending,
+    localeOptions,
+    nextLocale,
+    selectedLocale,
+  });
+
+  setOpen(false);
+  if (!target) {
+    return;
+  }
+
+  setAnnouncement(`${target.nativeLabel}…`);
+  setClientCookie(DEFAULT_SITE_I18N_CONFIG.cookieName, target.code, {
+    maxAgeSeconds: LANGUAGE_COOKIE_MAX_AGE_SECONDS,
+    path: '/',
+    sameSite: 'Lax',
+  });
+  setOptimisticPendingLocale(target.code);
+
+  routeNavigator.replace(target.href, {
+    pageKey: currentPage,
+    scroll: false,
+    sourceId: LANGUAGE_SWITCHER_SOURCE_ID,
+    transitionKind: 'locale-switch',
+  });
 };
 
 export function KangurLanguageSwitcher({
   basePath,
   className,
   currentPage,
+  forceFallbackPath = false,
 }: KangurLanguageSwitcherProps): React.JSX.Element | null {
   const locale = useLocale();
   const translations = useTranslations('KangurNavigation');
@@ -265,23 +705,20 @@ export function KangurLanguageSwitcher({
   const routeNavigator = useKangurRouteNavigator();
   const frontendPublicOwner = useOptionalFrontendPublicOwner();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
-  const queryClient = useContext(QueryClientContext);
   const [open, setOpen] = useState(false);
   const [announcement, setAnnouncement] = useState<string | null>(null);
-  const [hardNavigationPendingLocale, setHardNavigationPendingLocale] = useState<string | null>(null);
-  const warmedLocaleCodesRef = useRef<Set<string>>(new Set());
-  const hardNavigationRecoveryTimeoutRef = useRef<number | null>(null);
-  const hardNavigationCommittedRef = useRef(false);
+  const [optimisticPendingLocale, setOptimisticPendingLocale] = useState<string | null>(null);
 
   const currentLocale = normalizeSiteLocale(locale);
-  const search = searchParams?.toString() ?? '';
-  const fallbackPath = buildCurrentPageFallbackPath(currentPage, basePath);
-  const rawCurrentPathname = pathname?.trim() || fallbackPath;
-  const currentPathname =
-    frontendPublicOwner?.publicOwner === 'kangur'
-      ? canonicalizeKangurPublicAliasPath(rawCurrentPathname)
-      : rawCurrentPathname;
-  const currentHash = typeof window === 'undefined' ? '' : window.location.hash;
+  const search = resolveKangurLanguageSearch(searchParams);
+  const currentPathname = resolveCurrentKangurLanguagePathname({
+    basePath,
+    currentPage,
+    forceFallbackPath,
+    frontendPublicOwner,
+    pathname,
+  });
+  const currentHash = resolveCurrentHash();
 
   const palette = useMemo(
     () => resolveLanguageMenuPalette(kangurAppearance),
@@ -289,146 +726,52 @@ export function KangurLanguageSwitcher({
   );
   const localeOptions = useMemo(
     () =>
-      ENABLED_LOCALES.map((entry) => {
-        const code = normalizeSiteLocale(entry.code);
-        return {
-          code,
-          href: buildLocalizedHref({
-            hash: currentHash,
-            locale: code,
-            pathname: currentPathname,
-            search,
-          }),
-          label: entry.label,
-          nativeLabel: entry.nativeLabel,
-        };
+      buildKangurLanguageLocaleOptions({
+        currentHash,
+        currentPathname,
+        search,
       }),
     [currentHash, currentPathname, search]
   );
 
-  const transitionPendingLocale = useMemo(() => {
-    if (
-      routeTransitionState?.activeTransitionKind !== 'locale-switch' ||
-      routeTransitionState.activeTransitionSourceId !== LANGUAGE_SWITCHER_SOURCE_ID
-    ) {
-      return null;
-    }
-
-    return resolveLocaleFromHref(routeTransitionState.activeTransitionRequestedHref);
-  }, [
+  const transitionPendingLocale = useMemo(() => resolveTransitionPendingLocale(routeTransitionState), [
     routeTransitionState?.activeTransitionKind,
     routeTransitionState?.activeTransitionRequestedHref,
     routeTransitionState?.activeTransitionSourceId,
   ]);
 
-  const clearHardNavigationRecoveryTimeout = useCallback((): void => {
-    if (hardNavigationRecoveryTimeoutRef.current === null || typeof window === 'undefined') {
-      return;
+  const pendingLocale = resolveKangurPendingLocale({
+    optimisticPendingLocale,
+    transitionPendingLocale,
+  });
+  const selectedLocale = resolveSelectedLocale({
+    currentLocale,
+    optimisticPendingLocale,
+    transitionPendingLocale,
+  });
+
+  useEffect(() => {
+    if (
+      shouldClearOptimisticPendingLocale({
+        currentLocale,
+        optimisticPendingLocale,
+        transitionPendingLocale,
+      })
+    ) {
+      setOptimisticPendingLocale(null);
     }
+  }, [currentLocale, optimisticPendingLocale, transitionPendingLocale]);
 
-    window.clearTimeout(hardNavigationRecoveryTimeoutRef.current);
-    hardNavigationRecoveryTimeoutRef.current = null;
-  }, []);
-
-  const pendingLocale = hardNavigationPendingLocale ?? transitionPendingLocale;
-  const selectedLocale = pendingLocale ?? currentLocale;
-
-  useEffect(() => {
-    warmedLocaleCodesRef.current.clear();
-  }, [currentHash, currentPage, currentPathname, search]);
-
-  useEffect(() => {
-    if (!hardNavigationPendingLocale || hardNavigationPendingLocale !== currentLocale) {
-      return;
-    }
-
-    clearHardNavigationRecoveryTimeout();
-    setHardNavigationPendingLocale(null);
-  }, [clearHardNavigationRecoveryTimeout, currentLocale, hardNavigationPendingLocale]);
-
-  useEffect(() => {
-    return () => {
-      clearHardNavigationRecoveryTimeout();
-    };
-  }, [clearHardNavigationRecoveryTimeout]);
-
-  useEffect(() => {
-    if (!hardNavigationPendingLocale) {
-      hardNavigationCommittedRef.current = false;
-      return;
-    }
-
-    const onBeforeUnload = (): void => {
-      hardNavigationCommittedRef.current = true;
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload);
-    };
-  }, [hardNavigationPendingLocale]);
-
-  const warmLocaleTarget = useCallback(
-    (targetLocaleCode: string): void => {
-      if (targetLocaleCode === selectedLocale) {
-        return;
-      }
-
-      if (warmedLocaleCodesRef.current.has(targetLocaleCode)) {
-        return;
-      }
-
-      const target = localeOptions.find((option) => option.code === targetLocaleCode);
-      if (!target) {
-        return;
-      }
-
-      warmedLocaleCodesRef.current.add(targetLocaleCode);
-      routeNavigator.prefetch(target.href);
-      void prefetchKangurPageContentStore(queryClient, targetLocaleCode);
-    },
-    [localeOptions, queryClient, routeNavigator, selectedLocale]
-  );
-
-  useEffect(() => {
-    if (!open || currentLocale === DEFAULT_SITE_LOCALE) {
-      return;
-    }
-
-    warmLocaleTarget(DEFAULT_SITE_LOCALE);
-  }, [currentLocale, open, warmLocaleTarget]);
-
-  if (ENABLED_LOCALES.length < 2 || isKangurEmbeddedBasePath(basePath)) {
+  if (shouldHideKangurLanguageSwitcher(basePath)) {
     return null;
   }
 
-  const currentLocaleEntry =
-    ENABLED_LOCALES.find((entry) => normalizeSiteLocale(entry.code) === selectedLocale) ??
-    ENABLED_LOCALES[0];
-
-  const menuStyle = {
-    '--kangur-language-menu-active-bg': palette.activeBackground,
-    '--kangur-language-menu-active-border': palette.activeBorder,
-    '--kangur-language-menu-active-shadow': palette.activeShadow,
-    '--kangur-language-menu-bg': palette.background,
-    '--kangur-language-menu-border': palette.border,
-    '--kangur-language-menu-hover-bg': palette.hoverBackground,
-    '--kangur-language-menu-inner-bg': palette.innerBackground,
-    '--kangur-language-menu-shadow': palette.shadow,
-    '--kangur-language-menu-text': palette.text,
-  } as CSSProperties;
-  const currentLanguageLabel = currentLocaleEntry?.nativeLabel ?? selectedLocale.toUpperCase();
-  const triggerAriaLabel = translations('languageSwitcher.triggerAriaLabel', {
-    language: currentLanguageLabel,
-  });
-  const triggerTitle = translations('languageSwitcher.triggerTitle', {
-    language: currentLanguageLabel,
-  });
-  const triggerActionClassName = isCoarsePointer
-    ? 'min-h-12 px-4 touch-manipulation select-none active:scale-[0.985]'
-    : null;
-  const optionActionClassName = isCoarsePointer
-    ? 'min-h-[3.75rem] touch-manipulation select-none active:scale-[0.985]'
-    : null;
+  const menuStyle = buildLanguageMenuStyle(palette);
+  const { currentLanguageLabel, triggerAriaLabel, triggerTitle } =
+    resolveKangurLanguageSwitcherText({
+      selectedLocale,
+      translations,
+    });
   const isPending = pendingLocale !== null;
 
   return (
@@ -436,14 +779,11 @@ export function KangurLanguageSwitcher({
       <DropdownMenuTrigger asChild disabled={isPending}>
         <KangurButton
           aria-label={triggerAriaLabel}
-          className={[
-            'min-w-[8.75rem] max-w-full shrink-0 justify-start gap-2 overflow-hidden px-3 text-left',
-            triggerActionClassName,
-            isPending ? 'pointer-events-none opacity-70' : null,
+          className={resolveKangurLanguageTriggerClassName({
             className,
-          ]
-            .filter(Boolean)
-            .join(' ')}
+            isCoarsePointer,
+            isPending,
+          })}
           data-testid='kangur-language-switcher-trigger'
           disabled={isPending}
           title={triggerTitle}
@@ -459,132 +799,21 @@ export function KangurLanguageSwitcher({
           <span className='min-w-0 flex-1 truncate text-sm font-semibold'>
             {currentLanguageLabel}
           </span>
-          {isPending ? (
-            <span
-              aria-hidden='true'
-              className='inline-flex h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent'
-            />
-          ) : (
-            <ChevronDown
-              aria-hidden='true'
-              className='h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 data-[state=open]:rotate-180'
-            />
-          )}
+          <KangurLanguageSwitcherTriggerIcon isPending={isPending} />
         </KangurButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align='end'
-        className='w-fit max-w-[calc(100vw-1rem)] overflow-hidden rounded-[26px] border p-2'
-        data-testid='kangur-language-switcher-menu'
-        sideOffset={10}
-        style={{
-          ...menuStyle,
-          background: 'var(--kangur-language-menu-bg)',
-          borderColor: 'var(--kangur-language-menu-border)',
-          boxShadow: 'var(--kangur-language-menu-shadow)',
-          color: 'var(--kangur-language-menu-text)',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          className='rounded-[20px] p-1'
-          data-testid='kangur-language-switcher-menu-container'
-          style={{
-            background: 'var(--kangur-language-menu-inner-bg)',
-          }}
-        >
-          <DropdownMenuRadioGroup
-            className='flex flex-col gap-1.5'
-            data-testid='kangur-language-switcher-options'
-            onValueChange={(nextLocale) => {
-              if (isPending || nextLocale === selectedLocale) {
-                setOpen(false);
-                return;
-              }
-
-              const target = localeOptions.find((option) => option.code === nextLocale);
-              if (!target) {
-                setOpen(false);
-                return;
-              }
-
-              setOpen(false);
-              setAnnouncement(`${target.nativeLabel}…`);
-              warmLocaleTarget(target.code);
-              setClientCookie(DEFAULT_SITE_I18N_CONFIG.cookieName, target.code, {
-                maxAgeSeconds: LANGUAGE_COOKIE_MAX_AGE_SECONDS,
-                path: '/',
-                sameSite: 'Lax',
-              });
-
-              if (typeof window !== 'undefined' && typeof window.location.assign === 'function') {
-                hardNavigationCommittedRef.current = false;
-                clearHardNavigationRecoveryTimeout();
-                setHardNavigationPendingLocale(target.code);
-                hardNavigationRecoveryTimeoutRef.current = window.setTimeout(() => {
-                  hardNavigationRecoveryTimeoutRef.current = null;
-                  // If the browser has committed to unloading (beforeunload fired),
-                  // the navigation is in progress — do NOT clear the pending state.
-                  if (hardNavigationCommittedRef.current) return;
-                  setHardNavigationPendingLocale((currentPendingLocale) =>
-                    currentPendingLocale === target.code ? null : currentPendingLocale
-                  );
-                }, HARD_NAVIGATION_RECOVERY_TIMEOUT_MS);
-
-                try {
-                  window.location.assign(target.href);
-                  return;
-                } catch {
-                  clearHardNavigationRecoveryTimeout();
-                  setHardNavigationPendingLocale(null);
-                }
-              }
-
-              routeNavigator.replace(target.href, {
-                pageKey: currentPage,
-                scroll: false,
-                sourceId: LANGUAGE_SWITCHER_SOURCE_ID,
-                transitionKind: 'locale-switch',
-              });
-            }}
-            value={selectedLocale}
-          >
-            {localeOptions.map((option) => {
-              return (
-                <DropdownMenuRadioItem
-                  className={[
-                    'relative min-h-[3.1rem] cursor-pointer rounded-[18px] border border-transparent py-2.5 pl-3.5 pr-3.5 text-left outline-none transition-[background,border-color,box-shadow] duration-200 [color:var(--kangur-language-menu-text)] hover:[background:var(--kangur-language-menu-hover-bg)] focus:[background:var(--kangur-language-menu-hover-bg)] data-[highlighted]:[background:var(--kangur-language-menu-hover-bg)] data-[highlighted]:[color:var(--kangur-language-menu-text)] data-[state=checked]:cursor-default data-[state=checked]:[background:var(--kangur-language-menu-active-bg)] data-[state=checked]:[border-color:var(--kangur-language-menu-active-border)] data-[state=checked]:[box-shadow:var(--kangur-language-menu-active-shadow)] data-[state=checked]:[color:var(--kangur-language-menu-text)] [&>span:first-child]:hidden',
-                    optionActionClassName,
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  data-testid={`kangur-language-switcher-option-${option.code}`}
-                  disabled={isPending}
-                  key={option.code}
-                  onFocus={() => warmLocaleTarget(option.code)}
-                  onMouseEnter={() => warmLocaleTarget(option.code)}
-                  value={option.code}
-                >
-                  <div className='flex min-w-0 items-center gap-3'>
-                    <span
-                      aria-hidden='true'
-                      className='inline-flex h-5 w-7 shrink-0 items-center justify-center overflow-hidden rounded-[7px] border [border-color:color-mix(in_srgb,var(--kangur-language-menu-border)_76%,transparent)] [background:color-mix(in_srgb,var(--kangur-language-menu-bg)_78%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]'
-                    >
-                      <KangurLocaleFlag className='h-full w-full' locale={option.code} />
-                    </span>
-                    <span
-                      className='min-w-0 flex-1 truncate text-sm font-semibold'
-                      style={{ color: 'var(--kangur-language-menu-text)' }}
-                    >
-                      {option.nativeLabel}
-                    </span>
-                  </div>
-                </DropdownMenuRadioItem>
-              );
-            })}
-          </DropdownMenuRadioGroup>
-        </div>
-      </DropdownMenuContent>
+      <KangurLanguageSwitcherMenu
+        currentPage={currentPage}
+        isCoarsePointer={isCoarsePointer}
+        isPending={isPending}
+        localeOptions={localeOptions}
+        menuStyle={menuStyle}
+        routeNavigator={routeNavigator}
+        selectedLocale={selectedLocale}
+        setAnnouncement={setAnnouncement}
+        setOpen={setOpen}
+        setOptimisticPendingLocale={setOptimisticPendingLocale}
+      />
       <span
         aria-atomic='true'
         aria-live='assertive'

@@ -96,6 +96,7 @@ export const aiPathsValidationOperatorSchema = z.enum([
   'node_ids_unique',
   'edge_ids_unique',
   'node_positions_finite',
+  'tooltip_exists',
 ]);
 export type AiPathsValidationOperator = z.infer<typeof aiPathsValidationOperatorSchema>;
 

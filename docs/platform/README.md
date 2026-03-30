@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'platform'
@@ -9,7 +9,7 @@ canonical: true
 
 # Platform Documentation
 
-This directory is the future home for stable cross-cutting platform docs:
+This directory is the canonical home for stable cross-cutting platform docs:
 
 - architecture guides
 - shared engineering patterns
@@ -21,6 +21,11 @@ This directory is the future home for stable cross-cutting platform docs:
 
 New cross-cutting platform docs should land here instead of directly under
 `docs/`.
+
+For repo-level entrypoints, use [`README.md`](../../README.md),
+[`docs/README.md`](../README.md), and [`GEMINI.md`](../../GEMINI.md). This
+folder is for stable cross-cutting platform guidance, not the general repo
+onramp.
 
 ## Current Docs
 
@@ -36,9 +41,15 @@ New cross-cutting platform docs should land here instead of directly under
 
 ### Developer Resources
 - [`developer-handbook.md`](./developer-handbook.md)
+- [`testing-policy.md`](./testing-policy.md)
 - [`tooltip-documentation-platform.md`](./tooltip-documentation-platform.md)
 - [`migration-checklist.md`](./migration-checklist.md)
 - [`bun-support.md`](./bun-support.md)
+
+### Scan Reports
+- [`repo-deep-scan-2026-03-25.md`](./repo-deep-scan-2026-03-25.md) — dated
+  repository scan and remediation snapshot; use `GEMINI.md` for the current
+  high-level architecture reference
 
 ## Root Compatibility Stubs
 

@@ -1,7 +1,5 @@
-import {
-  KANGUR_BADGES,
-  getLocalizedKangurMetadataBadgeName,
-} from '@kangur/core';
+import { KANGUR_BADGES } from '@kangur/core';
+import { getLocalizedKangurMetadataBadgeName } from '@kangur/core';
 import { useMemo } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';

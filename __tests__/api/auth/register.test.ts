@@ -57,6 +57,11 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
+const buildRegisterRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 
 describe('Auth Register API', () => {
   beforeEach(() => {
@@ -88,10 +93,7 @@ describe('Auth Register API', () => {
     };
 
     const res = await POST(
-      new NextRequest('http://localhost/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      })
+      buildRegisterRequest(payload)
     );
 
     const data = (await res.json()) as { id: string; email: string };
@@ -109,10 +111,7 @@ describe('Auth Register API', () => {
     };
 
     const res = await POST(
-      new NextRequest('http://localhost/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      })
+      buildRegisterRequest(payload)
     );
 
     expect(res.status).toEqual(409);
@@ -132,10 +131,7 @@ describe('Auth Register API', () => {
     };
 
     const res = await POST(
-      new NextRequest('http://localhost/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      })
+      buildRegisterRequest(payload)
     );
 
     expect(res.status).toEqual(403);
@@ -150,10 +146,7 @@ describe('Auth Register API', () => {
     };
 
     const res = await POST(
-      new NextRequest('http://localhost/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      })
+      buildRegisterRequest(payload)
     );
 
     expect(res.status).toEqual(400);

@@ -1,5 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { captureExceptionMock } = vi.hoisted(() => ({
+  captureExceptionMock: vi.fn(),
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
+}));
+
 import { getNeo4jConfig, isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 import { pingNeo4j, runNeo4jStatements } from '@/shared/lib/neo4j/client';
 
@@ -9,6 +19,7 @@ describe('neo4j config and client', () => {
   beforeEach(() => {
     process.env = { ...ORIGINAL_ENV };
     vi.restoreAllMocks();
+    captureExceptionMock.mockReset();
   });
 
   afterEach(() => {

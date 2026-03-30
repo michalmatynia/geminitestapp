@@ -1,5 +1,6 @@
 'use client';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
@@ -8,10 +9,11 @@ import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
 } from '@/features/kangur/ui/components/KangurDragDropContext';
+import { getKangurCheckButtonClassName } from '@/features/kangur/ui/components/KangurCheckButton';
 
 import {
   KangurPracticeGameProgress,
-  KangurPracticeGameStage,
+  KangurPracticeGameShell,
   KangurPracticeGameSummary,
   KangurPracticeGameSummaryActions,
   KangurPracticeGameSummaryBreakdown,
@@ -60,13 +62,11 @@ import {
   type LogicalAnalogyRelationRound,
   type LogicalAnalogyRelationToken,
 } from './logical-analogies-game-data';
+import type { MultiSlottedRoundStateDto } from './round-state-contracts';
 
 import type { DropResult } from '@hello-pangea/dnd';
 
-type RoundState = {
-  pool: LogicalAnalogyRelationToken[];
-  slots: Record<string, LogicalAnalogyRelationToken[]>;
-};
+type RoundState = MultiSlottedRoundStateDto<LogicalAnalogyRelationToken>;
 
 const TOTAL_ROUNDS = Math.max(LOGICAL_ANALOGIES_RELATION_ROUNDS.length, 1);
 const TOTAL_TARGETS = LOGICAL_ANALOGIES_RELATION_ROUNDS.reduce(
@@ -88,7 +88,7 @@ const buildRoundState = (
   relationTokensById: Record<LogicalAnalogyRelationId, LogicalAnalogyRelationToken>
 ): RoundState => {
   const pool = shuffle(round.relationIds.map((relationId) => relationTokensById[relationId]));
-  const slots = round.targets.reduce<Record<string, LogicalAnalogyRelationToken[]>>((acc, target) => {
+  const slots = round.targets.reduce<RoundState['slots']>((acc, target) => {
     acc[target.id] = [];
     return acc;
   }, {});
@@ -144,7 +144,14 @@ export default function LogicalAnalogiesRelationGame({
   finishLabel,
   onFinish,
 }: KangurMiniGameFinishProps): React.JSX.Element {
+  const ownerKey = useKangurProgressOwnerKey();
   const translations = useTranslations('KangurMiniGames');
+  const hasMiniGameMessage =
+    typeof (translations as { has?: unknown }).has === 'function'
+      ? ((translations as { has: (key: string) => boolean }).has.bind(translations) as (
+          key: string,
+        ) => boolean)
+      : undefined;
   const isCoarsePointer = useKangurCoarsePointer();
   const t = (
     key: string,
@@ -157,6 +164,10 @@ export default function LogicalAnalogiesRelationGame({
       fallback,
       values
     );
+  const gameTitle =
+    !hasMiniGameMessage || hasMiniGameMessage('logicalAnalogies.game.title')
+      ? t('title', 'Relationship bridge')
+      : 'Relationship bridge';
   const localizedTokens = useMemo(
     () => getLocalizedLogicalAnalogyRelationTokens(translations),
     [translations]
@@ -279,14 +290,14 @@ export default function LogicalAnalogiesRelationGame({
   const goToNextRound = (): void => {
     if (roundIndex + 1 >= TOTAL_ROUNDS) {
       if (TOTAL_TARGETS > 0) {
-        const progress = loadProgress();
+        const progress = loadProgress({ ownerKey });
         const reward = createLessonPracticeReward(
           progress,
           'logical_analogies',
           score,
           TOTAL_TARGETS
         );
-        addXp(reward.xp, reward.progressUpdates);
+        addXp(reward.xp, reward.progressUpdates, { ownerKey });
         void persistKangurSessionScore({
           operation: 'logical',
           score,
@@ -462,7 +473,7 @@ export default function LogicalAnalogiesRelationGame({
         setHoveredRelationId(null);
       }}
     >
-      <KangurPracticeGameStage className='mx-auto max-w-2xl'>
+      <KangurPracticeGameShell className='mx-auto max-w-2xl'>
         <KangurPracticeGameProgress
           accent='rose'
           currentRound={roundIndex}
@@ -520,7 +531,7 @@ export default function LogicalAnalogiesRelationGame({
         <KangurInfoCard accent='rose' className='w-full' padding='sm' tone='accent'>
           <div className={`${KANGUR_WRAP_CENTER_ROW_CLASSNAME} justify-between`}>
             <div>
-              <p className='text-sm font-bold'>{t('stageTitle', 'Most relacji')}</p>
+              <p className='text-sm font-bold'>{gameTitle}</p>
               <p className='text-xs [color:var(--kangur-page-muted-text)]'>{round.prompt}</p>
             </div>
             <div className={KANGUR_WRAP_CENTER_ROW_CLASSNAME}>
@@ -749,7 +760,6 @@ export default function LogicalAnalogiesRelationGame({
               {roundTargets.map((target) => {
                 const assigned = roundState.slots[target.id]?.[0] ?? null;
                 const isCorrect = assigned?.id === target.relationId;
-                const relationLabel = localizedTokens[target.relationId]?.label;
                 const targetLabelId = `${idPrefix}-${target.id}-label`;
                 const slotHintId = `${idPrefix}-${target.id}-slot-hint`;
                 return (
@@ -854,13 +864,6 @@ export default function LogicalAnalogiesRelationGame({
                             )}
                             {provided.placeholder}
                           </div>
-                          {checked && !isCorrect ? (
-                            <p className='text-[11px] text-rose-600'>
-                              {t('correctRelation', 'Poprawnie: {label}', {
-                                label: relationLabel ?? '',
-                              })}
-                            </p>
-                          ) : null}
                         </KangurAnswerChoiceCard>
                       );
                     }}
@@ -876,26 +879,33 @@ export default function LogicalAnalogiesRelationGame({
             {t('oneToOneHint', 'Każda relacja pasuje tylko do jednej pary.')}
           </p>
           <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            {!checked ? (
-              <KangurButton
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleCheck}
-                disabled={!isRoundComplete}
-              >
-                {t('check', 'Sprawdź')}
-              </KangurButton>
-            ) : (
+            <KangurButton
+              size='sm'
+              type='button'
+              variant='primary'
+              onClick={handleCheck}
+              disabled={checked || !isRoundComplete}
+              className={getKangurCheckButtonClassName(
+                undefined,
+                checked
+                  ? roundCorrect === roundTargets.length
+                    ? 'success'
+                    : 'error'
+                  : null
+              )}
+            >
+              {t('check', 'Sprawdź')}
+            </KangurButton>
+            {checked ? (
               <KangurButton size='sm' type='button' variant='primary' onClick={goToNextRound}>
                 {roundIndex + 1 >= TOTAL_ROUNDS
                   ? t('seeResult', 'Zobacz wynik')
                   : t('next', 'Dalej')}
               </KangurButton>
-            )}
+            ) : null}
           </div>
         </div>
-      </KangurPracticeGameStage>
+      </KangurPracticeGameShell>
     </KangurDragDropContext>
   );
 }

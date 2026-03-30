@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'runbook'
 scope: 'feature:ai-paths'
@@ -8,6 +8,10 @@ canonical: true
 ---
 
 # Portable Engine Receiver Runbook
+
+This is the maintained runbook for the portable-engine remediation receiver
+surface. Pair it with [`overview.md`](./overview.md) and [`reference.md`](./reference.md)
+for the broader AI Paths runtime and operator context.
 
 ## Scope
 

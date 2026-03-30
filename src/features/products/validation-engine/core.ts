@@ -223,6 +223,37 @@ export const isReplacementAllowedForField = (
 };
 
 /**
+ * Validator docs: see docs/validator/function-reference.md#core.ispatternconfiguredforformatterautoapply
+ */
+export const isPatternConfiguredForFormatterAutoApply = ({
+  pattern,
+  fieldName,
+  validationScope,
+}: {
+  pattern: ProductValidationPattern;
+  fieldName: string;
+  validationScope: ProductValidationInstanceScope;
+}): boolean => {
+  if (!pattern.enabled) return false;
+  if (pattern.replacementAutoApply !== true) return false;
+  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
+  if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope)) return false;
+  if (
+    !isPatternReplacementEnabledForValidationScope(
+      pattern.replacementAppliesToScopes,
+      validationScope
+    )
+  ) {
+    return false;
+  }
+  const { target, locale } = resolveFieldTargetAndLocale(fieldName);
+  if (!target) return false;
+  if (pattern.target !== target) return false;
+  if (!isPatternLocaleMatch(pattern.locale, locale)) return false;
+  return isReplacementAllowedForField(pattern, fieldName);
+};
+
+/**
  * Validator docs: see docs/validator/function-reference.md#core.allowspatternexecutionwithoutregexmatch
  */
 export const allowsPatternExecutionWithoutRegexMatch = (

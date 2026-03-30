@@ -100,4 +100,83 @@ describe('pollGraphJob', () => {
     ).rejects.toThrow('AI job was canceled.');
     expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(1);
   });
+
+  it('times out when polling never yields a status', async () => {
+    pollMock.mockResolvedValue({
+      ok: true,
+      data: {
+        status: '',
+      },
+    });
+
+    await expect(pollGraphJob('job-timeout', { intervalMs: 0, maxAttempts: 1 })).rejects.toThrow(
+      'AI job "job-timeout" timed out.'
+    );
+    expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(1);
+  });
+
+  it('stringifies completed object results without a nested result field', async () => {
+    pollMock
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {},
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          status: 'completed',
+          result: { output: 'structured-result' },
+        },
+      });
+
+    await expect(pollGraphJob('job-object-result', { intervalMs: 0, maxAttempts: 2 })).resolves.toBe(
+      '{"output":"structured-result"}'
+    );
+    expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws AbortError immediately when the signal is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      pollGraphJob('job-aborted-before-start', {
+        intervalMs: 0,
+        maxAttempts: 2,
+        signal: controller.signal,
+      })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(vi.mocked(aiJobsApi.poll)).not.toHaveBeenCalled();
+  });
+
+  it('throws AbortError when the signal aborts after a poll failure', async () => {
+    const controller = new AbortController();
+    pollMock.mockImplementationOnce(async () => {
+      controller.abort();
+      throw new Error('network-down');
+    });
+
+    await expect(
+      pollGraphJob('job-aborted-during-retry', {
+        intervalMs: 0,
+        maxAttempts: 2,
+        signal: controller.signal,
+      })
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats the alternate canceled spelling as a terminal failure', async () => {
+    pollMock.mockResolvedValue({
+      ok: true,
+      data: {
+        status: 'canceled',
+      },
+    });
+
+    await expect(
+      pollGraphJob('job-canceled', { intervalMs: 0, maxAttempts: 5 })
+    ).rejects.toThrow('AI job was canceled.');
+    expect(vi.mocked(aiJobsApi.poll)).toHaveBeenCalledTimes(1);
+  });
 });

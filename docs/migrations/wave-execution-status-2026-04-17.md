@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'draft'
 doc_type: 'reference'
 scope: 'cross-feature'
@@ -13,6 +13,10 @@ Draft generated on: 2026-03-05
 Target publication date: 2026-04-17  
 Status: Draft (Wave F stabilization pending)  
 Scope: final publication update for `docs/plans/site-wide-canonical-migration-plan-2026-03-05.md`
+
+This file is the active draft for the April 17 closeout publication. Keep new
+stabilization evidence here or in the dedicated stabilization tracker, not in new
+dated markdown files unless the closeout scope materially changes.
 
 ## Final Summary (Target State)
 

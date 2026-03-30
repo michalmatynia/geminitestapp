@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { DIFFICULTY_CONFIG } from '@kangur/core';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
@@ -68,6 +68,102 @@ const PRIORITY_ORDER = {
 
 const DEFAULT_DIFFICULTY: KangurDifficulty = 'medium';
 
+const resolveAssignmentPriorityRank = (
+  assignment: KangurPracticeAssignment | null
+): number => (assignment ? PRIORITY_ORDER[assignment.priority] : Number.POSITIVE_INFINITY);
+
+const compareOperationPriority = (
+  leftId: KangurOperation,
+  rightId: KangurOperation,
+  priorityAssignmentsByOperation: Partial<Record<KangurOperation, KangurPracticeAssignment>>
+): number => {
+  const leftRank = resolveAssignmentPriorityRank(priorityAssignmentsByOperation[leftId] ?? null);
+  const rightRank = resolveAssignmentPriorityRank(priorityAssignmentsByOperation[rightId] ?? null);
+
+  if (leftRank !== rightRank) {
+    return leftRank - rightRank;
+  }
+
+  return (
+    OPERATIONS.findIndex((operation) => operation.id === leftId) -
+    OPERATIONS.findIndex((operation) => operation.id === rightId)
+  );
+};
+
+const buildDifficultyOption = ({
+  id,
+  difficulty,
+  translations,
+  setDifficulty,
+}: {
+  id: KangurDifficulty;
+  difficulty: KangurDifficulty;
+  translations: ReturnType<typeof useTranslations>;
+  setDifficulty: Dispatch<SetStateAction<KangurDifficulty>>;
+}): KangurDifficultyOption => {
+  const config = DIFFICULTY_CONFIG[id];
+
+  return {
+    displayLabel: `${config.emoji} ${translations(`difficulty.${id}`)}`,
+    id,
+    label: translations(`difficulty.${id}`),
+    metaLabel: translations('difficultyMeta', {
+      seconds: config.timeLimit,
+      range: config.range,
+    }),
+    selected: difficulty === id,
+    select: (): void => {
+      setDifficulty(id);
+    },
+  };
+};
+
+const buildOperationSelectorItem = ({
+  operation,
+  difficulty,
+  onSelect,
+  priorityAssignmentsByOperation,
+  recommendedLabel,
+  recommendedOperation,
+  translations,
+}: {
+  operation: (typeof OPERATIONS)[number];
+  difficulty: KangurDifficulty;
+  onSelect: UseKangurOperationSelectorStateOptions['onSelect'];
+  priorityAssignmentsByOperation: Partial<Record<KangurOperation, KangurPracticeAssignment>>;
+  recommendedLabel: string;
+  recommendedOperation: KangurOperation | null;
+  translations: ReturnType<typeof useTranslations>;
+}): KangurOperationSelectorItem => {
+  const priorityAssignment = priorityAssignmentsByOperation[operation.id] ?? null;
+  const isRecommended = recommendedOperation === operation.id;
+  const operationLabel = translations(`operations.${operation.id}`);
+
+  return {
+    accent: operation.accent,
+    actionLabel: translations('actions.startLesson'),
+    description: priorityAssignment
+      ? `${priorityAssignment.progress.percent}% · ${priorityAssignment.title}`
+      : translations('descriptionNoAssignment'),
+    displayLabel: `${operation.emoji} ${operationLabel}`,
+    emoji: operation.emoji,
+    hasPriorityAssignment: Boolean(priorityAssignment),
+    id: operation.id,
+    isRecommended,
+    label: operationLabel,
+    priority: priorityAssignment?.priority ?? null,
+    priorityLabel: priorityAssignment ? translations(`priority.${priorityAssignment.priority}`) : '',
+    recommendedLabel: isRecommended ? recommendedLabel : '',
+    select: (): void => {
+      onSelect?.(operation.id, difficulty);
+    },
+    statusLabel: priorityAssignment
+      ? translations('status.parentAssignment')
+      : translations('status.freePractice'),
+    subject: operation.subject,
+  };
+};
+
 export const useKangurOperationSelectorState = (
   options: UseKangurOperationSelectorStateOptions = {}
 ) => {
@@ -90,77 +186,29 @@ export const useKangurOperationSelectorState = (
 
   const difficultyOptions = useMemo<KangurDifficultyOption[]>(
     () =>
-      (Object.keys(DIFFICULTY_CONFIG) as KangurDifficulty[]).map((id) => {
-        const config = DIFFICULTY_CONFIG[id];
-        return {
-          displayLabel: `${config.emoji} ${translations(`difficulty.${id}`)}`,
-          id,
-          label: translations(`difficulty.${id}`),
-          metaLabel: translations('difficultyMeta', {
-            seconds: config.timeLimit,
-            range: config.range,
-          }),
-          selected: difficulty === id,
-          select: (): void => {
-            setDifficulty(id);
-          },
-        };
-      }),
+      (Object.keys(DIFFICULTY_CONFIG) as KangurDifficulty[]).map((id) =>
+        buildDifficultyOption({ id, difficulty, translations, setDifficulty })
+      ),
     [difficulty, translations]
   );
 
   const operations = useMemo<KangurOperationSelectorItem[]>(
     () =>
       [...OPERATIONS]
-        .sort((left, right) => {
-          const leftAssignment = priorityAssignmentsByOperation[left.id] ?? null;
-          const rightAssignment = priorityAssignmentsByOperation[right.id] ?? null;
-          const leftRank = leftAssignment
-            ? PRIORITY_ORDER[leftAssignment.priority]
-            : Number.POSITIVE_INFINITY;
-          const rightRank = rightAssignment
-            ? PRIORITY_ORDER[rightAssignment.priority]
-            : Number.POSITIVE_INFINITY;
-
-          if (leftRank !== rightRank) {
-            return leftRank - rightRank;
-          }
-
-          return (
-            OPERATIONS.findIndex((operation) => operation.id === left.id) -
-            OPERATIONS.findIndex((operation) => operation.id === right.id)
-          );
-        })
-        .map((operation) => {
-          const priorityAssignment = priorityAssignmentsByOperation[operation.id] ?? null;
-          const isRecommended = recommendedOperation === operation.id;
-          const operationLabel = translations(`operations.${operation.id}`);
-          return {
-            accent: operation.accent,
-            actionLabel: translations('actions.startLesson'),
-            description: priorityAssignment
-              ? `${priorityAssignment.progress.percent}% · ${priorityAssignment.title}`
-              : translations('descriptionNoAssignment'),
-            displayLabel: `${operation.emoji} ${operationLabel}`,
-            emoji: operation.emoji,
-            hasPriorityAssignment: Boolean(priorityAssignment),
-            id: operation.id,
-            isRecommended,
-            label: operationLabel,
-            priority: priorityAssignment?.priority ?? null,
-            priorityLabel: priorityAssignment
-              ? translations(`priority.${priorityAssignment.priority}`)
-              : '',
-            recommendedLabel: isRecommended ? recommendedLabel : '',
-            select: (): void => {
-              onSelect?.(operation.id, difficulty);
-            },
-            statusLabel: priorityAssignment
-              ? translations('status.parentAssignment')
-              : translations('status.freePractice'),
-            subject: operation.subject,
-          };
-        }),
+        .sort((left, right) =>
+          compareOperationPriority(left.id, right.id, priorityAssignmentsByOperation)
+        )
+        .map((operation) =>
+          buildOperationSelectorItem({
+            operation,
+            difficulty,
+            onSelect,
+            priorityAssignmentsByOperation,
+            recommendedLabel,
+            recommendedOperation,
+            translations,
+          })
+        ),
     [difficulty, onSelect, priorityAssignmentsByOperation, recommendedLabel, recommendedOperation, translations]
   );
 

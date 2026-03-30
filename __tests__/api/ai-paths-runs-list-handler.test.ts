@@ -49,6 +49,24 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const buildScopedRunsListExpectation = (overrides: Record<string, unknown>) =>
+  expect.objectContaining({
+    userId: 'user-1',
+    ...overrides,
+  });
+
+const globalRunsListExpectation = expect.not.objectContaining({
+  userId: expect.any(String),
+});
+
+const statusFreeRunsListExpectation = expect.not.objectContaining({
+  status: expect.any(String),
+});
+
+const sourceModeFreeRunsListExpectation = expect.not.objectContaining({
+  sourceMode: expect.any(String),
+});
+
 describe('AI Paths runs list handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -83,16 +101,13 @@ describe('AI Paths runs list handler', () => {
     const payload = (await response.json()) as AiPathRunListResult;
 
     expect(response.status).toBe(200);
-    expect(listRunsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 'user-1',
-        pathId: 'path-node-filter',
-        nodeId: 'node-42',
-        status: 'failed',
-        limit: 25,
-        offset: 5,
-      })
-    );
+    expect(listRunsMock).toHaveBeenCalledWith(buildScopedRunsListExpectation({
+      pathId: 'path-node-filter',
+      nodeId: 'node-42',
+      status: 'failed',
+      limit: 25,
+      offset: 5,
+    }));
     expect(payload).toEqual({ runs: [], total: 0 });
   });
 
@@ -113,13 +128,13 @@ describe('AI Paths runs list handler', () => {
     expect(listRunsMock).toHaveBeenCalledTimes(2);
     expect(listRunsMock).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({
+      buildScopedRunsListExpectation({
         nodeId: 'node-a',
       })
     );
     expect(listRunsMock).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({
+      buildScopedRunsListExpectation({
         nodeId: 'node-b',
       })
     );
@@ -131,11 +146,7 @@ describe('AI Paths runs list handler', () => {
       mockContext
     );
 
-    expect(listRunsMock).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        status: expect.any(String),
-      })
-    );
+    expect(listRunsMock).toHaveBeenCalledWith(statusFreeRunsListExpectation);
   });
 
   it('forwards source and sourceMode when source is provided', async () => {
@@ -146,14 +157,11 @@ describe('AI Paths runs list handler', () => {
       mockContext
     );
 
-    expect(listRunsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 'user-1',
-        source: 'ai_paths_ui',
-        sourceMode: 'exclude',
-        limit: 50,
-      })
-    );
+    expect(listRunsMock).toHaveBeenCalledWith(buildScopedRunsListExpectation({
+      source: 'ai_paths_ui',
+      sourceMode: 'exclude',
+      limit: 50,
+    }));
   });
 
   it('allows explicit global visibility for users with global run access', async () => {
@@ -164,11 +172,7 @@ describe('AI Paths runs list handler', () => {
       mockContext
     );
 
-    expect(listRunsMock).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        userId: expect.any(String),
-      })
-    );
+    expect(listRunsMock).toHaveBeenCalledWith(globalRunsListExpectation);
   });
 
   it('rejects explicit global visibility without global run access', async () => {
@@ -216,15 +220,11 @@ describe('AI Paths runs list handler', () => {
     expect(listRunsMock).toHaveBeenCalledTimes(2);
     expect(listRunsMock).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({
-        userId: 'user-1',
-      })
+      buildScopedRunsListExpectation({})
     );
     expect(listRunsMock).toHaveBeenNthCalledWith(
       2,
-      expect.not.objectContaining({
-        userId: expect.any(String),
-      })
+      globalRunsListExpectation
     );
   });
 
@@ -234,10 +234,6 @@ describe('AI Paths runs list handler', () => {
       mockContext
     );
 
-    expect(listRunsMock).toHaveBeenCalledWith(
-      expect.not.objectContaining({
-        sourceMode: expect.any(String),
-      })
-    );
+    expect(listRunsMock).toHaveBeenCalledWith(sourceModeFreeRunsListExpectation);
   });
 });

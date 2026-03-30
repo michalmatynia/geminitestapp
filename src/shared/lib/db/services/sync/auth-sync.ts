@@ -10,9 +10,67 @@ import type {
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
+type BatchResult = { count: number };
+
+type UserSeed = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  emailVerified: Date | null;
+  image: string | null;
+  passwordHash: string | null;
+};
+
+type AccountSeed = {
+  id: string;
+  userId: string;
+  type: string;
+  provider: string;
+  providerAccountId: string;
+  refresh_token: string | null;
+  access_token: string | null;
+  expires_at: number | null;
+  token_type: string | null;
+  scope: string | null;
+  id_token: string | null;
+  session_state: string | null;
+};
+
+type SessionSeed = {
+  id: string;
+  sessionToken: string;
+  userId: string;
+  expires: Date;
+};
+
+type VerificationTokenSeed = {
+  identifier: string;
+  token: string;
+  expires: Date;
+};
+
+type AuthSecurityProfileSeed = {
+  id: string;
+  userId: string;
+  mfaEnabled: boolean;
+  mfaSecret: string | null;
+  recoveryCodes: string[];
+  allowedIps: string[];
+  disabledAt: Date | null;
+  bannedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type UserRow = UserSeed;
+type AccountRow = AccountSeed;
+type SessionRow = SessionSeed;
+type VerificationTokenRow = VerificationTokenSeed;
+type AuthSecurityProfileRow = AuthSecurityProfileSeed;
+
 export const syncUsers: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs = (await mongo.collection('users').find({}).toArray()) as MongoUserDoc[];
-  const data: Prisma.UserCreateManyInput[] = docs
+  const data = docs
     .map((doc: MongoUserDoc) => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
@@ -25,10 +83,14 @@ export const syncUsers: DatabaseSyncHandler = async ({ mongo, prisma, normalizeI
         passwordHash: doc.passwordHash ?? null,
       };
     })
-    .filter((item): item is Prisma.UserCreateManyInput => item !== null);
+    .filter((item): item is UserSeed => item !== null);
 
-  const deleted = await prisma.user.deleteMany();
-  const created = data.length ? await prisma.user.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.user.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.user.createMany({
+      data: data as Prisma.UserCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
 
   return {
     sourceCount: data.length,
@@ -39,7 +101,7 @@ export const syncUsers: DatabaseSyncHandler = async ({ mongo, prisma, normalizeI
 
 export const syncAccounts: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId }) => {
   const docs = (await mongo.collection('accounts').find({}).toArray()) as MongoAccountDoc[];
-  const data: Prisma.AccountCreateManyInput[] = docs
+  const data = docs
     .map((doc: MongoAccountDoc) => {
       const id = normalizeId(doc as Record<string, unknown>);
       const userIdRaw = doc.userId;
@@ -60,10 +122,14 @@ export const syncAccounts: DatabaseSyncHandler = async ({ mongo, prisma, normali
         session_state: doc.session_state ?? null,
       };
     })
-    .filter((item): item is Prisma.AccountCreateManyInput => item !== null);
+    .filter((item): item is AccountSeed => item !== null);
 
-  const deleted = await prisma.account.deleteMany();
-  const created = data.length ? await prisma.account.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.account.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.account.createMany({
+      data: data as Prisma.AccountCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -73,7 +139,7 @@ export const syncSessions: DatabaseSyncHandler = async ({ mongo, prisma, normali
     .find({})
     .toArray()) as MongoSessionDoc[];
   const data = docs
-    .map((doc: MongoSessionDoc): Prisma.SessionCreateManyInput | null => {
+    .map((doc: MongoSessionDoc): SessionSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       const userIdRaw = doc.userId;
       const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? '');
@@ -87,10 +153,14 @@ export const syncSessions: DatabaseSyncHandler = async ({ mongo, prisma, normali
         expires,
       };
     })
-    .filter((item): item is Prisma.SessionCreateManyInput => item !== null);
+    .filter((item): item is SessionSeed => item !== null);
 
-  const deleted = await prisma.session.deleteMany();
-  const created = data.length ? await prisma.session.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.session.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.session.createMany({
+      data: data as Prisma.SessionCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -100,17 +170,21 @@ export const syncVerificationTokens: DatabaseSyncHandler = async ({ mongo, prism
     .find({})
     .toArray()) as MongoVerificationTokenDoc[];
   const data = docs
-    .map((doc: MongoVerificationTokenDoc): Prisma.VerificationTokenCreateManyInput | null => {
+    .map((doc: MongoVerificationTokenDoc): VerificationTokenSeed | null => {
       const identifier = doc.identifier;
       const token = doc.token;
       const expires = toDate(doc.expires);
       if (!identifier || !token || !expires) return null;
       return { identifier, token, expires };
     })
-    .filter((item): item is Prisma.VerificationTokenCreateManyInput => item !== null);
+    .filter((item): item is VerificationTokenSeed => item !== null);
 
-  const deleted = await prisma.verificationToken.deleteMany();
-  const created = data.length ? await prisma.verificationToken.createMany({ data }) : { count: 0 };
+  const deleted = (await prisma.verificationToken.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.verificationToken.createMany({
+      data: data as Prisma.VerificationTokenCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -122,7 +196,7 @@ export const syncAuthSecurityProfiles: DatabaseSyncHandler = async ({
 }) => {
   const docs = (await mongo.collection('auth_security_profiles').find({}).toArray()) as MongoAuthSecurityProfileDoc[];
   const data = docs
-    .map((doc: MongoAuthSecurityProfileDoc): Prisma.AuthSecurityProfileCreateManyInput | null => {
+    .map((doc: MongoAuthSecurityProfileDoc): AuthSecurityProfileSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       const userId = doc.userId ?? id;
       if (!userId) return null;
@@ -139,11 +213,13 @@ export const syncAuthSecurityProfiles: DatabaseSyncHandler = async ({
         updatedAt: toDate(doc.updatedAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.AuthSecurityProfileCreateManyInput => item !== null);
+    .filter((item): item is AuthSecurityProfileSeed => item !== null);
 
-  const deleted = await prisma.authSecurityProfile.deleteMany();
-  const created = data.length
-    ? await prisma.authSecurityProfile.createMany({ data })
+  const deleted = (await prisma.authSecurityProfile.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.authSecurityProfile.createMany({
+      data: data as Prisma.AuthSecurityProfileCreateManyInput[],
+    })) as BatchResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
@@ -151,8 +227,8 @@ export const syncAuthSecurityProfiles: DatabaseSyncHandler = async ({
 // --- Prisma to Mongo handlers ---
 
 export const syncUsersPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma, toObjectIdMaybe }) => {
-  const rows = await prisma.user.findMany();
-  const docs = rows.map((row: Prisma.UserGetPayload<{}>) => ({
+  const rows = (await prisma.user.findMany()) as UserRow[];
+  const docs = rows.map((row) => ({
     _id: toObjectIdMaybe(row.id) as ObjectId | string,
     id: row.id,
     name: row.name,
@@ -176,8 +252,8 @@ export const syncAccountsPrismaToMongo: DatabaseSyncHandler = async ({
   prisma,
   toObjectIdMaybe,
 }) => {
-  const rows = await prisma.account.findMany();
-  const docs = rows.map((row: Prisma.AccountGetPayload<{}>) => ({
+  const rows = (await prisma.account.findMany()) as AccountRow[];
+  const docs = rows.map((row) => ({
     _id: toObjectIdMaybe(row.id) as ObjectId | string,
     id: row.id,
     userId: toObjectIdMaybe(row.userId) as ObjectId | string,
@@ -207,8 +283,8 @@ export const syncSessionsPrismaToMongo: DatabaseSyncHandler = async ({
   prisma,
   toObjectIdMaybe,
 }) => {
-  const rows = await prisma.session.findMany();
-  const docs = rows.map((row: Prisma.SessionGetPayload<{}>) => ({
+  const rows = (await prisma.session.findMany()) as SessionRow[];
+  const docs = rows.map((row) => ({
     _id: toObjectIdMaybe(row.id) as ObjectId | string,
     id: row.id,
     sessionToken: row.sessionToken,
@@ -226,8 +302,8 @@ export const syncSessionsPrismaToMongo: DatabaseSyncHandler = async ({
 };
 
 export const syncVerificationTokensPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.verificationToken.findMany();
-  const docs = rows.map((row: Prisma.VerificationTokenGetPayload<{}>) => ({
+  const rows = (await prisma.verificationToken.findMany()) as VerificationTokenRow[];
+  const docs = rows.map((row) => ({
     identifier: row.identifier,
     token: row.token,
     expires: row.expires,
@@ -243,8 +319,8 @@ export const syncVerificationTokensPrismaToMongo: DatabaseSyncHandler = async ({
 };
 
 export const syncAuthSecurityProfilesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.authSecurityProfile.findMany();
-  const docs = rows.map((row: Prisma.AuthSecurityProfileGetPayload<{}>) => ({
+  const rows = (await prisma.authSecurityProfile.findMany()) as AuthSecurityProfileRow[];
+  const docs = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     userId: row.userId,

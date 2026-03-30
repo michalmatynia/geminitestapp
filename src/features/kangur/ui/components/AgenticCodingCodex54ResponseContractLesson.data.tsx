@@ -1,4 +1,4 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -62,16 +62,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='amber'
             caption='Stały format = mniej tarcia.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-amber-950'>
+                {OUTPUT_RULES.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticDocsStackAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='amber' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-amber-950'>
-              {OUTPUT_RULES.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },

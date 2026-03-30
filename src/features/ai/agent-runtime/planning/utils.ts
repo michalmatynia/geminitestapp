@@ -14,6 +14,82 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 export type { PlanHierarchy };
 
+const LOGIN_PROMPT_TERMS = ['login', 'log in', 'sign in', 'signin'] as const;
+const BROWSE_PROMPT_TERMS = ['browse', 'website'] as const;
+const LOGIN_PLAN_STEPS = [
+  'Open the target website.',
+  'Locate the sign-in form.',
+  'Fill in the credentials.',
+  'Submit the form and wait for the next page.',
+  'Verify the expected page or account state.',
+] as const;
+const BROWSE_PLAN_STEPS = [
+  'Open the target URL.',
+  'Wait for the page to finish loading.',
+  'Locate the requested content.',
+  'Capture the relevant details.',
+] as const;
+
+const includesPromptTerm = (prompt: string, terms: readonly string[]): boolean =>
+  terms.some((term) => prompt.includes(term));
+
+const isLoginPrompt = (prompt: string): boolean => includesPromptTerm(prompt, LOGIN_PROMPT_TERMS);
+
+const isBrowsePrompt = (prompt: string): boolean => includesPromptTerm(prompt, BROWSE_PROMPT_TERMS);
+
+const splitPromptIntoSteps = (prompt: string): string[] =>
+  prompt
+    .split(/[.!?]\s+/)
+    .map((sentence: string) => sentence.trim())
+    .filter(Boolean);
+
+const resolvePromptPlanTemplate = (prompt: string): readonly string[] | null => {
+  if (isLoginPrompt(prompt)) {
+    return LOGIN_PLAN_STEPS;
+  }
+  if (isBrowsePrompt(prompt)) {
+    return BROWSE_PLAN_STEPS;
+  }
+  return null;
+};
+
+const createToolDecision = (reason: string, toolName: AgentDecision['toolName'] = 'playwright') =>
+  ({
+    action: 'tool',
+    reason,
+    toolName,
+  }) satisfies AgentDecision;
+
+const createRespondDecision = (reason: string): AgentDecision => ({
+  action: 'respond',
+  reason,
+});
+
+const createWaitHumanDecision = (reason: string): AgentDecision => ({
+  action: 'wait_human',
+  reason,
+});
+
+const normalizeExplicitDecision = (
+  decision: Partial<AgentDecision> | undefined
+): AgentDecision | null => {
+  switch (decision?.action) {
+    case 'tool':
+      return createToolDecision(
+        decision.reason ?? 'LLM planner selected tool execution.',
+        decision.toolName ?? 'playwright'
+      );
+    case 'respond':
+      return createRespondDecision(decision.reason ?? 'LLM planner selected response.');
+    case 'wait_human':
+      return createWaitHumanDecision(
+        decision.reason ?? 'LLM planner requires human input.'
+      );
+    default:
+      return null;
+  }
+};
+
 export function parsePlanJson(content: string): unknown {
   if (!content) return null;
   const fencedMatch = content.match(/```json\s*([\s\S]*?)```/i);
@@ -461,73 +537,26 @@ export function flattenPlanHierarchy(hierarchy: PlanHierarchy): Array<{
 
 export function decideNextAction(prompt: string, memory: string[]): AgentDecision {
   const lower = prompt.toLowerCase();
-  if (lower.includes('browse') || lower.includes('website')) {
-    return {
-      action: 'tool',
-      reason: 'Prompt implies browser automation.',
-      toolName: 'playwright',
-    };
+  if (isBrowsePrompt(lower)) {
+    return createToolDecision('Prompt implies browser automation.');
   }
-  if (
-    lower.includes('login') ||
-    lower.includes('log in') ||
-    lower.includes('sign in') ||
-    lower.includes('signin')
-  ) {
-    return {
-      action: 'tool',
-      reason: 'Prompt includes a login flow.',
-      toolName: 'playwright',
-    };
+  if (isLoginPrompt(lower)) {
+    return createToolDecision('Prompt includes a login flow.');
   }
 
   if (memory.length > 0) {
-    return {
-      action: 'respond',
-      reason: 'Sufficient context to respond in scaffold.',
-    };
+    return createRespondDecision('Sufficient context to respond in scaffold.');
   }
 
-  return {
-    action: 'wait_human',
-    reason: 'Not enough context; human input required.',
-  };
+  return createWaitHumanDecision('Not enough context; human input required.');
 }
 
 export function buildPlan(prompt: string, maxSteps: number = MAX_PLAN_STEPS): string[] {
   const normalized = prompt.trim();
   if (!normalized) return [];
   const lower = normalized.toLowerCase();
-  const steps: string[] = [];
-
-  if (
-    lower.includes('login') ||
-    lower.includes('log in') ||
-    lower.includes('sign in') ||
-    lower.includes('signin')
-  ) {
-    steps.push('Open the target website.');
-    steps.push('Locate the sign-in form.');
-    steps.push('Fill in the credentials.');
-    steps.push('Submit the form and wait for the next page.');
-    steps.push('Verify the expected page or account state.');
-  } else if (lower.includes('browse') || lower.includes('website')) {
-    steps.push('Open the target URL.');
-    steps.push('Wait for the page to finish loading.');
-    steps.push('Locate the requested content.');
-    steps.push('Capture the relevant details.');
-  } else {
-    const sentences = normalized
-      .split(/[.!?]\s+/)
-      .map((sentence: string) => sentence.trim())
-      .filter(Boolean);
-    for (const sentence of sentences) {
-      steps.push(sentence);
-      if (steps.length >= maxSteps) break;
-    }
-  }
-
-  return steps.slice(0, maxSteps);
+  const template = resolvePromptPlanTemplate(lower);
+  return (template ?? splitPromptIntoSteps(normalized)).slice(0, maxSteps);
 }
 
 export function normalizeDecision(
@@ -536,31 +565,12 @@ export function normalizeDecision(
   prompt: string,
   memory: string[]
 ): AgentDecision {
-  if (decision?.action === 'tool') {
-    return {
-      action: 'tool',
-      reason: decision.reason ?? 'LLM planner selected tool execution.',
-      toolName: decision.toolName ?? 'playwright',
-    };
-  }
-  if (decision?.action === 'respond') {
-    return {
-      action: 'respond',
-      reason: decision.reason ?? 'LLM planner selected response.',
-    };
-  }
-  if (decision?.action === 'wait_human') {
-    return {
-      action: 'wait_human',
-      reason: decision.reason ?? 'LLM planner requires human input.',
-    };
+  const explicitDecision = normalizeExplicitDecision(decision);
+  if (explicitDecision) {
+    return explicitDecision;
   }
   if (steps.length > 0) {
-    return {
-      action: 'tool',
-      reason: 'Plan generated; execute tool steps.',
-      toolName: 'playwright',
-    };
+    return createToolDecision('Plan generated; execute tool steps.');
   }
   return decideNextAction(prompt, memory);
 }

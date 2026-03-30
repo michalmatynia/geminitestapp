@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:ai-paths'
@@ -8,6 +8,15 @@ canonical: true
 ---
 
 # AI-Paths Portable Engine Scaffolding (v1)
+
+This is the maintained portable-engine scaffolding and package-contract
+reference. Pair it with:
+
+- [`./overview.md`](./overview.md)
+- [`./reference.md`](./reference.md)
+- [`./semantic-grammar/README.md`](./semantic-grammar/README.md)
+- [`./node-code-objects-v2.md`](./node-code-objects-v2.md)
+- [`./node-code-objects-v3.md`](./node-code-objects-v3.md)
 
 ## Goal
 

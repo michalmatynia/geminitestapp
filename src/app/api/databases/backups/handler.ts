@@ -11,7 +11,7 @@ import {
 import type { DatabaseBackupFile as DatabaseInfo } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
-import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

@@ -1,7 +1,8 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
+import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import {
   getKangurProgressServerSnapshot,
   loadProgress,
@@ -11,5 +12,23 @@ import {
 const subscribe = (onStoreChange: () => void): (() => void) =>
   subscribeToProgress(() => onStoreChange());
 
-export const useKangurProgressState = () =>
-  useSyncExternalStore(subscribe, loadProgress, getKangurProgressServerSnapshot);
+type UseKangurProgressStateOptions = {
+  enabled?: boolean;
+};
+
+const subscribeDisabled = (): (() => void) => () => {};
+
+export const useKangurProgressState = (options: UseKangurProgressStateOptions = {}) => {
+  const enabled = options.enabled ?? true;
+  const ownerKey = useKangurProgressOwnerKey();
+  const getSnapshot = useCallback(
+    () => (enabled ? loadProgress({ ownerKey }) : getKangurProgressServerSnapshot()),
+    [enabled, ownerKey]
+  );
+
+  return useSyncExternalStore(
+    enabled ? subscribe : subscribeDisabled,
+    getSnapshot,
+    getKangurProgressServerSnapshot
+  );
+};

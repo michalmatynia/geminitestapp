@@ -25,7 +25,7 @@ import {
   IntegrationRecord,
   IntegrationConnectionRecord,
   IntegrationRepository,
-} from '../../types/integrations';
+} from '@/shared/contracts/integrations';
 
 type IntegrationDocument = {
   name: string;

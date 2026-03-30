@@ -8,9 +8,117 @@ import type {
 import type { DatabaseSyncHandler } from './types';
 import type { Prisma } from '@prisma/client';
 
+type BatchResult = { count: number };
+
+type MongoRecordWithStringId<TDoc> = Omit<TDoc, '_id'> & { _id: string };
+
+type SettingSeed = {
+  key: string;
+  value: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type UserPreferencesSeed = {
+  id: string;
+  userId: string;
+  productListNameLocale: string | null;
+  productListCatalogFilter: string | null;
+  productListCurrencyCode: string | null;
+  productListPageSize: number | null;
+  productListThumbnailSource: string | null;
+  aiPathsActivePathId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type SystemLogSeed = {
+  id?: string;
+  level: string;
+  message: string;
+  source: string | null;
+  context: unknown;
+  stack: string | null;
+  path: string | null;
+  method: string | null;
+  statusCode: number | null;
+  requestId: string | null;
+  userId: string | null;
+  createdAt: Date;
+};
+
+type FileUploadEventSeed = {
+  id: string;
+  status: 'error' | 'success';
+  category: string | null;
+  projectId: string | null;
+  folder: string | null;
+  filename: string | null;
+  filepath: string | null;
+  mimetype: string | null;
+  size: number | null;
+  source: string | null;
+  errorMessage: string | null;
+  requestId: string | null;
+  userId: string | null;
+  meta: unknown;
+  createdAt: Date;
+};
+
+type AiConfigurationSeed = {
+  id: string;
+  type: string | null;
+  descriptionGenerationModel: string | null;
+  generationInputPrompt: string | null;
+  generationOutputEnabled: boolean;
+  generationOutputPrompt: string | null;
+  imageAnalysisModel: string | null;
+  visionInputPrompt: string | null;
+  visionOutputEnabled: boolean;
+  visionOutputPrompt: string | null;
+  testProductId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type SettingRow = SettingSeed;
+type UserPreferencesRow = UserPreferencesSeed;
+type SystemLogRow = {
+  id: string;
+  level: string;
+  message: string;
+  source: string | null;
+  context: unknown;
+  stack: string | null;
+  path: string | null;
+  method: string | null;
+  statusCode: number | null;
+  requestId: string | null;
+  userId: string | null;
+  createdAt: Date;
+};
+type FileUploadEventRow = {
+  id: string;
+  status: string;
+  category: string | null;
+  projectId: string | null;
+  folder: string | null;
+  filename: string | null;
+  filepath: string | null;
+  mimetype: string | null;
+  size: number | null;
+  source: string | null;
+  errorMessage: string | null;
+  requestId: string | null;
+  userId: string | null;
+  meta: unknown;
+  createdAt: Date;
+};
+type AiConfigurationRow = AiConfigurationSeed;
+
 export const syncSettings: DatabaseSyncHandler = async ({ mongo, prisma, toDate }) => {
   const docs = (await mongo.collection('settings').find({}).toArray()) as MongoSettingDoc[];
-  const byKey = new Map<string, { key: string; value: string; createdAt: Date; updatedAt: Date }>();
+  const byKey = new Map<string, SettingSeed>();
   docs.forEach((doc: MongoSettingDoc) => {
     const key = doc.key ?? doc._id?.toString() ?? '';
     if (!key) return;
@@ -27,23 +135,29 @@ export const syncSettings: DatabaseSyncHandler = async ({ mongo, prisma, toDate 
     }
   });
   const data = Array.from(byKey.values());
-  const deleted = await prisma.setting.deleteMany();
-  const created = data.length
-    ? await prisma.setting.createMany({ data, skipDuplicates: true })
+  const deleted = (await prisma.setting.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.setting.createMany({
+      data: data as Prisma.SettingCreateManyInput[],
+      skipDuplicates: true,
+    })) as BatchResult)
     : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 export const syncUserPreferences: DatabaseSyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
+  const existingUsers = (await prisma.user.findMany({
+    select: { id: true },
+  })) as Array<{ id: string }>;
   const existingUserIds = new Set<string>(
-    (await prisma.user.findMany({ select: { id: true } })).map((entry: { id: string }) => entry.id)
+    existingUsers.map((entry) => entry.id)
   );
   const docs: MongoUserPreferencesDoc[] = (await mongo
     .collection('user_preferences')
     .find({})
     .toArray()) as MongoUserPreferencesDoc[];
   const data = docs
-    .map((doc): Prisma.UserPreferencesCreateManyInput | null => {
+    .map((doc): UserPreferencesSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       const userId = doc.userId;
       if (!userId || !existingUserIds.has(userId)) return null;
@@ -60,9 +174,13 @@ export const syncUserPreferences: DatabaseSyncHandler = async ({ mongo, prisma, 
         updatedAt: toDate(doc.updatedAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.UserPreferencesCreateManyInput => item !== null);
-  const deleted = await prisma.userPreferences.deleteMany();
-  const created = data.length ? await prisma.userPreferences.createMany({ data }) : { count: 0 };
+    .filter((item): item is UserPreferencesSeed => item !== null);
+  const deleted = (await prisma.userPreferences.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.userPreferences.createMany({
+      data: data as Prisma.UserPreferencesCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -85,7 +203,7 @@ export const syncSystemLogs: DatabaseSyncHandler = async ({
     .find({})
     .toArray()) as MongoSystemLogDoc[];
   const data = docs
-    .map((doc): Prisma.SystemLogCreateManyInput | null => {
+    .map((doc): SystemLogSeed => {
       const id = normalizeId(doc as Record<string, unknown>);
       return {
         ...(id ? { id } : null),
@@ -102,9 +220,13 @@ export const syncSystemLogs: DatabaseSyncHandler = async ({
         createdAt: toDate(doc.createdAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.SystemLogCreateManyInput => item !== null);
-  const deleted = await prisma.systemLog.deleteMany();
-  const created = data.length ? await prisma.systemLog.createMany({ data }) : { count: 0 };
+    .filter((item): item is SystemLogSeed => item !== null);
+  const deleted = (await prisma.systemLog.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.systemLog.createMany({
+      data: data as Prisma.SystemLogCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
@@ -121,7 +243,7 @@ export const syncFileUploadEvents: DatabaseSyncHandler = async ({
     .toArray()) as MongoFileUploadEventDoc[];
   const warnings: string[] = [];
   const data = docs
-    .map((doc): Prisma.FileUploadEventCreateManyInput | null => {
+    .map((doc): FileUploadEventSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       const status = doc.status;
@@ -147,9 +269,13 @@ export const syncFileUploadEvents: DatabaseSyncHandler = async ({
         createdAt: toDate(doc.createdAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.FileUploadEventCreateManyInput => item !== null);
-  const deleted = await prisma.fileUploadEvent.deleteMany();
-  const created = data.length ? await prisma.fileUploadEvent.createMany({ data }) : { count: 0 };
+    .filter((item): item is FileUploadEventSeed => item !== null);
+  const deleted = (await prisma.fileUploadEvent.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.fileUploadEvent.createMany({
+      data: data as Prisma.FileUploadEventCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return {
     sourceCount: data.length,
     targetDeleted: deleted.count,
@@ -164,7 +290,7 @@ export const syncAiConfigurations: DatabaseSyncHandler = async ({ mongo, prisma,
     .find({})
     .toArray()) as MongoAiConfigurationDoc[];
   const data = docs
-    .map((doc): Prisma.AiConfigurationCreateManyInput | null => {
+    .map((doc): AiConfigurationSeed | null => {
       const id = normalizeId(doc as Record<string, unknown>);
       if (!id) return null;
       return {
@@ -183,26 +309,30 @@ export const syncAiConfigurations: DatabaseSyncHandler = async ({ mongo, prisma,
         updatedAt: toDate(doc.updatedAt) ?? new Date(),
       };
     })
-    .filter((item): item is Prisma.AiConfigurationCreateManyInput => item !== null);
-  const deleted = await prisma.aiConfiguration.deleteMany();
-  const created = data.length ? await prisma.aiConfiguration.createMany({ data }) : { count: 0 };
+    .filter((item): item is AiConfigurationSeed => item !== null);
+  const deleted = (await prisma.aiConfiguration.deleteMany()) as BatchResult;
+  const created: BatchResult = data.length
+    ? ((await prisma.aiConfiguration.createMany({
+      data: data as Prisma.AiConfigurationCreateManyInput[],
+    })) as BatchResult)
+    : { count: 0 };
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
 // --- Prisma to Mongo handlers ---
 
 export const syncSettingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.setting.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.setting.findMany()) as SettingRow[];
+  const docs: MongoRecordWithStringId<MongoSettingDoc>[] = rows.map((row) => ({
     _id: row.key,
     key: row.key,
     value: row.value,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('settings');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoSettingDoc>>('settings');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -211,8 +341,8 @@ export const syncSettingsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, pr
 };
 
 export const syncUserPreferencesPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.userPreferences.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.userPreferences.findMany()) as UserPreferencesRow[];
+  const docs: MongoRecordWithStringId<MongoUserPreferencesDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     userId: row.userId,
@@ -225,9 +355,11 @@ export const syncUserPreferencesPrismaToMongo: DatabaseSyncHandler = async ({ mo
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('user_preferences');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoUserPreferencesDoc>>(
+    'user_preferences'
+  );
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -236,13 +368,14 @@ export const syncUserPreferencesPrismaToMongo: DatabaseSyncHandler = async ({ mo
 };
 
 export const syncSystemLogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.systemLog.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.systemLog.findMany()) as SystemLogRow[];
+  const docs: MongoRecordWithStringId<MongoSystemLogDoc>[] = rows.map((row) => ({
     _id: row.id,
+    id: row.id,
     level: row.level,
     message: row.message,
     source: row.source ?? null,
-    context: row.context ?? null,
+    context: (row.context as Record<string, unknown> | null | undefined) ?? null,
     stack: row.stack ?? null,
     path: row.path ?? null,
     method: row.method ?? null,
@@ -251,9 +384,9 @@ export const syncSystemLogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
     userId: row.userId ?? null,
     createdAt: row.createdAt,
   }));
-  const collection = mongo.collection('system_logs');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoSystemLogDoc>>('system_logs');
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -262,8 +395,8 @@ export const syncSystemLogsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, 
 };
 
 export const syncFileUploadEventsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.fileUploadEvent.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.fileUploadEvent.findMany()) as FileUploadEventRow[];
+  const docs: MongoRecordWithStringId<MongoFileUploadEventDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     status: row.status,
@@ -281,9 +414,11 @@ export const syncFileUploadEventsPrismaToMongo: DatabaseSyncHandler = async ({ m
     meta: row.meta ?? null,
     createdAt: row.createdAt,
   }));
-  const collection = mongo.collection('file_upload_events');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoFileUploadEventDoc>>(
+    'file_upload_events'
+  );
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,
@@ -292,8 +427,8 @@ export const syncFileUploadEventsPrismaToMongo: DatabaseSyncHandler = async ({ m
 };
 
 export const syncAiConfigurationsPrismaToMongo: DatabaseSyncHandler = async ({ mongo, prisma }) => {
-  const rows = await prisma.aiConfiguration.findMany();
-  const docs = rows.map((row) => ({
+  const rows = (await prisma.aiConfiguration.findMany()) as AiConfigurationRow[];
+  const docs: MongoRecordWithStringId<MongoAiConfigurationDoc>[] = rows.map((row) => ({
     _id: row.id,
     id: row.id,
     type: row.type ?? null,
@@ -309,9 +444,11 @@ export const syncAiConfigurationsPrismaToMongo: DatabaseSyncHandler = async ({ m
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));
-  const collection = mongo.collection('ai_configurations');
+  const collection = mongo.collection<MongoRecordWithStringId<MongoAiConfigurationDoc>>(
+    'ai_configurations'
+  );
   const deleted = await collection.deleteMany({});
-  if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
+  if (docs.length) await collection.insertMany(docs);
   return {
     sourceCount: rows.length,
     targetDeleted: deleted.deletedCount ?? 0,

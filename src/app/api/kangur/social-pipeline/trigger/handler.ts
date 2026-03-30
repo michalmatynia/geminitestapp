@@ -7,11 +7,16 @@ import {
   enqueueKangurSocialPipelineJob,
   recoverKangurSocialPipelineQueue,
   startKangurSocialPipelineQueue,
-} from '@/features/kangur/workers/kangurSocialPipelineQueue';
+} from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
+import {
+  getKangurSocialProjectUrlError,
+  normalizeKangurSocialProjectUrl,
+} from '@/features/kangur/social/project-url';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { imageFileSelectionSchema } from '@/shared/contracts/files';
+import { kangurSocialVisualAnalysisSchema } from '@/shared/contracts/kangur-social-posts';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
-import { isRedisAvailable } from '@/shared/lib/queue';
+import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 
 const editorStateSchema = z.object({
   titlePl: z.string().trim().max(200),
@@ -23,7 +28,7 @@ const editorStateSchema = z.object({
 const manualPipelineInputSchema = z.object({
   postId: z.string().trim().min(1),
   editorState: editorStateSchema,
-  imageAssets: z.array(imageFileSelectionSchema).max(12).default([]),
+  imageAssets: z.array(imageFileSelectionSchema).max(30).default([]),
   imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
   captureMode: z.enum(['existing_assets', 'fresh_capture']).default('fresh_capture'),
   batchCaptureBaseUrl: z.string().trim().url().optional(),
@@ -35,6 +40,8 @@ const manualPipelineInputSchema = z.object({
   projectUrl: z.string().trim().optional().default(''),
   generationNotes: z.string().trim().optional().default(''),
   docReferences: z.array(z.string().trim().min(1)).max(80).default([]),
+  prefetchedVisualAnalysis: kangurSocialVisualAnalysisSchema.optional(),
+  requireVisualAnalysisInBody: z.boolean().optional().default(false),
 }).superRefine((value, ctx) => {
   if (value.captureMode === 'fresh_capture') {
     if (!value.batchCaptureBaseUrl) {
@@ -54,17 +61,46 @@ const manualPipelineInputSchema = z.object({
   }
 });
 
+const manualVisualAnalysisInputSchema = z.object({
+  postId: z.string().trim().optional(),
+  visionModelId: z.string().trim().nullable().optional(),
+  imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
+});
+
+const manualGenerationInputSchema = z.object({
+  postId: z.string().trim().optional(),
+  docReferences: z.array(z.string().trim().min(1)).max(80).default([]),
+  notes: z.string().trim().optional().default(''),
+  modelId: z.string().trim().nullable().optional(),
+  visionModelId: z.string().trim().nullable().optional(),
+  imageAddonIds: z.array(z.string().trim().min(1)).max(30).default([]),
+  projectUrl: z.string().trim().optional().default(''),
+  prefetchedVisualAnalysis: kangurSocialVisualAnalysisSchema.optional(),
+  requireVisualAnalysisInBody: z.boolean().optional().default(false),
+});
+
 const bodySchema = z
   .object({
-    jobType: z.enum(['pipeline-tick', 'manual-post-pipeline']).optional(),
-    input: manualPipelineInputSchema.optional(),
+    jobType: z
+      .enum([
+        'pipeline-tick',
+        'manual-post-pipeline',
+        'manual-post-visual-analysis',
+        'manual-post-generation',
+      ])
+      .optional(),
+    input: z.unknown().optional(),
   })
   .superRefine((value, ctx) => {
-    if (value.jobType === 'manual-post-pipeline' && !value.input) {
+    if (
+      value.jobType &&
+      value.jobType !== 'pipeline-tick' &&
+      !value.input
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['input'],
-        message: 'Manual pipeline input is required.',
+        message: 'Manual queue input is required.',
       });
     }
   });
@@ -82,9 +118,36 @@ export async function POST_handler(
   const jobType =
     parsed.jobType ??
     (parsed.input ? 'manual-post-pipeline' : 'pipeline-tick');
+  const manualPipelineInput =
+    jobType === 'manual-post-pipeline'
+      ? manualPipelineInputSchema.parse(parsed.input ?? {})
+      : null;
+  const manualVisualAnalysisInput =
+    jobType === 'manual-post-visual-analysis'
+      ? manualVisualAnalysisInputSchema.parse(parsed.input ?? {})
+      : null;
+  const manualGenerationInput =
+    jobType === 'manual-post-generation'
+      ? manualGenerationInputSchema.parse(parsed.input ?? {})
+      : null;
+  const normalizedManualPipelineProjectUrl =
+    manualPipelineInput
+      ? normalizeKangurSocialProjectUrl(manualPipelineInput.projectUrl)
+      : '';
+  const normalizedManualGenerationProjectUrl =
+    manualGenerationInput
+      ? normalizeKangurSocialProjectUrl(manualGenerationInput.projectUrl)
+      : '';
+  const manualProjectUrlError = getKangurSocialProjectUrlError(
+    normalizedManualPipelineProjectUrl || normalizedManualGenerationProjectUrl
+  );
 
-  await recoverKangurSocialPipelineQueue();
-  startKangurSocialPipelineQueue();
+  if (
+    (jobType === 'manual-post-pipeline' || jobType === 'manual-post-generation') &&
+    manualProjectUrlError
+  ) {
+    throw operationFailedError(manualProjectUrlError);
+  }
 
   if (!isRedisAvailable()) {
     throw operationFailedError(
@@ -92,19 +155,47 @@ export async function POST_handler(
     );
   }
 
+  const redisReachable = await isRedisReachable();
+  if (!redisReachable) {
+    throw operationFailedError(
+      'Social pipeline queue is not available. Redis is configured but unreachable.'
+    );
+  }
+
+  await recoverKangurSocialPipelineQueue();
+  startKangurSocialPipelineQueue();
+
   const jobId =
     jobType === 'manual-post-pipeline'
       ? await enqueueKangurSocialPipelineJob({
           type: 'manual-post-pipeline',
           input: {
-            ...parsed.input!,
+            ...manualPipelineInput!,
+            projectUrl: normalizedManualPipelineProjectUrl,
             actorId: actor.actorId,
-            linkedinConnectionId: parsed.input?.linkedinConnectionId ?? null,
-            brainModelId: parsed.input?.brainModelId ?? null,
-            visionModelId: parsed.input?.visionModelId ?? null,
+            linkedinConnectionId: manualPipelineInput?.linkedinConnectionId ?? null,
+            brainModelId: manualPipelineInput?.brainModelId ?? null,
+            visionModelId: manualPipelineInput?.visionModelId ?? null,
             forwardCookies: req.headers.get('cookie') ?? '',
           },
         })
+      : jobType === 'manual-post-visual-analysis'
+        ? await enqueueKangurSocialPipelineJob({
+            type: 'manual-post-visual-analysis',
+            input: {
+              ...manualVisualAnalysisInput!,
+              actorId: actor.actorId,
+            },
+          })
+        : jobType === 'manual-post-generation'
+          ? await enqueueKangurSocialPipelineJob({
+              type: 'manual-post-generation',
+              input: {
+                ...manualGenerationInput!,
+                projectUrl: normalizedManualGenerationProjectUrl,
+                actorId: actor.actorId,
+              },
+            })
       : await enqueueKangurSocialPipelineJob({ type: 'pipeline-tick' });
 
   return NextResponse.json(

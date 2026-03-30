@@ -26,12 +26,13 @@ const setEdgesGraphMock = vi.fn();
 const setPathConfigsGraphMock = vi.fn();
 const setRuntimeStateMock = vi.fn();
 const logClientErrorMock = vi.fn();
+const graphActionsMock = {
+  setEdges: setEdgesGraphMock,
+  setPathConfigs: setPathConfigsGraphMock,
+};
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
-  useGraphActions: () => ({
-    setEdges: setEdgesGraphMock,
-    setPathConfigs: setPathConfigsGraphMock,
-  }),
+  useGraphActions: () => graphActionsMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/context/RuntimeContext', () => ({

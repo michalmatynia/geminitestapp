@@ -1,16 +1,17 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
+import { cache } from 'react';
 
 import type { CmsDomain, CmsRepository, CmsSlugLookupOptions, Slug } from '@/shared/contracts/cms';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getCmsDomainSettings } from './cms-domain-settings';
 
 import type { NextRequest } from 'next/server';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 
 type CmsDomainRecord = {
   id: string;
@@ -96,11 +97,22 @@ const getHostFromHeaders = (
   return null;
 };
 
-export async function isDomainZoningEnabled(): Promise<boolean> {
+export const isDomainZoningEnabled = cache(async (): Promise<boolean> => {
   if (!process.env['MONGODB_URI']) return false;
-  const settings = await getCmsDomainSettings();
-  return settings.zoningEnabled;
-}
+  try {
+    const settings = await getCmsDomainSettings();
+    return settings.zoningEnabled;
+  } catch (error) {
+    if (!isTransientMongoConnectionError(error)) {
+      void ErrorSystem.captureException(error, {
+        service: 'cms.domain',
+        source: 'cms.domain',
+        action: 'isDomainZoningEnabled',
+      });
+    }
+    return false;
+  }
+});
 
 export async function setGlobalDefaultSlug(slugId: string | null): Promise<void> {
   await getCmsDataProvider();
@@ -149,7 +161,8 @@ export async function resolveCmsDomainScopeById(domainId: string): Promise<CmsDo
   if (!zoningEnabled) {
     return buildDefaultDomain(null);
   }
-  let current = await getDomainRecordById(domainId);
+  const initialRecord = await getDomainRecordById(domainId);
+  let current = initialRecord;
   if (!current) return null;
   const visited = new Set<string>([current.id]);
   while (current.aliasOf) {
@@ -168,8 +181,8 @@ export async function resolveCmsDomainByHost(hostHeader: string | null): Promise
   if (!zoningEnabled) {
     return buildDefaultDomain(hostHeader);
   }
-
   const db = await getMongoDb();
+
   const existing = await db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).findOne({ domain });
   if (existing) {
     const scoped = await resolveCmsDomainScopeById(existing.id);
@@ -198,12 +211,12 @@ export async function getCmsDomainById(domainId: string): Promise<CmsDomain | nu
   return doc ? toDomainResponse(doc) : null;
 }
 
-export async function getDomainSlugLinks(domainId: string): Promise<CmsDomainSlugLink[]> {
+export const getDomainSlugLinks = cache(async (domainId: string): Promise<CmsDomainSlugLink[]> => {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return [];
   const db = await getMongoDb();
   return db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).find({ domainId }).toArray();
-}
+});
 
 export async function getDomainIdsForSlug(slugId: string): Promise<string[]> {
   const zoningEnabled = await isDomainZoningEnabled();
@@ -274,11 +287,14 @@ export async function deleteCmsDomain(domainId: string): Promise<void> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return;
   const db = await getMongoDb();
+  // updateMany must complete before deleteOne to clear aliases first
   await db
     .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
     .updateMany({ aliasOf: domainId }, { $set: { aliasOf: null, updatedAt: new Date() } });
-  await db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).deleteOne({ id: domainId });
-  await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteMany({ domainId });
+  await Promise.all([
+    db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).deleteOne({ id: domainId }),
+    db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteMany({ domainId }),
+  ]);
 }
 
 export async function setCmsDomainAlias(
@@ -287,9 +303,8 @@ export async function setCmsDomainAlias(
 ): Promise<CmsDomainResponse | null> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return null;
+  const [domain, db] = await Promise.all([getDomainRecordById(domainId), getMongoDb()]);
   if (aliasOf === domainId) aliasOf = null;
-  const db = await getMongoDb();
-  const domain = await getDomainRecordById(domainId);
   if (!domain) return null;
 
   let targetId: string | null = aliasOf;
@@ -404,12 +419,10 @@ export async function getSlugForDomainById(
   options?: CmsSlugLookupOptions
 ): Promise<Slug | null> {
   const zoningEnabled = await isDomainZoningEnabled();
-  if (!zoningEnabled) {
-    return repo.getSlugById(slugId, options);
-  }
-  const slug = await repo.getSlugById(slugId, options);
+  const slugPromise = repo.getSlugById(slugId, options);
+  if (!zoningEnabled) return slugPromise;
+  const [slug, links] = await Promise.all([slugPromise, getDomainSlugLinks(domainId)]);
   if (!slug) return null;
-  const links = await getDomainSlugLinks(domainId);
   const link = links.find((item: CmsDomainSlugLink) => item.slugId === slugId);
   if (!link && process.env['MONGODB_URI']) return null;
   return {
@@ -425,17 +438,14 @@ export async function getSlugForDomainByValue(
   options?: CmsSlugLookupOptions
 ): Promise<Slug | null> {
   const zoningEnabled = await isDomainZoningEnabled();
-  if (!zoningEnabled) {
-    return repo.getSlugByValue(slugValue, options);
-  }
-  const slug = await repo.getSlugByValue(slugValue, options);
+  const slugPromise = repo.getSlugByValue(slugValue, options);
+  if (!zoningEnabled) return slugPromise;
+  const [slug, links] = await Promise.all([slugPromise, getDomainSlugLinks(domainId)]);
   if (!slug) return null;
-  const isAllowed = await isSlugAssignedToDomain(domainId, slug.id);
-  if (!isAllowed) return null;
-  const links = await getDomainSlugLinks(domainId);
   const link = links.find((item: CmsDomainSlugLink) => item.slugId === slug.id);
+  if (!link) return null;
   return {
     ...slug,
-    isDefault: link?.isDefault ?? false,
+    isDefault: link.isDefault ?? false,
   };
 }

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-17'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'agent-guide'
 scope: 'repo'
@@ -34,16 +34,23 @@ code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it
 - AI stack: AI Paths, chatbot, agent runtime, AI Brain routing, image studio,
   AI insights, product AI flows
 
-## Locked Build Configuration — DO NOT MODIFY
+## Locked Build & Vercel Deploy Configuration — DO NOT MODIFY
 
-The following files are locked and must NOT be modified by AI agents without explicit user approval:
+The Vercel deployment was stabilised on 2026-03-29. The following files must
+NOT be modified by AI agents without explicit user approval:
 
-- `next.config.mjs` — Next.js build config
-- `package.json` `"build"` script — heap size tuned for Vercel
+- `next.config.mjs` — serverExternalPackages (29), compiler, experimental, webpack cache
+- `scripts/build/run-next-build.cjs` — heap (3584 MB on Vercel), bundler (webpack on Vercel)
+- `scripts/build/prebuild-cleanup.cjs` — Vercel-safe minimal cleanup
+- `vercel.json` — install/build commands
 - `tsconfig.json` — TypeScript compiler config
-- `vercel.json` — Vercel deployment settings (if present)
 
-Key constraints: `--max-old-space-size=3584`, `experimental.cpus: 2`, conditional `output: 'standalone'` (disabled on Vercel), `typescript.ignoreBuildErrors: true`.
+Key constraints: heap `3584 MB` on Vercel (main + worker must fit 8 GB),
+webpack bundler on Vercel (turbopack cold builds exceed 45-min limit),
+webpack cache disabled on Vercel, `compiler.removeConsole` disabled on Vercel,
+`experimental.cpus: 1` for webpack, `output: 'standalone'` only for non-Vercel.
+
+See [`docs/build/vercel-deployment.md`](./build/vercel-deployment.md) for full rationale.
 
 If you need to change any of these files, stop and ask the user for permission first.
 
@@ -178,6 +185,40 @@ Use `buildScanOutput`, `parseScanOutput`, and `parseScanSummary` from
 agent summarizing scanner output, keep findings in their matching fields instead
 of collapsing everything into one mixed block.
 
+## Testing Documentation Workflow
+
+Major test runs must leave a written record.
+
+- Canonical lanes are defined in
+  `scripts/testing/config/test-suite-registry.mjs`
+- Lane inventory is generated to
+  `docs/metrics/testing-suite-inventory-latest.*`
+- Run history is generated to
+  `docs/metrics/testing-run-ledger-latest.*`
+
+When you run a major validation pass, do one of the following:
+
+1. Prefer a canonical lane such as `npm run test:lane:pr-required` or
+   `npm run test:lane:weekly-audit`
+2. If you run a bespoke major validation command, follow it with
+   `npm run testing:record -- --label="..." --status=ok --suite=...`
+
+Treat these as major runs:
+
+- any lane with `pr-required`, `nightly-deep`, `weekly-audit`, or `release-gate`
+- any manual build + e2e or multi-suite regression sweep
+- any broader AI-agent validation pass used to support merge or release decisions
+
+Every recorded entry should capture:
+
+- what ran
+- when it ran
+- final status
+- lane or suite scope
+- duration when known
+- generated artifact paths
+- short follow-up notes for failures, skips, or advisory gaps
+
 ## Current Source Layout
 
 Use current `src/` paths, not older root-level conventions.
@@ -189,6 +230,19 @@ Use current `src/` paths, not older root-level conventions.
 - Auth UI: `src/app/auth/`
 - API routes: `src/app/api/`
 
+Public frontend route ownership is now grouped under `src/app/(frontend)/`:
+
+- `home/`: front-page route support
+- `cms/`: CMS render/data helpers
+- `shell/`: public shell support
+- `preview/`: preview route support
+- `products/`: public product route support
+- `route-helpers/`: shared route logic for localized and non-localized wrappers
+- `__tests__/`: cross-route layout/loading tests
+
+Keep route roots thin. Concrete route folders such as `[...slug]/`, `preview/[id]/`,
+and `products/[id]/` should prefer entrypoints only.
+
 ### Feature modules
 
 Top-level features live under `src/features/`, including:
@@ -198,7 +252,6 @@ Top-level features live under `src/features/`, including:
 - `app-embeds`
 - `auth`
 - `case-resolver`
-- `case-resolver-capture`
 - `cms`
 - `data-import-export`
 - `database`
@@ -224,6 +277,14 @@ Top-level features live under `src/features/`, including:
 
 AI subsystems are primarily under `src/features/ai/`.
 
+### Active workspaces outside `src/`
+
+- `apps/mobile` is the active Expo Router native Kangur app
+- `apps/mobile-web` is reserved for a future dedicated React Native Web target
+- `packages/kangur-contracts`, `packages/kangur-core`,
+  `packages/kangur-api-client`, and `packages/kangur-platform` are active
+  shared workspaces
+
 ### Shared platform code
 
 Shared platform/runtime code lives under `src/shared/`, especially:
@@ -246,8 +307,13 @@ Shared platform/runtime code lives under `src/shared/`, especially:
 - Kangur routing + embed params: `src/features/kangur/config/routing.ts`
 - Kangur learner pages: `src/features/kangur/ui/pages/`
 - Kangur admin pages: `src/features/kangur/admin/` (`AdminKangurPageShell`)
+- Kangur storefront appearance: `src/features/kangur/appearance/`
+- Kangur social capture/workflows: `src/features/kangur/social/`
+- Kangur AI tutor content/runtime support: `src/features/kangur/ai-tutor/`
+- Kangur lesson documents: `src/features/kangur/lesson-documents/`
+- Kangur test-suite domain logic: `src/features/kangur/test-suites/`
 - CMS app embed option (StudiQ): `src/shared/lib/app-embeds.ts`
-- AI Tutor content sources: `src/features/kangur/page-content-catalog.ts`,
+- AI Tutor content sources: `src/features/kangur/ai-tutor/page-content-catalog.ts`,
   `src/shared/contracts/kangur-ai-tutor-native-guide-entries.ts`
 - Canonical docs: `docs/kangur/README.md`, `docs/kangur/studiq-application.md`
 
@@ -430,4 +496,4 @@ bun run check:bun:compat
 
 ## Last Updated
 
-Aligned to the scanned repo structure and documentation taxonomy on `2026-03-16`.
+Aligned to the scanned repo structure and documentation taxonomy on `2026-03-26`.

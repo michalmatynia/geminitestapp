@@ -33,6 +33,28 @@ export const getMongoDumpCommand = (): string => process.env['MONGODUMP_PATH'] ?
 export const getMongoRestoreCommand = (): string =>
   process.env['MONGORESTORE_PATH'] ?? 'mongorestore';
 
+export const isTransientMongoConnectionError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const constructorName = error.constructor?.name ?? '';
+  const normalized = `${constructorName} ${error.name} ${error.message}`.toLowerCase();
+
+  return (
+    constructorName === 'MongoServerSelectionError' ||
+    constructorName === 'MongoNetworkError' ||
+    constructorName === 'MongoTopologyClosedError' ||
+    constructorName === 'MongoServerClosedError' ||
+    normalized.includes('server selection') ||
+    normalized.includes('topology closed') ||
+    normalized.includes('econn') ||
+    normalized.includes('connection refused') ||
+    normalized.includes('connection closed') ||
+    (normalized.includes('connection') && normalized.includes('timed out'))
+  );
+};
+
 export const execFileAsync = (
   command: string,
   args: string[]

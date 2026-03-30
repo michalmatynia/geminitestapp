@@ -54,6 +54,19 @@ vi.mock('@/features/jobs/server', () => ({
 
 import { POST_handler } from './handler';
 
+const buildChatbotJobRequestPayload = (
+  overrides: Record<string, unknown>
+): Record<string, unknown> => ({
+  sessionId: 'session-1',
+  messages: [
+    {
+      role: 'user',
+      content: 'Translate this',
+    },
+  ],
+  ...overrides,
+});
+
 describe('chatbot jobs handler', () => {
   beforeEach(() => {
     resolveBrainModelExecutionConfigMock.mockReset();
@@ -124,20 +137,14 @@ describe('chatbot jobs handler', () => {
   });
 
   it('creates a job with Brain-applied config and queues it', async () => {
+    const requestPayload = buildChatbotJobRequestPayload({
+      userMessage: 'Translate this',
+    });
     const response = await POST_handler(
       new Request('http://localhost/api/chatbot/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'session-1',
-          messages: [
-            {
-              role: 'user',
-              content: 'Translate this',
-            },
-          ],
-          userMessage: 'Translate this',
-        }),
+        body: JSON.stringify(requestPayload),
       }) as Parameters<typeof POST_handler>[0],
       { requestId: 'req-3' } as Parameters<typeof POST_handler>[1]
     );
@@ -188,21 +195,15 @@ describe('chatbot jobs handler', () => {
   });
 
   it('rejects legacy model override payloads', async () => {
+    const requestPayload = buildChatbotJobRequestPayload({
+      model: 'legacy-model',
+    });
     await expect(
       POST_handler(
         new Request('http://localhost/api/chatbot/jobs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: 'session-1',
-            model: 'legacy-model',
-            messages: [
-              {
-                role: 'user',
-                content: 'Translate this',
-              },
-            ],
-          }),
+          body: JSON.stringify(requestPayload),
         }) as Parameters<typeof POST_handler>[0],
         { requestId: 'req-4' } as Parameters<typeof POST_handler>[1]
       )
@@ -214,110 +215,92 @@ describe('chatbot jobs handler', () => {
   });
 
   it('normalizes and stores context registry payloads on queued jobs', async () => {
+    const expectedContextRefs = [
+      {
+        id: 'page:admin-chatbot',
+        kind: 'static_node',
+      },
+      {
+        id: 'runtime:chatbot:workspace',
+        kind: 'runtime_document',
+        providerId: 'chatbot-page-local',
+        entityType: 'chatbot_workspace_state',
+      },
+    ];
+    const contextRegistryRequestPayload = {
+      sessionId: 'session-1',
+      messages: [
+        {
+          role: 'user',
+          content: 'Use the page context.',
+        },
+      ],
+      contextRegistry: {
+        refs: expectedContextRefs,
+        engineVersion: 'page-context-engine/1',
+        resolved: {
+          refs: [
+            {
+              id: 'runtime:chatbot:workspace',
+              kind: 'runtime_document',
+              providerId: 'chatbot-page-local',
+              entityType: 'chatbot_workspace_state',
+            },
+          ],
+          nodes: [],
+          documents: [
+            {
+              id: 'runtime:chatbot:workspace',
+              kind: 'runtime_document',
+              entityType: 'chatbot_workspace_state',
+              title: 'Chatbot workspace state',
+              summary: 'Current page state',
+              tags: ['chatbot'],
+              relatedNodeIds: ['page:admin-chatbot'],
+              timestamps: {
+                observedAtISO: '2026-03-09T08:30:00.000Z',
+              },
+            },
+          ],
+          truncated: false,
+          engineVersion: 'page-context-engine/1',
+        },
+      },
+    };
+    const expectedResolvedContextRegistry = {
+      refs: expectedContextRefs,
+      resolved: expect.objectContaining({
+        documents: expect.arrayContaining([
+          expect.objectContaining({
+            id: 'runtime:chatbot:workspace',
+          }),
+        ]),
+        nodes: expect.arrayContaining([
+          expect.objectContaining({
+            id: 'page:admin-chatbot',
+          }),
+        ]),
+      }),
+    };
+
     await POST_handler(
       new Request('http://localhost/api/chatbot/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'session-1',
-          messages: [
-            {
-              role: 'user',
-              content: 'Use the page context.',
-            },
-          ],
-          contextRegistry: {
-            refs: [
-              {
-                id: 'page:admin-chatbot',
-                kind: 'static_node',
-              },
-              {
-                id: 'runtime:chatbot:workspace',
-                kind: 'runtime_document',
-                providerId: 'chatbot-page-local',
-                entityType: 'chatbot_workspace_state',
-              },
-            ],
-            engineVersion: 'page-context-engine/1',
-            resolved: {
-              refs: [
-                {
-                  id: 'runtime:chatbot:workspace',
-                  kind: 'runtime_document',
-                  providerId: 'chatbot-page-local',
-                  entityType: 'chatbot_workspace_state',
-                },
-              ],
-              nodes: [],
-              documents: [
-                {
-                  id: 'runtime:chatbot:workspace',
-                  kind: 'runtime_document',
-                  entityType: 'chatbot_workspace_state',
-                  title: 'Chatbot workspace state',
-                  summary: 'Current page state',
-                  tags: ['chatbot'],
-                  relatedNodeIds: ['page:admin-chatbot'],
-                  timestamps: {
-                    observedAtISO: '2026-03-09T08:30:00.000Z',
-                  },
-                },
-              ],
-              truncated: false,
-              engineVersion: 'page-context-engine/1',
-            },
-          },
-        }),
+        body: JSON.stringify(contextRegistryRequestPayload),
       }) as Parameters<typeof POST_handler>[0],
       { requestId: 'req-5' } as Parameters<typeof POST_handler>[1]
     );
 
     expect(contextRegistryResolveRefsMock).toHaveBeenCalledWith({
-      refs: [
-        {
-          id: 'page:admin-chatbot',
-          kind: 'static_node',
-        },
-        {
-          id: 'runtime:chatbot:workspace',
-          kind: 'runtime_document',
-          providerId: 'chatbot-page-local',
-          entityType: 'chatbot_workspace_state',
-        },
-      ],
+      refs: expectedContextRefs,
       maxNodes: 24,
       depth: 1,
     });
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: expect.objectContaining({
-          contextRegistry: expect.objectContaining({
-            refs: [
-              {
-                id: 'page:admin-chatbot',
-                kind: 'static_node',
-              },
-              {
-                id: 'runtime:chatbot:workspace',
-                kind: 'runtime_document',
-                providerId: 'chatbot-page-local',
-                entityType: 'chatbot_workspace_state',
-              },
-            ],
-            resolved: expect.objectContaining({
-              documents: expect.arrayContaining([
-                expect.objectContaining({
-                  id: 'runtime:chatbot:workspace',
-                }),
-              ]),
-              nodes: expect.arrayContaining([
-                expect.objectContaining({
-                  id: 'page:admin-chatbot',
-                }),
-              ]),
-            }),
-          }),
+          contextRegistry: expect.objectContaining(expectedResolvedContextRegistry),
         }),
       })
     );

@@ -20,16 +20,18 @@ type KangurConfirmModalProps = {
   title: string;
 };
 
-export function KangurConfirmModal({
-  cancelText = 'Anuluj',
-  confirmText = 'Potwierdź',
-  isOpen,
-  message,
-  onClose,
-  onConfirm,
-  showCancel = true,
-  title,
-}: KangurConfirmModalProps): React.JSX.Element {
+export function KangurConfirmModal(props: KangurConfirmModalProps): React.JSX.Element {
+  const {
+    cancelText = 'Anuluj',
+    confirmText = 'Potwierdź',
+    isOpen,
+    message,
+    onClose,
+    onConfirm,
+    showCancel = true,
+    title,
+  } = props;
+
   const handleOpenChange = (open: boolean): void => {
     if (!open) {
       onClose();

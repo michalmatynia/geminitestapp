@@ -68,7 +68,10 @@ describe('analyzeHighRiskCoverage', () => {
       },
     });
 
-    const report = analyzeHighRiskCoverage({ root });
+    const report = analyzeHighRiskCoverage({
+      root,
+      coverageSummaryPath: 'coverage/coverage-summary.json',
+    });
 
     expect(report.status).toBe('passed');
     expect(report.summary.errorCount).toBe(0);
@@ -91,6 +94,7 @@ describe('analyzeHighRiskCoverage', () => {
 
     const report = analyzeHighRiskCoverage({
       root,
+      coverageSummaryPath: 'coverage/coverage-summary.json',
       targets: [
         {
           id: 'api-routes',
@@ -140,6 +144,31 @@ describe('analyzeHighRiskCoverage', () => {
     expect(report.status).toBe('warn');
     expect(report.summary.targetCount).toBe(5);
     expect(report.summary.warningCount).toBe(1);
+    expect(report.issues).toEqual([
+      expect.objectContaining({
+        ruleId: 'high-risk-coverage-report-missing',
+        severity: 'warn',
+      }),
+    ]);
+  });
+
+  it('ignores the generic repo coverage summary when the dedicated high-risk artifact is missing', () => {
+    const root = createTempRoot();
+
+    writeJson(root, 'coverage/coverage-summary.json', {
+      total: {},
+      'src/app/api/health/route.ts': {
+        lines: { total: 10, covered: 10, skipped: 0, pct: 100 },
+        statements: { total: 10, covered: 10, skipped: 0, pct: 100 },
+        functions: { total: 10, covered: 10, skipped: 0, pct: 100 },
+        branches: { total: 10, covered: 10, skipped: 0, pct: 100 },
+      },
+    });
+
+    const report = analyzeHighRiskCoverage({ root });
+
+    expect(report.status).toBe('warn');
+    expect(report.coverageSummaryPath).toBe('coverage/high-risk/coverage-summary.json');
     expect(report.issues).toEqual([
       expect.objectContaining({
         ruleId: 'high-risk-coverage-report-missing',
@@ -215,6 +244,7 @@ describe('analyzeHighRiskCoverage', () => {
 
     const report = analyzeHighRiskCoverage({
       root,
+      coverageSummaryPath: 'coverage/coverage-summary.json',
       targetIds: ['ai-paths'],
     });
 

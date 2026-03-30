@@ -8,7 +8,7 @@ import {
   type KANGUR_SECTION_EYEBROW_CLASSNAMES,
 } from './KangurSectionEyebrow';
 
-export type KangurPanelIntroProps = React.HTMLAttributes<HTMLDivElement> & {
+export type KangurPanelIntroProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> & {
   description?: React.ReactNode;
   descriptionClassName?: string;
   eyebrow?: React.ReactNode;

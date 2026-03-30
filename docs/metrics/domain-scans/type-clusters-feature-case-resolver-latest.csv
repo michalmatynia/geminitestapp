@@ -1,1 +1,2 @@
-clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signatureKind
+clusterId,clusterKind,riskScore,declarationCount,domains,canonicalDtoCandidate,signatureHash,signaturePreview,declarations
+exact-0004,exact-shape,12,2,feature:case-resolver,,4873ee998ebf,CaseResolverNamedColorParentFormData,src/features/case-resolver/entity-form-data.ts:11:CaseResolverIdentifierFormData|src/features/case-resolver/entity-form-data.ts:12:CaseResolverTagFormData

@@ -22,6 +22,7 @@ import {
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import type { KangurQuestionChoice } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
+import { KANGUR_CLOCK_THEME_COLORS } from './clock-theme';
 
 export type QuestionCardQuestion = {
   id?: string;
@@ -78,11 +79,8 @@ const translateQuestionCard = (
     values
   );
 
-function AnalogClockSmall({
-  hours,
-  minutes,
-  ariaLabel,
-}: AnalogClockSmallProps): React.JSX.Element {
+function AnalogClockSmall(props: AnalogClockSmallProps): React.JSX.Element {
+  const { hours, minutes, ariaLabel } = props;
   const hourAngle = ((hours % 12) + minutes / 60) * 30;
   const minuteAngle = minutes * 6;
 
@@ -97,8 +95,8 @@ function AnalogClockSmall({
         cx='100'
         cy='100'
         r='95'
-        fill='var(--kangur-soft-card-background)'
-        stroke='#6366f1'
+        fill={KANGUR_CLOCK_THEME_COLORS.faceFill}
+        stroke={KANGUR_CLOCK_THEME_COLORS.faceStroke}
         strokeWidth='4'
       />
       {Array.from({ length: 12 }, (_, index) => {
@@ -110,7 +108,7 @@ function AnalogClockSmall({
             y1={100 + 80 * Math.sin(angle)}
             x2={100 + 90 * Math.cos(angle)}
             y2={100 + 90 * Math.sin(angle)}
-            stroke='#4f46e5'
+            stroke={KANGUR_CLOCK_THEME_COLORS.majorTick}
             strokeWidth='3'
             strokeLinecap='round'
           />
@@ -127,7 +125,7 @@ function AnalogClockSmall({
             dominantBaseline='central'
             fontSize='14'
             fontWeight='bold'
-            fill='#3730a3'
+            fill={KANGUR_CLOCK_THEME_COLORS.numeral}
           >
             {value}
           </text>
@@ -138,7 +136,7 @@ function AnalogClockSmall({
         y1='100'
         x2={100 + 48 * Math.cos((hourAngle - 90) * (Math.PI / 180))}
         y2={100 + 48 * Math.sin((hourAngle - 90) * (Math.PI / 180))}
-        stroke='#1e1b4b'
+        stroke={KANGUR_CLOCK_THEME_COLORS.lessonHourHand}
         strokeWidth='6'
         strokeLinecap='round'
       />
@@ -147,25 +145,26 @@ function AnalogClockSmall({
         y1='100'
         x2={100 + 68 * Math.cos((minuteAngle - 90) * (Math.PI / 180))}
         y2={100 + 68 * Math.sin((minuteAngle - 90) * (Math.PI / 180))}
-        stroke='#4f46e5'
+        stroke={KANGUR_CLOCK_THEME_COLORS.lessonMinuteHand}
         strokeWidth='4'
         strokeLinecap='round'
       />
-      <circle cx='100' cy='100' r='5' fill='#6366f1' />
+      <circle cx='100' cy='100' r='5' fill={KANGUR_CLOCK_THEME_COLORS.center} />
     </svg>
   );
 }
 
-export default function QuestionCard({
-  question,
-  onAnswer,
-  onAnswerChoice,
-  questionNumber,
-  total,
-  timeLimit,
-  answerMode = 'client',
-  serverResult = null,
-}: QuestionCardProps): React.JSX.Element {
+export default function QuestionCard(props: QuestionCardProps): React.JSX.Element {
+  const {
+    question,
+    onAnswer,
+    onAnswerChoice,
+    questionNumber,
+    total,
+    timeLimit,
+    answerMode = 'client',
+    serverResult = null,
+  } = props;
   const translations = useTranslations('KangurMiniGames');
   const isCoarsePointer = useKangurCoarsePointer();
   const questionHeadingId = useId();

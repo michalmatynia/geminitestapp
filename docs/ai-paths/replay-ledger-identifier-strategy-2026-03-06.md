@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,14 @@ canonical: true
 ---
 
 # Replay Ledger Identifier Strategy (2026-03-06)
+
+This is a retained design-baseline note from the March 2026 AI Paths sprint
+work. Use it for the identifier model captured during that design slice, but use
+the maintained AI Paths docs for the current runtime and operator surface:
+
+- [`./overview.md`](./overview.md)
+- [`./reference.md`](./reference.md)
+- [`./ai-paths-improvements-plan-2026-03-06.md`](./ai-paths-improvements-plan-2026-03-06.md)
 
 ## References
 

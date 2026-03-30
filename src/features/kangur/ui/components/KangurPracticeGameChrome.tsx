@@ -22,12 +22,12 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
-type KangurPracticeGameStageProps = React.HTMLAttributes<HTMLDivElement>;
+type KangurPracticeGameShellProps = React.HTMLAttributes<HTMLDivElement>;
 
-export function KangurPracticeGameStage({
+export function KangurPracticeGameShell({
   className,
   ...props
-}: KangurPracticeGameStageProps): React.JSX.Element {
+}: KangurPracticeGameShellProps): React.JSX.Element {
   return (
     <div
       className={cn(
@@ -43,7 +43,7 @@ export function KangurPracticeGameStage({
 type KangurPracticeGameProgressProps = {
   accent: KangurAccent;
   currentRound: number;
-  dataTestId: string;
+  dataTestId?: string;
   totalRounds: number;
 };
 
@@ -54,7 +54,7 @@ export function KangurPracticeGameProgress({
   totalRounds,
 }: KangurPracticeGameProgressProps): React.JSX.Element {
   const progressAccent = accent;
-  const progressTestId = dataTestId;
+  const progressTestId = dataTestId ?? 'kangur-practice-progress';
   const progressValue = (currentRound / totalRounds) * 100;
 
   return (

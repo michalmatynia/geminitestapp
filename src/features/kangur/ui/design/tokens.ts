@@ -1,4 +1,7 @@
 import { cn } from '@/features/kangur/shared/utils';
+import type { KangurAccent } from '@/shared/contracts/kangur-theme';
+
+export type { KangurAccent } from '@/shared/contracts/kangur-theme';
 
 export type KangurPageTone = 'play' | 'learn' | 'profile' | 'dashboard';
 
@@ -103,16 +106,6 @@ export const KANGUR_SEGMENTED_CONTROL_ITEM_CLASSNAME =
 
 export const KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME =
   'kangur-segmented-control-item-active';
-
-export type KangurAccent =
-  | 'indigo'
-  | 'violet'
-  | 'emerald'
-  | 'sky'
-  | 'amber'
-  | 'rose'
-  | 'teal'
-  | 'slate';
 
 type KangurAccentStyles = {
   icon: string;

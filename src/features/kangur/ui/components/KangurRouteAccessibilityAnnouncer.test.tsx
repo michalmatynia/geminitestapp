@@ -12,9 +12,24 @@ import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutin
 
 import { KangurRouteAccessibilityAnnouncer } from './KangurRouteAccessibilityAnnouncer';
 
+const sessionState = vi.hoisted(() => ({
+  value: {
+    data: null,
+    status: 'unauthenticated' as const,
+  },
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionState.value,
+}));
+
 describe('KangurRouteAccessibilityAnnouncer', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    sessionState.value = {
+      data: null,
+      status: 'unauthenticated',
+    };
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
       callback(0);
       return 1;
@@ -104,6 +119,45 @@ describe('KangurRouteAccessibilityAnnouncer', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent('Przełączanie języka: Lekcje');
+    });
+  });
+
+  it('does not announce GamesLibrary to non-super-admin users', async () => {
+    const { rerender } = render(
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <KangurRoutingProvider
+          basePath='/kangur'
+          embedded={false}
+          pageKey='Game'
+          requestedPath='/kangur'
+        >
+          <KangurRouteAccessibilityAnnouncer />
+          <KangurPageContainer>
+            <h1>Start</h1>
+          </KangurPageContainer>
+        </KangurRoutingProvider>
+      </NextIntlClientProvider>
+    );
+
+    rerender(
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <KangurRoutingProvider
+          basePath='/kangur'
+          embedded={false}
+          pageKey='GamesLibrary'
+          requestedPath='/kangur/games'
+        >
+          <KangurRouteAccessibilityAnnouncer />
+          <KangurPageContainer>
+            <h1>Not found</h1>
+          </KangurPageContainer>
+        </KangurRoutingProvider>
+      </NextIntlClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).not.toHaveTextContent('Biblioteka Gier');
+      expect(screen.getByRole('status')).toHaveTextContent('');
     });
   });
 });

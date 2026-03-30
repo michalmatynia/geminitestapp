@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { RedisOverview } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
-import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { getRedisClient } from '@/shared/lib/redis';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

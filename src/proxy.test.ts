@@ -259,9 +259,35 @@ describe('proxy api routing', () => {
     const response = await Promise.resolve(proxy(request as never, { params: {} }));
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-middleware-rewrite')).toBe(
-      'http://localhost/pl/products/123'
-    );
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('location')).toBeNull();
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rewrites default-locale bare public slugs through the localized app route', async () => {
+    const request = createRequest('http://localhost/lessons', {
+      acceptLanguage: 'pl-PL,pl;q=0.9',
+    });
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBeNull();
+    expect(response.headers.get('x-middleware-rewrite')).toBe('http://localhost/pl/lessons');
+    expect(response.headers.get('location')).toBeNull();
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes the default-locale root route through without rewriting it to a locale-prefixed alias', async () => {
+    const request = createRequest('http://localhost/', {
+      localeCookie: 'pl',
+    });
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('x-middleware-rewrite')).toBeNull();
     expect(response.headers.get('location')).toBeNull();
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });
@@ -285,6 +311,19 @@ describe('proxy api routing', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('x-middleware-next')).toBe('1');
     expect(response.headers.get('set-cookie')).toContain('NEXT_LOCALE=en');
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes localized public paths through without rewriting the locale cookie when it already matches', async () => {
+    const request = createRequest('http://localhost/en/about', {
+      localeCookie: 'en',
+    });
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('set-cookie')).toBeNull();
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });
 });

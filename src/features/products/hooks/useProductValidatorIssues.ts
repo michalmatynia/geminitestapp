@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 
 import {
   areIssueMapsEquivalent,
@@ -37,6 +37,108 @@ const toComparableString = (value: unknown): string => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   return '';
+};
+
+const resolveFieldChangedAt = ({
+  fieldName,
+  timestamps,
+  resolveChangedAt,
+}: {
+  fieldName: string;
+  timestamps: Record<string, number>;
+  resolveChangedAt?: (fieldName: string, timestamps: Record<string, number>) => number;
+}): number =>
+  resolveChangedAt ? resolveChangedAt(fieldName, timestamps) : (timestamps[fieldName] ?? 0);
+
+const clearDebounceTimer = (
+  timerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>
+): void => {
+  if (!timerRef.current) {
+    return;
+  }
+
+  clearTimeout(timerRef.current);
+  timerRef.current = null;
+};
+
+const buildRuntimeValidatorPayload = ({
+  contextRegistry,
+  latestProductValues,
+  runtimePatternIds,
+  runtimeValues,
+  validationScope,
+  values,
+}: {
+  contextRegistry: ReturnType<typeof useOptionalContextRegistryPageEnvelope>;
+  latestProductValues: Record<string, unknown> | null;
+  runtimePatternIds: string[];
+  runtimeValues?: Record<string, unknown>;
+  validationScope: ProductValidationInstanceScope;
+  values: Record<string, unknown>;
+}) => ({
+  values: runtimeValues ?? values,
+  latestProductValues,
+  patternIds: runtimePatternIds,
+  validationScope,
+  ...(contextRegistry ? { contextRegistry } : {}),
+});
+
+const resolveNextIssueRefreshDelay = ({
+  fieldIssues,
+  resolveChangedAt,
+  timestamps,
+}: {
+  fieldIssues: Record<string, FieldValidatorIssue[]>;
+  resolveChangedAt?: (fieldName: string, timestamps: Record<string, number>) => number;
+  timestamps: Record<string, number>;
+}): number | null => {
+  const now = Date.now();
+  let nextRemainingMs: number | null = null;
+
+  for (const [fieldName, issueList] of Object.entries(fieldIssues)) {
+    const changedAt = resolveFieldChangedAt({
+      fieldName,
+      timestamps,
+      resolveChangedAt,
+    });
+    if (changedAt <= 0) continue;
+
+    for (const issue of issueList) {
+      const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
+      if (debounceMs <= 0) continue;
+      const remaining = debounceMs - (now - changedAt);
+      if (remaining <= 0) continue;
+      nextRemainingMs =
+        nextRemainingMs === null ? remaining : Math.min(nextRemainingMs, remaining);
+    }
+  }
+
+  return nextRemainingMs;
+};
+
+const isVisibleIssue = ({
+  fieldName,
+  issue,
+  changedAt,
+  now,
+  isIssueAccepted,
+  isIssueDenied,
+}: {
+  fieldName: string;
+  issue: FieldValidatorIssue;
+  changedAt: number;
+  now: number;
+  isIssueAccepted: (fieldName: string, patternId: string) => boolean;
+  isIssueDenied: (fieldName: string, patternId: string) => boolean;
+}): boolean => {
+  if (isIssueDenied(fieldName, issue.patternId)) return false;
+  if (issue.postAcceptBehavior === 'stop_after_accept' && isIssueAccepted(fieldName, issue.patternId)) {
+    return false;
+  }
+
+  const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
+  if (debounceMs <= 0 || changedAt <= 0) return true;
+  return now - changedAt >= debounceMs;
 };
 
 export const useProductValidatorIssues = ({
@@ -128,49 +230,45 @@ export const useProductValidatorIssues = ({
       lastSentRuntimeKeyRef.current = '';
       return;
     }
-    // Skip if the payload is semantically identical to the last sent request.
-    // This prevents the debounce timer from resetting on pure reference churn.
     if (runtimeValuesKey && runtimeValuesKey === lastSentRuntimeKeyRef.current) {
       return;
     }
-    const timer = setTimeout(
-      () => {
-        lastSentRuntimeKeyRef.current = runtimeValuesKey;
-        void api
-          .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
-            '/api/v2/products/validator-runtime/evaluate',
-            {
-              values: runtimeValues ?? values,
-              latestProductValues,
-              patternIds: runtimePatternIds,
-              validationScope,
-              ...(contextRegistry ? { contextRegistry } : {}),
+    const payload = buildRuntimeValidatorPayload({
+      contextRegistry,
+      latestProductValues,
+      runtimePatternIds,
+      runtimeValues,
+      validationScope,
+      values,
+    });
+    const timer = setTimeout(() => {
+      lastSentRuntimeKeyRef.current = runtimeValuesKey;
+      void api
+        .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
+          '/api/v2/products/validator-runtime/evaluate',
+          payload,
+          { logError: false }
+        )
+        .then((response) => {
+          const nextIssues = response.issues ?? {};
+          setRuntimeFieldIssues((previous) =>
+            areIssueMapsEquivalent(previous, nextIssues) ? previous : nextIssues
+          );
+        })
+        .catch((error: unknown) => {
+          setRuntimeFieldIssues((previous) =>
+            Object.keys(previous).length === 0 ? previous : {}
+          );
+          logClientError(error instanceof Error ? error : new Error(String(error)), {
+            context: {
+              source,
+              action: 'runtimeValidatorEvaluate',
             },
-            { logError: false }
-          )
-          .then((response) => {
-            const nextIssues = response.issues ?? {};
-            setRuntimeFieldIssues((previous) =>
-              areIssueMapsEquivalent(previous, nextIssues) ? previous : nextIssues
-            );
-          })
-          .catch((error: unknown) => {
-            setRuntimeFieldIssues((previous) =>
-              Object.keys(previous).length === 0 ? previous : {}
-            );
-            logClientError(error instanceof Error ? error : new Error(String(error)), {
-              context: {
-                source,
-                action: 'runtimeValidatorEvaluate',
-              },
-            });
           });
-      },
-      Math.max(0, runtimeDebounceMs)
-    );
-    return () => {
-      clearTimeout(timer);
-    };
+        });
+    }, Math.max(0, runtimeDebounceMs));
+
+    return () => clearTimeout(timer);
   }, [
     contextRegistry,
     latestProductValues,
@@ -218,27 +316,13 @@ export const useProductValidatorIssues = ({
   );
 
   useEffect(() => {
-    if (debounceRefreshTimerRef.current) {
-      clearTimeout(debounceRefreshTimerRef.current);
-      debounceRefreshTimerRef.current = null;
-    }
+    clearDebounceTimer(debounceRefreshTimerRef);
     if (!validatorEnabled) return;
-    const now = Date.now();
-    let nextRemainingMs: number | null = null;
-    for (const [fieldName, issueList] of Object.entries(fieldIssues)) {
-      const changedAt = resolveChangedAt
-        ? resolveChangedAt(fieldName, fieldEditTimestampsRef.current)
-        : (fieldEditTimestampsRef.current[fieldName] ?? 0);
-      if (changedAt <= 0) continue;
-      for (const issue of issueList) {
-        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
-        if (debounceMs <= 0) continue;
-        const remaining = debounceMs - (now - changedAt);
-        if (remaining <= 0) continue;
-        nextRemainingMs =
-          nextRemainingMs === null ? remaining : Math.min(nextRemainingMs, remaining);
-      }
-    }
+    const nextRemainingMs = resolveNextIssueRefreshDelay({
+      fieldIssues,
+      resolveChangedAt,
+      timestamps: fieldEditTimestampsRef.current,
+    });
     if (nextRemainingMs !== null) {
       debounceRefreshTimerRef.current = setTimeout(() => {
         setDebounceTick((prev) => prev + 1);
@@ -253,25 +337,25 @@ export const useProductValidatorIssues = ({
   }, [debounceTick, fieldIssues, resolveChangedAt, validatorEnabled]);
 
   const visibleFieldIssues = useMemo((): Record<string, FieldValidatorIssue[]> => {
-    if (!validatorEnabled) return {};
+      if (!validatorEnabled) return {};
     const visible: Record<string, FieldValidatorIssue[]> = {};
     const now = Date.now();
     for (const [fieldName, issueList] of Object.entries(fieldIssues)) {
-      const changedAt = resolveChangedAt
-        ? resolveChangedAt(fieldName, fieldEditTimestampsRef.current)
-        : (fieldEditTimestampsRef.current[fieldName] ?? 0);
-      visible[fieldName] = issueList.filter((issue: FieldValidatorIssue): boolean => {
-        if (isIssueDenied(fieldName, issue.patternId)) return false;
-        if (
-          issue.postAcceptBehavior === 'stop_after_accept' &&
-          isIssueAccepted(fieldName, issue.patternId)
-        ) {
-          return false;
-        }
-        const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
-        if (debounceMs <= 0 || changedAt <= 0) return true;
-        return now - changedAt >= debounceMs;
+      const changedAt = resolveFieldChangedAt({
+        fieldName,
+        timestamps: fieldEditTimestampsRef.current,
+        resolveChangedAt,
       });
+      visible[fieldName] = issueList.filter((issue: FieldValidatorIssue): boolean =>
+        isVisibleIssue({
+          fieldName,
+          issue,
+          changedAt,
+          now,
+          isIssueAccepted,
+          isIssueDenied,
+        })
+      );
     }
     return visible;
   }, [

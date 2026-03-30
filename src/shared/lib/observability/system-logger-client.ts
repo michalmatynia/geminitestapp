@@ -1,4 +1,8 @@
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
+import {
+  getObservabilityLoggingControlTypeForSystemLogLevel,
+} from '@/shared/lib/observability/logging-controls';
+import { isClientLoggingControlEnabled } from '@/shared/lib/observability/logging-controls-client';
 import { logger } from '@/shared/utils/logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -17,6 +21,13 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
   if (typeof window === 'undefined') return;
 
   const level = input.level ?? 'info';
+  const loggingControlType = getObservabilityLoggingControlTypeForSystemLogLevel(
+    level,
+    Boolean(input.critical)
+  );
+  if (!isClientLoggingControlEnabled(loggingControlType)) {
+    return;
+  }
   const source = input.source || 'system';
   const context = input.context ?? undefined;
   const consoleMessage = `[${source}] ${input.message}`;

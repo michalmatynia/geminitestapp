@@ -14,6 +14,34 @@ const mockState = vi.hoisted(() => ({
   toggleGlobalPalette: vi.fn(),
 }));
 
+const mockThemeSettingsValue = vi.hoisted(() => ({
+  activeColorSchemeId: 'scheme-2',
+  colorSchemes: [
+    {
+      id: 'scheme-1',
+      name: 'Warm',
+      colors: {
+        background: '#111111',
+        border: '#222222',
+        surface: '#333333',
+        text: '#eeeeee',
+        accent: '#f97316',
+      },
+    },
+    {
+      id: 'scheme-2',
+      name: 'Cool',
+      colors: {
+        background: '#0f172a',
+        border: '#1e293b',
+        surface: '#1e293b',
+        text: '#e2e8f0',
+        accent: '#38bdf8',
+      },
+    },
+  ],
+}));
+
 vi.mock('../ThemeColorsContext', () => ({
   useThemeColorsState: () => ({
     schemeView: 'list',
@@ -36,33 +64,7 @@ vi.mock('../ThemeColorsContext', () => ({
 }));
 
 vi.mock('../../ThemeSettingsContext', () => ({
-  useThemeSettingsValue: () => ({
-    activeColorSchemeId: 'scheme-2',
-    colorSchemes: [
-      {
-        id: 'scheme-1',
-        name: 'Warm',
-        colors: {
-          background: '#111111',
-          border: '#222222',
-          surface: '#333333',
-          text: '#eeeeee',
-          accent: '#f97316',
-        },
-      },
-      {
-        id: 'scheme-2',
-        name: 'Cool',
-        colors: {
-          background: '#0f172a',
-          border: '#1e293b',
-          surface: '#1e293b',
-          text: '#e2e8f0',
-          accent: '#38bdf8',
-        },
-      },
-    ],
-  }),
+  useThemeSettingsValue: () => mockThemeSettingsValue,
   useThemeSettingsActions: () => ({
     update: mockState.update,
   }),

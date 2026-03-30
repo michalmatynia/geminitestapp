@@ -52,7 +52,9 @@ vi.mock('@/features/notesapp/components/list/NoteCardHeader', async () => {
 });
 
 vi.mock('@/features/notesapp/components/list/NoteCardContent', () => ({
-  NoteCardContent: ({ note }: { note: NoteWithRelations }) => <div>content {note.title}</div>,
+  renderNoteCardContent: ({ note }: { note: NoteWithRelations }) => (
+    <div>content {note.title}</div>
+  ),
 }));
 
 vi.mock('@/features/notesapp/components/list/NoteCardFooter', () => ({

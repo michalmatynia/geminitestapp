@@ -1,0 +1,11 @@
+export * from '../pages/AdminFrontManagePage';
+export * from '../pages/AdminNotificationsSettingsPage';
+export * from '../pages/AdminSettingsHomePage';
+export * from '../pages/AdminMenuSettingsPage';
+export * from '../pages/AdminTypographySettingsPage';
+export * from '../pages/AdminRouteMapPage';
+export { default as AdminDashboardPage } from '../pages/AdminDashboardPage';
+export * from '../pages/AdminGlobalValidatorPage';
+export * from '../pages/AdminSyncSettingsPage';
+export { default as AdminTransientRecoverySettingsPage } from '../pages/AdminTransientRecoverySettingsPage';
+export * from '../pages/AdminValidatorPatternListsPage';

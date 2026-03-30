@@ -36,7 +36,11 @@ vi.mock('@/shared/utils/observability/activity-service', () => ({
   logActivity: logActivityMock,
 }));
 
-import { getKangurProgressHandler, patchKangurProgressHandler } from './handler';
+import {
+  clearKangurProgressCache,
+  getKangurProgressHandler,
+  patchKangurProgressHandler,
+} from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -67,6 +71,7 @@ const createPatchRequest = (
 describe('kangur progress handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearKangurProgressCache();
 
     getKangurProgressRepositoryMock.mockResolvedValue({
       getProgress: getProgressMock,
@@ -119,6 +124,26 @@ describe('kangur progress handler', () => {
     expect(saveProgressMock).toHaveBeenCalledWith('learner-1::maths', progress);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(progress);
+  });
+
+  it('reuses cached learner progress across repeated reads', async () => {
+    getProgressMock
+      .mockResolvedValueOnce(createDefaultKangurProgressState())
+      .mockResolvedValueOnce(createDefaultKangurProgressState())
+      .mockResolvedValueOnce(createDefaultKangurProgressState())
+      .mockResolvedValueOnce(createProgress({ totalXp: 180, gamesPlayed: 7 }));
+
+    await getKangurProgressHandler(
+      new NextRequest('http://localhost/api/kangur/progress'),
+      createRequestContext()
+    );
+    await getKangurProgressHandler(
+      new NextRequest('http://localhost/api/kangur/progress'),
+      createRequestContext()
+    );
+
+    expect(getProgressMock).toHaveBeenCalledTimes(4);
+    expect(saveProgressMock).toHaveBeenCalledTimes(1);
   });
 
   it('saves validated progress for the authenticated learner', async () => {

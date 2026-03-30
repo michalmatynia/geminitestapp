@@ -14,15 +14,21 @@ const {
   useKangurProgressStateMock,
   useOptionalKangurAuthMock,
   useOptionalKangurRoutingMock,
+  sessionMock,
 } = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
   useKangurProgressStateMock: vi.fn(),
   useOptionalKangurAuthMock: vi.fn(),
   useOptionalKangurRoutingMock: vi.fn(),
+  sessionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
   usePathname: usePathnameMock,
+}));
+
+vi.mock('next-auth/react', () => ({
+  useSession: () => sessionMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -49,6 +55,10 @@ const renderWithIntl = (element: ReactElement) =>
 describe('KangurPageTransitionSkeleton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionMock.mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
     usePathnameMock.mockReturnValue('/en/lessons');
     useOptionalKangurAuthMock.mockReturnValue({
       canAccessParentAssignments: true,
@@ -133,6 +143,29 @@ describe('KangurPageTransitionSkeleton', () => {
     expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
       'data-kangur-skeleton-variant',
       'lessons-library'
+    );
+  });
+
+  it('downgrades blocked GamesLibrary skeletons to the game-home variant for non-super-admin users', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+    sessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      },
+      status: 'authenticated',
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='GamesLibrary' />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveAttribute(
+      'data-kangur-skeleton-variant',
+      'game-home'
     );
   });
 
@@ -240,7 +273,7 @@ describe('KangurPageTransitionSkeleton', () => {
     });
   });
 
-  it('renders with path-based fallback copy when next-intl context is unavailable', () => {
+  it('renders fallback skeleton copy when next-intl context is unavailable', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -248,8 +281,27 @@ describe('KangurPageTransitionSkeleton', () => {
 
     render(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
 
-    expect(screen.getByText('Loading Kangur page')).toBeInTheDocument();
-    expect(screen.getAllByText('Lessons')).not.toHaveLength(0);
+    expect(screen.getByRole('status')).toHaveTextContent('Loading page');
+    expect(
+      screen.getByTestId('kangur-page-transition-skeleton-lessons-library-layout')
+    ).toBeInTheDocument();
+  });
+
+  it('uses an opaque page background for navigation skeletons so the previous route does not ghost through', () => {
+    useOptionalKangurRoutingMock.mockReturnValue({
+      basePath: '/kangur',
+      embedded: false,
+    });
+
+    renderWithIntl(<KangurPageTransitionSkeleton pageKey='Lessons' variant='lessons-library' />);
+
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
+      background:
+        'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
+    });
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-locale-overlay')
+    ).toBeNull();
   });
 
   it('keeps standalone game-session overlays below the top bar without adding a second top-bar offset', () => {
@@ -504,7 +556,7 @@ describe('KangurPageTransitionSkeleton', () => {
     ).toBeNull();
   });
 
-  it('uses a softer blurred overlay for locale-switch skeletons', () => {
+  it('uses a softer blurred overlay for locale-switch skeletons without rendering an inline navbar', () => {
     useOptionalKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
       embedded: false,
@@ -514,6 +566,7 @@ describe('KangurPageTransitionSkeleton', () => {
       <KangurPageTransitionSkeleton
         pageKey='Lessons'
         reason='locale-switch'
+        renderInlineTopNavigationSkeleton
         variant='lessons-library'
       />
     );
@@ -522,7 +575,17 @@ describe('KangurPageTransitionSkeleton', () => {
       'data-kangur-skeleton-reason',
       'locale-switch'
     );
-    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveClass('backdrop-blur-md');
+    expect(screen.getByTestId('kangur-page-transition-skeleton')).toHaveStyle({
+      background:
+        'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
+    });
+    expect(screen.getByTestId('kangur-page-transition-skeleton-locale-overlay')).toHaveStyle({
+      background: 'color-mix(in srgb, var(--kangur-soft-card-background) 74%, transparent)',
+    });
+    expect(
+      screen.queryByTestId('kangur-page-transition-skeleton-inline-top-navigation')
+    ).toBeNull();
+    expect(screen.queryByTestId('kangur-top-navigation-skeleton')).toBeNull();
     expect(screen.getByRole('status')).not.toHaveTextContent(/^$/);
   });
 });

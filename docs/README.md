@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-22'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'index'
 scope: 'repo'
@@ -15,6 +15,7 @@ avoid becoming another dumping ground.
 
 ## Start Here
 
+- Repo quick start: [`README.md`](../README.md)
 - Agent guide: [`docs/AGENTS.md`](./AGENTS.md)
 - Deep architecture reference: [`GEMINI.md`](../GEMINI.md)
 - Documentation system and placement rules:
@@ -60,6 +61,11 @@ avoid becoming another dumping ground.
 - StudiQ app shell (Kangur integration): [`docs/kangur/studiq-application.md`](./kangur/studiq-application.md)
 - Kangur mobile app runtime and commands: [`apps/mobile/README.md`](../apps/mobile/README.md)
 - Kangur mobile-web workspace boundary: [`apps/mobile-web/README.md`](../apps/mobile-web/README.md)
+- Kangur shared packages:
+  [`packages/kangur-contracts/README.md`](../packages/kangur-contracts/README.md),
+  [`packages/kangur-core/README.md`](../packages/kangur-core/README.md),
+  [`packages/kangur-api-client/README.md`](../packages/kangur-api-client/README.md),
+  [`packages/kangur-platform/README.md`](../packages/kangur-platform/README.md)
 - Prompt Exploder: canonical feature docs under
   [`docs/prompt-exploder/README.md`](./prompt-exploder/README.md)
 
@@ -69,6 +75,7 @@ These are canonical platform guides.
 
 - [`docs/platform/accessibility.md`](./platform/accessibility.md) — WCAG 2.1 Level AA patterns, screen reader support, keyboard navigation
 - [`docs/platform/developer-handbook.md`](./platform/developer-handbook.md)
+- [`docs/platform/testing-policy.md`](./platform/testing-policy.md)
 - [`docs/platform/best-practices.md`](./platform/best-practices.md)
 - [`docs/platform/component-patterns.md`](./platform/component-patterns.md)
 - [`docs/platform/architecture-guardrails.md`](./platform/architecture-guardrails.md)
@@ -78,6 +85,7 @@ These are canonical platform guides.
 - [`docs/build/bazel.md`](./build/bazel.md)
 - [`docs/build/bun.md`](./build/bun.md)
 - [`docs/platform/bun-support.md`](./platform/bun-support.md)
+- [`docs/runbooks/testing-operations.md`](./runbooks/testing-operations.md)
 
 Future platform-wide docs should land under [`docs/platform/`](./platform/README.md).
 

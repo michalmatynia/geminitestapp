@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-05T04:20:36.089Z",
+  "generatedAt": "2026-03-26T13:27:11.590Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "mode": "scan",
     "scope": "src/**/*.{ts,tsx}"
   },
@@ -18,18 +18,56 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 4208,
-    "exportedDeclarationsScanned": 3332,
-    "candidateDeclarationsScanned": 3303,
-    "exactShapeClusters": 0,
-    "nearShapeClusters": 0,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 7786,
+    "exportedDeclarationsScanned": 5176,
+    "candidateDeclarationsScanned": 5152,
+    "exactShapeClusters": 12,
+    "nearShapeClusters": 5,
+    "clustersAfterFilters": 1,
+    "declarationsInClusters": 2,
+    "highestRiskScore": 11
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 11,
+      "declarationCount": 2,
+      "domains": [
+        "feature:ai",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "726ca3d63c38",
+        "memberCount": 1,
+        "preview": "LabeledOptionDto<string>"
+      },
+      "declarations": [
+        {
+          "name": "DatabaseTemplateSnippet",
+          "kind": "type",
+          "path": "src/features/ai/ai-paths/config/query-presets.ts",
+          "line": 5,
+          "domain": "feature:ai",
+          "usageCount": 1
+        },
+        {
+          "name": "LabelValueOptionDto",
+          "kind": "type",
+          "path": "src/shared/contracts/base.ts",
+          "line": 70,
+          "domain": "shared:contracts",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
   "notes": [
-    "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
-    "Use clusters as review candidates before moving declarations to canonical DTO modules."
+    "type-clusters scan result"
   ]
 }

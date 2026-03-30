@@ -24,6 +24,56 @@ export const colorSchemeSchema = z.object({
 export type ColorSchemeDto = z.infer<typeof colorSchemeSchema>;
 export type ColorScheme = ColorSchemeDto;
 
+export const clockThemeSettingsSchema = z.object({
+  accentAmberText: z.string(),
+  accentIndigoSoftFill: z.string(),
+  accentIndigoSolidFill: z.string(),
+  accentIndigoText: z.string(),
+  atmosphereEnd: z.string(),
+  atmosphereStart: z.string(),
+  center: z.string(),
+  challengeHigh: z.string(),
+  challengeLow: z.string(),
+  challengeMid: z.string(),
+  challengeTrack: z.string(),
+  contrastText: z.string(),
+  faceFill: z.string(),
+  faceGradientEnd: z.string(),
+  faceGradientMid: z.string(),
+  faceGradientStart: z.string(),
+  faceStroke: z.string(),
+  feedbackCorrectBackground: z.string(),
+  feedbackCorrectBorder: z.string(),
+  feedbackCorrectSoftBackground: z.string(),
+  feedbackCorrectText: z.string(),
+  feedbackWrongBackground: z.string(),
+  feedbackWrongBorder: z.string(),
+  feedbackWrongSoftBackground: z.string(),
+  feedbackWrongText: z.string(),
+  frame: z.string(),
+  highlightHourHand: z.string(),
+  highlightMinuteHand: z.string(),
+  interactiveHourHand: z.string(),
+  interactiveMinuteHand: z.string(),
+  label: z.string(),
+  lessonHourHand: z.string(),
+  lessonMinuteHand: z.string(),
+  majorTick: z.string(),
+  minorTick: z.string(),
+  numeral: z.string(),
+  progressChallengeActive: z.string(),
+  progressChallengeDone: z.string(),
+  progressPracticeActive: z.string(),
+  progressPracticeDone: z.string(),
+  promptText: z.string(),
+  secondHand: z.string(),
+  stepFill: z.string(),
+  stepLabel: z.string(),
+});
+
+export type ClockThemeSettingsDto = z.infer<typeof clockThemeSettingsSchema>;
+export type ClockThemeSettings = ClockThemeSettingsDto;
+
 export const themeSettingsSchema = z.object({
   // Colors
   primaryColor: z.string(),
@@ -153,6 +203,7 @@ export const themeSettingsSchema = z.object({
   homeActionKangurUnderlayShadowColor: z.string(),
   homeActionKangurSurfaceShadowColor: z.string(),
   progressTrackColor: z.string(),
+  clockTheme: clockThemeSettingsSchema,
   colorSchemes: z.array(colorSchemeSchema),
   activeColorSchemeId: z.string(),
   // Typography
@@ -435,6 +486,53 @@ export type ThemeSettings = ThemeSettingsDto;
 
 export const CMS_THEME_SETTINGS_KEY = 'cms_theme_settings.v1';
 
+export const DEFAULT_CLOCK_THEME: ClockThemeSettings = {
+  accentAmberText: '#f59e0b',
+  accentIndigoSoftFill: '#c7d2fe',
+  accentIndigoSolidFill: '#6366f1',
+  accentIndigoText: '#4f46e5',
+  atmosphereEnd: 'rgba(99, 102, 241, 0)',
+  atmosphereStart: 'rgba(99, 102, 241, 0.18)',
+  center: '#4f46e5',
+  challengeHigh: '#f59e0b',
+  challengeLow: '#dc2626',
+  challengeMid: '#f97316',
+  challengeTrack: '#fde68a',
+  contrastText: '#ffffff',
+  faceFill: '#ffffff',
+  faceGradientEnd: '#dbeafe',
+  faceGradientMid: '#f8fafc',
+  faceGradientStart: '#ffffff',
+  faceStroke: '#6366f1',
+  feedbackCorrectBackground: '#10b981',
+  feedbackCorrectBorder: '#10b981',
+  feedbackCorrectSoftBackground: '#d1fae5',
+  feedbackCorrectText: '#047857',
+  feedbackWrongBackground: '#f43f5e',
+  feedbackWrongBorder: '#f43f5e',
+  feedbackWrongSoftBackground: '#ffe4e6',
+  feedbackWrongText: '#be123c',
+  frame: 'rgba(255, 255, 255, 0.72)',
+  highlightHourHand: '#dc2626',
+  highlightMinuteHand: '#16a34a',
+  interactiveHourHand: '#dc2626',
+  interactiveMinuteHand: '#16a34a',
+  label: '#1e293b',
+  lessonHourHand: '#334155',
+  lessonMinuteHand: '#4f46e5',
+  majorTick: '#4f46e5',
+  minorTick: '#c7d2fe',
+  numeral: '#1e293b',
+  progressChallengeActive: '#f59e0b',
+  progressChallengeDone: '#fde68a',
+  progressPracticeActive: '#6366f1',
+  progressPracticeDone: '#c7d2fe',
+  promptText: '#d97706',
+  secondHand: '#ef4444',
+  stepFill: '#34d399',
+  stepLabel: '#0f766e',
+};
+
 export const DEFAULT_THEME: ThemeSettings = {
   primaryColor: '#3b82f6',
   secondaryColor: '#6366f1',
@@ -560,6 +658,7 @@ export const DEFAULT_THEME: ThemeSettings = {
   homeActionKangurUnderlayShadowColor: '',
   homeActionKangurSurfaceShadowColor: '',
   progressTrackColor: '',
+  clockTheme: DEFAULT_CLOCK_THEME,
   colorSchemes: [
     {
       id: 'scheme-1',
@@ -838,6 +937,13 @@ export function normalizeThemeSettings(
   const merged = {
     ...baseTheme,
     ...input,
+    clockTheme:
+      input.clockTheme && typeof input.clockTheme === 'object' && !Array.isArray(input.clockTheme)
+        ? {
+            ...baseTheme.clockTheme,
+            ...input.clockTheme,
+          }
+        : baseTheme.clockTheme,
   };
   const mergedResult = themeSettingsSchema.safeParse(merged);
   if (mergedResult.success) return mergedResult.data;

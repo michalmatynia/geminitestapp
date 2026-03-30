@@ -108,6 +108,7 @@ describe('useProductAiPathsRunSync', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     invalidateProductsAndDetailMock.mockReset();
+    invalidateProductsAndDetailMock.mockResolvedValue(undefined);
     getRecentAiPathRunEnqueueMock.mockReset();
     listTriggerButtonRunFeedbackMock.mockReset();
     getQueuedProductSourcesMock.mockReset();
@@ -207,6 +208,7 @@ describe('useProductAiPathsRunSync', () => {
         trackingState: 'stopped',
       });
     });
+    await flushAsync();
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-1');
     expect(invalidateProductsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
@@ -438,6 +440,7 @@ describe('useProductAiPathsRunSync', () => {
         trackingState: 'stopped',
       });
     });
+    await flushAsync();
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-1');
     expect(removeQueuedProductSourceMock).not.toHaveBeenCalledWith('product-1', 'ai-run:run-2');
@@ -467,6 +470,7 @@ describe('useProductAiPathsRunSync', () => {
         trackingState: 'stopped',
       });
     });
+    await flushAsync();
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-1', 'ai-run:run-2');
     expect(invalidateProductsAndDetailMock).toHaveBeenCalledTimes(2);
@@ -495,6 +499,7 @@ describe('useProductAiPathsRunSync', () => {
         trackingState: 'stopped',
       });
     });
+    await flushAsync();
 
     expect(removeQueuedProductSourceMock).toHaveBeenCalledWith('product-7', 'ai-run:run-failed');
     expect(invalidateProductsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-7');

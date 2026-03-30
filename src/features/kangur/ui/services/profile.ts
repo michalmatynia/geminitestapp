@@ -1,194 +1,175 @@
+'use client';
+
 import type { KangurScoreRecord } from '@kangur/platform';
-import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
-import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import type {
-  KangurLearnerProfileSnapshot,
-  KangurLearnerRecommendation,
-  KangurLessonMasteryInsight,
-  KangurLessonMasteryInsights,
-  KangurOperationPerformance,
-  KangurRecentSession,
-  KangurWeeklyActivityPoint,
-} from '@/features/kangur/shared/contracts/kangur-profile';
+  KangurProgressState,
+} from '@/features/kangur/shared/contracts/kangur';
 import {
   getCurrentLevel,
   getNextLevel,
   getProgressBadges,
   getProgressAverageAccuracy,
+  getProgressAverageXpPerSession,
   getProgressBestAccuracy,
   getRecommendedSessionMomentum,
 } from '@/features/kangur/ui/services/progress';
-import type {
-  KangurProgressState,
-  KangurRouteAction,
-} from '@/features/kangur/shared/contracts/kangur';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
-export type {
-  KangurLearnerProfileSnapshot,
-  KangurLearnerRecommendation,
-  KangurLessonMasteryInsight,
-  KangurLessonMasteryInsights,
-  KangurOperationPerformance,
-  KangurRecentSession,
-  KangurWeeklyActivityPoint,
-} from '@/features/kangur/shared/contracts/kangur-profile';
+import {
+  type KangurLearnerProfileSnapshot,
+  type KangurLearnerProfileTranslate,
+} from './profile/profile-types';
+import {
+  parseDateOrNull,
+  toLocalDateKey,
+  toPercent,
+} from './profile/profile-utils';
+import { computeStreaks } from './profile/profile-streaks';
+import {
+  computeOperationPerformance,
+  computeRecentSessions,
+  computeWeeklyActivity,
+  computeXpAnalytics,
+} from './profile/profile-performance';
+import { buildLessonMasteryInsights } from './profile/profile-mastery';
+import {
+  buildRecommendations,
+  localizeRecommendedSessionMomentum,
+} from './profile/profile-recommendations';
 
-type KangurLearnerProfileTranslationValue = string | number;
+export * from './profile/profile-types';
+export { buildLessonMasteryInsights } from './profile/profile-mastery';
+export { translateKangurLearnerProfileWithFallback } from './profile/profile-utils';
 
-export type KangurLearnerProfileTranslate = (
-  key: string,
-  values?: Record<string, KangurLearnerProfileTranslationValue>
-) => string;
+const normalizeScoresDesc = (scores: KangurScoreRecord[]): KangurScoreRecord[] =>
+  [...scores].sort((left, right) => {
+    const leftDate = parseDateOrNull(left.created_date);
+    const rightDate = parseDateOrNull(right.created_date);
+    const leftTs = leftDate?.getTime() ?? 0;
+    const rightTs = rightDate?.getTime() ?? 0;
+    return rightTs - leftTs;
+  });
 
-export const translateKangurLearnerProfileWithFallback = (
-  translate: KangurLearnerProfileTranslate | undefined,
-  key: string,
-  fallback: string,
-  values?: Record<string, KangurLearnerProfileTranslationValue>
-): string => {
-  if (!translate) {
-    return fallback;
+const computeAverageAccuracyFromScores = (scores: KangurScoreRecord[]): number => {
+  if (scores.length === 0) {
+    return 0;
   }
 
-  const translated = translate(key, values);
-  return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
+  const totalAccuracy = scores.reduce((sum, score) => {
+    const totalQuestions = Math.max(1, score.total_questions || 1);
+    return sum + (score.correct_answers / totalQuestions) * 100;
+  }, 0);
+
+  return toPercent(totalAccuracy / scores.length);
 };
 
-const OPERATION_LABELS: Record<string, { label: string; emoji: string }> = {
-  addition: { label: 'Dodawanie', emoji: '➕' },
-  subtraction: { label: 'Odejmowanie', emoji: '➖' },
-  multiplication: { label: 'Mnożenie', emoji: '✖️' },
-  division: { label: 'Dzielenie', emoji: '➗' },
-  decimals: { label: 'Ułamki', emoji: '🔢' },
-  powers: { label: 'Potęgi', emoji: '⚡' },
-  roots: { label: 'Pierwiastki', emoji: '√' },
-  clock: { label: 'Zegar', emoji: '🕐' },
-  calendar: { label: 'Kalendarz', emoji: '📅' },
-  geometry: { label: 'Geometria', emoji: '🔷' },
-  logical: { label: 'Logika', emoji: '🧩' },
-  mixed: { label: 'Mieszane', emoji: '🎲' },
-  english_basics: { label: 'Podstawy', emoji: '🗣️' },
-  english_parts_of_speech: { label: 'Części mowy', emoji: '🔤' },
-  english_sentence_structure: { label: 'Szyk zdania', emoji: '🧩' },
-  english_subject_verb_agreement: { label: 'Zgoda podmiotu', emoji: '🤝' },
-  english_articles: { label: 'Przedimki', emoji: '📰' },
-  english_adjectives: { label: 'Przymiotniki', emoji: '🎨' },
-  english_prepositions_time_place: { label: 'Przyimki czasu i miejsca', emoji: '🧭' },
-};
+const computeBestAccuracyFromScores = (scores: KangurScoreRecord[]): number =>
+  scores.reduce((best, score) => {
+    const totalQuestions = Math.max(1, score.total_questions || 1);
+    return Math.max(best, toPercent((score.correct_answers / totalQuestions) * 100));
+  }, 0);
 
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
-const toLocalDateKey = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const parseDateOrNull = (raw: string): Date | null => {
-  const parsed = new Date(raw);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const toDateAtLocalMidnight = (value: string): Date => {
-  const [yearRaw, monthRaw, dayRaw] = value.split('-');
-  const year = Number(yearRaw);
-  const month = Number(monthRaw);
-  const day = Number(dayRaw);
-  return new Date(year, month - 1, day);
-};
-
-const toPercent = (value: number): number => Math.max(0, Math.min(100, Math.round(value)));
-const QUICK_START_OPERATIONS = new Set([
-  'addition',
-  'subtraction',
-  'multiplication',
-  'division',
-  'decimals',
-  'powers',
-  'roots',
-  'clock',
-  'mixed',
-]);
-const ACTIVITY_PRIMARY_TO_OPERATION: Record<string, string> = {
-  adding: 'addition',
-  addition: 'addition',
-  subtracting: 'subtraction',
-  subtraction: 'subtraction',
-  multiplication: 'multiplication',
-  division: 'division',
-  decimals: 'decimals',
-  powers: 'powers',
-  roots: 'roots',
-  mixed: 'mixed',
-  clock: 'clock',
-  calendar: 'calendar',
-  geometry: 'geometry',
-  geometry_shape_recognition: 'geometry',
-  geometry_basics: 'geometry',
-  geometry_shapes: 'geometry',
-  geometry_symmetry: 'geometry',
-  geometry_perimeter: 'geometry',
-  art_colors_harmony: 'art_colors_harmony',
-  art_shapes_basic: 'art_shapes_basic',
-  music_diatonic_scale: 'music_diatonic_scale',
-  logical_thinking: 'logical',
-  logical_patterns: 'logical',
-  logical_classification: 'logical',
-  logical_reasoning: 'logical',
-  logical_analogies: 'logical',
-  english_pronoun_remix: 'english_basics',
-  english_parts_of_speech_sort: 'english_parts_of_speech',
-  english_pronouns_warmup: 'english_parts_of_speech',
-  english_sentence_structure_quiz: 'english_sentence_structure',
-  english_subject_verb_agreement_quiz: 'english_subject_verb_agreement',
-  english_articles_drag_drop: 'english_articles',
-  english_adjectives_scene_studio: 'english_adjectives',
-  english_prepositions_quiz: 'english_prepositions_time_place',
-  english_prepositions_sort: 'english_prepositions_time_place',
-  english_prepositions_order: 'english_prepositions_time_place',
-};
-
-const resolvePracticeDifficulty = (averageAccuracy: number): 'easy' | 'medium' | 'hard' => {
-  if (averageAccuracy >= 85) {
-    return 'hard';
-  }
-  if (averageAccuracy >= 70) {
-    return 'medium';
-  }
-  return 'easy';
-};
-
-const buildPracticeRecommendationAction = (
-  operation: string | null,
-  averageAccuracy: number,
-  translate?: KangurLearnerProfileTranslate
-): KangurRouteAction => {
-  const startTrainingLabel = translateKangurLearnerProfileWithFallback(
-    translate,
-    'recommendations.actions.startTraining',
-    'Uruchom trening'
-  );
-
-  if (!operation || !QUICK_START_OPERATIONS.has(operation)) {
+const resolveActivityStatsStreakFallback = (
+  progress: KangurProgressState
+): {
+  currentStreakDays: number;
+  longestStreakDays: number;
+  lastPlayedAt: string | null;
+} => {
+  const activityEntries = Object.values(progress.activityStats ?? {});
+  if (activityEntries.length === 0) {
     return {
-      label: startTrainingLabel,
-      page: 'Game',
-      query: {
-        quickStart: 'training',
-      },
+      currentStreakDays: 0,
+      longestStreakDays: 0,
+      lastPlayedAt: null,
     };
   }
 
+  const latestPlayedAt = activityEntries.reduce<string | null>((latest, entry) => {
+    if (!entry.lastPlayedAt) {
+      return latest;
+    }
+
+    if (!latest) {
+      return entry.lastPlayedAt;
+    }
+
+    return entry.lastPlayedAt > latest ? entry.lastPlayedAt : latest;
+  }, null);
+
   return {
-    label: startTrainingLabel,
-    page: 'Game',
-    query: {
-      quickStart: 'operation',
-      operation,
-      difficulty: resolvePracticeDifficulty(averageAccuracy),
-    },
+    currentStreakDays: activityEntries.reduce(
+      (best, entry) => Math.max(best, Math.max(0, entry.currentStreak ?? 0)),
+      0
+    ),
+    longestStreakDays: activityEntries.reduce(
+      (best, entry) => Math.max(best, Math.max(0, entry.bestStreak ?? 0)),
+      0
+    ),
+    lastPlayedAt: latestPlayedAt,
+  };
+};
+
+const resolveProfileSnapshotStreaks = (
+  progress: KangurProgressState,
+  sortedScores: KangurScoreRecord[],
+  now: Date
+): {
+  currentStreakDays: number;
+  longestStreakDays: number;
+  lastPlayedAt: string | null;
+} => {
+  const scoreStreaks = computeStreaks(sortedScores, now);
+  const activityStatsStreaks = resolveActivityStatsStreakFallback(progress);
+  return {
+    currentStreakDays:
+      scoreStreaks.currentStreakDays > 0
+        ? scoreStreaks.currentStreakDays
+        : activityStatsStreaks.currentStreakDays,
+    longestStreakDays:
+      scoreStreaks.longestStreakDays > 0
+        ? scoreStreaks.longestStreakDays
+        : activityStatsStreaks.longestStreakDays,
+    lastPlayedAt: scoreStreaks.lastPlayedAt ?? activityStatsStreaks.lastPlayedAt,
+  };
+};
+
+const resolveProfileSnapshotAccuracies = (
+  progress: KangurProgressState,
+  sortedScores: KangurScoreRecord[]
+): { averageAccuracy: number; bestAccuracy: number } => {
+  const progressAverageAccuracy = getProgressAverageAccuracy(progress);
+  const progressBestAccuracy = getProgressBestAccuracy(progress);
+
+  return {
+    averageAccuracy:
+      progressAverageAccuracy > 0
+        ? progressAverageAccuracy
+        : computeAverageAccuracyFromScores(sortedScores),
+    bestAccuracy:
+      progressBestAccuracy > 0 ? progressBestAccuracy : computeBestAccuracyFromScores(sortedScores),
+  };
+};
+
+const resolveTodayGames = (
+  weeklyActivity: KangurLearnerProfileSnapshot['weeklyActivity'],
+  now: Date
+): number => {
+  const todayDateKey = toLocalDateKey(now);
+  return (
+    weeklyActivity.find((entry) => entry.dateKey === todayDateKey)?.games ??
+    weeklyActivity.at(-1)?.games ??
+    0
+  );
+};
+
+const resolveUnlockedBadgeSnapshot = (
+  badges: ReturnType<typeof getProgressBadges>
+): { unlockedBadges: number; unlockedBadgeIds: string[] } => {
+  const unlockedBadgeIds = badges.filter((badge) => badge.isUnlocked).map((badge) => badge.id);
+  return {
+    unlockedBadges: unlockedBadgeIds.length,
+    unlockedBadgeIds,
   };
 };
 
@@ -201,760 +182,59 @@ type BuildProfileSnapshotInput = {
   translate?: KangurLearnerProfileTranslate | undefined;
 };
 
-const normalizeScoresDesc = (scores: KangurScoreRecord[]): KangurScoreRecord[] =>
-  [...scores].sort((left, right) => {
-    const leftDate = parseDateOrNull(left.created_date);
-    const rightDate = parseDateOrNull(right.created_date);
-    const leftTs = leftDate?.getTime() ?? 0;
-    const rightTs = rightDate?.getTime() ?? 0;
-    return rightTs - leftTs;
-  });
-
-const computeStreaks = (
-  scores: KangurScoreRecord[],
-  now: Date
-): {
-  currentStreakDays: number;
-  longestStreakDays: number;
-  lastPlayedAt: string | null;
-} => {
-  if (scores.length === 0) {
-    return { currentStreakDays: 0, longestStreakDays: 0, lastPlayedAt: null };
-  }
-
-  const uniqueDateKeys = Array.from(
-    new Set(
-      scores
-        .map((score) => parseDateOrNull(score.created_date))
-        .filter((date): date is Date => Boolean(date))
-        .map((date) => toLocalDateKey(date))
-    )
-  ).sort(
-    (left, right) => toDateAtLocalMidnight(right).getTime() - toDateAtLocalMidnight(left).getTime()
-  );
-
-  if (uniqueDateKeys.length === 0) {
-    return { currentStreakDays: 0, longestStreakDays: 0, lastPlayedAt: null };
-  }
-
-  let longestStreakDays = 1;
-  let rolling = 1;
-  for (let index = 1; index < uniqueDateKeys.length; index += 1) {
-    const prev = toDateAtLocalMidnight(uniqueDateKeys[index - 1]!);
-    const next = toDateAtLocalMidnight(uniqueDateKeys[index]!);
-    const diffDays = Math.round((prev.getTime() - next.getTime()) / DAY_IN_MS);
-    if (diffDays === 1) {
-      rolling += 1;
-    } else {
-      rolling = 1;
-    }
-    if (rolling > longestStreakDays) {
-      longestStreakDays = rolling;
-    }
-  }
-
-  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const latestDate = toDateAtLocalMidnight(uniqueDateKeys[0]!);
-  const latestDiffDays = Math.round((todayDate.getTime() - latestDate.getTime()) / DAY_IN_MS);
-  let currentStreakDays = 0;
-  if (latestDiffDays === 0 || latestDiffDays === 1) {
-    currentStreakDays = 1;
-    for (let index = 1; index < uniqueDateKeys.length; index += 1) {
-      const prev = toDateAtLocalMidnight(uniqueDateKeys[index - 1]!);
-      const next = toDateAtLocalMidnight(uniqueDateKeys[index]!);
-      const diffDays = Math.round((prev.getTime() - next.getTime()) / DAY_IN_MS);
-      if (diffDays !== 1) break;
-      currentStreakDays += 1;
-    }
-  }
-
-  return {
-    currentStreakDays,
-    longestStreakDays,
-    lastPlayedAt: scores[0]?.created_date ?? null,
-  };
-};
-
-const resolveOperationFromActivityKey = (activityKey: string): string | null => {
-  const parts = activityKey.split(':');
-  const primary = (parts[1] ?? parts[0] ?? '').trim();
-  if (!primary) {
-    return null;
-  }
-
-  return ACTIVITY_PRIMARY_TO_OPERATION[primary] ?? (OPERATION_LABELS[primary] ? primary : primary);
-};
-
-const resolveOperationInfo = (
-  operation: string,
-  translate?: KangurLearnerProfileTranslate
-): { label: string; emoji: string } => {
-  const fallback = OPERATION_LABELS[operation] ?? { label: operation, emoji: '❓' };
-  if (!OPERATION_LABELS[operation]) {
-    return fallback;
-  }
-
-  return {
-    emoji: fallback.emoji,
-    label: translateKangurLearnerProfileWithFallback(
-      translate,
-      `activityLabels.${operation}`,
-      fallback.label
-    ),
-  };
-};
-
-const computeOperationPerformance = (
-  scores: KangurScoreRecord[],
-  progress: KangurProgressState,
-  translate?: KangurLearnerProfileTranslate
-): KangurOperationPerformance[] => {
-  const buckets = new Map<
-    string,
-    {
-      attempts: number;
-      scoreSum: number;
-      accuracySum: number;
-      bestAccuracy: number;
-      totalXpEarned: number;
-      xpSamples: number;
-    }
-  >();
-
-  scores.forEach((score) => {
-    const total = Math.max(1, score.total_questions || 1);
-    const accuracy = (score.correct_answers / total) * 100;
-    const bucket = buckets.get(score.operation) ?? {
-      attempts: 0,
-      scoreSum: 0,
-      accuracySum: 0,
-      bestAccuracy: 0,
-      totalXpEarned: 0,
-      xpSamples: 0,
-    };
-    bucket.attempts += 1;
-    bucket.scoreSum += score.score;
-    bucket.accuracySum += accuracy;
-    bucket.bestAccuracy = Math.max(bucket.bestAccuracy, accuracy);
-    const normalizedXp = normalizeXpEarned(score.xp_earned);
-    if (normalizedXp > 0) {
-      bucket.totalXpEarned += normalizedXp;
-      bucket.xpSamples += 1;
-    }
-    buckets.set(score.operation, bucket);
-  });
-
-  Object.entries(progress.activityStats ?? {}).forEach(([activityKey, entry]) => {
-    const operation = resolveOperationFromActivityKey(activityKey);
-    if (!operation || buckets.has(operation) || entry.sessionsPlayed <= 0) {
-      return;
-    }
-
-    const totalQuestionsAnswered = Math.max(0, entry.totalQuestionsAnswered);
-    const averageAccuracy =
-      totalQuestionsAnswered > 0
-        ? toPercent((entry.totalCorrectAnswers / totalQuestionsAnswered) * 100)
-        : entry.bestScorePercent;
-
-    buckets.set(operation, {
-      attempts: entry.sessionsPlayed,
-      scoreSum: Math.round((averageAccuracy / 100) * entry.sessionsPlayed * 10),
-      accuracySum: averageAccuracy * entry.sessionsPlayed,
-      bestAccuracy: entry.bestScorePercent,
-      totalXpEarned: entry.totalXpEarned,
-      xpSamples: entry.sessionsPlayed,
-    });
-  });
-
-  return Array.from(buckets.entries())
-    .map(([operation, bucket]): KangurOperationPerformance => {
-      const operationInfo = resolveOperationInfo(operation, translate);
-      return {
-        operation,
-        label: operationInfo.label,
-        emoji: operationInfo.emoji,
-        attempts: bucket.attempts,
-        averageAccuracy: toPercent(bucket.accuracySum / bucket.attempts),
-        averageScore: Math.round((bucket.scoreSum / bucket.attempts) * 10) / 10,
-        bestScore: toPercent(bucket.bestAccuracy),
-        totalXpEarned: bucket.totalXpEarned,
-        averageXpPerSession:
-          bucket.xpSamples > 0 ? Math.max(0, Math.round(bucket.totalXpEarned / bucket.xpSamples)) : 0,
-      };
-    })
-    .sort((left, right) => {
-      if (right.averageAccuracy !== left.averageAccuracy) {
-        return right.averageAccuracy - left.averageAccuracy;
-      }
-      if (right.averageXpPerSession !== left.averageXpPerSession) {
-        return right.averageXpPerSession - left.averageXpPerSession;
-      }
-      return right.attempts - left.attempts;
-    });
-};
-
-const computeWeeklyActivity = (
-  scores: KangurScoreRecord[],
-  now: Date,
-  translate?: KangurLearnerProfileTranslate
-): KangurWeeklyActivityPoint[] => {
-  const daysToDisplay = 7;
-  const buckets = new Map<string, { games: number; accuracySum: number }>();
-
-  scores.forEach((score) => {
-    const parsed = parseDateOrNull(score.created_date);
-    if (!parsed) return;
-    const dateKey = toLocalDateKey(parsed);
-    const bucket = buckets.get(dateKey) ?? { games: 0, accuracySum: 0 };
-    const total = Math.max(1, score.total_questions || 1);
-    bucket.games += 1;
-    bucket.accuracySum += (score.correct_answers / total) * 100;
-    buckets.set(dateKey, bucket);
-  });
-
-  const dayLabels = ['niedz.', 'pon.', 'wt.', 'sr.', 'czw.', 'pt.', 'sob.'];
-  const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  const result: KangurWeeklyActivityPoint[] = [];
-  for (let offset = daysToDisplay - 1; offset >= 0; offset -= 1) {
-    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
-    const dateKey = toLocalDateKey(day);
-    const bucket = buckets.get(dateKey);
-    const avg = bucket && bucket.games > 0 ? toPercent(bucket.accuracySum / bucket.games) : 0;
-    const dayIndex = day.getDay();
-    result.push({
-      dateKey,
-      label: translateKangurLearnerProfileWithFallback(
-        translate,
-        `weeklyActivity.${dayKeys[dayIndex]}`,
-        dayLabels[dayIndex] ?? dateKey
-      ),
-      games: bucket?.games ?? 0,
-      averageAccuracy: avg,
-    });
-  }
-
-  return result;
-};
-
-const computeRecentSessions = (
-  scores: KangurScoreRecord[],
-  translate?: KangurLearnerProfileTranslate
-): KangurRecentSession[] =>
-  scores.slice(0, 8).map((score): KangurRecentSession => {
-    const operationInfo = resolveOperationInfo(score.operation, translate);
-    const totalQuestions = Math.max(1, score.total_questions || 1);
-    return {
-      id: score.id,
-      operation: score.operation,
-      operationLabel: operationInfo.label,
-      operationEmoji: operationInfo.emoji,
-      createdAt: score.created_date,
-      score: score.score,
-      totalQuestions,
-      accuracyPercent: toPercent((score.correct_answers / totalQuestions) * 100),
-      timeTakenSeconds: Math.max(0, score.time_taken || 0),
-      xpEarned:
-        typeof score.xp_earned === 'number' && Number.isFinite(score.xp_earned)
-          ? Math.max(0, Math.round(score.xp_earned))
-          : null,
-    };
-  });
-
-const normalizeXpEarned = (value: unknown): number =>
-  typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
-
-const computeXpAnalytics = (
-  scores: KangurScoreRecord[],
-  progress: KangurProgressState,
-  now: Date
-): {
-  todayXpEarned: number;
-  weeklyXpEarned: number;
-  averageXpPerSession: number;
-} => {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
-
-  let todayXpEarned = 0;
-  let weeklyXpEarned = 0;
-
-  scores.forEach((score) => {
-    const playedAt = parseDateOrNull(score.created_date);
-    if (!playedAt) {
-      return;
-    }
-
-    const normalizedXp = normalizeXpEarned(score.xp_earned);
-    if (normalizedXp <= 0) {
-      return;
-    }
-
-    const playedDay = new Date(playedAt.getFullYear(), playedAt.getMonth(), playedAt.getDate());
-    if (playedDay.getTime() === today.getTime()) {
-      todayXpEarned += normalizedXp;
-    }
-    if (playedDay.getTime() >= weekStart.getTime() && playedDay.getTime() <= today.getTime()) {
-      weeklyXpEarned += normalizedXp;
-    }
-  });
-
-  return {
-    todayXpEarned,
-    weeklyXpEarned,
-    averageXpPerSession:
-      progress.gamesPlayed > 0 ? Math.max(0, Math.round(progress.totalXp / progress.gamesPlayed)) : 0,
-  };
-};
-
-const getLatestProgressActivityDate = (progress: KangurProgressState): string | null => {
-  const timestamps = Object.values(progress.activityStats ?? {})
-    .map((entry) => entry.lastPlayedAt)
-    .filter((value): value is string => Boolean(value))
-    .map((value) => Date.parse(value))
-    .filter((value) => Number.isFinite(value));
-
-  if (timestamps.length === 0) {
-    return null;
-  }
-
-  return new Date(Math.max(...timestamps)).toISOString();
-};
-
-const resolveLessonMasteryEntries = (
-  progress: KangurProgressState,
-  locale?: string | null | undefined
-): KangurLessonMasteryInsight[] =>
-  Object.entries(progress.lessonMastery ?? {})
-    .map(([componentId, mastery]) => {
-      const lesson = KANGUR_LESSON_LIBRARY[componentId as keyof typeof KANGUR_LESSON_LIBRARY];
-      if (!lesson) {
-        return null;
-      }
-
-      return {
-        componentId,
-        title: getLocalizedKangurLessonTitle(componentId, locale, lesson.title),
-        emoji: lesson.emoji,
-        masteryPercent: mastery.masteryPercent,
-        attempts: mastery.attempts,
-        bestScorePercent: mastery.bestScorePercent,
-        lastScorePercent: mastery.lastScorePercent,
-        lastCompletedAt: mastery.lastCompletedAt,
-      };
-    })
-    .filter((entry): entry is KangurLessonMasteryInsight => entry !== null);
-
-export const buildLessonMasteryInsights = (
-  progress: KangurProgressState,
-  limit = 3,
-  locale?: string | null | undefined
-): KangurLessonMasteryInsights => {
-  const entries = resolveLessonMasteryEntries(progress, locale);
-  const safeLimit = Math.max(1, Math.floor(limit));
-  const weakest = [...entries]
-    .filter((entry) => entry.masteryPercent < 80)
-    .sort((left, right) => {
-      if (left.masteryPercent !== right.masteryPercent) {
-        return left.masteryPercent - right.masteryPercent;
-      }
-      if (left.lastScorePercent !== right.lastScorePercent) {
-        return left.lastScorePercent - right.lastScorePercent;
-      }
-      return right.attempts - left.attempts;
-    })
-    .slice(0, safeLimit);
-  const strongest = [...entries]
-    .sort((left, right) => {
-      if (left.masteryPercent !== right.masteryPercent) {
-        return right.masteryPercent - left.masteryPercent;
-      }
-      if (left.bestScorePercent !== right.bestScorePercent) {
-        return right.bestScorePercent - left.bestScorePercent;
-      }
-      return right.attempts - left.attempts;
-    })
-    .slice(0, safeLimit);
-
-  return {
-    weakest,
-    strongest,
-    trackedLessons: entries.length,
-    masteredLessons: entries.filter((entry) => entry.masteryPercent >= 80).length,
-    lessonsNeedingPractice: entries.filter((entry) => entry.masteryPercent < 80).length,
-  };
-};
-
-const localizeRecommendedSessionMomentum = (
-  completedSessions: number,
-  nextBadgeName: string | null,
-  summary: string,
-  translate?: KangurLearnerProfileTranslate
-): {
-  summary: string;
-  nextBadgeName: string | null;
-} => {
-  if (!nextBadgeName) {
-    return {
-      nextBadgeName: null,
-      summary: translateKangurLearnerProfileWithFallback(
-        translate,
-        'guidedMomentum.summary.complete',
-        summary
-      ),
-    };
-  }
-
-  if (completedSessions < 1) {
-    return {
-      nextBadgeName: translateKangurLearnerProfileWithFallback(
-        translate,
-        'guidedMomentum.badges.guidedStep',
-        nextBadgeName
-      ),
-      summary: translateKangurLearnerProfileWithFallback(
-        translate,
-        'guidedMomentum.summary.guidedStep',
-        summary,
-        {
-          completed: Math.min(completedSessions, 1),
-        }
-      ),
-    };
-  }
-
-  return {
-    nextBadgeName: translateKangurLearnerProfileWithFallback(
-      translate,
-      'guidedMomentum.badges.guidedKeeper',
-      nextBadgeName
-    ),
-    summary: translateKangurLearnerProfileWithFallback(
-      translate,
-      'guidedMomentum.summary.guidedKeeper',
-      summary,
-      {
-        completed: Math.min(completedSessions, 3),
-      }
-    ),
-  };
-};
-
-const buildRecommendations = (input: {
-  averageAccuracy: number;
-  currentStreakDays: number;
-  dailyGoalGames: number;
-  todayGames: number;
-  todayXpEarned: number;
-  weeklyXpEarned: number;
-  averageXpPerSession: number;
-  operationPerformance: KangurOperationPerformance[];
-  progress: KangurProgressState;
-  locale: string;
-  translate?: KangurLearnerProfileTranslate;
-}): KangurLearnerRecommendation[] => {
-  const recommendations: KangurLearnerRecommendation[] = [];
-  const remainingDailyGames = Math.max(0, input.dailyGoalGames - input.todayGames);
-  const weakestOperation = input.operationPerformance.at(-1) ?? null;
-  const strongestOperation = input.operationPerformance[0] ?? null;
-  const highestYieldOperation =
-    [...input.operationPerformance].sort((left, right) => {
-      if (right.averageXpPerSession !== left.averageXpPerSession) {
-        return right.averageXpPerSession - left.averageXpPerSession;
-      }
-      if (right.totalXpEarned !== left.totalXpEarned) {
-        return right.totalXpEarned - left.totalXpEarned;
-      }
-      return right.averageAccuracy - left.averageAccuracy;
-    })[0] ?? null;
-  const momentumOperation = highestYieldOperation ?? strongestOperation;
-  const weakestLessonEntry = buildLessonMasteryInsights(input.progress, 1, input.locale).weakest[0] ?? null;
-  const xpMomentumTarget = Math.max(20, input.averageXpPerSession);
-
-  if (weakestOperation && weakestOperation.averageAccuracy < 75) {
-    recommendations.push({
-      id: 'focus_weakest_operation',
-      title: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.focusWeakestOperation.title',
-        `Skup się na: ${weakestOperation.label}`,
-        { operation: weakestOperation.label }
-      ),
-      description: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.focusWeakestOperation.description',
-        `Wykonaj 2 krótkie sesje ${weakestOperation.label.toLowerCase()} i celuj w min. 80% poprawności.`,
-        { operation: weakestOperation.label.toLowerCase() }
-      ),
-      priority: 'high',
-      action: {
-        label: translateKangurLearnerProfileWithFallback(
-          input.translate,
-          'recommendations.actions.openLesson',
-          'Otwórz lekcję'
-        ),
-        page: 'Lessons',
-        query: {
-          focus: weakestOperation.operation,
-        },
-      },
-    });
-  }
-
-  if (input.averageAccuracy < 70) {
-    recommendations.push({
-      id: 'improve_accuracy',
-      title: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.improveAccuracy.title',
-        'Stabilizuj skuteczność'
-      ),
-      description: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.improveAccuracy.description',
-        'Przez 3 gry wybieraj tryb średni i skup się na dokładności zamiast na czasie.'
-      ),
-      priority: 'high',
-      action: buildPracticeRecommendationAction(null, input.averageAccuracy, input.translate),
-    });
-  }
-
-  if (weakestLessonEntry && weakestLessonEntry.masteryPercent < 80) {
-    recommendations.push({
-      id: 'strengthen_lesson_mastery',
-      title: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.strengthenLessonMastery.title',
-        `Powtórz lekcję: ${weakestLessonEntry.title}`,
-        { lessonTitle: weakestLessonEntry.title }
-      ),
-      description: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.strengthenLessonMastery.description',
-        `Aktualne opanowanie to ${weakestLessonEntry.masteryPercent}%. Jedna powtórka tej lekcji podniesie stabilność.`,
-        { masteryPercent: weakestLessonEntry.masteryPercent }
-      ),
-      priority: weakestLessonEntry.masteryPercent < 60 ? 'high' : 'medium',
-      action: {
-        label: translateKangurLearnerProfileWithFallback(
-          input.translate,
-          'recommendations.actions.openLesson',
-          'Otwórz lekcję'
-        ),
-        page: 'Lessons',
-        query: {
-          focus: weakestLessonEntry.componentId,
-        },
-      },
-    });
-  }
-
-  if (remainingDailyGames > 0) {
-    recommendations.push({
-      id: 'daily_goal',
-      title: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.dailyGoal.title',
-        'Domknij dzienny cel'
-      ),
-      description:
-        remainingDailyGames === 1
-          ? translateKangurLearnerProfileWithFallback(
-              input.translate,
-              'recommendations.dailyGoal.descriptionSingle',
-              `Brakuje tylko 1 gry do dziennego celu. Dziś masz już +${input.todayXpEarned} XP.`,
-              { todayXpEarned: input.todayXpEarned }
-            )
-          : translateKangurLearnerProfileWithFallback(
-              input.translate,
-              'recommendations.dailyGoal.descriptionMultiple',
-              `Brakuje ${remainingDailyGames} gier do dziennego celu. Dziś masz już +${input.todayXpEarned} XP.`,
-              { remainingGames: remainingDailyGames, todayXpEarned: input.todayXpEarned }
-            ),
-      priority: 'medium',
-      action: {
-        label: translateKangurLearnerProfileWithFallback(
-          input.translate,
-          'recommendations.actions.playNow',
-          'Zagraj teraz'
-        ),
-        page: 'Game',
-        query: {
-          quickStart: 'training',
-        },
-      },
-    });
-  }
-
-  if (
-    remainingDailyGames === 0 &&
-    input.todayXpEarned < xpMomentumTarget &&
-    input.averageAccuracy >= 70
-  ) {
-    recommendations.push({
-      id: 'boost_xp_momentum',
-      title: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.boostXpMomentum.title',
-        'Podkręć dzisiejsze XP'
-      ),
-      description: highestYieldOperation
-        ? translateKangurLearnerProfileWithFallback(
-            input.translate,
-            'recommendations.boostXpMomentum.descriptionWithOperation',
-            `Cel gier jest już zamknięty, ale dziś wpadło tylko +${input.todayXpEarned} XP. Jedna mocniejsza sesja ${highestYieldOperation.label.toLowerCase()} zwykle daje około ${highestYieldOperation.averageXpPerSession} XP na próbę.`,
-            {
-              operation: highestYieldOperation.label.toLowerCase(),
-              todayXpEarned: input.todayXpEarned,
-              averageXpPerSession: highestYieldOperation.averageXpPerSession,
-            }
-          )
-        : translateKangurLearnerProfileWithFallback(
-            input.translate,
-            'recommendations.boostXpMomentum.descriptionFallback',
-            `Cel gier jest już zamknięty, ale dziś wpadło tylko +${input.todayXpEarned} XP. Jedna mocniejsza sesja treningowa powinna dowieźć ponad ${xpMomentumTarget} XP.`,
-            {
-              todayXpEarned: input.todayXpEarned,
-              xpMomentumTarget,
-            }
-          ),
-      priority: 'medium',
-      action: buildPracticeRecommendationAction(
-        highestYieldOperation?.operation ?? null,
-        highestYieldOperation?.averageAccuracy ?? input.averageAccuracy,
-        input.translate
-      ),
-    });
-  }
-
-  if (input.currentStreakDays < 2) {
-    recommendations.push({
-      id: 'streak_bootstrap',
-      title: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.streakBootstrap.title',
-        'Zbuduj serię'
-      ),
-      description: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.streakBootstrap.description',
-        'Zagraj także jutro, aby uruchomić serię kolejnych dni.'
-      ),
-      priority: 'medium',
-      action: {
-        label: translateKangurLearnerProfileWithFallback(
-          input.translate,
-          'recommendations.actions.playToday',
-          'Zagraj dziś'
-        ),
-        page: 'Game',
-        query: {
-          quickStart: 'training',
-        },
-      },
-    });
-  }
-
-  if (recommendations.length === 0) {
-    recommendations.push({
-      id: 'maintain_momentum',
-      title: translateKangurLearnerProfileWithFallback(
-        input.translate,
-        'recommendations.maintainMomentum.title',
-        'Utrzymaj tempo'
-      ),
-      description: momentumOperation
-        ? translateKangurLearnerProfileWithFallback(
-            input.translate,
-            'recommendations.maintainMomentum.descriptionWithOperation',
-            `Świetna forma. W 7 dni zebrano +${input.weeklyXpEarned} XP. Dorzuć 1 sesję ${momentumOperation.label.toLowerCase()} dla utrwalenia.`,
-            {
-              weeklyXpEarned: input.weeklyXpEarned,
-              operation: momentumOperation.label.toLowerCase(),
-            }
-          )
-        : translateKangurLearnerProfileWithFallback(
-            input.translate,
-            'recommendations.maintainMomentum.descriptionFallback',
-            `Świetna forma. W 7 dni zebrano +${input.weeklyXpEarned} XP. Kontynuuj dzisiejszy rytm nauki.`,
-            { weeklyXpEarned: input.weeklyXpEarned }
-          ),
-      priority: 'low',
-      action: buildPracticeRecommendationAction(
-        momentumOperation?.operation ?? null,
-        momentumOperation?.averageAccuracy ?? input.averageAccuracy,
-        input.translate
-      ),
-    });
-  }
-
-  return recommendations.slice(0, 3);
-};
-
 export const buildKangurLearnerProfileSnapshot = (
   input: BuildProfileSnapshotInput
 ): KangurLearnerProfileSnapshot => {
   const now = input.now ?? new Date();
-  const locale = normalizeSiteLocale(input.locale);
-  const normalizedScores = normalizeScoresDesc(input.scores);
-  const progressLocalizer = { translate: input.translate };
-  const level = getCurrentLevel(input.progress.totalXp, progressLocalizer);
-  const nextLevel = getNextLevel(input.progress.totalXp, progressLocalizer);
+  const normalizedLocale = normalizeSiteLocale(input.locale);
+  const sortedScores = normalizeScoresDesc(input.scores);
+  const streaks = resolveProfileSnapshotStreaks(input.progress, sortedScores, now);
+  const operationPerformance = computeOperationPerformance(
+    sortedScores,
+    input.progress,
+    normalizedLocale,
+    input.translate
+  );
+  const weeklyActivity = computeWeeklyActivity(
+    sortedScores,
+    now,
+    normalizedLocale,
+    input.translate
+  );
+  const recentSessions = computeRecentSessions(sortedScores, normalizedLocale, input.translate);
+  const xpAnalytics = computeXpAnalytics(sortedScores, input.progress, now);
+  const badges = getProgressBadges(input.progress);
+  const unlockedBadgeSnapshot = resolveUnlockedBadgeSnapshot(badges);
+  const level = getCurrentLevel(input.progress.totalXp);
+  const nextLevel = getNextLevel(input.progress.totalXp);
   const xpIntoLevel = input.progress.totalXp - level.minXp;
   const xpNeeded = nextLevel ? Math.max(1, nextLevel.minXp - level.minXp) : 1;
-  const levelProgressPercent = nextLevel ? toPercent((xpIntoLevel / xpNeeded) * 100) : 100;
-  const streaks = computeStreaks(normalizedScores, now);
-  const operationPerformance = computeOperationPerformance(
-    normalizedScores,
-    input.progress,
-    input.translate
-  );
-  const weeklyActivity = computeWeeklyActivity(normalizedScores, now, input.translate);
-  const recentSessions = computeRecentSessions(normalizedScores, input.translate);
-  const xpAnalytics = computeXpAnalytics(normalizedScores, input.progress, now);
-  const recommendedSessionMomentum = getRecommendedSessionMomentum(
-    input.progress,
-    progressLocalizer
-  );
-  const localizedRecommendedSessionMomentum = localizeRecommendedSessionMomentum(
-    recommendedSessionMomentum.completedSessions,
-    recommendedSessionMomentum.nextBadgeName,
-    recommendedSessionMomentum.summary,
-    input.translate
-  );
-  const accuracyValues = normalizedScores.map(
-    (score) => (score.correct_answers / Math.max(1, score.total_questions || 1)) * 100
-  );
-  const scoreHistoryAverageAccuracy =
-    accuracyValues.length === 0
-      ? 0
-      : toPercent(accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length);
-  const scoreHistoryBestAccuracy =
-    accuracyValues.length === 0 ? 0 : toPercent(Math.max(...accuracyValues));
-  const progressAverageAccuracy = getProgressAverageAccuracy(input.progress);
-  const progressBestAccuracy = getProgressBestAccuracy(input.progress);
-  const averageAccuracy =
-    (input.progress.totalQuestionsAnswered ?? 0) > 0
-      ? progressAverageAccuracy
-      : scoreHistoryAverageAccuracy;
-  const bestAccuracy = Math.max(scoreHistoryBestAccuracy, progressBestAccuracy);
-  const latestProgressActivityDate = getLatestProgressActivityDate(input.progress);
-  const todayDateKey = toLocalDateKey(now);
-  const todayGames = weeklyActivity.find((entry) => entry.dateKey === todayDateKey)?.games ?? 0;
+  const todayGames = resolveTodayGames(weeklyActivity, now);
   const dailyGoalGames = Math.max(1, Math.round(input.dailyGoalGames));
-  const dailyGoalPercent = toPercent((todayGames / dailyGoalGames) * 100);
-  const badgeStatuses = getProgressBadges(input.progress, progressLocalizer);
-  const unlockedBadgeIds = badgeStatuses.filter((badge) => badge.isUnlocked).map((badge) => badge.id);
+  const { averageAccuracy, bestAccuracy } = resolveProfileSnapshotAccuracies(
+    input.progress,
+    sortedScores
+  );
+
+  const rawMomentum = getRecommendedSessionMomentum(input.progress);
+  const momentum = localizeRecommendedSessionMomentum(
+    rawMomentum.completedSessions,
+    rawMomentum.nextBadgeName,
+    rawMomentum.summary,
+    input.translate
+  );
+
   const recommendations = buildRecommendations({
     averageAccuracy,
     currentStreakDays: streaks.currentStreakDays,
-    dailyGoalGames,
+    dailyGoalGames: input.dailyGoalGames,
     todayGames,
     todayXpEarned: xpAnalytics.todayXpEarned,
     weeklyXpEarned: xpAnalytics.weeklyXpEarned,
     averageXpPerSession: xpAnalytics.averageXpPerSession,
     operationPerformance,
     progress: input.progress,
-    locale,
+    locale: normalizedLocale,
     translate: input.translate,
   });
 
@@ -963,30 +243,32 @@ export const buildKangurLearnerProfileSnapshot = (
     gamesPlayed: input.progress.gamesPlayed,
     lessonsCompleted: input.progress.lessonsCompleted,
     perfectGames: input.progress.perfectGames,
-    totalBadges: badgeStatuses.length,
-    unlockedBadges: unlockedBadgeIds.length,
-    unlockedBadgeIds,
+    totalBadges: badges.length,
+    unlockedBadges: unlockedBadgeSnapshot.unlockedBadges,
+    unlockedBadgeIds: unlockedBadgeSnapshot.unlockedBadgeIds,
     level,
     nextLevel,
-    levelProgressPercent,
+    levelProgressPercent: nextLevel ? toPercent((xpIntoLevel / xpNeeded) * 100) : 100,
+    todayXpEarned: xpAnalytics.todayXpEarned,
+    weeklyXpEarned: xpAnalytics.weeklyXpEarned,
+    averageXpPerSession:
+      xpAnalytics.averageXpPerSession || getProgressAverageXpPerSession(input.progress),
     averageAccuracy,
     bestAccuracy,
     currentStreakDays: streaks.currentStreakDays,
     longestStreakDays: streaks.longestStreakDays,
-    lastPlayedAt: streaks.lastPlayedAt ?? latestProgressActivityDate,
+    lastPlayedAt: streaks.lastPlayedAt,
     dailyGoalGames,
     todayGames,
-    dailyGoalPercent,
-    todayXpEarned: xpAnalytics.todayXpEarned,
-    weeklyXpEarned: xpAnalytics.weeklyXpEarned,
-    averageXpPerSession: xpAnalytics.averageXpPerSession,
-    recommendedSessionsCompleted: recommendedSessionMomentum.completedSessions,
-    recommendedSessionProgressPercent: recommendedSessionMomentum.progressPercent,
-    recommendedSessionSummary: localizedRecommendedSessionMomentum.summary,
-    recommendedSessionNextBadgeName: localizedRecommendedSessionMomentum.nextBadgeName,
+    dailyGoalPercent: toPercent((todayGames / dailyGoalGames) * 100),
+    recommendedSessionsCompleted: rawMomentum.completedSessions,
+    recommendedSessionProgressPercent: rawMomentum.progressPercent,
+    recommendedSessionSummary: momentum.summary,
+    recommendedSessionNextBadgeName: momentum.nextBadgeName,
+    weeklyActivity,
     operationPerformance,
     recentSessions,
-    weeklyActivity,
     recommendations,
+    lessonMastery: buildLessonMasteryInsights(input.progress, 3, normalizedLocale),
   };
 };

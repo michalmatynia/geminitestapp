@@ -5,11 +5,11 @@ import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/moti
 describe('createKangurPageTransitionMotionProps', () => {
   it('uses the Lekcje-style vertical fade as the canonical Kangur transition', () => {
     expect(createKangurPageTransitionMotionProps(false)).toEqual({
-      initial: { opacity: 0.92, y: 12 },
+      initial: { opacity: 0, y: 12 },
       animate: { opacity: 1, y: 0 },
-      exit: { opacity: 0.98, y: -4 },
+      exit: { opacity: 0, y: -6 },
       transition: {
-        duration: 0.32,
+        duration: 0.28,
         ease: [0.22, 1, 0.36, 1],
       },
     });

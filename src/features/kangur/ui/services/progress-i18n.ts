@@ -58,6 +58,8 @@ const ACTIVITY_LABEL_KEYS: Record<string, string> = {
   logical_reasoning: 'activityLabels.logicalReasoning',
   logical_analogies: 'activityLabels.logicalAnalogies',
   logical: 'activityLabels.logical',
+  english_comparatives_superlatives: 'activityLabels.english_comparatives_superlatives',
+  english_compare_and_crown: 'activityLabels.english_comparatives_superlatives',
 };
 
 const CLOCK_SECTION_LABEL_KEYS: Record<string, string> = {
@@ -161,6 +163,48 @@ const REWARD_BREAKDOWN_LABEL_KEYS: Record<string, string> = {
   anti_repeat: 'rewardBreakdown.antiRepeat',
   minimum_floor: 'rewardBreakdown.minimumFloor',
   daily_quest: 'rewardBreakdown.dailyQuest',
+};
+
+type KangurBadgeSummaryKind =
+  | 'game'
+  | 'perfectGame'
+  | 'lesson'
+  | 'perfect'
+  | 'streak'
+  | 'questions'
+  | 'percentGoal'
+  | 'games'
+  | 'xp'
+  | 'quest'
+  | 'round'
+  | 'types'
+  | 'sessions';
+
+const STATIC_BADGE_SUMMARY_KINDS: Record<string, KangurBadgeSummaryKind> = {
+  first_game: 'game',
+  english_first_game: 'game',
+  perfect_10: 'perfectGame',
+  lesson_hero: 'lesson',
+  mastery_builder: 'lesson',
+  english_articles_reader: 'lesson',
+  english_mastery_builder: 'lesson',
+  clock_master: 'perfect',
+  calendar_keeper: 'perfect',
+  geometry_artist: 'perfect',
+  english_perfect: 'perfect',
+  english_pronoun_pro: 'perfect',
+  english_sorter_star: 'perfect',
+  english_agreement_guardian: 'perfect',
+  streak_3: 'streak',
+  ten_games: 'games',
+  english_grammar_collection: 'games',
+  xp_500: 'xp',
+  xp_1000: 'xp',
+  quest_starter: 'quest',
+  quest_keeper: 'quest',
+  guided_step: 'round',
+  guided_keeper: 'round',
+  variety: 'types',
 };
 
 export const translateKangurProgressWithFallback = (
@@ -303,20 +347,7 @@ const getLocalizedBadgeSummaryByKind = ({
   fallback,
   translate,
 }: {
-  kind:
-    | 'game'
-    | 'perfectGame'
-    | 'lesson'
-    | 'perfect'
-    | 'streak'
-    | 'questions'
-    | 'percentGoal'
-    | 'games'
-    | 'xp'
-    | 'quest'
-    | 'round'
-    | 'types'
-    | 'sessions';
+  kind: KangurBadgeSummaryKind;
   current: number;
   target: number;
   fallback: string;
@@ -328,6 +359,25 @@ const getLocalizedBadgeSummaryByKind = ({
     fallback,
     { current, target }
   );
+
+const resolveDynamicBadgeSummaryKind = (
+  badgeId: string,
+  target: number
+): KangurBadgeSummaryKind | null => {
+  if (badgeId === 'accuracy_ace') {
+    return target >= 85 ? 'percentGoal' : 'questions';
+  }
+  if (badgeId === 'english_sentence_builder') {
+    return target >= 80 ? 'percentGoal' : 'sessions';
+  }
+  return null;
+};
+
+const resolveBadgeSummaryKind = (
+  badgeId: string,
+  target: number
+): KangurBadgeSummaryKind | null =>
+  STATIC_BADGE_SUMMARY_KINDS[badgeId] ?? resolveDynamicBadgeSummaryKind(badgeId, target);
 
 export const getLocalizedKangurBadgeSummary = ({
   badgeId,
@@ -342,76 +392,10 @@ export const getLocalizedKangurBadgeSummary = ({
   fallback: string;
   translate?: KangurProgressTranslate;
 }): string => {
-  switch (badgeId) {
-    case 'first_game':
-    case 'english_first_game':
-      return getLocalizedBadgeSummaryByKind({ kind: 'game', current, target, fallback, translate });
-    case 'perfect_10':
-      return getLocalizedBadgeSummaryByKind({
-        kind: 'perfectGame',
-        current,
-        target,
-        fallback,
-        translate,
-      });
-    case 'lesson_hero':
-    case 'mastery_builder':
-    case 'english_articles_reader':
-    case 'english_mastery_builder':
-      return getLocalizedBadgeSummaryByKind({
-        kind: 'lesson',
-        current,
-        target,
-        fallback,
-        translate,
-      });
-    case 'clock_master':
-    case 'calendar_keeper':
-    case 'geometry_artist':
-    case 'english_perfect':
-    case 'english_pronoun_pro':
-    case 'english_sorter_star':
-    case 'english_agreement_guardian':
-      return getLocalizedBadgeSummaryByKind({
-        kind: 'perfect',
-        current,
-        target,
-        fallback,
-        translate,
-      });
-    case 'streak_3':
-      return getLocalizedBadgeSummaryByKind({ kind: 'streak', current, target, fallback, translate });
-    case 'accuracy_ace':
-      return getLocalizedBadgeSummaryByKind({
-        kind: target >= 85 ? 'percentGoal' : 'questions',
-        current,
-        target,
-        fallback,
-        translate,
-      });
-    case 'ten_games':
-    case 'english_grammar_collection':
-      return getLocalizedBadgeSummaryByKind({ kind: 'games', current, target, fallback, translate });
-    case 'xp_500':
-    case 'xp_1000':
-      return getLocalizedBadgeSummaryByKind({ kind: 'xp', current, target, fallback, translate });
-    case 'quest_starter':
-    case 'quest_keeper':
-      return getLocalizedBadgeSummaryByKind({ kind: 'quest', current, target, fallback, translate });
-    case 'guided_step':
-    case 'guided_keeper':
-      return getLocalizedBadgeSummaryByKind({ kind: 'round', current, target, fallback, translate });
-    case 'variety':
-      return getLocalizedBadgeSummaryByKind({ kind: 'types', current, target, fallback, translate });
-    case 'english_sentence_builder':
-      return getLocalizedBadgeSummaryByKind({
-        kind: target >= 80 ? 'percentGoal' : 'sessions',
-        current,
-        target,
-        fallback,
-        translate,
-      });
-    default:
-      return fallback;
+  const kind = resolveBadgeSummaryKind(badgeId, target);
+  if (!kind) {
+    return fallback;
   }
+
+  return getLocalizedBadgeSummaryByKind({ kind, current, target, fallback, translate });
 };

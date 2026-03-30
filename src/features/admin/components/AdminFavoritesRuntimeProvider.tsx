@@ -5,11 +5,9 @@ import {
   AdminFavoritesProvider,
   type AdminFavoriteCandidate,
 } from '@/shared/providers/AdminFavoritesProvider';
-import {
-  buildAdminNav,
-  flattenAdminNav,
-  ADMIN_MENU_FAVORITES_KEY,
-} from '../public';
+import { ADMIN_MENU_FAVORITES_KEY } from '../constants/admin-menu-settings';
+import { buildAdminNav } from './admin-menu-nav';
+import { flattenAdminNav } from './menu/admin-menu-utils';
 
 const normalizePathname = (value: string | null | undefined): string => {
   if (!value) return '';

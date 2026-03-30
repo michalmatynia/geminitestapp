@@ -41,6 +41,113 @@ const buildConfig = (edges: Edge[]): PathConfig => {
   };
 };
 
+const LEGACY_RUNTIME_IDENTITY_STATE = {
+  status: 'running',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
+  inputs: {},
+  outputs: {},
+  runId: 'legacy-run-id',
+} as const;
+
+const NESTED_LEGACY_RUNTIME_IDENTITY_STATE = {
+  status: 'running',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [
+    {
+      id: 'evt-1',
+      timestamp: '2026-03-03T10:00:00.000Z',
+      type: 'status',
+      message: 'Run started.',
+      runId: 'legacy-run-id',
+    },
+  ],
+  history: {
+    'node-1': [
+      {
+        timestamp: '2026-03-03T10:00:00.000Z',
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        nodeId: 'node-1',
+        nodeType: 'prompt',
+        nodeTitle: 'Node 1',
+        status: 'completed',
+        iteration: 1,
+        inputs: {},
+        outputs: {},
+        inputHash: null,
+        runStartedAt: '2026-03-03T10:00:00.000Z',
+      },
+    ],
+  },
+  inputs: {},
+  outputs: {},
+} as const;
+
+const LEGACY_CONFIG_RUNTIME_STATE = {
+  status: 'idle',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
+  inputs: {},
+  outputs: {},
+  runId: 'legacy-run-id',
+  runStartedAt: '2026-03-03T10:00:00.000Z',
+} as const;
+
+const HISTORICAL_RUNTIME_STRATEGY_STATE = {
+  status: 'running',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
+  inputs: {},
+  outputs: {},
+  history: {
+    'node-1': [
+      {
+        timestamp: '2026-03-03T10:00:00.000Z',
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        nodeId: 'node-1',
+        nodeType: 'template',
+        nodeTitle: 'Node 1',
+        status: 'completed',
+        iteration: 1,
+        inputs: {},
+        outputs: {},
+        inputHash: null,
+        runtimeStrategy: HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS,
+        runtimeResolutionSource: 'registry',
+        runtimeCodeObjectId: null,
+      },
+    ],
+  },
+} as const;
+
+const CANCELLED_EVENT_RUNTIME_STATE = {
+  status: 'running',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [
+    {
+      id: 'evt-1',
+      timestamp: '2026-03-03T10:00:00.000Z',
+      type: 'status',
+      message: 'Node cancelled.',
+      status: 'cancelled',
+    },
+  ],
+  inputs: {},
+  outputs: {},
+} as const;
+
 describe('sanitizePathConfig', () => {
   it('rejects dangling and incompatible edges instead of dropping them', () => {
     const config = createDefaultPathConfig('path-invalid-edges');
@@ -385,77 +492,20 @@ describe('sanitizePathConfig', () => {
 
   it('rejects legacy runtime identity fields in runtime state payloads', () => {
     expect(() =>
-      parseRuntimeState(
-        JSON.stringify({
-          status: 'running',
-          nodeStatuses: {},
-          nodeOutputs: {},
-          variables: {},
-          events: [],
-          inputs: {},
-          outputs: {},
-          runId: 'legacy-run-id',
-        })
-      )
+      parseRuntimeState(JSON.stringify(LEGACY_RUNTIME_IDENTITY_STATE))
     ).toThrowError(/AI Paths runtime state payload includes unsupported identity fields\./i);
   });
 
   it('rejects nested legacy runtime identity fields in runtime state payloads', () => {
     expect(() =>
-      parseRuntimeState(
-        JSON.stringify({
-          status: 'running',
-          nodeStatuses: {},
-          nodeOutputs: {},
-          variables: {},
-          events: [
-            {
-              id: 'evt-1',
-              timestamp: '2026-03-03T10:00:00.000Z',
-              type: 'status',
-              message: 'Run started.',
-              runId: 'legacy-run-id',
-            },
-          ],
-          history: {
-            'node-1': [
-              {
-                timestamp: '2026-03-03T10:00:00.000Z',
-                pathId: 'path-1',
-                pathName: 'Path 1',
-                nodeId: 'node-1',
-                nodeType: 'prompt',
-                nodeTitle: 'Node 1',
-                status: 'completed',
-                iteration: 1,
-                inputs: {},
-                outputs: {},
-                inputHash: null,
-                runStartedAt: '2026-03-03T10:00:00.000Z',
-              },
-            ],
-          },
-          inputs: {},
-          outputs: {},
-        })
-      )
+      parseRuntimeState(JSON.stringify(NESTED_LEGACY_RUNTIME_IDENTITY_STATE))
     ).toThrowError(/AI Paths runtime state payload includes unsupported identity fields\./i);
   });
 
   it('rejects legacy runtime identity fields while sanitizing path configs', () => {
     const config = {
       ...buildConfig([]),
-      runtimeState: JSON.stringify({
-        status: 'idle',
-        nodeStatuses: {},
-        nodeOutputs: {},
-        variables: {},
-        events: [],
-        inputs: {},
-        outputs: {},
-        runId: 'legacy-run-id',
-        runStartedAt: '2026-03-03T10:00:00.000Z',
-      }),
+      runtimeState: JSON.stringify(LEGACY_CONFIG_RUNTIME_STATE),
     } as PathConfig;
 
     expect(() => sanitizePathConfig(config)).toThrowError(
@@ -465,60 +515,14 @@ describe('sanitizePathConfig', () => {
 
   it('rejects historical legacy runtime strategies inside runtime history', () => {
     expect(() =>
-      parseRuntimeState(
-        JSON.stringify({
-          status: 'running',
-          nodeStatuses: {},
-          nodeOutputs: {},
-          variables: {},
-          events: [],
-          inputs: {},
-          outputs: {},
-          history: {
-            'node-1': [
-              {
-                timestamp: '2026-03-03T10:00:00.000Z',
-                pathId: 'path-1',
-                pathName: 'Path 1',
-                nodeId: 'node-1',
-                nodeType: 'template',
-                nodeTitle: 'Node 1',
-                status: 'completed',
-                iteration: 1,
-                inputs: {},
-                outputs: {},
-                inputHash: null,
-                runtimeStrategy: HISTORICAL_RUNTIME_COMPATIBILITY_ALIAS,
-                runtimeResolutionSource: 'registry',
-                runtimeCodeObjectId: null,
-              },
-            ],
-          },
-        })
-      )
+      parseRuntimeState(JSON.stringify(HISTORICAL_RUNTIME_STRATEGY_STATE))
     ).toThrowError(/Invalid AI Paths runtime state payload\./i);
   });
 
   it('rejects malformed runtime payloads while sanitizing path configs', () => {
     const config = {
       ...buildConfig([]),
-      runtimeState: JSON.stringify({
-        status: 'running',
-        nodeStatuses: {},
-        nodeOutputs: {},
-        variables: {},
-        events: [
-          {
-            id: 'evt-1',
-            timestamp: '2026-03-03T10:00:00.000Z',
-            type: 'status',
-            message: 'Node cancelled.',
-            status: 'cancelled',
-          },
-        ],
-        inputs: {},
-        outputs: {},
-      }),
+      runtimeState: JSON.stringify(CANCELLED_EVENT_RUNTIME_STATE),
     } as PathConfig;
 
     expect(() => sanitizePathConfig(config)).toThrowError(
@@ -528,25 +532,7 @@ describe('sanitizePathConfig', () => {
 
   it('rejects legacy "cancelled" status spelling in runtime events', () => {
     expect(() =>
-      parseRuntimeState(
-        JSON.stringify({
-          status: 'running',
-          nodeStatuses: {},
-          nodeOutputs: {},
-          variables: {},
-          events: [
-            {
-              id: 'evt-1',
-              timestamp: '2026-03-03T10:00:00.000Z',
-              type: 'status',
-              message: 'Node cancelled.',
-              status: 'cancelled',
-            },
-          ],
-          inputs: {},
-          outputs: {},
-        })
-      )
+      parseRuntimeState(JSON.stringify(CANCELLED_EVENT_RUNTIME_STATE))
     ).toThrowError(/Invalid AI Paths runtime state payload\./i);
   });
 });

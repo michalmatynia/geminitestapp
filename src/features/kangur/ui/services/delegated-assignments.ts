@@ -1,3 +1,5 @@
+'use client';
+
 import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
@@ -5,16 +7,12 @@ import {
 } from '@/features/kangur/config/routing';
 import type { TranslationValues } from 'use-intl';
 import { KANGUR_LESSON_LIBRARY, getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
-import type {
-  KangurAssignmentCreateInput,
-  KangurAssignmentSnapshot,
-} from '@kangur/platform';
-import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import { buildKangurAssignments } from '@/features/kangur/ui/services/assignments';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import type {
   KangurDifficulty,
   KangurGameScreen,
   KangurOperation,
+  KangurTrainingSelection,
 } from '@/features/kangur/ui/types';
 import type {
   KangurLesson,
@@ -24,80 +22,28 @@ import type {
   KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 
-type KangurAssignmentCatalogGroup = 'time' | 'arithmetic' | 'geometry' | 'logic' | 'practice';
+import {
+  type KangurAssignmentCatalogItem,
+  type KangurAssignmentListItem,
+  type KangurAssignmentsRuntimeLocalizer,
+} from './delegated-assignments/delegated-assignments.types';
+import {
+  ASSIGNMENT_PRIORITY_ORDER,
+  ASSIGNMENT_SUBJECT_ACCENTS,
+  PRACTICE_ASSIGNMENT_ITEMS,
+  PRACTICE_ASSIGNMENT_RUNTIME_KEYS,
+} from './delegated-assignments/delegated-assignments.constants';
+import { buildKangurAssignments } from './assignments';
 
-export type KangurAssignmentsRuntimeLocalizer = {
-  locale?: string;
-  translate?: (key: string, values?: TranslationValues) => string;
+export * from './delegated-assignments/delegated-assignments.types';
+
+type KangurPracticeAssignment = KangurAssignmentSnapshot & {
+  target: Extract<KangurAssignmentSnapshot['target'], { type: 'practice' }>;
 };
 
-export type KangurAssignmentCatalogItem = {
-  id: string;
-  title: string;
-  description: string;
-  badge: string;
-  group: KangurAssignmentCatalogGroup;
-  priorityLabel: string;
-  createInput: KangurAssignmentCreateInput;
-  keywords: string[];
-};
-
-export type KangurAssignmentListItem = {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  createdAt: string;
-  subject: KangurLessonSubject;
-  subjectLabel: string;
-  subjectAccent: KangurAccent;
-  priority: KangurAssignmentSnapshot['priority'];
-  status: KangurAssignmentSnapshot['progress']['status'];
-  priorityLabel: string;
-  priorityAccent: 'rose' | 'amber' | 'emerald';
-  statusLabel: string;
-  statusAccent: 'slate' | 'indigo' | 'emerald';
-  progressPercent: number;
-  progressSummary: string;
-  progressCountLabel: string;
-  lastActivityLabel: string | null;
-  timeLimitMinutes: number | null;
-  timeLimitStartsAt: string | null;
-  timeLimitLabel: string | null;
-  actionHref: string;
-  actionLabel: string;
-  actionVariant: 'primary' | 'surface';
-};
-
-const ASSIGNMENT_PRIORITY_ORDER = {
-  high: 0,
-  medium: 1,
-  low: 2,
-} as const;
-
-const ASSIGNMENT_SUBJECT_ACCENTS: Record<KangurLessonSubject, KangurAccent> = {
-  alphabet: 'amber',
-  art: 'rose',
-  music: 'sky',
-  geometry: 'emerald',
-  english: 'sky',
-  maths: 'violet',
-  web_development: 'teal',
-  agentic_coding: 'indigo',
-};
-
-const MIXED_TRAINING_PRESET_CATEGORIES: KangurOperation[] = [
-  'addition',
-  'subtraction',
-  'multiplication',
-  'division',
-  'decimals',
-  'powers',
-  'roots',
-];
-const MIXED_TRAINING_PRESET_COUNTS = [5, 10, 15, 20, 30] as const;
-const DEFAULT_MIXED_TRAINING_COUNT = 10;
-const DEFAULT_MIXED_TRAINING_DIFFICULTY: KangurDifficulty = 'medium';
+const isKangurPracticeAssignment = (
+  assignment: KangurAssignmentSnapshot
+): assignment is KangurPracticeAssignment => assignment.target.type === 'practice';
 
 const interpolateAssignmentTemplate = (
   template: string,
@@ -132,506 +78,36 @@ const translateAssignmentsRuntimeWithFallback = (
   );
 };
 
-const resolveAssignmentsRuntimeLocale = (
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): string => localizer?.locale ?? 'pl-PL';
-
-const PRACTICE_ASSIGNMENT_RUNTIME_KEYS: Record<string, string> = {
-  'practice-mixed': 'practiceMixed',
-  'practice-addition': 'practiceAddition',
-  'practice-subtraction': 'practiceSubtraction',
-  'practice-multiplication': 'practiceMultiplication',
-  'practice-division': 'practiceDivision',
-  'practice-decimals': 'practiceDecimals',
-  'practice-powers': 'practicePowers',
-  'practice-roots': 'practiceRoots',
-  'practice-clock': 'practiceClock',
-};
-
-const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [
-  {
-    id: 'practice-mixed',
-    title: 'Trening mieszany',
-    description: 'Przypisz przekrojowy trening z różnymi typami pytań.',
-    badge: 'Trening',
-    group: 'practice',
-    priorityLabel: 'Priorytet średni',
-    createInput: {
-      title: 'Trening mieszany',
-      description: 'Wykonaj mieszany trening i utrzymaj regularność pracy.',
-      priority: 'medium',
-      target: {
-        type: 'practice',
-        operation: 'mixed',
-        requiredAttempts: 1,
-        minAccuracyPercent: 70,
-      },
-    },
-    keywords: ['trening', 'mieszany', 'powtórka', 'priorytet'],
-  },
-  {
-    id: 'practice-addition',
-    title: 'Trening: Dodawanie',
-    description: 'Jedna sesja dodawania z celem 80% poprawnych odpowiedzi.',
-    badge: 'Praktyka',
-    group: 'practice',
-    priorityLabel: 'Priorytet wysoki',
-    createInput: {
-      title: 'Praktyka: Dodawanie',
-      description: 'Rozwiąż sesję dodawania i osiągnij co najmniej 80% skuteczności.',
-      priority: 'high',
-      target: {
-        type: 'practice',
-        operation: 'addition',
-        requiredAttempts: 1,
-        minAccuracyPercent: 80,
-      },
-    },
-    keywords: ['dodawanie', 'arytmetyka', 'trening', 'plus'],
-  },
-  {
-    id: 'practice-subtraction',
-    title: 'Trening: Odejmowanie',
-    description: 'Jedna sesja odejmowania z celem 80% poprawnych odpowiedzi.',
-    badge: 'Praktyka',
-    group: 'practice',
-    priorityLabel: 'Priorytet wysoki',
-    createInput: {
-      title: 'Praktyka: Odejmowanie',
-      description: 'Rozwiąż sesję odejmowania i osiągnij co najmniej 80% skuteczności.',
-      priority: 'high',
-      target: {
-        type: 'practice',
-        operation: 'subtraction',
-        requiredAttempts: 1,
-        minAccuracyPercent: 80,
-      },
-    },
-    keywords: ['odejmowanie', 'arytmetyka', 'trening', 'minus'],
-  },
-  {
-    id: 'practice-multiplication',
-    title: 'Trening: Mnożenie',
-    description: 'Jedna sesja mnożenia z celem 80% poprawnych odpowiedzi.',
-    badge: 'Praktyka',
-    group: 'practice',
-    priorityLabel: 'Priorytet wysoki',
-    createInput: {
-      title: 'Praktyka: Mnożenie',
-      description: 'Rozwiąż sesję mnożenia i osiągnij co najmniej 80% skuteczności.',
-      priority: 'high',
-      target: {
-        type: 'practice',
-        operation: 'multiplication',
-        requiredAttempts: 1,
-        minAccuracyPercent: 80,
-      },
-    },
-    keywords: ['mnożenie', 'tabliczka', 'arytmetyka', 'trening'],
-  },
-  {
-    id: 'practice-division',
-    title: 'Trening: Dzielenie',
-    description: 'Jedna sesja dzielenia z celem 80% poprawnych odpowiedzi.',
-    badge: 'Praktyka',
-    group: 'practice',
-    priorityLabel: 'Priorytet wysoki',
-    createInput: {
-      title: 'Praktyka: Dzielenie',
-      description: 'Rozwiąż sesję dzielenia i osiągnij co najmniej 80% skuteczności.',
-      priority: 'high',
-      target: {
-        type: 'practice',
-        operation: 'division',
-        requiredAttempts: 1,
-        minAccuracyPercent: 80,
-      },
-    },
-    keywords: ['dzielenie', 'arytmetyka', 'trening'],
-  },
-  {
-    id: 'practice-decimals',
-    title: 'Trening: Ułamki',
-    description: 'Jedna sesja ułamków z celem 75% poprawnych odpowiedzi.',
-    badge: 'Praktyka',
-    group: 'practice',
-    priorityLabel: 'Priorytet średni',
-    createInput: {
-      title: 'Praktyka: Ułamki',
-      description: 'Rozwiąż sesję ułamków i osiągnij co najmniej 75% skuteczności.',
-      priority: 'medium',
-      target: {
-        type: 'practice',
-        operation: 'decimals',
-        requiredAttempts: 1,
-        minAccuracyPercent: 75,
-      },
-    },
-    keywords: ['ułamki', 'dziesiętne', 'arytmetyka', 'trening'],
-  },
-  {
-    id: 'practice-powers',
-    title: 'Trening: Potęgi',
-    description: 'Jedna sesja potęg z celem 75% poprawnych odpowiedzi.',
-    badge: 'Praktyka',
-    group: 'practice',
-    priorityLabel: 'Priorytet średni',
-    createInput: {
-      title: 'Praktyka: Potęgi',
-      description: 'Rozwiąż sesję potęg i osiągnij co najmniej 75% skuteczności.',
-      priority: 'medium',
-      target: {
-        type: 'practice',
-        operation: 'powers',
-        requiredAttempts: 1,
-        minAccuracyPercent: 75,
-      },
-    },
-    keywords: ['potęgi', 'wykładniki', 'arytmetyka', 'trening'],
-  },
-  {
-    id: 'practice-roots',
-    title: 'Trening: Pierwiastki',
-    description: 'Jedna sesja pierwiastków z celem 75% poprawnych odpowiedzi.',
-    badge: 'Praktyka',
-    group: 'practice',
-    priorityLabel: 'Priorytet średni',
-    createInput: {
-      title: 'Praktyka: Pierwiastki',
-      description: 'Rozwiąż sesję pierwiastków i osiągnij co najmniej 75% skuteczności.',
-      priority: 'medium',
-      target: {
-        type: 'practice',
-        operation: 'roots',
-        requiredAttempts: 1,
-        minAccuracyPercent: 75,
-      },
-    },
-    keywords: ['pierwiastki', 'arytmetyka', 'trening'],
-  },
-  {
-    id: 'practice-clock',
-    title: 'Trening: Zegar',
-    description: 'Sesja ćwiczeń z godzinami, minutami i pełnym czasem na zegarze.',
-    badge: 'Praktyka',
-    group: 'practice',
-    priorityLabel: 'Priorytet średni',
-    createInput: {
-      title: 'Praktyka: Zegar',
-      description: 'Wykonaj zegarowy trening i sprawdź odczytywanie godzin, minut oraz pełnego czasu.',
-      priority: 'medium',
-      target: {
-        type: 'practice',
-        operation: 'clock',
-        requiredAttempts: 1,
-        minAccuracyPercent: 75,
-      },
-    },
-    keywords: ['zegar', 'czas', 'godziny', 'minuty', 'pełny czas', 'trening'],
-  },
-];
-
-const resolveLessonGroup = (componentId: KangurLessonComponentId): KangurAssignmentCatalogGroup => {
-  if (componentId === 'clock' || componentId === 'calendar') {
-    return 'time';
-  }
-  if (componentId.startsWith('geometry_')) {
-    return 'geometry';
-  }
-  if (componentId.startsWith('logical_')) {
-    return 'logic';
-  }
-  if (componentId.startsWith('english_')) {
-    return 'logic';
-  }
-  return 'arithmetic';
-};
-
-const resolveLessonBadge = (
-  group: KangurAssignmentCatalogGroup,
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): string => {
-  if (group === 'time') {
-    return translateAssignmentsRuntimeWithFallback(localizer, 'catalog.groups.time', 'Czas');
-  }
-  if (group === 'geometry') {
-    return translateAssignmentsRuntimeWithFallback(
-      localizer,
-      'catalog.groups.geometry',
-      'Geometria'
-    );
-  }
-  if (group === 'logic') {
-    return translateAssignmentsRuntimeWithFallback(localizer, 'catalog.groups.logic', 'Logika');
-  }
-  return translateAssignmentsRuntimeWithFallback(localizer, 'catalog.groups.lesson', 'Lekcja');
-};
-
-export const formatKangurAssignmentPriorityLabel = (
-  priority: KangurAssignmentCreateInput['priority'],
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): string => {
-  if (priority === 'high') {
-    return translateAssignmentsRuntimeWithFallback(localizer, 'priority.high', 'Priorytet wysoki');
-  }
-  if (priority === 'medium') {
-    return translateAssignmentsRuntimeWithFallback(
-      localizer,
-      'priority.medium',
-      'Priorytet średni'
-    );
-  }
-  return translateAssignmentsRuntimeWithFallback(localizer, 'priority.low', 'Priorytet niski');
-};
-
-export const formatKangurAssignmentStatusLabel = (
-  value: KangurAssignmentSnapshot['progress']['status'],
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): string => {
-  if (value === 'completed') {
-    return translateAssignmentsRuntimeWithFallback(localizer, 'status.completed', 'Ukończone');
-  }
-  if (value === 'in_progress') {
-    return translateAssignmentsRuntimeWithFallback(localizer, 'status.inProgress', 'W trakcie');
-  }
-  return translateAssignmentsRuntimeWithFallback(localizer, 'status.new', 'Nowe');
-};
-
-const formatKangurAssignmentTimestamp = (
-  value: string | null,
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): string | null => {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  return parsed.toLocaleString(resolveAssignmentsRuntimeLocale(localizer), {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-};
-
-const formatKangurAssignmentTimeLimit = (
-  value: number | null | undefined,
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): { minutes: number | null; label: string | null } => {
-  if (value === null || value === undefined) {
-    return { minutes: null, label: null };
-  }
-
-  const rounded = Math.round(value);
-  if (!Number.isFinite(rounded) || rounded <= 0) {
-    return { minutes: null, label: null };
-  }
-
-  const hours = Math.floor(rounded / 60);
-  const minutes = rounded % 60;
-  const timeLabel =
-    hours > 0
-      ? minutes > 0
-        ? translateAssignmentsRuntimeWithFallback(
-            localizer,
-            'time.hoursMinutes',
-            '{hours} godz. {minutes} min',
-            { hours, minutes }
-          )
-        : translateAssignmentsRuntimeWithFallback(
-            localizer,
-            'time.hoursOnly',
-            '{hours} godz.',
-            { hours }
-          )
-      : translateAssignmentsRuntimeWithFallback(
-          localizer,
-          'time.minutesOnly',
-          '{minutes} min',
-          { minutes: rounded }
-        );
-
-  return {
-    minutes: rounded,
-    label: translateAssignmentsRuntimeWithFallback(
-      localizer,
-      'time.timeLimitLabel',
-      'Czas na wykonanie: {label}',
-      { label: timeLabel }
-    ),
-  };
-};
-
-const formatKangurAssignmentCountdown = (
-  remainingSeconds: number,
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): string => {
-  if (remainingSeconds <= 0) {
-    return translateAssignmentsRuntimeWithFallback(localizer, 'time.expired', 'Czas minął');
-  }
-
-  const normalized = Math.max(0, Math.round(remainingSeconds));
-  const hours = Math.floor(normalized / 3600);
-  const minutes = Math.floor((normalized % 3600) / 60);
-  const seconds = normalized % 60;
-
-  if (hours > 0) {
-    return translateAssignmentsRuntimeWithFallback(
-      localizer,
-      'time.remainingHoursMinutes',
-      'Pozostało: {hours} godz. {minutes} min',
-      { hours, minutes }
-    );
-  }
-  if (minutes > 0) {
-    return translateAssignmentsRuntimeWithFallback(
-      localizer,
-      'time.remainingMinutesSeconds',
-      'Pozostało: {minutes} min {seconds} s',
-      { minutes, seconds }
-    );
-  }
-  return translateAssignmentsRuntimeWithFallback(
-    localizer,
-    'time.remainingSeconds',
-    'Pozostało: {seconds} s',
-    { seconds }
-  );
-};
-
-export const resolveKangurAssignmentCountdownLabel = (input: {
-  timeLimitMinutes?: number | null;
-  timeLimitStartsAt?: string | null;
-  createdAt: string;
-  status?: KangurAssignmentSnapshot['progress']['status'] | null;
-  now?: number;
-},
-localizer?: KangurAssignmentsRuntimeLocalizer): string | null => {
-  const minutes =
-    typeof input.timeLimitMinutes === 'number' && Number.isFinite(input.timeLimitMinutes)
-      ? input.timeLimitMinutes
-      : null;
-  if (!minutes || minutes <= 0) {
-    return null;
-  }
-  if (input.status === 'completed') {
-    return null;
-  }
-
-  const start = input.timeLimitStartsAt ?? input.createdAt;
-  const startMs = Date.parse(start);
-  if (Number.isNaN(startMs)) {
-    return null;
-  }
-
-  const now = input.now ?? Date.now();
-  const deadlineMs = startMs + minutes * 60 * 1000;
-  const remainingSeconds = Math.ceil((deadlineMs - now) / 1000);
-  return formatKangurAssignmentCountdown(remainingSeconds, localizer);
-};
-
-export const resolveKangurAssignmentPriorityAccent = (
-  priority: KangurAssignmentSnapshot['priority']
-): 'rose' | 'amber' | 'emerald' => {
-  if (priority === 'high') return 'rose';
-  if (priority === 'medium') return 'amber';
-  return 'emerald';
-};
-
-const resolveKangurAssignmentStatusAccent = (
-  status: KangurAssignmentSnapshot['progress']['status']
-): 'slate' | 'indigo' | 'emerald' => {
-  if (status === 'completed') return 'emerald';
-  if (status === 'in_progress') return 'indigo';
-  return 'slate';
-};
-
-export const buildKangurAssignmentListItem = (
-  basePath: string,
-  assignment: KangurAssignmentSnapshot,
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): KangurAssignmentListItem => {
-  const timeLimit = formatKangurAssignmentTimeLimit(assignment.timeLimitMinutes, localizer);
-  const subject = resolveKangurAssignmentSubject(assignment);
-
-  return {
-    id: assignment.id,
-    title: assignment.title,
-    description: assignment.description,
-    icon: assignment.target.type === 'lesson' ? '📚' : '🎯',
-    createdAt: assignment.createdAt,
-    subject,
-    subjectLabel: getKangurSubjectLabel(subject),
-    subjectAccent: ASSIGNMENT_SUBJECT_ACCENTS[subject],
-    priority: assignment.priority,
-    status: assignment.progress.status,
-    priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority, localizer),
-    priorityAccent: resolveKangurAssignmentPriorityAccent(assignment.priority),
-    statusLabel: formatKangurAssignmentStatusLabel(assignment.progress.status, localizer),
-    statusAccent: resolveKangurAssignmentStatusAccent(assignment.progress.status),
-    progressPercent: assignment.progress.percent,
-    progressSummary: assignment.progress.summary,
-    progressCountLabel: `${assignment.progress.attemptsCompleted}/${assignment.progress.attemptsRequired}`,
-    lastActivityLabel: formatKangurAssignmentTimestamp(assignment.progress.lastActivityAt, localizer),
-    timeLimitMinutes: timeLimit.minutes,
-    timeLimitStartsAt: assignment.timeLimitStartsAt ?? null,
-    timeLimitLabel: timeLimit.label,
-    actionHref: buildKangurAssignmentHref(basePath, assignment),
-    actionLabel: getKangurAssignmentActionLabel(assignment, localizer),
-    actionVariant: assignment.target.type === 'lesson' ? 'primary' : 'surface',
-  };
-};
-
-export const buildKangurAssignmentListItems = (
-  basePath: string,
-  assignments: KangurAssignmentSnapshot[],
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): KangurAssignmentListItem[] =>
-  assignments.map((assignment) => buildKangurAssignmentListItem(basePath, assignment, localizer));
-
 export const buildKangurAssignmentCatalog = (
   lessons: KangurLesson[],
   localizer?: KangurAssignmentsRuntimeLocalizer
 ): KangurAssignmentCatalogItem[] => {
-  const lessonItems = lessons.map((lesson): KangurAssignmentCatalogItem => {
-    const group = resolveLessonGroup(lesson.componentId);
-    return {
-      id: `lesson-${lesson.id}`,
+  const lessonItems: KangurAssignmentCatalogItem[] = lessons.map((lesson) => ({
+    id: `lesson-${lesson.id}`,
+    title: lesson.title,
+    description: lesson.description || '',
+    badge: 'Lekcja',
+    group: lesson.subject === 'maths' ? 'arithmetic' : lesson.subject === 'geometry' ? 'geometry' : 'logic',
+    priorityLabel: 'Priorytet niski',
+    createInput: {
       title: lesson.title,
-      description: translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'catalog.lesson.descriptionTemplate',
-        '{description}. Przypisz uczniowi jedną świeżą powtórkę tej lekcji.',
-        { description: lesson.description }
-      ),
-      badge: resolveLessonBadge(group, localizer),
-      group,
-      priorityLabel: formatKangurAssignmentPriorityLabel('medium', localizer),
-      createInput: {
-        title: `${lesson.emoji} ${lesson.title}`,
-        description: translateAssignmentsRuntimeWithFallback(
-          localizer,
-          'catalog.lesson.createDescriptionTemplate',
-          'Powtórz lekcję "{title}" i zakończ jedną dodatkową sesję.',
-          { title: lesson.title }
-        ),
-        priority: 'medium',
-        target: {
-          type: 'lesson',
-          lessonComponentId: lesson.componentId,
-          requiredCompletions: 1,
-        },
+      description: lesson.description || '',
+      priority: 'low',
+      target: {
+        type: 'lesson',
+        lessonComponentId: lesson.componentId,
+        requiredCompletions: 1,
       },
-      keywords: [lesson.title, lesson.description, lesson.componentId, lesson.emoji].map((value) =>
-        value.toLowerCase()
-      ),
-    };
-  });
+    },
+    keywords: [lesson.id, lesson.componentId, lesson.subject, ...(lesson.title.toLowerCase().split(/\s+/))],
+  }));
 
-  const practiceItems = PRACTICE_ASSIGNMENT_ITEMS.map((item): KangurAssignmentCatalogItem => {
+  const practiceItems: KangurAssignmentCatalogItem[] = PRACTICE_ASSIGNMENT_ITEMS.map((item) => {
     const runtimeKey = PRACTICE_ASSIGNMENT_RUNTIME_KEYS[item.id];
+    if (!runtimeKey) {
+      return item;
+    }
+
     return {
       ...item,
       title: translateAssignmentsRuntimeWithFallback(
@@ -660,7 +136,7 @@ export const buildKangurAssignmentCatalog = (
         description: translateAssignmentsRuntimeWithFallback(
           localizer,
           `catalog.practice.${runtimeKey}.createDescription`,
-          item.createInput.description
+          item.createInput.description ?? ''
         ),
       },
     };
@@ -673,114 +149,390 @@ export const buildRecommendedKangurAssignmentCatalog = (
   progress: KangurProgressState,
   localizer?: KangurAssignmentsRuntimeLocalizer
 ): KangurAssignmentCatalogItem[] =>
-  buildKangurAssignments(progress)
-    .map((assignment): KangurAssignmentCatalogItem | null => {
-      if (assignment.action.page === 'Lessons' && assignment.action.query?.['focus']) {
-        const lessonComponentId = assignment.action.query['focus'] as KangurLessonComponentId;
-        const group = resolveLessonGroup(lessonComponentId);
-        return {
-          id: `suggested-${assignment.id}`,
-          title: assignment.title,
-          description: assignment.description,
-          badge: translateAssignmentsRuntimeWithFallback(
-            localizer,
-            'catalog.groups.hint',
-            'Podpowiedź'
-          ),
-          group,
-          priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority, localizer),
-          createInput: {
-            title: assignment.title,
-            description: assignment.description,
-            priority: assignment.priority,
-            target: {
-              type: 'lesson',
-              lessonComponentId,
-              requiredCompletions: 1,
-            },
-          },
-          keywords: [assignment.title, assignment.description, assignment.target].map((value) =>
-            value.toLowerCase()
-          ),
-        } satisfies KangurAssignmentCatalogItem;
-      }
-
-      if (
-        assignment.action.page === 'Game' &&
-        assignment.action.query?.['quickStart'] === 'training'
-      ) {
-        return {
-          id: `suggested-${assignment.id}`,
-          title: assignment.title,
-          description: assignment.description,
-          badge: translateAssignmentsRuntimeWithFallback(
-            localizer,
-            'catalog.groups.hint',
-            'Podpowiedź'
-          ),
-          group: 'practice',
-          priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority, localizer),
-          createInput: {
-            title: assignment.title,
-            description: assignment.description,
-            priority: assignment.priority,
-            target: {
-              type: 'practice',
-              operation: 'mixed',
-              requiredAttempts: 1,
-              minAccuracyPercent: assignment.priority === 'high' ? 80 : 70,
-            },
-          },
-          keywords: [assignment.title, assignment.description, assignment.target].map((value) =>
-            value.toLowerCase()
-          ),
-        } satisfies KangurAssignmentCatalogItem;
-      }
-
-      return null;
-    })
+  buildKangurAssignments(progress, 3, localizer)
+    .map((assignment): KangurAssignmentCatalogItem | null =>
+      buildSuggestedKangurAssignmentCatalogItem(assignment, localizer)
+    )
     .filter((item): item is KangurAssignmentCatalogItem => item !== null);
 
-export const filterKangurAssignmentCatalog = (
-  items: KangurAssignmentCatalogItem[],
-  searchTerm: string,
-  group: KangurAssignmentCatalogGroup | 'all'
-): KangurAssignmentCatalogItem[] => {
-  const normalizedSearch = searchTerm.trim().toLowerCase();
+const resolveSuggestedAssignmentBadge = (
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string =>
+  translateAssignmentsRuntimeWithFallback(localizer, 'suggested.badge', 'Podpowiedź');
 
-  return items.filter((item) => {
-    if (group !== 'all' && item.group !== group) {
+const resolveSuggestedAssignmentKeywords = (values: unknown[]): string[] =>
+  values.map((value) => String(value).toLowerCase());
+
+const resolveSuggestedLessonGroup = (
+  lessonComponentId: KangurLessonComponentId
+): KangurAssignmentCatalogItem['group'] => {
+  const lessonEntry = KANGUR_LESSON_LIBRARY[lessonComponentId];
+  if (lessonComponentId === 'clock' || lessonComponentId === 'calendar') {
+    return 'time';
+  }
+  if (lessonEntry?.subject === 'geometry') {
+    return 'geometry';
+  }
+  if (lessonEntry?.subject === 'maths') {
+    return 'arithmetic';
+  }
+  return 'logic';
+};
+
+const buildSuggestedLessonAssignmentCatalogItem = (
+  assignment: ReturnType<typeof buildKangurAssignments>[number],
+  lessonComponentId: KangurLessonComponentId,
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): KangurAssignmentCatalogItem => ({
+  id: `suggested-${assignment.id}`,
+  title: assignment.title,
+  description: assignment.description,
+  badge: resolveSuggestedAssignmentBadge(localizer),
+  group: resolveSuggestedLessonGroup(lessonComponentId),
+  priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority, localizer),
+  createInput: {
+    title: assignment.title,
+    description: assignment.description,
+    priority: assignment.priority,
+    target: {
+      type: 'lesson',
+      lessonComponentId,
+      requiredCompletions: 1,
+    },
+  },
+  keywords: resolveSuggestedAssignmentKeywords([
+    assignment.title,
+    assignment.description,
+    assignment.target,
+    lessonComponentId,
+  ]),
+});
+
+const buildSuggestedPracticeAssignmentCatalogItem = (
+  assignment: ReturnType<typeof buildKangurAssignments>[number],
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): KangurAssignmentCatalogItem => ({
+  id: `suggested-${assignment.id}`,
+  title: assignment.title,
+  description: assignment.description,
+  badge: resolveSuggestedAssignmentBadge(localizer),
+  group: 'practice',
+  priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority, localizer),
+  createInput: {
+    title: assignment.title,
+    description: assignment.description,
+    priority: assignment.priority,
+    target: {
+      type: 'practice',
+      operation: 'mixed',
+      requiredAttempts: 1,
+      minAccuracyPercent: assignment.priority === 'high' ? 80 : 70,
+    },
+  },
+  keywords: resolveSuggestedAssignmentKeywords([
+    assignment.title,
+    assignment.description,
+    assignment.target,
+    'mixed',
+    'practice',
+  ]),
+});
+
+const buildSuggestedKangurAssignmentCatalogItem = (
+  assignment: ReturnType<typeof buildKangurAssignments>[number],
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): KangurAssignmentCatalogItem | null => {
+  if (assignment.action.page === 'Lessons' && assignment.action.query?.['focus']) {
+    return buildSuggestedLessonAssignmentCatalogItem(
+      assignment,
+      assignment.action.query['focus'] as KangurLessonComponentId,
+      localizer
+    );
+  }
+  if (
+    assignment.action.page === 'Game' &&
+    assignment.action.query?.['quickStart'] === 'training'
+  ) {
+    return buildSuggestedPracticeAssignmentCatalogItem(assignment, localizer);
+  }
+  return null;
+};
+
+const TIME_PRACTICE_OPERATIONS = new Set<KangurPracticeAssignmentOperation>(['clock']);
+const ARITHMETIC_PRACTICE_OPERATIONS = new Set<KangurPracticeAssignmentOperation>([
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'decimals',
+  'powers',
+  'roots',
+  'mixed',
+]);
+const LOGIC_PRACTICE_OPERATIONS = new Set<string>([
+  'logical_thinking',
+  'logical_patterns',
+  'logical_classification',
+  'logical_reasoning',
+  'logical_analogies',
+]);
+
+const isGlobalCatalogFilter = (filter: Parameters<typeof matchesCatalogFilter>[1]): boolean =>
+  filter === 'all' || filter === 'assigned' || filter === 'unassigned';
+
+const resolveCatalogTargetInfo = (item: KangurAssignmentCatalogItem): {
+  lessonComponentId: KangurLessonComponentId | null;
+  operation: KangurPracticeAssignmentOperation | null;
+} => ({
+  lessonComponentId:
+    item.createInput.target.type === 'lesson'
+      ? item.createInput.target.lessonComponentId ?? null
+      : null,
+  operation: item.createInput.target.type === 'practice' ? item.createInput.target.operation : null,
+});
+
+const matchesTimeCatalogFilter = (
+  lessonComponentId: KangurLessonComponentId | null,
+  operation: KangurPracticeAssignmentOperation | null
+): boolean =>
+  lessonComponentId === 'clock' ||
+  lessonComponentId === 'calendar' ||
+  (operation !== null && TIME_PRACTICE_OPERATIONS.has(operation));
+
+const matchesArithmeticCatalogFilter = (
+  item: KangurAssignmentCatalogItem,
+  operation: KangurPracticeAssignmentOperation | null
+): boolean =>
+  item.group === 'arithmetic' ||
+  (operation !== null && ARITHMETIC_PRACTICE_OPERATIONS.has(operation));
+
+const matchesLogicCatalogFilter = (
+  item: KangurAssignmentCatalogItem,
+  operation: KangurPracticeAssignmentOperation | null
+): boolean =>
+  item.group === 'logic' || (operation !== null && LOGIC_PRACTICE_OPERATIONS.has(operation));
+
+const matchesCatalogFilter = (
+  item: KangurAssignmentCatalogItem,
+  filter:
+    | 'all'
+    | 'unassigned'
+    | 'assigned'
+    | 'time'
+    | 'arithmetic'
+    | 'geometry'
+    | 'logic'
+    | 'practice'
+): boolean => {
+  if (isGlobalCatalogFilter(filter)) {
+    return true;
+  }
+
+  const { lessonComponentId, operation } = resolveCatalogTargetInfo(item);
+
+  if (filter === 'practice') {
+    return item.group === 'practice';
+  }
+
+  if (filter === 'time') {
+    return matchesTimeCatalogFilter(lessonComponentId, operation);
+  }
+
+  if (filter === 'geometry') {
+    return item.group === 'geometry';
+  }
+
+  if (filter === 'logic') {
+    return matchesLogicCatalogFilter(item, operation);
+  }
+
+  if (filter === 'arithmetic') {
+    return matchesArithmeticCatalogFilter(item, operation);
+  }
+
+  return true;
+};
+
+export const filterKangurAssignmentCatalog = (
+  catalog: KangurAssignmentCatalogItem[],
+  query: string,
+  filter:
+    | 'all'
+    | 'unassigned'
+    | 'assigned'
+    | 'time'
+    | 'arithmetic'
+    | 'geometry'
+    | 'logic'
+    | 'practice'
+): KangurAssignmentCatalogItem[] => {
+  const normalizedQuery = query.trim().toLowerCase();
+  return catalog.filter((item) => {
+    if (!matchesCatalogFilter(item, filter)) {
       return false;
     }
-    if (!normalizedSearch) {
+
+    if (!normalizedQuery) {
       return true;
     }
 
-    return [item.title, item.description, item.badge, ...item.keywords].some((value) =>
-      value.toLowerCase().includes(normalizedSearch)
-    );
+    const searchable = [item.title, item.description, item.badge, ...item.keywords]
+      .join(' ')
+      .toLowerCase();
+    if (!searchable.includes(normalizedQuery)) {
+      return false;
+    }
+
+    return true;
   });
 };
 
-export const resolveKangurAssignmentSubject = (
-  assignment: Pick<KangurAssignmentSnapshot, 'target'>
+const MIXED_TRAINING_CATEGORIES: KangurOperation[] = [
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'decimals',
+  'powers',
+  'roots',
+];
+
+const PRACTICE_OPERATION_DIFFICULTY: Record<KangurPracticeAssignmentOperation, KangurDifficulty> = {
+  addition: 'medium',
+  subtraction: 'medium',
+  multiplication: 'hard',
+  division: 'medium',
+  decimals: 'medium',
+  powers: 'hard',
+  roots: 'hard',
+  clock: 'medium',
+  mixed: 'medium',
+};
+
+const PRACTICE_OPERATION_FALLBACK_LABELS: Record<KangurPracticeAssignmentOperation, string> = {
+  addition: 'Dodawanie',
+  subtraction: 'Odejmowanie',
+  multiplication: 'Mnożenie',
+  division: 'Dzielenie',
+  decimals: 'Ułamki',
+  powers: 'Potęgi',
+  roots: 'Pierwiastki',
+  clock: 'Zegar',
+  mixed: 'Trening mieszany',
+};
+
+const PRIORITY_FALLBACK_LABELS: Record<KangurAssignmentSnapshot['priority'], string> = {
+  high: 'Priorytet wysoki',
+  medium: 'Priorytet średni',
+  low: 'Priorytet niski',
+};
+
+const STATUS_FALLBACK_LABELS: Record<string, string> = {
+  completed: 'Ukończone',
+  in_progress: 'W trakcie',
+  not_started: 'Nowe',
+};
+
+const STATUS_SORT_ORDER: Record<string, number> = {
+  in_progress: 0,
+  not_started: 1,
+  completed: 2,
+};
+
+const resolveAssignmentCreatedAtTimestamp = (assignment: KangurAssignmentSnapshot): number => {
+  const value = assignment.updatedAt ?? assignment.createdAt;
+  const parsed = Date.parse(value ?? '');
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const resolveAssignmentProgressCount = (
+  assignment: KangurAssignmentSnapshot
+): { completed: number; required: number } => {
+  const completed = assignment.progress.attemptsCompleted ?? 0;
+  const requiredFromProgress = assignment.progress.attemptsRequired;
+  const requiredFromTarget =
+    assignment.target.type === 'practice'
+      ? assignment.target.requiredAttempts
+      : assignment.target.requiredCompletions;
+
+  return {
+    completed,
+    required: requiredFromProgress ?? requiredFromTarget ?? 1,
+  };
+};
+
+const formatKangurAssignmentTimeLimitLabel = (
+  timeLimitMinutes: number | null | undefined,
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string | null => {
+  if (typeof timeLimitMinutes !== 'number' || !Number.isFinite(timeLimitMinutes)) {
+    return null;
+  }
+
+  const roundedMinutes = Math.max(0, Math.round(timeLimitMinutes));
+  const hours = Math.floor(roundedMinutes / 60);
+  const minutes = roundedMinutes % 60;
+  const durationLabel = formatKangurAssignmentDurationLabel(
+    { hours, minutes, roundedMinutes },
+    localizer
+  );
+
+  return translateAssignmentsRuntimeWithFallback(
+    localizer,
+    'time.timeLimitLabel',
+    'Czas na wykonanie: {label}',
+    { label: durationLabel }
+  );
+};
+
+const formatKangurAssignmentDurationLabel = (
+  input: { hours: number; minutes: number; roundedMinutes: number },
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string => {
+  if (input.hours > 0 && input.minutes > 0) {
+    return translateAssignmentsRuntimeWithFallback(
+      localizer,
+      'time.hoursMinutes',
+      '{hours} godz. {minutes} min',
+      { hours: input.hours, minutes: input.minutes }
+    );
+  }
+  if (input.hours > 0) {
+    return translateAssignmentsRuntimeWithFallback(
+      localizer,
+      'time.hoursOnly',
+      '{hours} godz.',
+      { hours: input.hours }
+    );
+  }
+  return translateAssignmentsRuntimeWithFallback(
+    localizer,
+    'time.minutesOnly',
+    '{minutes} min',
+    { minutes: input.roundedMinutes }
+  );
+};
+
+const getKangurLessonSubjectFromAssignment = (
+  assignment: KangurAssignmentSnapshot
 ): KangurLessonSubject => {
-  if (assignment.target.type === 'practice') {
+  if (assignment.target.type !== 'lesson') {
     return 'maths';
   }
 
-  const componentId = assignment.target.lessonComponentId;
-  const lessonTemplate = KANGUR_LESSON_LIBRARY[componentId];
-  if (lessonTemplate?.subject) {
-    return lessonTemplate.subject;
+  const componentId = assignment.target.lessonComponentId as KangurLessonComponentId | undefined;
+
+  if (!componentId || !(componentId in KANGUR_LESSON_LIBRARY)) {
+    return 'maths';
   }
 
-  if (componentId.startsWith('english_')) {
-    return 'english';
-  }
-
-  return 'maths';
+  return KANGUR_LESSON_LIBRARY[componentId].subject;
 };
+
+export const resolveKangurAssignmentSubject = (
+  assignment: KangurAssignmentSnapshot
+): KangurLessonSubject =>
+  assignment.target.type === 'lesson' ? getKangurLessonSubjectFromAssignment(assignment) : 'maths';
 
 export const filterKangurAssignmentsBySubject = (
   assignments: KangurAssignmentSnapshot[],
@@ -788,188 +540,127 @@ export const filterKangurAssignmentsBySubject = (
 ): KangurAssignmentSnapshot[] =>
   assignments.filter((assignment) => resolveKangurAssignmentSubject(assignment) === subject);
 
-export const selectKangurPriorityAssignments = (
-  assignments: KangurAssignmentSnapshot[],
-  limit = 3
-): KangurAssignmentSnapshot[] =>
-  assignments
-    .filter((assignment) => !assignment.archived && assignment.progress.status !== 'completed')
-    .sort((left, right) => {
-      const priorityDelta =
-        ASSIGNMENT_PRIORITY_ORDER[left.priority] - ASSIGNMENT_PRIORITY_ORDER[right.priority];
-      if (priorityDelta !== 0) {
-        return priorityDelta;
-      }
-
-      const percentDelta = right.progress.percent - left.progress.percent;
-      if (percentDelta !== 0) {
-        return percentDelta;
-      }
-
-      return Date.parse(right.createdAt) - Date.parse(left.createdAt);
-    })
-    .slice(0, Math.max(1, Math.floor(limit)));
-
-export const selectKangurPracticeAssignmentForScreen = (
-  assignments: KangurAssignmentSnapshot[],
-  screen: KangurGameScreen,
-  operation: KangurOperation | null
-): (KangurAssignmentSnapshot & { target: { type: 'practice' } }) | null => {
-  const practiceAssignments = selectKangurPriorityAssignments(
-    assignments,
-    assignments.length
-  ).filter(
-    (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'practice' } } =>
-      assignment.target.type === 'practice'
-  );
-
-  if (screen === 'training') {
-    return (
-      practiceAssignments.find((assignment) => assignment.target.operation === 'mixed') ?? null
-    );
+export const resolveKangurAssignmentPriorityAccent = (
+  priority: KangurAssignmentSnapshot['priority']
+): 'rose' | 'amber' | 'emerald' => {
+  if (priority === 'high') {
+    return 'rose';
   }
-
-  if (screen === 'operation') {
-    return (
-      practiceAssignments.find((assignment) => assignment.target.operation !== 'mixed') ?? null
-    );
+  if (priority === 'medium') {
+    return 'amber';
   }
-
-  if ((screen === 'playing' || screen === 'result') && operation) {
-    return (
-      practiceAssignments.find((assignment) => assignment.target.operation === operation) ?? null
-    );
-  }
-
-  return null;
+  return 'emerald';
 };
 
-export const mapKangurPracticeAssignmentsByOperation = (
-  assignments: KangurAssignmentSnapshot[]
-): Partial<Record<KangurOperation, KangurAssignmentSnapshot & { target: { type: 'practice' } }>> =>
-  selectKangurPriorityAssignments(assignments, assignments.length)
-    .filter(
-      (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'practice' } } =>
-        assignment.target.type === 'practice'
-    )
-    .reduce<
-      Partial<Record<KangurOperation, KangurAssignmentSnapshot & { target: { type: 'practice' } }>>
-    >((accumulator, assignment) => {
-      if (!accumulator[assignment.target.operation]) {
-        accumulator[assignment.target.operation] = assignment;
-      }
-      return accumulator;
-    }, {});
-
-export const selectKangurResultPracticeAssignment = (
-  assignments: KangurAssignmentSnapshot[],
-  operation: KangurOperation | null
-): (KangurAssignmentSnapshot & { target: { type: 'practice' } }) | null => {
-  if (!operation) {
-    return null;
-  }
-
-  const matchingAssignments = assignments
-    .filter((assignment) => !assignment.archived)
-    .filter(
-      (assignment): assignment is KangurAssignmentSnapshot & { target: { type: 'practice' } } =>
-        assignment.target.type === 'practice' && assignment.target.operation === operation
-    )
-    .sort((left, right) => {
-      const leftActive = left.progress.status === 'completed' ? 1 : 0;
-      const rightActive = right.progress.status === 'completed' ? 1 : 0;
-      if (leftActive !== rightActive) {
-        return leftActive - rightActive;
-      }
-
-      const priorityDelta =
-        ASSIGNMENT_PRIORITY_ORDER[left.priority] - ASSIGNMENT_PRIORITY_ORDER[right.priority];
-      if (priorityDelta !== 0) {
-        return priorityDelta;
-      }
-
-      const leftTimestamp =
-        left.progress.status === 'completed'
-          ? Date.parse(left.progress.completedAt ?? left.updatedAt)
-          : Date.parse(left.updatedAt);
-      const rightTimestamp =
-        right.progress.status === 'completed'
-          ? Date.parse(right.progress.completedAt ?? right.updatedAt)
-          : Date.parse(right.updatedAt);
-
-      return rightTimestamp - leftTimestamp;
-    });
-
-  if (matchingAssignments.length === 0) {
-    return null;
-  }
-
-  const activeAssignment = matchingAssignments.find(
-    (assignment) => assignment.progress.status !== 'completed'
+export const formatKangurAssignmentPriorityLabel = (
+  priority: KangurAssignmentSnapshot['priority'],
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string =>
+  translateAssignmentsRuntimeWithFallback(
+    localizer,
+    `priority.${priority}`,
+    PRIORITY_FALLBACK_LABELS[priority]
   );
-  if (activeAssignment) {
-    return activeAssignment;
+
+export const formatKangurAssignmentOperationLabel = (
+  operation: KangurPracticeAssignmentOperation,
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string =>
+  translateAssignmentsRuntimeWithFallback(
+    localizer,
+    `operations.${operation}`,
+    PRACTICE_OPERATION_FALLBACK_LABELS[operation]
+  );
+
+export const getKangurAssignmentActionLabel = (
+  assignment: KangurAssignmentSnapshot,
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string =>
+  assignment.target.type === 'lesson'
+    ? translateAssignmentsRuntimeWithFallback(localizer, 'actions.openLesson', 'Otwórz lekcję')
+    : translateAssignmentsRuntimeWithFallback(
+        localizer,
+        'actions.startTraining',
+        'Uruchom trening'
+      );
+
+export const resolveKangurAssignmentCountdownLabel = (
+  params: {
+    createdAt?: string | null;
+    now?: number;
+    status?: KangurAssignmentSnapshot['progress']['status'] | null;
+    timeLimitMinutes?: number | null;
+    timeLimitStartsAt?: string | null;
+  },
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string | null => {
+  if (!hasKangurAssignmentCountdown(params)) {
+    return null;
   }
 
-  return matchingAssignments[0] ?? null;
+  const startTimestamp = Date.parse(params.timeLimitStartsAt ?? params.createdAt ?? '');
+  if (!Number.isFinite(startTimestamp)) {
+    return null;
+  }
+
+  const now = params.now ?? Date.now();
+  const timeLimitMinutes = params.timeLimitMinutes ?? 0;
+  const deadline = startTimestamp + timeLimitMinutes * 60_000;
+  const remainingMs = deadline - now;
+
+  if (remainingMs <= 0) {
+    return translateAssignmentsRuntimeWithFallback(localizer, 'time.expired', 'Czas minął');
+  }
+
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return formatKangurAssignmentRemainingTimeLabel(
+    { hours, minutes, seconds },
+    localizer
+  );
 };
 
-export const buildKangurMixedTrainingQuickStartParams = (): URLSearchParams =>
-  new URLSearchParams({
-    quickStart: 'training',
-    categories: MIXED_TRAINING_PRESET_CATEGORIES.join(','),
-    count: `${DEFAULT_MIXED_TRAINING_COUNT}`,
-    difficulty: DEFAULT_MIXED_TRAINING_DIFFICULTY,
-  });
+const hasKangurAssignmentCountdown = (
+  params: Parameters<typeof resolveKangurAssignmentCountdownLabel>[0]
+): boolean =>
+  params.status !== 'completed' &&
+  typeof params.timeLimitMinutes === 'number' &&
+  Number.isFinite(params.timeLimitMinutes);
 
-export const parseKangurMixedTrainingQuickStartParams = (
-  searchParams: URLSearchParams,
-  basePath?: string | null
-): {
-  categories: KangurOperation[];
-  count: number;
-  difficulty: KangurDifficulty;
-} | null => {
-  const rawCategories = readKangurUrlParam(searchParams, 'categories', basePath);
-  const rawCount = readKangurUrlParam(searchParams, 'count', basePath);
-  const rawDifficulty = readKangurUrlParam(searchParams, 'difficulty', basePath);
-
-  if (!rawCategories || !rawCount || !rawDifficulty) {
-    return null;
-  }
-
-  if (rawDifficulty !== 'easy' && rawDifficulty !== 'medium' && rawDifficulty !== 'hard') {
-    return null;
-  }
-
-  const count = Number.parseInt(rawCount, 10);
-  if (
-    !MIXED_TRAINING_PRESET_COUNTS.includes(count as (typeof MIXED_TRAINING_PRESET_COUNTS)[number])
-  ) {
-    return null;
-  }
-
-  const categories = rawCategories
-    .split(',')
-    .map((value) => value.trim())
-    .filter((value): value is KangurOperation =>
-      MIXED_TRAINING_PRESET_CATEGORIES.includes(value as KangurOperation)
+const formatKangurAssignmentRemainingTimeLabel = (
+  input: { hours: number; minutes: number; seconds: number },
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string => {
+  if (input.hours > 0) {
+    return translateAssignmentsRuntimeWithFallback(
+      localizer,
+      'time.remainingHoursMinutes',
+      'Pozostało: {hours} godz. {minutes} min',
+      { hours: input.hours, minutes: input.minutes }
     );
-
-  if (categories.length === 0) {
-    return null;
   }
-
-  return {
-    categories: Array.from(new Set(categories)),
-    count,
-    difficulty: rawDifficulty,
-  };
+  if (input.minutes > 0) {
+    return translateAssignmentsRuntimeWithFallback(
+      localizer,
+      'time.remainingMinutesSeconds',
+      'Pozostało: {minutes} min {seconds} s',
+      { minutes: input.minutes, seconds: input.seconds }
+    );
+  }
+  return translateAssignmentsRuntimeWithFallback(
+    localizer,
+    'time.remainingSeconds',
+    'Pozostało: {seconds} s',
+    { seconds: input.seconds }
+  );
 };
 
 export const buildKangurAssignmentHref = (
   basePath: string,
-  assignment: Pick<KangurAssignmentSnapshot, 'target'>
+  assignment: KangurAssignmentSnapshot
 ): string => {
   if (assignment.target.type === 'lesson') {
     return appendKangurUrlParams(
@@ -984,7 +675,12 @@ export const buildKangurAssignmentHref = (
   if (assignment.target.operation === 'mixed') {
     return appendKangurUrlParams(
       createPageUrl('Game', basePath),
-      Object.fromEntries(buildKangurMixedTrainingQuickStartParams()),
+      {
+        quickStart: 'training',
+        categories: MIXED_TRAINING_CATEGORIES.join(','),
+        count: 10,
+        difficulty: 'medium',
+      },
       basePath
     );
   }
@@ -994,89 +690,287 @@ export const buildKangurAssignmentHref = (
     {
       quickStart: 'operation',
       operation: assignment.target.operation,
-      difficulty: 'medium',
+      difficulty: PRACTICE_OPERATION_DIFFICULTY[assignment.target.operation],
     },
     basePath
   );
 };
 
-export const getKangurAssignmentActionLabel = (
-  assignment: Pick<KangurAssignmentSnapshot, 'target'>,
+export const buildKangurAssignmentListItem = (
+  basePath: string,
+  assignment: KangurAssignmentSnapshot,
   localizer?: KangurAssignmentsRuntimeLocalizer
-): string => {
-  if (assignment.target.type === 'lesson') {
-    return translateAssignmentsRuntimeWithFallback(localizer, 'actions.openLesson', 'Otwórz lekcję');
-  }
-  if (assignment.target.operation === 'mixed') {
-    return translateAssignmentsRuntimeWithFallback(
-      localizer,
-      'actions.startTraining',
-      'Uruchom trening'
-    );
-  }
-  return translateAssignmentsRuntimeWithFallback(localizer, 'actions.trainNow', 'Trenuj teraz');
+): KangurAssignmentListItem => {
+  const subject = resolveKangurAssignmentSubject(assignment);
+  const { completed, required } = resolveAssignmentProgressCount(assignment);
+  const subjectAccent = ASSIGNMENT_SUBJECT_ACCENTS[subject] ?? 'violet';
+  const status = assignment.progress.status;
+  const statusLabel = formatKangurAssignmentStatusLabel(status, localizer);
+  const actionLabel = getKangurAssignmentListActionLabel(assignment, localizer);
+  const icon = resolveKangurAssignmentIcon(assignment);
+  const lastActivityLabel = formatKangurAssignmentLastActivityLabel(
+    assignment.progress.lastActivityAt,
+    localizer
+  );
+  const baseFields = resolveKangurAssignmentListBaseFields(assignment);
+
+  return {
+    id: assignment.id,
+    title: assignment.title,
+    description: baseFields.description,
+    icon,
+    createdAt: baseFields.createdAt,
+    subject,
+    subjectLabel: getKangurSubjectLabel(subject),
+    subjectAccent,
+    priority: assignment.priority,
+    status,
+    priorityLabel: formatKangurAssignmentPriorityLabel(assignment.priority, localizer),
+    priorityAccent: resolveKangurAssignmentPriorityAccent(assignment.priority),
+    statusLabel,
+    statusAccent: resolveKangurAssignmentStatusAccent(status),
+    progressPercent: baseFields.progressPercent,
+    progressSummary: baseFields.progressSummary,
+    progressCountLabel: `${completed}/${required}`,
+    lastActivityLabel,
+    timeLimitMinutes: baseFields.timeLimitMinutes,
+    timeLimitStartsAt: baseFields.timeLimitStartsAt,
+    timeLimitLabel: formatKangurAssignmentTimeLimitLabel(
+      baseFields.timeLimitMinutes,
+      localizer
+    ),
+    actionHref: buildKangurAssignmentHref(basePath, assignment),
+    actionLabel,
+    actionVariant: resolveKangurAssignmentActionVariant(assignment),
+  };
 };
 
-export const formatKangurAssignmentOperationLabel = (
-  operation: KangurPracticeAssignmentOperation,
-  localizer?: KangurAssignmentsRuntimeLocalizer
-): string => {
-  switch (operation) {
-    case 'addition':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.addition',
-        'Dodawanie'
-      );
-    case 'subtraction':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.subtraction',
-        'Odejmowanie'
-      );
-    case 'multiplication':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.multiplication',
-        'Mnożenie'
-      );
-    case 'division':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.division',
-        'Dzielenie'
-      );
-    case 'decimals':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.decimals',
-        'Ułamki'
-      );
-    case 'powers':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.powers',
-        'Potęgi'
-      );
-    case 'roots':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.roots',
-        'Pierwiastki'
-      );
-    case 'clock':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.clock',
-        'Zegar'
-      );
-    case 'mixed':
-      return translateAssignmentsRuntimeWithFallback(
-        localizer,
-        'operations.mixed',
-        'Trening mieszany'
-      );
-    default:
-      return operation;
+const resolveKangurAssignmentListBaseFields = (
+  assignment: KangurAssignmentSnapshot
+): {
+  createdAt: string;
+  description: string;
+  progressPercent: number;
+  progressSummary: string;
+  timeLimitMinutes: number | null;
+  timeLimitStartsAt: string | null;
+} => ({
+  description: assignment.description || '',
+  createdAt: assignment.createdAt || '',
+  progressPercent: assignment.progress.percent ?? 0,
+  progressSummary: assignment.progress.summary ?? '',
+  timeLimitMinutes: assignment.timeLimitMinutes ?? null,
+  timeLimitStartsAt: assignment.timeLimitStartsAt ?? null,
+});
+
+const resolveKangurAssignmentStatusKey = (
+  status: KangurAssignmentSnapshot['progress']['status']
+): 'new' | 'inProgress' | 'completed' => {
+  if (status === 'not_started') {
+    return 'new';
   }
+  if (status === 'in_progress') {
+    return 'inProgress';
+  }
+  return 'completed';
+};
+
+const formatKangurAssignmentStatusLabel = (
+  status: KangurAssignmentSnapshot['progress']['status'],
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string =>
+  translateAssignmentsRuntimeWithFallback(
+    localizer,
+    `status.${resolveKangurAssignmentStatusKey(status)}`,
+    STATUS_FALLBACK_LABELS[status] ?? 'Nowe'
+  );
+
+const resolveKangurAssignmentStatusAccent = (
+  status: KangurAssignmentSnapshot['progress']['status']
+): 'emerald' | 'indigo' | 'slate' => {
+  if (status === 'completed') {
+    return 'emerald';
+  }
+  if (status === 'in_progress') {
+    return 'indigo';
+  }
+  return 'slate';
+};
+
+const resolveKangurAssignmentIcon = (assignment: KangurAssignmentSnapshot): string => {
+  if (assignment.target.type === 'lesson') {
+    return '📚';
+  }
+  if (assignment.target.operation === 'clock') {
+    return '🕐';
+  }
+  return '🎯';
+};
+
+const formatKangurAssignmentLastActivityLabel = (
+  lastActivityAt: string | null,
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string | null =>
+  lastActivityAt ? new Date(lastActivityAt).toLocaleDateString(localizer?.locale ?? 'pl') : null;
+
+const getKangurAssignmentListActionLabel = (
+  assignment: KangurAssignmentSnapshot,
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): string =>
+  assignment.target.type === 'lesson'
+    ? translateAssignmentsRuntimeWithFallback(localizer, 'actions.openLesson', 'Otwórz lekcję')
+    : translateAssignmentsRuntimeWithFallback(localizer, 'actions.trainNow', 'Trenuj teraz');
+
+const resolveKangurAssignmentActionVariant = (
+  assignment: KangurAssignmentSnapshot
+): 'primary' | 'surface' => (assignment.target.type === 'lesson' ? 'primary' : 'surface');
+
+export const buildKangurAssignmentListItems = (
+  basePath: string,
+  assignments: KangurAssignmentSnapshot[],
+  localizer?: KangurAssignmentsRuntimeLocalizer
+): KangurAssignmentListItem[] =>
+  assignments.map((assignment) => buildKangurAssignmentListItem(basePath, assignment, localizer));
+
+export const selectKangurPriorityAssignments = (
+  assignments: KangurAssignmentSnapshot[],
+  limit = assignments.length
+): KangurAssignmentSnapshot[] =>
+  assignments
+    .filter((assignment) => !assignment.archived && assignment.progress.status !== 'completed')
+    .sort((left, right) => {
+      const priorityDelta =
+        ASSIGNMENT_PRIORITY_ORDER[left.priority] - ASSIGNMENT_PRIORITY_ORDER[right.priority];
+      if (priorityDelta !== 0) {
+        return priorityDelta;
+      }
+
+      const statusDelta =
+        (STATUS_SORT_ORDER[left.progress.status] ?? 99) -
+        (STATUS_SORT_ORDER[right.progress.status] ?? 99);
+      if (statusDelta !== 0) {
+        return statusDelta;
+      }
+
+      return resolveAssignmentCreatedAtTimestamp(right) - resolveAssignmentCreatedAtTimestamp(left);
+    })
+    .slice(0, Math.max(0, limit));
+
+export const mapKangurPracticeAssignmentsByOperation = (
+  assignments: KangurAssignmentSnapshot[]
+): Partial<Record<KangurPracticeAssignmentOperation, KangurPracticeAssignment>> => {
+  const mapped: Partial<Record<KangurPracticeAssignmentOperation, KangurPracticeAssignment>> = {};
+
+  for (const assignment of selectKangurPriorityAssignments(assignments)) {
+    if (!isKangurPracticeAssignment(assignment)) {
+      continue;
+    }
+
+    if (!mapped[assignment.target.operation]) {
+      mapped[assignment.target.operation] = assignment;
+    }
+  }
+
+  return mapped;
+};
+
+export const selectKangurPracticeAssignmentForScreen = (
+  assignments: KangurAssignmentSnapshot[],
+  screen: KangurGameScreen,
+  operation: KangurOperation | null
+): KangurPracticeAssignment | null => {
+  const mapped = mapKangurPracticeAssignmentsByOperation(assignments);
+
+  if (screen === 'training') {
+    return mapped.mixed ?? null;
+  }
+
+  if (isKangurOperationPracticeScreen(screen)) {
+    return resolveOperationScreenPracticeAssignment(mapped, assignments, operation);
+  }
+
+  if (isKangurActivePracticeScreen(screen) && operation) {
+    return mapped[operation] ?? null;
+  }
+
+  return null;
+};
+
+const isKangurOperationPracticeScreen = (screen: KangurGameScreen): boolean =>
+  screen === 'operation';
+
+const isKangurActivePracticeScreen = (screen: KangurGameScreen): boolean =>
+  screen === 'playing' || screen === 'result';
+
+const resolveOperationScreenPracticeAssignment = (
+  mapped: Partial<Record<KangurPracticeAssignmentOperation, KangurPracticeAssignment>>,
+  assignments: KangurAssignmentSnapshot[],
+  operation: KangurOperation | null
+): KangurPracticeAssignment | null =>
+  operation ? mapped[operation] ?? null : selectFallbackOperationPracticeAssignment(assignments);
+
+const selectFallbackOperationPracticeAssignment = (
+  assignments: KangurAssignmentSnapshot[]
+): KangurPracticeAssignment | null =>
+  selectKangurPriorityAssignments(assignments).find(
+    (assignment): assignment is KangurPracticeAssignment =>
+      isKangurPracticeAssignment(assignment) && assignment.target.operation !== 'mixed'
+  ) ?? null;
+
+export const selectKangurResultPracticeAssignment = (
+  assignments: KangurAssignmentSnapshot[],
+  operation: KangurPracticeAssignmentOperation
+): KangurPracticeAssignment | null => {
+  const activeAssignment = mapKangurPracticeAssignmentsByOperation(assignments)[operation];
+  if (activeAssignment) {
+    return activeAssignment;
+  }
+
+  return assignments
+    .filter(
+      (assignment): assignment is KangurPracticeAssignment =>
+        isKangurPracticeAssignment(assignment) &&
+        assignment.target.operation === operation &&
+        assignment.progress.status === 'completed'
+    )
+    .sort((left, right) => resolveAssignmentCreatedAtTimestamp(right) - resolveAssignmentCreatedAtTimestamp(left))[0] ?? null;
+};
+
+export const parseKangurMixedTrainingQuickStartParams = (
+  searchParams: URLSearchParams,
+  basePath?: string | null
+): KangurTrainingSelection | null => {
+  const categoriesValue = readKangurUrlParam(searchParams, 'categories', basePath);
+  const countValue = readKangurUrlParam(searchParams, 'count', basePath);
+  const difficultyValue = readKangurUrlParam(searchParams, 'difficulty', basePath);
+
+  if (!categoriesValue || !countValue || !difficultyValue) {
+    return null;
+  }
+
+  const categories = categoriesValue
+    .split(',')
+    .map((value) => value.trim())
+    .filter(
+      (value): value is KangurOperation =>
+        value.length > 0 &&
+        value !== 'mixed' &&
+        value in PRACTICE_OPERATION_DIFFICULTY
+    );
+  const count = Number.parseInt(countValue, 10);
+
+  if (
+    categories.length === 0 ||
+    !Number.isFinite(count) ||
+    count <= 0 ||
+    !['easy', 'medium', 'hard'].includes(difficultyValue)
+  ) {
+    return null;
+  }
+
+  return {
+    categories,
+    count,
+    difficulty: difficultyValue as KangurDifficulty,
+  };
 };

@@ -14,11 +14,14 @@ vi.mock('next-intl', () => ({
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/features/kangur/ui/FrontendPublicOwnerShellClient', () => ({
-  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock('@/features/kangur/public', () => ({
+  FrontendPublicOwnerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  FrontendPublicOwnerShellClient: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  KangurSSRSkeleton: () => <div data-testid='kangur-ssr-skeleton' />,
+  KangurServerShell: () => <div data-testid='kangur-server-shell' />,
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: vi.fn(async () => null),
   shouldApplyFrontPageAppSelection: () => false,
 }));

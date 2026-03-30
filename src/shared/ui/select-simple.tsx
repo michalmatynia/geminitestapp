@@ -19,7 +19,8 @@ export type { SelectSimpleOption };
 
 interface SelectSimpleProps {
   value: string | undefined;
-  onValueChange: (value: string) => void;
+  onValueChange?: (value: string) => void;
+  onChange?: (value: string) => void;
   options: SelectSimpleOption[] | readonly SelectSimpleOption[];
   placeholder?: string | undefined;
   className?: string | undefined;
@@ -43,63 +44,79 @@ type SelectSimpleGroupedOptions = {
   hasVisibleGroupLabels: boolean;
 };
 
-type SelectSimpleControlProps = {
-  safeValue: string;
-  onValueChange: (value: string) => void;
-  disabled: boolean;
-  placeholder: string;
-  triggerClassName?: string | undefined;
-  contentClassName?: string | undefined;
-  id?: string | undefined;
-  ariaLabel?: string | undefined;
-  ariaDescribedBy?: string | undefined;
-  ariaInvalid?: boolean | undefined;
-  ariaErrorMessage?: string | undefined;
-  title?: string | undefined;
-  size: 'default' | 'sm' | 'xs';
-  variant: 'default' | 'subtle';
-  dataDocId?: string | undefined;
-  dataDocAlias?: string | undefined;
-  groupedOptions: SelectSimpleGroupedOptions;
-};
-
 const toOptionArray = <T,>(option: T): T[] => [option];
 
-function SelectSimpleControl({
-  safeValue,
-  onValueChange,
-  disabled,
-  placeholder,
-  triggerClassName,
-  contentClassName,
-  id,
-  ariaLabel,
-  ariaDescribedBy,
-  ariaInvalid,
-  ariaErrorMessage,
-  title,
-  size,
-  variant,
-  dataDocId,
-  dataDocAlias,
-  groupedOptions,
-}: SelectSimpleControlProps): React.JSX.Element {
-  const allowFallbackLabel = !id;
-  const { ariaLabel: resolvedAriaLabel, hasAccessibleLabel } = resolveAccessibleLabel({
-    children: null,
-    ariaLabel,
-    ariaLabelledBy: undefined,
-    title: allowFallbackLabel ? title : undefined,
-    fallbackLabel: allowFallbackLabel
-      ? placeholder ?? dataDocAlias ?? dataDocId
-      : undefined,
-  });
-  const hasLabel = hasAccessibleLabel || Boolean(id);
-  if (!hasLabel) {
-    warnMissingAccessibleLabel({ componentName: 'SelectSimple', hasAccessibleLabel: hasLabel });
-  }
+type SelectSimpleRenderProps = {
+  ariaDescribedBy: string | undefined;
+  ariaErrorMessage: string | undefined;
+  ariaInvalid: boolean | undefined;
+  className: string | undefined;
+  contentClassName: string | undefined;
+  dataDocAlias: string | undefined;
+  dataDocId: string | undefined;
+  disabled: boolean;
+  groupedOptions: SelectSimpleGroupedOptions;
+  id: string | undefined;
+  onValueChange: (value: string) => void;
+  placeholder: string;
+  resolvedTitle: string;
+  resolvedTriggerAriaLabel: string | undefined;
+  safeValue: string;
+  size: 'default' | 'sm' | 'xs';
+  triggerClassName: string | undefined;
+  variant: 'default' | 'subtle';
+};
 
-  return (
+const renderSelectSimpleOptions = ({
+  groupedOptions,
+}: Pick<SelectSimpleRenderProps, 'groupedOptions'>): React.ReactNode =>
+  groupedOptions.groups.map((group) => (
+    <SelectGroup key={group.key}>
+      {groupedOptions.hasVisibleGroupLabels && group.label ? (
+        <SelectLabel className='px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
+          {group.label}
+        </SelectLabel>
+      ) : null}
+      {group.options.map((option) => (
+        <SelectItem
+          key={option.value}
+          value={option.value}
+          {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
+        >
+          <div className='flex min-w-0 flex-col'>
+            <span className='break-words leading-tight'>{option.label}</span>
+            {option.description && (
+              <span className='mt-0.5 break-words text-[10px] leading-tight text-gray-500'>
+                {option.description}
+              </span>
+            )}
+          </div>
+        </SelectItem>
+      ))}
+    </SelectGroup>
+  ));
+
+const renderSelectSimple = ({
+  ariaDescribedBy,
+  ariaErrorMessage,
+  ariaInvalid,
+  className,
+  contentClassName,
+  dataDocAlias,
+  dataDocId,
+  disabled,
+  groupedOptions,
+  id,
+  onValueChange,
+  placeholder,
+  resolvedTitle,
+  resolvedTriggerAriaLabel,
+  safeValue,
+  size,
+  triggerClassName,
+  variant,
+}: SelectSimpleRenderProps): React.JSX.Element => (
+  <div className={cn('w-full', className)}>
     <Select value={safeValue} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger
         id={id}
@@ -111,11 +128,11 @@ function SelectSimpleControl({
             'border-border/40 bg-card/40 hover:bg-card/60 hover:border-border/60',
           triggerClassName
         )}
-        aria-label={resolvedAriaLabel}
+        aria-label={resolvedTriggerAriaLabel}
         aria-describedby={ariaDescribedBy}
         aria-invalid={ariaInvalid || undefined}
         aria-errormessage={ariaErrorMessage}
-        title={title}
+        title={resolvedTitle}
         data-doc-id={dataDocId}
         data-doc-alias={dataDocAlias}
       >
@@ -128,56 +145,42 @@ function SelectSimpleControl({
           contentClassName
         )}
       >
-        {groupedOptions.groups.map((group) => (
-          <SelectGroup key={group.key}>
-            {groupedOptions.hasVisibleGroupLabels && group.label ? (
-              <SelectLabel className='px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
-                {group.label}
-              </SelectLabel>
-            ) : null}
-            {group.options.map((option) => (
-              <SelectItem
-                key={option.value}
-                value={option.value}
-                {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
-              >
-                <div className='flex min-w-0 flex-col'>
-                  <span className='break-words leading-tight'>{option.label}</span>
-                  {option.description && (
-                    <span className='mt-0.5 break-words text-[10px] leading-tight text-gray-500'>
-                      {option.description}
-                    </span>
-                  )}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        ))}
+        {renderSelectSimpleOptions({ groupedOptions })}
       </SelectContent>
     </Select>
-  );
-}
+  </div>
+);
 
-export function SelectSimple({
-  value,
-  onValueChange,
-  options,
-  placeholder = 'Select an option',
-  className,
-  triggerClassName,
-  contentClassName,
-  disabled = false,
-  id,
-  ariaLabel,
-  ariaDescribedBy,
-  ariaInvalid,
-  ariaErrorMessage,
-  title,
-  size = 'default',
-  variant = 'default',
-  dataDocId,
-  dataDocAlias,
-}: SelectSimpleProps): React.JSX.Element {
+export function SelectSimple(props: SelectSimpleProps): React.JSX.Element {
+  const {
+    value,
+    onValueChange,
+    onChange,
+    options,
+    placeholder = 'Select an option',
+    className,
+    triggerClassName,
+    contentClassName,
+    disabled = false,
+    id,
+    ariaLabel,
+    ariaDescribedBy,
+    ariaInvalid,
+    ariaErrorMessage,
+    title,
+    size = 'default',
+    variant = 'default',
+    dataDocId,
+    dataDocAlias,
+  } = props;
+  const handleValueChange = React.useCallback(
+    (nextValue: string): void => {
+      onValueChange?.(nextValue);
+      onChange?.(nextValue);
+    },
+    [onChange, onValueChange]
+  );
+
   const normalizedOptions = React.useMemo(
     () => options.filter((option) => option.value && option.value.trim() !== ''),
     [options]
@@ -224,28 +227,46 @@ export function SelectSimple({
     }
     return resolvedAriaLabel;
   }, [resolvedAriaLabel, title]);
-
-  return (
-    <div className={cn('w-full', className)}>
-      <SelectSimpleControl
-        safeValue={safeValue}
-        onValueChange={onValueChange}
-        disabled={disabled}
-        placeholder={placeholder}
-        triggerClassName={triggerClassName}
-        contentClassName={contentClassName}
-        id={id}
-        ariaLabel={resolvedAriaLabel}
-        ariaDescribedBy={ariaDescribedBy}
-        ariaInvalid={ariaInvalid}
-        ariaErrorMessage={ariaErrorMessage}
-        title={resolvedTitle}
-        size={size}
-        variant={variant}
-        dataDocId={dataDocId}
-        dataDocAlias={dataDocAlias}
-        groupedOptions={groupedOptions}
-      />
-    </div>
+  const allowFallbackLabel = !id;
+  const {
+    ariaLabel: resolvedTriggerAriaLabel,
+    hasAccessibleLabel,
+  } = React.useMemo(
+    () =>
+      resolveAccessibleLabel({
+        children: null,
+        ariaLabel: resolvedAriaLabel,
+        ariaLabelledBy: undefined,
+        title: allowFallbackLabel ? resolvedTitle : undefined,
+        fallbackLabel: allowFallbackLabel
+          ? placeholder ?? dataDocAlias ?? dataDocId
+          : undefined,
+      }),
+    [allowFallbackLabel, dataDocAlias, dataDocId, placeholder, resolvedAriaLabel, resolvedTitle]
   );
+  const hasLabel = hasAccessibleLabel || Boolean(id);
+  if (!hasLabel) {
+    warnMissingAccessibleLabel({ componentName: 'SelectSimple', hasAccessibleLabel: hasLabel });
+  }
+
+  return renderSelectSimple({
+    ariaDescribedBy,
+    ariaErrorMessage,
+    ariaInvalid,
+    className,
+    contentClassName,
+    dataDocAlias,
+    dataDocId,
+      disabled,
+      groupedOptions,
+      id,
+      onValueChange: handleValueChange,
+      placeholder,
+    resolvedTitle,
+    resolvedTriggerAriaLabel,
+    safeValue,
+    size,
+    triggerClassName,
+    variant,
+  });
 }

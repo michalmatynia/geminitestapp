@@ -16,6 +16,8 @@ const viewportState = {
 };
 
 const visualViewportListeners = new Map<ViewportEventName, Set<() => void>>();
+const visualViewportAddEventListenerMock = vi.fn();
+const visualViewportRemoveEventListenerMock = vi.fn();
 
 const setViewportState = ({
   innerWidth,
@@ -76,16 +78,20 @@ describe('useKangurMobileBreakpoint', () => {
           return viewportState.visualWidth;
         },
         addEventListener: (eventName: ViewportEventName, listener: () => void) => {
+          visualViewportAddEventListenerMock(eventName, listener);
           const listeners = visualViewportListeners.get(eventName) ?? new Set<() => void>();
           listeners.add(listener);
           visualViewportListeners.set(eventName, listeners);
         },
         removeEventListener: (eventName: ViewportEventName, listener: () => void) => {
+          visualViewportRemoveEventListenerMock(eventName, listener);
           visualViewportListeners.get(eventName)?.delete(listener);
         },
       },
       writable: true,
     });
+    visualViewportAddEventListenerMock.mockClear();
+    visualViewportRemoveEventListenerMock.mockClear();
   });
 
   it('updates when the window is resized into the mobile breakpoint', () => {
@@ -126,5 +132,37 @@ describe('useKangurMobileBreakpoint', () => {
     });
 
     expect(screen.getByTestId('mobile-breakpoint-state')).toHaveTextContent('mobile');
+  });
+
+  it('shares the breakpoint listener set and ignores visual viewport scroll events', () => {
+    const windowAddEventListenerSpy = vi.spyOn(window, 'addEventListener');
+    windowAddEventListenerSpy.mockClear();
+
+    render(
+      <>
+        <MobileBreakpointProbe />
+        <MobileBreakpointProbe />
+      </>
+    );
+
+    expect(
+      windowAddEventListenerSpy.mock.calls.filter(([eventName]) => eventName === 'resize')
+    ).toHaveLength(1);
+    expect(
+      windowAddEventListenerSpy.mock.calls.filter(
+        ([eventName]) => eventName === 'orientationchange'
+      )
+    ).toHaveLength(1);
+    expect(visualViewportAddEventListenerMock).toHaveBeenCalledTimes(1);
+    expect(visualViewportAddEventListenerMock).toHaveBeenCalledWith(
+      'resize',
+      expect.any(Function)
+    );
+    expect(visualViewportAddEventListenerMock).not.toHaveBeenCalledWith(
+      'scroll',
+      expect.any(Function)
+    );
+
+    windowAddEventListenerSpy.mockRestore();
   });
 });

@@ -1,4 +1,4 @@
-import { FrontendRouteLoadingFallback } from '@/features/kangur/ui/FrontendRouteLoadingFallback';
+import { FrontendRouteLoadingFallback } from '@/features/kangur/public';
 
 export default function Loading(): React.JSX.Element {
   return <FrontendRouteLoadingFallback />;

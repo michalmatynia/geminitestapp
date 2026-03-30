@@ -1,6 +1,6 @@
 ---
 owner: 'Case Resolver Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-26'
 status: 'active'
 related_components:
   - 'src/features/case-resolver'
@@ -21,6 +21,21 @@ Case Resolver is split across three layers:
    - Workspace state stored through settings APIs with revision checks.
 3. Async processing layer
    - OCR jobs handled by BullMQ worker in `src/features/case-resolver/workers/caseResolverOcrQueue.ts`.
+
+## Operator Route Map
+
+The current admin surface is split across:
+
+- `/admin/case-resolver`
+- `/admin/case-resolver/cases`
+- `/admin/case-resolver/capture`
+- `/admin/case-resolver/categories`
+- `/admin/case-resolver/identifiers`
+- `/admin/case-resolver/preferences`
+- `/admin/case-resolver/settings`
+- `/admin/case-resolver/tags`
+
+The main workspace and the case inventory are separate entrypoints, which is important when describing state ownership and performance hot paths.
 
 ## Workspace Persistence Flow
 

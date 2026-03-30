@@ -14,17 +14,46 @@ export * from './hooks/useProductListingMutations';
 export * from './components/listings/hooks/useIntegrationSelection';
 
 // Types
-export type { BaseCategory } from './types/category-mapping';
-export * from './types/category-mapping';
-export * from './types/producer-mapping';
-export * from './types/tag-mapping';
-export * from './types/integrations';
-export type { IntegrationWithConnections } from './types/integrations';
-export { integrationDefinitions } from '@/shared/contracts/integrations';
-export * from './types/listings';
+export {
+  integrationDefinitions,
+  type BaseCategory,
+  type CategoryMapping,
+  type CategoryMappingCreateInput,
+  type CategoryMappingUpdateInput,
+  type CategoryMappingWithDetails,
+  type ExternalCategory,
+  type ExternalCategorySyncInput,
+  type ExternalCategoryWithChildren,
+  type ExternalProducer,
+  type ExternalProducerSyncInput,
+  type ProducerMapping,
+  type ProducerMappingCreateInput,
+  type ProducerMappingUpdateInput,
+  type ProducerMappingWithDetails,
+  type ExternalTag,
+  type ExternalTagSyncInput,
+  type TagMapping,
+  type TagMappingCreateInput,
+  type TagMappingUpdateInput,
+  type TagMappingWithDetails,
+  type Integration,
+  type IntegrationConnection,
+  type IntegrationConnectionBasic,
+  type IntegrationConnectionRecord,
+  type IntegrationRecord,
+  type IntegrationRepository,
+  type IntegrationWithConnections,
+  type CreateProductListingInput,
+  type ProductListing,
+  type ProductListingExportEvent,
+  type ProductListingExportEventRecord,
+  type ProductListingRepository,
+  type ProductListingWithDetails,
+} from '@/shared/contracts/integrations';
 
 // Utils
 export * from './utils/connections';
+export * from './product-integrations-adapter';
 
 // Constants
 export * from './constants/slugs';
@@ -36,7 +65,6 @@ export { default as CategoryMapperPage } from './pages/CategoryMapperPage';
 export { default as ConnectionsPage } from './pages/ConnectionsPage';
 export { default as MarketplacesPage } from './pages/marketplaces/MarketplacesPage';
 export { default as TraderaSettingsPage } from './pages/marketplaces/TraderaSettingsPage';
-export { default as BaseSynchronizationEnginePage } from './pages/aggregators/base-com/BaseSynchronizationEnginePage';
 export { default as AllegroConnectionsPage } from './pages/marketplaces/allegro/AllegroConnectionsPage';
 export { default as AllegroListingManagementPage } from './pages/marketplaces/allegro/AllegroListingManagementPage';
 export { default as AllegroListingTemplatesPage } from './pages/marketplaces/allegro/AllegroListingTemplatesPage';

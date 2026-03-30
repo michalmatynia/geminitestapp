@@ -4,8 +4,20 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/shared/ui/pagination', () => ({
-  Pagination: ({
+type PaginationMockProps = {
+  className?: string;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  page: number;
+  pageSize: number;
+  pageSizeOptions: number[];
+  showInfo: boolean;
+  totalCount: number;
+  variant: string;
+};
+
+function MockPagination(props: PaginationMockProps): React.JSX.Element {
+  const {
     className,
     onPageChange,
     onPageSizeChange,
@@ -15,17 +27,9 @@ vi.mock('@/shared/ui/pagination', () => ({
     showInfo,
     totalCount,
     variant,
-  }: {
-    className?: string;
-    onPageChange: (page: number) => void;
-    onPageSizeChange: (pageSize: number) => void;
-    page: number;
-    pageSize: number;
-    pageSizeOptions: number[];
-    showInfo: boolean;
-    totalCount: number;
-    variant: string;
-  }) => (
+  } = props;
+
+  return (
     <div
       data-testid='pagination'
       data-class-name={className}
@@ -43,24 +47,30 @@ vi.mock('@/shared/ui/pagination', () => ({
         size
       </button>
     </div>
-  ),
+  );
+}
+
+vi.mock('@/shared/ui/pagination', () => ({
+  Pagination: MockPagination,
 }));
 
-import { PanelPagination } from '@/shared/ui/templates/panels/PanelPagination';
+import { Pagination } from '@/shared/ui/pagination';
 
-describe('PanelPagination', () => {
-  it('passes the panel pagination contract directly into Pagination', () => {
+describe('Pagination', () => {
+  it('passes the panel pagination contract directly into the shared Pagination component', () => {
     const onPageChange = vi.fn();
     const onPageSizeChange = vi.fn();
 
     render(
-      <PanelPagination
+      <Pagination
+        variant='panel'
         page={2}
         pageSize={20}
         totalCount={125}
         pageSizeOptions={[10, 20, 50]}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
+        showInfo={true}
         className='panel-pagination'
       />
     );

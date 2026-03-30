@@ -17,6 +17,33 @@ import {
   reconcileProductValidationSemanticState,
 } from './validator-semantic-operations';
 
+const buildDynamicReplacementRecipe = (
+  overrides: Partial<Parameters<typeof encodeDynamicReplacementRecipe>[0]>
+) =>
+  encodeDynamicReplacementRecipe({
+    version: 1,
+    sourceMode: 'form_field',
+    sourceField: 'name_en',
+    sourceRegex: null,
+    sourceFlags: null,
+    sourceMatchGroup: null,
+    mathOperation: 'none',
+    mathOperand: null,
+    roundMode: 'none',
+    padLength: null,
+    padChar: null,
+    logicOperator: 'none',
+    logicOperand: null,
+    logicFlags: null,
+    logicWhenTrueAction: 'keep',
+    logicWhenTrueValue: null,
+    logicWhenFalseAction: 'keep',
+    logicWhenFalseValue: null,
+    resultAssembly: 'segment_only',
+    targetApply: 'replace_whole_field',
+    ...overrides,
+  });
+
 describe('validator semantic operations', () => {
   it('migrates legacy operation and preset ids to the latest canonical ids', () => {
     expect(
@@ -55,27 +82,9 @@ describe('validator semantic operations', () => {
       inferProductValidationSemanticStateFromPattern({
         target: 'stock',
         replacementEnabled: true,
-        replacementValue: encodeDynamicReplacementRecipe({
-          version: 1,
+        replacementValue: buildDynamicReplacementRecipe({
           sourceMode: 'latest_product_field',
           sourceField: 'stock',
-          sourceRegex: null,
-          sourceFlags: null,
-          sourceMatchGroup: null,
-          mathOperation: 'none',
-          mathOperand: null,
-          roundMode: 'none',
-          padLength: null,
-          padChar: null,
-          logicOperator: 'none',
-          logicOperand: null,
-          logicFlags: null,
-          logicWhenTrueAction: 'keep',
-          logicWhenTrueValue: null,
-          logicWhenFalseAction: 'keep',
-          logicWhenFalseValue: null,
-          resultAssembly: 'segment_only',
-          targetApply: 'replace_whole_field',
         }),
       })
     ).toMatchObject({
@@ -101,27 +110,9 @@ describe('validator semantic operations', () => {
       inferProductValidationSemanticStateFromPattern({
         target: 'category',
         replacementEnabled: true,
-        replacementValue: encodeDynamicReplacementRecipe({
-          version: 1,
+        replacementValue: buildDynamicReplacementRecipe({
           sourceMode: 'form_field',
           sourceField: 'nameEnSegment4',
-          sourceRegex: null,
-          sourceFlags: null,
-          sourceMatchGroup: null,
-          mathOperation: 'none',
-          mathOperand: null,
-          roundMode: 'none',
-          padLength: null,
-          padChar: null,
-          logicOperator: 'none',
-          logicOperand: null,
-          logicFlags: null,
-          logicWhenTrueAction: 'keep',
-          logicWhenTrueValue: null,
-          logicWhenFalseAction: 'keep',
-          logicWhenFalseValue: null,
-          resultAssembly: 'segment_only',
-          targetApply: 'replace_whole_field',
         }),
       })
     ).toMatchObject({
@@ -157,27 +148,9 @@ describe('validator semantic operations', () => {
           target: 'name',
           locale: 'pl',
           replacementEnabled: true,
-          replacementValue: encodeDynamicReplacementRecipe({
-            version: 1,
+          replacementValue: buildDynamicReplacementRecipe({
             sourceMode: 'form_field',
             sourceField: 'name_en',
-            sourceRegex: null,
-            sourceFlags: null,
-            sourceMatchGroup: null,
-            mathOperation: 'none',
-            mathOperand: null,
-            roundMode: 'none',
-            padLength: null,
-            padChar: null,
-            logicOperator: 'none',
-            logicOperand: null,
-            logicFlags: null,
-            logicWhenTrueAction: 'keep',
-            logicWhenTrueValue: null,
-            logicWhenFalseAction: 'keep',
-            logicWhenFalseValue: null,
-            resultAssembly: 'segment_only',
-            targetApply: 'replace_whole_field',
           }),
         },
       })

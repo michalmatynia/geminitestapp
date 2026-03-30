@@ -1,28 +1,33 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslations } from 'next-intl';
 
 import {
-  KangurButton,
+  computeKangurTotalStrokeLength,
+  flattenKangurStrokePoints,
+} from '@/features/kangur/ui/components/drawing-engine/stroke-metrics';
+import {
+  createKangurDrawingDraftStorageKey,
+  createKangurDrawingExportFilename,
+} from '@/features/kangur/ui/components/drawing-engine/drawing-identifiers';
+import { KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS } from '@/features/kangur/ui/components/drawing-engine/keyboard-shortcuts';
+import { KangurTracingLessonFooter } from '@/features/kangur/ui/components/drawing-engine/KangurTracingLessonFooter';
+import { KangurTracingBoard } from '@/features/kangur/ui/components/drawing-engine/KangurTracingBoard';
+import {
+  evaluateKangurTracingAttempt,
+  getKangurTracingCanvasConfig,
+} from '@/features/kangur/ui/components/drawing-engine/tracing';
+import { useKangurManagedStoredPointDrawing } from '@/features/kangur/ui/components/drawing-engine/useKangurManagedStoredPointDrawing';
+import { KangurManagedDrawingUtilityActions } from '@/features/kangur/ui/components/drawing-engine/KangurManagedDrawingUtilityActions';
+import {
   KangurGlassPanel,
   KangurHeadline,
-  KangurInfoCard,
   KangurStatusChip,
 } from '@/features/kangur/ui/design/primitives';
-import { KangurCheckButton } from '@/features/kangur/ui/components/KangurCheckButton';
-import {
-  KANGUR_STACK_ROOMY_CLASSNAME,
-  KANGUR_WRAP_ROW_CLASSNAME,
-} from '@/features/kangur/ui/design/tokens';
-import { useKangurCanvasRedraw } from '@/features/kangur/ui/hooks/useKangurCanvasRedraw';
-import {
-  resolveKangurCanvasPoint,
-  syncKangurCanvasContext,
-} from '@/features/kangur/ui/services/drawing-canvas';
+import { KANGUR_STACK_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useKangurCanvasTouchLock } from '@/features/kangur/ui/hooks/useKangurCanvasTouchLock';
 import type {
   KangurIntlTranslate,
   KangurMiniGameFeedbackState,
@@ -89,31 +94,135 @@ const translateAlphabetCopy = (
   return translated === key || translated.endsWith(`.${key}`) ? fallback : translated;
 };
 
-const flattenPoints = (strokes: Point2d[][]): Point2d[] =>
-  strokes.flatMap((stroke) => stroke);
-
-const distance = (a: Point2d, b: Point2d): number =>
-  Math.hypot(a.x - b.x, a.y - b.y);
-
-const computeStrokeLength = (stroke: Point2d[]): number => {
-  if (stroke.length < 2) return 0;
-  let total = 0;
-  for (let i = 1; i < stroke.length; i += 1) {
-    total += distance(stroke[i - 1] as Point2d, stroke[i] as Point2d);
-  }
-  return total;
-};
-
 const isPointInCopyZone = (point: Point2d): boolean => point.y >= COPY_ZONE_TOP;
+
+export function AlphabetCopyGuideSurface({
+  guideColor,
+  inkColor,
+  letter,
+  word,
+  writeHereLabel,
+}: {
+  guideColor: string;
+  inkColor: string;
+  letter: string;
+  word: string;
+  writeHereLabel: string;
+}): React.JSX.Element {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `alphabet-copy-guide-${baseId}-clip`;
+  const panelGradientId = `alphabet-copy-guide-${baseId}-panel`;
+  const frameGradientId = `alphabet-copy-guide-${baseId}-frame`;
+
+  return (
+    <svg
+      viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+      className='absolute inset-0 h-full w-full'
+      aria-hidden='true'
+      data-testid='alphabet-copy-guide-animation'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='0' y='0' width={CANVAS_WIDTH} height={CANVAS_HEIGHT} rx='28' />
+        </clipPath>
+        <linearGradient id={panelGradientId} x1='0' x2='1' y1='0' y2='1'>
+          <stop offset='0%' stopColor='#fef3c7' />
+          <stop offset='55%' stopColor='#e0f2fe' />
+          <stop offset='100%' stopColor='#fae8ff' />
+        </linearGradient>
+        <linearGradient id={frameGradientId} x1='0' x2='1' y1='0' y2='0'>
+          <stop offset='0%' stopColor='rgba(245,158,11,0.78)' />
+          <stop offset='50%' stopColor='rgba(56,189,248,0.82)' />
+          <stop offset='100%' stopColor='rgba(244,114,182,0.82)' />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${clipId})`} data-testid='alphabet-copy-guide-atmosphere'>
+        <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill={`url(#${panelGradientId})`} />
+        <rect
+          y={COPY_ZONE_TOP}
+          width={CANVAS_WIDTH}
+          height={COPY_ZONE_BOTTOM - COPY_ZONE_TOP}
+          fill='#ffffff'
+          opacity='0.72'
+        />
+        <line
+          x1={GUIDE_LINE_START_X}
+          x2={GUIDE_LINE_END_X}
+          y1={COPY_ZONE_TOP}
+          y2={COPY_ZONE_TOP}
+          className='copy-divider'
+        />
+        <line
+          x1={GUIDE_LINE_START_X}
+          x2={GUIDE_LINE_END_X}
+          y1={MIDLINE_Y}
+          y2={MIDLINE_Y}
+          className='copy-midline'
+          stroke={guideColor}
+        />
+        <line
+          x1={GUIDE_LINE_START_X}
+          x2={GUIDE_LINE_END_X}
+          y1={BASELINE_Y}
+          y2={BASELINE_Y}
+          className='copy-baseline'
+          stroke={inkColor}
+        />
+        <text
+          x={CANVAS_WIDTH / 2}
+          y={88}
+          textAnchor='middle'
+          className='target-letter'
+          fill={inkColor}
+          fontSize='96'
+          fontWeight='800'
+        >
+          {letter}
+        </text>
+        <text
+          x={CANVAS_WIDTH / 2}
+          y={110}
+          textAnchor='middle'
+          className='target-word'
+          fill='#0f172a'
+          fontSize='16'
+          fontWeight='600'
+          opacity='0.6'
+        >
+          {word}
+        </text>
+        <text
+          x={CANVAS_WIDTH / 2}
+          y={COPY_ZONE_TOP + 20}
+          textAnchor='middle'
+          fill='#0f172a'
+          fontSize='12'
+          fontWeight='600'
+          opacity='0.35'
+        >
+          {writeHereLabel}
+        </text>
+      </g>
+      <rect
+        x='10'
+        y='10'
+        width={CANVAS_WIDTH - 20}
+        height={CANVAS_HEIGHT - 20}
+        rx='24'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.75'
+        data-testid='alphabet-copy-guide-frame'
+      />
+    </svg>
+  );
+}
 
 export default function AlphabetCopyLesson(): React.JSX.Element {
   const translations = useTranslations('KangurStaticLessons.alphabetCopy');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const isDrawingRef = useRef(false);
 
   const [roundIndex, setRoundIndex] = useState(0);
-  const [strokes, setStrokes] = useState<Point2d[][]>([]);
-  const [isPointerDrawing, setIsPointerDrawing] = useState(false);
   const [feedback, setFeedback] = useState<KangurMiniGameFeedbackState>(null);
   const isCoarsePointer = useKangurCoarsePointer();
 
@@ -124,16 +233,65 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     `rounds.${currentRound.id}.word`,
     currentRound.word
   );
-  const points = useMemo(() => flattenPoints(strokes), [strokes]);
-  const strokeLength = useMemo(
-    () => strokes.reduce((sum, stroke) => sum + computeStrokeLength(stroke), 0),
-    [strokes]
+  const tracingCanvasConfig = useMemo(
+    () =>
+      getKangurTracingCanvasConfig(isCoarsePointer, {
+        fineMinDrawingLength: BASE_MIN_DRAWING_LENGTH,
+        fineMinDrawingPoints: BASE_MIN_DRAWING_POINTS,
+      }),
+    [isCoarsePointer]
   );
-
-  const minPointDistance = isCoarsePointer ? 5 : 2;
-  const minDrawingPoints = isCoarsePointer ? 12 : BASE_MIN_DRAWING_POINTS;
-  const minDrawingLength = isCoarsePointer ? 120 : BASE_MIN_DRAWING_LENGTH;
-  const strokeWidth = isCoarsePointer ? 14 : 10;
+  const {
+    canRedo,
+    canUndo,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    hasDrawableContent,
+    isPointerDrawing,
+    strokes,
+    clearDrawing,
+    exportDrawing,
+    handleCanvasKeyDown,
+    redoDrawing,
+    undoDrawing,
+  } = useKangurManagedStoredPointDrawing({
+    actions: {
+      clearFeedback: () => {
+        setFeedback(null);
+      },
+      exportFilename: createKangurDrawingExportFilename('alphabet-copy', currentRound.id),
+    },
+    drawing: {
+      canvasRef,
+      enabled: feedback?.kind !== 'success',
+      logicalHeight: CANVAS_HEIGHT,
+      logicalWidth: CANVAS_WIDTH,
+      minPointDistance: tracingCanvasConfig.minPointDistance,
+      onPointerStart: () => {
+        if (feedback?.kind === 'error') {
+          setFeedback(null);
+        }
+      },
+      onStartRejected: () => {
+        setFeedback({
+          kind: 'error',
+          text: translateAlphabetCopy(
+            translations,
+            'feedback.error.keepToLowerLines',
+            'Rysuj pod litera, na dolnych liniach.'
+          ),
+        });
+      },
+      resolveStyle: () => tracingCanvasConfig.strokeStyle,
+      shouldAddPoint: ({ point }) => isPointInCopyZone(point),
+      shouldStartStroke: ({ point }) => isPointInCopyZone(point),
+      storageKey: createKangurDrawingDraftStorageKey('alphabet-copy', currentRound.id),
+      touchLockEnabled: isCoarsePointer,
+    },
+  });
+  const points = useMemo(() => flattenKangurStrokePoints(strokes), [strokes]);
+  const strokeLength = useMemo(() => computeKangurTotalStrokeLength(strokes), [strokes]);
   const drawHint = isCoarsePointer
     ? translateAlphabetCopy(
         translations,
@@ -145,13 +303,20 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
         'drawHint.fine',
         'Przepisuj litere na dolnych liniach'
       );
+  const traceHint = translateAlphabetCopy(
+    translations,
+    'footer.traceHint',
+    'Trzymaj sie linii i nie spiesz sie.'
+  );
   const touchHint = isPointerDrawing
-    ? translateAlphabetCopy(
-        translations,
-        'footer.traceHint',
-        'Trzymaj sie linii i nie spiesz sie.'
-      )
+    ? traceHint
     : drawHint;
+  const pointsLabel = translateAlphabetCopy(
+    translations,
+    'footer.points',
+    '{count} punktow',
+    { count: points.length }
+  );
 
   const canvasSurfaceStyle = useMemo<CSSProperties>(
     () =>
@@ -166,157 +331,29 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
     [currentRound.inkColor]
   );
 
-  const redrawCanvas = useCallback(
-    (nextStrokes: Point2d[][]): void => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = syncKangurCanvasContext(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      ctx.lineWidth = strokeWidth;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#0f172a';
-      ctx.shadowColor = 'rgba(15, 23, 42, 0.12)';
-      ctx.shadowBlur = isCoarsePointer ? 8 : 6;
-
-      for (const stroke of nextStrokes) {
-        if (stroke.length === 0) continue;
-        ctx.beginPath();
-        const first = stroke[0];
-        if (!first) continue;
-        ctx.moveTo(first.x, first.y);
-        for (let i = 1; i < stroke.length; i += 1) {
-          const point = stroke[i];
-          if (!point) continue;
-          ctx.lineTo(point.x, point.y);
-        }
-        ctx.stroke();
-      }
-    },
-    [isCoarsePointer, strokeWidth]
-  );
-
-  useKangurCanvasRedraw({
-    canvasRef,
-    redraw: () => redrawCanvas(strokes),
-  });
-  useKangurCanvasTouchLock(canvasRef, { enabled: isCoarsePointer });
-
-  const updateStrokes = useCallback(
-    (updater: (current: Point2d[][]) => Point2d[][]): void => {
-      setStrokes((current) => {
-        const next = updater(current);
-        redrawCanvas(next);
-        return next;
-      });
-    },
-    [redrawCanvas]
-  );
-
-  const clearDrawing = useCallback((): void => {
-    setStrokes(() => {
-      redrawCanvas([]);
-      return [];
-    });
-    setFeedback(null);
-  }, [redrawCanvas]);
-
-  const resolvePoint = useCallback(
-    (event: React.PointerEvent<HTMLCanvasElement>): Point2d => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
-      return resolveKangurCanvasPoint(event, canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
-    },
-    []
-  );
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (feedback?.kind === 'success') return;
-    event.preventDefault();
-    if (feedback?.kind === 'error') {
-      setFeedback(null);
-    }
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const point = resolvePoint(event);
-    if (!isPointInCopyZone(point)) {
-      setFeedback({
-        kind: 'error',
-        text: translateAlphabetCopy(
-          translations,
-          'feedback.error.keepToLowerLines',
-          'Rysuj pod litera, na dolnych liniach.'
-        ),
-      });
-      return;
-    }
-    isDrawingRef.current = true;
-    setIsPointerDrawing(true);
-    canvas.setPointerCapture(event.pointerId);
-    updateStrokes((current) => [...current, [point]]);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current || feedback?.kind === 'success') return;
-    event.preventDefault();
-    const point = resolvePoint(event);
-    if (!isPointInCopyZone(point)) return;
-    updateStrokes((current) => {
-      if (current.length === 0) return current;
-      const next = [...current];
-      const lastStroke = next[next.length - 1] ?? [];
-      const lastPoint = lastStroke[lastStroke.length - 1];
-      if (lastPoint && distance(lastPoint, point) < minPointDistance) {
-        return current;
-      }
-      next[next.length - 1] = [...lastStroke, point];
-      return next;
-    });
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>): void => {
-    if (!isDrawingRef.current) return;
-    event.preventDefault();
-    const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.releasePointerCapture(event.pointerId);
-    }
-    isDrawingRef.current = false;
-    setIsPointerDrawing(false);
-  };
-
   const evaluateDrawing = (): KangurMiniGameFeedbackState => {
-    if (points.length < minDrawingPoints) {
-      return {
-        kind: 'error',
-        text: translateAlphabetCopy(
-          translations,
-          'feedback.error.copyMore',
-          'Przepisz litere na dole i sprobuj jeszcze raz.'
-        ),
-      };
-    }
-    if (strokeLength < minDrawingLength) {
-      return {
-        kind: 'error',
-        text: translateAlphabetCopy(
-          translations,
-          'feedback.error.keepGoing',
-          'Super start! Dorysuj jeszcze kawalek litery.'
-        ),
-      };
-    }
-    return {
-      kind: 'success',
-      text: translateAlphabetCopy(
+    return evaluateKangurTracingAttempt({
+      keepGoingText: translateAlphabetCopy(
+        translations,
+        'feedback.error.keepGoing',
+        'Super start! Dorysuj jeszcze kawalek litery.'
+      ),
+      minDrawingLength: tracingCanvasConfig.minDrawingLength,
+      minDrawingPoints: tracingCanvasConfig.minDrawingPoints,
+      pointCount: points.length,
+      strokeLength,
+      successText: translateAlphabetCopy(
         translations,
         'feedback.success',
         'Brawo! Litera {letter} gotowa.',
         { letter: currentRound.label }
       ),
-    };
+      tooShortText: translateAlphabetCopy(
+        translations,
+        'feedback.error.copyMore',
+        'Przepisz litere na dole i sprobuj jeszcze raz.'
+      ),
+    });
   };
 
   const handleCheck = (): void => {
@@ -382,207 +419,82 @@ export default function AlphabetCopyLesson(): React.JSX.Element {
             </KangurStatusChip>
           </div>
 
-          {isCoarsePointer ? (
-            <KangurInfoCard accent='sky' className='w-full rounded-[20px] text-sm' padding='sm' tone='neutral'>
-              <p
-                className='font-semibold text-slate-600'
-                data-testid='alphabet-copy-touch-hint'
-                role='status'
-                aria-live='polite'
-              >
-                {touchHint}
-              </p>
-            </KangurInfoCard>
-          ) : null}
-
-          <div
-            className={`relative w-full overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/80 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.45)] ${
-              isPointerDrawing ? 'ring-2 ring-sky-300/70 ring-offset-2 ring-offset-white' : ''
-            }`}
-            style={canvasSurfaceStyle}
-            data-testid='alphabet-copy-canvas-shell'
-          >
-            <svg
-              viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-              className='absolute inset-0 h-full w-full'
-              aria-hidden='true'
-            >
-              <defs>
-                <linearGradient id='copyBg' x1='0' x2='1' y1='0' y2='1'>
-                  <stop offset='0%' stopColor='#fef3c7' />
-                  <stop offset='55%' stopColor='#e0f2fe' />
-                  <stop offset='100%' stopColor='#fae8ff' />
-                </linearGradient>
-              </defs>
-              <rect width={CANVAS_WIDTH} height={CANVAS_HEIGHT} fill='url(#copyBg)' />
-              <rect
-                y={COPY_ZONE_TOP}
-                width={CANVAS_WIDTH}
-                height={COPY_ZONE_BOTTOM - COPY_ZONE_TOP}
-                fill='#ffffff'
-                opacity='0.72'
+          <KangurTracingBoard
+            ariaKeyShortcuts={KANGUR_DRAWING_HISTORY_ARIA_SHORTCUTS}
+            boardOverlay={<div className='copy-guide pointer-events-none' aria-hidden='true' />}
+            canvasAriaLabel={translateAlphabetCopy(
+              translations,
+              'canvasAria',
+              'Przepisz litere {letter} pod wzorem',
+              { letter: currentRound.label }
+            )}
+            canvasRef={canvasRef}
+            footerHint={traceHint}
+            footerPointsLabel={pointsLabel}
+            guideSurface={
+              <AlphabetCopyGuideSurface
+                guideColor={currentRound.guideColor}
+                inkColor={currentRound.inkColor}
+                letter={currentRound.label}
+                word={currentWord}
+                writeHereLabel={translateAlphabetCopy(translations, 'guide.writeHere', 'Napisz tutaj')}
               />
-              <line
-                x1={GUIDE_LINE_START_X}
-                x2={GUIDE_LINE_END_X}
-                y1={COPY_ZONE_TOP}
-                y2={COPY_ZONE_TOP}
-                className='copy-divider'
-              />
-              <line
-                x1={GUIDE_LINE_START_X}
-                x2={GUIDE_LINE_END_X}
-                y1={MIDLINE_Y}
-                y2={MIDLINE_Y}
-                className='copy-midline'
-                stroke={currentRound.guideColor}
-              />
-              <line
-                x1={GUIDE_LINE_START_X}
-                x2={GUIDE_LINE_END_X}
-                y1={BASELINE_Y}
-                y2={BASELINE_Y}
-                className='copy-baseline'
-                stroke={currentRound.inkColor}
-              />
-              <text
-                x={CANVAS_WIDTH / 2}
-                y={88}
-                textAnchor='middle'
-                className='target-letter'
-                fill={currentRound.inkColor}
-                fontSize='96'
-                fontWeight='800'
-              >
-                {currentRound.label}
-              </text>
-              <text
-                x={CANVAS_WIDTH / 2}
-                y={110}
-                textAnchor='middle'
-                className='target-word'
-                fill='#0f172a'
-                fontSize='16'
-                fontWeight='600'
-                opacity='0.6'
-              >
-                {currentWord}
-              </text>
-              <text
-                x={CANVAS_WIDTH / 2}
-                y={COPY_ZONE_TOP + 20}
-                textAnchor='middle'
-                fill='#0f172a'
-                fontSize='12'
-                fontWeight='600'
-                opacity='0.35'
-              >
-                {translateAlphabetCopy(translations, 'guide.writeHere', 'Napisz tutaj')}
-              </text>
-            </svg>
-
-            <div className='copy-guide pointer-events-none' aria-hidden='true' />
-
-            <canvas
-              ref={canvasRef}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-              data-drawing-active={isPointerDrawing ? 'true' : 'false'}
-              className='kangur-drawing-canvas relative z-10 h-full w-full touch-none'
-              aria-label={translateAlphabetCopy(
-                translations,
-                'canvasAria',
-                'Przepisz litere {letter} pod wzorem',
-                { letter: currentRound.label }
-              )}
-            />
-          </div>
-
-          <div className='flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600'>
-            <span>
-              {translateAlphabetCopy(
-                translations,
-                'footer.traceHint',
-                'Trzymaj sie linii i nie spiesz sie.'
-              )}
-            </span>
-            <span>
-              {translateAlphabetCopy(
-                translations,
-                'footer.points',
-                '{count} punktow',
-                { count: points.length }
-              )}
-            </span>
-          </div>
+            }
+            height={CANVAS_HEIGHT}
+            isCoarsePointer={isCoarsePointer}
+            isPointerDrawing={isPointerDrawing}
+            onKeyDown={handleCanvasKeyDown}
+            onPointerCancel={handlePointerUp}
+            onPointerDown={handlePointerDown}
+            onPointerLeave={handlePointerUp}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            shellDataTestId='alphabet-copy-canvas-shell'
+            shellStyle={canvasSurfaceStyle}
+            touchHint={touchHint}
+            touchHintTestId='alphabet-copy-touch-hint'
+            width={CANVAS_WIDTH}
+          />
         </div>
       </KangurGlassPanel>
 
-      <KangurGlassPanel className='w-full max-w-3xl' padding='lg' surface='playField'>
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <div className='min-w-0'>
-            {feedback ? (
-              <p
-                className={`text-sm font-semibold ${
-                  feedback.kind === 'success' ? 'text-emerald-600' : 'text-rose-600'
-                }`}
-                role='status'
-                aria-live='polite'
-              >
-                {feedback.text}
-              </p>
-            ) : (
-              <p className='text-sm text-slate-600'>
-                {translateAlphabetCopy(
-                  translations,
-                  'footer.idlePrompt',
-                  'Kliknij Sprawdz, gdy skonczysz przepisywac.'
-                )}
-              </p>
-            )}
-          </div>
-          <div className={KANGUR_WRAP_ROW_CLASSNAME}>
-            <KangurButton
-              className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-              size='sm'
-              type='button'
-              variant='surface'
-              onClick={clearDrawing}
-            >
-              {translateAlphabetCopy(translations, 'actions.clear', 'Wyczysc')}
-            </KangurButton>
-            {feedback?.kind === 'success' ? (
-              <KangurButton
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleNext}
-              >
-                {roundIndex + 1 >= totalRounds
-                  ? translateAlphabetCopy(translations, 'actions.restart', 'Zacznij od nowa')
-                  : translateAlphabetCopy(translations, 'actions.next', 'Dalej')}
-              </KangurButton>
-            ) : (
-              <KangurCheckButton
-                className={isCoarsePointer ? 'min-h-11 px-4' : undefined}
-                size='sm'
-                type='button'
-                variant='primary'
-                onClick={handleCheck}
-                feedbackTone={feedback?.kind === 'error' ? 'error' : null}
-              >
-                {translateAlphabetCopy(translations, 'actions.check', 'Sprawdz')}
-              </KangurCheckButton>
-            )}
-          </div>
-        </div>
-      </KangurGlassPanel>
+      <KangurTracingLessonFooter
+        checkLabel={translateAlphabetCopy(translations, 'actions.check', 'Sprawdz')}
+        clearLabel={translateAlphabetCopy(translations, 'actions.clear', 'Wyczysc')}
+        feedback={feedback}
+        utilityActions={
+          <KangurManagedDrawingUtilityActions
+            canExport={hasDrawableContent}
+            canRedo={canRedo}
+            canUndo={canUndo}
+            exportLabel={translateAlphabetCopy(translations, 'actions.export', 'Eksportuj PNG')}
+            exportTestId='alphabet-copy-export'
+            isCoarsePointer={isCoarsePointer}
+            layoutPreset='footer'
+            onExport={exportDrawing}
+            onRedo={redoDrawing}
+            onUndo={undoDrawing}
+            redoLabel={translateAlphabetCopy(translations, 'actions.redo', 'Ponow')}
+            undoLabel={translateAlphabetCopy(translations, 'actions.undo', 'Cofnij')}
+          />
+        }
+        idlePrompt={translateAlphabetCopy(
+          translations,
+          'footer.idlePrompt',
+          'Kliknij Sprawdz, gdy skonczysz przepisywac.'
+        )}
+        isCoarsePointer={isCoarsePointer}
+        isLastRound={roundIndex + 1 >= totalRounds}
+        nextLabel={translateAlphabetCopy(translations, 'actions.next', 'Dalej')}
+        onCheck={handleCheck}
+        onClear={clearDrawing}
+        onNext={handleNext}
+        restartLabel={translateAlphabetCopy(
+          translations,
+          'actions.restart',
+          'Zacznij od nowa'
+        )}
+      />
 
       <style jsx>{`
         .target-letter {

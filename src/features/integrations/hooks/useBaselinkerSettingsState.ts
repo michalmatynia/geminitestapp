@@ -5,6 +5,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   useIntegrationsActions,
   useIntegrationsData,
+  useIntegrationsForm,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
 import { useUpdateDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationMutations';
@@ -13,9 +14,16 @@ import { useSettings, useUpdateSettingsBulk } from '@/shared/hooks/use-settings'
 
 export function useBaselinkerSettingsState() {
   const { connections } = useIntegrationsData();
+  const { editingConnectionId } = useIntegrationsForm();
   const { handleBaselinkerTest } = useIntegrationsActions();
   const { isTesting } = useIntegrationsTesting();
-  const activeConnection = connections[0] || null;
+  const activeConnection = useMemo(
+    () =>
+      connections.find((connection) => connection.id === editingConnectionId) ??
+      connections[0] ??
+      null,
+    [connections, editingConnectionId]
+  );
   const baselinkerConnected = Boolean(activeConnection?.hasBaseApiToken);
   const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt
     ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()

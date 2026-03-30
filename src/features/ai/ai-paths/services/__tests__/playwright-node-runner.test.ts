@@ -411,6 +411,61 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
 
+  it('sanitizes invalid prefixed cookies before creating a browser context', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+        startUrl: 'https://kangur.app/login',
+        contextOptions: {
+          storageState: {
+            cookies: [
+              {
+                name: '__Host-next-auth.csrf-token',
+                value: 'csrf123',
+                domain: 'kangur.app',
+                path: '/login',
+              },
+              {
+                name: 'theme',
+                value: 'dark',
+                domain: 'kangur.app',
+                path: '/',
+              },
+            ],
+            origins: [],
+          },
+        },
+      },
+    });
+
+    expect(runtime.browser.newContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        storageState: {
+          cookies: [
+            {
+              name: '__Host-next-auth.csrf-token',
+              value: 'csrf123',
+              url: 'https://kangur.app',
+              secure: true,
+            },
+            {
+              name: 'theme',
+              value: 'dark',
+              domain: 'kangur.app',
+              path: '/',
+            },
+          ],
+          origins: [],
+        },
+      })
+    );
+  });
+
   it('fails when the start URL violates outbound policy', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
     const runtime = await createPlaywrightRuntime();
@@ -435,6 +490,47 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(persisted?.status).toBe('failed');
     expect(persisted?.logs).toEqual(
       expect.arrayContaining([expect.stringContaining('[runtime][error] Blocked outbound URL')])
+    );
+  });
+
+  it('allows only the exact policyAllowedHosts override for startUrl and matching subresources', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime({
+      routeUrls: [
+        'http://localhost:3101/static/app.js',
+        'http://localhost:3102/static/app.js',
+      ],
+      pageUrl: 'http://localhost:3101/final',
+    });
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+    mocks.evaluateOutboundUrlPolicyMock.mockImplementation((url: string) =>
+      url.includes('localhost')
+        ? { allowed: false, reason: 'local_hostname_blocked' }
+        : { allowed: true, reason: null }
+    );
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        startUrl: 'http://localhost:3101/start',
+        policyAllowedHosts: ['localhost:3101'],
+        script: 'export default async () => ({ ok: true });',
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(runtime.page.goto).toHaveBeenCalledWith('http://localhost:3101/start', {
+      timeout: 30000,
+      waitUntil: 'load',
+    });
+    expect(runtime.routes[0]?.continueMock).toHaveBeenCalledTimes(1);
+    expect(runtime.routes[1]?.abortMock).toHaveBeenCalledWith('blockedbyclient');
+    expect(run.logs).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          '[policy] Blocked outbound URL: http://localhost:3102/static/app.js'
+        ),
+      ])
     );
   });
 
@@ -466,5 +562,59 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(persisted?.error).toContain('Playwright script must export a default async function');
     expect(runtime.context.close).toHaveBeenCalledTimes(1);
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('persists emitted outputs while a background run is still running', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const queued = await enqueuePlaywrightNodeRun({
+      waitForResult: false,
+      request: {
+        script: `
+          export default async ({ emit, helpers }) => {
+            emit('capture_progress', {
+              processedCount: 1,
+              completedCount: 1,
+              failureCount: 0,
+              remainingCount: 1,
+              totalCount: 2,
+            });
+            await helpers.sleep(150);
+            emit('capture_progress', {
+              processedCount: 2,
+              completedCount: 2,
+              failureCount: 0,
+              remainingCount: 0,
+              totalCount: 2,
+            });
+            return { ok: true };
+          };
+        `,
+      },
+    });
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return (current?.result as { outputs?: { capture_progress?: unknown } } | undefined)
+          ?.outputs?.capture_progress;
+      })
+      .toEqual(
+        expect.objectContaining({
+          processedCount: 1,
+          completedCount: 1,
+          remainingCount: 1,
+          totalCount: 2,
+        })
+      );
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return current?.status ?? null;
+      })
+      .toBe('completed');
   });
 });

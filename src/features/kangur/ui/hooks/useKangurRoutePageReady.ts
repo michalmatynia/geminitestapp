@@ -13,6 +13,75 @@ type UseKangurRoutePageReadyInput = {
   ready: boolean;
 };
 
+type KangurRouteReadyTransitionState = {
+  transitionPhase: string;
+  activeTransitionKind?: string | null;
+  activeTransitionPageKey?: string | null;
+  activeTransitionRequestedHref?: string | null;
+};
+
+type KangurRouteReadyTransitionActions = {
+  markRouteTransitionReady: (input: { pageKey: string; requestedHref?: string }) => void;
+};
+
+type KangurRouteReadyContext = {
+  routeTransitionActions: KangurRouteReadyTransitionActions;
+  routeTransitionState: KangurRouteReadyTransitionState;
+};
+
+const shouldFastTrackKangurLocaleSwitchReady = (
+  routeTransitionState?: KangurRouteReadyTransitionState | null
+): boolean =>
+  routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
+  routeTransitionState.activeTransitionKind === 'locale-switch';
+
+const resolveKangurRouteReadyContext = ({
+  pageKey,
+  ready,
+  shouldFastTrackLocaleSwitchReady,
+  routeTransitionActions,
+  routeTransitionState,
+}: {
+  pageKey: string;
+  ready: boolean;
+  shouldFastTrackLocaleSwitchReady: boolean;
+  routeTransitionActions?: KangurRouteReadyTransitionActions | null;
+  routeTransitionState?: KangurRouteReadyTransitionState | null;
+}): KangurRouteReadyContext | null => {
+  if ((!ready && !shouldFastTrackLocaleSwitchReady) || !routeTransitionActions || !routeTransitionState) {
+    return null;
+  }
+  if (routeTransitionState.transitionPhase !== 'waiting_for_ready') {
+    return null;
+  }
+  if (
+    routeTransitionState.activeTransitionPageKey &&
+    routeTransitionState.activeTransitionPageKey !== pageKey
+  ) {
+    return null;
+  }
+  return {
+    routeTransitionActions,
+    routeTransitionState,
+  };
+};
+
+const resolveKangurRouteReadyTransitionKey = ({
+  pageKey,
+  requestedHref,
+  requestedPath,
+  routeTransitionState,
+}: {
+  pageKey: string;
+  requestedHref?: string | null;
+  requestedPath?: string | null;
+  routeTransitionState: KangurRouteReadyTransitionState;
+}): string =>
+  [
+    routeTransitionState.activeTransitionRequestedHref ?? requestedHref ?? requestedPath ?? 'none',
+    routeTransitionState.activeTransitionPageKey ?? pageKey,
+  ].join('::');
+
 export const useKangurRoutePageReady = ({
   pageKey,
   ready,
@@ -23,43 +92,37 @@ export const useKangurRoutePageReady = ({
   const routeTransitionActions = useOptionalKangurRouteTransitionActions();
   const routeTransitionState = useOptionalKangurRouteTransitionState();
   const reportedTransitionRef = useRef<string | null>(null);
-  const shouldFastTrackLocaleSwitchReady =
-    routeTransitionState?.transitionPhase === 'waiting_for_ready' &&
-    routeTransitionState.activeTransitionKind === 'locale-switch';
+  const shouldFastTrackLocaleSwitchReady = shouldFastTrackKangurLocaleSwitchReady(
+    routeTransitionState
+  );
 
   useEffect(() => {
-    if ((!ready && !shouldFastTrackLocaleSwitchReady) || !routeTransitionActions || !routeTransitionState) {
+    const readyContext = resolveKangurRouteReadyContext({
+      pageKey,
+      ready,
+      shouldFastTrackLocaleSwitchReady,
+      routeTransitionActions,
+      routeTransitionState,
+    });
+    if (!readyContext) {
       return;
     }
 
-    if (routeTransitionState.transitionPhase !== 'waiting_for_ready') {
-      return;
-    }
-
-    if (
-      routeTransitionState.activeTransitionPageKey &&
-      routeTransitionState.activeTransitionPageKey !== pageKey
-    ) {
-      return;
-    }
-
-    const transitionKey = [
-      routeTransitionState.activeTransitionRequestedHref ?? requestedHref ?? requestedPath ?? 'none',
-      routeTransitionState.activeTransitionPageKey ?? pageKey,
-    ].join('::');
+    const transitionKey = resolveKangurRouteReadyTransitionKey({
+      pageKey,
+      requestedHref,
+      requestedPath,
+      routeTransitionState: readyContext.routeTransitionState,
+    });
     if (reportedTransitionRef.current === transitionKey) {
       return;
     }
 
-    const markReady = (): void => {
-      routeTransitionActions.markRouteTransitionReady({
-        pageKey,
-        requestedHref: requestedHref ?? requestedPath,
-      });
-      reportedTransitionRef.current = transitionKey;
-    };
-
-    markReady();
+    readyContext.routeTransitionActions.markRouteTransitionReady({
+      pageKey,
+      requestedHref: requestedHref ?? requestedPath,
+    });
+    reportedTransitionRef.current = transitionKey;
   }, [
     pageKey,
     ready,

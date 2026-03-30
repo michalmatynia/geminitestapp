@@ -186,6 +186,34 @@ export const createNewRule = (
   return baseRule;
 };
 
+const appendRuleSearchParts = (parts: string[], values: Array<string | null | undefined>): void => {
+  values.forEach((value) => {
+    parts.push(value ?? '');
+  });
+};
+
+const appendSimilarRuleSearchParts = (parts: string[], rule: PromptValidationRule): void => {
+  (rule.similar ?? []).forEach((sim) => {
+    appendRuleSearchParts(parts, [sim.pattern, sim.flags ?? '', sim.suggestion, sim.comment ?? '']);
+  });
+};
+
+const appendAutofixRuleSearchParts = (parts: string[], operations: PromptAutofixOperation[]): void => {
+  operations.forEach((operation: PromptAutofixOperation) => {
+    appendRuleSearchParts(parts, [operation.kind]);
+    if (operation.kind === 'replace') {
+      appendRuleSearchParts(parts, [
+        operation.pattern,
+        operation.flags ?? '',
+        operation.replacement,
+        operation.comment ?? '',
+      ]);
+      return;
+    }
+    appendRuleSearchParts(parts, [operation.comment ?? '']);
+  });
+};
+
 export const ruleSearchText = (rule: PromptValidationRule): string => {
   const parts: string[] = [
     rule.id,
@@ -195,57 +223,34 @@ export const ruleSearchText = (rule: PromptValidationRule): string => {
     rule.message,
     rule.description ?? '',
   ];
-  (rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).forEach((scope) => parts.push(scope));
-  (rule.launchAppliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).forEach((scope) =>
-    parts.push(scope)
-  );
+  appendRuleSearchParts(parts, rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES);
+  appendRuleSearchParts(parts, rule.launchAppliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES);
   if (rule.kind === 'regex') {
-    parts.push(rule.pattern);
-    parts.push(rule.flags);
+    appendRuleSearchParts(parts, [rule.pattern, rule.flags]);
   }
-  (rule.similar ?? []).forEach((sim) => {
-    parts.push(sim.pattern);
-    parts.push(sim.flags ?? '');
-    parts.push(sim.suggestion);
-    parts.push(sim.comment ?? '');
-  });
-  (rule.autofix?.operations ?? []).forEach((op: PromptAutofixOperation) => {
-    parts.push(op.kind);
-    if (op.kind === 'replace') {
-      parts.push(op.pattern);
-      parts.push(op.flags ?? '');
-      parts.push(op.replacement);
-      parts.push(op.comment ?? '');
-    } else {
-      parts.push(op.comment ?? '');
-    }
-  });
+  appendSimilarRuleSearchParts(parts, rule);
+  appendAutofixRuleSearchParts(parts, rule.autofix?.operations ?? []);
   return parts.filter(Boolean).join(' ').toLowerCase();
 };
 
+const hasPromptExploderIdHint = (id: string): boolean =>
+  id.includes('prompt_exploder') || id.includes('exploder') || id.startsWith('segment.');
+
+const hasOnlyPromptExploderOrGlobalScopes = (scopes: PromptValidationScope[]): boolean =>
+  scopes.includes('prompt_exploder') &&
+  scopes.every(
+    (scope: PromptValidationScope) => scope === 'prompt_exploder' || scope === 'global'
+  );
+
 export const isPromptExploderRule = (rule: PromptValidationRule): boolean => {
   const id = rule.id.toLowerCase();
-  if (id.includes('prompt_exploder') || id.includes('exploder') || id.startsWith('segment.')) {
+  if (hasPromptExploderIdHint(id)) {
     return true;
   }
 
-  const appliesToScopes = rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES;
-  const launchScopes = rule.launchAppliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES;
+  const appliesToScopes = normalizeRuleScopes(rule.appliesToScopes);
+  if (hasOnlyPromptExploderOrGlobalScopes(appliesToScopes)) return true;
 
-  const hasPromptScope = appliesToScopes.includes('prompt_exploder');
-  const hasOnlyPromptOrGlobal =
-    hasPromptScope &&
-    appliesToScopes.every(
-      (scope: PromptValidationScope) => scope === 'prompt_exploder' || scope === 'global'
-    );
-  if (hasOnlyPromptOrGlobal) return true;
-
-  const hasPromptLaunchScope = launchScopes.includes('prompt_exploder');
-  const hasOnlyPromptLaunchOrGlobal =
-    hasPromptLaunchScope &&
-    launchScopes.every(
-      (scope: PromptValidationScope) => scope === 'prompt_exploder' || scope === 'global'
-    );
-
-  return hasOnlyPromptLaunchOrGlobal;
+  const launchScopes = normalizeRuleScopes(rule.launchAppliesToScopes);
+  return hasOnlyPromptExploderOrGlobalScopes(launchScopes);
 };

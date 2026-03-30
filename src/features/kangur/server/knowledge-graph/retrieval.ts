@@ -2,22 +2,20 @@ import 'server-only';
 
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import type { ContextRuntimeDocument } from '@/shared/contracts/ai-context-registry';
+import type { Page } from '@/shared/contracts/cms';
 import type {
   KangurAiTutorConversationContext,
   KangurAiTutorWebsiteHelpTarget,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-import {
-  KANGUR_KNOWLEDGE_GRAPH_KEY,
-} from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
+import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { getKangurAiTutorContent } from '@/features/kangur/server/ai-tutor-content-repository';
 import { getKangurAiTutorNativeGuideStore } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getKangurPageContentStore } from '@/features/kangur/server/page-content-repository';
-import { cmsService } from '@/features/cms/server';
-import type { Page } from '@/shared/contracts/cms';
 import {
-  extractCmsPageTextContent,
   buildCmsPageCanonicalText,
   buildCmsPageSemanticText,
+  cmsService,
+  extractCmsPageTextContent,
   hasMeaningfulTextContent,
 } from '@/features/cms/server';
 import { KANGUR_KNOWLEDGE_GRAPH_VECTOR_INDEX } from '@/features/kangur/server/knowledge-graph/neo4j-repository';
@@ -25,10 +23,7 @@ import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 import { runNeo4jStatements } from '@/shared/lib/neo4j/client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
-import {
-  cosineSimilarity,
-  generateKangurKnowledgeGraphQueryEmbedding,
-} from './semantic';
+import { cosineSimilarity, generateKangurKnowledgeGraphQueryEmbedding } from './semantic';
 import {
   buildRuntimeDocumentCanonicalText,
   buildSourceText,
@@ -37,41 +32,44 @@ import {
   resolveRuntimeDocumentForGraphHit,
   resolveTutorContentCanonicalSection,
 } from './retrieval-helpers';
-
-import {
-  type GraphFollowUpAction,
-  type KangurKnowledgeGraphHit,
-  type HydratedKnowledgeGraphHit,
-  type KangurKnowledgeGraphRetrievalResult,
-  type KangurKnowledgeGraphDebugHit,
-  type KangurKnowledgeGraphRetrievalPreviewResult,
-  type KangurKnowledgeGraphQueryMode,
-  type KangurKnowledgeGraphRecallStrategy,
-  type KangurKnowledgeGraphQueryIntent,
-  ROOT_ENTITY_TYPE_BY_NODE_ID,
+import type {
+  GraphFollowUpAction,
+  HydratedKnowledgeGraphHit,
+  KangurKnowledgeGraphDebugHit,
+  KangurKnowledgeGraphHit,
+  KangurKnowledgeGraphQueryIntent,
+  KangurKnowledgeGraphQueryMode,
+  KangurKnowledgeGraphRecallStrategy,
+  KangurKnowledgeGraphRetrievalPreviewResult,
+  KangurKnowledgeGraphRetrievalResult,
 } from './retrieval/retrieval.contracts';
+import { ROOT_ENTITY_TYPE_BY_NODE_ID } from './retrieval/retrieval.contracts';
 import {
-  normalizeText,
-  tokenizeQuery,
-  resolvePageKeyFromRoute,
-} from './retrieval/retrieval.utils';
+  mergeKnowledgeGraphHits,
+  normalizeKnowledgeGraphHit,
+} from './retrieval/retrieval.hit-normalization';
 import {
   buildKnowledgeGraphQueryIntent,
   hasSemanticContext,
   resolveGraphQueryMode,
 } from './retrieval/retrieval.logic';
 import { GRAPH_QUERY, VECTOR_GRAPH_QUERY } from './retrieval/retrieval.queries';
+import {
+  normalizeText,
+  resolvePageKeyFromRoute,
+  tokenizeQuery,
+} from './retrieval/retrieval.utils';
 
 export type {
   GraphFollowUpAction,
-  KangurKnowledgeGraphHit,
   HydratedKnowledgeGraphHit,
-  KangurKnowledgeGraphRetrievalResult,
   KangurKnowledgeGraphDebugHit,
-  KangurKnowledgeGraphRetrievalPreviewResult,
+  KangurKnowledgeGraphHit,
   KangurKnowledgeGraphQueryMode,
   KangurKnowledgeGraphRecallStrategy,
-};
+  KangurKnowledgeGraphRetrievalPreviewResult,
+  KangurKnowledgeGraphRetrievalResult,
+} from './retrieval/retrieval.contracts';
 
 const readQuerySeedPart = (value: string | null | undefined): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
@@ -103,89 +101,6 @@ const buildNormalizedSemanticQuerySeed = (input: {
   ]
     .filter(Boolean)
     .join(' ');
-
-const normalizeKnowledgeGraphHit = (hit: Partial<KangurKnowledgeGraphHit>): KangurKnowledgeGraphHit => ({
-  id: typeof hit.id === 'string' ? hit.id : '',
-  kind: typeof hit.kind === 'string' ? hit.kind : 'unknown',
-  title: typeof hit.title === 'string' ? hit.title : '',
-  summary: typeof hit.summary === 'string' ? hit.summary : null,
-  surface: typeof hit.surface === 'string' ? hit.surface : null,
-  focusKind: typeof hit.focusKind === 'string' ? hit.focusKind : null,
-  route: typeof hit.route === 'string' ? hit.route : null,
-  anchorId: typeof hit.anchorId === 'string' ? hit.anchorId : null,
-  semanticText: typeof hit.semanticText === 'string' ? hit.semanticText : null,
-  embedding: Array.isArray(hit.embedding)
-    ? hit.embedding.filter((value): value is number => typeof value === 'number')
-    : [],
-  embeddingModel: typeof hit.embeddingModel === 'string' ? hit.embeddingModel : null,
-  embeddingDimensions: typeof hit.embeddingDimensions === 'number' ? hit.embeddingDimensions : null,
-  focusIdPrefixes: Array.isArray(hit.focusIdPrefixes)
-    ? hit.focusIdPrefixes.filter((value): value is string => typeof value === 'string')
-    : [],
-  contentIdPrefixes: Array.isArray(hit.contentIdPrefixes)
-    ? hit.contentIdPrefixes.filter((value): value is string => typeof value === 'string')
-    : [],
-  triggerPhrases: Array.isArray(hit.triggerPhrases)
-    ? hit.triggerPhrases.filter((value): value is string => typeof value === 'string')
-    : [],
-  sourceCollection: hit.sourceCollection ?? null,
-  sourceRecordId: typeof hit.sourceRecordId === 'string' ? hit.sourceRecordId : null,
-  sourcePath: typeof hit.sourcePath === 'string' ? hit.sourcePath : null,
-  tags: Array.isArray(hit.tags) ? hit.tags.filter((value): value is string => typeof value === 'string') : [],
-  relations: Array.isArray(hit.relations)
-    ? hit.relations.map((relation) => ({
-        kind: typeof relation?.kind === 'string' ? relation.kind : null,
-        targetId: typeof relation?.targetId === 'string' ? relation.targetId : null,
-        targetTitle: typeof relation?.targetTitle === 'string' ? relation.targetTitle : null,
-        targetKind: typeof relation?.targetKind === 'string' ? relation.targetKind : null,
-        targetAnchorId:
-          typeof relation?.targetAnchorId === 'string' ? relation.targetAnchorId : null,
-        targetRoute: typeof relation?.targetRoute === 'string' ? relation.targetRoute : null,
-      }))
-    : [],
-  semanticScore: typeof hit.semanticScore === 'number' ? hit.semanticScore : 0,
-  tokenHits: typeof hit.tokenHits === 'number' ? hit.tokenHits : 0,
-});
-
-const mergeKnowledgeGraphHits = (
-  primaryHits: KangurKnowledgeGraphHit[],
-  secondaryHits: KangurKnowledgeGraphHit[]
-): KangurKnowledgeGraphHit[] => {
-  const merged = new Map<string, KangurKnowledgeGraphHit>();
-
-  for (const hit of [...primaryHits, ...secondaryHits]) {
-    const existing = merged.get(hit.id);
-    if (!existing) {
-      merged.set(hit.id, hit);
-      continue;
-    }
-
-    merged.set(hit.id, {
-      ...existing,
-      ...hit,
-      semanticScore: Math.max(existing.semanticScore, hit.semanticScore),
-      tokenHits: Math.max(existing.tokenHits, hit.tokenHits),
-      tags: Array.from(new Set([...existing.tags, ...hit.tags])),
-      focusIdPrefixes: Array.from(new Set([...existing.focusIdPrefixes, ...hit.focusIdPrefixes])),
-      contentIdPrefixes: Array.from(
-        new Set([...existing.contentIdPrefixes, ...hit.contentIdPrefixes])
-      ),
-      triggerPhrases: Array.from(new Set([...existing.triggerPhrases, ...hit.triggerPhrases])),
-      relations: [...existing.relations, ...hit.relations].filter(
-        (relation, index, relations) =>
-          relations.findIndex(
-            (candidate) =>
-              candidate.targetId === relation.targetId &&
-              candidate.targetAnchorId === relation.targetAnchorId &&
-              candidate.targetRoute === relation.targetRoute &&
-              candidate.kind === relation.kind
-          ) === index
-      ),
-    });
-  }
-
-  return Array.from(merged.values());
-};
 
 const fetchVectorKnowledgeGraphHits = async (input: {
   graphKey: string;
@@ -259,7 +174,7 @@ const buildInstructions = (
       .map((hit) => {
         const routeLabel = hit.route ?? '/';
         const anchorLabel = hit.anchorId ? `#${hit.anchorId}` : '';
-        const relatedTarget = hit.relations.find((r) => r.targetRoute || r.targetAnchorId);
+        const relatedTarget = hit.relations.find((relation) => relation.targetRoute || relation.targetAnchorId);
         const pathParts = [hit.canonicalTitle];
         if (relatedTarget) {
           pathParts.push(relatedTarget.targetTitle ?? relatedTarget.targetId ?? 'related');
@@ -345,43 +260,37 @@ const hydrateKnowledgeGraphHits = async (
   locale: string,
   runtimeDocuments: ContextRuntimeDocument[]
 ): Promise<HydratedKnowledgeGraphHit[]> => {
-  const needsTutorContent = hits.some(
-    (hit) => hit.sourceCollection === 'kangur_ai_tutor_content'
-  );
+  const needsTutorContent = hits.some((hit) => hit.sourceCollection === 'kangur_ai_tutor_content');
   const needsNativeGuideStore = hits.some(
     (hit) => hit.sourceCollection === 'kangur_ai_tutor_native_guides'
   );
-  const needsPageContentStore = hits.some(
-    (hit) => hit.sourceCollection === 'kangur_page_content'
-  );
-  const needsCmsPages = hits.some(
-    (hit) => hit.sourceCollection === 'cms_pages'
-  );
+  const needsPageContentStore = hits.some((hit) => hit.sourceCollection === 'kangur_page_content');
+  const needsCmsPages = hits.some((hit) => hit.sourceCollection === 'cms_pages');
 
   const [tutorContent, nativeGuideStore, pageContentStore, cmsPages] = await Promise.all([
     needsTutorContent
       ? getKangurAiTutorContent(locale).catch((error) => {
-        void ErrorSystem.captureException(error);
-        return null;
-      })
+          void ErrorSystem.captureException(error);
+          return null;
+        })
       : Promise.resolve(null),
     needsNativeGuideStore
       ? getKangurAiTutorNativeGuideStore(locale).catch((error) => {
-        void ErrorSystem.captureException(error);
-        return null;
-      })
+          void ErrorSystem.captureException(error);
+          return null;
+        })
       : Promise.resolve(null),
     needsPageContentStore
       ? getKangurPageContentStore(locale).catch((error) => {
-        void ErrorSystem.captureException(error);
-        return null;
-      })
+          void ErrorSystem.captureException(error);
+          return null;
+        })
       : Promise.resolve(null),
     needsCmsPages
       ? cmsService.getPages().catch((error) => {
-        void ErrorSystem.captureException(error);
-        return [] as Page[];
-      })
+          void ErrorSystem.captureException(error);
+          return [] as Page[];
+        })
       : Promise.resolve([] as Page[]),
   ]);
 
@@ -391,9 +300,7 @@ const hydrateKnowledgeGraphHits = async (
   const pageContentEntriesById = new Map(
     (pageContentStore?.entries ?? []).map((entry) => [entry.id, entry] as const)
   );
-  const cmsPagesById = new Map(
-    cmsPages.map((page) => [page.id, page] as const)
-  );
+  const cmsPagesById = new Map(cmsPages.map((page) => [page.id, page] as const));
 
   return hits.map((hit) => {
     if (hit.sourceCollection === 'kangur_page_content' && hit.sourceRecordId) {
@@ -455,10 +362,7 @@ const hydrateKnowledgeGraphHits = async (
       }
     }
 
-    if (
-      hit.sourceCollection === 'kangur_ai_tutor_content' &&
-      tutorContent
-    ) {
+    if (hit.sourceCollection === 'kangur_ai_tutor_content' && tutorContent) {
       const section = resolveTutorContentCanonicalSection(tutorContent, hit);
       if (section) {
         return {
@@ -505,9 +409,7 @@ const hydrateKnowledgeGraphHits = async (
 };
 
 const resolveCmsPagesFallback = async (
-  _normalizedQuery: string,
-  tokens: string[],
-  _locale: string
+  tokens: string[]
 ): Promise<HydratedKnowledgeGraphHit[]> => {
   if (tokens.length === 0) {
     return [];
@@ -539,7 +441,10 @@ const resolveCmsPagesFallback = async (
       continue;
     }
 
-    const defaultSlug = page.slugs?.[0]?.slug;
+    const defaultSlug =
+      page.slugs?.find((slug) => slug.isDefault)?.slug ??
+      page.slugs?.[0]?.slug ??
+      null;
     const route = defaultSlug ? `/${defaultSlug}` : null;
     const title = page.seoTitle ?? page.name;
 
@@ -576,7 +481,7 @@ const resolveCmsPagesFallback = async (
   }
 
   return hits
-    .sort((a, b) => b.semanticScore - a.semanticScore || b.tokenHits - a.tokenHits)
+    .sort((left, right) => right.semanticScore - left.semanticScore || right.tokenHits - left.tokenHits)
     .slice(0, 4);
 };
 
@@ -585,8 +490,8 @@ const rerankKnowledgeGraphHits = (input: {
   queryEmbedding: number[] | null;
   queryMode: KangurKnowledgeGraphQueryMode;
   intent: KangurKnowledgeGraphQueryIntent;
-}): HydratedKnowledgeGraphHit[] => {
-  return input.hits
+}): HydratedKnowledgeGraphHit[] =>
+  input.hits
     .map((hit) => {
       const vectorScore =
         input.queryMode === 'semantic' &&
@@ -650,8 +555,7 @@ const rerankKnowledgeGraphHits = (input: {
 
       return {
         ...hit,
-        semanticScore:
-          hit.semanticScore + Math.round(Math.max(0, vectorScore) * 140) + intentScore,
+        semanticScore: hit.semanticScore + Math.round(Math.max(0, vectorScore) * 140) + intentScore,
       };
     })
     .sort((left, right) => {
@@ -663,7 +567,6 @@ const rerankKnowledgeGraphHits = (input: {
       }
       return left.canonicalTitle.localeCompare(right.canonicalTitle);
     });
-};
 
 const toDebugHit = (hit: HydratedKnowledgeGraphHit): KangurKnowledgeGraphDebugHit => ({
   id: hit.id,
@@ -703,7 +606,8 @@ const resolveWebsiteHelpTargetFromHits = (
 
     const relatedTarget = hit.relations.find(
       (relation) =>
-        Boolean(relation.targetId) && Boolean(relation.targetTitle) &&
+        Boolean(relation.targetId) &&
+        Boolean(relation.targetTitle) &&
         (Boolean(relation.targetRoute) || Boolean(relation.targetAnchorId))
     );
     if (relatedTarget?.targetId && relatedTarget.targetTitle) {
@@ -759,10 +663,25 @@ const finalizeResolvedGraphContext = (
   websiteHelpTarget: resolveWebsiteHelpTargetFromHits(hydratedHits),
   graphFollowUpActions: resolveGraphFollowUpActions(hydratedHits),
   hits: hydratedHits.map(toDebugHit),
-  sourceCollections: Array.from(
-    new Set(hydratedHits.map((hit) => hit.canonicalSourceCollection))
-  ).sort(),
+  sourceCollections: Array.from(new Set(hydratedHits.map((hit) => hit.canonicalSourceCollection))).sort(),
   hydrationSources: Array.from(new Set(hydratedHits.map((hit) => hit.hydrationSource))).sort(),
+});
+
+const buildMissPreviewResult = (input: {
+  status: 'disabled' | 'skipped' | 'miss';
+  querySeed: string;
+  normalizedQuerySeed: string;
+  tokens: string[];
+}): KangurKnowledgeGraphRetrievalPreviewResult => ({
+  status: input.status,
+  queryMode: null,
+  querySeed: input.querySeed,
+  normalizedQuerySeed: input.normalizedQuerySeed,
+  tokens: input.tokens,
+  instructions: null,
+  sources: [],
+  nodeIds: [],
+  hits: [],
 });
 
 async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
@@ -770,6 +689,7 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
   context: KangurAiTutorConversationContext | undefined;
   locale?: string;
   runtimeDocuments?: ContextRuntimeDocument[];
+  limit?: number;
 }): Promise<KangurKnowledgeGraphRetrievalPreviewResult> {
   const querySeed = buildRawSemanticQuerySeed(input);
   const normalizedQuerySeed = buildNormalizedSemanticQuerySeed(input);
@@ -777,14 +697,10 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
   if (!isNeo4jEnabled()) {
     const fallbackTokens = tokenizeQuery(normalizedQuerySeed);
     if (fallbackTokens.length > 0) {
-      const cmsFallbackHits = await resolveCmsPagesFallback(
-        normalizedQuerySeed,
-        fallbackTokens,
-        input.locale?.trim() || 'pl'
-      );
+      const cmsFallbackHits = await resolveCmsPagesFallback(fallbackTokens);
       if (cmsFallbackHits.length > 0) {
         return finalizeResolvedGraphContext(
-          cmsFallbackHits,
+          cmsFallbackHits.slice(0, input.limit ?? 4),
           querySeed,
           normalizedQuerySeed,
           fallbackTokens,
@@ -798,59 +714,44 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
       }
     }
 
-    return {
+    return buildMissPreviewResult({
       status: 'disabled',
-      queryMode: null,
       querySeed,
       normalizedQuerySeed,
       tokens: [],
-      instructions: null,
-      sources: [],
-      nodeIds: [],
-      hits: [],
-    };
+    });
   }
 
   const queryMode = resolveGraphQueryMode(input);
   if (!queryMode) {
-    return {
+    return buildMissPreviewResult({
       status: 'skipped',
-      queryMode: null,
       querySeed,
       normalizedQuerySeed,
       tokens: [],
-      instructions: null,
-      sources: [],
-      nodeIds: [],
-      hits: [],
-    };
+    });
   }
 
   const tokens = tokenizeQuery(normalizedQuerySeed);
   const queryIntent = buildKnowledgeGraphQueryIntent(normalizedQuerySeed);
   if (tokens.length === 0 && !hasSemanticContext(input.context)) {
-    return {
+    return buildMissPreviewResult({
       status: 'skipped',
-      queryMode: null,
       querySeed,
       normalizedQuerySeed,
       tokens,
-      instructions: null,
-      sources: [],
-      nodeIds: [],
-      hits: [],
-    };
+    });
   }
 
   const queryEmbedding =
     queryMode === 'semantic'
       ? await generateKangurKnowledgeGraphQueryEmbedding(normalizedQuerySeed).catch((error) => {
-        void ErrorSystem.captureException(error);
-        return null;
-      })
+          void ErrorSystem.captureException(error);
+          return null;
+        })
       : null;
 
-  const lexicalLimit = queryMode === 'website_help' ? 8 : 8;
+  const lexicalLimit = input.limit ?? 8;
   const [lexicalResults, vectorHits] = await Promise.all([
     runNeo4jStatements([
       {
@@ -872,7 +773,7 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
       ? fetchVectorKnowledgeGraphHits({
           graphKey: KANGUR_KNOWLEDGE_GRAPH_KEY,
           queryEmbedding,
-          limit: 8,
+          limit: input.limit ?? 8,
         })
       : Promise.resolve([]),
   ]);
@@ -882,17 +783,12 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
   );
   const hits = mergeKnowledgeGraphHits(lexicalHits, vectorHits);
   if (hits.length === 0) {
-    return {
+    return buildMissPreviewResult({
       status: 'miss',
-      queryMode: null,
       querySeed,
       normalizedQuerySeed,
       tokens,
-      instructions: null,
-      sources: [],
-      nodeIds: [],
-      hits: [],
-    };
+    });
   }
 
   const hydratedHits = await hydrateKnowledgeGraphHits(
@@ -900,12 +796,13 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
     input.locale?.trim() || 'pl',
     input.runtimeDocuments ?? []
   );
+  const resultLimit = input.limit ?? (queryMode === 'website_help' ? 3 : 4);
   const rerankedHits = rerankKnowledgeGraphHits({
     hits: hydratedHits,
     queryEmbedding,
     queryMode,
     intent: queryIntent,
-  }).slice(0, queryMode === 'website_help' ? 3 : 4);
+  }).slice(0, resultLimit);
 
   return finalizeResolvedGraphContext(
     rerankedHits,
@@ -921,11 +818,21 @@ async function resolveKangurAiTutorSemanticGraphContextInternal(input: {
   );
 }
 
+export const resolveKangurKnowledgeGraphContext = async (input: {
+  latestUserMessage: string | null;
+  context: KangurAiTutorConversationContext | undefined;
+  locale?: string;
+  runtimeDocuments?: ContextRuntimeDocument[];
+  limit?: number;
+}): Promise<KangurKnowledgeGraphRetrievalResult> =>
+  resolveKangurAiTutorSemanticGraphContext(input);
+
 export async function resolveKangurAiTutorSemanticGraphContext(input: {
   latestUserMessage: string | null;
   context: KangurAiTutorConversationContext | undefined;
   locale?: string;
   runtimeDocuments?: ContextRuntimeDocument[];
+  limit?: number;
 }): Promise<KangurKnowledgeGraphRetrievalResult> {
   const result = await resolveKangurAiTutorSemanticGraphContextInternal(input);
   if (result.status !== 'hit') {
@@ -960,6 +867,7 @@ export async function previewKangurAiTutorSemanticGraphContext(input: {
   context: KangurAiTutorConversationContext | undefined;
   locale?: string;
   runtimeDocuments?: ContextRuntimeDocument[];
+  limit?: number;
 }): Promise<KangurKnowledgeGraphRetrievalPreviewResult> {
   return resolveKangurAiTutorSemanticGraphContextInternal(input);
 }
@@ -969,6 +877,7 @@ export async function resolveKangurWebsiteHelpGraphContext(input: {
   context: KangurAiTutorConversationContext | undefined;
   locale?: string;
   runtimeDocuments?: ContextRuntimeDocument[];
+  limit?: number;
 }): Promise<KangurKnowledgeGraphRetrievalResult> {
   return resolveKangurAiTutorSemanticGraphContext(input);
 }
@@ -978,6 +887,7 @@ export async function previewKangurWebsiteHelpGraphContext(input: {
   context: KangurAiTutorConversationContext | undefined;
   locale?: string;
   runtimeDocuments?: ContextRuntimeDocument[];
+  limit?: number;
 }): Promise<KangurKnowledgeGraphRetrievalPreviewResult> {
   return previewKangurAiTutorSemanticGraphContext(input);
 }

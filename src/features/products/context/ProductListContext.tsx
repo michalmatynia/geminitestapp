@@ -72,13 +72,13 @@ type ProductListRuntimeBridgeProps = {
   triggerListingStatusHighlight: (productId: string) => void;
 };
 
-function ProductListRuntimeBridge({
+function useProductListRuntimeBridge({
   data,
   queuedProductIds,
   productAiRunStatusByProductId,
   rowRuntimeStore,
   triggerListingStatusHighlight,
-}: ProductListRuntimeBridgeProps): null {
+}: ProductListRuntimeBridgeProps): void {
   const visibleProductIds = useMemo(
     () =>
       data
@@ -120,8 +120,6 @@ function ProductListRuntimeBridge({
     traderaBadgeIds,
     traderaBadgeStatuses,
   ]);
-
-  return null;
 }
 
 export const useProductListFiltersContext = (): ProductListFiltersContextType => {
@@ -249,6 +247,13 @@ export function ProductListProvider({
     rowVisualsValue,
     modalsValue,
   } = useProductListSubContexts(value);
+  useProductListRuntimeBridge({
+    data: value.data,
+    queuedProductIds: value.queuedProductIds,
+    productAiRunStatusByProductId: value.productAiRunStatusByProductId,
+    rowRuntimeStore,
+    triggerListingStatusHighlight: value.triggerListingStatusHighlight,
+  });
 
   return (
     <ProductListFiltersContext.Provider value={filtersValue}>
@@ -259,13 +264,6 @@ export function ProductListProvider({
               <ProductListHeaderActionsContext.Provider value={headerActionsValue}>
                 <ProductListRowActionsContext.Provider value={rowActionsValue}>
                   <ProductListRowRuntimeStoreContext.Provider value={rowRuntimeStore}>
-                    <ProductListRuntimeBridge
-                      data={value.data}
-                      queuedProductIds={value.queuedProductIds}
-                      productAiRunStatusByProductId={value.productAiRunStatusByProductId}
-                      rowRuntimeStore={rowRuntimeStore}
-                      triggerListingStatusHighlight={value.triggerListingStatusHighlight}
-                    />
                     <ProductListRowVisualsContext.Provider value={rowVisualsValue}>
                       <ProductListModalsContext.Provider value={modalsValue}>
                         {children}

@@ -3,14 +3,13 @@ import {
   getKangurPracticeOperationForLessonComponent,
   type KangurLessonMasteryInsight,
 } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
 import type { Href } from 'expo-router';
-import { useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { createKangurLessonHref } from '../lessons/lessonHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
-import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { useKangurMobileHomeProgressSnapshot } from './KangurMobileHomeProgressSnapshotContext';
 
 export type KangurMobileHomeLessonMasteryItem = KangurLessonMasteryInsight & {
   lessonHref: Href;
@@ -46,15 +45,12 @@ const mapInsightToHomeItem = (
 export const useKangurMobileHomeLessonMastery =
   (): UseKangurMobileHomeLessonMasteryResult => {
     const { locale } = useKangurMobileI18n();
-    const { progressStore } = useKangurMobileRuntime();
-    const progress = useSyncExternalStore(
-      progressStore.subscribeToProgress,
-      progressStore.loadProgress,
-      createDefaultKangurProgressState,
-    );
+    const progress = useKangurMobileHomeProgressSnapshot();
 
     const masteryInsights = useMemo(
-      () => buildLessonMasteryInsights(progress, 2, locale),
+      () => {
+        return buildLessonMasteryInsights(progress, 2, locale);
+      },
       [locale, progress],
     );
 

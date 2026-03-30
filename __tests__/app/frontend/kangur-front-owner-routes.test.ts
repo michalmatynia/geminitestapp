@@ -6,11 +6,13 @@ const {
   kangurFeatureRouteShellMock,
   getFrontPagePublicOwnerMock,
   getFrontPageSettingMock,
-  getKangurConfiguredLaunchTargetMock,
+  getKangurConfiguredLaunchRouteMock,
   kangurPublicAppMock,
   loadSlugRenderDataMock,
   notFoundMock,
+  readSanitizedKangurAliasLoginSearchParamsMock,
   redirectMock,
+  renderAccessibleKangurAliasRouteMock,
   resolveSlugToPageMock,
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
@@ -18,11 +20,13 @@ const {
   kangurFeatureRouteShellMock: vi.fn(),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
-  getKangurConfiguredLaunchTargetMock: vi.fn(),
+  getKangurConfiguredLaunchRouteMock: vi.fn(),
   kangurPublicAppMock: vi.fn(),
   loadSlugRenderDataMock: vi.fn(),
   notFoundMock: vi.fn(),
+  readSanitizedKangurAliasLoginSearchParamsMock: vi.fn(),
   redirectMock: vi.fn(),
+  renderAccessibleKangurAliasRouteMock: vi.fn(),
   resolveSlugToPageMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
@@ -39,7 +43,7 @@ vi.mock('next-intl/server', () => ({
   })),
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => ({
+vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
 }));
@@ -50,18 +54,59 @@ vi.mock('@/shared/lib/front-page-app', () => ({
 
 vi.mock('@/features/kangur/public', () => ({
   KangurPublicApp: kangurPublicAppMock,
-}));
-
-vi.mock('@/features/kangur/server/launch-route', () => ({
-  getKangurConfiguredLaunchTarget: getKangurConfiguredLaunchTargetMock,
-  getKangurConfiguredLaunchHref: vi.fn(async (slug, searchParams) => {
-    const resolved = await getKangurConfiguredLaunchTargetMock(slug, searchParams);
-    return resolved.href;
-  }),
-}));
-
-vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', () => ({
   KangurFeatureRouteShell: kangurFeatureRouteShellMock,
+  getKangurPublicAliasHref: (
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
+
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        return;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    });
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
+  getKangurCanonicalPublicHref: (
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/${slugSegments.join('/')}` : '/';
+    const query = new URLSearchParams();
+
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        return;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    });
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
+  getKangurHomeHref: (pathname = '/') => pathname,
+}));
+
+vi.mock('@/features/kangur/server', () => ({
+  getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
+  requireAccessibleKangurSlugRoute: vi.fn(async () => undefined),
+  renderAccessibleKangurAliasRoute: renderAccessibleKangurAliasRouteMock,
+  readSanitizedKangurAliasLoginSearchParams: readSanitizedKangurAliasLoginSearchParamsMock,
 }));
 
 vi.mock('@/features/cms/components/frontend/CmsPageRenderer', () => ({
@@ -99,28 +144,11 @@ describe('kangur public-owner frontend routes', () => {
       value === 'kangur' ? 'kangur' : 'cms'
     );
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getKangurConfiguredLaunchTargetMock.mockImplementation(
-      async (slug: string[] = [], searchParams?: Record<string, string | string[] | undefined>) => {
-        const pathname = `/${slug.join('/') || ''}`.replace(/\/+$/, '') || '/';
-        const query = new URLSearchParams();
-        Object.entries(searchParams ?? {}).forEach(([key, value]) => {
-          if (Array.isArray(value)) {
-            value.forEach((entry) => {
-              if (typeof entry === 'string') query.append(key, entry);
-            });
-            return;
-          }
-          if (typeof value === 'string') {
-            query.set(key, value);
-          }
-        });
-        const serializedQuery = query.toString();
-        const href = serializedQuery ? `${pathname}?${serializedQuery}` : pathname;
-        return {
-          href,
-          fallbackHref: pathname,
-        };
-      }
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
+    renderAccessibleKangurAliasRouteMock.mockResolvedValue(null);
+    readSanitizedKangurAliasLoginSearchParamsMock.mockImplementation(
+      async ({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) =>
+        searchParams
     );
     redirectMock.mockImplementation((target: string) => {
       throw new Error(`redirect:${target}`);
@@ -129,17 +157,19 @@ describe('kangur public-owner frontend routes', () => {
     kangurFeatureRouteShellMock.mockReturnValue(null);
   });
 
-  it('routes public frontend slugs through Kangur when Kangur owns the frontend', async () => {
+  it('redirects root-owned public frontend slugs to the Kangur alias path without CMS lookup', async () => {
     const { default: CmsSlugPage } = await import('@/app/(frontend)/[...slug]/page');
+    const { KANGUR_BASE_PATH } = await import('@/features/kangur/config/routing');
 
-    const result = await CmsSlugPage({
-      params: Promise.resolve({ slug: ['tests'] }),
-    });
+    await expect(
+      CmsSlugPage({
+        params: Promise.resolve({ slug: ['tests'] }),
+      })
+    ).rejects.toThrow(`redirect:${KANGUR_BASE_PATH}/tests`);
 
-    expect(result).toMatchObject({
-      type: kangurPublicAppMock,
-      props: expect.objectContaining({ slug: ['tests'], basePath: '/' }),
-    });
+    expect(redirectMock).toHaveBeenCalledWith(`${KANGUR_BASE_PATH}/tests`);
+    expect(kangurPublicAppMock).not.toHaveBeenCalled();
+    expect(kangurFeatureRouteShellMock).not.toHaveBeenCalled();
     expect(resolveSlugToPageMock).not.toHaveBeenCalled();
     expect(notFoundMock).not.toHaveBeenCalled();
   });
@@ -159,33 +189,32 @@ describe('kangur public-owner frontend routes', () => {
     expect(buildSlugMetadataMock).not.toHaveBeenCalled();
   });
 
-  it('redirects legacy /kangur child routes to root-owned public routes when Kangur owns the frontend', async () => {
+  it('keeps legacy /kangur child routes on the server shell when Kangur owns the frontend', async () => {
     const { default: KangurAliasPage } = await import(
-      '@/app/(frontend)/kangur/(app)/[[...slug]]/page'
+      '@/app/(frontend)/kangur/(app)/[...slug]/page'
     );
 
-    await expect(
-      KangurAliasPage({
-        params: Promise.resolve({ slug: ['tests'] }),
-        searchParams: Promise.resolve({ focus: 'division' }),
-      })
-    ).rejects.toThrow('redirect:/tests?focus=division');
+    const result = await KangurAliasPage({
+      params: Promise.resolve({ slug: ['tests'] }),
+      searchParams: Promise.resolve({ focus: 'division' }),
+    });
 
-    expect(redirectMock).toHaveBeenCalledWith('/tests?focus=division');
+    expect(result).toBeNull();
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it('keeps legacy /kangur child routes inert when CMS owns the frontend', async () => {
+  it('keeps legacy /kangur child routes on the server shell when CMS owns the frontend', async () => {
     getFrontPageSettingMock.mockResolvedValue('cms');
 
     const { default: KangurAliasPage } = await import(
-      '@/app/(frontend)/kangur/(app)/[[...slug]]/page'
+      '@/app/(frontend)/kangur/(app)/[...slug]/page'
     );
 
-    await expect(
-      KangurAliasPage({
-        params: Promise.resolve({ slug: ['tests'] }),
-      })
-    ).resolves.toBeNull();
+    const result = await KangurAliasPage({
+      params: Promise.resolve({ slug: ['tests'] }),
+    });
+
+    expect(result).toBeNull();
 
     expect(redirectMock).not.toHaveBeenCalled();
   });
@@ -207,23 +236,4 @@ describe('kangur public-owner frontend routes', () => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  it('keeps legacy /kangur/login rendering when CMS owns the frontend', async () => {
-    getFrontPageSettingMock.mockResolvedValue('cms');
-
-    const { default: KangurAliasLoginPage } = await import('@/app/(frontend)/kangur/login/page');
-
-    const result = await KangurAliasLoginPage({});
-
-    expect(result.type).toBe(Symbol.for('react.suspense'));
-    expect(result.props.children).toMatchObject({
-      type: kangurFeatureRouteShellMock,
-    });
-    expect(result.props.fallback).toMatchObject({
-      props: {
-        className: 'sr-only',
-        children: 'routeLoading',
-      },
-    });
-    expect(redirectMock).not.toHaveBeenCalled();
-  });
 });

@@ -5,11 +5,14 @@ const {
   frontPageAllowed,
   getFrontPagePublicOwnerMock,
   getFrontPageRedirectPathMock,
+  getKangurConfiguredLaunchRouteMock,
   getCmsRepositoryMock,
+  isDomainZoningEnabledMock,
   getSlugsForDomainMock,
   getFrontPageSettingMock,
   headersMock,
   homeContentMock,
+  kangurSsrSkeletonMock,
   redirectMock,
   resolveCmsDomainFromHeadersMock,
   shouldApplyFrontPageAppSelectionMock,
@@ -18,11 +21,14 @@ const {
   frontPageAllowed: new Set(['cms', 'products', 'kangur', 'chatbot', 'notes']),
   getFrontPagePublicOwnerMock: vi.fn(),
   getFrontPageRedirectPathMock: vi.fn(),
+  getKangurConfiguredLaunchRouteMock: vi.fn(),
   getCmsRepositoryMock: vi.fn(),
+  isDomainZoningEnabledMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
   getFrontPageSettingMock: vi.fn(),
   headersMock: vi.fn(),
   homeContentMock: vi.fn(),
+  kangurSsrSkeletonMock: vi.fn(),
   redirectMock: vi.fn(),
   resolveCmsDomainFromHeadersMock: vi.fn(),
   shouldApplyFrontPageAppSelectionMock: vi.fn(),
@@ -30,20 +36,55 @@ const {
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
+  permanentRedirect: redirectMock,
 }));
 
-vi.mock('next/headers', () => ({
-  headers: headersMock,
+vi.mock('@/shared/lib/request/optional-headers', () => ({
+  readOptionalRequestHeaders: headersMock,
 }));
 
 vi.mock('@/features/cms/server', () => ({
   getCmsRepository: getCmsRepositoryMock,
+  isDomainZoningEnabled: isDomainZoningEnabledMock,
   getSlugsForDomain: getSlugsForDomainMock,
   resolveCmsDomainFromHeaders: resolveCmsDomainFromHeadersMock,
 }));
 
-vi.mock('@/app/(frontend)/HomeContent', () => ({
+vi.mock('@/app/(frontend)/home/HomeContent', () => ({
   HomeContent: homeContentMock,
+}));
+
+vi.mock('@/features/kangur/server', () => ({
+  getKangurConfiguredLaunchRoute: getKangurConfiguredLaunchRouteMock,
+}));
+
+vi.mock('@/features/kangur/public', () => ({
+  getKangurPublicAliasHref: (
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
+
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        return;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    });
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
+}));
+
+vi.mock('@/features/kangur/ui/KangurSSRSkeleton', () => ({
+  KangurSSRSkeleton: kangurSsrSkeletonMock,
 }));
 
 vi.mock('@/shared/lib/front-page-app', () => ({
@@ -52,14 +93,14 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPageRedirectPath: getFrontPageRedirectPathMock,
 }));
 
-vi.mock('@/app/(frontend)/home-timing', () => ({
+vi.mock('@/app/(frontend)/home/home-timing', () => ({
   createHomeTimingRecorder: () => ({
     withTiming: async (_label: string, fn: () => Promise<unknown>) => fn(),
     flush: flushMock,
   }),
 }));
 
-vi.mock('@/app/(frontend)/home-helpers', () => {
+vi.mock('@/app/(frontend)/home/home-helpers', () => {
   return {
     FRONT_PAGE_ALLOWED: frontPageAllowed,
     getFrontPageSetting: getFrontPageSettingMock,
@@ -73,8 +114,10 @@ describe('front page app selection', () => {
     vi.resetModules();
 
     getCmsRepositoryMock.mockResolvedValue({});
+    isDomainZoningEnabledMock.mockResolvedValue(false);
     getSlugsForDomainMock.mockResolvedValue([]);
     getFrontPageSettingMock.mockResolvedValue('kangur');
+    getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
     headersMock.mockResolvedValue(new Headers());
     flushMock.mockResolvedValue(undefined);
     homeContentMock.mockReturnValue(null);
@@ -119,15 +162,13 @@ describe('front page app selection', () => {
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
 
-  it('lets the frontend layout own the Kangur shell when Front Manage assigns Kangur as the public owner', async () => {
-    const { Home } = await loadHomeModule();
+  it('redirects HOME to the Kangur public alias when Front Manage assigns Kangur as the public owner', async () => {
+    const { Home, KANGUR_BASE_PATH } = await loadHomeModule();
 
     getFrontPageSettingMock.mockResolvedValue('kangur');
 
-    const result = await Home();
-
-    expect(result).toBeNull();
-    expect(redirectMock).not.toHaveBeenCalled();
+    await expect(Home()).rejects.toThrow(`redirect:${KANGUR_BASE_PATH}`);
+    expect(redirectMock).toHaveBeenCalledWith(KANGUR_BASE_PATH);
     expect(getCmsRepositoryMock).not.toHaveBeenCalled();
     expect(headersMock).not.toHaveBeenCalled();
     expect(homeContentMock).not.toHaveBeenCalled();
@@ -145,7 +186,7 @@ describe('front page app selection', () => {
     expect(getCmsRepositoryMock).toHaveBeenCalled();
     expect(headersMock).toHaveBeenCalled();
     expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
-    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {});
+    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {}, undefined);
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
 
@@ -162,7 +203,7 @@ describe('front page app selection', () => {
     expect(getCmsRepositoryMock).toHaveBeenCalled();
     expect(headersMock).toHaveBeenCalled();
     expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
-    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {});
+    expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {}, undefined);
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
 });

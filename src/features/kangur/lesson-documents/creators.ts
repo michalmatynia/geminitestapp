@@ -17,7 +17,7 @@ import {
   type KangurLessonTextBlock,
 } from '@/features/kangur/shared/contracts/kangur';
 
-import { applyKangurLessonActivityDefaults } from '../lesson-activities';
+import { applyKangurLessonActivityDefaults } from '../lessons/activities';
 import {
   createRandomId,
   DEFAULT_IMAGE_SRC,
@@ -492,7 +492,12 @@ const STARTER_TEMPLATE_BY_COMPONENT_ID: Record<
   english_basics: 'article',
   english_parts_of_speech: 'article',
   english_sentence_structure: 'article',
+  english_going_to: 'article',
   english_subject_verb_agreement: 'article',
+  english_adjectives: 'article',
+  english_comparatives_superlatives: 'article',
+  english_adverbs: 'article',
+  english_adverbs_frequency: 'article',
   english_articles: 'article',
   english_prepositions_time_place: 'article',
   webdev_react_components: 'article',

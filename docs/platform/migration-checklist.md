@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'platform'
@@ -11,7 +11,7 @@ canonical: true
 
 **Purpose:** Step-by-step guide for migrating components to consolidated templates
 **Audience:** Frontend developers
-**Last Updated:** February 13, 2026
+**Last Updated:** March 26, 2026
 
 ---
 
@@ -555,7 +555,7 @@ npm run deploy:production
 
 **Checklist:**
 
-- [ ] Updated DEVELOPER_HANDBOOK.md if needed
+- [ ] Updated `docs/platform/developer-handbook.md` if needed
 - [ ] Added real-world example to docs
 - [ ] Updated migration guide
 - [ ] Added before/after code snippets
@@ -659,5 +659,5 @@ npm run dev
 
 ---
 
-**Last Updated:** February 13, 2026
+**Last Updated:** March 26, 2026
 **Next Candidates:** Review docs/platform/component-patterns.md section "Consolidation Opportunities"

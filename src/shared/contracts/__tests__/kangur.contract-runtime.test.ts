@@ -125,6 +125,33 @@ describe('kangur contract runtime', () => {
     ).toBe('english');
   });
 
+  it('resolves English score subjects from comparatives and superlatives operations', () => {
+    expect(
+      resolveKangurScoreSubject({
+        operation: 'english_comparatives_superlatives',
+        subject: null,
+      })
+    ).toBe('english');
+  });
+
+  it('resolves English score subjects from general adverb operations', () => {
+    expect(
+      resolveKangurScoreSubject({
+        operation: 'english_adverbs',
+        subject: null,
+      })
+    ).toBe('english');
+  });
+
+  it('resolves English score subjects from adverbs-of-frequency operations', () => {
+    expect(
+      resolveKangurScoreSubject({
+        operation: 'english_adverbs_frequency',
+        subject: null,
+      })
+    ).toBe('english');
+  });
+
   it('parses Kangur lesson-template route query and bulk-replace payload DTOs', () => {
     expect(
       kangurLessonTemplatesQuerySchema.parse({

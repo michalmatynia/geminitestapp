@@ -108,8 +108,9 @@ function ProductFormModalBridge(props: {
 function ProductFormModalBody(props: {
   submitButtonText: string;
   validationInstanceScopeOverride?: ProductFormScope;
+  validatorSessionKey?: string;
 }): React.JSX.Element {
-  const { submitButtonText, validationInstanceScopeOverride } = props;
+  const { submitButtonText, validationInstanceScopeOverride, validatorSessionKey } = props;
 
   const { product, draft, getValues } = useProductFormCore();
   const { showFileManager, handleMultiFileSelect } = useProductFormImages();
@@ -153,6 +154,7 @@ function ProductFormModalBody(props: {
         <ProductForm
           key={formInstanceKey}
           submitButtonText={submitButtonText}
+          validatorSessionKey={validatorSessionKey}
           {...(validationInstanceScopeOverride ? { validationInstanceScopeOverride } : {})}
         />
       )}
@@ -335,12 +337,25 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   const [formIsSaving, setFormIsSaving] = useState(false);
   const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
   const formSubmitRef = useRef<(() => void) | null>(null);
+  const openSessionCounterRef = useRef(isOpen ? 1 : 0);
+  const wasOpenRef = useRef(isOpen);
+  const [validatorSessionKey, setValidatorSessionKey] = useState<string>(() =>
+    `${providerKey}:session:${isOpen ? 1 : 0}`
+  );
 
   const onIsSavingChange = useCallback((value: boolean) => setFormIsSaving(value), []);
   const onHasUnsavedChangesChange = useCallback(
     (value: boolean) => setFormHasUnsavedChanges(value),
     []
   );
+
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      openSessionCounterRef.current += 1;
+      setValidatorSessionKey(`${providerKey}:session:${openSessionCounterRef.current}`);
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen, providerKey]);
 
   useEffect(() => {
     if (showSkeleton) {
@@ -388,6 +403,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
           <ProductFormModalBody
             submitButtonText={submitButtonText}
             validationInstanceScopeOverride={validationInstanceScopeOverride}
+            validatorSessionKey={validatorSessionKey}
           />
         </ProductFormProvider>
       )}
@@ -409,6 +425,7 @@ export function ProductModals(): React.JSX.Element {
     onEditSuccess,
     onEditSave,
     integrationsProduct,
+    integrationsRecoveryContext,
     onCloseIntegrations,
     onStartListing,
     showListProductModal,
@@ -484,6 +501,7 @@ export function ProductModals(): React.JSX.Element {
           onClose={onCloseIntegrations}
           onStartListing={onStartListing}
           onListingsUpdated={onListingsUpdated}
+          recoveryContext={integrationsRecoveryContext}
         />
       )}
 

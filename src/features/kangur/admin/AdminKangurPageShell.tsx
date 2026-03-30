@@ -2,7 +2,9 @@
 
 import React from 'react';
 
-import { resolveKangurFeaturePageRoute } from '@/features/kangur/config/routing';
+import {
+  resolveKangurFeaturePageRoute,
+} from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';
 import { LoadingPanel } from '@/shared/ui/LoadingPanel';
 
@@ -16,10 +18,11 @@ const LazyKangurFeaturePageShell = React.lazy(() =>
 );
 
 export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.JSX.Element {
-  const { normalizedBasePath, pageKey, requestedPath } = resolveKangurFeaturePageRoute(
-    slug,
-    KANGUR_ADMIN_BASE_PATH
-  );
+  const {
+    normalizedBasePath,
+    pageKey,
+    requestedPath,
+  } = resolveKangurFeaturePageRoute(slug, KANGUR_ADMIN_BASE_PATH);
 
   return (
     <>
@@ -32,7 +35,7 @@ export function AdminKangurPageShell({ slug = [] }: { slug?: string[] }): React.
         embedded
       >
         <React.Suspense
-          fallback={<LoadingPanel>Loading Kangur workspace...</LoadingPanel>}
+          fallback={<LoadingPanel>Loading workspace...</LoadingPanel>}
         >
           <LazyKangurFeaturePageShell />
         </React.Suspense>

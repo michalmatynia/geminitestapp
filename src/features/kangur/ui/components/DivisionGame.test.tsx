@@ -15,6 +15,7 @@ describe('DivisionGame', () => {
   it('uses the shared pill CTA style for the confirm action', () => {
     render(<DivisionGame onFinish={() => undefined} />);
 
+    expect(screen.getByTestId('division-game-shell')).toHaveClass('w-full', 'max-w-4xl');
     expect(screen.getByTestId('division-game-round-shell')).toHaveClass(
       'glass-panel',
       'kangur-panel-soft',
@@ -56,5 +57,7 @@ describe('DivisionGame', () => {
 
     const checkButton = screen.getByRole('button', { name: 'Sprawdź ✓' });
     expect(checkButton.className).toMatch(/bg-(emerald|rose)-500/);
+    expect(screen.queryByText(/Poprawna odpowiedź/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Niepoprawnie/i)).not.toBeInTheDocument();
   });
 });

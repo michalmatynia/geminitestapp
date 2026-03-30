@@ -27,6 +27,14 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
+function getSlotsStateMock() {
+  return {
+    slots: mocks.slotState.slots,
+    slotSelectionLocked: mocks.slotState.slotSelectionLocked,
+    workingSlot: mocks.slotState.workingSlot,
+  };
+}
+
 vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = (await importOriginal()) as any;
   return {
@@ -52,11 +60,7 @@ vi.mock('@/features/ai/image-studio/context/ProjectsContext', () => ({
 }));
 
 vi.mock('@/features/ai/image-studio/context/SlotsContext', () => ({
-  useSlotsState: () => ({
-    slots: mocks.slotState.slots,
-    slotSelectionLocked: mocks.slotState.slotSelectionLocked,
-    workingSlot: mocks.slotState.workingSlot,
-  }),
+  useSlotsState: getSlotsStateMock,
   useSlotsActions: () => ({
     setSelectedSlotId: mocks.setSelectedSlotId,
     setWorkingSlotId: mocks.setWorkingSlotId,

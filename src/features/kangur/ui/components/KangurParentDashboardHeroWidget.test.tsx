@@ -9,7 +9,6 @@ import plMessages from '@/i18n/messages/pl.json';
 const {
   routeNavigatorPushMock,
   settingsStoreMock,
-  lessonsState,
   useKangurLoginModalMock,
   useKangurLearnerActivityStatusMock,
   useKangurParentDashboardRuntimeMock,
@@ -18,9 +17,6 @@ const {
   routeNavigatorPushMock: vi.fn(),
   settingsStoreMock: {
     get: vi.fn<(key: string) => string | undefined>(),
-  },
-  lessonsState: {
-    value: [] as Array<Record<string, unknown>>,
   },
   useKangurLoginModalMock: vi.fn(),
   useKangurLearnerActivityStatusMock: vi.fn(),
@@ -32,9 +28,14 @@ vi.mock('next/link', () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     scroll: _scroll,
     ...rest
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; scroll?: boolean }) => (
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    prefetch?: boolean;
+    scroll?: boolean;
+  }) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -54,7 +55,26 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurParentDashboardRuntimeContext', () => ({
-  useKangurParentDashboardRuntime: useKangurParentDashboardRuntimeMock,
+  useKangurParentDashboardRuntimeHeroState: () => {
+    const value = useKangurParentDashboardRuntimeMock();
+    return {
+      activeLearner: value.activeLearner,
+      basePath: value.basePath,
+      canManageLearners: value.canManageLearners,
+      isAuthenticated: value.isAuthenticated,
+      lessons: value.lessons,
+      progress: value.progress,
+      viewerName: value.viewerName,
+      viewerRoleLabel: value.viewerRoleLabel,
+    };
+  },
+  useKangurParentDashboardRuntimeShellActions: () => {
+    const value = useKangurParentDashboardRuntimeMock();
+    return {
+      logout: value.logout,
+      setCreateLearnerModalOpen: value.setCreateLearnerModalOpen,
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -63,14 +83,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLearnerActivity', () => ({
   useKangurLearnerActivityStatus: useKangurLearnerActivityStatusMock,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: () => ({
-    data: lessonsState.value,
-    isLoading: false,
-    error: null,
-  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
@@ -95,7 +107,6 @@ describe('KangurParentDashboardHeroWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     settingsStoreMock.get.mockReturnValue(undefined);
-    lessonsState.value = [];
     useKangurLoginModalMock.mockReturnValue({
       authMode: 'sign-in',
       callbackUrl: '/kangur',
@@ -198,6 +209,8 @@ describe('KangurParentDashboardHeroWidget', () => {
     expect(openLoginModal).toHaveBeenLastCalledWith(null, {
       authMode: 'create-account',
     });
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledTimes(1);
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledWith('parent-dashboard-guest-hero');
   });
 
   it('renders the authenticated dashboard view with the active learner', () => {
@@ -255,7 +268,51 @@ describe('KangurParentDashboardHeroWidget', () => {
     expect(screen.queryByTestId('kangur-parent-dashboard-track-summary')).toBeNull();
     expect(screen.queryByTestId('kangur-parent-dashboard-hero-milestone-shell')).toBeNull();
     expect(screen.queryByRole('button', { name: 'hero.logout' })).not.toBeInTheDocument();
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledTimes(1);
+    expect(useKangurPageContentEntryMock).toHaveBeenCalledWith('parent-dashboard-hero');
 
+  });
+
+  it('defers learner-activity polling when the authenticated parent hero mounts', () => {
+    useKangurParentDashboardRuntimeMock.mockReturnValue({
+      activeLearner: { id: 'learner-1', displayName: 'Maja' },
+      basePath: '/kangur',
+      canManageLearners: true,
+      isAuthenticated: true,
+      logout: vi.fn(),
+      navigateToLogin: vi.fn(),
+      progress: {
+        totalXp: 0,
+        gamesPlayed: 0,
+        perfectGames: 0,
+        lessonsCompleted: 0,
+        clockPerfect: 0,
+        calendarPerfect: 0,
+        geometryPerfect: 0,
+        badges: [],
+        operationsPlayed: [],
+        totalCorrectAnswers: 0,
+        totalQuestionsAnswered: 0,
+        bestWinStreak: 0,
+        activityStats: {},
+        lessonMastery: {},
+        openedTasks: [],
+        lessonPanelProgress: {},
+      },
+      setCreateLearnerModalOpen: vi.fn(),
+      viewerName: 'parent@example.com',
+      viewerRoleLabel: 'Rodzic',
+      lessons: [],
+    });
+
+    render(<KangurParentDashboardHeroWidget showActions={false} />);
+
+    expect(useKangurLearnerActivityStatusMock).toHaveBeenCalledWith({
+      deferInitialRefreshMs: 1200,
+      enabled: true,
+      learnerId: 'learner-1',
+      refreshIntervalMs: 10000,
+    });
   });
 
   it('routes the restricted hero action directly to the learner profile', () => {

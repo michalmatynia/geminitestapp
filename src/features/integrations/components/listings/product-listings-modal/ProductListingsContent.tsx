@@ -5,7 +5,7 @@ import React from 'react';
 import { Card } from '@/shared/ui';
 
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
-import { ProductListingItem } from './ProductListingItem';
+import { renderProductListingItem } from './ProductListingItem';
 import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
 
 export function ProductListingsContent(): React.JSX.Element {
@@ -21,7 +21,9 @@ export function ProductListingsContent(): React.JSX.Element {
       )}
       {showSync && isBaseFilter && <ProductListingsSyncPanel />}
       {filteredListings.map((listing) => (
-        <ProductListingItem key={listing.id} listing={listing} />
+        <React.Fragment key={listing.id}>
+          {renderProductListingItem({ listing })}
+        </React.Fragment>
       ))}
     </div>
   );

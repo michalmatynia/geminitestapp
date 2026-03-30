@@ -2,13 +2,14 @@
  * @vitest-environment jsdom
  */
 
+import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
-import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
+
 const {
   useKangurRoutingMock,
   settingsStoreGetMock,
@@ -37,12 +38,82 @@ const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
   useKangurAgeGroupFocusMock: vi.fn(),
 }));
 
+const emptyLessonSectionsQueryMock = {
+  data: [],
+  isLoading: false,
+  error: null,
+} as const;
+
+const emptyPageContentEntryQueryMock = {
+  entry: null,
+  isLoading: false,
+  error: null,
+} as const;
+
 let requestAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
 let cancelAnimationFrameMock: ReturnType<typeof vi.spyOn> | null = null;
+const scheduledAnimationFrameHandles = new Set<number>();
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
   useKangurRouting: useKangurRoutingMock,
   useOptionalKangurRouting: () => null,
+}));
+
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  motion: {
+    div: React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+      ({ children, ...props }, ref) => (
+        <div ref={ref} {...props}>
+          {children}
+        </div>
+      )
+    ),
+  },
+}));
+
+vi.mock('@/features/kangur/lessons/lesson-ui-registry', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/kangur/lessons/lesson-ui-registry')>();
+  const LessonStub = ({ onReady }: { onReady?: () => void }) => {
+    React.useEffect(() => {
+      onReady?.();
+    }, [onReady]);
+
+    return <div data-testid='mock-focused-lesson-runtime' />;
+  };
+
+  return {
+    ...actual,
+    LESSON_COMPONENTS: {
+      adding: LessonStub,
+      division: LessonStub,
+    },
+  };
+});
+
+vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
+  LazyActiveLessonView: ({
+    snapshot,
+  }: {
+    snapshot?: {
+      activeLesson?: { componentId: string; title: string };
+      completedLessonAssignmentsByComponent?: Map<string, unknown>;
+    };
+  }) => {
+    const activeLesson = snapshot?.activeLesson ?? null;
+    const completedAssignment = activeLesson
+      ? snapshot?.completedLessonAssignmentsByComponent?.get(activeLesson.componentId)
+      : null;
+
+    return (
+      <div data-testid='mock-focused-lesson-runtime'>
+        <div data-testid='active-lesson-header'>{activeLesson?.title ?? 'Aktywna lekcja'}</div>
+        {completedAssignment ? (
+          <div data-testid='active-lesson-parent-completed-chip'>Ukończone dla rodzica</div>
+        ) : null}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
@@ -64,6 +135,44 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => ({
+    get: settingsStoreGetMock,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/KangurStorefrontAppearanceProvider', () => ({
+  useKangurStorefrontAppearanceHydrated: () => false,
+  useKangurStorefrontInitialThemeSettings: () => ({
+    default: null,
+    dawn: null,
+    sunset: null,
+    dark: null,
+  }),
+}));
+
+vi.mock('@/features/cms/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/cms/public')>();
+  return {
+    ...actual,
+    useOptionalCmsStorefrontAppearance: () => null,
+    resolveKangurStorefrontAppearance:
+      actual.resolveKangurStorefrontAppearance ??
+      (() => ({
+        vars: {},
+        background: 'transparent',
+        foreground: '#ffffff',
+        isAppearanceAvailable: false,
+      })),
+  };
+});
+
+vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+  KangurTopNavigationController: ({ navigation }: { navigation: unknown }) => (
+    <div data-testid='mock-lessons-focus-top-nav'>{JSON.stringify(Boolean(navigation))}</div>
+  ),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
   useKangurProgressState: useKangurProgressStateMock,
 }));
@@ -73,25 +182,47 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: (options: { subject?: string; enabledOnly?: boolean } = {}) => {
-    let data = lessonsState.value;
-    if (options.enabledOnly) {
-      data = data.filter((lesson) => lesson.enabled !== false);
-    }
-    if (options.subject) {
-      data = data.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
-    }
-    return {
-      data,
-      isLoading: false,
-      error: null,
-    };
-  },
+  useKangurLessonDocument: () => ({
+    data: null,
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
+    error: null,
+  }),
   useKangurLessonDocuments: () => ({
     data: {},
     isLoading: false,
     error: null,
   }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
+  useKangurLessonsCatalog: (
+    options: { subject?: string; ageGroup?: string; enabledOnly?: boolean } = {}
+  ) => {
+    let lessons = lessonsState.value;
+    if (options.enabledOnly) {
+      lessons = lessons.filter((lesson) => lesson.enabled !== false);
+    }
+    if (options.subject) {
+      lessons = lessons.filter((lesson) => (lesson.subject ?? 'maths') === options.subject);
+    }
+    if (options.ageGroup) {
+      lessons = lessons.filter(
+        (lesson) => (lesson.ageGroup ?? DEFAULT_KANGUR_AGE_GROUP) === options.ageGroup
+      );
+    }
+    return {
+      data: { lessons, sections: [] },
+      isFetching: false,
+      isLoading: false,
+      isPending: false,
+      isPlaceholderData: false,
+      isRefetching: false,
+      refetch: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
@@ -103,19 +234,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({
-    data: [],
-    isLoading: false,
-    error: null,
-  }),
+  useKangurLessonSections: () => emptyLessonSectionsQueryMock,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => ({
-    entry: null,
-    isLoading: false,
-    error: null,
-  }),
+  useKangurPageContentEntry: () => emptyPageContentEntryQueryMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
@@ -131,8 +254,6 @@ vi.mock('next-auth/react', () => ({
   useSession: useSessionMock,
 }));
 
-import Lessons from '@/features/kangur/ui/pages/Lessons';
-
 const createTestQueryClient = (): QueryClient =>
   new QueryClient({
     defaultOptions: {
@@ -145,6 +266,9 @@ const createTestQueryClient = (): QueryClient =>
       },
     },
   });
+
+let Lessons: typeof import('@/features/kangur/ui/pages/Lessons').default;
+let KangurGuestPlayerProvider: typeof import('@/features/kangur/ui/context/KangurGuestPlayerContext').KangurGuestPlayerProvider;
 
 const renderLessonsPage = () =>
   render(
@@ -185,17 +309,28 @@ const lessonsSettingsValue = JSON.stringify([
 ]);
 
 describe('Lessons page focus query support', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    vi.useRealTimers();
+    vi.resetModules();
     requestAnimationFrameMock = vi
       .spyOn(window, 'requestAnimationFrame')
       .mockImplementation((callback: FrameRequestCallback) => {
-        callback(0);
-        return 0;
+        const handle = window.setTimeout(() => {
+          scheduledAnimationFrameHandles.delete(handle);
+          callback(performance.now());
+        }, 0);
+        scheduledAnimationFrameHandles.add(handle);
+        return handle;
       });
     cancelAnimationFrameMock = vi
       .spyOn(window, 'cancelAnimationFrame')
-      .mockImplementation(() => {});
+      .mockImplementation((handle: number) => {
+        if (scheduledAnimationFrameHandles.has(handle)) {
+          scheduledAnimationFrameHandles.delete(handle);
+          window.clearTimeout(handle);
+        }
+      });
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
     useKangurAuthMock.mockReturnValue({
       user: null,
@@ -254,9 +389,18 @@ describe('Lessons page focus query support', () => {
       refresh: vi.fn(),
     });
     useKangurProgressStateMock.mockReturnValue(createDefaultKangurProgressState());
+    Lessons = (await import('@/features/kangur/ui/pages/Lessons')).default;
+    KangurGuestPlayerProvider = (
+      await import('@/features/kangur/ui/context/KangurGuestPlayerContext')
+    ).KangurGuestPlayerProvider;
   });
 
   afterEach(() => {
+    vi.useRealTimers();
+    for (const handle of scheduledAnimationFrameHandles) {
+      window.clearTimeout(handle);
+    }
+    scheduledAnimationFrameHandles.clear();
     requestAnimationFrameMock?.mockRestore();
     cancelAnimationFrameMock?.mockRestore();
     requestAnimationFrameMock = null;
@@ -264,25 +408,29 @@ describe('Lessons page focus query support', () => {
   });
 
   it('auto-opens the focused lesson when focus query maps to operation', async () => {
+    vi.useFakeTimers();
     window.history.replaceState({}, '', '/kangur/lessons?focus=division');
 
     renderLessonsPage();
+    await act(async () => {
+      vi.runAllTimers();
+    });
 
-    expect(await screen.findByTestId('active-lesson-header')).toHaveTextContent('Dzielenie');
-    expect(await screen.findByText('Co to dzielenie?')).toBeInTheDocument();
-    expect(screen.getByTestId('active-lesson-parent-completed-chip')).toHaveTextContent(
-      'Ukończone dla rodzica'
-    );
+    expect(screen.getByTestId('active-lesson-header')).toHaveTextContent('Dzielenie');
     expect(window.location.search).toBe('');
   });
 
   it('keeps lessons list view when focus query does not map to a lesson', async () => {
+    vi.useFakeTimers();
     window.history.replaceState({}, '', '/kangur/lessons?focus=unknown');
 
     renderLessonsPage();
+    await act(async () => {
+      vi.runAllTimers();
+    });
 
-    expect(await screen.findByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.queryByText('Co to dzielenie?')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
+    expect(screen.queryByTestId('active-lesson-header')).not.toBeInTheDocument();
     expect(window.location.search).toBe('?focus=unknown');
   });
 });

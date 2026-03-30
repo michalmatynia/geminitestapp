@@ -31,19 +31,61 @@ export type KangurIconBadgeProps = React.HTMLAttributes<HTMLSpanElement> &
     label?: string;
   };
 
-export function KangurIconBadge({
-  accent = 'slate',
-  className,
+const resolveKangurIconBadgeAccessibilityProps = ({
+  ariaDescribedBy,
+  ariaLabel,
+  ariaLabelledBy,
   decorative,
-  label,
-  size,
-  'aria-label': ariaLabelProp,
-  'aria-labelledby': ariaLabelledBy,
-  'aria-describedby': ariaDescribedBy,
-  ...props
-}: KangurIconBadgeProps): React.JSX.Element {
+}: {
+  ariaDescribedBy?: string;
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
+  decorative?: boolean;
+}): {
+  ariaDescribedBy?: string;
+  ariaHidden?: 'true';
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
+  role: 'img' | 'presentation';
+} => {
+  const shouldHide = decorative ?? !(ariaLabel || ariaLabelledBy || ariaDescribedBy);
+
+  if (shouldHide) {
+    return {
+      ariaDescribedBy,
+      ariaHidden: 'true',
+      ariaLabelledBy,
+      role: 'presentation',
+    };
+  }
+
+  return {
+    ariaDescribedBy,
+    ariaLabel,
+    ariaLabelledBy,
+    role: 'img',
+  };
+};
+
+export function KangurIconBadge(props: KangurIconBadgeProps): React.JSX.Element {
+  const {
+    accent = 'slate',
+    className,
+    decorative,
+    label,
+    size,
+    'aria-label': ariaLabelProp,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
+    ...restProps
+  } = props;
   const resolvedLabel = ariaLabelProp ?? label;
-  const shouldHide = decorative ?? !(resolvedLabel || ariaLabelledBy || ariaDescribedBy);
+  const accessibilityProps = resolveKangurIconBadgeAccessibilityProps({
+    ariaDescribedBy,
+    ariaLabel: resolvedLabel,
+    ariaLabelledBy,
+    decorative,
+  });
 
   return (
     <span
@@ -52,12 +94,12 @@ export function KangurIconBadge({
         KANGUR_ACCENT_STYLES[accent].icon,
         className
       )}
-      role={shouldHide ? 'presentation' : 'img'}
-      aria-hidden={shouldHide ? 'true' : undefined}
-      aria-label={shouldHide ? undefined : resolvedLabel}
-      aria-labelledby={ariaLabelledBy}
-      aria-describedby={ariaDescribedBy}
-      {...props}
+      role={accessibilityProps.role}
+      aria-hidden={accessibilityProps.ariaHidden}
+      aria-label={accessibilityProps.ariaLabel}
+      aria-labelledby={accessibilityProps.ariaLabelledBy}
+      aria-describedby={accessibilityProps.ariaDescribedBy}
+      {...restProps}
     />
   );
 }

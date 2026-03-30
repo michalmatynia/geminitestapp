@@ -67,12 +67,19 @@ import {
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 
 const RuntimeProbe = (): React.JSX.Element => {
-  const { canStartFromHome, handleStartGame, playerName, screen } = useKangurGameRuntime();
+  const {
+    canStartFromHome,
+    handleStartGame,
+    launchableGameInstanceId,
+    playerName,
+    screen,
+  } = useKangurGameRuntime();
 
   return (
     <div>
       <div data-testid='kangur-game-can-start'>{String(canStartFromHome)}</div>
       <div data-testid='kangur-game-screen'>{screen}</div>
+      <div data-testid='kangur-game-instance-id'>{launchableGameInstanceId ?? 'none'}</div>
       <div data-testid='kangur-game-player-name'>{playerName}</div>
       <button type='button' onClick={handleStartGame}>
         Start game
@@ -84,6 +91,8 @@ const RuntimeProbe = (): React.JSX.Element => {
 describe('KangurGameRuntimeContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
+    window.history.replaceState({}, '', '/kangur/game');
     useKangurRoutingMock.mockReturnValue({
       basePath: '/kangur',
     });
@@ -148,6 +157,172 @@ describe('KangurGameRuntimeContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent('operation');
       expect(screen.getByTestId('kangur-game-player-name')).toHaveTextContent('Gracz');
+    });
+  });
+
+  it('applies launchable screen quick starts from the URL and clears the address bar', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/kangur/game?quickStart=screen&screen=multiplication_array_quiz'
+    );
+
+    render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(
+        'multiplication_array_quiz'
+      );
+    });
+    expect(screen.getByTestId('kangur-game-player-name')).toHaveTextContent('Gracz');
+    expect(window.location.search).toBe('');
+    expect(
+      window.sessionStorage.getItem('kangur:game:pending-quick-start')
+    ).not.toBeNull();
+  });
+
+  it('replays pending quick starts after a clean remount path', async () => {
+    window.history.replaceState({}, '', '/en/kangur/game');
+    window.sessionStorage.setItem(
+      'kangur:game:pending-quick-start',
+      JSON.stringify({
+        createdAt: Date.now(),
+        quickStart: 'screen',
+        screen: 'multiplication_array_quiz',
+      })
+    );
+
+    render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(
+        'multiplication_array_quiz'
+      );
+    });
+    expect(window.location.pathname).toBe('/en/kangur/game');
+    expect(
+      window.sessionStorage.getItem('kangur:game:pending-quick-start')
+    ).not.toBeNull();
+  });
+
+  it.each([
+    {
+      instanceId: 'adding_ball:instance:default',
+      screen: 'addition_quiz',
+    },
+    {
+      instanceId: 'adding_synthesis:instance:default',
+      screen: 'adding_synthesis_quiz',
+    },
+    {
+      instanceId: 'division_groups:instance:default',
+      screen: 'division_quiz',
+    },
+    {
+      instanceId: 'multiplication_array:instance:default',
+      screen: 'multiplication_array_quiz',
+    },
+    {
+      instanceId: 'subtracting_garden:instance:default',
+      screen: 'subtraction_quiz',
+    },
+  ])(
+    'keeps the $instanceId quick start on repeated remounts of the sanitized game route',
+    async ({ instanceId, screen: quickStartScreen }) => {
+      window.history.replaceState(
+        {},
+        '',
+        `/en/kangur/game?quickStart=screen&screen=${quickStartScreen}&instanceId=${instanceId}`
+      );
+
+      const { unmount } = render(
+        <KangurGuestPlayerProvider>
+          <KangurGameRuntimeProvider>
+            <RuntimeProbe />
+          </KangurGameRuntimeProvider>
+        </KangurGuestPlayerProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(quickStartScreen);
+        expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(instanceId);
+      });
+
+      unmount();
+      window.history.replaceState({}, '', '/en/kangur/game');
+
+      render(
+        <KangurGuestPlayerProvider>
+          <KangurGameRuntimeProvider>
+            <RuntimeProbe />
+          </KangurGameRuntimeProvider>
+        </KangurGuestPlayerProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(quickStartScreen);
+        expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(instanceId);
+      });
+    }
+  );
+
+  it('keeps the root-owned adding synthesis quick start on repeated remounts of the sanitized game route', async () => {
+    useKangurRoutingMock.mockReturnValue({
+      basePath: '/',
+    });
+    window.history.replaceState(
+      {},
+      '',
+      '/en/game?quickStart=screen&screen=adding_synthesis_quiz&instanceId=adding_synthesis:instance:default'
+    );
+
+    const { unmount } = render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(
+        'adding_synthesis_quiz'
+      );
+      expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(
+        'adding_synthesis:instance:default'
+      );
+    });
+
+    unmount();
+    window.history.replaceState({}, '', '/en/game');
+
+    render(
+      <KangurGuestPlayerProvider>
+        <KangurGameRuntimeProvider>
+          <RuntimeProbe />
+        </KangurGameRuntimeProvider>
+      </KangurGuestPlayerProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kangur-game-screen')).toHaveTextContent(
+        'adding_synthesis_quiz'
+      );
+      expect(screen.getByTestId('kangur-game-instance-id')).toHaveTextContent(
+        'adding_synthesis:instance:default'
+      );
     });
   });
 });

@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { buttonVariants } from '@/shared/ui/button';
 import { cn } from '@/shared/utils';
 
 export type CategoryMapperNameCellProps = {
@@ -15,28 +15,6 @@ export type CategoryMapperNameCellProps = {
   isMapped: boolean;
   hasPendingChange: boolean;
 };
-
-type CategoryMapperExpandRuntimeValue = {
-  isExpanded: boolean;
-  onToggleExpand: () => void;
-};
-
-function CategoryMapperExpandButton({
-  isExpanded,
-  onToggleExpand,
-}: CategoryMapperExpandRuntimeValue): React.JSX.Element {
-  return (
-    <Button
-      variant='ghost'
-      size='xs'
-      onClick={onToggleExpand}
-      aria-label={isExpanded ? 'Collapse category' : 'Expand category'}
-      className='mr-2 p-0.5 text-gray-400 hover:text-white h-6 w-6'
-      title={isExpanded ? 'Collapse category' : 'Expand category'}>
-      {isExpanded ? <ChevronDown className='h-4 w-4' /> : <ChevronRight className='h-4 w-4' />}
-    </Button>
-  );
-}
 
 export function CategoryMapperNameCell({
   name,
@@ -56,7 +34,22 @@ export function CategoryMapperNameCell({
     >
       <div style={{ paddingLeft: `${depth * 20}px` }} className='flex items-center'>
         {canExpand ? (
-          <CategoryMapperExpandButton isExpanded={isExpanded} onToggleExpand={onToggleExpand} />
+          <button
+            type='button'
+            onClick={onToggleExpand}
+            aria-label={isExpanded ? 'Collapse category' : 'Expand category'}
+            className={cn(
+              buttonVariants({ variant: 'ghost', size: 'xs' }),
+              'mr-2 h-6 w-6 p-0.5 text-gray-400 hover:text-white'
+            )}
+            title={isExpanded ? 'Collapse category' : 'Expand category'}
+          >
+            {isExpanded ? (
+              <ChevronDown className='h-4 w-4' />
+            ) : (
+              <ChevronRight className='h-4 w-4' />
+            )}
+          </button>
         ) : (
           <span className='mr-2 w-6 inline-block' />
         )}

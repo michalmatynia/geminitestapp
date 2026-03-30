@@ -1,7 +1,6 @@
 import { resolveKangurLessonFocusForPracticeOperation } from '@kangur/core';
-import { Link, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { Text, View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
@@ -9,14 +8,10 @@ import {
   createKangurLessonHref,
   createKangurLessonHrefForPracticeOperation,
 } from '../lessons/lessonHref';
-import {
-  useKangurMobileLessonCheckpoints,
-  type KangurMobileLessonCheckpointItem,
-} from '../lessons/useKangurMobileLessonCheckpoints';
+import { useKangurMobileLessonCheckpoints } from '../lessons/useKangurMobileLessonCheckpoints';
 import { createKangurPlanHref } from '../plan/planHref';
+import { createKangurPracticeHref } from '../practice/practiceHref';
 import {
-  type KangurMobileOperationPerformance,
-  type KangurMobileScoreFamily,
   formatKangurMobileScoreFamily,
   formatKangurMobileScoreDateTime,
   formatKangurMobileScoreDuration,
@@ -24,763 +19,40 @@ import {
   getKangurMobileScoreAccuracyPercent,
   getKangurMobileScoreFamily,
 } from './mobileScoreSummary';
-import { createKangurPracticeHref } from '../practice/practiceHref';
-import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
+import {
+  KangurMobileActionButton as ActionButton,
+  KangurMobileCard as Card,
+  KangurMobileFilterChip,
+  KangurMobileInsetPanel as InsetPanel,
+  KangurMobileLinkButton as LinkButton,
+  KangurMobileMetric as Metric,
+  KangurMobilePill as Pill,
+  KangurMobileScrollScreen,
+  KangurMobileSummaryChip,
+} from '../shared/KangurMobileUi';
 import { createKangurResultsHref } from './resultsHref';
 import { useKangurMobileResults } from './useKangurMobileResults';
-import {
-  useKangurMobileResultsAssignments,
-  type KangurMobileResultsAssignmentItem,
-} from './useKangurMobileResultsAssignments';
-import {
-  useKangurMobileResultsLessonMastery,
-  type KangurMobileResultsLessonMasteryItem,
-} from './useKangurMobileResultsLessonMastery';
-import {
-  useKangurMobileResultsBadges,
-  type KangurMobileResultsBadgeItem,
-} from './useKangurMobileResultsBadges';
+import { useKangurMobileResultsAssignments } from './useKangurMobileResultsAssignments';
+import { useKangurMobileResultsLessonMastery } from './useKangurMobileResultsLessonMastery';
+import { useKangurMobileResultsBadges } from './useKangurMobileResultsBadges';
 import { useKangurMobileResultsDuels } from './useKangurMobileResultsDuels';
-
-function Card({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        borderRadius: 24,
-        backgroundColor: '#ffffff',
-        padding: 18,
-        gap: 12,
-        shadowColor: '#0f172a',
-        shadowOpacity: 0.08,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 10 },
-        elevation: 3,
-      }}
-    >
-      {children}
-    </View>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  description,
-}: {
-  description: string;
-  label: string;
-  value: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        flexBasis: '48%',
-        gap: 6,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-      }}
-    >
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{label}</Text>
-      <Text style={{ color: '#0f172a', fontSize: 22, fontWeight: '800' }}>{value}</Text>
-      <Text style={{ color: '#475569', fontSize: 12, lineHeight: 18 }}>{description}</Text>
-    </View>
-  );
-}
-
-function SummaryChip({
-  label,
-  backgroundColor = '#eef2ff',
-  borderColor = '#c7d2fe',
-  textColor = '#4338ca',
-}: {
-  label: string;
-  backgroundColor?: string;
-  borderColor?: string;
-  textColor?: string;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor,
-        backgroundColor,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>{label}</Text>
-    </View>
-  );
-}
-
-const getAccuracyTone = (
-  accuracyPercent: number,
-): {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-} => {
-  if (accuracyPercent >= 90) {
-    return {
-      backgroundColor: '#ecfdf5',
-      borderColor: '#a7f3d0',
-      textColor: '#047857',
-    };
-  }
-  if (accuracyPercent >= 70) {
-    return {
-      backgroundColor: '#fffbeb',
-      borderColor: '#fde68a',
-      textColor: '#b45309',
-    };
-  }
-  return {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
-    textColor: '#b91c1c',
-  };
-};
-
-const getOperationTone = (
-  family: Exclude<KangurMobileScoreFamily, 'all'>,
-): {
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-} => {
-  if (family === 'logic') {
-    return {
-        backgroundColor: '#eef2ff',
-        borderColor: '#c7d2fe',
-        textColor: '#4338ca',
-      };
-  }
-  if (family === 'time') {
-    return {
-      backgroundColor: '#fff7ed',
-      borderColor: '#fdba74',
-      textColor: '#c2410c',
-    };
-  }
-  return {
-    backgroundColor: '#ecfeff',
-    borderColor: '#a5f3fc',
-    textColor: '#0f766e',
-  };
-};
+import { ResultsDuelsCard } from './results-duels-card';
+import {
+  LessonCheckpointRow,
+  LessonMasteryRow,
+  OperationInsightCard,
+  ResultsAssignmentRow,
+  ResultsBadgeChip,
+  getAccuracyTone,
+  getOperationTone,
+  resolveResultsFilterFamily,
+  resolveResultsFilterOperation,
+} from './results-primitives';
 
 const RESULTS_HOME_ROUTE = '/' as const;
 const LESSONS_ROUTE = '/lessons' as Href;
 const DUELS_ROUTE = createKangurDuelsHref();
 const PROFILE_ROUTE = '/profile' as Href;
-
-const resolveResultsFilterFamily = (
-  value: string | string[] | undefined,
-): KangurMobileScoreFamily => {
-  const resolved = Array.isArray(value) ? value[0] : value;
-  if (
-    resolved === 'all' ||
-    resolved === 'arithmetic' ||
-    resolved === 'logic' ||
-    resolved === 'time'
-  ) {
-    return resolved;
-  }
-
-  return 'all';
-};
-
-const resolveResultsFilterOperation = (
-  value: string | string[] | undefined,
-): string | null => {
-  const resolved = Array.isArray(value) ? value[0] : value;
-  const trimmed = resolved?.trim();
-  return trimmed ? trimmed : null;
-};
-
-function FilterPill({
-  href,
-  isActive,
-  label,
-}: {
-  href: Href;
-  isActive: boolean;
-  label: string;
-}): React.JSX.Element {
-  return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityRole='button'
-        style={{
-          borderRadius: 999,
-          borderWidth: 1,
-          borderColor: isActive ? '#4338ca' : '#cbd5e1',
-          backgroundColor: isActive ? '#eef2ff' : '#ffffff',
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-        }}
-      >
-        <Text
-          style={{
-            color: isActive ? '#4338ca' : '#475569',
-            fontSize: 12,
-            fontWeight: '700',
-          }}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Link>
-  );
-}
-
-function OperationInsightCard({
-  description,
-  lessonHref,
-  operation,
-  practiceLabel,
-  title,
-}: {
-  description: string;
-  lessonHref?: Href;
-  operation: KangurMobileOperationPerformance;
-  practiceLabel: string;
-  title: string;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const operationTone = getOperationTone(operation.family);
-
-  return (
-    <View
-      style={{
-        flexBasis: '48%',
-        gap: 10,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-      }}
-    >
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
-      <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-        {formatKangurMobileScoreOperation(operation.operation, locale)}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>{description}</Text>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: operationTone.borderColor,
-            backgroundColor: operationTone.backgroundColor,
-            paddingHorizontal: 12,
-            paddingVertical: 7,
-          }}
-        >
-          <Text
-            style={{
-              color: operationTone.textColor,
-              fontSize: 12,
-              fontWeight: '700',
-            }}
-          >
-            {copy({
-              de: `Durchschnitt ${operation.averageAccuracyPercent}%`,
-              en: `Average ${operation.averageAccuracyPercent}%`,
-              pl: `Średnio ${operation.averageAccuracyPercent}%`,
-            })}
-          </Text>
-        </View>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#cbd5e1',
-            backgroundColor: '#ffffff',
-            paddingHorizontal: 12,
-            paddingVertical: 7,
-          }}
-        >
-          <Text style={{ color: '#475569', fontSize: 12, fontWeight: '700' }}>
-            {copy({
-              de: `Ergebnisse ${operation.sessions}`,
-              en: `Results ${operation.sessions}`,
-              pl: `Wyniki ${operation.sessions}`,
-            })}
-          </Text>
-        </View>
-      </View>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={createKangurPracticeHref(operation.operation)} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {practiceLabel}
-            </Text>
-          </Pressable>
-        </Link>
-
-        {lessonHref ? (
-          <Link href={lessonHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 12,
-                paddingVertical: 9,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Lektion öffnen',
-                  en: 'Open lesson',
-                  pl: 'Otwórz lekcję',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
-
-        <Link
-          href={createKangurResultsHref({
-            operation: operation.operation,
-          })}
-          asChild
-        >
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: '#cbd5e1',
-              backgroundColor: '#ffffff',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Modusverlauf',
-                  en: 'Mode history',
-                  pl: 'Historia trybu',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-      </View>
-    </View>
-  );
-}
-
-function LessonCheckpointRow({
-  item,
-}: {
-  item: KangurMobileLessonCheckpointItem;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-            {item.emoji} {item.title}
-          </Text>
-          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-            {copy({
-              de: `Letztes Ergebnis ${item.lastScorePercent}% • Beherrschung ${item.masteryPercent}%`,
-              en: `Last score ${item.lastScorePercent}% • mastery ${item.masteryPercent}%`,
-              pl: `Ostatni wynik ${item.lastScorePercent}% • opanowanie ${item.masteryPercent}%`,
-            })}
-          </Text>
-        </View>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: '#c7d2fe',
-            backgroundColor: '#eef2ff',
-            paddingHorizontal: 12,
-            paddingVertical: 7,
-          }}
-        >
-          <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-            {item.bestScorePercent}%
-          </Text>
-        </View>
-      </View>
-
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Zuletzt gespeichert ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-          en: `Last saved ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-          pl: `Ostatni zapis ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-        })}
-      </Text>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={item.lessonHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {copy({
-                de: 'Zur Lektion zurück',
-                en: 'Return to lesson',
-                pl: 'Wróć do lekcji',
-              })}
-              {`: ${item.title}`}
-            </Text>
-          </Pressable>
-        </Link>
-        {item.practiceHref ? (
-          <Link href={item.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 12,
-                paddingVertical: 9,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-                {`: ${item.title}`}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-function ResultsBadgeChip({
-  item,
-}: {
-  item: KangurMobileResultsBadgeItem;
-}): React.JSX.Element {
-  return (
-    <View
-      style={{
-        alignSelf: 'flex-start',
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: '#c7d2fe',
-        backgroundColor: '#eef2ff',
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-      }}
-    >
-      <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-        {item.emoji} {item.name}
-      </Text>
-    </View>
-  );
-}
-
-function ResultsAssignmentRow({
-  item,
-}: {
-  item: KangurMobileResultsAssignmentItem;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const priorityTone =
-    item.assignment.priority === 'high'
-      ? {
-          backgroundColor: '#fef2f2',
-          borderColor: '#fecaca',
-          textColor: '#b91c1c',
-        }
-      : item.assignment.priority === 'medium'
-        ? {
-            backgroundColor: '#fffbeb',
-            borderColor: '#fde68a',
-            textColor: '#b45309',
-          }
-        : {
-            backgroundColor: '#eff6ff',
-            borderColor: '#bfdbfe',
-            textColor: '#1d4ed8',
-          };
-
-  return (
-    <View
-      style={{
-        borderRadius: 18,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#ffffff',
-        padding: 12,
-        gap: 8,
-      }}
-    >
-      <View
-        style={{
-          alignSelf: 'flex-start',
-          borderRadius: 999,
-          borderWidth: 1,
-          borderColor: priorityTone.borderColor,
-          backgroundColor: priorityTone.backgroundColor,
-          paddingHorizontal: 12,
-          paddingVertical: 7,
-        }}
-      >
-        <Text style={{ color: priorityTone.textColor, fontSize: 12, fontWeight: '700' }}>
-          {copy({
-            de:
-              item.assignment.priority === 'high'
-                ? 'Hohe Priorität'
-                : item.assignment.priority === 'medium'
-                  ? 'Mittlere Priorität'
-                  : 'Niedrige Priorität',
-            en:
-              item.assignment.priority === 'high'
-                ? 'High priority'
-                : item.assignment.priority === 'medium'
-                  ? 'Medium priority'
-                  : 'Low priority',
-            pl:
-              item.assignment.priority === 'high'
-                ? 'Priorytet wysoki'
-                : item.assignment.priority === 'medium'
-                  ? 'Priorytet średni'
-                  : 'Priorytet niski',
-          })}
-        </Text>
-      </View>
-      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-        {item.assignment.title}
-      </Text>
-      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {item.assignment.description}
-      </Text>
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Ziel: ${item.assignment.target}`,
-          en: `Goal: ${item.assignment.target}`,
-          pl: `Cel: ${item.assignment.target}`,
-        })}
-      </Text>
-      {item.href ? (
-        <Link href={item.href} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {translateKangurMobileActionLabel(item.assignment.action.label, locale)}
-            </Text>
-          </Pressable>
-        </Link>
-      ) : (
-        <View
-          style={{
-            alignSelf: 'flex-start',
-            borderRadius: 999,
-            backgroundColor: '#e2e8f0',
-            paddingHorizontal: 12,
-            paddingVertical: 9,
-          }}
-        >
-          <Text style={{ color: '#475569', fontWeight: '700' }}>
-            {translateKangurMobileActionLabel(item.assignment.action.label, locale)} ·{' '}
-            {copy({
-              de: 'bald',
-              en: 'soon',
-              pl: 'wkrotce',
-            })}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function LessonMasteryRow({
-  insight,
-  title,
-}: {
-  insight: KangurMobileResultsLessonMasteryItem;
-  title: string;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const masteryTone = getAccuracyTone(insight.masteryPercent);
-  const lastAttemptLabel = insight.lastCompletedAt
-    ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale)
-    : copy({
-        de: 'kein Datum',
-        en: 'no date',
-        pl: 'brak daty',
-      });
-
-  return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 10,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
-          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-            {insight.emoji} {insight.title}
-          </Text>
-          <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-            {copy({
-              de: `Versuche ${insight.attempts} • letztes Ergebnis ${insight.lastScorePercent}%`,
-              en: `Attempts ${insight.attempts} • last score ${insight.lastScorePercent}%`,
-              pl: `Próby ${insight.attempts} • ostatni wynik ${insight.lastScorePercent}%`,
-            })}
-          </Text>
-        </View>
-        <View
-          style={{
-            borderRadius: 999,
-            borderWidth: 1,
-            borderColor: masteryTone.borderColor,
-            backgroundColor: masteryTone.backgroundColor,
-            paddingHorizontal: 12,
-            paddingVertical: 7,
-          }}
-        >
-          <Text style={{ color: masteryTone.textColor, fontSize: 12, fontWeight: '700' }}>
-            {insight.masteryPercent}%
-          </Text>
-        </View>
-      </View>
-
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Bestes Ergebnis ${insight.bestScorePercent}% • letzter Versuch ${lastAttemptLabel}`,
-          en: `Best score ${insight.bestScorePercent}% • last attempt ${lastAttemptLabel}`,
-          pl: `Najlepszy wynik ${insight.bestScorePercent}% • ostatnia próba ${lastAttemptLabel}`,
-        })}
-      </Text>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Link href={insight.lessonHref} asChild>
-          <Pressable
-            accessibilityRole='button'
-            style={{
-              alignSelf: 'flex-start',
-              borderRadius: 999,
-              backgroundColor: '#0f172a',
-              paddingHorizontal: 12,
-              paddingVertical: 9,
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-              {copy({
-                de: 'Lektion öffnen',
-                en: 'Open lesson',
-                pl: 'Otwórz lekcję',
-              })}
-            </Text>
-          </Pressable>
-        </Link>
-        {insight.practiceHref ? (
-          <Link href={insight.practiceHref} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: '#cbd5e1',
-                backgroundColor: '#ffffff',
-                paddingHorizontal: 12,
-                paddingVertical: 9,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Danach trainieren',
-                  en: 'Practice after',
-                  pl: 'Potem trenuj',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
-        ) : null}
-      </View>
-    </View>
-  );
-}
 
 export function KangurResultsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -825,37 +97,22 @@ export function KangurResultsScreen(): React.JSX.Element {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fffaf2' }}>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 18,
-          paddingHorizontal: 20,
-          paddingVertical: 24,
-        }}
-      >
+    <KangurMobileScrollScreen
+      contentContainerStyle={{
+        gap: 18,
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+    >
         <View style={{ gap: 14 }}>
-          <Link href={RESULTS_HOME_ROUTE} asChild>
-            <Pressable
-              accessibilityRole='button'
-              style={{
-                alignSelf: 'flex-start',
-                borderRadius: 999,
-                backgroundColor: '#ffffff',
-                borderWidth: 1,
-                borderColor: '#e2e8f0',
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                {copy({
-                  de: 'Zurück',
-                  en: 'Back',
-                  pl: 'Wróć',
-                })}
-              </Text>
-            </Pressable>
-          </Link>
+          <LinkButton
+            href={RESULTS_HOME_ROUTE}
+            label={copy({
+              de: 'Zurück',
+              en: 'Back',
+              pl: 'Wróć',
+            })}
+          />
 
           <Card>
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -879,28 +136,16 @@ export function KangurResultsScreen(): React.JSX.Element {
                 pl: 'Jedno miejsce dla ostatnich wyników, skuteczności i tego, jak rozkładają się na arytmetykę, czas i logikę.',
               })}
             </Text>
-            <Link href={createKangurPlanHref()} asChild>
-              <Pressable
-                accessibilityRole='button'
-                style={{
-                  alignSelf: 'flex-start',
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: '#cbd5e1',
-                  backgroundColor: '#ffffff',
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                }}
-                >
-                  <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Tagesplan öffnen',
-                      en: 'Open daily plan',
-                      pl: 'Otwórz plan dnia',
-                    })}
-                  </Text>
-                </Pressable>
-              </Link>
+            <LinkButton
+              href={createKangurPlanHref()}
+              label={copy({
+                de: 'Tagesplan öffnen',
+                en: 'Open daily plan',
+                pl: 'Otwórz plan dnia',
+              })}
+              style={{ paddingHorizontal: 16 }}
+              verticalPadding={12}
+            />
           </Card>
 
           {results.isLoading ? (
@@ -922,26 +167,17 @@ export function KangurResultsScreen(): React.JSX.Element {
                   pl: 'Zaloguj się, aby zobaczyć wyniki.',
                 })}
               </Text>
-              <Link href={RESULTS_HOME_ROUTE} asChild>
-                <Pressable
-                  accessibilityRole='button'
-                  style={{
-                    alignSelf: 'flex-start',
-                    borderRadius: 999,
-                    backgroundColor: '#1d4ed8',
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                    {copy({
-                      de: 'Zum Login',
-                      en: 'Go to sign in',
-                      pl: 'Przejdź do logowania',
-                    })}
-                  </Text>
-                </Pressable>
-              </Link>
+              <LinkButton
+                href={RESULTS_HOME_ROUTE}
+                label={copy({
+                  de: 'Zum Login',
+                  en: 'Go to sign in',
+                  pl: 'Przejdź do logowania',
+                })}
+                style={{ paddingHorizontal: 16 }}
+                tone='brand'
+                verticalPadding={12}
+              />
             </Card>
           ) : (
             <>
@@ -1171,42 +407,23 @@ export function KangurResultsScreen(): React.JSX.Element {
                 </View>
 
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  <View
-                    style={{
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#c7d2fe',
-                      backgroundColor: '#eef2ff',
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
-                    }}
-                  >
-                    <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-                      {copy({
-                        de: `Freigeschaltet ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
-                        en: `Unlocked ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
-                        pl: `Odblokowane ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
-                      })}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#fde68a',
-                      backgroundColor: '#fffbeb',
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
-                    }}
-                  >
-                    <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>
-                      {copy({
-                        de: `Offen ${resultsBadges.remainingBadges}`,
-                        en: `Remaining ${resultsBadges.remainingBadges}`,
-                        pl: `Do zdobycia ${resultsBadges.remainingBadges}`,
-                      })}
-                    </Text>
-                  </View>
+                  <KangurMobileSummaryChip
+                    label={copy({
+                      de: `Freigeschaltet ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+                      en: `Unlocked ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+                      pl: `Odblokowane ${resultsBadges.unlockedBadges}/${resultsBadges.totalBadges}`,
+                    })}
+                  />
+                  <KangurMobileSummaryChip
+                    label={copy({
+                      de: `Offen ${resultsBadges.remainingBadges}`,
+                      en: `Remaining ${resultsBadges.remainingBadges}`,
+                      pl: `Do zdobycia ${resultsBadges.remainingBadges}`,
+                    })}
+                    backgroundColor='#fffbeb'
+                    borderColor='#fde68a'
+                    textColor='#b45309'
+                  />
                 </View>
 
                 {resultsBadges.recentBadges.length === 0 ? (
@@ -1234,28 +451,14 @@ export function KangurResultsScreen(): React.JSX.Element {
                   </View>
                 )}
 
-                <Link href={PROFILE_ROUTE} asChild>
-                  <Pressable
-                    accessibilityRole='button'
-                    style={{
-                      alignSelf: 'flex-start',
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#cbd5e1',
-                      backgroundColor: '#ffffff',
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                      {copy({
-                        de: 'Profil und Abzeichen öffnen',
-                        en: 'Open profile and badges',
-                        pl: 'Otwórz profil i odznaki',
-                      })}
-                    </Text>
-                  </Pressable>
-                </Link>
+                <LinkButton
+                  href={PROFILE_ROUTE}
+                  label={copy({
+                    de: 'Profil und Abzeichen öffnen',
+                    en: 'Open profile and badges',
+                    pl: 'Otwórz profil i odznaki',
+                  })}
+                />
               </Card>
 
               <Card>
@@ -1284,60 +487,33 @@ export function KangurResultsScreen(): React.JSX.Element {
                 </View>
 
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  <View
-                    style={{
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#c7d2fe',
-                      backgroundColor: '#eef2ff',
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
-                    }}
-                  >
-                    <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-                      {copy({
-                        de: `Verfolgt ${lessonMastery.trackedLessons}`,
-                        en: `Tracked ${lessonMastery.trackedLessons}`,
-                        pl: `Śledzone ${lessonMastery.trackedLessons}`,
-                      })}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#a7f3d0',
-                      backgroundColor: '#ecfdf5',
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
-                    }}
-                  >
-                    <Text style={{ color: '#047857', fontSize: 12, fontWeight: '700' }}>
-                      {copy({
-                        de: `Beherrscht ${lessonMastery.masteredLessons}`,
-                        en: `Mastered ${lessonMastery.masteredLessons}`,
-                        pl: `Opanowane ${lessonMastery.masteredLessons}`,
-                      })}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      borderRadius: 999,
-                      borderWidth: 1,
-                      borderColor: '#fde68a',
-                      backgroundColor: '#fffbeb',
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
-                    }}
-                  >
-                    <Text style={{ color: '#b45309', fontSize: 12, fontWeight: '700' }}>
-                      {copy({
-                        de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
-                        en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
-                        pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
-                      })}
-                    </Text>
-                  </View>
+                  <KangurMobileSummaryChip
+                    label={copy({
+                      de: `Verfolgt ${lessonMastery.trackedLessons}`,
+                      en: `Tracked ${lessonMastery.trackedLessons}`,
+                      pl: `Śledzone ${lessonMastery.trackedLessons}`,
+                    })}
+                  />
+                  <KangurMobileSummaryChip
+                    label={copy({
+                      de: `Beherrscht ${lessonMastery.masteredLessons}`,
+                      en: `Mastered ${lessonMastery.masteredLessons}`,
+                      pl: `Opanowane ${lessonMastery.masteredLessons}`,
+                    })}
+                    backgroundColor='#ecfdf5'
+                    borderColor='#a7f3d0'
+                    textColor='#047857'
+                  />
+                  <KangurMobileSummaryChip
+                    label={copy({
+                      de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
+                      en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
+                      pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
+                    })}
+                    backgroundColor='#fffbeb'
+                    borderColor='#fde68a'
+                    textColor='#b45309'
+                  />
                 </View>
 
                 {lessonMastery.trackedLessons === 0 ? (
@@ -1358,65 +534,28 @@ export function KangurResultsScreen(): React.JSX.Element {
 
                     <View style={{ alignSelf: 'stretch', gap: 10 }}>
                       {weakestLesson ? (
-                        <Link href={weakestLesson.lessonHref} asChild>
-                          <Pressable
-                            accessibilityRole='button'
-                            style={{
-                              alignSelf: 'stretch',
-                              width: '100%',
-                              borderRadius: 999,
-                              backgroundColor: '#0f172a',
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color: '#ffffff',
-                                fontWeight: '700',
-                                textAlign: 'center',
-                              }}
-                            >
-                              {copy({
-                                de: `Fokus: ${weakestLesson.title}`,
-                                en: `Focus: ${weakestLesson.title}`,
-                                pl: `Skup się: ${weakestLesson.title}`,
-                              })}
-                            </Text>
-                          </Pressable>
-                        </Link>
+                        <LinkButton
+                          href={weakestLesson.lessonHref}
+                          label={copy({
+                            de: `Fokus: ${weakestLesson.title}`,
+                            en: `Focus: ${weakestLesson.title}`,
+                            pl: `Skup się: ${weakestLesson.title}`,
+                          })}
+                          stretch
+                          tone='primary'
+                        />
                       ) : null}
 
                       {strongestLesson ? (
-                        <Link href={strongestLesson.lessonHref} asChild>
-                          <Pressable
-                            accessibilityRole='button'
-                            style={{
-                              alignSelf: 'stretch',
-                              width: '100%',
-                              borderRadius: 999,
-                              borderWidth: 1,
-                              borderColor: '#cbd5e1',
-                              backgroundColor: '#ffffff',
-                              paddingHorizontal: 14,
-                              paddingVertical: 10,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color: '#0f172a',
-                                fontWeight: '700',
-                                textAlign: 'center',
-                              }}
-                            >
-                              {copy({
-                                de: `Stärke halten: ${strongestLesson.title}`,
-                                en: `Maintain strength: ${strongestLesson.title}`,
-                                pl: `Podtrzymaj: ${strongestLesson.title}`,
-                              })}
-                            </Text>
-                          </Pressable>
-                        </Link>
+                        <LinkButton
+                          href={strongestLesson.lessonHref}
+                          label={copy({
+                            de: `Stärke halten: ${strongestLesson.title}`,
+                            en: `Maintain strength: ${strongestLesson.title}`,
+                            pl: `Podtrzymaj: ${strongestLesson.title}`,
+                          })}
+                          stretch
+                        />
                       ) : null}
                     </View>
 
@@ -1444,282 +583,11 @@ export function KangurResultsScreen(): React.JSX.Element {
                 )}
               </Card>
 
-              <Card>
-                <View style={{ gap: 4 }}>
-                  <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-                    {copy({
-                      de: 'Duelle',
-                      en: 'Duels',
-                      pl: 'Pojedynki',
-                    })}
-                  </Text>
-                  <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                    {copy({
-                      de: 'Schneller Rückweg zu Rivalen',
-                      en: 'Quick return to rivals',
-                      pl: 'Szybki powrót do rywali',
-                    })}
-                  </Text>
-                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {copy({
-                      de: 'Prüfe den aktuellen Duellstand, sieh die letzten Rivalen und starte einen Rückkampf, ohne Ergebnisse zu verlassen.',
-                      en: 'Check the current duel standing, see recent rivals, and jump into a rematch without leaving results.',
-                      pl: 'Sprawdź aktualny stan pojedynków, zobacz ostatnich rywali i wejdź w rewanż bez wychodzenia z wyników.',
-                    })}
-                  </Text>
-                </View>
-
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  <SummaryChip
-                    label={copy({
-                      de: `Rivalen ${duelResults.opponents.length}`,
-                      en: `Rivals ${duelResults.opponents.length}`,
-                      pl: `Rywale ${duelResults.opponents.length}`,
-                    })}
-                    backgroundColor='#eff6ff'
-                    borderColor='#bfdbfe'
-                    textColor='#1d4ed8'
-                  />
-                  <SummaryChip
-                    label={
-                      duelResults.currentRank
-                        ? copy({
-                            de: `Deine Position #${duelResults.currentRank}`,
-                            en: `Your rank #${duelResults.currentRank}`,
-                            pl: `Twoja pozycja #${duelResults.currentRank}`,
-                          })
-                        : copy({
-                            de: 'Wartet auf Sichtbarkeit',
-                            en: 'Waiting for visibility',
-                            pl: 'Czeka na widoczność',
-                          })
-                    }
-                    backgroundColor='#ecfdf5'
-                    borderColor='#a7f3d0'
-                    textColor='#047857'
-                  />
-                </View>
-
-                {duelResults.isRestoringAuth || duelResults.isLoading ? (
-                  <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {copy({
-                      de: 'Der Duellstand in den Ergebnissen wird geladen.',
-                      en: 'Loading the duel standing in results.',
-                      pl: 'Pobieramy stan pojedynków w wynikach.',
-                    })}
-                  </Text>
-                ) : duelResults.error ? (
-                  <View style={{ gap: 10 }}>
-                    <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-                      {duelResults.error}
-                    </Text>
-                    <Pressable
-                      accessibilityRole='button'
-                      onPress={() => {
-                        void duelResults.refresh();
-                      }}
-                      style={{
-                        alignSelf: 'flex-start',
-                        borderRadius: 999,
-                        backgroundColor: '#0f172a',
-                        paddingHorizontal: 14,
-                        paddingVertical: 10,
-                      }}
-                    >
-                      <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                        {copy({
-                          de: 'Duelle aktualisieren',
-                          en: 'Refresh duels',
-                          pl: 'Odśwież pojedynki',
-                        })}
-                      </Text>
-                    </Pressable>
-                  </View>
-                ) : (
-                  <View style={{ gap: 12 }}>
-                    {duelResults.currentEntry ? (
-                      <View
-                        style={{
-                          borderRadius: 20,
-                          borderWidth: 1,
-                          borderColor: '#bfdbfe',
-                          backgroundColor: '#eff6ff',
-                          padding: 14,
-                          gap: 8,
-                        }}
-                      >
-                        <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                          {copy({
-                            de: 'DEIN DUELLSTAND',
-                            en: 'YOUR DUEL SNAPSHOT',
-                            pl: 'TWÓJ WYNIK W POJEDYNKACH',
-                          })}
-                        </Text>
-                        <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                          #{duelResults.currentRank} {duelResults.currentEntry.displayName}
-                        </Text>
-                        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                          {copy({
-                            de: `Siege ${duelResults.currentEntry.wins} • Niederlagen ${duelResults.currentEntry.losses} • Unentschieden ${duelResults.currentEntry.ties}`,
-                            en: `Wins ${duelResults.currentEntry.wins} • Losses ${duelResults.currentEntry.losses} • Ties ${duelResults.currentEntry.ties}`,
-                            pl: `Wygrane ${duelResults.currentEntry.wins} • Porażki ${duelResults.currentEntry.losses} • Remisy ${duelResults.currentEntry.ties}`,
-                          })}
-                        </Text>
-                        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                          {copy({
-                            de: `Matches ${duelResults.currentEntry.matches} • Quote ${Math.round(duelResults.currentEntry.winRate * 100)}% • letztes Duell ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
-                            en: `Matches ${duelResults.currentEntry.matches} • Win rate ${Math.round(duelResults.currentEntry.winRate * 100)}% • last duel ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
-                            pl: `Mecze ${duelResults.currentEntry.matches} • Win rate ${Math.round(duelResults.currentEntry.winRate * 100)}% • ostatni pojedynek ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
-                          })}
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                        {copy({
-                          de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                          en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
-                          pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
-                        })}
-                      </Text>
-                    )}
-
-                    {duelResults.actionError ? (
-                      <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-                        {duelResults.actionError}
-                      </Text>
-                    ) : null}
-
-                    {duelResults.opponents.length === 0 ? (
-                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                        {copy({
-                          de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
-                          en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
-                          pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
-                        })}
-                      </Text>
-                    ) : (
-                      <View style={{ gap: 10 }}>
-                        <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-                          {copy({
-                            de: 'Letzte Rivalen',
-                            en: 'Recent rivals',
-                            pl: 'Ostatni rywale',
-                          })}
-                        </Text>
-                        {duelResults.opponents.map((opponent) => (
-                          <View
-                            key={opponent.learnerId}
-                            style={{
-                              borderRadius: 20,
-                              borderWidth: 1,
-                              borderColor: '#e2e8f0',
-                              backgroundColor: '#f8fafc',
-                              padding: 14,
-                              gap: 8,
-                            }}
-                          >
-                            <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-                              {opponent.displayName}
-                            </Text>
-                            <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                              {copy({
-                                de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                                en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                                pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                              })}
-                            </Text>
-                            <Pressable
-                              accessibilityRole='button'
-                              disabled={duelResults.isActionPending}
-                              onPress={() => {
-                                void duelResults.createRematch(opponent.learnerId).then((sessionId) => {
-                                  if (sessionId) {
-                                    openDuelSession(sessionId);
-                                  }
-                                });
-                              }}
-                              style={{
-                                alignSelf: 'flex-start',
-                                borderRadius: 999,
-                                backgroundColor: duelResults.isActionPending ? '#94a3b8' : '#1d4ed8',
-                                paddingHorizontal: 14,
-                                paddingVertical: 10,
-                              }}
-                            >
-                              <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                                {duelResults.pendingOpponentLearnerId === opponent.learnerId
-                                  ? copy({
-                                      de: 'Rückkampf wird gesendet...',
-                                      en: 'Sending rematch...',
-                                      pl: 'Wysyłanie rewanżu...',
-                                    })
-                                  : copy({
-                                      de: 'Schneller Rückkampf',
-                                      en: 'Quick rematch',
-                                      pl: 'Szybki rewanż',
-                                    })}
-                              </Text>
-                            </Pressable>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-
-                    <View style={{ alignSelf: 'stretch', gap: 10 }}>
-                      <Pressable
-                        accessibilityRole='button'
-                        onPress={() => {
-                          void duelResults.refresh();
-                        }}
-                        style={{
-                          alignSelf: 'stretch',
-                          width: '100%',
-                          borderRadius: 999,
-                          borderWidth: 1,
-                          borderColor: '#cbd5e1',
-                          backgroundColor: '#ffffff',
-                          paddingHorizontal: 14,
-                          paddingVertical: 10,
-                        }}
-                      >
-                        <Text style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}>
-                          {copy({
-                            de: 'Duelle aktualisieren',
-                            en: 'Refresh duels',
-                            pl: 'Odśwież pojedynki',
-                          })}
-                        </Text>
-                      </Pressable>
-
-                      <Link href={DUELS_ROUTE} asChild>
-                        <Pressable
-                          accessibilityRole='button'
-                          style={{
-                            alignSelf: 'stretch',
-                            width: '100%',
-                            borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor: '#cbd5e1',
-                            backgroundColor: '#ffffff',
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
-                          }}
-                        >
-                          <Text
-                            style={{ color: '#0f172a', fontWeight: '700', textAlign: 'center' }}
-                          >
-                            {copy({
-                              de: 'Duelle öffnen',
-                              en: 'Open duels',
-                              pl: 'Otwórz pojedynki',
-                            })}
-                          </Text>
-                        </Pressable>
-                      </Link>
-                    </View>
-                  </View>
-                )}
-              </Card>
+              <ResultsDuelsCard
+                duelResults={duelResults}
+                duelsHref={DUELS_ROUTE}
+                openDuelSession={openDuelSession}
+              />
 
               <Card>
                 <View style={{ gap: 4 }}>
@@ -1752,28 +620,16 @@ export function KangurResultsScreen(): React.JSX.Element {
                     {lessonCheckpoints.recentCheckpoints.map((item) => (
                       <LessonCheckpointRow key={item.componentId} item={item} />
                     ))}
-                    <Link href={LESSONS_ROUTE} asChild>
-                      <Pressable
-                        accessibilityRole='button'
-                        style={{
-                          alignSelf: 'flex-start',
-                          borderRadius: 999,
-                          borderWidth: 1,
-                          borderColor: '#cbd5e1',
-                          backgroundColor: '#ffffff',
-                          paddingHorizontal: 12,
-                          paddingVertical: 9,
-                        }}
-                      >
-                        <Text style={{ color: '#0f172a', fontWeight: '700' }}>
-                          {copy({
-                            de: 'Lektionen öffnen',
-                            en: 'Open lessons',
-                            pl: 'Otwórz lekcje',
-                          })}
-                        </Text>
-                      </Pressable>
-                    </Link>
+                    <LinkButton
+                      href={LESSONS_ROUTE}
+                      label={copy({
+                        de: 'Lektionen öffnen',
+                        en: 'Open lessons',
+                        pl: 'Otwórz lekcje',
+                      })}
+                      style={{ paddingHorizontal: 12 }}
+                      verticalPadding={9}
+                    />
                   </View>
                 )}
               </Card>
@@ -1803,92 +659,109 @@ export function KangurResultsScreen(): React.JSX.Element {
                       })}
                     </Text>
                   </View>
-                  <Pressable
-                    accessibilityRole='button'
-                    onPress={() => {
-                      void results.refresh();
-                    }}
-                    style={{
-                      alignSelf: 'flex-start',
-                      borderRadius: 999,
-                      backgroundColor: '#0f172a',
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Text style={{ color: '#ffffff', fontWeight: '700' }}>
-                      {copy({
-                        de: 'Aktualisieren',
-                        en: 'Refresh',
-                        pl: 'Odśwież',
-                      })}
-                    </Text>
-                  </Pressable>
+                  <ActionButton
+                    label={copy({
+                      de: 'Aktualisieren',
+                      en: 'Refresh',
+                      pl: 'Odśwież',
+                    })}
+                    onPress={() => results.refresh()}
+                  />
                 </View>
 
                 <View style={{ gap: 10 }}>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    <FilterPill
+                    <KangurMobileFilterChip
                       href={createKangurResultsHref({
                         family: 'all',
                         operation: null,
                       })}
-                      isActive={filterFamily === 'all' && !filterOperation}
+                      horizontalPadding={12}
+                      idleTextColor='#475569'
                       label={copy({
                         de: 'Alle Ergebnisse',
                         en: 'All results',
                         pl: 'Wszystkie wyniki',
                       })}
+                      selected={filterFamily === 'all' && !filterOperation}
+                      selectedBackgroundColor='#eef2ff'
+                      selectedBorderColor='#4338ca'
+                      selectedTextColor='#4338ca'
+                      verticalPadding={8}
                     />
-                    <FilterPill
+                    <KangurMobileFilterChip
                       href={createKangurResultsHref({
                         family: 'arithmetic',
                         operation: null,
                       })}
-                      isActive={filterFamily === 'arithmetic' && !filterOperation}
+                      horizontalPadding={12}
+                      idleTextColor='#475569'
                       label={copy({
                         de: 'Arithmetik',
                         en: 'Arithmetic',
                         pl: 'Arytmetyka',
                       })}
+                      selected={filterFamily === 'arithmetic' && !filterOperation}
+                      selectedBackgroundColor='#eef2ff'
+                      selectedBorderColor='#4338ca'
+                      selectedTextColor='#4338ca'
+                      verticalPadding={8}
                     />
-                    <FilterPill
+                    <KangurMobileFilterChip
                       href={createKangurResultsHref({
                         family: 'logic',
                         operation: null,
                       })}
-                      isActive={filterFamily === 'logic' && !filterOperation}
+                      horizontalPadding={12}
+                      idleTextColor='#475569'
                       label={copy({
                         de: 'Logik',
                         en: 'Logic',
                         pl: 'Logika',
                       })}
+                      selected={filterFamily === 'logic' && !filterOperation}
+                      selectedBackgroundColor='#eef2ff'
+                      selectedBorderColor='#4338ca'
+                      selectedTextColor='#4338ca'
+                      verticalPadding={8}
                     />
-                    <FilterPill
+                    <KangurMobileFilterChip
                       href={createKangurResultsHref({
                         family: 'time',
                         operation: null,
                       })}
-                      isActive={filterFamily === 'time' && !filterOperation}
+                      horizontalPadding={12}
+                      idleTextColor='#475569'
                       label={copy({
                         de: 'Zeit',
                         en: 'Time',
                         pl: 'Czas',
                       })}
+                      selected={filterFamily === 'time' && !filterOperation}
+                      selectedBackgroundColor='#eef2ff'
+                      selectedBorderColor='#4338ca'
+                      selectedTextColor='#4338ca'
+                      verticalPadding={8}
                     />
                   </View>
 
                   {results.availableOperations.length > 0 ? (
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                       {results.availableOperations.map((operation) => (
-                        <FilterPill
+                        <KangurMobileFilterChip
                           key={operation}
                           href={createKangurResultsHref({
                             family: 'all',
                             operation,
                           })}
-                          isActive={filterOperation === operation}
+                          horizontalPadding={12}
+                          idleTextColor='#475569'
                           label={formatKangurMobileScoreOperation(operation, locale)}
+                          selected={filterOperation === operation}
+                          selectedBackgroundColor='#eef2ff'
+                          selectedBorderColor='#4338ca'
+                          selectedTextColor='#4338ca'
+                          verticalPadding={8}
                         />
                       ))}
                     </View>
@@ -1927,17 +800,7 @@ export function KangurResultsScreen(): React.JSX.Element {
                         createKangurLessonHrefForPracticeOperation(score.operation);
 
                       return (
-                        <View
-                          key={score.id}
-                          style={{
-                            gap: 10,
-                            borderRadius: 20,
-                            borderWidth: 1,
-                            borderColor: '#e2e8f0',
-                            backgroundColor: '#f8fafc',
-                            padding: 14,
-                          }}
-                        >
+                        <InsetPanel key={score.id} gap={10}>
                           <View
                             style={{
                               alignItems: 'center',
@@ -1968,56 +831,24 @@ export function KangurResultsScreen(): React.JSX.Element {
                               </Text>
                             </View>
 
-                            <View
-                              style={{
-                                borderRadius: 999,
-                                borderWidth: 1,
-                                borderColor: accuracyTone.borderColor,
-                                backgroundColor: accuracyTone.backgroundColor,
-                                paddingHorizontal: 12,
-                                paddingVertical: 7,
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  color: accuracyTone.textColor,
-                                  fontSize: 12,
-                                  fontWeight: '700',
-                                }}
-                              >
-                                {copy({
-                                  de: `Trefferquote ${accuracyPercent}%`,
-                                  en: `Accuracy ${accuracyPercent}%`,
-                                  pl: `Skuteczność ${accuracyPercent}%`,
-                                })}
-                              </Text>
-                            </View>
+                            <Pill
+                              label={copy({
+                                de: `Trefferquote ${accuracyPercent}%`,
+                                en: `Accuracy ${accuracyPercent}%`,
+                                pl: `Skuteczność ${accuracyPercent}%`,
+                              })}
+                              tone={accuracyTone}
+                            />
                           </View>
 
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                            <View
-                              style={{
-                                borderRadius: 999,
-                                borderWidth: 1,
-                                borderColor: operationTone.borderColor,
-                                backgroundColor: operationTone.backgroundColor,
-                                paddingHorizontal: 12,
-                                paddingVertical: 7,
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  color: operationTone.textColor,
-                                  fontSize: 12,
-                                  fontWeight: '700',
-                                }}
-                              >
-                                {formatKangurMobileScoreFamily(
-                                  operationFamily,
-                                  locale,
-                                )}
-                              </Text>
-                            </View>
+                            <Pill
+                              label={formatKangurMobileScoreFamily(
+                                operationFamily,
+                                locale,
+                              )}
+                              tone={operationTone}
+                            />
                           </View>
 
                           <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -2029,93 +860,42 @@ export function KangurResultsScreen(): React.JSX.Element {
                           </Text>
 
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                            <Link
+                            <LinkButton
                               href={createKangurPracticeHref(score.operation)}
-                              asChild
-                            >
-                              <Pressable
-                                accessibilityRole='button'
-                                style={{
-                                  alignSelf: 'flex-start',
-                                  borderRadius: 999,
-                                  backgroundColor: '#0f172a',
-                                  paddingHorizontal: 14,
-                                  paddingVertical: 10,
-                                }}
-                              >
-                                <Text
-                                  style={{ color: '#ffffff', fontWeight: '700' }}
-                                >
-                                  {copy({
-                                    de: 'Diesen Modus trainieren',
-                                    en: 'Train this mode',
-                                    pl: 'Trenuj ten tryb',
-                                  })}
-                                </Text>
-                              </Pressable>
-                            </Link>
+                              label={copy({
+                                de: 'Diesen Modus trainieren',
+                                en: 'Train this mode',
+                                pl: 'Trenuj ten tryb',
+                              })}
+                              tone='primary'
+                            />
 
                             {lessonHref ? (
-                              <Link href={lessonHref} asChild>
-                                <Pressable
-                                  accessibilityRole='button'
-                                  style={{
-                                    alignSelf: 'flex-start',
-                                    borderRadius: 999,
-                                    borderWidth: 1,
-                                    borderColor: '#cbd5e1',
-                                    backgroundColor: '#ffffff',
-                                    paddingHorizontal: 14,
-                                    paddingVertical: 10,
-                                  }}
-                                >
-                                  <Text
-                                    style={{ color: '#0f172a', fontWeight: '700' }}
-                                  >
-                                    {copy({
-                                      de: 'Lektion öffnen',
-                                      en: 'Open lesson',
-                                      pl: 'Otwórz lekcję',
-                                    })}
-                                  </Text>
-                                </Pressable>
-                              </Link>
+                              <LinkButton
+                                href={lessonHref}
+                                label={copy({
+                                  de: 'Lektion öffnen',
+                                  en: 'Open lesson',
+                                  pl: 'Otwórz lekcję',
+                                })}
+                              />
                             ) : null}
 
                             {filterOperation !== score.operation ? (
-                              <Link
+                              <LinkButton
                                 href={createKangurResultsHref({
                                   family: 'all',
                                   operation: score.operation,
                                 })}
-                                asChild
-                              >
-                                <Pressable
-                                  accessibilityRole='button'
-                                  style={{
-                                    alignSelf: 'flex-start',
-                                    borderRadius: 999,
-                                    borderWidth: 1,
-                                    borderColor: '#cbd5e1',
-                                    backgroundColor: '#ffffff',
-                                    paddingHorizontal: 14,
-                                    paddingVertical: 10,
-                                  }}
-                                >
-                                  <Text
-                                    style={{ color: '#0f172a', fontWeight: '700' }}
-                                  >
-                                    {copy({
-                                      de: 'Diesen Modus filtern',
-                                      en: 'Filter this mode',
-                                      pl: 'Filtruj ten tryb',
-                                    })}
-                                  </Text>
-                                </Pressable>
-                              </Link>
+                                label={copy({
+                                  de: 'Diesen Modus filtern',
+                                  en: 'Filter this mode',
+                                  pl: 'Filtruj ten tryb',
+                                })}
+                              />
                             ) : null}
                           </View>
-                        </View>
+                        </InsetPanel>
                       );
                     })}
                   </View>
@@ -2124,7 +904,6 @@ export function KangurResultsScreen(): React.JSX.Element {
             </>
           )}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+    </KangurMobileScrollScreen>
   );
 }

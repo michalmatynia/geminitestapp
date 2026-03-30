@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'cross-feature'
@@ -11,6 +11,13 @@ canonical: true
 
 Date: 2026-03-05  
 Owner: Platform Architecture + Domain Maintainers
+
+This register is the executed March 5 baseline. Keep it as the historical
+starting point for the hard-cut wave, but treat
+[`script-lifecycle-register-2026-04-17.md`](./script-lifecycle-register-2026-04-17.md)
+as the active reclassification draft paired with
+[`stabilization-window-2026-04-17.md`](./stabilization-window-2026-04-17.md)
+and [`docs/plans/canonical-closeout-2026-04-17.md`](../plans/canonical-closeout-2026-04-17.md).
 
 ## Status Legend
 
@@ -70,4 +77,6 @@ Summary:
 
 1. No script is marked `remove-obsolete` in this revision because final cutover monitoring is still active.
 2. Scripts marked `retain-breakglass` should be documented in runbooks with explicit operator approval gates.
-3. Next review should convert stable breakglass scripts to `archive-history` or `remove-obsolete` after the closeout window.
+3. The active reclassification work now lives in
+   [`script-lifecycle-register-2026-04-17.md`](./script-lifecycle-register-2026-04-17.md);
+   use this March register as the baseline comparison point, not the live tracker.

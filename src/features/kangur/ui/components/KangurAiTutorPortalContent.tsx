@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 
 import { KangurAiTutorComposer } from './KangurAiTutorComposer';
@@ -19,6 +20,36 @@ import { KangurAiTutorSpotlightOverlays } from './KangurAiTutorSpotlightOverlays
 
 export { KangurAiTutorPortalProvider };
 
+const resolveAccessibilityStatusText = (context: {
+  avatar: ReturnType<typeof useKangurAiTutorPortalContext>['avatar'];
+  guestIntro: ReturnType<typeof useKangurAiTutorPortalContext>['guestIntro'];
+  guidedCallout: ReturnType<typeof useKangurAiTutorPortalContext>['guidedCallout'];
+  panel: ReturnType<typeof useKangurAiTutorPortalContext>['panel'];
+  selectionAction: ReturnType<typeof useKangurAiTutorPortalContext>['selectionAction'];
+}): string => {
+  const { avatar, guestIntro, guidedCallout, panel, selectionAction } = context;
+  if (guestIntro.shouldRender) {
+    return [guestIntro.guestIntroHeadline, guestIntro.guestIntroDescription]
+      .filter(Boolean)
+      .join(' ');
+  }
+  if (guidedCallout.shouldRender) {
+    return [guidedCallout.stepLabel, guidedCallout.title, guidedCallout.detail]
+      .filter(Boolean)
+      .join(' ');
+  }
+  if (panel.isOpen && !panel.suppressPanelSurface) {
+    return ['Czat AI Tutora otwarty.', panel.sessionSurfaceLabel].filter(Boolean).join(' ');
+  }
+  if (selectionAction.shouldRender) {
+    return 'Zaznaczono fragment. Możesz użyć przycisku Zapytaj o to.';
+  }
+  if (avatar.showFloatingAvatar) {
+    return avatar.ariaLabel;
+  }
+  return '';
+};
+
 export function KangurAiTutorPortalContent() {
   const {
     avatar,
@@ -30,19 +61,31 @@ export function KangurAiTutorPortalContent() {
     selectionAction,
     spotlights,
   } = useKangurAiTutorPortalContext();
-  void guestIntro;
-  void KangurAiTutorGuestIntroPanel;
-  const accessibilityStatusText = guestIntro.shouldRender
-    ? [guestIntro.guestIntroHeadline, guestIntro.guestIntroDescription].filter(Boolean).join(' ')
-    : guidedCallout.shouldRender
-      ? [guidedCallout.stepLabel, guidedCallout.title, guidedCallout.detail].filter(Boolean).join(' ')
-      : panel.isOpen && !panel.suppressPanelSurface
-        ? ['Czat AI Tutora otwarty.', panel.sessionSurfaceLabel].filter(Boolean).join(' ')
-        : selectionAction.shouldRender
-          ? 'Zaznaczono fragment. Możesz użyć przycisku Zapytaj o to.'
-          : avatar.showFloatingAvatar
-            ? avatar.ariaLabel
-            : '';
+  const accessibilityStatusText = resolveAccessibilityStatusText({
+    avatar,
+    guestIntro,
+    guidedCallout,
+    panel,
+    selectionAction,
+  });
+  const handleGuidedCalloutAction = useCallback(
+    (action: string): void => {
+      if (action === 'advance_home_onboarding') {
+        guidedCallout.onAdvanceHomeOnboarding();
+        return;
+      }
+      if (action === 'back_home_onboarding') {
+        guidedCallout.onBackHomeOnboarding();
+        return;
+      }
+      if (action === 'finish_home_onboarding') {
+        guidedCallout.onFinishHomeOnboarding();
+        return;
+      }
+      guidedCallout.onClose();
+    },
+    [guidedCallout]
+  );
 
   return (
     <>
@@ -109,21 +152,7 @@ export function KangurAiTutorPortalContent() {
           entryDirection={guidedCallout.entryDirection}
           headerLabel={guidedCallout.headerLabel}
           mode={guidedCallout.mode}
-          onAction={(action) => {
-            if (action === 'advance_home_onboarding') {
-              guidedCallout.onAdvanceHomeOnboarding();
-              return;
-            }
-            if (action === 'back_home_onboarding') {
-              guidedCallout.onBackHomeOnboarding();
-              return;
-            }
-            if (action === 'finish_home_onboarding') {
-              guidedCallout.onFinishHomeOnboarding();
-              return;
-            }
-            guidedCallout.onClose();
-          }}
+          onAction={handleGuidedCalloutAction}
           placement={guidedCallout.placement}
           prefersReducedMotion={guidedCallout.prefersReducedMotion}
           reducedMotionTransitions={guidedCallout.reducedMotionTransitions}

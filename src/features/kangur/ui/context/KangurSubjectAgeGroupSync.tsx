@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { resolveKangurSubjectForAgeGroup } from '@/features/kangur/lessons/lesson-catalog';
+import { resolveKangurSubjectForAgeGroup } from '@/features/kangur/lessons/lesson-catalog-metadata';
 import { useKangurAgeGroupFocus } from '@/features/kangur/ui/context/KangurAgeGroupFocusContext';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 

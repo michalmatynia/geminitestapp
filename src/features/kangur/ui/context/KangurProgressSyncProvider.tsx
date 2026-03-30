@@ -7,7 +7,6 @@ import {
   withKangurClientError,
 } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
-import type { KangurUser } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import {
@@ -15,40 +14,88 @@ import {
   loadProgress,
   loadProgressOwnerKey,
   mergeProgressStates,
-  resetProgressStore,
   saveProgress,
   saveProgressOwnerKey,
   subscribeToProgress,
   setProgressPersistenceEnabled,
 } from '@/features/kangur/ui/services/progress';
 import {
-  createDefaultKangurProgressState,
+  type KangurLessonSubject,
   type KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
-
+import {
+  isKangurParentWithoutActiveLearner,
+  resolveKangurUserScopeKey,
+} from '@/features/kangur/ui/context/kangur-user-scope';
 
 const kangurPlatform = getKangurPlatform();
+const KANGUR_PROGRESS_HYDRATION_CACHE_TTL_MS = 30_000;
 
-const resolveUserProgressKey = (user: KangurUser | null): string | null => {
-  const activeLearnerId = user?.activeLearner?.id?.trim();
-  if (activeLearnerId) {
-    return activeLearnerId;
-  }
-
-  if (user?.actorType === 'parent') {
-    return null;
-  }
-
-  if (user?.actorType === 'learner') {
-    const id = user?.id?.trim();
-    return id && id.length > 0 ? id : null;
-  }
-
-  return null;
+type KangurProgressHydrationCacheEntry = {
+  progress: KangurProgressState;
+  fetchedAt: number;
 };
 
+const kangurProgressHydrationCache = new Map<string, KangurProgressHydrationCacheEntry>();
+const kangurProgressHydrationInflight = new Map<string, Promise<KangurProgressState>>();
+
 const serializeProgress = (progress: KangurProgressState): string => JSON.stringify(progress);
+
+const buildKangurProgressHydrationCacheKey = (
+  userKey: string,
+  subject: KangurLessonSubject
+): string => `${userKey}::${subject}`;
+
+const cloneKangurProgressHydrationState = (
+  progress: KangurProgressState
+): KangurProgressState => structuredClone(progress);
+
+const primeKangurProgressHydrationCache = (
+  userKey: string,
+  subject: KangurLessonSubject,
+  progress: KangurProgressState
+): void => {
+  kangurProgressHydrationCache.set(buildKangurProgressHydrationCacheKey(userKey, subject), {
+    progress: cloneKangurProgressHydrationState(progress),
+    fetchedAt: Date.now(),
+  });
+};
+
+export const clearKangurProgressHydrationCache = (): void => {
+  kangurProgressHydrationCache.clear();
+  kangurProgressHydrationInflight.clear();
+};
+
+const loadRemoteHydrationProgress = async (
+  userKey: string,
+  subject: KangurLessonSubject
+): Promise<KangurProgressState> => {
+  const cacheKey = buildKangurProgressHydrationCacheKey(userKey, subject);
+  const cached = kangurProgressHydrationCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && now - cached.fetchedAt < KANGUR_PROGRESS_HYDRATION_CACHE_TTL_MS) {
+    return cloneKangurProgressHydrationState(cached.progress);
+  }
+
+  const inflight = kangurProgressHydrationInflight.get(cacheKey);
+  if (inflight) {
+    return cloneKangurProgressHydrationState(await inflight);
+  }
+
+  const inflightPromise = kangurPlatform.progress
+    .get({ subject })
+    .then((progress) => {
+      primeKangurProgressHydrationCache(userKey, subject, progress);
+      return progress;
+    })
+    .finally(() => {
+      kangurProgressHydrationInflight.delete(cacheKey);
+    });
+
+  kangurProgressHydrationInflight.set(cacheKey, inflightPromise);
+  return cloneKangurProgressHydrationState(await inflightPromise);
+};
 
 const scheduleDeferredCallback = (callback: () => void): (() => void) => {
   if (typeof globalThis.requestIdleCallback === 'function') {
@@ -72,13 +119,12 @@ const scheduleDeferredCallback = (callback: () => void): (() => void) => {
 export function KangurProgressSyncProvider({
   children,
 }: {
-  children: ReactNode;
-}): React.JSX.Element {
+  children?: ReactNode;
+}): React.JSX.Element | null {
   const { isAuthenticated, isLoadingAuth, user } = useKangurAuth();
   const { subject } = useKangurSubjectFocus();
-  const isParentWithoutLearner =
-    user?.actorType === 'parent' && !user?.activeLearner?.id;
-  const userKey = resolveUserProgressKey(user);
+  const isParentWithoutLearner = isKangurParentWithoutActiveLearner(user);
+  const userKey = resolveKangurUserScopeKey(user);
   const lastSyncedProgressRef = useRef<string | null>(null);
   const syncStateRef = useRef<'idle' | 'loading' | 'ready'>('idle');
 
@@ -91,12 +137,21 @@ export function KangurProgressSyncProvider({
     setProgressPersistenceEnabled(!isParentWithoutLearner);
   }, [isParentWithoutLearner]);
 
+  // Eagerly initialise guest progress owner key while auth is still loading,
+  // so localStorage reads resolve to the anonymous bucket immediately.
+  useEffect(() => {
+    if (isLoadingAuth && !userKey) {
+      saveProgressOwnerKey(null);
+    }
+  }, [isLoadingAuth, userKey]);
+
   useEffect(() => {
     if (isLoadingAuth) {
       return;
     }
 
     if (!isAuthenticated || !userKey) {
+      saveProgressOwnerKey(null);
       syncStateRef.current = 'idle';
       lastSyncedProgressRef.current = null;
       return;
@@ -109,11 +164,6 @@ export function KangurProgressSyncProvider({
       syncStateRef.current = 'loading';
       const localOwnerKey = loadProgressOwnerKey();
 
-      if (localOwnerKey && localOwnerKey !== userKey) {
-        saveProgressOwnerKey(userKey);
-        resetProgressStore();
-      }
-
       try {
         const result = await withKangurClientError(
           {
@@ -123,15 +173,17 @@ export function KangurProgressSyncProvider({
             context: { userKey, subject },
           },
           async () => {
-            const remoteProgress = await kangurPlatform.progress.get({ subject });
+            const remoteProgress = await loadRemoteHydrationProgress(userKey, subject);
             if (cancelled) {
               return null;
             }
 
-            const localProgress =
-              localOwnerKey && localOwnerKey !== userKey
-                ? createDefaultKangurProgressState()
-                : loadProgress();
+            const scopedLocalProgress = loadProgress({ ownerKey: userKey });
+            const guestLocalProgress =
+              localOwnerKey === null ? loadProgress({ ownerKey: null }) : null;
+            const localProgress = guestLocalProgress
+              ? mergeProgressStates(scopedLocalProgress, guestLocalProgress)
+              : scopedLocalProgress;
             const mergedProgress = mergeProgressStates(remoteProgress, localProgress);
             const shouldUpdateLocal =
               !areProgressStatesEqual(localProgress, mergedProgress) || localOwnerKey !== userKey;
@@ -140,7 +192,7 @@ export function KangurProgressSyncProvider({
             saveProgressOwnerKey(userKey);
 
             if (shouldUpdateLocal) {
-              saveProgress(mergedProgress);
+              saveProgress(mergedProgress, { ownerKey: userKey });
             }
 
             return {
@@ -192,7 +244,40 @@ export function KangurProgressSyncProvider({
             if (cancelled) {
               return;
             }
-            void kangurPlatform.progress.update(result.mergedProgress, { subject });
+            primeKangurProgressHydrationCache(userKey, subject, result.mergedProgress);
+            void kangurPlatform.progress
+              .update(result.mergedProgress, { subject })
+              .then((savedProgress) => {
+                if (cancelled) {
+                  return;
+                }
+
+                primeKangurProgressHydrationCache(userKey, subject, savedProgress);
+                const savedSerialized = serializeProgress(savedProgress);
+                lastSyncedProgressRef.current = savedSerialized;
+
+                if (!areProgressStatesEqual(result.mergedProgress, savedProgress)) {
+                  saveProgress(savedProgress, { ownerKey: userKey });
+                }
+              })
+              .catch((error) => {
+                if (cancelled) {
+                  return;
+                }
+
+                if (isKangurAuthStatusError(error)) {
+                  syncStateRef.current = 'idle';
+                  return;
+                }
+
+                trackKangurClientEvent('kangur_progress_hydration_remote_sync_failed', {
+                  userKey,
+                  totalXp: result.mergedProgress.totalXp,
+                  gamesPlayed: result.mergedProgress.gamesPlayed,
+                  errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                  subject,
+                });
+              });
           });
         }
       } finally {
@@ -202,10 +287,26 @@ export function KangurProgressSyncProvider({
       }
     };
 
-    void hydrateProgress();
+    // Yield to the rendering pipeline so the first paint completes before
+    // the progress hydration network call fires.  This reduces network
+    // contention during the critical boot window.
+    let rafId: number | undefined;
+    let deferredTimeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+
+    rafId = requestAnimationFrame(() => {
+      rafId = undefined;
+      deferredTimeoutId = globalThis.setTimeout(() => {
+        deferredTimeoutId = undefined;
+        if (!cancelled) {
+          void hydrateProgress();
+        }
+      }, 0);
+    });
 
     return () => {
       cancelled = true;
+      if (rafId !== undefined) cancelAnimationFrame(rafId);
+      if (deferredTimeoutId !== undefined) globalThis.clearTimeout(deferredTimeoutId);
       cancelDeferredRemoteUpdate?.();
     };
   }, [isAuthenticated, isLoadingAuth, subject, userKey]);
@@ -264,10 +365,11 @@ export function KangurProgressSyncProvider({
           return;
         }
 
+        primeKangurProgressHydrationCache(userKey, subject, savedProgress);
         const savedSerialized = serializeProgress(savedProgress);
         lastSyncedProgressRef.current = savedSerialized;
         if (!areProgressStatesEqual(progress, savedProgress)) {
-          saveProgress(savedProgress);
+          saveProgress(savedProgress, { ownerKey: userKey });
         }
       })();
     });
@@ -275,5 +377,5 @@ export function KangurProgressSyncProvider({
     return unsubscribe;
   }, [isAuthenticated, isLoadingAuth, subject, userKey]);
 
-  return <>{children}</>;
+  return children != null ? <>{children}</> : null;
 }

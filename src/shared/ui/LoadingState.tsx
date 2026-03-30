@@ -9,11 +9,8 @@ interface LoadingStateProps {
   size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
-export function LoadingState({
-  message = 'Loading...',
-  className,
-  size = 'md',
-}: LoadingStateProps): React.JSX.Element {
+export function LoadingState(props: LoadingStateProps): React.JSX.Element {
+  const { message = 'Loading...', className, size = 'md' } = props;
   const iconSize = {
     xs: 'size-3',
     sm: 'size-4',

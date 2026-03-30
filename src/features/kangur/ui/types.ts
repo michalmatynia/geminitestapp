@@ -2,6 +2,7 @@ import type {
   KangurDifficulty,
   KangurOperation,
 } from '@kangur/core';
+import { KANGUR_LAUNCHABLE_GAME_SCREENS } from '@/shared/contracts/kangur-games';
 import type { KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 export type { KangurExamQuestion, KangurQuestionChoice } from '@/features/kangur/shared/contracts/kangur';
 export type { KangurLessonMasteryEntry, KangurProgressState } from '@/features/kangur/shared/contracts/kangur';
@@ -13,26 +14,18 @@ export type {
   KangurQuestion,
 } from '@kangur/core';
 
-export type KangurGameScreen =
-  | 'home'
-  | 'training'
-  | 'kangur_setup'
-  | 'kangur'
-  | 'calendar_quiz'
-  | 'geometry_quiz'
-  | 'clock_quiz'
-  | 'addition_quiz'
-  | 'subtraction_quiz'
-  | 'multiplication_quiz'
-  | 'division_quiz'
-  | 'logical_patterns_quiz'
-  | 'logical_classification_quiz'
-  | 'logical_analogies_quiz'
-  | 'english_sentence_quiz'
-  | 'english_parts_of_speech_quiz'
-  | 'operation'
-  | 'playing'
-  | 'result';
+export const KANGUR_GAME_SCREENS = [
+  'home',
+  'training',
+  'kangur_setup',
+  'kangur',
+  ...KANGUR_LAUNCHABLE_GAME_SCREENS,
+  'operation',
+  'playing',
+  'result',
+] as const;
+
+export type KangurGameScreen = (typeof KANGUR_GAME_SCREENS)[number];
 
 export type KangurDifficultyOption = {
   displayLabel: string;
@@ -76,18 +69,27 @@ export type KangurMiniGameFinishVariantPropsDto = KangurMiniGameFinishActionProp
 };
 export type KangurMiniGameFinishVariantProps = KangurMiniGameFinishVariantPropsDto;
 
-export type KangurMiniGameFeedbackDto = {
-  kind: 'success' | 'error';
+type KangurMiniGameFeedbackBaseDto<TKind extends string> = {
+  kind: TKind;
   text: string;
 };
+
+export type KangurMiniGameFeedbackDto = KangurMiniGameFeedbackBaseDto<'success' | 'error'>;
 export type KangurMiniGameFeedback = KangurMiniGameFeedbackDto;
 export type KangurMiniGameFeedbackState = KangurMiniGameFeedback | null;
-export type KangurMiniGameBinaryFeedbackState = 'correct' | 'wrong' | null;
+export type KangurMiniGameBinaryFeedbackState =
+  | 'correct'
+  | 'wrong'
+  | 'success'
+  | 'error'
+  | null;
 export type KangurIntlTranslate = ReturnType<(typeof import('next-intl'))['useTranslations']>;
 
-export type KangurMiniGameInformationalFeedbackDto = {
-  kind: 'success' | 'error' | 'info';
-  text: string;
+export type KangurMiniGameInformationalFeedbackDto = KangurMiniGameFeedbackBaseDto<
+  'success' | 'error' | 'info'
+> & {
+  title?: string;
+  description?: string;
 };
 export type KangurMiniGameInformationalFeedback = KangurMiniGameInformationalFeedbackDto;
 

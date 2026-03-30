@@ -12,8 +12,8 @@ import {
   KANGUR_NIGHTLY_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
   KANGUR_DEFAULT_THEME,
-} from '@/features/kangur/theme-settings';
-import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/storefront-appearance-settings';
+} from '@/features/kangur/appearance/theme-settings';
+import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';

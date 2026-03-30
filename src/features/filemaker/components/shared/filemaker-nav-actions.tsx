@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, Database, Mail, Users } from 'lucide-react';
+import { Building2, CalendarDays, Database, Mail, Megaphone, ShieldAlert, Users } from 'lucide-react';
 
 
 import type { PanelAction } from '@/shared/contracts/ui';
@@ -6,7 +6,15 @@ import type { PanelAction } from '@/shared/contracts/ui';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { ReactNode } from 'react';
 
-type FilemakerPageKey = 'persons' | 'organizations' | 'emails' | 'events' | 'manage';
+type FilemakerPageKey =
+  | 'persons'
+  | 'organizations'
+  | 'emails'
+  | 'mail'
+  | 'events'
+  | 'campaigns'
+  | 'control-centre'
+  | 'manage';
 
 const NAV_ITEMS: Array<{
   key: FilemakerPageKey;
@@ -37,10 +45,31 @@ const NAV_ITEMS: Array<{
     variant: 'outline',
   },
   {
+    key: 'mail',
+    label: 'Mail',
+    href: '/admin/filemaker/mail',
+    icon: <Mail className='size-4' />,
+    variant: 'outline',
+  },
+  {
     key: 'events',
     label: 'Events',
     href: '/admin/filemaker/events',
     icon: <CalendarDays className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'campaigns',
+    label: 'Campaigns',
+    href: '/admin/filemaker/campaigns',
+    icon: <Megaphone className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'control-centre',
+    label: 'Control Centre',
+    href: '/admin/filemaker/campaigns/control-centre',
+    icon: <ShieldAlert className='size-4' />,
     variant: 'outline',
   },
   {

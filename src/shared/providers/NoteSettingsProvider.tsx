@@ -3,42 +3,28 @@
 import {
   createContext,
   useContext,
-  useState,
   useEffect,
-  useRef,
-  type ReactNode,
   useCallback,
   useMemo,
+  useRef,
+  useState,
+  type ReactNode,
 } from 'react';
 
 import type { NoteSettings } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
 import { useLiteSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import {
+  DEFAULT_NOTE_SETTINGS,
+  NOTE_SETTINGS_AUTOFORMAT_KEY,
+  NOTE_SETTINGS_EDITOR_MODE_KEY,
+  NOTE_SETTINGS_FOLDER_ID_KEY,
+  NOTE_SETTINGS_NOTEBOOK_ID_KEY,
+  NOTE_SETTINGS_STORAGE_KEY,
+} from '@/shared/providers/NoteSettingsProvider.constants';
 
-export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
-  sidebarCollapsed: false,
-  showPinnedSection: true,
-  defaultNotebookId: null,
-  sortBy: 'created',
-  sortOrder: 'desc',
-  showTimestamps: true,
-  showBreadcrumbs: true,
-  showRelatedNotes: true,
-  searchScope: 'both',
-  selectedFolderId: null,
-  selectedNotebookId: null,
-  viewMode: 'grid',
-  gridDensity: 4,
-  autoformatOnPaste: false,
-  editorMode: 'markdown',
-};
-
-const STORAGE_KEY = 'noteSettings';
-const DB_SETTING_KEY = 'noteSettings:selectedFolderId';
-const DB_NOTEBOOK_KEY = 'noteSettings:selectedNotebookId';
-const DB_AUTOFORMAT_KEY = 'noteSettings:autoformatOnPaste';
-const DB_EDITOR_MODE_KEY = 'noteSettings:editorMode';
+export { DEFAULT_NOTE_SETTINGS } from '@/shared/providers/NoteSettingsProvider.constants';
 
 interface NoteSettingsStateContextType {
   settings: NoteSettings;
@@ -69,7 +55,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (typeof window === 'undefined') return;
 
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
+      const stored = window.localStorage.getItem(NOTE_SETTINGS_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<NoteSettings>;
         setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, ...parsed }));
@@ -90,10 +76,10 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
   useEffect(() => {
     if (!settingsQuery.data || !isInitialized) return;
 
-    const dbFolderId = settingsQuery.data.get(DB_SETTING_KEY) || null;
-    const dbNotebookId = settingsQuery.data.get(DB_NOTEBOOK_KEY) || null;
-    const dbAutoformat = settingsQuery.data.get(DB_AUTOFORMAT_KEY);
-    const dbEditorMode = settingsQuery.data.get(DB_EDITOR_MODE_KEY);
+    const dbFolderId = settingsQuery.data.get(NOTE_SETTINGS_FOLDER_ID_KEY) || null;
+    const dbNotebookId = settingsQuery.data.get(NOTE_SETTINGS_NOTEBOOK_ID_KEY) || null;
+    const dbAutoformat = settingsQuery.data.get(NOTE_SETTINGS_AUTOFORMAT_KEY);
+    const dbEditorMode = settingsQuery.data.get(NOTE_SETTINGS_EDITOR_MODE_KEY);
 
     setSettings((prev: NoteSettings) => {
       const next = { ...prev };
@@ -139,7 +125,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (!isInitialized || typeof window === 'undefined') return;
 
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      window.localStorage.setItem(NOTE_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
     } catch (error: unknown) {
       logClientCatch(error, {
         source: 'NoteSettingsContext',
@@ -154,7 +140,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (settings.selectedFolderId !== previousFolderIdRef.current) {
       previousFolderIdRef.current = settings.selectedFolderId ?? null;
       updateSetting.mutate({
-        key: DB_SETTING_KEY,
+        key: NOTE_SETTINGS_FOLDER_ID_KEY,
         value: settings.selectedFolderId ?? '',
       });
     }
@@ -165,7 +151,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (settings.selectedNotebookId !== previousNotebookIdRef.current) {
       previousNotebookIdRef.current = settings.selectedNotebookId ?? null;
       updateSetting.mutate({
-        key: DB_NOTEBOOK_KEY,
+        key: NOTE_SETTINGS_NOTEBOOK_ID_KEY,
         value: settings.selectedNotebookId ?? '',
       });
     }
@@ -176,7 +162,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (settings.autoformatOnPaste !== previousAutoformatRef.current) {
       previousAutoformatRef.current = settings.autoformatOnPaste;
       updateSetting.mutate({
-        key: DB_AUTOFORMAT_KEY,
+        key: NOTE_SETTINGS_AUTOFORMAT_KEY,
         value: settings.autoformatOnPaste ? 'true' : 'false',
       });
     }
@@ -187,7 +173,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (settings.editorMode !== previousEditorModeRef.current) {
       previousEditorModeRef.current = settings.editorMode;
       updateSetting.mutate({
-        key: DB_EDITOR_MODE_KEY,
+        key: NOTE_SETTINGS_EDITOR_MODE_KEY,
         value: settings.editorMode,
       });
     }
@@ -199,10 +185,10 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
 
   const resetToDefaults = useCallback((): void => {
     setSettings(DEFAULT_NOTE_SETTINGS);
-    updateSetting.mutate({ key: DB_SETTING_KEY, value: '' });
-    updateSetting.mutate({ key: DB_NOTEBOOK_KEY, value: '' });
-    updateSetting.mutate({ key: DB_AUTOFORMAT_KEY, value: 'false' });
-    updateSetting.mutate({ key: DB_EDITOR_MODE_KEY, value: 'markdown' });
+    updateSetting.mutate({ key: NOTE_SETTINGS_FOLDER_ID_KEY, value: '' });
+    updateSetting.mutate({ key: NOTE_SETTINGS_NOTEBOOK_ID_KEY, value: '' });
+    updateSetting.mutate({ key: NOTE_SETTINGS_AUTOFORMAT_KEY, value: 'false' });
+    updateSetting.mutate({ key: NOTE_SETTINGS_EDITOR_MODE_KEY, value: 'markdown' });
   }, [updateSetting]);
 
   const stateValue = useMemo<NoteSettingsStateContextType>(

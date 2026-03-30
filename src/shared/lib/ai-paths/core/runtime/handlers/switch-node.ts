@@ -3,6 +3,28 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+import type { SwitchConfig } from '@/shared/contracts/ai-paths';
+
+const resolveSwitchInputPort = (config: SwitchConfig | undefined): string =>
+  config?.inputPort?.trim() || 'value';
+
+const findMatchingSwitchCaseId = (
+  config: SwitchConfig | undefined,
+  valueStr: string
+): string | null => {
+  for (const candidate of config?.cases ?? []) {
+    if (!candidate) continue;
+    if (String(candidate.matchValue ?? '') === valueStr) {
+      return candidate.id;
+    }
+  }
+  return null;
+};
+
+const resolveSelectedSwitchCaseId = (
+  config: SwitchConfig | undefined,
+  valueStr: string
+): string | null => findMatchingSwitchCaseId(config, valueStr) ?? config?.defaultCaseId ?? null;
 
 export const handleSwitchNode: NodeHandler = ({
   node,
@@ -12,24 +34,10 @@ export const handleSwitchNode: NodeHandler = ({
   if (node.type !== 'switch') return prevOutputs;
 
   const config = node.config?.['switch'];
-  const inputPort = config?.inputPort?.trim() || 'value';
-  const cases = config?.cases ?? [];
-
+  const inputPort = resolveSwitchInputPort(config);
   const rawValue = nodeInputs[inputPort];
   const valueStr = rawValue == null ? '' : String(rawValue);
-
-  let selectedCaseId: string | null = null;
-  for (const c of cases) {
-    if (!c) continue;
-    if (String(c.matchValue ?? '') === valueStr) {
-      selectedCaseId = c.id;
-      break;
-    }
-  }
-
-  if (!selectedCaseId && config?.defaultCaseId) {
-    selectedCaseId = config.defaultCaseId;
-  }
+  const selectedCaseId = resolveSelectedSwitchCaseId(config, valueStr);
 
   return {
     value: rawValue,

@@ -77,23 +77,11 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     });
 
     expect(snapshot.matchedScoreId).toBe('score-1');
-    expect(snapshot.surfaces).toEqual([
-      expect.objectContaining({
-        label: 'Centrum wyników',
-        status: 'ready',
-      }),
-      expect.objectContaining({
-        label: 'Postęp profilu',
-        status: 'ready',
-      }),
-      expect.objectContaining({
-        label: 'Plan dnia',
-        status: 'ready',
-      }),
-      expect.objectContaining({
-        label: 'Ranking',
-        status: 'ready',
-      }),
+    expect(snapshot.surfaces).toMatchObject([
+      { label: 'Centrum wyników', status: 'ready' },
+      { label: 'Postęp profilu', status: 'ready' },
+      { label: 'Plan dnia', status: 'ready' },
+      { label: 'Ranking', status: 'ready' },
     ]);
   });
 
@@ -114,23 +102,11 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
     });
 
     expect(snapshot.matchedScoreId).toBeNull();
-    expect(snapshot.surfaces).toEqual([
-      expect.objectContaining({
-        label: 'Centrum wyników',
-        status: 'missing',
-      }),
-      expect.objectContaining({
-        label: 'Postęp profilu',
-        status: 'missing',
-      }),
-      expect.objectContaining({
-        label: 'Plan dnia',
-        status: 'missing',
-      }),
-      expect.objectContaining({
-        label: 'Ranking',
-        status: 'missing',
-      }),
+    expect(snapshot.surfaces).toMatchObject([
+      { label: 'Centrum wyników', status: 'missing' },
+      { label: 'Postęp profilu', status: 'missing' },
+      { label: 'Plan dnia', status: 'missing' },
+      { label: 'Ranking', status: 'missing' },
     ]);
   });
 
@@ -160,5 +136,36 @@ describe('buildKangurPracticeSyncProofSnapshot', () => {
       status: 'ready',
     });
     expect(snapshot.surfaces[3]?.detail).toContain('You');
+  });
+
+  it('prefers an exact score created after the recorded run start', () => {
+    const snapshot = buildKangurPracticeSyncProofSnapshot({
+      expectedCorrectAnswers: 8,
+      expectedTotalQuestions: 8,
+      leaderboardItems: [createLeaderboardItem({ id: 'score-fresh' })],
+      operation: 'clock',
+      progress: {
+        ...createDefaultKangurProgressState(),
+        gamesPlayed: 1,
+        operationsPlayed: ['clock'],
+      },
+      runStartedAt: Date.parse('2026-03-20T19:35:00.000Z'),
+      scores: [
+        createScore({
+          id: 'score-older',
+          created_date: '2026-03-20T19:34:00.000Z',
+        }),
+        createScore({
+          id: 'score-fresh',
+          created_date: '2026-03-20T19:36:00.000Z',
+        }),
+      ],
+    });
+
+    expect(snapshot.matchedScoreId).toBe('score-fresh');
+    expect(snapshot.surfaces[0]).toMatchObject({
+      label: 'Centrum wyników',
+      status: 'ready',
+    });
   });
 });

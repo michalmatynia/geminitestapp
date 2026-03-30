@@ -13,7 +13,7 @@ import { systemLogsInterpretRequestSchema } from '@/shared/contracts/observabili
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { assertSettingsManageAccess } from '@/shared/lib/auth/settings-manage-access';
+import { assertSettingsManageAccess } from '@/features/auth/server';
 import { resolveObservabilityContextRegistryEnvelope } from '@/shared/lib/observability/runtime-context/server';
 import { hydrateSystemLogRecordRuntimeContext } from '@/features/observability/entry-server';
 import { getSystemLogById } from '@/shared/lib/observability/system-log-repository';;

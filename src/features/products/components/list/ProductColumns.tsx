@@ -429,7 +429,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         status={status}
         prefetchListings={prefetchListings}
         showMarketplaceBadge={showMarketplaceBadge}
-        onOpenIntegrations={(): void => handleClick(product)}
+        onOpenIntegrations={(recoveryContext): void => handleClick(product, recoveryContext)}
         onOpenExportSettings={(): void => onExportSettingsClick(product)}
       />
       <TriggerButtonBar

@@ -1,6 +1,8 @@
-export type ScheduledTickJobData = {
-  type: 'scheduled-tick';
+export type TypedSchedulerTickJobData<TType extends string> = {
+  type: TType;
 };
+
+export type ScheduledTickJobData = TypedSchedulerTickJobData<'scheduled-tick'>;
 
 export type SchedulerQueueState = {
   workerStarted: boolean;

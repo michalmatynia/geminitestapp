@@ -1,9 +1,18 @@
 import type { KangurScore } from '@kangur/contracts';
+import { useEffect, useMemo } from 'react';
 
+import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { resolveKangurMobileScoreScope } from '../profile/mobileScoreScope';
+import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import {
+  persistKangurMobileRecentResults,
+  resolvePersistedKangurMobileRecentResults,
+} from '../scores/persistedKangurMobileRecentResults';
 import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
 
 type UseKangurMobileRecentResultsOptions = {
+  enabled?: boolean;
   limit?: number;
 };
 
@@ -20,14 +29,63 @@ export const useKangurMobileRecentResults = (
   options: UseKangurMobileRecentResultsOptions = {},
 ): UseKangurMobileRecentResultsResult => {
   const { copy } = useKangurMobileI18n();
+  const { session } = useKangurMobileAuth();
+  const { storage } = useKangurMobileRuntime();
   const limit =
     typeof options.limit === 'number' && options.limit > 0
       ? Math.round(options.limit)
       : 3;
+  const isQueryEnabled = options.enabled ?? true;
+  const scoreScope = resolveKangurMobileScoreScope(session.user);
+  const scoreScopeIdentityKey = scoreScope?.identityKey ?? null;
+  const persistedResults = useMemo(
+    () =>
+      scoreScopeIdentityKey
+        ? resolvePersistedKangurMobileRecentResults({
+            identityKey: scoreScopeIdentityKey,
+            limit,
+            storage,
+          })
+        : null,
+    [limit, scoreScopeIdentityKey, storage],
+  );
   const resultsQuery = useKangurMobileScoreHistory({
+    enabled: isQueryEnabled,
     limit,
+    placeholderData: persistedResults ?? undefined,
     sort: '-created_date',
   });
+  const results = (
+    resultsQuery.isEnabled || !persistedResults ? resultsQuery.scores : persistedResults
+  ).slice(0, limit);
+
+  useEffect(() => {
+    if (
+      !scoreScopeIdentityKey ||
+      !resultsQuery.isEnabled ||
+      resultsQuery.isLoading ||
+      resultsQuery.isPlaceholderData ||
+      resultsQuery.isRestoringAuth ||
+      resultsQuery.error
+    ) {
+      return;
+    }
+
+    persistKangurMobileRecentResults({
+      identityKey: scoreScopeIdentityKey,
+      results,
+      storage,
+    });
+  }, [
+    results,
+    resultsQuery.error,
+    resultsQuery.isEnabled,
+    resultsQuery.isLoading,
+    resultsQuery.isPlaceholderData,
+    resultsQuery.isRestoringAuth,
+    scoreScopeIdentityKey,
+    storage,
+  ]);
 
   return {
     error:
@@ -41,7 +99,13 @@ export const useKangurMobileRecentResults = (
     isEnabled: resultsQuery.isEnabled,
     isLoading: resultsQuery.isLoading,
     isRestoringAuth: resultsQuery.isRestoringAuth,
-    refresh: resultsQuery.refresh,
-    results: resultsQuery.scores,
+    refresh: async () => {
+      if (!resultsQuery.isEnabled) {
+        return;
+      }
+
+      await resultsQuery.refresh();
+    },
+    results,
   };
 };

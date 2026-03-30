@@ -117,7 +117,7 @@ export const handlePoll: NodeHandler = async ({
   const jobId: string =
     typeof rawJobId === 'string' || typeof rawJobId === 'number' ? String(rawJobId).trim() : '';
   if (pollMode === 'database') {
-    const queryConfig: DbQueryConfig = { ...DEFAULT_DB_QUERY, ...(pollConfig.dbQuery ?? {}) };
+    const queryConfig: DbQueryConfig = { ...DEFAULT_DB_QUERY, ...((pollConfig.dbQuery as Partial<DbQueryConfig>) ?? {}) };
     try {
       const response: { result: unknown; status: string; bundle: Record<string, unknown> } =
         await pollDatabaseQuery(

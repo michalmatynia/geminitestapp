@@ -10,10 +10,8 @@ type ValidationItemCardProps = {
   className?: string;
 };
 
-export function ValidationItemCard({
-  children,
-  className,
-}: ValidationItemCardProps): React.JSX.Element {
+export function ValidationItemCard(props: ValidationItemCardProps): React.JSX.Element {
+  const { children, className } = props;
   return (
     <Card
       variant='subtle-compact'

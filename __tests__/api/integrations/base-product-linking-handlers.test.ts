@@ -49,6 +49,23 @@ const mockContext: ApiHandlerContext = {
   getElapsedMs: () => 0,
 };
 
+const buildSkuCheckRequest = (payload: Record<string, unknown>) =>
+  new NextRequest('http://localhost/api/v2/integrations/products/product-1/base/sku-check', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+const buildLinkExistingRequest = (payload: Record<string, unknown>) =>
+  new NextRequest(
+    'http://localhost/api/v2/integrations/products/product-1/base/link-existing',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    }
+  );
+
 describe('base product linking handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,13 +84,9 @@ describe('base product linking handlers', () => {
 
   it('returns the centralized Base SKU check response', async () => {
     const response = await skuCheckHandler(
-      new NextRequest('http://localhost/api/v2/integrations/products/product-1/base/sku-check', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          connectionId: 'conn-1',
-          inventoryId: 'inv-1',
-        }),
+      buildSkuCheckRequest({
+        connectionId: 'conn-1',
+        inventoryId: 'inv-1',
       }),
       mockContext,
       { id: 'product-1' }
@@ -90,18 +103,11 @@ describe('base product linking handlers', () => {
 
   it('returns the centralized link-existing response when creating a listing link', async () => {
     const response = await linkExistingHandler(
-      new NextRequest(
-        'http://localhost/api/v2/integrations/products/product-1/base/link-existing',
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            connectionId: 'conn-1',
-            inventoryId: 'inv-1',
-            externalListingId: 'base-123',
-          }),
-        }
-      ),
+      buildLinkExistingRequest({
+        connectionId: 'conn-1',
+        inventoryId: 'inv-1',
+        externalListingId: 'base-123',
+      }),
       mockContext,
       { id: 'product-1' }
     );

@@ -21,7 +21,12 @@ export const methodNotAllowed = async (
 };
 
 export type SimpleRouteHandler = ((request: NextRequest) => Promise<Response>) & { __isApiHandler?: boolean };
-export type ParamRouteHandler = ((request: NextRequest, context: { params: { id: string } }) => Promise<Response>) & { __isApiHandler?: boolean };
+type RouteParams = Record<string, string | string[] | undefined>;
+
+export type ParamRouteHandler<P extends RouteParams = RouteParams> = ((
+  request: NextRequest,
+  context: { params: P | Promise<P> }
+) => Promise<Response>) & { __isApiHandler?: boolean };
 
 export const handleGetPost = (
   request: NextRequest,

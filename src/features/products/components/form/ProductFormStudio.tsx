@@ -36,27 +36,30 @@ function ProductFormStudioInner(): React.JSX.Element {
     variantsData,
   } = useProductStudioContext();
   const { product } = useProductFormCore();
-  const registrySource = React.useMemo(
-    () =>
-      product?.id
-        ? {
-          label: 'Product Studio workspace state',
-          resolved: buildProductStudioWorkspaceContextBundle({
-            product,
-            studioProjectId,
-            selectedImageIndex,
-            imageSlotPreviews,
-            selectedVariantSlotId,
-            variantsData,
-            activeRunId,
-            runStatus,
-            pendingVariantPlaceholderCount,
-            sequenceReadinessMessage,
-            auditEntries,
-          }),
-        }
-        : null,
-    [
+  const registrySource = React.useMemo(() => {
+    if (!product?.id) {
+      return null;
+    }
+
+    const workspaceContextInput = {
+      product,
+      studioProjectId,
+      selectedImageIndex,
+      imageSlotPreviews,
+      selectedVariantSlotId,
+      variantsData,
+      activeRunId,
+      runStatus,
+      pendingVariantPlaceholderCount,
+      sequenceReadinessMessage,
+      auditEntries,
+    };
+
+    return {
+      label: 'Product Studio workspace state',
+      resolved: buildProductStudioWorkspaceContextBundle(workspaceContextInput),
+    };
+  }, [
       activeRunId,
       auditEntries,
       imageSlotPreviews,
@@ -68,8 +71,7 @@ function ProductFormStudioInner(): React.JSX.Element {
       sequenceReadinessMessage,
       studioProjectId,
       variantsData,
-    ]
-  );
+    ]);
 
   useRegisterContextRegistryPageSource('product-studio-workspace-state', registrySource);
 

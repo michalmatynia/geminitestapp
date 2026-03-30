@@ -39,14 +39,33 @@ const {
 vi.mock('react-native', () => {
   const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
     return ({
+      accessibilityHint: _accessibilityHint,
+      accessibilityLabel,
+      accessibilityRole,
       children,
+      contentContainerStyle: _contentContainerStyle,
+      keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
       onPress,
+      testID,
       ...props
-    }: React.PropsWithChildren<Record<string, unknown> & { onPress?: () => void }>) =>
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityHint?: string;
+        accessibilityLabel?: string;
+        accessibilityRole?: string;
+        contentContainerStyle?: unknown;
+        keyboardShouldPersistTaps?: string;
+        onPress?: () => void;
+        testID?: string;
+      }
+    >) =>
       React.createElement(
         tagName,
         {
           ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
           ...(onPress ? { onClick: onPress } : {}),
         },
         children,
@@ -63,8 +82,29 @@ vi.mock('react-native', () => {
 
 vi.mock('react-native-safe-area-context', () => {
   const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
-    return ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
-      React.createElement(tagName, props, children);
+    return ({
+      accessibilityLabel,
+      accessibilityRole,
+      children,
+      testID,
+      ...props
+    }: React.PropsWithChildren<
+      Record<string, unknown> & {
+        accessibilityLabel?: string;
+        accessibilityRole?: string;
+        testID?: string;
+      }
+    >) =>
+      React.createElement(
+        tagName,
+        {
+          ...props,
+          ...(testID ? { 'data-testid': testID } : {}),
+          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
+          ...(accessibilityRole ? { role: accessibilityRole } : {}),
+        },
+        children,
+      );
   };
 
   return {

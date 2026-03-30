@@ -1,3 +1,5 @@
+import { logger } from '@/shared/utils/logger';
+
 export type ErrorEnricher = (
   error: unknown,
   context: Record<string, unknown>
@@ -29,7 +31,7 @@ export async function notifyErrorEnrichers(
         tasks.push(result);
       }
     } catch (enricherError) {
-      console.error('[ErrorSystem] Enricher failed:', enricherError);
+      logger.error('[ErrorSystem] Enricher failed', enricherError);
     }
   }
   if (tasks.length > 0) {

@@ -2,8 +2,11 @@
 
 import { createContext, useContext } from 'react';
 
+import type { FrontendPublicOwner, FrontendPublicRouteFamily } from '@/shared/lib/frontend-public-route-family';
+
 type FrontendPublicOwnerContextValue = {
-  publicOwner: 'cms' | 'kangur';
+  publicOwner: FrontendPublicOwner;
+  routeFamily?: FrontendPublicRouteFamily;
 };
 
 const FrontendPublicOwnerContext = createContext<FrontendPublicOwnerContextValue | null>(null);
@@ -11,12 +14,14 @@ const FrontendPublicOwnerContext = createContext<FrontendPublicOwnerContextValue
 export function FrontendPublicOwnerProvider({
   children,
   publicOwner,
+  routeFamily,
 }: {
   children: React.ReactNode;
-  publicOwner: 'cms' | 'kangur';
+  publicOwner: FrontendPublicOwner;
+  routeFamily?: FrontendPublicRouteFamily;
 }): React.JSX.Element {
   return (
-    <FrontendPublicOwnerContext.Provider value={{ publicOwner }}>
+    <FrontendPublicOwnerContext.Provider value={{ publicOwner, routeFamily }}>
       {children}
     </FrontendPublicOwnerContext.Provider>
   );

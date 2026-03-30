@@ -5,18 +5,26 @@ import type {
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import {
+  buildKangurMobileHomeDuelLobbyQueryKey,
+  MOBILE_HOME_DUEL_LOBBY_POLL_MS,
+  MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT,
+} from './homeDuelLobbyQuery';
 
 const MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT = 4;
-const MOBILE_HOME_DUELS_SPOTLIGHT_QUERY_LIMIT = 8;
-const MOBILE_HOME_DUELS_SPOTLIGHT_POLL_MS = 20_000;
 
 type UseKangurMobileHomeDuelsSpotlightResult = {
   entries: KangurDuelLobbyEntry[];
   error: string | null;
   isLoading: boolean;
   refresh: () => Promise<void>;
+};
+
+type UseKangurMobileHomeDuelsSpotlightOptions = {
+  enabled?: boolean;
 };
 
 const DUEL_SPOTLIGHT_STATUS_PRIORITY: Record<KangurDuelStatus, number> = {
@@ -71,54 +79,66 @@ const isSpotlightEntry = (entry: KangurDuelLobbyEntry): boolean =>
     entry.status === 'ready' ||
     entry.status === 'in_progress');
 
-export const useKangurMobileHomeDuelsSpotlight =
-  (): UseKangurMobileHomeDuelsSpotlightResult => {
-    const { copy } = useKangurMobileI18n();
-    const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+export const useKangurMobileHomeDuelsSpotlight = ({
+  enabled = true,
+}: UseKangurMobileHomeDuelsSpotlightOptions = {}): UseKangurMobileHomeDuelsSpotlightResult => {
+  const { copy } = useKangurMobileI18n();
+  const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+  const { session } = useKangurMobileAuth();
+  const learnerIdentity =
+    session.user?.activeLearner?.id ??
+    session.user?.email ??
+    session.user?.id ??
+    'guest';
 
-    const spotlightQuery = useQuery({
-      queryKey: [
-        'kangur-mobile',
-        'home',
-        'duels-spotlight',
-        apiBaseUrl,
-      ] as const,
-      queryFn: async () =>
-        apiClient.listDuelLobby(
-          { limit: MOBILE_HOME_DUELS_SPOTLIGHT_QUERY_LIMIT },
-          { cache: 'no-store' },
-        ),
-      refetchInterval: MOBILE_HOME_DUELS_SPOTLIGHT_POLL_MS,
-      staleTime: 10_000,
-    });
+  const spotlightQuery = useQuery({
+    enabled,
+    queryKey: buildKangurMobileHomeDuelLobbyQueryKey(
+      apiBaseUrl,
+      learnerIdentity,
+      'public',
+    ),
+    queryFn: async () =>
+      apiClient.listDuelLobby(
+        {
+          limit: MOBILE_HOME_DUEL_LOBBY_QUERY_LIMIT,
+          visibility: 'public',
+        },
+        { cache: 'no-store' },
+      ),
+    refetchInterval: MOBILE_HOME_DUEL_LOBBY_POLL_MS,
+    staleTime: 10_000,
+  });
 
-    const entries = useMemo(
-      () =>
-        (spotlightQuery.data?.entries ?? [])
-          .filter((entry) => isSpotlightEntry(entry))
-          .sort((left, right) => {
-            const statusPriority =
-              DUEL_SPOTLIGHT_STATUS_PRIORITY[left.status] -
-              DUEL_SPOTLIGHT_STATUS_PRIORITY[right.status];
+  const entries = useMemo(
+    () =>
+      (spotlightQuery.data?.entries ?? [])
+        .filter((entry) => isSpotlightEntry(entry))
+        .sort((left, right) => {
+          const statusPriority =
+            DUEL_SPOTLIGHT_STATUS_PRIORITY[left.status] -
+            DUEL_SPOTLIGHT_STATUS_PRIORITY[right.status];
 
-            if (statusPriority !== 0) {
-              return statusPriority;
-            }
+          if (statusPriority !== 0) {
+            return statusPriority;
+          }
 
-            return (
-              Date.parse(right.updatedAt) - Date.parse(left.updatedAt)
-            );
-          })
-          .slice(0, MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT),
-      [spotlightQuery.data?.entries],
-    );
+          return Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
+        })
+        .slice(0, MOBILE_HOME_DUELS_SPOTLIGHT_LIMIT),
+    [spotlightQuery.data?.entries],
+  );
 
-    return {
-      entries,
-      error: toSpotlightErrorMessage(spotlightQuery.error, copy),
-      isLoading: spotlightQuery.isLoading,
-      refresh: async () => {
-        await spotlightQuery.refetch();
-      },
-    };
+  return {
+    entries,
+    error: toSpotlightErrorMessage(spotlightQuery.error, copy),
+    isLoading: enabled && spotlightQuery.isLoading,
+    refresh: async () => {
+      if (!enabled) {
+        return;
+      }
+
+      await spotlightQuery.refetch();
+    },
   };
+};

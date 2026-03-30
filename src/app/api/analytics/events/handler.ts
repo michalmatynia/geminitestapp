@@ -18,6 +18,7 @@ import {
   parseAnalyticsUserAgent,
 } from '@/shared/lib/analytics/server/enrichment';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { logger } from '@/shared/utils/logger';
 
 const BLOCKING_ANALYTICS_EVENTS_INGESTION =
@@ -27,7 +28,7 @@ export { analyticsEventCreateRequestSchema as createEventSchema };
 export { analyticsEventsQuerySchema as querySchema };
 
 const resolveSessionUserId = async (): Promise<string | null> => {
-  const session = await auth().catch(() => null);
+  const session = await readOptionalServerAuthSession();
   const userId = session?.user?.id;
   if (typeof userId !== 'string') return null;
   const trimmed = userId.trim();

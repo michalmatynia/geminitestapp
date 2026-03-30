@@ -9,4 +9,4 @@ export type CaseResolverCategoryFormData = CaseResolverNamedColorParentFormData 
 };
 
 export type CaseResolverIdentifierFormData = CaseResolverNamedColorParentFormData;
-export type CaseResolverTagFormData = CaseResolverNamedColorParentFormData;
+export type CaseResolverTagFormData = CaseResolverIdentifierFormData;

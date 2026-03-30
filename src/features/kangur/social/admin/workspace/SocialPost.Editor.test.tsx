@@ -1,0 +1,135 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+const { useSocialPostContextMock } = vi.hoisted(() => ({
+  useSocialPostContextMock: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/shared/ui', () => ({
+  Button: ({
+    children,
+    ...rest
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
+    <button {...rest}>{children}</button>
+  ),
+  FormSection: ({
+    title,
+    children,
+  }: {
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <section>
+      <h2>{title}</h2>
+      {children}
+    </section>
+  ),
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+    <textarea {...props} />
+  ),
+}));
+
+vi.mock('./SocialPost.Visuals', () => ({
+  SocialPostVisuals: () => <div data-testid='social-post-visuals'>social-post-visuals</div>,
+}));
+
+vi.mock('./SocialPostContext', () => ({
+  useSocialPostContext: () => useSocialPostContextMock(),
+}));
+
+import { renderSocialPostEditor } from './SocialPost.Editor';
+
+const buildPost = () => ({
+  id: 'post-1',
+  titlePl: 'StudiQ Weekly Update',
+  titleEn: 'StudiQ Weekly Update',
+  bodyPl: '',
+  bodyEn: '',
+  combinedBody: '',
+  status: 'draft' as const,
+  scheduledAt: null,
+  publishedAt: null,
+  linkedinPostId: null,
+  linkedinUrl: null,
+  linkedinConnectionId: null,
+  brainModelId: null,
+  visionModelId: null,
+  publishError: null,
+  imageAssets: [],
+  imageAddonIds: [],
+  docReferences: [],
+  contextSummary: null,
+  generatedSummary: null,
+  visualSummary: null,
+  visualHighlights: [],
+  createdBy: null,
+  updatedBy: null,
+  createdAt: '2026-03-19T10:00:00.000Z',
+  updatedAt: '2026-03-19T10:00:00.000Z',
+});
+
+describe('renderSocialPostEditor', () => {
+  it('keeps the editor post-specific and no longer renders general LinkedIn settings', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      editorState: { titlePl: '', titleEn: '', bodyPl: '', bodyEn: '' },
+      setEditorState: vi.fn(),
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+    });
+
+    render(renderSocialPostEditor({}));
+
+    expect(screen.getByText('Post editor')).toBeInTheDocument();
+    expect(screen.getByTestId('social-post-visuals')).toBeInTheDocument();
+    expect(screen.queryByText('LinkedIn connection')).not.toBeInTheDocument();
+    expect(screen.queryByText('Default LinkedIn connection')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loaded context')).not.toBeInTheDocument();
+    expect(screen.queryByText('Documentation references')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save draft' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Schedule' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish to LinkedIn' })).not.toBeInTheDocument();
+  });
+
+  it('blocks editing draft copy while Social generation or pipeline jobs are in flight', () => {
+    useSocialPostContextMock.mockReturnValue({
+      activePost: buildPost(),
+      editorState: {
+        titlePl: 'Polski tytul',
+        titleEn: 'English title',
+        bodyPl: 'Polska tresc',
+        bodyEn: 'English body',
+      },
+      setEditorState: vi.fn(),
+      currentGenerationJob: {
+        id: 'job-generate-1',
+        status: 'waiting',
+        progress: { message: 'Waiting for the draft generation worker.' },
+        failedReason: null,
+      },
+      currentPipelineJob: {
+        id: 'job-pipeline-1',
+        status: 'active',
+        progress: { message: 'Pipeline is still updating the draft.' },
+        failedReason: null,
+      },
+    });
+
+    render(renderSocialPostEditor({}));
+
+    expect(screen.getByPlaceholderText('Polish title')).toBeDisabled();
+    expect(screen.getByPlaceholderText('Polish title')).toHaveAttribute(
+      'title',
+      'Wait for the current Social runtime job to finish.'
+    );
+    expect(screen.getByPlaceholderText('Polish body')).toBeDisabled();
+    expect(screen.getByPlaceholderText('English title')).toBeDisabled();
+    expect(screen.getByPlaceholderText('English body')).toBeDisabled();
+  });
+});

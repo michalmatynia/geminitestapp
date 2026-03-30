@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { Card, type CardProps } from '@/features/kangur/shared/ui';
+import { Card } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/utils/cn';
 
 export const KANGUR_ADMIN_CARD_CLASS_NAME = 'rounded-2xl border-border/60 bg-card/40 shadow-sm';
@@ -19,49 +19,57 @@ type KangurAdminCardHeaderProps = {
   titleClassName?: string;
 };
 
-export function KangurAdminCard({
-  className,
-  padding = 'md',
-  variant = 'subtle',
-  ...props
-}: CardProps): React.JSX.Element {
+type KangurAdminCardProps = {
+  children: ReactNode;
+  className?: string;
+  title?: ReactNode;
+  description?: ReactNode;
+  headerActions?: ReactNode;
+  badge?: ReactNode;
+};
+
+export function KangurAdminCard(props: KangurAdminCardProps): React.JSX.Element {
+  const { children, className, title, description, headerActions, badge } = props;
   return (
-    <Card
-      variant={variant}
-      padding={padding}
-      className={cn(KANGUR_ADMIN_CARD_CLASS_NAME, className)}
-      {...props}
-    />
+    <Card variant='subtle' padding='md' className={cn(KANGUR_ADMIN_CARD_CLASS_NAME, className)}>
+      {title || description || headerActions || badge ? (
+        <div className='mb-4'>
+          <KangurAdminCardHeader
+            title={title ?? ''}
+            description={description}
+            actions={headerActions}
+            badge={badge}
+          />
+        </div>
+      ) : null}
+      {children}
+    </Card>
   );
 }
 
-export function KangurAdminInsetCard({
-  className,
-  padding = 'md',
-  variant = 'subtle',
-  ...props
-}: CardProps): React.JSX.Element {
+export function KangurAdminInsetCard(props: KangurAdminCardProps): React.JSX.Element {
+  const { children, className } = props;
   return (
-    <Card
-      variant={variant}
-      padding={padding}
-      className={cn(KANGUR_ADMIN_INSET_CARD_CLASS_NAME, className)}
-      {...props}
-    />
+    <Card variant='subtle' padding='md' className={cn(KANGUR_ADMIN_INSET_CARD_CLASS_NAME, className)}>
+      {children}
+    </Card>
   );
 }
 
-export function KangurAdminCardHeader({
-  title,
-  description,
-  badge,
-  actions,
-  className,
-  contentClassName,
-  descriptionClassName,
-  titleAs = 'h3',
-  titleClassName,
-}: KangurAdminCardHeaderProps): React.JSX.Element {
+export function KangurAdminCardHeader(
+  props: KangurAdminCardHeaderProps
+): React.JSX.Element {
+  const {
+    title,
+    description,
+    badge,
+    actions,
+    className,
+    contentClassName,
+    descriptionClassName,
+    titleAs = 'h3',
+    titleClassName,
+  } = props;
   const TitleTag = titleAs;
 
   return (

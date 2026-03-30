@@ -11,10 +11,18 @@ import {
 import { patchKangurAssignmentHandler } from '../../assignments/[id]/handler';
 import { postKangurAssignmentReassignHandler } from '../../assignments/[id]/reassign/handler';
 import {
+  getKangurGameLibraryPageHandler,
+  querySchema as gameLibraryPageQuerySchema,
+} from '../../game-library-page/handler';
+import {
   getKangurLessonsHandler,
   postKangurLessonsHandler,
   querySchema as lessonsQuerySchema,
 } from '../../lessons/handler';
+import {
+  getKangurLessonsCatalogHandler,
+  querySchema as lessonsCatalogQuerySchema,
+} from '../../lessons-catalog/handler';
 import {
   getKangurLessonDocumentHandler,
   getKangurLessonDocumentsHandler,
@@ -25,6 +33,21 @@ import {
   postKangurLessonSectionsHandler,
   querySchema as lessonSectionsQuerySchema,
 } from '../../lesson-sections/handler';
+import {
+  getKangurLessonGameSectionsHandler,
+  postKangurLessonGameSectionsHandler,
+  querySchema as lessonGameSectionsQuerySchema,
+} from '../../lesson-game-sections/handler';
+import {
+  getKangurGameContentSetsHandler,
+  postKangurGameContentSetsHandler,
+  querySchema as gameContentSetsQuerySchema,
+} from '../../game-content-sets/handler';
+import {
+  getKangurGameInstancesHandler,
+  postKangurGameInstancesHandler,
+  querySchema as gameInstancesQuerySchema,
+} from '../../game-instances/handler';
 import {
   getKangurLessonTemplatesHandler,
   postKangurLessonTemplatesHandler,
@@ -43,7 +66,11 @@ import {
   postKangurSocialImageAddonsHandler,
   querySchema as socialImageAddonsQuerySchema,
 } from '../../social-image-addons/handler';
-import { postKangurSocialImageAddonsBatchHandler } from '../../social-image-addons/batch/handler';
+import {
+  getKangurSocialImageAddonsBatchHandler,
+  postKangurSocialImageAddonsBatchHandler,
+  querySchema as socialImageAddonsBatchQuerySchema,
+} from '../../social-image-addons/batch/handler';
 import {
   GET_handler as getKangurSocialImageAddonsServeHandler,
   querySchema as socialImageAddonsServeQuerySchema,
@@ -55,7 +82,7 @@ import {
 } from '../../social-posts/[id]/handler';
 import { postKangurSocialPostPublishHandler } from '../../social-posts/[id]/publish/handler';
 import { postKangurSocialPostUnpublishHandler } from '../../social-posts/[id]/unpublish/handler';
-import { postKangurSocialPostDocUpdatesHandler } from '../../social-posts/[id]/doc-updates/handler';
+import { postKangurSocialPostAnalyzeVisualsHandler } from '../../social-posts/analyze-visuals/handler';
 import { postKangurSocialPostGenerateHandler } from '../../social-posts/generate/handler';
 import {
   getKangurSocialPostContextHandler,
@@ -95,7 +122,8 @@ export const assignmentsPostHandler: SimpleRouteHandler = apiHandler(postKangurA
   bodySchema: kangurAssignmentCreateInputSchema,
 });
 
-export const assignmentPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+export const assignmentPatchHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(
   patchKangurAssignmentHandler,
   {
     source: 'kangur.assignments.[id].PATCH',
@@ -104,19 +132,35 @@ export const assignmentPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ 
   }
 );
 
-export const assignmentReassignHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  postKangurAssignmentReassignHandler,
-  {
+export const assignmentReassignHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(postKangurAssignmentReassignHandler, {
     source: 'kangur.assignments.[id].reassign.POST',
     service: 'kangur.api',
-  }
-);
+  });
 
 export const lessonsGetHandler: SimpleRouteHandler = apiHandler(getKangurLessonsHandler, {
   source: 'kangur.lessons.GET',
   service: 'kangur.api',
   querySchema: lessonsQuerySchema,
 });
+
+export const lessonsCatalogGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurLessonsCatalogHandler,
+  {
+    source: 'kangur.lessons-catalog.GET',
+    service: 'kangur.api',
+    querySchema: lessonsCatalogQuerySchema,
+  }
+);
+
+export const gameLibraryPageGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameLibraryPageHandler,
+  {
+    source: 'kangur.game-library-page.GET',
+    service: 'kangur.api',
+    querySchema: gameLibraryPageQuerySchema,
+  }
+);
 
 export const lessonsPostHandler: SimpleRouteHandler = apiHandler(postKangurLessonsHandler, {
   source: 'kangur.lessons.POST',
@@ -137,6 +181,60 @@ export const lessonSectionsPostHandler: SimpleRouteHandler = apiHandler(
   postKangurLessonSectionsHandler,
   {
     source: 'kangur.lesson-sections.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
+export const lessonGameSectionsGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurLessonGameSectionsHandler,
+  {
+    source: 'kangur.lesson-game-sections.GET',
+    service: 'kangur.api',
+    querySchema: lessonGameSectionsQuerySchema,
+  }
+);
+
+export const lessonGameSectionsPostHandler: SimpleRouteHandler = apiHandler(
+  postKangurLessonGameSectionsHandler,
+  {
+    source: 'kangur.lesson-game-sections.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
+export const gameInstancesGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameInstancesHandler,
+  {
+    source: 'kangur.game-instances.GET',
+    service: 'kangur.api',
+    querySchema: gameInstancesQuerySchema,
+  }
+);
+
+export const gameContentSetsGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurGameContentSetsHandler,
+  {
+    source: 'kangur.game-content-sets.GET',
+    service: 'kangur.api',
+    querySchema: gameContentSetsQuerySchema,
+  }
+);
+
+export const gameContentSetsPostHandler: SimpleRouteHandler = apiHandler(
+  postKangurGameContentSetsHandler,
+  {
+    source: 'kangur.game-content-sets.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
+export const gameInstancesPostHandler: SimpleRouteHandler = apiHandler(
+  postKangurGameInstancesHandler,
+  {
+    source: 'kangur.game-instances.POST',
     service: 'kangur.api',
     parseJsonBody: true,
   }
@@ -168,12 +266,11 @@ export const lessonDocumentsGetHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
-export const lessonDocumentGetHandler: ParamRouteHandler = apiHandlerWithParams<{
-  lessonId: string;
-}>(getKangurLessonDocumentHandler, {
+export const lessonDocumentGetHandler: ParamRouteHandler<{ lessonId: string }> =
+  apiHandlerWithParams<{ lessonId: string }>(getKangurLessonDocumentHandler, {
   source: 'kangur.lesson-documents.[lessonId].GET',
   service: 'kangur.api',
-});
+  });
 
 export const lessonDocumentsPostHandler: SimpleRouteHandler = apiHandler(
   postKangurLessonDocumentsHandler,
@@ -241,6 +338,15 @@ export const socialImageAddonsBatchHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
+export const socialImageAddonsBatchGetHandler: SimpleRouteHandler = apiHandler(
+  getKangurSocialImageAddonsBatchHandler,
+  {
+    source: 'kangur.social-image-addons.batch.GET',
+    service: 'kangur.api',
+    querySchema: socialImageAddonsBatchQuerySchema,
+  }
+);
+
 export const socialImageAddonsServeHandler: SimpleRouteHandler = apiHandler(
   getKangurSocialImageAddonsServeHandler,
   {
@@ -250,7 +356,7 @@ export const socialImageAddonsServeHandler: SimpleRouteHandler = apiHandler(
   }
 );
 
-export const socialPostGetHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+export const socialPostGetHandler: ParamRouteHandler<{ id: string }> = apiHandlerWithParams<{ id: string }>(
   getKangurSocialPostHandler,
   {
     source: 'kangur.social-posts.[id].GET',
@@ -258,54 +364,46 @@ export const socialPostGetHandler: ParamRouteHandler = apiHandlerWithParams<{ id
   }
 );
 
-export const socialPostPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  patchKangurSocialPostHandler,
-  {
+export const socialPostPatchHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(patchKangurSocialPostHandler, {
     source: 'kangur.social-posts.[id].PATCH',
     service: 'kangur.api',
     parseJsonBody: true,
-  }
-);
+  });
 
-export const socialPostDeleteHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  deleteKangurSocialPostHandler,
-  {
+export const socialPostDeleteHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(deleteKangurSocialPostHandler, {
     source: 'kangur.social-posts.[id].DELETE',
     service: 'kangur.api',
-  }
-);
+  });
 
-export const socialPostPublishHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  postKangurSocialPostPublishHandler,
-  {
+export const socialPostPublishHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(postKangurSocialPostPublishHandler, {
     source: 'kangur.social-posts.[id].publish.POST',
     service: 'kangur.api',
     parseJsonBody: true,
-  }
-);
+  });
 
-export const socialPostUnpublishHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  postKangurSocialPostUnpublishHandler,
-  {
+export const socialPostUnpublishHandler: ParamRouteHandler<{ id: string }> =
+  apiHandlerWithParams<{ id: string }>(postKangurSocialPostUnpublishHandler, {
     source: 'kangur.social-posts.[id].unpublish.POST',
     service: 'kangur.api',
     parseJsonBody: true,
-  }
-);
-
-export const socialPostDocUpdatesHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
-  postKangurSocialPostDocUpdatesHandler,
-  {
-    source: 'kangur.social-posts.[id].doc-updates.POST',
-    service: 'kangur.api',
-    parseJsonBody: true,
-  }
-);
+  });
 
 export const socialPostGenerateHandler: SimpleRouteHandler = apiHandler(
   postKangurSocialPostGenerateHandler,
   {
     source: 'kangur.social-posts.generate.POST',
+    service: 'kangur.api',
+    parseJsonBody: true,
+  }
+);
+
+export const socialPostAnalyzeVisualsHandler: SimpleRouteHandler = apiHandler(
+  postKangurSocialPostAnalyzeVisualsHandler,
+  {
+    source: 'kangur.social-posts.analyze-visuals.POST',
     service: 'kangur.api',
     parseJsonBody: true,
   }
@@ -458,8 +556,25 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
   if (segments[0] === 'lessons' && segments.length === 1) {
     return handleGetPost(request, lessonsGetHandler, lessonsPostHandler);
   }
+  if (segments[0] === 'lessons-catalog' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return lessonsCatalogGetHandler(request);
+  }
+  if (segments[0] === 'game-library-page' && segments.length === 1) {
+    if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);
+    return gameLibraryPageGetHandler(request);
+  }
   if (segments[0] === 'lesson-sections' && segments.length === 1) {
     return handleGetPost(request, lessonSectionsGetHandler, lessonSectionsPostHandler);
+  }
+  if (segments[0] === 'lesson-game-sections' && segments.length === 1) {
+    return handleGetPost(request, lessonGameSectionsGetHandler, lessonGameSectionsPostHandler);
+  }
+  if (segments[0] === 'game-instances' && segments.length === 1) {
+    return handleGetPost(request, gameInstancesGetHandler, gameInstancesPostHandler);
+  }
+  if (segments[0] === 'game-content-sets' && segments.length === 1) {
+    return handleGetPost(request, gameContentSetsGetHandler, gameContentSetsPostHandler);
   }
   if (segments[0] === 'lesson-templates' && segments.length === 1) {
     return handleGetPost(request, lessonTemplatesGetHandler, lessonTemplatesPostHandler);
@@ -494,6 +609,10 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return socialPostGenerateHandler(request);
     }
+    if (segments[1] === 'analyze-visuals' && segments.length === 2) {
+      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
+      return socialPostAnalyzeVisualsHandler(request);
+    }
     if (segments[1] === 'publish-scheduled' && segments.length === 2) {
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return socialPostsPublishScheduledHandler(request);
@@ -514,18 +633,19 @@ export const handleMiscRouting = (request: NextRequest, segments: string[]): Pro
       if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
       return socialPostUnpublishHandler(request, { params: { id } });
     }
-    if (segments[2] === 'doc-updates' && segments.length === 3) {
-      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
-      return socialPostDocUpdatesHandler(request, { params: { id } });
-    }
   }
   if (segments[0] === 'social-image-addons') {
     if (segments.length === 1) {
       return handleGetPost(request, socialImageAddonsGetHandler, socialImageAddonsPostHandler);
     }
     if (segments[1] === 'batch' && segments.length === 2) {
-      if (request.method !== 'POST') return methodNotAllowed(request, ['POST'], request.method);
-      return socialImageAddonsBatchHandler(request);
+      if (request.method === 'GET') {
+        return socialImageAddonsBatchGetHandler(request);
+      }
+      if (request.method === 'POST') {
+        return socialImageAddonsBatchHandler(request);
+      }
+      return methodNotAllowed(request, ['GET', 'POST'], request.method);
     }
     if (segments[1] === 'serve' && segments.length === 2) {
       if (request.method !== 'GET') return methodNotAllowed(request, ['GET'], request.method);

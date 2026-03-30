@@ -36,47 +36,78 @@ type PageNotFoundAuthState = {
   isAuthenticated: boolean;
 };
 
+const resolveUnknownPageFallback = (
+  requestedPath: string | null | undefined,
+  unknownPageLabel: string
+): string => requestedPath?.replace(/^\/+/, '') || unknownPageLabel;
+
+const resolveEmbeddedPageName = (input: {
+  basePath: string;
+  embeddedHostPath: string;
+  requestedPath: string | null | undefined;
+  unknownPageLabel: string;
+}): string =>
+  withKangurClientErrorSync(
+    {
+      source: 'page-not-found',
+      action: 'resolve-embedded-page',
+      description: 'Resolve embedded Kangur page name for 404 banner.',
+      context: {
+        basePath: input.basePath,
+        requestedPath: input.requestedPath,
+        embeddedHostPath: input.embeddedHostPath,
+      },
+    },
+    () => {
+      const parsed = new URL(input.requestedPath || input.embeddedHostPath, 'https://kangur.local');
+      return (
+        readKangurUrlParam(parsed.searchParams, KANGUR_EMBED_QUERY_PARAM, input.basePath) ||
+        input.unknownPageLabel
+      );
+    },
+    { fallback: resolveUnknownPageFallback(input.requestedPath, input.unknownPageLabel) }
+  );
+
+const resolveRequestedPageName = (input: {
+  basePath: string;
+  requestedPath: string | null | undefined;
+  unknownPageLabel: string;
+}): string => {
+  if (!input.requestedPath || input.requestedPath.length === 0) {
+    return input.unknownPageLabel;
+  }
+  if (!input.requestedPath.startsWith(input.basePath)) {
+    return resolveUnknownPageFallback(input.requestedPath, input.unknownPageLabel);
+  }
+
+  const suffix = input.requestedPath.slice(input.basePath.length).replace(/^\/+/, '');
+  return suffix || input.unknownPageLabel;
+};
+
 export function PageNotFound(): React.JSX.Element {
   const translations = useTranslations('KangurPageNotFound');
   const isCoarsePointer = useKangurCoarsePointer();
   const routeNavigator = useKangurRouteNavigator();
   const { requestedPath, basePath } = useKangurRouting();
+  const unknownPageLabel = translations('unknownPage');
 
   const pageName = useMemo(() => {
     const embeddedHostPath = getKangurEmbeddedHostPath(basePath);
     if (embeddedHostPath) {
-      const fallbackName = requestedPath?.replace(/^\/+/, '') || translations('unknownPage');
-      return withKangurClientErrorSync(
-        {
-          source: 'page-not-found',
-          action: 'resolve-embedded-page',
-          description: 'Resolve embedded Kangur page name for 404 banner.',
-          context: {
-            basePath,
-            requestedPath,
-            embeddedHostPath,
-          },
-        },
-        () => {
-          const parsed = new URL(requestedPath || embeddedHostPath, 'https://kangur.local');
-          return (
-            readKangurUrlParam(parsed.searchParams, KANGUR_EMBED_QUERY_PARAM, basePath) ||
-            translations('unknownPage')
-          );
-        },
-        { fallback: fallbackName }
-      );
+      return resolveEmbeddedPageName({
+        basePath,
+        requestedPath,
+        embeddedHostPath,
+        unknownPageLabel,
+      });
     }
 
-    if (!requestedPath || requestedPath.length === 0) {
-      return translations('unknownPage');
-    }
-    if (!requestedPath.startsWith(basePath)) {
-      return requestedPath.replace(/^\/+/, '') || translations('unknownPage');
-    }
-    const suffix = requestedPath.slice(basePath.length).replace(/^\/+/, '');
-    return suffix || translations('unknownPage');
-  }, [basePath, requestedPath, translations]);
+    return resolveRequestedPageName({
+      basePath,
+      requestedPath,
+      unknownPageLabel,
+    });
+  }, [basePath, requestedPath, unknownPageLabel]);
 
   const { data: authData, isFetched } = useQuery<PageNotFoundAuthState>({
     queryKey: QUERY_KEYS.auth.user(),
@@ -162,7 +193,7 @@ export function PageNotFound(): React.JSX.Element {
               }
               onClick={() => {
                 routeNavigator.push(getKangurHomeHref(basePath), {
-                  acknowledgeMs: 110,
+                  acknowledgeMs: 0,
                   pageKey: 'Game',
                   sourceId: 'page-not-found:home',
                 });

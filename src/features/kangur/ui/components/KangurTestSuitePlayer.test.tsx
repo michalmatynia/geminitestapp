@@ -4,6 +4,10 @@
 
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME,
+  LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME,
+} from '@/features/kangur/ui/pages/lessons/Lessons.constants';
 import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 const {
@@ -22,6 +26,8 @@ const {
   useOptionalKangurAiTutorMock: vi.fn(),
 }));
 
+const splitClasses = (className: string): string[] => className.trim().split(/\s+/);
+
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: ({ readLabel }: { readLabel: string }) => <button>{readLabel}</button>,
 }));
@@ -29,6 +35,7 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutorSessionSync: useKangurAiTutorSessionSyncMock,
   useOptionalKangurAiTutor: useOptionalKangurAiTutorMock,
+  useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
@@ -113,6 +120,12 @@ describe('KangurTestSuitePlayer', () => {
       'aria-valuenow',
       '100'
     );
+    expect(screen.getByTestId('kangur-test-suite-navigation')).toHaveClass(
+      ...splitClasses(LESSONS_SELECTOR_NAV_LAYOUT_CLASSNAME)
+    );
+    expect(screen.getByRole('group', { name: /test suite navigation/i })).toHaveClass(
+      ...splitClasses(LESSONS_SELECTOR_NAV_BUTTON_ROW_CLASSNAME)
+    );
     expect(screen.getByRole('button', { name: /previous/i })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta',
@@ -120,6 +133,7 @@ describe('KangurTestSuitePlayer', () => {
       'px-4',
       'touch-manipulation'
     );
+    expect(screen.getByRole('button', { name: /previous/i })).not.toHaveTextContent('Previous');
     expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
 
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
@@ -148,11 +162,9 @@ describe('KangurTestSuitePlayer', () => {
 
     const restartButton = screen.getByRole('button', { name: /try again/i });
     expect(screen.getByText('Podsumowanie testu')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Sprawdź wynik końcowy i wróć do pytań, aby przeanalizować odpowiedzi.'
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-test-suite-summary-copy')).toHaveTextContent(
+      /Sprawdź wynik końcowy i wróć do pytań, aby przeanalizowa[cć] odpowiedzi\./
+    );
     expect(screen.getByTestId('kangur-test-suite-summary')).toHaveClass(
       'soft-card'
     );
@@ -171,16 +183,17 @@ describe('KangurTestSuitePlayer', () => {
     await userEvent.click(screen.getByRole('button', { name: /check answer/i }));
     await userEvent.click(screen.getByRole('button', { name: /finish/i }));
 
+    const expectedFinishedSessionContext = {
+      surface: 'test',
+      contentId: 'suite-2024',
+      title: 'Kangur 2024',
+      description: 'Wynik końcowy: 3/3 pkt (100%).',
+      questionProgressLabel: 'Ukończono 1/1',
+      answerRevealed: true,
+    };
     expect(useKangurAiTutorSessionSyncMock).toHaveBeenLastCalledWith({
       learnerId: null,
-      sessionContext: expect.objectContaining({
-        surface: 'test',
-        contentId: 'suite-2024',
-        title: 'Kangur 2024',
-        description: 'Wynik końcowy: 3/3 pkt (100%).',
-        questionProgressLabel: 'Ukończono 1/1',
-        answerRevealed: true,
-      }),
+      sessionContext: expect.objectContaining(expectedFinishedSessionContext),
     });
   });
 
@@ -189,19 +202,20 @@ describe('KangurTestSuitePlayer', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /A.*4/i }));
 
+    const expectedSelectedChoiceSessionContext = {
+      surface: 'test',
+      contentId: 'suite-2024',
+      questionId: 'question-1',
+      selectedChoiceLabel: 'A',
+      selectedChoiceText: '4',
+      currentQuestion: 'Ile to jest 2 + 2?',
+      description: undefined,
+      questionProgressLabel: 'Pytanie 1/1',
+      answerRevealed: false,
+    };
     expect(useKangurAiTutorSessionSyncMock).toHaveBeenLastCalledWith({
       learnerId: null,
-      sessionContext: expect.objectContaining({
-        surface: 'test',
-        contentId: 'suite-2024',
-        questionId: 'question-1',
-        selectedChoiceLabel: 'A',
-        selectedChoiceText: '4',
-        currentQuestion: 'Ile to jest 2 + 2?',
-        description: undefined,
-        questionProgressLabel: 'Pytanie 1/1',
-        answerRevealed: false,
-      }),
+      sessionContext: expect.objectContaining(expectedSelectedChoiceSessionContext),
     });
   });
 
@@ -346,5 +360,6 @@ describe('KangurTestSuitePlayer', () => {
     ).toBeInTheDocument();
     expect(await screen.findByText(/Correct! \+3 pts/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next/i })).not.toHaveTextContent('Next');
   });
 });

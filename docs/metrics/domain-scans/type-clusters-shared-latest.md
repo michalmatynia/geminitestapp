@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-11'
+last_reviewed: '2026-03-26'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,26 +8,30 @@ canonical: true
 ---
 # Type Cluster Scanner Report
 
-Generated at: 2026-03-05T04:20:53.299Z
+Generated at: 2026-03-26T13:27:58.830Z
 Status: ok
 
 ## Summary
 
-- Files scanned: 4208
-- Exported declarations scanned: 3332
-- Candidate declarations scanned: 3303
-- Exact-shape clusters: 0
-- Near-shape clusters: 0
-- Clusters after filters: 0
-- Declarations in clusters: 0
-- Highest risk score: 0
+- Files scanned: 7787
+- Exported declarations scanned: 5176
+- Candidate declarations scanned: 5152
+- Exact-shape clusters: 12
+- Near-shape clusters: 5
+- Clusters after filters: 5
+- Declarations in clusters: 12
+- Highest risk score: 20
 - Domain filter: shared
 
 ## Top Cluster Candidates
 
 | Cluster | Kind | Risk | Decls | Domains | Candidate DTO |
 | --- | --- | ---: | ---: | --- | --- |
-| _none_ | - | 0 | 0 | - | - |
+| `exact-0002` | exact-shape | 20 | 3 | shared, shared:contracts | TBD |
+| `near-0001` | near-shape | 16 | 3 | feature:kangur, shared | TBD |
+| `near-0005` | near-shape | 14 | 2 | shared | TBD |
+| `exact-0011` | exact-shape | 13 | 2 | shared, shared:contracts | TBD |
+| `exact-0010` | exact-shape | 11 | 2 | feature:kangur, shared | TBD |
 
 ## Initial DTO Consolidation Workflow
 

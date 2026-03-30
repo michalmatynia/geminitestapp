@@ -115,8 +115,24 @@ vi.mock('next/image', () => ({
   default: ({ alt, ...props }: any) => <img alt={alt} {...props} />,
 }));
 
-vi.mock('../KangurAiTutorMoodAvatar', () => ({
-  KangurAiTutorMoodAvatar: ({ label, avatarImageUrl, svgContent, className, 'data-testid': dataTestId }: any) => (
+type MoodAvatarMockProps = {
+  label: string;
+  avatarImageUrl?: string | null;
+  svgContent?: string | null;
+  className?: string;
+  'data-testid'?: string;
+};
+
+function MockKangurAiTutorMoodAvatar(props: MoodAvatarMockProps): React.JSX.Element {
+  const {
+    label,
+    avatarImageUrl,
+    svgContent,
+    className,
+    'data-testid': dataTestId,
+  } = props;
+
+  return (
     <div aria-label={label} className={className} data-testid={dataTestId} role='img'>
       {avatarImageUrl ? (
         <img alt={label} src={avatarImageUrl} />
@@ -126,7 +142,11 @@ vi.mock('../KangurAiTutorMoodAvatar', () => ({
         <svg aria-hidden='true' />
       )}
     </div>
-  ),
+  );
+}
+
+vi.mock('../KangurAiTutorMoodAvatar', () => ({
+  KangurAiTutorMoodAvatar: MockKangurAiTutorMoodAvatar,
 }));
 
 vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', () => ({
@@ -137,6 +157,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorActivationContext: React.createContext(null),
   useKangurAiTutor: mocks.useKangurAiTutorMock,
   useOptionalKangurAiTutor: mocks.useKangurAiTutorMock,
+  useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
@@ -188,7 +209,7 @@ vi.mock('@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext', () =>
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ href, children, ...props }: any) => (
+  default: ({ href, children, prefetch: _prefetch, ...props }: any) => (
     <a href={href} {...props}>
       {children}
     </a>

@@ -209,4 +209,19 @@ describe('useKangurMobileHomeDuelsRematches', () => {
     expect(result.current.opponents).toEqual([]);
     expect(listDuelOpponentsMock).not.toHaveBeenCalled();
   });
+
+  it('does not load recent opponents until deferred home duel panels are enabled', () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileHomeDuelsRematches({ enabled: false }),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.opponents).toEqual([]);
+    expect(listDuelOpponentsMock).not.toHaveBeenCalled();
+  });
 });

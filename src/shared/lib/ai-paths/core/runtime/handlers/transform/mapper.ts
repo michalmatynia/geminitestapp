@@ -12,6 +12,88 @@ import {
 } from '../json-integrity';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+type MapperJsonIntegrityDiagnostic = JsonIntegrityDiagnostic & { port: string };
+
+const normalizeMapperInputValue = (
+  port: string,
+  value: unknown,
+  jsonIntegrityPolicy: ReturnType<typeof normalizeJsonIntegrityPolicy>,
+  diagnostics: MapperJsonIntegrityDiagnostic[]
+): unknown => {
+  const normalized = normalizeJsonLikeValue(value, jsonIntegrityPolicy);
+  if (normalized.state === 'repaired' || normalized.state === 'unparseable') {
+    diagnostics.push({
+      ...normalized.diagnostic,
+      port,
+    });
+  }
+  return normalized.value;
+};
+
+const buildMapperSources = (
+  nodeInputs: NodeHandlerContext['nodeInputs'],
+  jsonIntegrityPolicy: ReturnType<typeof normalizeJsonIntegrityPolicy>,
+  diagnostics: MapperJsonIntegrityDiagnostic[]
+): Record<'context' | 'result' | 'bundle' | 'value', unknown> => ({
+  context: normalizeMapperInputValue(
+    'context',
+    coerceInput(nodeInputs['context']),
+    jsonIntegrityPolicy,
+    diagnostics
+  ),
+  result: normalizeMapperInputValue(
+    'result',
+    coerceInput(nodeInputs['result']),
+    jsonIntegrityPolicy,
+    diagnostics
+  ),
+  bundle: normalizeMapperInputValue(
+    'bundle',
+    coerceInput(nodeInputs['bundle']),
+    jsonIntegrityPolicy,
+    diagnostics
+  ),
+  value: normalizeMapperInputValue(
+    'value',
+    coerceInput(nodeInputs['value']),
+    jsonIntegrityPolicy,
+    diagnostics
+  ),
+});
+
+const resolveMapperContextValue = (
+  sources: Record<'context' | 'result' | 'bundle' | 'value', unknown>
+): unknown => sources['context'] ?? sources['result'] ?? sources['bundle'] ?? sources['value'];
+
+const MAPPER_SOURCE_PATH_PATTERN = /^(context|result|bundle|value)(?:\.|\[|$)/;
+
+const resolveMappedValue = (
+  path: string,
+  sources: Record<'context' | 'result' | 'bundle' | 'value', unknown>,
+  contextValue: unknown,
+  jsonIntegrityPolicy: ReturnType<typeof normalizeJsonIntegrityPolicy>
+): unknown => {
+  if (!path) return undefined;
+  if (MAPPER_SOURCE_PATH_PATTERN.test(path)) {
+    return getValueAtMappingPath(sources, path, {
+      jsonIntegrityPolicy,
+    });
+  }
+  const fromContext = getValueAtMappingPath(contextValue, path, {
+    jsonIntegrityPolicy,
+  });
+  if (fromContext !== undefined) return fromContext;
+  return getValueAtMappingPath(sources, path, {
+    jsonIntegrityPolicy,
+  });
+};
+
+const collectConnectedOutputPorts = (nodeId: string, edges: NodeHandlerContext['edges']): Set<string> =>
+  new Set<string>(
+    edges
+      .filter((edge) => edge.from === nodeId && typeof edge.fromPort === 'string')
+      .map((edge) => edge.fromPort as string)
+  );
 
 export const handleMapper: NodeHandler = ({
   node,
@@ -29,60 +111,22 @@ export const handleMapper: NodeHandler = ({
       jsonIntegrityPolicy: 'repair',
     };
     const jsonIntegrityPolicy = normalizeJsonIntegrityPolicy(mapperConfig.jsonIntegrityPolicy);
-    const jsonIntegrityDiagnostics: Array<JsonIntegrityDiagnostic & { port: string }> = [];
-    const normalizeMapperInputValue = (port: string, value: unknown): unknown => {
-      const normalized = normalizeJsonLikeValue(value, jsonIntegrityPolicy);
-      if (normalized.state === 'repaired' || normalized.state === 'unparseable') {
-        jsonIntegrityDiagnostics.push({
-          ...normalized.diagnostic,
-          port,
-        });
-      }
-      return normalized.value;
-    };
-
-    const sources = {
-      context: normalizeMapperInputValue('context', coerceInput(nodeInputs['context'])),
-      result: normalizeMapperInputValue('result', coerceInput(nodeInputs['result'])),
-      bundle: normalizeMapperInputValue('bundle', coerceInput(nodeInputs['bundle'])),
-      value: normalizeMapperInputValue('value', coerceInput(nodeInputs['value'])),
-    };
-    const contextValue =
-      sources['context'] ?? sources['result'] ?? sources['bundle'] ?? sources['value'];
+    const jsonIntegrityDiagnostics: MapperJsonIntegrityDiagnostic[] = [];
+    const sources = buildMapperSources(nodeInputs, jsonIntegrityPolicy, jsonIntegrityDiagnostics);
+    const contextValue = resolveMapperContextValue(sources);
     if (contextValue === undefined) return {};
-
-    const sourcePathPattern = /^(context|result|bundle|value)(?:\.|\[|$)/;
-    const resolveMappedValue = (path: string): unknown => {
-      if (!path) return undefined;
-      if (sourcePathPattern.test(path)) {
-        return getValueAtMappingPath(sources, path, {
-          jsonIntegrityPolicy,
-        });
-      }
-      const fromContext = getValueAtMappingPath(contextValue, path, {
-        jsonIntegrityPolicy,
-      });
-      if (fromContext !== undefined) return fromContext;
-      return getValueAtMappingPath(sources, path, {
-        jsonIntegrityPolicy,
-      });
-    };
 
     const mapped: RuntimePortValues = {};
     const unresolvedMappings: string[] = [];
-    const connectedOutputPorts = new Set<string>(
-      edges
-        .filter((edge) => edge.from === node.id && typeof edge.fromPort === 'string')
-        .map((edge) => edge.fromPort as string)
-    );
+    const connectedOutputPorts = collectConnectedOutputPorts(node.id, edges);
 
     (mapperConfig.outputs ?? []).forEach((output: string): void => {
       const mapping = mapperConfig.mappings?.[output]?.trim() ?? '';
       const value = mapping
-        ? resolveMappedValue(mapping)
+        ? resolveMappedValue(mapping, sources, contextValue, jsonIntegrityPolicy)
         : output === 'value'
           ? contextValue
-          : resolveMappedValue(output);
+          : resolveMappedValue(output, sources, contextValue, jsonIntegrityPolicy);
       if (value !== undefined) {
         mapped[output] = value;
         return;

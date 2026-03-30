@@ -6,6 +6,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 
 vi.mock('next-intl', async () => await vi.importActual<typeof import('next-intl')>('next-intl'));
 vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>('use-intl'));
@@ -43,7 +44,11 @@ describe('LogicalAnalogiesLesson i18n', () => {
 
     const sections = (capturedProps?.sections as Array<Record<string, unknown>>) ?? [];
     const games =
-      (capturedProps?.games as Array<{ sectionId: string; stage: Record<string, unknown> }>) ?? [];
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+        launchableInstance?: { gameId?: string; instanceId?: string };
+      }>) ?? [];
 
     expect(sections.find((section) => section.id === 'intro')).toMatchObject({
       title: 'Analogie - Einstieg und Woerter',
@@ -53,8 +58,14 @@ describe('LogicalAnalogiesLesson i18n', () => {
       title: 'Teil-Ganzes und Ursache-Wirkung',
       description: 'Zwei wichtige Typen relationaler Analogien',
     });
-    expect(games.find((game) => game.sectionId === 'game_relacje')?.stage).toMatchObject({
+    expect(games.find((game) => game.sectionId === 'game_relacje')?.shell).toMatchObject({
       title: 'Beziehungsbruecke',
+    });
+    expect(
+      games.find((game) => game.sectionId === 'game_relacje')?.launchableInstance
+    ).toMatchObject({
+      gameId: 'logical_analogies_relations',
+      instanceId: getKangurBuiltInGameInstanceId('logical_analogies_relations'),
     });
 
     const slides = (capturedProps?.slides as Record<string, CapturedSlide[]>) ?? {};
@@ -64,5 +75,27 @@ describe('LogicalAnalogiesLesson i18n', () => {
 
     expect(screen.getByText('Schreibweise der Analogie:')).toBeInTheDocument();
     expect(screen.getByText('Vogel : fliegen = Fisch : ❓')).toBeInTheDocument();
+  });
+
+  it('prefers the gameTitle locale key for the relations shell title', () => {
+    const customMessages = structuredClone(deMessages) as Record<string, any>;
+    customMessages.KangurStaticLessons.logicalAnalogies.game.gameTitle =
+      'Benutzerdefinierte Beziehungsbruecke';
+
+    render(
+      <NextIntlClientProvider locale='de' messages={customMessages}>
+        <LogicalAnalogiesLesson />
+      </NextIntlClientProvider>
+    );
+
+    const games =
+      (capturedProps?.games as Array<{
+        sectionId: string;
+        shell: Record<string, unknown>;
+      }>) ?? [];
+
+    expect(games.find((game) => game.sectionId === 'game_relacje')?.shell).toMatchObject({
+      title: 'Benutzerdefinierte Beziehungsbruecke',
+    });
   });
 });

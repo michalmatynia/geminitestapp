@@ -1,6 +1,6 @@
 ---
 owner: 'Products / Platform Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-28'
 status: 'active'
 doc_type: 'index'
 scope: 'feature:validator'
@@ -18,8 +18,14 @@ Generated and maintained docs for the Product Validator tool.
 - Case Resolver plain-text patterns: `docs/validator/case-resolver-plain-text-patterns.md`
 - Semantic grammar: `docs/validator/semantic-grammar/README.md`
 
+Validation and settings APIs:
+
+- `src/app/api/v2/products/validator-settings/`
+- `src/app/api/v2/products/validator-runtime/evaluate/`
+
 Regenerate with:
 
 ```bash
 npm run docs:validator:generate
+npm run docs:validator:check
 ```

@@ -44,7 +44,7 @@ export const learnersPostHandler: SimpleRouteHandler = apiHandler(postKangurLear
   bodySchema: kangurLearnerCreateInputSchema,
 });
 
-export const learnerPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+export const learnerPatchHandler: ParamRouteHandler<{ id: string }> = apiHandlerWithParams<{ id: string }>(
   patchKangurLearnerHandler,
   {
     source: 'kangur.learners.[id].PATCH',
@@ -54,7 +54,7 @@ export const learnerPatchHandler: ParamRouteHandler = apiHandlerWithParams<{ id:
   }
 );
 
-export const learnerDeleteHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+export const learnerDeleteHandler: ParamRouteHandler<{ id: string }> = apiHandlerWithParams<{ id: string }>(
   deleteKangurLearnerHandler,
   {
     source: 'kangur.learners.[id].DELETE',
@@ -62,7 +62,7 @@ export const learnerDeleteHandler: ParamRouteHandler = apiHandlerWithParams<{ id
   }
 );
 
-export const learnerSessionsHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+export const learnerSessionsHandler: ParamRouteHandler<{ id: string }> = apiHandlerWithParams<{ id: string }>(
   getKangurLearnerSessionsHandler,
   {
     source: 'kangur.learners.[id].sessions.GET',
@@ -70,7 +70,7 @@ export const learnerSessionsHandler: ParamRouteHandler = apiHandlerWithParams<{ 
   }
 );
 
-export const learnerInteractionsHandler: ParamRouteHandler = apiHandlerWithParams<{ id: string }>(
+export const learnerInteractionsHandler: ParamRouteHandler<{ id: string }> = apiHandlerWithParams<{ id: string }>(
   getKangurLearnerInteractionsHandler,
   {
     source: 'kangur.learners.[id].interactions.GET',

@@ -589,6 +589,8 @@ export const DEFAULT_KANGUR_AI_TUTOR_CONTENT_INPUT = {
       penLabel: 'Pióro',
       eraserLabel: 'Gumka',
       undoLabel: 'Cofnij',
+      redoLabel: 'Ponów',
+      exportLabel: 'Eksportuj PNG',
       clearLabel: 'Wyczyść',
       cancelLabel: 'Anuluj',
       doneLabel: 'Gotowe',

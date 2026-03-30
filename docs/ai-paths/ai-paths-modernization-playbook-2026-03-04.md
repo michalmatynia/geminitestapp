@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'plan'
 scope: 'feature:ai-paths'
@@ -8,6 +8,10 @@ canonical: true
 ---
 
 # AI-Paths Modernization Playbook (2026-03-04)
+
+This file is the retained migration playbook for the context-native ownership cutover.
+Use it for historical sequencing and rationale; use [`overview.md`](./overview.md) and
+[`reference.md`](./reference.md) for the current system map and operator surface.
 
 ## Goal
 

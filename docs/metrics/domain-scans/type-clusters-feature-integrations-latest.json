@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-05T04:20:40.302Z",
+  "generatedAt": "2026-03-26T13:27:22.862Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "mode": "scan",
     "scope": "src/**/*.{ts,tsx}"
   },
@@ -18,18 +18,55 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 4208,
-    "exportedDeclarationsScanned": 3332,
-    "candidateDeclarationsScanned": 3303,
-    "exactShapeClusters": 0,
-    "nearShapeClusters": 0,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 7787,
+    "exportedDeclarationsScanned": 5176,
+    "candidateDeclarationsScanned": 5152,
+    "exactShapeClusters": 12,
+    "nearShapeClusters": 5,
+    "clustersAfterFilters": 1,
+    "declarationsInClusters": 2,
+    "highestRiskScore": 8
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "exact-0006",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:integrations"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "807893788d98",
+        "memberCount": 1,
+        "preview": "prop:listing:ProductListingWithDetails"
+      },
+      "declarations": [
+        {
+          "name": "ProductListingActionsProps",
+          "kind": "type",
+          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
+          "line": 25,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        },
+        {
+          "name": "ProductListingDetailsProps",
+          "kind": "type",
+          "path": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
+          "line": 29,
+          "domain": "feature:integrations",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
   "notes": [
-    "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
-    "Use clusters as review candidates before moving declarations to canonical DTO modules."
+    "type-clusters scan result"
   ]
 }

@@ -11,6 +11,19 @@ vi.mock('use-intl', async () => await vi.importActual<typeof import('use-intl')>
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
+const { downloadKangurDataUrl } = vi.hoisted(() => ({
+  downloadKangurDataUrl: vi.fn(),
+}));
+vi.mock('@/features/kangur/ui/components/drawing-engine/canvas-export', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/features/kangur/ui/components/drawing-engine/canvas-export')
+  >('@/features/kangur/ui/components/drawing-engine/canvas-export');
+
+  return {
+    ...actual,
+    downloadKangurDataUrl,
+  };
+});
 
 import GeometryPerimeterDrawingGame from '@/features/kangur/ui/components/GeometryPerimeterDrawingGame';
 import enMessages from '@/i18n/messages/en.json';
@@ -36,8 +49,13 @@ describe('GeometryPerimeterDrawingGame touch interactions', () => {
   const originalGetBoundingClientRect = HTMLCanvasElement.prototype.getBoundingClientRect;
 
   beforeEach(() => {
+    window.sessionStorage.clear();
+    downloadKangurDataUrl.mockReset();
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
       canvasContextStub as unknown as CanvasRenderingContext2D
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+      'data:image/png;base64,PERIMETER'
     );
     HTMLCanvasElement.prototype.getBoundingClientRect = vi.fn(() => ({
       width: 320,
@@ -62,6 +80,7 @@ describe('GeometryPerimeterDrawingGame touch interactions', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    window.sessionStorage.clear();
     HTMLCanvasElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
   });
 
@@ -87,5 +106,81 @@ describe('GeometryPerimeterDrawingGame touch interactions', () => {
 
     expect(canvas).toHaveAttribute('data-drawing-active', 'true');
     expect(board).toHaveClass('ring-2');
+  });
+
+  it('exports the current perimeter drawing through the shared snapshot action', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometryPerimeterDrawingGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const exportButton = screen.getByRole('button', { name: /export png/i });
+    const canvas = screen.getByTestId('geometry-perimeter-canvas');
+
+    expect(exportButton).toBeDisabled();
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 9,
+      clientX: 84,
+      clientY: 88,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 9,
+      clientX: 132,
+      clientY: 136,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 9,
+      clientX: 132,
+      clientY: 136,
+    });
+
+    expect(exportButton).not.toBeDisabled();
+
+    fireEvent.click(exportButton);
+
+    expect(downloadKangurDataUrl).toHaveBeenCalledWith(
+      'data:image/png;base64,PERIMETER',
+      'geometry-perimeter-square-3.png'
+    );
+  });
+
+  it('restores the saved drawing draft when the perimeter board remounts on the same round', () => {
+    const { unmount } = render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometryPerimeterDrawingGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    const canvas = screen.getByTestId('geometry-perimeter-canvas');
+
+    fireEvent.pointerDown(canvas, {
+      pointerId: 6,
+      clientX: 84,
+      clientY: 88,
+    });
+    fireEvent.pointerMove(canvas, {
+      pointerId: 6,
+      clientX: 132,
+      clientY: 136,
+    });
+    fireEvent.pointerUp(canvas, {
+      pointerId: 6,
+      clientX: 132,
+      clientY: 136,
+    });
+
+    expect(screen.getByRole('button', { name: 'Clear' })).not.toBeDisabled();
+
+    unmount();
+
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <GeometryPerimeterDrawingGame onFinish={() => undefined} />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByRole('button', { name: 'Clear' })).not.toBeDisabled();
   });
 });

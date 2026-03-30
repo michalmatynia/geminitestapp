@@ -11,6 +11,12 @@ import {
   resetMobileDevelopmentKangurStorage,
 } from './createMobileDevelopmentKangurStorage';
 
+const expectLessonMasteryProgress = (masteryPercent: number, attempts: number) =>
+  expect.objectContaining({
+    masteryPercent,
+    attempts,
+  });
+
 describe('createMobileDevelopmentKangurStorage on web', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -63,10 +69,7 @@ describe('createMobileDevelopmentKangurStorage on web', () => {
       totalXp: 50,
       lessonsCompleted: 1,
       lessonMastery: {
-        logical_patterns: expect.objectContaining({
-          masteryPercent: 100,
-          attempts: 1,
-        }),
+        logical_patterns: expectLessonMasteryProgress(100, 1),
       },
     });
   });

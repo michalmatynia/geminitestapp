@@ -99,6 +99,20 @@ describe('useKangurMobileHomeDuelsLeaderboard', () => {
     expect(result.current.entries[0]?.displayName).toBe('Maja Sprint');
   });
 
+  it('does not load the leaderboard until deferred home duel panels are enabled', () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () => useKangurMobileHomeDuelsLeaderboard({ enabled: false }),
+      {
+        wrapper: createWrapper(queryClient),
+      },
+    );
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.entries).toEqual([]);
+    expect(getDuelLeaderboardMock).not.toHaveBeenCalled();
+  });
+
   it('maps network failures to the shared api error copy', async () => {
     getDuelLeaderboardMock.mockRejectedValue(new Error('Failed to fetch'));
 

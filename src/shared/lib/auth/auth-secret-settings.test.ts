@@ -1,26 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { readSecretSettingValueMock } = vi.hoisted(() => ({
-  readSecretSettingValueMock: vi.fn(),
+const { readSecretSettingValuesMock } = vi.hoisted(() => ({
+  readSecretSettingValuesMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/settings/secret-settings', () => ({
-  readSecretSettingValue: readSecretSettingValueMock,
+  readSecretSettingValues: readSecretSettingValuesMock,
 }));
 
 import { getAuthEmailSecrets, getAuthOAuthSecrets } from './auth-secret-settings';
 
 describe('auth secret settings helpers', () => {
   beforeEach(() => {
-    readSecretSettingValueMock.mockReset();
+    readSecretSettingValuesMock.mockReset();
   });
 
   it('loads OAuth secrets by provider', async () => {
-    readSecretSettingValueMock
-      .mockResolvedValueOnce('google-id')
-      .mockResolvedValueOnce('google-secret')
-      .mockResolvedValueOnce('facebook-id')
-      .mockResolvedValueOnce('facebook-secret');
+    readSecretSettingValuesMock.mockResolvedValue({
+      auth_google_client_id: 'google-id',
+      auth_google_client_secret: 'google-secret',
+      auth_facebook_client_id: 'facebook-id',
+      auth_facebook_client_secret: 'facebook-secret',
+    });
 
     await expect(getAuthOAuthSecrets()).resolves.toEqual({
       google: {
@@ -35,14 +36,15 @@ describe('auth secret settings helpers', () => {
   });
 
   it('builds SMTP settings only when the required secrets exist', async () => {
-    readSecretSettingValueMock
-      .mockResolvedValueOnce('https://hooks.example')
-      .mockResolvedValueOnce('webhook-secret')
-      .mockResolvedValueOnce('smtp.example.com')
-      .mockResolvedValueOnce('2525')
-      .mockResolvedValueOnce('mailer')
-      .mockResolvedValueOnce('smtp-pass')
-      .mockResolvedValueOnce(null);
+    readSecretSettingValuesMock.mockResolvedValueOnce({
+      auth_email_webhook_url: 'https://hooks.example',
+      auth_email_webhook_secret: 'webhook-secret',
+      auth_smtp_host: 'smtp.example.com',
+      auth_smtp_port: '2525',
+      auth_smtp_user: 'mailer',
+      auth_smtp_pass: 'smtp-pass',
+      auth_smtp_from: null,
+    });
 
     await expect(getAuthEmailSecrets()).resolves.toEqual({
       webhookUrl: 'https://hooks.example',
@@ -56,14 +58,15 @@ describe('auth secret settings helpers', () => {
       },
     });
 
-    readSecretSettingValueMock
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null);
+    readSecretSettingValuesMock.mockResolvedValueOnce({
+      auth_email_webhook_url: null,
+      auth_email_webhook_secret: null,
+      auth_smtp_host: null,
+      auth_smtp_port: null,
+      auth_smtp_user: null,
+      auth_smtp_pass: null,
+      auth_smtp_from: null,
+    });
 
     await expect(getAuthEmailSecrets()).resolves.toEqual({
       webhookUrl: null,

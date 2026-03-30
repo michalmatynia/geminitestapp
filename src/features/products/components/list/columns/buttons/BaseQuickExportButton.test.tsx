@@ -6,6 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { ApiError } from '@/shared/lib/api-client';
 
+import {
+  baseQuickExportTestProduct as product,
+  createBaseQuickExportTestQueryClient,
+} from './BaseQuickExportButton.test-support';
+
 const {
   toastMock,
   apiGetMock,
@@ -96,44 +101,8 @@ vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
 
 import { BaseQuickExportButton } from './BaseQuickExportButton';
 
-const product = {
-  id: 'product-1',
-  sku: 'SKU-001',
-  name_en: 'Product 1',
-  name_pl: '',
-  name_de: '',
-  description_en: null,
-  description_pl: null,
-  description_de: null,
-  price: 10,
-  stock: 3,
-  weight: null,
-  ean: null,
-  baseProductId: null,
-  images: [],
-  imageLinks: [],
-  imageBase64s: [],
-  categoryId: null,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-01T00:00:00.000Z',
-  producer: null,
-  parameters: [],
-  tags: [],
-  catalogs: [],
-  defaultPriceGroupId: null,
-  priceGroupPrices: [],
-} as unknown as ProductWithImages;
-
-const createQueryClient = (): QueryClient =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
 const renderButton = (overrides?: Partial<React.ComponentProps<typeof BaseQuickExportButton>>) => {
-  const queryClient = createQueryClient();
+  const queryClient = createBaseQuickExportTestQueryClient();
 
   const props: React.ComponentProps<typeof BaseQuickExportButton> = {
     product,
@@ -744,6 +713,132 @@ describe('BaseQuickExportButton', () => {
       '/api/v2/integrations/products/product-1/base/sku-check',
       expect.anything()
     );
+  });
+
+  it('opens integration options instead of re-exporting when the Base row state is failed', () => {
+    const onOpenIntegrations = vi.fn();
+
+    renderButton({
+      status: 'failed',
+      showMarketplaceBadge: false,
+      onOpenIntegrations,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Base.com recovery options (failed).' }));
+
+    expect(onOpenIntegrations).toHaveBeenCalledWith({
+      source: 'base_quick_export_failed',
+      integrationSlug: 'baselinker',
+      status: 'failed',
+      runId: null,
+    });
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('opens integration options instead of re-exporting when the latest quick export failed', async () => {
+    const onOpenIntegrations = vi.fn();
+
+    window.sessionStorage.setItem(
+      'base-quick-export-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          runId: 'run-failed-retry',
+          status: 'failed',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    renderButton({
+      status: 'not_started',
+      showMarketplaceBadge: false,
+      onOpenIntegrations,
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Open Base.com recovery options (failed).' })
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Base.com recovery options (failed).' }));
+
+    expect(onOpenIntegrations).toHaveBeenCalledWith({
+      source: 'base_quick_export_failed',
+      integrationSlug: 'baselinker',
+      status: 'failed',
+      runId: 'run-failed-retry',
+    });
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('prefers authoritative exported row state over stale failed quick-export feedback', async () => {
+    window.sessionStorage.setItem(
+      'base-quick-export-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          runId: 'run-failed-old',
+          status: 'failed',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    renderButton({
+      status: 'active',
+      showMarketplaceBadge: true,
+      onOpenExportSettings: vi.fn(),
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Open Base.com listing actions (active).' })
+      ).toHaveClass('border-emerald-400/70');
+    });
+
+    expect(screen.queryByRole('button', { name: 'Base.com export failed.' })).not.toBeInTheDocument();
+    expect(window.sessionStorage.getItem('base-quick-export-feedback')).toBeNull();
+  });
+
+  it('does not resurrect stale failed quick-export feedback after remount when the row is exported', async () => {
+    window.sessionStorage.setItem(
+      'base-quick-export-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          runId: 'run-failed-old',
+          status: 'failed',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    const firstRender = renderButton({
+      status: 'active',
+      showMarketplaceBadge: true,
+      onOpenExportSettings: vi.fn(),
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Open Base.com listing actions (active).' })
+      ).toHaveClass('border-emerald-400/70');
+    });
+
+    firstRender.unmount();
+
+    renderButton({
+      status: 'active',
+      showMarketplaceBadge: true,
+      onOpenExportSettings: vi.fn(),
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Open Base.com listing actions (active).' })
+    ).toHaveClass('border-emerald-400/70');
+    expect(screen.queryByRole('button', { name: 'Base.com export failed.' })).not.toBeInTheDocument();
   });
 
   it('reflects queued, running, and completed export run states on the button', async () => {

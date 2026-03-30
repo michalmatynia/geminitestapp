@@ -6,9 +6,22 @@ import type {
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 export const CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT = 'case_resolver:drop-document-to-canvas';
 export const CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT = 'case_resolver:show-document-in-canvas';
+
+const isNonEmptyId = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const hasValidTreeDragEntityId = (payload: CaseResolverTreeDragPayload): boolean => {
+  switch (payload.entity) {
+    case 'asset':
+      return isNonEmptyId(payload.assetId);
+    case 'file':
+      return isNonEmptyId(payload.fileId);
+    default:
+      return false;
+  }
+};
 
 export const emitCaseResolverDropDocumentToCanvas = (
   detail: CaseResolverDropDocumentToCanvasDetail
@@ -42,18 +55,7 @@ export const parseCaseResolverTreeDropPayload = (
   try {
     const payload = JSON.parse(raw) as CaseResolverTreeDragPayload;
     if (payload.source !== 'case_resolver_tree') return null;
-
-    if (payload.entity === 'asset') {
-      if (typeof payload.assetId !== 'string' || payload.assetId.trim().length === 0) return null;
-      return payload;
-    }
-
-    if (payload.entity === 'file') {
-      if (typeof payload.fileId !== 'string' || payload.fileId.trim().length === 0) return null;
-      return payload;
-    }
-
-    return null;
+    return hasValidTreeDragEntityId(payload) ? payload : null;
   } catch (error) {
     logClientError(error);
     return null;

@@ -35,6 +35,7 @@ export type MockKangurTutorEnvironment = {
   suiteTitle: string;
   questionPrompt: string;
   hintResponse: string;
+  testQuestionResponse: string;
 };
 
 type MockKangurTutorEnvironmentOptions = {
@@ -49,6 +50,10 @@ type MockKangurTutorEnvironmentOptions = {
   chatResponseDelayMs?: number;
   narratorEngine?: 'server' | 'client';
   initialProgress?: Record<string, unknown>;
+  suiteTitle?: string;
+  questionPrompt?: string;
+  testQuestionResponse?: string;
+  testQuestionAnswerResolutionMode?: 'page_content' | null;
 };
 
 const NOW_ISO = '2026-03-07T12:00:00.000Z';
@@ -112,6 +117,10 @@ export async function mockKangurTutorEnvironment(
     chatResponseDelayMs = 0,
     narratorEngine = 'server',
     initialProgress = {},
+    suiteTitle = 'Mini test dodawania',
+    questionPrompt = 'Ile to 8 + 5?',
+    testQuestionResponse,
+    testQuestionAnswerResolutionMode = null,
   } = options;
   const learner = {
     id: 'learner-ada',
@@ -147,10 +156,9 @@ export async function mockKangurTutorEnvironment(
   const lessonTitle = 'Dodawanie z tutorem';
   const lessonSelectedText = '10 + 4 = 14';
   const lessonResponse = `Wyjaśniam fragment: ${lessonSelectedText}. Najpierw zatrzymaj się na dziesiątce, a potem dodaj pozostałe jedności.`;
-  const suiteTitle = 'Mini test dodawania';
-  const questionPrompt = 'Ile to 8 + 5?';
   const hintResponse =
     'Podpowiedź do pytania: dopełnij 8 do 10, a potem dodaj pozostałe 3.';
+  const resolvedTestQuestionResponse = testQuestionResponse ?? hintResponse;
   let progress = {
     ...createDefaultProgress(),
     ...initialProgress,
@@ -290,6 +298,8 @@ export async function mockKangurTutorEnvironment(
           gradeLevel: 'III',
           category: 'custom',
           enabled: true,
+          publicationStatus: 'live',
+          publishedAt: NOW_ISO,
           sortOrder: 1000,
         },
       ]),
@@ -311,6 +321,12 @@ export async function mockKangurTutorEnvironment(
           pointValue: 3,
           explanation: 'Mozesz dopelnic 8 do 10 i dodac pozostale 3.',
           illustration: { type: 'none' },
+          editorial: {
+            source: 'manual',
+            reviewStatus: 'ready',
+            workflowStatus: 'published',
+            auditFlags: [],
+          },
         },
       }),
     },
@@ -387,9 +403,13 @@ export async function mockKangurTutorEnvironment(
 
     const context = payload?.context;
     let message = 'Pomagam dalej.';
+    let answerResolutionMode: 'page_content' | null = null;
 
     if (context?.surface === 'lesson' && context.selectedText) {
       message = lessonResponse;
+    } else if (context?.surface === 'test' && context.selectedText) {
+      message = resolvedTestQuestionResponse;
+      answerResolutionMode = testQuestionAnswerResolutionMode;
     } else if (context?.surface === 'test' || context?.surface === 'game') {
       message = hintResponse;
     }
@@ -402,6 +422,7 @@ export async function mockKangurTutorEnvironment(
       message,
       sources: [],
       followUpActions: [],
+      ...(answerResolutionMode ? { answerResolutionMode } : {}),
     });
   });
 
@@ -435,6 +456,7 @@ export async function mockKangurTutorEnvironment(
     suiteTitle,
     questionPrompt,
     hintResponse,
+    testQuestionResponse: resolvedTestQuestionResponse,
   };
 }
 

@@ -1,4 +1,4 @@
-import type { LessonSlide } from '@/features/kangur/ui/components/LessonSlideSection';
+import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCallout,
   KangurLessonCaption,
@@ -15,6 +15,7 @@ import {
 import { AgenticCodingMiniGame } from '@/features/kangur/ui/components/AgenticCodingMiniGames';
 import AgenticLessonQuickCheck from '@/features/kangur/ui/components/AgenticLessonQuickCheck';
 import AgenticLessonCodeBlock from '@/features/kangur/ui/components/AgenticLessonCodeBlock';
+import { useId } from 'react';
 
 type SectionId = 'models' | 'reasoning_router_game';
 
@@ -97,92 +98,200 @@ const REASONING_ROUTER_STEPS = [
   'Sprawdź, czy routing jest spójny.',
 ] as const;
 
-const ModelDecisionMatrixVisual = (): JSX.Element => (
-  <svg
-    aria-label='Diagram: matryca wyboru modelu (speed vs depth).'
-    className='h-auto w-full'
-    role='img'
-    viewBox='0 0 360 160'
-  >
-    <style>{`
-      .axis {
-        stroke: #cbd5f5;
-        stroke-width: 2;
-      }
-      .cell {
-        fill: #f8fafc;
-        stroke: #e2e8f0;
-        stroke-width: 1.5;
-      }
-      .label {
-        font: 700 9px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #0f172a;
-      }
-      .muted {
-        font: 600 8px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #64748b;
-      }
-    `}</style>
-    <line className='axis' x1='60' x2='300' y1='80' y2='80' />
-    <line className='axis' x1='180' x2='180' y1='30' y2='130' />
-    <rect className='cell' height='44' rx='10' width='110' x='70' y='34' />
-    <rect className='cell' height='44' rx='10' width='110' x='190' y='34' />
-    <rect className='cell' height='44' rx='10' width='110' x='70' y='82' />
-    <rect className='cell' height='44' rx='10' width='110' x='190' y='82' />
-    <text className='label' x='84' y='58'>Bugfix</text>
-    <text className='muted' x='84' y='70'>Fast + Low</text>
-    <text className='label' x='204' y='58'>Refactor</text>
-    <text className='muted' x='204' y='70'>Balanced</text>
-    <text className='label' x='84' y='106'>Investigation</text>
-    <text className='muted' x='84' y='118'>Medium/High</text>
-    <text className='label' x='204' y='106'>Architecture</text>
-    <text className='muted' x='204' y='118'>High/XHigh</text>
-    <text className='muted' x='62' y='24'>Speed</text>
-    <text className='muted' x='268' y='24'>Depth</text>
-  </svg>
-);
+export const ModelDecisionMatrixVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-model-decision-matrix-${baseId}-clip`;
+  const panelGradientId = `agentic-model-decision-matrix-${baseId}-panel`;
+  const frameGradientId = `agentic-model-decision-matrix-${baseId}-frame`;
 
-const ReasoningRampVisual = (): JSX.Element => (
-  <svg
-    aria-label='Diagram: ramping reasoning od low do xhigh.'
-    className='h-auto w-full'
-    role='img'
-    viewBox='0 0 360 140'
-  >
-    <style>{`
-      .bar {
-        fill: #ccfbf1;
-        stroke: #5eead4;
-        stroke-width: 2;
-      }
-      .bar-2 { fill: #99f6e4; }
-      .bar-3 { fill: #5eead4; }
-      .bar-4 { fill: #2dd4bf; }
-      .label {
-        font: 600 9px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #0f172a;
-      }
-      .axis {
-        stroke: #94a3b8;
-        stroke-width: 2;
-      }
-      .muted {
-        font: 600 8px/1.2 "Space Grotesk", "IBM Plex Sans", sans-serif;
-        fill: #64748b;
-      }
-    `}</style>
-    <line className='axis' x1='50' x2='300' y1='112' y2='112' />
-    <rect className='bar' height='28' rx='8' width='48' x='70' y='84' />
-    <rect className='bar bar-2' height='44' rx='8' width='48' x='130' y='68' />
-    <rect className='bar bar-3' height='60' rx='8' width='48' x='190' y='52' />
-    <rect className='bar bar-4' height='76' rx='8' width='48' x='250' y='36' />
-    <text className='label' x='78' y='124'>Low</text>
-    <text className='label' x='128' y='124'>Medium</text>
-    <text className='label' x='196' y='124'>High</text>
-    <text className='label' x='248' y='124'>XHigh</text>
-    <text className='muted' x='50' y='24'>Cost / Time</text>
-  </svg>
-);
+  return (
+    <svg
+      aria-label='Diagram: matryca wyboru modelu (speed vs depth).'
+      className='h-auto w-full'
+      data-testid='agentic-model-decision-matrix-animation'
+      role='img'
+      viewBox='0 0 360 180'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='10' y='10' width='340' height='160' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='18'
+          x2='342'
+          y1='14'
+          y2='168'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f0fdfa' />
+          <stop offset='50%' stopColor='#ecfeff' />
+          <stop offset='100%' stopColor='#f8fafc' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='342'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(20,184,166,0.8)' />
+          <stop offset='52%' stopColor='rgba(45,212,191,0.82)' />
+          <stop offset='100%' stopColor='rgba(96,165,250,0.8)' />
+        </linearGradient>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-model-decision-matrix-atmosphere'>
+        <rect
+          x='10'
+          y='10'
+          width='340'
+          height='160'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(45,212,191,0.16)'
+          strokeWidth='2'
+        />
+        <ellipse cx='86' cy='34' rx='74' ry='20' fill='rgba(45,212,191,0.14)' />
+        <ellipse cx='286' cy='40' rx='68' ry='18' fill='rgba(96,165,250,0.12)' />
+        <ellipse cx='184' cy='146' rx='96' ry='24' fill='rgba(45,212,191,0.12)' />
+
+        <line x1='62' y1='92' x2='304' y2='92' stroke='#99f6e4' strokeWidth='3' strokeLinecap='round' />
+        <polygon points='304,92 294,86 294,98' fill='#14b8a6' />
+        <line x1='182' y1='138' x2='182' y2='32' stroke='#99f6e4' strokeWidth='3' strokeLinecap='round' />
+        <polygon points='182,32 176,42 188,42' fill='#14b8a6' />
+
+        <rect x='70' y='40' width='108' height='46' rx='14' fill='rgba(255,255,255,0.88)' stroke='#99f6e4' strokeWidth='2' />
+        <rect x='186' y='40' width='108' height='46' rx='14' fill='rgba(255,255,255,0.88)' stroke='#5eead4' strokeWidth='2' />
+        <rect x='70' y='96' width='108' height='46' rx='14' fill='rgba(255,255,255,0.88)' stroke='#2dd4bf' strokeWidth='2' />
+        <rect x='186' y='96' width='108' height='46' rx='14' fill='rgba(240,253,250,0.94)' stroke='#14b8a6' strokeWidth='2' />
+
+        <rect x='84' y='50' width='42' height='8' rx='4' fill='rgba(45,212,191,0.18)' />
+        <rect x='200' y='50' width='48' height='8' rx='4' fill='rgba(20,184,166,0.18)' />
+        <rect x='84' y='106' width='58' height='8' rx='4' fill='rgba(45,212,191,0.18)' />
+        <rect x='200' y='106' width='60' height='8' rx='4' fill='rgba(20,184,166,0.2)' />
+
+        <text x='84' y='68' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Bugfix</text>
+        <text x='84' y='79' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#64748b'>Fast + Low</text>
+        <text x='200' y='68' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Refactor</text>
+        <text x='200' y='79' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#64748b'>Balanced</text>
+        <text x='84' y='124' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Investigation</text>
+        <text x='84' y='135' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#64748b'>Medium/High</text>
+        <text x='200' y='124' fontSize='10' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Architecture</text>
+        <text x='200' y='135' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#64748b'>High/XHigh</text>
+        <text x='64' y='30' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f766e'>Speed</text>
+        <text x='270' y='30' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f766e'>Depth</text>
+      </g>
+
+      <rect
+        x='18'
+        y='18'
+        width='324'
+        height='144'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-model-decision-matrix-frame'
+      />
+    </svg>
+  );
+};
+
+export const ReasoningRampVisual = (): JSX.Element => {
+  const baseId = useId().replace(/:/g, '');
+  const clipId = `agentic-reasoning-ramp-${baseId}-clip`;
+  const panelGradientId = `agentic-reasoning-ramp-${baseId}-panel`;
+  const frameGradientId = `agentic-reasoning-ramp-${baseId}-frame`;
+
+  return (
+    <svg
+      aria-label='Diagram: ramping reasoning od low do xhigh.'
+      className='h-auto w-full'
+      data-testid='agentic-reasoning-ramp-animation'
+      role='img'
+      viewBox='0 0 360 150'
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect x='10' y='10' width='340' height='130' rx='24' />
+        </clipPath>
+        <linearGradient
+          id={panelGradientId}
+          x1='16'
+          x2='342'
+          y1='16'
+          y2='138'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f0fdfa' />
+          <stop offset='58%' stopColor='#ecfeff' />
+          <stop offset='100%' stopColor='#f8fafc' />
+        </linearGradient>
+        <linearGradient
+          id={frameGradientId}
+          x1='18'
+          x2='342'
+          y1='18'
+          y2='18'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(94,234,212,0.82)' />
+          <stop offset='52%' stopColor='rgba(45,212,191,0.82)' />
+          <stop offset='100%' stopColor='rgba(13,148,136,0.82)' />
+        </linearGradient>
+      </defs>
+
+      <g clipPath={`url(#${clipId})`} data-testid='agentic-reasoning-ramp-atmosphere'>
+        <rect
+          x='10'
+          y='10'
+          width='340'
+          height='130'
+          rx='24'
+          fill={`url(#${panelGradientId})`}
+          stroke='rgba(45,212,191,0.16)'
+          strokeWidth='2'
+        />
+        <ellipse cx='82' cy='30' rx='76' ry='18' fill='rgba(94,234,212,0.16)' />
+        <ellipse cx='286' cy='36' rx='64' ry='18' fill='rgba(45,212,191,0.14)' />
+        <ellipse cx='232' cy='126' rx='92' ry='20' fill='rgba(13,148,136,0.12)' />
+
+        <line x1='48' y1='112' x2='312' y2='112' stroke='#94a3b8' strokeWidth='2.5' strokeLinecap='round' />
+        <path d='M58 112 Q 146 88 202 70 T 288 40' fill='none' stroke='rgba(45,212,191,0.36)' strokeWidth='3' strokeLinecap='round' />
+
+        <rect x='70' y='84' width='48' height='28' rx='10' fill='rgba(204,251,241,0.92)' stroke='#5eead4' strokeWidth='2' />
+        <rect x='130' y='68' width='48' height='44' rx='10' fill='rgba(153,246,228,0.94)' stroke='#2dd4bf' strokeWidth='2' />
+        <rect x='190' y='52' width='48' height='60' rx='10' fill='rgba(94,234,212,0.96)' stroke='#14b8a6' strokeWidth='2' />
+        <rect x='250' y='36' width='48' height='76' rx='10' fill='rgba(45,212,191,0.98)' stroke='#0d9488' strokeWidth='2' />
+
+        <rect x='78' y='92' width='16' height='6' rx='3' fill='rgba(15,118,110,0.18)' />
+        <rect x='138' y='76' width='16' height='6' rx='3' fill='rgba(15,118,110,0.18)' />
+        <rect x='198' y='60' width='16' height='6' rx='3' fill='rgba(15,118,110,0.2)' />
+        <rect x='258' y='44' width='16' height='6' rx='3' fill='rgba(15,118,110,0.22)' />
+
+        <text x='78' y='126' fontSize='9' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Low</text>
+        <text x='128' y='126' fontSize='9' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>Medium</text>
+        <text x='196' y='126' fontSize='9' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>High</text>
+        <text x='248' y='126' fontSize='9' fontWeight='700' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f172a'>XHigh</text>
+        <text x='50' y='26' fontSize='8' fontWeight='600' fontFamily='"Space Grotesk", "IBM Plex Sans", sans-serif' fill='#0f766e'>Cost / Time</text>
+      </g>
+
+      <rect
+        x='18'
+        y='18'
+        width='324'
+        height='114'
+        rx='20'
+        fill='none'
+        stroke={`url(#${frameGradientId})`}
+        strokeWidth='1.8'
+        data-testid='agentic-reasoning-ramp-frame'
+      />
+    </svg>
+  );
+};
 
 export const SLIDES: Record<SectionId, LessonSlide[]> = {
   models: [
@@ -198,19 +307,24 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='teal'
             caption='Szybkość i reasoning zawsze są w napięciu.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-3`}>
+                {MODEL_FACTORS.map((item) => (
+                  <div
+                    key={item.title}
+                    className='rounded-2xl border border-teal-200/70 bg-white/75 px-3 py-2 text-left shadow-sm'
+                  >
+                    <p className='text-sm font-semibold text-teal-950'>{item.title}</p>
+                    <KangurLessonCaption className='mt-2 text-teal-950'>
+                      {item.description}
+                    </KangurLessonCaption>
+                  </div>
+                ))}
+              </div>
+            }
           >
             <AgenticModelSelectorAnimation />
           </KangurLessonVisual>
-          <div className={`grid ${KANGUR_PANEL_GAP_CLASSNAME} sm:grid-cols-3`}>
-            {MODEL_FACTORS.map((item) => (
-              <KangurLessonInset key={item.title} accent='teal'>
-                <p className='text-sm font-semibold text-teal-950'>{item.title}</p>
-                <KangurLessonCaption className='mt-2 text-teal-950'>
-                  {item.description}
-                </KangurLessonCaption>
-              </KangurLessonInset>
-            ))}
-          </div>
         </KangurLessonStack>
       ),
     },
@@ -264,16 +378,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='teal'
             caption='Wyższy reasoning = więcej czasu i kosztu, ale też więcej kontroli.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-teal-950'>
+                {REASONING_TRIGGERS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <ReasoningRampVisual />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='teal' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-teal-950'>
-              {REASONING_TRIGGERS.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
         </KangurLessonStack>
       ),
     },
@@ -323,16 +437,16 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             accent='teal'
             caption='Speed i depth to najczęstsza dźwignia routingowa.'
             maxWidthClassName='max-w-full'
+            supportingContent={
+              <ul className='space-y-2 text-sm text-teal-950'>
+                {ROUTING_PLAYBOOK.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            }
           >
             <AgenticRoutingDialAnimation />
           </KangurLessonVisual>
-          <KangurLessonCallout accent='teal' padding='sm' className='text-left'>
-            <ul className='space-y-2 text-sm text-teal-950'>
-              {ROUTING_PLAYBOOK.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </KangurLessonCallout>
           <AgenticLessonCodeBlock
             accent='teal'
             title='Routing playbook'

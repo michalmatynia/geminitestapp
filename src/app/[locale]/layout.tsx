@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
+import { loadSiteMessages } from '@/i18n/messages';
 import {
   getStaticSiteLocaleParams,
   isSupportedSiteLocale,
@@ -62,9 +63,10 @@ export default async function LocaleLayout({
 
   const normalizedLocale = normalizeSiteLocale(locale);
   setRequestLocale(normalizedLocale);
+  const messages = await loadSiteMessages(normalizedLocale);
 
   return (
-    <NextIntlClientProvider locale={normalizedLocale}>
+    <NextIntlClientProvider locale={normalizedLocale} messages={messages}>
       <HtmlLangSync locale={normalizedLocale} />
       {children}
     </NextIntlClientProvider>

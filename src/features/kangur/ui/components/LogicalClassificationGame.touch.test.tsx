@@ -60,6 +60,19 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 import enMessages from '@/i18n/messages/en.json';
 import LogicalClassificationGame from '@/features/kangur/ui/components/LogicalClassificationGame';
 
+const placeAllTokensInBin = (label: string, binTestId: string): void => {
+  for (;;) {
+    const pool = screen.getByTestId('logical-classification-pool-zone');
+    const matchingTokens = within(pool).queryAllByRole('button', { name: label });
+    const token = matchingTokens[0];
+    if (!token) {
+      return;
+    }
+    fireEvent.click(token);
+    fireEvent.click(screen.getByTestId(binTestId));
+  }
+};
+
 describe('LogicalClassificationGame touch interactions', () => {
   it('shows touch guidance and supports tap-to-bin sorting', () => {
     render(
@@ -92,5 +105,22 @@ describe('LogicalClassificationGame touch interactions', () => {
       'Tap an item, then tap a matching group or the pool.'
     );
     expect(within(redBin).getAllByRole('button', { name: 'Czerwony' }).length).toBeGreaterThan(0);
+  });
+
+  it('keeps Sprawdź visible in green after a correct round', () => {
+    render(
+      <NextIntlClientProvider locale='en' messages={enMessages}>
+        <LogicalClassificationGame onFinish={vi.fn()} />
+      </NextIntlClientProvider>
+    );
+
+    placeAllTokensInBin('Czerwony', 'logical-classification-bin-red');
+    placeAllTokensInBin('Niebieski', 'logical-classification-bin-blue');
+
+    const checkButton = screen.getByRole('button', { name: 'Sprawdź' });
+    fireEvent.click(checkButton);
+
+    expect(checkButton).toHaveClass('bg-emerald-500');
+    expect(screen.getByRole('button', { name: 'Dalej' })).toBeInTheDocument();
   });
 });

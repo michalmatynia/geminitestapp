@@ -1,18 +1,120 @@
-import { useId } from 'react';
+import React from 'react';
+
+import {
+  renderSoftAtmosphereGradients,
+  renderSoftAtmosphereOvals,
+} from '@/features/kangur/ui/components/animations/svgAtmosphere';
+import {
+  type KangurAnimationSurfaceIdsDto,
+  useKangurAnimationSurfaceIds,
+} from '@/features/kangur/ui/components/animations/animation-surface-contracts';
+
+type PronounSurfaceIds = KangurAnimationSurfaceIdsDto & {
+  atmosphereId: string;
+};
+
+function usePronounSurfaceIds(prefix: string): PronounSurfaceIds {
+  const baseIds = useKangurAnimationSurfaceIds(prefix);
+  const atmosphereBaseId = React.useId().replace(/:/g, '');
+
+  return {
+    ...baseIds,
+    atmosphereId: `${prefix}-${atmosphereBaseId}-atmosphere-oval`,
+  };
+}
+
+type PronounSurfaceProps = {
+  ids: PronounSurfaceIds;
+  testIdPrefix: string;
+};
+
+function PronounSurface({ ids, testIdPrefix }: PronounSurfaceProps): React.JSX.Element {
+  return (
+    <>
+      <defs>
+        <clipPath id={ids.clipId}>
+          <rect x='8' y='8' width='344' height='164' rx='28' />
+        </clipPath>
+        <linearGradient
+          id={ids.panelGradientId}
+          x1='24'
+          x2='332'
+          y1='16'
+          y2='170'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='#f8fafc' />
+          <stop offset='52%' stopColor='#eff6ff' />
+          <stop offset='100%' stopColor='#fef3c7' />
+        </linearGradient>
+        <linearGradient
+          id={ids.frameGradientId}
+          x1='16'
+          x2='344'
+          y1='16'
+          y2='16'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0%' stopColor='rgba(56,189,248,0.76)' />
+          <stop offset='52%' stopColor='rgba(129,140,248,0.82)' />
+          <stop offset='100%' stopColor='rgba(251,191,36,0.84)' />
+        </linearGradient>
+        {renderSoftAtmosphereGradients(ids.atmosphereId, [
+          { key: 'left', cx: 92, cy: 42, rx: 72, ry: 30, color: '#38bdf8', opacity: 0.055, glowBias: '42%' },
+          { key: 'bottom', cx: 292, cy: 146, rx: 92, ry: 42, color: '#fbbf24', opacity: 0.05, glowBias: '60%' },
+          { key: 'top', cx: 262, cy: 38, rx: 58, ry: 22, color: '#818cf8', opacity: 0.045, glowBias: '40%' },
+        ])}
+      </defs>
+
+      <g clipPath={`url(#${ids.clipId})`} data-testid={`${testIdPrefix}-atmosphere`}>
+        <rect
+          x='8'
+          y='8'
+          width='344'
+          height='164'
+          rx='28'
+          fill={`url(#${ids.panelGradientId})`}
+          stroke='rgba(148,163,184,0.18)'
+          strokeWidth='2'
+        />
+        {renderSoftAtmosphereOvals(ids.atmosphereId, [
+          { key: 'left', cx: 92, cy: 42, rx: 72, ry: 30, color: '#38bdf8', opacity: 0.055, glowBias: '42%' },
+          { key: 'bottom', cx: 292, cy: 146, rx: 92, ry: 42, color: '#fbbf24', opacity: 0.05, glowBias: '60%' },
+          { key: 'top', cx: 262, cy: 38, rx: 58, ry: 22, color: '#818cf8', opacity: 0.045, glowBias: '40%' },
+        ])}
+      </g>
+
+      <rect
+        data-testid={`${testIdPrefix}-frame`}
+        x='16'
+        y='16'
+        width='328'
+        height='148'
+        rx='24'
+        fill='none'
+        stroke={`url(#${ids.frameGradientId})`}
+        strokeWidth='1.75'
+      />
+    </>
+  );
+}
 
 export function EnglishPronounsPulseAnimation(): React.JSX.Element {
-  const glowId = useId().replace(/:/g, '');
-  const ringId = useId().replace(/:/g, '');
-  const highlightId = useId().replace(/:/g, '');
-  const ruleGlowId = useId().replace(/:/g, '');
+  const surfaceIds = usePronounSurfaceIds('english-pronouns-pulse');
+  const glowId = React.useId().replace(/:/g, '');
+  const ringId = React.useId().replace(/:/g, '');
+  const highlightId = React.useId().replace(/:/g, '');
+  const ruleGlowId = React.useId().replace(/:/g, '');
 
   return (
     <svg
       aria-label='Animated pronoun guide. Pronoun tags float around a message bubble while rule labels highlight the four pronoun roles.'
       className='h-auto w-full'
+      data-testid='english-pronouns-pulse-animation'
       role='img'
       viewBox='0 0 360 180'
     >
+      <PronounSurface ids={surfaceIds} testIdPrefix='english-pronouns-pulse' />
       <defs>
         <radialGradient id={glowId} cx='50%' cy='50%' r='60%'>
           <stop offset='0%' stopColor='rgba(255,255,255,0.9)' />
@@ -33,12 +135,12 @@ export function EnglishPronounsPulseAnimation(): React.JSX.Element {
         </linearGradient>
       </defs>
       <style>{`
-        .bubble { fill: #ffffff; stroke: #e2e8f0; stroke-width: 2; }
+        .bubble { fill: #ffffff; stroke: #dbeafe; stroke-width: 2.2; }
         .bubble-glow { fill: url(#${glowId}); opacity: 0.6; animation: bubblePulse 6.2s ease-in-out infinite; }
-        .bubble-highlight { fill: url(#${highlightId}); opacity: 0.7; }
-        .bubble-tail { fill: #ffffff; stroke: #e2e8f0; stroke-width: 2; }
-        .prompt { font: 700 12px/1.1 system-ui, sans-serif; fill: #0f172a; }
-        .sub { font: 600 11px/1 system-ui, sans-serif; fill: #64748b; }
+        .bubble-highlight { fill: url(#${highlightId}); opacity: 0.72; }
+        .bubble-tail { fill: #ffffff; stroke: #dbeafe; stroke-width: 2.2; }
+        .prompt { font: 700 12px/1.1 "Space Grotesk", system-ui, sans-serif; fill: #0f172a; }
+        .sub { font: 600 11px/1 "IBM Plex Sans", system-ui, sans-serif; fill: #64748b; }
         .sub-cycle { opacity: 0; animation: subSwap 8s ease-in-out infinite; }
         .sub-a { animation-delay: 0s; }
         .sub-b { animation-delay: 2s; }
@@ -52,7 +154,7 @@ export function EnglishPronounsPulseAnimation(): React.JSX.Element {
         .chip-b { animation: floatB 6.6s ease-in-out infinite; }
         .chip-c { animation: floatC 7.8s ease-in-out infinite; }
         .chip-d { animation: floatD 6.9s ease-in-out infinite; }
-        .chip-text { font: 700 12px/1 system-ui, sans-serif; fill: #0f172a; }
+        .chip-text { font: 700 12px/1 "Space Grotesk", system-ui, sans-serif; fill: #0f172a; }
         .ring {
           fill: none;
           stroke: url(#${ringId});
@@ -64,8 +166,8 @@ export function EnglishPronounsPulseAnimation(): React.JSX.Element {
         .spark { fill: #cbd5f5; opacity: 0.4; animation: spark 5.8s ease-in-out infinite; }
         .spark-2 { animation-delay: 1.4s; }
         .spark-3 { animation-delay: 2.6s; }
-        .rule-pill { fill: #f8fafc; stroke: #e2e8f0; stroke-width: 1.5; }
-        .rule-text { font: 600 9px/1 system-ui, sans-serif; fill: #475569; letter-spacing: 0.02em; }
+        .rule-pill { fill: rgba(255,255,255,0.78); stroke: rgba(191,219,254,0.92); stroke-width: 1.5; }
+        .rule-text { font: 600 9px/1 "IBM Plex Sans", system-ui, sans-serif; fill: #475569; letter-spacing: 0.02em; }
         .rule-glow { fill: url(#${ruleGlowId}); opacity: 0; animation: rulePulse 8s ease-in-out infinite; }
         .rule-a { animation-delay: 0s; }
         .rule-b { animation-delay: 2s; }
@@ -118,55 +220,58 @@ export function EnglishPronounsPulseAnimation(): React.JSX.Element {
           .rule-glow { opacity: 0; }
         }
       `}</style>
-      <circle className='bubble-glow' cx='180' cy='70' r='70' />
-      <circle className='ring' cx='180' cy='70' r='62' />
 
-      <rect className='bubble' x='92' y='26' width='176' height='88' rx='40' />
-      <rect className='bubble-highlight' x='110' y='34' width='120' height='18' rx='9' />
-      <path className='bubble-tail' d='M140 114 L124 126 L150 122 Z' />
+      <g clipPath={`url(#${surfaceIds.clipId})`}>
+        <circle className='bubble-glow' cx='180' cy='70' r='70' />
+        <circle className='ring' cx='180' cy='70' r='62' />
 
-      <text className='prompt' x='180' y='68' textAnchor='middle'>Pronoun Remix</text>
-      <text className='sub sub-cycle sub-a' x='180' y='88' textAnchor='middle'>Subject</text>
-      <text className='sub sub-cycle sub-b' x='180' y='88' textAnchor='middle'>Object</text>
-      <text className='sub sub-cycle sub-c' x='180' y='88' textAnchor='middle'>Possessive</text>
-      <text className='sub sub-cycle sub-d' x='180' y='88' textAnchor='middle'>Reflexive</text>
+        <rect className='bubble' x='92' y='26' width='176' height='88' rx='40' />
+        <rect className='bubble-highlight' x='110' y='34' width='120' height='18' rx='9' />
+        <path className='bubble-tail' d='M140 114 L124 126 L150 122 Z' />
 
-      <g className='chip chip-a'>
-        <rect x='24' y='20' width='72' height='28' rx='14' fill='#ccfbf1' stroke='#5eead4' strokeWidth='2' />
-        <text className='chip-text' x='60' y='39' textAnchor='middle'>they</text>
-      </g>
-      <g className='chip chip-b'>
-        <rect x='260' y='24' width='72' height='28' rx='14' fill='#e0e7ff' stroke='#a5b4fc' strokeWidth='2' />
-        <text className='chip-text' x='296' y='43' textAnchor='middle'>her</text>
-      </g>
-      <g className='chip chip-c'>
-        <rect x='30' y='96' width='64' height='26' rx='13' fill='#fef3c7' stroke='#fcd34d' strokeWidth='2' />
-        <text className='chip-text' x='62' y='114' textAnchor='middle'>we</text>
-      </g>
-      <g className='chip chip-d'>
-        <rect x='256' y='94' width='76' height='28' rx='14' fill='#ffe4e6' stroke='#fda4af' strokeWidth='2' />
-        <text className='chip-text' x='294' y='113' textAnchor='middle'>him</text>
-      </g>
+        <text className='prompt' x='180' y='68' textAnchor='middle'>Pronoun Remix</text>
+        <text className='sub sub-cycle sub-a' x='180' y='88' textAnchor='middle'>Subject</text>
+        <text className='sub sub-cycle sub-b' x='180' y='88' textAnchor='middle'>Object</text>
+        <text className='sub sub-cycle sub-c' x='180' y='88' textAnchor='middle'>Possessive</text>
+        <text className='sub sub-cycle sub-d' x='180' y='88' textAnchor='middle'>Reflexive</text>
 
-      <circle className='spark spark-1' cx='110' cy='18' r='3' />
-      <circle className='spark spark-2' cx='250' cy='16' r='3' />
-      <circle className='spark spark-3' cx='180' cy='124' r='3' />
+        <g className='chip chip-a'>
+          <rect x='24' y='20' width='72' height='28' rx='14' fill='#ccfbf1' stroke='#5eead4' strokeWidth='2' />
+          <text className='chip-text' x='60' y='39' textAnchor='middle'>they</text>
+        </g>
+        <g className='chip chip-b'>
+          <rect x='260' y='24' width='72' height='28' rx='14' fill='#e0e7ff' stroke='#a5b4fc' strokeWidth='2' />
+          <text className='chip-text' x='296' y='43' textAnchor='middle'>her</text>
+        </g>
+        <g className='chip chip-c'>
+          <rect x='30' y='96' width='64' height='26' rx='13' fill='#fef3c7' stroke='#fcd34d' strokeWidth='2' />
+          <text className='chip-text' x='62' y='114' textAnchor='middle'>we</text>
+        </g>
+        <g className='chip chip-d'>
+          <rect x='256' y='94' width='76' height='28' rx='14' fill='#ffe4e6' stroke='#fda4af' strokeWidth='2' />
+          <text className='chip-text' x='294' y='113' textAnchor='middle'>him</text>
+        </g>
 
-      <g aria-hidden='true'>
-        <rect className='rule-pill' x='16' y='136' width='74' height='22' rx='11' />
-        <rect className='rule-pill' x='98' y='136' width='74' height='22' rx='11' />
-        <rect className='rule-pill' x='180' y='136' width='74' height='22' rx='11' />
-        <rect className='rule-pill' x='262' y='136' width='74' height='22' rx='11' />
+        <circle className='spark spark-1' cx='110' cy='18' r='3' />
+        <circle className='spark spark-2' cx='250' cy='16' r='3' />
+        <circle className='spark spark-3' cx='180' cy='124' r='3' />
 
-        <rect className='rule-glow rule-a' x='16' y='136' width='74' height='22' rx='11' />
-        <rect className='rule-glow rule-b' x='98' y='136' width='74' height='22' rx='11' />
-        <rect className='rule-glow rule-c' x='180' y='136' width='74' height='22' rx='11' />
-        <rect className='rule-glow rule-d' x='262' y='136' width='74' height='22' rx='11' />
+        <g aria-hidden='true'>
+          <rect className='rule-pill' x='16' y='136' width='74' height='22' rx='11' />
+          <rect className='rule-pill' x='98' y='136' width='74' height='22' rx='11' />
+          <rect className='rule-pill' x='180' y='136' width='74' height='22' rx='11' />
+          <rect className='rule-pill' x='262' y='136' width='74' height='22' rx='11' />
 
-        <text className='rule-text' x='53' y='151' textAnchor='middle'>Subject</text>
-        <text className='rule-text' x='135' y='151' textAnchor='middle'>Object</text>
-        <text className='rule-text' x='217' y='151' textAnchor='middle'>Possessive</text>
-        <text className='rule-text' x='299' y='151' textAnchor='middle'>Reflexive</text>
+          <rect className='rule-glow rule-a' x='16' y='136' width='74' height='22' rx='11' />
+          <rect className='rule-glow rule-b' x='98' y='136' width='74' height='22' rx='11' />
+          <rect className='rule-glow rule-c' x='180' y='136' width='74' height='22' rx='11' />
+          <rect className='rule-glow rule-d' x='262' y='136' width='74' height='22' rx='11' />
+
+          <text className='rule-text' x='53' y='151' textAnchor='middle'>Subject</text>
+          <text className='rule-text' x='135' y='151' textAnchor='middle'>Object</text>
+          <text className='rule-text' x='217' y='151' textAnchor='middle'>Possessive</text>
+          <text className='rule-text' x='299' y='151' textAnchor='middle'>Reflexive</text>
+        </g>
       </g>
     </svg>
   );

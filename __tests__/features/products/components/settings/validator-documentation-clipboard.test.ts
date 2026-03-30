@@ -18,7 +18,8 @@ describe('validator-documentation-clipboard', () => {
     expect(text).toContain('## Function Reference');
     expect(text).toContain('core.buildFieldIssues');
     expect(text).toContain('## UI Controls & Tooltips');
-    expect(text).toContain('validator.patterns.add');
+    expect(text).toContain('ui.ValidatorPatternModal');
+    expect(text).toContain('docs/validator/tooltips.md');
   });
 
   it('contains the same sample import JSON used by import modal', () => {

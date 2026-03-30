@@ -28,9 +28,7 @@ export function RichTextEditor(props: RichTextEditorProps): React.JSX.Element {
     loadingLabel,
     containerClassName,
     toolbarClassName,
-    surfaceClassName,
-    editorContentClassName,
-    surfaceStyle,
+    surfaceOptions,
   } = props;
 
   return (
@@ -51,9 +49,7 @@ export function RichTextEditor(props: RichTextEditorProps): React.JSX.Element {
       loadingLabel={loadingLabel}
       containerClassName={containerClassName}
       toolbarClassName={toolbarClassName}
-      surfaceClassName={surfaceClassName}
-      editorContentClassName={editorContentClassName}
-      surfaceStyle={surfaceStyle}
+      surfaceOptions={surfaceOptions}
     />
   );
 }

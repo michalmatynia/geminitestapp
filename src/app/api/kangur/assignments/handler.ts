@@ -11,6 +11,7 @@ import {
 
 import {
   createAssignmentSnapshotForLearner,
+  invalidateKangurAssignmentSnapshotsCache,
   listAssignmentSnapshotsForLearner,
   readKangurJsonBody,
   resolveAssignmentActor,
@@ -52,6 +53,12 @@ export async function postKangurAssignmentsHandler(
     learnerEmail: actor.learnerEmail,
     legacyLearnerKey: actor.legacyLearnerKey,
     payload,
+  });
+  invalidateKangurAssignmentSnapshotsCache({
+    learnerKey: actor.learnerKey,
+    learnerName: actor.learnerName,
+    learnerEmail: actor.learnerEmail,
+    legacyLearnerKey: actor.legacyLearnerKey,
   });
 
   void logKangurServerEvent({

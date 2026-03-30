@@ -7,14 +7,14 @@ import { vi } from 'vitest';
 
 import { POST as POST_CRUD } from '@/app/api/databases/crud/route';
 import { POST as POST_EXECUTE } from '@/app/api/databases/execute/route';
-import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoClient: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/services/database-engine-access', () => ({
+vi.mock('@/features/database/server', () => ({
   assertDatabaseEngineManageAccess: vi.fn(),
 }));
 

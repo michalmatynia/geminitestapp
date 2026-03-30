@@ -21,7 +21,7 @@ vi.mock('@/shared/lib/db/services/database-engine-provider-preview', () => ({
   getDatabaseEngineProviderPreview: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/db/services/database-engine-access', () => ({
+vi.mock('@/features/database/server', () => ({
   assertDatabaseEngineManageAccess: vi.fn().mockResolvedValue(undefined),
 }));
 

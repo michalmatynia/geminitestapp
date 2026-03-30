@@ -9,7 +9,7 @@ import {
   getPathSegments,
   type CatchAllRouteDefinition as RouteDefinition,
   type CatchAllRoutePathParams as RouteParams,
-  type CatchAllOptionalRoutePatternToken as PatternToken,
+  type CatchAllRoutePatternToken as PatternToken,
 } from '@/shared/lib/api/catch-all-router';
 
 import * as cardsBackfill from '../cards/backfill/route-handler';

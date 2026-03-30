@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
-import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { CmsDomain } from '@/shared/contracts/cms';
 import { SelectSimple } from '@/shared/ui';
 
@@ -12,37 +11,6 @@ type CmsDomainSelectorProps = {
   triggerClassName?: string;
   onChange?: (domainId: string) => void;
 };
-
-type CmsDomainSelectorRuntimeValue = {
-  options: Array<LabeledOptionWithDescriptionDto<string>>;
-  value?: string;
-  handleChange: (domainId: string) => void;
-  disabled: boolean;
-  triggerClassName?: string;
-};
-
-function CmsDomainSelectorControl({
-  options,
-  value,
-  handleChange,
-  disabled,
-  triggerClassName,
-}: CmsDomainSelectorRuntimeValue): React.JSX.Element {
-  return (
-    <SelectSimple
-      size='sm'
-      options={options}
-      value={value}
-      onValueChange={handleChange}
-      disabled={disabled}
-      placeholder='Select zone'
-      className='w-[220px]'
-      triggerClassName={triggerClassName}
-      ariaLabel='Zone selector'
-      title='Zone selector'
-    />
-  );
-}
 
 export function CmsDomainSelector({
   label = 'Zone',
@@ -105,12 +73,17 @@ export function CmsDomainSelector({
           {label}
         </span>
       )}
-      <CmsDomainSelectorControl
+      <SelectSimple
+        size='sm'
         options={options}
         value={activeDomainId ?? undefined}
-        handleChange={handleChange}
+        onValueChange={handleChange}
         disabled={domains.length === 0}
+        placeholder='Select zone'
+        className='w-[220px]'
         triggerClassName={triggerClassName}
+        ariaLabel='Zone selector'
+        title='Zone selector'
       />
     </div>
   );

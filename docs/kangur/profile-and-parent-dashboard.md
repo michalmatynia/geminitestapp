@@ -1,6 +1,6 @@
 ---
 owner: 'Kangur Team'
-last_reviewed: '2026-03-09'
+last_reviewed: '2026-03-26'
 status: 'active'
 doc_type: 'reference'
 scope: 'feature:kangur'
@@ -18,6 +18,8 @@ The learner profile combines:
 - lesson mastery insights
 - assignment recommendations
 - recent score history
+- session and activity history
+- AI Tutor mood and recommendation context
 
 This route is learner-facing, but it also acts as the fastest place for a parent or admin to validate whether progress data is being recorded correctly.
 
@@ -31,6 +33,10 @@ The parent dashboard is the management surface for:
 - reviewing aggregated progress
 - reviewing score history
 - assigning lessons and practice goals
+
+The stable web parent dashboard runtime lives in `src/features/kangur/ui/pages/ParentDashboard.tsx`.
+The mobile app currently contains `/parent` in this branch, but that route is
+still branch-local and should not be treated as the stable native contract yet.
 
 ## Parent account onboarding
 
@@ -54,15 +60,21 @@ Important behavior:
 
 ## Tabs
 
-The parent dashboard exposes separate tabs for:
+The current parent dashboard exposes four runtime tabs:
 
-- `Wyniki`
 - `Postęp`
 - `Zadania`
 - `Monitorowanie zadań`
 - `AI Tutor`
 
 Each tab needs a stable documentation entry because the same shell is reused while the content focus changes.
+
+The current tab ids and documentation anchors are:
+
+- `progress` -> `parent_progress_tab`
+- `assign` -> `parent_assignments_tab`
+- `monitoring` -> `parent_monitoring_tab`
+- `ai-tutor` -> `parent_ai_tutor_tab`
 
 The `AI Tutor` tab is the learner-specific tutoring control surface. It is where the parent enables or disables the tutor and configures guardrails for the selected learner.
 
@@ -77,6 +89,16 @@ Those guardrails currently include:
 Global tutor behavior such as the tutor persona, Brain chat routing, tutor motion preset, and daily message cap is managed in `Kangur Settings` and applies across the whole app.
 
 When the tutor is enabled, the same tab also shows the current day's tutor usage for the selected learner, including the consumed message count and the remaining quota when the global daily cap is active.
+
+## Related runtime widgets
+
+The current profile and parent-dashboard experience is composed from dedicated
+widgets rather than one monolithic panel:
+
+- learner profile hero, overview, level progress, mastery, performance,
+  sessions, assignments, results, recommendations, and AI Tutor mood widgets
+- parent dashboard hero, progress, assignments, assignment monitoring, and
+  AI Tutor widgets
 
 ## Documentation requirement
 

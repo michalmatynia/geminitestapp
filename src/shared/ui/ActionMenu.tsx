@@ -10,6 +10,7 @@ import { cn } from '@/shared/utils';
 interface ActionMenuProps {
   children: ReactNode;
   trigger?: ReactNode;
+  triggerId?: string;
   align?: 'start' | 'end' | 'center';
   className?: string;
   triggerClassName?: string;
@@ -19,9 +20,10 @@ interface ActionMenuProps {
   disabled?: boolean;
 }
 
-type ActionMenuContentProps = {
+type ActionMenuResolvedProps = {
   children: ReactNode;
   trigger?: ReactNode;
+  triggerId?: string;
   align: 'start' | 'end' | 'center';
   className?: string;
   triggerClassName?: string;
@@ -31,21 +33,25 @@ type ActionMenuContentProps = {
   disabled: boolean;
 };
 
-function ActionMenuContent({
-  children,
-  trigger,
-  align,
-  className,
-  triggerClassName,
-  ariaLabel,
-  variant,
-  size,
-  disabled,
-}: ActionMenuContentProps): React.JSX.Element {
+const renderActionMenu = (resolvedProps: ActionMenuResolvedProps): React.JSX.Element => {
+  const {
+    children,
+    trigger,
+    triggerId,
+    align,
+    className,
+    triggerClassName,
+    ariaLabel,
+    variant,
+    size,
+    disabled,
+  } = resolvedProps;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          {...(triggerId ? { id: triggerId } : {})}
           variant={variant}
           size={size}
           disabled={disabled}
@@ -65,30 +71,32 @@ function ActionMenuContent({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
 
-export function ActionMenu({
-  children,
-  trigger,
-  align = 'end',
-  className,
-  triggerClassName,
-  ariaLabel = 'Open actions menu',
-  variant = 'ghost',
-  size = 'icon',
-  disabled = false,
-}: ActionMenuProps): React.JSX.Element {
-  return (
-    <ActionMenuContent
-      children={children}
-      trigger={trigger}
-      align={align}
-      className={className}
-      triggerClassName={triggerClassName}
-      ariaLabel={ariaLabel}
-      variant={variant}
-      size={size}
-      disabled={disabled}
-    />
-  );
+export function ActionMenu(props: ActionMenuProps): React.JSX.Element {
+  const {
+    children,
+    trigger,
+    triggerId,
+    align = 'end',
+    className,
+    triggerClassName,
+    ariaLabel = 'Open actions menu',
+    variant = 'ghost',
+    size = 'icon',
+    disabled = false,
+  } = props;
+
+  return renderActionMenu({
+    children,
+    trigger,
+    triggerId,
+    align,
+    className,
+    triggerClassName,
+    ariaLabel,
+    variant,
+    size,
+    disabled,
+  });
 }

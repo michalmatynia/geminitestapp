@@ -1,18 +1,18 @@
 import { NextRequest } from 'next/server';
 
-import type { StringRecordDto } from '@/shared/contracts/base';
+import type { StringRecord } from '@/shared/contracts/base';
 import { methodNotAllowedError, notFoundError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 export type CatchAllRouteMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-export type CatchAllRouteParams = StringRecordDto;
+export type CatchAllRouteParams = StringRecord;
 export type CatchAllRoutePathParams = { path?: string[] | string };
 export type CatchAllRouteHandler<P extends CatchAllRouteParams = CatchAllRouteParams> = (
   request: NextRequest,
   context: { params: P | Promise<P> }
 ) => Promise<Response>;
 // catch-all route modules define their own param shapes.
-export type CatchAllRouteModule = Partial<Record<CatchAllRouteMethod, CatchAllRouteHandler>>;
+export type CatchAllRouteModule = Partial<Record<CatchAllRouteMethod, unknown>>;
 export type CatchAllRoutePatternParamToken = { param: string };
 export type CatchAllRoutePatternLiteralToken = { literal: string; optional?: boolean };
 export type CatchAllRoutePatternOptionalParamToken = { param: string; optional?: boolean };
@@ -60,14 +60,17 @@ const dispatch = async (
   params?: CatchAllRouteParams
 ): Promise<Response> => {
   const handler = module[method];
-  if (!handler) {
+  if (typeof handler !== 'function') {
     const allowed = getAllowedMethods(module);
     const source = 'catch-all-router.dispatch';
     return allowed.length > 0
       ? createMethodNotAllowed(request, allowed, source)
       : createNotFound(request, source);
   }
-  return handler(request, { params: Promise.resolve(params ?? ({} as CatchAllRouteParams)) });
+  return (handler as CatchAllRouteHandler)(
+    request,
+    { params: Promise.resolve(params ?? ({} as CatchAllRouteParams)) }
+  );
 };
 
 export const getPathSegments = (request: NextRequest, basePath: string): string[] => {
@@ -91,6 +94,85 @@ const normalizeToken = (
   return { isParam: true, key: token.param, optional: Boolean(token.optional) };
 };
 
+const resolveSegmentAt = (segments: string[], segmentIndex: number): string | null =>
+  segmentIndex < segments.length ? (segments[segmentIndex] ?? null) : null;
+
+const isMissingRequiredToken = (
+  segment: string | null,
+  optional: boolean,
+): boolean => segment === null && !optional;
+
+const shouldSkipOptionalLiteral = (
+  key: string,
+  currentSegment: string,
+  optional: boolean,
+): boolean => optional && key !== currentSegment;
+
+const shouldAbortPatternMatch = (
+  currentSegment: string | null,
+  optional: boolean,
+): boolean => isMissingRequiredToken(currentSegment, optional);
+
+const consumeLiteralToken = (args: {
+  key: string;
+  currentSegment: string;
+  optional: boolean;
+}): boolean => {
+  if (shouldSkipOptionalLiteral(args.key, args.currentSegment, args.optional)) {
+    return false;
+  }
+
+  return args.key === args.currentSegment;
+};
+
+const matchLiteralToken = (args: {
+  currentSegment: string | null;
+  key: string;
+  optional: boolean;
+  segmentIndex: number;
+}): number | null => {
+  if (shouldAbortPatternMatch(args.currentSegment, args.optional)) {
+    return null;
+  }
+
+  if (args.currentSegment === null) {
+    return args.segmentIndex;
+  }
+
+  if (shouldSkipOptionalLiteral(args.key, args.currentSegment, args.optional)) {
+    return args.segmentIndex;
+  }
+
+  if (!consumeLiteralToken({
+    key: args.key,
+    currentSegment: args.currentSegment,
+    optional: args.optional,
+  })) {
+    return null;
+  }
+
+  return args.segmentIndex + 1;
+};
+
+const matchParamToken = (args: {
+  currentSegment: string | null;
+  key: string;
+  optional: boolean;
+  params: CatchAllRouteParams;
+  segmentIndex: number;
+}): number | null => {
+  if (shouldAbortPatternMatch(args.currentSegment, args.optional)) {
+    return null;
+  }
+
+  if (args.currentSegment === null) {
+    return args.segmentIndex;
+  }
+
+  args.params[args.key] = args.currentSegment;
+  return args.segmentIndex + 1;
+};
+
 export const matchCatchAllPattern = (
   pattern: CatchAllOptionalRoutePatternToken[],
   segments: string[]
@@ -99,32 +181,27 @@ export const matchCatchAllPattern = (
   let segmentIndex = 0;
   for (const token of pattern) {
     const { isParam, key, optional } = normalizeToken(token);
+    const currentSegment = resolveSegmentAt(segments, segmentIndex);
+    const nextSegmentIndex = isParam
+      ? matchParamToken({
+          currentSegment,
+          key,
+          optional,
+          params,
+          segmentIndex,
+        })
+      : matchLiteralToken({
+          currentSegment,
+          key,
+          optional,
+          segmentIndex,
+        });
 
-    if (segmentIndex >= segments.length) {
-      if (optional) {
-        continue;
-      }
+    if (nextSegmentIndex === null) {
       return null;
     }
 
-    const currentSegment = segments[segmentIndex];
-    if (!currentSegment) {
-      return null;
-    }
-
-    if (!isParam) {
-      if (key !== currentSegment) {
-        if (optional) {
-          continue;
-        }
-        return null;
-      }
-      segmentIndex += 1;
-      continue;
-    }
-
-    params[key] = currentSegment;
-    segmentIndex += 1;
+    segmentIndex = nextSegmentIndex;
   }
 
   if (segmentIndex !== segments.length) {

@@ -4,7 +4,7 @@ import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/c
 import type {
   KangurAiTutorHintDepth,
   KangurAiTutorProactiveNudges,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import type {
   ContextRegistryResolutionBundle,

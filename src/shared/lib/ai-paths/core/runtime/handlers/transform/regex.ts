@@ -62,41 +62,70 @@ const buildRegexItems = (value: unknown, splitLines: boolean): string[] => {
   return strings;
 };
 
+const resolveRegexSelectorKey = (selector: string | undefined): string =>
+  (selector ?? 'match').trim();
+
+const resolveRegexRawGroups = (match: RegExpExecArray): Record<string, unknown> | null =>
+  match.groups && typeof match.groups === 'object'
+    ? (match.groups as Record<string, unknown>)
+    : null;
+
+const normalizeRegexGroupValue = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (value === undefined || value === null) return '';
+  return safeStringify(value);
+};
+
+const normalizeRegexGroups = (
+  rawGroups: Record<string, unknown> | null
+): Record<string, string> | null =>
+  rawGroups
+    ? (Object.fromEntries(
+      Object.entries(rawGroups).map(([name, value]: [string, unknown]) => [
+        name,
+        normalizeRegexGroupValue(value),
+      ])
+    ) as Record<string, string>)
+    : null;
+
+const resolveRegexIndexedSelection = (
+  match: RegExpExecArray,
+  key: string
+): { handled: boolean; value: unknown } => {
+  const asIndex = Number(key);
+  if (!Number.isInteger(asIndex)) return { handled: false, value: null };
+  return {
+    handled: true,
+    value: match[asIndex] ?? null,
+  };
+};
+
+const resolveRegexGroupSelection = (
+  rawGroups: Record<string, unknown> | null,
+  key: string
+): unknown => {
+  const candidate = rawGroups ? rawGroups[key] : undefined;
+  if (typeof candidate === 'string') return candidate;
+  if (candidate === undefined || candidate === null) return null;
+  return safeStringify(candidate);
+};
+
 const resolveRegexSelection = (match: RegExpExecArray, selector: string | undefined): unknown => {
-  const key = (selector ?? 'match').trim();
+  const key = resolveRegexSelectorKey(selector);
   if (!key || key === 'match' || key === '0') {
     return match[0] ?? null;
   }
   if (key === 'captures') {
     return match.slice(1).map((value: string | undefined) => value ?? '');
   }
-  const rawGroups =
-    match.groups && typeof match.groups === 'object'
-      ? (match.groups as Record<string, unknown>)
-      : null;
-  const groups = rawGroups
-    ? (Object.fromEntries(
-      Object.entries(rawGroups).map(([name, value]: [string, unknown]) => [
-        name,
-        typeof value === 'string'
-          ? value
-          : value === undefined || value === null
-            ? ''
-            : safeStringify(value),
-      ])
-    ) as Record<string, string>)
-    : null;
+  const rawGroups = resolveRegexRawGroups(match);
+  const groups = normalizeRegexGroups(rawGroups);
   if (key === 'groups') {
     return groups;
   }
-  const asIndex = Number(key);
-  if (Number.isInteger(asIndex)) {
-    return match[asIndex] ?? null;
-  }
-  const candidate = rawGroups ? rawGroups[key] : undefined;
-  if (typeof candidate === 'string') return candidate;
-  if (candidate === undefined || candidate === null) return null;
-  return safeStringify(candidate);
+  const indexed = resolveRegexIndexedSelection(match, key);
+  if (indexed.handled) return indexed.value;
+  return resolveRegexGroupSelection(rawGroups, key);
 };
 
 const parseRegexExtractedJson = (
@@ -129,6 +158,21 @@ const resolveGroupKey = (match: RegExpExecArray, groupBy: string | undefined): s
   if (typeof selected === 'string') return selected;
   return safeStringify(selected);
 };
+
+const buildRegexMatchRecord = (
+  input: string,
+  match: RegExpExecArray | null,
+  key: string,
+  extracted: unknown
+): RegexMatchRecord => ({
+  input,
+  match: match?.[0] ?? null,
+  index: typeof match?.index === 'number' ? match.index : null,
+  captures: match ? match.slice(1).map((value: string | undefined) => value ?? '') : [],
+  groups: match ? normalizeRegexGroups(resolveRegexRawGroups(match)) : null,
+  key,
+  extracted,
+});
 
 export const handleRegex: NodeHandler = ({
   node,
@@ -241,41 +285,19 @@ export const handleRegex: NodeHandler = ({
       if (!match) continue;
       found = true;
       const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
-      const groups =
-        match.groups && typeof match.groups === 'object'
-          ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
-          ) as Record<string, string>)
-          : null;
       const selectedValue = resolveRegexSelection(match, groupBy);
       const extracted = resolveExtractedValue(selectedValue, {
         key,
         index: typeof match.index === 'number' ? match.index : null,
       });
-      const record: RegexMatchRecord = {
-        input,
-        match: match[0] ?? null,
-        index: typeof match.index === 'number' ? match.index : null,
-        captures: match.slice(1).map((value: string | undefined) => value ?? ''),
-        groups,
-        key,
-        extracted,
-      };
+      const record = buildRegexMatchRecord(input, match, key, extracted);
       matches.push(record);
       pushGrouped(key, record);
       break;
     }
 
     if (!found && includeUnmatched && items.length > 0) {
-      const record: RegexMatchRecord = {
-        input: items[0] ?? '',
-        match: null,
-        index: null,
-        captures: [],
-        groups: null,
-        key: unmatchedKey,
-        extracted: null,
-      };
+      const record = buildRegexMatchRecord(items[0] ?? '', null, unmatchedKey, null);
       matches.push(record);
       pushGrouped(unmatchedKey, record);
     }
@@ -289,29 +311,12 @@ export const handleRegex: NodeHandler = ({
         while ((match = regexAll.exec(input)) !== null) {
           found = true;
           const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
-          const groups =
-            match.groups && typeof match.groups === 'object'
-              ? (Object.fromEntries(
-                Object.entries(match.groups).map(([k, v]: [string, unknown]) => [
-                  k,
-                  safeStringify(v),
-                ])
-              ) as Record<string, string>)
-              : null;
           const selectedValue = resolveRegexSelection(match, groupBy);
           const extracted = resolveExtractedValue(selectedValue, {
             key,
             index: typeof match.index === 'number' ? match.index : null,
           });
-          const record: RegexMatchRecord = {
-            input,
-            match: match[0] ?? null,
-            index: typeof match.index === 'number' ? match.index : null,
-            captures: match.slice(1).map((value: string | undefined) => value ?? ''),
-            groups,
-            key,
-            extracted,
-          };
+          const record = buildRegexMatchRecord(input, match, key, extracted);
           matches.push(record);
           pushGrouped(key, record);
           // Avoid infinite loops on zero-length matches.
@@ -320,15 +325,7 @@ export const handleRegex: NodeHandler = ({
           }
         }
         if (!found && includeUnmatched) {
-          const record: RegexMatchRecord = {
-            input,
-            match: null,
-            index: null,
-            captures: [],
-            groups: null,
-            key: unmatchedKey,
-            extracted: null,
-          };
+          const record = buildRegexMatchRecord(input, null, unmatchedKey, null);
           matches.push(record);
           pushGrouped(unmatchedKey, record);
         }
@@ -340,40 +337,18 @@ export const handleRegex: NodeHandler = ({
       const match = nonGlobalRegex.exec(input);
       if (!match) {
         if (!includeUnmatched) return;
-        const record: RegexMatchRecord = {
-          input,
-          match: null,
-          index: null,
-          captures: [],
-          groups: null,
-          key: unmatchedKey,
-          extracted: null,
-        };
+        const record = buildRegexMatchRecord(input, null, unmatchedKey, null);
         matches.push(record);
         pushGrouped(unmatchedKey, record);
         return;
       }
       const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
-      const groups =
-        match.groups && typeof match.groups === 'object'
-          ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
-          ) as Record<string, string>)
-          : null;
       const selectedValue = resolveRegexSelection(match, groupBy);
       const extracted = resolveExtractedValue(selectedValue, {
         key,
         index: typeof match.index === 'number' ? match.index : null,
       });
-      const record: RegexMatchRecord = {
-        input,
-        match: match[0] ?? null,
-        index: typeof match.index === 'number' ? match.index : null,
-        captures: match.slice(1).map((value: string | undefined) => value ?? ''),
-        groups,
-        key,
-        extracted,
-      };
+      const record = buildRegexMatchRecord(input, match, key, extracted);
       matches.push(record);
       pushGrouped(key, record);
     });

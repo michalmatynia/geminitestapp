@@ -8,3 +8,4 @@ export * from './pages/AdminCaseResolverPreferencesPage';
 export * from './party-matching';
 export * from './settings';
 export * from './utils/caseResolverUtils';
+export * from './capture/public';

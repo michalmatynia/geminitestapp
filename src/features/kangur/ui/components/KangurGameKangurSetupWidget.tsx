@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 import { KangurKangurWordmark } from '@/features/kangur/ui/components/KangurKangurWordmark';
-import { renderKangurGameSetupShell } from "@/features/kangur/ui/components/game-setup/KangurGameSetupShell";
+import { renderKangurGameSetupShell } from '@/features/kangur/ui/components/game-setup/KangurGameSetupShell';
 import KangurSetup from '@/features/kangur/ui/components/KangurSetup';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { getRecommendedKangurMode } from '@/features/kangur/ui/services/game-setup-recommendations';

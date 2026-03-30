@@ -14,7 +14,7 @@ import {
   type TutorMotionPosition,
   type TutorMotionProfile,
   getTutorEntryDirection
-  } from "./ai-tutor-widget/KangurAiTutorWidget.shared";
+  } from './ai-tutor-widget/KangurAiTutorWidget.shared';
 
 import type { TutorPoint } from './ai-tutor-widget/KangurAiTutorWidget.types';
 import type { CSSProperties } from 'react';

@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { renderKangurGameSetupShell } from '@/features/kangur/ui/components/game-setup/KangurGameSetupShell';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner';
-import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/KangurTrainingSetupPanel';
+import { KangurTrainingSetupPanel } from '@/features/kangur/ui/components/game-setup/KangurTrainingSetupPanel';
 import { KangurTreningWordmark } from '@/features/kangur/ui/components/KangurTreningWordmark';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { getRecommendedTrainingSetup } from '@/features/kangur/ui/services/game-setup-recommendations';

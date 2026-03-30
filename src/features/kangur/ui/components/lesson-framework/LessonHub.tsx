@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/KangurIconSummaryOptionCard';
+import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/summary-cards/KangurIconSummaryOptionCard';
 import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
 import { KangurLessonProgressDots } from '@/features/kangur/ui/components/KangurLessonProgressDots';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';

@@ -12,8 +12,8 @@ import {
 
 import {
   KangurPrimaryNavigation
-} from "@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation";
-import { useAccessibleKangurPrimaryNavigation } from "@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.access";
+} from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation';
+import { useAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.access';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
 

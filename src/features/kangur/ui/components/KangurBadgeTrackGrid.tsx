@@ -5,7 +5,7 @@ import {
   KangurBadgeTrackCardBody,
   KangurBadgeTrackCardBar,
   KANGUR_BADGE_TRACK_ACCENTS,
-} from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
+} from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackSummaryCard';
 import { KangurCardDescription } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_GAP_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 import { getProgressBadgeTrackSummaries } from '@/features/kangur/ui/services/progress';

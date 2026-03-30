@@ -5,7 +5,7 @@ import {
 import { getLocalizedKangurLessonTitle } from '@/features/kangur/lessons/lesson-catalog-i18n';
 import { KANGUR_LESSON_LIBRARY } from '@/features/kangur/settings';
 import { useLocale, useTranslations } from 'next-intl';
-import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
+import KangurRecommendationCard from '@/features/kangur/ui/components/summary-cards/KangurRecommendationCard';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import { KANGUR_PANEL_ROW_CLASSNAME } from '@/features/kangur/ui/design/tokens';

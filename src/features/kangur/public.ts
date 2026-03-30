@@ -22,7 +22,7 @@ export * from '@/features/kangur/ui/components/KangurGameHomeHeroWidget';
 export * from '@/features/kangur/ui/components/KangurGameKangurSessionWidget';
 export * from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
 export * from '@/features/kangur/ui/components/KangurGameNavigationWidget';
-export * from "@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget";
+export * from '@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget';
 export * from '@/features/kangur/ui/components/KangurGameQuestionWidget';
 export * from '@/features/kangur/ui/components/KangurGameResultWidget';
 export * from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';

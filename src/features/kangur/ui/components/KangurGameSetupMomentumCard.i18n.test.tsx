@@ -52,7 +52,7 @@ vi.mock('@/features/kangur/ui/services/progress', async () => {
   };
 });
 
-import KangurGameSetupMomentumCard from '@/features/kangur/ui/components/KangurGameSetupMomentumCard';
+import KangurGameSetupMomentumCard from '@/features/kangur/ui/components/game-setup/KangurGameSetupMomentumCard';
 
 const buildProgress = (
   overrides: Partial<KangurProgressState> = {}

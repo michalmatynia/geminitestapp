@@ -97,7 +97,7 @@ vi.mock('@/features/kangur/ui/components/KangurSetup', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameSetupMomentumCard', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurGameSetupMomentumCard', () => ({
   __esModule: true,
   default: ({ mode }: { mode: string }) => (
     <div data-testid={`mock-game-setup-momentum-${mode}`}>Mock setup momentum {mode}</div>

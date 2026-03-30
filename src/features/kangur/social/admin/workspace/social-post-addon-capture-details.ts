@@ -39,7 +39,14 @@ export const getSocialPostAddonCaptureDetailLabels = (
   if (appearanceMode) {
     labels.push(`Appearance: ${appearanceMode}`);
   }
-  const addonAny = addon as any;
+  const addonAny = addon as KangurSocialImageAddon & {
+    playwrightCaptureMode?: string;
+    playwrightReadinessMode?: string;
+    playwrightViewportPreset?: string;
+    playwrightAttemptCount?: number;
+    playwrightCaptureDurationMs?: number;
+    playwrightCaptureStage?: string;
+  };
   if (addonAny.playwrightCaptureMode) {
     const mode = addonAny.playwrightCaptureMode;
     labels.push(`Capture: ${mode === 'full-page' ? 'Full page' : mode === 'viewport' ? 'Viewport' : mode}`);

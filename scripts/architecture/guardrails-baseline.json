@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-30T21:26:05.511Z",
+  "generatedAt": "2026-03-30T22:32:35.576Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
     "imports.featuresToAppApiTotalImports": 0
@@ -7,7 +7,7 @@
   "max": {
     "source.filesOver1000": 8,
     "source.filesOver1500": 0,
-    "source.useClientFiles": 1893,
+    "source.useClientFiles": 1892,
     "source.largestFileLines": 1278,
     "api.totalRoutes": 30,
     "api.delegatedServerRoutes": 172,
@@ -22,10 +22,10 @@
     "runtime.setIntervalOccurrences": 1,
     "propDrilling.depthGte4Chains": 0,
     "propDrilling.componentsWithForwarding": 0,
-    "uiConsolidation.totalOpportunities": 22,
-    "uiConsolidation.highPriorityOpportunities": 2,
-    "uiConsolidation.duplicateNameClusters": 9,
-    "uiConsolidation.propSignatureClusters": 5,
-    "uiConsolidation.tokenSimilarityClusters": 8
+    "uiConsolidation.totalOpportunities": 0,
+    "uiConsolidation.highPriorityOpportunities": 0,
+    "uiConsolidation.duplicateNameClusters": 0,
+    "uiConsolidation.propSignatureClusters": 0,
+    "uiConsolidation.tokenSimilarityClusters": 0
   }
 }

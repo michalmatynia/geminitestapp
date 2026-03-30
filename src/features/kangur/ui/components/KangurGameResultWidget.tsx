@@ -3,7 +3,7 @@ import { useLocale, useTranslations } from 'next-intl';
 
 import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
 import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner';
-import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
+import KangurRecommendationCard from '@/features/kangur/ui/components/summary-cards/KangurRecommendationCard';
 import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
 import ResultScreen from '@/features/kangur/ui/components/game-runtime/ResultScreen';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';

@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 
 import KangurGame from '@/features/kangur/ui/components/KangurGame';
-import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
+import KangurRecommendationCard from '@/features/kangur/ui/components/summary-cards/KangurRecommendationCard';
 import { KangurGameProvider } from '@/features/kangur/ui/context/KangurGameContext';
 import { useKangurGameRuntime } from '@/features/kangur/ui/context/KangurGameRuntimeContext';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';

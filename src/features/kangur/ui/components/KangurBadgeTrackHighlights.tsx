@@ -3,14 +3,14 @@ import type {
   KangurBadgeTrackKey,
   KangurBadgeTrackSummary,
 } from '@kangur/core';
-import KangurBadgeTrackPlaceholderCard from '@/features/kangur/ui/components/KangurBadgeTrackPlaceholderCard';
+import KangurBadgeTrackPlaceholderCard from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackPlaceholderCard';
 import {
   KangurBadgeTrackSummaryCard,
   KangurBadgeTrackCardHeader,
   KangurBadgeTrackCardBody,
   KangurBadgeTrackCardBar,
   KANGUR_BADGE_TRACK_ACCENTS,
-} from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
+} from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackSummaryCard';
 import {
   getBadgeTrackMeta,
   getProgressBadgeTrackSummaries,

@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
-import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
-import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/KangurBadgeTrackSection';
+import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/summary-cards/KangurActivitySummaryCard';
+import { KangurBadgeTrackSection } from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackSection';
 import {
   KangurProgressHighlightCardContent,
   KangurProgressHighlightHeader,

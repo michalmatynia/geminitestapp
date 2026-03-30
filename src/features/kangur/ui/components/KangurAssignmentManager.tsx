@@ -35,7 +35,7 @@ import {
   TIME_LIMIT_MINUTES_MIN,
 } from './assignment-manager/KangurAssignmentManager.helpers';
 import { useKangurAssignmentManagerState } from './KangurAssignmentManager.hooks';
-import { renderKangurAssignmentManagerTimeLimitModal } from './KangurAssignmentManagerTimeLimitModal';
+import { renderKangurAssignmentManagerTimeLimitModal } from './assignment-manager/KangurAssignmentManagerTimeLimitModal';
 import type { KangurAssignmentManagerProps } from './assignment-manager/KangurAssignmentManager.types';
 
 type AssignmentManagerState = ReturnType<typeof useKangurAssignmentManagerState>;

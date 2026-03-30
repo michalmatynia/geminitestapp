@@ -6,7 +6,7 @@ import { useLocale } from 'next-intl';
 import { useId } from 'react';
 
 import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
-import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
+import KangurRecommendationCard from '@/features/kangur/ui/components/summary-cards/KangurRecommendationCard';
 import {
   KangurButton,
   KangurGlassPanel,

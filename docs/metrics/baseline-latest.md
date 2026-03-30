@@ -8,13 +8,13 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-30T21:12:58.228Z
+Generated at: 2026-03-30T22:32:17.441Z
 
 ## Snapshot
 
-- Source files: 9034
-- Source lines: 1517047
-- use client files: 1893
+- Source files: 9031
+- Source lines: 1515486
+- use client files: 1892
 - Files >= 1000 LOC: 8
 - Files >= 1500 LOC: 0
 - Largest file: `src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx` (1278 LOC)

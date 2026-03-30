@@ -81,7 +81,7 @@ vi.mock('@/features/kangur/ui/components/game-setup/KangurGameSetupShell', () =>
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTrainingSetupPanel', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurTrainingSetupPanel', () => ({
   KangurTrainingSetupPanel: () => <div data-testid='mock-training-setup-panel'>mock-training-setup-panel</div>,
 }));
 

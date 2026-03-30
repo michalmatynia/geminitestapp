@@ -13,7 +13,7 @@ import {
   KangurParentDashboardTabsWidget,
   getParentDashboardTabIds,
 } from '@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardTabsWidget';
-import { KangurTopNavigationController } from "@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController";
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';

@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-30T21:12:58.228Z",
+  "generatedAt": "2026-03-30T22:32:17.441Z",
   "source": {
-    "totalFiles": 9034,
-    "totalLines": 1517047,
-    "useClientFiles": 1893,
+    "totalFiles": 9031,
+    "totalLines": 1515486,
+    "useClientFiles": 1892,
     "filesOver800": 101,
     "filesOver1000": 8,
     "filesOver1500": 0,
@@ -132,8 +132,8 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2455,
-        "lines": 539849
+        "files": 2452,
+        "lines": 538288
       },
       {
         "feature": "ai",

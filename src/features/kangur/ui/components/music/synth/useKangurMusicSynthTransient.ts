@@ -14,21 +14,23 @@ import {
   DEFAULT_DURATION_MS,
   DEFAULT_GAIN,
   DEFAULT_VELOCITY,
+  type ActiveNode,
   type KangurMusicPlayableNote,
+  type ReverbChain,
 } from '../useKangurMusicSynth.types';
 import { ensureCompressorNode, ensureReverbChain } from '../useKangurMusicSynth.audio';
 
 export function useKangurMusicSynthTransient(
   _audioContextRef: React.MutableRefObject<AudioContext | null>,
   compressorNodeRef: React.MutableRefObject<DynamicsCompressorNode | null>,
-  reverbChainRef: React.MutableRefObject<any | null>,
-  activeNodesRef: React.MutableRefObject<any[]>,
+  reverbChainRef: React.MutableRefObject<ReverbChain | null>,
+  activeNodesRef: React.MutableRefObject<ActiveNode[]>,
   ensureAudioContext: () => Promise<AudioContext | null>,
   clearActivePlayback: () => void
 ) {
   const playTone = useCallback(
     async (
-      note: KangurMusicPlayableNote<any>,
+      note: KangurMusicPlayableNote<string>,
       options: { stopPrevious?: boolean } = {}
     ): Promise<boolean> => {
       if (options.stopPrevious !== false) {
@@ -89,8 +91,8 @@ export function useKangurMusicSynthTransient(
       waveShaperNode.curve = WAVE_SHAPER_CURVE as Float32Array<ArrayBuffer>;
       waveShaperNode.oversample = '2x';
 
-      const compressor = ensureCompressorNode(context, compressorNodeRef);
-      const reverbChain = ensureReverbChain(context, reverbChainRef, compressor);
+      const compressor: DynamicsCompressorNode = ensureCompressorNode(context, compressorNodeRef);
+      const reverbChain: ReverbChain = ensureReverbChain(context, reverbChainRef, compressor);
       const reverbSendGainNode = context.createGain();
       reverbSendGainNode.gain.setValueAtTime(
         resolveReverbSendGain({ brightness, velocity }),

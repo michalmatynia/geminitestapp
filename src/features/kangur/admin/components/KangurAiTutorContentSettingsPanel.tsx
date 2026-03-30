@@ -130,7 +130,8 @@ export function KangurAiTutorContentSettingsPanel(): React.JSX.Element {
         {Array.from(translationStatusesByLocale.entries()).map(([locale, statuses]) => {
           const status = statuses.get(sectionKey);
           if (!status) return null;
-          if (activeTranslationStatusFilters.length > 0 && !activeTranslationStatusFilters.includes(status as any)) return null;
+          const filterStatus = status as SectionTranslationFilterStatus;
+          if (activeTranslationStatusFilters.length > 0 && !activeTranslationStatusFilters.includes(filterStatus)) return null;
           return (
             <Badge key={locale} variant={getTranslationStatusBadgeVariant(status)} className='px-1.5 py-0 text-[10px] uppercase font-bold tracking-wider'>
               {formatTranslationStatusLabel(locale, status)}

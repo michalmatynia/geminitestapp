@@ -7,6 +7,7 @@ import {
   getLocaleFallbackChain,
   normalizeSiteLocale,
 } from '@/shared/lib/i18n/site-locale';
+import { repairKangurPolishCopy } from '@/shared/lib/i18n/kangur-polish-diacritics';
 
 export type SiteMessages = typeof enMessages;
 
@@ -19,6 +20,16 @@ type SiteMessageValue =
   | { [key: string]: SiteMessageValue };
 
 type SiteMessageDictionary = { [key: string]: SiteMessageValue };
+
+const repairBundledPolishMessages = (
+  messages: SiteMessageDictionary
+): SiteMessageDictionary =>
+  Object.fromEntries(
+    Object.entries(messages).map(([key, value]) => [
+      key,
+      key.startsWith('Kangur') ? repairKangurPolishCopy(value) : value,
+    ])
+  );
 
 const isPlainMessageObject = (value: unknown): value is SiteMessageDictionary =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -42,10 +53,15 @@ const mergeSiteMessageDictionaries = (
 };
 
 const defaultMessageLoader = () =>
-  import('./messages/pl.json').then((module) => module.default as SiteMessageDictionary);
+  import('./messages/pl.json').then((module) =>
+    repairBundledPolishMessages(module.default as SiteMessageDictionary)
+  );
 
 const messageLoaders: Partial<Record<string, () => Promise<SiteMessageDictionary>>> = {
-  pl: () => import('./messages/pl.json').then((module) => module.default as SiteMessageDictionary),
+  pl: () =>
+    import('./messages/pl.json').then((module) =>
+      repairBundledPolishMessages(module.default as SiteMessageDictionary)
+    ),
   en: () => import('./messages/en.json').then((module) => module.default as SiteMessageDictionary),
   de: () => import('./messages/de.json').then((module) => module.default as SiteMessageDictionary),
   uk: () => import('./messages/uk.json').then((module) => module.default as SiteMessageDictionary),

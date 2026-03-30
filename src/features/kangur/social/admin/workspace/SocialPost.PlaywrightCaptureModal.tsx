@@ -648,7 +648,9 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
           retryKind='programmable'
           retryDisabled={isConfigEditingLocked}
           retryTitle={configLockTitle}
-          onRetryFailed={handleRetryFailedProgrammableCaptureJob}
+          onRetryFailed={(job) => {
+            void handleRetryFailedProgrammableCaptureJob(job);
+          }}
         />
       </div>
     </FormModal>

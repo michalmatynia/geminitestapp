@@ -91,6 +91,26 @@ function expectNoLegacyLessonTitleKeys(messages: unknown) {
 }
 
 describe('site messages', () => {
+  it('repairs bundled Polish diacritics for Kangur app messages', async () => {
+    const messages = await loadSiteMessages('pl');
+
+    expect(messages.KangurGamePage.screens.home.description).toBe(
+      'Wybierz sposób ćwiczenia i rozpocznij kolejną sesję.'
+    );
+    expect(messages.KangurGamePage.screens.kangur.description).toBe(
+      'Rozwiązuj zadania StudiQ Matematycznego krok po kroku.'
+    );
+    expect(messages.KangurPageNotFound.description).toBe(
+      'Nie udało się znaleźć strony "{pageName}" w tej aplikacji.'
+    );
+    expect(messages.KangurParentDashboardRuntime.timeout.activate).toBe(
+      'Aktywowanie profilu trwa zbyt długo. Spróbuj wybrać go ręcznie.'
+    );
+    expect(messages.KangurDuels.lobby.publicLoginToJoinAria).toBe(
+      'Zaloguj się, aby dołączyć do pojedynku z {name}'
+    );
+  });
+
   it('merges Ukrainian overrides on top of configured fallbacks', async () => {
     const messages = await loadSiteMessages('uk');
 

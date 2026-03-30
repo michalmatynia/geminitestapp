@@ -392,9 +392,7 @@ export const findPannerNodeByRampTarget = (
 export const findSustainedFilterNode = (
   context: MockAudioContext | undefined
 ): MockBiquadFilterNode | undefined =>
-  context?.createBiquadFilter.mock.results.find((result) => result.type === 'return')?.value as
-    | MockBiquadFilterNode
-    | undefined;
+  context?.createBiquadFilter.mock.results.find((result) => result.type === 'return')?.value;
 
 export const findTransientGainNodeByInitialValue = (
   context: MockAudioContext | undefined

@@ -123,10 +123,10 @@ describe('PageNotFound', () => {
     render(<PageNotFound />, { wrapper: createWrapper() });
 
     expect(
-      await screen.findByText('Nie udalo sie znalezc strony "nieznana" w tej aplikacji.')
+      await screen.findByText('Nie udało się znaleźć strony "nieznana" w tej aplikacji.')
     ).toBeInTheDocument();
     expect(
-      screen.queryByText('Nie udalo sie znalezc strony "games" w tej aplikacji.')
+      screen.queryByText('Nie udało się znaleźć strony "games" w tej aplikacji.')
     ).not.toBeInTheDocument();
   });
 });

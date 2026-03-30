@@ -120,7 +120,7 @@ export const resolveKangurActiveLearner = async (
 
     if (requestedLearnerId) {
       const requestedLearner = await getKangurLearnerById(requestedLearnerId);
-      if (requestedLearner && requestedLearner.ownerUserId === ownerUserId) {
+      if (requestedLearner?.ownerUserId === ownerUserId) {
         return requestedLearner;
       }
     }

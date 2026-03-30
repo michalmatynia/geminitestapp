@@ -108,12 +108,12 @@ export function reduceSectionActions(
 
     case 'REORDER_SECTION_IN_ZONE':
     case 'REORDER_SECTIONS': {
-      const zone: PageZone = action.zone as PageZone;
+      const zone: PageZone = action.zone;
       const rootSectionsInZone = state.sections.filter(
         (section: SectionInstance) => section.zone === zone && !section.parentSectionId
       );
-      const fromIndex = action.fromIndex as number;
-      const toIndex = action.toIndex as number;
+      const fromIndex = action.fromIndex;
+      const toIndex = action.toIndex;
       const moved = rootSectionsInZone[fromIndex] ?? null;
       if (!moved) return state;
       const result = moveSectionSubtree(state.sections, {

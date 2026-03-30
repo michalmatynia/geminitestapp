@@ -20,12 +20,14 @@ const OVERLAY_VARIANT_PROPS: Record<
   { className?: string; style?: CSSProperties }
 > = {
   soft: {
+    className: 'bg-slate-950/64 backdrop-blur-[6px]',
     style: {
       background:
         'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 14%, rgba(2,6,23,0.72))',
     },
   },
   standard: {
+    className: 'bg-slate-950/72 backdrop-blur-[8px]',
     style: {
       background:
         'color-mix(in srgb, var(--kangur-soft-card-background, #ffffff) 16%, rgba(2,6,23,0.7))',

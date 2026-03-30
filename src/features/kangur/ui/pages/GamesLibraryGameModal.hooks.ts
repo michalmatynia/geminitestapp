@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import {
@@ -22,6 +22,10 @@ export function useGamesLibraryGameModalState({
   const locale = useLocale();
   const translations = useTranslations('KangurGamesLibraryPage');
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    setSettingsOpen(false);
+  }, [game?.id]);
 
   const enabled = open && Boolean(game);
   const gameInstancesQuery = useKangurGameInstances({

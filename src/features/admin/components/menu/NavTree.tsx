@@ -29,6 +29,15 @@ type NavTreeItemProps = {
   onToggleOpen: (id: string) => void;
 };
 
+type NavTreeNodeProps = {
+  item: NavItem;
+  depth: number;
+  isMenuCollapsed: boolean;
+  pathname: string;
+  openIds: Set<string>;
+  onToggleOpen: (id: string) => void;
+};
+
 const FOCUS_RING_CLASS_NAME =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
 
@@ -98,6 +107,27 @@ const buildNavContextItems = (
   }
 
   return items;
+};
+
+const hasSubtreeOpenStateChanged = (
+  prevOpenIds: Set<string>,
+  nextOpenIds: Set<string>,
+  item: NavItem
+): boolean => {
+  const children = item.children;
+  if (!children || children.length === 0) return false;
+
+  const stack = [...children];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!node?.children || node.children.length === 0) continue;
+    if (prevOpenIds.has(node.id) !== nextOpenIds.has(node.id)) {
+      return true;
+    }
+    stack.push(...node.children);
+  }
+
+  return false;
 };
 
 const NavTreeItem = memo(
@@ -291,6 +321,75 @@ const NavTreeItem = memo(
   }
 );
 
+const NavTreeNode = memo(
+  function NavTreeNode({
+    item,
+    depth,
+    isMenuCollapsed,
+    pathname,
+    openIds,
+    onToggleOpen,
+  }: NavTreeNodeProps): React.ReactNode {
+    const hasChildren = !!item.children?.length;
+    const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
+    const isOpen = !isMenuCollapsed && hasChildren && openIds.has(item.id);
+
+    return (
+      <div>
+        <NavTreeItem
+          item={item}
+          depth={depth}
+          isMenuCollapsed={isMenuCollapsed}
+          active={active}
+          isOpen={isOpen}
+          onToggleOpen={onToggleOpen}
+        />
+
+        {hasChildren && isOpen ? (
+          <div className='mt-1' id={`${item.id}-children`}>
+            <NavTree
+              items={item.children ?? []}
+              depth={depth + 1}
+              isMenuCollapsed={isMenuCollapsed}
+              pathname={pathname}
+              openIds={openIds}
+              onToggleOpen={onToggleOpen}
+            />
+          </div>
+        ) : null}
+      </div>
+    );
+  },
+  function navTreeNodePropsAreEqual(prev: NavTreeNodeProps, next: NavTreeNodeProps): boolean {
+    if (
+      prev.item !== next.item ||
+      prev.depth !== next.depth ||
+      prev.isMenuCollapsed !== next.isMenuCollapsed ||
+      prev.pathname !== next.pathname ||
+      prev.onToggleOpen !== next.onToggleOpen
+    ) {
+      return false;
+    }
+
+    const hasChildren = !!next.item.children?.length;
+    if (!hasChildren) {
+      return true;
+    }
+
+    const prevIsOpen = !prev.isMenuCollapsed && prev.openIds.has(prev.item.id);
+    const nextIsOpen = !next.isMenuCollapsed && next.openIds.has(next.item.id);
+    if (prevIsOpen !== nextIsOpen) {
+      return false;
+    }
+
+    if (!nextIsOpen) {
+      return true;
+    }
+
+    return !hasSubtreeOpenStateChanged(prev.openIds, next.openIds, next.item);
+  }
+);
+
 export const NavTree = memo(function NavTree({
   items,
   depth,
@@ -301,38 +400,17 @@ export const NavTree = memo(function NavTree({
 }: NavTreeProps): React.ReactNode {
   return (
     <div className={cn(depth === 0 ? 'space-y-1.5' : 'space-y-1')}>
-      {items.map((item: NavItem) => {
-        const hasChildren = !!item.children?.length;
-        const active =
-          !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
-        const isOpen = !isMenuCollapsed && hasChildren && openIds.has(item.id);
-
-        return (
-          <div key={item.id}>
-            <NavTreeItem
-              item={item}
-              depth={depth}
-              isMenuCollapsed={isMenuCollapsed}
-              active={active}
-              isOpen={isOpen}
-              onToggleOpen={onToggleOpen}
-            />
-
-            {hasChildren && isOpen ? (
-              <div className='mt-1' id={`${item.id}-children`}>
-                <NavTree
-                  items={item.children ?? []}
-                  depth={depth + 1}
-                  isMenuCollapsed={isMenuCollapsed}
-                  pathname={pathname}
-                  openIds={openIds}
-                  onToggleOpen={onToggleOpen}
-                />
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
+      {items.map((item: NavItem) => (
+        <NavTreeNode
+          key={item.id}
+          item={item}
+          depth={depth}
+          isMenuCollapsed={isMenuCollapsed}
+          pathname={pathname}
+          openIds={openIds}
+          onToggleOpen={onToggleOpen}
+        />
+      ))}
     </div>
   );
 });

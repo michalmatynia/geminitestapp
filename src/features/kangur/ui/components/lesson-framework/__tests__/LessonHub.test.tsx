@@ -217,8 +217,8 @@ describe('LessonHub', () => {
           {
             id: 'game_repeat',
             emoji: '🎹',
-            title: 'Powtorz melodie',
-            description: 'Najpierw posluchaj, potem zagraj te same kolory.',
+            title: 'Powtórz melodię',
+            description: 'Najpierw posłuchaj, potem zagraj te same kolory.',
             isGame: true,
           },
         ]}

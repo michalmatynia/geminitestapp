@@ -826,7 +826,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
                 </div>
               ))}
             </div>
-          ) : deepSearchResults && deepSearchResults.groups.length === 0 ? (
+          ) : deepSearchResults?.groups.length === 0 ? (
             <div className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-500'>
               No messages matched your search.
             </div>

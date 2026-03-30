@@ -21,10 +21,23 @@ import {
 import { KangurMusicWaveformIcon } from './music-waveform-icons';
 import type { KangurMusicSynthEnvelope } from './useKangurMusicSynth';
 
+type SynthEnvelopeControlId = 'attackMs' | 'decayMs' | 'sustainLevel' | 'releaseMs';
+
+type SynthEnvelopeControl = {
+  id: SynthEnvelopeControlId;
+  label: string;
+  max: number;
+  min: number;
+  step: number;
+  testIdSuffix: 'attack' | 'decay' | 'sustain' | 'release';
+  value: number;
+  valueLabel: string;
+};
+
 type SynthControlPanelProps = {
   activeOscTab: 'osc1' | 'osc2';
   onActiveOscTabChange: (tab: 'osc1' | 'osc2') => void;
-  onEnvelopeChange: (id: any, val: number) => void;
+  onEnvelopeChange: (id: SynthEnvelopeControlId, val: number) => void;
   onEnvelopeReset: () => void;
   onGlideModeChange: (mode: KangurMusicSynthGlideMode) => void;
   onOscSettingsChange: (osc1: KangurMusicSynthOsc1Config, osc2: KangurMusicSynthOsc2Config) => void;
@@ -32,7 +45,7 @@ type SynthControlPanelProps = {
   osc1Config: KangurMusicSynthOsc1Config;
   osc2Config: KangurMusicSynthOsc2Config;
   resolvedSynthEnvelope: KangurMusicSynthEnvelope;
-  synthEnvelopeControls: any[];
+  synthEnvelopeControls: SynthEnvelopeControl[];
   synthGlideMode: KangurMusicSynthGlideMode;
   synthWaveform: KangurMusicSynthWaveform;
 };
@@ -112,6 +125,7 @@ export function SynthControlPanel(props: SynthControlPanelProps) {
                 <span>{control.valueLabel}</span>
               </div>
               <input
+                aria-label={control.label}
                 className='h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-sky-500'
                 max={control.max}
                 min={control.min}

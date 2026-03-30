@@ -15,3 +15,7 @@ export {
   useAssets3D,
 } from './hooks/useAsset3dQueries';
 export type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+
+// Admin pages (re-exported from index for architecture compliance)
+export { Admin3DAssetsPage } from './pages/Admin3DAssetsPage';
+export { Asset3DListPage } from './pages/Asset3DListPage';

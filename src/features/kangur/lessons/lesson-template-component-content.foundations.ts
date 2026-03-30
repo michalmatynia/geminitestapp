@@ -184,7 +184,7 @@ export const MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT = createMusicDiatonic
       noteCardLabel: 'Dzwiek',
       noteSequence: ['do', 're', 'mi', 'fa', 'sol', 'la', 'si', 'do'],
       caption:
-        'Mozesz klasnac przy kazdym dzwieku, zeby latwiej zapamietac kolejnosc.',
+        'Możesz klasnąć przy każdym dźwięku, żeby łatwiej zapamiętać kolejność.',
     },
     colorsSlide: {
       title: 'Kolory pomagaja zapamietac melodie',
@@ -193,7 +193,7 @@ export const MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT = createMusicDiatonic
       noteChips: ['do', 're', 'mi', 'fa', 'sol', 'la', 'si', 'do+'],
       previewTitle: 'Podglad piano rollu',
       previewDescription:
-        'Na gorze dzwieki ukladaja sie na wysokosciach jak prawdziwy piano roll, a na dole czekaja te same kolory na klawiaturze.',
+        'Na górze dźwięki układają się na wysokościach jak prawdziwy piano roll, a na dole czekają te same kolory na klawiaturze.',
       caption:
         'W grze najpierw posluchasz melodii, a potem szybko odtworzysz ja tymi samymi kolorami.',
     },
@@ -201,41 +201,41 @@ export const MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT = createMusicDiatonic
   melodySection: {
     emoji: '🎶',
     title: 'Melodia',
-    description: 'Uslysz, jak skala idzie w gore i w dol.',
+    description: 'Usłysz, jak skala idzie w górę i w dół.',
     directionSlide: {
-      title: 'W gore i w dol',
+      title: 'W górę i w dół',
       lead:
-        'Kiedy spiewasz od do do kolejnego do, melodia idzie w gore. Gdy wracasz od wysokiego do na dol, melodia schodzi.',
-      ascendingTitle: 'W gore',
+        'Kiedy śpiewasz od do do kolejnego do, melodia idzie w górę. Gdy wracasz od wysokiego do na dół, melodia schodzi.',
+      ascendingTitle: 'W górę',
       ascendingSequence: 'do re mi fa sol',
-      ascendingCaption: 'Kazdy kolejny dzwiek brzmi wyzej niz poprzedni.',
-      descendingTitle: 'W dol',
+      ascendingCaption: 'Każdy kolejny dźwięk brzmi wyżej niż poprzedni.',
+      descendingTitle: 'W dół',
       descendingSequence: 'sol fa mi re do',
-      descendingCaption: 'Kazdy kolejny dzwiek opada i prowadzi melodie nizej.',
+      descendingCaption: 'Każdy kolejny dźwięk opada i prowadzi melodię niżej.',
     },
     listenSlide: {
-      title: 'Najpierw sluchaj, potem dotykaj',
+      title: 'Najpierw słuchaj, potem dotykaj',
       lead:
-        'Gdy chcesz powtorzyc melodie, nie spiesz sie od razu. Najpierw posluchaj calej sciezki, a potem podazaj za kolorami od pierwszego dzwieku.',
+        'Gdy chcesz powtórzyć melodię, nie spiesz się od razu. Najpierw posłuchaj całej ścieżki, a potem podążaj za kolorami od pierwszego dźwięku.',
       planTitle: 'Szybki plan',
-      planSteps: ['1. sluchaj', '2. patrz na kolory', '3. powtorz po kolei'],
+      planSteps: ['1. słuchaj', '2. patrz na kolory', '3. powtórz po kolei'],
       caption:
-        'Jesli sie zgubisz, odsluchaj melodie jeszcze raz i zacznij od pierwszego koloru.',
+        'Jeśli się zgubisz, odsłuchaj melodię jeszcze raz i zacznij od pierwszego koloru.',
     },
   },
   gameRepeatSection: {
     emoji: '🎹',
-    title: 'Powtorz melodie',
+    title: 'Powtórz melodię',
     description: 'Najpierw posluchaj, potem zagraj te same kolory.',
-    gameTitle: 'Powtorz melodie',
-    gameDescription: 'Najpierw posluchaj, potem zagraj te same kolory.',
+    gameTitle: 'Powtórz melodię',
+    gameDescription: 'Najpierw posłuchaj, potem zagraj te same kolory.',
   },
   gameFreeplaySection: {
     emoji: '🎛️',
     title: 'Swobodna gra',
-    description: 'Graj na piano rollu bez zadania i sprawdzaj rozne brzmienia.',
+    description: 'Graj na piano rollu bez zadania i sprawdzaj różne brzmienia.',
     gameTitle: 'Swobodna gra',
-    gameDescription: 'Graj na piano rollu bez zadania i sprawdzaj rozne brzmienia.',
+    gameDescription: 'Graj na piano rollu bez zadania i sprawdzaj różne brzmienia.',
   },
   summarySection: {
     emoji: '⭐',
@@ -255,7 +255,7 @@ export const MUSIC_DIATONIC_SCALE_LESSON_COMPONENT_CONTENT = createMusicDiatonic
         },
         {
           title: 'Cwiczenie',
-          caption: 'Posluchaj melodii, a potem odtworz ja po kolei na piano rollu.',
+          caption: 'Posłuchaj melodii, a potem odtwórz ją po kolei na piano rollu.',
         },
       ],
     },

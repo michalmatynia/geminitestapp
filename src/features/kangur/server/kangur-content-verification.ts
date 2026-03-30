@@ -10,10 +10,8 @@ import {
   getKangurGameContentSetsForGame,
   getKangurGameDefinition,
 } from '@/features/kangur/games';
-import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { kangurLessonSchema } from '@/shared/contracts/kangur';
-import { type KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import {
   type KangurLessonTemplate,
 } from '@/shared/contracts/kangur-lesson-templates';
@@ -124,7 +122,7 @@ const loadMongoLessonSections = async (
       .sort({ sortOrder: 1, id: 1 })
       .toArray()
   ).map((document) =>
-    normalizeKangurLessonSectionForSnapshot(normalizeKangurLessonSection(document) as KangurLessonSection)
+    normalizeKangurLessonSectionForSnapshot(normalizeKangurLessonSection(document))
   );
 
 const loadMongoLessonTemplatesByLocale = async (
@@ -270,7 +268,7 @@ export async function verifyKangurContentInMongo(
     Promise.all(
       expectedGames.map(async (game) => {
         const expected = getKangurGameContentSetsForGame(
-          getKangurGameDefinition(game.id as KangurGameId)
+          getKangurGameDefinition(game.id)
         ).length;
         const actual = await db
           .collection(COLLECTIONS.gameContentSets)
@@ -281,7 +279,7 @@ export async function verifyKangurContentInMongo(
     Promise.all(
       expectedGames.map(async (game) => {
         const expected = getKangurGameBuiltInInstancesForGame(
-          getKangurGameDefinition(game.id as KangurGameId)
+          getKangurGameDefinition(game.id)
         ).length;
         const actual = await db
           .collection(COLLECTIONS.gameInstances)

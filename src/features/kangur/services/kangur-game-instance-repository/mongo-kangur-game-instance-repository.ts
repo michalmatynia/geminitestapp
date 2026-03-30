@@ -7,7 +7,6 @@ import type { KangurGameInstance } from '@/shared/contracts/kangur-game-instance
 import {
   kangurGameInstanceSchema,
 } from '@/shared/contracts/kangur-game-instances';
-import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type {
@@ -129,7 +128,7 @@ const seedMissingBuiltInInstancesForGame = async (
   }
 
   const builtInInstances = getKangurGameBuiltInInstancesForGame(
-    getKangurGameDefinition(gameId as KangurGameId)
+    getKangurGameDefinition(gameId)
   );
   if (builtInInstances.length === 0) {
     return false;

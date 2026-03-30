@@ -25,6 +25,13 @@ describe('repairKangurPolishText', () => {
     ).toBe(
       'Szybkie akcje są po to, aby uczeń albo rodzic od razu przeszedł do najważniejszego następnego ruchu: lekcji, gry albo innego kroku zaproponowanego przez aplikację.'
     );
+    expect(repairKangurPolishText('Nie udalo sie znalezc strony.')).toBe(
+      'Nie udało się znaleźć strony.'
+    );
+    expect(repairKangurPolishText('Zaloguj sie, aby dolaczyc do pojedynku.')).toBe(
+      'Zaloguj się, aby dołączyć do pojedynku.'
+    );
+    expect(repairKangurPolishText('Sekcje lekcji')).toBe('Sekcje lekcji');
   });
 
   it('repairs nested Mongo-style objects without touching non-string values', () => {

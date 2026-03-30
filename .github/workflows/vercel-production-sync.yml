@@ -18,11 +18,13 @@ permissions:
   contents: read
 
 jobs:
-  missing-token:
-    if: ${{ secrets.VERCEL_TOKEN == '' }}
+  production-sync:
     runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - name: Report missing Vercel token
+        if: ${{ env.VERCEL_TOKEN == '' }}
         run: |
           {
             echo "## Vercel Production Sync Guardrail"
@@ -32,24 +34,20 @@ jobs:
             echo "- Action: add a Vercel token so \`npm run check:vercel:production:sync\` can run on schedule."
           } >> "$GITHUB_STEP_SUMMARY"
 
-  check-production-sync:
-    if: ${{ secrets.VERCEL_TOKEN != '' }}
-    runs-on: ubuntu-latest
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-    steps:
       - name: Checkout
+        if: ${{ env.VERCEL_TOKEN != '' }}
         uses: actions/checkout@v4
 
       - name: Setup Node
+        if: ${{ env.VERCEL_TOKEN != '' }}
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
 
       - name: Check StudiQ production domain sync
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.mode == 'check' }}
+        if: ${{ env.VERCEL_TOKEN != '' && (github.event_name != 'workflow_dispatch' || inputs.mode == 'check') }}
         run: npm run check:vercel:production:sync
 
       - name: Repair StudiQ production domain sync
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'repair' }}
+        if: ${{ env.VERCEL_TOKEN != '' && github.event_name == 'workflow_dispatch' && inputs.mode == 'repair' }}
         run: npm run repair:vercel:production:sync

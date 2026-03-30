@@ -21,8 +21,9 @@ describe('Vercel production sync workflow contract', () => {
     expect(workflowText).toContain("- check");
     expect(workflowText).toContain("- repair");
     expect(workflowText).toContain("cron: '17 * * * *'");
-    expect(workflowText).toContain("if: ${{ secrets.VERCEL_TOKEN == '' }}");
-    expect(workflowText).toContain("if: ${{ secrets.VERCEL_TOKEN != '' }}");
+    expect(workflowText).toContain("VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}");
+    expect(workflowText).toContain("if: ${{ env.VERCEL_TOKEN == '' }}");
+    expect(workflowText).toContain("if: ${{ env.VERCEL_TOKEN != '' }}");
     expect(workflowText).toContain('actions/checkout@v4');
     expect(workflowText).toContain('actions/setup-node@v4');
     expect(workflowText).toContain("node-version-file: '.nvmrc'");

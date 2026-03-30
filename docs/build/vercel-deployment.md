@@ -132,11 +132,16 @@ Preferred release flow:
 
 1. Promote the intended production deployment with `vercel promote <deployment>`.
 2. Run `npm run check:vercel:production:sync`.
-3. If Kangur lesson content changed, also run `npm run verify:kangur:content -- --strict`.
+3. Run `npm run check:github:branch-protection`.
+4. If Kangur lesson content changed, also run `npm run verify:kangur:content -- --strict`.
 
 GitHub Actions also exposes `.github/workflows/vercel-production-sync.yml` for
-manual recovery. Use `mode=repair` only when the scheduled or local check has
-already confirmed alias drift.
+scheduled drift detection and manual recovery. Use `mode=repair` only when the
+scheduled or local check has already confirmed alias drift.
+
+GitHub Actions also exposes `.github/workflows/github-main-branch-protection.yml`
+for scheduled drift detection and manual `mode=repair` recovery of the minimum
+`main` branch protection baseline.
 
 Only use `repair:vercel:production:sync` when the custom domain has drifted
 away from the canonical production alias. It is a recovery command, not the
@@ -175,4 +180,6 @@ Your local machine has no timeout and more RAM.
 
 1. Run `npm run check:vercel:production:sync`.
 2. If drift is reported, run `npm run repair:vercel:production:sync`.
-3. Re-check the affected public route or API after the alias converges.
+3. Run `npm run check:github:branch-protection` to confirm the required
+   `toolchain-contract` branch gate is still enforced on `main`.
+4. Re-check the affected public route or API after the alias converges.

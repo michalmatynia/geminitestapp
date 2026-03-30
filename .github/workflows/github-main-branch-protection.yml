@@ -1,0 +1,57 @@
+name: github-main-branch-protection
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Choose whether to check or repair the main branch protection baseline'
+        required: true
+        default: check
+        type: choice
+        options:
+          - check
+          - repair
+  schedule:
+    - cron: '47 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  protection:
+    runs-on: ubuntu-latest
+    env:
+      GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+    steps:
+      - name: Report missing GitHub admin token
+        if: ${{ env.GH_ADMIN_TOKEN == '' }}
+        run: |
+          {
+            echo "## GitHub Main Branch Protection Guardrail"
+            echo
+            echo "- Status: skipped"
+            echo "- Reason: \`GH_ADMIN_TOKEN\` secret is not configured for this repository."
+            echo "- Action: add a GitHub token with repository administration access so \`npm run check:github:branch-protection\` can run on schedule."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Checkout
+        if: ${{ env.GH_ADMIN_TOKEN != '' }}
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: ${{ env.GH_ADMIN_TOKEN != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Check main branch protection
+        if: ${{ env.GH_ADMIN_TOKEN != '' && (github.event_name != 'workflow_dispatch' || inputs.mode == 'check') }}
+        env:
+          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: npm run check:github:branch-protection
+
+      - name: Repair main branch protection
+        if: ${{ env.GH_ADMIN_TOKEN != '' && github.event_name == 'workflow_dispatch' && inputs.mode == 'repair' }}
+        env:
+          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: npm run repair:github:branch-protection

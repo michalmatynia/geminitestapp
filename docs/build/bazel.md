@@ -254,6 +254,12 @@ These checks should be required in GitHub branch protection:
 
 This repository can document those requirements, but GitHub branch protection itself must still be configured in repository settings.
 
+The minimum GitHub branch protection baseline is now audited separately with
+`npm run check:github:branch-protection`, which verifies that `main` still
+requires the `toolchain-contract` check and disallows force-push/deletion
+drift. The live production-domain alias remains covered by
+`npm run check:vercel:production:sync` and its scheduled workflow.
+
 ## Optional remote cache
 
 The repository now supports provider-neutral remote cache injection through [run-bazel.sh](/Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/tools/bazel/run-bazel.sh).

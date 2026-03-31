@@ -166,6 +166,7 @@ describe('useSocialSettings', () => {
       programmableCaptureScript: expect.any(String),
       programmableCaptureRoutes: [],
       projectUrl: 'https://project.example.com',
+      captureContentConfig: { slides: [] },
     });
     expect(settingsStoreMock.refetch).toHaveBeenCalledTimes(1);
     expect(toastMock).toHaveBeenCalledWith('Social settings saved.', {
@@ -338,6 +339,7 @@ describe('useSocialSettings', () => {
         },
       ],
       projectUrl: 'https://project.persisted.example.com',
+      captureContentConfig: { slides: [] },
     });
     expect(toastMock).toHaveBeenCalledWith('Programmable Playwright defaults saved.', {
       variant: 'success',

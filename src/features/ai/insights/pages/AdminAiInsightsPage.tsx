@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 import {
@@ -166,6 +167,8 @@ function AiInsightsContextRegistrySource(): React.JSX.Element {
 }
 
 function AdminAiInsightsPageContent(): React.JSX.Element {
+  const router = useRouter();
+
   return (
     <div className='page-section'>
       <AiInsightsContextRegistrySource />
@@ -177,7 +180,7 @@ function AdminAiInsightsPageContent(): React.JSX.Element {
           <Button
             variant='outline'
             size='sm'
-            onClick={() => window.location.assign('/admin/brain?tab=routing')}
+            onClick={() => router.push('/admin/brain?tab=routing')}
           >
             Settings
           </Button>

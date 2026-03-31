@@ -195,6 +195,7 @@ export function useSocialSettings() {
       programmableCaptureScript: persistedSocialSettings.programmableCaptureScript,
       programmableCaptureRoutes: persistedSocialSettings.programmableCaptureRoutes,
       projectUrl: normalizedProjectUrl,
+      captureContentConfig: persistedSocialSettings.captureContentConfig,
     };
     return await persistSettingsValue(payload, {
       successMessage: 'Social settings saved.',

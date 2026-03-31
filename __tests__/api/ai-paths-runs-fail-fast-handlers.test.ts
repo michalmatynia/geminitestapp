@@ -36,12 +36,18 @@ vi.mock('@/features/jobs/server', () => ({
   assertAiPathRunQueueReadyForEnqueue: assertAiPathRunQueueReadyMock,
 }));
 
+vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
+  assertAiPathRunQueueReady: assertAiPathRunQueueReadyMock,
+  assertAiPathRunQueueReadyForEnqueue: assertAiPathRunQueueReadyMock,
+}));
+
 vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
+  resolvePathRunRepository: getPathRunRepositoryMock,
 }));
 
 vi.mock('@/shared/lib/observability/system-logger', () => ({
@@ -82,6 +88,7 @@ describe('AI Paths fail-fast queue guards', () => {
     getPathRunRepositoryMock.mockResolvedValue({
       findRunById: vi.fn().mockResolvedValue({ id: 'run-1', status: 'failed' }),
       listRuns: vi.fn().mockResolvedValue({ runs: [] }),
+      getQueueStats: vi.fn().mockResolvedValue({ queuedCount: 0, processingCount: 0 }),
     });
     logSystemEventMock.mockResolvedValue(undefined);
     contextRegistryResolveRefsMock.mockResolvedValue({

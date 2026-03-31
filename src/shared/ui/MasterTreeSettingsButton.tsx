@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 import { cn, getFolderTreeInstanceSettingsHref, type FolderTreeInstance } from '@/shared/utils';
@@ -20,6 +21,8 @@ export function MasterTreeSettingsButton({
   className,
   ...props
 }: MasterTreeSettingsButtonProps): React.JSX.Element {
+  const router = useRouter();
+
   return (
     <button
       type='button'
@@ -39,8 +42,7 @@ export function MasterTreeSettingsButton({
           onOpen(instance);
           return;
         }
-        if (typeof window === 'undefined') return;
-        window.location.assign(href ?? getFolderTreeInstanceSettingsHref(instance));
+        router.push(href ?? getFolderTreeInstanceSettingsHref(instance));
       }}
       {...props}
     >

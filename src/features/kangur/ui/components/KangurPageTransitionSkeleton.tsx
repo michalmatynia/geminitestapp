@@ -58,7 +58,7 @@ import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readK
 import {
   SKELETON_ANIMATION_CLASSES,
   getSkeletonAnimationCssVariables,
-} from "@/features/kangur/ui/animations/skeleton-animations";
+} from '@/features/kangur/ui/animations/skeleton-animations';
 
 const FALLBACK_PAGE_LABELS: Record<KangurRouteTransitionSkeletonVariant, string> = {
   'game-home': 'Game',

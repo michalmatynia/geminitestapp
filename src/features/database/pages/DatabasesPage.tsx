@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import {
   AdminDatabasePageLayout,
   Button,
@@ -23,6 +25,7 @@ import {
 import { DatabaseProvider } from '../context/DatabaseContext';
 
 function DatabasesContentInner(): React.JSX.Element {
+  const router = useRouter();
   const {
     isLogModalOpen,
     logModalContent,
@@ -78,7 +81,7 @@ function DatabasesContentInner(): React.JSX.Element {
           <Button
             variant='outline'
             onClick={(): void => {
-              window.location.assign('/admin/databases/engine?view=operations');
+              router.push('/admin/databases/engine?view=operations');
             }}
           >
             Database Operations
@@ -86,7 +89,7 @@ function DatabasesContentInner(): React.JSX.Element {
           <Button
             variant='outline'
             onClick={(): void => {
-              window.location.assign('/admin/databases/engine');
+              router.push('/admin/databases/engine');
             }}
           >
             Database Engine

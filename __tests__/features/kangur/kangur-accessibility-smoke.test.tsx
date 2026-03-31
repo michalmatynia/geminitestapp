@@ -216,11 +216,12 @@ const renderGamePage = (screenState = 'home') => {
   useKangurGameRuntimeMock.mockReturnValue({
     screen: screenState,
     user: null,
-    progress: { totalXp: 0, lessonMastery: {}, operationsPlayed: [] },
+    progress: { totalXp: 0, lessonMastery: {}, operationsPlayed: [], badges: [] },
     xpToast: { visible: false },
     basePath: '/kangur',
     setScreen: vi.fn(),
     handleStartGame: vi.fn(),
+    practiceAssignmentsByOperation: {},
   } as any);
 
   const queryClient = createTestQueryClient();
@@ -322,11 +323,12 @@ describe('Kangur accessibility smoke', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       screen: 'operation',
       user: null,
-      progress: { totalXp: 0, lessonMastery: {}, operationsPlayed: [] },
+      progress: { totalXp: 0, lessonMastery: {}, operationsPlayed: [], badges: [] },
       xpToast: { visible: false },
       basePath: '/kangur',
       setScreen: vi.fn(),
       handleStartGame: vi.fn(),
+      practiceAssignmentsByOperation: {},
     } as any);
     
     vi.mock('@/features/kangur/ui/components/KangurGameOperationSelectorWidget', () => ({

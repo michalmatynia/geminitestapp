@@ -18,6 +18,14 @@ vi.mock('@/features/jobs/server', () => ({
   startAiInsightsQueue: startAiInsightsQueueMock,
 }));
 
+vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
+  startAiPathRunQueue: startAiPathRunQueueMock,
+}));
+
+vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({
+  startAiInsightsQueue: startAiInsightsQueueMock,
+}));
+
 import { GET_handler } from '@/app/api/ai-paths/runtime-analytics/summary/handler';
 import { authError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

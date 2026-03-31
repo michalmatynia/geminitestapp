@@ -7,19 +7,21 @@ const {
   startAiInsightsQueueMock,
   listAiInsightsMock,
   generateRuntimeAnalyticsInsightMock,
+  getScheduleSettingsMock,
 } = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
   resolveAiInsightsContextRegistryEnvelopeMock: vi.fn(),
   startAiInsightsQueueMock: vi.fn(),
   listAiInsightsMock: vi.fn(),
   generateRuntimeAnalyticsInsightMock: vi.fn(),
+  getScheduleSettingsMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccess: requireAiPathsAccessMock,
 }));
 
-vi.mock('@/features/jobs/server', () => ({
+vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({
   startAiInsightsQueue: startAiInsightsQueueMock,
 }));
 
@@ -27,9 +29,19 @@ vi.mock('@/features/ai/insights/context-registry/server', () => ({
   resolveAiInsightsContextRegistryEnvelope: resolveAiInsightsContextRegistryEnvelopeMock,
 }));
 
+vi.mock('@/features/ai/insights/generator', () => ({
+  generateRuntimeAnalyticsInsight: generateRuntimeAnalyticsInsightMock,
+  getScheduleSettings: getScheduleSettingsMock,
+}));
+
+vi.mock('@/features/ai/insights/repository', () => ({
+  listAiInsights: listAiInsightsMock,
+}));
+
 vi.mock('@/features/ai/insights/server', () => ({
   listAiInsights: listAiInsightsMock,
   generateRuntimeAnalyticsInsight: generateRuntimeAnalyticsInsightMock,
+  getScheduleSettings: getScheduleSettingsMock,
 }));
 
 describe('ai-paths runtime analytics insights handler', () => {
@@ -38,6 +50,7 @@ describe('ai-paths runtime analytics insights handler', () => {
     startAiInsightsQueueMock.mockReset();
     listAiInsightsMock.mockReset();
     generateRuntimeAnalyticsInsightMock.mockReset();
+    getScheduleSettingsMock.mockReset().mockResolvedValue({ frequency: '24h' });
     resolveAiInsightsContextRegistryEnvelopeMock.mockReset().mockResolvedValue(null);
   });
 

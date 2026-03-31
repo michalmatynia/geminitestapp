@@ -27,6 +27,8 @@ vi.mock('next-auth/react', () => ({
     data: { user: { name: 'Test User', email: 'test@example.com' } },
     status: 'authenticated',
   })),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
   SessionProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 

@@ -12,6 +12,35 @@ import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
 
 const intlMiddleware = createIntlMiddleware(siteRouting);
 
+const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
+  ['/admin/ai-paths/jobs', '/admin/ai-paths/queue'],
+  ['/admin/databases', '/admin/databases/engine'],
+  ['/admin/databases/backups', '/admin/databases/engine?view=backups'],
+  ['/admin/databases/control', '/admin/databases/engine'],
+  ['/admin/databases/operations', '/admin/databases/engine?view=operations'],
+  ['/admin/databases/settings', '/admin/databases/engine'],
+  ['/admin/image-studio/settings', '/admin/image-studio?tab=settings'],
+  ['/admin/image-studio/validation-patterns', '/admin/image-studio?tab=validation'],
+  ['/admin/integrations/aggregators', '/admin/integrations/aggregators/base-com'],
+  [
+    '/admin/integrations/aggregators/base-com',
+    '/admin/integrations/aggregators/base-com/synchronization-engine',
+  ],
+  ['/admin/integrations/imports', '/admin/integrations/aggregators/base-com/import-export'],
+  [
+    '/admin/integrations/marketplaces/category-mapper',
+    '/admin/integrations/aggregators/base-com/category-mapping',
+  ],
+  ['/admin/products/builder', '/admin/products/settings'],
+  ['/admin/products/constructor', '/admin/products/settings'],
+  ['/admin/products/jobs', '/admin/ai-paths/queue?tab=paths-external'],
+  ['/admin/prompt-engine', '/admin/prompt-engine/validation'],
+  ['/admin/settings/ai', '/admin/brain?tab=routing'],
+  ['/admin/settings/brain', '/admin/brain?tab=routing'],
+  ['/admin/settings/database', '/admin/databases/engine'],
+  ['/admin/system/upload-events', '/admin/ai-paths/queue?tab=file-uploads'],
+]);
+
 const finalizeResponse = (request: NextRequest, response: NextResponse): NextResponse => {
   const existing = request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
   ensureCsrfCookie(response, existing);
@@ -22,9 +51,6 @@ const baseProxy = (request: NextRequest): NextResponse => {
   const response = NextResponse.next();
   return finalizeResponse(request, response);
 };
-
-const handler =
-  typeof auth === 'function' ? auth((request: NextRequest): Response => baseProxy(request)) : null;
 
 type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
@@ -116,6 +142,27 @@ const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null 
 
   return finalizeResponse(request, intlMiddleware(request));
 };
+
+const resolveAdminRedirectResponse = (request: NextRequest): NextResponse | null => {
+  if (!isSafePageMethod(request)) {
+    return null;
+  }
+
+  const destination = ADMIN_CANONICAL_REDIRECTS.get(request.nextUrl.pathname);
+  if (!destination) {
+    return null;
+  }
+
+  return finalizeResponse(request, NextResponse.redirect(new URL(destination, request.url), 307));
+};
+
+const handler =
+  typeof auth === 'function'
+    ? auth(
+      (request: NextRequest): Response =>
+        resolveAdminRedirectResponse(request) ?? baseProxy(request)
+    )
+    : null;
 
 export function proxy(
   request: NextRequest,

@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
@@ -38,6 +39,7 @@ import {
 } from '../hooks/useDatabaseQueries';
 
 export function useDatabaseBackupsState() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<DatabaseType>('mongodb');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState('');
@@ -347,11 +349,11 @@ ${String(error)}`);
 
   const handlePreview = (backupName: string): void => {
     const url = `/admin/databases/preview?backup=${encodeURIComponent(backupName)}&type=${activeTab}`;
-    window.location.assign(url);
+    router.push(url);
   };
 
   const handlePreviewCurrent = (): void => {
-    window.location.assign(`/admin/databases/preview?mode=current&type=${activeTab}`);
+    router.push(`/admin/databases/preview?mode=current&type=${activeTab}`);
   };
 
   const handleSchedulerEnabledDraftChange = useCallback((enabled: boolean): void => {

@@ -93,10 +93,26 @@ const patchProductListCacheValue = (
   return cacheValue;
 };
 
+const syncUpdatedProductAcrossCaches = (
+  queryClient: QueryClient,
+  savedProduct: ProductWithImages
+): void => {
+  queryClient.setQueryData(
+    getProductDetailQueryKey(savedProduct.id),
+    (old: ProductWithImages | undefined) => (old ? { ...old, ...savedProduct } : savedProduct)
+  );
+  queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
+  queryClient.setQueriesData(
+    { queryKey: QUERY_KEYS.products.lists() },
+    (old: ProductListCacheValue) => patchProductListCacheValue(old, savedProduct)
+  );
+};
+
 const refreshUpdatedProductCaches = (
   queryClient: QueryClient,
   savedProduct: ProductWithImages
 ): void => {
+  syncUpdatedProductAcrossCaches(queryClient, savedProduct);
   void invalidateProductsAndDetail(queryClient, savedProduct.id).catch((error) => {
     logClientError(error, {
       context: {
@@ -105,6 +121,8 @@ const refreshUpdatedProductCaches = (
         productId: savedProduct.id,
       },
     });
+  }).finally(() => {
+    syncUpdatedProductAcrossCaches(queryClient, savedProduct);
   });
 };
 
@@ -273,20 +291,6 @@ export function useUpdateProductMutation(): UseMutationResult<
       }) => [productsCountsQueryKey, getProductDetailQueryKey(variables.id)],
       invalidate: (queryClient, savedProduct) => {
         if (!savedProduct) return;
-        // Synchronously patch the detail caches
-        queryClient.setQueryData(
-          getProductDetailQueryKey(savedProduct.id),
-          (old: ProductWithImages | undefined) => (old ? { ...old, ...savedProduct } : savedProduct)
-        );
-        queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
-        // Patch lists in the background
-        setTimeout(() => {
-          queryClient.setQueriesData(
-            { queryKey: QUERY_KEYS.products.lists() },
-            (old: ProductListCacheValue) => patchProductListCacheValue(old, savedProduct)
-          );
-        }, 0);
-
         refreshUpdatedProductCaches(queryClient, savedProduct);
       },
       queuedMessage: 'Product update queued in runtime queue.',

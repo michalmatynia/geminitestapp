@@ -17,9 +17,13 @@ vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
-vi.mock('@/features/filemaker/server', () => ({
-  readFilemakerCampaignSettingValue: readFilemakerCampaignSettingValueMock,
-}));
+vi.mock('@/features/filemaker/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/filemaker/server')>();
+  return {
+    ...actual,
+    readFilemakerCampaignSettingValue: readFilemakerCampaignSettingValueMock,
+  };
+});
 
 vi.mock('@/features/jobs/server', () => ({
   startFilemakerEmailCampaignQueue: startFilemakerEmailCampaignQueueMock,

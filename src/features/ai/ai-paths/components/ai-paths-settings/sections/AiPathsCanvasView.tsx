@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React from 'react';
 import { createPortal } from 'react-dom';
 
@@ -39,6 +40,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
     : null;
 
 export function AiPathsCanvasView(): React.JSX.Element | null {
+  const router = useRouter();
   const {
     activeTab,
     isFocusMode,
@@ -746,13 +748,13 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     <Button
                       type='button'
                       className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
-                      onClick={(): void =>
-                        window.location.assign(
+                      onClick={(): void => {
+                        router.push(
                           `/admin/system/logs?level=error&source=client&query=${encodeURIComponent(
                             'AI Paths'
                           )}`
-                        )
-                      }
+                        );
+                      }}
                     >
                         View logs
                     </Button>

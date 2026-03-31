@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-03-31T07:39:17.131Z",
+  "generatedAt": "2026-03-31T16:17:33.111Z",
   "source": {
-    "totalFiles": 9000,
-    "totalLines": 1502533,
-    "useClientFiles": 1668,
-    "hooksWithoutUseClient": 0,
+    "totalFiles": 8989,
+    "totalLines": 1503399,
+    "useClientFiles": 1673,
+    "hooksWithoutUseClient": 1,
     "filesOver800": 92,
     "filesOver1000": 0,
     "filesOver1500": 0,
@@ -120,13 +120,13 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2405,
-        "lines": 524987
+        "files": 2413,
+        "lines": 525657
       },
       {
         "feature": "ai",
         "files": 1169,
-        "lines": 236514
+        "lines": 236546
       },
       {
         "feature": "case-resolver",
@@ -151,7 +151,7 @@
       {
         "feature": "filemaker",
         "files": 134,
-        "lines": 33452
+        "lines": 33454
       },
       {
         "feature": "prompt-exploder",
@@ -166,7 +166,7 @@
       {
         "feature": "admin",
         "files": 49,
-        "lines": 9032
+        "lines": 9103
       },
       {
         "feature": "auth",
@@ -176,7 +176,7 @@
       {
         "feature": "database",
         "files": 35,
-        "lines": 6818
+        "lines": 6823
       },
       {
         "feature": "data-import-export",

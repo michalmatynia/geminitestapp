@@ -16,7 +16,7 @@ vi.mock('../AiPathsSettingsPageContext', () => ({
   useAiPathsSettingsPageContext: () => mockState.pageContext,
 }));
 
-vi.mock('@/features/ai/ai-paths/components/context', () => ({
+vi.mock('@/features/ai/ai-paths/context', () => ({
   usePersistenceState: () => mockState.persistenceState,
 }));
 

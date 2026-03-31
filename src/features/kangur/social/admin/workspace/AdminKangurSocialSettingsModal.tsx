@@ -22,6 +22,7 @@ import { SocialSettingsProjectTab } from './social-settings-modal/SocialSettings
 import { SocialSettingsDocumentationTab } from './social-settings-modal/SocialSettingsDocumentationTab';
 import { SocialSettingsPublishingTab } from './social-settings-modal/SocialSettingsPublishingTab';
 import { SocialSettingsCaptureTab } from './social-settings-modal/SocialSettingsCaptureTab';
+import { SocialSettingsContentBrowserTab } from './social-settings-modal/SocialSettingsContentBrowserTab';
 
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
@@ -205,12 +206,13 @@ export function AdminKangurSocialSettingsModal({
         onValueChange={(value: string) => setActiveTab(value as SocialSettingsTab)}
         className='w-full'
       >
-        <TabsList className='grid w-full grid-cols-2 sm:grid-cols-5' aria-label='Social settings tabs'>
+        <TabsList className='grid w-full grid-cols-3 sm:grid-cols-6' aria-label='Social settings tabs'>
           <TabsTrigger value='models'>Models</TabsTrigger>
           <TabsTrigger value='project'>Project</TabsTrigger>
           <TabsTrigger value='documentation'>Documentation</TabsTrigger>
           <TabsTrigger value='publishing'>Publishing</TabsTrigger>
           <TabsTrigger value='capture'>Capture</TabsTrigger>
+          <TabsTrigger value='content-browser'>Content</TabsTrigger>
         </TabsList>
 
         <TabsContent value='models' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
@@ -320,6 +322,10 @@ export function AdminKangurSocialSettingsModal({
               void handleRetryFailedPresetBatchCaptureJob(job);
             }}
           />
+        </TabsContent>
+
+        <TabsContent value='content-browser' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
+          <SocialSettingsContentBrowserTab />
         </TabsContent>
       </Tabs>
     </FormModal>

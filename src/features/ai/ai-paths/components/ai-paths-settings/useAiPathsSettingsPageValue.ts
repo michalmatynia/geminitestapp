@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
@@ -21,6 +22,7 @@ export function useAiPathsSettingsPageValue(
   props: AiPathsSettingsProps,
   state: UseAiPathsSettingsStateReturn
 ): AiPathsSettingsPageContextValue {
+  const router = useRouter();
   const { setRunHistoryNodeId, setRunFilter, openRunDetail } = useRunHistoryActions();
   const [pathSettingsModalOpen, setPathSettingsModalOpen] = React.useState(false);
   const [simulationModalOpen, setSimulationModalOpen] = React.useState(false);
@@ -128,10 +130,8 @@ export function useAiPathsSettingsPageValue(
   );
 
   const handleOpenNodeValidator = React.useCallback((): void => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/admin/ai-paths/validation');
-    }
-  }, []);
+    router.push('/admin/ai-paths/validation');
+  }, [router]);
 
   const handleRunNodeValidationCheck = React.useCallback((): void => {
     if (validationPreflightReport.blocked) {

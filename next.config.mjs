@@ -318,15 +318,6 @@ const nextConfig = {
       },
     ],
   },
-  async redirects() {
-    return [
-      {
-        source: '/admin/products/constructor',
-        destination: '/admin/products/settings',
-        permanent: false,
-      },
-    ];
-  },
   async headers() {
     return [
       {

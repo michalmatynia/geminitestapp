@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { Badge, FormField, SelectSimple } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
@@ -77,9 +79,12 @@ export function SocialSettingsModelsTab({
           ) : (
             <p>Current effective model: {brainModelBadgeLabel}</p>
           )}
-          <a href='/admin/brain?tab=routing' className='inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4'>
+          <Link
+            href='/admin/brain?tab=routing'
+            className='inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4'
+          >
             Open AI Brain routing
-          </a>
+          </Link>
         </div>
       </KangurAdminCard>
 
@@ -103,9 +108,12 @@ export function SocialSettingsModelsTab({
           ) : (
             <p>Current effective model: {visionModelBadgeLabel}</p>
           )}
-          <a href='/admin/brain?tab=routing' className='inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4'>
+          <Link
+            href='/admin/brain?tab=routing'
+            className='inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4'
+          >
             Open AI Brain routing
-          </a>
+          </Link>
         </div>
       </KangurAdminCard>
     </div>

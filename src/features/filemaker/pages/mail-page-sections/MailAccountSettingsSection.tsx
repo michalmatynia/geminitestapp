@@ -9,12 +9,12 @@ export interface MailAccountSettingsSectionProps {
   selectedAccountLabel: string;
   selectedAccount: FilemakerMailAccount | null;
   syncingAccountId: string | null;
-  handleSyncAccount: (accountId: string) => void;
+  handleSyncAccount: (accountId: string) => void | Promise<void>;
   draft: FilemakerMailAccountDraft;
   setDraft: React.Dispatch<React.SetStateAction<FilemakerMailAccountDraft>>;
   folderAllowlistValue: string;
   setFolderAllowlistValue: React.Dispatch<React.SetStateAction<string>>;
-  handleSaveAccount: () => void;
+  handleSaveAccount: () => void | Promise<void>;
   isSavingAccount: boolean;
   onComposeFromAccount: (accountId: string) => void;
 }
@@ -49,7 +49,7 @@ export function MailAccountSettingsSection({
             size='sm'
             variant='outline'
             disabled={syncingAccountId === selectedAccount.id}
-            onClick={(): void => {
+            onClick={() => {
               void handleSyncAccount(selectedAccount.id);
             }}
           >
@@ -263,7 +263,9 @@ export function MailAccountSettingsSection({
         <div className='flex flex-wrap gap-2'>
           <Button
             type='button'
-            onClick={handleSaveAccount}
+            onClick={() => {
+              void handleSaveAccount();
+            }}
             disabled={isSavingAccount}
           >
             {isSavingAccount

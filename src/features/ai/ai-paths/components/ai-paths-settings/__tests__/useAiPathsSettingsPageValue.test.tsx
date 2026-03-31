@@ -6,6 +6,7 @@ import type { AiPathsSettingsProps } from '../../AiPathsSettings';
 import type { UseAiPathsSettingsStateReturn } from '../types';
 
 const mockState = vi.hoisted(() => ({
+  routerPush: vi.fn(),
   setRunHistoryNodeId: vi.fn(),
   setRunFilter: vi.fn(),
   openRunDetail: vi.fn(),
@@ -16,6 +17,12 @@ const mockState = vi.hoisted(() => ({
   normalizeAiPathsValidationConfig: vi.fn(),
   buildSwitchPathOptions: vi.fn(),
   sortPathMetas: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockState.routerPush,
+  }),
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
@@ -237,6 +244,7 @@ const createState = (
 
 describe('useAiPathsSettingsPageValue', () => {
   beforeEach(() => {
+    mockState.routerPush.mockReset();
     mockState.setRunHistoryNodeId.mockReset();
     mockState.setRunFilter.mockReset();
     mockState.openRunDetail.mockReset();
@@ -418,6 +426,17 @@ describe('useAiPathsSettingsPageValue', () => {
       result.current.handleRunNodeValidationCheck();
     });
     expect(toast).toHaveBeenCalledWith('Node validation passed.', { variant: 'success' });
+  });
+
+  it('opens the node validator via router navigation', async () => {
+    const state = createState();
+    const { result } = renderHook(() => useAiPathsSettingsPageValue(props, state));
+
+    await act(async () => {
+      result.current.handleOpenNodeValidator();
+    });
+
+    expect(mockState.routerPush).toHaveBeenCalledWith('/admin/ai-paths/validation');
   });
 
   it('inspects node traces, preferring failed runs and falling back to general history', async () => {

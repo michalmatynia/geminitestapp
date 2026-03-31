@@ -18,6 +18,10 @@ import {
 
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
 
+type UserPreferencesQueryOptions = {
+  enabled?: boolean;
+};
+
 const hasPreferenceChanged = (
   current: UserPreferences | undefined,
   key: string,
@@ -45,9 +49,12 @@ const hasPreferenceChanged = (
   return currentValue !== nextValue;
 };
 
-export function useUserPreferences(): SingleQuery<UserPreferences> {
+export function useUserPreferences(
+  options?: UserPreferencesQueryOptions
+): SingleQuery<UserPreferences> {
   return createSingleQueryV2<UserPreferences>({
     id: 'current-user-preferences',
+    enabled: options?.enabled ?? true,
     queryKey: userPreferencesQueryKey,
     queryFn: ({ signal }) =>
       api

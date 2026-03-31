@@ -6,8 +6,8 @@ import {
 
 export type { UserPreferences, UserPreferencesUpdate };
 
-export function useUserPreferences() {
-  return useSharedUserPreferences();
+export function useUserPreferences(options?: { enabled?: boolean }) {
+  return useSharedUserPreferences(options);
 }
 
 export function useUpdateUserPreferencesMutation() {

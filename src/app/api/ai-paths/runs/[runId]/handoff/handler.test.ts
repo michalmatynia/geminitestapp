@@ -30,7 +30,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   })),
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 

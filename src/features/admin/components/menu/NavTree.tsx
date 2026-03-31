@@ -2,7 +2,8 @@
 
 import { AppWindow, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
-import React, { memo, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import React, { memo, useCallback, useMemo, useRef } from 'react';
 
 import { Tooltip, TreeContextMenu, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -18,6 +19,8 @@ type NavTreeProps = {
   pathname: string;
   openIds: Set<string>;
   onToggleOpen: (id: string) => void;
+  onNavigateHref?: ((href: string) => void) | undefined;
+  onPrefetchHref?: ((href: string) => void) | undefined;
 };
 
 type NavTreeItemProps = {
@@ -27,6 +30,8 @@ type NavTreeItemProps = {
   active: boolean;
   isOpen: boolean;
   onToggleOpen: (id: string) => void;
+  onNavigateHref: (href: string) => void;
+  onPrefetchHref: (href: string) => void;
 };
 
 type NavTreeNodeProps = {
@@ -36,6 +41,8 @@ type NavTreeNodeProps = {
   pathname: string;
   openIds: Set<string>;
   onToggleOpen: (id: string) => void;
+  onNavigateHref: (href: string) => void;
+  onPrefetchHref: (href: string) => void;
 };
 
 const FOCUS_RING_CLASS_NAME =
@@ -58,7 +65,8 @@ const buildNavContextItems = (
   item: NavItem,
   isOpen: boolean,
   hasChildren: boolean,
-  onToggleOpen: (id: string) => void
+  onToggleOpen: (id: string) => void,
+  onNavigateHref: (href: string) => void
 ): Array<{
   id: string;
   label?: string;
@@ -89,7 +97,7 @@ const buildNavContextItems = (
       id: 'open',
       label: 'Open',
       onSelect: () => {
-        if (typeof window !== 'undefined') window.location.assign(itemHref);
+        onNavigateHref(itemHref);
       },
     });
     items.push({
@@ -102,7 +110,9 @@ const buildNavContextItems = (
     items.push({
       id: 'copy-link',
       label: 'Copy link',
-      onSelect: () => void copyToClipboard(itemHref),
+      onSelect: () => {
+        void copyToClipboard(itemHref);
+      },
     });
   }
 
@@ -138,11 +148,13 @@ const NavTreeItem = memo(
     active,
     isOpen,
     onToggleOpen,
+    onNavigateHref,
+    onPrefetchHref,
   }: NavTreeItemProps): React.ReactNode {
     const hasChildren = !!item.children?.length;
     const contextItems = useMemo(
-      () => buildNavContextItems(item, isOpen, hasChildren, onToggleOpen),
-      [hasChildren, isOpen, item, onToggleOpen]
+      () => buildNavContextItems(item, isOpen, hasChildren, onToggleOpen, onNavigateHref),
+      [hasChildren, isOpen, item, onNavigateHref, onToggleOpen]
     );
     const sectionStyle = item.sectionColor ? ADMIN_MENU_COLOR_MAP[item.sectionColor] : null;
     const rowStyle: React.CSSProperties | undefined = isMenuCollapsed
@@ -182,6 +194,11 @@ const NavTreeItem = memo(
       if (item.action) item.action();
     }, [item]);
 
+    const handleLinkIntent = useCallback((): void => {
+      if (!item.href) return;
+      onPrefetchHref(item.href);
+    }, [item.href, onPrefetchHref]);
+
     const handleGroupToggleClick = useCallback((): void => {
       if (item.action) {
         item.action();
@@ -220,8 +237,9 @@ const NavTreeItem = memo(
         <TreeContextMenu items={contextItems} className='cursor-pointer'>
           <Link
             href={item.href}
-            prefetch={false}
             {...(item.onClick ? { onClick: item.onClick } : {})}
+            onMouseEnter={handleLinkIntent}
+            onFocus={handleLinkIntent}
             className={cn(
               'flex items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer',
               FOCUS_RING_CLASS_NAME,
@@ -286,8 +304,9 @@ const NavTreeItem = memo(
         <TreeContextMenu items={contextItems} className='cursor-pointer'>
           <Link
             href={item.href}
-            prefetch={false}
             {...(item.onClick ? { onClick: item.onClick } : {})}
+            onMouseEnter={handleLinkIntent}
+            onFocus={handleLinkIntent}
             className={rowClassName}
             style={rowStyle}
           >
@@ -318,7 +337,9 @@ const NavTreeItem = memo(
       prev.isMenuCollapsed === next.isMenuCollapsed &&
       prev.active === next.active &&
       prev.isOpen === next.isOpen &&
-      prev.onToggleOpen === next.onToggleOpen
+      prev.onToggleOpen === next.onToggleOpen &&
+      prev.onNavigateHref === next.onNavigateHref &&
+      prev.onPrefetchHref === next.onPrefetchHref
     );
   }
 );
@@ -331,6 +352,8 @@ const NavTreeNode = memo(
     pathname,
     openIds,
     onToggleOpen,
+    onNavigateHref,
+    onPrefetchHref,
   }: NavTreeNodeProps): React.ReactNode {
     const hasChildren = !!item.children?.length;
     const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
@@ -345,6 +368,8 @@ const NavTreeNode = memo(
           active={active}
           isOpen={isOpen}
           onToggleOpen={onToggleOpen}
+          onNavigateHref={onNavigateHref}
+          onPrefetchHref={onPrefetchHref}
         />
 
         {hasChildren && isOpen ? (
@@ -356,6 +381,8 @@ const NavTreeNode = memo(
               pathname={pathname}
               openIds={openIds}
               onToggleOpen={onToggleOpen}
+              onNavigateHref={onNavigateHref}
+              onPrefetchHref={onPrefetchHref}
             />
           </div>
         ) : null}
@@ -368,7 +395,9 @@ const NavTreeNode = memo(
       prev.depth !== next.depth ||
       prev.isMenuCollapsed !== next.isMenuCollapsed ||
       prev.pathname !== next.pathname ||
-      prev.onToggleOpen !== next.onToggleOpen
+      prev.onToggleOpen !== next.onToggleOpen ||
+      prev.onNavigateHref !== next.onNavigateHref ||
+      prev.onPrefetchHref !== next.onPrefetchHref
     ) {
       return false;
     }
@@ -399,7 +428,28 @@ export const NavTree = memo(function NavTree({
   pathname,
   openIds,
   onToggleOpen,
+  onNavigateHref: onNavigateHrefProp,
+  onPrefetchHref: onPrefetchHrefProp,
 }: NavTreeProps): React.ReactNode {
+  const router = useRouter();
+  const prefetchedHrefSetRef = useRef<Set<string>>(new Set());
+  const handleNavigateHrefLocal = useCallback(
+    (href: string): void => {
+      router.push(href);
+    },
+    [router]
+  );
+  const handlePrefetchHrefLocal = useCallback(
+    (href: string): void => {
+      if (prefetchedHrefSetRef.current.has(href)) return;
+      prefetchedHrefSetRef.current.add(href);
+      router.prefetch(href);
+    },
+    [router]
+  );
+  const handleNavigateHref = onNavigateHrefProp ?? handleNavigateHrefLocal;
+  const handlePrefetchHref = onPrefetchHrefProp ?? handlePrefetchHrefLocal;
+
   return (
     <div className={cn(depth === 0 ? 'space-y-1.5' : 'space-y-1')}>
       {items.map((item: NavItem) => (
@@ -411,6 +461,8 @@ export const NavTree = memo(function NavTree({
           pathname={pathname}
           openIds={openIds}
           onToggleOpen={onToggleOpen}
+          onNavigateHref={handleNavigateHref}
+          onPrefetchHref={handlePrefetchHref}
         />
       ))}
     </div>

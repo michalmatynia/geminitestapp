@@ -11,10 +11,14 @@ const {
   upsertFilemakerCampaignSettingValueMock: vi.fn(),
 }));
 
-vi.mock('@/features/filemaker/server', () => ({
-  readFilemakerCampaignSettingValue: readFilemakerCampaignSettingValueMock,
-  upsertFilemakerCampaignSettingValue: upsertFilemakerCampaignSettingValueMock,
-}));
+vi.mock('@/features/filemaker/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/filemaker/server')>();
+  return {
+    ...actual,
+    readFilemakerCampaignSettingValue: readFilemakerCampaignSettingValueMock,
+    upsertFilemakerCampaignSettingValue: upsertFilemakerCampaignSettingValueMock,
+  };
+});
 
 import { POST_handler } from './handler';
 

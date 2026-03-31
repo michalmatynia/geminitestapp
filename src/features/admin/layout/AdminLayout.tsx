@@ -2,7 +2,7 @@
 
 import { ChevronLeftIcon, Menu as MenuIcon, X as CloseIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { SessionProvider, useSession } from 'next-auth/react';
+import { SessionProvider } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AiInsightsNotificationsDrawer } from '@/features/admin/components/AiInsightsNotificationsDrawer';
@@ -28,20 +28,30 @@ import type { Session } from 'next-auth';
 const ADMIN_MENU_COLLAPSED_STORAGE_KEY = 'adminMenuCollapsed';
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
 
-function AdminLayoutContent({ children }: { children: React.ReactNode }): React.ReactNode {
+function AdminLayoutContent({
+  children,
+  hasInitialMenuPreference,
+}: {
+  children: React.ReactNode;
+  hasInitialMenuPreference: boolean;
+}): React.ReactNode {
   const { isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed } = useAdminLayoutState();
   const { setIsMenuCollapsed, setIsMenuHidden, setIsProgrammaticallyCollapsed } =
     useAdminLayoutActions();
-  const { data: session, status } = useSession();
   const pathname = usePathname();
   const didUserToggleRef = useRef(false);
   const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
   const programmaticCollapsedRef = useRef(false);
-  const hydratedUserRef = useRef<string | null>(null);
   const lastDesktopMenuHiddenRef = useRef(isMenuHidden);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [hasResolvedLocalMenuPreference, setHasResolvedLocalMenuPreference] = useState(false);
+  const [shouldLoadRemoteMenuPreference, setShouldLoadRemoteMenuPreference] = useState(
+    !hasInitialMenuPreference
+  );
 
-  const { data: preferences } = useUserPreferences();
+  const { data: preferences } = useUserPreferences({
+    enabled: hasResolvedLocalMenuPreference && shouldLoadRemoteMenuPreference,
+  });
   const updatePreferencesMutation = useUpdateUserPreferences();
 
   const persistMenuCollapsedFallbacks = useCallback((collapsed: boolean): void => {
@@ -80,15 +90,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     if (typeof window === 'undefined') return;
     try {
       const stored = window.localStorage.getItem(ADMIN_MENU_COLLAPSED_STORAGE_KEY);
-      if (stored !== 'true' && stored !== 'false') return;
-      const storedCollapsed = stored === 'true';
-      preferredMenuCollapsedRef.current = storedCollapsed;
-      didUserToggleRef.current = true;
-      setIsMenuCollapsed(storedCollapsed);
+      if (stored === 'true' || stored === 'false') {
+        const storedCollapsed = stored === 'true';
+        preferredMenuCollapsedRef.current = storedCollapsed;
+        didUserToggleRef.current = true;
+        setIsMenuCollapsed(storedCollapsed);
+        setShouldLoadRemoteMenuPreference(false);
+      }
     } catch (error) {
       logClientError(error);
     
       // ignore storage failures
+    } finally {
+      setHasResolvedLocalMenuPreference(true);
     }
   }, [setIsMenuCollapsed]);
 
@@ -141,16 +155,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   }, [isMobileViewport, setIsMenuHidden]);
 
   useEffect(() => {
-    const userId = session?.user?.id ?? null;
-    if (status !== 'authenticated' || !userId || hydratedUserRef.current === userId) return;
+    if (!hasResolvedLocalMenuPreference || !shouldLoadRemoteMenuPreference) return;
+    if (didUserToggleRef.current || programmaticCollapsedRef.current) return;
+    if (!preferences || typeof preferences.adminMenuCollapsed !== 'boolean') return;
 
-    if (preferences && typeof preferences.adminMenuCollapsed === 'boolean') {
-      if (didUserToggleRef.current || programmaticCollapsedRef.current) return;
-      preferredMenuCollapsedRef.current = preferences.adminMenuCollapsed;
-      setIsMenuCollapsed(preferences.adminMenuCollapsed);
-      hydratedUserRef.current = userId;
-    }
-  }, [session, status, preferences, setIsMenuCollapsed]);
+    preferredMenuCollapsedRef.current = preferences.adminMenuCollapsed;
+    setIsMenuCollapsed(preferences.adminMenuCollapsed);
+    persistMenuCollapsedFallbacks(preferences.adminMenuCollapsed);
+    setShouldLoadRemoteMenuPreference(false);
+  }, [
+    hasResolvedLocalMenuPreference,
+    persistMenuCollapsedFallbacks,
+    preferences,
+    setIsMenuCollapsed,
+    shouldLoadRemoteMenuPreference,
+  ]);
 
   useEffect(() => {
     if (isProgrammaticallyCollapsed && pathname !== '/admin/cms/pages/create') {
@@ -294,11 +313,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
 export function AdminLayout({
   children,
   initialMenuCollapsed = false,
+  hasInitialMenuPreference = false,
   session = null,
   canReadAdminSettings = true,
 }: {
   children: React.ReactNode;
   initialMenuCollapsed?: boolean;
+  hasInitialMenuPreference?: boolean;
   session?: Session | null;
   canReadAdminSettings?: boolean;
 }): React.ReactNode {
@@ -312,7 +333,9 @@ export function AdminLayout({
             <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
               <AdminFavoritesRuntimeProvider>
                 <NoteSettingsProvider>
-                  <AdminLayoutContent>{children}</AdminLayoutContent>
+                  <AdminLayoutContent hasInitialMenuPreference={hasInitialMenuPreference}>
+                    {children}
+                  </AdminLayoutContent>
                 </NoteSettingsProvider>
               </AdminFavoritesRuntimeProvider>
             </AdminLayoutProvider>

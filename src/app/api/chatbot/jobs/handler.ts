@@ -7,7 +7,7 @@ import {
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
-import { enqueueChatbotJob, startChatbotJobQueue } from '@/features/jobs/server';
+import { enqueueChatbotJob, startChatbotJobQueue } from '@/features/ai/chatbot/workers/chatbotJobQueue';
 import type {
   ChatbotJobDto as ChatbotJob,
   EnqueueChatbotJobRequestDto as EnqueueJobRequest,

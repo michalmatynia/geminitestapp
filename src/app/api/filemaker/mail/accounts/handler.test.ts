@@ -13,9 +13,6 @@ const {
 
 vi.mock('@/features/filemaker/server', () => ({
   requireFilemakerMailAdminSession: requireFilemakerMailAdminSessionMock,
-}));
-
-vi.mock('@/features/filemaker/server', () => ({
   listFilemakerMailAccounts: listFilemakerMailAccountsMock,
   upsertFilemakerMailAccount: upsertFilemakerMailAccountMock,
 }));

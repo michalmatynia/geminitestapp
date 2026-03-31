@@ -17,11 +17,19 @@ import { AiPathsCanvasView } from '../sections/AiPathsCanvasView';
 let pageContextMock: Record<string, unknown> = {};
 const setPathsMock = vi.fn();
 const setPathConfigsMock = vi.fn();
+const routerPushMock = vi.fn();
 const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
 const graphActionsMock = {
   setPaths: setPathsMock,
   setPathConfigs: setPathConfigsMock,
 };
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/admin/ai-paths',
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
+}));
 
 vi.mock('react-dom', async () => {
   const actual = await vi.importActual<typeof import('react-dom')>('react-dom');

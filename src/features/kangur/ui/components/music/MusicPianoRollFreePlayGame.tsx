@@ -40,7 +40,7 @@ export default function MusicPianoRollFreePlayGame({
     stopAllSustainedNotes,
     stopSustainedNote,
     updateSustainedNote,
-  } = useKangurMusicSynth<DiatonicNoteId>() as any;
+  } = useKangurMusicSynth<DiatonicNoteId>();
   const [keyboardMode, setKeyboardMode] = useState<KangurMusicKeyboardMode>('piano');
   const [synthGlideMode, setSynthGlideMode] =
     useState<KangurMusicSynthGlideMode>('continuous');

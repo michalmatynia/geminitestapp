@@ -125,7 +125,7 @@ export function KangurParentDashboardWeeklyActivitySection({
       </div>
       <div className='mt-3 rounded-[26px] border border-violet-200/70 bg-white/78 px-4 py-4'>
         <div className='flex h-36 items-end gap-2'>
-          {snapshot.weeklyActivity.map((point: any) => {
+          {snapshot.weeklyActivity.map((point: ParentDashboardProgressSnapshot['weeklyActivity'][number]) => {
             const heightPercent =
               point.games === 0
                 ? 8
@@ -237,7 +237,7 @@ export function KangurParentDashboardMasteryLessonsColumn({
     <div className={`rounded-[20px] px-4 py-3 ${borderClassName}`}>
       <div className='text-xs font-bold uppercase tracking-[0.18em]'>{title}</div>
       <div className='mt-2 flex flex-col gap-2'>
-        {lessons.map((lesson: any) => (
+        {lessons.map((lesson: ParentDashboardLessonMasteryInsights['strongest'][number]) => (
           <div key={lesson.componentId}>
             <div className='flex items-center justify-between gap-2 text-sm'>
               <span className='min-w-0 truncate font-semibold [color:var(--kangur-page-text)]'>

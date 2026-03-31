@@ -180,7 +180,7 @@ function useKangurParentDashboardProgressWidgetState() {
   const { archiveError, handleArchiveAssignment } =
     useKangurParentDashboardProgressArchiveAction({
       archiveAssignmentErrorLabel,
-      updateAssignment: updateAssignment!,
+      updateAssignment: updateAssignment,
     });
 
   return {
@@ -340,7 +340,7 @@ function KangurParentDashboardProgressWidgetContent(): React.JSX.Element {
         handleArchiveAssignment={handleArchiveAssignment}
         isLoadingAssignments={isLoadingAssignments}
         lessons={lessons}
-        preloadedUpdateAssignment={updateAssignment!}
+        preloadedUpdateAssignment={updateAssignment}
         recentAssignmentItems={recentAssignmentItems}
         recentAssignmentsEmptyLabel={recentAssignmentsEmptyLabel}
         recentAssignmentsSummary={recentAssignmentsSummary}

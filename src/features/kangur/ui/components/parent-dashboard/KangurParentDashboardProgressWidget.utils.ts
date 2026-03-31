@@ -198,7 +198,7 @@ export const buildRecentAssignments = (
 
 export const resolveMaxWeeklyGames = (
   weeklyActivity: ParentDashboardProgressSnapshot['weeklyActivity']
-): number => Math.max(1, ...weeklyActivity.map((point: any) => point.games));
+): number => Math.max(1, ...weeklyActivity.map((point: ParentDashboardProgressSnapshot['weeklyActivity'][number]) => point.games));
 
 export const createProgressTimestampFormatter = ({
   fallback,

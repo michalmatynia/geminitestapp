@@ -18,7 +18,7 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   }),
 }));
 
-vi.mock('@/features/foldertree/public', () => ({
+vi.mock('@/shared/lib/foldertree/public', () => ({
   createMasterFolderTreeTransactionAdapter: () => ({}),
   FolderTreeViewportV2: () => <div data-testid='tree-viewport' />,
   useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),

@@ -3,7 +3,7 @@
 import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, type ReactNode } from 'react';
 
-import { FolderTreeSearchBar } from '@/features/foldertree/public';
+import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';
 import { AdminCaseResolverBreadcrumbs, Button, Pagination } from '@/shared/ui';
 
 import { useOptionalCaseListPanelControlsContext } from './CaseListPanelControlsContext';

@@ -22,7 +22,7 @@ import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
 } from '@/features/filemaker/public';
-import type { DocumentWysiwygEditorProps } from '@/features/document-editor/public';
+import type { DocumentWysiwygEditorProps } from '@/shared/lib/document-editor/public';
 import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
 import {
   Badge,
@@ -64,7 +64,7 @@ import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/uti
 export type { EditorDetailsTab };
 
 const LazyDocumentWysiwygEditor = React.lazy(() =>
-  import('@/features/document-editor/public').then((mod) => ({
+  import('@/shared/lib/document-editor/public').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
 ) as React.ComponentType<DocumentWysiwygEditorProps>;

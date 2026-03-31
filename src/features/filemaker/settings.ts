@@ -46,3 +46,4 @@ export {
   createFilemakerPhoneNumberLink,
   formatFilemakerAddress,
 } from './filemaker-settings.entities';
+export * from './settings/campaign-factories';

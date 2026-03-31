@@ -7,7 +7,7 @@ import { LogOut } from 'lucide-react';
 import {
   CmsStorefrontAppearanceButtons,
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { KangurElevatedUserMenu } from '@/features/kangur/ui/components/KangurElevatedUserMenu';
 import { KangurProfileMenu } from '@/features/kangur/ui/components/KangurProfileMenu';
 

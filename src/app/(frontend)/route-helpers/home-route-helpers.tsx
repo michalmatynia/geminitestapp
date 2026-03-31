@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { JSX } from 'react';
 
 import { getCmsRepository, getSlugsForDomain, isDomainZoningEnabled, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
+import { getKangurPublicLaunchHref } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';

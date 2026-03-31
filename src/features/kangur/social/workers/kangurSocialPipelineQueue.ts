@@ -25,6 +25,7 @@ import type {
 import type { KangurSocialVisualAnalysis } from '@/shared/contracts/kangur-social-posts';
 import { createManagedQueue, getRedisConnection, type ManagedQueue } from '@/shared/lib/queue';
 import type { SchedulerQueueState } from '@/shared/lib/queue/scheduler-queue-types';
+import { safeSetInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type KangurSocialPipelineJobData =
@@ -117,7 +118,7 @@ const KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_KEY =
   'kangur-social-pipeline:worker-heartbeat';
 
 type KangurSocialPipelineQueueState = SchedulerQueueState & {
-  heartbeatTimer: ReturnType<typeof setInterval> | null;
+  heartbeatTimer: SafeTimerId | null;
 };
 
 const globalWithQueueState = globalThis as typeof globalThis & {
@@ -180,7 +181,7 @@ const startKangurSocialPipelineWorkerHeartbeat = (): void => {
   if (queueState.heartbeatTimer) return;
 
   void writeKangurSocialPipelineWorkerHeartbeat();
-  queueState.heartbeatTimer = setInterval(() => {
+  queueState.heartbeatTimer = safeSetInterval(() => {
     void writeKangurSocialPipelineWorkerHeartbeat();
   }, KANGUR_SOCIAL_PIPELINE_WORKER_HEARTBEAT_INTERVAL_MS);
   queueState.heartbeatTimer.unref?.();

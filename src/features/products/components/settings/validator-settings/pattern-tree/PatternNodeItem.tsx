@@ -3,7 +3,7 @@
 import { Copy, GripVertical, Pencil, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as PatternNodeItemProps } from '@/features/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput as PatternNodeItemProps } from '@/shared/lib/foldertree/public';
 import { StatusBadge, StatusToggle, TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import {
   describeProductValidationSemanticAuditRecord,

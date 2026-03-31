@@ -1,4 +1,4 @@
-import { PageBuilderSettingsPage } from '@/features/cms/components/page-builder/settings/PageBuilderSettingsPage';
+import { PageBuilderSettingsPage } from '@/features/cms/public';
 
 export default function Page(): React.JSX.Element {
   return <PageBuilderSettingsPage />;

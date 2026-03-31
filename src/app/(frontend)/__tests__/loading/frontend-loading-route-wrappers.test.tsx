@@ -23,7 +23,8 @@ vi.mock('@/features/kangur/ui/FrontendRouteLoadingFallback', () => ({
   FrontendRouteLoadingFallback: frontendRouteLoadingFallbackMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/FrontendCmsRouteLoadingFallback', () => ({
+vi.mock('@/features/kangur/public', () => ({
+  FrontendRouteLoadingFallback: frontendRouteLoadingFallbackMock,
   FrontendCmsRouteLoadingFallback: frontendCmsRouteLoadingFallbackMock,
 }));
 

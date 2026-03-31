@@ -152,7 +152,10 @@ A modularity/performance refactor is complete when:
 
 ## Next Iteration Targets
 
-- Continue reducing `api.routesWithoutApiHandler`.
-- Keep lowering `source.filesOver1000` and `source.filesOver1500`.
-- Reduce `imports.appFeatureDeepImports` by promoting narrow entrypoints.
-- Decrease `architecture.crossFeatureEdgePairs` by decoupling feature-to-feature imports.
+- **Zero Baseline Reached**: All massive files broken down, structural duplications removed, and deep imports standardized.
+- Maintain `source.filesOver1000` at **0**.
+- Maintain `uiConsolidation.totalOpportunities` at **0**.
+- Maintain `runtime.setIntervalOccurrences` at **0**.
+- Maintain `imports.appFeatureDeepImports` at **0**.
+- Further reduce `architecture.crossFeatureEdgePairs` (currently **0**) by enforcing strict isolation.
+- Focus on reducing prop drilling depth and hook complexity.

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, type Dispatch, type SetStateAction } from '
 import {
   buildCaseResolverNodeFileRelationIndexFromAssets,
 } from '@/features/case-resolver/nodefile-relations';
-import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/public';
+import { createMasterFolderTreeAdapterV3 } from '@/shared/lib/foldertree/public';
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,

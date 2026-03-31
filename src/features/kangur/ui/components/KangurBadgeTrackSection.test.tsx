@@ -9,7 +9,7 @@ const { kangurBadgeTrackGridMock } = vi.hoisted(() => ({
   kangurBadgeTrackGridMock: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurBadgeTrackGrid', () => ({
+vi.mock('@/features/kangur/ui/components/badge-track/KangurBadgeTrackGrid', () => ({
   default: kangurBadgeTrackGridMock,
 }));
 

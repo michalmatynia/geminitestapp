@@ -4,7 +4,7 @@ import { FolderPlus, FilePlus, FileImage, FileCode2, ImagePlus } from 'lucide-re
 import { useRouter } from 'next/navigation';
 import React, { useMemo } from 'react';
 
-import { FolderTreeSearchBar } from '@/features/foldertree/public';
+import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Switch } from '@/shared/ui';
 

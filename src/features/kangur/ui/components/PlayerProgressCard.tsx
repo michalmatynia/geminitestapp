@@ -10,7 +10,7 @@ import {
   KangurProgressHighlightHeader,
   KangurProgressHighlightChip,
   KangurProgressHighlightBar,
-} from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
+} from '@/features/kangur/ui/components/summary-cards/KangurProgressHighlightCardContent';
 import {
   KangurCardDescription,
   KangurCardTitle,

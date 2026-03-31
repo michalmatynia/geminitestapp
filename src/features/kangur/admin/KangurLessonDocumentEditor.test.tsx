@@ -4,7 +4,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/features/document-editor/public', () => ({
+vi.mock('@/shared/lib/document-editor/public', () => ({
   DocumentWysiwygEditor: ({
     value,
     onChange,
@@ -20,8 +20,8 @@ vi.mock('@/features/document-editor/public', () => ({
   ),
 }));
 
-vi.mock('@/features/cms/public', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/cms/public')>();
+vi.mock('@/shared/ui/cms-appearance/CmsStorefrontAppearance', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/cms-appearance/CmsStorefrontAppearance')>();
   return {
     ...actual,
     MediaLibraryPanel: ({

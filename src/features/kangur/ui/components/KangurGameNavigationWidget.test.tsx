@@ -44,7 +44,7 @@ vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationC
   },
 }));
 
-import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/KangurGameNavigationWidget';
+import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget';
 
 describe('KangurGameNavigationWidget', () => {
   beforeEach(() => {

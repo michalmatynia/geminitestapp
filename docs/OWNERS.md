@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-26'
+last_reviewed: '2026-03-30'
 status: 'active'
 doc_type: 'policy'
 scope: 'repo'

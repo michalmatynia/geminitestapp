@@ -6,8 +6,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { getKangurHomeHref } from '@/features/kangur/config/routing';
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 
-const KangurGameKangurSessionWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameKangurSessionWidget').then(m => ({ default: m.KangurGameKangurSessionWidget })), { ssr: false });
-const KangurGameKangurSetupWidget = dynamic(() => import('@/features/kangur/ui/components/KangurGameKangurSetupWidget').then(m => ({ default: m.KangurGameKangurSetupWidget })), { ssr: false });
+const KangurGameKangurSessionWidget = dynamic(() => import('@/features/kangur/ui/components/game-runtime/KangurGameKangurSessionWidget').then(m => ({ default: m.KangurGameKangurSessionWidget })), { ssr: false });
+const KangurGameKangurSetupWidget = dynamic(() => import('@/features/kangur/ui/components/game-setup/KangurGameKangurSetupWidget').then(m => ({ default: m.KangurGameKangurSetupWidget })), { ssr: false });
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import { KangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';

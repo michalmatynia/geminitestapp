@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as ComponentTreeNodeRendererProps } from '@/features/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput as ComponentTreeNodeRendererProps } from '@/shared/lib/foldertree/public';
 import { Button } from '@/shared/ui';
 
 import { useComponentTreeNodeRuntimeContext } from './ComponentTreeNodeRuntimeContext';

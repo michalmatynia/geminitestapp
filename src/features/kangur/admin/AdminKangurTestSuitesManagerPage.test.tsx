@@ -5,7 +5,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FolderTreeViewportV2Props } from '@/features/foldertree/public';
+import type { FolderTreeViewportV2Props } from '@/shared/lib/foldertree/public';
 
 const { settingsStoreMock, mutateAsyncMock, useMasterFolderTreeShellMock, toastMock, folderTreeViewportMock } =
   vi.hoisted(() => ({
@@ -50,8 +50,8 @@ vi.mock('next-intl', () => ({
   useLocale: () => 'en',
 }));
 
-vi.mock('@/features/foldertree/public', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/foldertree/public')>();
+vi.mock('@/shared/lib/foldertree/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/foldertree/public')>();
   return {
     ...actual,
     createMasterFolderTreeTransactionAdapter: vi.fn(() => ({ apply: vi.fn() })),

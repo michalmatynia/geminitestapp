@@ -94,7 +94,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
 }));
 
-vi.mock('./KangurAiTutorWidget.state', () => ({
+vi.mock('./ai-tutor-widget/KangurAiTutorWidget.state', () => ({
   useKangurAiTutorWidgetStateContext: () => widgetStateContextMock,
 }));
 

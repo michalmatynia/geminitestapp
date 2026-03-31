@@ -11,7 +11,7 @@ import {
   SelectSimple,
   useToast,
 } from '@/features/kangur/shared/ui';
-import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
+import { resolveKangurStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import {
   KANGUR_THEME_CATALOG_KEY,
   type KangurThemeCatalogEntry,

@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
+import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/game-home/KangurGameHomeMomentumWidget';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 
 const buildProgress = (

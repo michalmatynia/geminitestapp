@@ -21,8 +21,8 @@ vi.mock('@/features/kangur/ui/components/GeometryDrawingGame', () => ({
   default: () => <div data-testid='mock-geometry-training-game'>Mock Geometry Training</div>,
 }));
 
-import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/KangurGameCalendarTrainingWidget';
-import { KangurGameGeometryTrainingWidget } from '@/features/kangur/ui/components/KangurGameGeometryTrainingWidget';
+import { KangurGameCalendarTrainingWidget } from '@/features/kangur/ui/components/game-quiz/KangurGameCalendarTrainingWidget';
+import { KangurGameGeometryTrainingWidget } from '@/features/kangur/ui/components/game-quiz/KangurGameGeometryTrainingWidget';
 
 describe('Kangur game training widgets', () => {
   beforeEach(() => {

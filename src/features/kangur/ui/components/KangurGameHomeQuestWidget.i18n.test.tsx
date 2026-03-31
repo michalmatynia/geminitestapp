@@ -72,7 +72,7 @@ vi.mock('@/features/kangur/ui/services/progress', async () => {
   };
 });
 
-import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
+import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget';
 
 const RealDate = Date;
 const FIXED_NOW = '2026-03-10T09:00:00.000Z';

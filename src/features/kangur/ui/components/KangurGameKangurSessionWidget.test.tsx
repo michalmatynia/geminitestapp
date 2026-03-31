@@ -27,7 +27,7 @@ vi.mock('@/features/kangur/ui/components/KangurGame', () => ({
   default: () => <div data-testid='kangur-session-game'>kangur-game</div>,
 }));
 
-import { KangurGameKangurSessionWidget } from '@/features/kangur/ui/components/KangurGameKangurSessionWidget';
+import { KangurGameKangurSessionWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameKangurSessionWidget';
 
 describe('KangurGameKangurSessionWidget', () => {
   it('renders the active recommendation above the Kangur session', () => {

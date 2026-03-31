@@ -5,7 +5,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { KangurHomeLogo } from '@/features/kangur/ui/components/wordmarks/KangurHomeLogo';
 
 describe('KangurHomeLogo', () => {
   it('uses the cropped SVG viewBox so the logo stays tightly framed in the nav pill', () => {

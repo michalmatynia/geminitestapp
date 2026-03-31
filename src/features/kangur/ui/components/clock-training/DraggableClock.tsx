@@ -30,7 +30,7 @@ import {
   type Feedback,
   type Hand,
   type MinuteSnapMode,
-} from '../clock-training-utils';
+} from './clock-training-utils';
 
 export type DraggableClockProps = {
   onSubmit: (hours: number, minutes: number) => void;

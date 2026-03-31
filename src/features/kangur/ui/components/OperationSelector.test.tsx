@@ -39,7 +39,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-vi.mock('@/features/kangur/ui/components/DifficultySelector', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/DifficultySelector', () => ({
   default: () => <div data-testid='difficulty-selector'>difficulty-selector</div>,
 }));
 

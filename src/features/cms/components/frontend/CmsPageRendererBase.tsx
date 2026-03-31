@@ -5,7 +5,7 @@ import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffec
 import {
   resolveStorefrontAppearanceColorSchemes,
   type CmsStorefrontAppearanceMode,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/features/gsap/public';

@@ -34,6 +34,7 @@ export * from '@/features/kangur/server/kangur-learner-sessions';
 export * from '@/features/kangur/server/kangur-learner-interactions';
 export * from '@/features/kangur/server/ai-tutor-mood';
 export * from '@/features/kangur/appearance/server/storefront-appearance';
+export * from '@/features/kangur/appearance/server/storefront-appearance-bootstrap';
 export * from '@/features/kangur/server/auth-bootstrap';
 export * from '@/features/kangur/server/route-access';
 export * from '@/features/kangur/server/alias-shell-page';

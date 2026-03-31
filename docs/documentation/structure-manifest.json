@@ -262,6 +262,7 @@
     "docs/build/bazel-buildbuddy.md",
     "docs/build/bazel.md",
     "docs/build/bun.md",
+    "docs/build/vercel-deployment.md",
     "docs/build/codeql.md",
     "docs/build/general-improvements.md",
     "docs/plans/README.md",

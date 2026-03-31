@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import { Badge, TreeRow } from '@/features/kangur/shared/ui';
 import { cn } from '@/features/kangur/shared/utils';

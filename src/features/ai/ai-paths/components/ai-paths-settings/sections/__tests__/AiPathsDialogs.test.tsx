@@ -2,19 +2,19 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../../node-config-dialog', () => ({
+vi.mock('@/features/ai/ai-paths/components/node-config-dialog', () => ({
   NodeConfigDialog: (): React.JSX.Element => <div data-testid='node-config-dialog'>node</div>,
 }));
 
-vi.mock('../../../run-detail-dialog', () => ({
+vi.mock('@/features/ai/ai-paths/components/run-detail-dialog', () => ({
   RunDetailDialog: (): React.JSX.Element => <div data-testid='run-detail-dialog'>run</div>,
 }));
 
-vi.mock('../../../presets-dialog', () => ({
+vi.mock('@/features/ai/ai-paths/components/presets-dialog', () => ({
   PresetsDialog: (): React.JSX.Element => <div data-testid='presets-dialog'>presets</div>,
 }));
 
-vi.mock('../../../simulation-dialog', () => ({
+vi.mock('@/features/ai/ai-paths/components/simulation-dialog', () => ({
   SimulationDialog: (): React.JSX.Element => <div data-testid='simulation-dialog'>simulation</div>,
 }));
 

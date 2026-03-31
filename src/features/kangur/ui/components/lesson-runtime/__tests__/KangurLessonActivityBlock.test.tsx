@@ -29,7 +29,7 @@ vi.mock('@/features/kangur/ui/components/AddingSynthesisGame', () => ({
 vi.mock('@/features/kangur/ui/components/CalendarInteractiveGame', () => ({
   default: createMockGame('CalendarInteractiveGame'),
 }));
-vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
+vi.mock('@/features/kangur/ui/components/clock-training/ClockTrainingGame', () => ({
   default: createMockGame('ClockTrainingGame'),
 }));
 vi.mock('@/features/kangur/ui/components/DivisionGame', () => ({

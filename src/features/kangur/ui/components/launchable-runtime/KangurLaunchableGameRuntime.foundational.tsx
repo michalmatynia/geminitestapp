@@ -38,7 +38,7 @@ const CalendarTrainingGame = createDynamicLaunchableGameComponent(
   () => import('@/features/kangur/ui/components/CalendarTrainingGame')
 );
 const ClockTrainingGame = createDynamicLaunchableGameComponent(
-  () => import('@/features/kangur/ui/components/ClockTrainingGame')
+  () => import('@/features/kangur/ui/components/clock-training/ClockTrainingGame')
 );
 const DivisionGame = createDynamicLaunchableGameComponent(
   () => import('@/features/kangur/ui/components/DivisionGame')

@@ -17,7 +17,7 @@ import { clamp, parseNumberInput } from '../utils';
 import { SvgCodeEditor, extractSvgViewBox } from './SvgCodeEditor';
 
 const LazyDocumentWysiwygEditor = React.lazy(() =>
-  import('@/features/document-editor/public').then((mod) => ({
+  import('@/shared/lib/document-editor/public').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
 );

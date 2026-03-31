@@ -59,7 +59,8 @@ vi.mock('@/features/kangur/server', () => ({
 }));
 
 vi.mock('@/features/kangur/public', () => ({
-  getKangurPublicAliasHref: (
+  getKangurPublicLaunchHref: (
+    route: string | undefined,
     slugSegments: readonly string[] = [],
     searchParams?: Record<string, string | string[] | undefined>
   ) => {
@@ -77,6 +78,10 @@ vi.mock('@/features/kangur/public', () => ({
         query.set(key, value);
       }
     });
+
+    if (route === 'dedicated_app' && slugSegments.length === 0) {
+      query.set('__kangurLaunch', 'dedicated_app');
+    }
 
     const serialized = query.toString();
     return serialized ? `${pathname}?${serialized}` : pathname;

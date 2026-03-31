@@ -2,7 +2,7 @@ import { Gauge, Music2, RefreshCw, Sparkles, Target, Zap } from 'lucide-react';
 import React from 'react';
 
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
-import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/game-runtime/KangurRewardBreakdownChips';
 import {
   KangurButton,
   KangurGlassPanel,

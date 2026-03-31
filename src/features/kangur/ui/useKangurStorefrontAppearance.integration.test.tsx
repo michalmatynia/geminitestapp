@@ -16,7 +16,7 @@ import {
 import { KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY } from '@/features/kangur/appearance/storefront-appearance-settings';
 import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
-import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
+import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 
 const settingsMapRef = { current: new Map<string, string>() };
 const settingsQueryStub = () => ({

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-import ClockTrainingGame from '@/features/kangur/ui/components/ClockTrainingGame';
+import ClockTrainingGame from '@/features/kangur/ui/components/clock-training/ClockTrainingGame';
 import { renderKangurGameQuizShell } from './KangurGameQuizShell';
 
 export function KangurGameClockQuizWidget(): React.JSX.Element | null {

@@ -1,4 +1,4 @@
-import { ensureHtmlForPreview } from '@/features/document-editor/public';
+import { ensureHtmlForPreview } from '@/shared/lib/document-editor/public';
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,

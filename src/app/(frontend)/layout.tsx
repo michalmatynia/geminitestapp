@@ -1,5 +1,11 @@
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home/home-helpers';
 import {
+  getKangurAuthBootstrapScript,
+  getKangurStorefrontInitialState,
+  getKangurSurfaceBootstrapStyle,
+  KANGUR_SURFACE_HINT_SCRIPT,
+} from '@/features/kangur/server';
+import {
   createFrontendLoadTimingRecorder,
   serializeInlineTimingPayload,
   shouldEnableFrontendLoadTiming,
@@ -7,12 +13,6 @@ import {
 } from '@/app/(frontend)/shell/frontend-load-timing';
 import { CmsStorefrontAppearanceProvider } from '@/features/cms/public';
 import { getCmsThemeSettings } from '@/features/cms/server';
-import { getKangurAuthBootstrapScript } from '@/features/kangur/server';
-import { getKangurStorefrontInitialState } from '@/features/kangur/appearance/server/storefront-appearance';
-import {
-  getKangurSurfaceBootstrapStyle,
-  KANGUR_SURFACE_HINT_SCRIPT,
-} from '@/features/kangur/appearance/server/storefront-appearance-bootstrap';
 import {
   FrontendPublicOwnerProvider,
   FrontendPublicOwnerShellClient,

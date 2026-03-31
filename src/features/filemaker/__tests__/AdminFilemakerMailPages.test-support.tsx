@@ -29,7 +29,7 @@ vi.mock('next/navigation', () => ({
   useParams: () => routeParamsMock,
 }));
 
-vi.mock('@/features/document-editor/components/DocumentWysiwygEditor', () => ({
+vi.mock('@/shared/lib/document-editor/components/DocumentWysiwygEditor', () => ({
   DocumentWysiwygEditor: ({
     value,
     onChange,
@@ -63,7 +63,7 @@ vi.mock('@/shared/ui/FolderTreePanel', () => ({
   ),
 }));
 
-vi.mock('@/features/foldertree/public', () => ({
+vi.mock('@/shared/lib/foldertree/public', () => ({
   useMasterFolderTreeShell: ({
     nodes,
     selectedNodeId,

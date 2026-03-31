@@ -6,7 +6,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import TrainingSetup from '@/features/kangur/ui/components/TrainingSetup';
+import TrainingSetup from '@/features/kangur/ui/components/game-setup/TrainingSetup';
 
 const { localeMock } = vi.hoisted(() => ({
   localeMock: vi.fn(() => 'pl'),

@@ -7,7 +7,7 @@ import {
   FolderTreeViewportV2,
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/public';
+} from '@/shared/lib/foldertree/public';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {

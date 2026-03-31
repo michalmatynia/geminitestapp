@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
 const readTutorSource = (fileName: string) =>
-  readFileSync(join(currentDir, fileName), 'utf8');
+  readFileSync(join(currentDir, "ai-tutor-widget", fileName), 'utf8');
 
 const readTutorPlaywrightSource = (fileName: string) =>
   readFileSync(join(currentDir, '../../../../../e2e/features/kangur', fileName), 'utf8');

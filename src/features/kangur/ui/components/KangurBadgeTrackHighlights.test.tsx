@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
+import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackHighlights';
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 
 const buildLessonMastery = (masteryPercent: number) => ({

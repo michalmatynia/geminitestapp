@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurLearnerProfileAiTutorMoodWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget';
+import { KangurLearnerProfileAiTutorMoodWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget';
 import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileAssignmentsWidget';
 import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileHeroWidget';
 import { KangurLearnerProfileLevelProgressWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileLevelProgressWidget';

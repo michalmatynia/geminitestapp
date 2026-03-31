@@ -54,7 +54,7 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
 }));
 
-vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
+vi.mock('@/features/kangur/server', () => ({
   getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
 }));
 

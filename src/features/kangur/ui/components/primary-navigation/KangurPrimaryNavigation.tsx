@@ -8,7 +8,7 @@ import React from 'react';
 
 import {
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import {
   getKangurHomeHref,
   getKangurPageHref as createPageUrl,

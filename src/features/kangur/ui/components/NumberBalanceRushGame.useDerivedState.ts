@@ -1,12 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
-import type {
-  NumberBalanceMatchPlayerState,
-  NumberBalanceMatchState,
-  NumberBalancePlayerScore,
-} from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
+import {
+  resolveNumberBalanceRushMatchMeta,
+  resolveNumberBalanceRushTiming,
+  shouldPollNumberBalanceRushMatch,
+} from './NumberBalanceRushGame.runtime';
 import type { MatchStatus, UseNumberBalanceRushDerivedStateProps } from './NumberBalanceRushGame.types';
 
 export function useNumberBalanceRushDerivedState({
@@ -21,13 +20,15 @@ export function useNumberBalanceRushDerivedState({
   translations,
 }: UseNumberBalanceRushDerivedStateProps) {
   const activeMatchId = match?.matchId ?? null;
-  const activeMatchStatus: MatchStatus | null = match?.status ?? null;
+  const activeMatchStatus = (match?.status ?? 'waiting') as MatchStatus;
   const activePlayerId = player?.playerId ?? null;
+
   const shouldPoll = shouldPollNumberBalanceRushMatch({
     activeMatchId,
     activeMatchStatus,
     activePlayerId,
   });
+
   const matchMeta = useMemo(
     () =>
       resolveNumberBalanceRushMatchMeta({
@@ -38,6 +39,7 @@ export function useNumberBalanceRushDerivedState({
       }),
     [activePlayerId, playerCount, scores, translations]
   );
+
   const timing = useMemo(
     () =>
       resolveNumberBalanceRushTiming({

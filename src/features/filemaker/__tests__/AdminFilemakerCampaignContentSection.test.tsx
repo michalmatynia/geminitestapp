@@ -6,7 +6,7 @@ import type { FilemakerEmailCampaign } from '../types';
 import { createBlankCampaignDraft } from '../pages/AdminFilemakerCampaignEditPage.utils';
 import { ContentSection } from '../pages/AdminFilemakerCampaignEditPage.sections';
 
-vi.mock('@/features/document-editor/components/DocumentWysiwygEditor', () => ({
+vi.mock('@/shared/lib/document-editor/components/DocumentWysiwygEditor', () => ({
   DocumentWysiwygEditor: ({
     value,
     onChange,

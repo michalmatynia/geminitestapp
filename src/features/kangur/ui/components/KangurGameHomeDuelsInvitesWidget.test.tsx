@@ -85,7 +85,7 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   },
 }));
 
-import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget';
+import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget';
 
 describe('KangurGameHomeDuelsInvitesWidget', () => {
   beforeEach(() => {

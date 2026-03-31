@@ -30,7 +30,7 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBan
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeMomentumWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeMomentumWidget', () => ({
   default: () => <div data-testid='kangur-result-momentum-widget'>momentum-widget</div>,
 }));
 
@@ -49,7 +49,7 @@ vi.mock('@/features/kangur/ui/services/progress', async () => {
   };
 });
 
-import { KangurGameResultWidget } from '@/features/kangur/ui/components/KangurGameResultWidget';
+import { KangurGameResultWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameResultWidget';
 
 const buildRuntime = (overrides: Record<string, unknown> = {}) => ({
   activeSessionRecommendation: null,

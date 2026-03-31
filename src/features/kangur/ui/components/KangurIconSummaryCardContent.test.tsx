@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
+import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/summary-cards/KangurIconSummaryCardContent';
 
 describe('KangurIconSummaryCardContent', () => {
   it('renders the shared icon, title, description, aside, and footer slots', () => {

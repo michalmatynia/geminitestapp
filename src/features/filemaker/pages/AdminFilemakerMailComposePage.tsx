@@ -4,7 +4,7 @@ import { ArrowLeft, SendHorizonal } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { DocumentWysiwygEditor } from '@/features/document-editor/public';
+import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';

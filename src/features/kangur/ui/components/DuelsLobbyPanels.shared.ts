@@ -1,6 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import type {
@@ -18,6 +17,7 @@ import {
 } from '@/features/kangur/ui/pages/duels/duels-helpers';
 
 import type { KangurGameOperationSelectorTranslations as LobbyTranslations } from '@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.types';
+export type { LobbyTranslations };
 export type LobbySortValue =
   | 'recent'
   | 'time_fast'

@@ -10,7 +10,7 @@ import {
   loadSlugRenderData,
   resolveSlugToPage,
 } from '@/app/(frontend)/cms/slug-page-data';
-import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
+import { getKangurPublicLaunchHref } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchRoute, requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';

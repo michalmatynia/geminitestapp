@@ -9,9 +9,9 @@ import {
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/public';
-import { useMasterFolderTreeSearch } from '@/features/foldertree/public';
-import type { MasterTreeDropInput } from '@/features/foldertree/public';
+} from '@/shared/lib/foldertree/public';
+import { useMasterFolderTreeSearch } from '@/shared/lib/foldertree/public';
+import type { MasterTreeDropInput } from '@/shared/lib/foldertree/public';
 import type { CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui';

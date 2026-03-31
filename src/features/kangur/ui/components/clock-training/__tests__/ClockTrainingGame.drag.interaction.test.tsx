@@ -27,7 +27,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurMobileInteractionScrollLock', () =>
   }),
 }));
 
-import ClockTrainingGame from '../../ClockTrainingGame';
+import ClockTrainingGame from '../ClockTrainingGame';
 
 const CLOCK_SIZE = 220;
 const CLOCK_CENTER = CLOCK_SIZE / 2;

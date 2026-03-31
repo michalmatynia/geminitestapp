@@ -17,7 +17,7 @@ import {
   type KangurLessonLibraryCardCopy,
 } from '@/features/kangur/ui/components/lesson-library/KangurResolvedLessonLibraryCard';
 import { KangurResolvedLessonGroupAccordion } from '@/features/kangur/ui/components/lesson-library/KangurResolvedLessonGroupAccordion';
-import { LazyKangurLessonsWordmark } from '@/features/kangur/ui/components/LazyKangurLessonsWordmark';
+import { LazyKangurLessonsWordmark } from '@/features/kangur/ui/components/wordmarks/LazyKangurLessonsWordmark';
 import { KangurResolvedPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import {

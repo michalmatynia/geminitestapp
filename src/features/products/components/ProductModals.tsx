@@ -394,6 +394,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
           initialSku={initialSku}
           initialCatalogId={initialCatalogId}
           requireHydratedEditProduct={requireHydratedEditProduct}
+          validatorSessionKey={validatorSessionKey}
         >
           <ProductFormModalBridge
             onIsSavingChange={onIsSavingChange}

@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegments } from 'next/navigation';
 import { startTransition, useEffect, useMemo, useState } from 'react';
 
-import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
+import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import {
   KANGUR_BASE_PATH,
   getKangurDedicatedAppHref,

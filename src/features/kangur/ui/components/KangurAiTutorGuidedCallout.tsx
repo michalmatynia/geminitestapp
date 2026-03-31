@@ -26,40 +26,11 @@ import {
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
-import type {
-  TutorHorizontalSide,
-  TutorReducedMotionStableTransitions,
-} from './ai-tutor-widget/KangurAiTutorWidget.shared';
 import type { GuidedTutorTarget } from './ai-tutor-widget/KangurAiTutorWidget.types';
 import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 
-type Props = {
-  avatarPlacement: 'top' | 'bottom' | 'left' | 'right' | null;
-  calloutKey: string;
-  calloutTestId: string;
-  detail: string | null;
-  entryDirection: TutorHorizontalSide;
-  headerLabel: string;
-  mode: 'auth' | 'home_onboarding' | 'section' | 'selection' | null;
-  onAction: (
-    action: 'advance_home_onboarding' | 'close' | 'finish_home_onboarding' | 'back_home_onboarding'
-  ) => void;
-  placement: string;
-  prefersReducedMotion: boolean;
-  reducedMotionTransitions: TutorReducedMotionStableTransitions;
-  sectionGuidanceLabel: string | null;
-  sectionResponsePendingKind: string | null;
-  selectionPreview: string | null;
-  shouldRender: boolean;
-  showSectionGuidanceCallout: boolean;
-  showSelectionGuidanceCallout: boolean;
-  stepLabel: string | null;
-  style: CSSProperties | null;
-  title: string | null;
-  transitionDuration: number;
-  transitionEase: [number, number, number, number];
-};
+import { useKangurAiTutorPortalContext } from './KangurAiTutorPortal.context';
 
 const GUIDED_CALLOUT_ENTRY_OFFSET_PX = 72;
 
@@ -155,7 +126,8 @@ const resolveTutorGuidedFallback = (
   return value;
 };
 
-export function KangurAiTutorGuidedCallout(props: Props): JSX.Element {
+export function KangurAiTutorGuidedCallout(): JSX.Element {
+  const { guidedCallout } = useKangurAiTutorPortalContext();
   const {
     avatarPlacement,
     calloutKey,
@@ -164,7 +136,6 @@ export function KangurAiTutorGuidedCallout(props: Props): JSX.Element {
     entryDirection,
     headerLabel,
     mode,
-    onAction,
     placement,
     prefersReducedMotion,
     reducedMotionTransitions,
@@ -178,7 +149,12 @@ export function KangurAiTutorGuidedCallout(props: Props): JSX.Element {
     title,
     transitionDuration,
     transitionEase,
-  } = props;
+    onAdvanceHomeOnboarding,
+    onBackHomeOnboarding,
+    onClose,
+    onFinishHomeOnboarding,
+  } = guidedCallout;
+
   const tutorContent = useKangurAiTutorContent();
   const normalizedLocale = normalizeSiteLocale(tutorContent.locale);
   const fallbackCopy = useMemo(
@@ -219,10 +195,10 @@ export function KangurAiTutorGuidedCallout(props: Props): JSX.Element {
       duration: transitionDuration,
       ease: transitionEase,
     };
-  const handleCloseCallout = (): void => onAction('close');
-  const handleGoBackHomeOnboarding = (): void => onAction('back_home_onboarding');
-  const handleFinishHomeOnboarding = (): void => onAction('finish_home_onboarding');
-  const handleAdvanceHomeOnboarding = (): void => onAction('advance_home_onboarding');
+  const handleCloseCallout = (): void => onClose();
+  const handleGoBackHomeOnboarding = (): void => onBackHomeOnboarding();
+  const handleFinishHomeOnboarding = (): void => onFinishHomeOnboarding();
+  const handleAdvanceHomeOnboarding = (): void => onAdvanceHomeOnboarding();
   const resolvedSelectedText =
     selectionConversationContext?.selectedText ??
     selectionResponsePending?.selectedText ??

@@ -5,7 +5,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { KangurLessonsWordmark } from '@/features/kangur/ui/components/KangurLessonsWordmark';
+import { KangurLessonsWordmark } from '@/features/kangur/ui/components/wordmarks/KangurLessonsWordmark';
 
 describe('KangurLessonsWordmark', () => {
   it('renders the Polish Lekcje wordmark as standalone SVG paths', () => {

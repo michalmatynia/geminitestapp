@@ -5,7 +5,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { CmsStorefrontAppearanceProvider } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
 
 describe('CmsPageShell appearance', () => {

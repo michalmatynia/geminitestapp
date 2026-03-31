@@ -6,7 +6,7 @@ import {
   resolveParameterValue,
   toRecord,
 } from '../database-parameter-inference-utils';
-import { coerceInput } from '../../../utils/runtime';
+import { coerceInput } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { normalizeParameterEntries } from './parameter-inference.normalizer';
 
 const DEFAULT_PARAMETER_INFERENCE_LANGUAGE_CODE = 'en';

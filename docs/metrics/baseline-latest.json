@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-03-31T01:21:48.774Z",
+  "generatedAt": "2026-03-31T07:39:17.131Z",
   "source": {
-    "totalFiles": 9100,
-    "totalLines": 1519081,
-    "useClientFiles": 1734,
+    "totalFiles": 9000,
+    "totalLines": 1502533,
+    "useClientFiles": 1668,
     "hooksWithoutUseClient": 0,
-    "filesOver800": 94,
+    "filesOver800": 92,
     "filesOver1000": 0,
     "filesOver1500": 0,
     "largestFile": {
@@ -109,37 +109,24 @@
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 4,
-    "featureToSharedTotalImports": 27,
+    "appFeatureDeepImports": 0,
+    "featureToSharedTotalImports": 25,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 0
   },
   "architecture": {
-    "crossFeatureEdgePairs": 3,
-    "topCrossFeatureEdges": [
-      {
-        "edge": "kangur -> cms",
-        "references": 12
-      },
-      {
-        "edge": "filemaker -> document-editor",
-        "references": 3
-      },
-      {
-        "edge": "admin -> foldertree",
-        "references": 2
-      }
-    ],
+    "crossFeatureEdgePairs": 0,
+    "topCrossFeatureEdges": [],
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2487,
-        "lines": 539346
+        "files": 2405,
+        "lines": 524987
       },
       {
         "feature": "ai",
         "files": 1169,
-        "lines": 236485
+        "lines": 236514
       },
       {
         "feature": "case-resolver",
@@ -149,12 +136,12 @@
       {
         "feature": "products",
         "files": 301,
-        "lines": 60140
+        "lines": 60059
       },
       {
         "feature": "cms",
-        "files": 359,
-        "lines": 55224
+        "files": 345,
+        "lines": 52793
       },
       {
         "feature": "integrations",
@@ -164,7 +151,7 @@
       {
         "feature": "filemaker",
         "files": 134,
-        "lines": 33440
+        "lines": 33452
       },
       {
         "feature": "prompt-exploder",
@@ -177,14 +164,9 @@
         "lines": 12909
       },
       {
-        "feature": "foldertree",
-        "files": 80,
-        "lines": 9824
-      },
-      {
         "feature": "admin",
         "files": 49,
-        "lines": 9030
+        "lines": 9032
       },
       {
         "feature": "auth",
@@ -232,11 +214,6 @@
         "lines": 2258
       },
       {
-        "feature": "document-editor",
-        "files": 18,
-        "lines": 2103
-      },
-      {
         "feature": "internationalization",
         "files": 21,
         "lines": 1976
@@ -269,10 +246,10 @@
     ]
   },
   "runtime": {
-    "setIntervalOccurrences": 1
+    "setIntervalOccurrences": 0
   },
   "codeHealth": {
-    "deepRelativeImportCount": 18,
+    "deepRelativeImportCount": 0,
     "circularFeatureDeps": [],
     "hookComplexity": [
       {
@@ -507,10 +484,6 @@
         "lines": 970
       },
       {
-        "path": "src/features/kangur/ui/components/KangurAssignmentManager.hooks.ts",
-        "lines": 969
-      },
-      {
         "path": "src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts",
         "lines": 969
       },
@@ -573,6 +546,10 @@
       {
         "path": "src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts",
         "lines": 935
+      },
+      {
+        "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.test.tsx",
+        "lines": 934
       }
     ],
     "topPagesByLines": [
@@ -659,8 +636,8 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 582,
-    "depthGte4Chains": 169,
+    "candidateChains": 542,
+    "depthGte4Chains": 156,
     "forwardingComponents": 120
   }
 }

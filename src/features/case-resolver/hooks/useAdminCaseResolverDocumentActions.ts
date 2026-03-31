@@ -13,7 +13,7 @@ import {
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
   type DocumentContentCanonical,
-} from '@/features/document-editor/public';
+} from '@/shared/lib/document-editor/public';
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverPartyReference,

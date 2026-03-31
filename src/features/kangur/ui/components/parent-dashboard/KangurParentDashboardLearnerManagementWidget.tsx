@@ -3,16 +3,18 @@ import type React from 'react';
 import { KangurPanelIntro, KangurPanelStack } from '@/features/kangur/ui/design/primitives';
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
-import { useLearnerManagementState } from './KangurParentDashboardLearnerManagementWidget.hooks';
-import { useLearnerManagementWidgetRuntime } from './KangurParentDashboardLearnerManagementWidget.runtime';
+import {
+  LearnerManagementProvider,
+  useLearnerManagementContext,
+} from './KangurParentDashboardLearnerManagement.context';
 import {
   LearnerManagementCardsGrid,
   LearnerManagementModal,
   LearnerManagementSettingsShortcut,
 } from './KangurParentDashboardLearnerManagementWidget.sections';
 
-export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
-  const state = useLearnerManagementState();
+function LearnerManagementWidgetContent(): React.JSX.Element | null {
+  const { state, runtime } = useLearnerManagementContext();
   const {
     copy,
     isCoarsePointer,
@@ -26,7 +28,6 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
   const { entry: learnerManagementContent } = useKangurPageContentEntry(
     'parent-dashboard-learner-management'
   );
-  const runtime = useLearnerManagementWidgetRuntime(state);
 
   if (!overview.canAccessDashboard) {
     return null;
@@ -40,57 +41,20 @@ export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Elemen
         description={learnerManagementContent?.summary ?? copy.learnerManagementDescription}
       />
 
-      <LearnerManagementSettingsShortcut
-        copy={copy}
-        isCoarsePointer={isCoarsePointer}
-        activeLearner={overview.activeLearner}
-        onOpenActiveLearnerSettings={runtime.handleOpenActiveLearnerSettings}
-      />
+      <LearnerManagementSettingsShortcut />
 
-      <LearnerManagementCardsGrid
-        learners={overview.learners}
-        selectedLearnerId={runtime.selectedLearnerId}
-        copy={copy}
-        isCoarsePointer={isCoarsePointer}
-        onOpenLearner={runtime.handleOpenLearner}
-        onCreateNew={runtime.handleCreateNew}
-      />
+      <LearnerManagementCardsGrid />
 
-      <LearnerManagementModal
-        copy={copy}
-        open={runtime.modalOpen}
-        isCreateModalVisible={runtime.isCreateModalVisible}
-        activeTab={activeTab}
-        isCoarsePointer={isCoarsePointer}
-        showPassword={runtime.showPassword}
-        isConfirmingRemove={runtime.isConfirmingRemove}
-        createForm={overview.createForm}
-        editForm={overview.editForm}
-        feedback={overview.feedback}
-        isSubmitting={overview.isSubmitting}
-        activeProfileId={runtime.activeProfileId}
-        activeProfile={runtime.activeProfile}
-        sessions={runtime.sessions}
-        sessionsError={sessionsError}
-        sessionsLoadMoreError={sessionsLoadMoreError}
-        isLoadingSessions={isLoadingSessions}
-        isLoadingMoreSessions={isLoadingMoreSessions}
-        hasMoreSessions={runtime.hasMoreSessions}
-        onClose={runtime.handleCloseWidgetModal}
-        onSelectTab={runtime.setActiveTab}
-        onDisplayNameChange={runtime.handleDisplayNameChange}
-        onLoginNameChange={runtime.handleLoginNameChange}
-        onAgeChange={runtime.handleAgeChange}
-        onPasswordChange={runtime.handlePasswordChange}
-        onStatusChange={runtime.handleStatusChange}
-        onTogglePassword={runtime.handleTogglePassword}
-        onCancelRemove={runtime.handleCancelRemove}
-        onConfirmRemove={runtime.handleConfirmRemove}
-        onSave={runtime.handleSaveAction}
-        onStartRemove={runtime.handleStartRemove}
-        onLoadMoreSessions={runtime.handleLoadMoreSessions}
-      />
+      <LearnerManagementModal />
     </KangurPanelStack>
+  );
+}
+
+export function KangurParentDashboardLearnerManagementWidget(): React.JSX.Element | null {
+  return (
+    <LearnerManagementProvider>
+      <LearnerManagementWidgetContent />
+    </LearnerManagementProvider>
   );
 }
 

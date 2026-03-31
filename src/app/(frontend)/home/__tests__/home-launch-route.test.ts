@@ -49,14 +49,10 @@ vi.mock('@/shared/lib/front-page-app', () => ({
   getFrontPageRedirectPath: getFrontPageRedirectPathMock,
 }));
 
-vi.mock('@/features/kangur/config/routing', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/kangur/config/routing')>();
-  return {
-    ...actual,
-    getKangurPublicLaunchHref: (route?: string) =>
-      route === 'dedicated_app' ? '/kangur?__kangurLaunch=dedicated_app' : '/kangur',
-  };
-});
+vi.mock('@/features/kangur/public', () => ({
+  getKangurPublicLaunchHref: (route?: string) =>
+    route === 'dedicated_app' ? '/kangur?__kangurLaunch=dedicated_app' : '/kangur',
+}));
 
 vi.mock('@/features/kangur/server', () => {
   return {

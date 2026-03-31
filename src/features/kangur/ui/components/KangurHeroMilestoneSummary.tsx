@@ -3,13 +3,13 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import type { KangurBadgeTrackKey } from '@kangur/core';
-import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/KangurBadgeTrackHighlights';
+import KangurBadgeTrackHighlights from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackHighlights';
 import {
   KangurProgressHighlightCardContent,
   KangurProgressHighlightHeader,
   KangurProgressHighlightChip,
   KangurProgressHighlightBar,
-} from '@/features/kangur/ui/components/KangurProgressHighlightCardContent';
+} from '@/features/kangur/ui/components/summary-cards/KangurProgressHighlightCardContent';
 import {
   getNextLockedBadge,
   translateKangurProgressWithFallback,

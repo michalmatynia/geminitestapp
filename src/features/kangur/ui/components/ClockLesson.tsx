@@ -23,7 +23,7 @@ import {
   KangurUnifiedLesson,
   useKangurUnifiedLessonBack,
 } from '@/features/kangur/ui/lessons/lesson-components';
-import ClockTrainingGame from '@/features/kangur/ui/components/ClockTrainingGame';
+import ClockTrainingGame from '@/features/kangur/ui/components/clock-training/ClockTrainingGame';
 import {
   buildClockCombinedSlides,
   buildClockHoursSlides,

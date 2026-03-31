@@ -27,12 +27,12 @@ root Next.js app.
 
 Verified from the repository scan:
 
-- `27` top-level feature domains in `src/features`
-- `285` `route.ts` API route files in `src/app/api`
-- `164` `page.tsx` files in `src/app`
-- `439` test files under top-level `__tests__`
+- `25` top-level feature domains in `src/features`
+- `298` `route.ts` API route files in `src/app/api`
+- `182` `page.tsx` files in `src/app`
+- `450` test files under top-level `__tests__`
 - `59` Playwright specs in `e2e/features`
-- `381` files in `scripts`
+- `411` files in `scripts`
 
 ## Stack
 
@@ -656,4 +656,15 @@ If you need to change any of these files, stop and ask the user for permission f
 
 ## Last Reviewed
 
-Scanned against the repository on `2026-03-26`.
+Scanned against the repository on `2026-03-30`.
+
+## Zero-Baseline Achievements (March 2026)
+
+The repository has reached a critical architectural milestone with the following metrics reduced to exactly zero:
+
+- **Massive Files**: Every file in the `src` directory is now under 1000 lines of code.
+- **Structural Duplication**: All exact structural type clusters and UI consolidation opportunities have been eliminated.
+- **Runtime Integrity**: All direct `setInterval` calls in feature code have been migrated to `safeSetInterval`.
+- **Architectural Boundaries**: Forbidden deep imports from the app layer into feature internals have been fully standardized.
+- **Deep Relative Imports**: All deep upward relative paths (`../../../`) have been migrated to `@/` workspace aliases.
+- **Cross-Feature Edge Pairs**: Unique feature-to-feature dependency edges in the UI layer have been eliminated by moving shared components to `src/shared`.

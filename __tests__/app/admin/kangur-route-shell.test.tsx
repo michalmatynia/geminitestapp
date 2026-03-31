@@ -9,11 +9,19 @@ const { shellPropsSpy } = vi.hoisted(() => ({
   shellPropsSpy: vi.fn(),
 }));
 
-vi.mock('@/features/kangur/admin/AdminKangurPageShell', () => ({
+const { requireAccessibleKangurSlugRouteMock } = vi.hoisted(() => ({
+  requireAccessibleKangurSlugRouteMock: vi.fn(async () => undefined),
+}));
+
+vi.mock('@/features/kangur/public', () => ({
   AdminKangurPageShell: (props: { slug?: string[] }) => {
     shellPropsSpy(props);
     return <div data-testid='admin-kangur-shell' />;
   },
+}));
+
+vi.mock('@/features/kangur/server', () => ({
+  requireAccessibleKangurSlugRoute: requireAccessibleKangurSlugRouteMock,
 }));
 
 import AdminKangurPage from '@/app/(admin)/admin/kangur/page';
@@ -22,6 +30,7 @@ import AdminKangurSlugPage from '@/app/(admin)/admin/kangur/[...slug]/page';
 describe('admin kangur routes', () => {
   beforeEach(() => {
     shellPropsSpy.mockReset();
+    requireAccessibleKangurSlugRouteMock.mockReset();
   });
 
   it('renders /admin/kangur with an empty slug', () => {
@@ -39,6 +48,7 @@ describe('admin kangur routes', () => {
     render(element);
 
     expect(screen.getByTestId('admin-kangur-shell')).toBeInTheDocument();
+    expect(requireAccessibleKangurSlugRouteMock).toHaveBeenCalledWith(['lessons']);
     expect(shellPropsSpy).toHaveBeenCalledWith({ slug: ['lessons'] });
   });
 });

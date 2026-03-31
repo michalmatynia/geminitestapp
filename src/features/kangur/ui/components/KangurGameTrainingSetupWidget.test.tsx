@@ -89,7 +89,7 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBan
   default: () => <div data-testid='mock-practice-assignment-banner'>mock-practice-assignment-banner</div>,
 }));
 
-import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
+import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/game-setup/KangurGameTrainingSetupWidget';
 
 describe('KangurGameTrainingSetupWidget', () => {
   beforeEach(() => {

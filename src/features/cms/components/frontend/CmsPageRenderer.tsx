@@ -6,7 +6,7 @@ import {
   type CmsPageRendererProps,
   type SectionRendererProps,
 } from './CmsPageRendererBase';
-import { useOptionalCmsStorefrontAppearance } from './CmsStorefrontAppearance';
+import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { useOptionalCmsRuntime } from './CmsRuntimeContext';
 
 export type { CmsPageRendererProps } from './CmsPageRendererBase';

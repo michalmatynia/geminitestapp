@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from 'react';
 
-import { findFolderById } from '@/features/foldertree/public';
+import { findFolderById } from '@/shared/lib/foldertree/public';
 import type { UseNoteThemeProps } from '@/shared/contracts/notes';
 import type { NoteWithRelations, NotebookRecord, ThemeRecord } from '@/shared/contracts/notes';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';

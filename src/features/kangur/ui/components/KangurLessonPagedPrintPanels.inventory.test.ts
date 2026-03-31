@@ -19,7 +19,7 @@ const PAGED_PRINT_PANEL_FILES = [
     expectedCount: 1,
   },
   {
-    path: 'src/features/kangur/ui/components/ClockTrainingGame.tsx',
+    path: 'src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx',
     expectedCount: 1,
   },
   {
@@ -39,7 +39,7 @@ const PAGED_PRINT_PANEL_FILES = [
 const PAGED_PRINT_MARKER = "data-kangur-print-paged-panel='true'";
 const PREFERRED_PRINT_TARGET_FILES = [
   {
-    path: 'src/features/kangur/ui/components/ClockTrainingGame.tsx',
+    path: 'src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx',
     expectedCount: 1,
   },
   {

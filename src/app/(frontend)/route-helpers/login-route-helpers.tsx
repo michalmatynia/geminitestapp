@@ -11,7 +11,7 @@ import {
   resolveSlugToPage,
 } from '@/app/(frontend)/cms/slug-page-data';
 import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home/home-helpers';
-import { getKangurStorefrontInitialState } from '@/features/kangur/appearance/server/storefront-appearance';
+import { getKangurStorefrontInitialState } from '@/features/kangur/server';
 import { FrontendPublicOwnerKangurShell } from '@/features/kangur/public';
 import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';

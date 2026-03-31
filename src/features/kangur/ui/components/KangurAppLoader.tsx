@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 
-import { KangurHomeLogo } from '@/features/kangur/ui/components/KangurHomeLogo';
+import { KangurHomeLogo } from '@/features/kangur/ui/components/wordmarks/KangurHomeLogo';
 import { safeHtml } from '@/shared/lib/security/safe-html';
 import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 

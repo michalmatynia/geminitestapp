@@ -365,7 +365,7 @@ function NumberBalanceRushLeaderboard({
 
   return (
     <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-      {entries.map((entry) => (
+      {entries.map((entry: any) => (
         <div
           key={entry.playerId}
           className={cn(

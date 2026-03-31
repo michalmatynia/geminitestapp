@@ -8,13 +8,13 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-31T01:21:48.774Z
+Generated at: 2026-03-31T07:39:17.131Z
 
 ## Snapshot
 
-- Source files: 9100
-- Source lines: 1519081
-- use client files: 1734
+- Source files: 9000
+- Source lines: 1502533
+- use client files: 1668
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
 - Largest file: `src/features/filemaker/components/FilemakerMailSidebar.tsx` (986 LOC)
@@ -22,11 +22,11 @@ Generated at: 2026-03-31T01:21:48.774Z
 - API delegated server routes: 172
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 298/30 (993.3%)
-- Cross-feature dependency pairs: 3
+- Cross-feature dependency pairs: 0
 - Shared -> features imports: 0
-- setInterval occurrences: 1
-- Prop-drilling chains (depth >= 3): 582
-- Prop-drilling chains (depth >= 4): 169
+- setInterval occurrences: 0
+- Prop-drilling chains (depth >= 3): 542
+- Prop-drilling chains (depth >= 4): 156
 
 ## Top API Hotspots (by LOC)
 
@@ -52,9 +52,6 @@ Generated at: 2026-03-31T01:21:48.774Z
 
 | Edge | References |
 | --- | ---: |
-| `kangur -> cms` | 12 |
-| `filemaker -> document-editor` | 3 |
-| `admin -> foldertree` | 2 |
 
 ## Top File Hotspots (by LOC)
 
@@ -73,10 +70,10 @@ Generated at: 2026-03-31T01:21:48.774Z
 | `src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts` | 973 |
 | `src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx` | 970 |
 | `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 970 |
-| `src/features/kangur/ui/components/KangurAssignmentManager.hooks.ts` | 969 |
 | `src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts` | 969 |
 | `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 967 |
 | `src/features/kangur/ui/components/GeometryBasicsWorkshopGame.tsx` | 964 |
 | `src/shared/contracts/cms-theme.ts` | 964 |
+| `src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.ts` | 962 |

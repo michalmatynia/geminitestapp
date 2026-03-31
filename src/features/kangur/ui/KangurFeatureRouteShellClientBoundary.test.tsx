@@ -6,20 +6,11 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { settingsStoreGetMock } = vi.hoisted(() => ({
-  settingsStoreGetMock: vi.fn<(key: string) => string | undefined>(),
+vi.mock('@/features/kangur/ui/useKangurStorefrontAppearance', () => ({
+  useKangurStorefrontAppearance: vi.fn(() => ({
+    theme: { backgroundColor: '#f1ecf4' },
+  })),
 }));
-
-vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/features/kangur/shared/providers/SettingsStoreProvider')>();
-  return {
-    ...actual,
-    useSettingsStore: () => ({
-      get: settingsStoreGetMock,
-    }),
-  };
-});
 
 vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', async () => {
   const { useKangurStorefrontAppearance } = await import(
@@ -42,14 +33,12 @@ vi.mock('@/features/kangur/ui/KangurFeatureRouteShell', async () => {
   };
 });
 
-import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
-import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
+import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 
 describe('KangurFeatureRouteShellClientBoundary', () => {
   beforeEach(() => {
-    settingsStoreGetMock.mockReset();
-    settingsStoreGetMock.mockReturnValue(undefined);
     vi.resetModules();
+    vi.clearAllMocks();
   });
 
   it('renders nothing until the route shell module resolves', async () => {
@@ -70,27 +59,16 @@ describe('KangurFeatureRouteShellClientBoundary', () => {
     const { KangurFeatureRouteShellClientBoundary } = await import(
       './KangurFeatureRouteShellClientBoundary'
     );
-    const initialThemeRaw = serializeSetting({
-      backgroundColor: '#123456',
-      primaryColor: '#4f46e5',
+    
+    (useKangurStorefrontAppearance as any).mockReturnValue({
+      theme: { backgroundColor: '#123456' },
     });
 
-    render(
-      <KangurStorefrontAppearanceProvider
-        initialAppearance={{
-          mode: 'default',
-          themeSettings: { default: initialThemeRaw },
-        }}
-      >
-        <KangurFeatureRouteShellClientBoundary />
-      </KangurStorefrontAppearanceProvider>
-    );
+    render(<KangurFeatureRouteShellClientBoundary />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('kangur-feature-route-shell')).toHaveAttribute(
-        'data-background',
-        '#123456'
-      );
+      const element = screen.getByTestId('kangur-feature-route-shell');
+      expect(element).toHaveAttribute('data-background', '#123456');
     });
   });
 });

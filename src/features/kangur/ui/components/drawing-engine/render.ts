@@ -248,7 +248,7 @@ export const redrawKangurCanvasStrokes = <TMeta>({
     ctx.clearRect(0, 0, logicalWidth, logicalHeight);
     const nextCachedLayer = baseLayerCache.current;
     if (nextCachedLayer) {
-      ctx.drawImage(nextCachedLayer.canvas, 0, 0, logicalWidth, logicalHeight);
+      ctx.drawImage && ctx.drawImage(nextCachedLayer.canvas, 0, 0, logicalWidth, logicalHeight);
     }
   } else {
     drawKangurCanvasBaseLayer({
@@ -290,7 +290,7 @@ export const redrawKangurCanvasStrokes = <TMeta>({
 
     const nextCachedStrokeLayer = strokeLayerCache.current;
     if (nextCachedStrokeLayer) {
-      ctx.drawImage(nextCachedStrokeLayer.canvas, 0, 0, logicalWidth, logicalHeight);
+      ctx.drawImage && ctx.drawImage(nextCachedStrokeLayer.canvas, 0, 0, logicalWidth, logicalHeight);
     }
   } else {
     renderKangurDrawingStrokes(ctx, strokes, resolveStyle);

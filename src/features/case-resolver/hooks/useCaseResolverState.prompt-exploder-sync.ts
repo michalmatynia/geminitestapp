@@ -11,7 +11,7 @@ import {
   deriveDocumentContentSync,
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
-} from '@/features/document-editor/public';
+} from '@/shared/lib/document-editor/public';
 import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,

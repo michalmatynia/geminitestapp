@@ -42,6 +42,7 @@ export interface ProductFormCoreContextType {
   uploading: boolean;
   uploadError: string | null;
   uploadSuccess: boolean;
+  validatorSessionKey?: string;
 }
 
 export interface ProductFormCoreActionsContextType {
@@ -86,12 +87,14 @@ export function ProductFormCoreProvider({
   draft,
   requireSku = true,
   initialSku,
+  validatorSessionKey,
 }: {
   children: React.ReactNode;
   product?: ProductWithImages;
   draft?: ProductDraft | null;
   requireSku?: boolean;
   initialSku?: string;
+  validatorSessionKey?: string;
 }) {
   const formSchema = product || !requireSku ? productUpdateSchema : productCreateSchema;
   const methods = useForm<ProductFormData>({
@@ -171,6 +174,7 @@ export function ProductFormCoreProvider({
       uploading,
       uploadError,
       uploadSuccess,
+      validatorSessionKey,
     }),
     [
       methods,
@@ -183,6 +187,7 @@ export function ProductFormCoreProvider({
       uploading,
       uploadError,
       uploadSuccess,
+      validatorSessionKey,
     ]
   );
   const actionsValue = useMemo(

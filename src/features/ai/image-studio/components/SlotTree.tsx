@@ -22,7 +22,7 @@ import {
   isInternalMasterTreeNode,
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/public';
+} from '@/shared/lib/foldertree/public';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { IdDataDto } from '@/shared/contracts/base';
 import { MasterTreeSettingsButton } from '@/shared/ui';

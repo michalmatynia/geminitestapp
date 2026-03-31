@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "setup:contracts": "node -e \"const fs = require('fs'); const path = require('path'); const dirs = ['src/shared/contracts/ui/component-props', 'src/shared/contracts/hooks', 'src/shared/contracts/context', 'src/shared/contracts/kangur-repositories', 'src/shared/contracts/workers', 'src/shared/contracts/forms']; dirs.forEach(d => { const p = path.dirname(d); if (!fs.existsSync(d)) fs.mkdirSync(d, {recursive: true}); const idx = path.join(d, 'index.ts'); if (!fs.existsSync(idx)) fs.writeFileSync(idx, '// ' + d); }); console.log('✅ Directories created');\""
+  }
+}

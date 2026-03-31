@@ -10,7 +10,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 }));
 
 import { KangurIconSummaryOptionCard } from '@/features/kangur/ui/components/summary-cards/KangurIconSummaryOptionCard';
-import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
+import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/summary-cards/KangurIconSummaryCardContent';
 
 describe('KangurIconSummaryOptionCard', () => {
   it('renders the shared icon-summary content inside the shared option-card shell via composition', () => {

@@ -10,39 +10,39 @@ const kangurButtonPath = path.join(
 );
 const kangurAiTutorWidgetDisplayPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorWidget.coordinator-display.ts'
+  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.coordinator-display.ts'
 );
 const kangurAiTutorPanelChromePath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.tsx'
+  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorPanelChrome.tsx'
 );
 const kangurAiTutorPanelChromeSharedPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.shared.ts'
+  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorPanelChrome.shared.ts'
 );
 const kangurAiTutorPanelChromeSurfacePath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.surface.tsx'
+  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorPanelChrome.surface.tsx'
 );
 const kangurAiTutorPanelAuxiliaryControlsPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorPanelAuxiliaryControls.tsx'
+  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorPanelAuxiliaryControls.tsx'
 );
 const kangurAiTutorMessageListPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorMessageList.tsx'
+  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorMessageList.tsx'
 );
 const kangurAiTutorComposerPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorComposer.tsx'
+  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorComposer.tsx'
 );
 const kangurParentDashboardAiTutorWidgetPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx'
+  'src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx'
 );
 const kangurHomeActionsWidgetPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurGameHomeActionsWidget.tsx'
+  'src/features/kangur/ui/components/game-setup/KangurGameHomeActionsWidget.tsx'
 );
 const kangurSourceRoots = [
   path.join(process.cwd(), 'src/features/kangur'),

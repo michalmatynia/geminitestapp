@@ -304,7 +304,7 @@ vi.mock('@/features/kangur/ui/components/UserNotRegisteredError', () => ({
   default: () => <div data-testid='kangur-user-not-registered-error' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurAiTutorWidget', () => ({
+vi.mock('@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget', () => ({
   KangurAiTutorWidget: () => <div data-testid='kangur-ai-tutor-widget' />,
 }));
 

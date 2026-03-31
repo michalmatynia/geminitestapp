@@ -63,12 +63,12 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
   useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameNavigationWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget', () => ({
   KangurGameNavigationWidget: ({ visible = true }: { visible?: boolean }) =>
     visible ? <div data-testid='kangur-game-navigation-widget' /> : null,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget', () => ({
   KangurGameHomeHeroWidget: () => <div data-testid='kangur-home-hero-widget' />,
 }));
 
@@ -76,17 +76,17 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight',
   KangurAssignmentSpotlight: () => <div data-testid='kangur-assignment-spotlight-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeActionsWidget', () => ({
   KangurGameHomeActionsWidget: () => <div data-testid='kangur-home-actions-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget', () => ({
   KangurGameHomeDuelsInvitesWidget: () => (
     <div data-testid='kangur-home-duels-invites-widget' />
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeQuestWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget', () => ({
   KangurGameHomeQuestWidget: () => <div data-testid='kangur-home-quest-widget' />,
 }));
 
@@ -103,23 +103,23 @@ vi.mock('@/features/kangur/ui/components/progress', () => ({
   XpToast: () => <div data-testid='xp-toast-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameKangurSessionWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameKangurSessionWidget', () => ({
   KangurGameKangurSessionWidget: () => <div data-testid='kangur-kangur-session-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameCalendarTrainingWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-quiz/KangurGameCalendarTrainingWidget', () => ({
   KangurGameCalendarTrainingWidget: () => <div data-testid='kangur-calendar-training-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameGeometryTrainingWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-quiz/KangurGameGeometryTrainingWidget', () => ({
   KangurGameGeometryTrainingWidget: () => <div data-testid='kangur-geometry-training-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameQuestionWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameQuestionWidget', () => ({
   KangurGameQuestionWidget: () => <div data-testid='kangur-question-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameResultWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameResultWidget', () => ({
   KangurGameResultWidget: () => <div data-testid='kangur-result-widget' />,
 }));
 
@@ -127,7 +127,7 @@ vi.mock('@/features/kangur/ui/components/game-setup/OperationSelector', () => ({
   default: () => <div data-testid='mock-operation-selector'>Mock operation selector</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/TrainingSetup', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/TrainingSetup', () => ({
   default: () => <div data-testid='mock-training-setup'>Mock training setup</div>,
 }));
 

@@ -4,8 +4,8 @@ import { FilterX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/public';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/public';
+import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { Badge, Button, Checkbox, Input, SelectSimple, useToast } from '@/shared/ui';
 import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';

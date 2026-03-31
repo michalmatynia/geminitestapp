@@ -1,1 +1,1 @@
-export { default } from '../../../(frontend)/[...slug]/loading';
+export { default } from '@/app/(frontend)/[...slug]/loading';

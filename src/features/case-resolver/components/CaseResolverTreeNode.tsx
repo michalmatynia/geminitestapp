@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight, Lock, Unlock, Trash2, GitBranch } from 'lucide-react';
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as CaseResolverTreeNodeProps } from '@/features/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput as CaseResolverTreeNodeProps } from '@/shared/lib/foldertree/public';
 import { Button, Badge, Input } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';

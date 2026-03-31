@@ -53,6 +53,33 @@ vi.mock('@/shared/lib/front-page-app', () => ({
 }));
 
 vi.mock('@/features/kangur/public', () => ({
+  getKangurPublicLaunchHref: (
+    route: string | undefined,
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
+
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        return;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    });
+
+    if (route === 'dedicated_app' && slugSegments[0] !== 'games' && slugSegments[0] !== 'parent-dashboard') {
+      query.set('__kangurLaunch', 'dedicated_app');
+    }
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
   KangurPublicApp: kangurPublicAppMock,
   KangurFeatureRouteShell: kangurFeatureRouteShellMock,
   getKangurPublicAliasHref: (

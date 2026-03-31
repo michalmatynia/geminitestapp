@@ -46,7 +46,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonGameSections', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
+vi.mock('@/features/kangur/ui/components/clock-training/ClockTrainingGame', () => ({
   __esModule: true,
   default: ({ section }: { section?: string }) => (
     <div data-testid='mock-clock-training-game'>{section ?? 'mixed'}</div>

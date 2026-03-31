@@ -299,7 +299,7 @@ vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonNavigationWi
   KangurLessonNavigationWidget: () => <div data-testid='mock-lesson-navigation' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
+vi.mock('@/features/kangur/ui/components/wordmarks/LazyKangurLessonsWordmark', () => ({
   LazyKangurLessonsWordmark: (props: unknown) => {
     lessonsWordmarkPropsMock(props);
     return <div data-testid='mock-lessons-wordmark' />;

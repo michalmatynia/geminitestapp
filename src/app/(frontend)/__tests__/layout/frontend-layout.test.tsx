@@ -7,7 +7,6 @@ import type { ReactNode } from 'react';
 
 const {
   cmsStorefrontAppearanceProviderMock,
-  frontendPublicOwnerKangurShellMock,
   frontendPublicOwnerProviderMock,
   frontendPublicOwnerShellClientMock,
   getCmsThemeSettingsMock,
@@ -23,7 +22,6 @@ const {
   shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   cmsStorefrontAppearanceProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
-  frontendPublicOwnerKangurShellMock: vi.fn(() => <div data-testid='frontend-kangur-shell' />),
   frontendPublicOwnerProviderMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   frontendPublicOwnerShellClientMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   getCmsThemeSettingsMock: vi.fn(),
@@ -52,12 +50,13 @@ vi.mock('@/features/cms/server', () => ({
   getCmsThemeSettings: getCmsThemeSettingsMock,
 }));
 
-vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
-  getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
-}));
-
-vi.mock('@/features/kangur/server/auth-bootstrap', () => ({
+vi.mock('@/features/kangur/server', () => ({
   getKangurAuthBootstrapScript: getKangurAuthBootstrapScriptMock,
+  getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
+  getKangurSurfaceBootstrapStyle: vi.fn(
+    () => ':root{--kangur-soft-card-border:rgba(15,23,42,0.18);}'
+  ),
+  KANGUR_SURFACE_HINT_SCRIPT: "document.documentElement.classList.add('kangur-surface-active')",
 }));
 
 vi.mock('@/shared/lib/request/server-request-context', () => ({
@@ -65,32 +64,20 @@ vi.mock('@/shared/lib/request/server-request-context', () => ({
   readServerRequestPathname: readServerRequestPathnameMock,
 }));
 
-vi.mock('@/features/cms/components/frontend/CmsStorefrontAppearance', () => ({
+vi.mock('@/features/cms/public', () => ({
   CmsStorefrontAppearanceProvider: cmsStorefrontAppearanceProviderMock,
-}));
-
-vi.mock('@/features/kangur/ui/FrontendPublicOwnerContext', () => ({
-  FrontendPublicOwnerProvider: frontendPublicOwnerProviderMock,
-}));
-
-vi.mock('@/features/kangur/ui/FrontendPublicOwnerKangurShell', () => ({
-  FrontendPublicOwnerKangurShell: frontendPublicOwnerKangurShellMock,
 }));
 
 vi.mock('@/shared/ui/QueryErrorBoundary', () => ({
   QueryErrorBoundary: queryErrorBoundaryMock,
 }));
 
-vi.mock('@/features/kangur/public', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/kangur/public')>();
-  return {
-    ...actual,
-    FrontendPublicOwnerProvider: frontendPublicOwnerProviderMock,
-    FrontendPublicOwnerShellClient: frontendPublicOwnerShellClientMock,
-    KangurSSRSkeleton: kangurSSRSkeletonMock,
-    KangurServerShell: kangurServerShellMock,
-  };
-});
+vi.mock('@/features/kangur/public', () => ({
+  FrontendPublicOwnerProvider: frontendPublicOwnerProviderMock,
+  FrontendPublicOwnerShellClient: frontendPublicOwnerShellClientMock,
+  KangurSSRSkeleton: kangurSSRSkeletonMock,
+  KangurServerShell: kangurServerShellMock,
+}));
 
 describe('frontend layout bootstrap', () => {
   beforeEach(() => {
@@ -127,7 +114,6 @@ describe('frontend layout bootstrap', () => {
     expect(getFrontPageSettingMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
     expect(document.querySelector('#kangur-main-content')).toHaveAttribute(
       'data-frontend-public-route-family',
       'cms'
@@ -187,7 +173,6 @@ describe('frontend layout bootstrap', () => {
       }),
       undefined
     );
-    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
     expect(kangurSSRSkeletonMock).toHaveBeenCalledTimes(1);
     },
     60_000
@@ -229,7 +214,6 @@ describe('frontend layout bootstrap', () => {
       }),
       undefined
     );
-    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
     expect(kangurServerShellMock).toHaveBeenCalledTimes(1);
   });
 
@@ -308,7 +292,6 @@ describe('frontend layout bootstrap', () => {
     expect(getCmsThemeSettingsMock).toHaveBeenCalledTimes(1);
     expect(getKangurStorefrontInitialStateMock).not.toHaveBeenCalled();
     expect(getKangurAuthBootstrapScriptMock).not.toHaveBeenCalled();
-    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
     expect(frontendPublicOwnerProviderMock.mock.calls[0]?.[0]).toMatchObject({
       publicOwner: 'cms',
       routeFamily: 'studiq',
@@ -353,7 +336,6 @@ describe('frontend layout bootstrap', () => {
       }),
       undefined
     );
-    expect(frontendPublicOwnerKangurShellMock).not.toHaveBeenCalled();
     expect(kangurServerShellMock).toHaveBeenCalledTimes(1);
   });
 

@@ -84,7 +84,7 @@ vi.mock('next-intl', () => ({
     },
 }));
 
-import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/KangurGameHomeMomentumWidget';
+import KangurGameHomeMomentumWidget from '@/features/kangur/ui/components/game-home/KangurGameHomeMomentumWidget';
 
 const buildProgress = (
   overrides: Partial<KangurProgressState> = {}

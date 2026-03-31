@@ -136,12 +136,12 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameNavigationWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget', () => ({
   KangurGameNavigationWidget: ({ visible = true }: { visible?: boolean }) =>
     visible ? <div data-testid='kangur-game-navigation-widget' /> : null,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget', () => ({
   KangurGameHomeHeroWidget: (props: {
     hideWhenScreenMismatch?: boolean;
     showIntro?: boolean;
@@ -159,14 +159,14 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight',
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeActionsWidget', () => ({
   KangurGameHomeActionsWidget: (props: { hideWhenScreenMismatch?: boolean }) => {
     homeActionsPropsMock(props);
     return <div data-testid='kangur-home-actions-widget' />;
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget', () => ({
   KangurGameHomeDuelsInvitesWidget: (props: { hideWhenScreenMismatch?: boolean }) => {
     homeDuelsInvitesPropsMock(props);
     return <div data-testid='kangur-home-duels-invites-widget' />;
@@ -195,7 +195,7 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameHomeQuestWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget', () => ({
   KangurGameHomeQuestWidget: () => <div data-testid='kangur-home-quest-widget' />,
 }));
 
@@ -211,22 +211,22 @@ vi.mock('@/features/kangur/ui/components/PlayerProgressCard', () => ({
   default: () => <div data-testid='player-progress-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/XpToast', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/XpToast', () => ({
   default: (props: unknown) => {
     xpToastPropsMock(props);
     return <div data-testid='xp-toast-widget' />;
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameTrainingSetupWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurGameTrainingSetupWidget', () => ({
   KangurGameTrainingSetupWidget: () => <div data-testid='kangur-training-setup-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameKangurSetupWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurGameKangurSetupWidget', () => ({
   KangurGameKangurSetupWidget: () => <div data-testid='kangur-kangur-setup-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameKangurSessionWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameKangurSessionWidget', () => ({
   KangurGameKangurSessionWidget: () => <div data-testid='kangur-kangur-session-widget' />,
 }));
 
@@ -237,7 +237,7 @@ vi.mock('@/features/kangur/ui/components/CalendarTrainingGame', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/ClockTrainingGame', () => ({
+vi.mock('@/features/kangur/ui/components/clock-training/ClockTrainingGame', () => ({
   default: (props: unknown) => {
     clockTrainingGamePropsMock(props);
     return <div data-testid='clock-training-game' />;
@@ -304,11 +304,11 @@ vi.mock('@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorW
   KangurGameOperationSelectorWidget: () => <div data-testid='kangur-operation-selector-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameQuestionWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameQuestionWidget', () => ({
   KangurGameQuestionWidget: () => <div data-testid='kangur-question-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameResultWidget', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/KangurGameResultWidget', () => ({
   KangurGameResultWidget: () => <div data-testid='kangur-result-widget' />,
 }));
 

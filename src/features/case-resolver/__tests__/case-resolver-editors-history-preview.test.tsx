@@ -18,7 +18,7 @@ vi.mock('next/image', () => ({
   default: () => <div data-testid='mock-next-image' />,
 }));
 
-vi.mock('@/features/document-editor/public', () => ({
+vi.mock('@/shared/lib/document-editor/public', () => ({
   DocumentWysiwygEditor: () => <div data-testid='mock-wysiwyg-editor' />,
 }));
 

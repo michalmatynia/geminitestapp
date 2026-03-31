@@ -15,7 +15,7 @@ const mockState = vi.hoisted(() => ({
   safeStringify: vi.fn((value: unknown) => JSON.stringify(value)),
 }));
 
-vi.mock('../../../context', () => ({
+vi.mock('@/features/ai/ai-paths/components/context', () => ({
   useGraphState: () => mockState.graphState,
   useRuntimeActions: () => ({
     setLastError: mockState.setLastError,

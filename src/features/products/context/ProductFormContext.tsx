@@ -351,6 +351,7 @@ export function ProductFormProvider(props: {
   requireHydratedEditProduct?: boolean;
   initialSku?: string;
   initialCatalogId?: string;
+  validatorSessionKey?: string;
 }): React.ReactNode {
   const {
     children,
@@ -362,6 +363,7 @@ export function ProductFormProvider(props: {
     requireHydratedEditProduct = false,
     initialSku,
     initialCatalogId,
+    validatorSessionKey,
   } = props;
 
   const runtime = useContext(ProductFormProviderRuntimeContext);
@@ -394,6 +396,7 @@ export function ProductFormProvider(props: {
       draft={resolvedDraft}
       requireSku={requireSku}
       initialSku={initialSku}
+      validatorSessionKey={validatorSessionKey}
     >
       <ProductFormProviderConfigContext.Provider value={providerConfigContextValue}>
         <ProductFormSubProviders>{children}</ProductFormSubProviders>

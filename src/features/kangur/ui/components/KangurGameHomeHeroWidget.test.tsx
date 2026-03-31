@@ -32,7 +32,7 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight',
   ),
 }));
 
-import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/KangurGameHomeHeroWidget';
+import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget';
 
 const buildProgress = (
   overrides: Partial<{

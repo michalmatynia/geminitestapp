@@ -2,29 +2,22 @@ import { AnimatePresence, motion, type Transition } from 'framer-motion';
 
 import { cn } from '@/features/kangur/shared/utils';
 
+import { useKangurAiTutorPortalContext } from './KangurAiTutorPortal.context';
 import { KangurAiTutorDrawingCanvas } from './KangurAiTutorDrawingCanvas';
 
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 
-type Props = {
-  hint?: string;
-  onClose: () => void;
-  onComplete: (dataUrl: string) => void;
-  prefersReducedMotion: boolean;
-  shouldRender: boolean;
-  style: CSSProperties | null;
-};
+export function KangurAiTutorDrawingSidePanel(): JSX.Element {
+  const { drawingPanel } = useKangurAiTutorPortalContext();
+  const {
+    hint,
+    onClose: handleClose,
+    onComplete: handleComplete,
+    prefersReducedMotion,
+    shouldRender,
+    style,
+  } = drawingPanel;
 
-export function KangurAiTutorDrawingSidePanel({
-  hint,
-  onClose,
-  onComplete,
-  prefersReducedMotion,
-  shouldRender,
-  style,
-}: Props): JSX.Element {
-  const handleClose = onClose;
-  const handleComplete = onComplete;
   const panelTransition: Transition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 0.2, ease: [0.22, 1, 0.36, 1] };

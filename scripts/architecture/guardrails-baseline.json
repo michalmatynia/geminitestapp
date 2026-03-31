@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-31T00:20:26.038Z",
+  "generatedAt": "2026-03-31T07:30:38.856Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
     "imports.featuresToAppApiTotalImports": 0,
@@ -8,7 +8,7 @@
   "max": {
     "source.filesOver1000": 0,
     "source.filesOver1500": 0,
-    "source.useClientFiles": 1733,
+    "source.useClientFiles": 1668,
     "source.hooksWithoutUseClient": 0,
     "source.largestFileLines": 986,
     "api.totalRoutes": 30,
@@ -16,12 +16,12 @@
     "api.routesWithoutApiHandler": 0,
     "api.routesWithoutExplicitCachePolicy": 0,
     "imports.appFeatureBarrelImports": 0,
-    "imports.appFeatureDeepImports": 4,
-    "imports.featuresToSharedTotalImports": 27,
+    "imports.appFeatureDeepImports": 0,
+    "imports.featuresToSharedTotalImports": 25,
     "imports.featuresToAppApiTotalImports": 0,
     "imports.sharedToFeaturesTotalImports": 0,
-    "architecture.crossFeatureEdgePairs": 3,
-    "runtime.setIntervalOccurrences": 1,
+    "architecture.crossFeatureEdgePairs": 0,
+    "runtime.setIntervalOccurrences": 0,
     "propDrilling.depthGte4Chains": 0,
     "propDrilling.componentsWithForwarding": 0,
     "uiConsolidation.totalOpportunities": 0,

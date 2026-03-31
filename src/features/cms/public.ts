@@ -9,13 +9,13 @@ export {
   CmsStorefrontAppearanceButtons,
   CmsStorefrontAppearanceProvider,
   useOptionalCmsStorefrontAppearance,
-} from './components/frontend/CmsStorefrontAppearance';
-export type { CmsStorefrontAppearanceMode } from './components/frontend/CmsStorefrontAppearance';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
+export type { CmsStorefrontAppearanceMode } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 export {
   resolveCmsStorefrontAppearance,
   resolveKangurStorefrontAppearance,
   withFallbackTone,
-} from './components/frontend/CmsStorefrontAppearance.logic';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance.logic';
 export { MediaStylesProvider } from './components/frontend/media-styles-context';
 export * from './components/frontend/theme-styles';
 export { CmsBuilderLeftPanel } from './components/page-builder/CmsBuilderLeftPanel';
@@ -50,3 +50,21 @@ export {
 export * from './hooks/useCmsQueries';
 export { isCmsSectionHidden } from './utils/page-builder-normalization';
 export { CmsDomainSelector } from './components/CmsDomainSelector';
+export { default as CmsHomePage } from './pages/CmsHomePage';
+export { default as PageBuilderPage } from './pages/builder/PageBuilderPage';
+export {
+  PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,
+  PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY,
+  PageBuilderSettingsPage,
+} from './components/page-builder/settings/PageBuilderSettingsPage';
+export { default as CmsEditorLayout } from './components/CmsEditorLayout';
+export { default as EditPagePage } from './pages/pages/EditPagePage';
+export { default as CreatePagePage } from './pages/pages/CreatePagePage';
+export { default as PagesPage } from './pages/pages/PagesPage';
+export { default as EditSlugPage } from './pages/slugs/EditSlugPage';
+export { default as CreateSlugPage } from './pages/slugs/CreateSlugPage';
+export { default as SlugsPage } from './pages/slugs/SlugsPage';
+export { default as EditThemePage } from './pages/themes/EditThemePage';
+export { default as CreateThemePage } from './pages/themes/CreateThemePage';
+export { default as ThemesPage } from './pages/themes/ThemesPage';
+export { default as ZonesPage } from './pages/zones/ZonesPage';

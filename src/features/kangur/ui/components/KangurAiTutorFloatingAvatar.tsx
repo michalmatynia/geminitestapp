@@ -3,49 +3,13 @@ import { motion, type TargetAndTransition, type Transition } from 'framer-motion
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { cn } from '@/features/kangur/shared/utils';
 
+import { useKangurAiTutorPortalContext } from './KangurAiTutorPortal.context';
 import { KangurAiTutorMoodAvatar } from './KangurAiTutorMoodAvatar';
 import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
-import type {
-  TutorGuidedArrowhead,
-  TutorMotionPosition,
-  TutorMotionProfile,
-  TutorReducedMotionAvatarTransitions,
-} from './ai-tutor-widget/KangurAiTutorWidget.shared';
-import type { CSSProperties, JSX, MouseEvent, PointerEvent } from 'react';
+import type { JSX } from 'react';
 
 const KANGUR_AI_TUTOR_PANEL_SURFACE_ID = 'kangur-ai-tutor-panel-surface';
-
-type Props = {
-  ariaLabel: string;
-  avatarAnchorKind: string;
-  avatarButtonClassName: string;
-  avatarButtonStyle: CSSProperties;
-  avatarStyle: TutorMotionPosition;
-  floatingAvatarPlacement: string;
-  guidedArrowheadTransition?: string;
-  guidedAvatarArrowhead: TutorGuidedArrowhead | null;
-  guidedAvatarArrowheadDisplayAngle: number | null;
-  guidedAvatarArrowheadDisplayAngleLabel?: string;
-  guidedAvatarPlacement: string;
-  guidedTargetKind: string;
-  isAskModalMode: boolean;
-  isGuidedTutorMode: boolean;
-  isOpen: boolean;
-  motionProfile: TutorMotionProfile;
-  onClick: () => void;
-  onMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
-  onMouseUp: (event: MouseEvent<HTMLButtonElement>) => void;
-  onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
-  onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
-  onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
-  onPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
-  prefersReducedMotion: boolean;
-  reducedMotionTransitions: TutorReducedMotionAvatarTransitions;
-  rimColor: string;
-  showFloatingAvatar: boolean;
-  uiMode: string;
-};
 
 function toMotionTarget(
   style: Record<string, number | string | undefined>
@@ -55,36 +19,39 @@ function toMotionTarget(
   ) as TargetAndTransition;
 }
 
-export function KangurAiTutorFloatingAvatar({
-  ariaLabel,
-  avatarAnchorKind,
-  avatarButtonClassName,
-  avatarButtonStyle,
-  avatarStyle,
-  floatingAvatarPlacement,
-  guidedArrowheadTransition,
-  guidedAvatarArrowhead,
-  guidedAvatarArrowheadDisplayAngle,
-  guidedAvatarArrowheadDisplayAngleLabel,
-  guidedAvatarPlacement,
-  guidedTargetKind,
-  isAskModalMode,
-  isGuidedTutorMode,
-  isOpen,
-  motionProfile,
-  onClick,
-  onMouseDown,
-  onMouseUp,
-  onPointerCancel,
-  onPointerDown,
-  onPointerMove,
-  onPointerUp,
-  prefersReducedMotion,
-  reducedMotionTransitions,
-  rimColor,
-  showFloatingAvatar,
-  uiMode,
-}: Props): JSX.Element | null {
+export function KangurAiTutorFloatingAvatar(): JSX.Element | null {
+  const { avatar } = useKangurAiTutorPortalContext();
+  const {
+    ariaLabel,
+    avatarAnchorKind,
+    avatarButtonClassName,
+    avatarButtonStyle,
+    avatarStyle,
+    floatingAvatarPlacement,
+    guidedArrowheadTransition,
+    guidedAvatarArrowhead,
+    guidedAvatarArrowheadDisplayAngle,
+    guidedAvatarArrowheadDisplayAngleLabel,
+    guidedAvatarPlacement,
+    guidedTargetKind,
+    isAskModalMode,
+    isGuidedTutorMode,
+    isOpen,
+    motionProfile,
+    onClick,
+    onMouseDown,
+    onMouseUp,
+    onPointerCancel,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    prefersReducedMotion,
+    reducedMotionTransitions,
+    rimColor,
+    showFloatingAvatar,
+    uiMode,
+  } = avatar;
+
   const tutor = useKangurAiTutor();
   const { hasNewMessage, isAvatarDragging } = useKangurAiTutorWidgetStateContext();
 

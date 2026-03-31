@@ -50,7 +50,7 @@ vi.mock('@/features/kangur/ui/components/game-setup/OperationSelector', () => ({
   default: () => <div data-testid='mock-operation-selector'>Mock operation selector</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/TrainingSetup', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/TrainingSetup', () => ({
   default: (props: {
     onStart: (selection: {
       categories: ('addition' | 'subtraction')[];
@@ -109,7 +109,7 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBan
   default: () => <div data-testid='mock-practice-assignment-banner'>Mock assignment banner</div>,
 }));
 
-import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
+import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/game-setup/KangurGameKangurSetupWidget';
 import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget';
 
 describe('Kangur game entry top sections', () => {

@@ -301,7 +301,9 @@ const NavTreeItem = memo(
       <div>
         {isMenuCollapsed && depth === 0 ? (
           <Tooltip content={item.label} side='right'>
-            <div>{collapsedRootContent}</div>
+            <span tabIndex={0} role='button' className='block focus:outline-none'>
+              {collapsedRootContent}
+            </span>
           </Tooltip>
         ) : (
           primaryRowContent

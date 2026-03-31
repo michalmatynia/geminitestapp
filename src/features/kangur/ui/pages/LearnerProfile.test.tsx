@@ -33,7 +33,7 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
   useKangurDocsTooltips: getDisabledDocsTooltipsMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget', () => ({
   KangurLearnerProfileAiTutorMoodWidget: () => <div data-testid='ai-mood-widget' />,
 }));
 

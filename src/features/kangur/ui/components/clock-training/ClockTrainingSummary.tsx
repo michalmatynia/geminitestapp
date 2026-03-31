@@ -26,7 +26,7 @@ import type {
   ClockTrainingTaskPoolId,
 } from './types';
 import { KANGUR_CLOCK_THEME_COLORS } from '../clock-theme';
-import { getClockChallengeMedalLabel } from '../clock-training-utils';
+import { getClockChallengeMedalLabel } from './clock-training-utils';
 
 export type ClockTrainingSummaryProps = {
   score: number;

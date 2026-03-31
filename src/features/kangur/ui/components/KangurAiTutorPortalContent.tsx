@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 
 import { KangurAiTutorComposer } from './KangurAiTutorComposer';
@@ -56,12 +55,10 @@ export function KangurAiTutorPortalContent() {
   const {
     avatar,
     diagnostics,
-    drawingPanel,
     guestIntro,
     guidedCallout,
     panel,
     selectionAction,
-    spotlights,
   } = useKangurAiTutorPortalContext();
   const accessibilityStatusText = resolveAccessibilityStatusText({
     avatar,
@@ -70,24 +67,6 @@ export function KangurAiTutorPortalContent() {
     panel,
     selectionAction,
   });
-  const handleGuidedCalloutAction = useCallback(
-    (action: string): void => {
-      if (action === 'advance_home_onboarding') {
-        guidedCallout.onAdvanceHomeOnboarding();
-        return;
-      }
-      if (action === 'back_home_onboarding') {
-        guidedCallout.onBackHomeOnboarding();
-        return;
-      }
-      if (action === 'finish_home_onboarding') {
-        guidedCallout.onFinishHomeOnboarding();
-        return;
-      }
-      guidedCallout.onClose();
-    },
-    [guidedCallout]
-  );
 
   return (
     <>
@@ -146,133 +125,13 @@ export function KangurAiTutorPortalContent() {
       </AnimatePresence>
 
       <KangurAiTutorPanelBodyProvider value={panel.panelBodyContextValue}>
-        <KangurAiTutorGuidedCallout
-          avatarPlacement={guidedCallout.avatarPlacement}
-          calloutKey={guidedCallout.calloutKey}
-          calloutTestId={guidedCallout.calloutTestId}
-          detail={guidedCallout.detail}
-          entryDirection={guidedCallout.entryDirection}
-          headerLabel={guidedCallout.headerLabel}
-          mode={guidedCallout.mode}
-          onAction={handleGuidedCalloutAction}
-          placement={guidedCallout.placement}
-          prefersReducedMotion={guidedCallout.prefersReducedMotion}
-          reducedMotionTransitions={guidedCallout.reducedMotionTransitions}
-          sectionGuidanceLabel={guidedCallout.sectionGuidanceLabel}
-          sectionResponsePendingKind={guidedCallout.sectionResponsePendingKind}
-          selectionPreview={guidedCallout.selectionPreview}
-          shouldRender={guidedCallout.shouldRender}
-          showSectionGuidanceCallout={guidedCallout.showSectionGuidanceCallout}
-          showSelectionGuidanceCallout={guidedCallout.showSelectionGuidanceCallout}
-          stepLabel={guidedCallout.stepLabel}
-          style={guidedCallout.style}
-          title={guidedCallout.title}
-          transitionDuration={guidedCallout.transitionDuration}
-          transitionEase={guidedCallout.transitionEase}
-        />
-      </KangurAiTutorPanelBodyProvider>
+        <KangurAiTutorGuidedCallout />      </KangurAiTutorPanelBodyProvider>
 
-      <KangurAiTutorSpotlightOverlays
-        guidedMode={spotlights.guidedMode}
-        prefersReducedMotion={spotlights.prefersReducedMotion}
-        reducedMotionTransitions={spotlights.reducedMotionTransitions}
-        sectionContextSpotlightStyle={spotlights.sectionContextSpotlightStyle}
-        sectionDropHighlightStyle={spotlights.sectionDropHighlightStyle}
-        selectionGlowStyles={spotlights.selectionGlowStyles}
-        selectionContextSpotlightStyle={spotlights.selectionContextSpotlightStyle}
-        selectionSpotlightStyle={spotlights.selectionSpotlightStyle}
-      />
+      <KangurAiTutorSpotlightOverlays />
 
-      <KangurAiTutorFloatingAvatar
-        ariaLabel={avatar.ariaLabel}
-        avatarAnchorKind={avatar.avatarAnchorKind}
-        avatarButtonClassName={avatar.avatarButtonClassName}
-        avatarButtonStyle={avatar.avatarButtonStyle}
-        avatarStyle={avatar.avatarStyle}
-        floatingAvatarPlacement={avatar.floatingAvatarPlacement}
-        guidedArrowheadTransition={avatar.guidedArrowheadTransition}
-        guidedAvatarArrowhead={avatar.guidedAvatarArrowhead}
-        guidedAvatarArrowheadDisplayAngle={avatar.guidedAvatarArrowheadDisplayAngle}
-        guidedAvatarArrowheadDisplayAngleLabel={avatar.guidedAvatarArrowheadDisplayAngleLabel}
-        guidedAvatarPlacement={avatar.guidedAvatarPlacement}
-        guidedTargetKind={avatar.guidedTargetKind}
-        isAskModalMode={avatar.isAskModalMode}
-        isGuidedTutorMode={avatar.isGuidedTutorMode}
-        isOpen={avatar.isOpen}
-        motionProfile={avatar.motionProfile}
-        onClick={avatar.onClick}
-        onMouseDown={avatar.onMouseDown}
-        onMouseUp={avatar.onMouseUp}
-        onPointerCancel={avatar.onPointerCancel}
-        onPointerDown={avatar.onPointerDown}
-        onPointerMove={avatar.onPointerMove}
-        onPointerUp={avatar.onPointerUp}
-        prefersReducedMotion={avatar.prefersReducedMotion}
-        reducedMotionTransitions={avatar.reducedMotionTransitions}
-        rimColor={avatar.rimColor}
-        showFloatingAvatar={avatar.showFloatingAvatar}
-        uiMode={avatar.uiMode}
-      />
+      <KangurAiTutorFloatingAvatar />
 
-      <KangurAiTutorPanelChrome
-        attachedAvatarStyle={panel.attachedAvatarStyle}
-        attachedLaunchOffset={panel.attachedLaunchOffset}
-        avatarAnchorKind={panel.avatarAnchorKind}
-        avatarAttachmentSide={panel.avatarAttachmentSide}
-        avatarButtonClassName={panel.avatarButtonClassName}
-        avatarPointer={panel.avatarPointer}
-        bubbleEntryDirection={panel.bubbleEntryDirection}
-        bubbleLaunchOrigin={panel.bubbleLaunchOrigin}
-        bubbleMode={panel.bubbleMode}
-        bubbleStrategy={panel.bubbleStrategy}
-        bubbleStyle={panel.bubbleStyle}
-        bubbleTailPlacement={panel.bubbleTailPlacement}
-        bubbleWidth={panel.bubbleWidth}
-        canDetachPanelFromContext={panel.canDetachPanelFromContext}
-        canMovePanelToContext={panel.canMovePanelToContext}
-        chromeVariant={panel.chromeVariant}
-        canResetPanelPosition={panel.canResetPanelPosition}
-        compactDockedTutorPanelWidth={panel.compactDockedTutorPanelWidth}
-        isAskModalMode={panel.isAskModalMode}
-        isCompactDockedTutorPanel={panel.isCompactDockedTutorPanel}
-        isGuidedTutorMode={panel.isGuidedTutorMode}
-        isMinimalPanelMode={panel.isMinimalPanelMode}
-        isOpen={panel.isOpen}
-        isPanelDraggable={panel.isPanelDraggable}
-        isPanelDragging={panel.isPanelDragging}
-        isFollowingContext={panel.isFollowingContext}
-        isTutorHidden={panel.isTutorHidden}
-        minimalPanelStyle={panel.minimalPanelStyle}
-        motionProfile={panel.motionProfile}
-        panelAvatarPlacement={panel.panelAvatarPlacement}
-        panelBodyContextValue={panel.panelBodyContextValue}
-        panelEmptyStateMessage={panel.panelEmptyStateMessage}
-        panelOpenAnimation={panel.panelOpenAnimation}
-        panelSnapState={panel.panelSnapState}
-        panelTransition={panel.panelTransition}
-        pointerMarkerId={panel.pointerMarkerId}
-        prefersReducedMotion={panel.prefersReducedMotion}
-        reducedMotionTransitions={panel.reducedMotionTransitions}
-        sessionSurfaceLabel={panel.sessionSurfaceLabel}
-        showAttachedAvatarShell={panel.showAttachedAvatarShell}
-        suppressPanelSurface={panel.suppressPanelSurface}
-        uiMode={panel.uiMode}
-        onAttachedAvatarClick={panel.onAttachedAvatarClick}
-        onAttachedAvatarPointerCancel={panel.onAttachedAvatarPointerCancel}
-        onAttachedAvatarPointerDown={panel.onAttachedAvatarPointerDown}
-        onAttachedAvatarPointerMove={panel.onAttachedAvatarPointerMove}
-        onAttachedAvatarPointerUp={panel.onAttachedAvatarPointerUp}
-        onBackdropClose={panel.onBackdropClose}
-        onClose={panel.onClose}
-        onDetachPanelFromContext={panel.onDetachPanelFromContext}
-        onDisableTutor={panel.onDisableTutor}
-        onMovePanelToContext={panel.onMovePanelToContext}
-        onResetPanelPosition={panel.onResetPanelPosition}
-        onHeaderPointerCancel={panel.onHeaderPointerCancel}
-        onHeaderPointerDown={panel.onHeaderPointerDown}
-        onHeaderPointerMove={panel.onHeaderPointerMove}
-        onHeaderPointerUp={panel.onHeaderPointerUp}
-      >
+      <KangurAiTutorPanelChrome>
         <KangurAiTutorPanelBodyProvider value={panel.panelBodyContextValue}>
           <>
             <KangurAiTutorPanelContextSummary />
@@ -283,14 +142,7 @@ export function KangurAiTutorPortalContent() {
         </KangurAiTutorPanelBodyProvider>
       </KangurAiTutorPanelChrome>
 
-      <KangurAiTutorDrawingSidePanel
-        hint={drawingPanel.hint}
-        onClose={drawingPanel.onClose}
-        onComplete={drawingPanel.onComplete}
-        prefersReducedMotion={drawingPanel.prefersReducedMotion}
-        shouldRender={drawingPanel.shouldRender}
-        style={drawingPanel.style}
-      />
+      <KangurAiTutorDrawingSidePanel />
     </>
   );
 }

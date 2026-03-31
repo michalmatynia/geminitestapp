@@ -14,7 +14,7 @@ import {
 import type { getOperationSelectorFallbackCopy } from './KangurGameOperationSelectorWidget.copy';
 import type {
   KangurGameOperationSelectorTranslations,
-  KangurGameOperationSelectorRecommendation,
+  KangurOperationSelectorRecommendation as KangurGameOperationSelectorRecommendation,
   KangurGameOperationSelectorRuntime,
 } from './KangurGameOperationSelectorWidget.types';
 import type { LessonQuizOption } from './KangurGameOperationSelectorWidget.types';
@@ -39,7 +39,7 @@ export function KangurGameOperationSelectorQuickPracticeOptionCard({
   isSixYearOld: boolean;
   option: LessonQuizOption;
   quickPracticeGameChipLabel: string;
-  recommendation: KangurGameOperationSelectorRecommendation;
+  recommendation: KangurGameOperationSelectorRecommendation | null;
   setScreen: KangurGameOperationSelectorRuntime['setScreen'];
 }): React.JSX.Element {
   const optionLabel = translateRecommendationWithFallback(

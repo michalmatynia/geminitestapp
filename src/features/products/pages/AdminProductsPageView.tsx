@@ -1,3 +1,5 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 
 import { ProductListPanel } from '@/features/products/components/ProductListPanel';

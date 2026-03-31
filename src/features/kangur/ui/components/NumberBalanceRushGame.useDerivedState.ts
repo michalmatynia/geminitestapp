@@ -7,24 +7,7 @@ import type {
   NumberBalanceMatchState,
   NumberBalancePlayerScore,
 } from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
-import type { MatchStatus } from './NumberBalanceRushGame.types';
-import {
-  resolveNumberBalanceRushMatchMeta,
-  resolveNumberBalanceRushTiming,
-  shouldPollNumberBalanceRushMatch,
-} from './NumberBalanceRushGame.runtime';
-
-export interface UseNumberBalanceRushDerivedStateProps {
-  clockNowMs: number;
-  durationMs: number;
-  isLoading: boolean;
-  match: NumberBalanceMatchState | null;
-  player: NumberBalanceMatchPlayerState | null;
-  playerCount: number;
-  scores: NumberBalancePlayerScore[];
-  serverOffsetMs: number;
-  translations: ReturnType<typeof useTranslations<'KangurMiniGames'>>;
-}
+import type { MatchStatus, UseNumberBalanceRushDerivedStateProps } from './NumberBalanceRushGame.types';
 
 export function useNumberBalanceRushDerivedState({
   clockNowMs,

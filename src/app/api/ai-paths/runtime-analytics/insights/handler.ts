@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights/context-registry/server';
-import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/server';
-import { listAiInsights } from '@/features/ai/insights/server';
-import { startAiInsightsQueue } from '@/features/jobs/server';
+import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/generator';
+import { listAiInsights } from '@/features/ai/insights/repository';
+import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import {
   runtimeAnalyticsInsightsListQuerySchema,
   runtimeAnalyticsInsightRunRequestSchema,

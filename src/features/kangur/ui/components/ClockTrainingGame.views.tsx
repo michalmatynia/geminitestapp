@@ -15,7 +15,7 @@ import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import type { KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
+import type { KangurMiniGameBinaryFeedbackState, KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
@@ -32,7 +32,7 @@ import { getClockTrainingSectionContent } from './clock-training-data';
 import { DraggableClock } from './clock-training/DraggableClock';
 
 type ClockFeedback = {
-  kind: 'correct' | 'wrong';
+  kind: KangurMiniGameBinaryFeedbackState;
   title: string;
   details: string;
   tone?: 'near' | 'far';

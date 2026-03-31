@@ -8,12 +8,12 @@ import {
   parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   toPersistedFilemakerEmailCampaignEventRegistry,
-} from '@/features/filemaker/settings';
+} from '@/features/filemaker/server';
 import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
-} from '@/features/filemaker/server/campaign-settings-store';
-import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
+} from '@/features/filemaker/server';
+import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const TRANSPARENT_GIF = Buffer.from(

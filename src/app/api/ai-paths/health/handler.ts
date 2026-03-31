@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { startAiPathRunQueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
+import { getAiPathRunQueueStatus } from '@/features/ai/ai-paths/workers/ai-path-run-queue/status';
+import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/server';
-import {
-  getAiPathRunQueueStatus,
-  startAiInsightsQueue,
-  startAiPathRunQueue,
-} from '@/features/jobs/server';
 import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

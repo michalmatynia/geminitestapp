@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-03-30T23:50:53.156Z",
+  "generatedAt": "2026-03-31T00:21:54.181Z",
   "source": {
-    "totalFiles": 9066,
-    "totalLines": 1516942,
-    "useClientFiles": 1728,
+    "totalFiles": 9078,
+    "totalLines": 1516769,
+    "useClientFiles": 1733,
     "hooksWithoutUseClient": 0,
-    "filesOver800": 95,
-    "filesOver1000": 1,
+    "filesOver800": 94,
+    "filesOver1000": 0,
     "filesOver1500": 0,
     "largestFile": {
-      "path": "src/features/filemaker/pages/AdminFilemakerMailPage.tsx",
-      "lines": 1191
+      "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
+      "lines": 986
     }
   },
   "api": {
@@ -134,37 +134,37 @@
       {
         "feature": "kangur",
         "files": 2487,
-        "lines": 539938
+        "lines": 539346
       },
       {
         "feature": "ai",
         "files": 1169,
-        "lines": 236449
+        "lines": 236485
       },
       {
         "feature": "case-resolver",
         "files": 302,
-        "lines": 66240
+        "lines": 66244
       },
       {
         "feature": "products",
         "files": 301,
-        "lines": 60149
+        "lines": 60140
       },
       {
         "feature": "cms",
         "files": 359,
-        "lines": 55222
+        "lines": 55224
       },
       {
         "feature": "integrations",
         "files": 231,
-        "lines": 34507
+        "lines": 34508
       },
       {
         "feature": "filemaker",
-        "files": 121,
-        "lines": 33056
+        "files": 133,
+        "lines": 33436
       },
       {
         "feature": "prompt-exploder",
@@ -209,12 +209,12 @@
       {
         "feature": "viewer3d",
         "files": 34,
-        "lines": 5216
+        "lines": 5218
       },
       {
         "feature": "prompt-engine",
         "files": 25,
-        "lines": 4189
+        "lines": 4191
       },
       {
         "feature": "product-sync",
@@ -455,26 +455,6 @@
   "hotspots": {
     "topFilesByLines": [
       {
-        "path": "src/features/filemaker/__tests__/AdminFilemakerMailPages.recent-and-thread.test.tsx",
-        "lines": 3394
-      },
-      {
-        "path": "src/features/filemaker/__tests__/AdminFilemakerMailPages.test.tsx",
-        "lines": 1441
-      },
-      {
-        "path": "src/features/filemaker/pages/AdminFilemakerMailPage.tsx",
-        "lines": 1191
-      },
-      {
-        "path": "src/features/kangur/social/admin/workspace/SocialPost.PlaywrightCaptureModal.test.tsx",
-        "lines": 1099
-      },
-      {
-        "path": "src/features/filemaker/server/filemaker-mail-service.test.ts",
-        "lines": 1005
-      },
-      {
         "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
         "lines": 999
       },
@@ -573,6 +553,26 @@
       {
         "path": "src/features/kangur/ui/components/primary-navigation/__tests__/KangurPrimaryNavigation.navigation.test.tsx",
         "lines": 945
+      },
+      {
+        "path": "src/features/kangur/ui/KangurFeatureApp.test.tsx",
+        "lines": 944
+      },
+      {
+        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.test.tsx",
+        "lines": 943
+      },
+      {
+        "path": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx",
+        "lines": 943
+      },
+      {
+        "path": "src/app/api/settings/handler.ts",
+        "lines": 936
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts",
+        "lines": 935
       }
     ],
     "topPagesByLines": [

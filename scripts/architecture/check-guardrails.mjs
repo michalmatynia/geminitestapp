@@ -125,7 +125,11 @@ const run = async () => {
   const snapshot = buildArchitectureGuardrailSnapshot(metrics, propDrilling, uiConsolidation);
 
   if (args.has('--update-baseline')) {
-    const payload = await writeGuardrailBaseline(snapshot, { baselinePath });
+    const existingBaseline = await readGuardrailBaseline({ baselinePath }).catch(() => null);
+    const payload = await writeGuardrailBaseline(snapshot, {
+      baselinePath,
+      min: existingBaseline?.min,
+    });
     if (summaryJson) {
       writeGuardrailSummaryJson({
         generatedAt: payload.generatedAt,

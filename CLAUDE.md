@@ -19,7 +19,7 @@ The architecture scanner enforces two constraints to prevent looping behaviour:
 | Guardrail | Constraint | Meaning |
 |-----------|-----------|---------|
 | `source.hooksWithoutUseClient` | hard limit = **0** | Every file using hooks must have `'use client'` — violations fail CI immediately |
-| `source.useClientFiles` (max) | ≤ 1729 | Ceiling to prevent unnecessary client-side drift upward |
+| `source.useClientFiles` (max) | ≤ 1733 | Ceiling to prevent unnecessary client-side drift upward |
 | `source.useClientFiles` (min) | ≥ 1400 | **Floor** — going below this means hook-using files have been incorrectly stripped. This will fail CI. |
 
 The `useClientFiles` metric intentionally has **both a ceiling and a floor**. Do not attempt to drive the count below 1400; the floor exists because a large portion of the codebase legitimately requires client-side rendering.

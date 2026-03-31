@@ -7,11 +7,11 @@ import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {
   invalidateKangurStorefrontInitialStateCache,
   isKangurStorefrontInitialStateDependencyKey,
-} from '@/features/kangur/appearance/server/storefront-appearance';
+} from '@/features/kangur/server';
 import {
   KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
   ensureKangurStorefrontAppearanceSettingsSeeded,
-} from '@/features/kangur/appearance/server/storefront-appearance-source';
+} from '@/features/kangur/server-source';
 import { ensureKangurThemeCatalogSeeded } from '@/features/kangur/appearance/server/theme-catalog-source';
 import { ensureKangurThemePresetManifestSeeded } from '@/features/kangur/appearance/server/theme-preset-manifest-source';
 import { ensureKangurThemeSlotAssignmentsSeeded } from '@/features/kangur/appearance/server/theme-slot-assignments-source';
@@ -20,8 +20,8 @@ import {
   listKangurSettings,
   readKangurSettingValue,
   upsertKangurSettingValue,
-} from '@/features/kangur/services/kangur-settings-repository';
-import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
+} from '@/features/kangur/server';
+import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/server';
 import {
   KANGUR_SLOT_ASSIGNMENTS_KEY,
   KANGUR_THEME_CATALOG_KEY,

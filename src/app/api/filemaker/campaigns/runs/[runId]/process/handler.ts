@@ -25,8 +25,8 @@ import {
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   resolveFilemakerEmailCampaignRetryableDeliveries,
-} from '@/features/filemaker/settings';
-import { readFilemakerCampaignSettingValue } from '@/features/filemaker/server/campaign-settings-store';
+} from '@/features/filemaker/server';
+import { readFilemakerCampaignSettingValue } from '@/features/filemaker/server';
 
 export async function POST_handler(
   req: NextRequest,

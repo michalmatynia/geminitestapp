@@ -17,7 +17,7 @@ vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
-vi.mock('@/features/filemaker/server/campaign-settings-store', () => ({
+vi.mock('@/features/filemaker/server', () => ({
   readFilemakerCampaignSettingValue: readFilemakerCampaignSettingValueMock,
 }));
 

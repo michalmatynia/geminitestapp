@@ -17,7 +17,7 @@ vi.mock('@/features/auth/server', () => ({
   assertSettingsManageAccess: assertSettingsManageAccessMock,
 }));
 
-vi.mock('@/features/filemaker/server/campaign-runtime', () => ({
+vi.mock('@/features/filemaker/server', () => ({
   launchFilemakerEmailCampaignRun: launchFilemakerEmailCampaignRunMock,
 }));
 

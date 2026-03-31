@@ -89,15 +89,24 @@ export const createGuardrailBaseline = (
   {
     generatedAt = new Date().toISOString(),
     hardLimits = DEFAULT_GUARDRAIL_HARD_LIMITS,
+    min = undefined,
   } = {}
-) => ({
-  generatedAt,
-  hardLimits: {
-    ...DEFAULT_GUARDRAIL_HARD_LIMITS,
-    ...(hardLimits ?? {}),
-  },
-  max: snapshot,
-});
+) => {
+  const baseline = {
+    generatedAt,
+    hardLimits: {
+      ...DEFAULT_GUARDRAIL_HARD_LIMITS,
+      ...(hardLimits ?? {}),
+    },
+    max: snapshot,
+  };
+  // Preserve min constraints if provided — these are floor guards that should
+  // never be silently dropped by --update-baseline runs.
+  if (min && Object.keys(min).length > 0) {
+    baseline.min = min;
+  }
+  return baseline;
+};
 
 export const readGuardrailBaseline = async ({
   root = process.cwd(),
@@ -114,11 +123,13 @@ export const writeGuardrailBaseline = async (
     baselinePath = resolveGuardrailBaselinePath(root),
     generatedAt,
     hardLimits,
+    min,
   } = {}
 ) => {
   const payload = createGuardrailBaseline(snapshot, {
     generatedAt,
     hardLimits,
+    min,
   });
   await fs.mkdir(path.dirname(baselinePath), { recursive: true });
   await fs.writeFile(baselinePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');

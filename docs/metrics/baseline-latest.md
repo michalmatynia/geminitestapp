@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-30'
+last_reviewed: '2026-03-31'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-30T23:50:53.156Z
+Generated at: 2026-03-31T00:21:54.181Z
 
 ## Snapshot
 
-- Source files: 9066
-- Source lines: 1516942
-- use client files: 1728
-- Files >= 1000 LOC: 1
+- Source files: 9078
+- Source lines: 1516769
+- use client files: 1733
+- Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/filemaker/pages/AdminFilemakerMailPage.tsx` (1191 LOC)
+- Largest file: `src/features/filemaker/components/FilemakerMailSidebar.tsx` (986 LOC)
 - API routes: 30
 - API delegated server routes: 172
 - API routes without apiHandler/delegation: 0
@@ -60,11 +60,6 @@ Generated at: 2026-03-30T23:50:53.156Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/filemaker/__tests__/AdminFilemakerMailPages.recent-and-thread.test.tsx` | 3394 |
-| `src/features/filemaker/__tests__/AdminFilemakerMailPages.test.tsx` | 1441 |
-| `src/features/filemaker/pages/AdminFilemakerMailPage.tsx` | 1191 |
-| `src/features/kangur/social/admin/workspace/SocialPost.PlaywrightCaptureModal.test.tsx` | 1099 |
-| `src/features/filemaker/server/filemaker-mail-service.test.ts` | 1005 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
@@ -80,3 +75,8 @@ Generated at: 2026-03-30T23:50:53.156Z
 | `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 970 |
 | `src/features/kangur/ui/components/KangurAssignmentManager.hooks.ts` | 969 |
 | `src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts` | 969 |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx` | 968 |
+| `src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx` | 968 |
+| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 967 |
+| `src/features/kangur/ui/components/GeometryBasicsWorkshopGame.tsx` | 964 |
+| `src/shared/contracts/cms-theme.ts` | 964 |

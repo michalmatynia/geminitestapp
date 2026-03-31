@@ -15,12 +15,12 @@ import {
   toPersistedFilemakerEmailCampaignEventRegistry,
   toPersistedFilemakerEmailCampaignSuppressionRegistry,
   upsertFilemakerEmailCampaignSuppressionEntry,
-} from '@/features/filemaker/settings';
+} from '@/features/filemaker/server';
 import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
-} from '@/features/filemaker/server/campaign-settings-store';
-import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
+} from '@/features/filemaker/server';
+import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
 import type {
   FilemakerEmailCampaignUnsubscribeRequest,
   FilemakerEmailCampaignUnsubscribeResponse,

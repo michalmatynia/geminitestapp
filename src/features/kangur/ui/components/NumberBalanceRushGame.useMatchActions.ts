@@ -30,6 +30,7 @@ export function useNumberBalanceRushMatchActions({
   setMatch,
   setPlayer,
   setPlayerCount,
+  setPuzzle,
   setScore,
   setScores,
   setSelectedTileId,

@@ -5,14 +5,14 @@ import {
   ensureAiPathsPermission,
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server';
-import { noteUpdateSchema } from '@/features/notesapp/public';
-import { noteService } from '@/features/notesapp/server';
+import { noteService } from '@/features/notesapp/services/notes';
+import { noteUpdateSchema } from '@/features/notesapp/validations/notes';
 import {
-  parseJsonBody,
   productUpdateSchema,
-  getProductDataProvider,
-  productService,
-} from '@/features/products/server';
+} from '@/shared/lib/products/validations';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { productService } from '@/shared/lib/products/services/productService';
 import { aiPathEntityUpdateRequestSchema } from '@/shared/contracts/ai-paths';
 import { NoteUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

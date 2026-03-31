@@ -325,6 +325,56 @@ const jsonResponse = (body: MockResponseBody, status: number = 200): Response =>
     json: async () => body,
   }) as Response;
 
+const mockAccounts = [
+  {
+    id: 'account-1',
+    name: 'Support inbox',
+    emailAddress: 'support@example.com',
+    status: 'active',
+    imapHost: 'imap.example.com',
+    imapPort: 993,
+    imapSecure: true,
+    imapUser: 'support@example.com',
+    imapPasswordSettingKey: 'imap-key',
+    smtpHost: 'smtp.example.com',
+    smtpPort: 465,
+    smtpSecure: true,
+    smtpUser: 'support@example.com',
+    smtpPasswordSettingKey: 'smtp-key',
+    fromName: 'Support',
+    replyToEmail: null,
+    folderAllowlist: ['INBOX', 'VIP'],
+    initialSyncLookbackDays: 30,
+    maxMessagesPerSync: 100,
+    lastSyncedAt: null,
+    lastSyncError: null,
+    createdAt: '2026-03-28T10:00:00.000Z',
+    updatedAt: '2026-03-28T10:00:00.000Z',
+    provider: 'imap_smtp',
+  },
+];
+
+const mockFolders = [
+  {
+    id: 'account-1::INBOX',
+    accountId: 'account-1',
+    mailboxPath: 'INBOX',
+    mailboxRole: 'inbox',
+    threadCount: 2,
+    unreadCount: 1,
+    lastMessageAt: '2026-03-28T10:00:00.000Z',
+  },
+  {
+    id: 'account-1::VIP',
+    accountId: 'account-1',
+    mailboxPath: 'VIP',
+    mailboxRole: 'custom',
+    threadCount: 1,
+    unreadCount: 1,
+    lastMessageAt: '2026-03-28T10:00:00.000Z',
+  },
+];
+
 const setupAdminFilemakerMailPagesTest = (): void => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -337,6 +387,8 @@ const setupAdminFilemakerMailPagesTest = (): void => {
 export {
   fetchMock,
   jsonResponse,
+  mockAccounts,
+  mockFolders,
   routeParamsMock,
   routerPushMock,
   routerReplaceMock,

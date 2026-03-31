@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET_handler } from './handler';
-import { getCaseResolverOcrObservabilitySnapshot } from '@/features/case-resolver/server/ocr-observability';
+import { getCaseResolverOcrObservabilitySnapshot } from '@/features/case-resolver/server';
 
-vi.mock('@/features/case-resolver/server/ocr-observability', () => ({
+vi.mock('@/features/case-resolver/server', () => ({
   getCaseResolverOcrObservabilitySnapshot: vi.fn(),
 }));
 

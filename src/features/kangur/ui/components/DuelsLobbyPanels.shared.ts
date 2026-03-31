@@ -17,7 +17,7 @@ import {
   resolveLobbyHostInitial,
 } from '@/features/kangur/ui/pages/duels/duels-helpers';
 
-export type LobbyTranslations = ReturnType<typeof useTranslations>;
+import type { KangurGameOperationSelectorTranslations as LobbyTranslations } from '@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget.types';
 export type LobbySortValue =
   | 'recent'
   | 'time_fast'

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { startAiPathRunQueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
+import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/server';
-import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
 import type {
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummaryResponse,

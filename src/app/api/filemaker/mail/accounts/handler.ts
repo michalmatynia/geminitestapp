@@ -2,11 +2,11 @@ import { NextRequest } from 'next/server';
 
 import { filemakerMailAccountDraftSchema } from '@/shared/contracts/filemaker-mail';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { requireFilemakerMailAdminSession } from '@/features/filemaker/server/filemaker-mail-access';
+import { requireFilemakerMailAdminSession } from '@/features/filemaker/server';
 import {
   listFilemakerMailAccounts,
   upsertFilemakerMailAccount,
-} from '@/features/filemaker/server/filemaker-mail-service';
+} from '@/features/filemaker/server';
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();

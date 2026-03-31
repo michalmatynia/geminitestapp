@@ -6,7 +6,7 @@ import {
 } from '@/features/jobs/server';
 import {
   launchFilemakerEmailCampaignRun,
-} from '@/features/filemaker/server/campaign-runtime';
+} from '@/features/filemaker/server';
 import type {
   FilemakerEmailCampaignLaunchRunRequest,
   FilemakerEmailCampaignLaunchRunResponse,

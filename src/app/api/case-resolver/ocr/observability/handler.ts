@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getCaseResolverOcrObservabilitySnapshot } from '@/features/case-resolver/server/ocr-observability';
+import { getCaseResolverOcrObservabilitySnapshot } from '@/features/case-resolver/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 

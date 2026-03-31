@@ -5,8 +5,8 @@ import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
+import { assertAiPathRunQueueReady } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { resumePathRun } from '@/features/ai/ai-paths/server';
-import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { aiPathRunDeadLetterRequeueRequestSchema } from '@/shared/contracts/ai-paths';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

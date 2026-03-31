@@ -9,11 +9,11 @@ const {
   listFilemakerMailThreadsMock: vi.fn(),
 }));
 
-vi.mock('@/features/filemaker/server/filemaker-mail-access', () => ({
+vi.mock('@/features/filemaker/server', () => ({
   requireFilemakerMailAdminSession: requireFilemakerMailAdminSessionMock,
 }));
 
-vi.mock('@/features/filemaker/server/filemaker-mail-service', () => ({
+vi.mock('@/features/filemaker/server', () => ({
   listFilemakerMailThreads: listFilemakerMailThreadsMock,
 }));
 

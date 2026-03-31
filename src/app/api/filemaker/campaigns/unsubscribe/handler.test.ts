@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
+import { createFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
 
 const {
   readFilemakerCampaignSettingValueMock,
@@ -11,7 +11,7 @@ const {
   upsertFilemakerCampaignSettingValueMock: vi.fn(),
 }));
 
-vi.mock('@/features/filemaker/server/campaign-settings-store', () => ({
+vi.mock('@/features/filemaker/server', () => ({
   readFilemakerCampaignSettingValue: readFilemakerCampaignSettingValueMock,
   upsertFilemakerCampaignSettingValue: upsertFilemakerCampaignSettingValueMock,
 }));

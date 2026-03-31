@@ -1,7 +1,7 @@
 import React from 'react';
 import type {
   KangurGameOperationSelectorRuntime,
-  KangurGameOperationSelectorRecommendation,
+  KangurOperationSelectorRecommendation as KangurGameOperationSelectorRecommendation,
 } from './KangurGameOperationSelectorWidget.types';
 import OperationSelector from './OperationSelector';
 
@@ -13,7 +13,7 @@ export function KangurGameOperationSelectorOperationSection({
 }: {
   handleSelectOperation: KangurGameOperationSelectorRuntime['handleSelectOperation'];
   practiceAssignmentsByOperation: KangurGameOperationSelectorRuntime['practiceAssignmentsByOperation'];
-  recommendation: KangurGameOperationSelectorRecommendation;
+  recommendation: KangurGameOperationSelectorRecommendation | null;
   showMathSections: boolean;
 }): React.JSX.Element | null {
   if (!showMathSections) {

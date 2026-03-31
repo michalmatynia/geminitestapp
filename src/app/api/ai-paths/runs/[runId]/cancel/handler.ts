@@ -5,8 +5,8 @@ import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
+import { removePathRunQueueEntries } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { cancelPathRunWithRepository } from '@/features/ai/ai-paths/server';
-import { removePathRunQueueEntries } from '@/features/ai/server';
 import { aiPathRunRouteParamsSchema, type AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';

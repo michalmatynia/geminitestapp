@@ -5,4 +5,4 @@ export {
   enqueueProductAiJobToQueue,
   processProductAiJob,
   getQueueStatus,
-} from '@/features/products/server';
+} from '@/features/products/workers/productAiQueue';

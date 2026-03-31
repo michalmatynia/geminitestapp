@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { requireFilemakerMailAdminSession } from '@/features/filemaker/server/filemaker-mail-access';
-import { syncFilemakerMailAccount } from '@/features/filemaker/server/filemaker-mail-service';
+import { requireFilemakerMailAdminSession } from '@/features/filemaker/server';
+import { syncFilemakerMailAccount } from '@/features/filemaker/server';
 
 export async function POST_handler(
   _req: NextRequest,

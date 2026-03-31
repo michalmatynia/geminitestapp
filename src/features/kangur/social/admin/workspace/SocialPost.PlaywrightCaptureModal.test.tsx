@@ -139,7 +139,6 @@ describe('SocialPostPlaywrightCaptureModal', () => {
   });
 
   it('renders personas, programmable routes, and the editable script', () => {
-    const x: number = 'error';
     usePlaywrightPersonasMock.mockReturnValue({
       data: [{ id: 'persona-1', name: 'Fast reviewer' }],
       isLoading: false,

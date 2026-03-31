@@ -11,8 +11,8 @@ import {
   getCaseResolverOcrJobById,
   markCaseResolverOcrJobFailed,
   setCaseResolverOcrJobDispatchMode,
-} from '@/features/case-resolver/server/ocr-runtime-job-store';
-import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/settings';
+} from '@/features/case-resolver/server';
+import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/server';
 import { retryCaseResolverOcrJobSchema } from '@/shared/contracts/case-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';

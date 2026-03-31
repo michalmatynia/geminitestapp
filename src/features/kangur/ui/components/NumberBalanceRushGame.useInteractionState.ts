@@ -1,21 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo } from 'react';
-import type React from 'react';
-import { useTranslations } from 'next-intl';
 import type { DropResult } from '@hello-pangea/dnd';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 import {
   evaluateNumberBalancePlacement,
-  type NumberBalancePuzzle,
   type NumberBalanceTile,
 } from '@/features/kangur/games/number-balance/number-balance-generator';
-import type {
-  NumberBalanceMatchPlayerState,
-  NumberBalanceMatchState,
-  NumberBalancePlayerScore,
-  NumberBalanceSolveResponse,
-} from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
+import type { NumberBalanceSolveResponse } from '@/features/kangur/shared/contracts/kangur-multiplayer-number-balance';
 import { api } from '@/shared/lib/api-client';
 import type { ZoneId, UseNumberBalanceRushInteractionStateProps } from './NumberBalanceRushGame.types';
 import {

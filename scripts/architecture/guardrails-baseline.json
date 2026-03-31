@@ -1,15 +1,16 @@
 {
-  "generatedAt": "2026-03-30T22:32:35.576Z",
+  "generatedAt": "2026-03-31T00:20:26.038Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000,
     "imports.featuresToAppApiTotalImports": 0,
     "source.hooksWithoutUseClient": 0
   },
   "max": {
-    "source.filesOver1000": 8,
+    "source.filesOver1000": 0,
     "source.filesOver1500": 0,
-    "source.useClientFiles": 1729,
-    "source.largestFileLines": 1278,
+    "source.useClientFiles": 1733,
+    "source.hooksWithoutUseClient": 0,
+    "source.largestFileLines": 986,
     "api.totalRoutes": 30,
     "api.delegatedServerRoutes": 172,
     "api.routesWithoutApiHandler": 0,

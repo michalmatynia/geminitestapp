@@ -277,7 +277,7 @@ export const handleKangurGameOperationRecommendationSelect = ({
   trainingSectionRef,
 }: {
   handleSelectOperation: KangurGameOperationSelectorRuntime['handleSelectOperation'];
-  recommendation: KangurGameOperationSelectorRecommendation;
+  recommendation: KangurOperationSelectorRecommendation | null;
   screen: KangurGameOperationSelectorScreen;
   setScreen: KangurGameOperationSelectorRuntime['setScreen'];
   trainingSectionRef: React.RefObject<HTMLElement | null>;

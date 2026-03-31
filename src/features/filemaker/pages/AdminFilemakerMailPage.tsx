@@ -1,56 +1,47 @@
 'use client';
 
-import {
-  FilterX,
-  Inbox,
-  Mail,
-  MailPlus,
-  RefreshCcw,
-  Search,
-  Settings2,
-  ShieldAlert,
-} from 'lucide-react';
+import { FilterX, Mail, MailPlus, RefreshCcw, Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-import {
-  Badge,
-  Button,
-  Checkbox,
-  FormField,
-  FormSection,
-  Input,
-  SelectSimple,
-  useToast,
-} from '@/shared/ui';
+import { Button, useToast } from '@/shared/ui';
 
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
-import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
-import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
+import {
+  buildFilemakerMailComposeHref as buildComposeHref,
+  buildFilemakerMailThreadHref as buildThreadHref,
+} from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
-import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
 import { formatFilemakerMailFolderLabel } from '../mail-master-tree';
-import { buildFilemakerMailSelectionHref as buildMailSelectionHref, fetchFilemakerMailJson as fetchJson } from '../mail-ui-helpers';
+import {
+  buildFilemakerMailSelectionHref as buildMailSelectionHref,
+  fetchFilemakerMailJson as fetchJson,
+} from '../mail-ui-helpers';
 import { formatFilemakerMailboxAllowlist } from '../mail-utils';
 import {
   createDefaultFilemakerMailDraft as defaultDraft,
   toDraftFromFilemakerMailAccount as toDraftFromAccount,
 } from './AdminFilemakerMailPage.helpers';
+import type {
+  AccountsResponse,
+  FoldersResponse,
+  MailPageSelection,
+  ThreadsResponse,
+} from './AdminFilemakerMailPage.types';
+import { MailAccountSettingsSection } from './mail-page-sections/MailAccountSettingsSection';
+import { MailboxesAttentionSection } from './mail-page-sections/MailboxesAttentionSection';
+import { MailSearchSection } from './mail-page-sections/MailSearchSection';
+import { MailThreadsSection } from './mail-page-sections/MailThreadsSection';
 
 import type {
   FilemakerMailAccount,
   FilemakerMailAccountDraft,
   FilemakerMailFolderSummary,
   FilemakerMailSearchResponse,
-  FilemakerMailSearchResultGroup,
   FilemakerMailThread,
 } from '../types';
-
-type AccountsResponse = { accounts: FilemakerMailAccount[] };
-type FoldersResponse = { folders: FilemakerMailFolderSummary[] };
-type ThreadsResponse = { threads: FilemakerMailThread[] };
 
 export function AdminFilemakerMailPage(): React.JSX.Element {
   const router = useRouter();
@@ -86,11 +77,7 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
   const [threads, setThreads] = useState<FilemakerMailThread[]>([]);
   const [recentMailboxFilter, setRecentMailboxFilter] = useState('');
   const [recentUnreadOnly, setRecentUnreadOnly] = useState(false);
-  const [selection, setSelection] = useState<{
-    accountId: string | null;
-    mailboxPath: string | null;
-    panel: 'account' | 'attention' | 'recent' | 'search' | 'settings' | null;
-  }>({
+  const [selection, setSelection] = useState<MailPageSelection>({
     accountId: requestedAccountId,
     mailboxPath: requestedMailboxPath,
     panel: requestedPanel,
@@ -607,583 +594,59 @@ export function AdminFilemakerMailPage(): React.JSX.Element {
       />
 
       {isAttentionPanel ? (
-        <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
-          <div className='flex flex-wrap items-center justify-between gap-3'>
-            <div>
-              <div className='text-base font-semibold text-white'>Mailboxes Requiring Attention</div>
-              <div className='text-sm text-gray-500'>
-                Review paused accounts and sync failures, then jump into mailbox settings.
-              </div>
-            </div>
-            <Badge variant='outline' className='text-[10px]'>
-              Affected: {attentionAccounts.length}
-            </Badge>
-          </div>
-
-          {attentionAccounts.length > 0 ? (
-            <div className='grid gap-3'>
-              {attentionAccounts.map((account) => (
-                <div
-                  key={account.id}
-                  className='rounded-lg border border-border/60 bg-card/25 p-4'
-                >
-                  <div className='flex flex-wrap items-start justify-between gap-3'>
-                    <div className='space-y-1'>
-                      <div className='text-sm font-semibold text-white'>{account.name}</div>
-                      <div className='text-xs text-gray-500'>{account.emailAddress}</div>
-                    </div>
-                    <div className='flex flex-wrap gap-2'>
-                      {account.status !== 'active' ? (
-                        <Badge variant='outline' className='text-[10px]'>
-                          Status: {account.status}
-                        </Badge>
-                      ) : null}
-                      {account.lastSyncError ? (
-                        <Badge variant='outline' className='text-[10px]'>
-                          Sync error
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className='mt-3 grid gap-2 text-xs text-gray-500 md:grid-cols-2'>
-                    <div>
-                      Last sync:{' '}
-                      {account.lastSyncedAt
-                        ? new Date(account.lastSyncedAt).toLocaleString()
-                        : 'Never'}
-                    </div>
-                    <div>
-                      Allowlist:{' '}
-                      {account.folderAllowlist.length > 0
-                        ? formatFilemakerMailboxAllowlist(account.folderAllowlist)
-                        : 'Auto'}
-                    </div>
-                    {account.lastSyncError ? (
-                      <div className='md:col-span-2 text-red-400'>{account.lastSyncError}</div>
-                    ) : null}
-                  </div>
-                  <div className='mt-4 flex flex-wrap gap-2'>
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant='outline'
-                      onClick={() => {
-                        setSelection({
-                          accountId: account.id,
-                          mailboxPath: null,
-                          panel: 'settings',
-                        });
-                      }}
-                    >
-                      <Settings2 className='mr-2 size-4' />
-                      Open Settings
-                    </Button>
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant='outline'
-                      onClick={() => {
-                        setSelection({
-                          accountId: account.id,
-                          mailboxPath: null,
-                          panel: 'account',
-                        });
-                      }}
-                    >
-                      <ShieldAlert className='mr-2 size-4' />
-                      Open Mailbox
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-500'>
-              All mailbox accounts are healthy.
-            </div>
-          )}
-        </div>
+        <MailboxesAttentionSection
+          attentionAccounts={attentionAccounts}
+          onSelectSelection={setSelection}
+        />
       ) : isSearchPanel ? (
-        <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
-          <div className='flex flex-wrap items-center justify-between gap-3'>
-            <div>
-              <div className='text-base font-semibold text-white'>
-                <Search className='mr-2 inline-block size-4' />
-                Search Messages
-              </div>
-              <div className='text-sm text-gray-500'>
-                Full-text search across all message bodies, subjects, and participants.
-                {selectedAccount ? ` Scoped to ${selectedAccount.name}.` : ' Searching all accounts.'}
-              </div>
-            </div>
-            {deepSearchResults ? (
-              <Badge variant='outline' className='text-[10px]'>
-                {deepSearchResults.totalHits} hit{deepSearchResults.totalHits !== 1 ? 's' : ''} in{' '}
-                {deepSearchResults.groups.length} thread{deepSearchResults.groups.length !== 1 ? 's' : ''}
-              </Badge>
-            ) : null}
-          </div>
-
-          <div className='flex gap-2'>
-            <Input
-              value={deepSearchQuery}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDeepSearchQuery(event.target.value)}
-              placeholder='Search message bodies, subjects, senders...'
-              aria-label='Deep message search'
-              className='flex-1'
-            />
-            {deepSearchQuery ? (
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                onClick={() => {
-                  setDeepSearchQuery('');
-                  setDeepSearchResults(null);
-                }}
-              >
-                <FilterX className='size-4' />
-              </Button>
-            ) : null}
-          </div>
-
-          {isSearching ? (
-            <div className='text-sm text-gray-500'>Searching messages...</div>
-          ) : deepSearchResults && deepSearchResults.groups.length > 0 ? (
-            <div className='space-y-4'>
-              {deepSearchResults.groups.map((group: FilemakerMailSearchResultGroup) => (
-                <div
-                  key={group.threadId}
-                  className='rounded-lg border border-border/60 bg-card/25 p-4'
-                >
-                  <div className='flex flex-wrap items-start justify-between gap-2'>
-                    <div className='min-w-0 flex-1'>
-                      <div className='truncate text-sm font-semibold text-white'>
-                        {group.threadSubject}
-                      </div>
-                      <div className='text-[11px] text-gray-500'>
-                        {group.mailboxPath} &middot;{' '}
-                        {group.lastMessageAt
-                          ? new Date(group.lastMessageAt).toLocaleString()
-                          : 'Unknown date'}
-                      </div>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <Badge variant='outline' className='text-[10px]'>
-                        {group.hits.length} match{group.hits.length !== 1 ? 'es' : ''}
-                      </Badge>
-                      <Button
-                        type='button'
-                        size='sm'
-                        variant='outline'
-                        onClick={() =>
-                          router.push(
-                            buildThreadHref({
-                              threadId: group.threadId,
-                              accountId: group.accountId,
-                              mailboxPath: group.mailboxPath,
-                              originPanel: 'search',
-                              searchAccountId: selectedAccountId ? null : 'all',
-                              searchQuery: deepSearchQuery,
-                            })
-                          )
-                        }
-                      >
-                        Open Thread
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className='mt-3 space-y-2'>
-                    {group.hits.map((hit) => (
-                      <div
-                        key={hit.messageId}
-                        className='rounded border border-border/40 bg-card/10 p-3'
-                      >
-                        <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-500'>
-                          <span className='font-medium text-gray-300'>
-                            {hit.from?.name ?? hit.from?.address ?? 'Unknown'}
-                          </span>
-                          <span>&rarr;</span>
-                          <span>
-                            {hit.to.map((p) => p.name ?? p.address).join(', ') || 'Unknown'}
-                          </span>
-                          <Badge variant='outline' className='text-[10px]'>
-                            {hit.matchField}
-                          </Badge>
-                          <span>
-                            {(hit.receivedAt ?? hit.sentAt)
-                              ? new Date(hit.receivedAt ?? hit.sentAt ?? '').toLocaleString()
-                              : ''}
-                          </span>
-                        </div>
-                        <div className='mt-1 text-xs text-gray-400'>
-                          {hit.matchSnippet}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : deepSearchResults?.groups.length === 0 ? (
-            <div className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-500'>
-              No messages matched your search.
-            </div>
-          ) : !deepSearchQuery ? (
-            <div className='rounded-lg border border-border/60 bg-card/25 p-4 text-sm text-gray-500'>
-              Enter a search term to find messages across all synced mailboxes.
-            </div>
-          ) : null}
-        </div>
+        <MailSearchSection
+          selectedAccount={selectedAccount}
+          selectedAccountId={selectedAccountId}
+          deepSearchQuery={deepSearchQuery}
+          onDeepSearchQueryChange={setDeepSearchQuery}
+          deepSearchResults={deepSearchResults}
+          isSearching={isSearching}
+          onClearSearch={() => {
+            setDeepSearchQuery('');
+            setDeepSearchResults(null);
+          }}
+          onOpenThread={(href) => router.push(href)}
+        />
       ) : selectedFolder || isRecentPanel ? (
-        <FilemakerEntityTablePage
-          title={
-            isRecentPanel
-              ? `${selectedAccountLabel} / Recent`
-              : `${selectedAccountLabel} / ${selectedFolderLabel}`
-          }
-          description={
-            isRecentPanel
-              ? 'Browse the latest synced conversations across this mailbox account.'
-              : 'Browse synced mailbox threads and open a reply workspace.'
-          }
-          icon={<Inbox className='size-4' />}
-          actions={tableActions}
-          badges={
-            <>
-              {selectedFolder ? (
-                <>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Threads: {selectedFolder.threadCount}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Unread: {selectedFolder.unreadCount}
-                  </Badge>
-                </>
-              ) : (
-                <>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Threads: {visibleThreads.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Account Recent
-                  </Badge>
-                  {recentMailboxFilter ? (
-                    <Badge variant='outline' className='text-[10px]'>
-                      Mailbox: {recentMailboxFilter}
-                    </Badge>
-                  ) : null}
-                  {recentUnreadOnly ? (
-                    <Badge variant='outline' className='text-[10px]'>
-                      Unread only
-                    </Badge>
-                  ) : null}
-                  {query ? (
-                    <Badge variant='outline' className='text-[10px]'>
-                      Search: {query}
-                    </Badge>
-                  ) : null}
-                  <SelectSimple
-                    value={recentMailboxFilter}
-                    onValueChange={setRecentMailboxFilter}
-                    options={recentMailboxOptions}
-                    placeholder='All mailboxes'
-                    ariaLabel='Recent mailbox filter'
-                  />
-                  <label
-                    htmlFor='filemaker-mail-recent-unread-only'
-                    className='flex items-center gap-2 text-[11px] text-gray-300'
-                  >
-                    <Checkbox
-                      id='filemaker-mail-recent-unread-only'
-                      checked={recentUnreadOnly}
-                      onCheckedChange={(checked) => setRecentUnreadOnly(checked === true)}
-                    />
-                    Unread only
-                  </label>
-                </>
-              )}
-            </>
-          }
+        <MailThreadsSection
+          isRecentPanel={isRecentPanel}
+          selectedAccountLabel={selectedAccountLabel}
+          selectedFolderLabel={selectedFolderLabel}
+          selectedFolder={selectedFolder}
+          visibleThreads={visibleThreads}
+          recentMailboxFilter={recentMailboxFilter}
+          onRecentMailboxFilterChange={setRecentMailboxFilter}
+          recentUnreadOnly={recentUnreadOnly}
+          onRecentUnreadOnlyChange={setRecentUnreadOnly}
           query={query}
           onQueryChange={setQuery}
-          queryPlaceholder='Search subject, snippet, or participant...'
+          recentMailboxOptions={recentMailboxOptions}
+          tableActions={tableActions}
           columns={columns}
-          data={visibleThreads}
-          isLoading={isNavigationLoading || isThreadsLoading}
-          emptyTitle={
-            isRecentPanel ? 'No recent threads for this account yet' : 'No synced threads in this folder yet'
-          }
-          emptyDescription={
-            isRecentPanel
-              ? 'Run mailbox sync or open a specific folder.'
-              : 'Run mailbox sync or select another folder.'
-          }
+          isNavigationLoading={isNavigationLoading}
+          isThreadsLoading={isThreadsLoading}
         />
       ) : (
-        <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
-          <div className='flex flex-wrap items-center justify-between gap-3'>
-            <div>
-              <div className='text-base font-semibold text-white'>{selectedAccountLabel}</div>
-              <div className='text-sm text-gray-500'>
-                {selectedAccount
-                  ? 'Update mailbox connection settings and run sync from here.'
-                  : 'Create a new IMAP/SMTP mailbox for Filemaker mail sync and replies.'}
-              </div>
-            </div>
-            {selectedAccount ? (
-              <Button
-                type='button'
-                size='sm'
-                variant='outline'
-                disabled={syncingAccountId === selectedAccount.id}
-                onClick={(): void => {
-                  void handleSyncAccount(selectedAccount.id);
-                }}
-              >
-                <RefreshCcw className='mr-2 size-4' />
-                {syncingAccountId === selectedAccount.id ? 'Syncing...' : 'Sync'}
-              </Button>
-            ) : null}
-          </div>
-
-          {selectedAccount ? (
-            <div className='grid gap-3 text-xs text-gray-500 md:grid-cols-3'>
-              <div>
-                Last sync:{' '}
-                {selectedAccount.lastSyncedAt
-                  ? new Date(selectedAccount.lastSyncedAt).toLocaleString()
-                  : 'Never'}
-              </div>
-              <div>
-                Allowlist:{' '}
-                {selectedAccount.folderAllowlist.length > 0
-                  ? formatFilemakerMailboxAllowlist(selectedAccount.folderAllowlist)
-                  : 'Auto'}
-              </div>
-              <div>Status: {selectedAccount.status}</div>
-              {selectedAccount.lastSyncError ? (
-                <div className='md:col-span-3 text-red-400'>{selectedAccount.lastSyncError}</div>
-              ) : null}
-            </div>
-          ) : null}
-
-          <FormSection title={selectedAccount ? 'Mailbox Settings' : 'Add Mailbox'} className='space-y-3 p-4'>
-            <FormField label='Mailbox name'>
-              <Input
-                value={draft.name}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setDraft((prev) => ({ ...prev, name: event.target.value }))
-                }
-                placeholder='Primary support inbox'
-              />
-            </FormField>
-            <FormField label='Email address'>
-              <Input
-                value={draft.emailAddress}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setDraft((prev) => ({ ...prev, emailAddress: event.target.value }))
-                }
-                placeholder='support@example.com'
-              />
-            </FormField>
-            <div className='grid gap-3 md:grid-cols-2'>
-              <FormField label='IMAP host'>
-                <Input
-                  value={draft.imapHost}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({ ...prev, imapHost: event.target.value }))
-                  }
-                  placeholder='imap.example.com'
-                />
-              </FormField>
-              <FormField label='IMAP port'>
-                <Input
-                  value={String(draft.imapPort)}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      imapPort: Number.parseInt(event.target.value, 10) || 993,
-                    }))
-                  }
-                />
-              </FormField>
-              <FormField label='IMAP user'>
-                <Input
-                  value={draft.imapUser}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({ ...prev, imapUser: event.target.value }))
-                  }
-                />
-              </FormField>
-              <FormField label='IMAP password'>
-                <Input
-                  type='password'
-                  value={draft.imapPassword}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({ ...prev, imapPassword: event.target.value }))
-                  }
-                  placeholder={selectedAccount ? 'Leave blank to keep current password' : ''}
-                />
-              </FormField>
-            </div>
-            <div className='grid gap-3 md:grid-cols-2'>
-              <FormField label='SMTP host'>
-                <Input
-                  value={draft.smtpHost}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({ ...prev, smtpHost: event.target.value }))
-                  }
-                  placeholder='smtp.example.com'
-                />
-              </FormField>
-              <FormField label='SMTP port'>
-                <Input
-                  value={String(draft.smtpPort)}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      smtpPort: Number.parseInt(event.target.value, 10) || 465,
-                    }))
-                  }
-                />
-              </FormField>
-              <FormField label='SMTP user'>
-                <Input
-                  value={draft.smtpUser}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({ ...prev, smtpUser: event.target.value }))
-                  }
-                />
-              </FormField>
-              <FormField label='SMTP password'>
-                <Input
-                  type='password'
-                  value={draft.smtpPassword}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({ ...prev, smtpPassword: event.target.value }))
-                  }
-                  placeholder={selectedAccount ? 'Leave blank to keep current password' : ''}
-                />
-              </FormField>
-            </div>
-            <div className='grid gap-3 md:grid-cols-2'>
-              <FormField label='From name'>
-                <Input
-                  value={draft.fromName ?? ''}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({ ...prev, fromName: event.target.value || null }))
-                  }
-                  placeholder='Filemaker Team'
-                />
-              </FormField>
-              <FormField label='Reply-to email'>
-                <Input
-                  value={draft.replyToEmail ?? ''}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({ ...prev, replyToEmail: event.target.value || null }))
-                  }
-                  placeholder='reply@example.com'
-                />
-              </FormField>
-            </div>
-            <FormField label='Mailbox allowlist'>
-              <Input
-                value={folderAllowlistValue}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setFolderAllowlistValue(event.target.value)
-                }
-                placeholder='INBOX, Sent'
-              />
-            </FormField>
-            <div className='grid gap-3 md:grid-cols-2'>
-              <FormField label='Initial sync lookback (days)'>
-                <Input
-                  value={String(draft.initialSyncLookbackDays)}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      initialSyncLookbackDays: Number.parseInt(event.target.value, 10) || 30,
-                    }))
-                  }
-                />
-              </FormField>
-              <FormField label='Max messages per sync'>
-                <Input
-                  value={String(draft.maxMessagesPerSync)}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      maxMessagesPerSync: Number.parseInt(event.target.value, 10) || 100,
-                    }))
-                  }
-                />
-              </FormField>
-            </div>
-            <div className='flex items-center gap-6'>
-              <label
-                htmlFor='filemaker-mail-account-imap-secure'
-                className='flex items-center gap-2 text-sm text-white'
-              >
-                <Checkbox
-                  id='filemaker-mail-account-imap-secure'
-                  checked={draft.imapSecure}
-                  onCheckedChange={(checked) =>
-                    setDraft((prev) => ({ ...prev, imapSecure: checked === true }))
-                  }
-                />
-                IMAP secure
-              </label>
-              <label
-                htmlFor='filemaker-mail-account-smtp-secure'
-                className='flex items-center gap-2 text-sm text-white'
-              >
-                <Checkbox
-                  id='filemaker-mail-account-smtp-secure'
-                  checked={draft.smtpSecure}
-                  onCheckedChange={(checked) =>
-                    setDraft((prev) => ({ ...prev, smtpSecure: checked === true }))
-                  }
-                />
-                SMTP secure
-              </label>
-            </div>
-            <div className='flex flex-wrap gap-2'>
-              <Button
-                type='button'
-                onClick={(): void => {
-                  void handleSaveAccount();
-                }}
-                disabled={isSavingAccount}
-              >
-                {isSavingAccount
-                  ? selectedAccount
-                    ? 'Updating mailbox...'
-                    : 'Saving mailbox...'
-                  : selectedAccount
-                    ? 'Update Mailbox'
-                    : 'Save Mailbox'}
-              </Button>
-              {selectedAccount ? (
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={(): void => {
-                    router.push(
-                      buildComposeHref({
-                        accountId: selectedAccount.id,
-                      })
-                    );
-                  }}
-                >
-                  <MailPlus className='mr-2 size-4' />
-                  Compose from Account
-                </Button>
-              ) : null}
-            </div>
-          </FormSection>
-        </div>
+        <MailAccountSettingsSection
+          selectedAccountLabel={selectedAccountLabel}
+          selectedAccount={selectedAccount}
+          syncingAccountId={syncingAccountId}
+          handleSyncAccount={handleSyncAccount}
+          draft={draft}
+          setDraft={setDraft}
+          folderAllowlistValue={folderAllowlistValue}
+          setFolderAllowlistValue={setFolderAllowlistValue}
+          handleSaveAccount={handleSaveAccount}
+          isSavingAccount={isSavingAccount}
+          onComposeFromAccount={(accountId) => {
+            router.push(buildComposeHref({ accountId }));
+          }}
+        />
       )}
     </div>
   );

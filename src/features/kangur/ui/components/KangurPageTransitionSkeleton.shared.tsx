@@ -3,6 +3,10 @@ import {
   KangurGlassPanel,
   KangurInfoCard,
 } from '@/features/kangur/ui/design/primitives';
+import {
+  SKELETON_ANIMATION_CLASSES,
+  SKELETON_CSS_VARIABLES,
+} from '@/features/kangur/ui/animations/skeleton-animations';
 import { cn } from '@/features/kangur/shared/utils';
 import { getPathLocale, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
@@ -71,25 +75,29 @@ export const resolveSkeletonLocale = (pathname: string | null): KangurSkeletonLo
 export const SkeletonBlock = ({
   className,
   style,
+  animationDelay,
 }: {
   className?: string;
   style?: React.CSSProperties;
+  animationDelay?: number;
 }): React.JSX.Element => (
   <div
     aria-hidden='true'
-    className={cn('animate-pulse', className)}
+    className={cn('animate-pulse', SKELETON_ANIMATION_CLASSES.staggeredElement, className)}
     style={{
       background:
         'color-mix(in srgb, var(--kangur-soft-card-border, #e2e8f0) 78%, var(--kangur-soft-card-background, #ffffff))',
+      ...(animationDelay !== undefined ? { [SKELETON_CSS_VARIABLES.elementStaggerDelay]: `${animationDelay}ms` } : {}),
       ...style,
     }}
   />
 );
 
-export const SkeletonChip = ({ className }: { className?: string }): React.JSX.Element => {
+export const SkeletonChip = ({ className, animationDelay }: { className?: string; animationDelay?: number }): React.JSX.Element => {
   const chipClassName = className;
   return (
     <SkeletonBlock
+      animationDelay={animationDelay}
       className={cn(
         'rounded-full border border-white/70 bg-white/85 shadow-[0_18px_36px_-28px_rgba(91,106,170,0.24)]',
         chipClassName,
@@ -130,9 +138,9 @@ export const SkeletonPanel = ({
 export const SkeletonGlassPanel = KangurGlassPanel;
 export const SkeletonInfoSurface = KangurInfoCard;
 
-export const SkeletonLine = ({ className }: { className?: string }): React.JSX.Element => {
+export const SkeletonLine = ({ className, animationDelay }: { className?: string; animationDelay?: number }): React.JSX.Element => {
   const lineClassName = className;
-  return <SkeletonBlock className={cn('h-4 rounded-full', lineClassName)} />;
+  return <SkeletonBlock animationDelay={animationDelay} className={cn('h-4 rounded-full', lineClassName)} />;
 };
 
 export const HOME_ACTION_SKELETONS = [

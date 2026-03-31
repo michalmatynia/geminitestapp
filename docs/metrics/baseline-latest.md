@@ -8,13 +8,13 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-31T00:21:54.181Z
+Generated at: 2026-03-31T01:21:48.774Z
 
 ## Snapshot
 
-- Source files: 9078
-- Source lines: 1516769
-- use client files: 1733
+- Source files: 9100
+- Source lines: 1519081
+- use client files: 1734
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
 - Largest file: `src/features/filemaker/components/FilemakerMailSidebar.tsx` (986 LOC)

@@ -23,6 +23,8 @@ import {
   ensureKangurStorefrontAppearanceSettingsSeeded,
 } from './storefront-appearance-source';
 
+export { KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS } from './storefront-appearance-source';
+
 const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TTL_MS = 30_000;
 export const KANGUR_STOREFRONT_INITIAL_STATE_CACHE_TAG = 'kangur-storefront-initial-state';
 const KANGUR_STOREFRONT_APPEARANCE_LOAD_ERROR_MESSAGE =

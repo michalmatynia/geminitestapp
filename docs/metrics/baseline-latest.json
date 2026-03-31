@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-31T00:21:54.181Z",
+  "generatedAt": "2026-03-31T01:21:48.774Z",
   "source": {
-    "totalFiles": 9078,
-    "totalLines": 1516769,
-    "useClientFiles": 1733,
+    "totalFiles": 9100,
+    "totalLines": 1519081,
+    "useClientFiles": 1734,
     "hooksWithoutUseClient": 0,
     "filesOver800": 94,
     "filesOver1000": 0,
@@ -143,8 +143,8 @@
       },
       {
         "feature": "case-resolver",
-        "files": 302,
-        "lines": 66244
+        "files": 304,
+        "lines": 66447
       },
       {
         "feature": "products",
@@ -163,8 +163,8 @@
       },
       {
         "feature": "filemaker",
-        "files": 133,
-        "lines": 33436
+        "files": 134,
+        "lines": 33440
       },
       {
         "feature": "prompt-exploder",
@@ -203,8 +203,8 @@
       },
       {
         "feature": "observability",
-        "files": 29,
-        "lines": 5866
+        "files": 30,
+        "lines": 5868
       },
       {
         "feature": "viewer3d",

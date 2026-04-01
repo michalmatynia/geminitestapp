@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   resolveBrainModelExecutionConfigMock,
+  getBrainAssignmentForFeatureMock,
   findByIdMock,
   addMessageMock,
   createMock,
@@ -12,6 +13,7 @@ const {
   contextRegistryResolveRefsMock,
 } = vi.hoisted(() => ({
   resolveBrainModelExecutionConfigMock: vi.fn(),
+  getBrainAssignmentForFeatureMock: vi.fn(),
   findByIdMock: vi.fn(),
   addMessageMock: vi.fn(),
   createMock: vi.fn(),
@@ -24,6 +26,7 @@ const {
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   resolveBrainModelExecutionConfig: resolveBrainModelExecutionConfigMock,
+  getBrainAssignmentForFeature: getBrainAssignmentForFeatureMock,
 }));
 
 vi.mock('@/features/ai/ai-context-registry/server', () => ({
@@ -47,7 +50,7 @@ vi.mock('@/features/ai/chatbot/services/chatbot-job-repository', () => ({
   },
 }));
 
-vi.mock('@/features/jobs/server', () => ({
+vi.mock('@/features/ai/chatbot/workers/chatbotJobQueue', () => ({
   enqueueChatbotJob: enqueueChatbotJobMock,
   startChatbotJobQueue: startChatbotJobQueueMock,
 }));

@@ -320,4 +320,41 @@ describe('postKangurSocialImageAddonsBatchHandler', () => {
       })
     );
   });
+
+  it('passes a trusted self origin host for bracketed IPv6 loopback aliases', async () => {
+    createKangurSocialImageAddonsBatchMock.mockResolvedValueOnce({
+      runId: 'social-batch-run-ipv6',
+      addons: [],
+      failures: [],
+      totals: {
+        completed: 0,
+        failed: 0,
+        total: 0,
+      },
+    });
+
+    const url = 'http://localhost:3000/api/kangur/social-image-addons/batch';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          baseUrl: 'http://[::1]:3000',
+          presetIds: ['game'],
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Parameters<typeof wrappedPostHandler>[0];
+
+    const response = await wrappedPostHandler(request);
+
+    expect(response.status).toBe(200);
+    expect(createKangurSocialImageAddonsBatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        trustedSelfOriginHost: '[::1]:3000',
+      })
+    );
+  });
 });

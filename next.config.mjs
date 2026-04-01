@@ -112,7 +112,7 @@ const nextConfig = {
   devIndicators: false,
   ...(isDev
     ? {
-        allowedDevOrigins: ['127.0.0.1', '::1'],
+        allowedDevOrigins: ['127.0.0.1', '::1', '[::1]'],
       }
     : {}),
   // Keep dev artifacts separate from production builds to avoid lock/cache races
@@ -371,7 +371,7 @@ const nextConfig = {
 
 const withBundleAnalyzer =
   process.env.ANALYZE === 'true'
-    ? (await import('@next/bundle-analyzer')).default({ enabled: true })
+    ? (await import(['@next', 'bundle-analyzer'].join('/'))).default({ enabled: true })
     : (/** @type {import('next').NextConfig} */ config) => config;
 
 export default withBundleAnalyzer(withNextIntl(nextConfig));

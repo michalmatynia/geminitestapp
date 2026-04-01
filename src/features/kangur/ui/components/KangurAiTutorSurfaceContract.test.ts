@@ -7,7 +7,10 @@ import { describe, expect, it } from 'vitest';
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
 const readTutorSource = (fileName: string) =>
-  readFileSync(join(currentDir, "ai-tutor-widget", fileName), 'utf8');
+  readFileSync(join(currentDir, 'ai-tutor-widget', fileName), 'utf8');
+
+const readComponentSource = (fileName: string) =>
+  readFileSync(join(currentDir, fileName), 'utf8');
 
 const readTutorPlaywrightSource = (fileName: string) =>
   readFileSync(join(currentDir, '../../../../../e2e/features/kangur', fileName), 'utf8');
@@ -41,7 +44,7 @@ describe('Kangur AI Tutor surface contract', () => {
   });
 
   it('keeps the minimalist contextual panel renderable while guided avatar mode is still active', () => {
-    const panelChromeSource = readTutorSource('KangurAiTutorPanelChrome.shared.ts');
+    const panelChromeSource = readComponentSource('KangurAiTutorPanelChrome.shared.ts');
 
     expect(panelChromeSource).toContain('(!isGuidedTutorMode || isMinimalPanelMode) &&');
   });

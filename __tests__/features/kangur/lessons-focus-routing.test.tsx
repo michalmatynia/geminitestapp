@@ -182,6 +182,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => ({
+    data: lessonsState.value,
+    isLoading: false,
+    error: null,
+  }),
   useKangurLessonDocument: () => ({
     data: null,
     isLoading: false,

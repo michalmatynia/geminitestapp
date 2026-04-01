@@ -146,6 +146,7 @@ const collectImportPaths = (source: string): string[] => {
 
 const isForbiddenKangurUiImport = (importPath: string): boolean => {
   if (importPath === '@/features/cms/components/frontend/CmsStorefrontAppearance' ||
+    importPath === '@/shared/ui/cms-appearance/CmsStorefrontAppearance' ||
     importPath === '@/shared/ui/dropdown-menu' ||
     importPath === '@/shared/ui/radix-overlay-content-shell') {
     return false;

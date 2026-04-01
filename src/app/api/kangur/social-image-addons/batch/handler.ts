@@ -24,6 +24,7 @@ import {
   isAppError,
 } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { resolveTrustedSelfOriginHost } from '@/shared/lib/security/trusted-self-origin';
 
 export const querySchema = z.object({
   id: optionalTrimmedQueryString(z.string().trim().min(1)).optional(),
@@ -49,39 +50,6 @@ const surfaceBatchCaptureError = (error: unknown): unknown => {
     retryable: error.retryable,
     ...(error.retryAfterMs !== undefined ? { retryAfterMs: error.retryAfterMs } : {}),
   });
-};
-
-const LOOPBACK_HOSTNAMES = new Set(['localhost', 'localhost.localdomain', '127.0.0.1', '::1']);
-
-const isLoopbackHostname = (hostname: string): boolean =>
-  LOOPBACK_HOSTNAMES.has(hostname.trim().toLowerCase());
-
-const resolveTrustedSelfOriginHost = (params: {
-  requestUrl: string;
-  baseUrl: string;
-}): string | null => {
-  try {
-    const request = new URL(params.requestUrl);
-    const base = new URL(params.baseUrl);
-    const requestHost = request.host.trim().toLowerCase();
-    const baseHost = base.host.trim().toLowerCase();
-    if (!requestHost || !baseHost) {
-      return null;
-    }
-
-    if (requestHost === baseHost) {
-      return baseHost;
-    }
-
-    const portsMatch = request.port === base.port;
-    if (portsMatch && isLoopbackHostname(request.hostname) && isLoopbackHostname(base.hostname)) {
-      return baseHost;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
 };
 
 export async function getKangurSocialImageAddonsBatchHandler(
@@ -164,7 +132,7 @@ export async function postKangurSocialImageAddonsBatchHandler(
         forwardCookies: requestCookies || null,
         trustedSelfOriginHost: resolveTrustedSelfOriginHost({
           requestUrl: req.url,
-          baseUrl,
+          candidateUrl: baseUrl,
         }),
       });
 
@@ -201,7 +169,7 @@ export async function postKangurSocialImageAddonsBatchHandler(
       forwardCookies: requestCookies || null,
       trustedSelfOriginHost: resolveTrustedSelfOriginHost({
         requestUrl: req.url,
-        baseUrl,
+        candidateUrl: baseUrl,
       }),
     });
 

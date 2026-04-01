@@ -30,12 +30,10 @@ import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import {
   productsAllQueryKey,
-  productsListsQueryKey,
   productsCountsQueryKey,
   getProductDetailQueryKey,
   refetchProductsAndCounts,
   invalidateProductsAndCounts,
-  invalidateProductsAndDetail,
 } from './productCache';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -43,6 +41,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
 const PRODUCT_UPDATE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('update');
 const PRODUCT_DELETE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('delete');
+const PRODUCT_UPDATE_MUTATION_QUERY_KEY = [...productsAllQueryKey, 'mutation', 'update'] as const;
 
 type ProductListCacheValue =
   | ProductWithImages[]
@@ -113,17 +112,40 @@ const refreshUpdatedProductCaches = (
   savedProduct: ProductWithImages
 ): void => {
   syncUpdatedProductAcrossCaches(queryClient, savedProduct);
-  void invalidateProductsAndDetail(queryClient, savedProduct.id).catch((error) => {
-    logClientError(error, {
-      context: {
-        source: 'products.hooks.useUpdateProductMutation',
-        action: 'refreshUpdatedProductCaches',
-        productId: savedProduct.id,
-      },
+  void Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.lists(),
+      refetchType: 'none',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.counts(),
+      refetchType: 'none',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.detail(savedProduct.id),
+      refetchType: 'none',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.detailEdit(savedProduct.id),
+      refetchType: 'none',
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
+      refetchType: 'none',
+    }),
+  ])
+    .catch((error) => {
+      logClientError(error, {
+        context: {
+          source: 'products.hooks.useUpdateProductMutation',
+          action: 'refreshUpdatedProductCaches',
+          productId: savedProduct.id,
+        },
+      });
+    })
+    .finally(() => {
+      syncUpdatedProductAcrossCaches(queryClient, savedProduct);
     });
-  }).finally(() => {
-    syncUpdatedProductAcrossCaches(queryClient, savedProduct);
-  });
 };
 
 const isValidAdvancedFilterPayload = (payload: string): boolean => {
@@ -276,7 +298,7 @@ export function useUpdateProductMutation(): UseMutationResult<
       return updateProduct(id, data);
     },
     {
-      queryKey: productsListsQueryKey,
+      queryKey: PRODUCT_UPDATE_MUTATION_QUERY_KEY,
       meta: {
         source: 'products.hooks.useUpdateProductMutation',
         operation: 'update',
@@ -284,11 +306,6 @@ export function useUpdateProductMutation(): UseMutationResult<
         domain: 'products',
         tags: ['products', 'update'],
       },
-      extraInvalidateKeys: (variables: {
-        id: string;
-        data: Partial<ProductWithImages> | FormData;
-        originalSku?: string | null;
-      }) => [productsCountsQueryKey, getProductDetailQueryKey(variables.id)],
       invalidate: (queryClient, savedProduct) => {
         if (!savedProduct) return;
         refreshUpdatedProductCaches(queryClient, savedProduct);
@@ -305,7 +322,19 @@ export function useUpdateProductMutation(): UseMutationResult<
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
-      }) => removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
+      }, { queryClient }) => {
+        removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE);
+        void invalidateProductsAndCounts(queryClient);
+        void queryClient.invalidateQueries({
+          queryKey: getProductDetailQueryKey(variables.id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.products.detailEdit(variables.id),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
+        });
+      },
       onFailed: (variables: {
         id: string;
         data: Partial<ProductWithImages> | FormData;

@@ -47,6 +47,19 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutorDeferredActivationBridge: vi.fn(),
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurAiTutorPortal.context', () => ({
+  useKangurAiTutorPortalState: () => ({
+    portalMode: 'overlay',
+    shouldShowContextualSpotlightLayer: false,
+    focusedSpotlightArea: null,
+  }),
+  useKangurAiTutorPortalContext: () => ({
+    portalMode: 'overlay',
+    shouldShowContextualSpotlightLayer: false,
+    focusedSpotlightArea: null,
+  }),
+}));
+
 const motionProfile: TutorMotionProfile = {
   kind: 'default',
   sheetBreakpoint: 768,

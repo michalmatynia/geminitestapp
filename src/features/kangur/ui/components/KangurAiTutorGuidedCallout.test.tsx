@@ -102,6 +102,19 @@ vi.mock('./KangurAiTutorPanelBody.context', () => ({
   useKangurAiTutorPanelBodyContext: () => panelBodyContextMock,
 }));
 
+vi.mock('@/features/kangur/ui/components/KangurAiTutorPortal.context', () => ({
+  useKangurAiTutorPortalState: () => ({
+    portalMode: 'overlay',
+    shouldShowContextualSpotlightLayer: false,
+    focusedSpotlightArea: null,
+  }),
+  useKangurAiTutorPortalContext: () => ({
+    portalMode: 'overlay',
+    shouldShowContextualSpotlightLayer: false,
+    focusedSpotlightArea: null,
+  }),
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: () => pageContentQueryMock,
 }));

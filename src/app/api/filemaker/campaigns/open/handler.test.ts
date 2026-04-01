@@ -11,7 +11,7 @@ const {
   upsertFilemakerCampaignSettingValueMock: vi.fn(),
 }));
 
-vi.mock('@/features/filemaker/server', () => ({
+vi.mock('@/features/filemaker/server/campaign-settings-store', () => ({
   readFilemakerCampaignSettingValue: readFilemakerCampaignSettingValueMock,
   upsertFilemakerCampaignSettingValue: upsertFilemakerCampaignSettingValueMock,
 }));

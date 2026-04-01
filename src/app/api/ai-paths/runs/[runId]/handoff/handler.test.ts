@@ -27,6 +27,9 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(async () => ({
     findRunById: findRunByIdMock,
+    listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+    getQueueStats: vi.fn().mockResolvedValue({ queuedCount: 0, processingCount: 0 }),
+    markStaleRunningRuns: vi.fn(),
   })),
 }));
 

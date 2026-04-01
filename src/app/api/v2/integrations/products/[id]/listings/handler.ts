@@ -2,17 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
-  findProductListingByIdAcrossProviders,
-  getExportDefaultConnectionId,
-  getExportDefaultInventoryId,
   getProductListingRepository,
   listingExistsAcrossProviders,
-  listProductListingsByProductIdAcrossProviders,
 } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
+import { listCanonicalBaseProductListings } from '@/features/integrations/services/base-listing-canonicalization';
 import { enqueueTraderaListingJob } from '@/features/jobs/server';
-import { getProductRepository } from '@/features/products/server';
-import { parseJsonBody } from '@/features/products/server';
+import { getProductRepository, parseJsonBody } from '@/features/products/server';
 import {
   productListingCreatePayloadSchema,
   type ProductListingCreateResponse,
@@ -27,125 +23,11 @@ const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
   return normalized === 'base' || normalized === 'base-com' || normalized === 'baselinker';
 };
 
-type BaseListingLinkContext = {
-  integrationId: string;
-  connectionId: string;
-  inventoryId: string | null;
-};
-
-type ProductListings = Awaited<ReturnType<typeof listProductListingsByProductIdAcrossProviders>>;
-
 const requireProductId = (productId: string | null | undefined): string => {
   if (!productId) {
     throw badRequestError('Product id is required');
   }
   return productId;
-};
-
-const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext | null> => {
-  const integrationRepo = await getIntegrationRepository();
-  const integrations = await integrationRepo.listIntegrations();
-  const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
-    isBaseIntegrationSlug(integration.slug)
-  );
-  if (!baseIntegration) return null;
-
-  const connections = await integrationRepo.listConnections(baseIntegration.id);
-  if (connections.length === 0) return null;
-
-  const defaultConnectionId = (await getExportDefaultConnectionId())?.trim() || '';
-  const preferredConnection =
-    (defaultConnectionId
-      ? connections.find(
-        (connection: (typeof connections)[number]) => connection.id === defaultConnectionId
-      )
-      : null) ??
-    connections.find((connection: (typeof connections)[number]) =>
-      Boolean(connection.baseApiToken)
-    ) ??
-    connections[0] ??
-    null;
-  if (!preferredConnection?.id) return null;
-
-  const defaultInventoryId = (await getExportDefaultInventoryId())?.trim() || '';
-  return {
-    integrationId: baseIntegration.id,
-    connectionId: preferredConnection.id,
-    inventoryId: defaultInventoryId || null,
-  };
-};
-
-const syncBaseListingsWithProductId = async (
-  productId: string,
-  normalizedBaseProductId: string,
-  listings: ProductListings
-): Promise<ProductListings> => {
-  if (!normalizedBaseProductId) {
-    return listings;
-  }
-
-  const baseListingsWithoutExternalId = listings.filter(
-    (listing: ProductListings[number]) =>
-      isBaseIntegrationSlug(listing.integration.slug) && !listing.externalListingId?.trim()
-  );
-  if (baseListingsWithoutExternalId.length === 0) {
-    return listings;
-  }
-
-  await Promise.all(
-    baseListingsWithoutExternalId.map(async (listing) => {
-      const resolved = await findProductListingByIdAcrossProviders(listing.id);
-      if (!resolved) {
-        return;
-      }
-
-      await resolved.repository.updateListingExternalId(listing.id, normalizedBaseProductId);
-      if ((resolved.listing.status ?? '').trim().length === 0) {
-        await resolved.repository.updateListingStatus(listing.id, 'active');
-      }
-    })
-  );
-
-  return listProductListingsByProductIdAcrossProviders(productId);
-};
-
-const backfillBaseListingIfMissing = async (
-  productId: string,
-  normalizedBaseProductId: string,
-  listings: ProductListings
-): Promise<ProductListings> => {
-  if (!normalizedBaseProductId) {
-    return listings;
-  }
-  if (listings.some((listing: ProductListings[number]) => isBaseIntegrationSlug(listing.integration.slug))) {
-    return listings;
-  }
-
-  const linkContext = await resolveBaseListingLinkContext();
-  if (!linkContext) {
-    return listings;
-  }
-
-  const existsForConnection = await listingExistsAcrossProviders(productId, linkContext.connectionId);
-  if (existsForConnection) {
-    return listings;
-  }
-
-  const listingRepo = await getProductListingRepository();
-  await listingRepo.createListing({
-    productId,
-    integrationId: linkContext.integrationId,
-    connectionId: linkContext.connectionId,
-    status: 'active',
-    externalListingId: normalizedBaseProductId,
-    inventoryId: linkContext.inventoryId,
-    marketplaceData: {
-      source: 'base-import-backfill',
-      marketplace: 'base',
-    },
-  });
-
-  return listProductListingsByProductIdAcrossProviders(productId);
 };
 
 /**
@@ -159,18 +41,7 @@ export async function GET_handler(
 ): Promise<Response> {
   try {
     const productId = requireProductId(params.id);
-    let listings = await listProductListingsByProductIdAcrossProviders(productId);
-    const productRepo = await getProductRepository();
-    const product = await productRepo.getProductById(productId);
-    const normalizedBaseProductId = product?.baseProductId?.trim() || '';
-
-    listings = await syncBaseListingsWithProductId(
-      productId,
-      normalizedBaseProductId,
-      listings
-    );
-    listings = await backfillBaseListingIfMissing(productId, normalizedBaseProductId, listings);
-
+    const listings = await listCanonicalBaseProductListings(productId);
     return NextResponse.json(listings);
   } catch (error) {
     void ErrorSystem.captureException(error);

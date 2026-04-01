@@ -6,6 +6,10 @@ import {
   getProductListingRepository,
   getIntegrationRepository,
 } from '@/features/integrations/server';
+import {
+  applyCanonicalBaseBadgeFallback,
+  isCanonicalBaseIntegrationSlug,
+} from '@/features/integrations/services/base-listing-canonicalization';
 import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -15,7 +19,6 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 type MarketplaceBadgeKey = keyof MarketplaceBadgeEntry;
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
 
@@ -41,7 +44,7 @@ const normalizeStatus = (value: string | null | undefined): string =>
 
 const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadgeKey | null => {
   const normalized = (slug ?? '').trim().toLowerCase();
-  if (BASE_INTEGRATION_SLUGS.has(normalized)) return 'base';
+  if (isCanonicalBaseIntegrationSlug(normalized)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(normalized)) return 'tradera';
   return null;
 };
@@ -51,7 +54,7 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
   const data = value as Record<string, unknown>;
   const marketplace =
     typeof data['marketplace'] === 'string' ? data['marketplace'].trim().toLowerCase() : '';
-  if (BASE_INTEGRATION_SLUGS.has(marketplace)) return 'base';
+  if (isCanonicalBaseIntegrationSlug(marketplace)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(marketplace)) return 'tradera';
 
   const source = typeof data['source'] === 'string' ? data['source'].trim().toLowerCase() : '';
@@ -173,7 +176,13 @@ const buildPayload = async (
     timings['assemble'] = performance.now() - assembleStart;
   }
 
-  return NextResponse.json(Object.fromEntries(byProduct.entries()) as ListingBadgesPayload);
+  const payload = Object.fromEntries(byProduct.entries()) as ListingBadgesPayload;
+  const canonicalPayload = await applyCanonicalBaseBadgeFallback(
+    payload,
+    normalizedRequestedProductIds
+  );
+
+  return NextResponse.json(canonicalPayload);
 };
 
 /**

@@ -207,6 +207,51 @@ describe('postKangurSocialImageAddonsHandler', () => {
     );
   });
 
+  it('passes a trusted self origin host for bracketed IPv6 loopback aliases', async () => {
+    createKangurSocialImageAddonFromPlaywrightMock.mockResolvedValueOnce({
+      id: 'addon-ipv6',
+      title: 'Local hero image',
+      description: '',
+      image: {
+        id: 'file-ipv6',
+        filename: 'hero-local-ipv6.png',
+        filepath: '/uploads/kangur/social-addons/hero-local-ipv6.png',
+        url: '/uploads/kangur/social-addons/hero-local-ipv6.png',
+        width: 1200,
+        height: 630,
+      },
+      sourceUrl: 'http://[::1]:3000/en/kangur/tests',
+      sourceHost: '[::1]:3000',
+      createdAt: '2026-03-30T00:00:00.000Z',
+      updatedAt: '2026-03-30T00:00:00.000Z',
+      createdBy: 'admin-1',
+    });
+
+    const url = 'http://localhost:3000/api/kangur/social-image-addons';
+    const request = Object.assign(
+      new Request(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Local hero image',
+          sourceUrl: 'http://[::1]:3000/en/kangur/tests',
+        }),
+      }),
+      {
+        nextUrl: new URL(url),
+      }
+    ) as Parameters<typeof wrappedPostHandler>[0];
+
+    const response = await wrappedPostHandler(request);
+
+    expect(response.status).toBe(200);
+    expect(createKangurSocialImageAddonFromPlaywrightMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        trustedSelfOriginHost: '[::1]:3000',
+      })
+    );
+  });
+
   it('captures create failures for single Playwright add-ons', async () => {
     createKangurSocialImageAddonFromPlaywrightMock.mockRejectedValueOnce(
       operationFailedError('Browser crashed.')

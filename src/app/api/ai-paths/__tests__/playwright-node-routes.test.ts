@@ -21,12 +21,12 @@ const {
   readPlaywrightNodeArtifactMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/server', () => ({
+vi.mock('@/features/ai/ai-paths/server/access', () => ({
   requireAiPathsAccessOrInternal: requireAiPathsAccessOrInternalMock,
   enforceAiPathsActionRateLimit: enforceAiPathsActionRateLimitMock,
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
 }));
 

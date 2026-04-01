@@ -76,6 +76,8 @@ vi.mock('@/features/kangur/docs/tooltips', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   useKangurAiTutorSessionSync: () => undefined,
+  useOptionalKangurAiTutor: () => null,
+  useKangurAiTutorContent: () => ({ entry: null }),
 }));
 
 vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({

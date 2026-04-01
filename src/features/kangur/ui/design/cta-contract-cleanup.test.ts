@@ -14,27 +14,27 @@ const kangurAiTutorWidgetDisplayPath = path.join(
 );
 const kangurAiTutorPanelChromePath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorPanelChrome.tsx'
+  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.tsx'
 );
 const kangurAiTutorPanelChromeSharedPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorPanelChrome.shared.ts'
+  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.shared.ts'
 );
 const kangurAiTutorPanelChromeSurfacePath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorPanelChrome.surface.tsx'
+  'src/features/kangur/ui/components/KangurAiTutorPanelChrome.surface.tsx'
 );
 const kangurAiTutorPanelAuxiliaryControlsPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorPanelAuxiliaryControls.tsx'
+  'src/features/kangur/ui/components/KangurAiTutorPanelAuxiliaryControls.tsx'
 );
 const kangurAiTutorMessageListPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorMessageList.tsx'
+  'src/features/kangur/ui/components/KangurAiTutorMessageList.tsx'
 );
 const kangurAiTutorComposerPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorComposer.tsx'
+  'src/features/kangur/ui/components/KangurAiTutorComposer.tsx'
 );
 const kangurParentDashboardAiTutorWidgetPath = path.join(
   process.cwd(),
@@ -42,7 +42,7 @@ const kangurParentDashboardAiTutorWidgetPath = path.join(
 );
 const kangurHomeActionsWidgetPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/game-setup/KangurGameHomeActionsWidget.tsx'
+  'src/features/kangur/ui/components/game-home/KangurGameHomeActionsWidget.tsx'
 );
 const kangurSourceRoots = [
   path.join(process.cwd(), 'src/features/kangur'),

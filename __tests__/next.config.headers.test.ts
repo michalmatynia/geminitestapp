@@ -10,4 +10,10 @@ describe('next.config headers', () => {
 
     expect(csp).toContain("media-src 'self' data: blob:");
   });
+
+  it('allows the bracketed IPv6 loopback origin in dev', () => {
+    const allowedDevOrigins = nextConfig.allowedDevOrigins ?? [];
+
+    expect(allowedDevOrigins).toContain('[::1]');
+  });
 });

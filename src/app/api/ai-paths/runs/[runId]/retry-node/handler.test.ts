@@ -28,10 +28,6 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   retryPathRunNode: retryPathRunNodeMock,
 }));
 
-vi.mock('@/features/jobs/server', () => ({
-  assertAiPathRunQueueReady: assertAiPathRunQueueReadyMock,
-}));
-
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   assertAiPathRunQueueReady: assertAiPathRunQueueReadyMock,
 }));
@@ -43,7 +39,9 @@ vi.mock('@/shared/lib/api/parse-json', () => ({
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(async () => ({
     findRunById: findRunByIdMock,
+    listRuns: vi.fn(),
     getQueueStats: vi.fn().mockResolvedValue({ queuedCount: 0, processingCount: 0 }),
+    markStaleRunningRuns: vi.fn(),
   })),
 }));
 

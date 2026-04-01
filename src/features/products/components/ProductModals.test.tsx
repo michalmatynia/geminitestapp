@@ -284,6 +284,25 @@ describe('ProductModals', () => {
       });
     });
 
+    it('routes export settings products through the Base-filtered listings modal', async () => {
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          exportSettingsProduct: createProduct(),
+        })
+      );
+
+      render(<ProductModals />);
+
+      await waitFor(() => {
+        expect(productListingsModalPropsMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            item: expect.objectContaining({ id: 'product-1' }),
+            filterIntegrationSlug: 'baselinker',
+          })
+        );
+      });
+    });
+
     it('renders edit form when the editing product is hydrated', () => {
       const hydrated = markEditingProductHydrated(createProduct());
       useProductFormCoreMock.mockReturnValue({

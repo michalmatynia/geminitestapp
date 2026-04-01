@@ -36,8 +36,10 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   enqueuePathRun: enqueuePathRunMock,
 }));
 
-vi.mock('@/features/jobs/server', () => ({
+vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   assertAiPathRunQueueReadyForEnqueue: assertAiPathRunQueueReadyForEnqueueMock,
+  enqueuePathRunJob: vi.fn(),
+  scheduleLocalFallbackRun: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server/settings-store', () => ({
@@ -289,7 +291,13 @@ describe('ai-paths runs enqueue handler', () => {
       provider: 'mongodb',
       routeMode: 'explicit',
       collection: 'ai_path_runs',
-      repo: {},
+      repo: {
+        listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+        createRun: vi.fn().mockImplementation(async (data) => ({ id: 'run-1', ...data })),
+        createRunNodes: vi.fn().mockResolvedValue(undefined),
+        createRunEvent: vi.fn().mockResolvedValue(undefined),
+        updateRunIfStatus: vi.fn().mockResolvedValue(true),
+      },
     });
     contextRegistryResolveRefsMock.mockReset().mockResolvedValue({
       refs: [{ id: 'page:ai-paths', kind: 'static_node' }],
@@ -799,9 +807,9 @@ describe('ai-paths runs enqueue handler', () => {
   });
 
   it('throws a 503 service unavailable when the queue readiness check times out', async () => {
-    assertAiPathRunQueueReadyForEnqueueMock.mockRejectedValue(
+    assertAiPathRunQueueReadyForEnqueueMock.mockImplementation(() => Promise.reject(
       new Error('queue_preflight_timeout after 10000ms')
-    );
+    ));
     const config = createDefaultPathConfig('path-queue-timeout');
 
     await expect(
@@ -822,7 +830,7 @@ describe('ai-paths runs enqueue handler', () => {
 
   it('re-throws non-timeout queue readiness errors without wrapping them as 503', async () => {
     const queueError = new Error('Redis connection refused');
-    assertAiPathRunQueueReadyForEnqueueMock.mockRejectedValue(queueError);
+    assertAiPathRunQueueReadyForEnqueueMock.mockImplementation(() => Promise.reject(queueError));
     const config = createDefaultPathConfig('path-queue-error');
 
     await expect(

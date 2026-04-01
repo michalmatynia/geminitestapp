@@ -1,11 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import type { CSSProperties, ReactNode } from 'react';
 
+import { describe, expect, it, vi } from 'vitest';
+
 import { KangurAiTutorSpotlightOverlays } from './KangurAiTutorSpotlightOverlays';
 import {
   KangurAiTutorWidgetStateProvider,
   useKangurAiTutorWidgetState,
 } from './ai-tutor-widget/KangurAiTutorWidget.state';
+
+vi.mock('@/features/kangur/ui/components/KangurAiTutorPortal.context', () => ({
+  useKangurAiTutorPortalState: () => ({
+    portalMode: 'overlay',
+    shouldShowContextualSpotlightLayer: false,
+    focusedSpotlightArea: null,
+  }),
+  useKangurAiTutorPortalContext: () => ({
+    portalMode: 'overlay',
+    shouldShowContextualSpotlightLayer: false,
+    focusedSpotlightArea: null,
+  }),
+}));
 
 function SpotlightOverlaysHarness(): ReactNode {
   const widgetState = useKangurAiTutorWidgetState();

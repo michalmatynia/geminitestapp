@@ -61,7 +61,7 @@ export async function processBaseExportJob(
         }
       : undefined;
 
-    const { product, connection, integrations, primaryListingRepo } =
+    const { product, connection, integrations, primaryListingRepo, productRepo } =
       await segments.loadExportResources(productId, connectionId);
 
     if (!product) throw externalServiceError('Product not found', { productId });
@@ -290,6 +290,16 @@ export async function processBaseExportJob(
         fields: exportFields,
         requestId,
       });
+    }
+
+    const normalizedExternalProductId = result.productId?.trim() || '';
+    const normalizedProductBaseId = product.baseProductId?.trim() || '';
+    if (normalizedExternalProductId && normalizedProductBaseId !== normalizedExternalProductId) {
+      await productRepo
+        .updateProduct(productId, { baseProductId: normalizedExternalProductId })
+        .catch((error) => {
+          void ErrorSystem.captureException(error);
+        });
     }
 
     await runRepository

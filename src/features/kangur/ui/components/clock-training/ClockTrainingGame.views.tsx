@@ -30,6 +30,7 @@ import type {
 import { CHALLENGE_TIME_LIMIT_SECONDS, buildClockTaskPrompt, pad, taskToKey } from './clock-training-utils';
 import { getClockTrainingSectionContent } from './clock-training-data';
 import { DraggableClock } from '../clock-training/DraggableClock';
+import { useClockTrainingContext } from './ClockTraining.context';
 
 type ClockFeedback = {
   kind: KangurMiniGameBinaryFeedbackState;
@@ -435,33 +436,22 @@ function ClockTrainingFeedbackAnnouncer({
   );
 }
 
-function ClockTrainingSummaryView({
-  challengeBestStreak,
-  challengeMedal,
-  completionAction,
-  gameMode,
-  onResetSession,
-  resolvedCompletionPrimaryActionLabel,
-  retryAddedCount,
-  score,
-  section,
-  tasks,
-  xpBreakdown,
-  xpEarned,
-}: {
-  challengeBestStreak: number;
-  challengeMedal: ClockChallengeMedal | null;
-  completionAction: () => void;
-  gameMode: ClockGameMode;
-  onResetSession: (mode: ClockGameMode) => void;
-  resolvedCompletionPrimaryActionLabel: string;
-  retryAddedCount: number;
-  score: number;
-  section: ClockTrainingTaskPoolId;
-  tasks: ClockTask[];
-  xpBreakdown: KangurRewardBreakdownEntry[];
-  xpEarned: number;
-}): React.JSX.Element {
+function ClockTrainingSummaryView(): React.JSX.Element {
+  const { state, actions } = useClockTrainingContext();
+  const {
+    challengeBestStreak,
+    challengeMedal,
+    gameMode,
+    resolvedCompletionPrimaryActionLabel,
+    retryAddedCount,
+    score,
+    section,
+    tasks,
+    xpBreakdown,
+    xpEarned,
+  } = state;
+  const { onFinish, resetSession } = actions;
+
   return (
     <ClockTrainingSummary
       score={score}
@@ -474,62 +464,38 @@ function ClockTrainingSummaryView({
       retryAddedCount={retryAddedCount}
       section={section}
       completionPrimaryActionLabel={resolvedCompletionPrimaryActionLabel}
-      onFinish={completionAction}
-      onRestart={() => onResetSession(gameMode)}
+      onFinish={onFinish}
+      onRestart={() => resetSession(gameMode)}
     />
   );
 }
 
-function ClockTrainingActiveView({
-  challengeTimeLeft,
-  current,
-  done,
-  feedback,
-  gameMode,
-  handleSubmit,
-  hideModeSwitch,
-  isCoarsePointer,
-  onResetSession,
-  retryAddedCount,
-  section,
-  showHourHand,
-  showMinuteHand,
-  showTaskTitle,
-  showTimeDisplay,
-  submitNextStep,
-  task,
-  tasks,
-  trainingSectionContent,
-  translations,
-}: {
-  challengeTimeLeft: number;
-  current: number;
-  done: boolean;
-  feedback: ClockFeedback | null;
-  gameMode: ClockGameMode;
-  handleSubmit: (hours: number, minutes: number) => void;
-  hideModeSwitch: boolean;
-  isCoarsePointer: boolean;
-  onResetSession: (mode: ClockGameMode) => void;
-  retryAddedCount: number;
-  section: ClockTrainingTaskPoolId;
-  showHourHand: boolean;
-  showMinuteHand: boolean;
-  showTaskTitle: boolean;
-  showTimeDisplay: boolean;
-  submitNextStep: 'next-stage' | 'next-task' | 'summary' | null;
-  task: ClockTask;
-  tasks: ClockTask[];
-  trainingSectionContent: ReturnType<typeof getClockTrainingSectionContent>;
-  translations: ReturnType<typeof useTranslations>;
-}): React.JSX.Element {
+function ClockTrainingActiveView(): React.JSX.Element {
+  const { props, state, actions } = useClockTrainingContext();
+  const {
+    challengeTimeLeft,
+    current,
+    done,
+    feedback,
+    gameMode,
+    isCoarsePointer,
+    retryAddedCount,
+    submitNextStep,
+    task,
+    tasks,
+    trainingSectionContent,
+    translations,
+  } = state;
+  const { handleSubmit, resetSession } = actions;
+  const { hideModeSwitch, showHourHand, showMinuteHand, showTaskTitle, showTimeDisplay } = props;
+
   return (
     <div className={`flex w-full flex-col items-center ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <ClockTrainingModeSwitchSlot
         gameMode={gameMode}
-        hideModeSwitch={hideModeSwitch}
+        hideModeSwitch={hideModeSwitch ?? false}
         isCoarsePointer={isCoarsePointer}
-        onResetSession={onResetSession}
+        onResetSession={resetSession}
         translations={translations}
       />
       <ClockTrainingGuidanceSlot
@@ -554,7 +520,7 @@ function ClockTrainingActiveView({
       />
       <ClockTrainingPromptPanel
         section={section}
-        showTaskTitle={showTaskTitle}
+        showTaskTitle={showTaskTitle ?? true}
         task={task}
         trainingSectionContent={trainingSectionContent}
         translations={translations}
@@ -570,9 +536,9 @@ function ClockTrainingActiveView({
         challengeTimeLeft={challengeTimeLeft}
         challengeTimeLimit={CHALLENGE_TIME_LIMIT_SECONDS}
         section={section}
-        showHourHand={showHourHand}
-        showMinuteHand={showMinuteHand}
-        showTimeDisplay={showTimeDisplay}
+        showHourHand={showHourHand ?? true}
+        showMinuteHand={showMinuteHand ?? true}
+        showTimeDisplay={showTimeDisplay ?? true}
         submitFeedback={resolveClockTrainingSubmitFeedback({ done, feedback, gameMode })}
         submitFeedbackDetails={feedback?.details ?? null}
         submitFeedbackTitle={feedback?.title ?? null}
@@ -583,106 +549,38 @@ function ClockTrainingActiveView({
   );
 }
 
-export function ClockTrainingGameView({
-  challengeBestStreak,
-  challengeMedal,
-  challengeTimeLeft,
-  completionAction,
-  current,
-  done,
-  feedback,
-  gameMode,
-  handleSubmit,
-  hideModeSwitch,
-  isCoarsePointer,
-  onResetSession,
-  resolvedCompletionPrimaryActionLabel,
-  retryAddedCount,
-  score,
-  section,
-  showHourHand,
-  showMinuteHand,
-  showStandalonePracticeSummary,
-  showTaskTitle,
-  showTimeDisplay,
-  submitNextStep,
-  task,
-  tasks,
-  trainingSectionContent,
-  translations,
-  xpBreakdown,
-  xpEarned,
-}: {
-  challengeBestStreak: number;
-  challengeMedal: ClockChallengeMedal | null;
-  challengeTimeLeft: number;
-  completionAction: () => void;
-  current: number;
-  done: boolean;
-  feedback: ClockFeedback | null;
-  gameMode: ClockGameMode;
-  handleSubmit: (hours: number, minutes: number) => void;
-  hideModeSwitch: boolean;
-  isCoarsePointer: boolean;
-  onResetSession: (mode: ClockGameMode) => void;
-  resolvedCompletionPrimaryActionLabel: string;
-  retryAddedCount: number;
-  score: number;
-  section: ClockTrainingTaskPoolId;
-  showHourHand: boolean;
-  showMinuteHand: boolean;
-  showStandalonePracticeSummary: boolean;
-  showTaskTitle: boolean;
-  showTimeDisplay: boolean;
-  submitNextStep: 'next-stage' | 'next-task' | 'summary' | null;
-  task: ClockTask;
-  tasks: ClockTask[];
-  trainingSectionContent: ReturnType<typeof getClockTrainingSectionContent>;
-  translations: ReturnType<typeof useTranslations>;
-  xpBreakdown: KangurRewardBreakdownEntry[];
-  xpEarned: number;
-}): React.JSX.Element {
+export function ClockTrainingGameView(): React.JSX.Element {
+  const { state, actions } = useClockTrainingContext();
+  const {
+    challengeBestStreak,
+    challengeMedal,
+    challengeTimeLeft,
+    current,
+    done,
+    feedback,
+    gameMode,
+    isCoarsePointer,
+    resolvedCompletionPrimaryActionLabel,
+    retryAddedCount,
+    score,
+    showStandalonePracticeSummary,
+    submitNextStep,
+    task,
+    tasks,
+    trainingSectionContent,
+    translations,
+    xpBreakdown,
+    xpEarned,
+  } = state;
+  const { onFinish, resetSession, handleSubmit } = actions;
+
   if (shouldShowClockTrainingSummary({ done, gameMode, showStandalonePracticeSummary })) {
     return (
-      <ClockTrainingSummaryView
-        challengeBestStreak={challengeBestStreak}
-        challengeMedal={challengeMedal}
-        completionAction={completionAction}
-        gameMode={gameMode}
-        onResetSession={onResetSession}
-        resolvedCompletionPrimaryActionLabel={resolvedCompletionPrimaryActionLabel}
-        retryAddedCount={retryAddedCount}
-        score={score}
-        section={section}
-        tasks={tasks}
-        xpBreakdown={xpBreakdown}
-        xpEarned={xpEarned}
-      />
+      <ClockTrainingSummaryView />
     );
   }
 
   return (
-    <ClockTrainingActiveView
-      challengeTimeLeft={challengeTimeLeft}
-      current={current}
-      done={done}
-      feedback={feedback}
-      gameMode={gameMode}
-      handleSubmit={handleSubmit}
-      hideModeSwitch={hideModeSwitch}
-      isCoarsePointer={isCoarsePointer}
-      onResetSession={onResetSession}
-      retryAddedCount={retryAddedCount}
-      section={section}
-      showHourHand={showHourHand}
-      showMinuteHand={showMinuteHand}
-      showTaskTitle={showTaskTitle}
-      showTimeDisplay={showTimeDisplay}
-      submitNextStep={submitNextStep}
-      task={task}
-      tasks={tasks}
-      trainingSectionContent={trainingSectionContent}
-      translations={translations}
-    />
+    <ClockTrainingActiveView />
   );
 }

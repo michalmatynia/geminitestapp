@@ -115,7 +115,6 @@ const refreshUpdatedProductCaches = (
   void Promise.all([
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.products.lists(),
-      refetchType: 'none',
     }),
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.products.counts(),

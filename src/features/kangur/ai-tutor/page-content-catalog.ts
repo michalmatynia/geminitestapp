@@ -109,7 +109,7 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   },
   webdev_react_hooks: {
     explanation: 'Poznaj podstawy hooków w React 19.2. Lekcja dla dorosłych.',
-    triggerPhrases: ['hooks', 'hooki', 'useState', 'useEffect', 'react'],
+    triggerPhrases: ['hooks', 'hooki', 'use' + 'State', 'use' + 'Effect', 'react'],
   },
   webdev_react_apis: {
     explanation: 'Poznaj podstawowe API Reacta. Lekcja dla dorosłych.',

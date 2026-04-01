@@ -189,8 +189,8 @@ describe('front page app selection', () => {
     expect(result).toBeTruthy();
     expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).toHaveBeenCalled();
-    expect(headersMock).toHaveBeenCalled();
-    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
+    expect(headersMock).not.toHaveBeenCalled();
+    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalledWith(null);
     expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {}, undefined);
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
@@ -206,9 +206,22 @@ describe('front page app selection', () => {
     expect(getFrontPageSettingMock).not.toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).toHaveBeenCalled();
-    expect(headersMock).toHaveBeenCalled();
-    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
+    expect(headersMock).not.toHaveBeenCalled();
+    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalledWith(null);
     expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {}, undefined);
     expect(flushMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads request headers only when domain zoning is enabled', async () => {
+    const { Home } = await loadHomeModule();
+
+    getFrontPageSettingMock.mockResolvedValue('products');
+    isDomainZoningEnabledMock.mockResolvedValue(true);
+
+    const result = await Home();
+
+    expect(result).toBeTruthy();
+    expect(headersMock).toHaveBeenCalledTimes(1);
+    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalledWith(expect.any(Headers));
   });
 });

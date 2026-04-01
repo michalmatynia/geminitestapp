@@ -9,16 +9,32 @@ import {
   useKangurAiTutorWidgetState,
 } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
+const spotlightsStateMock = {
+  guidedMode: null,
+  prefersReducedMotion: false,
+  reducedMotionTransitions: {
+    instant: { duration: 0 },
+    stableState: { opacity: 1, scale: 1, y: 0 },
+  },
+  sectionContextSpotlightStyle: null,
+  sectionDropHighlightStyle: null,
+  selectionContextSpotlightStyle: null,
+  selectionGlowStyles: [],
+  selectionSpotlightStyle: null,
+} as any;
+
 vi.mock('@/features/kangur/ui/components/KangurAiTutorPortal.context', () => ({
   useKangurAiTutorPortalState: () => ({
     portalMode: 'overlay',
     shouldShowContextualSpotlightLayer: false,
     focusedSpotlightArea: null,
+    spotlights: spotlightsStateMock,
   }),
   useKangurAiTutorPortalContext: () => ({
     portalMode: 'overlay',
     shouldShowContextualSpotlightLayer: false,
     focusedSpotlightArea: null,
+    spotlights: spotlightsStateMock,
   }),
 }));
 
@@ -27,19 +43,7 @@ function SpotlightOverlaysHarness(): ReactNode {
 
   return (
     <KangurAiTutorWidgetStateProvider value={widgetState}>
-      <KangurAiTutorSpotlightOverlays
-        guidedMode={null}
-        prefersReducedMotion={false}
-        reducedMotionTransitions={{
-          instant: { duration: 0 },
-          stableState: { opacity: 1, scale: 1, y: 0 },
-        }}
-        sectionContextSpotlightStyle={null}
-        sectionDropHighlightStyle={null}
-        selectionGlowStyles={[]}
-        selectionContextSpotlightStyle={null}
-        selectionSpotlightStyle={null}
-      />
+      <KangurAiTutorSpotlightOverlays />
     </KangurAiTutorWidgetStateProvider>
   );
 }
@@ -65,24 +69,21 @@ function SpotlightOverlaysStylesHarness({
 
   return (
     <KangurAiTutorWidgetStateProvider value={widgetState}>
-      <KangurAiTutorSpotlightOverlays
-        guidedMode={guidedMode}
-        prefersReducedMotion={false}
-        reducedMotionTransitions={{
-          instant: { duration: 0 },
-          stableState: { opacity: 1, scale: 1, y: 0 },
-        }}
-        sectionContextSpotlightStyle={sectionContextSpotlightStyle}
-        sectionDropHighlightStyle={sectionDropHighlightStyle}
-        selectionGlowStyles={selectionGlowStyles}
-        selectionContextSpotlightStyle={selectionContextSpotlightStyle}
-        selectionSpotlightStyle={selectionSpotlightStyle}
-      />
+      <KangurAiTutorSpotlightOverlays />
     </KangurAiTutorWidgetStateProvider>
   );
 }
 
 describe('KangurAiTutorSpotlightOverlays', () => {
+  beforeEach(() => {
+    spotlightsStateMock.guidedMode = null;
+    spotlightsStateMock.sectionContextSpotlightStyle = null;
+    spotlightsStateMock.sectionDropHighlightStyle = null;
+    spotlightsStateMock.selectionGlowStyles = [];
+    spotlightsStateMock.selectionContextSpotlightStyle = null;
+    spotlightsStateMock.selectionSpotlightStyle = null;
+  });
+
   it('uses a visible inline light-mode selection emphasis instead of transparent text fill', () => {
     const { container } = render(<SpotlightOverlaysHarness />);
     const style = container.querySelector('style');
@@ -126,14 +127,14 @@ describe('KangurAiTutorSpotlightOverlays', () => {
   });
 
   it('renders themed spotlight utility classes for selection glow and contextual frames', () => {
+    spotlightsStateMock.guidedMode = 'selection';
+    spotlightsStateMock.selectionGlowStyles = [{ left: 12, top: 18, width: 84, height: 28 }];
+    spotlightsStateMock.selectionContextSpotlightStyle = { left: 20, top: 32, width: 160, height: 48 };
+    spotlightsStateMock.sectionContextSpotlightStyle = { left: 28, top: 92, width: 180, height: 56 };
+    spotlightsStateMock.sectionDropHighlightStyle = { left: 36, top: 160, width: 200, height: 72 };
+
     render(
-      <SpotlightOverlaysStylesHarness
-        guidedMode='selection'
-        selectionGlowStyles={[{ left: 12, top: 18, width: 84, height: 28 }]}
-        selectionContextSpotlightStyle={{ left: 20, top: 32, width: 160, height: 48 }}
-        sectionContextSpotlightStyle={{ left: 28, top: 92, width: 180, height: 56 }}
-        sectionDropHighlightStyle={{ left: 36, top: 160, width: 200, height: 72 }}
-      />
+      <SpotlightOverlaysStylesHarness />
     );
 
     expect(screen.getByTestId('kangur-ai-tutor-selection-glow')).toHaveClass(
@@ -151,11 +152,11 @@ describe('KangurAiTutorSpotlightOverlays', () => {
   });
 
   it('renders the aggregated selection spotlight with the dedicated themed selection chrome', () => {
+    spotlightsStateMock.guidedMode = 'selection';
+    spotlightsStateMock.selectionSpotlightStyle = { left: 12, top: 18, width: 96, height: 32 };
+
     render(
-      <SpotlightOverlaysStylesHarness
-        guidedMode='selection'
-        selectionSpotlightStyle={{ left: 12, top: 18, width: 96, height: 32 }}
-      />
+      <SpotlightOverlaysStylesHarness />
     );
 
     expect(screen.getByTestId('kangur-ai-tutor-selection-spotlight')).toHaveClass(

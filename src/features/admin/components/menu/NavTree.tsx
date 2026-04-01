@@ -21,6 +21,8 @@ type NavTreeProps = {
   onToggleOpen: (id: string) => void;
   onNavigateHref?: ((href: string) => void) | undefined;
   onPrefetchHref?: ((href: string) => void) | undefined;
+  pendingHref?: string | null | undefined;
+  onSetPendingHref?: ((href: string) => void) | undefined;
 };
 
 type NavTreeItemProps = {
@@ -32,6 +34,7 @@ type NavTreeItemProps = {
   onToggleOpen: (id: string) => void;
   onNavigateHref: (href: string) => void;
   onPrefetchHref: (href: string) => void;
+  onSetPendingHref?: ((href: string) => void) | undefined;
 };
 
 type NavTreeNodeProps = {
@@ -43,6 +46,8 @@ type NavTreeNodeProps = {
   onToggleOpen: (id: string) => void;
   onNavigateHref: (href: string) => void;
   onPrefetchHref: (href: string) => void;
+  pendingHref?: string | null | undefined;
+  onSetPendingHref?: ((href: string) => void) | undefined;
 };
 
 const FOCUS_RING_CLASS_NAME =
@@ -150,6 +155,7 @@ const NavTreeItem = memo(
     onToggleOpen,
     onNavigateHref,
     onPrefetchHref,
+    onSetPendingHref,
   }: NavTreeItemProps): React.ReactNode {
     const hasChildren = !!item.children?.length;
     const contextItems = useMemo(
@@ -237,7 +243,10 @@ const NavTreeItem = memo(
         <TreeContextMenu items={contextItems} className='cursor-pointer'>
           <Link
             href={item.href}
-            {...(item.onClick ? { onClick: item.onClick } : {})}
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              onSetPendingHref?.(item.href!);
+              item.onClick?.(e);
+            }}
             onMouseEnter={handleLinkIntent}
             onFocus={handleLinkIntent}
             className={cn(
@@ -304,7 +313,10 @@ const NavTreeItem = memo(
         <TreeContextMenu items={contextItems} className='cursor-pointer'>
           <Link
             href={item.href}
-            {...(item.onClick ? { onClick: item.onClick } : {})}
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              onSetPendingHref?.(item.href!);
+              item.onClick?.(e);
+            }}
             onMouseEnter={handleLinkIntent}
             onFocus={handleLinkIntent}
             className={rowClassName}
@@ -339,7 +351,8 @@ const NavTreeItem = memo(
       prev.isOpen === next.isOpen &&
       prev.onToggleOpen === next.onToggleOpen &&
       prev.onNavigateHref === next.onNavigateHref &&
-      prev.onPrefetchHref === next.onPrefetchHref
+      prev.onPrefetchHref === next.onPrefetchHref &&
+      prev.onSetPendingHref === next.onSetPendingHref
     );
   }
 );
@@ -354,9 +367,12 @@ const NavTreeNode = memo(
     onToggleOpen,
     onNavigateHref,
     onPrefetchHref,
+    pendingHref,
+    onSetPendingHref,
   }: NavTreeNodeProps): React.ReactNode {
     const hasChildren = !!item.children?.length;
-    const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
+    const effectivePathname = pendingHref ?? pathname;
+    const active = !hasChildren && item.href ? isActiveHref(effectivePathname, item.href, item.exact) : false;
     const isOpen = !isMenuCollapsed && hasChildren && openIds.has(item.id);
 
     return (
@@ -370,6 +386,7 @@ const NavTreeNode = memo(
           onToggleOpen={onToggleOpen}
           onNavigateHref={onNavigateHref}
           onPrefetchHref={onPrefetchHref}
+          onSetPendingHref={onSetPendingHref}
         />
 
         {hasChildren && isOpen ? (
@@ -383,6 +400,8 @@ const NavTreeNode = memo(
               onToggleOpen={onToggleOpen}
               onNavigateHref={onNavigateHref}
               onPrefetchHref={onPrefetchHref}
+              pendingHref={pendingHref}
+              onSetPendingHref={onSetPendingHref}
             />
           </div>
         ) : null}
@@ -395,9 +414,11 @@ const NavTreeNode = memo(
       prev.depth !== next.depth ||
       prev.isMenuCollapsed !== next.isMenuCollapsed ||
       prev.pathname !== next.pathname ||
+      prev.pendingHref !== next.pendingHref ||
       prev.onToggleOpen !== next.onToggleOpen ||
       prev.onNavigateHref !== next.onNavigateHref ||
-      prev.onPrefetchHref !== next.onPrefetchHref
+      prev.onPrefetchHref !== next.onPrefetchHref ||
+      prev.onSetPendingHref !== next.onSetPendingHref
     ) {
       return false;
     }
@@ -430,14 +451,17 @@ export const NavTree = memo(function NavTree({
   onToggleOpen,
   onNavigateHref: onNavigateHrefProp,
   onPrefetchHref: onPrefetchHrefProp,
+  pendingHref,
+  onSetPendingHref: onSetPendingHrefProp,
 }: NavTreeProps): React.ReactNode {
   const router = useRouter();
   const prefetchedHrefSetRef = useRef<Set<string>>(new Set());
   const handleNavigateHrefLocal = useCallback(
     (href: string): void => {
+      onSetPendingHrefProp?.(href);
       router.push(href);
     },
-    [router]
+    [router, onSetPendingHrefProp]
   );
   const handlePrefetchHrefLocal = useCallback(
     (href: string): void => {
@@ -463,6 +487,8 @@ export const NavTree = memo(function NavTree({
           onToggleOpen={onToggleOpen}
           onNavigateHref={handleNavigateHref}
           onPrefetchHref={handlePrefetchHref}
+          pendingHref={pendingHref}
+          onSetPendingHref={onSetPendingHrefProp}
         />
       ))}
     </div>

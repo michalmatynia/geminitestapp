@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-31'
+last_reviewed: '2026-04-01'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-31T16:17:33.111Z
+Generated at: 2026-04-01T10:48:25.304Z
 
 ## Snapshot
 
-- Source files: 8989
-- Source lines: 1503399
+- Source files: 9007
+- Source lines: 1503997
 - use client files: 1673
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -25,8 +25,8 @@ Generated at: 2026-03-31T16:17:33.111Z
 - Cross-feature dependency pairs: 0
 - Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 542
-- Prop-drilling chains (depth >= 4): 156
+- Prop-drilling chains (depth >= 3): 451
+- Prop-drilling chains (depth >= 4): 116
 
 ## Top API Hotspots (by LOC)
 

@@ -1,10 +1,11 @@
+import { AdminRouteLoading } from '@/features/admin/public';
 import { JSX, Suspense } from 'react';
 
 import { DatabasePreviewPage } from '@/features/database/public';
 
 export default function Page(): JSX.Element {
   return (
-    <Suspense fallback={<></>}>
+    <Suspense fallback={<AdminRouteLoading />}>
       <DatabasePreviewPage />
     </Suspense>
   );

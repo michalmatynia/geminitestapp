@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { headers } from 'next/headers';
 
 import { getKangurAuthBootstrapScript } from '@/features/kangur/server/auth-bootstrap';
@@ -11,20 +12,26 @@ type KangurAliasAppLayoutProps = {
   children: ReactNode;
 };
 
-export async function KangurAliasAppLayout({
-  children,
-}: KangurAliasAppLayoutProps): Promise<ReactNode> {
+async function KangurAuthBootstrapScript(): Promise<ReactNode> {
   const bootstrapScript = await getKangurAuthBootstrapScript(await headers());
+  if (!bootstrapScript) return null;
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: safeHtml(bootstrapScript),
+      }}
+    />
+  );
+}
 
+export function KangurAliasAppLayout({
+  children,
+}: KangurAliasAppLayoutProps): ReactNode {
   return (
     <>
-      {bootstrapScript ? (
-        <script
-          dangerouslySetInnerHTML={{
-            __html: safeHtml(bootstrapScript),
-          }}
-        />
-      ) : null}
+      <Suspense fallback={null}>
+        <KangurAuthBootstrapScript />
+      </Suspense>
       <KangurServerShell />
       {children}
       <KangurFeatureRouteShellClientBoundary />

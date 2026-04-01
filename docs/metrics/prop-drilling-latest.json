@@ -1,22 +1,22 @@
 {
   "summary": {
-    "generatedAt": "2026-03-31T08:20:48.438Z",
-    "scannedSourceFiles": 6553,
-    "scannedJsxFiles": 2425,
-    "componentCount": 4218,
+    "generatedAt": "2026-04-01T08:30:53.637Z",
+    "scannedSourceFiles": 6552,
+    "scannedJsxFiles": 2421,
+    "componentCount": 4216,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 330,
-    "resolvedTransitionCount": 1907,
-    "depth2CandidateChainCount": 1907,
+    "componentsWithAnyForwarding": 331,
+    "resolvedTransitionCount": 1923,
+    "depth2CandidateChainCount": 1923,
     "candidateChainCount": 542,
     "highPriorityChainCount": 156,
     "unknownSpreadForwardingCount": 6,
     "highPropCountComponentCount": 67,
-    "passThroughHotspotCount": 125,
+    "passThroughHotspotCount": 126,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 294
+        "count": 295
       },
       {
         "scope": "feature:filemaker",
@@ -12245,7 +12245,7 @@
           "sourceProp": "translations",
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 329
+          "line": 333
         }
       ]
     },
@@ -12271,7 +12271,7 @@
           "sourceProp": "translations",
           "targetProp": "finishLabel",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 345
+          "line": 349
         }
       ]
     },
@@ -12297,7 +12297,7 @@
           "sourceProp": "translations",
           "targetProp": "restartLabel",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 345
+          "line": 349
         }
       ]
     },
@@ -14455,7 +14455,7 @@
           "sourceProp": "item",
           "targetProp": "aria-controls",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 265
+          "line": 292
         }
       ]
     },
@@ -14481,7 +14481,7 @@
           "sourceProp": "item",
           "targetProp": "content",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 303
+          "line": 334
         }
       ]
     },
@@ -15521,7 +15521,7 @@
           "sourceProp": "hasUnsavedChanges",
           "targetProp": "isSaveDisabled",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 156
+          "line": 157
         }
       ]
     },
@@ -15547,7 +15547,111 @@
           "sourceProp": "isSaving",
           "targetProp": "isSaveDisabled",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 156
+          "line": 157
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+      "sinkComponentId": "src/shared/ui/badge.tsx#Badge",
+      "componentPath": [
+        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+        "src/shared/ui/badge.tsx#Badge"
+      ],
+      "propPath": [
+        "disabled",
+        "variant"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+          "toComponentId": "src/shared/ui/badge.tsx#Badge",
+          "sourceProp": "disabled",
+          "targetProp": "variant",
+          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+      "sinkComponentId": "src/shared/ui/switch.tsx#Switch",
+      "componentPath": [
+        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+        "src/shared/ui/switch.tsx#Switch"
+      ],
+      "propPath": [
+        "disabled",
+        "checked"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+          "toComponentId": "src/shared/ui/switch.tsx#Switch",
+          "sourceProp": "disabled",
+          "targetProp": "checked",
+          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+          "line": 55
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+      "sinkComponentId": "src/shared/ui/switch.tsx#Switch",
+      "componentPath": [
+        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+        "src/shared/ui/switch.tsx#Switch"
+      ],
+      "propPath": [
+        "isSaving",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+          "toComponentId": "src/shared/ui/switch.tsx#Switch",
+          "sourceProp": "isSaving",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+          "line": 55
+        }
+      ]
+    },
+    {
+      "score": 68,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
+      "componentPath": [
+        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+        "src/shared/ui/checkbox.tsx#Checkbox"
+      ],
+      "propPath": [
+        "isSaving",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
+          "sourceProp": "isSaving",
+          "targetProp": "disabled",
+          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+          "line": 76
         }
       ]
     },
@@ -17263,7 +17367,7 @@
           "sourceProp": "item",
           "targetProp": "items",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 352
+          "line": 394
         }
       ]
     },
@@ -18589,7 +18693,7 @@
           "sourceProp": "score",
           "targetProp": "emoji",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 325
+          "line": 329
         }
       ]
     },
@@ -18615,7 +18719,7 @@
           "sourceProp": "score",
           "targetProp": "title",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 329
+          "line": 333
         }
       ]
     },
@@ -18641,7 +18745,7 @@
           "sourceProp": "canInteract",
           "targetProp": "isDragDisabled",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -18667,7 +18771,7 @@
           "sourceProp": "canInteract",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -22723,7 +22827,7 @@
           "sourceProp": "isSaving",
           "targetProp": "isSaving",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 156
+          "line": 157
         }
       ]
     },
@@ -22749,7 +22853,7 @@
           "sourceProp": "hasUnsavedChanges",
           "targetProp": "hasUnsavedChanges",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 156
+          "line": 157
         }
       ]
     },
@@ -22775,7 +22879,7 @@
           "sourceProp": "active",
           "targetProp": "className",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 195
+          "line": 218
         }
       ]
     },
@@ -22801,7 +22905,7 @@
           "sourceProp": "isOpen",
           "targetProp": "aria-expanded",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 265
+          "line": 292
         }
       ]
     },
@@ -23945,7 +24049,7 @@
           "sourceProp": "onComposeFromAccount",
           "targetProp": "onClick",
           "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
-          "line": 278
+          "line": 280
         }
       ]
     },
@@ -24180,6 +24284,58 @@
           "targetProp": "title",
           "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureBatchHistory.tsx",
           "line": 204
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+      "sinkComponentId": "src/shared/ui/switch.tsx#Switch",
+      "componentPath": [
+        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+        "src/shared/ui/switch.tsx#Switch"
+      ],
+      "propPath": [
+        "onToggleDisabled",
+        "onCheckedChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+          "toComponentId": "src/shared/ui/switch.tsx#Switch",
+          "sourceProp": "onToggleDisabled",
+          "targetProp": "onCheckedChange",
+          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+          "line": 55
+        }
+      ]
+    },
+    {
+      "score": 58,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 2,
+      "rootComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+      "sinkComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
+      "componentPath": [
+        "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+        "src/shared/ui/checkbox.tsx#Checkbox"
+      ],
+      "propPath": [
+        "onToggleSection",
+        "onCheckedChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+          "toComponentId": "src/shared/ui/checkbox.tsx#Checkbox",
+          "sourceProp": "onToggleSection",
+          "targetProp": "onCheckedChange",
+          "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+          "line": 76
         }
       ]
     },
@@ -25245,7 +25401,7 @@
           "sourceProp": "item",
           "targetProp": "item",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 341
+          "line": 380
         }
       ]
     },
@@ -25271,7 +25427,7 @@
           "sourceProp": "depth",
           "targetProp": "depth",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 341
+          "line": 380
         }
       ]
     },
@@ -25297,7 +25453,7 @@
           "sourceProp": "isMenuCollapsed",
           "targetProp": "isMenuCollapsed",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 341
+          "line": 380
         }
       ]
     },
@@ -25323,7 +25479,85 @@
           "sourceProp": "onToggleOpen",
           "targetProp": "onToggleOpen",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 341
+          "line": 380
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeItem"
+      ],
+      "propPath": [
+        "onNavigateHref",
+        "onNavigateHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
+          "sourceProp": "onNavigateHref",
+          "targetProp": "onNavigateHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 380
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeItem"
+      ],
+      "propPath": [
+        "onPrefetchHref",
+        "onPrefetchHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
+          "sourceProp": "onPrefetchHref",
+          "targetProp": "onPrefetchHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 380
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeItem"
+      ],
+      "propPath": [
+        "onSetPendingHref",
+        "onSetPendingHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
+          "sourceProp": "onSetPendingHref",
+          "targetProp": "onSetPendingHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 380
         }
       ]
     },
@@ -25349,7 +25583,7 @@
           "sourceProp": "depth",
           "targetProp": "depth",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 352
+          "line": 394
         }
       ]
     },
@@ -25375,7 +25609,7 @@
           "sourceProp": "isMenuCollapsed",
           "targetProp": "isMenuCollapsed",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 352
+          "line": 394
         }
       ]
     },
@@ -25401,7 +25635,85 @@
           "sourceProp": "onToggleOpen",
           "targetProp": "onToggleOpen",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 352
+          "line": 394
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+        "src/features/admin/components/menu/NavTree.tsx#NavTree"
+      ],
+      "propPath": [
+        "onNavigateHref",
+        "onNavigateHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+          "sourceProp": "onNavigateHref",
+          "targetProp": "onNavigateHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 394
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+        "src/features/admin/components/menu/NavTree.tsx#NavTree"
+      ],
+      "propPath": [
+        "onPrefetchHref",
+        "onPrefetchHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+          "sourceProp": "onPrefetchHref",
+          "targetProp": "onPrefetchHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 394
+        }
+      ]
+    },
+    {
+      "score": 54,
+      "depth": 2,
+      "rootFanout": 2,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+        "src/features/admin/components/menu/NavTree.tsx#NavTree"
+      ],
+      "propPath": [
+        "onSetPendingHref",
+        "onSetPendingHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+          "sourceProp": "onSetPendingHref",
+          "targetProp": "onSetPendingHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 394
         }
       ]
     },
@@ -31563,7 +31875,7 @@
           "sourceProp": "handleCopyMatchId",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 246
+          "line": 250
         }
       ]
     },
@@ -31589,7 +31901,7 @@
           "sourceProp": "handleRetryMatch",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 282
+          "line": 286
         }
       ]
     },
@@ -31615,7 +31927,7 @@
           "sourceProp": "handleRetryMatch",
           "targetProp": "onRestart",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 345
+          "line": 349
         }
       ]
     },
@@ -31641,7 +31953,7 @@
           "sourceProp": "selectedTileId",
           "targetProp": "isSelected",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -31667,7 +31979,7 @@
           "sourceProp": "setSelectedTileId",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -31693,7 +32005,7 @@
           "sourceProp": "currentTiles",
           "targetProp": "tiles",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -31719,7 +32031,7 @@
           "sourceProp": "translations",
           "targetProp": "ariaLabel",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         }
       ]
     },
@@ -40767,7 +41079,7 @@
           "sourceProp": "canReadAdminSettings",
           "targetProp": "canReadAdminSettings",
           "relativePath": "src/features/admin/layout/AdminLayout.tsx",
-          "line": 310
+          "line": 331
         }
       ]
     },
@@ -40897,7 +41209,7 @@
           "sourceProp": "open",
           "targetProp": "open",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 156
+          "line": 157
         }
       ]
     },
@@ -40923,7 +41235,7 @@
           "sourceProp": "onClose",
           "targetProp": "onClose",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 156
+          "line": 157
         }
       ]
     },
@@ -40949,7 +41261,7 @@
           "sourceProp": "onSave",
           "targetProp": "onSave",
           "relativePath": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-          "line": 156
+          "line": 157
         }
       ]
     },
@@ -41079,7 +41391,7 @@
           "sourceProp": "pathname",
           "targetProp": "pathname",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 352
+          "line": 394
         }
       ]
     },
@@ -41105,7 +41417,33 @@
           "sourceProp": "openIds",
           "targetProp": "openIds",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 352
+          "line": 394
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+        "src/features/admin/components/menu/NavTree.tsx#NavTree"
+      ],
+      "propPath": [
+        "pendingHref",
+        "pendingHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+          "sourceProp": "pendingHref",
+          "targetProp": "pendingHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 394
         }
       ]
     },
@@ -41131,7 +41469,7 @@
           "sourceProp": "depth",
           "targetProp": "depth",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 406
+          "line": 480
         }
       ]
     },
@@ -41157,7 +41495,7 @@
           "sourceProp": "isMenuCollapsed",
           "targetProp": "isMenuCollapsed",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 406
+          "line": 480
         }
       ]
     },
@@ -41183,7 +41521,7 @@
           "sourceProp": "pathname",
           "targetProp": "pathname",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 406
+          "line": 480
         }
       ]
     },
@@ -41209,7 +41547,7 @@
           "sourceProp": "openIds",
           "targetProp": "openIds",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 406
+          "line": 480
         }
       ]
     },
@@ -41235,7 +41573,85 @@
           "sourceProp": "onToggleOpen",
           "targetProp": "onToggleOpen",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 406
+          "line": 480
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTree",
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode"
+      ],
+      "propPath": [
+        "pendingHref",
+        "pendingHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "sourceProp": "pendingHref",
+          "targetProp": "pendingHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 480
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+      "sinkComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "componentPath": [
+        "src/features/admin/components/menu/NavTree.tsx#NavTree",
+        "src/features/admin/components/menu/NavTree.tsx#NavTreeNode"
+      ],
+      "propPath": [
+        "onSetPendingHref",
+        "onSetPendingHref"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+          "toComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+          "sourceProp": "onSetPendingHref",
+          "targetProp": "onSetPendingHref",
+          "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+          "line": 480
+        }
+      ]
+    },
+    {
+      "score": 44,
+      "depth": 2,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/features/admin/layout/AdminLayout.tsx#AdminLayout",
+      "sinkComponentId": "src/features/admin/layout/AdminLayout.tsx#AdminLayoutContent",
+      "componentPath": [
+        "src/features/admin/layout/AdminLayout.tsx#AdminLayout",
+        "src/features/admin/layout/AdminLayout.tsx#AdminLayoutContent"
+      ],
+      "propPath": [
+        "hasInitialMenuPreference",
+        "hasInitialMenuPreference"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/features/admin/layout/AdminLayout.tsx#AdminLayout",
+          "toComponentId": "src/features/admin/layout/AdminLayout.tsx#AdminLayoutContent",
+          "sourceProp": "hasInitialMenuPreference",
+          "targetProp": "hasInitialMenuPreference",
+          "relativePath": "src/features/admin/layout/AdminLayout.tsx",
+          "line": 336
         }
       ]
     },
@@ -44875,7 +45291,7 @@
           "sourceProp": "onFinish",
           "targetProp": "onFinish",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 345
+          "line": 349
         }
       ]
     },
@@ -44901,7 +45317,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "isCoarsePointer",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -44927,7 +45343,7 @@
           "sourceProp": "ariaLabel",
           "targetProp": "ariaLabel",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -44953,7 +45369,7 @@
           "sourceProp": "canInteract",
           "targetProp": "canInteract",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -44979,7 +45395,7 @@
           "sourceProp": "dataTestId",
           "targetProp": "dataTestId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -45005,7 +45421,7 @@
           "sourceProp": "droppableId",
           "targetProp": "droppableId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -45031,7 +45447,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "isCoarsePointer",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -45057,7 +45473,7 @@
           "sourceProp": "moveSelectedTileTo",
           "targetProp": "moveSelectedTileTo",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -45083,7 +45499,7 @@
           "sourceProp": "selectedTileId",
           "targetProp": "selectedTileId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -45109,7 +45525,7 @@
           "sourceProp": "setSelectedTileId",
           "targetProp": "setSelectedTileId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         }
       ]
     },
@@ -45135,7 +45551,7 @@
           "sourceProp": "canInteract",
           "targetProp": "canInteract",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         }
       ]
     },
@@ -45161,7 +45577,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "isCoarsePointer",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         }
       ]
     },
@@ -45187,7 +45603,7 @@
           "sourceProp": "moveSelectedTileTo",
           "targetProp": "moveSelectedTileTo",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         }
       ]
     },
@@ -45213,7 +45629,7 @@
           "sourceProp": "selectedTileId",
           "targetProp": "selectedTileId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         }
       ]
     },
@@ -45239,7 +45655,7 @@
           "sourceProp": "setSelectedTileId",
           "targetProp": "setSelectedTileId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         }
       ]
     },
@@ -45265,7 +45681,7 @@
           "sourceProp": "tiles",
           "targetProp": "tiles",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         }
       ]
     },
@@ -53860,6 +54276,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "name": "NavTreeNode",
+      "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+      "feature": "feature:admin",
+      "forwardedPropCount": 10,
+      "outgoingTransitionCount": 17,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
       "name": "MailAccountSettingsSection",
       "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
@@ -54184,6 +54609,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+      "name": "NavTree",
+      "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+      "feature": "feature:admin",
+      "forwardedPropCount": 7,
+      "outgoingTransitionCount": 7,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTray",
       "name": "NumberBalanceRushTray",
       "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
@@ -54226,15 +54660,6 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 6,
       "outgoingTransitionCount": 11,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
-      "name": "NavTreeNode",
-      "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-      "feature": "feature:admin",
-      "forwardedPropCount": 6,
-      "outgoingTransitionCount": 10,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -54454,15 +54879,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
-      "name": "NavTree",
-      "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-      "feature": "feature:admin",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/MultiplicationArrayGame.tsx#MultiplicationArrayGroups",
       "name": "MultiplicationArrayGroups",
       "relativePath": "src/features/kangur/ui/components/MultiplicationArrayGame.tsx",
@@ -54541,6 +54957,15 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 7,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+      "name": "SocialCaptureSectionSelector",
+      "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -54708,15 +55133,6 @@
     {
       "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorSelectFieldRow",
       "name": "AiTutorSelectFieldRow",
-      "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 4,
-      "outgoingTransitionCount": 4,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorAvailabilityRow",
-      "name": "AiTutorAvailabilityRow",
       "relativePath": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx",
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
@@ -54942,6 +55358,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
+      "name": "NavTreeNode",
+      "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+      "feature": "feature:admin",
+      "forwardedPropCount": 10,
+      "outgoingTransitionCount": 17,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx#MailAccountSettingsSection",
       "name": "MailAccountSettingsSection",
       "relativePath": "src/features/filemaker/pages/mail-page-sections/MailAccountSettingsSection.tsx",
@@ -55266,6 +55691,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
+      "name": "NavTree",
+      "relativePath": "src/features/admin/components/menu/NavTree.tsx",
+      "feature": "feature:admin",
+      "forwardedPropCount": 7,
+      "outgoingTransitionCount": 7,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTray",
       "name": "NumberBalanceRushTray",
       "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
@@ -55308,15 +55742,6 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 6,
       "outgoingTransitionCount": 11,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeNode",
-      "name": "NavTreeNode",
-      "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-      "feature": "feature:admin",
-      "forwardedPropCount": 6,
-      "outgoingTransitionCount": 10,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -55536,15 +55961,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/admin/components/menu/NavTree.tsx#NavTree",
-      "name": "NavTree",
-      "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-      "feature": "feature:admin",
-      "forwardedPropCount": 5,
-      "outgoingTransitionCount": 5,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/MultiplicationArrayGame.tsx#MultiplicationArrayGroups",
       "name": "MultiplicationArrayGroups",
       "relativePath": "src/features/kangur/ui/components/MultiplicationArrayGame.tsx",
@@ -55623,6 +56039,15 @@
       "feature": "feature:kangur",
       "forwardedPropCount": 4,
       "outgoingTransitionCount": 7,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx#SocialCaptureSectionSelector",
+      "name": "SocialCaptureSectionSelector",
+      "relativePath": "src/features/kangur/social/admin/workspace/SocialCaptureSectionSelector.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 4,
+      "outgoingTransitionCount": 6,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -56409,6 +56834,15 @@
       "hasUnknownSpreadForwarding": false
     },
     {
+      "componentId": "src/features/admin/layout/AdminLayout.tsx#AdminLayout",
+      "name": "AdminLayout",
+      "relativePath": "src/features/admin/layout/AdminLayout.tsx",
+      "feature": "feature:admin",
+      "forwardedPropCount": 2,
+      "outgoingTransitionCount": 2,
+      "hasUnknownSpreadForwarding": false
+    },
+    {
       "componentId": "src/features/filemaker/pages/campaign-run-sections/RunDeliveryLogSection.tsx#RunDeliveryLogSection",
       "name": "RunDeliveryLogSection",
       "relativePath": "src/features/filemaker/pages/campaign-run-sections/RunDeliveryLogSection.tsx",
@@ -56901,15 +57335,6 @@
       "feature": "feature:products",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 2,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/admin/layout/AdminLayout.tsx#AdminLayout",
-      "name": "AdminLayout",
-      "relativePath": "src/features/admin/layout/AdminLayout.tsx",
-      "feature": "feature:admin",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 1,
       "hasUnknownSpreadForwarding": false
     },
     {
@@ -68481,7 +68906,7 @@
           "sourceProp": "item",
           "targetProp": "item",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 341
+          "line": 380
         },
         {
           "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
@@ -68489,7 +68914,7 @@
           "sourceProp": "item",
           "targetProp": "aria-controls",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 265
+          "line": 292
         }
       ]
     },
@@ -68517,7 +68942,7 @@
           "sourceProp": "item",
           "targetProp": "item",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 341
+          "line": 380
         },
         {
           "fromComponentId": "src/features/admin/components/menu/NavTree.tsx#NavTreeItem",
@@ -68525,7 +68950,7 @@
           "sourceProp": "item",
           "targetProp": "content",
           "relativePath": "src/features/admin/components/menu/NavTree.tsx",
-          "line": 303
+          "line": 334
         }
       ]
     },
@@ -73413,7 +73838,7 @@
           "sourceProp": "canInteract",
           "targetProp": "canInteract",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73421,7 +73846,7 @@
           "sourceProp": "canInteract",
           "targetProp": "isDragDisabled",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73449,7 +73874,7 @@
           "sourceProp": "canInteract",
           "targetProp": "canInteract",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73457,7 +73882,7 @@
           "sourceProp": "canInteract",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73485,7 +73910,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "isCoarsePointer",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73493,7 +73918,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "isCoarsePointer",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73521,7 +73946,7 @@
           "sourceProp": "selectedTileId",
           "targetProp": "selectedTileId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73529,7 +73954,7 @@
           "sourceProp": "selectedTileId",
           "targetProp": "isSelected",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73557,7 +73982,7 @@
           "sourceProp": "setSelectedTileId",
           "targetProp": "setSelectedTileId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 509
+          "line": 513
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73565,7 +73990,7 @@
           "sourceProp": "setSelectedTileId",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73593,7 +74018,7 @@
           "sourceProp": "canInteract",
           "targetProp": "canInteract",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73601,7 +74026,7 @@
           "sourceProp": "canInteract",
           "targetProp": "isDragDisabled",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73629,7 +74054,7 @@
           "sourceProp": "canInteract",
           "targetProp": "canInteract",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73637,7 +74062,7 @@
           "sourceProp": "canInteract",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73665,7 +74090,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "isCoarsePointer",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73673,7 +74098,7 @@
           "sourceProp": "isCoarsePointer",
           "targetProp": "isCoarsePointer",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73701,7 +74126,7 @@
           "sourceProp": "selectedTileId",
           "targetProp": "selectedTileId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73709,7 +74134,7 @@
           "sourceProp": "selectedTileId",
           "targetProp": "isSelected",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },
@@ -73737,7 +74162,7 @@
           "sourceProp": "setSelectedTileId",
           "targetProp": "setSelectedTileId",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 553
+          "line": 557
         },
         {
           "fromComponentId": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx#NumberBalanceRushTileZone",
@@ -73745,7 +74170,7 @@
           "sourceProp": "setSelectedTileId",
           "targetProp": "onClick",
           "relativePath": "src/features/kangur/ui/components/NumberBalanceRushGame.tsx",
-          "line": 458
+          "line": 462
         }
       ]
     },

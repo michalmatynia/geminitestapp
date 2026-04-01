@@ -8,6 +8,7 @@ import {
   getPathLocale,
   resolvePreferredSiteLocale,
 } from '@/shared/lib/i18n/site-locale';
+import { applyEdgeTrafficGuard } from '@/shared/lib/security/edge-traffic-guard';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
 
 const intlMiddleware = createIntlMiddleware(siteRouting);
@@ -170,6 +171,11 @@ export function proxy(
 ): Promise<Response> | Response {
   const resolvedContext = context ?? ({ params: {} } as HandlerContext);
   const pathname = request.nextUrl.pathname;
+  const trafficGuardResponse = applyEdgeTrafficGuard(request);
+
+  if (trafficGuardResponse) {
+    return trafficGuardResponse;
+  }
 
   if (isApiRequest(pathname)) {
     return baseProxy(request);

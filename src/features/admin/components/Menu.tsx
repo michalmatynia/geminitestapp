@@ -36,6 +36,7 @@ import {
   applySectionColors,
   adminNavToCustomNav,
   getAdminMenuSections,
+  isActiveHref,
 } from './menu/admin-menu-utils';
 import { NavTree } from './menu/NavTree';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -127,6 +128,7 @@ export default function Menu(): React.ReactNode {
   const [openIdsLoaded, setOpenIdsLoaded] = useState(false);
   const [closedAutoIds, setClosedAutoIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const deferredQuery = useDeferredValue(query);
 
   const { data: chatbotSessions = [], refetch: refetchChatbotSessions } = useChatbotSessions({
@@ -166,17 +168,25 @@ export default function Menu(): React.ReactNode {
     }
   }, [openIdsLoaded, userOpenIds]);
 
+  useEffect(() => {
+    if (!pendingHref) return;
+    if (isActiveHref(pathname, pendingHref, false)) setPendingHref(null);
+  }, [pathname, pendingHref]);
+
   const handleOpenChat = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>): void => {
       if (typeof window === 'undefined') return;
-      event.preventDefault();
-
-      const openChat = async (): Promise<void> => {
-        const storedSession = window.localStorage.getItem('chatbotSessionId');
-        if (storedSession) {
-          router.push(`/admin/chatbot?session=${storedSession}`);
-          return;
-        }
+      const storedSession = window.localStorage.getItem('chatbotSessionId');
+      if (storedSession) {
+        // Synchronous fast path — redirect immediately to the stored session.
+        event.preventDefault();
+        setPendingHref('/admin/chatbot');
+        router.push(`/admin/chatbot?session=${storedSession}`);
+        return;
+      }
+      // No stored session — let the Link navigate to /admin/chatbot immediately,
+      // then resolve the session asynchronously in the background.
+      void (async () => {
         try {
           let latestId: string | undefined = chatbotSessions[0]?.id;
           if (!latestId) {
@@ -185,24 +195,18 @@ export default function Menu(): React.ReactNode {
           }
           if (latestId) {
             window.localStorage.setItem('chatbotSessionId', latestId);
-            router.push(`/admin/chatbot?session=${latestId}`);
+            router.replace(`/admin/chatbot?session=${latestId}`);
             return;
           }
-
           const created = await createChatbotSession({});
           if (created.sessionId) {
             window.localStorage.setItem('chatbotSessionId', created.sessionId);
-            router.push(`/admin/chatbot?session=${created.sessionId}`);
-          } else {
-            router.push('/admin/chatbot');
+            router.replace(`/admin/chatbot?session=${created.sessionId}`);
           }
         } catch (error) {
           logClientError(error);
-          router.push('/admin/chatbot');
         }
-      };
-
-      void openChat();
+      })();
     },
     [router, chatbotSessions, createChatbotSession, refetchChatbotSessions]
   );
@@ -446,6 +450,8 @@ export default function Menu(): React.ReactNode {
         pathname={pathname}
         openIds={effectiveOpenIds}
         onToggleOpen={handleToggleOpen}
+        pendingHref={pendingHref}
+        onSetPendingHref={setPendingHref}
       />
     </nav>
   );

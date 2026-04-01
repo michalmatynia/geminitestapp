@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cache } from 'react';
 import { randomUUID } from 'crypto';
 
 import bcrypt from 'bcryptjs';
@@ -435,7 +436,7 @@ const readAllKnownLearners = async (): Promise<StoredKangurLearnerProfile[]> => 
   return mergeStoredLearners(mongoProfiles, legacyProfiles);
 };
 
-export const listKangurLearnersByOwner = async (
+export const listKangurLearnersByOwner = cache(async (
   ownerUserId: string
 ): Promise<KangurLearnerProfile[]> => {
   if (!(await shouldUseMongoLearnerCollection())) {
@@ -464,7 +465,7 @@ export const listKangurLearnersByOwner = async (
   return sortPublicLearners(
     mergeStoredLearners(mongoProfiles, legacyOwnedProfiles).map(toPublicLearnerProfile)
   );
-};
+});
 
 export const searchKangurLearners = async (
   query: string,

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { resetEdgeTrafficGuardState } from '@/shared/lib/security/edge-traffic-guard';
+
 const { authInvokeMock, ensureCsrfCookieMock } = vi.hoisted(() => ({
   authInvokeMock: vi.fn(),
   ensureCsrfCookieMock: vi.fn(),
@@ -178,6 +180,8 @@ const createRequest = (
     localeCookie?: string;
     acceptLanguage?: string;
     method?: string;
+    userAgent?: string;
+    cookie?: string;
   }
 ): {
   url: string;
@@ -190,6 +194,12 @@ const createRequest = (
   const headers = new Headers();
   if (options?.acceptLanguage) {
     headers.set('accept-language', options.acceptLanguage);
+  }
+  if (options?.userAgent) {
+    headers.set('user-agent', options.userAgent);
+  }
+  if (options?.cookie) {
+    headers.set('cookie', options.cookie);
   }
   return {
     url: parsed.toString(),
@@ -217,6 +227,7 @@ const createRequest = (
 
 describe('proxy api routing', () => {
   beforeEach(() => {
+    resetEdgeTrafficGuardState();
     authInvokeMock.mockReset();
     authInvokeMock.mockImplementation(
       (
@@ -392,5 +403,20 @@ describe('proxy api routing', () => {
     expect(response.headers.get('x-middleware-next')).toBe('1');
     expect(response.headers.get('set-cookie')).toBeNull();
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rate-limits repeated anonymous scraper traffic on public pages before rendering work fan-outs', async () => {
+    let response: Response | undefined;
+
+    for (let attempt = 0; attempt < 9; attempt += 1) {
+      const request = createRequest('http://localhost/', {
+        userAgent: 'curl/8.7.1',
+      });
+      response = await Promise.resolve(proxy(request as never, { params: {} }));
+    }
+
+    expect(response?.status).toBe(429);
+    expect(response?.headers.get('x-traffic-guard')).toBe('public-page-burst');
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(8);
   });
 });

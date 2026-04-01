@@ -56,11 +56,11 @@ export const renderHomeRoute = async ({
     redirect(localizePublicPath(getKangurPublicLaunchHref(kangurLaunchRoute ?? undefined), resolvedLocale));
   }
 
-  const [cmsRepository, hdrs] = await Promise.all([
+  const [cmsRepository, zoningEnabled] = await Promise.all([
     withTiming('cmsRepository', getCmsRepository),
-    withTiming('headers', readOptionalRequestHeaders),
     isDomainZoningEnabled(),
   ]);
+  const hdrs = zoningEnabled ? await withTiming('headers', readOptionalRequestHeaders) : null;
   const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));
   const slugs = await withTiming('cmsSlugs', () =>
     getSlugsForDomain(domain.id, cmsRepository, resolvedLocale ? { locale: resolvedLocale } : undefined)

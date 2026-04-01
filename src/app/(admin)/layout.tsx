@@ -8,7 +8,6 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { JSX } from 'react';
 
 
-export const dynamic = 'force-dynamic';
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
 const isPlaywrightRuntime = Boolean(
   process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] || process.env['PLAYWRIGHT_RUNTIME_AGENT_ID']

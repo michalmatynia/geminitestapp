@@ -1,5 +1,3 @@
-'use client';
-
 import type React from 'react';
 import type { NumberBalancePuzzle, NumberBalanceTile } from '@/features/kangur/games/number-balance/number-balance-generator';
 import type {

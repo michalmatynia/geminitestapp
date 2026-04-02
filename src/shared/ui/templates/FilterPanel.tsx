@@ -41,6 +41,7 @@ export interface FilterPanelProps {
   compact?: boolean;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   toggleButtonAlignment?: 'start' | 'end';
   showHeader?: boolean;
   headerTitle?: string;
@@ -98,6 +99,7 @@ interface FilterPanelMainFiltersProps {
   filterSearchPlaceholder: string;
   filters: FilterField[];
   idBase?: string;
+  onExpandedChange?: (expanded: boolean) => void;
   onFilterChange: (key: string, value: unknown) => void;
   onReset?: () => void;
   onSearchChange?: (search: string) => void;
@@ -115,6 +117,7 @@ const renderFilterPanelMainFilters = ({
   filterSearchPlaceholder,
   filters,
   idBase,
+  onExpandedChange,
   onFilterChange,
   onReset,
   onSearchChange,
@@ -135,6 +138,7 @@ const renderFilterPanelMainFilters = ({
       compact={compact}
       collapsible={collapsible}
       {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
+      {...(onExpandedChange !== undefined ? { onExpandedChange } : {})}
       toggleButtonAlignment={toggleButtonAlignment}
       {...(actions !== undefined ? { actions } : {})}
     />
@@ -212,6 +216,7 @@ const renderFilterPanelContent = ({
   headerAction,
   headerTitle,
   onApplyPreset,
+  onExpandedChange,
   onFilterChange,
   onReset,
   onSearchChange,
@@ -234,6 +239,7 @@ const renderFilterPanelContent = ({
   headerAction?: ReactNode;
   headerTitle: string;
   onApplyPreset?: (preset: Record<string, unknown>) => void;
+  onExpandedChange?: (expanded: boolean) => void;
   onFilterChange: (key: string, value: unknown) => void;
   onReset?: () => void;
   onSearchChange?: (search: string) => void;
@@ -261,6 +267,7 @@ const renderFilterPanelContent = ({
       filterSearchPlaceholder,
       filters,
       idBase,
+      onExpandedChange,
       onFilterChange,
       onReset,
       onSearchChange,
@@ -288,6 +295,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   compact = false,
   collapsible = false,
   defaultExpanded,
+  onExpandedChange,
   toggleButtonAlignment = 'end',
   showHeader = true,
   headerTitle = 'Filters',
@@ -311,6 +319,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     headerAction,
     headerTitle,
     onApplyPreset,
+    onExpandedChange,
     onFilterChange,
     onReset,
     onSearchChange,

@@ -14,14 +14,8 @@ import {
 } from './KangurParentDashboardLearnerManagementWidget.sections';
 
 function LearnerManagementWidgetContent(): React.JSX.Element | null {
-  const { state, runtime } = useLearnerManagementContext();
-  const { copy, isCoarsePointer, overview } = state;
-  const {
-    selectedLearnerId,
-    handleOpenActiveLearnerSettings,
-    handleOpenLearner,
-    handleCreateNew,
-  } = runtime;
+  const { state } = useLearnerManagementContext();
+  const { overview, copy } = state;
   const { entry: learnerManagementContent } = useKangurPageContentEntry(
     'parent-dashboard-learner-management'
   );
@@ -38,21 +32,9 @@ function LearnerManagementWidgetContent(): React.JSX.Element | null {
         description={learnerManagementContent?.summary ?? copy.learnerManagementDescription}
       />
 
-      <LearnerManagementSettingsShortcut
-        copy={copy}
-        isCoarsePointer={isCoarsePointer}
-        activeLearner={overview.activeLearner}
-        onOpenActiveLearnerSettings={handleOpenActiveLearnerSettings}
-      />
+      <LearnerManagementSettingsShortcut />
 
-      <LearnerManagementCardsGrid
-        learners={overview.learners}
-        selectedLearnerId={selectedLearnerId}
-        copy={copy}
-        isCoarsePointer={isCoarsePointer}
-        onOpenLearner={handleOpenLearner}
-        onCreateNew={handleCreateNew}
-      />
+      <LearnerManagementCardsGrid />
 
       <LearnerManagementModal />
     </KangurPanelStack>

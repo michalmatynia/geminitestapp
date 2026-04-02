@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  useKangurSocialPosts,
+  useKangurSocialPost,
 } from '@/features/kangur/social/hooks/useKangurSocialPosts';
 import {
   useKangurSocialImageAddons,
@@ -51,10 +51,11 @@ const buildStringArraySignature = (values: string[] | null | undefined): string 
     .join('|');
 
 export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
-  const postsQuery = useKangurSocialPosts({ scope: 'admin' });
-
-  const posts = postsQuery.data ?? [];
   const [activePostId, setActivePostId] = useState<string | null>(null);
+  const activePostQuery = useKangurSocialPost(activePostId, {
+    enabled: Boolean(activePostId),
+  });
+  const activePost = activePostQuery.data ?? null;
   const [editorState, setEditorState] = useState<EditorState>(emptyEditorState);
   const [scheduledAt, setScheduledAt] = useState<string>('');
   const [docReferenceInput, setDocReferenceInput] = useState<string>('');
@@ -65,10 +66,7 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
   const [addonForm, setAddonForm] = useState<AddonFormState>(emptyAddonForm);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [contextSummary, setContextSummary] = useState<string | null>(null);
-  const activePost = useMemo(
-    () => posts.find((post) => post.id === activePostId) ?? null,
-    [activePostId, posts]
-  );
+  const posts = useMemo(() => (activePost ? [activePost] : []), [activePost]);
   const requestedAddonIds = useMemo(() => {
     const candidateIds =
       hydratedDraftPostId === activePost?.id ? draftImageAddonIds : activePost?.imageAddonIds ?? [];
@@ -76,6 +74,7 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
   }, [activePost?.id, activePost?.imageAddonIds, draftImageAddonIds, hydratedDraftPostId]);
   const addonsQuery = useKangurSocialImageAddons({
     ids: requestedAddonIds,
+    enabled: requestedAddonIds.length > 0,
   });
   const recentAddons = addonsQuery.data ?? [];
   const hasTrackedViewRef = useRef(false);
@@ -153,20 +152,12 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     scheduledAt,
   ]);
 
-  // Auto-select first post
-  useEffect(() => {
-    if (!activePostId && posts.length > 0) {
-      setActivePostId(posts[0]?.id ?? null);
-    }
-  }, [activePostId, posts]);
-
   // Track page view
   useEffect(() => {
     if (hasTrackedViewRef.current) return;
-    if (postsQuery.isLoading) return;
     hasTrackedViewRef.current = true;
     trackKangurClientEvent('kangur_social_page_view', {
-      postCount: posts.length,
+      hasActivePostSelection: Boolean(activePostId),
       hasLinkedInIntegration: Boolean(deps.linkedinConnectionId),
       connectionCount: deps.linkedinConnections.length,
       brainModelId: deps.brainModelId ?? null,
@@ -177,8 +168,7 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     deps.visionModelId,
     deps.linkedinConnections.length,
     deps.linkedinConnectionId,
-    posts.length,
-    postsQuery.isLoading,
+    activePostId,
   ]);
 
   // Sync editor state when active post changes
@@ -323,7 +313,7 @@ export function useSocialEditorSync(deps: SocialEditorSyncDeps) {
     handleSelectAddons,
     handleRemoveAddon,
     handleRemoveMissingAddons,
-    postsQuery,
+    postsQuery: activePostQuery,
     addonsQuery,
   };
 }

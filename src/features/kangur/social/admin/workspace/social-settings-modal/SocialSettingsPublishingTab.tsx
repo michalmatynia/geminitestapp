@@ -1,35 +1,42 @@
-'use client';
-
 import React from 'react';
 
 import { FormField, SelectSimple } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
-import type {
-  Integration,
-  IntegrationConnection,
-} from '@/shared/contracts/integrations';
+import { useSocialPostContext } from '../SocialPostContext';
+import { useSocialSettingsModalContext } from './SocialSettingsModalContext';
 
-export function SocialSettingsPublishingTab({
-  linkedinConnectionId,
-  handleLinkedInConnectionChange,
-  linkedInOptions,
-  linkedinIntegration,
-  selectedLinkedInConnection,
-  linkedInExpiryStatus,
-  linkedInExpiryLabel,
-  linkedInDaysRemaining,
-  isRuntimeLocked,
-}: {
-  linkedinConnectionId: string | null;
-  handleLinkedInConnectionChange: (val: string) => void;
-  linkedInOptions: Array<{ value: string; label: string; description?: string; disabled?: boolean }>;
-  linkedinIntegration: Integration | null;
-  selectedLinkedInConnection: IntegrationConnection | null;
-  linkedInExpiryStatus: 'expired' | 'warning' | 'ok' | null;
-  linkedInExpiryLabel: string | null;
-  linkedInDaysRemaining: number | null;
-  isRuntimeLocked?: boolean;
-}) {
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
+export function SocialSettingsPublishingTab() {
+  const context = useSocialPostContext();
+  const state = useSocialSettingsModalContext();
+
+  const {
+    linkedinConnectionId,
+    handleLinkedInConnectionChange,
+    currentGenerationJob,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
+  } = context;
+
+  const {
+    linkedInOptions,
+    linkedinIntegration,
+    selectedLinkedInConnection,
+    linkedInExpiryStatus,
+    linkedInExpiryLabel,
+    linkedInDaysRemaining,
+  } = state;
+
+  const isRuntimeLocked =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+
   const placeholder = linkedinIntegration
     ? 'Select LinkedIn connection'
     : 'Create LinkedIn integration first';
@@ -75,7 +82,9 @@ export function SocialSettingsPublishingTab({
       >
         <SelectSimple
           value={linkedinConnectionId ?? undefined}
-          onValueChange={handleLinkedInConnectionChange}
+          onValueChange={(id) => {
+            handleLinkedInConnectionChange(id);
+          }}
           options={linkedInOptions}
           placeholder={placeholder}
           disabled={!linkedinIntegration || linkedInOptions.length === 0 || isRuntimeLocked}

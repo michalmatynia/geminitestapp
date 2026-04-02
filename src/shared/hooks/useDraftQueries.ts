@@ -20,7 +20,14 @@ const draftListKey = (notebookId?: string) =>
 
 export { draftKeys };
 
-export function useDraftQueries(notebookId?: string): ListQuery<ProductDraft> {
+type DraftQueriesOptions = {
+  enabled?: boolean;
+};
+
+export function useDraftQueries(
+  notebookId?: string,
+  options?: DraftQueriesOptions
+): ListQuery<ProductDraft> {
   const queryKey = draftListKey(notebookId);
 
   return createListQueryV2<ProductDraft>({
@@ -29,6 +36,7 @@ export function useDraftQueries(notebookId?: string): ListQuery<ProductDraft> {
       api.get<ProductDraft[]>('/api/drafts', {
         params: notebookId ? { notebookId } : undefined,
       }),
+    enabled: options?.enabled ?? true,
     meta: {
       source: 'shared.hooks.useDraftQueries',
       operation: 'list',

@@ -5,8 +5,8 @@ import { useLearnerManagementState } from './KangurParentDashboardLearnerManagem
 import { useLearnerManagementWidgetRuntime } from './KangurParentDashboardLearnerManagementWidget.runtime';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
-type State = ReturnType<typeof useLearnerManagementState>;
-type Runtime = ReturnType<typeof useLearnerManagementWidgetRuntime>;
+import { type LearnerManagementState as State } from './KangurParentDashboardLearnerManagementWidget.hooks';
+import { type LearnerManagementRuntime as Runtime } from './KangurParentDashboardLearnerManagementWidget.runtime';
 
 export type LearnerManagementContextValue = {
   state: State;
@@ -31,7 +31,7 @@ export function LearnerManagementProvider({ children }: { children: React.ReactN
   );
 }
 
-export function useLearnerManagementContext() {
+export function useLearnerManagementContext(): LearnerManagementContextValue {
   const context = useContext(LearnerManagementContext);
   if (!context) {
     throw internalError('useLearnerManagementContext must be used within a LearnerManagementProvider');

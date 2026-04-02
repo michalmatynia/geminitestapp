@@ -64,6 +64,7 @@ interface PanelFiltersProps {
   compact?: boolean;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   toggleButtonAlignment?: 'start' | 'end';
   actions?: React.ReactNode;
   className?: string;
@@ -91,6 +92,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
     compact = false,
     collapsible = false,
     defaultExpanded,
+    onExpandedChange,
     toggleButtonAlignment = 'end',
     actions,
     className,
@@ -134,7 +136,8 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
     onReset?.();
     setLocalSearch('');
     setIsExpanded(false);
-  }, [onReset]);
+    onExpandedChange?.(false);
+  }, [onExpandedChange, onReset]);
 
   const activeFilterSource = activeValues ?? values;
   const hasActiveFilters = Object.values(activeFilterSource).some((value) => isActiveFilterValue(value));
@@ -187,7 +190,9 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
               variant={hasActiveFilters ? 'default' : 'outline'}
               onClick={() => {
                 userToggledRef.current = true;
-                setIsExpanded(!isExpanded);
+                const nextExpanded = !isExpanded;
+                setIsExpanded(nextExpanded);
+                onExpandedChange?.(nextExpanded);
               }}
               className={cn(
                 'h-8 w-full justify-center gap-1.5 px-3 tabular-nums sm:w-[10rem] sm:shrink-0',

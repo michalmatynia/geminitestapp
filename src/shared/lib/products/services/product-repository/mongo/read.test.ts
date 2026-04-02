@@ -8,6 +8,13 @@ describe('buildListProjectStage', () => {
 
     expect(stage).not.toBeNull();
     expect(stage).toMatchObject({
+      importSource: 1,
+      category: {
+        id: '$category.id',
+        name: '$category.name',
+        catalogId: '$category.catalogId',
+        name_en: '$category.name_en',
+      },
       parameters: 1,
       name_en: 1,
       name_pl: 1,

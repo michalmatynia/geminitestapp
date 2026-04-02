@@ -1,4 +1,4 @@
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import {
   kangurSocialPublishModeSchema,
   kangurSocialPostsSchema,
@@ -9,7 +9,11 @@ import {
   type KangurSocialVisualAnalysis,
 } from '@/shared/contracts/kangur-social-posts';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createListQueryV2,
+  createSingleQueryV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export type KangurSocialPostsScope = 'public' | 'admin';
@@ -18,6 +22,24 @@ type SocialPostsQueryOptions = {
   scope?: KangurSocialPostsScope;
   limit?: number;
   enabled?: boolean;
+};
+
+export type KangurSocialPostListStatus = 'all' | 'draft' | 'scheduled' | 'published' | 'failed';
+
+type SocialPostsPageQueryOptions = {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: KangurSocialPostListStatus;
+  enabled?: boolean;
+};
+
+export type KangurSocialPostsPageResult = {
+  posts: KangurSocialPost[];
+  total: number;
+  page: number;
+  pageSize: number;
+  statusCounts: Record<Exclude<KangurSocialPostListStatus, 'all'>, number>;
 };
 
 const SOCIAL_POSTS_QUERY_TIMEOUT_MS = 60_000;
@@ -36,6 +58,44 @@ export const fetchKangurSocialPosts = async (
     timeout: SOCIAL_POSTS_QUERY_TIMEOUT_MS,
   });
   return kangurSocialPostsSchema.parse(payload).map((post) => normalizeKangurSocialPost(post));
+};
+
+export const fetchKangurSocialPostsPage = async (
+  options: SocialPostsPageQueryOptions
+): Promise<KangurSocialPostsPageResult> => {
+  const payload = await api.get<KangurSocialPostsPageResult>('/api/kangur/social-posts', {
+    params: {
+      scope: 'admin',
+      page: options.page,
+      pageSize: options.pageSize,
+      search: options.search?.trim() || undefined,
+      status: options.status && options.status !== 'all' ? options.status : undefined,
+    },
+    timeout: SOCIAL_POSTS_QUERY_TIMEOUT_MS,
+  });
+
+  return {
+    ...payload,
+    posts: kangurSocialPostsSchema
+      .parse(Array.isArray(payload.posts) ? payload.posts : [])
+      .map((post) => normalizeKangurSocialPost(post)),
+    total: typeof payload.total === 'number' ? payload.total : 0,
+    page: typeof payload.page === 'number' ? payload.page : options.page,
+    pageSize: typeof payload.pageSize === 'number' ? payload.pageSize : options.pageSize,
+    statusCounts: {
+      draft: payload.statusCounts?.draft ?? 0,
+      scheduled: payload.statusCounts?.scheduled ?? 0,
+      published: payload.statusCounts?.published ?? 0,
+      failed: payload.statusCounts?.failed ?? 0,
+    },
+  };
+};
+
+export const fetchKangurSocialPostById = async (id: string): Promise<KangurSocialPost> => {
+  const payload = await api.get<KangurSocialPost>(`/api/kangur/social-posts/${id}`, {
+    timeout: SOCIAL_POSTS_QUERY_TIMEOUT_MS,
+  });
+  return normalizeKangurSocialPost(payload);
 };
 
 export const useKangurSocialPosts = (
@@ -60,6 +120,64 @@ export const useKangurSocialPosts = (
       domain: 'kangur',
       tags: ['kangur', 'social-posts'],
       description: 'Loads Kangur social posts.',
+    },
+  });
+
+export const useKangurSocialPostsPage = (
+  options: SocialPostsPageQueryOptions
+): SingleQuery<KangurSocialPostsPageResult> =>
+  createSingleQueryV2<KangurSocialPostsPageResult>({
+    id: `admin:${options.page}:${options.pageSize}:${options.search ?? ''}:${options.status ?? 'all'}`,
+    queryKey: QUERY_KEYS.kangur.socialPosts({
+      scope: 'admin',
+      page: options.page,
+      pageSize: options.pageSize,
+      search: options.search ?? null,
+      status: options.status ?? 'all',
+    }),
+    queryFn: async (): Promise<KangurSocialPostsPageResult> => fetchKangurSocialPostsPage(options),
+    enabled: options.enabled ?? true,
+    staleTime: 1000 * 30,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    meta: {
+      source: 'kangur.hooks.useKangurSocialPostsPage',
+      operation: 'list',
+      resource: 'kangur.social-posts.paged',
+      domain: 'kangur',
+      tags: ['kangur', 'social-posts', 'paged'],
+      description: 'Loads paged admin Kangur social posts.',
+    },
+  });
+
+export const useKangurSocialPost = (
+  id: string | null,
+  options?: { enabled?: boolean }
+): SingleQuery<KangurSocialPost> =>
+  createSingleQueryV2<KangurSocialPost>({
+    id: id ?? null,
+    queryKey: QUERY_KEYS.kangur.socialPost(id),
+    queryFn: async (): Promise<KangurSocialPost> => {
+      if (!id) {
+        throw new Error('Missing social post id.');
+      }
+      return await fetchKangurSocialPostById(id);
+    },
+    enabled: (options?.enabled ?? true) && Boolean(id),
+    staleTime: 1000 * 30,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    meta: {
+      source: 'kangur.hooks.useKangurSocialPost',
+      operation: 'detail',
+      resource: 'kangur.social-post',
+      domain: 'kangur',
+      tags: ['kangur', 'social-posts', 'detail'],
+      description: 'Loads a single Kangur social post for admin editing.',
     },
   });
 

@@ -31,6 +31,7 @@ describe('filemaker campaign settings', () => {
             name: ' Spring Expo ',
             status: 'ACTIVE',
             subject: 'Join us',
+            mailAccountId: '  sales-account  ',
             audience: {
               partyKinds: ['organization'],
               emailStatuses: ['active'],
@@ -53,6 +54,7 @@ describe('filemaker campaign settings', () => {
         name: 'Spring Expo',
         status: 'active',
         subject: 'Join us',
+        mailAccountId: 'sales-account',
         audience: expect.objectContaining({
           partyKinds: ['organization'],
           emailStatuses: ['active'],

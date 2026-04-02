@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import enMessages from './messages/en.json';
 
 import {
@@ -67,30 +69,32 @@ const messageLoaders: Partial<Record<string, () => Promise<SiteMessageDictionary
   uk: () => import('./messages/uk.json').then((module) => module.default as SiteMessageDictionary),
 };
 
-export const loadSiteMessages = async (locale: string | null | undefined): Promise<SiteMessages> => {
-  const normalizedLocale = normalizeSiteLocale(locale);
-  const loaders = getLocaleFallbackChain(normalizedLocale)
-    .slice()
-    .reverse()
-    .reduce<Array<() => Promise<SiteMessageDictionary>>>((accumulator, candidateLocale) => {
-      const loader = messageLoaders[candidateLocale];
-      if (loader) {
-        accumulator.push(loader);
-      }
-      return accumulator;
-    }, []);
+export const loadSiteMessages = cache(
+  async (locale: string | null | undefined): Promise<SiteMessages> => {
+    const normalizedLocale = normalizeSiteLocale(locale);
+    const loaders = getLocaleFallbackChain(normalizedLocale)
+      .slice()
+      .reverse()
+      .reduce<Array<() => Promise<SiteMessageDictionary>>>((accumulator, candidateLocale) => {
+        const loader = messageLoaders[candidateLocale];
+        if (loader) {
+          accumulator.push(loader);
+        }
+        return accumulator;
+      }, []);
 
-  if (loaders.length === 0) {
-    const fallbackLoader =
-      messageLoaders[getDefaultSiteLocaleCode()] ?? messageLoaders['en'] ?? defaultMessageLoader;
-    return (await fallbackLoader()) as SiteMessages;
+    if (loaders.length === 0) {
+      const fallbackLoader =
+        messageLoaders[getDefaultSiteLocaleCode()] ?? messageLoaders['en'] ?? defaultMessageLoader;
+      return (await fallbackLoader()) as SiteMessages;
+    }
+
+    let mergedMessages: SiteMessageDictionary = {};
+
+    for (const loader of loaders) {
+      mergedMessages = mergeSiteMessageDictionaries(mergedMessages, await loader());
+    }
+
+    return mergedMessages as SiteMessages;
   }
-
-  let mergedMessages: SiteMessageDictionary = {};
-
-  for (const loader of loaders) {
-    mergedMessages = mergeSiteMessageDictionaries(mergedMessages, await loader());
-  }
-
-  return mergedMessages as SiteMessages;
-};
+);

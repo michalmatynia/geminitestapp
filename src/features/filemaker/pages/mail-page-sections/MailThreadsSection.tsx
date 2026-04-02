@@ -7,6 +7,7 @@ import type { PanelAction } from '@/shared/contracts/ui/panels';
 import { Badge, Checkbox, SelectSimple } from '@/shared/ui';
 
 import { FilemakerEntityTablePage } from '../../components/shared/FilemakerEntityTablePage';
+import { useMailPageContext } from '../FilemakerMail.context';
 
 import type { FilemakerMailFolderSummary, FilemakerMailThread } from '../../types';
 
@@ -29,24 +30,26 @@ export interface MailThreadsSectionProps {
   isThreadsLoading: boolean;
 }
 
-export function MailThreadsSection({
-  isRecentPanel,
-  selectedAccountLabel,
-  selectedFolderLabel,
-  selectedFolder,
-  visibleThreads,
-  recentMailboxFilter,
-  onRecentMailboxFilterChange,
-  recentUnreadOnly,
-  onRecentUnreadOnlyChange,
-  query,
-  onQueryChange,
-  recentMailboxOptions,
-  tableActions,
-  columns,
-  isNavigationLoading,
-  isThreadsLoading,
-}: MailThreadsSectionProps): React.JSX.Element {
+export function MailThreadsSection(): React.JSX.Element {
+  const {
+    isRecentPanel,
+    selectedAccountLabel,
+    selectedFolderLabel,
+    selectedFolder,
+    visibleThreads,
+    recentMailboxFilter,
+    setRecentMailboxFilter: onRecentMailboxFilterChange,
+    recentUnreadOnly,
+    setRecentUnreadOnly: onRecentUnreadOnlyChange,
+    query,
+    setQuery: onQueryChange,
+    recentMailboxOptions,
+    tableActions,
+    columns,
+    isNavigationLoading,
+    isThreadsLoading,
+  } = useMailPageContext();
+
   return (
     <FilemakerEntityTablePage
       title={

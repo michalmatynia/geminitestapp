@@ -6,6 +6,7 @@ import type React from 'react';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 
 import { useLearnerManagementState } from './KangurParentDashboardLearnerManagementWidget.hooks';
+import type { ProfileModalTabId } from './KangurParentDashboardLearnerManagementWidget.types';
 
 type LearnerManagementState = ReturnType<typeof useLearnerManagementState>;
 type LearnerRecord = LearnerManagementState['overview']['learners'][number];
@@ -186,7 +187,36 @@ const resolveModalOpen = ({
   activeProfileId: LearnerManagementState['activeProfileId'];
 }): boolean => isCreateModalVisible || !!activeProfileId;
 
-export function useLearnerManagementWidgetRuntime(state: LearnerManagementState) {
+export type LearnerManagementRuntime = {
+  selectedLearnerId: string | null;
+  isCreateModalVisible: boolean;
+  hasMoreSessions: boolean;
+  modalOpen: boolean;
+  showPassword: boolean;
+  isConfirmingRemove: boolean;
+  handleCreateNew: () => void;
+  handleOpenLearner: (learner: LearnerRecord) => Promise<void>;
+  handleOpenActiveLearnerSettings: () => void;
+  handleCloseWidgetModal: () => void;
+  handleDisplayNameChange: (nextValue: string) => void;
+  handleLoginNameChange: (nextValue: string) => void;
+  handlePasswordChange: (nextValue: string) => void;
+  handleAgeChange: (nextValue: string) => void;
+  handleStatusChange: (nextValue: EditStatus) => void;
+  handleTogglePassword: () => void;
+  handleCancelRemove: () => void;
+  handleConfirmRemove: () => void;
+  handleSaveAction: () => void;
+  handleStartRemove: () => void;
+  handleLoadMoreSessions: () => void;
+  activeTab: ProfileModalTabId;
+  setActiveTab: React.Dispatch<React.SetStateAction<ProfileModalTabId>>;
+  activeProfileId: string | null;
+  activeProfile: LearnerManagementState['activeProfile'];
+  sessions: LearnerManagementState['sessions'];
+};
+
+export function useLearnerManagementWidgetRuntime(state: LearnerManagementState): LearnerManagementRuntime {
   const {
     overview,
     actions,

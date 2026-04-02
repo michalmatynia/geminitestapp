@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { namedDtoSchema } from '../base';
 import type { LabeledOptionDto } from '../base';
-import { productParameterValueSchema } from './product';
+import { productImportSourceSchema, productParameterValueSchema } from './product';
 
 import type { ImageFileRecord } from '../files';
 import type { ManagedImageSlot } from '../image-slots';
@@ -104,6 +104,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   openProductFormTab: productDraftOpenFormTabSchema.nullable().optional(),
   imageLinks: z.array(z.string()).optional(),
   baseProductId: z.string().nullable().optional(),
+  importSource: productImportSourceSchema.nullable().optional(),
 });
 
 export type ProductDraft = z.infer<typeof productDraftSchema>;

@@ -15,15 +15,14 @@ import {
 } from '@/features/kangur/social/shared/social-playwright-capture';
 import { cn } from '@/shared/utils';
 import type {
-  KangurSocialCaptureAppearanceMode,
   KangurSocialImageAddonsBatchJob,
-  KangurSocialImageAddonsBatchResult,
-  KangurSocialProgrammableCaptureRoute,
 } from '@/shared/contracts/kangur-social-image-addons';
-import type { AddonFormState } from '../AdminKangurSocialPage.Constants';
 import { usePlaywrightPersonas } from '@/shared/hooks/usePlaywrightPersonas';
 import { SocialJobStatusPill } from '../SocialJobStatusPill';
 import { SocialCaptureBatchHistory } from '../SocialCaptureBatchHistory';
+
+import { useSocialPostContext } from '../SocialPostContext';
+import { useSocialSettingsModalContext } from './SocialSettingsModalContext';
 
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
@@ -35,98 +34,58 @@ const isBatchCaptureJobInFlight = (
   status: KangurSocialImageAddonsBatchJob['status'] | null | undefined
 ): boolean => status === 'queued' || status === 'running';
 
-export function SocialSettingsCaptureTab({
-  addonForm,
-  setAddonForm,
-  handleCreateAddon,
-  createAddonMutationPending,
-  batchCaptureBaseUrl,
-  setBatchCaptureBaseUrl,
-  batchCapturePresetLimit,
-  setBatchCapturePresetLimit,
-  batchCapturePresetIds,
-  handleToggleCapturePreset,
-  selectAllCapturePresets,
-  clearCapturePresets,
-  handleBatchCapture,
-  batchCaptureMutationPending,
-  batchCapturePending,
-  batchCaptureJob,
-  batchCaptureMessage,
-  batchCaptureErrorMessage,
-  batchCaptureRecentJobs,
-  batchCaptureRecentJobsLoading,
-  batchCaptureResult,
-  batchCaptureLimitSummary,
-  currentVisualAnalysisJob,
-  currentGenerationJob,
-  currentPipelineJob,
-  hasSavedProgrammableCaptureDefaults,
-  programmableCaptureDefaultsBaseUrl,
-  programmableCaptureDefaultsPersonaId,
-  programmableCaptureDefaultsScript,
-  programmableCaptureDefaultsRoutes,
-  captureAppearanceMode,
-  handleOpenProgrammableCaptureModal,
-  handleResetProgrammableCaptureDefaults,
-  handleRetryFailedPresetBatchCaptureJob,
-}: {
-  addonForm: AddonFormState;
-  setAddonForm: React.Dispatch<React.SetStateAction<AddonFormState>>;
-  handleCreateAddon: () => void;
-  createAddonMutationPending: boolean;
-  batchCaptureBaseUrl: string;
-  setBatchCaptureBaseUrl: (val: string) => void;
-  batchCapturePresetLimit: number | null;
-  setBatchCapturePresetLimit: (val: string) => void;
-  batchCapturePresetIds: string[];
-  handleToggleCapturePreset: (id: string) => void;
-  selectAllCapturePresets: () => void;
-  clearCapturePresets: () => void;
-  handleBatchCapture: () => void;
-  batchCaptureMutationPending: boolean;
-  batchCapturePending: boolean;
-  batchCaptureJob: KangurSocialImageAddonsBatchJob | null;
-  batchCaptureMessage: string | null;
-  batchCaptureErrorMessage: string | null;
-  batchCaptureRecentJobs: KangurSocialImageAddonsBatchJob[];
-  batchCaptureRecentJobsLoading: boolean;
-  batchCaptureResult: KangurSocialImageAddonsBatchResult | null;
-  batchCaptureLimitSummary: string;
-  currentVisualAnalysisJob: {
-    id: string;
-    status: string;
-    progress: {
-      message: string | null;
-    } | null;
-    failedReason: string | null;
-  } | null;
-  currentGenerationJob: {
-    id: string;
-    status: string;
-    progress: {
-      message: string | null;
-    } | null;
-    failedReason: string | null;
-  } | null;
-  currentPipelineJob: {
-    id: string;
-    status: string;
-    progress: {
-      message: string | null;
-    } | null;
-    failedReason: string | null;
-  } | null;
-  hasSavedProgrammableCaptureDefaults: boolean;
-  programmableCaptureDefaultsBaseUrl: string | null;
-  programmableCaptureDefaultsPersonaId: string | null;
-  programmableCaptureDefaultsScript: string;
-  programmableCaptureDefaultsRoutes: KangurSocialProgrammableCaptureRoute[];
-  captureAppearanceMode: KangurSocialCaptureAppearanceMode;
-  handleOpenProgrammableCaptureModal: () => void;
-  handleResetProgrammableCaptureDefaults: () => void;
-  handleRetryFailedPresetBatchCaptureJob: (job: KangurSocialImageAddonsBatchJob) => void;
-}) {
+export function SocialSettingsCaptureTab() {
+  const context = useSocialPostContext();
+  const state = useSocialSettingsModalContext();
+
+  const {
+    addonForm,
+    batchCaptureBaseUrl,
+    batchCapturePending,
+    batchCaptureJob,
+    batchCaptureMessage,
+    batchCaptureErrorMessage,
+    batchCaptureRecentJobs,
+    batchCaptureRecentJobsLoading,
+    batchCapturePresetIds,
+    batchCapturePresetLimit,
+    batchCaptureResult,
+    createAddonMutation,
+    batchCaptureMutation,
+    captureAppearanceMode,
+    currentGenerationJob,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
+    handleBatchCapture,
+    handleCreateAddon,
+    handleRetryFailedPresetBatchCaptureJob,
+    handleToggleCapturePreset,
+    selectAllCapturePresets,
+    clearCapturePresets,
+    setAddonForm,
+    setBatchCaptureBaseUrl,
+    setBatchCapturePresetLimit,
+    handleOpenProgrammablePlaywrightModalFromDefaults,
+    handleResetProgrammableCaptureDefaults,
+    hasSavedProgrammableCaptureDefaults,
+    persistedProgrammableCaptureBaseUrl,
+    persistedProgrammableCapturePersonaId,
+    persistedProgrammableCaptureScript,
+    persistedProgrammableCaptureRoutes,
+  } = context;
+
+  const { batchCaptureLimitSummary } = state;
+
+  const handleOpenProgrammableCaptureModal = handleOpenProgrammablePlaywrightModalFromDefaults;
+
+  const programmableCaptureDefaultsBaseUrl = persistedProgrammableCaptureBaseUrl;
+  const programmableCaptureDefaultsPersonaId = persistedProgrammableCapturePersonaId;
+  const programmableCaptureDefaultsScript = persistedProgrammableCaptureScript;
+  const programmableCaptureDefaultsRoutes = persistedProgrammableCaptureRoutes;
+
+  const createAddonMutationPending = createAddonMutation.isPending;
+  const batchCaptureMutationPending = batchCaptureMutation.isPending;
+
   const personasQuery = usePlaywrightPersonas({
     enabled: Boolean(programmableCaptureDefaultsPersonaId?.trim()),
   });
@@ -336,7 +295,7 @@ export function SocialSettingsCaptureTab({
           <Button
             type='button'
             size='sm'
-            onClick={handleCreateAddon}
+            onClick={() => { void handleCreateAddon(); }}
             disabled={
               !addonForm.title.trim() ||
               !addonForm.sourceUrl.trim() ||
@@ -361,14 +320,14 @@ export function SocialSettingsCaptureTab({
             </div>
           </div>
           <div className='flex flex-wrap justify-start gap-2'>
-            <Button type='button' variant='outline' size='sm' onClick={handleOpenProgrammableCaptureModal}>
+            <Button type='button' variant='outline' size='sm' onClick={() => { handleOpenProgrammableCaptureModal(); }}>
               Open programmable editor
             </Button>
             <Button
               type='button'
               variant='ghost'
               size='sm'
-              onClick={handleResetProgrammableCaptureDefaults}
+              onClick={() => { void handleResetProgrammableCaptureDefaults(); }}
               disabled={!hasSavedProgrammableCaptureDefaults || hasBlockingRuntimeJob}
               title={
                 hasBlockingRuntimeJob
@@ -536,7 +495,7 @@ export function SocialSettingsCaptureTab({
             <Button
               type='button'
               size='sm'
-              onClick={handleBatchCapture}
+              onClick={() => { void handleBatchCapture(); }}
               disabled={
                 batchCapturePresetIds.length === 0 ||
                 batchCaptureMutationPending ||
@@ -626,7 +585,7 @@ export function SocialSettingsCaptureTab({
             retryKind='preset'
             retryDisabled={hasCaptureActionLock}
             retryTitle={captureActionTitle}
-            onRetryFailed={handleRetryFailedPresetBatchCaptureJob}
+            onRetryFailed={(job) => { void handleRetryFailedPresetBatchCaptureJob(job); }}
           />
         </div>
       </KangurAdminCard>

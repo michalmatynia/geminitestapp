@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
@@ -14,7 +15,6 @@ import {
   fetchKangurSocialImageAddonsBatchJob,
   useBatchCaptureKangurSocialImageAddons,
   useCreateKangurSocialImageAddon,
-  useKangurSocialImageAddonsBatchJobs,
   useStartBatchCaptureKangurSocialImageAddons,
 } from '@/features/kangur/social/hooks/useKangurSocialImageAddons';
 import {
@@ -256,13 +256,13 @@ const handleBatchCaptureFailure = ({
 };
 
 export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const storefrontAppearance = useOptionalCmsStorefrontAppearance();
   const createAddonMutation = useCreateKangurSocialImageAddon();
   const batchCaptureMutation = useBatchCaptureKangurSocialImageAddons();
   const startBatchCaptureMutation = useStartBatchCaptureKangurSocialImageAddons();
-  const batchCaptureRecentJobsQuery = useKangurSocialImageAddonsBatchJobs({ limit: 5 });
   const [batchCaptureResult, setBatchCaptureResult] =
     useState<KangurSocialImageAddonsBatchResult | null>(null);
   const [batchCapturePending, setBatchCapturePending] = useState(false);
@@ -281,6 +281,12 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     normalizeAppearanceMode(storedDefaultAppearanceMode) ??
     'default';
   const captureAppearanceMode = resolveCaptureAppearanceMode();
+
+  const invalidateBatchCaptureRecentJobs = (): void => {
+    void queryClient.invalidateQueries({
+      queryKey: ['kangur', 'social-image-addon-batch-jobs'],
+    });
+  };
 
   const waitForBatchCaptureJob = async (
     initialJob: KangurSocialImageAddonsBatchJob,
@@ -444,7 +450,7 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
       setBatchCaptureErrorMessage(extractMutationErrorMessage(error, 'Batch capture failed'));
       handleBatchCaptureFailure({ error, deps, toast });
     } finally {
-      void batchCaptureRecentJobsQuery.refetch();
+      invalidateBatchCaptureRecentJobs();
       setBatchCapturePending(false);
     }
   };
@@ -479,7 +485,7 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
           appearanceMode: captureAppearanceMode,
         })
       );
-      void batchCaptureRecentJobsQuery.refetch();
+      invalidateBatchCaptureRecentJobs();
       return startedJob;
     } catch (error) {
       handleBatchCaptureFailure({ error, deps, toast });
@@ -512,8 +518,6 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
     batchCaptureJob,
     batchCaptureMessage,
     batchCaptureErrorMessage,
-    batchCaptureRecentJobs: batchCaptureRecentJobsQuery.data ?? [],
-    batchCaptureRecentJobsLoading: batchCaptureRecentJobsQuery.isLoading,
     captureAppearanceMode,
     setBatchCaptureResult,
     runBatchCapture,

@@ -188,6 +188,9 @@ export const resolveProductCategoryLabel = (
   return OPAQUE_CATEGORY_ID_PATTERN.test(normalizedCategoryId) ? '—' : normalizedCategoryId;
 };
 
+export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>
+  typeof product.importSource === 'string' && product.importSource.trim().length > 0;
+
 export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();
 
 export const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);

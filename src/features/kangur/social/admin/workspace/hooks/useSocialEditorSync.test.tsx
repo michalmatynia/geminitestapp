@@ -6,19 +6,19 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  useKangurSocialPostsMock,
+  useKangurSocialPostMock,
   useKangurSocialImageAddonsMock,
   trackKangurClientEventMock,
   refetchImageAddonsMock,
 } = vi.hoisted(() => ({
-  useKangurSocialPostsMock: vi.fn(),
+  useKangurSocialPostMock: vi.fn(),
   useKangurSocialImageAddonsMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   refetchImageAddonsMock: vi.fn(),
 }));
 
 vi.mock('@/features/kangur/social/hooks/useKangurSocialPosts', () => ({
-  useKangurSocialPosts: (...args: unknown[]) => useKangurSocialPostsMock(...args),
+  useKangurSocialPost: (...args: unknown[]) => useKangurSocialPostMock(...args),
 }));
 
 vi.mock('@/features/kangur/social/hooks/useKangurSocialImageAddons', () => ({
@@ -70,10 +70,19 @@ const staleAddonFixture = {
 describe('useSocialEditorSync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useKangurSocialPostsMock.mockReturnValue({
-      data: [postFixture],
+    const emptyResult = {
+      data: null,
       isLoading: false,
-    });
+      refetch: vi.fn(),
+    };
+    const selectedResult = {
+      data: postFixture,
+      isLoading: false,
+      refetch: vi.fn(),
+    };
+    useKangurSocialPostMock.mockImplementation((id: string | null) => ({
+      ...(id === postFixture.id ? selectedResult : emptyResult),
+    }));
     useKangurSocialImageAddonsMock.mockReturnValue({
       data: [addonFixture],
       isFetching: false,
@@ -81,7 +90,7 @@ describe('useSocialEditorSync', () => {
     });
   });
 
-  it('auto-selects the first post and syncs editor state from it', async () => {
+  it('loads the selected post detail and syncs editor state from it', async () => {
     const { result } = renderHook(() =>
       useSocialEditorSync({
         linkedinConnections: [{ id: 'conn-1' }],
@@ -91,8 +100,19 @@ describe('useSocialEditorSync', () => {
       })
     );
 
+    act(() => {
+      result.current.setActivePostId('post-1');
+    });
+
     await waitFor(() => expect(result.current.activePostId).toBe('post-1'));
-    expect(useKangurSocialImageAddonsMock).toHaveBeenLastCalledWith({ ids: ['addon-1'] });
+    expect(useKangurSocialImageAddonsMock).toHaveBeenNthCalledWith(1, {
+      ids: [],
+      enabled: false,
+    });
+    expect(useKangurSocialImageAddonsMock).toHaveBeenLastCalledWith({
+      ids: ['addon-1'],
+      enabled: true,
+    });
 
     expect(result.current.activePost).toEqual(postFixture);
     expect(result.current.editorState).toEqual({
@@ -106,7 +126,7 @@ describe('useSocialEditorSync', () => {
     expect(result.current.contextSummary).toBe('Existing context');
     expect(result.current.hasUnsavedChanges).toBe(false);
     expect(trackKangurClientEventMock).toHaveBeenCalledWith('kangur_social_page_view', {
-      postCount: 1,
+      hasActivePostSelection: false,
       hasLinkedInIntegration: true,
       connectionCount: 1,
       brainModelId: 'brain-1',
@@ -123,6 +143,10 @@ describe('useSocialEditorSync', () => {
         visionModelId: null,
       })
     );
+
+    act(() => {
+      result.current.setActivePostId('post-1');
+    });
 
     await waitFor(() => expect(result.current.activePostId).toBe('post-1'));
 
@@ -161,6 +185,10 @@ describe('useSocialEditorSync', () => {
       })
     );
 
+    act(() => {
+      result.current.setActivePostId('post-1');
+    });
+
     await waitFor(() => expect(result.current.activePostId).toBe('post-1'));
 
     expect(result.current.hasUnsavedChanges).toBe(false);
@@ -191,19 +219,27 @@ describe('useSocialEditorSync', () => {
   });
 
   it('resolves stale standalone addon assets to the latest selected capture without marking the draft dirty', async () => {
-    useKangurSocialPostsMock.mockReturnValue({
-      data: [
-        {
-          ...postFixture,
-          imageAddonIds: ['addon-old', 'addon-new'],
-          imageAssets: [
-            staleAddonFixture.imageAsset,
-            { id: 'manual-1', filepath: '/manual/custom.png', url: '/manual/custom.png' },
-          ],
-        },
+    const staleSelectedPost = {
+      ...postFixture,
+      imageAddonIds: ['addon-old', 'addon-new'],
+      imageAssets: [
+        staleAddonFixture.imageAsset,
+        { id: 'manual-1', filepath: '/manual/custom.png', url: '/manual/custom.png' },
       ],
+    };
+    const emptyResult = {
+      data: null,
       isLoading: false,
-    });
+      refetch: vi.fn(),
+    };
+    const selectedResult = {
+      data: staleSelectedPost,
+      isLoading: false,
+      refetch: vi.fn(),
+    };
+    useKangurSocialPostMock.mockImplementation((id: string | null) => ({
+      ...(id === postFixture.id ? selectedResult : emptyResult),
+    }));
     useKangurSocialImageAddonsMock.mockReturnValue({
       data: [latestAddonFixture, staleAddonFixture],
     });
@@ -217,6 +253,10 @@ describe('useSocialEditorSync', () => {
       })
     );
 
+    act(() => {
+      result.current.setActivePostId('post-1');
+    });
+
     await waitFor(() => expect(result.current.activePostId).toBe('post-1'));
 
     expect(result.current.imageAddonIds).toEqual(['addon-new']);
@@ -228,15 +268,23 @@ describe('useSocialEditorSync', () => {
   });
 
   it('keeps missing selected add-ons requested and lets the editor clear them', async () => {
-    useKangurSocialPostsMock.mockReturnValue({
-      data: [
-        {
-          ...postFixture,
-          imageAddonIds: ['addon-missing'],
-        },
-      ],
+    const missingAddonPost = {
+      ...postFixture,
+      imageAddonIds: ['addon-missing'],
+    };
+    const emptyResult = {
+      data: null,
       isLoading: false,
-    });
+      refetch: vi.fn(),
+    };
+    const selectedResult = {
+      data: missingAddonPost,
+      isLoading: false,
+      refetch: vi.fn(),
+    };
+    useKangurSocialPostMock.mockImplementation((id: string | null) => ({
+      ...(id === postFixture.id ? selectedResult : emptyResult),
+    }));
     useKangurSocialImageAddonsMock.mockReturnValue({
       data: [],
       isFetching: false,
@@ -252,9 +300,16 @@ describe('useSocialEditorSync', () => {
       })
     );
 
+    act(() => {
+      result.current.setActivePostId('post-1');
+    });
+
     await waitFor(() => expect(result.current.activePostId).toBe('post-1'));
 
-    expect(useKangurSocialImageAddonsMock).toHaveBeenLastCalledWith({ ids: ['addon-missing'] });
+    expect(useKangurSocialImageAddonsMock).toHaveBeenLastCalledWith({
+      ids: ['addon-missing'],
+      enabled: true,
+    });
     expect(result.current.missingSelectedImageAddonIds).toEqual(['addon-missing']);
 
     act(() => {
@@ -263,6 +318,9 @@ describe('useSocialEditorSync', () => {
 
     expect(result.current.imageAddonIds).toEqual([]);
     expect(result.current.missingSelectedImageAddonIds).toEqual([]);
-    expect(useKangurSocialImageAddonsMock).toHaveBeenLastCalledWith({ ids: [] });
+    expect(useKangurSocialImageAddonsMock).toHaveBeenLastCalledWith({
+      ids: [],
+      enabled: false,
+    });
   });
 });

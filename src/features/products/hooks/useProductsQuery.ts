@@ -28,6 +28,7 @@ export type { UseProductsFilters };
 
 export interface UseProductsOptions {
   enabled?: boolean;
+  prefetchNextPage?: boolean;
 }
 
 // Trade-off between API load and freshness for product list queries.
@@ -230,6 +231,7 @@ export function useProductsWithCount(
 } {
   const queryClient = useQueryClient();
   const enabled = options?.enabled ?? true;
+  const shouldPrefetchNextPage = options?.prefetchNextPage ?? true;
   const prefetchKeyRef = useRef<string>('');
 
   // Single request replaces the previous two parallel queries (getProducts + countProducts).
@@ -272,6 +274,7 @@ export function useProductsWithCount(
 
   useEffect(() => {
     if (!enabled) return;
+    if (!shouldPrefetchNextPage) return;
     if (!query.data) return;
 
     const currentPage = typeof filters.page === 'number' && filters.page > 0 ? filters.page : 1;
@@ -320,7 +323,7 @@ export function useProductsWithCount(
         description: 'Prefetches the next product page and count.',
       },
     })();
-  }, [enabled, filters, query.data, queryClient]);
+  }, [enabled, filters, query.data, queryClient, shouldPrefetchNextPage]);
 
   const previousDebugSnapshotRef = useRef<ProductsPagedDebugSnapshot | null>(null);
   const debugSnapshot = useMemo(

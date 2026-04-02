@@ -15,6 +15,10 @@ export const productCurrencySchema = namedDtoSchema.extend({
 
 export type ProductCurrencyRecord = z.infer<typeof productCurrencySchema>;
 
+export const productImportSourceSchema = z.enum(['base']);
+
+export type ProductImportSource = z.infer<typeof productImportSourceSchema>;
+
 /**
  * Price Group With Details Contract
  */
@@ -136,6 +140,7 @@ export type ResolvedProductParameterValue = z.infer<typeof resolvedProductParame
 export const productSchema = dtoBaseSchema.extend({
   sku: z.string().nullable(),
   baseProductId: z.string().nullable(),
+  importSource: productImportSourceSchema.nullable().optional(),
   defaultPriceGroupId: z.string().nullable(),
   ean: z.string().nullable(),
   gtin: z.string().nullable(),

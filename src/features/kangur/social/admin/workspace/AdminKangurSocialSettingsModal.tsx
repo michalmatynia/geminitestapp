@@ -2,8 +2,6 @@
 
 import React from 'react';
 
-/* eslint-disable @typescript-eslint/no-misused-promises */
-/* eslint-disable @typescript-eslint/no-confusing-void-expression */
 import {
   FormModal,
   Tabs,
@@ -15,8 +13,8 @@ import { useSocialPostContext } from './SocialPostContext';
 import { SocialJobStatusPill } from './SocialJobStatusPill';
 import {
   type SocialSettingsTab,
-  useSocialSettingsModalState,
 } from './social-settings-modal/SocialSettingsModal.hooks';
+import { SocialSettingsModalProvider, useSocialSettingsModalContext } from './social-settings-modal/SocialSettingsModalContext';
 import { SocialSettingsModelsTab } from './social-settings-modal/SocialSettingsModelsTab';
 import { SocialSettingsProjectTab } from './social-settings-modal/SocialSettingsProjectTab';
 import { SocialSettingsDocumentationTab } from './social-settings-modal/SocialSettingsDocumentationTab';
@@ -30,102 +28,20 @@ const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean 
   return normalized !== 'completed' && normalized !== 'failed';
 };
 
-export function AdminKangurSocialSettingsModal({
-  open,
-  onClose,
-  onSave,
-  isSaving,
-  hasUnsavedChanges,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSave: () => void;
-  isSaving: boolean;
-  hasUnsavedChanges: boolean;
-}): React.JSX.Element {
+function AdminKangurSocialSettingsModalContent(): React.JSX.Element {
   const context = useSocialPostContext();
-  const state = useSocialSettingsModalState(context);
+  const state = useSocialSettingsModalContext();
 
   const {
     activeTab,
     setActiveTab,
-    brainModelBadgeLabel,
-    brainModelSelectOptions,
-    visionModelBadgeLabel,
-    visionModelSelectOptions,
-    selectedPostTitle,
-    linkedInOptions,
-    linkedinIntegration,
-    selectedLinkedInConnection,
-    linkedInExpiryStatus,
-    linkedInExpiryLabel,
-    linkedInDaysRemaining,
-    docsUsed,
-    batchCaptureLimitSummary,
   } = state;
 
   const {
-    activePost,
-    addonForm,
-    batchCaptureBaseUrl,
-    batchCaptureMutation,
-    batchCapturePending,
-    batchCaptureJob,
-    batchCaptureMessage,
-    batchCaptureErrorMessage,
-    batchCaptureRecentJobs,
-    batchCaptureRecentJobsLoading,
-    batchCapturePresetIds,
-    batchCapturePresetLimit,
-    batchCaptureResult,
-    brainModelId,
-    brainModelOptions,
-    canGenerateSocialDraft,
-    clearCapturePresets,
-    contextLoading,
-    createAddonMutation,
-    captureAppearanceMode,
-    docReferenceInput,
     currentGenerationJob,
     currentPipelineJob,
     currentVisualAnalysisJob,
-    generationNotes,
-    handleBatchCapture,
-    handleBrainModelChange,
-    handleCreateAddon,
-    handleGenerate,
-    handleLinkedInConnectionChange,
-    handleLoadContext,
-    handleRetryFailedPresetBatchCaptureJob,
-    handleToggleCapturePreset,
-    handleVisionModelChange,
-    linkedinConnectionId,
-    projectUrl,
-    projectUrlError,
-    selectAllCapturePresets,
-    setAddonForm,
-    setBatchCaptureBaseUrl,
-    setBatchCapturePresetLimit,
-    setDocReferenceInput,
-    setGenerationNotes,
-    setProjectUrl,
-    socialDraftBlockedReason,
-    socialVisionWarning,
-    handleOpenProgrammablePlaywrightModalFromDefaults,
-    handleResetProgrammableCaptureDefaults,
-    hasSavedProgrammableCaptureDefaults,
-    persistedProgrammableCaptureBaseUrl,
-    persistedProgrammableCapturePersonaId,
-    persistedProgrammableCaptureScript,
-    persistedProgrammableCaptureRoutes,
-    visionModelId,
-    visionModelOptions,
-    contextSummary,
   } = context;
-  const hasBlockingRuntimeJob =
-    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
-    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
-    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
   const currentVisualAnalysisJobTitle = [
     currentVisualAnalysisJob?.progress?.message ?? null,
     currentVisualAnalysisJob?.failedReason ?? null,
@@ -147,29 +63,9 @@ export function AdminKangurSocialSettingsModal({
   ]
     .filter((value): value is string => Boolean(value))
     .join(' · ');
-  const saveSettingsTitle = hasBlockingRuntimeJob
-    ? 'Wait for the current Social runtime job to finish.'
-    : !hasUnsavedChanges
-      ? 'No settings changes to save.'
-      : undefined;
 
   return (
-    <FormModal
-      open={open}
-      onClose={onClose}
-      title='Social Settings'
-      subtitle='Choose StudiQ Social models from the AI Brain catalog and manage project references.'
-      onSave={onSave}
-      isSaving={isSaving}
-      disableCloseWhileSaving
-      isSaveDisabled={!hasUnsavedChanges || isSaving || hasBlockingRuntimeJob}
-      hasUnsavedChanges={hasUnsavedChanges}
-      saveText='Save Settings'
-      saveTitle={saveSettingsTitle}
-      cancelText='Close'
-      size='xl'
-      className='md:min-w-[52rem] max-w-[56rem]'
-    >
+    <>
       {(currentVisualAnalysisJob?.status ||
         currentGenerationJob?.status ||
         currentPipelineJob?.status) ? (
@@ -216,118 +112,83 @@ export function AdminKangurSocialSettingsModal({
         </TabsList>
 
         <TabsContent value='models' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
-          <SocialSettingsModelsTab
-            brainModelBadgeLabel={brainModelBadgeLabel}
-            brainModelSelectOptions={brainModelSelectOptions}
-            brainModelId={brainModelId}
-            handleBrainModelChange={handleBrainModelChange}
-            brainModelOptionsLoading={brainModelOptions.isLoading}
-            visionModelBadgeLabel={visionModelBadgeLabel}
-            visionModelSelectOptions={visionModelSelectOptions}
-            visionModelId={visionModelId}
-            handleVisionModelChange={handleVisionModelChange}
-            visionModelOptionsLoading={visionModelOptions.isLoading}
-            isRuntimeLocked={hasBlockingRuntimeJob}
-          />
+          <SocialSettingsModelsTab />
         </TabsContent>
 
         <TabsContent value='project' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
-          <SocialSettingsProjectTab
-            projectUrl={projectUrl}
-            projectUrlError={projectUrlError ?? null}
-            setProjectUrl={setProjectUrl}
-            isRuntimeLocked={hasBlockingRuntimeJob}
-          />
+          <SocialSettingsProjectTab />
         </TabsContent>
 
         <TabsContent value='documentation' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
-          <SocialSettingsDocumentationTab
-            activePost={activePost}
-            canGenerateSocialDraft={canGenerateSocialDraft}
-            contextLoading={contextLoading}
-            currentGenerationJob={currentGenerationJob}
-            currentPipelineJob={currentPipelineJob}
-            docReferenceInput={docReferenceInput}
-            docsUsed={docsUsed}
-            generationNotes={generationNotes}
-            handleGenerate={handleGenerate}
-            handleLoadContext={handleLoadContext}
-            contextSummary={contextSummary}
-            selectedPostTitle={selectedPostTitle}
-            setDocReferenceInput={setDocReferenceInput}
-            setGenerationNotes={setGenerationNotes}
-            socialDraftBlockedReason={socialDraftBlockedReason}
-            socialVisionWarning={socialVisionWarning}
-          />
+          <SocialSettingsDocumentationTab />
         </TabsContent>
 
         <TabsContent value='publishing' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
-          <SocialSettingsPublishingTab
-            linkedinConnectionId={linkedinConnectionId}
-            handleLinkedInConnectionChange={(id) => {
-              void handleLinkedInConnectionChange(id);
-            }}
-            linkedInOptions={linkedInOptions}
-            linkedinIntegration={linkedinIntegration}
-            selectedLinkedInConnection={selectedLinkedInConnection}
-            linkedInExpiryStatus={linkedInExpiryStatus}
-            linkedInExpiryLabel={linkedInExpiryLabel}
-            linkedInDaysRemaining={linkedInDaysRemaining}
-            isRuntimeLocked={hasBlockingRuntimeJob}
-          />
+          <SocialSettingsPublishingTab />
         </TabsContent>
 
         <TabsContent value='capture' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
-          <SocialSettingsCaptureTab
-            addonForm={addonForm}
-            setAddonForm={setAddonForm}
-            handleCreateAddon={() => { void handleCreateAddon(); }}
-            createAddonMutationPending={createAddonMutation.isPending}
-            batchCaptureBaseUrl={batchCaptureBaseUrl}
-            setBatchCaptureBaseUrl={setBatchCaptureBaseUrl}
-            batchCapturePresetLimit={batchCapturePresetLimit}
-            setBatchCapturePresetLimit={setBatchCapturePresetLimit}
-            batchCapturePresetIds={batchCapturePresetIds}
-            handleToggleCapturePreset={handleToggleCapturePreset}
-            selectAllCapturePresets={selectAllCapturePresets}
-            clearCapturePresets={clearCapturePresets}
-            handleBatchCapture={() => {
-              void handleBatchCapture();
-            }}
-            batchCaptureMutationPending={batchCaptureMutation.isPending}
-            batchCapturePending={batchCapturePending}
-            batchCaptureJob={batchCaptureJob}
-            batchCaptureMessage={batchCaptureMessage}
-            batchCaptureErrorMessage={batchCaptureErrorMessage}
-            batchCaptureRecentJobs={batchCaptureRecentJobs}
-            batchCaptureRecentJobsLoading={batchCaptureRecentJobsLoading}
-            batchCaptureResult={batchCaptureResult}
-            batchCaptureLimitSummary={batchCaptureLimitSummary}
-            currentVisualAnalysisJob={currentVisualAnalysisJob}
-            currentGenerationJob={currentGenerationJob}
-            currentPipelineJob={currentPipelineJob}
-            hasSavedProgrammableCaptureDefaults={hasSavedProgrammableCaptureDefaults}
-            programmableCaptureDefaultsBaseUrl={persistedProgrammableCaptureBaseUrl}
-            programmableCaptureDefaultsPersonaId={persistedProgrammableCapturePersonaId}
-            programmableCaptureDefaultsScript={persistedProgrammableCaptureScript}
-            programmableCaptureDefaultsRoutes={persistedProgrammableCaptureRoutes}
-            captureAppearanceMode={captureAppearanceMode ?? 'default'}
-            handleOpenProgrammableCaptureModal={
-              handleOpenProgrammablePlaywrightModalFromDefaults
-            }
-            handleResetProgrammableCaptureDefaults={() => {
-              void handleResetProgrammableCaptureDefaults();
-            }}
-            handleRetryFailedPresetBatchCaptureJob={(job) => {
-              void handleRetryFailedPresetBatchCaptureJob(job);
-            }}
-          />
+          <SocialSettingsCaptureTab />
         </TabsContent>
 
         <TabsContent value='content-browser' className='mt-4 space-y-4 data-[state=inactive]:hidden'>
           <SocialSettingsContentBrowserTab />
         </TabsContent>
       </Tabs>
+    </>
+  );
+}
+
+export function AdminKangurSocialSettingsModal({
+  open,
+  onClose,
+  onSave,
+  isSaving,
+  hasUnsavedChanges,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  isSaving: boolean;
+  hasUnsavedChanges: boolean;
+}): React.JSX.Element {
+  const context = useSocialPostContext();
+  const {
+    currentGenerationJob,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
+  } = context;
+  const hasBlockingRuntimeJob =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+
+  const saveSettingsTitle = hasBlockingRuntimeJob
+    ? 'Wait for the current Social runtime job to finish.'
+    : !hasUnsavedChanges
+      ? 'No settings changes to save.'
+      : undefined;
+
+  return (
+    <FormModal
+      open={open}
+      onClose={onClose}
+      title='Social Settings'
+      subtitle='Choose StudiQ Social models from the AI Brain catalog and manage project references.'
+      onSave={onSave}
+      isSaving={isSaving}
+      disableCloseWhileSaving
+      isSaveDisabled={!hasUnsavedChanges || isSaving || hasBlockingRuntimeJob}
+      hasUnsavedChanges={hasUnsavedChanges}
+      saveText='Save Settings'
+      saveTitle={saveSettingsTitle}
+      cancelText='Close'
+      size='xl'
+      className='md:min-w-[52rem] max-w-[56rem]'
+    >
+      <SocialSettingsModalProvider>
+        <AdminKangurSocialSettingsModalContent />
+      </SocialSettingsModalProvider>
     </FormModal>
   );
 }

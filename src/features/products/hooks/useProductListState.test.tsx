@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
 import {
   applyProductListAdvancedFilterState,
+  scheduleDeferredProductListDraftBootstrap,
   shouldEnableProductListBackgroundSync,
   shouldAdoptIncomingEditProductDetail,
 } from './useProductListState';
@@ -183,5 +184,64 @@ describe('shouldEnableProductListBackgroundSync', () => {
         activeTrackedProductAiRunsCount: 1,
       })
     ).toBe(true);
+  });
+});
+
+describe('scheduleDeferredProductListDraftBootstrap', () => {
+  it('uses requestIdleCallback when available and cancels it on cleanup', () => {
+    const onReady = vi.fn();
+    let scheduled: (() => void) | null = null;
+    const requestIdleCallback = vi.fn((callback: () => void) => {
+      scheduled = callback;
+      return 41;
+    });
+    const cancelIdleCallback = vi.fn();
+
+    const cleanup = scheduleDeferredProductListDraftBootstrap(
+      {
+        requestIdleCallback,
+        cancelIdleCallback,
+        setTimeout: vi.fn(() => 0),
+        clearTimeout: vi.fn(),
+      },
+      onReady
+    );
+
+    expect(requestIdleCallback).toHaveBeenCalledTimes(1);
+    expect(onReady).not.toHaveBeenCalled();
+
+    scheduled?.();
+    expect(onReady).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    expect(cancelIdleCallback).toHaveBeenCalledWith(41);
+  });
+
+  it('falls back to a short timeout when requestIdleCallback is unavailable', () => {
+    const onReady = vi.fn();
+    let scheduled: (() => void) | null = null;
+    const clearTimeout = vi.fn();
+    const setTimeout = vi.fn((callback: () => void, timeout?: number) => {
+      scheduled = callback;
+      expect(timeout).toBe(1);
+      return 7;
+    });
+
+    const cleanup = scheduleDeferredProductListDraftBootstrap(
+      {
+        setTimeout,
+        clearTimeout,
+      },
+      onReady
+    );
+
+    expect(setTimeout).toHaveBeenCalledTimes(1);
+    expect(onReady).not.toHaveBeenCalled();
+
+    scheduled?.();
+    expect(onReady).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    expect(clearTimeout).toHaveBeenCalledWith(7);
   });
 });

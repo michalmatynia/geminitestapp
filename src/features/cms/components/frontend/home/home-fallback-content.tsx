@@ -26,7 +26,7 @@ export type HomeFallbackContentProps = {
   appearanceTone?: CmsAppearanceTone;
 };
 
-export function renderHomeFallbackContent({
+export function HomeFallbackContent({
   showFallbackHeader,
   products,
   themeSettings,
@@ -59,4 +59,8 @@ export function renderHomeFallbackContent({
       {showFallbackHeader ? <HomeFallbackFooterWithTheme themeSettings={themeSettings} /> : null}
     </div>
   );
+}
+
+export function renderHomeFallbackContent(props: HomeFallbackContentProps): React.JSX.Element {
+  return <HomeFallbackContent {...props} />;
 }

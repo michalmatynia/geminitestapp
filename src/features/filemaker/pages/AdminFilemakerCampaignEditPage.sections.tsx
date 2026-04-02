@@ -7,7 +7,8 @@ import type {
   FilemakerEmailCampaign,
   FilemakerPartyReference,
 } from '@/shared/contracts/filemaker';
-import { Badge, FormField, FormSection, Input, SelectSimple, Textarea } from '@/shared/ui';
+import type { FilemakerMailAccount } from '@/shared/contracts/filemaker-mail';
+import { Badge, Button, FormField, FormSection, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 import { AudienceSourceSection } from './campaign-edit-sections/AudienceSourceSection';
 export { DeliveryGovernanceSection } from './campaign-edit-sections/DeliveryGovernanceSection';
@@ -34,6 +35,8 @@ type OptionLike = {
   label: string;
 };
 
+const SHARED_DELIVERY_OPTION_VALUE = '__shared__';
+
 const defaultRecurringRule = () => ({
   frequency: 'weekly' as const,
   interval: 1,
@@ -52,10 +55,19 @@ const updateCampaignDraft = (
 export function CampaignDetailsSection({
   draft,
   setDraft,
+  mailAccountOptions,
+  selectedMailAccount,
 }: {
   draft: FilemakerEmailCampaign;
   setDraft: CampaignDraftSetter;
+  mailAccountOptions: OptionLike[];
+  selectedMailAccount: FilemakerMailAccount | null;
 }): React.JSX.Element {
+  const selectedMailAccountSummary = selectedMailAccount
+    ? `${selectedMailAccount.name} <${selectedMailAccount.emailAddress}>`
+    : null;
+  const isMissingMailAccount = Boolean(draft.mailAccountId) && !selectedMailAccount;
+
   return (
     <FormSection title='Campaign Details' className='space-y-4 p-4'>
       <div className='grid gap-4 md:grid-cols-2'>
@@ -105,8 +117,40 @@ export function CampaignDetailsSection({
             }}
           />
         </FormField>
-        <FormField label='From name'>
+        <FormField
+          label='Mail account'
+          description={
+            isMissingMailAccount
+              ? `This campaign references a missing mail account (${draft.mailAccountId}). Select a valid account or switch back to shared delivery.`
+              : selectedMailAccount
+              ? selectedMailAccount.status === 'active'
+                ? `Campaign delivery uses ${selectedMailAccountSummary} for SMTP and sender defaults.`
+                : `${selectedMailAccountSummary} is paused. Live sends will fail until this account is reactivated.`
+              : 'Optional. Leave blank to use the shared Filemaker campaign delivery provider.'
+          }
+        >
+          <SelectSimple
+            ariaLabel='Campaign mail account'
+            value={draft.mailAccountId ?? SHARED_DELIVERY_OPTION_VALUE}
+            onValueChange={(value) => {
+              updateCampaignDraft(setDraft, (current) => ({
+                ...current,
+                mailAccountId: value === SHARED_DELIVERY_OPTION_VALUE ? null : value,
+              }));
+            }}
+            options={mailAccountOptions}
+          />
+        </FormField>
+        <FormField
+          label='From name override'
+          description={
+            selectedMailAccount
+              ? 'Optional. Leave blank to use the selected mail account default sender name.'
+              : 'Optional. Override the shared campaign sender display name.'
+          }
+        >
           <Input
+            aria-label='Campaign from name override'
             value={draft.fromName ?? ''}
             onChange={(event) => {
               updateCampaignDraft(setDraft, (current) => ({
@@ -116,8 +160,16 @@ export function CampaignDetailsSection({
             }}
           />
         </FormField>
-        <FormField label='Reply-to email'>
+        <FormField
+          label='Reply-to override'
+          description={
+            selectedMailAccount
+              ? 'Optional. Leave blank to use the selected mail account reply-to address.'
+              : 'Optional. Override the reply-to address used for campaign deliveries.'
+          }
+        >
           <Input
+            aria-label='Campaign reply-to override'
             value={draft.replyToEmail ?? ''}
             onChange={(event) => {
               updateCampaignDraft(setDraft, (current) => ({
@@ -185,6 +237,69 @@ export function ContentSection({
           }}
         />
       </FormField>
+    </FormSection>
+  );
+}
+
+export function CampaignTestSendSection({
+  testRecipientEmailDraft,
+  setTestRecipientEmailDraft,
+  handleSendTestEmail,
+  isTestSendPending,
+  selectedMailAccount,
+}: {
+  testRecipientEmailDraft: string;
+  setTestRecipientEmailDraft: React.Dispatch<React.SetStateAction<string>>;
+  handleSendTestEmail: () => Promise<void>;
+  isTestSendPending: boolean;
+  selectedMailAccount: FilemakerMailAccount | null;
+}): React.JSX.Element {
+  return (
+    <FormSection title='Test Delivery' className='space-y-4 p-4'>
+      <div className='space-y-2 text-sm text-gray-400'>
+        <div>
+          Send the current draft to a single inbox without creating a run. Unsaved subject and body
+          changes are included.
+        </div>
+        <div>
+          Tracking placeholders are rendered in preview-safe mode, so test clicks do not create
+          campaign events or unsubscribe records.
+        </div>
+      </div>
+      <div className='flex flex-wrap gap-2 text-[10px]'>
+        <Badge variant='outline'>
+          Sender route:{' '}
+          {selectedMailAccount ? `${selectedMailAccount.name} <${selectedMailAccount.emailAddress}>` : 'Shared provider'}
+        </Badge>
+        <Badge variant='outline'>
+          Reply-to default:{' '}
+          {selectedMailAccount?.replyToEmail ?? 'Campaign override / shared provider'}
+        </Badge>
+      </div>
+      <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end'>
+        <FormField
+          label='Recipient email'
+          description='Use a real inbox you control to verify rendering, sender identity, and plain-text output.'
+        >
+          <Input
+            aria-label='Campaign test recipient email'
+            value={testRecipientEmailDraft}
+            onChange={(event) => {
+              setTestRecipientEmailDraft(event.target.value);
+            }}
+          />
+        </FormField>
+        <Button
+          type='button'
+          className='md:mb-1'
+          disabled={isTestSendPending || !testRecipientEmailDraft.trim()}
+          onClick={(): void => {
+            void handleSendTestEmail();
+          }}
+        >
+          {isTestSendPending ? 'Sending Test Email...' : 'Send Test Email'}
+        </Button>
+      </div>
     </FormSection>
   );
 }

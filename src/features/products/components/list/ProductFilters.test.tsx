@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -29,14 +29,14 @@ vi.mock('@/features/products/context/ProductListContext', () => ({
 }));
 
 vi.mock('@/features/products/hooks/useCategoryQueries', () => ({
-  useProductCategories: () => useProductCategoriesMock(),
+  useProductCategories: (...args: unknown[]) => useProductCategoriesMock(...args),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
-  useCatalogs: () => useCatalogsMock(),
-  useMultiTags: () => useMultiTagsMock(),
-  useProducers: () => useProducersMock(),
-  useTags: () => useTagsMock(),
+  useCatalogs: (...args: unknown[]) => useCatalogsMock(...args),
+  useMultiTags: (...args: unknown[]) => useMultiTagsMock(...args),
+  useProducers: (...args: unknown[]) => useProducersMock(...args),
+  useTags: (...args: unknown[]) => useTagsMock(...args),
 }));
 
 vi.mock('@/features/products/hooks/useUserPreferences', () => ({
@@ -146,6 +146,11 @@ describe('ProductFilters layout contract', () => {
 
     const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(filterPanelProps.defaultExpanded).toBe(false);
+    expect(useProductCategoriesMock).toHaveBeenCalledWith(undefined, { enabled: false });
+    expect(useCatalogsMock).toHaveBeenCalledWith({ enabled: false });
+    expect(useTagsMock).toHaveBeenCalledWith(undefined, { enabled: false });
+    expect(useMultiTagsMock).toHaveBeenCalledWith([], { enabled: false });
+    expect(useProducersMock).toHaveBeenCalledWith({ enabled: false });
   });
 
   it('passes a deterministic id base when rendered for a specific layout instance', () => {
@@ -153,5 +158,23 @@ describe('ProductFilters layout contract', () => {
 
     const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(filterPanelProps.idBase).toBe('products-mobile');
+  });
+
+  it('enables metadata queries when the advanced filter modal opens from a collapsed panel', async () => {
+    useProductListFiltersContextMock.mockReturnValue(
+      buildFiltersContextValue({ filtersCollapsedByDefault: true })
+    );
+
+    render(<ProductFilters />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced Filter' }));
+
+    await waitFor(() => {
+      expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: true });
+      expect(useTagsMock).toHaveBeenLastCalledWith(undefined, { enabled: true });
+      expect(useMultiTagsMock).toHaveBeenLastCalledWith([], { enabled: true });
+      expect(useProducersMock).toHaveBeenLastCalledWith({ enabled: true });
+      expect(screen.getByTestId('advanced-filter-modal')).toBeInTheDocument();
+    });
   });
 });

@@ -127,6 +127,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     id: 'product-1',
     sku: 'SKU-001',
     baseProductId: null,
+    importSource: null,
     defaultPriceGroupId: null,
     ean: null,
     gtin: null,
@@ -241,5 +242,39 @@ describe('ProductListMobileCards', () => {
 
     expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.queryByText('Queued')).not.toBeInTheDocument();
+  });
+
+  it('does not render the imported badge when a product only has Base linkage', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          baseProductId: 'base-123',
+          importSource: null,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.queryByText('Imported')).not.toBeInTheDocument();
+  });
+
+  it('renders the imported badge for products with explicit import provenance', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          baseProductId: 'base-123',
+          importSource: 'base',
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Imported')).toBeInTheDocument();
   });
 });

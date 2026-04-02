@@ -1,62 +1,38 @@
 'use client';
 
 import { Printer } from 'lucide-react';
-import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { useTranslations } from 'next-intl';
 
 import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import { KangurButton, KangurInlineFallback } from '@/features/kangur/ui/design/primitives';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import {
-  addXp,
-  createTrainingReward,
-  loadProgress,
-} from '@/features/kangur/ui/services/progress';
-import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
-import type {
-  KangurMiniGameBinaryFeedbackState,
-  KangurRewardBreakdownEntry,
-} from '@/features/kangur/ui/types';
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
 import { ClockTrainingGameView } from './ClockTrainingGame.views';
 import { ClockTrainingProvider, useClockTrainingContext } from './ClockTraining.context';
 
 import type {
-  ClockChallengeResult,
-  ClockGameMode,
-  ClockTask,
   ClockTrainingProps as ClockTrainingGameProps,
-  ClockTrainingTaskPoolId,
 } from '../clock-training/types';
 import {
   buildClockTaskPrompt,
   getClockTrainingSummaryMessage,
 } from './clock-training-utils';
-import { getClockTrainingSectionContent } from './clock-training-data';
 
 function ClockTrainingGameContent(): React.JSX.Element {
   const lessonNavigationTranslations = useTranslations('KangurLessonsWidgets.navigation');
   const gamePageTranslations = useTranslations('KangurGamePage');
-  const { props, state, actions } = useClockTrainingContext();
+  const { props, state } = useClockTrainingContext();
   const {
-    challengeBestStreak,
-    challengeMedal,
-    challengeTimeLeft,
     current,
     done,
-    feedback,
-    gameMode,
     score,
     tasks,
     trainingSectionContent,
     translations,
   } = state;
-  const { resetSession, handleSubmit } = actions;
   const {
     section,
-    onCompletionPrimaryAction,
-    onFinish,
   } = props;
   const isCoarsePointer = useKangurCoarsePointer();
   const lessonPrint = useOptionalKangurLessonPrint();

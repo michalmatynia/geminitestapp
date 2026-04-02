@@ -205,7 +205,7 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
         onRowSelectionChange={tableProps.onRowSelectionChange}
         skeletonRows={tableProps.skeletonRows}
         stickyHeader={tableProps.stickyHeader}
-        enableVirtualization={false}
+        enableVirtualization={true}
         maxHeight={resolvedTableMaxHeight}
         showTable={false}
       >
@@ -234,7 +234,7 @@ const ProductListTableSurface = memo(function ProductListTableSurface() {
             skeletonRows={tableProps.skeletonRows}
             maxHeight={resolvedTableMaxHeight}
             stickyHeader={tableProps.stickyHeader}
-            enableVirtualization={false}
+            enableVirtualization={true}
             tableLayout='fixed'
           />
         </div>

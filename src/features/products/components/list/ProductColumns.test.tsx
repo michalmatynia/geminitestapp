@@ -63,6 +63,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     id: 'product-1',
     sku: 'KEYCHA1212',
     baseProductId: null,
+    importSource: null,
     defaultPriceGroupId: null,
     ean: null,
     gtin: null,
@@ -692,6 +693,40 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByRole('button', { name: 'Nested Keychains' })).toBeInTheDocument();
   });
 
+  it('does not render the imported badge when a product is only linked by Base id', () => {
+    const product = createProduct({
+      baseProductId: 'base-123',
+      importSource: null,
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.queryByLabelText('Imported product')).not.toBeInTheDocument();
+  });
+
+  it('renders the imported badge only for products with explicit import provenance', () => {
+    const product = createProduct({
+      baseProductId: 'base-123',
+      importSource: 'base',
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+  });
+
   it('renders a global trigger run feedback toggle in the integrations header', () => {
     const setShowTriggerRunFeedback = vi.fn();
     useProductListHeaderActionsContextMock.mockReturnValue({
@@ -840,65 +875,4 @@ describe('ProductColumns queued badge', () => {
     );
   });
 
-  it('routes the green BL button to the Base export settings modal path', async () => {
-    const product = createProduct({
-      baseProductId: 'base-123',
-    });
-    const onIntegrationsClick = vi.fn();
-    const onExportSettingsClick = vi.fn();
-
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-      onIntegrationsClick,
-      onExportSettingsClick,
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-        showTriggerRunFeedback: true,
-      })
-    );
-    useProductListRowRuntimeMock.mockReturnValue(
-      createRowRuntimeContext({
-        showMarketplaceBadge: true,
-        integrationStatus: 'active',
-      })
-    );
-
-    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
-    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
-      throw new Error('Integrations column cell was not found.');
-    }
-
-    const cell = integrationsColumn.cell({ row: { original: product } } as never);
-    render(cell);
-
-    expect(await screen.findByRole('button', { name: 'BL' })).toBeInTheDocument();
-
-    const props = baseQuickExportButtonMock.mock.calls
-      .map((call) => call[0])
-      .find(
-        (value) =>
-          typeof value === 'object' &&
-          value !== null &&
-          'showMarketplaceBadge' in value &&
-          (value as { showMarketplaceBadge?: boolean }).showMarketplaceBadge === true
-      ) as
-      | {
-          showMarketplaceBadge?: boolean;
-          onOpenExportSettings?: (() => void) | undefined;
-        }
-      | undefined;
-
-    expect(props?.showMarketplaceBadge).toBe(true);
-    props?.onOpenExportSettings?.();
-
-    expect(onExportSettingsClick).toHaveBeenCalledWith(product);
-    expect(onIntegrationsClick).not.toHaveBeenCalled();
-  });
 });

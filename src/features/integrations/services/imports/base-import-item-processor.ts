@@ -40,6 +40,7 @@ import { getProducerRepository } from '@/shared/lib/products/services/producer-r
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { getTagRepository } from '@/shared/lib/products/services/tag-repository';
 import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
+import { listingHasBaseImportProvenance } from '@/features/integrations/services/imports/base-import-provenance';
 
 import {
   MAX_IMAGES_PER_PRODUCT,
@@ -572,6 +573,16 @@ export const importSingleItem = async (input: {
   }
 
   if (decision.type === 'update') {
+    const existingListing =
+      input.prefetchedListings?.get(decision.target.id) ??
+      (await findProductListingByProductAndConnectionAcrossProviders(
+        decision.target.id,
+        input.connectionId
+      ));
+    const shouldBackfillImportSource =
+      decision.target.importSource === 'base' ||
+      listingHasBaseImportProvenance(existingListing?.listing);
+
     const parameterImportResult = (await applyBaseParameterImport({
       record: input.raw,
       catalogId: input.targetCatalogId,
@@ -599,6 +610,7 @@ export const importSingleItem = async (input: {
 
     const updateData: ProductUpdateInput = {
       baseProductId: mappedBaseProductId ?? decision.target.baseProductId ?? null,
+      ...(shouldBackfillImportSource ? { importSource: 'base' as const } : {}),
       defaultPriceGroupId: input.defaultPriceGroupId,
       sku: mappedSku ?? undefined,
       name_en: mapped.name_en,
@@ -704,7 +716,7 @@ export const importSingleItem = async (input: {
       connectionId: input.connectionId,
       inventoryId: input.inventoryId,
       baseProductId: mappedBaseProductId,
-      existingListing: input.prefetchedListings?.get(updated.id) ?? null,
+      existingListing,
     });
     emitProductCacheInvalidation();
 
@@ -747,6 +759,7 @@ export const importSingleItem = async (input: {
     ...mapped,
     sku: skuForCreate,
     baseProductId: mappedBaseProductId ?? null,
+    importSource: 'base',
     defaultPriceGroupId: input.defaultPriceGroupId,
     imageLinks: imageUrls,
   };

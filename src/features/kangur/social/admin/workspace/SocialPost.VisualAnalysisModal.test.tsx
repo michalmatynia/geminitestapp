@@ -128,6 +128,15 @@ describe('SocialPostVisualAnalysisModal', () => {
     });
   });
 
+  it('keeps the personas query disabled while the modal is closed', () => {
+    render(<SocialPostVisualAnalysisModal />);
+
+    expect(usePlaywrightPersonasMock).toHaveBeenCalledWith({ enabled: false });
+    expect(
+      screen.queryByRole('dialog', { name: 'Image analysis pipeline' })
+    ).not.toBeInTheDocument();
+  });
+
   it('renders selected visuals and the returned analysis result', () => {
     useSocialPostContextMock.mockReturnValue({
       activePost: {

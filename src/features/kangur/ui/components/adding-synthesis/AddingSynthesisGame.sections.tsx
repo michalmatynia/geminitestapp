@@ -27,11 +27,9 @@ import {
 import { cn } from '@/features/kangur/shared/utils';
 
 import { LANE_STYLES } from './AddingSynthesisGame.constants';
+import { useAddingSynthesisContext } from './AddingSynthesis.context';
 import type { 
-  AddingSynthesisLocalizedStage, 
   AddingSynthesisLocalizedStages, 
-  AddingSynthesisState, 
-  AddingSynthesisTranslate 
 } from './AddingSynthesisGame.types';
 import { 
   resolveAddingSynthesisHintPanel, 
@@ -71,23 +69,17 @@ export function AddingSynthesisIntroStages({
   );
 }
 
-export function AddingSynthesisIntroView({
-  exitLabel,
-  introNoteCount,
-  laneCount,
-  localizedStages,
-  onFinish,
-  startSession,
-  t,
-}: {
-  exitLabel: string;
-  introNoteCount: number;
-  laneCount: number;
-  localizedStages: AddingSynthesisLocalizedStages;
-  onFinish: (() => void) | undefined;
-  startSession: AddingSynthesisState['startSession'];
-  t: AddingSynthesisTranslate;
-}): React.JSX.Element {
+export function AddingSynthesisIntroView(): React.JSX.Element {
+  const {
+    exitLabel,
+    introNoteCount,
+    laneCount,
+    localizedStages,
+    onFinish,
+    startSession,
+    t,
+  } = useAddingSynthesisContext();
+
   return (
     <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
       <KangurGlassPanel
@@ -207,19 +199,17 @@ export function AddingSynthesisIntroView({
   );
 }
 
-export function AddingSynthesisSummaryView({
-  exitLabel,
-  onFinish,
-  startSession,
-  summary,
-  t,
-}: {
-  exitLabel: string;
-  onFinish: (() => void) | undefined;
-  startSession: AddingSynthesisState['startSession'];
-  summary: NonNullable<AddingSynthesisState['summary']>;
-  t: AddingSynthesisTranslate;
-}): React.JSX.Element {
+export function AddingSynthesisSummaryView(): React.JSX.Element | null {
+  const {
+    exitLabel,
+    onFinish,
+    startSession,
+    summary,
+    t,
+  } = useAddingSynthesisContext();
+
+  if (!summary) return null;
+
   const showRewards = summary.xpEarned > 0 || summary.breakdown.length > 0;
 
   return (
@@ -302,23 +292,19 @@ export function AddingSynthesisSummaryView({
   );
 }
 
-export function AddingSynthesisPlayingHud({
-  currentIndex,
-  currentStage,
-  notesLength,
-  perfectHits,
-  score,
-  streak,
-  t,
-}: {
-  currentIndex: number;
-  currentStage: AddingSynthesisLocalizedStage;
-  notesLength: number;
-  perfectHits: number;
-  score: number;
-  streak: number;
-  t: AddingSynthesisTranslate;
-}): React.JSX.Element {
+export function AddingSynthesisPlayingHud(): React.JSX.Element {
+  const {
+    currentIndex,
+    currentStage,
+    notes,
+    perfectHits,
+    score,
+    streak,
+    t,
+  } = useAddingSynthesisContext();
+
+  const notesLength = notes.length;
+
   return (
     <KangurGlassPanel
       data-testid='adding-synthesis-hud'
@@ -369,11 +355,9 @@ export function AddingSynthesisPlayingHud({
   );
 }
 
-export function AddingSynthesisUpcomingNotes({
-  upcomingNotes,
-}: {
-  upcomingNotes: NonNullable<AddingSynthesisState['currentNote']>[];
-}): React.JSX.Element {
+export function AddingSynthesisUpcomingNotes(): React.JSX.Element {
+  const { upcomingNotes } = useAddingSynthesisContext();
+
   return (
     <div className='pointer-events-none absolute left-2 right-2 top-3 flex justify-center gap-1.5 sm:left-4 sm:right-4 sm:top-4 sm:gap-2'>
       {upcomingNotes.map((note, index) => (
@@ -396,11 +380,9 @@ export function AddingSynthesisUpcomingNotes({
   );
 }
 
-export function AddingSynthesisLaneRails({
-  t,
-}: {
-  t: AddingSynthesisTranslate;
-}): React.JSX.Element {
+export function AddingSynthesisLaneRails(): React.JSX.Element {
+  const { t } = useAddingSynthesisContext();
+
   return (
     <div className='absolute inset-y-0 left-0 right-0 grid grid-cols-4 kangur-panel-gap'>
       {LANE_STYLES.map((laneStyle, laneIndex) => (
@@ -431,19 +413,17 @@ export function AddingSynthesisLaneRails({
   );
 }
 
-export function AddingSynthesisCurrentNoteCard({
-  currentNote,
-  currentStage,
-  noteScale,
-  noteTop,
-  t,
-}: {
-  currentNote: NonNullable<AddingSynthesisState['currentNote']>;
-  currentStage: AddingSynthesisLocalizedStage;
-  noteScale: number;
-  noteTop: number;
-  t: AddingSynthesisTranslate;
-}): React.JSX.Element {
+export function AddingSynthesisCurrentNoteCard(): React.JSX.Element | null {
+  const {
+    currentNote,
+    currentStage,
+    noteScale,
+    noteTop,
+    t,
+  } = useAddingSynthesisContext();
+
+  if (!currentNote) return null;
+
   return (
     <div
       className='pointer-events-none absolute inset-x-0 z-20 px-2 min-[360px]:px-3 sm:px-4'
@@ -498,21 +478,20 @@ export function AddingSynthesisCurrentNoteCard({
 
 export function AddingSynthesisLaneChoiceCard({
   choice,
-  feedback,
-  isCoarsePointer,
   laneIndex,
   noteId,
-  onChoose,
-  t,
 }: {
   choice: number;
-  feedback: AddingSynthesisState['feedback'];
-  isCoarsePointer: boolean;
   laneIndex: number;
   noteId: string;
-  onChoose: (laneIndex: number) => void;
-  t: AddingSynthesisTranslate;
 }): React.JSX.Element {
+  const {
+    feedback,
+    isCoarsePointer,
+    resolveChoice: onChoose,
+    t,
+  } = useAddingSynthesisContext();
+
   const presentation = resolveAddingSynthesisLanePresentation({
     feedback,
     isCoarsePointer,
@@ -553,58 +532,32 @@ export function AddingSynthesisLaneChoiceCard({
   );
 }
 
-export function AddingSynthesisLaneChoices({
-  currentNote,
-  feedback,
-  isCoarsePointer,
-  onChoose,
-  t,
-}: {
-  currentNote: NonNullable<AddingSynthesisState['currentNote']>;
-  feedback: AddingSynthesisState['feedback'];
-  isCoarsePointer: boolean;
-  onChoose: (laneIndex: number) => void;
-  t: AddingSynthesisTranslate;
-}): React.JSX.Element {
+export function AddingSynthesisLaneChoices(): React.JSX.Element | null {
+  const {
+    currentNote,
+  } = useAddingSynthesisContext();
+
+  if (!currentNote) return null;
+
   return (
     <div className='absolute inset-x-0 bottom-0 grid grid-cols-4 kangur-panel-gap'>
       {currentNote.choices.map((choice, laneIndex) => (
         <AddingSynthesisLaneChoiceCard
           key={`${currentNote.id}-${choice}`}
           choice={choice}
-          feedback={feedback}
-          isCoarsePointer={isCoarsePointer}
           laneIndex={laneIndex}
           noteId={currentNote.id}
-          onChoose={onChoose}
-          t={t}
         />
       ))}
     </div>
   );
 }
 
-export function AddingSynthesisPlayingBoard({
-  currentNote,
-  currentStage,
-  feedback,
-  isCoarsePointer,
-  noteScale,
-  noteTop,
-  onChoose,
-  upcomingNotes,
-  t,
-}: {
-  currentNote: AddingSynthesisState['currentNote'];
-  currentStage: AddingSynthesisLocalizedStage;
-  feedback: AddingSynthesisState['feedback'];
-  isCoarsePointer: boolean;
-  noteScale: number;
-  noteTop: number;
-  onChoose: (laneIndex: number) => void;
-  upcomingNotes: NonNullable<AddingSynthesisState['currentNote']>[];
-  t: AddingSynthesisTranslate;
-}): React.JSX.Element {
+export function AddingSynthesisPlayingBoard(): React.JSX.Element {
+  const {
+    currentNote,
+  } = useAddingSynthesisContext();
+
   return (
     <KangurGlassPanel
       className='min-w-0'
@@ -621,31 +574,19 @@ export function AddingSynthesisPlayingBoard({
       >
         <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,191,36,0.18),transparent_30%),radial-gradient(circle_at_100%_20%,rgba(129,140,248,0.18),transparent_34%),radial-gradient(circle_at_50%_100%,rgba(45,212,191,0.16),transparent_36%)]' />
 
-        <AddingSynthesisUpcomingNotes upcomingNotes={upcomingNotes} />
+        <AddingSynthesisUpcomingNotes />
 
         <div className='relative h-[320px] min-w-0 overflow-hidden min-[360px]:h-[360px] sm:h-[420px]'>
-          <AddingSynthesisLaneRails t={t} />
+          <AddingSynthesisLaneRails />
 
           <div className='pointer-events-none absolute left-4 right-4 bottom-[110px] border-t-2 border-dashed border-amber-300/80' />
 
           {currentNote ? (
-            <AddingSynthesisCurrentNoteCard
-              currentNote={currentNote}
-              currentStage={currentStage}
-              noteScale={noteScale}
-              noteTop={noteTop}
-              t={t}
-            />
+            <AddingSynthesisCurrentNoteCard />
           ) : null}
 
           {currentNote ? (
-            <AddingSynthesisLaneChoices
-              currentNote={currentNote}
-              feedback={feedback}
-              isCoarsePointer={isCoarsePointer}
-              onChoose={onChoose}
-              t={t}
-            />
+            <AddingSynthesisLaneChoices />
           ) : null}
         </div>
       </KangurGlassPanel>
@@ -653,31 +594,23 @@ export function AddingSynthesisPlayingBoard({
   );
 }
 
-export function AddingSynthesisPlayingSidebar({
-  accuracy,
-  currentIndex,
-  currentNote,
-  currentStage,
-  feedback,
-  inSessionExitLabel,
-  isCoarsePointer,
-  notesLength,
-  onFinish,
-  t,
-  translations,
-}: {
-  accuracy: number;
-  currentIndex: number;
-  currentNote: AddingSynthesisState['currentNote'];
-  currentStage: AddingSynthesisLocalizedStage;
-  feedback: AddingSynthesisState['feedback'];
-  inSessionExitLabel: string;
-  isCoarsePointer: boolean;
-  notesLength: number;
-  onFinish: (() => void) | undefined;
-  t: AddingSynthesisTranslate;
-  translations: AddingSynthesisState['translations'];
-}): React.JSX.Element {
+export function AddingSynthesisPlayingSidebar(): React.JSX.Element {
+  const {
+    accuracy,
+    currentIndex,
+    currentNote,
+    currentStage,
+    feedback,
+    inSessionExitLabel,
+    isCoarsePointer,
+    notes,
+    onFinish,
+    t,
+    translations,
+  } = useAddingSynthesisContext();
+
+  const notesLength = notes.length;
+
   const hintPanel = resolveAddingSynthesisHintPanel({
     currentNote,
     currentStage,
@@ -751,82 +684,14 @@ export function AddingSynthesisPlayingSidebar({
   );
 }
 
-export function AddingSynthesisPlayingView({
-  accuracy,
-  currentIndex,
-  currentNote,
-  currentStage,
-  feedback,
-  inSessionExitLabel,
-  isCoarsePointer,
-  noteScale,
-  noteTop,
-  notes,
-  onChoose,
-  onFinish,
-  perfectHits,
-  score,
-  streak,
-  t,
-  upcomingNotes,
-  translations,
-}: {
-  accuracy: number;
-  currentIndex: number;
-  currentNote: AddingSynthesisState['currentNote'];
-  currentStage: AddingSynthesisLocalizedStage;
-  feedback: AddingSynthesisState['feedback'];
-  inSessionExitLabel: string;
-  isCoarsePointer: boolean;
-  noteScale: number;
-  noteTop: number;
-  notes: AddingSynthesisState['notes'];
-  onChoose: (laneIndex: number) => void;
-  onFinish: (() => void) | undefined;
-  perfectHits: number;
-  score: number;
-  streak: number;
-  t: AddingSynthesisTranslate;
-  upcomingNotes: NonNullable<AddingSynthesisState['currentNote']>[];
-  translations: AddingSynthesisState['translations'];
-}): React.JSX.Element {
+export function AddingSynthesisPlayingView(): React.JSX.Element {
   return (
     <div className={`flex w-full flex-col ${KANGUR_PANEL_GAP_CLASSNAME}`}>
-      <AddingSynthesisPlayingHud
-        currentIndex={currentIndex}
-        currentStage={currentStage}
-        notesLength={notes.length}
-        perfectHits={perfectHits}
-        score={score}
-        streak={streak}
-        t={t}
-      />
+      <AddingSynthesisPlayingHud />
 
       <div className='grid kangur-panel-gap lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]'>
-        <AddingSynthesisPlayingBoard
-          currentNote={currentNote}
-          currentStage={currentStage}
-          feedback={feedback}
-          isCoarsePointer={isCoarsePointer}
-          noteScale={noteScale}
-          noteTop={noteTop}
-          onChoose={onChoose}
-          upcomingNotes={upcomingNotes}
-          t={t}
-        />
-        <AddingSynthesisPlayingSidebar
-          accuracy={accuracy}
-          currentIndex={currentIndex}
-          currentNote={currentNote}
-          currentStage={currentStage}
-          feedback={feedback}
-          inSessionExitLabel={inSessionExitLabel}
-          isCoarsePointer={isCoarsePointer}
-          notesLength={notes.length}
-          onFinish={onFinish}
-          t={t}
-          translations={translations}
-        />
+        <AddingSynthesisPlayingBoard />
+        <AddingSynthesisPlayingSidebar />
       </div>
     </div>
   );

@@ -336,6 +336,7 @@ export const filemakerEmailCampaignSchema = dtoBaseSchema.extend({
   status: filemakerEmailCampaignLifecycleStatusSchema,
   subject: z.string(),
   previewText: z.string().nullable().optional(),
+  mailAccountId: z.string().nullable().optional(),
   fromName: z.string().nullable().optional(),
   replyToEmail: z.string().nullable().optional(),
   bodyText: z.string().nullable().optional(),
@@ -551,6 +552,40 @@ export type FilemakerEmailCampaignProcessRunResponseDto = z.infer<
 >;
 export type FilemakerEmailCampaignProcessRunResponse =
   FilemakerEmailCampaignProcessRunResponseDto;
+
+export const filemakerEmailCampaignCancelRunResponseSchema = z.object({
+  campaignId: z.string(),
+  runId: z.string(),
+  status: filemakerEmailCampaignRunStatusSchema,
+});
+export type FilemakerEmailCampaignCancelRunResponseDto = z.infer<
+  typeof filemakerEmailCampaignCancelRunResponseSchema
+>;
+export type FilemakerEmailCampaignCancelRunResponse =
+  FilemakerEmailCampaignCancelRunResponseDto;
+
+export const filemakerEmailCampaignTestSendRequestSchema = z.object({
+  campaign: filemakerEmailCampaignSchema,
+  recipientEmail: z.string().trim().email(),
+});
+export type FilemakerEmailCampaignTestSendRequestDto = z.infer<
+  typeof filemakerEmailCampaignTestSendRequestSchema
+>;
+export type FilemakerEmailCampaignTestSendRequest =
+  FilemakerEmailCampaignTestSendRequestDto;
+
+export const filemakerEmailCampaignTestSendResponseSchema = z.object({
+  campaignId: z.string(),
+  recipientEmail: z.string(),
+  provider: filemakerEmailCampaignDeliveryProviderSchema,
+  providerMessage: z.string(),
+  sentAt: z.string(),
+});
+export type FilemakerEmailCampaignTestSendResponseDto = z.infer<
+  typeof filemakerEmailCampaignTestSendResponseSchema
+>;
+export type FilemakerEmailCampaignTestSendResponse =
+  FilemakerEmailCampaignTestSendResponseDto;
 
 export const filemakerEmailCampaignPreferenceStatusSchema = z.enum([
   'subscribed',

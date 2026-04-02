@@ -4,7 +4,6 @@ import React, { createContext, useContext, useMemo, useState, useRef, useCallbac
 import { useTranslations } from 'next-intl';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
-import { useOptionalKangurLessonPrint } from '@/features/kangur/ui/context/KangurLessonPrintContext';
 import {
   addXp,
   createTrainingReward,
@@ -12,18 +11,15 @@ import {
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
 import type {
-  KangurMiniGameBinaryFeedbackState,
   KangurRewardBreakdownEntry,
   KangurIntlTranslate,
 } from '@/features/kangur/ui/types';
 import {
   CHALLENGE_TIME_LIMIT_SECONDS,
   buildClockCorrectFeedback,
-  buildClockTaskPrompt,
   buildClockTimeoutFeedback,
   buildClockWrongFeedback,
   createClockTaskSet,
-  getClockTrainingSummaryMessage,
   resolveClockChallengeMedal,
   resolveClockPracticeTaskSet,
   scheduleRetryTask,
@@ -31,7 +27,6 @@ import {
 import { getClockTrainingSectionContent } from './clock-training-data';
 import type {
   ClockChallengeMedal,
-  ClockChallengeResult,
   ClockFeedback,
   ClockGameMode,
   ClockTask,
@@ -64,7 +59,7 @@ export type ClockTrainingContextValue = {
     translations: KangurIntlTranslate;
     showStandalonePracticeSummary: boolean;
     resolvedCompletionPrimaryActionLabel: string;
-    task: ClockTask;
+    task: ClockTask | undefined;
     section: ClockTrainingTaskPoolId;
   };
   actions: {
@@ -339,7 +334,7 @@ export function ClockTrainingProvider({ children, ...props }: ClockTrainingProps
   }, [resolveAttempt, task]);
 
   useEffect(() => {
-    if (gameMode !== 'challenge' || done || feedback) {
+    if (gameMode !== 'challenge' || done || feedback || !task) {
       return;
     }
     if (challengeTimeLeft <= 0) {

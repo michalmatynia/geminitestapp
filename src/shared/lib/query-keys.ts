@@ -108,8 +108,17 @@ export const QUERY_KEYS = {
       ] as const,
     assignments: (options?: { includeArchived?: boolean | undefined }) =>
       [...QUERY_KEYS.kangur.all, 'assignments', { includeArchived: options?.includeArchived ?? false }] as const,
-    socialPosts: (options: { scope: string; limit: number | null }) =>
+    socialPosts: (options: {
+      scope: string;
+      limit?: number | null;
+      page?: number | null;
+      pageSize?: number | null;
+      search?: string | null;
+      status?: string | null;
+    }) =>
       [...QUERY_KEYS.kangur.all, 'social-posts', options] as const,
+    socialPost: (id: string | null) =>
+      [...QUERY_KEYS.kangur.all, 'social-post', id ?? null] as const,
     socialImageAddons: (options: { limit: number | null; ids?: string[] | null }) =>
       [...QUERY_KEYS.kangur.all, 'social-image-addons', options] as const,
     observability: {

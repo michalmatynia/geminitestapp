@@ -6,6 +6,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { CmsStorefrontAppearanceProvider } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
+import { normalizeThemeSettings } from '@/shared/contracts/cms-theme';
 import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
 
 describe('CmsPageShell appearance', () => {
@@ -20,7 +21,7 @@ describe('CmsPageShell appearance', () => {
             } as never
           }
           theme={
-            {
+            normalizeThemeSettings({
               backgroundColor: '#ffffff',
               surfaceColor: '#f8fafc',
               textColor: '#111827',
@@ -37,7 +38,7 @@ describe('CmsPageShell appearance', () => {
               pageMargin: 0,
               borderRadius: 0,
               enableAnimations: false,
-            } as never
+            })
           }
           colorSchemes={{}}
         >

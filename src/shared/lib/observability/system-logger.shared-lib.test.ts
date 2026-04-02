@@ -56,10 +56,14 @@ vi.mock('@/shared/utils/observability/internal-observability-fallback', () => ({
 }));
 
 describe('system-logger', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+
   beforeEach(() => {
     vi.clearAllMocks();
     reportObservabilityInternalErrorMock.mockReset();
     vi.mocked(isServerLoggingEnabled).mockResolvedValue(true);
+    process.env['NODE_ENV'] = 'test';
+    delete process.env['ENABLE_DEV_SYSTEM_LOG_PERSISTENCE'];
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -68,6 +72,15 @@ describe('system-logger', () => {
     vi.mocked(saveCentralLogDeadLetters).mockResolvedValue(true);
     vi.unstubAllGlobals();
     delete process.env['CENTRAL_LOG_WEBHOOK_URL'];
+  });
+
+  afterAll(() => {
+    if (originalNodeEnv === undefined) {
+      delete process.env['NODE_ENV'];
+      return;
+    }
+
+    process.env['NODE_ENV'] = originalNodeEnv;
   });
 
   describe('normalizeErrorInfo', () => {
@@ -145,6 +158,22 @@ describe('system-logger', () => {
           })
         );
       });
+    });
+
+    it('skips database persistence for development logs by default', async () => {
+      process.env['NODE_ENV'] = 'development';
+
+      await logSystemEvent({ message: 'Dev log', source: 'test' });
+
+      await vi.waitFor(() => {
+        expect(emitOtelLogRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'Dev log',
+            source: 'test',
+          })
+        );
+      });
+      expect(createSystemLog).not.toHaveBeenCalled();
     });
 
     it('should skip info logs when info logging is disabled', async () => {

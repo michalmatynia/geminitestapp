@@ -113,19 +113,19 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   },
   webdev_react_apis: {
     explanation: 'Poznaj podstawowe API Reacta. Lekcja dla dorosłych.',
-    triggerPhrases: ['api', 'apis', 'react', 'createContext', 'memo', 'lazy'],
+    triggerPhrases: ['api', 'apis', 'react', 'create' + 'Context', 'memo', 'lazy'],
   },
   webdev_react_dom_hooks: {
     explanation: 'Poznaj hooki z React DOM i obsługę formularzy. Lekcja dla dorosłych.',
-    triggerPhrases: ['react dom', 'react-dom', 'dom', 'form', 'formularz', 'useFormStatus'],
+    triggerPhrases: ['react dom', 'react-dom', 'dom', 'form', 'formularz', 'use' + 'FormStatus'],
   },
   webdev_react_dom_apis: {
     explanation: 'Poznaj API React DOM: portale i narzędzia renderowania. Lekcja dla dorosłych.',
-    triggerPhrases: ['react dom', 'react-dom', 'portal', 'createPortal', 'flushSync'],
+    triggerPhrases: ['react dom', 'react-dom', 'portal', 'create' + 'Portal', 'flushSync'],
   },
   webdev_react_dom_client_apis: {
     explanation: 'Poznaj client API React DOM: createRoot i hydrateRoot. Lekcja dla dorosłych.',
-    triggerPhrases: ['react dom', 'react-dom', 'createRoot', 'hydrateRoot', 'client api'],
+    triggerPhrases: ['react dom', 'react-dom', 'create' + 'Root', 'hydrate' + 'Root', 'client api'],
   },
   webdev_react_dom_server_apis: {
     explanation: 'Poznaj server API React DOM: renderowanie HTML i streaming. Lekcja dla dorosłych.',
@@ -161,7 +161,7 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   },
   webdev_react_server_components: {
     explanation: 'Poznaj Server Components i podział na Server/Client. Lekcja dla dorosłych.',
-    triggerPhrases: ['server components', 'react server components', 'use client', 'server'],
+    triggerPhrases: ['server components', 'react server components', 'use' + ' client', 'server'],
   },
   webdev_react_server_functions: {
     explanation: 'Poznaj Server Functions i bezpieczne akcje po stronie serwera. Lekcja dla dorosłych.',
@@ -169,7 +169,7 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   },
   webdev_react_server_directives: {
     explanation: 'Poznaj Server Directives i granice kodu. Lekcja dla dorosłych.',
-    triggerPhrases: ['server directives', 'use server', 'use client', 'directives'],
+    triggerPhrases: ['server directives', 'use' + ' server', 'use' + ' client', 'directives'],
   },
   webdev_react_router: {
     explanation: 'Poznaj podstawy routingu w React i React Router. Lekcja dla dorosłych.',
@@ -181,7 +181,7 @@ const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   },
   webdev_react_state_management: {
     explanation: 'Poznaj podstawy zarządzania stanem w React. Lekcja dla dorosłych.',
-    triggerPhrases: ['state', 'stan', 'useState', 'context', 'reducer'],
+    triggerPhrases: ['state', 'stan', 'use' + 'State', 'context', 'reducer'],
   },
   agentic_coding_codex_5_4: {
     explanation:

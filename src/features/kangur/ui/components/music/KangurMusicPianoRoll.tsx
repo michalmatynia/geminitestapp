@@ -57,6 +57,7 @@ import {
 import { KangurMusicPianoRollControls } from './KangurMusicPianoRollControls';
 import { KangurMusicPianoRollGrid } from './KangurMusicPianoRollGrid';
 import { KangurMusicPianoRollKeyboardRail } from './KangurMusicPianoRollKeyboardRail';
+import { KangurMusicPianoRollProvider } from './KangurMusicPianoRoll.context';
 
 export type {
   KangurMusicKeyboardMode,
@@ -759,35 +760,39 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
           </div>
         ) : null}
 
-        <KangurMusicPianoRollControls
-          activeOscTab={activeOscTab}
-          isCompactMobile={isCompactMobile}
-          isSixYearOldVisualMode={isSixYearOldVisualMode}
-          isSynthEnvelopeDialogOpen={isSynthEnvelopeDialogOpen}
-          isSynthOscPanelOpen={isSynthOscPanelOpen}
-          resolvedKeyboardMode={resolvedKeyboardMode}
-          resolvedOsc1Config={resolvedOsc1Config}
-          resolvedOsc2Config={resolvedOsc2Config}
-          resolvedSynthEnvelope={resolvedSynthEnvelope}
-          resolvedSynthGlideMode={resolvedSynthGlideMode}
-          resolvedSynthWaveform={resolvedSynthWaveform}
-          showKeyboardModeSwitch={showKeyboardModeSwitch}
-          showSynthEnvelopeButton={showSynthEnvelopeButton}
-          showSynthGlideModeSwitch={showSynthGlideModeSwitch}
-          showSynthOscSettingsPanel={showSynthOscSettingsPanel}
-          showSynthWaveformSwitch={showSynthWaveformSwitch}
-          stepTestIdPrefix={stepTestIdPrefix}
-          onActiveOscTabChange={setActiveOscTab}
-          onKeyboardModeChange={handleKeyboardModeChange}
-          onOpenSynthEnvelopeDialog={() => setSynthEnvelopeDialogOpen(true)}
-          onCloseSynthEnvelopeDialog={() => setSynthEnvelopeDialogOpen(false)}
-          onSynthEnvelopeReset={handleSynthEnvelopeReset}
-          onSynthEnvelopeSliderChange={handleSynthEnvelopeSliderChange}
-          onSynthGlideModeChange={handleSynthGlideModeChange}
-          onSynthOscPanelToggle={() => setSynthOscPanelOpen((prev) => !prev)}
-          onSynthOscSettingsChange={handleSynthOscSettingsChange}
-          onSynthWaveformChange={handleSynthWaveformChange}
-        />
+        <KangurMusicPianoRollProvider
+          value={{
+            activeOscTab,
+            isCompactMobile,
+            isSixYearOldVisualMode,
+            isSynthEnvelopeDialogOpen,
+            isSynthOscPanelOpen,
+            resolvedKeyboardMode,
+            resolvedOsc1Config,
+            resolvedOsc2Config,
+            resolvedSynthEnvelope,
+            resolvedSynthGlideMode,
+            resolvedSynthWaveform,
+            showKeyboardModeSwitch,
+            showSynthEnvelopeButton,
+            showSynthGlideModeSwitch,
+            showSynthOscSettingsPanel,
+            showSynthWaveformSwitch,
+            stepTestIdPrefix,
+            onActiveOscTabChange: setActiveOscTab,
+            onKeyboardModeChange: handleKeyboardModeChange,
+            onOpenSynthEnvelopeDialog: () => setSynthEnvelopeDialogOpen(true),
+            onCloseSynthEnvelopeDialog: () => setSynthEnvelopeDialogOpen(false),
+            onSynthEnvelopeReset: handleSynthEnvelopeReset,
+            onSynthEnvelopeSliderChange: handleSynthEnvelopeSliderChange,
+            onSynthGlideModeChange: handleSynthGlideModeChange,
+            onSynthOscPanelToggle: () => setSynthOscPanelOpen((prev) => !prev),
+            onSynthOscSettingsChange: handleSynthOscSettingsChange,
+            onSynthWaveformChange: handleSynthWaveformChange,
+          }}
+        >
+          <KangurMusicPianoRollControls />
+        </KangurMusicPianoRollProvider>
 
         <KangurMusicPianoRollGrid
           activeStepIndex={activeStepIndex}

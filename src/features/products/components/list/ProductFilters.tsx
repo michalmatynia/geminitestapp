@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AdvancedFilterModal } from '@/features/products/components/list/advanced-filter';
 import { useProductListFiltersContext } from '@/features/products/context/ProductListContext';
@@ -94,20 +94,32 @@ export const ProductFilters = memo(function ProductFilters({
   } = useProductListFiltersContext();
   const { preferences, setAdvancedFilterPresets } = useUserPreferences();
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
+  const [isFilterPanelExpanded, setIsFilterPanelExpanded] = useState(!filtersCollapsedByDefault);
   const advancedFilterPresets = preferences.advancedFilterPresets;
   const hasAdvancedFilter = advancedFilter.trim().length > 0;
+  const filterMetadataEnabled = isFilterPanelExpanded || isAdvancedFilterOpen;
+
+  useEffect(() => {
+    setIsFilterPanelExpanded(!filtersCollapsedByDefault);
+  }, [filtersCollapsedByDefault]);
 
   const selectedCatalogId =
     catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : undefined;
-  const { data: categories = [] } = useProductCategories(selectedCatalogId);
-  const { data: catalogs = [] } = useCatalogs();
-  const { data: tags = [] } = useTags(selectedCatalogId);
+  const { data: categories = [] } = useProductCategories(selectedCatalogId, {
+    enabled: isFilterPanelExpanded,
+  });
+  const { data: catalogs = [] } = useCatalogs({ enabled: filterMetadataEnabled });
+  const { data: tags = [] } = useTags(selectedCatalogId, {
+    enabled: filterMetadataEnabled,
+  });
   const catalogIds = useMemo(
     () => catalogs.map((catalog) => catalog.id).filter((id) => id.trim().length > 0),
     [catalogs]
   );
-  const multiTagQueries = useMultiTags(selectedCatalogId ? [] : catalogIds);
-  const { data: producers = [] } = useProducers();
+  const multiTagQueries = useMultiTags(selectedCatalogId ? [] : catalogIds, {
+    enabled: filterMetadataEnabled,
+  });
+  const { data: producers = [] } = useProducers({ enabled: filterMetadataEnabled });
 
   const categoryOptions = useMemo(() => {
     const options = [{ value: '__all__', label: 'All categories' }];
@@ -383,6 +395,7 @@ export const ProductFilters = memo(function ProductFilters({
         }
         collapsible
         defaultExpanded={!filtersCollapsedByDefault}
+        onExpandedChange={setIsFilterPanelExpanded}
         toggleButtonAlignment='start'
         showHeader={false}
       />

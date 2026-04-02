@@ -23,18 +23,14 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 
 import type { useLearnerManagementState } from './KangurParentDashboardLearnerManagementWidget.hooks';
-import type { ProfileModalTabId } from './KangurParentDashboardLearnerManagementWidget.types';
 import { PROFILE_MODAL_TABS } from './KangurParentDashboardLearnerManagementWidget.utils';
 import { useLearnerManagementContext } from './KangurParentDashboardLearnerManagement.context';
 
 type LearnerManagementWidgetState = ReturnType<typeof useLearnerManagementState>;
 type LearnerManagementOverview = LearnerManagementWidgetState['overview'];
 type LearnerRecord = LearnerManagementOverview['learners'][number];
-type ActiveLearnerRecord = LearnerManagementOverview['activeLearner'];
-type ActiveProfileRecord = LearnerManagementWidgetState['activeProfile'];
 type SessionHistory = LearnerManagementWidgetState['sessions'];
 type SessionRecord = NonNullable<SessionHistory>['sessions'][number];
-type CreateFormState = LearnerManagementOverview['createForm'];
 type EditFormState = LearnerManagementOverview['editForm'];
 
 const resolveShortcutButtonClassName = (isCoarsePointer: boolean): string =>
@@ -135,7 +131,7 @@ export function LearnerManagementCardsGrid(): React.JSX.Element {
 
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-      {overview.learners.map((learner) => {
+      {overview.learners.map((learner: LearnerRecord): React.JSX.Element => {
         const isSelectedProfile = selectedLearnerId === learner.id;
 
         return (
@@ -154,7 +150,7 @@ export function LearnerManagementCardsGrid(): React.JSX.Element {
             data-testid={`parent-dashboard-learner-card-${learner.id}`}
           >
             <KangurIconSummaryCardContent
-              aside={<LearnerCardStatusChip learner={learner} copy={copy} />}
+              aside={<LearnerCardStatusChip learner={learner} />}
               className='w-full flex-col items-start sm:flex-row sm:items-center'
               description={copy.learnerLoginDescription(learner.loginName)}
               footer={resolveLearnerCardFooter(isSelectedProfile, copy)}
@@ -366,24 +362,17 @@ function LearnerSettingsActions(): React.JSX.Element {
 
 function LearnerSettingsPanel(): React.JSX.Element {
   const { state, runtime } = useLearnerManagementContext();
-  const { copy, isCoarsePointer, overview } = state;
+  const { copy, overview } = state;
   const {
     isCreateModalVisible,
-    showPassword,
-    isConfirmingRemove,
     handleDisplayNameChange,
     handleLoginNameChange,
     handleAgeChange,
     handlePasswordChange,
     handleStatusChange,
-    handleTogglePassword,
-    handleCancelRemove,
-    handleConfirmRemove,
-    handleSaveAction,
-    handleStartRemove,
   } = runtime;
 
-  const { createForm, editForm, feedback, isSubmitting } = overview;
+  const { createForm, editForm } = overview;
 
   return (
     <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
@@ -510,7 +499,7 @@ function LearnerSessionsList(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      {sessions?.sessions.map((session, index) => (
+      {sessions?.sessions.map((session: SessionRecord, index: number) => (
         <LearnerSessionItem
           key={session.id}
           index={index}
@@ -608,36 +597,12 @@ export function LearnerManagementModal(): React.JSX.Element {
   const { state, runtime } = useLearnerManagementContext();
   const {
     copy,
-    isCoarsePointer,
-    overview,
-    isLoadingSessions,
-    isLoadingMoreSessions,
-    sessionsError,
-    sessionsLoadMoreError,
   } = state;
   const {
-    selectedLearnerId,
     isCreateModalVisible,
-    hasMoreSessions,
     modalOpen,
-    showPassword,
-    isConfirmingRemove,
     activeTab,
-    activeProfile,
-    sessions,
     handleCloseWidgetModal,
-    setActiveTab,
-    handleDisplayNameChange,
-    handleLoginNameChange,
-    handleAgeChange,
-    handlePasswordChange,
-    handleStatusChange,
-    handleTogglePassword,
-    handleCancelRemove,
-    handleConfirmRemove,
-    handleSaveAction,
-    handleStartRemove,
-    handleLoadMoreSessions,
   } = runtime;
 
   const showSettingsPanel = activeTab === 'settings' || isCreateModalVisible;
@@ -655,19 +620,10 @@ export function LearnerManagementModal(): React.JSX.Element {
         className='relative flex h-full flex-col max-sm:bg-white'
         data-testid={isCreateModalVisible ? 'parent-create-learner-modal' : undefined}
       >
-        <LearnerManagementModalHeader
-          copy={copy}
-          isCreateModalVisible={isCreateModalVisible}
-          onClose={handleCloseWidgetModal}
-        />
+        <LearnerManagementModalHeader />
 
         {isCreateModalVisible ? null : (
-          <LearnerManagementModalTabs
-            activeTab={activeTab}
-            copy={copy}
-            isCoarsePointer={isCoarsePointer}
-            onSelectTab={setActiveTab}
-          />
+          <LearnerManagementModalTabs />
         )}
 
         <div className='flex-1 overflow-y-auto p-6'>

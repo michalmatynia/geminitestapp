@@ -37,19 +37,19 @@ const isBatchCaptureJobInFlight = (status: string | null | undefined): boolean =
 
 function AdminKangurSocialPageContent(): React.JSX.Element {
   const {
-    posts,
     activePost,
     isSettingsModalOpen,
     setIsSettingsModalOpen,
     isPostEditorModalOpen,
     setIsPostEditorModalOpen,
+    isVisualAnalysisModalOpen,
+    isProgrammablePlaywrightModalOpen,
     postToDelete,
     setPostToDelete,
     postToUnpublish,
     setPostToUnpublish,
     deleteError,
     clearDeleteError,
-    postsQuery,
     deleteMutation,
     unpublishMutation,
     currentPipelineJob,
@@ -65,8 +65,6 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
     isSettingsDirty,
     isSavingSettings,
   } = useSocialPostContext();
-  const isInitialPageLoading = postsQuery.isLoading && posts.length === 0;
-
   const breadcrumbs = [
     { label: 'Admin', href: '/admin' },
     { label: 'Kangur', href: '/admin/kangur' },
@@ -171,39 +169,39 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
         </>
       }
     >
-      {isInitialPageLoading ? (
-        <LoadingState
-          message='Loading StudiQ Social...'
-          size='lg'
-          className='min-h-[360px] rounded-2xl border border-border/60 bg-card/40 shadow-sm'
-        />
-      ) : (
-        <div
-          className={cn(
-            KANGUR_GRID_ROOMY_CLASSNAME,
-            'xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]'
-          )}
-        >
-          <SocialPostList />
+      <div
+        className={cn(
+          KANGUR_GRID_ROOMY_CLASSNAME,
+          'xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]'
+        )}
+      >
+        <SocialPostList />
 
-          <div className='space-y-6'>
+        <div className='space-y-6'>
+          {activePost ? (
             <SocialPostPipeline />
+          ) : (
+            <LoadingState
+              message='Select a social post to open its pipeline workspace.'
+              size='lg'
+              className='min-h-[240px] rounded-2xl border border-border/60 bg-card/40 shadow-sm'
+            />
+          )}
 
-            <KangurSocialPipelineQueuePanel variant='compact' />
+          <KangurSocialPipelineQueuePanel variant='compact' />
 
-            {activePost?.status === 'failed' && activePost.publishError ? (
-              <KangurAdminCard>
-                <div className='space-y-2'>
-                  <div className='text-sm font-semibold text-foreground'>Publish error</div>
-                  <div className='text-sm text-muted-foreground whitespace-pre-wrap'>
-                    {activePost.publishError}
-                  </div>
+          {activePost?.status === 'failed' && activePost.publishError ? (
+            <KangurAdminCard>
+              <div className='space-y-2'>
+                <div className='text-sm font-semibold text-foreground'>Publish error</div>
+                <div className='text-sm text-muted-foreground whitespace-pre-wrap'>
+                  {activePost.publishError}
                 </div>
-              </KangurAdminCard>
-            ) : null}
-          </div>
+              </div>
+            </KangurAdminCard>
+          ) : null}
         </div>
-      )}
+      </div>
 
       <ConfirmModal
         isOpen={Boolean(postToDelete)}
@@ -239,12 +237,14 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
         confirmDisabled={isDeleteConfirmBlocked}
       />
 
-      <SocialPostEditorModal
-        isOpen={isPostEditorModalOpen}
-        onClose={() => setIsPostEditorModalOpen(false)}
-      />
-      <SocialPostPlaywrightCaptureModal />
-      <SocialPostVisualAnalysisModal />
+      {isPostEditorModalOpen ? (
+        <SocialPostEditorModal
+          isOpen={true}
+          onClose={() => setIsPostEditorModalOpen(false)}
+        />
+      ) : null}
+      {isProgrammablePlaywrightModalOpen ? <SocialPostPlaywrightCaptureModal /> : null}
+      {isVisualAnalysisModalOpen ? <SocialPostVisualAnalysisModal /> : null}
 
       <ConfirmModal
         isOpen={Boolean(postToUnpublish)}
@@ -270,15 +270,17 @@ function AdminKangurSocialPageContent(): React.JSX.Element {
         loading={unpublishMutation.isPending}
         confirmDisabled={isUnpublishConfirmBlocked}
       />
-      <AdminKangurSocialSettingsModal
-        open={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        onSave={() => {
-          void handleSaveSettings();
-        }}
-        isSaving={isSavingSettings}
-        hasUnsavedChanges={isSettingsDirty}
-      />
+      {isSettingsModalOpen ? (
+        <AdminKangurSocialSettingsModal
+          open={true}
+          onClose={() => setIsSettingsModalOpen(false)}
+          onSave={() => {
+            void handleSaveSettings();
+          }}
+          isSaving={isSavingSettings}
+          hasUnsavedChanges={isSettingsDirty}
+        />
+      ) : null}
     </KangurAdminContentShell>
   );
 }

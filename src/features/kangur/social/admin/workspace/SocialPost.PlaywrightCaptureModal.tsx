@@ -34,9 +34,6 @@ const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean 
 };
 
 export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
-  const personasQuery = usePlaywrightPersonas({
-    enabled: true,
-  });
   const {
     activePost,
     isProgrammablePlaywrightModalOpen,
@@ -69,6 +66,9 @@ export function SocialPostPlaywrightCaptureModal(): React.JSX.Element {
     currentPipelineJob,
     socialDraftBlockedReason,
   } = useSocialPostContext();
+  const personasQuery = usePlaywrightPersonas({
+    enabled: isProgrammablePlaywrightModalOpen,
+  });
 
   const personaOptions = React.useMemo(
     () => [

@@ -20,6 +20,25 @@ const FRONT_PAGE_SETTING_CACHE_TTL_MS = 30_000;
 const FRONT_PAGE_SETTING_RETRY_COOLDOWN_MS = 30_000;
 export { FRONT_PAGE_ALLOWED };
 
+const parseEnvBoolean = (value: string | undefined): boolean | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return null;
+};
+
+const shouldReadFrontPageSettingFromStorage = (
+  env: NodeJS.ProcessEnv = process.env
+): boolean => {
+  const explicit = parseEnvBoolean(env['ENABLE_DEV_FRONT_PAGE_SETTING_LOOKUP']);
+  if (explicit !== null) {
+    return explicit;
+  }
+
+  return true;
+};
+
 let frontPageSettingRetryBlockedUntil = 0;
 let lastKnownFrontPageSetting: FrontPageSelectableApp | null = null;
 let hasResolvedFrontPageSettingSnapshot = false;
@@ -68,7 +87,9 @@ export const shouldApplyFrontPageAppSelection = (): boolean => {
 };
 
 const readMongoFrontPageSetting = async (): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return lastKnownFrontPageSetting;
+  if (!process.env['MONGODB_URI'] || !shouldReadFrontPageSettingFromStorage()) {
+    return lastKnownFrontPageSetting;
+  }
   const now = Date.now();
 
   if (

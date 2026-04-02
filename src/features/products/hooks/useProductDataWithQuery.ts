@@ -111,6 +111,7 @@ export function useProductDataWithQuery({
     },
     {
       enabled: preferencesLoaded,
+      prefetchNextPage: page > 1,
     }
   );
 

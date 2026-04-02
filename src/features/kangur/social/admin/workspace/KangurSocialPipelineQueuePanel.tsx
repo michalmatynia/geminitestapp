@@ -124,6 +124,7 @@ export function KangurSocialPipelineQueuePanel({
 }: {
   variant?: PanelVariant;
 }): React.JSX.Element {
+  const isCompactVariant = variant === 'compact';
   const [status, setStatus] = useState<PipelineStatus | null>(null);
   const [jobs, setJobs] = useState<PipelineJobRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -132,28 +133,39 @@ export function KangurSocialPipelineQueuePanel({
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const refreshTimeoutRef = useRef<SafeTimerId | null>(null);
-  const activeProcessSummary = useMemo(() => getActiveQueueProcessSummary(jobs), [jobs]);
+  const activeProcessSummary = useMemo(
+    () => (isCompactVariant ? status?.activeProcessSummary ?? null : getActiveQueueProcessSummary(jobs)),
+    [isCompactVariant, jobs, status?.activeProcessSummary]
+  );
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [statusData, jobsData] = await Promise.all([
-        api.get<PipelineStatus>('/api/kangur/social-pipeline/status', {
+      if (isCompactVariant) {
+        const statusData = await api.get<PipelineStatus>('/api/kangur/social-pipeline/status', {
           timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
-        }),
-        api.get<PipelineJobRecord[]>('/api/kangur/social-pipeline/jobs', {
-          timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
-        }),
-      ]);
-      setStatus(statusData);
-      setJobs(jobsData);
+        });
+        setStatus(statusData);
+        setJobs([]);
+      } else {
+        const [statusData, jobsData] = await Promise.all([
+          api.get<PipelineStatus>('/api/kangur/social-pipeline/status', {
+            timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+          }),
+          api.get<PipelineJobRecord[]>('/api/kangur/social-pipeline/jobs', {
+            timeout: QUEUE_PANEL_REQUEST_TIMEOUT_MS,
+          }),
+        ]);
+        setStatus(statusData);
+        setJobs(jobsData);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load queue data.');
     } finally {
       setLoading(false);
     }
-  }, [variant]);
+  }, [isCompactVariant]);
 
   useEffect(() => {
     void fetchData();
@@ -284,7 +296,7 @@ export function KangurSocialPipelineQueuePanel({
       ? 'Resume pipeline'
       : 'Pause pipeline';
 
-  if (variant === 'compact') {
+  if (isCompactVariant) {
     return (
       <KangurAdminCard>
         <div className='flex items-center justify-between'>

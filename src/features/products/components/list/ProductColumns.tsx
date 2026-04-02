@@ -33,6 +33,7 @@ import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import {
   getProductListDisplayName,
   getProductDisplayName,
+  hasImportedProductOrigin,
   getImageFilepath,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
@@ -212,7 +213,7 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
   const nameKey = productNameKey ?? 'name_en';
   const nameValue = getProductListDisplayName(product, nameKey);
 
-  const isImported: boolean = !!product.baseProductId;
+  const isImported = hasImportedProductOrigin(product);
   const normalizedSku = (product.sku ?? '').trim();
   const categoryLabel = resolveProductCategoryLabel(
     product,

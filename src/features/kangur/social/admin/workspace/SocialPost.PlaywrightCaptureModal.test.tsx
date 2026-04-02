@@ -138,6 +138,53 @@ describe('SocialPostPlaywrightCaptureModal', () => {
     vi.clearAllMocks();
   });
 
+  it('keeps the personas query disabled while the modal is closed', () => {
+    usePlaywrightPersonasMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      error: null,
+    });
+    useSocialPostContextMock.mockReturnValue({
+      activePost: { id: 'post-1' },
+      isProgrammablePlaywrightModalOpen: false,
+      handleCloseProgrammablePlaywrightModal: vi.fn(),
+      captureAppearanceMode: 'default',
+      programmableCaptureBaseUrl: '',
+      setProgrammableCaptureBaseUrl: vi.fn(),
+      programmableCapturePersonaId: '',
+      setProgrammableCapturePersonaId: vi.fn(),
+      programmableCaptureScript: '',
+      setProgrammableCaptureScript: vi.fn(),
+      programmableCaptureRoutes: [],
+      programmableCapturePending: false,
+      programmableCaptureBatchCaptureJob: null,
+      programmableCaptureMessage: null,
+      programmableCaptureErrorMessage: null,
+      batchCaptureRecentJobs: [],
+      handleAddProgrammableCaptureRoute: vi.fn(),
+      handleUpdateProgrammableCaptureRoute: vi.fn(),
+      handleRemoveProgrammableCaptureRoute: vi.fn(),
+      handleSeedProgrammableCaptureRoutesFromPresets: vi.fn(),
+      handleResetProgrammableCaptureScript: vi.fn(),
+      handleSaveProgrammableCaptureDefaults: vi.fn(),
+      handleRunProgrammablePlaywrightCapture: vi.fn(),
+      handleRunProgrammablePlaywrightCaptureAndPipeline: vi.fn(),
+      handleRetryFailedProgrammableCaptureJob: vi.fn(),
+      canGenerateSocialDraft: false,
+      currentVisualAnalysisJob: null,
+      currentGenerationJob: null,
+      currentPipelineJob: null,
+      socialDraftBlockedReason: null,
+    });
+
+    render(<SocialPostPlaywrightCaptureModal />);
+
+    expect(usePlaywrightPersonasMock).toHaveBeenCalledWith({ enabled: false });
+    expect(
+      screen.queryByRole('dialog', { name: 'Programmable Playwright capture' })
+    ).not.toBeInTheDocument();
+  });
+
   it('renders personas, programmable routes, and the editable script', () => {
     usePlaywrightPersonasMock.mockReturnValue({
       data: [{ id: 'persona-1', name: 'Fast reviewer' }],

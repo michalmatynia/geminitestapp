@@ -3,32 +3,46 @@ import Link from 'next/link';
 import { Badge, FormField, SelectSimple } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
+import { useSocialPostContext } from '../SocialPostContext';
+import { useSocialSettingsModalContext } from './SocialSettingsModalContext';
 
-export function SocialSettingsModelsTab({
-  brainModelBadgeLabel,
-  brainModelSelectOptions,
-  brainModelId,
-  handleBrainModelChange,
-  brainModelOptionsLoading,
-  visionModelBadgeLabel,
-  visionModelSelectOptions,
-  visionModelId,
-  handleVisionModelChange,
-  visionModelOptionsLoading,
-  isRuntimeLocked,
-}: {
-  brainModelBadgeLabel: string;
-  brainModelSelectOptions: Array<{ value: string; label: string; description?: string }>;
-  brainModelId: string | null;
-  handleBrainModelChange: (val: string) => void;
-  brainModelOptionsLoading: boolean;
-  visionModelBadgeLabel: string;
-  visionModelSelectOptions: Array<{ value: string; label: string; description?: string }>;
-  visionModelId: string | null;
-  handleVisionModelChange: (val: string) => void;
-  visionModelOptionsLoading: boolean;
-  isRuntimeLocked?: boolean;
-}) {
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
+export function SocialSettingsModelsTab() {
+  const context = useSocialPostContext();
+  const state = useSocialSettingsModalContext();
+
+  const {
+    brainModelId,
+    visionModelId,
+    handleBrainModelChange,
+    handleVisionModelChange,
+    brainModelOptions,
+    visionModelOptions,
+    currentGenerationJob,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
+  } = context;
+
+  const {
+    brainModelBadgeLabel,
+    brainModelSelectOptions,
+    visionModelBadgeLabel,
+    visionModelSelectOptions,
+  } = state;
+
+  const isRuntimeLocked =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+
+  const brainModelOptionsLoading = brainModelOptions.isLoading;
+  const visionModelOptionsLoading = visionModelOptions.isLoading;
+
   const brainModelTitle = isRuntimeLocked
     ? 'Wait for the current Social runtime job to finish.'
     : brainModelOptionsLoading

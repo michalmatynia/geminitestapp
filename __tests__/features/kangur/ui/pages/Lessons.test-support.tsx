@@ -135,8 +135,10 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', async () => {
   const actual = await import('@/features/kangur/ui/pages/lessons/Lessons.ActiveLesson');
+  const { prefetchActiveLessonView } = await import('@/features/kangur/ui/pages/lessons/LazyActiveLessonView');
   return {
     LazyActiveLessonView: actual.ActiveLessonView,
+    prefetchActiveLessonView,
   };
 });
 

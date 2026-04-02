@@ -15,6 +15,7 @@ import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isTransientMongoConnectionError } from '@/shared/lib/db/utils/mongo';
 import { LITE_SETTINGS_KEYS } from '@/shared/lib/settings-lite-keys';
 import {
   cloneLiteSettings,
@@ -178,6 +179,9 @@ export const prewarmLiteSettingsServerCache = async (): Promise<void> => {
   try {
     await getOrCreateLiteSettingsInflight();
   } catch (error) {
+    if (isTransientMongoConnectionError(error)) {
+      return;
+    }
     void ErrorSystem.captureException(error, {
       service: 'api/settings/lite',
       action: 'prewarmLiteSettingsServerCache',
@@ -231,7 +235,7 @@ export const GET_handler = async (
     });
     return response;
   } catch (error: unknown) {
-    void ErrorSystem.captureException(error);
+    const isTransientMongoError = isTransientMongoConnectionError(error);
     if (staleCache) {
       const response = NextResponse.json(cloneLiteSettings(staleCache.data), {
         headers: { 'Cache-Control': 'no-store', 'X-Cache': 'stale' },
@@ -242,10 +246,21 @@ export const GET_handler = async (
       });
       return response;
     }
-    const { ErrorSystem: ErrorSystemLogger } = await import(
-      '@/shared/utils/observability/error-system'
-    );
-    void ErrorSystemLogger.captureException(error, {
+    if (isTransientMongoError) {
+      const response = NextResponse.json([], {
+        headers: {
+          'Cache-Control': 'no-store',
+          'X-Cache': 'degraded',
+          'X-Settings-Degraded': 'transient-mongo-error',
+        },
+      });
+      attachServerTiming(response, {
+        total: performance.now() - requestStart,
+        fetch: performance.now() - fetchStart,
+      });
+      return response;
+    }
+    void ErrorSystem.captureException(error, {
       service: 'api/settings/lite',
       action: 'GET_handler',
     });

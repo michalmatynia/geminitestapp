@@ -32,6 +32,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 import { useMonitoringWidgetState } from './monitoring-widget/MonitoringWidget.hooks';
+import { MonitoringWidgetProvider, useMonitoringWidgetContext } from './MonitoringWidget.context';
 
 const MONITORING_FALLBACK_COPY = {
   clearFilters: 'Wyczyść filtry',
@@ -346,27 +347,24 @@ function KangurParentDashboardMonitoringActivityMix({
 
 function KangurParentDashboardMonitoringHistoryFilters({
   hasActiveFilters,
-  interactionDateFrom,
-  interactionDateTo,
-  interactionFilter,
   interactionFilterOptions,
   segmentedFilterClassName,
-  setInteractionDateFrom,
-  setInteractionDateTo,
-  setInteractionFilter,
   translate,
 }: {
   hasActiveFilters: boolean;
-  interactionDateFrom: string;
-  interactionDateTo: string;
-  interactionFilter: InteractionFilter;
   interactionFilterOptions: ReadonlyArray<LabeledOptionDto<InteractionFilter>>;
   segmentedFilterClassName: string;
-  setInteractionDateFrom: (value: string) => void;
-  setInteractionDateTo: (value: string) => void;
-  setInteractionFilter: (value: InteractionFilter) => void;
   translate: MonitoringTranslate;
 }): React.JSX.Element {
+  const {
+    interactionFilter,
+    setInteractionFilter,
+    interactionDateFrom,
+    setInteractionDateFrom,
+    interactionDateTo,
+    setInteractionDateTo,
+  } = useMonitoringWidgetContext();
+
   return (
     <div className='flex flex-wrap items-center gap-3'>
       <div className={`${KANGUR_SEGMENTED_CONTROL_CLASSNAME} w-full sm:w-auto`}>
@@ -428,30 +426,28 @@ function KangurParentDashboardMonitoringHistoryFilters({
 }
 
 function KangurParentDashboardMonitoringHistoryContent({
-  activeLearnerId,
-  fetchInteractions,
   filteredInteractionViews,
   formatTimestamp,
   hasMoreInteractions,
-  interactionsError,
-  interactionsLoadMoreError,
-  isLoadingMoreInteractions,
   nextInteractionOffset,
   shouldShowLoadingState,
   translate,
 }: {
-  activeLearnerId: string | null;
-  fetchInteractions: MonitoringWidgetState['fetchInteractions'];
   filteredInteractionViews: InteractionView[];
   formatTimestamp: (value: string | null | undefined) => string;
   hasMoreInteractions: boolean;
-  interactionsError: string | null;
-  interactionsLoadMoreError: string | null;
-  isLoadingMoreInteractions: boolean;
   nextInteractionOffset: number | null;
   shouldShowLoadingState: boolean;
   translate: MonitoringTranslate;
 }): React.JSX.Element {
+  const {
+    activeLearnerId,
+    fetchInteractions,
+    interactionsError,
+    interactionsLoadMoreError,
+    isLoadingMoreInteractions,
+  } = useMonitoringWidgetContext();
+
   if (shouldShowLoadingState) {
     return (
       <KangurEmptyState
@@ -550,45 +546,23 @@ function KangurParentDashboardMonitoringHistoryContent({
 }
 
 function KangurParentDashboardMonitoringHistorySection({
-  activeLearnerId,
-  fetchInteractions,
   filteredInteractionViews,
   formatTimestamp,
   hasActiveFilters,
   hasMoreInteractions,
-  interactionDateFrom,
-  interactionDateTo,
-  interactionFilter,
   interactionFilterOptions,
-  interactionsError,
-  interactionsLoadMoreError,
-  isLoadingMoreInteractions,
   nextInteractionOffset,
   segmentedFilterClassName,
-  setInteractionDateFrom,
-  setInteractionDateTo,
-  setInteractionFilter,
   shouldShowLoadingState,
   translate,
 }: {
-  activeLearnerId: string | null;
-  fetchInteractions: MonitoringWidgetState['fetchInteractions'];
   filteredInteractionViews: InteractionView[];
   formatTimestamp: (value: string | null | undefined) => string;
   hasActiveFilters: boolean;
   hasMoreInteractions: boolean;
-  interactionDateFrom: string;
-  interactionDateTo: string;
-  interactionFilter: InteractionFilter;
   interactionFilterOptions: ReadonlyArray<LabeledOptionDto<InteractionFilter>>;
-  interactionsError: string | null;
-  interactionsLoadMoreError: string | null;
-  isLoadingMoreInteractions: boolean;
   nextInteractionOffset: number | null;
   segmentedFilterClassName: string;
-  setInteractionDateFrom: (value: string) => void;
-  setInteractionDateTo: (value: string) => void;
-  setInteractionFilter: (value: InteractionFilter) => void;
   shouldShowLoadingState: boolean;
   translate: MonitoringTranslate;
 }): React.JSX.Element {
@@ -602,26 +576,15 @@ function KangurParentDashboardMonitoringHistorySection({
 
       <KangurParentDashboardMonitoringHistoryFilters
         hasActiveFilters={hasActiveFilters}
-        interactionDateFrom={interactionDateFrom}
-        interactionDateTo={interactionDateTo}
-        interactionFilter={interactionFilter}
         interactionFilterOptions={interactionFilterOptions}
         segmentedFilterClassName={segmentedFilterClassName}
-        setInteractionDateFrom={setInteractionDateFrom}
-        setInteractionDateTo={setInteractionDateTo}
-        setInteractionFilter={setInteractionFilter}
         translate={translate}
       />
 
       <KangurParentDashboardMonitoringHistoryContent
-        activeLearnerId={activeLearnerId}
-        fetchInteractions={fetchInteractions}
         filteredInteractionViews={filteredInteractionViews}
         formatTimestamp={formatTimestamp}
         hasMoreInteractions={hasMoreInteractions}
-        interactionsError={interactionsError}
-        interactionsLoadMoreError={interactionsLoadMoreError}
-        isLoadingMoreInteractions={isLoadingMoreInteractions}
         nextInteractionOffset={nextInteractionOffset}
         shouldShowLoadingState={shouldShowLoadingState}
         translate={translate}
@@ -631,16 +594,17 @@ function KangurParentDashboardMonitoringHistorySection({
 }
 
 function KangurParentDashboardMonitoringLessonPanelTimeSection({
-  formatLocalizedDuration,
-  lessonPanelTimeCards,
   topLessonPanelCard,
   translate,
 }: {
-  formatLocalizedDuration: MonitoringWidgetState['formatLocalizedDuration'];
-  lessonPanelTimeCards: MonitoringWidgetState['lessonPanelTimeCards'];
   topLessonPanelCard: MonitoringWidgetState['lessonPanelTimeCards'][number] | null;
   translate: MonitoringTranslate;
 }): React.JSX.Element {
+  const {
+    formatLocalizedDuration,
+    lessonPanelTimeCards,
+  } = useMonitoringWidgetContext();
+
   return (
     <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
       <h3 className={KANGUR_WIDGET_TITLE_CLASSNAME}>
@@ -732,31 +696,27 @@ export function KangurParentDashboardAssignmentsMonitoringWidget({
   if (!shouldRenderKangurParentDashboardPanel(displayMode, activeTab, 'monitoring')) return null;
   if (!activeLearnerId) return null;
 
-  return <KangurParentDashboardAssignmentsMonitoringWidgetContent />;
+  return (
+    <MonitoringWidgetProvider>
+      <KangurParentDashboardAssignmentsMonitoringWidgetContent />
+    </MonitoringWidgetProvider>
+  );
 }
 
 function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.Element {
   const locale = useLocale();
   const isCoarsePointer = useKangurCoarsePointer();
-  const state = useMonitoringWidgetState();
+  const state = useMonitoringWidgetContext();
   const {
     translations,
-    activeLearnerId,
     interactionFilter,
-    setInteractionFilter,
     interactionDateFrom,
-    setInteractionDateFrom,
     interactionDateTo,
-    setInteractionDateTo,
     interactionHistory,
     isInteractionQueryReady,
     isLoadingInteractions,
-    interactionsError,
-    isLoadingMoreInteractions,
-    interactionsLoadMoreError,
     interactionViews,
     lessonPanelTimeCards,
-    fetchInteractions,
     formatLocalizedDuration,
   } = state;
 
@@ -829,24 +789,13 @@ function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.El
           />
           <KangurParentDashboardMonitoringActivityMix interactionCounts={interactionCounts} />
           <KangurParentDashboardMonitoringHistorySection
-            activeLearnerId={activeLearnerId}
-            fetchInteractions={fetchInteractions}
             filteredInteractionViews={filteredInteractionViews}
             formatTimestamp={formatTimestamp}
             hasActiveFilters={hasActiveFilters}
             hasMoreInteractions={hasMoreInteractions}
-            interactionDateFrom={interactionDateFrom}
-            interactionDateTo={interactionDateTo}
-            interactionFilter={interactionFilter}
             interactionFilterOptions={interactionFilterOptions}
-            interactionsError={interactionsError}
-            interactionsLoadMoreError={interactionsLoadMoreError}
-            isLoadingMoreInteractions={isLoadingMoreInteractions}
             nextInteractionOffset={nextInteractionOffset}
             segmentedFilterClassName={segmentedFilterClassName}
-            setInteractionDateFrom={setInteractionDateFrom}
-            setInteractionDateTo={setInteractionDateTo}
-            setInteractionFilter={setInteractionFilter}
             shouldShowLoadingState={shouldShowLoadingState}
             translate={translate}
           />
@@ -854,8 +803,6 @@ function KangurParentDashboardAssignmentsMonitoringWidgetContent(): React.JSX.El
 
         <div className='space-y-6'>
           <KangurParentDashboardMonitoringLessonPanelTimeSection
-            formatLocalizedDuration={formatLocalizedDuration}
-            lessonPanelTimeCards={lessonPanelTimeCards}
             topLessonPanelCard={topLessonPanelCard}
             translate={translate}
           />

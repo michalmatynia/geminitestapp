@@ -82,6 +82,13 @@ type ProductListDebugSnapshot = {
   isEditHydrating: boolean;
 };
 
+type DeferredDraftBootstrapTarget = {
+  requestIdleCallback?: (callback: () => void) => number;
+  cancelIdleCallback?: (handle: number) => void;
+  setTimeout: (handler: () => void, timeout?: number) => number;
+  clearTimeout: (handle: number) => void;
+};
+
 const EMPTY_INTEGRATION_BADGE_IDS = new Set<string>();
 const EMPTY_INTEGRATION_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_TRADERA_BADGE_IDS = new Set<string>();
@@ -128,6 +135,27 @@ export function shouldEnableProductListBackgroundSync(args: {
   return args.queuedProductIdsCount > 0 || args.activeTrackedProductAiRunsCount > 0;
 }
 
+export function scheduleDeferredProductListDraftBootstrap(
+  target: DeferredDraftBootstrapTarget,
+  onReady: () => void
+): () => void {
+  if (typeof target.requestIdleCallback === 'function') {
+    const idleHandle = target.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      target.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = target.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    target.clearTimeout(timeoutHandle);
+  };
+}
+
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
   isMounted: boolean;
@@ -144,6 +172,7 @@ export function useProductListState(): ProductListContextType & {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [draftsReady, setDraftsReady] = useState(false);
   const { toast } = useToast();
   const { imageExternalBaseUrl } = useProductSettings();
 
@@ -174,7 +203,7 @@ export function useProductListState(): ProductListContextType & {
 
   const { catalogs, currencyCode, setCurrencyCode, currencyOptions, priceGroups, languageOptions } =
     useCatalogSync(preferences.catalogFilter || 'all', {
-      enabled: !preferencesLoading,
+      enabled: true,
     });
 
   const filters = useProductListFilters({
@@ -432,6 +461,12 @@ export function useProductListState(): ProductListContextType & {
     setIsMounted(true);
   }, []);
 
+  useEffect(() => {
+    return scheduleDeferredProductListDraftBootstrap(window, () => {
+      setDraftsReady(true);
+    });
+  }, []);
+
   const getRowClassName = useCallback(
     (row: Row<ProductWithImages>): string | undefined => {
       const highlightToken = jobCompletionHighlights[row.original.id];
@@ -586,8 +621,11 @@ export function useProductListState(): ProductListContextType & {
 
   const columns = useMemo(() => getProductColumns(), []);
 
-  const draftQueries = useDraftQueries as () => ListQuery<ProductDraft>;
-  const { data: allDrafts = [] } = draftQueries();
+  const draftQueries = useDraftQueries as (
+    notebookId?: string,
+    options?: { enabled?: boolean }
+  ) => ListQuery<ProductDraft>;
+  const { data: allDrafts = [] } = draftQueries(undefined, { enabled: draftsReady });
   const activeDrafts = useMemo(
     () => allDrafts.filter((d: ProductDraft) => d.active !== false),
     [allDrafts]

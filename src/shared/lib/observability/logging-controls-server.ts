@@ -24,6 +24,25 @@ const loggingControlCache = new Map<
 const loggingControlInflight = new Map<ObservabilityLoggingControlType, Promise<boolean>>();
 let loggingControlReadDepth = 0;
 
+const parseEnvBoolean = (value: string | undefined): boolean | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return null;
+};
+
+const shouldReadServerLoggingControlsFromStorage = (
+  env: NodeJS.ProcessEnv = process.env
+): boolean => {
+  const explicit = parseEnvBoolean(env['ENABLE_DEV_RUNTIME_LOGGING_CONTROLS']);
+  if (explicit !== null) {
+    return explicit;
+  }
+
+  return env['NODE_ENV'] !== 'development';
+};
+
 const readStoredLoggingControlValue = async (key: string): Promise<string | null> => {
   const provider = await findProviderForKey(key);
   if (provider) {
@@ -47,6 +66,9 @@ export const isServerLoggingEnabled = async (
   type: ObservabilityLoggingControlType
 ): Promise<boolean> => {
   const defaultEnabled = readDefaultLoggingControlValue(type);
+  if (!shouldReadServerLoggingControlsFromStorage()) {
+    return defaultEnabled;
+  }
   const now = Date.now();
   const cached = loggingControlCache.get(type);
   if (cached && now - cached.fetchedAt < LOGGING_CONTROL_CACHE_TTL_MS) {

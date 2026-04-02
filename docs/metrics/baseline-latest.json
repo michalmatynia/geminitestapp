@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-01T10:48:25.304Z",
+  "generatedAt": "2026-04-01T22:10:10.340Z",
   "source": {
-    "totalFiles": 9007,
-    "totalLines": 1503997,
+    "totalFiles": 9028,
+    "totalLines": 1506103,
     "useClientFiles": 1673,
-    "hooksWithoutUseClient": 1,
-    "filesOver800": 92,
+    "hooksWithoutUseClient": 0,
+    "filesOver800": 89,
     "filesOver1000": 0,
     "filesOver1500": 0,
     "largestFile": {
@@ -120,8 +120,8 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2413,
-        "lines": 525595
+        "files": 2418,
+        "lines": 525446
       },
       {
         "feature": "ai",
@@ -136,17 +136,17 @@
       {
         "feature": "products",
         "files": 301,
-        "lines": 60187
+        "lines": 60360
       },
       {
         "feature": "cms",
-        "files": 345,
-        "lines": 52793
+        "files": 347,
+        "lines": 52968
       },
       {
         "feature": "integrations",
-        "files": 234,
-        "lines": 34939
+        "files": 236,
+        "lines": 35046
       },
       {
         "feature": "filemaker",
@@ -181,7 +181,7 @@
       {
         "feature": "data-import-export",
         "files": 33,
-        "lines": 6716
+        "lines": 6714
       },
       {
         "feature": "observability",
@@ -205,8 +205,8 @@
       },
       {
         "feature": "drafter",
-        "files": 12,
-        "lines": 2725
+        "files": 13,
+        "lines": 2821
       },
       {
         "feature": "files",
@@ -275,10 +275,10 @@
       },
       {
         "path": "src/features/products/hooks/useProductListState.tsx",
-        "useEffectCount": 5,
+        "useEffectCount": 6,
         "useCallbackCount": 17,
         "useMemoCount": 8,
-        "total": 30
+        "total": 31
       },
       {
         "path": "src/features/case-resolver/context/useCaseResolverFolderTreeRuntime.ts",
@@ -289,10 +289,10 @@
       },
       {
         "path": "src/features/products/hooks/useProductData.ts",
-        "useEffectCount": 6,
+        "useEffectCount": 5,
         "useCallbackCount": 19,
         "useMemoCount": 3,
-        "total": 28
+        "total": 27
       },
       {
         "path": "src/features/ai/ai-paths/components/useJobQueueRuntime.ts",
@@ -444,15 +444,15 @@
         "lines": 989
       },
       {
+        "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
+        "lines": 989
+      },
+      {
         "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
         "lines": 986
       },
       {
         "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx",
-        "lines": 982
-      },
-      {
-        "path": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx",
         "lines": 982
       },
       {
@@ -536,10 +536,6 @@
         "lines": 943
       },
       {
-        "path": "src/features/kangur/ui/components/CalendarInteractiveGame.tsx",
-        "lines": 943
-      },
-      {
         "path": "src/app/api/settings/handler.ts",
         "lines": 936
       },
@@ -550,6 +546,10 @@
       {
         "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.test.tsx",
         "lines": 934
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
+        "lines": 933
       }
     ],
     "topPagesByLines": [
@@ -598,11 +598,11 @@
         "lines": 20
       },
       {
-        "path": "src/app/[locale]/(frontend)/page.tsx",
-        "lines": 18
+        "path": "src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx",
+        "lines": 17
       },
       {
-        "path": "src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx",
+        "path": "src/app/[locale]/(frontend)/page.tsx",
         "lines": 17
       },
       {
@@ -636,8 +636,8 @@
     ]
   },
   "propDrilling": {
-    "candidateChains": 451,
-    "depthGte4Chains": 116,
+    "candidateChains": 322,
+    "depthGte4Chains": 95,
     "forwardingComponents": 120
   }
 }

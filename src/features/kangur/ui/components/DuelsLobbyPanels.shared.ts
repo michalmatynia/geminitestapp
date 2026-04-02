@@ -1,5 +1,3 @@
-'use client';
-
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import type {

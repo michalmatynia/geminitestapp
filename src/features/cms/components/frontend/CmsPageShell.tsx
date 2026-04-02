@@ -1,3 +1,5 @@
+'use client';
+
 import { CmsMenu } from '@/features/cms/components/frontend/CmsMenu';
 import {
   resolveCmsStorefrontAppearance,

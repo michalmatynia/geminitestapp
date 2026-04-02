@@ -278,7 +278,6 @@ export function BaseQuickExportButton(props: {
     prefetchListings,
     showMarketplaceBadge,
     onOpenIntegrations,
-    onOpenExportSettings,
   } = props;
 
   const { toast } = useToast();
@@ -713,9 +712,7 @@ export function BaseQuickExportButton(props: {
     }
   };
 
-  const label = showMarketplaceBadge
-    ? `Open Base.com listing actions (${status}).`
-    : 'One-click export to Base.com';
+  const label = 'One-click export to Base.com';
 
   const trackedExportPresentation = trackedExportRunStatus
     ? resolveTriggerButtonRunFeedbackPresentation(trackedExportRunStatus)
@@ -726,13 +723,11 @@ export function BaseQuickExportButton(props: {
   const resolvedButtonStatus = trackedExportRunStatus ?? status;
   const isFailureState = FAILURE_STATUSES.has(normalizeMarketplaceStatus(resolvedButtonStatus));
   const shouldUseFilledMarketplaceTone = showMarketplaceBadge || trackedExportRunStatus !== null;
-  const resolvedLabel = showMarketplaceBadge
-    ? `Open Base.com listing actions (${resolvedButtonStatus}).`
-    : isFailureState
-      ? `Open Base.com recovery options (${resolvedButtonStatus}).`
-      : trackedExportPresentation
-        ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
-        : label;
+  const resolvedLabel = isFailureState
+    ? `Open Base.com recovery options (${resolvedButtonStatus}).`
+    : trackedExportPresentation
+      ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
+      : label;
   const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
     ? {
       source: 'base_quick_export_failed',
@@ -748,10 +743,6 @@ export function BaseQuickExportButton(props: {
         type='button'
         disabled={quickExportPending}
         onClick={(): void => {
-          if (showMarketplaceBadge) {
-            onOpenExportSettings?.();
-            return;
-          }
           if (isFailureState) {
             onOpenIntegrations?.(recoveryContext);
             return;

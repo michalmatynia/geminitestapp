@@ -77,7 +77,36 @@ describe('useProductListCategories', () => {
     apiGetMock.mockReset();
   });
 
-  it('loads category labels when the product row exposes nested category and catalog data', async () => {
+  it('reuses embedded category labels without fetching the batch endpoint', async () => {
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useProductListCategories({
+          data: [
+            {
+              ...createProduct(),
+              category: {
+                id: 'category-1',
+                catalogId: 'catalog-1',
+                name_en: 'Keychains',
+              },
+            } as ProductWithImages,
+          ],
+          nameLocale: 'name_en',
+        }),
+      {
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoryNameById.get('category-1')).toBe('Keychains');
+    });
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the category batch endpoint when the row is missing an embedded label', async () => {
     apiGetMock.mockResolvedValue({
       'catalog-1': [
         {
@@ -95,12 +124,9 @@ describe('useProductListCategories', () => {
           data: [
             {
               ...createProduct(),
-              category: {
-                id: 'category-1',
-                catalogId: 'catalog-1',
-                name_en: 'Keychains',
-              },
-            } as ProductWithImages,
+              categoryId: 'category-1',
+              catalogId: 'catalog-1',
+            },
           ],
           nameLocale: 'name_en',
         }),

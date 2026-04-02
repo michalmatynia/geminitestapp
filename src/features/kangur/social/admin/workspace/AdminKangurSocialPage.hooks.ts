@@ -346,8 +346,6 @@ export function useAdminKangurSocialPage() {
     batchCaptureJob: imageAddons.batchCaptureJob,
     batchCaptureMessage: imageAddons.batchCaptureMessage,
     batchCaptureErrorMessage: imageAddons.batchCaptureErrorMessage,
-    batchCaptureRecentJobs: imageAddons.batchCaptureRecentJobs,
-    batchCaptureRecentJobsLoading: imageAddons.batchCaptureRecentJobsLoading,
     captureAppearanceMode: imageAddons.captureAppearanceMode,
     setBatchCaptureResult: imageAddons.setBatchCaptureResult,
     handleCreateAddon: imageAddons.handleCreateAddon,

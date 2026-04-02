@@ -696,7 +696,7 @@ describe('BaseQuickExportButton', () => {
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
-  it('opens Base export settings instead of re-exporting when the product is already exported', () => {
+  it('runs quick export without SKU check when the product is already exported', async () => {
     const onOpenExportSettings = vi.fn();
 
     renderButton({
@@ -705,10 +705,17 @@ describe('BaseQuickExportButton', () => {
       onOpenExportSettings,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Base.com listing actions (active).' }));
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
 
-    expect(onOpenExportSettings).toHaveBeenCalledTimes(1);
-    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+        })
+      );
+    });
+    expect(onOpenExportSettings).not.toHaveBeenCalled();
     expect(apiPostMock).not.toHaveBeenCalledWith(
       '/api/v2/integrations/products/product-1/base/sku-check',
       expect.anything()
@@ -794,7 +801,7 @@ describe('BaseQuickExportButton', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Open Base.com listing actions (active).' })
+        screen.getByRole('button', { name: 'One-click export to Base.com' })
       ).toHaveClass('border-emerald-400/70');
     });
 
@@ -823,7 +830,7 @@ describe('BaseQuickExportButton', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Open Base.com listing actions (active).' })
+        screen.getByRole('button', { name: 'One-click export to Base.com' })
       ).toHaveClass('border-emerald-400/70');
     });
 
@@ -836,7 +843,7 @@ describe('BaseQuickExportButton', () => {
     });
 
     expect(
-      screen.getByRole('button', { name: 'Open Base.com listing actions (active).' })
+      screen.getByRole('button', { name: 'One-click export to Base.com' })
     ).toHaveClass('border-emerald-400/70');
     expect(screen.queryByRole('button', { name: 'Base.com export failed.' })).not.toBeInTheDocument();
   });

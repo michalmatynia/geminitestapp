@@ -22,7 +22,6 @@ import {
   BALL_COLORS,
   BALL_POOL_CLASSNAME,
   getAnswerSlotSurface,
-  getBallSurfaceStyle,
 } from './utils';
 import { DraggableBall } from './AddingBallGame.Shared';
 
@@ -184,15 +183,8 @@ function PickAnswerBallPreview({
   }
 
   return (
-    <div
-      className='relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border text-white'
-      style={getBallSurfaceStyle(dropped.color)}
-    >
-      <span className='pointer-events-none absolute inset-x-[18%] top-[14%] h-[20%] rounded-full bg-white/55 blur-[1px]' />
-      <span className='pointer-events-none absolute inset-x-[20%] bottom-[14%] h-[28%] rounded-full bg-black/10 blur-[7px]' />
-      <span className='relative z-10 text-xl font-extrabold drop-shadow-[0_1px_2px_rgba(15,23,42,0.35)]'>
-        {dropped.num}
-      </span>
+    <div className={`flex h-16 w-16 items-center justify-center rounded-full ${dropped.color} shadow-md`}>
+      <span className='text-xl font-extrabold text-white'>{dropped.num}</span>
     </div>
   );
 }

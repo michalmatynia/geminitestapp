@@ -1,5 +1,3 @@
-import { getTranslations } from 'next-intl/server';
-
 import { getCmsMenuSettings } from '@/features/cms/server';
 import { getCmsRepository } from '@/features/cms/server';
 import { getCmsThemeSettings } from '@/features/cms/server';
@@ -27,8 +25,7 @@ export async function HomeContent({
   locale,
 }: HomeContentProps): Promise<React.JSX.Element> {
   const resolvedLocale = normalizeSiteLocale(locale);
-  const [commonTranslations, cmsRepository, themeSettings, menuSettings] = await Promise.all([
-    getTranslations({ locale: resolvedLocale, namespace: 'Common' }),
+  const [cmsRepository, themeSettings, menuSettings] = await Promise.all([
     withTiming('cmsRepository', getCmsRepository),
     withTiming('cmsTheme', () => getCmsThemeSettings()),
     withTiming('cmsMenu', () => getCmsMenuSettings(domainId, resolvedLocale)),
@@ -38,14 +35,13 @@ export async function HomeContent({
   const colorSchemes = buildColorSchemeMap(themeSettings);
 
   if (defaultSlug) {
-    const [cmsPage, session] = await Promise.all([
-      withTiming('cmsPageBySlug', () =>
-        cmsRepository.getPageBySlug(defaultSlug.slug, { locale: resolvedLocale })
-      ),
-      withTiming('auth', readOptionalServerAuthSession),
-    ]);
+    const cmsPage = await withTiming('cmsPageBySlug', () =>
+      cmsRepository.getPageBySlug(defaultSlug.slug, { locale: resolvedLocale })
+    );
     let allowDrafts = false;
+
     if (cmsPage && cmsPage.status !== 'published') {
+      const session = await withTiming('auth', readOptionalServerAuthSession);
       allowDrafts = await withTiming('canPreviewDrafts', () => canPreviewDrafts(session));
     }
 
@@ -66,7 +62,6 @@ export async function HomeContent({
         theme={themeSettings}
         colorSchemes={colorSchemes}
         showMenu={showMenu}
-        loadingLabel={commonTranslations('loadingStorefront')}
         hasCmsContent={hasCmsContent}
         defaultSlug={defaultSlug.slug}
         rendererComponents={rendererComponents}
@@ -90,7 +85,6 @@ export async function HomeContent({
       theme={themeSettings}
       colorSchemes={colorSchemes}
       showMenu={Boolean(menuSettings.showMenu)}
-      loadingLabel={commonTranslations('loadingStorefront')}
       showFallbackHeader={showFallbackHeader}
       products={products}
       appearanceTone={{

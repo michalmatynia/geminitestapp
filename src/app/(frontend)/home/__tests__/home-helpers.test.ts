@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { getMongoDbMock, captureExceptionMock, getUserPreferencesMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
@@ -21,16 +21,55 @@ vi.mock('@/features/auth/server', () => ({
 }));
 
 describe('home-helpers', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+
   beforeEach(() => {
     vi.resetModules();
     vi.unmock('react');
     vi.unmock('@/app/(frontend)/home/home-helpers');
     vi.clearAllMocks();
     vi.useRealTimers();
+    process.env['NODE_ENV'] = 'test';
     delete process.env['MONGODB_URI'];
+    delete process.env['ENABLE_DEV_FRONT_PAGE_SETTING_LOOKUP'];
+  });
+
+  afterAll(() => {
+    if (originalNodeEnv === undefined) {
+      delete process.env['NODE_ENV'];
+      return;
+    }
+
+    process.env['NODE_ENV'] = originalNodeEnv;
   });
 
   it('returns null without touching mongo when no mongo uri is configured', async () => {
+    const { getFrontPageSetting } = await import('@/app/(frontend)/home/home-helpers');
+
+    await expect(getFrontPageSetting()).resolves.toBeNull();
+    expect(getMongoDbMock).not.toHaveBeenCalled();
+  });
+
+  it('reads mongo front page settings in development by default', async () => {
+    process.env['NODE_ENV'] = 'development';
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn(() => ({
+        findOne: vi.fn().mockResolvedValue({ value: 'StudiQ' }),
+      })),
+    });
+
+    const { getFrontPageSetting } = await import('@/app/(frontend)/home/home-helpers');
+
+    await expect(getFrontPageSetting()).resolves.toBe('kangur');
+    expect(getMongoDbMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('can skip mongo front page reads in development when explicitly disabled', async () => {
+    process.env['NODE_ENV'] = 'development';
+    process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    process.env['ENABLE_DEV_FRONT_PAGE_SETTING_LOOKUP'] = 'false';
+
     const { getFrontPageSetting } = await import('@/app/(frontend)/home/home-helpers');
 
     await expect(getFrontPageSetting()).resolves.toBeNull();

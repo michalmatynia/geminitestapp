@@ -115,6 +115,7 @@ const refreshUpdatedProductCaches = (
   void Promise.all([
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.products.lists(),
+      refetchType: 'none',
     }),
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.products.counts(),
@@ -472,7 +473,7 @@ export function useProductData({
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
   const hasInitialized = useRef(false);
-  const [filtersInitialized, setFiltersInitialized] = useState(!preferencesLoaded);
+  const [filtersInitialized, setFiltersInitialized] = useState(true);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -510,13 +511,7 @@ export function useProductData({
     return () => clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    if (!preferencesLoaded) {
-      setFiltersInitialized(false);
-    }
-  }, [preferencesLoaded]);
-
-  const queriesEnabled = preferencesLoaded && filtersInitialized;
+  const queriesEnabled = filtersInitialized;
 
   const filters: UseProductsFilters = useMemo(
     () => ({
@@ -567,6 +562,7 @@ export function useProductData({
 
   const productsWithCountQuery = useProductsWithCount(filters, {
     enabled: queriesEnabled,
+    prefetchNextPage: page > 1,
   });
   const loadError = useMemo((): Error | null => {
     const error = productsWithCountQuery.error;

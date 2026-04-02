@@ -2,7 +2,10 @@
 
 import { Badge, Button, FormSection } from '@/shared/ui';
 import { formatTimestamp } from '../filemaker-page-utils';
-import { getRunActions } from '../AdminFilemakerCampaignEditPage.utils';
+import {
+  getRunActions,
+  type FilemakerCampaignRunActionId,
+} from '../AdminFilemakerCampaignEditPage.utils';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type {
   FilemakerEmailCampaignAnalytics,
@@ -12,7 +15,7 @@ import type {
 import type {
   FilemakerEmailCampaignRun,
   FilemakerEmailCampaignDelivery,
-  FilemakerEmailCampaignRunStatus,
+  FilemakerEmailCampaignDeliveryAttemptRegistry,
   FilemakerEmailCampaignDeliveryRegistry,
 } from '@/shared/contracts/filemaker';
 
@@ -161,6 +164,7 @@ export const CampaignAnalyticsSection = ({ analytics }: CampaignAnalyticsSection
 interface RecentRunsSectionProps {
   recentRuns: FilemakerEmailCampaignRun[];
   deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+  attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
   getFilemakerEmailCampaignDeliveriesForRun: (
     registry: FilemakerEmailCampaignDeliveryRegistry,
     runId: string
@@ -168,7 +172,8 @@ interface RecentRunsSectionProps {
   summarizeFilemakerEmailCampaignRunDeliveries: (
     deliveries: FilemakerEmailCampaignDelivery[]
   ) => FilemakerEmailCampaignRunMetrics;
-  handleRunStatusChange: (runId: string, nextStatus: FilemakerEmailCampaignRunStatus) => Promise<void>;
+  handleRunAction: (runId: string, action: FilemakerCampaignRunActionId) => Promise<boolean>;
+  isRunActionPending: (runId: string, action?: FilemakerCampaignRunActionId) => boolean;
   isUpdatePending: boolean;
   router: AppRouterInstance;
 }
@@ -176,9 +181,11 @@ interface RecentRunsSectionProps {
 export const RecentRunsSection = ({
   recentRuns,
   deliveryRegistry,
+  attemptRegistry,
   getFilemakerEmailCampaignDeliveriesForRun,
   summarizeFilemakerEmailCampaignRunDeliveries,
-  handleRunStatusChange,
+  handleRunAction,
+  isRunActionPending,
   isUpdatePending,
   router,
 }: RecentRunsSectionProps) => (
@@ -234,15 +241,19 @@ export const RecentRunsSection = ({
               >
                 Open Run Monitor
               </Button>
-              {getRunActions(run).map((action) => (
+              {getRunActions({
+                run,
+                deliveries: runDeliveries,
+                attemptRegistry,
+              }).map((action) => (
                 <Button
-                  key={`${run.id}-${action.nextStatus}`}
+                  key={`${run.id}-${action.action}`}
                   type='button'
                   size='sm'
                   variant='outline'
-                  disabled={isUpdatePending}
+                  disabled={isUpdatePending || isRunActionPending(run.id, action.action)}
                   onClick={(): void => {
-                    void handleRunStatusChange(run.id, action.nextStatus);
+                    void handleRunAction(run.id, action.action);
                   }}
                 >
                   {action.label}

@@ -80,6 +80,19 @@ const outputFileTracingExcludes = {
   ],
   '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
 };
+const watchIgnoredGlobs = [
+  '**/node_modules/**',
+  '**/.git/**',
+  '**/.next/**',
+  '**/.next-dev/**',
+  '**/public/uploads/**',
+  '**/tmp/**',
+  '**/test-results/**',
+  '**/playwright-debug/**',
+  '**/.playwright-cli/**',
+  '**/mongo/backups/**',
+  '**/docs/metrics/**',
+];
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -112,7 +125,7 @@ const nextConfig = {
   devIndicators: false,
   ...(isDev
     ? {
-        allowedDevOrigins: ['127.0.0.1', '::1', '[::1]'],
+        allowedDevOrigins: ['localhost', '127.0.0.1', '::1', '[::1]'],
       }
     : {}),
   // Keep dev artifacts separate from production builds to avoid lock/cache races
@@ -229,9 +242,16 @@ const nextConfig = {
 
     // Prevent webpack dev server from triggering HMR rebuilds when files are
     // written to public/uploads/ (e.g. batch screenshot captures).
+    const existingWatchIgnored = config.watchOptions?.ignored;
+    const normalizedWatchIgnored = Array.isArray(existingWatchIgnored)
+      ? existingWatchIgnored
+      : existingWatchIgnored
+        ? [existingWatchIgnored]
+        : [];
+
     config.watchOptions = {
       ...config.watchOptions,
-      ignored: ['**/node_modules/**', '**/.git/**', '**/public/uploads/**'],
+      ignored: Array.from(new Set([...normalizedWatchIgnored, ...watchIgnoredGlobs])),
     };
 
     config.resolve ??= {};

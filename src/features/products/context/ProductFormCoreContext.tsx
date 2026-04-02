@@ -107,6 +107,7 @@ export function ProductFormCoreProvider({
       sku: resolveProductFormDefaultSku({ product, draft, initialSku }),
       defaultPriceGroupId: product?.defaultPriceGroupId ?? draft?.defaultPriceGroupId ?? undefined,
       baseProductId: product?.baseProductId ?? draft?.baseProductId ?? undefined,
+      importSource: product?.importSource ?? draft?.importSource ?? undefined,
       ean: product?.ean || draft?.ean || '',
       gtin: product?.gtin || draft?.gtin || '',
       asin: product?.asin || draft?.asin || '',

@@ -66,13 +66,13 @@ export const renderHomeRoute = async ({
     getSlugsForDomain(domain.id, cmsRepository, resolvedLocale ? { locale: resolvedLocale } : undefined)
   );
 
-  const content = (
-    <HomeContent
-      domainId={domain.id}
-      slugs={slugs}
-      withTiming={withTiming}
-      locale={resolvedLocale}
-    />
+  const content = await withTiming('homeContent', () =>
+    HomeContent({
+      domainId: domain.id,
+      slugs,
+      withTiming,
+      locale: resolvedLocale,
+    })
   );
 
   await flush();

@@ -8,12 +8,12 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-01T10:48:25.304Z
+Generated at: 2026-04-01T22:10:10.340Z
 
 ## Snapshot
 
-- Source files: 9007
-- Source lines: 1503997
+- Source files: 9028
+- Source lines: 1506103
 - use client files: 1673
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
@@ -25,8 +25,8 @@ Generated at: 2026-04-01T10:48:25.304Z
 - Cross-feature dependency pairs: 0
 - Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 451
-- Prop-drilling chains (depth >= 4): 116
+- Prop-drilling chains (depth >= 3): 322
+- Prop-drilling chains (depth >= 4): 95
 
 ## Top API Hotspots (by LOC)
 
@@ -60,9 +60,9 @@ Generated at: 2026-04-01T10:48:25.304Z
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
+| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 989 |
 | `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 986 |
 | `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx` | 982 |
-| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 982 |
 | `src/features/kangur/ui/services/geometry-drawing.ts` | 981 |
 | `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 977 |
 | `src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx` | 976 |

@@ -15,25 +15,31 @@ const {
   createAddonMutateAsyncMock,
   batchCaptureMutateAsyncMock,
   startBatchCaptureMutateAsyncMock,
-  useBatchCaptureJobsQueryMock,
   fetchBatchCaptureJobMock,
   logKangurClientErrorMock,
   trackKangurClientEventMock,
   captureExceptionMock,
   settingsStoreGetMock,
   storefrontAppearanceModeRef,
+  invalidateQueriesMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   createAddonMutateAsyncMock: vi.fn(),
   batchCaptureMutateAsyncMock: vi.fn(),
   startBatchCaptureMutateAsyncMock: vi.fn(),
-  useBatchCaptureJobsQueryMock: vi.fn(),
   fetchBatchCaptureJobMock: vi.fn(),
   logKangurClientErrorMock: vi.fn(),
   trackKangurClientEventMock: vi.fn(),
   captureExceptionMock: vi.fn(),
   settingsStoreGetMock: vi.fn<(key: string) => string | undefined>(),
   storefrontAppearanceModeRef: { current: null as string | null },
+  invalidateQueriesMock: vi.fn(),
+}));
+
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({
+    invalidateQueries: (...args: unknown[]) => invalidateQueriesMock(...args),
+  }),
 }));
 
 vi.mock('@/features/kangur/shared/ui', () => ({
@@ -57,8 +63,6 @@ vi.mock('@/features/kangur/social/hooks/useKangurSocialImageAddons', () => ({
   useStartBatchCaptureKangurSocialImageAddons: () => ({
     mutateAsync: startBatchCaptureMutateAsyncMock,
   }),
-  useKangurSocialImageAddonsBatchJobs: (...args: unknown[]) =>
-    useBatchCaptureJobsQueryMock(...args),
   fetchKangurSocialImageAddonsBatchJob: (...args: unknown[]) => fetchBatchCaptureJobMock(...args),
 }));
 
@@ -107,11 +111,6 @@ describe('useSocialImageAddons', () => {
       error: null,
       createdAt: '2026-03-29T10:00:00.000Z',
       updatedAt: '2026-03-29T10:00:00.000Z',
-    });
-    useBatchCaptureJobsQueryMock.mockReturnValue({
-      data: [],
-      isLoading: false,
-      refetch: vi.fn(),
     });
     fetchBatchCaptureJobMock.mockResolvedValue(null);
     settingsStoreGetMock.mockReturnValue('default');
@@ -579,44 +578,6 @@ describe('useSocialImageAddons', () => {
   });
 
   it('retries only failed presets from a stored capture run', async () => {
-    const refetchMock = vi.fn();
-    useBatchCaptureJobsQueryMock.mockReturnValue({
-      data: [
-        {
-          id: 'job-history-1',
-          runId: 'run-history-1',
-          status: 'completed',
-          request: {
-            baseUrl: 'https://retry.example.com',
-            presetIds: ['game', 'lessons'],
-            presetLimit: null,
-            appearanceMode: 'default',
-            playwrightPersonaId: null,
-            playwrightScript: null,
-            playwrightRoutes: [],
-          },
-          progress: {
-            processedCount: 2,
-            completedCount: 1,
-            failureCount: 1,
-            remainingCount: 0,
-            totalCount: 2,
-          },
-          result: {
-            addons: [{ id: 'addon-1', title: 'Addon 1' }],
-            failures: [{ id: 'lessons', reason: 'Timeout' }],
-            usedPresetCount: 2,
-            usedPresetIds: ['game', 'lessons'],
-            runId: 'run-history-1',
-          },
-          error: null,
-          createdAt: '2026-03-29T10:00:00.000Z',
-          updatedAt: '2026-03-29T10:00:01.000Z',
-        },
-      ],
-      isLoading: false,
-      refetch: refetchMock,
-    });
     fetchBatchCaptureJobMock.mockResolvedValueOnce({
       id: 'job-1',
       runId: 'run-1',
@@ -695,7 +656,9 @@ describe('useSocialImageAddons', () => {
       presetLimit: null,
       appearanceMode: 'default',
     });
-    expect(refetchMock).toHaveBeenCalled();
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ['kangur', 'social-image-addon-batch-jobs'],
+    });
     expect(result.current.batchCaptureMessage).toBe(
       'Captured 1 add-on from the current batch.'
     );

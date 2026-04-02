@@ -15,14 +15,12 @@ import {
   KANGUR_SEGMENTED_CONTROL_CLASSNAME,
   KANGUR_STEP_PILL_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import type { KangurMiniGameBinaryFeedbackState, KangurRewardBreakdownEntry } from '@/features/kangur/ui/types';
 import { cn } from '@/features/kangur/shared/utils';
 
 import { translateClockTrainingWithFallback } from './clock-training-i18n';
 import { ClockTrainingSummary } from '../clock-training/ClockTrainingSummary';
 import { KANGUR_CLOCK_THEME_COLORS } from '../clock-theme';
 import type {
-  ClockChallengeMedal,
   ClockGameMode,
   ClockTask,
   ClockTrainingTaskPoolId,
@@ -31,13 +29,7 @@ import { CHALLENGE_TIME_LIMIT_SECONDS, buildClockTaskPrompt, pad, taskToKey } fr
 import { getClockTrainingSectionContent } from './clock-training-data';
 import { DraggableClock } from '../clock-training/DraggableClock';
 import { useClockTrainingContext } from './ClockTraining.context';
-
-type ClockFeedback = {
-  kind: KangurMiniGameBinaryFeedbackState;
-  title: string;
-  details: string;
-  tone?: 'near' | 'far';
-};
+import type { ClockFeedback } from '../clock-training/types';
 
 const resolveClockTrainingCurrentTaskNumber = (current: number, tasksCount: number): number =>
   Math.min(current + 1, tasksCount);
@@ -449,9 +441,8 @@ function ClockTrainingSummaryView(): React.JSX.Element {
     tasks,
     xpBreakdown,
     xpEarned,
-  } = state;
-  const { onFinish, resetSession } = actions;
-
+    } = state;
+    const { onFinish, resetSession } = actions;
   return (
     <ClockTrainingSummary
       score={score}
@@ -480,6 +471,7 @@ function ClockTrainingActiveView(): React.JSX.Element {
     gameMode,
     isCoarsePointer,
     retryAddedCount,
+    section,
     submitNextStep,
     task,
     tasks,
@@ -518,13 +510,15 @@ function ClockTrainingActiveView(): React.JSX.Element {
         tasks={tasks}
         translations={translations}
       />
-      <ClockTrainingPromptPanel
-        section={section}
-        showTaskTitle={showTaskTitle ?? true}
-        task={task}
-        trainingSectionContent={trainingSectionContent}
-        translations={translations}
-      />
+      {task && (
+        <ClockTrainingPromptPanel
+          section={section}
+          showTaskTitle={showTaskTitle ?? true}
+          task={task}
+          trainingSectionContent={trainingSectionContent}
+          translations={translations}
+        />
+      )}
       <ClockTrainingTouchHintSlot
         isCoarsePointer={isCoarsePointer}
         translations={translations}
@@ -550,29 +544,12 @@ function ClockTrainingActiveView(): React.JSX.Element {
 }
 
 export function ClockTrainingGameView(): React.JSX.Element {
-  const { state, actions } = useClockTrainingContext();
+  const { state } = useClockTrainingContext();
   const {
-    challengeBestStreak,
-    challengeMedal,
-    challengeTimeLeft,
-    current,
     done,
-    feedback,
     gameMode,
-    isCoarsePointer,
-    resolvedCompletionPrimaryActionLabel,
-    retryAddedCount,
-    score,
     showStandalonePracticeSummary,
-    submitNextStep,
-    task,
-    tasks,
-    trainingSectionContent,
-    translations,
-    xpBreakdown,
-    xpEarned,
   } = state;
-  const { onFinish, resetSession, handleSubmit } = actions;
 
   if (shouldShowClockTrainingSummary({ done, gameMode, showStandalonePracticeSummary })) {
     return (

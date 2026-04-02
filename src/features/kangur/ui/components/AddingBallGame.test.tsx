@@ -97,7 +97,7 @@ describe('AddingBallGame', () => {
     const firstBallFace = screen
       .getAllByLabelText('Piłka: 1')[0]
       ?.querySelector('div.rounded-full');
-    expect(firstBallFace?.getAttribute('style')).toContain('radial-gradient');
-    expect(firstBallFace?.getAttribute('style')).toContain('box-shadow');
+    expect(firstBallFace).toHaveClass('bg-red-400');
+    expect(firstBallFace).not.toHaveAttribute('style');
   });
 });

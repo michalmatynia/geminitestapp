@@ -41,6 +41,7 @@ export {
 } from '@/server/queues/integrations';
 export { startKangurSocialSchedulerQueue } from '@/server/queues/kangur';
 export {
+  startFilemakerEmailCampaignSchedulerQueue,
   startFilemakerEmailCampaignQueue,
   stopFilemakerEmailCampaignQueue,
   enqueueFilemakerEmailCampaignRunJob,

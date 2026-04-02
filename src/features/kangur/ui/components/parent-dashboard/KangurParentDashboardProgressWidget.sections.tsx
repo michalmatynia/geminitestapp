@@ -31,14 +31,11 @@ import type {
   ProgressTranslations,
 } from './KangurParentDashboardProgressWidget.types';
 import type { resolveDailyQuestPresentation } from './KangurParentDashboardProgressWidget.utils';
+import { useProgressWidgetContext } from './ProgressWidget.context';
 
-export function KangurParentDashboardAnalyticsSection({
-  snapshot,
-  translations,
-}: {
-  snapshot: ParentDashboardProgressSnapshot;
-  translations: ProgressTranslations;
-}): React.JSX.Element {
+export function KangurParentDashboardAnalyticsSection(): React.JSX.Element {
+  const { snapshot, translations } = useProgressWidgetContext();
+
   return (
     <KangurSummaryPanel
       accent='indigo'
@@ -90,19 +87,15 @@ export function KangurParentDashboardAnalyticsSection({
   );
 }
 
-export function KangurParentDashboardWeeklyActivitySection({
-  isLoadingScores,
-  maxWeeklyGames,
-  scoresError,
-  snapshot,
-  translations,
-}: {
-  isLoadingScores: boolean;
-  maxWeeklyGames: number;
-  scoresError: ParentDashboardRuntimeState['scoresError'];
-  snapshot: ParentDashboardProgressSnapshot;
-  translations: ProgressTranslations;
-}): React.JSX.Element {
+export function KangurParentDashboardWeeklyActivitySection(): React.JSX.Element {
+  const {
+    isLoadingScores,
+    maxWeeklyGames,
+    scoresError,
+    snapshot,
+    translations,
+  } = useProgressWidgetContext();
+
   return (
     <KangurSummaryPanel
       accent='violet'
@@ -157,13 +150,9 @@ export function KangurParentDashboardWeeklyActivitySection({
   );
 }
 
-export function KangurParentDashboardOperationFocusSection({
-  topOperationPerformance,
-  translations,
-}: {
-  topOperationPerformance: ParentDashboardProgressSnapshot['operationPerformance'];
-  translations: ProgressTranslations;
-}): React.JSX.Element {
+export function KangurParentDashboardOperationFocusSection(): React.JSX.Element {
+  const { topOperationPerformance, translations } = useProgressWidgetContext();
+
   return (
     <KangurSummaryPanel
       accent='sky'
@@ -258,17 +247,14 @@ export function KangurParentDashboardMasteryLessonsColumn({
   );
 }
 
-export function KangurParentDashboardMasterySummarySection({
-  lessonMasteryInsights,
-  strongestLessons,
-  translations,
-  weakestLessons,
-}: {
-  lessonMasteryInsights: ParentDashboardLessonMasteryInsights;
-  strongestLessons: ParentDashboardLessonMasteryInsights['strongest'];
-  translations: ProgressTranslations;
-  weakestLessons: ParentDashboardLessonMasteryInsights['weakest'];
-}): React.JSX.Element {
+export function KangurParentDashboardMasterySummarySection(): React.JSX.Element {
+  const {
+    lessonMasteryInsights,
+    strongestLessons,
+    translations,
+    weakestLessons,
+  } = useProgressWidgetContext();
+
   return (
     <KangurSummaryPanel
       accent='amber'
@@ -319,17 +305,14 @@ export function KangurParentDashboardMasterySummarySection({
   );
 }
 
-export function KangurParentDashboardDailyQuestSection({
-  compactActionClassName,
-  dailyQuest,
-  dailyQuestPresentation,
-  translations,
-}: {
-  compactActionClassName: string;
-  dailyQuest: ParentDashboardDailyQuest;
-  dailyQuestPresentation: ReturnType<typeof resolveDailyQuestPresentation>;
-  translations: ProgressTranslations;
-}): React.JSX.Element | null {
+export function KangurParentDashboardDailyQuestSection(): React.JSX.Element | null {
+  const {
+    compactActionClassName,
+    dailyQuest,
+    dailyQuestPresentation,
+    translations,
+  } = useProgressWidgetContext();
+
   if (!dailyQuest) {
     return null;
   }
@@ -380,19 +363,15 @@ export function KangurParentDashboardDailyQuestSection({
   );
 }
 
-export function KangurParentDashboardOpenedTasksSection({
-  compactActionClassName,
-  formatTimestamp,
-  openedTasks,
-  taskKindLabels,
-  translations,
-}: {
-  compactActionClassName: string;
-  formatTimestamp: (value: string | null | undefined) => string;
-  openedTasks: NonNullable<ParentDashboardRuntimeState['progress']['openedTasks']>;
-  taskKindLabels: Record<string, string>;
-  translations: ProgressTranslations;
-}): React.JSX.Element {
+export function KangurParentDashboardOpenedTasksSection(): React.JSX.Element {
+  const {
+    compactActionClassName,
+    formatTimestamp,
+    openedTasks,
+    taskKindLabels,
+    translations,
+  } = useProgressWidgetContext();
+
   return (
     <KangurSummaryPanel
       accent='indigo'
@@ -443,43 +422,27 @@ export function KangurParentDashboardOpenedTasksSection({
   );
 }
 
-export function KangurParentDashboardAssignmentsSection({
-  activeAssignmentItems,
-  activeAssignmentsEmptyLabel,
-  activeAssignmentsErrorLabel,
-  assignmentsLoadingLabel,
-  archiveError,
-  assignments,
-  assignmentsError,
-  basePath,
-  handleArchiveAssignment,
-  isLoadingAssignments,
-  lessons,
-  preloadedUpdateAssignment,
-  recentAssignmentItems,
-  recentAssignmentsEmptyLabel,
-  recentAssignmentsSummary,
-  recentAssignmentsTitle,
-  translations,
-}: {
-  activeAssignmentItems: ReturnType<typeof buildKangurAssignmentListItems>;
-  activeAssignmentsEmptyLabel: string;
-  activeAssignmentsErrorLabel: string;
-  assignmentsLoadingLabel: string;
-  archiveError: string | null;
-  assignments: ParentDashboardRuntimeState['assignments'];
-  assignmentsError: ParentDashboardRuntimeState['assignmentsError'];
-  basePath: string;
-  handleArchiveAssignment: (assignmentId: string) => Promise<void>;
-  isLoadingAssignments: boolean;
-  lessons: ParentDashboardRuntimeState['lessons'];
-  preloadedUpdateAssignment: NonNullable<ParentDashboardRuntimeState['updateAssignment']>;
-  recentAssignmentItems: ReturnType<typeof buildKangurAssignmentListItems>;
-  recentAssignmentsEmptyLabel: string;
-  recentAssignmentsSummary: string;
-  recentAssignmentsTitle: string;
-  translations: ProgressTranslations;
-}): React.JSX.Element {
+export function KangurParentDashboardAssignmentsSection(): React.JSX.Element {
+  const {
+    activeAssignmentItems,
+    activeAssignmentsEmptyLabel,
+    activeAssignmentsErrorLabel,
+    assignmentsLoadingLabel,
+    archiveError,
+    assignments,
+    assignmentsError,
+    basePath,
+    handleArchiveAssignment,
+    isLoadingAssignments,
+    lessons,
+    updateAssignment: preloadedUpdateAssignment,
+    recentAssignmentItems,
+    recentAssignmentsEmptyLabel,
+    recentAssignmentsSummary,
+    recentAssignmentsTitle,
+    translations,
+  } = useProgressWidgetContext();
+
   if (isLoadingAssignments) {
     return (
       <KangurGlassPanel
@@ -562,15 +525,13 @@ export function KangurParentDashboardAssignmentsSection({
   );
 }
 
-export function KangurParentDashboardLessonProgressSection({
-  lessonPanelCards,
-  locale,
-  translations,
-}: {
-  lessonPanelCards: ParentDashboardLessonPanelCard[];
-  locale: string;
-  translations: ProgressTranslations;
-}): React.JSX.Element {
+export function KangurParentDashboardLessonProgressSection(): React.JSX.Element {
+  const {
+    lessonPanelCards,
+    locale,
+    translations,
+  } = useProgressWidgetContext();
+
   return (
     <KangurSummaryPanel
       accent='amber'

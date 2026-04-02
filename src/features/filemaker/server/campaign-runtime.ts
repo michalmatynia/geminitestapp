@@ -47,3 +47,9 @@ export const processFilemakerEmailCampaignRun = async (input: {
   runId: string;
   reason?: 'manual' | 'retry';
 }) => createFilemakerCampaignRuntimeService().processRun(input);
+
+export const cancelFilemakerEmailCampaignRun = async (input: {
+  runId: string;
+  actor?: string | null;
+  message?: string | null;
+}) => createFilemakerCampaignRuntimeService().cancelRun(input);

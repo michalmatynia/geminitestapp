@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { productParameterValueSchema, productSchema } from './product';
+import {
+  productImportSourceSchema,
+  productParameterValueSchema,
+  productSchema,
+} from './product';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 /**
@@ -91,6 +95,7 @@ const optionalParameterValuesFromFormSchema = z.preprocess((value: unknown): unk
 export const productCreateInputSchema = z.object({
   id: z.string().nullable().optional(),
   baseProductId: z.string().nullable().optional(),
+  importSource: productImportSourceSchema.nullable().optional(),
   defaultPriceGroupId: z.string().nullable().optional(),
   sku: z.preprocess(
     (value: unknown): unknown => (typeof value === 'string' ? value.trim() : value),

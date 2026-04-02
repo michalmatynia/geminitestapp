@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 
 import {
   buildCategoryNameById,
+  resolveCategoryLabelByLocale,
+  resolveCategoryRecordId,
   resolveProductCatalogId,
   resolveProductCategoryId,
 } from '@/features/products/hooks/product-list-state-utils';
@@ -22,16 +24,37 @@ export function useProductListCategories({
   data: ProductWithImages[];
   nameLocale?: string;
 }) {
+  const locale = (nameLocale ?? 'name_en') as 'name_en' | 'name_pl' | 'name_de';
+
+  const embeddedCategoryNameById = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    data.forEach((product: ProductWithImages) => {
+      const category = product.category;
+      if (!category || typeof category !== 'object' || Array.isArray(category)) return;
+
+      const categoryId = resolveCategoryRecordId(category);
+      if (!categoryId || map.has(categoryId)) return;
+
+      const label = resolveCategoryLabelByLocale(category, locale);
+      if (!label) return;
+
+      map.set(categoryId, label);
+    });
+    return map;
+  }, [data, locale]);
+
   const categoryLookupCatalogIds = useMemo((): string[] => {
     const ids = new Set<string>();
     data.forEach((product: ProductWithImages) => {
       const categoryId = resolveProductCategoryId(product);
+      if (!categoryId || embeddedCategoryNameById.has(categoryId)) return;
+
       const catalogId = resolveProductCatalogId(product);
-      if (!categoryId || !catalogId) return;
+      if (!catalogId) return;
       ids.add(catalogId);
     });
     return Array.from(ids).sort();
-  }, [data]);
+  }, [data, embeddedCategoryNameById]);
 
   const batchCategoryQueryKey = useMemo(
     () =>
@@ -71,10 +94,16 @@ export function useProductListCategories({
   });
 
   const categoryNameById = useMemo((): Map<string, string> => {
-    const locale = (nameLocale ?? 'name_en') as 'name_en' | 'name_pl' | 'name_de';
     const grouped = categoryBatchQuery.data ?? {};
-    return buildCategoryNameById(grouped, locale);
-  }, [categoryBatchQuery.data, nameLocale]);
+    const fetchedCategoryNameById = buildCategoryNameById(grouped, locale);
+    if (embeddedCategoryNameById.size === 0) return fetchedCategoryNameById;
+
+    const merged = new Map(fetchedCategoryNameById);
+    embeddedCategoryNameById.forEach((label: string, categoryId: string) => {
+      merged.set(categoryId, label);
+    });
+    return merged;
+  }, [categoryBatchQuery.data, embeddedCategoryNameById, locale]);
 
   return {
     categoryNameById,

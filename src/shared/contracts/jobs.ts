@@ -102,6 +102,12 @@ export const queueHealthStatusSchema = z.object({
   delayedCount: z.number().optional(),
   lastPollTime: z.number().optional(),
   timeSinceLastPoll: z.number().optional(),
+  activeProcessSummary: z
+    .object({
+      label: z.string(),
+      additionalRunningCount: z.number().nonnegative(),
+    })
+    .optional(),
 });
 
 export type QueueHealthStatusDto = z.infer<typeof queueHealthStatusSchema>;

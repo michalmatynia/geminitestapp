@@ -1,25 +1,34 @@
-'use client';
-
 import { FormField, Input } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
+import { useSocialPostContext } from '../SocialPostContext';
 
-export function SocialSettingsProjectTab({
-  projectUrl,
-  projectUrlError,
-  setProjectUrl,
-  isRuntimeLocked,
-}: {
-  projectUrl: string;
-  projectUrlError: string | null;
-  setProjectUrl: (val: string) => void;
-  isRuntimeLocked?: boolean;
-}) {
+const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
+  const normalized = status?.trim().toLowerCase();
+  if (!normalized) return false;
+  return normalized !== 'completed' && normalized !== 'failed';
+};
+
+export function SocialSettingsProjectTab() {
+  const {
+    projectUrl,
+    projectUrlError,
+    setProjectUrl,
+    currentGenerationJob,
+    currentPipelineJob,
+    currentVisualAnalysisJob,
+  } = useSocialPostContext();
+
+  const isRuntimeLocked =
+    isSocialRuntimeJobInFlight(currentVisualAnalysisJob?.status) ||
+    isSocialRuntimeJobInFlight(currentGenerationJob?.status) ||
+    isSocialRuntimeJobInFlight(currentPipelineJob?.status);
+
   return (
     <KangurAdminCard>
       <FormField
         label='Project URL'
         description='Used for all links and redirects in generated social posts. Localhost and loopback URLs are rejected.'
-        error={projectUrlError}
+        error={projectUrlError ?? null}
       >
         <Input
           type='url'

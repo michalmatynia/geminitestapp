@@ -162,13 +162,13 @@ describe('ProductListPanel layout contract', () => {
     });
   });
 
-  it('pins the current panel spacing and keeps the desktop table non-virtualized', async () => {
+  it('pins the current panel spacing and enables the desktop table virtualization path', async () => {
     render(<ProductListPanel />);
 
     const panelProps = standardDataTablePanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(panelProps.variant).toBe('flat');
     expect(panelProps.className).toBe('[&>div:first-child]:mb-3');
-    expect(panelProps.enableVirtualization).toBe(false);
+    expect(panelProps.enableVirtualization).toBe(true);
 
     const desktopTableWrapper = screen.getByTestId('desktop-data-table').parentElement;
     if (!desktopTableWrapper) {
@@ -185,7 +185,7 @@ describe('ProductListPanel layout contract', () => {
     await waitFor(() => {
       const dataTableProps = dataTableMock.mock.lastCall?.[0] as Record<string, unknown>;
       expect(dataTableProps.maxHeight).toBe(436);
-      expect(dataTableProps.enableVirtualization).toBe(false);
+      expect(dataTableProps.enableVirtualization).toBe(true);
       expect(dataTableProps.tableLayout).toBe('fixed');
     });
   });

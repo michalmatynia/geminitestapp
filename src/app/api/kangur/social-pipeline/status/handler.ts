@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { Queue } from 'bullmq';
+import type { Job, Queue } from 'bullmq';
 
 import {
   getKangurSocialPipelineQueue,
@@ -49,6 +49,52 @@ export async function GET_handler(
     isPaused = await rawQueue.isPaused();
   }
 
+  const resolveProcessLabel = (jobType: unknown): string | null => {
+    switch (jobType) {
+      case 'manual-post-pipeline':
+        return 'Full pipeline';
+      case 'manual-post-visual-analysis':
+        return 'Image analysis';
+      case 'manual-post-generation':
+        return 'Generate post';
+      default:
+        return null;
+    }
+  };
+
+  const resolveActiveProcessSummary = async (): Promise<
+    | {
+        label: string;
+        additionalRunningCount: number;
+      }
+    | undefined
+  > => {
+    if (!rawQueue || (status.activeCount ?? 0) <= 0) {
+      return undefined;
+    }
+
+    try {
+      const activeJobs: Job[] = await rawQueue.getJobs(['active'], 0, 4);
+      const firstActiveJob = activeJobs[0];
+      const label = resolveProcessLabel(
+        firstActiveJob && typeof firstActiveJob.data === 'object' && firstActiveJob.data
+          ? (firstActiveJob.data as { type?: unknown }).type
+          : null
+      );
+
+      if (!label) {
+        return undefined;
+      }
+
+      return {
+        label,
+        additionalRunningCount: Math.max(0, (status.activeCount ?? 0) - 1),
+      };
+    } catch {
+      return undefined;
+    }
+  };
+
   const effectiveWorkerState = isPaused
     ? 'paused'
     : hasFreshWorkerHeartbeat && status.workerState === 'offline'
@@ -67,6 +113,7 @@ export async function GET_handler(
     effectiveWorkerState === 'running' ||
     effectiveWorkerState === 'idle' ||
     effectiveWorkerState === 'paused';
+  const activeProcessSummary = await resolveActiveProcessSummary();
 
   return NextResponse.json(
     {
@@ -82,6 +129,7 @@ export async function GET_handler(
       healthy: effectiveHealthy,
       isPaused,
       repeatEveryMs: KANGUR_SOCIAL_PIPELINE_REPEAT_EVERY_MS,
+      activeProcessSummary,
     },
     { headers: { 'Cache-Control': 'no-store' } }
   );

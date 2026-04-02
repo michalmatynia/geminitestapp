@@ -23,10 +23,9 @@ import {
   KANGUR_MUSIC_SYNTH_WAVEFORMS,
 } from './music-theory';
 import type { KangurMusicSynthEnvelope } from './useKangurMusicSynth';
-import {
-  KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME,
-} from './KangurMusicPianoRoll.utils';
+import { KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME } from './KangurMusicPianoRoll.utils';
 import { KangurMusicWaveformIcon } from './music-waveform-icons';
+import { useKangurMusicPianoRollContext } from './KangurMusicPianoRoll.context';
 
 type SynthEnvelopeControlId = 'attackMs' | 'decayMs' | 'sustainLevel' | 'releaseMs';
 
@@ -39,39 +38,6 @@ type SynthEnvelopeControl = {
   testIdSuffix: 'attack' | 'decay' | 'sustain' | 'release';
   value: number;
   valueLabel: string;
-};
-
-type KangurMusicPianoRollControlsProps = {
-  activeOscTab: 'osc1' | 'osc2';
-  isCompactMobile: boolean;
-  isSixYearOldVisualMode: boolean;
-  isSynthEnvelopeDialogOpen: boolean;
-  isSynthOscPanelOpen: boolean;
-  resolvedKeyboardMode: KangurMusicKeyboardMode;
-  resolvedOsc1Config: KangurMusicSynthOsc1Config;
-  resolvedOsc2Config: KangurMusicSynthOsc2Config;
-  resolvedSynthEnvelope: KangurMusicSynthEnvelope;
-  resolvedSynthGlideMode: KangurMusicSynthGlideMode;
-  resolvedSynthWaveform: KangurMusicSynthWaveform;
-  showKeyboardModeSwitch: boolean;
-  showSynthEnvelopeButton: boolean;
-  showSynthGlideModeSwitch: boolean;
-  showSynthOscSettingsPanel: boolean;
-  showSynthWaveformSwitch: boolean;
-  stepTestIdPrefix: string;
-  onActiveOscTabChange: (tab: 'osc1' | 'osc2') => void;
-  onKeyboardModeChange: (mode: KangurMusicKeyboardMode) => void;
-  onOpenSynthEnvelopeDialog: () => void;
-  onCloseSynthEnvelopeDialog: () => void;
-  onSynthEnvelopeReset: () => void;
-  onSynthEnvelopeSliderChange: (controlId: SynthEnvelopeControlId, nextValue: number) => void;
-  onSynthGlideModeChange: (glideMode: KangurMusicSynthGlideMode) => void;
-  onSynthOscPanelToggle: () => void;
-  onSynthOscSettingsChange: (
-    nextOsc1: KangurMusicSynthOsc1Config,
-    nextOsc2: KangurMusicSynthOsc2Config
-  ) => void;
-  onSynthWaveformChange: (waveform: KangurMusicSynthWaveform) => void;
 };
 
 const renderMusicKeyboardModeCue = ({
@@ -116,35 +82,37 @@ const renderMusicGlideModeCue = ({
   />
 );
 
-export function KangurMusicPianoRollControls({
-  activeOscTab,
-  isCompactMobile,
-  isSixYearOldVisualMode,
-  isSynthEnvelopeDialogOpen,
-  isSynthOscPanelOpen,
-  resolvedKeyboardMode,
-  resolvedOsc1Config,
-  resolvedOsc2Config,
-  resolvedSynthEnvelope,
-  resolvedSynthGlideMode,
-  resolvedSynthWaveform,
-  showKeyboardModeSwitch,
-  showSynthEnvelopeButton,
-  showSynthGlideModeSwitch,
-  showSynthOscSettingsPanel,
-  showSynthWaveformSwitch,
-  stepTestIdPrefix,
-  onActiveOscTabChange,
-  onKeyboardModeChange,
-  onOpenSynthEnvelopeDialog,
-  onCloseSynthEnvelopeDialog,
-  onSynthEnvelopeReset,
-  onSynthEnvelopeSliderChange,
-  onSynthGlideModeChange,
-  onSynthOscPanelToggle,
-  onSynthOscSettingsChange,
-  onSynthWaveformChange,
-}: KangurMusicPianoRollControlsProps): React.JSX.Element {
+export function KangurMusicPianoRollControls(): React.JSX.Element {
+  const {
+    activeOscTab,
+    isCompactMobile,
+    isSixYearOldVisualMode,
+    isSynthEnvelopeDialogOpen,
+    isSynthOscPanelOpen,
+    resolvedKeyboardMode,
+    resolvedOsc1Config,
+    resolvedOsc2Config,
+    resolvedSynthEnvelope,
+    resolvedSynthGlideMode,
+    resolvedSynthWaveform,
+    showKeyboardModeSwitch,
+    showSynthEnvelopeButton,
+    showSynthGlideModeSwitch,
+    showSynthOscSettingsPanel,
+    showSynthWaveformSwitch,
+    stepTestIdPrefix,
+    onActiveOscTabChange,
+    onKeyboardModeChange,
+    onOpenSynthEnvelopeDialog,
+    onCloseSynthEnvelopeDialog,
+    onSynthEnvelopeReset,
+    onSynthEnvelopeSliderChange,
+    onSynthGlideModeChange,
+    onSynthOscPanelToggle,
+    onSynthOscSettingsChange,
+    onSynthWaveformChange,
+  } = useKangurMusicPianoRollContext();
+
   const adsrTranslations = useTranslations('KangurMiniGames.musicPianoRoll.adsr');
   const keyboardModePianoTestId = `${stepTestIdPrefix}-keyboard-mode-piano`;
   const synthEnvelopeDialogContentProps = {

@@ -5,6 +5,7 @@ import { cache } from 'react';
 
 import {
   CMS_THEME_SETTINGS_KEY,
+  DEFAULT_THEME,
   normalizeThemeSettings,
   type ThemeSettings,
 } from '@/shared/contracts/cms-theme';
@@ -22,6 +23,46 @@ type CmsThemeSettingsCacheEntry = {
 
 let cmsThemeSettingsCacheEntry: CmsThemeSettingsCacheEntry | null = null;
 let cmsThemeSettingsInFlight: Promise<ThemeSettings> | null = null;
+
+const parseEnvNumber = (value: string | undefined): number | null => {
+  if (typeof value !== 'string') return null;
+  const parsed = Number(value.trim());
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const getCmsThemeSettingsReadTimeoutMs = (env: NodeJS.ProcessEnv = process.env): number | null => {
+  const explicit = parseEnvNumber(env['CMS_THEME_SETTINGS_READ_TIMEOUT_MS']);
+  if (explicit !== null) {
+    return explicit > 0 ? explicit : null;
+  }
+
+  return env['NODE_ENV'] === 'development' ? 150 : null;
+};
+
+const awaitThemeSettingsWithinTimeout = async (
+  promise: Promise<ThemeSettings>,
+  timeoutMs: number | null,
+  fallbackValue: ThemeSettings
+): Promise<ThemeSettings> => {
+  if (timeoutMs === null) {
+    return await promise;
+  }
+
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<ThemeSettings>((resolve) => {
+        timeoutHandle = setTimeout(() => resolve(fallbackValue), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutHandle !== null) {
+      clearTimeout(timeoutHandle);
+    }
+  }
+};
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -72,9 +113,17 @@ const getCmsThemeSettingsHotCached = async (): Promise<ThemeSettings> => {
       cmsThemeSettingsInFlight = null;
     });
 
-  return cmsThemeSettingsInFlight;
+  return await awaitThemeSettingsWithinTimeout(
+    cmsThemeSettingsInFlight,
+    getCmsThemeSettingsReadTimeoutMs(),
+    cmsThemeSettingsCacheEntry?.value ?? DEFAULT_THEME
+  );
 };
 
 export const getCmsThemeSettings = cache(async (): Promise<ThemeSettings> => {
   return await getCmsThemeSettingsHotCached();
 });
+
+export const __testOnly = {
+  getCmsThemeSettingsReadTimeoutMs,
+};

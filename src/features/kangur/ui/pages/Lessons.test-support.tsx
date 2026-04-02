@@ -378,6 +378,9 @@ vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
       </div>
     );
   },
+  prefetchActiveLessonView: () => {
+    // Mock prefetch function
+  },
 }));
 
 vi.mock('@/features/kangur/ui/pages/lessons/LazyLessonsDeferredEnhancements', () => ({

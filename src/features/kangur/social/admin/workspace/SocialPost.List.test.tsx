@@ -3,11 +3,13 @@
  */
 
 import React from 'react';
+import { act } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useSocialPostContextMock } = vi.hoisted(() => ({
+const { useSocialPostContextMock, useKangurSocialPostsPageMock } = vi.hoisted(() => ({
   useSocialPostContextMock: vi.fn(),
+  useKangurSocialPostsPageMock: vi.fn(),
 }));
 
 type ListPanelMockProps = {
@@ -109,6 +111,10 @@ vi.mock('./SocialPostContext', () => ({
   useSocialPostContext: () => useSocialPostContextMock(),
 }));
 
+vi.mock('@/features/kangur/social/hooks/useKangurSocialPosts', () => ({
+  useKangurSocialPostsPage: (options: unknown) => useKangurSocialPostsPageMock(options),
+}));
+
 import { SocialPostList } from './SocialPost.List';
 
 const buildPost = () => ({
@@ -145,7 +151,79 @@ const buildPost = () => ({
   updatedAt: '2026-03-19T10:00:00.000Z',
 });
 
+const resolveListStatus = (post: ReturnType<typeof buildPost>): string =>
+  post.status === 'published' || post.publishedAt || post.linkedinPostId || post.linkedinUrl
+    ? 'published'
+    : post.status;
+
+const buildSearchText = (post: ReturnType<typeof buildPost>): string =>
+  [
+    post.titlePl,
+    post.titleEn,
+    post.bodyPl,
+    post.bodyEn,
+    post.combinedBody,
+    post.visualSummary,
+    ...(post.visualHighlights ?? []),
+    post.visualAnalysisModelId,
+    post.visualAnalysisJobId,
+    post.visualAnalysisError,
+    post.linkedinPostId,
+    post.linkedinUrl,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
 describe('SocialPostList', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    useKangurSocialPostsPageMock.mockImplementation(
+      (options: {
+        page: number;
+        pageSize: number;
+        search?: string;
+        status?: string;
+      }) => {
+        const latestContext =
+          useSocialPostContextMock.mock.results.at(-1)?.value ?? useSocialPostContextMock();
+        const allPosts = Array.isArray(latestContext.posts) ? latestContext.posts : [];
+        const normalizedSearch = options.search?.trim().toLowerCase() ?? '';
+        const searchFilteredPosts = normalizedSearch
+          ? allPosts.filter((post) => buildSearchText(post).includes(normalizedSearch))
+          : allPosts;
+        const statusCounts = {
+          draft: searchFilteredPosts.filter((post) => resolveListStatus(post) === 'draft').length,
+          scheduled: searchFilteredPosts.filter((post) => resolveListStatus(post) === 'scheduled')
+            .length,
+          published: searchFilteredPosts.filter((post) => resolveListStatus(post) === 'published')
+            .length,
+          failed: searchFilteredPosts.filter((post) => resolveListStatus(post) === 'failed').length,
+        };
+        const filteredPosts =
+          options.status && options.status !== 'all'
+            ? searchFilteredPosts.filter((post) => resolveListStatus(post) === options.status)
+            : searchFilteredPosts;
+        const startIndex = (options.page - 1) * options.pageSize;
+
+        return {
+          data: {
+            posts: filteredPosts.slice(startIndex, startIndex + options.pageSize),
+            total: filteredPosts.length,
+            page: options.page,
+            pageSize: options.pageSize,
+            statusCounts,
+          },
+          isLoading: Boolean(latestContext.postsQuery?.isLoading),
+        };
+      }
+    );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('supports search, status filtering, and pagination for larger post sets', () => {
     const posts = Array.from({ length: 9 }, (_, index) => ({
       ...buildPost(),
@@ -171,6 +249,9 @@ describe('SocialPostList', () => {
 
     fireEvent.change(screen.getByLabelText('Search social posts'), {
       target: { value: 'roadmap' },
+    });
+    act(() => {
+      vi.advanceTimersByTime(250);
     });
 
     expect(screen.getByText('Published roadmap highlight')).toBeInTheDocument();
@@ -225,12 +306,18 @@ describe('SocialPostList', () => {
     fireEvent.change(screen.getByLabelText('Search social posts'), {
       target: { value: 'teacher illustration is more central' },
     });
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
 
     expect(screen.getByText('Visual refresh')).toBeInTheDocument();
     expect(screen.queryByText('Plain draft')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Search social posts'), {
       target: { value: 'larger CTA card' },
+    });
+    act(() => {
+      vi.advanceTimersByTime(250);
     });
 
     expect(screen.getByText('Visual refresh')).toBeInTheDocument();
@@ -296,6 +383,9 @@ describe('SocialPostList', () => {
 
     fireEvent.change(screen.getByLabelText('Search social posts'), {
       target: { value: 'selected screenshots could not be loaded' },
+    });
+    act(() => {
+      vi.advanceTimersByTime(250);
     });
 
     expect(screen.getByText('Failed visual analysis')).toBeInTheDocument();

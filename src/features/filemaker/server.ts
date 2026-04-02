@@ -1,6 +1,8 @@
 export * from './server/filemaker-mail-service';
 export * from './server/filemaker-mail-access';
 export * from './server/campaign-runtime';
+export * from './server/filemakerEmailCampaignScheduler';
+export * from './server/filemaker-email-campaign-test-send';
 export {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,

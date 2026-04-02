@@ -29,6 +29,7 @@ import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import {
   getProductDisplayName,
   getProductListDisplayName,
+  hasImportedProductOrigin,
   getImageFilepath,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
@@ -399,7 +400,7 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
 
   const nameKey = rowVisuals.productNameKey ?? 'name_en';
   const nameValue = getProductListDisplayName(product, nameKey);
-  const isImported: boolean = Boolean(product.baseProductId?.trim());
+  const isImported = hasImportedProductOrigin(product);
   const skuLabel = product.sku?.trim() || 'No SKU';
   const categoryLabel = resolveProductCategoryLabel(product, rowVisuals.categoryNameById, nameKey);
   const thumbnailUrl = resolveThumbnailUrl(

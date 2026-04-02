@@ -26,6 +26,10 @@ import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 export { productMetadataKeys };
 
+export type ProductMetadataQueryOptions = {
+  enabled?: boolean;
+};
+
 const STABLE_METADATA_STALE_MS = 10 * 60 * 1_000;
 const STABLE_METADATA_QUERY_OPTIONS = {
   staleTime: STABLE_METADATA_STALE_MS,
@@ -53,12 +57,13 @@ const flattenCategoryTree = (
   return flattened;
 };
 
-export function useCatalogs(): ListQuery<CatalogRecord> {
+export function useCatalogs(options?: ProductMetadataQueryOptions): ListQuery<CatalogRecord> {
   const queryKey = productMetadataKeys.catalogs();
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<CatalogRecord[]> =>
       await api.get<CatalogRecord[]>('/api/v2/products/entities/catalogs'),
+    enabled: options?.enabled ?? true,
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useCatalogs',
@@ -71,7 +76,10 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
   });
 }
 
-export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
+export function useCategories(
+  catalogId?: string,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCategory> {
   const queryKey = productMetadataKeys.categories(catalogId ?? null);
   return createListQueryV2({
     queryKey,
@@ -82,7 +90,7 @@ export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
       );
       return flattenCategoryTree(tree);
     },
-    enabled: Boolean(catalogId),
+    enabled: Boolean(catalogId) && (options?.enabled ?? true),
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useMetadataCategories',
@@ -95,7 +103,10 @@ export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
   });
 }
 
-export function useTags(catalogId?: string): ListQuery<ProductTag> {
+export function useTags(
+  catalogId?: string,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductTag> {
   const queryKey = productMetadataKeys.tags(catalogId ?? null);
   return createListQueryV2({
     queryKey,
@@ -105,7 +116,7 @@ export function useTags(catalogId?: string): ListQuery<ProductTag> {
         `/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`
       );
     },
-    enabled: Boolean(catalogId),
+    enabled: Boolean(catalogId) && (options?.enabled ?? true),
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useMetadataTags',
@@ -118,7 +129,10 @@ export function useTags(catalogId?: string): ListQuery<ProductTag> {
   });
 }
 
-export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>[] {
+export function useMultiTags(
+  catalogIds: string[],
+  options?: ProductMetadataQueryOptions
+): UseQueryResult<ProductTag[]>[] {
   return createMultiQueryV2({
     queries: catalogIds.map((catalogId) => {
       const queryKey = normalizeQueryKey(productMetadataKeys.tags(catalogId));
@@ -128,6 +142,7 @@ export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>
           await api.get<ProductTag[]>(
             `/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`
           ),
+        enabled: options?.enabled ?? true,
         ...STABLE_METADATA_QUERY_OPTIONS,
         meta: {
           source: 'products.hooks.useMultiTags',
@@ -143,12 +158,13 @@ export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>
   });
 }
 
-export function useProducers(): ListQuery<Producer> {
+export function useProducers(options?: ProductMetadataQueryOptions): ListQuery<Producer> {
   const queryKey = productMetadataKeys.producers();
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<Producer[]> =>
       await api.get<Producer[]>('/api/v2/products/producers'),
+    enabled: options?.enabled ?? true,
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useProducers',

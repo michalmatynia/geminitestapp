@@ -14,6 +14,7 @@ export {
   applyAiPathsSettingsMaintenance,
   deleteAiPathsSettings,
   getAiPathsSetting,
+  getAiPathsSettings,
   inspectAiPathsSettingsMaintenance,
   listAiPathsSettings,
   upsertAiPathsSetting,
@@ -22,6 +23,7 @@ export {
 export { AI_PATHS_MAINTENANCE_ACTION_IDS } from './server/settings-store.constants';
 export { enqueuePathRun } from './services/path-run-enqueue-service';
 export {
+  cancelPathRun,
   cancelPathRunWithRepository,
   deletePathRunWithRepository,
   deletePathRunsWithRepository,

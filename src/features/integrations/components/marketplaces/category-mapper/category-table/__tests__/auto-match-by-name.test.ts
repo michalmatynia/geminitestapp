@@ -96,6 +96,49 @@ describe('autoMatchCategoryMappingsByName', () => {
     });
   });
 
+  it('uses the full marketplace path to disambiguate duplicate leaf names', () => {
+    const result = autoMatchCategoryMappingsByName({
+      externalCategories: [
+        createExternalCategory({
+          id: 'ext-pins-collectibles',
+          name: 'Pins',
+          path: 'Collectibles > Pins',
+        }),
+        createExternalCategory({
+          id: 'ext-pins-fashion',
+          name: 'Pins',
+          path: 'Fashion > Pins',
+        }),
+      ],
+      internalCategories: [
+        createInternalCategory({ id: 'int-collectibles', name: 'Collectibles', parentId: null }),
+        createInternalCategory({ id: 'int-fashion', name: 'Fashion', parentId: null }),
+        createInternalCategory({ id: 'int-pins-collectibles', name: 'Pins', parentId: 'int-collectibles' }),
+        createInternalCategory({ id: 'int-pins-fashion', name: 'Pins', parentId: 'int-fashion' }),
+      ],
+      pendingMappings: new Map(),
+      getCurrentMapping: () => null,
+    });
+
+    expect(result).toEqual({
+      matches: [
+        {
+          externalCategoryId: 'market-ext-pins-collectibles',
+          internalCategoryId: 'int-pins-collectibles',
+        },
+        {
+          externalCategoryId: 'market-ext-pins-fashion',
+          internalCategoryId: 'int-pins-fashion',
+        },
+      ],
+      matchedCount: 2,
+      alreadyMappedCount: 0,
+      pendingCount: 0,
+      ambiguousCount: 0,
+      unmatchedCount: 0,
+    });
+  });
+
   it('formats a readable toast summary', () => {
     expect(
       formatAutoMatchCategoryMappingsByNameMessage({

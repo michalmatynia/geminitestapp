@@ -36,6 +36,8 @@ export const QUERY_KEYS = {
       catalogs: () => [...QUERY_KEYS.products.metadata.all, 'catalogs'] as const,
       categories: (catalogId: string | null) =>
         [...QUERY_KEYS.products.metadata.all, 'categories', catalogId] as const,
+      shippingGroups: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.metadata.all, 'shipping-groups', catalogId] as const,
       tags: (catalogId: string | null) =>
         [...QUERY_KEYS.products.metadata.all, 'tags', catalogId] as const,
       producers: () => [...QUERY_KEYS.products.metadata.all, 'producers'] as const,
@@ -52,6 +54,8 @@ export const QUERY_KEYS = {
       catalogs: () => [...QUERY_KEYS.products.settings.all, 'catalogs'] as const,
       categories: (catalogId: string | null) =>
         [...QUERY_KEYS.products.settings.all, 'categories', catalogId] as const,
+      shippingGroups: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.settings.all, 'shipping-groups', catalogId] as const,
       tags: (catalogId: string | null) =>
         [...QUERY_KEYS.products.settings.all, 'tags', catalogId] as const,
       parameters: (catalogId: string | null) =>

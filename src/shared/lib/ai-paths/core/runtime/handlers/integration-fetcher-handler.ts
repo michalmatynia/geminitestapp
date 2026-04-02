@@ -13,6 +13,7 @@ type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulatio
 type FetcherResolvedSource = 'live_context' | 'simulation_id' | 'live_context_override';
 
 const DEFAULT_FETCHER_SOURCE_MODE: FetcherSourceMode = 'live_context';
+const ENTITY_OBJECT_CONTEXT_KEYS = ['entity', 'entityJson', 'product'] as const;
 
 const readString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -47,8 +48,15 @@ const readEntityObjectFromContext = (
   context: Record<string, unknown> | null | undefined
 ): Record<string, unknown> | null => {
   if (!context) return null;
-  const candidate = context['entity'] ?? context['entityJson'] ?? context['product'] ?? null;
-  return isObjectRecord(candidate) ? candidate : null;
+
+  for (const key of ENTITY_OBJECT_CONTEXT_KEYS) {
+    const candidate = context[key];
+    if (isObjectRecord(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 };
 
 const readLocationPathnameFromContext = (
@@ -120,18 +128,31 @@ const buildFetcherContextPayload = (args: {
     entityType: args.entityType ?? args.base['entityType'],
   };
 
-  if (args.entityId && args.entityType === 'product') {
-    next['productId'] = args.entityId;
-  }
-  if (args.entity) {
-    next['entity'] = args.entity;
-    next['entityJson'] = args.entity;
-    if (args.entityType === 'product') {
-      next['product'] = args.entity;
-    }
-  }
+  appendFetcherEntityAliases(next, args);
 
   return next;
+};
+
+const appendFetcherEntityAliases = (
+  target: Record<string, unknown>,
+  args: {
+    entity: Record<string, unknown> | null;
+    entityId: string | null;
+    entityType: string | null;
+  }
+): void => {
+  if (args.entityId && args.entityType === 'product') {
+    target['productId'] = args.entityId;
+  }
+  if (!args.entity) {
+    return;
+  }
+
+  target['entity'] = args.entity;
+  target['entityJson'] = args.entity;
+  if (args.entityType === 'product') {
+    target['product'] = args.entity;
+  }
 };
 
 export const handleFetcher: NodeHandler = async ({

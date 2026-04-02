@@ -72,6 +72,7 @@ describe('settings-client', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/settings/lite?fresh=1', {
       cache: 'no-store',
       credentials: 'include',
+      priority: 'high',
     });
     expect(logClientErrorMock).not.toHaveBeenCalled();
     expect(logClientCatchMock).not.toHaveBeenCalled();

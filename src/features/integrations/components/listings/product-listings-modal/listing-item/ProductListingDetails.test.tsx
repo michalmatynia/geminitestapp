@@ -89,6 +89,9 @@ describe('ProductListingDetails', () => {
                     runId: 'run-123',
                     publishVerified: false,
                     categorySource: 'categoryMapper',
+                    categoryMappingReason: 'mapped',
+                    categoryMatchScope: 'catalog_match',
+                    categoryInternalCategoryId: 'internal-category-1',
                     categoryId: '101',
                     categoryPath: 'Collectibles > Pins',
                     rawResult: {
@@ -123,6 +126,12 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('No')).toBeInTheDocument();
     expect(screen.getByText('Category source:')).toBeInTheDocument();
     expect(screen.getByText('categoryMapper')).toBeInTheDocument();
+    expect(screen.getByText('Category mapping reason:')).toBeInTheDocument();
+    expect(screen.getByText('mapped')).toBeInTheDocument();
+    expect(screen.getByText('Category match scope:')).toBeInTheDocument();
+    expect(screen.getByText('catalog_match')).toBeInTheDocument();
+    expect(screen.getByText('Internal category:')).toBeInTheDocument();
+    expect(screen.getByText('internal-category-1')).toBeInTheDocument();
     expect(screen.getByText('Category ID:')).toBeInTheDocument();
     expect(screen.getByText('101')).toBeInTheDocument();
     expect(screen.getByText('Category path:')).toBeInTheDocument();
@@ -182,6 +191,59 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('builtin')).toBeInTheDocument();
     expect(screen.getByText('Error category:')).toBeInTheDocument();
     expect(screen.getByText('NAVIGATION')).toBeInTheDocument();
+  });
+
+  it('shows Tradera category mapper fallback diagnostics when no mapped category was applied', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-1',
+            status: 'failed',
+            externalListingId: null,
+            inventoryId: null,
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: 'Category fallback used.',
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T11:15:00.000Z',
+                  metadata: {
+                    scriptMode: 'scripted',
+                    categorySource: 'fallback',
+                    categoryMappingReason: 'ambiguous_external_category',
+                    categoryMatchScope: 'cross_catalog',
+                    categoryInternalCategoryId: 'internal-category-1',
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Category source:')).toBeInTheDocument();
+    expect(screen.getByText('fallback')).toBeInTheDocument();
+    expect(screen.getByText('Category mapping reason:')).toBeInTheDocument();
+    expect(screen.getByText('ambiguous_external_category')).toBeInTheDocument();
+    expect(screen.getByText('Category match scope:')).toBeInTheDocument();
+    expect(screen.getByText('cross_catalog')).toBeInTheDocument();
+    expect(screen.getByText('Internal category:')).toBeInTheDocument();
+    expect(screen.getByText('internal-category-1')).toBeInTheDocument();
   });
 
   it('shows pending Tradera relist metadata while a recovery relist is queued', () => {

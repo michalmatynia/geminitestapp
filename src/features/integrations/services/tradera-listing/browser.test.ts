@@ -7,6 +7,7 @@ const {
   accessMock,
   statMock,
   listCategoryMappingsMock,
+  resolveTraderaShippingGroupResolutionForProductMock,
 } = vi.hoisted(() => ({
   getProductByIdMock: vi.fn(),
   runPlaywrightListingScriptMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
   accessMock: vi.fn(),
   statMock: vi.fn(),
   listCategoryMappingsMock: vi.fn(),
+  resolveTraderaShippingGroupResolutionForProductMock: vi.fn(),
 }));
 
 vi.mock('node:fs/promises', () => ({
@@ -52,6 +54,11 @@ vi.mock('../playwright-listing/runner', () => ({
     runPlaywrightListingScriptMock(...args) as Promise<unknown>,
 }));
 
+vi.mock('./shipping-group', () => ({
+  resolveTraderaShippingGroupResolutionForProduct: (...args: unknown[]) =>
+    resolveTraderaShippingGroupResolutionForProductMock(...args),
+}));
+
 import { ensureLoggedIn, runTraderaBrowserListing } from './browser';
 import {
   LOGIN_SUCCESS_SELECTOR,
@@ -70,15 +77,24 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v8');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v17');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizedConfiguredSellUrl =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CREATE_LISTING_TRIGGER_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const CONDITION_FIELD_LABELS = ['Condition', 'Skick'];");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const CONDITION_OPTION_LABELS = [");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DRAFT_IMAGE_REMOVE_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CONTINUE_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const ACTIVE_SEARCH_SUBMIT_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const VALIDATION_MESSAGE_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Create a New Listing")');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Skapa en ny annons")');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const DEPARTMENT_FIELD_LABELS = ['Department', 'Avdelning'];");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const DEPARTMENT_OPTION_LABELS = ['Unisex', 'Dam/Herr', 'Women/Men'];");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const DELIVERY_FIELD_LABELS = ['Delivery', 'Leverans'];");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const DELIVERY_OPTION_LABELS = [");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.auth.initial'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await page.goto('https://www.tradera.com/en/login'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('async function captureFailureArtifacts');
@@ -88,10 +104,24 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const advancePastImagesStep = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const localImagePaths = Array.isArray(input?.localImagePaths)');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const resolveUploadFiles = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clearDraftImagesIfPresent = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findFieldTriggerByLabels = async (labels) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const trySelectOptionalFieldValue = async ({ fieldLabels, optionLabels, fieldKey }) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const triggerActiveSearchSubmit = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isControlDisabled = async (locator) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const collectValidationMessages = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findListingLinkForTerm = async (term) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.draft.reset'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.duplicate.search'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.duplicate.result'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.field.selected'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.validation'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isListingFormReady = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForListingFormReady = async (timeoutMs = 20_000) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const AUTOFILL_PENDING_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const deliveryOptionLabels = configuredDeliveryOptionLabel');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const applyCategorySelection = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_CATEGORY_SET: Mapped Tradera category segment');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('Autofilling your listing');
@@ -103,6 +133,17 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const openCreateListingPage = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await page.goto(DIRECT_SELL_URL");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const opened = entryPoint === 'trigger' ? await openCreateListingPage() : false;");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await clearDraftImagesIfPresent();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await trySelectOptionalFieldValue({');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'condition'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'department'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("fieldKey: 'delivery'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasDeliveryValidationIssue = (messages) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_SHIPPING_SET: ');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const prePublishValidationMessages = await collectValidationMessages();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_PUBLISH_VALIDATION: ');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const baseProductDuplicate = await checkDuplicate(baseProductId);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const duplicateResult = await checkDuplicate(baseProductId);');
   });
 });
 
@@ -169,6 +210,17 @@ describe('runTraderaBrowserListing scripted mode', () => {
         },
       },
     ]);
+    resolveTraderaShippingGroupResolutionForProductMock.mockResolvedValue({
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: 'Small parcel',
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+      },
+      shippingGroupId: 'shipping-group-1',
+      shippingCondition: 'Buyer pays shipping',
+      reason: 'mapped',
+    });
   });
 
   it('returns scripted run metadata on success', async () => {
@@ -234,6 +286,22 @@ describe('runTraderaBrowserListing scripted mode', () => {
             internalCategoryId: 'internal-category-1',
             catalogId: 'catalog-1',
           },
+          traderaCategoryMapping: {
+            reason: 'mapped',
+            matchScope: 'catalog_match',
+            internalCategoryId: 'internal-category-1',
+            productCatalogIds: ['catalog-1'],
+            matchingMappingCount: 1,
+            validMappingCount: 1,
+            catalogMatchedMappingCount: 1,
+          },
+          traderaShipping: {
+            shippingGroupId: 'shipping-group-1',
+            shippingGroupName: 'Small parcel',
+            shippingGroupCatalogId: 'catalog-1',
+            shippingCondition: 'Buyer pays shipping',
+            reason: 'mapped',
+          },
         }),
       })
     );
@@ -249,9 +317,17 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         rawResult: { listingUrl: 'https://www.tradera.com/item/123' },
         publishVerified: true,
+        categoryMappingReason: 'mapped',
+        categoryMatchScope: 'catalog_match',
+        categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
         categorySource: 'categoryMapper',
+        shippingGroupId: 'shipping-group-1',
+        shippingGroupName: 'Small parcel',
+        shippingCondition: 'Buyer pays shipping',
+        shippingConditionSource: 'shippingGroup',
+        shippingConditionReason: 'mapped',
       },
     });
   });
@@ -307,9 +383,17 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         rawResult: { listingUrl: 'https://www.tradera.com/item/456' },
         publishVerified: true,
+        categoryMappingReason: 'mapped',
+        categoryMatchScope: 'catalog_match',
+        categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
         categorySource: 'categoryMapper',
+        shippingGroupId: 'shipping-group-1',
+        shippingGroupName: 'Small parcel',
+        shippingCondition: 'Buyer pays shipping',
+        shippingConditionSource: 'shippingGroup',
+        shippingConditionReason: 'mapped',
       },
     });
   });
@@ -370,9 +454,17 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         rawResult: { listingUrl: 'https://www.tradera.com/item/789' },
         publishVerified: true,
+        categoryMappingReason: 'mapped',
+        categoryMatchScope: 'catalog_match',
+        categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
         categorySource: 'categoryMapper',
+        shippingGroupId: 'shipping-group-1',
+        shippingGroupName: 'Small parcel',
+        shippingCondition: 'Buyer pays shipping',
+        shippingConditionSource: 'shippingGroup',
+        shippingConditionReason: 'mapped',
       },
     });
   });
@@ -507,9 +599,17 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         rawResult: { listingUrl: 'https://www.tradera.com/item/headed-recovery' },
         publishVerified: true,
+        categoryMappingReason: 'mapped',
+        categoryMatchScope: 'catalog_match',
+        categoryInternalCategoryId: 'internal-category-1',
         categoryId: '101',
         categoryPath: 'Collectibles > Pins',
         categorySource: 'categoryMapper',
+        shippingGroupId: 'shipping-group-1',
+        shippingGroupName: 'Small parcel',
+        shippingCondition: 'Buyer pays shipping',
+        shippingConditionSource: 'shippingGroup',
+        shippingConditionReason: 'mapped',
       },
     });
   });

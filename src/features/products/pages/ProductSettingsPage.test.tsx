@@ -12,6 +12,7 @@ const {
   useDeletePriceGroupMutationMock,
   useParametersMock,
   usePriceGroupsMock,
+  useShippingGroupsMock,
   useTagsMock,
   useUpdatePriceGroupMutationMock,
 } = vi.hoisted(() => ({
@@ -22,6 +23,7 @@ const {
   useDeletePriceGroupMutationMock: vi.fn(),
   useParametersMock: vi.fn(),
   usePriceGroupsMock: vi.fn(),
+  useShippingGroupsMock: vi.fn(),
   useTagsMock: vi.fn(),
   useUpdatePriceGroupMutationMock: vi.fn(),
 }));
@@ -33,6 +35,7 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   useDeletePriceGroupMutation: () => useDeletePriceGroupMutationMock(),
   useParameters: (...args: unknown[]) => useParametersMock(...args),
   usePriceGroups: (...args: unknown[]) => usePriceGroupsMock(...args),
+  useShippingGroups: (...args: unknown[]) => useShippingGroupsMock(...args),
   useTags: (...args: unknown[]) => useTagsMock(...args),
   useUpdatePriceGroupMutation: () => useUpdatePriceGroupMutationMock(),
 }));
@@ -47,6 +50,10 @@ vi.mock('@/features/products/components/settings/CategoriesSettings', () => ({
 
 vi.mock('@/features/products/components/settings/TagsSettings', () => ({
   TagsSettings: () => <div data-testid='tags-settings' />,
+}));
+
+vi.mock('@/features/products/components/settings/ShippingGroupsSettings', () => ({
+  ShippingGroupsSettings: () => <div data-testid='shipping-groups-settings' />,
 }));
 
 vi.mock('@/features/products/components/constructor/ParametersSettings', () => ({
@@ -139,6 +146,7 @@ describe('ProductSettingsPage metadata gating', () => {
       })
     );
     useCategoriesMock.mockReturnValue(buildQueryResult());
+    useShippingGroupsMock.mockReturnValue(buildQueryResult());
     useTagsMock.mockReturnValue(buildQueryResult());
     useParametersMock.mockReturnValue(buildQueryResult());
     useUpdatePriceGroupMutationMock.mockReturnValue({
@@ -164,6 +172,7 @@ describe('ProductSettingsPage metadata gating', () => {
 
     expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: true });
     expect(usePriceGroupsMock).toHaveBeenLastCalledWith({ enabled: false });
+    expect(useShippingGroupsMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(useTagsMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('categories-settings')).toBeInTheDocument();
@@ -188,6 +197,18 @@ describe('ProductSettingsPage metadata gating', () => {
     expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: true });
     expect(usePriceGroupsMock).toHaveBeenLastCalledWith({ enabled: false });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Shipping Groups' }));
+
+    await waitFor(() => {
+      expect(useShippingGroupsMock).toHaveBeenLastCalledWith('catalog-default', {
+        enabled: true,
+      });
+    });
+
+    expect(useCategoriesMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
+    expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
+    expect(screen.getByTestId('shipping-groups-settings')).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'Price Groups' }));
 
     await waitFor(() => {
@@ -195,6 +216,9 @@ describe('ProductSettingsPage metadata gating', () => {
     });
 
     expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: false });
+    expect(useShippingGroupsMock).toHaveBeenLastCalledWith('catalog-default', {
+      enabled: false,
+    });
     expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
     expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('price-groups-settings')).toBeInTheDocument();

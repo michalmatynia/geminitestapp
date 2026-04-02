@@ -9,6 +9,7 @@ import type {
   ProductCategory,
   ProductCategoryWithChildren,
   ProductParameter,
+  ProductShippingGroup,
   ProductSimpleParameter,
   ProductTag,
 } from '@/shared/contracts/products';
@@ -126,6 +127,33 @@ export function useTags(
       queryKey,
       tags: ['products', 'metadata', 'tags'],
       description: 'Loads products metadata tags.'},
+  });
+}
+
+export function useShippingGroups(
+  catalogId?: string,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductShippingGroup> {
+  const queryKey = productMetadataKeys.shippingGroups(catalogId ?? null);
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<ProductShippingGroup[]> => {
+      if (!catalogId) return [];
+      return await api.get<ProductShippingGroup[]>(
+        `/api/v2/products/shipping-groups?catalogId=${encodeURIComponent(catalogId)}`
+      );
+    },
+    enabled: Boolean(catalogId) && (options?.enabled ?? true),
+    ...STABLE_METADATA_QUERY_OPTIONS,
+    meta: {
+      source: 'products.hooks.useShippingGroups',
+      operation: 'list',
+      resource: 'products.metadata.shipping-groups',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'metadata', 'shipping-groups'],
+      description: 'Loads products metadata shipping groups.',
+    },
   });
 }
 

@@ -3,7 +3,11 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
-import { resolveProductListingsIntegrationScope } from '@/features/integrations/utils/product-listings-recovery';
+import {
+  areProductListingsRecoveryContextsEqual,
+  mergeProductListingsRecoveryContext,
+  resolveProductListingsIntegrationScope,
+} from '@/features/integrations/utils/product-listings-recovery';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type {
@@ -173,7 +177,12 @@ export function ProductListingsProvider({
     useState<ProductListingsRecoveryContext | null>(recoveryContext ?? null);
 
   useEffect(() => {
-    setResolvedRecoveryContext(recoveryContext ?? null);
+    setResolvedRecoveryContext((current) => {
+      const nextRecoveryContext = mergeProductListingsRecoveryContext(recoveryContext ?? null, current);
+      return areProductListingsRecoveryContextsEqual(current, nextRecoveryContext)
+        ? current
+        : nextRecoveryContext;
+    });
   }, [recoveryContext]);
 
   const resolvedFilterIntegrationSlug = useMemo(

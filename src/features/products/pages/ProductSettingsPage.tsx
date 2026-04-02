@@ -10,6 +10,7 @@ import { PriceGroupModal } from '@/features/products/components/settings/modals/
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
+import { ShippingGroupsSettings } from '@/features/products/components/settings/ShippingGroupsSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorDefaultPanel } from '@/features/products/components/settings/validator-settings/ValidatorDefaultPanel';
 import { ValidatorDocsTooltipsProvider } from '@/features/products/components/settings/validator-settings/ValidatorDocsTooltips';
@@ -21,6 +22,7 @@ import {
   useDeletePriceGroupMutation,
   useParameters,
   usePriceGroups,
+  useShippingGroups,
   useTags,
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
@@ -62,12 +64,14 @@ export function ProductSettingsPage({
 
   const { toast } = useToast();
   const isCategoriesSectionActive = activeSection === 'Categories';
+  const isShippingGroupsSectionActive = activeSection === 'Shipping Groups';
   const isTagsSectionActive = activeSection === 'Tags';
   const isParametersSectionActive = activeSection === 'Parameters';
   const isPriceGroupsSectionActive = activeSection === 'Price Groups';
   const isCatalogsSectionActive = activeSection === 'Catalogs';
   const shouldLoadCatalogs =
     isCategoriesSectionActive ||
+    isShippingGroupsSectionActive ||
     isTagsSectionActive ||
     isParametersSectionActive ||
     isCatalogsSectionActive;
@@ -83,6 +87,9 @@ export function ProductSettingsPage({
   });
 
   const [selectedCategoryCatalogId, setSelectedCategoryCatalogId] = useState<string | null>(null);
+  const [selectedShippingGroupCatalogId, setSelectedShippingGroupCatalogId] = useState<string | null>(
+    null
+  );
   const [selectedTagCatalogId, setSelectedTagCatalogId] = useState<string | null>(null);
   const [selectedParameterCatalogId, setSelectedParameterCatalogId] = useState<string | null>(null);
 
@@ -91,6 +98,13 @@ export function ProductSettingsPage({
     isLoading: loadingCategories,
     refetch: refetchCategories,
   } = useCategories(selectedCategoryCatalogId, { enabled: isCategoriesSectionActive });
+  const {
+    data: shippingGroups = [],
+    isLoading: loadingShippingGroups,
+    refetch: refetchShippingGroups,
+  } = useShippingGroups(selectedShippingGroupCatalogId, {
+    enabled: isShippingGroupsSectionActive,
+  });
   const {
     data: productTags = [],
     isLoading: loadingTags,
@@ -121,6 +135,9 @@ export function ProductSettingsPage({
         if (isCategoriesSectionActive && !selectedCategoryCatalogId) {
           setSelectedCategoryCatalogId(def.id);
         }
+        if (isShippingGroupsSectionActive && !selectedShippingGroupCatalogId) {
+          setSelectedShippingGroupCatalogId(def.id);
+        }
         if (isTagsSectionActive && !selectedTagCatalogId) {
           setSelectedTagCatalogId(def.id);
         }
@@ -135,9 +152,11 @@ export function ProductSettingsPage({
   }, [
     catalogs,
     isCategoriesSectionActive,
+    isShippingGroupsSectionActive,
     isParametersSectionActive,
     isTagsSectionActive,
     selectedCategoryCatalogId,
+    selectedShippingGroupCatalogId,
     selectedParameterCatalogId,
     selectedTagCatalogId,
     shouldLoadCatalogs,
@@ -205,7 +224,9 @@ export function ProductSettingsPage({
       },
     });
   };
-  const sharedSettingsContextValue = {
+  const sharedSettingsContextValue: React.ComponentProps<
+    typeof ProductSettingsProvider
+  >['value'] = {
     loadingCatalogs,
     catalogs,
     onOpenCatalogModal: (): void => {
@@ -245,6 +266,15 @@ export function ProductSettingsPage({
     },
     onRefreshCategories: (): void => {
       void refetchCategories();
+    },
+    loadingShippingGroups,
+    shippingGroups,
+    selectedShippingGroupCatalogId,
+    onShippingGroupCatalogChange: (id: string | null): void => {
+      setSelectedShippingGroupCatalogId(id);
+    },
+    onRefreshShippingGroups: (): void => {
+      void refetchShippingGroups();
     },
     loadingTags,
     tags: productTags,
@@ -307,6 +337,7 @@ export function ProductSettingsPage({
           <ProductSettingsProvider value={sharedSettingsContextValue}>
             <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
               {activeSection === 'Categories' && <CategoriesSettings />}
+              {activeSection === 'Shipping Groups' && <ShippingGroupsSettings />}
               {activeSection === 'Tags' && <TagsSettings />}
               {activeSection === 'Parameters' && (
                 <ParametersSettings

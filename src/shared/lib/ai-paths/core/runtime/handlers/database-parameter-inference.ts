@@ -29,6 +29,8 @@ import {
   resolveExistingParameterValueFromInputs,
 } from './parameter-inference/parameter-inference.merger';
 
+import { stableStringify } from '@/shared/utils/stable-stringify';
+
 export {
   coerceArrayLike,
   normalizeNonEmptyString,
@@ -52,7 +54,7 @@ const areParameterRecordArraysEqual = (
 ): boolean => {
   if (left.length !== right.length) return false;
   for (let index = 0; index < left.length; index += 1) {
-    if (JSON.stringify(left[index]) !== JSON.stringify(right[index])) {
+    if (stableStringify(left[index]) !== stableStringify(right[index])) {
       return false;
     }
   }

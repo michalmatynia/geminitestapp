@@ -92,18 +92,25 @@ vi.mock('@/shared/ui', () => ({
   GenericMapperStats: ({
     total,
     mapped,
+    unmapped,
     pending,
     itemLabel,
   }: {
     total: number;
     mapped: number;
+    unmapped?: number;
     pending: number;
     itemLabel?: string;
   }) => (
     <div data-testid='mapper-stats'>
-      {itemLabel}:{total}:{mapped}:{pending}
+      {itemLabel}:{total}:{mapped}:{unmapped ?? 'na'}:{pending}
     </div>
   ),
+  Alert: ({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) => <div data-testid='mapper-alert'>{children}</div>,
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
   SelectSimple: ({
     value,
@@ -247,10 +254,11 @@ describe('CategoryMapperTable', () => {
       </CategoryMapperProvider>
     );
 
-    const autoMatchButton = await screen.findByRole('button', { name: 'Auto-match Names' });
+    const autoMatchButton = await screen.findByRole('button', { name: 'Auto-match Paths & Names' });
 
     await waitFor(() => expect(autoMatchButton).toBeEnabled());
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.getByTestId('mapper-stats')).toHaveTextContent('Categories:1:0:1:0');
 
     await user.click(autoMatchButton);
 
@@ -307,5 +315,40 @@ describe('CategoryMapperTable', () => {
       expect(screen.getByText('Gaming Pins')).toBeInTheDocument();
       expect(screen.getByText('Movie Pins')).toBeInTheDocument();
     });
+  });
+
+  it('shows a warning when saved mappings point to missing marketplace categories', async () => {
+    mocks.mappings = [
+      {
+        id: 'mapping-stale',
+        connectionId: 'conn-1',
+        externalCategoryId: 'market-missing',
+        internalCategoryId: 'int-1',
+        catalogId: 'catalog-1',
+        isActive: true,
+        createdAt: '2026-03-22T00:00:00.000Z',
+        updatedAt: '2026-03-22T00:00:00.000Z',
+        externalCategory: createExternalCategory({
+          id: 'ext-missing',
+          externalId: 'market-missing',
+          name: '[Missing external category: Office Chairs]',
+          path: 'Furniture > Office Chairs',
+        }),
+        internalCategory: createInternalCategory({ id: 'int-1', name: 'office chairs' }),
+      },
+    ];
+
+    render(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Tradera'>
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    expect(await screen.findByTestId('mapper-alert')).toHaveTextContent(
+      '1 saved mapping points to a missing marketplace category. Fetch categories and remap it before listing.'
+    );
+    expect(screen.getByTestId('mapper-alert')).toHaveTextContent(
+      'Furniture > Office Chairs -> office chairs'
+    );
   });
 });

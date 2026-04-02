@@ -219,6 +219,75 @@ const parseRegexExtractedJson = (value: unknown, policy: JsonIntegrityPolicy): u
   return normalizeJsonLikeValue(value, policy).value;
 };
 
+const normalizeRegexPreviewGroups = (
+  match: RegExpExecArray
+): Record<string, string> | null =>
+  match.groups && typeof match.groups === 'object'
+    ? (Object.fromEntries(
+      Object.entries(match.groups).map(([key, value]: [string, string | undefined]) => [
+        key,
+        value ?? '',
+      ])
+    ) as Record<string, string>)
+    : null;
+
+const buildRegexPreviewRecord = ({
+  input,
+  match,
+  groupBy,
+  jsonIntegrityPolicy,
+  shouldParse,
+  unmatchedKey,
+}: {
+  input: string;
+  match: RegExpExecArray | null;
+  groupBy: string | undefined;
+  jsonIntegrityPolicy: JsonIntegrityPolicy;
+  shouldParse: boolean;
+  unmatchedKey: string;
+}): RegexPreviewRecord => {
+  if (!match) {
+    return {
+      input,
+      match: null,
+      index: null,
+      captures: [],
+      groups: null,
+      key: unmatchedKey,
+      extracted: null,
+    };
+  }
+
+  const selection = resolveRegexSelection(match, groupBy);
+
+  return {
+    input,
+    match: match[0] ?? null,
+    index: typeof match.index === 'number' ? match.index : null,
+    captures: match.slice(1).map((value: string | undefined) => value ?? ''),
+    groups: normalizeRegexPreviewGroups(match),
+    key: resolveGroupKey(match, groupBy) ?? unmatchedKey,
+    extracted: shouldParse
+      ? parseRegexExtractedJson(selection, jsonIntegrityPolicy)
+      : selection,
+  };
+};
+
+const appendRegexPreviewRecord = ({
+  groupedMap,
+  matches,
+  record,
+}: {
+  groupedMap: Map<string, RegexPreviewRecord[]>;
+  matches: RegexPreviewRecord[];
+  record: RegexPreviewRecord;
+}): void => {
+  matches.push(record);
+  const current = groupedMap.get(record.key) ?? [];
+  current.push(record);
+  groupedMap.set(record.key, current);
+};
+
 export const buildRegexPreview = (
   regexConfig: RegexConfig,
   regexValidation: RegexValidation,
@@ -235,11 +304,6 @@ export const buildRegexPreview = (
 
   const matches: RegexPreviewRecord[] = [];
   const groupedMap = new Map<string, RegexPreviewRecord[]>();
-  const pushGrouped = (key: string, record: RegexPreviewRecord): void => {
-    const current = groupedMap.get(key) ?? [];
-    current.push(record);
-    groupedMap.set(key, current);
-  };
 
   if (!regexValidation.ok || !regexValidation.regex) {
     return {
@@ -263,45 +327,34 @@ export const buildRegexPreview = (
       const match = nonGlobalRegex.exec(input);
       if (!match) continue;
       found = true;
-      const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
-      const groups =
-        match.groups && typeof match.groups === 'object'
-          ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
-              k,
-              v ?? '',
-            ])
-          ) as Record<string, string>)
-          : null;
-      const extracted = shouldParse
-        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
-        : resolveRegexSelection(match, groupBy);
-      const record: RegexPreviewRecord = {
-        input,
-        match: match[0] ?? null,
-        index: typeof match.index === 'number' ? match.index : null,
-        captures: match.slice(1).map((value: string | undefined) => value ?? ''),
-        groups,
-        key,
-        extracted,
-      };
-      matches.push(record);
-      pushGrouped(key, record);
+      appendRegexPreviewRecord({
+        groupedMap,
+        matches,
+        record: buildRegexPreviewRecord({
+          input,
+          match,
+          groupBy,
+          jsonIntegrityPolicy,
+          shouldParse,
+          unmatchedKey,
+        }),
+      });
       break;
     }
 
     if (!found && includeUnmatched && sampleLines.length > 0) {
-      const record: RegexPreviewRecord = {
-        input: sampleLines[0] ?? '',
-        match: null,
-        index: null,
-        captures: [],
-        groups: null,
-        key: unmatchedKey,
-        extracted: null,
-      };
-      matches.push(record);
-      pushGrouped(unmatchedKey, record);
+      appendRegexPreviewRecord({
+        groupedMap,
+        matches,
+        record: buildRegexPreviewRecord({
+          input: sampleLines[0] ?? '',
+          match: null,
+          groupBy,
+          jsonIntegrityPolicy,
+          shouldParse,
+          unmatchedKey,
+        }),
+      });
     }
   } else {
     sampleLines.forEach((input: string) => {
@@ -312,46 +365,35 @@ export const buildRegexPreview = (
         let match: RegExpExecArray | null;
         while ((match = regexAll.exec(input)) !== null) {
           found = true;
-          const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
-          const groups =
-            match.groups && typeof match.groups === 'object'
-              ? (Object.fromEntries(
-                Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
-                  k,
-                  v ?? '',
-                ])
-              ) as Record<string, string>)
-              : null;
-          const extracted = shouldParse
-            ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
-            : resolveRegexSelection(match, groupBy);
-          const record: RegexPreviewRecord = {
-            input,
-            match: match[0] ?? null,
-            index: typeof match.index === 'number' ? match.index : null,
-            captures: match.slice(1).map((value: string | undefined) => value ?? ''),
-            groups,
-            key,
-            extracted,
-          };
-          matches.push(record);
-          pushGrouped(key, record);
+          appendRegexPreviewRecord({
+            groupedMap,
+            matches,
+            record: buildRegexPreviewRecord({
+              input,
+              match,
+              groupBy,
+              jsonIntegrityPolicy,
+              shouldParse,
+              unmatchedKey,
+            }),
+          });
           if (match[0] === '') {
             regexAll.lastIndex = Math.min(input.length, regexAll.lastIndex + 1);
           }
         }
         if (!found && includeUnmatched) {
-          const record: RegexPreviewRecord = {
-            input,
-            match: null,
-            index: null,
-            captures: [],
-            groups: null,
-            key: unmatchedKey,
-            extracted: null,
-          };
-          matches.push(record);
-          pushGrouped(unmatchedKey, record);
+          appendRegexPreviewRecord({
+            groupedMap,
+            matches,
+            record: buildRegexPreviewRecord({
+              input,
+              match: null,
+              groupBy,
+              jsonIntegrityPolicy,
+              shouldParse,
+              unmatchedKey,
+            }),
+          });
         }
         return;
       }
@@ -362,43 +404,32 @@ export const buildRegexPreview = (
       const match = nonGlobalRegex ? nonGlobalRegex.exec(input) : null;
       if (!match) {
         if (!includeUnmatched) return;
-        const record: RegexPreviewRecord = {
-          input,
-          match: null,
-          index: null,
-          captures: [],
-          groups: null,
-          key: unmatchedKey,
-          extracted: null,
-        };
-        matches.push(record);
-        pushGrouped(unmatchedKey, record);
+        appendRegexPreviewRecord({
+          groupedMap,
+          matches,
+          record: buildRegexPreviewRecord({
+            input,
+            match: null,
+            groupBy,
+            jsonIntegrityPolicy,
+            shouldParse,
+            unmatchedKey,
+          }),
+        });
         return;
       }
-      const key = resolveGroupKey(match, groupBy) ?? unmatchedKey;
-      const groups =
-        match.groups && typeof match.groups === 'object'
-          ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
-              k,
-              v ?? '',
-            ])
-          ) as Record<string, string>)
-          : null;
-      const extracted = shouldParse
-        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
-        : resolveRegexSelection(match, groupBy);
-      const record: RegexPreviewRecord = {
-        input,
-        match: match[0] ?? null,
-        index: typeof match.index === 'number' ? match.index : null,
-        captures: match.slice(1).map((value: string | undefined) => value ?? ''),
-        groups,
-        key,
-        extracted,
-      };
-      matches.push(record);
-      pushGrouped(key, record);
+      appendRegexPreviewRecord({
+        groupedMap,
+        matches,
+        record: buildRegexPreviewRecord({
+          input,
+          match,
+          groupBy,
+          jsonIntegrityPolicy,
+          shouldParse,
+          unmatchedKey,
+        }),
+      });
     });
   }
 

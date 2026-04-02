@@ -46,6 +46,43 @@ const parseCreateBody = async (
   return parseJsonBody(req, systemLogsCreateRequestSchema, { logPrefix: 'systemLogs.POST' });
 };
 
+const buildSystemLogCreateInput = ({
+  data,
+  hydratedContext,
+}: {
+  data: SystemLogsCreateRequest;
+  hydratedContext: Awaited<ReturnType<typeof hydrateLogRuntimeContext>>;
+}) => ({
+  level: data.level ?? undefined,
+  message: data.message,
+  category: data.category ?? null,
+  source: data.source ?? undefined,
+  service: data.service ?? undefined,
+  context: hydratedContext,
+  stack: data.stack ?? null,
+  path: data.path ?? null,
+  method: data.method ?? null,
+  statusCode: data.statusCode ?? null,
+  requestId: data.requestId ?? null,
+  traceId: data.traceId ?? null,
+  correlationId: data.correlationId ?? null,
+  spanId: data.spanId ?? null,
+  parentSpanId: data.parentSpanId ?? null,
+  userId: data.userId ?? null,
+});
+
+const createSystemLogFromRequest = async (
+  data: SystemLogsCreateRequest
+): Promise<Awaited<ReturnType<typeof createSystemLog>>> => {
+  const hydratedContext = await hydrateLogRuntimeContext(data.context ?? null);
+  return await createSystemLog(
+    buildSystemLogCreateInput({
+      data,
+      hydratedContext,
+    })
+  );
+};
+
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertSettingsManageAccess();
   const url = new URL(req.url);
@@ -91,26 +128,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   if (!parsed.ok) {
     return parsed.response;
   }
-  const data = parsed.data;
-  const hydratedContext = await hydrateLogRuntimeContext(data.context ?? null);
-  const created = await createSystemLog({
-    level: data.level ?? undefined,
-    message: data.message,
-    category: data.category ?? null,
-    source: data.source ?? undefined,
-    service: data.service ?? undefined,
-    context: hydratedContext,
-    stack: data.stack ?? null,
-    path: data.path ?? null,
-    method: data.method ?? null,
-    statusCode: data.statusCode ?? null,
-    requestId: data.requestId ?? null,
-    traceId: data.traceId ?? null,
-    correlationId: data.correlationId ?? null,
-    spanId: data.spanId ?? null,
-    parentSpanId: data.parentSpanId ?? null,
-    userId: data.userId ?? null,
-  });
+  const created = await createSystemLogFromRequest(parsed.data);
   return NextResponse.json({ log: created });
 }
 

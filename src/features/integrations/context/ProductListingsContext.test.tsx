@@ -169,4 +169,57 @@ describe('ProductListingsProvider', () => {
     expect(screen.getByTestId('connection-id')).toHaveTextContent('conn-tradera-2');
     expect(screen.getByTestId('run-id')).toHaveTextContent('run-tradera-2');
   });
+
+  it('preserves enriched recovery details when the parent rerenders with the same weaker recovery context', () => {
+    const initialRecoveryContext = {
+      source: 'tradera_quick_export_failed' as const,
+      integrationSlug: 'tradera' as const,
+      status: 'failed',
+      runId: null,
+    };
+
+    const { rerender } = render(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+        recoveryContext={initialRecoveryContext}
+      >
+        <RecoveryContextSummary />
+        <RecoveryContextUpdater />
+      </ProductListingsProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enrich recovery context' }));
+
+    expect(screen.getByTestId('integration-id')).toHaveTextContent('integration-tradera-2');
+    expect(screen.getByTestId('connection-id')).toHaveTextContent('conn-tradera-2');
+    expect(screen.getByTestId('run-id')).toHaveTextContent('run-tradera-2');
+
+    rerender(
+      <ProductListingsProvider
+        product={
+          {
+            id: 'product-1',
+            name: 'Product 1',
+            images: [],
+          } as never
+        }
+        onClose={vi.fn()}
+        recoveryContext={{ ...initialRecoveryContext }}
+      >
+        <RecoveryContextSummary />
+        <RecoveryContextUpdater />
+      </ProductListingsProvider>
+    );
+
+    expect(screen.getByTestId('integration-id')).toHaveTextContent('integration-tradera-2');
+    expect(screen.getByTestId('connection-id')).toHaveTextContent('conn-tradera-2');
+    expect(screen.getByTestId('run-id')).toHaveTextContent('run-tradera-2');
+  });
 });

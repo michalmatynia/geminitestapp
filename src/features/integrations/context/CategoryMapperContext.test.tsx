@@ -137,13 +137,18 @@ const createCategoryMapping = (
 
 function Harness(): React.JSX.Element {
   const { selectedCatalogId, categoryTree } = useCategoryMapperData();
-  const { pendingMappings } = useCategoryMapperUIState();
+  const { pendingMappings, staleMappings, stats } = useCategoryMapperUIState();
   const { handleAutoMatchByName, getMappingForExternal } = useCategoryMapperActions();
 
   return (
     <div>
       <div data-testid='selected-catalog'>{selectedCatalogId ?? 'none'}</div>
       <div data-testid='pending-count'>{String(pendingMappings.size)}</div>
+      <div data-testid='stale-count'>{String(stats.stale)}</div>
+      <div data-testid='unmapped-count'>{String(stats.unmapped)}</div>
+      <div data-testid='stale-summary'>
+        {JSON.stringify(staleMappings)}
+      </div>
       <div data-testid='mapping-ext-match'>
         {getMappingForExternal('market-ext-match') ?? 'none'}
       </div>
@@ -194,6 +199,17 @@ describe('CategoryMapperProvider auto-match by name', () => {
         externalCategory: createExternalCategory({ id: 'ext-saved', name: 'Desk Lamps' }),
         internalCategory: deskLamps,
       }),
+      createCategoryMapping({
+        id: 'mapping-stale',
+        externalCategoryId: 'market-ext-stale',
+        internalCategoryId: 'int-office',
+        externalCategory: createExternalCategory({
+          id: 'ext-stale',
+          externalId: 'market-ext-stale',
+          name: '[Missing external category: Legacy Office Chairs]',
+        }),
+        internalCategory: createInternalCategory({ id: 'int-office', name: 'office chairs' }),
+      }),
     ];
   });
 
@@ -216,6 +232,11 @@ describe('CategoryMapperProvider auto-match by name', () => {
 
     expect(screen.getByTestId('mapping-ext-match')).toHaveTextContent('int-office');
     expect(screen.getByTestId('mapping-ext-saved')).toHaveTextContent('int-desk');
+    expect(screen.getByTestId('stale-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('unmapped-count')).toHaveTextContent('2');
+    expect(screen.getByTestId('stale-summary')).toHaveTextContent('Legacy Office Chairs');
+    expect(screen.getByTestId('stale-summary')).toHaveTextContent('"externalCategoryPath":null');
+    expect(screen.getByTestId('stale-summary')).toHaveTextContent('office chairs');
     expect(mocks.toast).toHaveBeenCalledWith(
       'Matched 1 category, 1 already mapped, 1 ambiguous, 1 unmatched.',
       { variant: 'success' }

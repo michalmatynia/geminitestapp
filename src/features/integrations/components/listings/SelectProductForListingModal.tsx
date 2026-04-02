@@ -5,6 +5,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';
+import { resolveSelectProductForListingModalCopy } from './product-listings-copy';
 import { SelectProductForListingModalProvider } from './select-product-modal/context/SelectProductForListingModalContext';
 import {
   SelectProductForListingModalViewProvider,
@@ -21,6 +22,7 @@ interface SelectProductForListingModalProps extends EntityModalProps<never> {
 
 function SelectProductForListingModalContent(): React.JSX.Element {
   const { onClose, onSuccess } = useSelectProductForListingModalView();
+  const { modalTitle, saveText } = resolveSelectProductForListingModalCopy();
 
   const {
     productSearch,
@@ -44,12 +46,12 @@ function SelectProductForListingModalContent(): React.JSX.Element {
     <FormModal
       open={true}
       onClose={onClose}
-      title='List Product on Marketplace'
+      title={modalTitle}
       onSave={() => {
         void handleSubmit(onSuccess);
       }}
       isSaving={submitting}
-      saveText='List Product'
+      saveText={saveText}
       size='xl'
     >
       <SelectProductForListingModalProvider

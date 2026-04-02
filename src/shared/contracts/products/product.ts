@@ -6,6 +6,7 @@ import { catalogSchema } from './catalogs';
 import { priceGroupSchema } from './catalogs';
 import { productCategorySchema } from './categories';
 import { producerSchema } from './producers';
+import { productShippingGroupSchema } from './shipping-groups';
 import { productTagSchema } from './tags';
 
 export const productCurrencySchema = namedDtoSchema.extend({
@@ -164,8 +165,10 @@ export const productSchema = dtoBaseSchema.extend({
   length: z.number().nullable(),
   published: z.boolean(),
   categoryId: z.string().nullable(),
+  shippingGroupId: z.string().nullable().optional(),
   catalogId: z.string(),
   category: productCategorySchema.optional(),
+  shippingGroup: productShippingGroupSchema.optional(),
   tags: z.array(productTagRelationSchema).optional(),
   producers: z.array(productProducerRelationSchema).optional(),
   images: z.array(productImageSchema).optional(),

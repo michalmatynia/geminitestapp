@@ -9,7 +9,7 @@ import {
   useCategoryMapperData,
   useCategoryMapperUIState,
 } from '@/features/integrations/context/CategoryMapperContext';
-import { StandardDataTablePanel, CompactEmptyState, GenericMapperStats } from '@/shared/ui';
+import { StandardDataTablePanel, CompactEmptyState, GenericMapperStats, Alert } from '@/shared/ui';
 
 import { CategoryMapperNameCell } from './category-table/CategoryMapperNameCell';
 import { CategoryMapperSelectCell } from './category-table/CategoryMapperSelectCell';
@@ -28,7 +28,7 @@ export function CategoryMapperTable(): React.JSX.Element {
     internalCategoryOptions,
     categoryTree,
   } = useCategoryMapperData();
-  const { pendingMappings, expandedIds, toggleExpand, stats } = useCategoryMapperUIState();
+  const { pendingMappings, expandedIds, toggleExpand, staleMappings, stats } = useCategoryMapperUIState();
   const {
     getMappingForExternal,
     handleMappingChange,
@@ -65,6 +65,7 @@ export function CategoryMapperTable(): React.JSX.Element {
           return (
             <CategoryMapperNameCell
               name={row.original.name}
+              path={row.original.path}
               depth={row.depth}
               canExpand={row.getCanExpand()}
               isExpanded={row.getIsExpanded()}
@@ -142,12 +143,41 @@ export function CategoryMapperTable(): React.JSX.Element {
         </div>
       }
       alerts={
-        <GenericMapperStats
-          total={stats.total}
-          mapped={stats.mapped}
-          pending={stats.pending}
-          itemLabel='Categories'
-        />
+        <div className='space-y-3'>
+          <GenericMapperStats
+            total={stats.total}
+            mapped={stats.mapped}
+            unmapped={stats.unmapped}
+            pending={stats.pending}
+            itemLabel='Categories'
+          />
+          {stats.stale > 0 ? (
+            <Alert variant='warning' className='text-xs'>
+              <div className='space-y-2'>
+                <div>
+                  {stats.stale === 1
+                    ? '1 saved mapping points to a missing marketplace category. Fetch categories and remap it before listing.'
+                    : `${stats.stale} saved mappings point to missing marketplace categories. Fetch categories and remap them before listing.`}
+                </div>
+                <div className='space-y-1'>
+                  {staleMappings.slice(0, 3).map((mapping) => (
+                    <div key={mapping.externalCategoryId} className='font-mono text-[11px]'>
+                      {mapping.externalCategoryPath && mapping.externalCategoryPath !== mapping.externalCategoryName
+                        ? mapping.externalCategoryPath
+                        : mapping.externalCategoryName}
+                      {mapping.internalCategoryLabel ? ` -> ${mapping.internalCategoryLabel}` : ''}
+                    </div>
+                  ))}
+                  {staleMappings.length > 3 ? (
+                    <div className='text-[11px] text-yellow-200/90'>
+                      +{staleMappings.length - 3} more stale mapping{staleMappings.length - 3 === 1 ? '' : 's'}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </Alert>
+          ) : null}
+        </div>
       }
       isLoading={isLoading}
       variant='flat'

@@ -30,6 +30,68 @@ const normalizeCategoryName = (value: string): string =>
     .toLocaleLowerCase()
     .replace(/\s+/g, ' ');
 
+const normalizeCategoryPath = (segments: string[]): string =>
+  segments
+    .map((segment) => normalizeCategoryName(segment))
+    .filter(Boolean)
+    .join(' / ');
+
+const splitExternalCategoryPath = (externalCategory: ExternalCategory): string[] => {
+  const source = typeof externalCategory.path === 'string' ? externalCategory.path.trim() : '';
+  if (!source) {
+    return [];
+  }
+
+  return source
+    .split(/\s*>\s*/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+};
+
+const buildInternalCategoryPaths = (
+  internalCategories: ProductCategory[]
+): Map<string, string[]> => {
+  const byId = new Map<string, ProductCategory>(
+    internalCategories.map((category) => [category.id, category])
+  );
+  const cache = new Map<string, string[]>();
+
+  const visit = (category: ProductCategory, trail: Set<string>): string[] => {
+    const cached = cache.get(category.id);
+    if (cached) return cached;
+
+    const currentName = category.name.trim();
+    if (!currentName) {
+      cache.set(category.id, []);
+      return [];
+    }
+
+    const parentId = typeof category.parentId === 'string' ? category.parentId.trim() : '';
+    if (!parentId || !byId.has(parentId) || trail.has(parentId)) {
+      const path = [currentName];
+      cache.set(category.id, path);
+      return path;
+    }
+
+    const parent = byId.get(parentId)!;
+    const path = [...visit(parent, new Set([...trail, parentId])), currentName];
+    cache.set(category.id, path);
+    return path;
+  };
+
+  const paths = new Map<string, string[]>();
+  for (const category of internalCategories) {
+    const path = visit(category, new Set([category.id]));
+    const normalized = normalizeCategoryPath(path);
+    if (!normalized) continue;
+    const current = paths.get(normalized) ?? [];
+    current.push(category.id);
+    paths.set(normalized, current);
+  }
+
+  return paths;
+};
+
 export const autoMatchCategoryMappingsByName = ({
   externalCategories,
   internalCategories,
@@ -37,6 +99,7 @@ export const autoMatchCategoryMappingsByName = ({
   getCurrentMapping,
 }: AutoMatchCategoryMappingsByNameInput): AutoMatchCategoryMappingsByNameResult => {
   const internalIdsByName = new Map<string, string[]>();
+  const internalIdsByPath = buildInternalCategoryPaths(internalCategories);
 
   for (const category of internalCategories) {
     const normalizedName = normalizeCategoryName(category.name);
@@ -61,6 +124,16 @@ export const autoMatchCategoryMappingsByName = ({
 
     if (getCurrentMapping(externalCategory.externalId) !== null) {
       alreadyMappedCount += 1;
+      continue;
+    }
+
+    const normalizedPath = normalizeCategoryPath(splitExternalCategoryPath(externalCategory));
+    const internalIdsForPath = [...new Set(internalIdsByPath.get(normalizedPath) ?? [])];
+    if (normalizedPath && internalIdsForPath.length === 1) {
+      matches.push({
+        externalCategoryId: externalCategory.externalId,
+        internalCategoryId: internalIdsForPath[0]!,
+      });
       continue;
     }
 

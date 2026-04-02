@@ -13,7 +13,8 @@ import {
   DEFAULT_TRADERA_API_PAYMENT_CONDITION,
   DEFAULT_TRADERA_API_SHIPPING_CONDITION,
 } from './config';
-import { resolveTraderaCategoryMappingForProduct } from './category-mapping';
+import { resolveTraderaCategoryMappingResolutionForProduct } from './category-mapping';
+import { resolveTraderaShippingGroupResolutionForProduct } from './shipping-group';
 import { toPositiveInt, toRecord } from './utils';
 
 const decryptTrimmedSecret = (value: string | null | undefined): string =>
@@ -86,6 +87,9 @@ export const resolveTraderaApiCategoryId = async (
   source: 'marketplaceData' | 'categoryMapper' | 'product' | 'env' | 'default';
   categoryPath: string | null;
   categoryName: string | null;
+  categoryMappingReason: string | null;
+  categoryMatchScope: string | null;
+  categoryInternalCategoryId: string | null;
 }> => {
   const listingData = toRecord(listing.marketplaceData);
   const traderaData = toRecord(listingData['tradera']);
@@ -96,13 +100,17 @@ export const resolveTraderaApiCategoryId = async (
       source: 'marketplaceData',
       categoryPath: null,
       categoryName: null,
+      categoryMappingReason: null,
+      categoryMatchScope: null,
+      categoryInternalCategoryId: null,
     };
   }
 
-  const mappedCategory = await resolveTraderaCategoryMappingForProduct({
+  const categoryMapping = await resolveTraderaCategoryMappingResolutionForProduct({
     connectionId: listing.connectionId,
     product: product as never,
   });
+  const mappedCategory = categoryMapping.mapping;
   const fromCategoryMapper = toPositiveInt(mappedCategory?.externalCategoryId ?? null);
   if (fromCategoryMapper) {
     return {
@@ -110,6 +118,9 @@ export const resolveTraderaApiCategoryId = async (
       source: 'categoryMapper',
       categoryPath: mappedCategory?.externalCategoryPath ?? null,
       categoryName: mappedCategory?.externalCategoryName ?? null,
+      categoryMappingReason: categoryMapping.reason,
+      categoryMatchScope: categoryMapping.matchScope,
+      categoryInternalCategoryId: categoryMapping.internalCategoryId,
     };
   }
 
@@ -120,6 +131,9 @@ export const resolveTraderaApiCategoryId = async (
       source: 'product',
       categoryPath: null,
       categoryName: null,
+      categoryMappingReason: categoryMapping.reason,
+      categoryMatchScope: categoryMapping.matchScope,
+      categoryInternalCategoryId: categoryMapping.internalCategoryId,
     };
   }
 
@@ -130,6 +144,9 @@ export const resolveTraderaApiCategoryId = async (
       source: 'env',
       categoryPath: null,
       categoryName: null,
+      categoryMappingReason: categoryMapping.reason,
+      categoryMatchScope: categoryMapping.matchScope,
+      categoryInternalCategoryId: categoryMapping.internalCategoryId,
     };
   }
 
@@ -138,6 +155,9 @@ export const resolveTraderaApiCategoryId = async (
     source: 'default',
     categoryPath: null,
     categoryName: null,
+    categoryMappingReason: categoryMapping.reason,
+    categoryMatchScope: categoryMapping.matchScope,
+    categoryInternalCategoryId: categoryMapping.internalCategoryId,
   };
 };
 
@@ -180,7 +200,18 @@ export const runTraderaApiListing = async ({
     source: categorySource,
     categoryPath,
     categoryName,
+    categoryMappingReason,
+    categoryMatchScope,
+    categoryInternalCategoryId,
   } = await resolveTraderaApiCategoryId(listing, product);
+  const shippingGroupResolution = await resolveTraderaShippingGroupResolutionForProduct({
+    product,
+  });
+  const shippingCondition =
+    shippingGroupResolution.shippingCondition || DEFAULT_TRADERA_API_SHIPPING_CONDITION;
+  const shippingConditionSource = shippingGroupResolution.shippingCondition
+    ? 'shippingGroup'
+    : 'default';
   const addResult = await addTraderaShopItem({
     credentials,
     input: {
@@ -189,7 +220,7 @@ export const runTraderaApiListing = async ({
       categoryId,
       price: normalizedPrice,
       quantity,
-      shippingCondition: DEFAULT_TRADERA_API_SHIPPING_CONDITION,
+      shippingCondition,
       paymentCondition: DEFAULT_TRADERA_API_PAYMENT_CONDITION,
     },
   });
@@ -206,6 +237,14 @@ export const runTraderaApiListing = async ({
       categorySource,
       categoryPath,
       categoryName,
+      categoryMappingReason,
+      categoryMatchScope,
+      categoryInternalCategoryId,
+      shippingGroupId: shippingGroupResolution.shippingGroupId,
+      shippingGroupName: shippingGroupResolution.shippingGroup?.name ?? null,
+      shippingCondition,
+      shippingConditionSource,
+      shippingConditionReason: shippingGroupResolution.reason,
       quantity,
       sandbox: credentials.sandbox ?? false,
     },

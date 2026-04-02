@@ -208,6 +208,7 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
           <GenericMapperStats
             total={stats.total}
             mapped={stats.mapped}
+            unmapped={stats.unmapped}
             pending={stats.pending}
             itemLabel={title}
           />

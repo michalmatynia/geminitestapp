@@ -6,6 +6,7 @@ import { EngineStateManager } from './engine-state-manager';
 import {
   type EvaluateGraphOptions,
   type RuntimeValidationIssue,
+  type RuntimeValidationResult,
   type RuntimeValidationStage,
   type RuntimeNodeResolutionTelemetry,
 } from './engine-types';
@@ -63,6 +64,126 @@ export type RunRuntimeValidationArgs = {
   sanitizedEdges: Edge[];
 };
 
+type RuntimeValidationMiddlewareResult = RuntimeValidationResult | null | undefined;
+
+const executeRuntimeValidationMiddleware = async (
+  args: RunRuntimeValidationArgs,
+  validationMiddleware: NonNullable<EvaluateGraphOptions['validationMiddleware']>
+): Promise<RuntimeValidationMiddlewareResult> => {
+  const {
+    stage,
+    node = null,
+    resolvedRunId,
+    resolvedRunStartedAt,
+    nodes,
+    sanitizedEdges,
+  } = args;
+  const context: Parameters<NonNullable<EvaluateGraphOptions['validationMiddleware']>>[0] = {
+    stage,
+    runId: resolvedRunId,
+    runStartedAt: resolvedRunStartedAt,
+    iteration: args.iteration,
+    node,
+    nodeInputs: args.nodeInputs,
+    nodeOutputs: args.nodeOutputs,
+    nodes,
+    edges: sanitizedEdges,
+  };
+
+  try {
+    return await validationMiddleware(context);
+  } catch (error) {
+    logClientError(error);
+    args.options.reportAiPathsError(error, {
+      action: 'runtime_validation_middleware',
+      stage,
+      nodeId: node?.id ?? null,
+      iteration: args.iteration,
+      runId: resolvedRunId,
+    });
+    throw error;
+  }
+};
+
+const resolveRuntimeValidationDecision = (
+  validationResult: Exclude<RuntimeValidationMiddlewareResult, null | undefined>
+): 'warn' | 'block' => (validationResult.decision === 'block' ? 'block' : 'warn');
+
+const buildRuntimeValidationFallbackMessage = (args: {
+  decision: 'warn' | 'block';
+  node: AiNode | null;
+  stage: RuntimeValidationStage;
+}): string =>
+  args.decision === 'block'
+    ? `Runtime validation blocked ${args.node ? `node ${args.node.id}` : 'graph'} at stage ${args.stage}.`
+    : `Runtime validation warning for ${args.node ? `node ${args.node.id}` : 'graph'} at stage ${args.stage}.`;
+
+const resolveRuntimeValidationMessage = (args: {
+  validationResult: Exclude<RuntimeValidationMiddlewareResult, null | undefined>;
+  decision: 'warn' | 'block';
+  issues: RuntimeValidationIssue[];
+  node: AiNode | null;
+  stage: RuntimeValidationStage;
+}): string => {
+  const message = args.validationResult.message;
+  if (typeof message === 'string' && message.trim().length > 0) {
+    return message.trim();
+  }
+
+  return (
+    args.issues[0]?.message ??
+    buildRuntimeValidationFallbackMessage({
+      decision: args.decision,
+      node: args.node,
+      stage: args.stage,
+    })
+  );
+};
+
+const notifyRuntimeValidation = async (args: {
+  options: EvaluateGraphOptions;
+  resolvedRunId: string;
+  resolvedRunStartedAt: string;
+  iteration: number;
+  stage: RuntimeValidationStage;
+  decision: 'warn' | 'block';
+  node: AiNode | null;
+  nodeInputs?: RuntimePortValues;
+  nodeOutputs?: RuntimePortValues;
+  message: string;
+  issues: RuntimeValidationIssue[];
+  runtimeTelemetry?: RuntimeNodeResolutionTelemetry | null;
+}): Promise<void> => {
+  if (!args.options.onRuntimeValidation) {
+    return;
+  }
+
+  try {
+    await args.options.onRuntimeValidation({
+      runId: args.resolvedRunId,
+      runStartedAt: args.resolvedRunStartedAt,
+      iteration: args.iteration,
+      stage: args.stage,
+      decision: args.decision,
+      node: args.node,
+      nodeInputs: args.nodeInputs,
+      nodeOutputs: args.nodeOutputs,
+      message: args.message,
+      issues: args.issues,
+      ...buildRuntimeTelemetryFields(args.runtimeTelemetry ?? null),
+    });
+  } catch (error) {
+    logClientError(error);
+    args.options.reportAiPathsError(error, {
+      action: 'onRuntimeValidation',
+      stage: args.stage,
+      nodeId: args.node?.id ?? null,
+      iteration: args.iteration,
+      runId: args.resolvedRunId,
+    });
+  }
+};
+
 export const runRuntimeValidation = async (
   args: RunRuntimeValidationArgs
 ): Promise<{
@@ -76,84 +197,41 @@ export const runRuntimeValidation = async (
     node = null,
     resolvedRunId,
     resolvedRunStartedAt,
-    nodes,
-    sanitizedEdges,
   } = args;
   if (!options.validationMiddleware) return null;
 
-  let validationResult:
-    | {
-        decision: 'pass' | 'warn' | 'block';
-        message?: string;
-        issues?: RuntimeValidationIssue[];
-      }
-    | null
-    | undefined = null;
-  try {
-    validationResult = await options.validationMiddleware({
-      stage,
-      runId: resolvedRunId,
-      runStartedAt: resolvedRunStartedAt,
-      iteration: args.iteration,
-      node,
-      nodeInputs: args.nodeInputs,
-      nodeOutputs: args.nodeOutputs,
-      nodes,
-      edges: sanitizedEdges,
-    });
-  } catch (error) {
-    logClientError(error);
-    options.reportAiPathsError(error, {
-      action: 'runtime_validation_middleware',
-      stage,
-      nodeId: node?.id ?? null,
-      iteration: args.iteration,
-      runId: resolvedRunId,
-    });
-    throw error;
-  }
-
+  const validationResult = await executeRuntimeValidationMiddleware(
+    args,
+    options.validationMiddleware
+  );
   if (!validationResult || validationResult.decision === 'pass') {
     return null;
   }
 
-  const decision = validationResult.decision === 'block' ? 'block' : 'warn';
+  const decision = resolveRuntimeValidationDecision(validationResult);
   const issues = normalizeRuntimeValidationIssues(validationResult.issues, stage, node);
-  const fallbackMessage =
-    decision === 'block'
-      ? `Runtime validation blocked ${node ? `node ${node.id}` : 'graph'} at stage ${stage}.`
-      : `Runtime validation warning for ${node ? `node ${node.id}` : 'graph'} at stage ${stage}.`;
-  const message =
-    typeof validationResult.message === 'string' && validationResult.message.trim().length > 0
-      ? validationResult.message.trim()
-      : (issues[0]?.message ?? fallbackMessage);
+  const message = resolveRuntimeValidationMessage({
+    validationResult,
+    decision,
+    issues,
+    node,
+    stage,
+  });
 
-  if (options.onRuntimeValidation) {
-    try {
-      await options.onRuntimeValidation({
-        runId: resolvedRunId,
-        runStartedAt: resolvedRunStartedAt,
-        iteration: args.iteration,
-        stage,
-        decision,
-        node,
-        nodeInputs: args.nodeInputs,
-        nodeOutputs: args.nodeOutputs,
-        message,
-        issues,
-        ...buildRuntimeTelemetryFields(args.runtimeTelemetry ?? null),
-      });
-    } catch (error) {
-      logClientError(error);
-      options.reportAiPathsError(error, {
-        action: 'onRuntimeValidation',
-        stage,
-        nodeId: node?.id ?? null,
-        iteration: args.iteration,
-        runId: resolvedRunId,
-      });
-    }
-  }
+  await notifyRuntimeValidation({
+    options,
+    resolvedRunId,
+    resolvedRunStartedAt,
+    iteration: args.iteration,
+    stage,
+    decision,
+    node,
+    nodeInputs: args.nodeInputs,
+    nodeOutputs: args.nodeOutputs,
+    message,
+    issues,
+    runtimeTelemetry: args.runtimeTelemetry ?? null,
+  });
 
   return {
     decision,

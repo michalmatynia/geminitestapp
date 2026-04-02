@@ -58,6 +58,11 @@ const DEFAULT_PUBLIC_APP_URL = 'http://localhost:3000';
 type ActiveEmailVerificationChallenge = Awaited<
   ReturnType<typeof findActiveEmailVerificationChallengeByEmail>
 >;
+type ParentVerificationToken = Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
+type ParentVerificationDispatch = {
+  hasPassword: boolean;
+  verificationToken: ParentVerificationToken;
+};
 
 const normalizeOptionalString = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') {
@@ -357,6 +362,99 @@ const sendKangurParentVerificationEmail = async (input: {
   });
 };
 
+const finalizeParentVerificationFlow = async (input: {
+  email: string;
+  callbackUrl: string | null;
+  request?: Request | null;
+  locale?: string | null;
+  created: boolean;
+  hasPassword: boolean;
+  resendCooldownMs: number;
+  notificationSuppressed: boolean;
+  verificationToken: ParentVerificationToken;
+}): Promise<KangurParentAccountCreateResult> => {
+  const origin = resolveAppOrigin(input.request);
+  const verificationUrl = buildAbsoluteKangurLoginUrl({
+    origin,
+    callbackUrl: input.callbackUrl,
+    verifyEmailToken: input.verificationToken.id,
+  });
+
+  if (!input.notificationSuppressed) {
+    await sendKangurParentVerificationEmail({
+      email: input.email,
+      callbackUrl: input.callbackUrl,
+      created: input.created,
+      hasPassword: input.hasPassword,
+      verificationUrl,
+      locale: input.locale,
+    });
+  }
+
+  return {
+    email: input.email,
+    created: input.created,
+    emailVerified: false,
+    hasPassword: input.hasPassword,
+    retryAfterMs: input.resendCooldownMs,
+    verificationUrl,
+    notificationSuppressed: input.notificationSuppressed,
+  };
+};
+
+const createExistingParentResendVerification = async (input: {
+  user: Awaited<ReturnType<typeof findAuthUserByEmail>>;
+  email: string;
+  callbackUrl: string | null;
+  resendCooldownMs: number;
+  t: SiteTranslator;
+}): Promise<ParentVerificationDispatch> => {
+  const user = input.user;
+  if (!user) {
+    throw internalError('Nie udało się odczytać konta rodzica.');
+  }
+
+  await assertUserLoginAllowed(user.id, input.t);
+  if (user.emailVerified) {
+    throw conflictError(getParentEmailConflictMessage(input.t));
+  }
+
+  const activeVerification = await findActiveEmailVerificationChallengeByEmail(input.email);
+  assertKangurParentVerificationSendAllowed(activeVerification, input.resendCooldownMs, input.t);
+
+  return {
+    hasPassword: Boolean(user.passwordHash),
+    verificationToken: await createEmailVerificationChallenge({
+      userId: user.id,
+      email: input.email,
+      callbackUrl: input.callbackUrl,
+    }),
+  };
+};
+
+const createPendingParentResendVerification = async (input: {
+  email: string;
+  callbackUrl: string | null;
+  resendCooldownMs: number;
+  t: SiteTranslator;
+}): Promise<ParentVerificationDispatch> => {
+  const pendingVerification = await findActiveEmailVerificationChallengeByEmail(input.email);
+  if (pendingVerification?.pendingRegistration?.source !== 'kangur_parent') {
+    throw forbiddenError(input.t('KangurAuthApi.pendingParentAccountMissing'));
+  }
+
+  assertKangurParentVerificationSendAllowed(pendingVerification, input.resendCooldownMs, input.t);
+
+  return {
+    hasPassword: true,
+    verificationToken: await createEmailVerificationChallenge({
+      email: input.email,
+      callbackUrl: input.callbackUrl,
+      pendingRegistration: pendingVerification.pendingRegistration,
+    }),
+  };
+};
+
 export const createKangurParentAccount = async (input: {
   email: string;
   password: string;
@@ -441,32 +539,17 @@ export const createKangurParentAccount = async (input: {
     hasPassword = Boolean(user.passwordHash);
   }
 
-  const origin = resolveAppOrigin(input.request);
-  const verificationUrl = buildAbsoluteKangurLoginUrl({
-    origin,
-    callbackUrl,
-    verifyEmailToken: verificationToken.id,
-  });
-  if (!notificationSuppressed) {
-    await sendKangurParentVerificationEmail({
-      email,
-      callbackUrl,
-      created,
-      hasPassword,
-      verificationUrl,
-      locale,
-    });
-  }
-
-  return {
+  return finalizeParentVerificationFlow({
     email,
+    callbackUrl,
+    request: input.request,
+    locale,
     created,
-    emailVerified: false,
     hasPassword,
-    retryAfterMs: resendCooldownMs,
-    verificationUrl,
+    resendCooldownMs,
     notificationSuppressed,
-  };
+    verificationToken,
+  });
 };
 
 export const resendKangurParentVerificationEmail = async (input: {
@@ -485,66 +568,34 @@ export const resendKangurParentVerificationEmail = async (input: {
   if (!parentVerificationSettings.requireEmailVerification) {
     throw conflictError(t('KangurAuthApi.emailVerificationDisabled'));
   }
+
   const existingUser = await findAuthUserByEmail(email);
-  let hasPassword = false;
-  let verificationToken: Awaited<ReturnType<typeof createEmailVerificationChallenge>>;
+  const dispatch = existingUser
+    ? await createExistingParentResendVerification({
+        user: existingUser,
+        email,
+        callbackUrl,
+        resendCooldownMs,
+        t,
+      })
+    : await createPendingParentResendVerification({
+        email,
+        callbackUrl,
+        resendCooldownMs,
+        t,
+      });
 
-  if (existingUser) {
-    await assertUserLoginAllowed(existingUser.id, t);
-    if (existingUser.emailVerified) {
-      throw conflictError(getParentEmailConflictMessage(t));
-    }
-    const activeVerification = await findActiveEmailVerificationChallengeByEmail(email);
-    assertKangurParentVerificationSendAllowed(activeVerification, resendCooldownMs, t);
-
-    verificationToken = await createEmailVerificationChallenge({
-      userId: existingUser.id,
-      email,
-      callbackUrl,
-    });
-    hasPassword = Boolean(existingUser.passwordHash);
-  } else {
-    const pendingVerification = await findActiveEmailVerificationChallengeByEmail(email);
-    if (pendingVerification?.pendingRegistration?.source !== 'kangur_parent') {
-      throw forbiddenError(t('KangurAuthApi.pendingParentAccountMissing'));
-    }
-    assertKangurParentVerificationSendAllowed(pendingVerification, resendCooldownMs, t);
-
-    verificationToken = await createEmailVerificationChallenge({
-      email,
-      callbackUrl,
-      pendingRegistration: pendingVerification.pendingRegistration,
-    });
-    hasPassword = true;
-  }
-
-  const origin = resolveAppOrigin(input.request);
-  const verificationUrl = buildAbsoluteKangurLoginUrl({
-    origin,
-    callbackUrl,
-    verifyEmailToken: verificationToken.id,
-  });
-
-  if (!notificationSuppressed) {
-    await sendKangurParentVerificationEmail({
-      email,
-      callbackUrl,
-      created: false,
-      hasPassword,
-      verificationUrl,
-      locale,
-    });
-  }
-
-  return {
+  return finalizeParentVerificationFlow({
     email,
+    callbackUrl,
+    request: input.request,
+    locale,
     created: false,
-    emailVerified: false,
-    hasPassword,
-    retryAfterMs: resendCooldownMs,
-    verificationUrl,
+    hasPassword: dispatch.hasPassword,
+    resendCooldownMs,
     notificationSuppressed,
-  };
+    verificationToken: dispatch.verificationToken,
+  });
 };
 
 export const verifyKangurParentEmail = async (

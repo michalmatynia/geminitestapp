@@ -283,10 +283,34 @@ export const isLatestPriceStockMirrorPattern = (pattern: ProductValidationPatter
 export const isRuntimePatternEnabled = (pattern: ProductValidationPattern): boolean =>
   Boolean(pattern.runtimeEnabled && pattern.runtimeType !== 'none');
 
+type ResolvePatternLaunchSourceValueArgs = {
+  pattern: ProductValidationPattern;
+  fieldValue: string;
+  values: Record<string, unknown>;
+  latestProductValues: Record<string, unknown> | null;
+};
+
 const toStringValue = (value: unknown): string | null => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   return null;
+};
+
+const readPatternLaunchSourceRawValue = (
+  args: ResolvePatternLaunchSourceValueArgs
+): unknown => {
+  if (!args.pattern.launchEnabled) {
+    return args.fieldValue;
+  }
+
+  const sourceField = args.pattern.launchSourceField ?? '';
+  const sourceReaders = {
+    current_field: (): unknown => args.fieldValue,
+    form_field: (): unknown => args.values[sourceField],
+    latest_product_field: (): unknown => args.latestProductValues?.[sourceField],
+  } as const;
+
+  return sourceReaders[args.pattern.launchSourceMode]();
 };
 
 /**
@@ -297,20 +321,15 @@ export const resolvePatternLaunchSourceValue = ({
   fieldValue,
   values,
   latestProductValues,
-}: {
-  pattern: ProductValidationPattern;
-  fieldValue: string;
-  values: Record<string, unknown>;
-  latestProductValues: Record<string, unknown> | null;
-}): string => {
-  if (!pattern.launchEnabled || pattern.launchSourceMode === 'current_field') {
-    return fieldValue;
-  }
-  if (pattern.launchSourceMode === 'form_field') {
-    return toStringValue(values[pattern.launchSourceField ?? '']) ?? '';
-  }
-  return toStringValue(latestProductValues?.[pattern.launchSourceField ?? '']) ?? '';
-};
+}: ResolvePatternLaunchSourceValueArgs): string =>
+  toStringValue(
+    readPatternLaunchSourceRawValue({
+      pattern,
+      fieldValue,
+      values,
+      latestProductValues,
+    })
+  ) ?? '';
 
 /**
  * Validator docs: see docs/validator/function-reference.md#core.shouldlaunchpattern

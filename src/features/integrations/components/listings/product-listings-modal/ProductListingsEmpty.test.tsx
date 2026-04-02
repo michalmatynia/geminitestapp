@@ -34,8 +34,10 @@ import { ProductListingsEmpty } from './ProductListingsEmpty';
 
 const baseViewContextValue: ProductListingsViewContextValue = {
   filteredListings: [],
+  integrationScopeLabel: null,
   statusTargetLabel: 'Base.com',
   filterIntegrationSlug: undefined,
+  isScopedMarketplaceFlow: false,
   isBaseFilter: false,
   showSync: false,
 };

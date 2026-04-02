@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { NODE_MIN_HEIGHT, NODE_WIDTH, PORT_SIZE } from '@/shared/lib/ai-paths/core/constants';
+import type { DataContractNodeIssueSummary, RuntimeState } from '@/shared/lib/ai-paths';
 
 import {
   resolveNodePalette,
@@ -18,13 +19,347 @@ import {
   resolveNodeRuntimeStatusLabel,
 } from './canvas/signal-flow-visual-state';
 import { buildConnectorInfo } from './canvas-board-connectors';
-import { useCanvasBoardUI } from './CanvasBoardUIContext';
+import { useCanvasBoardUI, type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
 
 const EMPTY_TRIGGER_IDS = new Set<string>();
 
 type CanvasSvgNodeProps = {
   node: AiNode;
 };
+
+const resolveNodePortHistoryValue = ({
+  direction,
+  historyEntries,
+  port,
+}: {
+  direction: 'input' | 'output';
+  historyEntries: NonNullable<RuntimeState['history']>[string] | undefined;
+  port: string;
+}): unknown => {
+  if (!Array.isArray(historyEntries) || historyEntries.length === 0) {
+    return undefined;
+  }
+  const lastEntry = historyEntries[historyEntries.length - 1] as Record<string, unknown> | undefined;
+  const fallbackSourceCandidate =
+    direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
+  if (!fallbackSourceCandidate || typeof fallbackSourceCandidate !== 'object') {
+    return undefined;
+  }
+  return (fallbackSourceCandidate as Record<string, unknown>)[port];
+};
+
+const resolveNodePortValue = ({
+  direction,
+  nodeId,
+  port,
+  runtimeState,
+}: {
+  direction: 'input' | 'output';
+  nodeId: string;
+  port: string;
+  runtimeState: RuntimeState;
+}): unknown => {
+  const source = direction === 'input' ? runtimeState.inputs : runtimeState.outputs;
+  const nodeValues = source?.[nodeId] ?? {};
+  const directValue = nodeValues[port];
+  if (directValue !== undefined) {
+    return directValue;
+  }
+  return resolveNodePortHistoryValue({
+    direction,
+    historyEntries: runtimeState.history?.[nodeId],
+    port,
+  });
+};
+
+const resolveCanvasSvgNodeTriggerPalette = ({
+  isTriggerBlocked,
+  isTriggerConnected,
+  isTriggerLaunching,
+}: {
+  isTriggerBlocked: boolean;
+  isTriggerConnected: boolean;
+  isTriggerLaunching: boolean;
+}): { fill: string; stroke: string; text: string; label: string } => {
+  if (isTriggerLaunching) {
+    return {
+      fill: 'rgba(14, 165, 233, 0.24)',
+      stroke: '#38bdf8',
+      text: '#bae6fd',
+      label: 'Launching...',
+    };
+  }
+  if (isTriggerBlocked) {
+    return {
+      fill: 'rgba(245, 158, 11, 0.22)',
+      stroke: '#f59e0b',
+      text: '#fde68a',
+      label: 'Fix Wiring',
+    };
+  }
+  if (isTriggerConnected) {
+    return {
+      fill: 'rgba(16, 185, 129, 0.2)',
+      stroke: '#10b981',
+      text: '#a7f3d0',
+      label: 'Fire Trigger',
+    };
+  }
+  return {
+    fill: 'rgba(244, 63, 94, 0.14)',
+    stroke: '#f43f5e',
+    text: '#fecdd3',
+    label: 'Fire Trigger',
+  };
+};
+
+function CanvasSvgNodeModelSelectionBadge({
+  modelSelectionBadgeWidth,
+  modelSelectionLabel,
+  nodeId,
+  usesBrainDefaultModel,
+  visible,
+}: {
+  modelSelectionBadgeWidth: number;
+  modelSelectionLabel: string;
+  nodeId: string;
+  usesBrainDefaultModel: boolean;
+  visible: boolean;
+}): React.JSX.Element | null {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <g
+      transform='translate(10 24)'
+      data-node-model-selection-badge={nodeId}
+      pointerEvents='none'
+    >
+      <rect
+        width={modelSelectionBadgeWidth}
+        height={14}
+        rx={4}
+        fill={usesBrainDefaultModel ? 'rgba(245, 158, 11, 0.14)' : 'rgba(14, 165, 233, 0.14)'}
+        stroke={usesBrainDefaultModel ? 'rgba(245, 158, 11, 0.45)' : 'rgba(14, 165, 233, 0.45)'}
+        strokeWidth='0.75'
+      />
+      <text
+        x={modelSelectionBadgeWidth / 2}
+        y={10}
+        textAnchor='middle'
+        fill={usesBrainDefaultModel ? '#fcd34d' : '#7dd3fc'}
+        fontSize='8'
+        fontWeight='600'
+        style={{ userSelect: 'none' }}
+      >
+        {modelSelectionLabel}
+      </text>
+    </g>
+  );
+}
+
+function CanvasSvgNodeDiagnosticsBadge({
+  badge,
+  badgeX,
+  nodeId,
+  onFocusNodeDiagnostics,
+  onNodeDiagnosticsHover,
+  onNodeDiagnosticsLeave,
+  summary,
+}: {
+  badge: NonNullable<ReturnType<typeof resolveNodeDiagnosticsBadgePalette>> | null;
+  badgeX: number;
+  nodeId: string;
+  onFocusNodeDiagnostics?: CanvasBoardUIContextValue['onFocusNodeDiagnostics'];
+  onNodeDiagnosticsHover?: CanvasBoardUIContextValue['onNodeDiagnosticsHover'];
+  onNodeDiagnosticsLeave?: CanvasBoardUIContextValue['onNodeDiagnosticsLeave'];
+  summary: DataContractNodeIssueSummary | undefined;
+}): React.JSX.Element | null {
+  if (!badge || !summary) {
+    return null;
+  }
+
+  return (
+    <g transform={`translate(${badgeX} 6)`} data-node-diagnostics-badge={nodeId}>
+      <rect
+        x={0}
+        y={0}
+        width={50}
+        height={16}
+        rx={5}
+        fill={badge.fill}
+        stroke={badge.stroke}
+        strokeWidth='1'
+        style={{ cursor: 'pointer' }}
+        onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
+          event.stopPropagation();
+        }}
+        onPointerEnter={(event: React.PointerEvent<SVGRectElement>) => {
+          onNodeDiagnosticsHover?.({
+            clientX: event.clientX,
+            clientY: event.clientY,
+            nodeId,
+            summary,
+          });
+        }}
+        onPointerMove={(event: React.PointerEvent<SVGRectElement>) => {
+          onNodeDiagnosticsHover?.({
+            clientX: event.clientX,
+            clientY: event.clientY,
+            nodeId,
+            summary,
+          });
+        }}
+        onPointerLeave={() => {
+          onNodeDiagnosticsLeave?.();
+        }}
+        onClick={(event: React.MouseEvent<SVGRectElement>) => {
+          event.stopPropagation();
+          onFocusNodeDiagnostics?.(nodeId);
+        }}
+      />
+      <text
+        x={25}
+        y={11}
+        textAnchor='middle'
+        fill={badge.text}
+        fontSize='8'
+        fontWeight='600'
+        pointerEvents='none'
+        style={{ userSelect: 'none' }}
+      >
+        {badge.label}
+      </text>
+    </g>
+  );
+}
+
+function CanvasSvgNodeTriggerAction({
+  consumeSuppressedNodeClick,
+  isTriggerBlocked,
+  isTriggerConnected,
+  isTriggerLaunching,
+  node,
+  onFireTrigger,
+  triggerBlockedMessage,
+}: {
+  consumeSuppressedNodeClick: (nodeId: string) => boolean;
+  isTriggerBlocked: boolean;
+  isTriggerConnected: boolean;
+  isTriggerLaunching: boolean;
+  node: AiNode;
+  onFireTrigger: CanvasBoardUIContextValue['onFireTrigger'];
+  triggerBlockedMessage: string | null;
+}): React.JSX.Element | null {
+  if (node.type !== 'trigger') {
+    return null;
+  }
+
+  const palette = resolveCanvasSvgNodeTriggerPalette({
+    isTriggerBlocked,
+    isTriggerConnected,
+    isTriggerLaunching,
+  });
+
+  return (
+    <g transform={`translate(${NODE_WIDTH - 92} 6)`}>
+      {isTriggerBlocked && triggerBlockedMessage ? <title>{triggerBlockedMessage}</title> : null}
+      <rect
+        data-node-action='fire-trigger'
+        data-node-id={node.id}
+        data-trigger-blocked={isTriggerBlocked ? 'true' : 'false'}
+        x={0}
+        y={0}
+        width={82}
+        height={16}
+        rx={5}
+        fill={palette.fill}
+        stroke={palette.stroke}
+        strokeWidth='1'
+        style={{ cursor: isTriggerBlocked ? 'help' : 'pointer', pointerEvents: 'all' }}
+        onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
+          event.stopPropagation();
+        }}
+        onClick={(event: React.MouseEvent<SVGRectElement>) => {
+          event.stopPropagation();
+          if (consumeSuppressedNodeClick(node.id)) {
+            event.preventDefault();
+            return;
+          }
+          void onFireTrigger(node, event);
+        }}
+      />
+      <path
+        d='M0 0L0 7L6 3.5Z'
+        transform='translate(8 4.5)'
+        fill={palette.stroke}
+        pointerEvents='none'
+      />
+      <text
+        x={46}
+        y={11}
+        textAnchor='middle'
+        fill={palette.text}
+        fontSize='8'
+        fontWeight='600'
+        pointerEvents='none'
+        style={{ userSelect: 'none' }}
+      >
+        {palette.label}
+      </text>
+    </g>
+  );
+}
+
+function CanvasSvgNodePulseOverlays({
+  inputPulse,
+  outputPulse,
+  visible,
+}: {
+  inputPulse: boolean;
+  outputPulse: boolean;
+  visible: boolean;
+}): React.JSX.Element | null {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <>
+      {inputPulse ? (
+        <rect
+          x={-2}
+          y={-2}
+          width={NODE_WIDTH + 4}
+          height={NODE_MIN_HEIGHT + 4}
+          rx={13}
+          ry={13}
+          fill='none'
+          stroke='#38bdf8'
+          strokeWidth='2'
+          className='ai-paths-node-pulse-input'
+          pointerEvents='none'
+        />
+      ) : null}
+      {outputPulse ? (
+        <rect
+          x={-2}
+          y={-2}
+          width={NODE_WIDTH + 4}
+          height={NODE_MIN_HEIGHT + 4}
+          rx={13}
+          ry={13}
+          fill='none'
+          stroke='#10b981'
+          strokeWidth='2'
+          className='ai-paths-node-pulse-output'
+          pointerEvents='none'
+        />
+      ) : null}
+    </>
+  );
+}
 
 export const CanvasSvgNode = React.memo(function CanvasSvgNode({
   node,
@@ -74,15 +409,12 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
 
   const getPortValue = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string): unknown => {
-      const source = direction === 'input' ? runtimeState.inputs : runtimeState.outputs;
-      const nodeValues = source?.[nodeId] ?? {};
-      const directValue = nodeValues[port];
-      if (directValue !== undefined) return directValue;
-      const history = runtimeState.history?.[nodeId];
-      if (!Array.isArray(history) || history.length === 0) return directValue;
-      const lastEntry = history[history.length - 1];
-      const fallbackSource = direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
-      return fallbackSource?.[port];
+      return resolveNodePortValue({
+        direction,
+        nodeId,
+        port,
+        runtimeState,
+      });
     },
     [runtimeState]
   );
@@ -279,33 +611,13 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
         {titleText}
       </text>
 
-      {node.type === 'model' && showModelSelectionBadge ? (
-        <g
-          transform='translate(10 24)'
-          data-node-model-selection-badge={node.id}
-          pointerEvents='none'
-        >
-          <rect
-            width={modelSelectionBadgeWidth}
-            height={14}
-            rx={4}
-            fill={usesBrainDefaultModel ? 'rgba(245, 158, 11, 0.14)' : 'rgba(14, 165, 233, 0.14)'}
-            stroke={usesBrainDefaultModel ? 'rgba(245, 158, 11, 0.45)' : 'rgba(14, 165, 233, 0.45)'}
-            strokeWidth='0.75'
-          />
-          <text
-            x={modelSelectionBadgeWidth / 2}
-            y={10}
-            textAnchor='middle'
-            fill={usesBrainDefaultModel ? '#fcd34d' : '#7dd3fc'}
-            fontSize='8'
-            fontWeight='600'
-            style={{ userSelect: 'none' }}
-          >
-            {modelSelectionLabel}
-          </text>
-        </g>
-      ) : null}
+      <CanvasSvgNodeModelSelectionBadge
+        modelSelectionBadgeWidth={modelSelectionBadgeWidth}
+        modelSelectionLabel={modelSelectionLabel}
+        nodeId={node.id}
+        usesBrainDefaultModel={usesBrainDefaultModel}
+        visible={node.type === 'model' && showModelSelectionBadge}
+      />
 
       {showNodeId && (
         <text
@@ -377,176 +689,29 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
         </g>
       )}
 
-      {nodeDiagnosticsBadge && nodeDiagnosticsSummary ? (
-        <g
-          transform={`translate(${nodeDiagnosticsBadgeX} 6)`}
-          data-node-diagnostics-badge={node.id}
-        >
-          <rect
-            x={0}
-            y={0}
-            width={50}
-            height={16}
-            rx={5}
-            fill={nodeDiagnosticsBadge.fill}
-            stroke={nodeDiagnosticsBadge.stroke}
-            strokeWidth='1'
-            style={{ cursor: 'pointer' }}
-            onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
-              event.stopPropagation();
-            }}
-            onPointerEnter={(event: React.PointerEvent<SVGRectElement>) => {
-              onNodeDiagnosticsHover?.({
-                clientX: event.clientX,
-                clientY: event.clientY,
-                nodeId: node.id,
-                summary: nodeDiagnosticsSummary,
-              });
-            }}
-            onPointerMove={(event: React.PointerEvent<SVGRectElement>) => {
-              onNodeDiagnosticsHover?.({
-                clientX: event.clientX,
-                clientY: event.clientY,
-                nodeId: node.id,
-                summary: nodeDiagnosticsSummary,
-              });
-            }}
-            onPointerLeave={() => {
-              onNodeDiagnosticsLeave?.();
-            }}
-            onClick={(event: React.MouseEvent<SVGRectElement>) => {
-              event.stopPropagation();
-              onFocusNodeDiagnostics?.(node.id);
-            }}
-          />
-          <text
-            x={25}
-            y={11}
-            textAnchor='middle'
-            fill={nodeDiagnosticsBadge.text}
-            fontSize='8'
-            fontWeight='600'
-            pointerEvents='none'
-            style={{ userSelect: 'none' }}
-          >
-            {nodeDiagnosticsBadge.label}
-          </text>
-        </g>
-      ) : null}
-
-      {node.type === 'trigger' && (
-        <g transform={`translate(${NODE_WIDTH - 92} 6)`}>
-          {isTriggerBlocked && triggerBlockedMessage ? (
-            <title>{triggerBlockedMessage}</title>
-          ) : null}
-          <rect
-            data-node-action='fire-trigger'
-            data-node-id={node.id}
-            data-trigger-blocked={isTriggerBlocked ? 'true' : 'false'}
-            x={0}
-            y={0}
-            width={82}
-            height={16}
-            rx={5}
-            fill={
-              isTriggerLaunching
-                ? 'rgba(14, 165, 233, 0.24)'
-                : isTriggerBlocked
-                  ? 'rgba(245, 158, 11, 0.22)'
-                  : isTriggerConnected
-                    ? 'rgba(16, 185, 129, 0.2)'
-                    : 'rgba(244, 63, 94, 0.14)'
-            }
-            stroke={
-              isTriggerLaunching
-                ? '#38bdf8'
-                : isTriggerBlocked
-                  ? '#f59e0b'
-                  : isTriggerConnected
-                    ? '#10b981'
-                    : '#f43f5e'
-            }
-            strokeWidth='1'
-            style={{ cursor: isTriggerBlocked ? 'help' : 'pointer', pointerEvents: 'all' }}
-            onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
-              event.stopPropagation();
-            }}
-            onClick={(event: React.MouseEvent<SVGRectElement>) => {
-              event.stopPropagation();
-              if (consumeSuppressedNodeClick(node.id)) {
-                event.preventDefault();
-                return;
-              }
-              void onFireTrigger(node, event);
-            }}
-          />
-          <path
-            d='M0 0L0 7L6 3.5Z'
-            transform='translate(8 4.5)'
-            fill={
-              isTriggerLaunching
-                ? '#38bdf8'
-                : isTriggerBlocked
-                  ? '#f59e0b'
-                  : isTriggerConnected
-                    ? '#10b981'
-                    : '#f43f5e'
-            }
-            pointerEvents='none'
-          />
-          <text
-            x={46}
-            y={11}
-            textAnchor='middle'
-            fill={
-              isTriggerLaunching
-                ? '#bae6fd'
-                : isTriggerBlocked
-                  ? '#fde68a'
-                  : isTriggerConnected
-                    ? '#a7f3d0'
-                    : '#fecdd3'
-            }
-            fontSize='8'
-            fontWeight='600'
-            pointerEvents='none'
-            style={{ userSelect: 'none' }}
-          >
-            {isTriggerLaunching ? 'Launching...' : isTriggerBlocked ? 'Fix Wiring' : 'Fire Trigger'}
-          </text>
-        </g>
-      )}
-
-      {showNodeAnimations && inputPulse && (
-        <rect
-          x={-2}
-          y={-2}
-          width={NODE_WIDTH + 4}
-          height={NODE_MIN_HEIGHT + 4}
-          rx={13}
-          ry={13}
-          fill='none'
-          stroke='#38bdf8'
-          strokeWidth='2'
-          className='ai-paths-node-pulse-input'
-          pointerEvents='none'
-        />
-      )}
-      {showNodeAnimations && outputPulse && (
-        <rect
-          x={-2}
-          y={-2}
-          width={NODE_WIDTH + 4}
-          height={NODE_MIN_HEIGHT + 4}
-          rx={13}
-          ry={13}
-          fill='none'
-          stroke='#10b981'
-          strokeWidth='2'
-          className='ai-paths-node-pulse-output'
-          pointerEvents='none'
-        />
-      )}
+      <CanvasSvgNodeDiagnosticsBadge
+        badge={nodeDiagnosticsBadge}
+        badgeX={nodeDiagnosticsBadgeX}
+        nodeId={node.id}
+        onFocusNodeDiagnostics={onFocusNodeDiagnostics}
+        onNodeDiagnosticsHover={onNodeDiagnosticsHover}
+        onNodeDiagnosticsLeave={onNodeDiagnosticsLeave}
+        summary={nodeDiagnosticsSummary}
+      />
+      <CanvasSvgNodeTriggerAction
+        consumeSuppressedNodeClick={consumeSuppressedNodeClick}
+        isTriggerBlocked={isTriggerBlocked}
+        isTriggerConnected={isTriggerConnected}
+        isTriggerLaunching={isTriggerLaunching}
+        node={node}
+        onFireTrigger={onFireTrigger}
+        triggerBlockedMessage={triggerBlockedMessage}
+      />
+      <CanvasSvgNodePulseOverlays
+        inputPulse={inputPulse}
+        outputPulse={outputPulse}
+        visible={showNodeAnimations}
+      />
 
       {showNodePorts && (
         <CanvasSvgNodePorts

@@ -47,7 +47,8 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { getIntegrationRepository } from '../integration-repository';
 import { runPlaywrightListingScript } from '../playwright-listing/runner';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
-import { resolveTraderaCategoryMappingForProduct } from './category-mapping';
+import { resolveTraderaCategoryMappingResolutionForProduct } from './category-mapping';
+import { resolveTraderaShippingGroupResolutionForProduct } from './shipping-group';
 
 export type TraderaBrowserListingResult = {
   externalListingId: string;
@@ -115,7 +116,7 @@ const resolveLocalProductImagePaths = async (
   return validPaths;
 };
 
-const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v8';
+const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v17';
 
 const includesAnyHint = (value: string, hints: readonly string[]): boolean => {
   const normalized = value.trim().toLowerCase();
@@ -235,10 +236,15 @@ const buildTraderaScriptInput = async ({
   const appBaseUrl = resolveAppBaseUrl();
   const images = resolveProductImageUrls(product).map((u) => toAbsoluteUrl(u, appBaseUrl));
   const localImagePaths = await resolveLocalProductImagePaths(product);
-  const mappedCategory = await resolveTraderaCategoryMappingForProduct({
+  const categoryMapping = await resolveTraderaCategoryMappingResolutionForProduct({
     connectionId: connection.id,
     product,
   });
+  const shippingGroupResolution = await resolveTraderaShippingGroupResolutionForProduct({
+    product,
+  });
+  const mappedCategory = categoryMapping.mapping;
+  const shippingGroup = shippingGroupResolution.shippingGroup;
   // Credentials passed in-memory only — never written to disk or job queue
   const username = connection.username ?? null;
   const password = connection.password ? decryptSecret(connection.password) : null;
@@ -270,6 +276,22 @@ const buildTraderaScriptInput = async ({
     autoRelistLeadMinutes: listing.relistPolicy?.leadMinutes ?? null,
     templateId: listing.relistPolicy?.templateId ?? null,
     traderaConfig: { listingFormUrl: systemSettings.listingFormUrl },
+    traderaCategoryMapping: {
+      reason: categoryMapping.reason,
+      matchScope: categoryMapping.matchScope,
+      internalCategoryId: categoryMapping.internalCategoryId,
+      productCatalogIds: categoryMapping.productCatalogIds,
+      matchingMappingCount: categoryMapping.matchingMappingCount,
+      validMappingCount: categoryMapping.validMappingCount,
+      catalogMatchedMappingCount: categoryMapping.catalogMatchedMappingCount,
+    },
+    traderaShipping: {
+      shippingGroupId: shippingGroupResolution.shippingGroupId,
+      shippingGroupName: shippingGroup?.name ?? null,
+      shippingGroupCatalogId: shippingGroup?.catalogId ?? null,
+      shippingCondition: shippingGroupResolution.shippingCondition,
+      reason: shippingGroupResolution.reason,
+    },
   };
 };
 
@@ -466,6 +488,27 @@ const runTraderaBrowserListingScripted = async ({
       browserMode: resolveResultBrowserMode(browserMode, result.effectiveBrowserMode),
       rawResult: result.rawResult,
       publishVerified: result.publishVerified,
+      categoryMappingReason:
+        scriptInput &&
+        typeof scriptInput['traderaCategoryMapping'] === 'object' &&
+        scriptInput['traderaCategoryMapping'] &&
+        typeof (scriptInput['traderaCategoryMapping'] as Record<string, unknown>)['reason'] === 'string'
+          ? ((scriptInput['traderaCategoryMapping'] as Record<string, unknown>)['reason'] as string)
+          : null,
+      categoryMatchScope:
+        scriptInput &&
+        typeof scriptInput['traderaCategoryMapping'] === 'object' &&
+        scriptInput['traderaCategoryMapping'] &&
+        typeof (scriptInput['traderaCategoryMapping'] as Record<string, unknown>)['matchScope'] === 'string'
+          ? ((scriptInput['traderaCategoryMapping'] as Record<string, unknown>)['matchScope'] as string)
+          : null,
+      categoryInternalCategoryId:
+        scriptInput &&
+        typeof scriptInput['traderaCategoryMapping'] === 'object' &&
+        scriptInput['traderaCategoryMapping'] &&
+        typeof (scriptInput['traderaCategoryMapping'] as Record<string, unknown>)['internalCategoryId'] === 'string'
+          ? ((scriptInput['traderaCategoryMapping'] as Record<string, unknown>)['internalCategoryId'] as string)
+          : null,
       categoryId:
         scriptInput &&
         typeof scriptInput['traderaCategory'] === 'object' &&
@@ -486,6 +529,47 @@ const runTraderaBrowserListingScripted = async ({
         scriptInput['traderaCategory']
           ? 'categoryMapper'
           : 'fallback',
+      shippingGroupId:
+        scriptInput &&
+        typeof scriptInput['traderaShipping'] === 'object' &&
+        scriptInput['traderaShipping'] &&
+        typeof (scriptInput['traderaShipping'] as Record<string, unknown>)['shippingGroupId'] ===
+          'string'
+          ? ((scriptInput['traderaShipping'] as Record<string, unknown>)['shippingGroupId'] as string)
+          : null,
+      shippingGroupName:
+        scriptInput &&
+        typeof scriptInput['traderaShipping'] === 'object' &&
+        scriptInput['traderaShipping'] &&
+        typeof (scriptInput['traderaShipping'] as Record<string, unknown>)[
+          'shippingGroupName'
+        ] === 'string'
+          ? ((scriptInput['traderaShipping'] as Record<string, unknown>)['shippingGroupName'] as string)
+          : null,
+      shippingCondition:
+        scriptInput &&
+        typeof scriptInput['traderaShipping'] === 'object' &&
+        scriptInput['traderaShipping'] &&
+        typeof (scriptInput['traderaShipping'] as Record<string, unknown>)[
+          'shippingCondition'
+        ] === 'string'
+          ? ((scriptInput['traderaShipping'] as Record<string, unknown>)['shippingCondition'] as string)
+          : null,
+      shippingConditionSource:
+        scriptInput &&
+        typeof scriptInput['traderaShipping'] === 'object' &&
+        scriptInput['traderaShipping'] &&
+        typeof (scriptInput['traderaShipping'] as Record<string, unknown>)['shippingCondition'] ===
+          'string'
+          ? 'shippingGroup'
+          : 'default',
+      shippingConditionReason:
+        scriptInput &&
+        typeof scriptInput['traderaShipping'] === 'object' &&
+        scriptInput['traderaShipping'] &&
+        typeof (scriptInput['traderaShipping'] as Record<string, unknown>)['reason'] === 'string'
+          ? ((scriptInput['traderaShipping'] as Record<string, unknown>)['reason'] as string)
+          : null,
     },
   };
 };

@@ -8,6 +8,7 @@ import {
 } from '../database-parameter-inference-utils';
 import { coerceInput } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { normalizeParameterEntries } from './parameter-inference.normalizer';
+import { stableStringify } from '@/shared/utils/stable-stringify';
 
 const DEFAULT_PARAMETER_INFERENCE_LANGUAGE_CODE = 'en';
 
@@ -129,7 +130,7 @@ export const mergeParameterInferenceUpdates = (args: {
       languageCode,
       allowScalarFill: !currentValue,
     });
-    if (JSON.stringify(current) === JSON.stringify(mergeResult.next)) {
+    if (stableStringify(current) === stableStringify(mergeResult.next)) {
       return;
     }
 
@@ -178,7 +179,7 @@ const areParameterRecordArraysEqual = (
 ): boolean => {
   if (left.length !== right.length) return false;
   for (let index = 0; index < left.length; index += 1) {
-    if (JSON.stringify(left[index]) !== JSON.stringify(right[index])) {
+    if (stableStringify(left[index]) !== stableStringify(right[index])) {
       return false;
     }
   }

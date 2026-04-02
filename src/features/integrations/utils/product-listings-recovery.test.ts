@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  areProductListingsRecoveryContextsEqual,
   createBaseRecoveryContext,
   createTraderaRecoveryContext,
   findTraderaRecoveryListing,
@@ -9,6 +10,8 @@ import {
   matchesProductListingsIntegrationScope,
   normalizeProductListingsIntegrationScope,
   readProductListingsRecoveryString,
+  mergeProductListingsRecoveryContext,
+  resolveProductListingsEmptyDescription,
   resolveTraderaRecoverySource,
   resolveProductListingsRecoveryIdentifiers,
   resolveProductListingsIntegrationScope,
@@ -110,6 +113,34 @@ describe('product-listings-recovery', () => {
     });
   });
 
+  it('resolves empty-state copy for Base, Tradera, and generic cases', () => {
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'base_quick_export_failed',
+        integrationSlug: 'baselinker',
+        status: 'failed',
+        runId: null,
+      })
+    ).toBe(
+      'The last Base.com one-click export failed before a listing record was created. Use the options above to retry or choose a different connection.'
+    );
+
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'tradera_quick_export_auth_required',
+        integrationSlug: 'tradera',
+        status: 'auth_required',
+        runId: null,
+      })
+    ).toBe(
+      'The last Tradera quick export stopped before a stable listing record was available. Open the Tradera login window if needed, then continue the Tradera listing flow from this modal.'
+    );
+
+    expect(resolveProductListingsEmptyDescription(null)).toBe(
+      'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.'
+    );
+  });
+
   it('maps Tradera auth-like statuses back to the auth recovery source', () => {
     expect(resolveTraderaRecoverySource('auth_required')).toBe(
       'tradera_quick_export_auth_required'
@@ -156,6 +187,61 @@ describe('product-listings-recovery', () => {
       source: 'tradera_quick_export_auth_required',
       integrationSlug: 'tradera',
       status: 'needs_login',
+      runId: 'run-tradera-1',
+      requestId: 'job-tradera-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+  });
+
+  it('treats semantically equivalent recovery contexts as equal', () => {
+    expect(
+      areProductListingsRecoveryContextsEqual(
+        {
+          source: 'tradera_quick_export_failed',
+          integrationSlug: 'tradera',
+          status: 'failed',
+          runId: null,
+          requestId: undefined,
+          integrationId: undefined,
+          connectionId: undefined,
+        },
+        {
+          source: 'tradera_quick_export_failed',
+          integrationSlug: 'tradera',
+          status: 'failed',
+          runId: null,
+          requestId: null,
+          integrationId: null,
+          connectionId: null,
+        }
+      )
+    ).toBe(true);
+  });
+
+  it('merges weaker recovery context props with enriched modal state', () => {
+    expect(
+      mergeProductListingsRecoveryContext(
+        {
+          source: 'tradera_quick_export_failed',
+          integrationSlug: 'tradera',
+          status: 'failed',
+          runId: null,
+        },
+        {
+          source: 'tradera_quick_export_failed',
+          integrationSlug: 'tradera',
+          status: 'failed',
+          runId: 'run-tradera-1',
+          requestId: 'job-tradera-1',
+          integrationId: 'integration-tradera-1',
+          connectionId: 'conn-tradera-1',
+        }
+      )
+    ).toEqual({
+      source: 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: 'failed',
       runId: 'run-tradera-1',
       requestId: 'job-tradera-1',
       integrationId: 'integration-tradera-1',

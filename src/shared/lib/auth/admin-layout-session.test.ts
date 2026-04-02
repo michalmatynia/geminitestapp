@@ -38,6 +38,7 @@ describe('admin layout session helpers', () => {
         accountDisabled: false,
         accountBanned: false,
       },
+      expires: new Date(0).toISOString(),
     });
   });
 

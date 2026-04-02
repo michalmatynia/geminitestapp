@@ -1,29 +1,34 @@
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
+const QUEUE_TRANSPORT_ERROR_CODES = new Set([
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'EPIPE',
+]);
+const QUEUE_TRANSPORT_ERROR_MESSAGE_PARTS = [
+  'econnrefused',
+  'econnreset',
+  'timeout',
+  'socket',
+  'connection is closed',
+  'read only',
+  'not connected',
+] as const;
+
+const readQueueTransportErrorCode = (error: Error): string | null => {
+  const code = (error as NodeJS.ErrnoException).code;
+  return typeof code === 'string' ? code.toUpperCase() : null;
+};
+
 export const isQueueTransportError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
-  const code = (error as NodeJS.ErrnoException).code;
-  if (typeof code === 'string') {
-    const normalized = code.toUpperCase();
-    if (
-      normalized === 'ECONNREFUSED' ||
-      normalized === 'ECONNRESET' ||
-      normalized === 'ETIMEDOUT' ||
-      normalized === 'EPIPE'
-    ) {
-      return true;
-    }
-  }
+
+  const code = readQueueTransportErrorCode(error);
+  if (code && QUEUE_TRANSPORT_ERROR_CODES.has(code)) return true;
+
   const message = error.message.toLowerCase();
-  return (
-    message.includes('econnrefused') ||
-    message.includes('econnreset') ||
-    message.includes('timeout') ||
-    message.includes('socket') ||
-    message.includes('connection is closed') ||
-    message.includes('read only') ||
-    message.includes('not connected')
-  );
+  return QUEUE_TRANSPORT_ERROR_MESSAGE_PARTS.some((part) => message.includes(part));
 };
 
 export const createDebugQueueLogger = (logSource: string, enabled: boolean) => {

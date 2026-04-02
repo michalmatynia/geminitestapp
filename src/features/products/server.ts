@@ -9,6 +9,7 @@ export { getCatalogRepository } from '@/shared/lib/products/services/catalog-rep
 export { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
 export { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
 export { getProducerRepository } from '@/shared/lib/products/services/producer-repository';
+export { getShippingGroupRepository } from '@/shared/lib/products/services/shipping-group-repository';
 export { getTagRepository } from '@/shared/lib/products/services/tag-repository';
 export { getValidationPatternRepository } from '@/shared/lib/products/services/validation-pattern-repository';
 export { formDataToObject } from '@/shared/lib/products/services/product-service-form-utils';

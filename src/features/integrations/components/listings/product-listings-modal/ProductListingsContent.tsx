@@ -7,18 +7,19 @@ import {
   useProductListingsModals,
 } from '@/features/integrations/context/ProductListingsContext';
 import {
+  areProductListingsRecoveryContextsEqual,
   createTraderaRecoveryContext,
   findTraderaRecoveryListing,
+  mergeProductListingsRecoveryContext,
   resolveTraderaRecoveryMetadata,
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
 import { persistTraderaQuickListFeedback } from '@/features/products/components/list/columns/buttons/traderaQuickListFeedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import { Card } from '@/shared/ui';
 
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
 import { renderProductListingItem } from './ProductListingItem';
-import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
+import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 
 export function ProductListingsContent(): React.JSX.Element {
@@ -63,17 +64,14 @@ export function ProductListingsContent(): React.JSX.Element {
       });
 
     setRecoveryContext((current) => {
-      if (
-        current?.source === nextRecoveryContext.source &&
-        current.status === nextRecoveryContext.status &&
-        current.runId === nextRecoveryContext.runId &&
-        current.requestId === nextRecoveryContext.requestId &&
-        current.integrationId === nextRecoveryContext.integrationId &&
-        current.connectionId === nextRecoveryContext.connectionId
-      ) {
+      const mergedRecoveryContext = mergeProductListingsRecoveryContext(
+        nextRecoveryContext,
+        current
+      );
+      if (areProductListingsRecoveryContextsEqual(current, mergedRecoveryContext)) {
         return current;
       }
-      return nextRecoveryContext;
+      return mergedRecoveryContext;
     });
 
     persistTraderaQuickListFeedback(
@@ -105,14 +103,7 @@ export function ProductListingsContent(): React.JSX.Element {
     <div className='space-y-3'>
       {isTraderaQuickExportRecovery && (
         <TraderaQuickExportRecoveryBanner
-          title='Tradera quick export requires recovery'
-          description={
-            <>
-              Tradera quick export requires recovery. Review the Tradera listing below and use
-              <span className='font-semibold text-white'> Login and continue listing </span>
-              if the last run needs manual verification.
-            </>
-          }
+          mode='content'
           status={recoveryContext?.status}
           requestId={recoveryRequestId}
           runId={recoveryRunId}
@@ -121,11 +112,13 @@ export function ProductListingsContent(): React.JSX.Element {
         />
       )}
       {filterIntegrationSlug && (
-        <Card variant='subtle-compact' padding='sm' className='bg-card/60 text-xs text-gray-300'>
-          {statusTargetLabel} status: {filteredListings[0]?.status ?? 'Unknown'}
-        </Card>
+        <ProductListingsScopedStatusPanel
+          statusTargetLabel={statusTargetLabel}
+          status={filteredListings[0]?.status ?? 'Unknown'}
+          isBaseFilter={isBaseFilter}
+          showSync={showSync}
+        />
       )}
-      {showSync && isBaseFilter && <ProductListingsSyncPanel />}
       {filteredListings.map((listing) => (
         <React.Fragment key={listing.id}>
           {renderProductListingItem({ listing })}

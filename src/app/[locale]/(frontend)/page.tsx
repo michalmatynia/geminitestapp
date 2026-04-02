@@ -2,6 +2,8 @@ import { JSX } from 'react';
 
 import { renderHomeRoute } from '@/app/(frontend)/route-helpers/home-route-helpers';
 
+export const revalidate = 300;
+
 type LocalizedHomeProps = {
   params: Promise<{ locale: string }>;
 };

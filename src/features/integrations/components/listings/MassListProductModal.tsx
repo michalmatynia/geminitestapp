@@ -18,6 +18,7 @@ import {
   useMassListProductModalViewContext,
 } from './mass-list-modal/context/MassListProductModalViewContext';
 import { MassListProgressPanel } from './mass-list-modal/MassListProgressPanel';
+import { resolveMassListProductModalCopy } from './product-listings-copy';
 
 interface MassListProductModalProps extends EntityModalProps<string[]> {
   integrationId: string;
@@ -35,17 +36,22 @@ function MassListProductModalContent(): React.JSX.Element {
   } = useListingSelection();
 
   const { error, progress, exportLogs, handleSubmit, submitting } = useMassListForm();
+  const { modalTitle, saveText } = resolveMassListProductModalCopy({
+    productCount: productIds.length,
+    selectedIntegrationName: selectedIntegration?.name?.trim() || null,
+    isBaseComIntegration,
+  });
 
   return (
     <FormModal
       open={true}
       onClose={onClose}
-      title={`List ${productIds.length} Products to ${selectedIntegration?.name || 'Marketplace'}`}
+      title={modalTitle}
       onSave={(): void => {
         void handleSubmit();
       }}
       isSaving={submitting}
-      saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Products'}
+      saveText={saveText}
       cancelText='Cancel'
       size='md'
     >

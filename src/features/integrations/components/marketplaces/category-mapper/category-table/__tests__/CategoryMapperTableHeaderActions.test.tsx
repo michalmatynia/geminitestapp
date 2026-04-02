@@ -18,7 +18,7 @@ describe('CategoryMapperTableHeaderActions', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Auto-match Names' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Auto-match Paths & Names' })).toBeInTheDocument();
   });
 
   it('invokes the auto-match handler when clicked', async () => {
@@ -37,7 +37,7 @@ describe('CategoryMapperTableHeaderActions', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Auto-match Names' }));
+    await user.click(screen.getByRole('button', { name: 'Auto-match Paths & Names' }));
 
     expect(onAutoMatchByName).toHaveBeenCalledTimes(1);
   });

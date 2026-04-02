@@ -303,7 +303,7 @@ export const folderTreePersistFeedbackByInstance: Record<
   kangur_social_capture_browser: {
     notifySuccess: false,
     notifyError: false,
-    successMessage: '',
+    successMessage: 'Social capture browser updated.',
   },
 };
 

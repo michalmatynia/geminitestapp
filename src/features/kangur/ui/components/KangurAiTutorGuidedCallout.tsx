@@ -57,52 +57,41 @@ type GuidedCalloutFallbackCopy = {
   selectionSketchHint: string;
 };
 
-const getGuidedCalloutFallbackCopy = (
-  locale: ReturnType<typeof normalizeSiteLocale>
-): GuidedCalloutFallbackCopy => {
-  if (locale === 'uk') {
-    return {
-      knowledgeFragmentBadge: 'Фрагмент з бази знань',
-      pageContentBadge: 'Вміст сторінки',
-      savedPageContentBadge: 'Збережений вміст сторінки',
-      selectionDetailFromPageContent:
-        'Пояснення використовує збережений вміст сторінки для цього виділення.',
-      selectionDetailReady: 'Пояснення вже готове для вибраного фрагмента.',
-      selectionSketchCtaLabel: 'Намалюй це для мене',
-      selectionSketchHint:
-        'Відкриваю дошку для малювання. Спробуй намалювати поділи та порівняти фігури після повороту або віддзеркалення.',
-    };
-  }
-
-  if (locale === 'de') {
-    return {
-      knowledgeFragmentBadge: 'Wissensbasis-Ausschnitt',
-      pageContentBadge: 'Seiteninhalt',
-      savedPageContentBadge: 'Gespeicherter Seiteninhalt',
-      selectionDetailFromPageContent:
-        'Die Erklarung nutzt den gespeicherten Seiteninhalt fur diese Auswahl.',
-      selectionDetailReady: 'Die Erklarung fur den ausgewahlten Ausschnitt ist bereits fertig.',
-      selectionSketchCtaLabel: 'Zeig es mir als Skizze',
-      selectionSketchHint:
-        'Ich offne das Zeichenfeld. Skizziere die Aufteilung und vergleiche die Formen nach Drehung oder Spiegelung.',
-    };
-  }
-
-  if (locale === 'en') {
-    return {
-      knowledgeFragmentBadge: 'Knowledge base fragment',
-      pageContentBadge: 'Page content',
-      savedPageContentBadge: 'Saved page content',
-      selectionDetailFromPageContent:
-        'The explanation uses the saved page content for this selection.',
-      selectionDetailReady: 'The explanation for the selected fragment is already ready.',
-      selectionSketchCtaLabel: 'Sketch it out for me',
-      selectionSketchHint:
-        'I am opening the drawing board. Try sketching the partitions and comparing the shapes after a rotation or reflection.',
-    };
-  }
-
-  return {
+const GUIDED_CALLOUT_FALLBACK_COPY_BY_LOCALE: Record<string, GuidedCalloutFallbackCopy> = {
+  uk: {
+    knowledgeFragmentBadge: 'Фрагмент з бази знань',
+    pageContentBadge: 'Вміст сторінки',
+    savedPageContentBadge: 'Збережений вміст сторінки',
+    selectionDetailFromPageContent:
+      'Пояснення використовує збережений вміст сторінки для цього виділення.',
+    selectionDetailReady: 'Пояснення вже готове для вибраного фрагмента.',
+    selectionSketchCtaLabel: 'Намалюй це для мене',
+    selectionSketchHint:
+      'Відкриваю дошку для малювання. Спробуй намалювати поділи та порівняти фігури після повороту або віддзеркалення.',
+  },
+  de: {
+    knowledgeFragmentBadge: 'Wissensbasis-Ausschnitt',
+    pageContentBadge: 'Seiteninhalt',
+    savedPageContentBadge: 'Gespeicherter Seiteninhalt',
+    selectionDetailFromPageContent:
+      'Die Erklarung nutzt den gespeicherten Seiteninhalt fur diese Auswahl.',
+    selectionDetailReady: 'Die Erklarung fur den ausgewahlten Ausschnitt ist bereits fertig.',
+    selectionSketchCtaLabel: 'Zeig es mir als Skizze',
+    selectionSketchHint:
+      'Ich offne das Zeichenfeld. Skizziere die Aufteilung und vergleiche die Formen nach Drehung oder Spiegelung.',
+  },
+  en: {
+    knowledgeFragmentBadge: 'Knowledge base fragment',
+    pageContentBadge: 'Page content',
+    savedPageContentBadge: 'Saved page content',
+    selectionDetailFromPageContent:
+      'The explanation uses the saved page content for this selection.',
+    selectionDetailReady: 'The explanation for the selected fragment is already ready.',
+    selectionSketchCtaLabel: 'Sketch it out for me',
+    selectionSketchHint:
+      'I am opening the drawing board. Try sketching the partitions and comparing the shapes after a rotation or reflection.',
+  },
+  pl: {
     knowledgeFragmentBadge: 'Fragment z bazy wiedzy',
     pageContentBadge: 'Treść strony',
     savedPageContentBadge: 'Zapisana treść strony',
@@ -112,8 +101,14 @@ const getGuidedCalloutFallbackCopy = (
     selectionSketchCtaLabel: 'Rozrysuj mi to, proszę',
     selectionSketchHint:
       'Otwieram planszę do rysowania. Spróbuj rozrysować podziały i porównać kształty po obrocie lub odbiciu.',
-  };
+  },
 };
+
+const getGuidedCalloutFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): GuidedCalloutFallbackCopy =>
+  GUIDED_CALLOUT_FALLBACK_COPY_BY_LOCALE[locale] ??
+  GUIDED_CALLOUT_FALLBACK_COPY_BY_LOCALE['pl']!;
 
 const resolveTutorGuidedFallback = (
   value: string | null | undefined,

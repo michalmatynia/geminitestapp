@@ -24,6 +24,7 @@ import {
   CatalogRecord,
   PriceGroupWithDetails,
   ProductCategory,
+  ProductShippingGroup,
 } from '@/shared/contracts/products';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
@@ -126,6 +127,8 @@ export default function ProductFormOther(): React.JSX.Element {
     categories,
     selectedCategoryId,
     setCategoryId,
+    shippingGroups,
+    shippingGroupsLoading,
     filteredPriceGroups,
   } = useProductFormMetadata();
 
@@ -138,6 +141,7 @@ export default function ProductFormOther(): React.JSX.Element {
   const { setValue, watch } = useFormContext<ProductFormData>();
   const basePrice = watch('price') || 0;
   const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
+  const selectedShippingGroupId = watch('shippingGroupId') || '';
 
   const selectedCategoryName = useMemo((): string => {
     if (!selectedCategoryId) return '';
@@ -211,6 +215,16 @@ export default function ProductFormOther(): React.JSX.Element {
         label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${group.currency?.code ?? group.currencyCode})`,
       })),
     [filteredPriceGroups]
+  );
+  const shippingGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () => [
+      { value: '', label: 'No shipping group' },
+      ...shippingGroups.map((shippingGroup: ProductShippingGroup) => ({
+        value: shippingGroup.id,
+        label: shippingGroup.name,
+      })),
+    ],
+    [shippingGroups]
   );
 
   return (
@@ -384,6 +398,27 @@ export default function ProductFormOther(): React.JSX.Element {
               </Button>
             </div>
           ) : null}
+
+          <FormField
+            label='Shipping Group'
+            description='Assign an internal shipping group to control marketplace delivery behavior later.'
+          >
+            <SelectSimple
+              size='sm'
+              value={selectedShippingGroupId}
+              onValueChange={(value: string): void =>
+                setValue('shippingGroupId', value, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                })
+              }
+              options={shippingGroupOptions}
+              placeholder={hasCatalogs ? 'Select shipping group' : 'Select a catalog first'}
+              disabled={!hasCatalogs || shippingGroupsLoading}
+              ariaLabel='Shipping group'
+              title='Shipping group'
+            />
+          </FormField>
 
           <TagMultiSelectField
             disabled={!hasCatalogs}

@@ -74,6 +74,33 @@ type ProductListRuntimeBridgeProps = {
   enabled: boolean;
 };
 
+const createRequiredProductListContextHook = <T,>(
+  context: React.Context<T | null>,
+  hookName: string
+): (() => T) => {
+  return (): T => {
+    const value = useContext(context);
+    if (!value) {
+      throw internalError(`${hookName} must be used within a ProductListProvider`);
+    }
+    return value;
+  };
+};
+
+type ProductListProviderTreeProps = {
+  actionsValue: ProductListActionsContextType;
+  alertsValue: ProductListAlertsContextType;
+  children: ReactNode;
+  filtersValue: ProductListFiltersContextType;
+  headerActionsValue: ProductListHeaderActionsContextType;
+  modalsValue: ProductListModalsContextType;
+  rowActionsValue: ProductListRowActionsContextType;
+  rowRuntimeStore: ProductListRowRuntimeStore;
+  rowVisualsValue: ProductListRowVisualsContextType;
+  selectionValue: ProductListSelectionContextType;
+  tableValue: ProductListTableContextType;
+};
+
 function useProductListRuntimeBridge({
   data,
   queuedProductIds,
@@ -132,75 +159,45 @@ function useProductListRuntimeBridge({
   ]);
 }
 
-export const useProductListFiltersContext = (): ProductListFiltersContextType => {
-  const context = useContext(ProductListFiltersContext);
-  if (!context) {
-    throw internalError('useProductListFiltersContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const useProductListFiltersContext = createRequiredProductListContextHook(
+  ProductListFiltersContext,
+  'useProductListFiltersContext'
+);
 
-export const useProductListSelectionContext = (): ProductListSelectionContextType => {
-  const context = useContext(ProductListSelectionContext);
-  if (!context) {
-    throw internalError('useProductListSelectionContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const useProductListSelectionContext = createRequiredProductListContextHook(
+  ProductListSelectionContext,
+  'useProductListSelectionContext'
+);
 
-export const useProductListTableContext = (): ProductListTableContextType => {
-  const context = useContext(ProductListTableContext);
-  if (!context) {
-    throw internalError('useProductListTableContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const useProductListTableContext = createRequiredProductListContextHook(
+  ProductListTableContext,
+  'useProductListTableContext'
+);
 
-export const useProductListAlertsContext = (): ProductListAlertsContextType => {
-  const context = useContext(ProductListAlertsContext);
-  if (!context) {
-    throw internalError('useProductListAlertsContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const useProductListAlertsContext = createRequiredProductListContextHook(
+  ProductListAlertsContext,
+  'useProductListAlertsContext'
+);
 
-export const useProductListActionsContext = (): ProductListActionsContextType => {
-  const context = useContext(ProductListActionsContext);
-  if (!context) {
-    throw internalError('useProductListActionsContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const useProductListActionsContext = createRequiredProductListContextHook(
+  ProductListActionsContext,
+  'useProductListActionsContext'
+);
 
-export const useProductListHeaderActionsContext = (): ProductListHeaderActionsContextType => {
-  const context = useContext(ProductListHeaderActionsContext);
-  if (!context) {
-    throw internalError(
-      'useProductListHeaderActionsContext must be used within a ProductListProvider'
-    );
-  }
-  return context;
-};
+export const useProductListHeaderActionsContext = createRequiredProductListContextHook(
+  ProductListHeaderActionsContext,
+  'useProductListHeaderActionsContext'
+);
 
-export const useProductListRowActionsContext = (): ProductListRowActionsContextType => {
-  const context = useContext(ProductListRowActionsContext);
-  if (!context) {
-    throw internalError(
-      'useProductListRowActionsContext must be used within a ProductListProvider'
-    );
-  }
-  return context;
-};
+export const useProductListRowActionsContext = createRequiredProductListContextHook(
+  ProductListRowActionsContext,
+  'useProductListRowActionsContext'
+);
 
-export const useProductListRowVisualsContext = (): ProductListRowVisualsContextType => {
-  const context = useContext(ProductListRowVisualsContext);
-  if (!context) {
-    throw internalError(
-      'useProductListRowVisualsContext must be used within a ProductListProvider'
-    );
-  }
-  return context;
-};
+export const useProductListRowVisualsContext = createRequiredProductListContextHook(
+  ProductListRowVisualsContext,
+  'useProductListRowVisualsContext'
+);
 
 export const useProductListRowRuntime = (
   productId: string,
@@ -225,6 +222,44 @@ export const useProductListModalsContext = (): ProductListModalsContextType => {
   }
   return context;
 };
+
+function ProductListProviderTree({
+  actionsValue,
+  alertsValue,
+  children,
+  filtersValue,
+  headerActionsValue,
+  modalsValue,
+  rowActionsValue,
+  rowRuntimeStore,
+  rowVisualsValue,
+  selectionValue,
+  tableValue,
+}: ProductListProviderTreeProps): React.JSX.Element {
+  return (
+    <ProductListFiltersContext.Provider value={filtersValue}>
+      <ProductListSelectionContext.Provider value={selectionValue}>
+        <ProductListAlertsContext.Provider value={alertsValue}>
+          <ProductListTableContext.Provider value={tableValue}>
+            <ProductListActionsContext.Provider value={actionsValue}>
+              <ProductListHeaderActionsContext.Provider value={headerActionsValue}>
+                <ProductListRowActionsContext.Provider value={rowActionsValue}>
+                  <ProductListRowRuntimeStoreContext.Provider value={rowRuntimeStore}>
+                    <ProductListRowVisualsContext.Provider value={rowVisualsValue}>
+                      <ProductListModalsContext.Provider value={modalsValue}>
+                        {children}
+                      </ProductListModalsContext.Provider>
+                    </ProductListRowVisualsContext.Provider>
+                  </ProductListRowRuntimeStoreContext.Provider>
+                </ProductListRowActionsContext.Provider>
+              </ProductListHeaderActionsContext.Provider>
+            </ProductListActionsContext.Provider>
+          </ProductListTableContext.Provider>
+        </ProductListAlertsContext.Provider>
+      </ProductListSelectionContext.Provider>
+    </ProductListFiltersContext.Provider>
+  );
+}
 
 export function ProductListProvider({
   children,
@@ -269,26 +304,19 @@ export function ProductListProvider({
   });
 
   return (
-    <ProductListFiltersContext.Provider value={filtersValue}>
-      <ProductListSelectionContext.Provider value={selectionValue}>
-        <ProductListAlertsContext.Provider value={alertsValue}>
-          <ProductListTableContext.Provider value={tableValue}>
-            <ProductListActionsContext.Provider value={actionsValue}>
-              <ProductListHeaderActionsContext.Provider value={headerActionsValue}>
-                <ProductListRowActionsContext.Provider value={rowActionsValue}>
-                  <ProductListRowRuntimeStoreContext.Provider value={rowRuntimeStore}>
-                    <ProductListRowVisualsContext.Provider value={rowVisualsValue}>
-                      <ProductListModalsContext.Provider value={modalsValue}>
-                        {children}
-                      </ProductListModalsContext.Provider>
-                    </ProductListRowVisualsContext.Provider>
-                  </ProductListRowRuntimeStoreContext.Provider>
-                </ProductListRowActionsContext.Provider>
-              </ProductListHeaderActionsContext.Provider>
-            </ProductListActionsContext.Provider>
-          </ProductListTableContext.Provider>
-        </ProductListAlertsContext.Provider>
-      </ProductListSelectionContext.Provider>
-    </ProductListFiltersContext.Provider>
+    <ProductListProviderTree
+      actionsValue={actionsValue}
+      alertsValue={alertsValue}
+      filtersValue={filtersValue}
+      headerActionsValue={headerActionsValue}
+      modalsValue={modalsValue}
+      rowActionsValue={rowActionsValue}
+      rowRuntimeStore={rowRuntimeStore}
+      rowVisualsValue={rowVisualsValue}
+      selectionValue={selectionValue}
+      tableValue={tableValue}
+    >
+      {children}
+    </ProductListProviderTree>
   );
 }

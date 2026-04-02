@@ -11,6 +11,10 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { FormField, FormSection, SelectSimple, Alert, LoadingState } from '@/shared/ui';
 
 import { BaseListingSettings } from '../BaseListingSettings';
+import {
+  resolveIntegrationSelectionLoadingMessage,
+  resolveSelectProductIntegrationSettingsCopy,
+} from '../product-listings-copy';
 import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';
 
 export function IntegrationSettingsSection(): React.JSX.Element {
@@ -46,31 +50,42 @@ export function IntegrationSettingsSection(): React.JSX.Element {
       ),
     [selectedIntegration]
   );
+  const {
+    sectionTitle,
+    marketplaceLabel,
+    marketplacePlaceholder,
+    accountLabel,
+    accountPlaceholder,
+  } = resolveSelectProductIntegrationSettingsCopy();
 
   return (
     <div className='space-y-4'>
-      <FormSection title='2. Integration Settings' variant='subtle' className='p-4 space-y-4'>
+      <FormSection title={sectionTitle} variant='subtle' className='p-4 space-y-4'>
         {loadingIntegrations ? (
-          <LoadingState message='Loading integrations...' size='sm' className='py-4' />
+          <LoadingState
+            message={resolveIntegrationSelectionLoadingMessage()}
+            size='sm'
+            className='py-4'
+          />
         ) : (
           <>
-            <FormField label='Marketplace'>
+            <FormField label={marketplaceLabel}>
               <SelectSimple
                 value={selectedIntegrationId ?? undefined}
                 onValueChange={setSelectedIntegrationId}
                 options={integrationOptions}
-                placeholder='Select marketplace...'
-               ariaLabel='Select marketplace...' title='Select marketplace...'/>
+                placeholder={marketplacePlaceholder}
+               ariaLabel={marketplacePlaceholder} title={marketplacePlaceholder}/>
             </FormField>
 
             {selectedIntegration && (
-              <FormField label='Account'>
+              <FormField label={accountLabel}>
                 <SelectSimple
                   value={selectedConnectionId ?? undefined}
                   onValueChange={setSelectedConnectionId}
                   options={connectionOptions}
-                  placeholder='Select account...'
-                 ariaLabel='Select account...' title='Select account...'/>
+                  placeholder={accountPlaceholder}
+                 ariaLabel={accountPlaceholder} title={accountPlaceholder}/>
               </FormField>
             )}
 

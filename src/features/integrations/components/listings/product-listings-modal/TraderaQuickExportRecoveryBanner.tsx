@@ -5,8 +5,7 @@ import { Card } from '@/shared/ui';
 import { TraderaRecoveryContinueButton } from './TraderaRecoveryContinueButton';
 
 type TraderaQuickExportRecoveryBannerProps = {
-  title: string;
-  description: React.ReactNode;
+  mode: 'empty' | 'content';
   status: string | null | undefined;
   requestId?: string | null | undefined;
   runId?: string | null | undefined;
@@ -16,8 +15,7 @@ type TraderaQuickExportRecoveryBannerProps = {
 };
 
 export function TraderaQuickExportRecoveryBanner({
-  title,
-  description,
+  mode,
   status,
   requestId,
   runId,
@@ -26,6 +24,20 @@ export function TraderaQuickExportRecoveryBanner({
   variant = 'compact',
 }: TraderaQuickExportRecoveryBannerProps): React.JSX.Element {
   const canContinue = Boolean(integrationId && connectionId);
+  const title =
+    mode === 'empty'
+      ? 'Tradera quick export needs recovery'
+      : 'Tradera quick export requires recovery';
+  const description =
+    mode === 'empty' ? (
+      'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then continue directly into the Tradera listing flow from this modal.'
+    ) : (
+      <>
+        Tradera quick export requires recovery. Review the Tradera listing below and use
+        <span className='font-semibold text-white'> Login and continue listing </span>
+        if the last run needs manual verification.
+      </>
+    );
 
   if (variant === 'full') {
     return (

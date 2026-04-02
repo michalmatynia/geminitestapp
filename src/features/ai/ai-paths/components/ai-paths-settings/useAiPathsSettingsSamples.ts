@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import type { Toast } from '@/shared/contracts/ui';
@@ -9,6 +9,7 @@ import { createMutationV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2'
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const AI_PATHS_SAMPLE_STALE_MS = 10_000;
+const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
 
 type UseAiPathsSettingsSamplesInput = {
   toast: Toast;
@@ -30,6 +31,21 @@ type FetchUpdaterSampleResult = {
   notify: boolean;
 };
 
+type DbQueryCandidate = {
+  filter: Record<string, unknown>;
+  idType?: 'string' | 'objectId';
+};
+
+type DbQueryPayload = {
+  item?: unknown;
+  items?: unknown[];
+};
+
+type FetchedSampleResult = {
+  sample: unknown | null;
+  fetchedId: string;
+};
+
 export type UseAiPathsSettingsSamplesReturn = {
   parserSampleLoading: boolean;
   updaterSampleLoading: boolean;
@@ -40,6 +56,153 @@ export type UseAiPathsSettingsSamplesReturn = {
     entityId: string,
     options?: { notify?: boolean }
   ) => Promise<void>;
+};
+
+const isObjectId = (value: string): boolean => OBJECT_ID_PATTERN.test(value);
+
+const buildDbQueryCandidates = (id?: string): DbQueryCandidate[] => {
+  if (!id?.trim()) {
+    return [{ filter: {}, idType: 'string' }];
+  }
+
+  return [
+    { filter: { id }, idType: 'string' },
+    { filter: { _id: id }, idType: isObjectId(id) ? 'objectId' : 'string' },
+  ];
+};
+
+const readDbQuerySample = (payload: DbQueryPayload | null | undefined): unknown | null =>
+  payload?.item ?? payload?.items?.[0] ?? null;
+
+const resolveFetchedSampleId = (sample: unknown, fallbackId: string): string => {
+  const record = sample as Record<string, unknown> | null | undefined;
+  const rawId = record?.['_id'] ?? record?.['id'];
+  return (rawId as { toString?: () => string })?.toString?.() ?? fallbackId;
+};
+
+const queryDbSampleCandidate = async ({
+  collection,
+  candidate,
+  fallbackId,
+}: {
+  collection: string;
+  candidate: DbQueryCandidate;
+  fallbackId: string;
+}): Promise<FetchedSampleResult | null> => {
+  const result = await dbApi.query<DbQueryPayload>({
+    provider: 'auto',
+    collection,
+    filter: candidate.filter,
+    single: true,
+    limit: 1,
+    idType: candidate.idType,
+  });
+
+  if (!result.ok) {
+    return null;
+  }
+
+  const sample = readDbQuerySample(result.data);
+  if (!sample) {
+    return null;
+  }
+
+  return {
+    sample,
+    fetchedId: resolveFetchedSampleId(sample, fallbackId),
+  };
+};
+
+const fetchUpdaterSampleViaDbQuery = async (
+  collection: string,
+  id?: string
+): Promise<FetchedSampleResult> => {
+  const fallbackId = id ?? '';
+
+  for (const candidate of buildDbQueryCandidates(id)) {
+    const result = await queryDbSampleCandidate({
+      collection,
+      candidate,
+      fallbackId,
+    });
+    if (result) {
+      return result;
+    }
+  }
+
+  return { sample: null, fetchedId: fallbackId };
+};
+
+const fetchUpdaterProductSample = async (
+  queryClient: QueryClient,
+  entityId: string
+): Promise<FetchedSampleResult> => ({
+  sample: await fetchQueryV2<unknown>(queryClient, {
+    queryKey: getProductDetailQueryKey(entityId),
+    queryFn: async () => {
+      const result = await entityApi.getProduct(entityId);
+      return result.ok ? result.data : null;
+    },
+    staleTime: AI_PATHS_SAMPLE_STALE_MS,
+    meta: {
+      source: 'ai.ai-paths.settings.fetch-updater-sample.product',
+      operation: 'detail',
+      resource: 'products.detail',
+      domain: 'ai_paths',
+      queryKey: getProductDetailQueryKey(entityId),
+      tags: ['ai-paths', 'samples', 'fetch'],
+      description: 'Loads products detail.',
+    },
+  })(),
+  fetchedId: entityId,
+});
+
+const fetchUpdaterNoteSample = async (
+  queryClient: QueryClient,
+  entityId: string
+): Promise<FetchedSampleResult> => ({
+  sample: await fetchQueryV2<unknown>(queryClient, {
+    queryKey: QUERY_KEYS.notes.detail(entityId),
+    queryFn: async () => {
+      const result = await entityApi.getNote(entityId);
+      return result.ok ? result.data : null;
+    },
+    staleTime: AI_PATHS_SAMPLE_STALE_MS,
+    meta: {
+      source: 'ai.ai-paths.settings.fetch-updater-sample.note',
+      operation: 'detail',
+      resource: 'notes.detail',
+      domain: 'ai_paths',
+      queryKey: QUERY_KEYS.notes.detail(entityId),
+      tags: ['ai-paths', 'samples', 'fetch'],
+      description: 'Loads notes detail.',
+    },
+  })(),
+  fetchedId: entityId,
+});
+
+const fetchUpdaterSampleByEntityType = async ({
+  queryClient,
+  entityType,
+  entityId,
+}: {
+  queryClient: QueryClient;
+  entityType: string;
+  entityId: string;
+}): Promise<FetchedSampleResult> => {
+  if (!entityId.trim()) {
+    return await fetchUpdaterSampleViaDbQuery(entityType, '');
+  }
+
+  const normalized = entityType.toLowerCase();
+  if (normalized === 'product') {
+    return await fetchUpdaterProductSample(queryClient, entityId);
+  }
+  if (normalized === 'note') {
+    return await fetchUpdaterNoteSample(queryClient, entityId);
+  }
+
+  return await fetchUpdaterSampleViaDbQuery(entityType, entityId);
 };
 
 export function useAiPathsSettingsSamples({
@@ -172,102 +335,11 @@ export function useAiPathsSettingsSamples({
           notify,
         };
       }
-      let sample: unknown;
-      let fetchedId = entityId;
-
-      const isObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
-      const fetchViaDbQuery = async (
-        collection: string,
-        id?: string
-      ): Promise<{ sample: unknown | null; fetchedId: string }> => {
-        const queries: Array<{
-          filter: Record<string, unknown>;
-          idType?: 'string' | 'objectId';
-        }> = [];
-        if (id?.trim()) {
-          queries.push({ filter: { id }, idType: 'string' });
-          if (isObjectId(id)) {
-            queries.push({ filter: { _id: id }, idType: 'objectId' });
-          } else {
-            queries.push({ filter: { _id: id }, idType: 'string' });
-          }
-        } else {
-          queries.push({ filter: {}, idType: 'string' });
-        }
-        for (const candidate of queries) {
-          const result = await dbApi.query<{
-            item?: unknown;
-            items?: unknown[];
-          }>({
-            provider: 'auto',
-            collection,
-            filter: candidate.filter,
-            single: true,
-            limit: 1,
-            idType: candidate.idType,
-          });
-          if (!result.ok) {
-            continue;
-          }
-          const payload = result.data;
-          const resolvedSample = payload?.item ?? payload?.items?.[0] ?? null;
-          if (resolvedSample) {
-            const rawId =
-              (resolvedSample as Record<string, unknown>)?.['_id'] ??
-              (resolvedSample as Record<string, unknown>)?.['id'];
-            const nextId = (rawId as { toString?: () => string })?.toString?.() ?? id ?? '';
-            return { sample: resolvedSample, fetchedId: nextId };
-          }
-        }
-        return { sample: null, fetchedId: id ?? '' };
-      };
-
-      if (!entityId.trim()) {
-        const fetched = await fetchViaDbQuery(entityType, '');
-        sample = fetched.sample;
-        fetchedId = fetched.fetchedId;
-      } else {
-        const normalized = entityType.toLowerCase();
-        if (normalized === 'product') {
-          sample = await fetchQueryV2<unknown>(queryClient, {
-            queryKey: getProductDetailQueryKey(entityId),
-            queryFn: async () => {
-              const result = await entityApi.getProduct(entityId);
-              return result.ok ? result.data : null;
-            },
-            staleTime: AI_PATHS_SAMPLE_STALE_MS,
-            meta: {
-              source: 'ai.ai-paths.settings.fetch-updater-sample.product',
-              operation: 'detail',
-              resource: 'products.detail',
-              domain: 'ai_paths',
-              queryKey: getProductDetailQueryKey(entityId),
-              tags: ['ai-paths', 'samples', 'fetch'],
-              description: 'Loads products detail.'},
-          })();
-        } else if (normalized === 'note') {
-          sample = await fetchQueryV2<unknown>(queryClient, {
-            queryKey: QUERY_KEYS.notes.detail(entityId),
-            queryFn: async () => {
-              const result = await entityApi.getNote(entityId);
-              return result.ok ? result.data : null;
-            },
-            staleTime: AI_PATHS_SAMPLE_STALE_MS,
-            meta: {
-              source: 'ai.ai-paths.settings.fetch-updater-sample.note',
-              operation: 'detail',
-              resource: 'notes.detail',
-              domain: 'ai_paths',
-              queryKey: QUERY_KEYS.notes.detail(entityId),
-              tags: ['ai-paths', 'samples', 'fetch'],
-              description: 'Loads notes detail.'},
-          })();
-        } else {
-          const fetched = await fetchViaDbQuery(entityType, entityId);
-          sample = fetched.sample;
-          fetchedId = fetched.fetchedId;
-        }
-      }
+      const { sample, fetchedId } = await fetchUpdaterSampleByEntityType({
+        queryClient,
+        entityType,
+        entityId,
+      });
 
       if (!sample) {
         return {

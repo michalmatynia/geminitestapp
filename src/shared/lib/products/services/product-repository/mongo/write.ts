@@ -52,6 +52,7 @@ export const mongoProductWriteImpl = {
       length: data.length ?? null,
       published: true,
       categoryId: data.categoryId || null,
+      shippingGroupId: data.shippingGroupId || null,
       catalogId: storageInput.catalogId || 'default',
       createdAt: now,
       updatedAt: now,
@@ -126,6 +127,9 @@ export const mongoProductWriteImpl = {
     if (data.length !== undefined) set['length'] = data.length;
     if (data.categoryId !== undefined) {
       set['categoryId'] = data.categoryId;
+    }
+    if (data.shippingGroupId !== undefined) {
+      set['shippingGroupId'] = data.shippingGroupId;
     }
     if (data.parameters !== undefined)
       set['parameters'] = normalizeProductParameterValues(data.parameters);

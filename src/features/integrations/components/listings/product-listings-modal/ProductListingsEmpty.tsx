@@ -5,13 +5,14 @@ import {
 } from '@/features/integrations/context/ProductListingsContext';
 import {
   isBaseQuickExportRecoveryContext,
+  resolveProductListingsEmptyDescription,
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
-import { EmptyState, Card } from '@/shared/ui';
+import { EmptyState } from '@/shared/ui';
 
 import { BaseQuickExportFailureBanner } from './BaseQuickExportFailureBanner';
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
-import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
+import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 
 export function ProductListingsEmpty(): React.JSX.Element {
@@ -39,9 +40,8 @@ export function ProductListingsEmpty(): React.JSX.Element {
       )}
       {isTraderaQuickExportRecovery && (
         <TraderaQuickExportRecoveryBanner
+          mode='empty'
           variant='full'
-          title='Tradera quick export needs recovery'
-          description='The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then continue directly into the Tradera listing flow from this modal.'
           status={recoveryContext?.status}
           requestId={recoveryRequestId}
           integrationId={canOpenTraderaRecoveryLogin ? recoveryIntegrationId : null}
@@ -49,23 +49,15 @@ export function ProductListingsEmpty(): React.JSX.Element {
         />
       )}
       {filterIntegrationSlug ? (
-        <Card variant='subtle' padding='lg' className='bg-card/50 text-center space-y-3'>
-          <div className='text-sm text-gray-300'>{statusTargetLabel} status</div>
-          <Card variant='subtle-compact' padding='sm' className='bg-card/60 text-xs text-gray-400'>
-            Not connected.
-          </Card>
-          {showSync && isBaseFilter && <ProductListingsSyncPanel />}
-        </Card>
+        <ProductListingsScopedStatusPanel
+          statusTargetLabel={statusTargetLabel}
+          isBaseFilter={isBaseFilter}
+          showSync={showSync}
+        />
       ) : (
         <EmptyState
           title='No listings found'
-          description={
-            isFailedBaseQuickExportRecovery
-              ? 'The last Base.com one-click export failed before a listing record was created. Use the options above to retry or choose a different connection.'
-              : isTraderaQuickExportRecovery
-                ? 'The last Tradera quick export stopped before a stable listing record was available. Open the Tradera login window if needed, then continue the Tradera listing flow from this modal.'
-              : 'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.'
-          }
+          description={resolveProductListingsEmptyDescription(recoveryContext)}
           className='py-12'
         />
       )}

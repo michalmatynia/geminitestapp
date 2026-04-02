@@ -12,74 +12,71 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths';
 
+const resolveStateAction = <T,>(next: SetStateAction<T>, currentValue: T): T =>
+  typeof next === 'function' ? (next as (previous: T) => T)(currentValue) : next;
+
+const normalizeBoolean = (value: boolean): boolean => Boolean(value);
+const normalizeNumber = (value: number): number => Number(value);
+
+const useResolvedGraphSettingSetter = <T,>(
+  currentValue: T,
+  commit: (value: T) => void,
+  normalize?: (value: T) => T
+): Dispatch<SetStateAction<T>> =>
+  useCallback<Dispatch<SetStateAction<T>>>(
+    (next): void => {
+      const resolved = resolveStateAction(next, currentValue);
+      commit(normalize ? normalize(resolved) : resolved);
+    },
+    [commit, currentValue, normalize]
+  );
+
 export function useExecutionSettingsState() {
   const graphState = useGraphState();
   const graphActions = useGraphActions();
 
-  const setExecutionMode = useCallback<Dispatch<SetStateAction<PathExecutionMode>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.executionMode) : next;
-      graphActions.setExecutionMode(resolved);
-    },
-    [graphActions, graphState.executionMode]
+  const setExecutionMode = useResolvedGraphSettingSetter<PathExecutionMode>(
+    graphState.executionMode,
+    graphActions.setExecutionMode
   );
 
-  const setFlowIntensity = useCallback<Dispatch<SetStateAction<PathFlowIntensity>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.flowIntensity) : next;
-      graphActions.setFlowIntensity(resolved);
-    },
-    [graphActions, graphState.flowIntensity]
+  const setFlowIntensity = useResolvedGraphSettingSetter<PathFlowIntensity>(
+    graphState.flowIntensity,
+    graphActions.setFlowIntensity
   );
 
-  const setRunMode = useCallback<Dispatch<SetStateAction<PathRunMode>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.runMode) : next;
-      graphActions.setRunMode(resolved);
-    },
-    [graphActions, graphState.runMode]
+  const setRunMode = useResolvedGraphSettingSetter<PathRunMode>(
+    graphState.runMode,
+    graphActions.setRunMode
   );
 
-  const setStrictFlowMode = useCallback<Dispatch<SetStateAction<boolean>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.strictFlowMode) : next;
-      graphActions.setStrictFlowMode(Boolean(resolved));
-    },
-    [graphActions, graphState.strictFlowMode]
+  const setStrictFlowMode = useResolvedGraphSettingSetter<boolean>(
+    graphState.strictFlowMode,
+    graphActions.setStrictFlowMode,
+    normalizeBoolean
   );
 
-  const setBlockedRunPolicy = useCallback<Dispatch<SetStateAction<PathBlockedRunPolicy>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.blockedRunPolicy) : next;
-      graphActions.setBlockedRunPolicy(resolved);
-    },
-    [graphActions, graphState.blockedRunPolicy]
+  const setBlockedRunPolicy = useResolvedGraphSettingSetter<PathBlockedRunPolicy>(
+    graphState.blockedRunPolicy,
+    graphActions.setBlockedRunPolicy
   );
 
-  const setAiPathsValidationState = useCallback<Dispatch<SetStateAction<AiPathsValidationConfig>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(graphState.aiPathsValidation) : next;
-      graphActions.setAiPathsValidation(normalizeAiPathsValidationConfig(resolved));
-    },
-    [graphActions, graphState.aiPathsValidation]
+  const setAiPathsValidationState = useResolvedGraphSettingSetter<AiPathsValidationConfig>(
+    graphState.aiPathsValidation,
+    graphActions.setAiPathsValidation,
+    normalizeAiPathsValidationConfig
   );
 
-  const setHistoryRetentionPasses = useCallback<Dispatch<SetStateAction<number>>>(
-    (next): void => {
-      const resolved =
-        typeof next === 'function' ? next(graphState.historyRetentionPasses) : Number(next);
-      graphActions.setHistoryRetentionPasses(resolved);
-    },
-    [graphActions, graphState.historyRetentionPasses]
+  const setHistoryRetentionPasses = useResolvedGraphSettingSetter<number>(
+    graphState.historyRetentionPasses,
+    graphActions.setHistoryRetentionPasses,
+    normalizeNumber
   );
 
-  const setHistoryRetentionOptionsMax = useCallback<Dispatch<SetStateAction<number>>>(
-    (next): void => {
-      const resolved =
-        typeof next === 'function' ? next(graphState.historyRetentionOptionsMax) : Number(next);
-      graphActions.setHistoryRetentionOptionsMax(resolved);
-    },
-    [graphActions, graphState.historyRetentionOptionsMax]
+  const setHistoryRetentionOptionsMax = useResolvedGraphSettingSetter<number>(
+    graphState.historyRetentionOptionsMax,
+    graphActions.setHistoryRetentionOptionsMax,
+    normalizeNumber
   );
 
   return {

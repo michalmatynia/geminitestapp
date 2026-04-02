@@ -13,6 +13,8 @@ import {
   type KangurSocialPost,
   type KangurSocialPostStore,
   type UpdateKangurSocialPostInput,
+  type KangurSocialPostListStatus,
+  type KangurSocialPostsPageResult,
 } from '@/shared/contracts/kangur-social-posts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
@@ -20,16 +22,6 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 type KangurSocialPostDoc = Omit<KangurSocialPost, 'createdAt' | 'updatedAt'> & {
   createdAt: Date;
   updatedAt: Date;
-};
-
-export type KangurSocialPostListStatus = 'all' | 'draft' | 'scheduled' | 'published' | 'failed';
-
-export type KangurSocialPostsPage = {
-  posts: KangurSocialPost[];
-  total: number;
-  page: number;
-  pageSize: number;
-  statusCounts: Record<Exclude<KangurSocialPostListStatus, 'all'>, number>;
 };
 
 type KangurSocialPostsPageOptions = {
@@ -194,7 +186,7 @@ const buildStatusCounts = (
 const filterPostsForAdminList = (
   posts: KangurSocialPost[],
   options?: KangurSocialPostsPageOptions
-): KangurSocialPostsPage => {
+): KangurSocialPostsPageResult => {
   const page = normalizePageNumber(options?.page, 1);
   const pageSize = normalizePageNumber(options?.pageSize, 8);
   const normalizedSearch = options?.search?.trim().toLowerCase() ?? '';
@@ -295,7 +287,7 @@ export async function listKangurSocialPosts(): Promise<KangurSocialPost[]> {
 
 export async function listKangurSocialPostsPage(
   options?: KangurSocialPostsPageOptions
-): Promise<KangurSocialPostsPage> {
+): Promise<KangurSocialPostsPageResult> {
   const page = normalizePageNumber(options?.page, 1);
   const pageSize = normalizePageNumber(options?.pageSize, 8);
   const normalizedStatus = normalizeSocialStatus(options?.status);

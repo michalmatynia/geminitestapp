@@ -63,7 +63,13 @@ export interface CategoryMapperUIState {
   pendingMappings: Map<string, string | null>;
   expandedIds: Set<string>;
   toggleExpand: (categoryId: string) => void;
-  stats: { total: number; mapped: number; pending: number };
+  staleMappings: Array<{
+    externalCategoryId: string;
+    externalCategoryName: string;
+    externalCategoryPath: string | null;
+    internalCategoryLabel: string | null;
+  }>;
+  stats: { total: number; mapped: number; unmapped: number; pending: number; stale: number };
 }
 const UIStateContext = createContext<CategoryMapperUIState | null>(null);
 export const useCategoryMapperUIState = () => {
@@ -87,6 +93,11 @@ const normalizeParentExternalId = (value: string | null | undefined): string | n
     return null;
   }
   return candidate;
+};
+
+const isMissingExternalCategoryName = (value: string | null | undefined): boolean => {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  return candidate.startsWith('[Missing external category:');
 };
 
 const buildInternalCategoryOptions = (categories: ProductCategory[]): InternalCategoryOption[] => {
@@ -398,14 +409,53 @@ export function CategoryMapperProvider({
 
   const categoryTree = useMemo(() => buildCategoryTree(externalCategories), [externalCategories]);
 
-  const stats = useMemo((): { total: number; mapped: number; pending: number } => {
+  const stats = useMemo((): { total: number; mapped: number; unmapped: number; pending: number; stale: number } => {
+    const staleMappings = mappings.filter((mapping: CategoryMappingWithDetails): boolean => {
+      if (!mapping.isActive) return false;
+      const externalCategoryId = mapping.externalCategoryId.trim();
+      if (!externalCategoryId) return false;
+      return (
+        !externalIds.has(externalCategoryId) ||
+        isMissingExternalCategoryName(mapping.externalCategory?.name)
+      );
+    });
     const total = externalCategories.length;
     const mapped = externalCategories.filter(
       (c: ExternalCategory) => getMappingForExternal(c.externalId) !== null
     ).length;
+    const unmapped = Math.max(0, total - mapped);
     const pending = pendingMappings.size;
-    return { total, mapped, pending };
-  }, [externalCategories, getMappingForExternal, pendingMappings.size]);
+    return { total, mapped, unmapped, pending, stale: staleMappings.length };
+  }, [externalCategories, externalIds, getMappingForExternal, mappings, pendingMappings.size]);
+
+  const staleMappings = useMemo(
+    (): Array<{
+      externalCategoryId: string;
+      externalCategoryName: string;
+      externalCategoryPath: string | null;
+      internalCategoryLabel: string | null;
+    }> =>
+      mappings
+        .filter((mapping: CategoryMappingWithDetails): boolean => {
+          if (!mapping.isActive) return false;
+          const externalCategoryId = mapping.externalCategoryId.trim();
+          if (!externalCategoryId) return false;
+          return (
+            !externalIds.has(externalCategoryId) ||
+            isMissingExternalCategoryName(mapping.externalCategory?.name)
+          );
+        })
+        .map((mapping: CategoryMappingWithDetails) => ({
+          externalCategoryId: mapping.externalCategoryId,
+          externalCategoryName:
+            mapping.externalCategory?.name?.trim() || mapping.externalCategoryId,
+          externalCategoryPath:
+            mapping.externalCategory?.path?.trim() || null,
+          internalCategoryLabel:
+            mapping.internalCategory?.name?.trim() || mapping.internalCategoryId || null,
+        })),
+    [externalIds, mappings]
+  );
 
   const configValue = useMemo<CategoryMapperConfig>(
     () => ({
@@ -452,9 +502,10 @@ export function CategoryMapperProvider({
       pendingMappings,
       expandedIds,
       toggleExpand,
+      staleMappings,
       stats,
     }),
-    [pendingMappings, expandedIds, toggleExpand, stats]
+    [pendingMappings, expandedIds, toggleExpand, staleMappings, stats]
   );
 
   const actionsValue = useMemo<CategoryMapperActions>(

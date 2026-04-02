@@ -6,6 +6,7 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 import {
   resolveProductCatalogIds,
   selectPreferredTraderaCategoryMapping,
+  selectPreferredTraderaCategoryMappingResolution,
 } from './category-mapping';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
@@ -94,7 +95,7 @@ describe('resolveProductCatalogIds', () => {
 
 describe('selectPreferredTraderaCategoryMapping', () => {
   it('prefers the mapping that matches the product catalog', () => {
-    const result = selectPreferredTraderaCategoryMapping({
+    const result = selectPreferredTraderaCategoryMappingResolution({
       product: createProduct(),
       mappings: [
         createMapping({
@@ -113,17 +114,26 @@ describe('selectPreferredTraderaCategoryMapping', () => {
     });
 
     expect(result).toEqual({
-      externalCategoryId: '1001',
-      externalCategoryName: 'Pins',
-      externalCategoryPath: 'Collectibles > Pins',
+      mapping: {
+        externalCategoryId: '1001',
+        externalCategoryName: 'Pins',
+        externalCategoryPath: 'Collectibles > Pins',
+        internalCategoryId: 'internal-category-1',
+        catalogId: 'catalog-primary',
+        pathSegments: ['Collectibles', 'Pins'],
+      },
+      reason: 'mapped',
+      matchScope: 'catalog_match',
       internalCategoryId: 'internal-category-1',
-      catalogId: 'catalog-primary',
-      pathSegments: ['Collectibles', 'Pins'],
+      productCatalogIds: ['catalog-primary'],
+      matchingMappingCount: 2,
+      validMappingCount: 2,
+      catalogMatchedMappingCount: 1,
     });
   });
 
   it('returns null when multiple active mapped categories remain after prioritization', () => {
-    const result = selectPreferredTraderaCategoryMapping({
+    const result = selectPreferredTraderaCategoryMappingResolution({
       product: createProduct(),
       mappings: [
         createMapping(),
@@ -141,6 +151,76 @@ describe('selectPreferredTraderaCategoryMapping', () => {
       ],
     });
 
-    expect(result).toBeNull();
+    expect(result).toEqual({
+      mapping: null,
+      reason: 'ambiguous_external_category',
+      matchScope: 'catalog_match',
+      internalCategoryId: 'internal-category-1',
+      productCatalogIds: ['catalog-primary'],
+      matchingMappingCount: 2,
+      validMappingCount: 2,
+      catalogMatchedMappingCount: 2,
+    });
+  });
+
+  it('flags stale external categories when only missing external placeholders remain', () => {
+    const result = selectPreferredTraderaCategoryMappingResolution({
+      product: createProduct(),
+      mappings: [
+        createMapping({
+          externalCategory: {
+            ...createMapping().externalCategory,
+            name: '[Missing external category: Pins]',
+          },
+        }),
+      ],
+    });
+
+    expect(result).toEqual({
+      mapping: null,
+      reason: 'stale_external_category',
+      matchScope: 'none',
+      internalCategoryId: 'internal-category-1',
+      productCatalogIds: ['catalog-primary'],
+      matchingMappingCount: 1,
+      validMappingCount: 0,
+      catalogMatchedMappingCount: 0,
+    });
+  });
+
+  it('reports missing internal category before checking mappings', () => {
+    const result = selectPreferredTraderaCategoryMappingResolution({
+      product: createProduct({
+        categoryId: null,
+      }),
+      mappings: [createMapping()],
+    });
+
+    expect(result).toEqual({
+      mapping: null,
+      reason: 'missing_internal_category',
+      matchScope: 'none',
+      internalCategoryId: null,
+      productCatalogIds: ['catalog-primary'],
+      matchingMappingCount: 0,
+      validMappingCount: 0,
+      catalogMatchedMappingCount: 0,
+    });
+  });
+
+  it('keeps the simple selector returning only the resolved mapping', () => {
+    const result = selectPreferredTraderaCategoryMapping({
+      product: createProduct(),
+      mappings: [createMapping()],
+    });
+
+    expect(result).toEqual({
+      externalCategoryId: '1001',
+      externalCategoryName: 'Pins',
+      externalCategoryPath: 'Collectibles > Pins',
+      internalCategoryId: 'internal-category-1',
+      catalogId: 'catalog-primary',
+      pathSegments: ['Collectibles', 'Pins'],
+    });
   });
 });

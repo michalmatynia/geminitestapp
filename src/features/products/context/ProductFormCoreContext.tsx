@@ -122,6 +122,7 @@ export function ProductFormCoreProvider({
       sizeWidth: product?.sizeWidth ?? draft?.sizeWidth ?? 0,
       weight: product?.weight ?? draft?.weight ?? 0,
       length: product?.length ?? draft?.length ?? 0,
+      shippingGroupId: product?.shippingGroupId ?? draft?.shippingGroupId ?? '',
     },
   });
 

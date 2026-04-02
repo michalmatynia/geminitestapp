@@ -120,6 +120,7 @@ export const productCreateInputSchema = z.object({
   weight: optionalNonNegativeNumberFromFormSchema,
   length: optionalNonNegativeNumberFromFormSchema,
   categoryId: z.string().nullable().optional(),
+  shippingGroupId: z.string().nullable().optional(),
   catalogIds: optionalStringArrayFromFormSchema,
   tagIds: optionalStringArrayFromFormSchema,
   producerIds: optionalStringArrayFromFormSchema,

@@ -192,6 +192,54 @@ const hasSameNodeSignature = (left: AiNode, right: AiNode): boolean =>
 const findNodeBySignature = (candidates: AiNode[], needle: AiNode): AiNode | undefined =>
   candidates.find((node: AiNode): boolean => hasSameNodeSignature(node, needle));
 
+const resolveExpectedNodeByIdOrIndex = ({
+  expectedNode,
+  expectedNodes,
+}: {
+  expectedNode: AiNode;
+  expectedNodes: AiNode[];
+}): AiNode | undefined => {
+  const expectedNodeIndex = expectedNodes.findIndex(
+    (node: AiNode): boolean => node.id === expectedNode.id
+  );
+  const expectedNodeByIndex = expectedNodeIndex >= 0 ? expectedNodes[expectedNodeIndex] : undefined;
+
+  return (
+    expectedNodes.find((node: AiNode): boolean => node.id === expectedNode.id) ??
+    (expectedNodeByIndex?.type === expectedNode.type ? expectedNodeByIndex : undefined)
+  );
+};
+
+const resolveExpectedPersistedNode = ({
+  expectedNode,
+  expectedNodes,
+}: {
+  expectedNode: AiNode;
+  expectedNodes: AiNode[];
+}): AiNode | undefined =>
+  resolveExpectedNodeByIdOrIndex({ expectedNode, expectedNodes }) ??
+  findNodeBySignature(expectedNodes, expectedNode);
+
+const resolvePersistedNodeByExpectedNode = ({
+  persistedNodes,
+  resolvedExpectedNode,
+}: {
+  persistedNodes: AiNode[];
+  resolvedExpectedNode: AiNode;
+}): AiNode | undefined =>
+  persistedNodes.find((node: AiNode): boolean => node.id === resolvedExpectedNode.id) ??
+  findNodeBySignature(persistedNodes, resolvedExpectedNode);
+
+const hasMatchingPersistedNodeConfig = ({
+  persistedNode,
+  resolvedExpectedNode,
+}: {
+  persistedNode: AiNode;
+  resolvedExpectedNode: AiNode;
+}): boolean =>
+  stableStringify(resolvedExpectedNode.config ?? null) ===
+  stableStringify(persistedNode.config ?? null);
+
 export const resolvePersistedNodeConfigMismatch = (args: {
   expectedNode: AiNode;
   expectedConfig: PathConfig;
@@ -201,14 +249,10 @@ export const resolvePersistedNodeConfigMismatch = (args: {
   const persistedNodes = Array.isArray(args.persistedConfig.nodes)
     ? args.persistedConfig.nodes
     : [];
-  const expectedNodeIndex = expectedNodes.findIndex(
-    (node: AiNode): boolean => node.id === args.expectedNode.id
-  );
-  const expectedNodeByIndex = expectedNodeIndex >= 0 ? expectedNodes[expectedNodeIndex] : undefined;
-  const resolvedExpectedNode =
-    expectedNodes.find((node: AiNode): boolean => node.id === args.expectedNode.id) ??
-    (expectedNodeByIndex?.type === args.expectedNode.type ? expectedNodeByIndex : undefined) ??
-    findNodeBySignature(expectedNodes, args.expectedNode);
+  const resolvedExpectedNode = resolveExpectedPersistedNode({
+    expectedNode: args.expectedNode,
+    expectedNodes,
+  });
   if (!resolvedExpectedNode) {
     return {
       reason: 'expected_node_missing',
@@ -218,9 +262,10 @@ export const resolvePersistedNodeConfigMismatch = (args: {
     };
   }
 
-  const persistedNode =
-    persistedNodes.find((node: AiNode): boolean => node.id === resolvedExpectedNode.id) ??
-    findNodeBySignature(persistedNodes, resolvedExpectedNode);
+  const persistedNode = resolvePersistedNodeByExpectedNode({
+    persistedNodes,
+    resolvedExpectedNode,
+  });
   if (!persistedNode) {
     return {
       reason: 'persisted_node_missing',
@@ -230,9 +275,7 @@ export const resolvePersistedNodeConfigMismatch = (args: {
     };
   }
 
-  const expectedConfigHash = stableStringify(resolvedExpectedNode.config ?? null);
-  const persistedConfigHash = stableStringify(persistedNode.config ?? null);
-  if (expectedConfigHash === persistedConfigHash) {
+  if (hasMatchingPersistedNodeConfig({ persistedNode, resolvedExpectedNode })) {
     return null;
   }
 

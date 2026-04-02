@@ -6,6 +6,7 @@ import type { Language } from '@/shared/contracts/internationalization';
 import type {
   CatalogRecord,
   ProductCategory,
+  ProductShippingGroup,
   ProductTag,
   ProductParameter,
   PriceGroupWithDetails,
@@ -24,6 +25,7 @@ import {
   useParameters,
   usePriceGroups,
   useProducers,
+  useShippingGroups,
   useTags,
 } from './useProductMetadataQueries';
 
@@ -39,6 +41,7 @@ export {
   usePriceGroups,
   useProducers,
   useSaveProducerMutation,
+  useShippingGroups,
   useTags,
 } from './useProductMetadataQueries';
 
@@ -52,6 +55,8 @@ export interface ProductMetadataHookResult {
   categoriesLoading: boolean;
   selectedCategoryId: string | null;
   setCategoryId: (categoryId: string | null) => void;
+  shippingGroups: ProductShippingGroup[];
+  shippingGroupsLoading: boolean;
   tags: ProductTag[];
   tagsLoading: boolean;
   selectedTagIds: string[];
@@ -228,6 +233,7 @@ export function useProductMetadata({
 
   const primaryCatalogId = selectedCatalogIds[0] || '';
   const categoriesQuery = useCategories(primaryCatalogId);
+  const shippingGroupsQuery = useShippingGroups(primaryCatalogId);
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);
   const categories = categoriesQuery.data || [];
@@ -396,6 +402,8 @@ export function useProductMetadata({
     categoriesLoading: categoriesQuery.isLoading,
     selectedCategoryId,
     setCategoryId,
+    shippingGroups: shippingGroupsQuery.data || [],
+    shippingGroupsLoading: shippingGroupsQuery.isLoading,
     tags: tagsQuery.data || [],
     tagsLoading: tagsQuery.isLoading,
     selectedTagIds,

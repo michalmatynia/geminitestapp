@@ -6,21 +6,17 @@ import React from 'react';
 import { useIntegrationSelection } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import { useProductListingsModals } from '@/features/integrations/context/ProductListingsContext';
 import { useProductListingsViewContext } from '@/features/integrations/components/listings/product-listings-modal/context/ProductListingsViewContext';
-import {
-  resolveProductListingsIntegrationScope,
-  resolveProductListingsIntegrationScopeLabel,
-} from '@/features/integrations/utils/product-listings-recovery';
 import { Button, Alert, LoadingState, IntegrationSelector, Card } from '@/shared/ui';
+
+import {
+  resolveIntegrationSelectionEmptyStateCopy,
+  resolveIntegrationSelectionLoadingMessage,
+} from '../product-listings-copy';
 
 export function ProductListingsStartPanel(): React.JSX.Element {
   const { onStartListing, recoveryContext } = useProductListingsModals();
-  const { filterIntegrationSlug, statusTargetLabel } = useProductListingsViewContext();
-  const effectiveFilterIntegrationSlug = resolveProductListingsIntegrationScope({
-    filterIntegrationSlug,
-    recoveryContext,
-  });
-  const effectiveStatusTargetLabel =
-    resolveProductListingsIntegrationScopeLabel(effectiveFilterIntegrationSlug) ?? statusTargetLabel;
+  const { filterIntegrationSlug, statusTargetLabel, isScopedMarketplaceFlow } =
+    useProductListingsViewContext();
   const {
     integrations,
     loading: loadingIntegrations,
@@ -31,14 +27,17 @@ export function ProductListingsStartPanel(): React.JSX.Element {
   } = useIntegrationSelection(
     recoveryContext?.integrationId ?? null,
     recoveryContext?.connectionId ?? null,
-    { filterIntegrationSlug: effectiveFilterIntegrationSlug }
+    { filterIntegrationSlug }
   );
-  const isScopedMarketplaceFlow = Boolean(effectiveFilterIntegrationSlug);
+  const { message: emptyStateMessage, setupLabel } = resolveIntegrationSelectionEmptyStateCopy({
+    isScopedMarketplaceFlow,
+    statusTargetLabel,
+  });
 
   if (loadingIntegrations) {
     return (
       <div className='flex items-center justify-center py-8'>
-        <LoadingState message='Loading integrations...' size='sm' />
+        <LoadingState message={resolveIntegrationSelectionLoadingMessage()} size='sm' />
       </div>
     );
   }
@@ -46,12 +45,9 @@ export function ProductListingsStartPanel(): React.JSX.Element {
   if (integrations.length === 0) {
     return (
       <Alert variant='warning'>
-        {isScopedMarketplaceFlow
-          ? `No connected ${effectiveStatusTargetLabel} accounts.`
-          : 'No connected integrations.'}{' '}
+        {emptyStateMessage}{' '}
         <Link href='/admin/integrations' className='underline hover:text-yellow-100'>
-          Set up{' '}
-          {isScopedMarketplaceFlow ? `${effectiveStatusTargetLabel} integration` : 'an integration'}
+          {setupLabel}
         </Link>
         .
       </Alert>
@@ -63,11 +59,9 @@ export function ProductListingsStartPanel(): React.JSX.Element {
       <div className='space-y-4'>
         {isScopedMarketplaceFlow && (
           <div className='space-y-1 text-center'>
-            <div className='text-sm font-semibold text-white'>
-              {effectiveStatusTargetLabel} options
-            </div>
+            <div className='text-sm font-semibold text-white'>{statusTargetLabel} options</div>
             <p className='text-xs text-gray-300'>
-              Continue with a {effectiveStatusTargetLabel} account only.
+              Continue with a {statusTargetLabel} account only.
             </p>
           </div>
         )}

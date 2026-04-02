@@ -5,18 +5,24 @@ import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-cli
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
+const ABSOLUTE_IMAGE_URL_PREFIXES = ['data:', 'http://', 'https://'] as const;
+
+const resolvePublicAppBaseUrl = (): string => {
+  const base =
+    process.env['NEXT_PUBLIC_APP_URL'] || process.env['NEXTAUTH_URL'] || 'http://localhost:3000';
+  return base.endsWith('/') ? base.slice(0, -1) : base;
+};
+
+const isAbsoluteImageUrl = (value: string): boolean =>
+  ABSOLUTE_IMAGE_URL_PREFIXES.some((prefix) => value.startsWith(prefix));
+
 const resolveImageUrl = (raw: string): string => {
   const value = raw.trim();
   if (!value) return value;
-  if (value.startsWith('data:')) return value;
-  if (value.startsWith('http://') || value.startsWith('https://')) return value;
-  if (value.startsWith('/')) {
-    const base =
-      process.env['NEXT_PUBLIC_APP_URL'] || process.env['NEXTAUTH_URL'] || 'http://localhost:3000';
-    const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
-    return `${normalizedBase}${value}`;
-  }
-  return `data:image/jpeg;base64,${value}`;
+  if (isAbsoluteImageUrl(value)) return value;
+  return value.startsWith('/')
+    ? `${resolvePublicAppBaseUrl()}${value}`
+    : `data:image/jpeg;base64,${value}`;
 };
 
 const normalizeRole = (role: string): 'user' | 'assistant' | 'system' => {

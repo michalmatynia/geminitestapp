@@ -50,8 +50,10 @@ const baseViewContextValue: ProductListingsViewContextValue = {
       status: 'auth_required',
     } as never,
   ],
+  integrationScopeLabel: 'Tradera',
   statusTargetLabel: 'Tradera',
   filterIntegrationSlug: 'tradera',
+  isScopedMarketplaceFlow: true,
   isBaseFilter: false,
   showSync: false,
 };

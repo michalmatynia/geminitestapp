@@ -6,6 +6,7 @@ import type { Language } from '@/shared/contracts/internationalization';
 import type {
   CatalogRecord,
   ProductCategory,
+  ProductShippingGroup,
   ProductTag,
   Producer,
   PriceGroupWithDetails,
@@ -26,6 +27,8 @@ export interface ProductFormMetadataContextType {
   categoriesLoading: boolean;
   selectedCategoryId: string | null;
   setCategoryId: (categoryId: string | null) => void;
+  shippingGroups: ProductShippingGroup[];
+  shippingGroupsLoading: boolean;
   tags: ProductTag[];
   tagsLoading: boolean;
   selectedTagIds: string[];
@@ -47,6 +50,8 @@ export type ProductFormMetadataStateContextType = Pick<
   | 'categories'
   | 'categoriesLoading'
   | 'selectedCategoryId'
+  | 'shippingGroups'
+  | 'shippingGroupsLoading'
   | 'tags'
   | 'tagsLoading'
   | 'selectedTagIds'
@@ -140,6 +145,8 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
     categories,
     categoriesLoading,
     selectedCategoryId,
+    shippingGroups,
+    shippingGroupsLoading,
     tags,
     tagsLoading,
     selectedTagIds,
@@ -157,6 +164,8 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
     categories,
     categoriesLoading,
     selectedCategoryId,
+    shippingGroups,
+    shippingGroupsLoading,
     tags,
     tagsLoading,
     selectedTagIds,

@@ -32,6 +32,12 @@ import type {
   ProductTagUpdateInput,
 } from './tags';
 import type {
+  ProductShippingGroup,
+  ProductShippingGroupCreateInput,
+  ProductShippingGroupFilters,
+  ProductShippingGroupUpdateInput,
+} from './shipping-groups';
+import type {
   ProductValidationPatternFormData,
   ProductValidationPattern,
   ProductValidationSemanticState,
@@ -91,6 +97,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   stock: z.number().nullable().optional(),
   catalogIds: z.array(z.string()).optional(),
   categoryId: z.string().nullable().optional(),
+  shippingGroupId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   producerIds: z.array(z.string()).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
@@ -260,6 +267,20 @@ export type TagRepository = {
   updateTag(id: string, data: ProductTagUpdateInput): Promise<ProductTag>;
   deleteTag(id: string): Promise<void>;
   findByName(catalogId: string, name: string): Promise<ProductTag | null>;
+};
+
+export type ShippingGroupFilters = ProductShippingGroupFilters;
+
+export type ShippingGroupRepository = {
+  listShippingGroups(filters: ShippingGroupFilters): Promise<ProductShippingGroup[]>;
+  getShippingGroupById(id: string): Promise<ProductShippingGroup | null>;
+  createShippingGroup(data: ProductShippingGroupCreateInput): Promise<ProductShippingGroup>;
+  updateShippingGroup(
+    id: string,
+    data: ProductShippingGroupUpdateInput
+  ): Promise<ProductShippingGroup>;
+  deleteShippingGroup(id: string): Promise<void>;
+  findByName(catalogId: string, name: string): Promise<ProductShippingGroup | null>;
 };
 
 export type PatternFormData = ProductValidationPatternFormData;

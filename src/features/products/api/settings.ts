@@ -10,6 +10,11 @@ import {
   type ProductCategoryWithChildren,
   type ReorderProductCategory as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
+import {
+  type ProductShippingGroup,
+  type ProductShippingGroupCreateInput,
+  type ProductShippingGroupUpdateInput,
+} from '@/shared/contracts/products/shipping-groups';
 import { type ProductParameter } from '@/shared/contracts/products/parameters';
 import { type ProductTag } from '@/shared/contracts/products/tags';
 import {
@@ -142,6 +147,14 @@ export async function getTags(catalogId: string | null): Promise<ProductTag[]> {
   });
 }
 
+export async function getShippingGroups(
+  catalogId: string | null
+): Promise<ProductShippingGroup[]> {
+  return api.get<ProductShippingGroup[]>('/api/v2/products/shipping-groups', {
+    params: { catalogId: catalogId || undefined },
+  });
+}
+
 export async function createTag(data: Partial<ProductTag>): Promise<ProductTag> {
   return api.post<ProductTag>('/api/v2/products/tags', data);
 }
@@ -152,6 +165,23 @@ export async function updateTag(id: string, data: Partial<ProductTag>): Promise<
 
 export async function deleteTag(id: string): Promise<void> {
   return api.delete(`/api/v2/products/tags/${id}`);
+}
+
+export async function createShippingGroup(
+  data: ProductShippingGroupCreateInput
+): Promise<ProductShippingGroup> {
+  return api.post<ProductShippingGroup>('/api/v2/products/shipping-groups', data);
+}
+
+export async function updateShippingGroup(
+  id: string,
+  data: ProductShippingGroupUpdateInput
+): Promise<ProductShippingGroup> {
+  return api.put<ProductShippingGroup>(`/api/v2/products/shipping-groups/${id}`, data);
+}
+
+export async function deleteShippingGroup(id: string): Promise<void> {
+  return api.delete(`/api/v2/products/shipping-groups/${id}`);
 }
 
 export async function getParameters(catalogId: string | null): Promise<ProductParameter[]> {

@@ -170,6 +170,7 @@ export type GenericMapperHeaderActionsProps = {
 export type GenericMapperStatsProps = {
   total: number;
   mapped: number;
+  unmapped?: number;
   pending: number;
   itemLabel?: string;
 };
@@ -177,6 +178,7 @@ export type GenericMapperStatsProps = {
 export type PendingMappingStatsDto = {
   total: number;
   mapped: number;
+  unmapped: number;
   pending: number;
 };
 export type PendingMappingStats = PendingMappingStatsDto;

@@ -11,6 +11,12 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { FormField, FormSection } from '@/shared/ui';
 import { SelectSimple } from '@/shared/ui';
 
+import {
+  resolveIntegrationSelectionConfiguredAccountsEmptyStateCopy,
+  resolveIntegrationSelectionLoadingMessage,
+  resolveListProductIntegrationSelectionCopy,
+} from '../product-listings-copy';
+
 export function IntegrationSelection(): React.JSX.Element {
   const {
     integrations,
@@ -44,9 +50,23 @@ export function IntegrationSelection(): React.JSX.Element {
         })),
     [selectedIntegration]
   );
+  const {
+    sectionTitle,
+    marketplaceLabel,
+    marketplacePlaceholder,
+    accountLabel,
+    accountPlaceholder,
+    accountDescription,
+  } = resolveListProductIntegrationSelectionCopy({
+    selectedIntegrationName: selectedIntegration?.name?.trim() || null,
+  });
+  const { message: emptyStateMessage, detail: emptyStateDetail } =
+    resolveIntegrationSelectionConfiguredAccountsEmptyStateCopy();
 
   if (loading) {
-    return <p className='text-sm text-gray-400'>Loading integrations...</p>;
+    return (
+      <p className='text-sm text-gray-400'>{resolveIntegrationSelectionLoadingMessage()}</p>
+    );
   }
 
   if (integrationsWithConnections.length === 0) {
@@ -55,36 +75,34 @@ export function IntegrationSelection(): React.JSX.Element {
         variant='subtle'
         className='border-yellow-500/40 bg-yellow-500/10 p-6 text-center'
       >
-        <p className='text-sm text-yellow-200'>No integrations with configured accounts found.</p>
-        <p className='mt-2 text-xs text-yellow-300/70'>
-          Please set up an integration with at least one account first.
-        </p>
+        <p className='text-sm text-yellow-200'>{emptyStateMessage}</p>
+        <p className='mt-2 text-xs text-yellow-300/70'>{emptyStateDetail}</p>
       </FormSection>
     );
   }
 
   return (
-    <FormSection title='Integration Target' className='p-4 space-y-4'>
-      <FormField label='Marketplace / Integration'>
+    <FormSection title={sectionTitle} className='p-4 space-y-4'>
+      <FormField label={marketplaceLabel}>
         <SelectSimple
           value={selectedIntegrationId || undefined}
           onValueChange={setSelectedIntegrationId}
           options={integrationOptions}
-          placeholder='Select a marketplace...'
-         ariaLabel='Select a marketplace...' title='Select a marketplace...'/>
+          placeholder={marketplacePlaceholder}
+         ariaLabel={marketplacePlaceholder} title={marketplacePlaceholder}/>
       </FormField>
 
       {selectedIntegration && (
         <FormField
-          label='Account'
-          description={`Choose which account to use for listing this product on ${selectedIntegration.name}.`}
+          label={accountLabel}
+          description={accountDescription ?? undefined}
         >
           <SelectSimple
             value={selectedConnectionId || undefined}
             onValueChange={setSelectedConnectionId}
             options={connectionOptions}
-            placeholder='Select an account...'
-           ariaLabel='Select an account...' title='Select an account...'/>
+            placeholder={accountPlaceholder}
+           ariaLabel={accountPlaceholder} title={accountPlaceholder}/>
         </FormField>
       )}
     </FormSection>

@@ -7,6 +7,8 @@ import {
   type KangurSocialPost,
   type KangurSocialPublishMode,
   type KangurSocialVisualAnalysis,
+  type KangurSocialPostListStatus,
+  type KangurSocialPostsPageResult,
 } from '@/shared/contracts/kangur-social-posts';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
@@ -24,22 +26,12 @@ type SocialPostsQueryOptions = {
   enabled?: boolean;
 };
 
-export type KangurSocialPostListStatus = 'all' | 'draft' | 'scheduled' | 'published' | 'failed';
-
 type SocialPostsPageQueryOptions = {
   page: number;
   pageSize: number;
   search?: string;
   status?: KangurSocialPostListStatus;
   enabled?: boolean;
-};
-
-export type KangurSocialPostsPageResult = {
-  posts: KangurSocialPost[];
-  total: number;
-  page: number;
-  pageSize: number;
-  statusCounts: Record<Exclude<KangurSocialPostListStatus, 'all'>, number>;
 };
 
 const SOCIAL_POSTS_QUERY_TIMEOUT_MS = 60_000;

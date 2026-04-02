@@ -71,6 +71,9 @@ const resolveTraderaExecutionSummary = (
   categoryId: string | null;
   categoryPath: string | null;
   categorySource: string | null;
+  categoryMappingReason: string | null;
+  categoryMatchScope: string | null;
+  categoryInternalCategoryId: string | null;
   rawResult: unknown;
 } => {
   const marketplaceRecord = toRecord(marketplaceData);
@@ -97,6 +100,9 @@ const resolveTraderaExecutionSummary = (
     categoryId: readString(metadata['categoryId']),
     categoryPath: readString(metadata['categoryPath']),
     categorySource: readString(metadata['categorySource']),
+    categoryMappingReason: readString(metadata['categoryMappingReason']),
+    categoryMatchScope: readString(metadata['categoryMatchScope']),
+    categoryInternalCategoryId: readString(metadata['categoryInternalCategoryId']),
     rawResult: metadata['rawResult'] ?? null,
   };
 };
@@ -315,6 +321,28 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <MetadataItem
               label='Category source'
               value={traderaExecution.categorySource}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categoryMappingReason ? (
+            <MetadataItem
+              label='Category mapping reason'
+              value={traderaExecution.categoryMappingReason}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categoryMatchScope ? (
+            <MetadataItem
+              label='Category match scope'
+              value={traderaExecution.categoryMatchScope}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categoryInternalCategoryId ? (
+            <MetadataItem
+              label='Internal category'
+              value={traderaExecution.categoryInternalCategoryId}
+              mono
               variant='minimal'
             />
           ) : null}

@@ -15,6 +15,10 @@ const PARTY_KIND_FILTER_OPTIONS = [
   { value: 'person', label: 'Person', icon: User },
   { value: 'organization', label: 'Org', icon: Building2 },
 ] as const;
+const PARTY_KIND_PREFIX_BY_FILTER = {
+  person: 'person:',
+  organization: 'organization:',
+} as const;
 
 interface CaseResolverPartySelectFieldProps {
   label: string;
@@ -23,6 +27,44 @@ interface CaseResolverPartySelectFieldProps {
   options?: Array<LabeledOptionWithDescriptionDto<string>>;
   disabled?: boolean | undefined;
   placeholder?: string | undefined;
+}
+
+const isSelectedPartyValue = (value: string): boolean => value !== '' && value !== 'none';
+
+const filterPartyOptions = (
+  options: Array<LabeledOptionWithDescriptionDto<string>>,
+  filter: PartyKindFilter
+): Array<LabeledOptionWithDescriptionDto<string>> => {
+  if (filter === 'all') {
+    return options;
+  }
+
+  const prefix = PARTY_KIND_PREFIX_BY_FILTER[filter];
+  return options.filter(
+    (option) => option.value === 'none' || option.value.startsWith(prefix)
+  );
+};
+
+function ClearPartySelectionButton(props: {
+  disabled: boolean;
+  onValueChange: (value: string) => void;
+  value: string;
+}): React.JSX.Element {
+  if (!isSelectedPartyValue(props.value) || props.disabled) {
+    return <div className='h-5' />;
+  }
+
+  return (
+    <Button
+      variant='ghost'
+      size='xs'
+      onClick={() => props.onValueChange('')}
+      className='h-5 self-start px-1 text-[10px] text-gray-500 hover:text-red-400 hover:bg-transparent'
+    >
+      <X className='mr-1 size-3' />
+      Clear
+    </Button>
+  );
 }
 
 export function CaseResolverPartySelectField(
@@ -47,18 +89,7 @@ export function CaseResolverPartySelectField(
   }
 
   const [filter, setFilter] = React.useState<PartyKindFilter>('all');
-
-  const hasValue = value !== '' && value !== 'none';
-
-  const filteredOptions = React.useMemo(() => {
-    if (filter === 'all') return options;
-    return options.filter(
-      (o) =>
-        o.value === 'none' ||
-        (filter === 'person' && o.value.startsWith('person:')) ||
-        (filter === 'organization' && o.value.startsWith('organization:'))
-    );
-  }, [options, filter]);
+  const filteredOptions = React.useMemo(() => filterPartyOptions(options, filter), [options, filter]);
 
   return (
     <div className='flex flex-col gap-1.5'>
@@ -83,22 +114,15 @@ export function CaseResolverPartySelectField(
         placeholder={placeholder}
         disabled={disabled}
         triggerClassName='bg-card/20 border-border/60'
-       ariaLabel={placeholder} title={placeholder}/>
+        ariaLabel={placeholder}
+        title={placeholder}
+      />
 
-      {/* Clear button — only when a real value is set */}
-      {hasValue && !disabled ? (
-        <Button
-          variant='ghost'
-          size='xs'
-          onClick={() => onValueChange('')}
-          className='h-5 self-start px-1 text-[10px] text-gray-500 hover:text-red-400 hover:bg-transparent'
-        >
-          <X className='mr-1 size-3' />
-          Clear
-        </Button>
-      ) : (
-        <div className='h-5' />
-      )}
+      <ClearPartySelectionButton
+        disabled={disabled}
+        onValueChange={onValueChange}
+        value={value}
+      />
     </div>
   );
 }

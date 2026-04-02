@@ -35,6 +35,13 @@ type GuestIntroProposalProps = {
   onDismiss: () => void;
 };
 
+type GuestIntroProposalActionButtonProps = {
+  actionClassName: string;
+  label: string;
+  onClick: () => void;
+  testId: string;
+};
+
 const resolveGuestIntroModalSurface = (shouldShowProposal: boolean): string =>
   shouldShowProposal ? 'canonical-onboarding' : 'canonical-chat';
 
@@ -58,6 +65,33 @@ const resolveGuestIntroActionClassName = (isCoarsePointer: boolean): string =>
     isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none active:scale-[0.97]'
   );
 
+function GuestIntroProposalCopy({
+  guestTutorLabel,
+}: Pick<GuestIntroProposalProps, 'guestTutorLabel'>): JSX.Element {
+  return (
+    <p className='text-sm kangur-chat-text-primary'>
+      Cześć,
+      <br />
+      Jestem {guestTutorLabel}.
+      <br />
+      Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie.
+    </p>
+  );
+}
+
+function GuestIntroProposalActionButton({
+  actionClassName,
+  label,
+  onClick,
+  testId,
+}: GuestIntroProposalActionButtonProps): JSX.Element {
+  return (
+    <button type='button' data-testid={testId} className={actionClassName} onClick={onClick}>
+      {label}
+    </button>
+  );
+}
+
 function GuestIntroProposal({
   guestTutorLabel,
   isCoarsePointer,
@@ -68,30 +102,20 @@ function GuestIntroProposal({
 
   return (
     <>
-      <p className='text-sm kangur-chat-text-primary'>
-        Cześć,
-        <br />
-        Jestem {guestTutorLabel}.
-        <br />
-        Jak chcesz, mogę pokazać Ci, jak odnaleźć się na Stronie.
-      </p>
+      <GuestIntroProposalCopy guestTutorLabel={guestTutorLabel} />
       <div className='flex items-center kangur-panel-gap text-[12px] font-semibold'>
-        <button
-          type='button'
-          data-testid='kangur-ai-tutor-onboarding-accept'
-          className={actionClassName}
+        <GuestIntroProposalActionButton
+          actionClassName={actionClassName}
+          label='Tak'
           onClick={onAccept}
-        >
-          Tak
-        </button>
-        <button
-          type='button'
-          data-testid='kangur-ai-tutor-onboarding-dismiss'
-          className={actionClassName}
+          testId='kangur-ai-tutor-onboarding-accept'
+        />
+        <GuestIntroProposalActionButton
+          actionClassName={actionClassName}
+          label='Nie'
           onClick={onDismiss}
-        >
-          Nie
-        </button>
+          testId='kangur-ai-tutor-onboarding-dismiss'
+        />
       </div>
     </>
   );

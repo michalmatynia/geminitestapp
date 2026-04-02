@@ -39,6 +39,10 @@ type KangurNavActionPressHandlers = {
   handlePressEnd: () => void;
   handlePressStart: () => void;
 };
+type KangurNavActionPresentation = {
+  buttonProps: KangurNavActionButtonProps;
+  resolvedAction: KangurResolvedNavActionSource;
+};
 
 export type KangurNavActionProps = {
   action?: Omit<KangurNavActionProps, 'action' | 'children'>;
@@ -274,10 +278,9 @@ const buildKangurNavTransitionLinkProps = ({
   transitionSourceId: transition?.sourceId,
 });
 
-export const KangurNavAction = memo(function KangurNavAction(
+const useKangurNavActionPresentation = (
   props: KangurNavActionProps
-): React.JSX.Element {
-  const { children } = props;
+): KangurNavActionPresentation => {
   const resolvedAction = resolveKangurNavActionValues(resolveKangurNavActionSource(props));
   const isCoarsePointer = useKangurCoarsePointer();
   const transitionActive = resolvedAction.transition?.active ?? false;
@@ -287,62 +290,107 @@ export const KangurNavAction = memo(function KangurNavAction(
     transitionActive,
   });
   const navState = resolveKangurNavActionState({ isPressed, transitionActive });
-  const resolvedVariant =
-    resolveKangurNavActionVariant({
-      active: resolvedAction.active,
-      navState,
-      variant: resolvedAction.variant,
-    });
+  const resolvedVariant = resolveKangurNavActionVariant({
+    active: resolvedAction.active,
+    navState,
+    variant: resolvedAction.variant,
+  });
   const resolvedClassName = resolveKangurNavActionClassName({
     className: resolvedAction.className,
     isCoarsePointer,
     size: resolvedAction.size,
   });
-  const buttonProps = buildKangurNavActionButtonProps({
-    active: resolvedAction.active,
-    ariaControls: resolvedAction.ariaControls,
-    ariaExpanded: resolvedAction.ariaExpanded,
-    ariaHasPopup: resolvedAction.ariaHasPopup,
-    ariaLabel: resolvedAction.ariaLabel,
-    className: resolvedClassName,
-    dataDocId: resolvedAction.docId,
-    disabled: resolvedAction.disabled,
-    navState,
-    onFocus: resolvedAction.onFocus,
-    onMouseEnter: resolvedAction.onMouseEnter,
-    pressHandlers,
-    size: resolvedAction.size,
-    testId: resolvedAction.testId,
-    title: resolvedAction.title,
-    variant: resolvedVariant,
-  });
 
-  if (resolvedAction.href) {
-    const transitionLinkProps = buildKangurNavTransitionLinkProps({
-      href: resolvedAction.href,
+  return {
+    resolvedAction,
+    buttonProps: buildKangurNavActionButtonProps({
+      active: resolvedAction.active,
+      ariaControls: resolvedAction.ariaControls,
+      ariaExpanded: resolvedAction.ariaExpanded,
+      ariaHasPopup: resolvedAction.ariaHasPopup,
+      ariaLabel: resolvedAction.ariaLabel,
+      className: resolvedClassName,
+      dataDocId: resolvedAction.docId,
+      disabled: resolvedAction.disabled,
+      navState,
       onFocus: resolvedAction.onFocus,
       onMouseEnter: resolvedAction.onMouseEnter,
-      prefetch: resolvedAction.prefetch,
-      targetPageKey: resolvedAction.targetPageKey,
-      transition: resolvedAction.transition,
-    });
+      pressHandlers,
+      size: resolvedAction.size,
+      testId: resolvedAction.testId,
+      title: resolvedAction.title,
+      variant: resolvedVariant,
+    }),
+  };
+};
 
-    return (
-      <KangurButton asChild {...buttonProps}>
-        <Link {...transitionLinkProps}>
-          {children}
-        </Link>
-      </KangurButton>
-    );
-  }
+function KangurNavActionLink({
+  buttonProps,
+  children,
+  resolvedAction,
+}: {
+  buttonProps: KangurNavActionButtonProps;
+  children: ReactNode;
+  resolvedAction: KangurResolvedNavActionSource;
+}): React.JSX.Element {
+  const transitionLinkProps = buildKangurNavTransitionLinkProps({
+    href: resolvedAction.href!,
+    onFocus: resolvedAction.onFocus,
+    onMouseEnter: resolvedAction.onMouseEnter,
+    prefetch: resolvedAction.prefetch,
+    targetPageKey: resolvedAction.targetPageKey,
+    transition: resolvedAction.transition,
+  });
 
+  return (
+    <KangurButton asChild {...buttonProps}>
+      <Link {...transitionLinkProps}>
+        {children}
+      </Link>
+    </KangurButton>
+  );
+}
+
+function KangurNavActionButton({
+  buttonProps,
+  children,
+  elementRef,
+}: {
+  buttonProps: KangurNavActionButtonProps;
+  children: ReactNode;
+  elementRef?: Ref<HTMLButtonElement>;
+}): React.JSX.Element {
   return (
     <KangurButton
       {...buttonProps}
-      ref={resolvedAction.elementRef}
+      ref={elementRef}
       type='button'
     >
       {children}
     </KangurButton>
+  );
+}
+
+export const KangurNavAction = memo(function KangurNavAction(
+  props: KangurNavActionProps
+): React.JSX.Element {
+  const { children } = props;
+  const { buttonProps, resolvedAction } = useKangurNavActionPresentation(props);
+
+  if (resolvedAction.href) {
+    return (
+      <KangurNavActionLink
+        buttonProps={buttonProps}
+        resolvedAction={resolvedAction}
+      >
+        {children}
+      </KangurNavActionLink>
+    );
+  }
+
+  return (
+    <KangurNavActionButton buttonProps={buttonProps} elementRef={resolvedAction.elementRef}>
+      {children}
+    </KangurNavActionButton>
   );
 });

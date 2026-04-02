@@ -1,5 +1,6 @@
 export const settingSections = [
   'Categories',
+  'Shipping Groups',
   'Tags',
   'Parameters',
   'Price Groups',

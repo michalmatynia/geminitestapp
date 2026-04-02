@@ -23,6 +23,7 @@ import {
 } from './list-product-modal/context/ListProductModalViewContext';
 import { IntegrationSelection } from './list-product-modal/IntegrationSelection';
 import { ListProductErrorPanel } from './list-product-modal/ListProductErrorPanel';
+import { resolveListProductModalCopy } from './product-listings-copy';
 import { TraderaListingSettings } from './TraderaListingSettings';
 
 interface ListProductModalProps extends EntityModalProps<ProductWithImages> {
@@ -49,18 +50,12 @@ function ListProductModalContent(): React.JSX.Element {
 
   const productName = product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
   const selectedIntegrationName = selectedIntegration?.name?.trim() || null;
-  const modalTitle = isBaseComIntegration
-    ? `Export to Base.com - ${productName}`
-    : isTraderaIntegration
-      ? `List on Tradera - ${productName}`
-      : selectedIntegrationName
-        ? `List on ${selectedIntegrationName} - ${productName}`
-        : `List Product - ${productName}`;
-  const saveText = isBaseComIntegration
-    ? 'Export to Base.com'
-    : isTraderaIntegration
-      ? 'List on Tradera'
-      : 'List Product';
+  const { modalTitle, saveText } = resolveListProductModalCopy({
+    productName,
+    isBaseComIntegration,
+    isTraderaIntegration,
+    selectedIntegrationName,
+  });
   const autoSubmitAttemptedRef = useRef(false);
 
   const integrationsWithConnections = integrations.filter(

@@ -35,6 +35,7 @@ describe('CategoryMapperNameCell', () => {
     render(
       <CategoryMapperNameCell
         name='Algebra'
+        path={null}
         depth={2}
         canExpand
         isExpanded={false}
@@ -57,6 +58,7 @@ describe('CategoryMapperNameCell', () => {
     render(
       <CategoryMapperNameCell
         name='Geometry'
+        path={null}
         depth={1}
         canExpand
         isExpanded
@@ -69,5 +71,23 @@ describe('CategoryMapperNameCell', () => {
     expect(screen.getByRole('button', { name: 'Collapse category' })).toBeInTheDocument();
     expect(screen.getByTestId('icon-down')).toBeInTheDocument();
     expect(screen.getByTestId('icon-check')).toBeInTheDocument();
+  });
+
+  it('renders the full external category path when it differs from the leaf name', () => {
+    render(
+      <CategoryMapperNameCell
+        name='Pins'
+        path='Collectibles > Pins'
+        depth={0}
+        canExpand={false}
+        isExpanded={false}
+        onToggleExpand={vi.fn()}
+        isMapped={false}
+        hasPendingChange={false}
+      />
+    );
+
+    expect(screen.getByText('Pins')).toBeInTheDocument();
+    expect(screen.getByText('Collectibles > Pins')).toBeInTheDocument();
   });
 });

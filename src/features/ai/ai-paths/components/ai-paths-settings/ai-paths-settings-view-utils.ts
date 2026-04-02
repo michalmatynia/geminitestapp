@@ -50,27 +50,28 @@ export const formatStatusLabel = (status: string): string =>
         .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
         .join(' ');
 
-export const statusToVariant = (status: string): StatusVariant => {
-  const s = status.toLowerCase();
-  if (s === 'completed' || s === 'cached' || s === 'success') return 'success';
-  if (s === 'failed' || s === 'canceled' || s === 'timeout' || s === 'error') {
-    return 'error';
-  }
-  if (s === 'queued' || s === 'pending' || s === 'blocked_on_lease' || s === 'handoff_ready') {
-    return 'warning';
-  }
-  if (
-    s === 'running' ||
-    s === 'polling' ||
-    s === 'waiting_callback' ||
-    s === 'advance_pending' ||
-    s === 'paused' ||
-    s === 'processing'
-  ) {
-    return 'processing';
-  }
-  return 'neutral';
+const STATUS_VARIANT_BY_STATUS: Record<string, StatusVariant> = {
+  completed: 'success',
+  cached: 'success',
+  success: 'success',
+  failed: 'error',
+  canceled: 'error',
+  timeout: 'error',
+  error: 'error',
+  queued: 'warning',
+  pending: 'warning',
+  blocked_on_lease: 'warning',
+  handoff_ready: 'warning',
+  running: 'processing',
+  polling: 'processing',
+  waiting_callback: 'processing',
+  advance_pending: 'processing',
+  paused: 'processing',
+  processing: 'processing',
 };
+
+export const statusToVariant = (status: string): StatusVariant =>
+  STATUS_VARIANT_BY_STATUS[status.toLowerCase()] ?? 'neutral';
 
 export const sortPathMetas = (paths: PathMeta[]): PathMeta[] =>
   [...paths].sort((a: PathMeta, b: PathMeta): number => {

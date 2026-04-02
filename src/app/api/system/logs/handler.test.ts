@@ -4,31 +4,39 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const {
+  parseJsonBodyMock,
+  createErrorResponseMock,
+  hydrateLogRuntimeContextMock,
   hydrateSystemLogRecordRuntimeContextMock,
   assertSettingsManageAccessMock,
   listSystemLogsMock,
+  createSystemLogMock,
   clearSystemLogsMock,
   clearActivityLogsMock,
   clearAnalyticsEventsMock,
 } = vi.hoisted(() => ({
+  parseJsonBodyMock: vi.fn(),
+  createErrorResponseMock: vi.fn(),
+  hydrateLogRuntimeContextMock: vi.fn(),
   hydrateSystemLogRecordRuntimeContextMock: vi.fn(),
   assertSettingsManageAccessMock: vi.fn(),
   listSystemLogsMock: vi.fn(),
+  createSystemLogMock: vi.fn(),
   clearSystemLogsMock: vi.fn(),
   clearActivityLogsMock: vi.fn(),
   clearAnalyticsEventsMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/server', () => ({
-  parseJsonBody: vi.fn(),
+  parseJsonBody: (...args: unknown[]) => parseJsonBodyMock(...args),
 }));
 
 vi.mock('@/shared/lib/api/handle-api-error', () => ({
-  createErrorResponse: vi.fn(),
+  createErrorResponse: (...args: unknown[]) => createErrorResponseMock(...args),
 }));
 
 vi.mock('@/features/observability/entry-server', () => ({
-  hydrateLogRuntimeContext: vi.fn(),
+  hydrateLogRuntimeContext: (...args: unknown[]) => hydrateLogRuntimeContextMock(...args),
   hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
 }));
 
@@ -38,7 +46,7 @@ vi.mock('@/features/auth/server', () => ({
 
 vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   clearSystemLogs: clearSystemLogsMock,
-  createSystemLog: vi.fn(),
+  createSystemLog: (...args: unknown[]) => createSystemLogMock(...args),
   listSystemLogs: listSystemLogsMock,
 }));
 
@@ -50,7 +58,7 @@ vi.mock('@/shared/lib/analytics/server', () => ({
   clearAnalyticsEvents: clearAnalyticsEventsMock,
 }));
 
-import { DELETE_handler, GET_handler } from './handler';
+import { DELETE_handler, GET_handler, POST_handler } from './handler';
 
 const createRequestContext = (): ApiHandlerContext =>
   ({
@@ -65,6 +73,91 @@ describe('system logs delete handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     assertSettingsManageAccessMock.mockResolvedValue(undefined);
+    createErrorResponseMock.mockReset();
+    createSystemLogMock.mockReset();
+    hydrateLogRuntimeContextMock.mockReset();
+    parseJsonBodyMock.mockReset();
+  });
+
+  it('hydrates runtime context and creates system logs from explicit request bodies', async () => {
+    hydrateLogRuntimeContextMock.mockResolvedValue({ runtime: 'hydrated' });
+    createSystemLogMock.mockResolvedValue({
+      id: 'log-created-1',
+      message: 'Created from body',
+    });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/system/logs', { method: 'POST' }),
+      {
+        ...createRequestContext(),
+        body: {
+          message: 'Created from body',
+          level: 'error',
+          category: 'system',
+          source: 'worker',
+          service: 'jobs',
+          context: { request: 'ctx' },
+          path: '/api/system/logs',
+          method: 'POST',
+          statusCode: 500,
+          requestId: 'req-created',
+          traceId: 'trace-created',
+          correlationId: 'corr-created',
+        },
+      }
+    );
+
+    expect(assertSettingsManageAccessMock).toHaveBeenCalledTimes(1);
+    expect(parseJsonBodyMock).not.toHaveBeenCalled();
+    expect(hydrateLogRuntimeContextMock).toHaveBeenCalledWith({ request: 'ctx' });
+    expect(createSystemLogMock).toHaveBeenCalledWith({
+      level: 'error',
+      message: 'Created from body',
+      category: 'system',
+      source: 'worker',
+      service: 'jobs',
+      context: { runtime: 'hydrated' },
+      stack: null,
+      path: '/api/system/logs',
+      method: 'POST',
+      statusCode: 500,
+      requestId: 'req-created',
+      traceId: 'trace-created',
+      correlationId: 'corr-created',
+      spanId: null,
+      parentSpanId: null,
+      userId: null,
+    });
+    await expect(response.json()).resolves.toEqual({
+      log: {
+        id: 'log-created-1',
+        message: 'Created from body',
+      },
+    });
+  });
+
+  it('returns the formatted validation response when explicit request bodies are invalid', async () => {
+    const invalidResponse = new Response(JSON.stringify({ error: 'invalid payload' }), {
+      status: 400,
+      headers: { 'content-type': 'application/json' },
+    });
+    createErrorResponseMock.mockResolvedValue(invalidResponse);
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/system/logs', { method: 'POST' }),
+      {
+        ...createRequestContext(),
+        body: {
+          message: '',
+        },
+      }
+    );
+
+    expect(createErrorResponseMock).toHaveBeenCalledTimes(1);
+    expect(hydrateLogRuntimeContextMock).not.toHaveBeenCalled();
+    expect(createSystemLogMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: 'invalid payload' });
   });
 
   it('parses shared list query DTOs before loading and hydrating logs', async () => {

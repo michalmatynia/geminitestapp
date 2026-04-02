@@ -74,6 +74,20 @@ export const isTraderaQuickExportRecoveryContext = (
   recoveryContext?.source === 'tradera_quick_export_auth_required' ||
   recoveryContext?.source === 'tradera_quick_export_failed';
 
+export const resolveProductListingsEmptyDescription = (
+  recoveryContext?: ProductListingsRecoveryContext | null | undefined
+): string => {
+  if (isBaseQuickExportRecoveryContext(recoveryContext)) {
+    return 'The last Base.com one-click export failed before a listing record was created. Use the options above to retry or choose a different connection.';
+  }
+
+  if (isTraderaQuickExportRecoveryContext(recoveryContext)) {
+    return 'The last Tradera quick export stopped before a stable listing record was available. Open the Tradera login window if needed, then continue the Tradera listing flow from this modal.';
+  }
+
+  return 'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.';
+};
+
 export const resolveTraderaRecoverySource = (
   statusOrSource: string | null | undefined
 ): TraderaRecoverySource => {
@@ -108,6 +122,63 @@ export const createTraderaRecoveryContext = ({
   integrationId: integrationId ?? null,
   connectionId: connectionId ?? null,
 });
+
+const normalizeRecoveryOptionalField = (value: unknown): string | null =>
+  readProductListingsRecoveryString(value);
+
+export const areProductListingsRecoveryContextsEqual = (
+  left?: ProductListingsRecoveryContext | null | undefined,
+  right?: ProductListingsRecoveryContext | null | undefined
+): boolean => {
+  if (!left && !right) return true;
+  if (!left || !right) return false;
+
+  return (
+    left.source === right.source &&
+    left.integrationSlug === right.integrationSlug &&
+    left.status === right.status &&
+    left.runId === right.runId &&
+    normalizeRecoveryOptionalField(left.requestId) ===
+      normalizeRecoveryOptionalField(right.requestId) &&
+    normalizeRecoveryOptionalField(left.integrationId) ===
+      normalizeRecoveryOptionalField(right.integrationId) &&
+    normalizeRecoveryOptionalField(left.connectionId) ===
+      normalizeRecoveryOptionalField(right.connectionId)
+  );
+};
+
+export const mergeProductListingsRecoveryContext = (
+  preferred?: ProductListingsRecoveryContext | null | undefined,
+  fallback?: ProductListingsRecoveryContext | null | undefined
+): ProductListingsRecoveryContext | null => {
+  if (!preferred) return fallback ?? null;
+  if (!fallback) return preferred;
+
+  if (preferred.source !== fallback.source || preferred.integrationSlug !== fallback.integrationSlug) {
+    return preferred;
+  }
+
+  return {
+    ...fallback,
+    ...preferred,
+    runId: preferred.runId ?? fallback.runId ?? null,
+    ...(normalizeRecoveryOptionalField(preferred.requestId) !== null
+      ? { requestId: normalizeRecoveryOptionalField(preferred.requestId) }
+      : normalizeRecoveryOptionalField(fallback.requestId) !== null
+        ? { requestId: normalizeRecoveryOptionalField(fallback.requestId) }
+        : {}),
+    ...(normalizeRecoveryOptionalField(preferred.integrationId) !== null
+      ? { integrationId: normalizeRecoveryOptionalField(preferred.integrationId) }
+      : normalizeRecoveryOptionalField(fallback.integrationId) !== null
+        ? { integrationId: normalizeRecoveryOptionalField(fallback.integrationId) }
+        : {}),
+    ...(normalizeRecoveryOptionalField(preferred.connectionId) !== null
+      ? { connectionId: normalizeRecoveryOptionalField(preferred.connectionId) }
+      : normalizeRecoveryOptionalField(fallback.connectionId) !== null
+        ? { connectionId: normalizeRecoveryOptionalField(fallback.connectionId) }
+        : {}),
+  };
+};
 
 export const resolveProductListingsRecoveryIdentifiers = (
   recoveryContext?: ProductListingsRecoveryContext | null | undefined

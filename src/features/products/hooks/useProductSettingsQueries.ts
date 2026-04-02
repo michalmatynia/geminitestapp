@@ -11,6 +11,11 @@ import {
   type ReorderProductCategory as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
 import {
+  type ProductShippingGroup,
+  type ProductShippingGroupCreateInput,
+  type ProductShippingGroupUpdateInput,
+} from '@/shared/contracts/products/shipping-groups';
+import {
   type ProductParameter,
   type ProductSimpleParameter,
 } from '@/shared/contracts/products/parameters';
@@ -59,6 +64,7 @@ import {
   type ProductMetadataQueryOptions,
   useSimpleParameters as useMetadataSimpleParameters,
   usePriceGroups as useMetadataPriceGroups,
+  useShippingGroups as useMetadataShippingGroups,
   useTags as useMetadataTags,
 } from './useProductMetadataQueries';
 import * as api from '../api/settings';
@@ -140,6 +146,13 @@ export function useTags(
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductTag> {
   return useMetadataTags(catalogId ?? undefined, options);
+}
+
+export function useShippingGroups(
+  catalogId: string | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductShippingGroup> {
+  return useMetadataShippingGroups(catalogId ?? undefined, options);
 }
 
 export function useParameters(
@@ -410,6 +423,98 @@ export function useSaveTagMutation(): SaveMutation<
     invalidate: async (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       await invalidateCatalogScopedData(queryClient, catalogId);
+    },
+  });
+}
+
+const toShippingGroupUpdatePayload = (
+  data: Partial<ProductShippingGroup>
+): ProductShippingGroupUpdateInput => {
+  const payload: ProductShippingGroupUpdateInput = {};
+
+  if (data.name !== undefined) payload.name = data.name;
+  if (data.description !== undefined) payload.description = data.description;
+  if (data.catalogId !== undefined) payload.catalogId = data.catalogId;
+  if (data.traderaShippingCondition !== undefined) {
+    payload.traderaShippingCondition = data.traderaShippingCondition;
+  }
+
+  return payload;
+};
+
+const toShippingGroupCreatePayload = (
+  data: Partial<ProductShippingGroup>
+): ProductShippingGroupCreateInput => {
+  const name = data.name?.trim();
+  const catalogId = data.catalogId?.trim();
+
+  if (!name) {
+    throw new Error('Shipping group name is required');
+  }
+  if (!catalogId) {
+    throw new Error('Shipping group catalogId is required');
+  }
+
+  return {
+    ...toShippingGroupUpdatePayload(data),
+    name,
+    catalogId,
+  };
+};
+
+export function useSaveShippingGroupMutation(): SaveMutation<
+  ProductShippingGroup,
+  { id: string | undefined; data: Partial<ProductShippingGroup> }
+> {
+  const mutationKey = productSettingsKeys.all;
+  return createMutationV2({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string | undefined;
+      data: Partial<ProductShippingGroup>;
+    }) =>
+      id
+        ? api.updateShippingGroup(id, toShippingGroupUpdatePayload(data))
+        : api.createShippingGroup(toShippingGroupCreatePayload(data)),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSaveShippingGroupMutation',
+      operation: 'action',
+      resource: 'products.settings.shipping-groups',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'shipping-groups', 'save'],
+      description: 'Runs products settings shipping groups.',
+    },
+    invalidate: async (queryClient, _data, variables) => {
+      const catalogId = variables.data.catalogId ?? null;
+      await invalidateCatalogScopedData(queryClient, catalogId);
+    },
+  });
+}
+
+export function useDeleteShippingGroupMutation(): UpdateMutation<
+  void,
+  { id: string; catalogId: string | null }
+> {
+  const mutationKey = productSettingsKeys.all;
+  return createDeleteMutationV2({
+    mutationFn: ({ id }: { id: string; catalogId: string | null }) =>
+      api.deleteShippingGroup(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteShippingGroupMutation',
+      operation: 'delete',
+      resource: 'products.settings.shipping-groups',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'shipping-groups', 'delete'],
+      description: 'Deletes products settings shipping groups.',
+    },
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }

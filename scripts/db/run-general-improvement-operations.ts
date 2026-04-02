@@ -57,6 +57,68 @@ function ensureNodeHeapOption(nodeOptions: string | undefined): string {
     .join(' ');
 }
 
+const DEFAULT_REPORT_PATH_BY_PHASE: Record<ImprovementPhase, string> = {
+  audit: 'artifacts/improvements/audit-report.json',
+  classify: 'artifacts/improvements/classify-report.json',
+  plan: 'artifacts/improvements/plan-report.json',
+  'dry-run': 'artifacts/improvements/dry-run-report.json',
+  apply: 'artifacts/improvements/apply-report.json',
+};
+
+const parseImprovementPhase = (value: string | undefined): ImprovementPhase | null => {
+  if (
+    value === 'audit' ||
+    value === 'classify' ||
+    value === 'plan' ||
+    value === 'dry-run' ||
+    value === 'apply'
+  ) {
+    return value;
+  }
+
+  return null;
+};
+
+const appendTrackIds = (trackIds: string[], value: string | undefined): void => {
+  if (!value) {
+    return;
+  }
+
+  trackIds.push(...value.split(',').map((item) => item.trim()).filter(Boolean));
+};
+
+const applyArgument = (
+  result: {
+    phase: ImprovementPhase;
+    execute: boolean;
+    allowWrite: boolean;
+    trackIds: string[];
+    reportPath: string;
+  },
+  argument: string,
+  value: string | undefined
+): boolean => {
+  switch (argument) {
+    case '--phase':
+      result.phase = parseImprovementPhase(value) ?? result.phase;
+      return true;
+    case '--track':
+      appendTrackIds(result.trackIds, value);
+      return true;
+    case '--report':
+      result.reportPath = value ?? result.reportPath;
+      return true;
+    case '--execute':
+      result.execute = true;
+      return false;
+    case '--allow-write':
+      result.allowWrite = true;
+      return false;
+    default:
+      return false;
+  }
+};
+
 function parseArguments(argv: readonly string[]): {
   phase: ImprovementPhase;
   execute: boolean;
@@ -64,73 +126,32 @@ function parseArguments(argv: readonly string[]): {
   trackIds: string[];
   reportPath: string;
 } {
-  let phase: ImprovementPhase = 'plan';
-  let execute = false;
-  let allowWrite = false;
-  let reportPath = 'artifacts/improvements/plan-report.json';
-  const trackIds: string[] = [];
+  const result = {
+    phase: 'plan' as ImprovementPhase,
+    execute: false,
+    allowWrite: false,
+    trackIds: [] as string[],
+    reportPath: 'artifacts/improvements/plan-report.json',
+  };
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (!argument) continue;
 
-    if (argument === '--phase') {
-      const value = argv[index + 1];
-      if (
-        value === 'audit' ||
-        value === 'classify' ||
-        value === 'plan' ||
-        value === 'dry-run' ||
-        value === 'apply'
-      ) {
-        phase = value;
-      }
+    if (applyArgument(result, argument, argv[index + 1])) {
       index += 1;
-      continue;
-    }
-
-    if (argument === '--track') {
-      const value = argv[index + 1];
-      if (value) {
-        trackIds.push(...value.split(',').map((item) => item.trim()).filter(Boolean));
-      }
-      index += 1;
-      continue;
-    }
-
-    if (argument === '--report') {
-      reportPath = argv[index + 1] ?? reportPath;
-      index += 1;
-      continue;
-    }
-
-    if (argument === '--execute') {
-      execute = true;
-      continue;
-    }
-
-    if (argument === '--allow-write') {
-      allowWrite = true;
     }
   }
 
-  const defaultReportPaths: Record<ImprovementPhase, string> = {
-    audit: 'artifacts/improvements/audit-report.json',
-    classify: 'artifacts/improvements/classify-report.json',
-    plan: 'artifacts/improvements/plan-report.json',
-    'dry-run': 'artifacts/improvements/dry-run-report.json',
-    apply: 'artifacts/improvements/apply-report.json',
-  };
-
   return {
-    phase,
-    execute,
-    allowWrite,
-    trackIds,
+    phase: result.phase,
+    execute: result.execute,
+    allowWrite: result.allowWrite,
+    trackIds: result.trackIds,
     reportPath:
-      reportPath === 'artifacts/improvements/plan-report.json'
-        ? defaultReportPaths[phase]
-        : reportPath,
+      result.reportPath === 'artifacts/improvements/plan-report.json'
+        ? DEFAULT_REPORT_PATH_BY_PHASE[result.phase]
+        : result.reportPath,
   };
 }
 

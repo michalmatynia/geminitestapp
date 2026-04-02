@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 
 import { ExportLogViewer } from '@/features/integrations/components/listings/ExportLogViewer';
-import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
   ProductListingsProvider,
   useProductListingsData,
@@ -11,13 +10,9 @@ import {
   useProductListingsModals,
 } from '@/features/integrations/context/ProductListingsContext';
 import {
-  matchesProductListingsIntegrationScope,
-  normalizeProductListingsIntegrationScope,
   resolveProductListingsIntegrationScope,
-  resolveProductListingsIntegrationScopeLabel,
 } from '@/features/integrations/utils/product-listings-recovery';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
@@ -28,8 +23,10 @@ import {
 } from './product-listings-modal/context/ProductListingsModalViewContext';
 import {
   ProductListingsViewProvider,
+  createProductListingsViewContextValue,
   type ProductListingsViewContextValue,
 } from './product-listings-modal/context/ProductListingsViewContext';
+import { resolveProductListingsModalTitle } from './product-listings-copy';
 import { ProductListingsConfirmDialogs } from './product-listings-modal/ProductListingsConfirmDialogs';
 import { ProductListingsContent } from './product-listings-modal/ProductListingsContent';
 import { ProductListingsEmpty } from './product-listings-modal/ProductListingsEmpty';
@@ -53,45 +50,25 @@ interface ProductListingsModalProps extends EntityModalProps<ProductWithImages> 
 function ProductListingsModalContent(): React.JSX.Element {
   const { product, listings, isLoading, error } = useProductListingsData();
   const { exportLogs } = useProductListingsLogs();
-  const { onClose, onStartListing, filterIntegrationSlug, recoveryContext } =
-    useProductListingsModals();
+  const { onClose, onStartListing, filterIntegrationSlug } = useProductListingsModals();
 
   const productName: string =
     product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
-  const effectiveFilterIntegrationSlug = resolveProductListingsIntegrationScope({
-    filterIntegrationSlug,
-    recoveryContext,
-  });
-
-  const filteredListings: ProductListingWithDetails[] = useMemo(() => {
-    return effectiveFilterIntegrationSlug
-      ? listings.filter((listing: ProductListingWithDetails): boolean =>
-        matchesProductListingsIntegrationScope(listing.integration.slug, effectiveFilterIntegrationSlug)
-      )
-      : listings;
-  }, [effectiveFilterIntegrationSlug, listings]);
-
-  const integrationScopeLabel = resolveProductListingsIntegrationScopeLabel(
-    effectiveFilterIntegrationSlug
-  );
-  const isBaseFilter = BASE_INTEGRATION_SLUGS.has(
-    normalizeProductListingsIntegrationScope(effectiveFilterIntegrationSlug)?.toLowerCase() ?? ''
-  );
-  const statusTargetLabel: string = integrationScopeLabel ?? 'integration';
-  const canStartListing: boolean = Boolean(onStartListing);
+  const effectiveFilterIntegrationSlug = filterIntegrationSlug ?? null;
   const productListingsViewContextValue: ProductListingsViewContextValue = useMemo(
-    () => ({
-      filteredListings,
-      statusTargetLabel,
-      filterIntegrationSlug: effectiveFilterIntegrationSlug,
-      isBaseFilter,
-      showSync: Boolean(effectiveFilterIntegrationSlug),
-    }),
-    [effectiveFilterIntegrationSlug, filteredListings, isBaseFilter, statusTargetLabel]
+    () =>
+      createProductListingsViewContextValue({
+        listings,
+        filterIntegrationSlug: effectiveFilterIntegrationSlug,
+      }),
+    [effectiveFilterIntegrationSlug, listings]
   );
-  const modalTitle = integrationScopeLabel
-    ? `${integrationScopeLabel} - ${productName}`
-    : `Integrations - ${productName}`;
+  const { filteredListings, integrationScopeLabel } = productListingsViewContextValue;
+  const canStartListing: boolean = Boolean(onStartListing);
+  const modalTitle = resolveProductListingsModalTitle({
+    productName,
+    integrationScopeLabel,
+  });
 
   return (
     <DetailModal isOpen={true} onClose={onClose} title={modalTitle} size='xl'>

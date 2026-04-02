@@ -33,8 +33,10 @@ import { ProductListingsStartPanel } from './ProductListingsStartPanel';
 
 const baseViewContextValue: ProductListingsViewContextValue = {
   filteredListings: [],
+  integrationScopeLabel: null,
   statusTargetLabel: 'Integrations',
   filterIntegrationSlug: null,
+  isScopedMarketplaceFlow: false,
   isBaseFilter: false,
   showSync: false,
 };
@@ -83,8 +85,10 @@ describe('ProductListingsStartPanel', () => {
       <ProductListingsViewProvider
         value={{
           ...baseViewContextValue,
+          integrationScopeLabel: 'Tradera',
           statusTargetLabel: 'Tradera',
           filterIntegrationSlug: 'tradera',
+          isScopedMarketplaceFlow: true,
         }}
       >
         <ProductListingsStartPanel />
@@ -98,7 +102,7 @@ describe('ProductListingsStartPanel', () => {
     );
   });
 
-  it('derives Tradera scoping from recovery context when the view filter is still unset', () => {
+  it('does not recompute marketplace scope from recovery context when the view filter is unset', () => {
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: vi.fn(),
       recoveryContext: {
@@ -120,10 +124,12 @@ describe('ProductListingsStartPanel', () => {
     expect(useIntegrationSelectionMock).toHaveBeenCalledWith(
       'integration-tradera-7',
       'conn-tradera-7',
-      { filterIntegrationSlug: 'tradera' }
+      { filterIntegrationSlug: null }
     );
-    expect(screen.getByText('Tradera options')).toBeInTheDocument();
-    expect(screen.getByText('Continue with a Tradera account only.')).toBeInTheDocument();
+    expect(screen.queryByText('Tradera options')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Continue with a Tradera account only.')
+    ).not.toBeInTheDocument();
   });
 
   it('starts listing with the selected integration and connection', () => {
@@ -149,8 +155,10 @@ describe('ProductListingsStartPanel', () => {
       <ProductListingsViewProvider
         value={{
           ...baseViewContextValue,
+          integrationScopeLabel: 'Tradera',
           statusTargetLabel: 'Tradera',
           filterIntegrationSlug: 'tradera',
+          isScopedMarketplaceFlow: true,
         }}
       >
         <ProductListingsStartPanel />

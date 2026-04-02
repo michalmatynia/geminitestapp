@@ -33,6 +33,7 @@ describe('folder-tree-profiles-v2', () => {
       'kangur_test_suites_manager_catalog',
       'brain_catalog_tree',
       'brain_routing_tree',
+      'kangur_social_capture_browser',
     ]);
   });
 

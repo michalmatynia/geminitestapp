@@ -32,6 +32,65 @@ interface MultiSelectProps {
   single?: boolean | undefined;
 }
 
+export const filterMultiSelectOptions = (
+  options: ReadonlyArray<MultiSelectOption>,
+  query: string
+): ReadonlyArray<MultiSelectOption> => {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return options;
+  }
+
+  return options.filter((option) => option.label.toLowerCase().includes(normalized));
+};
+
+export const toggleMultiSelectValue = (args: {
+  selected: string[];
+  value: string;
+  single: boolean;
+}): string[] => {
+  if (args.single) {
+    return args.selected.includes(args.value) ? [] : [args.value];
+  }
+
+  return args.selected.includes(args.value)
+    ? args.selected.filter((selectedValue) => selectedValue !== args.value)
+    : [...args.selected, args.value];
+};
+
+const resolveSelectedLabels = (
+  options: ReadonlyArray<MultiSelectOption>,
+  selected: string[]
+): string[] => options.filter((option) => selected.includes(option.value)).map((option) => option.label);
+
+export const formatMultiSelectDisplayValue = (args: {
+  placeholder: string;
+  selected: string[];
+  selectedLabels: string[];
+  single: boolean;
+}): string => {
+  if (args.selected.length === 0) return args.placeholder;
+
+  if (args.single) {
+    return args.selectedLabels[0] ?? `${args.selected.length} selected`;
+  }
+
+  if (args.selectedLabels.length === 0) {
+    return `${args.selected.length} selected`;
+  }
+
+  if (args.selectedLabels.length <= 2) {
+    return args.selectedLabels.join(', ');
+  }
+
+  return `${args.selectedLabels.slice(0, 2).join(', ')} +${args.selectedLabels.length - 2}`;
+};
+
+const buildMultiSelectOptionProps = (
+  option: MultiSelectOption
+): { disabled?: boolean | undefined } =>
+  option.disabled !== undefined ? { disabled: option.disabled } : {};
+
 export function MultiSelect(props: MultiSelectProps) {
   const {
     options,
@@ -52,44 +111,33 @@ export function MultiSelect(props: MultiSelectProps) {
 
   const [query, setQuery] = React.useState('');
 
-  const filteredOptions = React.useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return options;
-    return options.filter((opt) => opt.label.toLowerCase().includes(normalized));
-  }, [options, query]);
+  const filteredOptions = React.useMemo(() => filterMultiSelectOptions(options, query), [options, query]);
 
-  const toggleOption = (value: string) => {
-    if (single) {
-      onChange(selected.includes(value) ? [] : [value]);
-      return;
-    }
-    const next = selected.includes(value)
-      ? selected.filter((v) => v !== value)
-      : [...selected, value];
-    onChange(next);
-  };
+  const toggleOption = React.useCallback(
+    (value: string): void => {
+      onChange(
+        toggleMultiSelectValue({
+          selected,
+          value,
+          single,
+        })
+      );
+    },
+    [onChange, selected, single]
+  );
 
-  const selectedLabels = options
-    .filter((opt) => selected.includes(opt.value))
-    .map((opt) => opt.label);
+  const selectedLabels = React.useMemo(() => resolveSelectedLabels(options, selected), [options, selected]);
 
-  const displayValue = React.useMemo((): string => {
-    if (selected.length === 0) return placeholder;
-
-    if (single) {
-      return selectedLabels[0] ?? `${selected.length} selected`;
-    }
-
-    if (selectedLabels.length === 0) {
-      return `${selected.length} selected`;
-    }
-
-    if (selectedLabels.length <= 2) {
-      return selectedLabels.join(', ');
-    }
-
-    return `${selectedLabels.slice(0, 2).join(', ')} +${selectedLabels.length - 2}`;
-  }, [placeholder, selected.length, selectedLabels, single]);
+  const displayValue = React.useMemo(
+    (): string =>
+      formatMultiSelectDisplayValue({
+        placeholder,
+        selected,
+        selectedLabels,
+        single,
+      }),
+    [placeholder, selected, selectedLabels, single]
+  );
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -129,7 +177,7 @@ export function MultiSelect(props: MultiSelectProps) {
                   key={option.value}
                   checked={selected.includes(option.value)}
                   onCheckedChange={() => toggleOption(option.value)}
-                  {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
+                  {...buildMultiSelectOptionProps(option)}
                 >
                   {option.label}
                 </DropdownMenuCheckboxItem>

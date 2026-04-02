@@ -18,6 +18,7 @@ import {
 } from '../kangur-theme-settings.copy';
 import { serializeSetting } from '@/features/kangur/shared/utils/settings-json';
 import { withKangurClientError } from '@/features/kangur/observability/client';
+import { stableStringify } from '@/shared/utils/stable-stringify';
 
 export function useKangurThemeSettingsState(
   initialDaily: ThemeSettings,
@@ -49,7 +50,7 @@ export function useKangurThemeSettingsState(
   }), [initialDaily, initialNightly, initialDawn, initialSunset]);
 
   const hasUnsavedChanges = useMemo(
-    () => JSON.stringify(drafts[mode]) !== JSON.stringify(initialThemes[mode]),
+    () => stableStringify(drafts[mode]) !== stableStringify(initialThemes[mode]),
     [drafts, initialThemes, mode]
   );
 

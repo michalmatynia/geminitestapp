@@ -1,6 +1,6 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-03-14T08:09:30.164Z",
+  "generatedAt": "2026-04-02T10:05:38.751Z",
   "phase": "classify",
   "executionMode": "executed",
   "allowWrite": false,
@@ -18,14 +18,14 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-recovery-classification-*.json",
         "/tmp/product-parameter-recovery-classification-latest.json"
       ],
       "instructions": [],
       "script": "products:classify:parameter-recovery",
-      "durationMs": 3072
+      "durationMs": 777
     },
     {
       "id": "products-parameter-source-report",
@@ -34,14 +34,14 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-source-recovery-*.json",
         "/tmp/product-parameter-source-recovery-latest.json"
       ],
       "instructions": [],
       "script": "products:report:parameter-source-recovery",
-      "durationMs": 3189
+      "durationMs": 633
     },
     {
       "id": "products-parameter-source-summary",
@@ -50,14 +50,14 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-source-recovery-summary-*.json",
         "/tmp/product-parameter-source-recovery-summary-latest.json"
       ],
       "instructions": [],
       "script": "products:summarize:parameter-source-recovery",
-      "durationMs": 276
+      "durationMs": 315
     },
     {
       "id": "products-parameter-source-template",
@@ -66,14 +66,14 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-source-recovery-template-*.json",
         "/tmp/product-parameter-source-recovery-template-latest.json"
       ],
       "instructions": [],
       "script": "products:generate:parameter-source-recovery-template",
-      "durationMs": 266
+      "durationMs": 312
     },
     {
       "id": "products-parameter-source-batch-split",
@@ -82,13 +82,13 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-source-recovery-batches/manifest.json"
       ],
       "instructions": [],
       "script": "products:split:parameter-source-recovery-template",
-      "durationMs": 272
+      "durationMs": 312
     },
     {
       "id": "products-parameter-family-mapping-packs",
@@ -97,13 +97,13 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-source-recovery-batches/*-mapping-pack.json"
       ],
       "instructions": [],
       "script": "products:generate:parameter-family-mapping-pack",
-      "durationMs": 262
+      "durationMs": 302
     },
     {
       "id": "products-parameter-family-mapping-index",
@@ -112,13 +112,13 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-source-recovery-batches/family-mapping-index.json"
       ],
       "instructions": [],
       "script": "products:build:parameter-family-mapping-index",
-      "durationMs": 252
+      "durationMs": 310
     },
     {
       "id": "products-parameter-family-mapping-checklist",
@@ -127,13 +127,13 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-source-recovery-batches/family-mapping-index-checklist.md"
       ],
       "instructions": [],
       "script": "products:render:parameter-family-mapping-checklist",
-      "durationMs": 243
+      "durationMs": 317
     },
     {
       "id": "products-category-manual-remediation-report",
@@ -142,14 +142,14 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [
         "/tmp/product-parameter-manual-remediation-*.json",
         "/tmp/product-parameter-manual-remediation-latest.json"
       ],
       "instructions": [],
       "script": "products:report:parameter-remediation",
-      "durationMs": 507
+      "durationMs": 636
     },
     {
       "id": "repo-quality-lint",
@@ -158,11 +158,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:lint",
-      "durationMs": 9129
+      "durationMs": 215992
     },
     {
       "id": "repo-quality-typecheck",
@@ -171,11 +171,11 @@
       "phase": "classify",
       "mode": "automatic",
       "writes": false,
-      "status": "passed",
+      "status": "failed",
       "outputs": [],
       "instructions": [],
       "script": "quality:baseline:typecheck",
-      "durationMs": 38178
+      "durationMs": 72423
     }
   ]
 }

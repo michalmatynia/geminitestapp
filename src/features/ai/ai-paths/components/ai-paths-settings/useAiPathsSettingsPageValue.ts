@@ -18,6 +18,59 @@ import type { AiPathsSettingsPageContextValue } from './AiPathsSettingsPageConte
 import type { AiPathsSettingsProps } from '../AiPathsSettings';
 import type { UseAiPathsSettingsStateReturn } from './types';
 
+type DeferredAiPathsDiagnosticsTarget = {
+  requestIdleCallback?: (callback: () => void) => number;
+  cancelIdleCallback?: (handle: number) => void;
+  setTimeout: (handler: () => void, timeout?: number) => number;
+  clearTimeout: (handle: number) => void;
+};
+
+const EMPTY_VALIDATION_PREFLIGHT_REPORT: AiPathsSettingsPageContextValue['validationPreflightReport'] =
+  {
+    score: 0,
+    failedRules: 0,
+    blocked: false,
+    shouldWarn: false,
+    findings: [],
+    recommendations: [],
+    schemaVersion: 1,
+    skippedRuleIds: [],
+    moduleImpact: {},
+  };
+
+const buildEmptyDataContractReport = (
+  scopeMode: 'full' | 'reachable_from_roots'
+): AiPathsSettingsPageContextValue['dataContractReport'] => ({
+  mode: 'light',
+  scopeMode,
+  scopedNodeIds: [],
+  issues: [],
+  errors: 0,
+  warnings: 0,
+  byNodeId: {},
+});
+
+function scheduleDeferredAiPathsDiagnostics(
+  target: DeferredAiPathsDiagnosticsTarget,
+  onReady: () => void
+): () => void {
+  if (typeof target.requestIdleCallback === 'function') {
+    const idleHandle = target.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      target.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = target.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    target.clearTimeout(timeoutHandle);
+  };
+}
+
 export function useAiPathsSettingsPageValue(
   props: AiPathsSettingsProps,
   state: UseAiPathsSettingsStateReturn
@@ -32,6 +85,7 @@ export function useAiPathsSettingsPageValue(
   const [, setDataContractInspectorNodeId] = React.useState<string | null>(null);
   const [isPathNameEditing, setIsPathNameEditing] = React.useState(false);
   const [renameDraft, setRenameDraft] = React.useState('');
+  const [diagnosticsReady, setDiagnosticsReady] = React.useState(false);
   const { docsTooltipsEnabled, setDocsTooltipsEnabled } = useAiPathsDocsTooltips();
 
   const normalizedAiPathsValidation = React.useMemo(
@@ -46,27 +100,63 @@ export function useAiPathsSettingsPageValue(
     [normalizedAiPathsValidation]
   );
   const isNodeValidationEnabled = effectiveAiPathsValidation.enabled !== false;
+  const dataContractScopeMode = isNodeValidationEnabled ? 'full' : 'reachable_from_roots';
+  const emptyDataContractReport = React.useMemo(
+    () => buildEmptyDataContractReport(dataContractScopeMode),
+    [dataContractScopeMode]
+  );
 
-  const validationPreflightReport = React.useMemo(
+  React.useEffect(() => {
+    if (props.activeTab !== 'canvas') {
+      setDiagnosticsReady(false);
+      return;
+    }
+    if (diagnosticsReady) return;
+    if (typeof window === 'undefined') {
+      setDiagnosticsReady(true);
+      return;
+    }
+    return scheduleDeferredAiPathsDiagnostics(window, () => {
+      setDiagnosticsReady(true);
+    });
+  }, [diagnosticsReady, props.activeTab]);
+
+  const computeValidationPreflightReport = React.useCallback(
     () =>
       evaluateAiPathsValidationPreflight({
         nodes: state.nodes,
         edges: state.edges,
         config: effectiveAiPathsValidation,
       }),
-    [state.nodes, state.edges, effectiveAiPathsValidation]
+    [effectiveAiPathsValidation, state.edges, state.nodes]
   );
 
-  const dataContractReport = React.useMemo(
+  const computeDataContractReport = React.useCallback(
     () =>
       evaluateDataContractPreflight({
         nodes: state.nodes,
         edges: state.edges,
         runtimeState: state.runtimeState,
         mode: 'light',
-        scopeMode: isNodeValidationEnabled ? 'full' : 'reachable_from_roots',
+        scopeMode: dataContractScopeMode,
       }),
-    [state.nodes, state.edges, state.runtimeState, isNodeValidationEnabled]
+    [dataContractScopeMode, state.edges, state.nodes, state.runtimeState]
+  );
+
+  const validationPreflightReport = React.useMemo(
+    () =>
+      props.activeTab === 'canvas' && diagnosticsReady
+        ? computeValidationPreflightReport()
+        : EMPTY_VALIDATION_PREFLIGHT_REPORT,
+    [computeValidationPreflightReport, diagnosticsReady, props.activeTab]
+  );
+
+  const dataContractReport = React.useMemo(
+    () =>
+      props.activeTab === 'canvas' && diagnosticsReady
+        ? computeDataContractReport()
+        : emptyDataContractReport,
+    [computeDataContractReport, diagnosticsReady, emptyDataContractReport, props.activeTab]
   );
 
   const pathSwitchOptions = React.useMemo(
@@ -134,26 +224,35 @@ export function useAiPathsSettingsPageValue(
   }, [router]);
 
   const handleRunNodeValidationCheck = React.useCallback((): void => {
-    if (validationPreflightReport.blocked) {
-      state.toast(`Node validation blocked (score ${validationPreflightReport.score}).`, {
+    const report = diagnosticsReady
+      ? validationPreflightReport
+      : computeValidationPreflightReport();
+    if (report.blocked) {
+      state.toast(`Node validation blocked (score ${report.score}).`, {
         variant: 'error',
       });
       return;
     }
-    if (validationPreflightReport.shouldWarn) {
+    if (report.shouldWarn) {
       state.toast(
-        `Node validation warning (score ${validationPreflightReport.score}, failed rules ${validationPreflightReport.failedRules}).`,
+        `Node validation warning (score ${report.score}, failed rules ${report.failedRules}).`,
         { variant: 'warning' }
       );
       return;
     }
     state.toast('Node validation passed.', { variant: 'success' });
-  }, [state, validationPreflightReport]);
+  }, [
+    computeValidationPreflightReport,
+    diagnosticsReady,
+    state,
+    validationPreflightReport,
+  ]);
 
   return React.useMemo<AiPathsSettingsPageContextValue>(
     () => ({
       ...props,
       ...state,
+      diagnosticsReady,
       pathSettingsModalOpen,
       setPathSettingsModalOpen,
       simulationModalOpen,
@@ -199,6 +298,7 @@ export function useAiPathsSettingsPageValue(
     [
       props,
       state,
+      diagnosticsReady,
       pathSettingsModalOpen,
       simulationModalOpen,
       selectionScopeMode,

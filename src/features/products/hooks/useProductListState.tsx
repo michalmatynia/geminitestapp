@@ -93,6 +93,8 @@ const EMPTY_INTEGRATION_BADGE_IDS = new Set<string>();
 const EMPTY_INTEGRATION_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_TRADERA_BADGE_IDS = new Set<string>();
 const EMPTY_TRADERA_BADGE_STATUSES = new Map<string, string>();
+const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS = new Set<string>();
+const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES = new Map<string, string>();
 
 const buildProductListDebugSnapshot = (args: ProductListDebugSnapshot): ProductListDebugSnapshot => args;
 
@@ -135,6 +137,20 @@ export function shouldEnableProductListBackgroundSync(args: {
   return args.queuedProductIdsCount > 0 || args.activeTrackedProductAiRunsCount > 0;
 }
 
+export function shouldEnableProductListBackgroundSyncRuntime(args: {
+  rowRuntimeReady: boolean;
+  isLoading: boolean;
+  queuedProductIdsCount: number;
+  activeTrackedProductAiRunsCount: number;
+}): boolean {
+  if (!args.rowRuntimeReady) return false;
+  if (args.isLoading) return false;
+  return shouldEnableProductListBackgroundSync({
+    queuedProductIdsCount: args.queuedProductIdsCount,
+    activeTrackedProductAiRunsCount: args.activeTrackedProductAiRunsCount,
+  });
+}
+
 export function scheduleDeferredProductListDraftBootstrap(
   target: DeferredDraftBootstrapTarget,
   onReady: () => void
@@ -159,6 +175,7 @@ export function scheduleDeferredProductListDraftBootstrap(
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
   isMounted: boolean;
+  rowRuntimeReady: boolean;
   triggerListingStatusHighlight: (productId: string) => void;
   productToDelete: ProductWithImages | null;
   setProductToDelete: (product: ProductWithImages | null) => void;
@@ -173,6 +190,7 @@ export function useProductListState(): ProductListContextType & {
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [draftsReady, setDraftsReady] = useState(false);
+  const [rowRuntimeReady, setRowRuntimeReady] = useState(false);
   const { toast } = useToast();
   const { imageExternalBaseUrl } = useProductSettings();
 
@@ -183,8 +201,10 @@ export function useProductListState(): ProductListContextType & {
     ? useQueuedAiRunProductIdsHook()
     : new Set<string>();
 
-  useProductSync();
-  const productAiRunStatusByProductId = useProductAiPathsRunSync();
+  useProductSync({ enabled: rowRuntimeReady });
+  const productAiRunStatusByProductId = useProductAiPathsRunSync({
+    enabled: rowRuntimeReady,
+  });
 
   const {
     preferences,
@@ -194,6 +214,7 @@ export function useProductListState(): ProductListContextType & {
     setCurrencyCode: updateCurrencyCode,
     setPageSize: updatePageSize,
     setShowTriggerRunFeedback: updateShowTriggerRunFeedback,
+    setAdvancedFilterPresets,
     setAppliedAdvancedFilterState: persistAppliedAdvancedFilterState,
   } = useUserPreferences();
 
@@ -203,7 +224,9 @@ export function useProductListState(): ProductListContextType & {
 
   const { catalogs, currencyCode, setCurrencyCode, currencyOptions, priceGroups, languageOptions } =
     useCatalogSync(preferences.catalogFilter || 'all', {
-      enabled: true,
+      // The products table can render a usable first paint with default language/currency state
+      // and then hydrate catalog metadata after the deferred row-runtime bootstrap.
+      enabled: rowRuntimeReady,
     });
 
   const filters = useProductListFilters({
@@ -272,9 +295,12 @@ export function useProductListState(): ProductListContextType & {
   const { categoryNameById } = useProductListCategories({
     data: visibleData,
     nameLocale: preferences.nameLocale,
+    enabled: rowRuntimeReady,
   });
 
-  const shouldEnableListBackgroundSync = shouldEnableProductListBackgroundSync({
+  const shouldEnableListBackgroundSync = shouldEnableProductListBackgroundSyncRuntime({
+    rowRuntimeReady,
+    isLoading,
     queuedProductIdsCount: queuedProductIds.size,
     activeTrackedProductAiRunsCount: productAiRunStatusByProductId.size,
   });
@@ -297,7 +323,7 @@ export function useProductListState(): ProductListContextType & {
       page,
       pageSize,
     },
-    !isLoading && shouldEnableListBackgroundSync,
+    shouldEnableListBackgroundSync,
     {
       onSyncEvent: (event: BackgroundSyncEvent): void => {
         logProductListDebug(
@@ -464,6 +490,7 @@ export function useProductListState(): ProductListContextType & {
   useEffect(() => {
     return scheduleDeferredProductListDraftBootstrap(window, () => {
       setDraftsReady(true);
+      setRowRuntimeReady(true);
     });
   }, []);
 
@@ -557,7 +584,7 @@ export function useProductListState(): ProductListContextType & {
         loadErrorMessage: loadError?.message ?? null,
         queuedProductIdsCount: queuedProductIds.size,
         trackedAiRunsCount: productAiRunStatusByProductId.size,
-        backgroundSyncEnabled: !isLoading && shouldEnableListBackgroundSync,
+        backgroundSyncEnabled: shouldEnableListBackgroundSync,
         catalogFilter,
         hasSearch: search.length > 0,
         hasSku: sku.length > 0,
@@ -799,6 +826,8 @@ export function useProductListState(): ProductListContextType & {
     setEndDate,
     advancedFilter,
     activeAdvancedFilterPresetId,
+    advancedFilterPresets: preferences.advancedFilterPresets,
+    setAdvancedFilterPresets,
     setAdvancedFilter: handleSetAdvancedFilter,
     setAdvancedFilterState: handleSetAdvancedFilterState,
     data: visibleData,
@@ -825,6 +854,8 @@ export function useProductListState(): ProductListContextType & {
     integrationBadgeStatuses: EMPTY_INTEGRATION_BADGE_STATUSES,
     traderaBadgeIds: EMPTY_TRADERA_BADGE_IDS,
     traderaBadgeStatuses: EMPTY_TRADERA_BADGE_STATUSES,
+    playwrightProgrammableBadgeIds: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS,
+    playwrightProgrammableBadgeStatuses: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES,
     queuedProductIds,
     productAiRunStatusByProductId,
     categoryNameById,
@@ -872,6 +903,7 @@ export function useProductListState(): ProductListContextType & {
     onSelectIntegrationFromModal: handleSelectIntegrationFromModal,
     isDebugOpen,
     isMounted,
+    rowRuntimeReady,
     triggerListingStatusHighlight: triggerJobCompletionHighlight,
     productToDelete,
     setProductToDelete,

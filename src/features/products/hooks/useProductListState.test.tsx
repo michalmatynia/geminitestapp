@@ -7,6 +7,7 @@ import {
   applyProductListAdvancedFilterState,
   scheduleDeferredProductListDraftBootstrap,
   shouldEnableProductListBackgroundSync,
+  shouldEnableProductListBackgroundSyncRuntime,
   shouldAdoptIncomingEditProductDetail,
 } from './useProductListState';
 
@@ -180,6 +181,41 @@ describe('shouldEnableProductListBackgroundSync', () => {
   it('keeps background sync enabled while tracked AI runs remain active', () => {
     expect(
       shouldEnableProductListBackgroundSync({
+        queuedProductIdsCount: 0,
+        activeTrackedProductAiRunsCount: 1,
+      })
+    ).toBe(true);
+  });
+});
+
+describe('shouldEnableProductListBackgroundSyncRuntime', () => {
+  it('keeps background sync disabled before the deferred row runtime becomes ready', () => {
+    expect(
+      shouldEnableProductListBackgroundSyncRuntime({
+        rowRuntimeReady: false,
+        isLoading: false,
+        queuedProductIdsCount: 1,
+        activeTrackedProductAiRunsCount: 0,
+      })
+    ).toBe(false);
+  });
+
+  it('keeps background sync disabled while the list is still loading', () => {
+    expect(
+      shouldEnableProductListBackgroundSyncRuntime({
+        rowRuntimeReady: true,
+        isLoading: true,
+        queuedProductIdsCount: 1,
+        activeTrackedProductAiRunsCount: 0,
+      })
+    ).toBe(false);
+  });
+
+  it('enables background sync once deferred runtime is ready and work is active', () => {
+    expect(
+      shouldEnableProductListBackgroundSyncRuntime({
+        rowRuntimeReady: true,
+        isLoading: false,
         queuedProductIdsCount: 0,
         activeTrackedProductAiRunsCount: 1,
       })

@@ -2,11 +2,19 @@
 
 import React from 'react';
 
+import {
+  useOptionalTextEditorEngineProfile,
+} from '@/shared/lib/text-editor-engine/hooks/useTextEditorEngineProfile';
+import type {
+  TextEditorEngineAppearance,
+  TextEditorEngineInstance,
+} from '@/shared/lib/text-editor-engine/types';
+import { TextEditorEngineBrandButton } from '@/shared/ui/TextEditorEngineBrandButton';
 import { cn } from '@/shared/utils';
 
 import { RichTextEditor } from './RichTextEditor';
 
-export type DocumentWysiwygEditorAppearance = 'default' | 'document-preview';
+export type DocumentWysiwygEditorAppearance = TextEditorEngineAppearance;
 
 export interface DocumentWysiwygEditorProps {
   value: string;
@@ -14,9 +22,16 @@ export interface DocumentWysiwygEditorProps {
   disabled?: boolean | undefined;
   placeholder?: string | undefined;
   appearance?: DocumentWysiwygEditorAppearance | undefined;
+  engineInstance?: TextEditorEngineInstance | undefined;
+  showBrand?: boolean | undefined;
+  brandClassName?: string | undefined;
+  brandHref?: string | undefined;
   allowFontFamily?: boolean | undefined;
   allowTextAlign?: boolean | undefined;
   enableAdvancedTools?: boolean | undefined;
+  allowImage?: boolean | undefined;
+  allowTable?: boolean | undefined;
+  allowTaskList?: boolean | undefined;
   loadingLabel?: string | undefined;
   toolbarClassName?: string | undefined;
   surfaceClassName?: string | undefined;
@@ -36,20 +51,36 @@ export function DocumentWysiwygEditor(props: DocumentWysiwygEditorProps): React.
     onChange,
     disabled = false,
     placeholder,
-    appearance = 'default',
-    allowFontFamily = false,
-    allowTextAlign = false,
-    enableAdvancedTools = false,
+    appearance,
+    engineInstance,
+    showBrand = false,
+    brandClassName,
+    brandHref,
+    allowFontFamily,
+    allowTextAlign,
+    enableAdvancedTools,
+    allowImage,
+    allowTable,
+    allowTaskList,
     loadingLabel = 'Loading editor...',
     toolbarClassName,
     surfaceClassName,
     editorContentClassName,
     surfaceOptions,
   } = props;
+  const engineProfile = useOptionalTextEditorEngineProfile(engineInstance);
+  const resolvedAppearance = appearance ?? engineProfile?.appearance ?? 'default';
+  const resolvedAllowFontFamily = allowFontFamily ?? engineProfile?.allowFontFamily ?? false;
+  const resolvedAllowTextAlign = allowTextAlign ?? engineProfile?.allowTextAlign ?? false;
+  const resolvedEnableAdvancedTools =
+    enableAdvancedTools ?? engineProfile?.enableAdvancedTools ?? false;
+  const resolvedAllowImage = allowImage ?? engineProfile?.allowImage ?? true;
+  const resolvedAllowTable = allowTable ?? engineProfile?.allowTable ?? true;
+  const resolvedAllowTaskList = allowTaskList ?? engineProfile?.allowTaskList ?? true;
 
-  const isDocumentPreview = appearance === 'document-preview';
+  const isDocumentPreview = resolvedAppearance === 'document-preview';
 
-  return (
+  const editor = (
     <RichTextEditor
       value={value}
       onChange={onChange}
@@ -57,12 +88,12 @@ export function DocumentWysiwygEditor(props: DocumentWysiwygEditorProps): React.
       placeholder={placeholder}
       variant='full'
       headingLevels={[1, 2, 3]}
-      allowImage
-      allowTable
-      allowTaskList
-      allowFontFamily={allowFontFamily}
-      allowTextAlign={allowTextAlign}
-      enableAdvancedTools={enableAdvancedTools}
+      allowImage={resolvedAllowImage}
+      allowTable={resolvedAllowTable}
+      allowTaskList={resolvedAllowTaskList}
+      allowFontFamily={resolvedAllowFontFamily}
+      allowTextAlign={resolvedAllowTextAlign}
+      enableAdvancedTools={resolvedEnableAdvancedTools}
       loadingLabel={loadingLabel}
       toolbarClassName={cn('border-slate-300 bg-slate-50', toolbarClassName)}
       surfaceOptions={{
@@ -84,5 +115,20 @@ export function DocumentWysiwygEditor(props: DocumentWysiwygEditorProps): React.
         style: surfaceOptions?.style,
       }}
     />
+  );
+
+  if (!showBrand || !engineInstance) {
+    return editor;
+  }
+
+  return (
+    <div className='relative'>
+      {editor}
+      <TextEditorEngineBrandButton
+        instance={engineInstance}
+        href={brandHref}
+        className={brandClassName}
+      />
+    </div>
   );
 }

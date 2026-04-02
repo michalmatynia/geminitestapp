@@ -61,10 +61,26 @@ export function ProductSettingsPage({
       } | null>(null);
 
   const { toast } = useToast();
+  const isCategoriesSectionActive = activeSection === 'Categories';
+  const isTagsSectionActive = activeSection === 'Tags';
+  const isParametersSectionActive = activeSection === 'Parameters';
+  const isPriceGroupsSectionActive = activeSection === 'Price Groups';
+  const isCatalogsSectionActive = activeSection === 'Catalogs';
+  const shouldLoadCatalogs =
+    isCategoriesSectionActive ||
+    isTagsSectionActive ||
+    isParametersSectionActive ||
+    isCatalogsSectionActive;
+  const shouldLoadPriceGroups =
+    isPriceGroupsSectionActive || showCatalogModal || showPriceGroupModal;
 
   // Queries
-  const { data: priceGroups = [], isLoading: loadingGroups } = usePriceGroups();
-  const { data: catalogs = [], isLoading: loadingCatalogs } = useCatalogs();
+  const { data: priceGroups = [], isLoading: loadingGroups } = usePriceGroups({
+    enabled: shouldLoadPriceGroups,
+  });
+  const { data: catalogs = [], isLoading: loadingCatalogs } = useCatalogs({
+    enabled: shouldLoadCatalogs,
+  });
 
   const [selectedCategoryCatalogId, setSelectedCategoryCatalogId] = useState<string | null>(null);
   const [selectedTagCatalogId, setSelectedTagCatalogId] = useState<string | null>(null);
@@ -74,17 +90,17 @@ export function ProductSettingsPage({
     data: productCategories = [],
     isLoading: loadingCategories,
     refetch: refetchCategories,
-  } = useCategories(selectedCategoryCatalogId);
+  } = useCategories(selectedCategoryCatalogId, { enabled: isCategoriesSectionActive });
   const {
     data: productTags = [],
     isLoading: loadingTags,
     refetch: refetchTags,
-  } = useTags(selectedTagCatalogId);
+  } = useTags(selectedTagCatalogId, { enabled: isTagsSectionActive });
   const {
     data: productParameters = [],
     isLoading: loadingParameters,
     refetch: refetchParameters,
-  } = useParameters(selectedParameterCatalogId);
+  } = useParameters(selectedParameterCatalogId, { enabled: isParametersSectionActive });
 
   // Mutations
   const updatePriceGroupMutation = useUpdatePriceGroupMutation();
@@ -97,26 +113,35 @@ export function ProductSettingsPage({
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (catalogs.length > 0) {
+    if (catalogs.length > 0 && shouldLoadCatalogs) {
       timer = setTimeout(() => {
-        if (!selectedCategoryCatalogId) {
-          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-          if (def) setSelectedCategoryCatalogId(def.id);
+        const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
+        if (!def) return;
+
+        if (isCategoriesSectionActive && !selectedCategoryCatalogId) {
+          setSelectedCategoryCatalogId(def.id);
         }
-        if (!selectedTagCatalogId) {
-          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-          if (def) setSelectedTagCatalogId(def.id);
+        if (isTagsSectionActive && !selectedTagCatalogId) {
+          setSelectedTagCatalogId(def.id);
         }
-        if (!selectedParameterCatalogId) {
-          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-          if (def) setSelectedParameterCatalogId(def.id);
+        if (isParametersSectionActive && !selectedParameterCatalogId) {
+          setSelectedParameterCatalogId(def.id);
         }
       }, 0);
     }
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [catalogs, selectedCategoryCatalogId, selectedTagCatalogId, selectedParameterCatalogId]);
+  }, [
+    catalogs,
+    isCategoriesSectionActive,
+    isParametersSectionActive,
+    isTagsSectionActive,
+    selectedCategoryCatalogId,
+    selectedParameterCatalogId,
+    selectedTagCatalogId,
+    shouldLoadCatalogs,
+  ]);
 
   const handleSetDefaultGroup = async (groupId: string): Promise<void> => {
     const group = priceGroups.find((g: PriceGroup) => g.id === groupId);
@@ -315,27 +340,31 @@ export function ProductSettingsPage({
         </div>
 
         {/* Modals */}
-        <CatalogModal
-          isOpen={showCatalogModal}
-          onClose={() => setShowCatalogModal(false)}
-          onSuccess={(): void => {
-            setShowCatalogModal(false);
-          }}
-          item={editingCatalog}
-          items={priceGroups}
-          loading={loadingGroups}
-          defaultId={defaultGroupId}
-        />
+        {showCatalogModal && (
+          <CatalogModal
+            isOpen={showCatalogModal}
+            onClose={() => setShowCatalogModal(false)}
+            onSuccess={(): void => {
+              setShowCatalogModal(false);
+            }}
+            item={editingCatalog}
+            items={priceGroups}
+            loading={loadingGroups}
+            defaultId={defaultGroupId}
+          />
+        )}
 
-        <PriceGroupModal
-          isOpen={showPriceGroupModal}
-          onClose={() => setShowPriceGroupModal(false)}
-          onSuccess={(): void => {
-            setShowPriceGroupModal(false);
-          }}
-          item={editingPriceGroup}
-          items={priceGroups}
-        />
+        {showPriceGroupModal && (
+          <PriceGroupModal
+            isOpen={showPriceGroupModal}
+            onClose={() => setShowPriceGroupModal(false)}
+            onSuccess={(): void => {
+              setShowPriceGroupModal(false);
+            }}
+            item={editingPriceGroup}
+            items={priceGroups}
+          />
+        )}
 
         {internationalizationModalsSlot}
 

@@ -61,6 +61,14 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   hasTraderaApiAppKey: z.boolean().optional(),
   hasTraderaApiToken: z.boolean().optional(),
   traderaApiTokenUpdatedAt: z.string().nullable().optional(),
+  /** Playwright (Programmable) integration fields */
+  playwrightListingScript: z.string().nullable().optional(),
+  playwrightImportScript: z.string().nullable().optional(),
+  playwrightImportBaseUrl: z.string().nullable().optional(),
+  /** JSON-encoded import config. Supports either PlaywrightConfigCaptureRoute[] or { routes, appearanceMode }. */
+  playwrightImportCaptureRoutesJson: z.string().nullable().optional(),
+  /** JSON-encoded key→field mapping: { sourceKey: string, targetField: string }[] */
+  playwrightFieldMapperJson: z.string().nullable().optional(),
 });
 
 export type IntegrationConnection = z.infer<typeof integrationConnectionSchema>;

@@ -8,6 +8,7 @@ import {
   Type,
   Palette,
   Folder,
+  FileText,
   HardDrive,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -74,6 +75,15 @@ const settings: SettingsOption[] = [
     icon: Folder,
     title: 'Folder Trees',
     description: 'Configure tree placeholders, nesting rules, and icons per instance.',
+    color: 'blue',
+    bgColor: 'bg-blue-500/10',
+  },
+  {
+    id: 'text-editors',
+    href: '/admin/settings/text-editors',
+    icon: FileText,
+    title: 'Text Editors',
+    description: 'Configure reusable editor-engine instances and toolbar capabilities.',
     color: 'blue',
     bgColor: 'bg-blue-500/10',
   },

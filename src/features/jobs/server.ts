@@ -31,6 +31,8 @@ export {
   enqueueImageStudioSequenceJob,
 } from '@/server/queues/ai';
 export {
+  startPlaywrightListingQueue,
+  enqueuePlaywrightListingJob,
   startTraderaListingQueue,
   enqueueTraderaListingJob,
 } from '@/server/queues/integrations';

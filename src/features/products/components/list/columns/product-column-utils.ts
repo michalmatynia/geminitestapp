@@ -233,7 +233,7 @@ export const getStatusToneClass = (value: string): string => {
 export const getMarketplaceButtonClass = (
   value: string,
   manageMode: boolean,
-  marketplace: 'base' | 'tradera'
+  marketplace: 'base' | 'tradera' | 'playwright'
 ): string => {
   if (!manageMode) {
     return getStatusToneClass(value);
@@ -253,6 +253,9 @@ export const getMarketplaceButtonClass = (
   }
   if (marketplace === 'tradera') {
     return 'border-cyan-400/70 bg-cyan-500/15 text-cyan-100 hover:border-cyan-300/80 hover:bg-cyan-500/25';
+  }
+  if (marketplace === 'playwright') {
+    return 'border-fuchsia-400/70 bg-fuchsia-500/15 text-fuchsia-100 hover:border-fuchsia-300/80 hover:bg-fuchsia-500/25';
   }
   return 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
 };

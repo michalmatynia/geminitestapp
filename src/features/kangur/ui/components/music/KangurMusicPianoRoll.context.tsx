@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 import type {
   KangurMusicKeyboardMode,
   KangurMusicSynthGlideMode,
@@ -33,7 +33,7 @@ export type KangurMusicPianoRollContextValue = {
   onOpenSynthEnvelopeDialog: () => void;
   onCloseSynthEnvelopeDialog: () => void;
   onSynthEnvelopeReset: () => void;
-  onSynthEnvelopeSliderChange: (controlId: any, nextValue: number) => void;
+  onSynthEnvelopeSliderChange: (controlId: string, nextValue: number) => void;
   onSynthGlideModeChange: (glideMode: KangurMusicSynthGlideMode) => void;
   onSynthOscPanelToggle: () => void;
   onSynthOscSettingsChange: (

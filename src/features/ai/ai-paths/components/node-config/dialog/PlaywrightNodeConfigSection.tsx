@@ -28,7 +28,10 @@ import {
 } from '@/shared/ui';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
+import { PlaywrightCaptureRoutesEditor } from './PlaywrightCaptureRoutesEditor';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+const PLAYWRIGHT_CAPTURE_BATCH_NODE_TYPE_ID = 'playwright-capture-batch';
 
 
 const RUNTIME_PERSONA_VALUE = '__runtime__';
@@ -220,6 +223,9 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
     });
   };
 
+  const isBatchCapture =
+    selectedNode?.nodeTypeId === PLAYWRIGHT_CAPTURE_BATCH_NODE_TYPE_ID;
+
   if (selectedNode?.type !== 'playwright') return null;
 
   return (
@@ -342,67 +348,89 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
         </Button>
       </div>
 
-      <div
-        className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border/70`}
-      >
-        <FormField
-          label='Script Template'
-          description='Start from a tested automation pattern and customize it.'
-          actions={
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              className='h-7'
-              onClick={applyScriptTemplate}
-              disabled={!selectedTemplate}
-              data-doc-id='playwright_script_template_apply'
-            >
-              Apply Template
-            </Button>
+      {isBatchCapture ? (
+        <PlaywrightCaptureRoutesEditor
+          routes={playwrightConfig.captureRoutes ?? []}
+          baseUrl={playwrightConfig.captureBaseUrl ?? ''}
+          appearanceMode={playwrightConfig.captureAppearanceMode ?? ''}
+          onChange={(patch) =>
+            updateConfig({
+              ...(patch.routes !== undefined ? { captureRoutes: patch.routes } : {}),
+              ...(patch.baseUrl !== undefined ? { captureBaseUrl: patch.baseUrl } : {}),
+              ...(patch.appearanceMode !== undefined
+                ? { captureAppearanceMode: patch.appearanceMode }
+                : {}),
+            })
           }
-        >
-          <SelectSimple
-            size='sm'
-            variant='subtle'
-            value={selectedTemplateId}
-            onValueChange={setSelectedTemplateId}
-            options={scriptTemplateOptions}
-            placeholder='Select script template'
-            dataDocId='playwright_script_template_select'
-            ariaLabel='Playwright script template'
-           title='Select script template'/>
-        </FormField>
-        {selectedTemplate ? (
-          <p
-            className='mt-2 text-[11px] text-gray-400 italic'
-            data-testid='playwright-script-template-description'
+        />
+      ) : (
+        <>
+          <div
+            className={`${insetPanelVariants({ radius: 'compact', padding: 'sm' })} border-border/70`}
           >
-            {selectedTemplate.description}
-          </p>
-        ) : (
-          <p className='mt-2 text-[11px] text-gray-500 italic'>
-            Current script does not match a built-in template.
-          </p>
-        )}
-      </div>
+            <FormField
+              label='Script Template'
+              description='Start from a tested automation pattern and customize it.'
+              actions={
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  className='h-7'
+                  onClick={applyScriptTemplate}
+                  disabled={!selectedTemplate}
+                  data-doc-id='playwright_script_template_apply'
+                >
+                  Apply Template
+                </Button>
+              }
+            >
+              <SelectSimple
+                size='sm'
+                variant='subtle'
+                value={selectedTemplateId}
+                onValueChange={setSelectedTemplateId}
+                options={scriptTemplateOptions}
+                placeholder='Select script template'
+                dataDocId='playwright_script_template_select'
+                ariaLabel='Playwright script template'
+                title='Select script template'
+              />
+            </FormField>
+            {selectedTemplate ? (
+              <p
+                className='mt-2 text-[11px] text-gray-400 italic'
+                data-testid='playwright-script-template-description'
+              >
+                {selectedTemplate.description}
+              </p>
+            ) : (
+              <p className='mt-2 text-[11px] text-gray-500 italic'>
+                Current script does not match a built-in template.
+              </p>
+            )}
+          </div>
 
-      <FormField
-        label='Script'
-        description='Script must export a default async function. Use emit("result", value) to publish outputs.'
-      >
-        <Textarea
-          variant='subtle'
-          size='sm'
-          data-testid='playwright-script-editor'
-          className='min-h-[220px] font-mono'
-          value={playwrightConfig.script}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-            updateConfig({ script: event.target.value })
-          }
-          placeholder='export default async function run({ page, input, emit, artifacts, log }) { ... }'
-         aria-label='export default async function run({ page, input, emit, artifacts, log }) { ... }' title='export default async function run({ page, input, emit, artifacts, log }) { ... }'/>
-      </FormField>
+          <FormField
+            label='Script'
+            description='Script must export a default async function. Use emit("result", value) to publish outputs.'
+          >
+            <Textarea
+              variant='subtle'
+              size='sm'
+              data-testid='playwright-script-editor'
+              className='min-h-[220px] font-mono'
+              value={playwrightConfig.script}
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                updateConfig({ script: event.target.value })
+              }
+              placeholder='export default async function run({ page, input, emit, artifacts, log }) { ... }'
+              aria-label='export default async function run({ page, input, emit, artifacts, log }) { ... }'
+              title='export default async function run({ page, input, emit, artifacts, log }) { ... }'
+            />
+          </FormField>
+        </>
+      )}
 
       <div className='grid gap-3 sm:grid-cols-2'>
         <FormField label='Launch Options (JSON)' error={launchJsonError ?? undefined}>

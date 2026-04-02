@@ -5,6 +5,7 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 
 const {
   baseQuickExportButtonMock,
+  playwrightStatusButtonMock,
   triggerButtonBarMock,
   useProductListActionsContextMock,
   useProductListHeaderActionsContextMock,
@@ -13,6 +14,7 @@ const {
   useProductListRowVisualsContextMock,
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
+  playwrightStatusButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   useProductListActionsContextMock: vi.fn(),
   useProductListHeaderActionsContextMock: vi.fn(),
@@ -53,6 +55,13 @@ vi.mock('./columns/buttons/BaseQuickExportButton', () => ({
   BaseQuickExportButton: (props: Record<string, unknown>) => {
     baseQuickExportButtonMock(props);
     return <button type='button'>BL</button>;
+  },
+}));
+
+vi.mock('./columns/buttons/PlaywrightStatusButton', () => ({
+  PlaywrightStatusButton: (props: Record<string, unknown>) => {
+    playwrightStatusButtonMock(props);
+    return <button type='button'>PW</button>;
   },
 }));
 
@@ -110,6 +119,7 @@ const createRowVisualsContext = (
   categoryNameById: new Map([['category-1', 'Keychains']]),
   thumbnailSource: 'file',
   showTriggerRunFeedback: true,
+  triggerButtonsReady: true,
   imageExternalBaseUrl: null,
   ...overrides,
 });
@@ -121,6 +131,8 @@ const createRowRuntimeContext = (
   integrationStatus: 'not_started',
   showTraderaBadge: false,
   traderaStatus: 'not_started',
+  showPlaywrightProgrammableBadge: false,
+  playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,
   ...overrides,
 });
@@ -871,6 +883,66 @@ describe('ProductColumns queued badge', () => {
         published: false,
         status: 'draft',
         publicationStatus: 'draft',
+      })
+    );
+  });
+
+  it('keeps product-row trigger buttons deferred until row runtime is ready', () => {
+    const product = createProduct();
+
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick: vi.fn(),
+      onExportSettingsClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        triggerButtonsReady: false,
+      })
+    );
+    useProductListRowRuntimeMock.mockReturnValue(createRowRuntimeContext());
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    const cell = integrationsColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(triggerButtonBarMock).not.toHaveBeenCalled();
+  });
+
+  it('renders the Playwright listing status button when the programmable badge is active', async () => {
+    const product = createProduct();
+
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick: vi.fn(),
+      onExportSettingsClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue(createRowVisualsContext());
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showPlaywrightProgrammableBadge: true,
+        playwrightProgrammableStatus: 'queued',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    const cell = integrationsColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(await screen.findByRole('button', { name: 'PW' })).toBeInTheDocument();
+    expect(playwrightStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'queued',
+        prefetchListings: expect.any(Function),
+        onOpenListings: expect.any(Function),
       })
     );
   });

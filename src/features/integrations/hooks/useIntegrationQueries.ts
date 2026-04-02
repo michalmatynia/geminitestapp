@@ -39,7 +39,7 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 const INTEGRATIONS_QUERY_TIMEOUT_MS = 30_000;
 
-export function useIntegrations(): ListQuery<Integration> {
+export function useIntegrations(options?: { enabled?: boolean }): ListQuery<Integration> {
   const queryKey = integrationKeys.all;
   const queryFn = async (): Promise<Integration[]> => {
     const data = await api.get<Integration[]>('/api/v2/integrations', {
@@ -51,6 +51,7 @@ export function useIntegrations(): ListQuery<Integration> {
   return createListQueryV2({
     queryKey,
     queryFn,
+    enabled: options?.enabled ?? true,
     meta: {
       source: 'integrations.hooks.useIntegrations',
       operation: 'list',
@@ -63,7 +64,8 @@ export function useIntegrations(): ListQuery<Integration> {
 }
 
 export function useIntegrationConnections(
-  integrationId?: string
+  integrationId?: string,
+  options?: { enabled?: boolean }
 ): ListQuery<IntegrationConnection> {
   const queryKey = integrationKeys.connections(integrationId);
   const queryFn = async (): Promise<IntegrationConnection[]> => {
@@ -80,7 +82,7 @@ export function useIntegrationConnections(
   return createListQueryV2({
     queryKey,
     queryFn,
-    enabled: !!integrationId,
+    enabled: Boolean(integrationId) && (options?.enabled ?? true),
     meta: {
       source: 'integrations.hooks.useIntegrationConnections',
       operation: 'list',

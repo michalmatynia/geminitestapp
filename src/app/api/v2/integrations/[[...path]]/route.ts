@@ -46,6 +46,7 @@ import * as importsBaseRunReport from '../imports/base/runs/[runId]/report/route
 import * as importsBaseRunResume from '../imports/base/runs/[runId]/resume/route-handler';
 import * as importsBaseSample from '../imports/base/sample-product/route-handler';
 import * as integrationsJobs from '../jobs/route-handler';
+import * as playwrightTest from '../playwright/test/route-handler';
 import * as productListings from '../product-listings/route-handler';
 import * as integrationProductsListings from '../products/[id]/listings/route-handler';
 import * as integrationProductListing from '../products/[id]/listings/[listingId]/route-handler';
@@ -151,6 +152,7 @@ const ROUTES: RouteDefinition[] = [
   { pattern: ['imports', 'base', 'sample-product'], module: importsBaseSample },
   { pattern: ['imports', 'base', param('setting')], module: importsBaseSetting },
   { pattern: ['jobs'], module: integrationsJobs },
+  { pattern: ['playwright', 'test'], module: playwrightTest },
   { pattern: ['product-listings'], module: productListings },
   { pattern: ['products', param('id'), 'base', 'link-existing'], module: integrationProductLinkExisting },
   { pattern: ['products', param('id'), 'base', 'sku-check'], module: integrationProductSkuCheck },

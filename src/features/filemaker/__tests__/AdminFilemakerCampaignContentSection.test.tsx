@@ -11,17 +11,31 @@ vi.mock('@/shared/lib/document-editor/components/DocumentWysiwygEditor', () => (
     value,
     onChange,
     placeholder,
+    engineInstance,
+    showBrand,
   }: {
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
+    engineInstance?: 'filemaker_email' | 'notes_app' | 'case_resolver';
+    showBrand?: boolean;
   }) => (
-    <textarea
-      aria-label={placeholder ?? 'Document editor'}
-      data-testid='campaign-html-editor'
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    />
+    <div>
+      <textarea
+        aria-label={placeholder ?? 'Document editor'}
+        data-testid='campaign-html-editor'
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {showBrand && engineInstance ? (
+        <a
+          aria-label={`Open ${engineInstance === 'filemaker_email' ? 'Filemaker Email' : engineInstance === 'notes_app' ? 'Notes App' : 'Case Resolver'} text editor settings`}
+          href={`/admin/settings/text-editors#text-editor-instance-${engineInstance}`}
+        >
+          te
+        </a>
+      ) : null}
+    </div>
   ),
 }));
 
@@ -132,6 +146,14 @@ describe('ContentSection', () => {
     expect(
       screen.getByText('Optional. Leave blank to derive plain text from the HTML body during delivery.')
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', {
+        name: 'Open Filemaker Email text editor settings',
+      })
+    ).toHaveAttribute(
+      'href',
+      '/admin/settings/text-editors#text-editor-instance-filemaker_email'
+    );
 
     fireEvent.change(screen.getByTestId('campaign-html-editor'), {
       target: { value: '<p>Hello from campaign editor</p>' },

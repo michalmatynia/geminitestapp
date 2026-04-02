@@ -126,6 +126,44 @@ describe('useSocialSettings', () => {
     });
   });
 
+  it('keeps modal-only model and publishing queries disabled until settings data is requested', () => {
+    renderHook(() => useSocialSettings(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(useBrainModelOptionsMock).toHaveBeenNthCalledWith(1, {
+      capability: 'kangur_social.post_generation',
+      enabled: false,
+    });
+    expect(useBrainModelOptionsMock).toHaveBeenNthCalledWith(2, {
+      capability: 'kangur_social.visual_analysis',
+      enabled: false,
+    });
+    expect(useIntegrationsMock).toHaveBeenCalledWith({ enabled: false });
+    expect(useIntegrationConnectionsMock).toHaveBeenCalledWith('linkedin-integration', {
+      enabled: false,
+    });
+  });
+
+  it('enables model and publishing queries when settings modal data is requested', () => {
+    renderHook(() => useSocialSettings({ preloadSettingsModalData: true }), {
+      wrapper: createWrapper(),
+    });
+
+    expect(useBrainModelOptionsMock).toHaveBeenNthCalledWith(1, {
+      capability: 'kangur_social.post_generation',
+      enabled: true,
+    });
+    expect(useBrainModelOptionsMock).toHaveBeenNthCalledWith(2, {
+      capability: 'kangur_social.visual_analysis',
+      enabled: true,
+    });
+    expect(useIntegrationsMock).toHaveBeenCalledWith({ enabled: true });
+    expect(useIntegrationConnectionsMock).toHaveBeenCalledWith('linkedin-integration', {
+      enabled: true,
+    });
+  });
+
   it('hydrates defaults from the window origin and saves normalized settings', async () => {
     const { result } = renderHook(() => useSocialSettings(), {
       wrapper: createWrapper(),

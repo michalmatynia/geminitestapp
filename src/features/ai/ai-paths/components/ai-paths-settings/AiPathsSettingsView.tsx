@@ -13,7 +13,7 @@ import { AiPathsListView } from './sections/AiPathsListView';
 
 
 export function AiPathsSettingsView(): React.JSX.Element {
-  const { isFocusMode } = useAiPathsSettingsPageContext();
+  const { activeTab, isFocusMode } = useAiPathsSettingsPageContext();
   const { loading } = usePersistenceState();
 
   const { docsTooltipsEnabled } = useAiPathsDocsTooltips();
@@ -31,9 +31,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
         fallbackDocId='workflow_overview'
       />
 
-      <AiPathsCanvasView />
-      <AiPathsListView />
-      <AiPathsDocsView />
+      {activeTab === 'canvas' ? <AiPathsCanvasView /> : null}
+      {activeTab === 'paths' ? <AiPathsListView /> : null}
+      {activeTab === 'docs' ? <AiPathsDocsView /> : null}
 
       <AiPathsDialogs />
     </div>

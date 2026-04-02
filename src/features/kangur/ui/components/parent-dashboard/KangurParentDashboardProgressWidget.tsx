@@ -1,14 +1,10 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
-
 import {
   type KangurParentDashboardPanelDisplayMode,
   shouldRenderKangurParentDashboardPanel,
   useKangurParentDashboardRuntime,
 } from '@/features/kangur/ui/context/KangurParentDashboardRuntimeContext';
-import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import {
   KangurPanelIntro,
   KangurPanelStack,
@@ -28,17 +24,6 @@ import {
   KangurParentDashboardLessonProgressSection,
 } from './KangurParentDashboardProgressWidget.sections';
 import { ProgressWidgetProvider, useProgressWidgetContext } from './ProgressWidget.context';
-import type { ParentDashboardRuntimeState } from './KangurParentDashboardProgressWidget.types';
-import {
-  buildActiveAssignments,
-  buildLessonPanelCards,
-  buildProgressTaskKindLabels,
-  buildRecentAssignments,
-  createProgressTimestampFormatter,
-  resolveCompactActionClassName,
-  resolveDailyQuestPresentation,
-  resolveMaxWeeklyGames,
-} from './KangurParentDashboardProgressWidget.utils';
 
 export function KangurParentDashboardProgressWidget({
   displayMode = 'always',

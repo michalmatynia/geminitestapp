@@ -221,7 +221,10 @@ export function useDeleteProducerMutation(): DeleteMutation {
   });
 }
 
-export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
+export function useParameters(
+  catalogId?: string,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductParameter> {
   const queryKey = productMetadataKeys.parameters(catalogId ?? null);
   return createListQueryV2({
     queryKey,
@@ -234,7 +237,7 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
         cache: 'no-store',
       });
     },
-    enabled: Boolean(catalogId),
+    enabled: Boolean(catalogId) && (options?.enabled ?? true),
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useParameters',
@@ -247,7 +250,10 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
   });
 }
 
-export function useSimpleParameters(catalogId?: string): ListQuery<ProductSimpleParameter> {
+export function useSimpleParameters(
+  catalogId?: string,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductSimpleParameter> {
   const queryKey = productMetadataKeys.simpleParameters(catalogId ?? null);
   return createListQueryV2({
     queryKey,
@@ -257,7 +263,7 @@ export function useSimpleParameters(catalogId?: string): ListQuery<ProductSimple
         `/api/v2/products/simple-parameters?catalogId=${encodeURIComponent(catalogId)}`
       );
     },
-    enabled: Boolean(catalogId),
+    enabled: Boolean(catalogId) && (options?.enabled ?? true),
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useSimpleParameters',
@@ -287,12 +293,16 @@ export function useLanguages(): ListQuery<Language> {
   });
 }
 
-export function usePriceGroups(): ListQuery<PriceGroupWithDetails> {
+export function usePriceGroups(
+  options?: ProductMetadataQueryOptions
+): ListQuery<PriceGroupWithDetails> {
   const queryKey = productMetadataKeys.priceGroups();
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<PriceGroupWithDetails[]> =>
       await api.get<PriceGroupWithDetails[]>('/api/v2/products/metadata/price-groups'),
+    enabled: options?.enabled ?? true,
+    ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.usePriceGroups',
       operation: 'list',

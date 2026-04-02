@@ -11,7 +11,6 @@ import {
   useProducers,
   useTags,
 } from '@/features/products/hooks/useProductMetadataQueries';
-import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
   ProductAdvancedFilterField,
@@ -87,15 +86,15 @@ export const ProductFilters = memo(function ProductFilters({
     endDate,
     setEndDate,
     advancedFilter,
+    advancedFilterPresets,
+    setAdvancedFilterPresets,
     setAdvancedFilterState,
     baseExported,
     setBaseExported,
     filtersCollapsedByDefault,
   } = useProductListFiltersContext();
-  const { preferences, setAdvancedFilterPresets } = useUserPreferences();
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   const [isFilterPanelExpanded, setIsFilterPanelExpanded] = useState(!filtersCollapsedByDefault);
-  const advancedFilterPresets = preferences.advancedFilterPresets;
   const hasAdvancedFilter = advancedFilter.trim().length > 0;
   const filterMetadataEnabled = isFilterPanelExpanded || isAdvancedFilterOpen;
 

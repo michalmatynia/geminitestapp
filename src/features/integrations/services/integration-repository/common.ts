@@ -37,6 +37,11 @@ export const CONNECTION_DEFAULTS = {
   playwrightEmulateDevice: false,
   playwrightDeviceName: 'Desktop Chrome',
   playwrightPersonaId: null,
+  playwrightListingScript: null,
+  playwrightImportScript: null,
+  playwrightImportBaseUrl: null,
+  playwrightImportCaptureRoutesJson: null,
+  playwrightFieldMapperJson: null,
   traderaDefaultTemplateId: '',
   traderaDefaultDurationHours: 72,
   traderaAutoRelistEnabled: true,
@@ -256,6 +261,18 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
       (d['playwrightDeviceName'] as string) ?? CONNECTION_DEFAULTS.playwrightDeviceName,
     playwrightPersonaId:
       (d['playwrightPersonaId'] as string) ?? CONNECTION_DEFAULTS.playwrightPersonaId,
+    playwrightListingScript:
+      (d['playwrightListingScript'] as string) ?? CONNECTION_DEFAULTS.playwrightListingScript,
+    playwrightImportScript:
+      (d['playwrightImportScript'] as string) ?? CONNECTION_DEFAULTS.playwrightImportScript,
+    playwrightImportBaseUrl:
+      (d['playwrightImportBaseUrl'] as string) ?? CONNECTION_DEFAULTS.playwrightImportBaseUrl,
+    playwrightImportCaptureRoutesJson:
+      (d['playwrightImportCaptureRoutesJson'] as string) ??
+      CONNECTION_DEFAULTS.playwrightImportCaptureRoutesJson,
+    playwrightFieldMapperJson:
+      (d['playwrightFieldMapperJson'] as string) ??
+      CONNECTION_DEFAULTS.playwrightFieldMapperJson,
     allegroAccessToken: (d['allegroAccessToken'] as string) ?? null,
     allegroRefreshToken: (d['allegroRefreshToken'] as string) ?? null,
     allegroTokenType: (d['allegroTokenType'] as string) ?? null,

@@ -24,7 +24,6 @@ import {
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
-import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { ProductAdvancedFilterPreset, ProductWithImages } from '@/shared/contracts/products';
 import {
   ActionMenu,
@@ -67,10 +66,14 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     onDeleteSelected,
     onAddToMarketplace,
   } = useProductListSelectionContext();
-  const { advancedFilter, activeAdvancedFilterPresetId, setAdvancedFilterState } =
-    useProductListFiltersContext();
+  const {
+    advancedFilter,
+    activeAdvancedFilterPresetId,
+    advancedFilterPresets,
+    setAdvancedFilterPresets,
+    setAdvancedFilterState,
+  } = useProductListFiltersContext();
   const { toast } = useToast();
-  const { preferences, setAdvancedFilterPresets } = useUserPreferences();
   const [isPresetDialogOpen, setIsPresetDialogOpen] = useState(false);
   const [presetDialogMode, setPresetDialogMode] = useState<'create' | 'rename'>('create');
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
@@ -81,7 +84,6 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync: convertSelectedToBase64, isPending: isConvertingSelected } =
     useBulkConvertImagesToBase64();
-  const advancedFilterPresets = preferences.advancedFilterPresets;
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]

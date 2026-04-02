@@ -97,6 +97,7 @@ describe('ProductListHeader', () => {
       onCreateProduct: vi.fn(),
       onCreateFromDraft: vi.fn(),
       activeDrafts: [],
+      triggerButtonsReady: true,
     });
     useProductListFiltersContextMock.mockReturnValue({
       page: 1,
@@ -121,6 +122,7 @@ describe('ProductListHeader', () => {
       onCreateProduct: vi.fn(),
       onCreateFromDraft: vi.fn(),
       activeDrafts: [],
+      triggerButtonsReady: true,
     });
 
     render(<ProductListHeader />);
@@ -142,6 +144,19 @@ describe('ProductListHeader', () => {
     await user.click(button);
 
     expect(setIsMenuHidden).toHaveBeenCalledWith(true);
+  });
+
+  it('keeps the AI trigger button bar deferred until trigger buttons are ready', () => {
+    useProductListHeaderActionsContextMock.mockReturnValue({
+      onCreateProduct: vi.fn(),
+      onCreateFromDraft: vi.fn(),
+      activeDrafts: [],
+      triggerButtonsReady: false,
+    });
+
+    render(<ProductListHeader />);
+
+    expect(screen.queryByTestId('trigger-button-bar')).toBeNull();
   });
 
   it('keeps the breadcrumb under a plain heading and moves create actions into the header rail', () => {

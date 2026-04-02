@@ -305,6 +305,23 @@ export const buildAdminNav = (handlers: {
             label: 'Tradera',
             href: '/admin/integrations/tradera',
           },
+          {
+            id: 'integrations/marketplaces/playwright',
+            label: 'Playwright (Programmable)',
+            href: '/admin/integrations/marketplaces/playwright',
+            children: [
+              {
+                id: 'integrations/marketplaces/playwright/script',
+                label: 'Script Editor',
+                href: '/admin/integrations/marketplaces/playwright/script',
+              },
+              {
+                id: 'integrations/marketplaces/playwright/import',
+                label: 'Import Routes',
+                href: '/admin/integrations/marketplaces/playwright/import',
+              },
+            ],
+          },
         ],
       },
     ],
@@ -590,6 +607,11 @@ export const buildAdminNav = (handlers: {
             id: 'system/settings/folder-trees',
             label: 'Folder Trees',
             href: '/admin/settings/folder-trees',
+          },
+          {
+            id: 'system/settings/text-editors',
+            label: 'Text Editors',
+            href: '/admin/settings/text-editors',
           },
           {
             id: 'system/settings/recovery',

@@ -73,6 +73,17 @@ const TraderaStatusButton = dynamic(
   }
 );
 
+const PlaywrightStatusButton = dynamic(
+  () =>
+    import('./columns/buttons/PlaywrightStatusButton').then(
+      (mod: typeof import('./columns/buttons/PlaywrightStatusButton')) => mod.PlaywrightStatusButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const resolveThumbnailUrl = (
   product: ProductWithImages,
   thumbnailSource: 'file' | 'link' | 'base64',
@@ -204,12 +215,14 @@ const renderProductListMobileCard = ({
     onExportSettingsClick,
     onPrefetchProductDetail,
   } = rowActions;
-  const { showTriggerRunFeedback } = rowVisuals;
+  const { showTriggerRunFeedback, triggerButtonsReady = true } = rowVisuals;
   const {
     showMarketplaceBadge,
     integrationStatus: status,
     showTraderaBadge,
     traderaStatus,
+    showPlaywrightProgrammableBadge,
+    playwrightProgrammableStatus,
     productAiRunFeedback,
   } = rowRuntime;
 
@@ -356,22 +369,32 @@ const renderProductListMobileCard = ({
           onOpenExportSettings={() => onExportSettingsClick(product)}
         />
 
-        <TriggerButtonBar
-          location='product_row'
-          entityType='product'
-          entityId={product.id}
-          getEntityJson={(): Record<string, unknown> =>
-            buildTriggeredProductEntityJson({
-              product,
-              values: {},
-            })}
-          showRunFeedback={showTriggerRunFeedback}
-          className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
-        />
+        {triggerButtonsReady ? (
+          <TriggerButtonBar
+            location='product_row'
+            entityType='product'
+            entityId={product.id}
+            getEntityJson={(): Record<string, unknown> =>
+              buildTriggeredProductEntityJson({
+                product,
+                values: {},
+              })}
+            showRunFeedback={showTriggerRunFeedback}
+            className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
+          />
+        ) : null}
 
         {showTraderaBadge && (
           <TraderaStatusButton
             status={traderaStatus}
+            prefetchListings={() => prefetchListings(product.id)}
+            onOpenListings={() => onIntegrationsClick(product)}
+          />
+        )}
+
+        {showPlaywrightProgrammableBadge && (
+          <PlaywrightStatusButton
+            status={playwrightProgrammableStatus}
             prefetchListings={() => prefetchListings(product.id)}
             onOpenListings={() => onIntegrationsClick(product)}
           />

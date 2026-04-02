@@ -31,6 +31,26 @@ vi.mock('@/shared/hooks/offline/useOfflineMutation', () => ({
 
 import { useUserPreferences } from './useUserPreferences';
 
+const advancedFilterPreset = {
+  id: 'preset-1',
+  name: 'Pinned SKU',
+  filter: {
+    type: 'group',
+    id: 'root',
+    combinator: 'and',
+    not: false,
+    rules: [
+      {
+        type: 'condition',
+        id: 'condition-1',
+        field: 'sku',
+        operator: 'contains',
+        value: 'PIN',
+      },
+    ],
+  },
+} as const;
+
 const createQueryClient = (): QueryClient =>
   new QueryClient({
     defaultOptions: {
@@ -42,6 +62,7 @@ const createQueryClient = (): QueryClient =>
 describe('useUserPreferences page size normalization', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     apiGetMock.mockResolvedValue({
       productListNameLocale: 'name_en',
       productListCatalogFilter: 'all',
@@ -110,5 +131,47 @@ describe('useUserPreferences page size normalization', () => {
     });
 
     expect(mutateAsyncMock).toHaveBeenCalledWith({ showTriggerRunFeedback: false });
+  });
+
+  it('hydrates immediate preferences from localStorage while the server query is still loading', () => {
+    apiGetMock.mockImplementation(() => new Promise(() => undefined));
+    window.localStorage.setItem('productListCatalogFilter', 'catalog-local');
+    window.localStorage.setItem('productListPageSize', '36');
+    window.localStorage.setItem('productListShowTriggerRunFeedback', 'false');
+    window.localStorage.setItem('productListThumbnailSource', 'base64');
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
+
+    expect(result.current.loading).toBe(true);
+    expect(result.current.preferences.catalogFilter).toBe('catalog-local');
+    expect(result.current.preferences.pageSize).toBe(36);
+    expect(result.current.preferences.showTriggerRunFeedback).toBe(false);
+    expect(result.current.preferences.thumbnailSource).toBe('base64');
+  });
+
+  it('stores advanced filter presets as JSON so they can be reused on the next reload', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.setAdvancedFilterPresets([advancedFilterPreset]);
+    });
+
+    expect(window.localStorage.getItem('productListAdvancedFilterPresets')).toBe(
+      JSON.stringify([advancedFilterPreset])
+    );
   });
 });

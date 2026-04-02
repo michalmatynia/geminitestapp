@@ -43,13 +43,12 @@ function CaseResolverRichTextEditorRuntime(): React.JSX.Element {
       }
     >
       <LazyDocumentWysiwygEditor
+        engineInstance='case_resolver'
+        showBrand
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         appearance={appearance}
-        allowFontFamily
-        allowTextAlign
-        enableAdvancedTools
       />
     </React.Suspense>
   );

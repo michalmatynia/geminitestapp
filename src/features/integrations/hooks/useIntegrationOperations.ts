@@ -24,6 +24,8 @@ type IntegrationListingBadgeState = {
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeIds: Set<string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
 };
 
 const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
@@ -31,6 +33,8 @@ const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
   integrationBadgeStatuses: new Map<string, string>(),
   traderaBadgeIds: new Set<string>(),
   traderaBadgeStatuses: new Map<string, string>(),
+  playwrightProgrammableBadgeIds: new Set<string>(),
+  playwrightProgrammableBadgeStatuses: new Map<string, string>(),
 };
 
 const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
@@ -72,7 +76,15 @@ const areIntegrationListingBadgeStatesEqual = (
   areStringSetsEqual(previous.integrationBadgeIds, next.integrationBadgeIds) &&
   areStringMapsEqual(previous.integrationBadgeStatuses, next.integrationBadgeStatuses) &&
   areStringSetsEqual(previous.traderaBadgeIds, next.traderaBadgeIds) &&
-  areStringMapsEqual(previous.traderaBadgeStatuses, next.traderaBadgeStatuses);
+  areStringMapsEqual(previous.traderaBadgeStatuses, next.traderaBadgeStatuses) &&
+  areStringSetsEqual(
+    previous.playwrightProgrammableBadgeIds,
+    next.playwrightProgrammableBadgeIds
+  ) &&
+  areStringMapsEqual(
+    previous.playwrightProgrammableBadgeStatuses,
+    next.playwrightProgrammableBadgeStatuses
+  );
 
 const buildIntegrationListingBadgeState = (
   payload: ListingBadgesPayload
@@ -81,6 +93,8 @@ const buildIntegrationListingBadgeState = (
   const nextIntegrationBadgeIds = new Set<string>();
   const nextTraderaBadgeStatuses = new Map<string, string>();
   const nextTraderaBadgeIds = new Set<string>();
+  const nextPlaywrightProgrammableBadgeStatuses = new Map<string, string>();
+  const nextPlaywrightProgrammableBadgeIds = new Set<string>();
 
   for (const [productId, rawMarketplaces] of Object.entries(payload)) {
     const marketplaces = toMarketplaceEntry(rawMarketplaces);
@@ -97,6 +111,15 @@ const buildIntegrationListingBadgeState = (
       nextTraderaBadgeIds.add(productId);
       nextTraderaBadgeStatuses.set(productId, traderaStatus);
     }
+
+    const playwrightProgrammableStatus =
+      typeof marketplaces?.playwrightProgrammable === 'string'
+        ? marketplaces.playwrightProgrammable.trim().toLowerCase()
+        : '';
+    if (playwrightProgrammableStatus) {
+      nextPlaywrightProgrammableBadgeIds.add(productId);
+      nextPlaywrightProgrammableBadgeStatuses.set(productId, playwrightProgrammableStatus);
+    }
   }
 
   return {
@@ -104,11 +127,14 @@ const buildIntegrationListingBadgeState = (
     integrationBadgeStatuses: nextIntegrationBadgeStatuses,
     traderaBadgeIds: nextTraderaBadgeIds,
     traderaBadgeStatuses: nextTraderaBadgeStatuses,
+    playwrightProgrammableBadgeIds: nextPlaywrightProgrammableBadgeIds,
+    playwrightProgrammableBadgeStatuses: nextPlaywrightProgrammableBadgeStatuses,
   };
 };
 
 export function useIntegrationListingBadges(
-  productIds: readonly string[] = []
+  productIds: readonly string[] = [],
+  { enabled = true }: { enabled?: boolean } = {}
 ): IntegrationListingBadgeState {
   const scopedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
   const scopedListingBadgesQueryKey = useMemo(
@@ -133,7 +159,7 @@ export function useIntegrationListingBadges(
         return {};
       }
     },
-    enabled: scopedProductIds.length > 0,
+    enabled: enabled && scopedProductIds.length > 0,
     retry: 1,
     refetchInterval: (query) => {
       const data = query.state.data;
@@ -239,6 +265,8 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeIds: Set<string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
   exportSettingsProduct: ProductWithImages | null;
   setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   refreshListingBadges: () => Promise<void>;

@@ -14,6 +14,31 @@ import { SocialJobStatusPill } from './SocialJobStatusPill';
 const REFRESH_INTERVAL_MS = 10_000;
 const QUEUE_PANEL_REQUEST_TIMEOUT_MS = 60_000;
 
+const scheduleDeferredQueuePanelBootstrap = (onReady: () => void): (() => void) => {
+  if (typeof window === 'undefined') {
+    onReady();
+    return (): void => {
+      // no-op
+    };
+  }
+
+  if (typeof window.requestIdleCallback === 'function') {
+    const idleHandle = window.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      window.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = safeSetTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    safeClearTimeout(timeoutHandle);
+  };
+};
+
 const formatElapsedLabel = (ms: number | null | undefined): string | null => {
   if (!ms || ms <= 0) return null;
   if (ms < 60_000) return `${Math.round(ms / 1000)}s ago`;
@@ -168,10 +193,28 @@ export function KangurSocialPipelineQueuePanel({
   }, [isCompactVariant]);
 
   useEffect(() => {
-    void fetchData();
-    const interval = safeSetInterval(() => void fetchData(), REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    let interval: SafeTimerId | null = null;
+    const startPolling = (): void => {
+      void fetchData();
+      interval = safeSetInterval(() => void fetchData(), REFRESH_INTERVAL_MS);
+    };
+
+    const cleanupBootstrap = isCompactVariant
+      ? scheduleDeferredQueuePanelBootstrap(startPolling)
+      : (() => {
+          startPolling();
+          return (): void => {
+            // no-op
+          };
+        })();
+
+    return () => {
+      cleanupBootstrap();
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [fetchData, isCompactVariant]);
 
   useEffect(() => {
     return () => {

@@ -19,5 +19,5 @@ export function useMailPageContext(): MailPageState {
   if (!context) {
     throw new Error('useMailPageContext must be used within a MailPageProvider');
   }
-  return context as MailPageState;
+  return context;
 }

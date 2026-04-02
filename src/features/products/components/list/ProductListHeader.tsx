@@ -75,6 +75,7 @@ export const ProductListHeader = memo(function ProductListHeader({
     onCreateProduct,
     onCreateFromDraft,
     activeDrafts,
+    triggerButtonsReady = true,
   } = useProductListHeaderActionsContext();
   const {
     page,
@@ -216,13 +217,15 @@ export const ProductListHeader = memo(function ProductListHeader({
         ariaLabel='Filter by catalog'
        title='Catalog'/>
 
-      <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'>
-        <TriggerButtonBar
-          location='product_list'
-          entityType='product'
-          className='w-full flex-nowrap sm:w-auto'
-        />
-      </div>
+      {triggerButtonsReady ? (
+        <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'>
+          <TriggerButtonBar
+            location='product_list'
+            entityType='product'
+            className='w-full flex-nowrap sm:w-auto'
+          />
+        </div>
+      ) : null}
     </>
   );
 

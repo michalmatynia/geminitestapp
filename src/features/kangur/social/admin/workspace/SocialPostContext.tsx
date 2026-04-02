@@ -44,7 +44,9 @@ export function SocialPostProvider({ children }: { children: React.ReactNode }) 
   const [isPostEditorModalOpen, setIsPostEditorModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<KangurSocialPost | null>(null);
   const [postToUnpublish, setPostToUnpublish] = useState<KangurSocialPost | null>(null);
-  const socialPage = useAdminKangurSocialPage();
+  const socialPage = useAdminKangurSocialPage({
+    preloadSettingsModalData: isSettingsModalOpen,
+  });
   const batchCaptureRecentJobsQuery = useKangurSocialImageAddonsBatchJobs({
     limit: 5,
     enabled: isSettingsModalOpen || socialPage.isProgrammablePlaywrightModalOpen,

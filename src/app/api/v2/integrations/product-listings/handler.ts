@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
+import {
+  PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
+  TRADERA_INTEGRATION_SLUGS,
+} from '@/features/integrations/constants/slugs';
 import {
   getProductListingRepository,
   getIntegrationRepository,
@@ -46,6 +49,7 @@ const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadg
   const normalized = (slug ?? '').trim().toLowerCase();
   if (isCanonicalBaseIntegrationSlug(normalized)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(normalized)) return 'tradera';
+  if (normalized === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
   return null;
 };
 
@@ -56,16 +60,21 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
     typeof data['marketplace'] === 'string' ? data['marketplace'].trim().toLowerCase() : '';
   if (isCanonicalBaseIntegrationSlug(marketplace)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(marketplace)) return 'tradera';
+  if (marketplace === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
 
   const source = typeof data['source'] === 'string' ? data['source'].trim().toLowerCase() : '';
   if (source.includes('base')) return 'base';
   if (source.includes('tradera')) return 'tradera';
+  if (source.includes('playwright')) return 'playwrightProgrammable';
 
   const traderaData = data['tradera'];
   if (traderaData && typeof traderaData === 'object') return 'tradera';
 
   const baseData = data['base'];
   if (baseData && typeof baseData === 'object') return 'base';
+
+  const playwrightData = data['playwright'];
+  if (playwrightData && typeof playwrightData === 'object') return 'playwrightProgrammable';
 
   return null;
 };

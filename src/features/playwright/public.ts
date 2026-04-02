@@ -1,7 +1,10 @@
 // Auto-generated public API for feature. Edit with care.
 export * from './components/PlaywrightSettingsForm';
+export * from './components/PlaywrightEngineLogoButton';
+export * from './components/PlaywrightEngineSettingsModal';
 export * from './context/PlaywrightSettingsContext';
 export * from './constants/playwright';
+export * from './engine';
 export * from './hooks/usePlaywrightPersonas';
 export * from './pages/PlaywrightPersonasPage';
 export * from '@/shared/contracts/playwright';

@@ -32,14 +32,25 @@ import type { KangurSocialProgrammableCaptureRoute } from '@/shared/contracts/ka
 
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
 
-export function useSocialSettings() {
+type UseSocialSettingsOptions = {
+  preloadSettingsModalData?: boolean;
+};
+
+export function useSocialSettings(options?: UseSocialSettingsOptions) {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const queryClient = useQueryClient();
   const updateSetting = useUpdateSetting();
-  const brainModelOptions = useBrainModelOptions({ capability: 'kangur_social.post_generation' });
-  const visionModelOptions = useBrainModelOptions({ capability: 'kangur_social.visual_analysis' });
-  const integrationsQuery = useIntegrations();
+  const preloadSettingsModalData = options?.preloadSettingsModalData ?? false;
+  const brainModelOptions = useBrainModelOptions({
+    capability: 'kangur_social.post_generation',
+    enabled: preloadSettingsModalData,
+  });
+  const visionModelOptions = useBrainModelOptions({
+    capability: 'kangur_social.visual_analysis',
+    enabled: preloadSettingsModalData,
+  });
+  const integrationsQuery = useIntegrations({ enabled: preloadSettingsModalData });
 
   const rawSocialSettings = settingsStore.get(KANGUR_SOCIAL_SETTINGS_KEY);
   const persistedSocialSettings = useMemo(
@@ -51,7 +62,9 @@ export function useSocialSettings() {
     () => integrationsQuery.data?.find((integration) => integration.slug === 'linkedin') ?? null,
     [integrationsQuery.data]
   );
-  const linkedinConnectionsQuery = useIntegrationConnections(linkedinIntegration?.id);
+  const linkedinConnectionsQuery = useIntegrationConnections(linkedinIntegration?.id, {
+    enabled: preloadSettingsModalData,
+  });
   const linkedinConnections = linkedinConnectionsQuery.data ?? [];
 
   const [linkedinConnectionId, setLinkedinConnectionId] = useState<string | null>(

@@ -64,6 +64,7 @@ export { default as AddIntegrationPage } from './pages/AddIntegrationPage';
 export { default as CategoryMapperPage } from './pages/CategoryMapperPage';
 export { default as ConnectionsPage } from './pages/ConnectionsPage';
 export { default as MarketplacesPage } from './pages/marketplaces/MarketplacesPage';
+export { default as PlaywrightIntegrationPage } from './pages/marketplaces/PlaywrightIntegrationPage';
 export { default as TraderaSettingsPage } from './pages/marketplaces/TraderaSettingsPage';
 export { default as AllegroConnectionsPage } from './pages/marketplaces/allegro/AllegroConnectionsPage';
 export { default as AllegroListingManagementPage } from './pages/marketplaces/allegro/AllegroListingManagementPage';

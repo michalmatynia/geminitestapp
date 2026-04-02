@@ -12,7 +12,6 @@ const {
   useProductListFiltersContextMock,
   useProducersMock,
   useTagsMock,
-  useUserPreferencesMock,
 } = vi.hoisted(() => ({
   filterPanelMock: vi.fn(),
   useCatalogsMock: vi.fn(),
@@ -21,7 +20,6 @@ const {
   useProductListFiltersContextMock: vi.fn(),
   useProducersMock: vi.fn(),
   useTagsMock: vi.fn(),
-  useUserPreferencesMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/context/ProductListContext', () => ({
@@ -37,10 +35,6 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useMultiTags: (...args: unknown[]) => useMultiTagsMock(...args),
   useProducers: (...args: unknown[]) => useProducersMock(...args),
   useTags: (...args: unknown[]) => useTagsMock(...args),
-}));
-
-vi.mock('@/features/products/hooks/useUserPreferences', () => ({
-  useUserPreferences: () => useUserPreferencesMock(),
 }));
 
 vi.mock('@/features/products/components/list/advanced-filter', () => ({
@@ -99,6 +93,8 @@ const buildFiltersContextValue = (
   endDate: '',
   setEndDate: vi.fn(),
   advancedFilter: '',
+  advancedFilterPresets: [],
+  setAdvancedFilterPresets: vi.fn(),
   setAdvancedFilterState: vi.fn(),
   baseExported: '',
   setBaseExported: vi.fn(),
@@ -115,10 +111,6 @@ describe('ProductFilters layout contract', () => {
     useTagsMock.mockReturnValue({ data: [] });
     useMultiTagsMock.mockReturnValue([]);
     useProducersMock.mockReturnValue({ data: [] });
-    useUserPreferencesMock.mockReturnValue({
-      preferences: { advancedFilterPresets: [] },
-      setAdvancedFilterPresets: vi.fn(),
-    });
   });
 
   it('passes the current Products list layout props into FilterPanel', () => {

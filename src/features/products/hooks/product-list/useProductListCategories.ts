@@ -20,9 +20,11 @@ const PRODUCT_CATEGORY_BATCH_TIMEOUT_MS = 60_000;
 export function useProductListCategories({
   data,
   nameLocale,
+  enabled = true,
 }: {
   data: ProductWithImages[];
   nameLocale?: string;
+  enabled?: boolean;
 }) {
   const locale = (nameLocale ?? 'name_en') as 'name_en' | 'name_pl' | 'name_de';
 
@@ -82,7 +84,7 @@ export function useProductListCategories({
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    enabled: categoryLookupCatalogIds.length > 0,
+    enabled: enabled && categoryLookupCatalogIds.length > 0,
     meta: {
       source: 'products.hooks.useProductListCategories',
       operation: 'list',

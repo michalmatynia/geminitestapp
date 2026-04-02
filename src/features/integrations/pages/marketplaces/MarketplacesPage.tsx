@@ -22,6 +22,12 @@ const marketplaces = [
     href: '/admin/integrations/marketplaces/allegro',
   },
   {
+    name: 'Playwright (Programmable)',
+    description:
+      'Build custom Playwright listing and import scripts for marketplaces outside the built-in integrations.',
+    href: '/admin/integrations/marketplaces/playwright',
+  },
+  {
     name: 'Category Mapper',
     description:
       'Map external marketplace categories to your internal product categories for import/export.',

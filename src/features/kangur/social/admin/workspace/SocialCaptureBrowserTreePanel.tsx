@@ -16,6 +16,8 @@ import {
 import {
   buildSlideKey,
 } from '@/features/kangur/social/shared/social-capture-content-config';
+import { PlaywrightEngineLogoButton } from '@/features/playwright/components/PlaywrightEngineLogoButton';
+import { PlaywrightEngineSettingsModal } from '@/features/playwright/components/PlaywrightEngineSettingsModal';
 import type { SocialCaptureBrowserState } from './hooks/useSocialCaptureBrowserState';
 
 type SlideStatusDotProps = {
@@ -45,6 +47,7 @@ type Props = {
 
 export function SocialCaptureBrowserTreePanel({ state }: Props): React.JSX.Element {
   const { shell, search, searchQuery, setSearchQuery, slideMap } = state;
+  const [engineModalOpen, setEngineModalOpen] = React.useState(false);
 
   const renderNode = React.useCallback(
     ({ node, isExpanded, isSelected }: FolderTreeViewportRenderNodeInput): React.ReactNode => {
@@ -104,26 +107,33 @@ export function SocialCaptureBrowserTreePanel({ state }: Props): React.JSX.Eleme
   );
 
   return (
-    <div className='flex flex-col gap-2 h-full min-h-0'>
-      <FolderTreeSearchBar
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder='Search lessons…'
-      />
-      <div className='flex-1 min-h-0 overflow-hidden rounded border border-border/40'>
-        <FolderTreeViewportV2
-          controller={shell.controller}
-          renderNode={renderNode}
-          searchState={search}
-          emptyLabel={
-            search.isActive
-              ? 'No lessons match your search.'
-              : 'No lesson sections configured.'
-          }
-          enableDnd={false}
-          className='h-full'
+    <>
+      <div className='relative flex flex-col gap-2 h-full min-h-0'>
+        <FolderTreeSearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder='Search lessons…'
         />
+        <div className='flex-1 min-h-0 overflow-hidden rounded border border-border/40'>
+          <FolderTreeViewportV2
+            controller={shell.controller}
+            renderNode={renderNode}
+            searchState={search}
+            emptyLabel={
+              search.isActive
+                ? 'No lessons match your search.'
+                : 'No lesson sections configured.'
+            }
+            enableDnd={false}
+            className='h-full'
+          />
+        </div>
+        <PlaywrightEngineLogoButton onOpen={() => setEngineModalOpen(true)} />
       </div>
-    </div>
+      <PlaywrightEngineSettingsModal
+        open={engineModalOpen}
+        onClose={() => setEngineModalOpen(false)}
+      />
+    </>
   );
 }

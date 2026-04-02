@@ -44,6 +44,14 @@ describe('AdminFilemakerMail pages compose flows', () => {
     render(<AdminFilemakerMailComposePage />);
 
     await screen.findByText(/Sending from:/);
+    expect(
+      screen.getByRole('link', {
+        name: 'Open Filemaker Email text editor settings',
+      })
+    ).toHaveAttribute(
+      'href',
+      '/admin/settings/text-editors#text-editor-instance-filemaker_email'
+    );
 
     fireEvent.change(screen.getByLabelText('Subject'), {
       target: { value: 'Follow-up' },

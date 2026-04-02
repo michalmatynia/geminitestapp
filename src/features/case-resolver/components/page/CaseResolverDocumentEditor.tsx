@@ -451,12 +451,11 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               >
                 <LazyDocumentWysiwygEditor
                   key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
+                  engineInstance='case_resolver'
+                  showBrand
                   value={editingDocumentDraft.documentContentHtml ?? ''}
                   onChange={handleUpdateDraftDocumentContent}
                   disabled={isEditingDocumentLocked}
-                  allowFontFamily
-                  allowTextAlign
-                  enableAdvancedTools
                   surfaceOptions={{
                     className: 'min-h-[400px]',
                     editorContentClassName: '[&_.ProseMirror]:!min-h-[400px]',

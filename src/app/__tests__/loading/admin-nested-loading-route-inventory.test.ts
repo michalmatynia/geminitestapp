@@ -87,6 +87,7 @@ const adminNestedRoutesWithDedicatedLoading = [
   'settings/recovery',
   'settings/storage',
   'settings/sync',
+  'settings/text-editors',
   'settings/typography',
   'system/analytics',
   'system/logs',

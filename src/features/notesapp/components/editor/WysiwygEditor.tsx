@@ -8,5 +8,12 @@ import { useNoteContentContext } from '@/features/notesapp/context/NoteFormConte
 export function WysiwygEditor(): React.JSX.Element {
   const { content, setContent } = useNoteContentContext();
 
-  return <DocumentWysiwygEditor value={content} onChange={setContent} />;
+  return (
+    <DocumentWysiwygEditor
+      engineInstance='notes_app'
+      showBrand
+      value={content}
+      onChange={setContent}
+    />
+  );
 }

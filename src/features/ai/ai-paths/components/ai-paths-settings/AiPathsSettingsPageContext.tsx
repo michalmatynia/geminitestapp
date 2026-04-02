@@ -20,6 +20,7 @@ export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
   simulationModalOpen: boolean;
   setSimulationModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   savePathConfig: UseAiPathsSettingsStateReturn['handleSave'];
+  diagnosticsReady: boolean;
   normalizedAiPathsValidation: AiPathsValidationConfig;
   nodeValidationEnabled: boolean;
   handleOpenNodeValidator: () => void;

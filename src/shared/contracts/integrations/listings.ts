@@ -255,6 +255,7 @@ export type BaseProductLinkExistingResponse = z.infer<
 export type MarketplaceBadgeEntry = {
   base?: string;
   tradera?: string;
+  playwrightProgrammable?: string;
 };
 
 export type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;
@@ -426,4 +427,3 @@ export type ProductListingsRecoveryContext = {
   status: string;
   runId: string | null;
 };
-

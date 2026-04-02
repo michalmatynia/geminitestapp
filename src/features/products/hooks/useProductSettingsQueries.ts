@@ -56,6 +56,7 @@ export { productSettingsKeys };
 import {
   useCatalogs as useMetadataCatalogs,
   useParameters as useMetadataParameters,
+  type ProductMetadataQueryOptions,
   useSimpleParameters as useMetadataSimpleParameters,
   usePriceGroups as useMetadataPriceGroups,
   useTags as useMetadataTags,
@@ -105,20 +106,23 @@ const toCategoryCreatePayload = (
   };
 };
 
-export function usePriceGroups(): ListQuery<PriceGroup> {
-  return useMetadataPriceGroups();
+export function usePriceGroups(options?: ProductMetadataQueryOptions): ListQuery<PriceGroup> {
+  return useMetadataPriceGroups(options);
 }
 
-export function useCatalogs(): ListQuery<CatalogRecord> {
-  return useMetadataCatalogs();
+export function useCatalogs(options?: ProductMetadataQueryOptions): ListQuery<CatalogRecord> {
+  return useMetadataCatalogs(options);
 }
 
-export function useCategories(catalogId: string | null): ListQuery<ProductCategoryWithChildren> {
+export function useCategories(
+  catalogId: string | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCategoryWithChildren> {
   const queryKey = productSettingsKeys.categoryTree(catalogId);
   return createListQueryV2({
     queryKey,
     queryFn: () => api.getCategories(catalogId),
-    enabled: !!catalogId,
+    enabled: Boolean(catalogId) && (options?.enabled ?? true),
     ...STABLE_SETTINGS_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useCategories',
@@ -131,12 +135,18 @@ export function useCategories(catalogId: string | null): ListQuery<ProductCatego
   });
 }
 
-export function useTags(catalogId: string | null): ListQuery<ProductTag> {
-  return useMetadataTags(catalogId ?? undefined);
+export function useTags(
+  catalogId: string | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductTag> {
+  return useMetadataTags(catalogId ?? undefined, options);
 }
 
-export function useParameters(catalogId: string | null): ListQuery<ProductParameter> {
-  return useMetadataParameters(catalogId ?? undefined);
+export function useParameters(
+  catalogId: string | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductParameter> {
+  return useMetadataParameters(catalogId ?? undefined, options);
 }
 
 export function useSimpleParameters(catalogId: string | null): ListQuery<ProductSimpleParameter> {

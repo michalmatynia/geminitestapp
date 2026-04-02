@@ -2,8 +2,6 @@
 
 import React from 'react';
 
-import { useToast } from '@/shared/ui';
-
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import {
   buildFilemakerMailComposeHref as buildComposeHref,
@@ -16,7 +14,6 @@ import { MailPageProvider, useMailPageContext } from './FilemakerMail.context';
 
 function AdminFilemakerMailPageContent(): React.JSX.Element {
   const {
-    accounts,
     setAccounts,
     attentionAccounts,
     selectedAccount,
@@ -24,8 +21,6 @@ function AdminFilemakerMailPageContent(): React.JSX.Element {
     selectedFolder,
     selectedMailboxPath,
     selectedPanel,
-    isNavigationLoading,
-    isThreadsLoading,
     isSavingAccount,
     syncingAccountId,
     draft,
@@ -44,14 +39,9 @@ function AdminFilemakerMailPageContent(): React.JSX.Element {
     recentUnreadOnly,
     setRecentUnreadOnly,
     selectedAccountLabel,
-    selectedFolderLabel,
     isAttentionPanel,
     isSearchPanel,
     isRecentPanel,
-    visibleThreads,
-    recentMailboxOptions,
-    tableActions,
-    columns,
     handleSaveAccount,
     handleSyncAccount,
     setSelection,

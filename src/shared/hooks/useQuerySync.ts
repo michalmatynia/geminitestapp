@@ -16,13 +16,15 @@ export function useQuerySync(configs: SyncConfig[]): void {
   const queryClient = useQueryClient();
   const configsRef = useRef(configs);
   configsRef.current = configs;
+  const hasEnabledConfigs = configs.some((config: SyncConfig) => config.enabled !== false);
 
   const handleStorageChange = useCallback(
     (event: StorageEvent): void => {
       if (event.key?.startsWith('tanstack-query-sync-')) {
         const storageKey = event.key.replace('tanstack-query-sync-', '');
         const matchingConfig = configsRef.current.find(
-          (config: SyncConfig) => JSON.stringify(config.queryKey) === storageKey
+          (config: SyncConfig) =>
+            config.enabled !== false && JSON.stringify(config.queryKey) === storageKey
         );
 
         if (matchingConfig && event.newValue) {
@@ -44,12 +46,18 @@ export function useQuerySync(configs: SyncConfig[]): void {
   );
 
   useEffect((): (() => void) => {
+    if (!hasEnabledConfigs) {
+      return (): void => {};
+    }
     window.addEventListener('storage', handleStorageChange);
     return (): void => window.removeEventListener('storage', handleStorageChange);
-  }, [handleStorageChange]);
+  }, [handleStorageChange, hasEnabledConfigs]);
 
   // Sync data to localStorage when query cache changes (not on every render)
   useEffect((): (() => void) => {
+    if (!hasEnabledConfigs) {
+      return (): void => {};
+    }
     const queryCache = queryClient.getQueryCache();
     const unsubscribe = queryCache.subscribe((event: QueryCacheNotifyEvent) => {
       if (event.type !== 'updated' || event.action.type !== 'success') return;
@@ -67,5 +75,5 @@ export function useQuerySync(configs: SyncConfig[]): void {
       }
     });
     return unsubscribe;
-  }, [queryClient]);
+  }, [hasEnabledConfigs, queryClient]);
 }

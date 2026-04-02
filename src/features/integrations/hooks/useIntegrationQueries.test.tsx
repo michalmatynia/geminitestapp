@@ -46,6 +46,18 @@ describe('useIntegrationQueries', () => {
     });
   });
 
+  it('supports disabling integrations list and connections queries explicitly', () => {
+    renderHook(() => useIntegrations({ enabled: false }));
+    const integrationsConfig = createListQueryV2Mock.mock.calls[0]?.[0];
+
+    expect(integrationsConfig.enabled).toBe(false);
+
+    renderHook(() => useIntegrationConnections('integration-1', { enabled: false }));
+    const connectionsConfig = createListQueryV2Mock.mock.calls[1]?.[0];
+
+    expect(connectionsConfig.enabled).toBe(false);
+  });
+
   it('uses the extended timeout for integration connections and skips empty ids', async () => {
     const withId = renderHook(() => useIntegrationConnections('integration-1'));
     const withIdConfig = createListQueryV2Mock.mock.calls[0]?.[0];

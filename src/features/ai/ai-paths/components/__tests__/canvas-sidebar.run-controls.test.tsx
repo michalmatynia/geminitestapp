@@ -12,7 +12,6 @@ const {
   usePresetsActionsMock,
   useSelectionStateMock,
   useSelectionActionsMock,
-  usePaletteWithTriggerButtonsMock,
   useCanvasSidebarActionsMock,
   handoffRunMock,
 } = vi.hoisted(() => ({
@@ -25,7 +24,6 @@ const {
   usePresetsActionsMock: vi.fn(),
   useSelectionStateMock: vi.fn(),
   useSelectionActionsMock: vi.fn(),
-  usePaletteWithTriggerButtonsMock: vi.fn(),
   useCanvasSidebarActionsMock: vi.fn(),
   handoffRunMock: vi.fn(),
 }));
@@ -41,13 +39,6 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
   useRuntimeState: useRuntimeStateMock,
   useRuntimeActions: useRuntimeActionsMock,
 }));
-
-vi.mock(
-  '@/features/ai/ai-paths/components/ai-paths-settings/hooks/usePaletteWithTriggerButtons',
-  () => ({
-    usePaletteWithTriggerButtons: usePaletteWithTriggerButtonsMock,
-  })
-);
 
 vi.mock('@/features/ai/ai-paths/components/hooks/useCanvasSidebarActions', () => ({
   useCanvasSidebarActions: useCanvasSidebarActionsMock,
@@ -97,7 +88,6 @@ describe('CanvasSidebar run control coordination states', () => {
       setConfigOpen: vi.fn(),
       setSimulationOpenNodeId: vi.fn(),
     });
-    usePaletteWithTriggerButtonsMock.mockReset().mockReturnValue([]);
     useCanvasSidebarActionsMock.mockReset().mockReturnValue({
       handleDragStart: vi.fn(),
       updateSelectedNode: vi.fn(),
@@ -117,7 +107,7 @@ describe('CanvasSidebar run control coordination states', () => {
       },
     });
 
-    render(<CanvasSidebar />);
+    render(<CanvasSidebar palette={[]} />);
 
     expect(screen.getByText('Execution lease blocked')).toBeTruthy();
     expect(
@@ -142,7 +132,7 @@ describe('CanvasSidebar run control coordination states', () => {
       runtimeState: {},
     });
 
-    render(<CanvasSidebar />);
+    render(<CanvasSidebar palette={[]} />);
 
     expect(screen.getByText('Ready for delegated continuation')).toBeTruthy();
     expect(

@@ -28,6 +28,31 @@ import type { Session } from 'next-auth';
 const ADMIN_MENU_COLLAPSED_STORAGE_KEY = 'adminMenuCollapsed';
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
 
+const scheduleDeferredRemoteMenuPreferenceBootstrap = (onReady: () => void): (() => void) => {
+  if (typeof window === 'undefined') {
+    onReady();
+    return (): void => {
+      // no-op
+    };
+  }
+
+  if (typeof window.requestIdleCallback === 'function') {
+    const idleHandle = window.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      window.cancelIdleCallback(idleHandle);
+    };
+  }
+
+  const timeoutHandle = window.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    window.clearTimeout(timeoutHandle);
+  };
+};
+
 function AdminLayoutContent({
   children,
   hasInitialMenuPreference,
@@ -35,10 +60,12 @@ function AdminLayoutContent({
   children: React.ReactNode;
   hasInitialMenuPreference: boolean;
 }): React.ReactNode {
-  const { isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed } = useAdminLayoutState();
+  const { isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed, aiDrawerOpen } =
+    useAdminLayoutState();
   const { setIsMenuCollapsed, setIsMenuHidden, setIsProgrammaticallyCollapsed } =
     useAdminLayoutActions();
   const pathname = usePathname();
+  const shouldMountNoteSettingsProvider = pathname.startsWith('/admin/notes');
   const didUserToggleRef = useRef(false);
   const preferredMenuCollapsedRef = useRef(isMenuCollapsed);
   const programmaticCollapsedRef = useRef(false);
@@ -48,9 +75,11 @@ function AdminLayoutContent({
   const [shouldLoadRemoteMenuPreference, setShouldLoadRemoteMenuPreference] = useState(
     !hasInitialMenuPreference
   );
+  const [remoteMenuPreferenceReady, setRemoteMenuPreferenceReady] = useState(false);
 
   const { data: preferences } = useUserPreferences({
-    enabled: hasResolvedLocalMenuPreference && shouldLoadRemoteMenuPreference,
+    enabled:
+      hasResolvedLocalMenuPreference && shouldLoadRemoteMenuPreference && remoteMenuPreferenceReady,
   });
   const updatePreferencesMutation = useUpdateUserPreferences();
 
@@ -105,6 +134,24 @@ function AdminLayoutContent({
       setHasResolvedLocalMenuPreference(true);
     }
   }, [setIsMenuCollapsed]);
+
+  useEffect(() => {
+    if (!hasResolvedLocalMenuPreference || !shouldLoadRemoteMenuPreference) {
+      if (remoteMenuPreferenceReady) {
+        setRemoteMenuPreferenceReady(false);
+      }
+      return;
+    }
+    if (remoteMenuPreferenceReady) return;
+
+    return scheduleDeferredRemoteMenuPreferenceBootstrap(() => {
+      setRemoteMenuPreferenceReady(true);
+    });
+  }, [
+    hasResolvedLocalMenuPreference,
+    remoteMenuPreferenceReady,
+    shouldLoadRemoteMenuPreference,
+  ]);
 
   useEffect(() => {
     programmaticCollapsedRef.current = isProgrammaticallyCollapsed;
@@ -163,10 +210,12 @@ function AdminLayoutContent({
     setIsMenuCollapsed(preferences.adminMenuCollapsed);
     persistMenuCollapsedFallbacks(preferences.adminMenuCollapsed);
     setShouldLoadRemoteMenuPreference(false);
+    setRemoteMenuPreferenceReady(false);
   }, [
     hasResolvedLocalMenuPreference,
     persistMenuCollapsedFallbacks,
     preferences,
+    remoteMenuPreferenceReady,
     setIsMenuCollapsed,
     shouldLoadRemoteMenuPreference,
   ]);
@@ -301,10 +350,16 @@ function AdminLayoutContent({
             Admin content start
           </span>
           <QueryErrorBoundary>
-            <div className='min-w-0 max-w-full'>{children}</div>
+            <div className='min-w-0 max-w-full'>
+              {shouldMountNoteSettingsProvider ? (
+                <NoteSettingsProvider>{children}</NoteSettingsProvider>
+              ) : (
+                children
+              )}
+            </div>
           </QueryErrorBoundary>
         </main>
-        <AiInsightsNotificationsDrawer />
+        {aiDrawerOpen ? <AiInsightsNotificationsDrawer /> : null}
       </div>
     </div>
   );
@@ -332,11 +387,9 @@ export function AdminLayout({
           <ToastProvider>
             <AdminLayoutProvider initialMenuCollapsed={menuCollapsedDefault}>
               <AdminFavoritesRuntimeProvider>
-                <NoteSettingsProvider>
-                  <AdminLayoutContent hasInitialMenuPreference={hasInitialMenuPreference}>
-                    {children}
-                  </AdminLayoutContent>
-                </NoteSettingsProvider>
+                <AdminLayoutContent hasInitialMenuPreference={hasInitialMenuPreference}>
+                  {children}
+                </AdminLayoutContent>
               </AdminFavoritesRuntimeProvider>
             </AdminLayoutProvider>
           </ToastProvider>

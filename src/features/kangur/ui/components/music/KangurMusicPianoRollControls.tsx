@@ -10,10 +10,7 @@ import { KANGUR_SEGMENTED_CONTROL_CLASSNAME } from '@/features/kangur/ui/design/
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 
 import type {
-  KangurMusicKeyboardMode,
   KangurMusicSynthGlideMode,
-  KangurMusicSynthOsc1Config,
-  KangurMusicSynthOsc2Config,
   KangurMusicSynthWaveform,
 } from './music-theory';
 import {
@@ -22,7 +19,6 @@ import {
   KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS,
   KANGUR_MUSIC_SYNTH_WAVEFORMS,
 } from './music-theory';
-import type { KangurMusicSynthEnvelope } from './useKangurMusicSynth';
 import { KANGUR_PIANO_ROLL_SYNTH_CONTROL_BUTTON_CLASSNAME } from './KangurMusicPianoRoll.utils';
 import { KangurMusicWaveformIcon } from './music-waveform-icons';
 import { useKangurMusicPianoRollContext } from './KangurMusicPianoRoll.context';

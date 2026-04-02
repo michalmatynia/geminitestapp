@@ -14,7 +14,11 @@ import type {
   ProductListModalsContextType,
 } from '../ProductListContext.types';
 
-export function useProductListSubContexts(value: ProductListContextType) {
+export function useProductListSubContexts(
+  value: ProductListContextType & {
+    rowRuntimeReady?: boolean;
+  }
+) {
   const filtersValue = useMemo<ProductListFiltersContextType>(
     () => ({
       page: value.page,
@@ -58,6 +62,8 @@ export function useProductListSubContexts(value: ProductListContextType) {
       setEndDate: value.setEndDate,
       advancedFilter: value.advancedFilter,
       activeAdvancedFilterPresetId: value.activeAdvancedFilterPresetId,
+      advancedFilterPresets: value.advancedFilterPresets,
+      setAdvancedFilterPresets: value.setAdvancedFilterPresets,
       setAdvancedFilter: value.setAdvancedFilter,
       setAdvancedFilterState: value.setAdvancedFilterState,
       baseExported: value.baseExported,
@@ -105,6 +111,8 @@ export function useProductListSubContexts(value: ProductListContextType) {
       value.setEndDate,
       value.advancedFilter,
       value.activeAdvancedFilterPresetId,
+      value.advancedFilterPresets,
+      value.setAdvancedFilterPresets,
       value.setAdvancedFilter,
       value.setAdvancedFilterState,
       value.baseExported,
@@ -219,6 +227,7 @@ export function useProductListSubContexts(value: ProductListContextType) {
       activeDrafts: value.activeDrafts,
       showTriggerRunFeedback: value.showTriggerRunFeedback,
       setShowTriggerRunFeedback: value.setShowTriggerRunFeedback,
+      triggerButtonsReady: value.rowRuntimeReady ?? true,
     }),
     [
       value.onCreateProduct,
@@ -226,6 +235,7 @@ export function useProductListSubContexts(value: ProductListContextType) {
       value.activeDrafts,
       value.showTriggerRunFeedback,
       value.setShowTriggerRunFeedback,
+      value.rowRuntimeReady,
     ]
   );
 
@@ -258,6 +268,7 @@ export function useProductListSubContexts(value: ProductListContextType) {
       categoryNameById: value.categoryNameById,
       thumbnailSource: value.thumbnailSource,
       showTriggerRunFeedback: value.showTriggerRunFeedback,
+      triggerButtonsReady: value.rowRuntimeReady ?? true,
       imageExternalBaseUrl: value.imageExternalBaseUrl,
     }),
     [
@@ -267,6 +278,7 @@ export function useProductListSubContexts(value: ProductListContextType) {
       value.categoryNameById,
       value.thumbnailSource,
       value.showTriggerRunFeedback,
+      value.rowRuntimeReady,
       value.imageExternalBaseUrl,
     ]
   );

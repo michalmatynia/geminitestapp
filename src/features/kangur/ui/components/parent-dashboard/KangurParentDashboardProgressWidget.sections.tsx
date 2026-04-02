@@ -16,21 +16,15 @@ import {
   KangurStatusChip,
   KangurSummaryPanel,
 } from '@/features/kangur/ui/design/primitives';
-import { buildKangurAssignmentListItems } from '@/features/kangur/ui/services/delegated-assignments';
 import {
   KANGUR_COMPACT_ROW_CLASSNAME,
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_ROW_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
 import type {
-  ParentDashboardDailyQuest,
   ParentDashboardLessonMasteryInsights,
-  ParentDashboardLessonPanelCard,
   ParentDashboardProgressSnapshot,
-  ParentDashboardRuntimeState,
-  ProgressTranslations,
 } from './KangurParentDashboardProgressWidget.types';
-import type { resolveDailyQuestPresentation } from './KangurParentDashboardProgressWidget.utils';
 import { useProgressWidgetContext } from './ProgressWidget.context';
 
 export function KangurParentDashboardAnalyticsSection(): React.JSX.Element {

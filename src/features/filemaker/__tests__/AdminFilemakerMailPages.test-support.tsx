@@ -34,17 +34,31 @@ vi.mock('@/shared/lib/document-editor/components/DocumentWysiwygEditor', () => (
     value,
     onChange,
     placeholder,
+    engineInstance,
+    showBrand,
   }: {
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
+    engineInstance?: 'filemaker_email' | 'notes_app' | 'case_resolver';
+    showBrand?: boolean;
   }) => (
-    <textarea
-      aria-label={placeholder ?? 'Document editor'}
-      data-testid='document-wysiwyg-editor'
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    />
+    <div>
+      <textarea
+        aria-label={placeholder ?? 'Document editor'}
+        data-testid='document-wysiwyg-editor'
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {showBrand && engineInstance ? (
+        <a
+          aria-label={`Open ${engineInstance === 'filemaker_email' ? 'Filemaker Email' : engineInstance === 'notes_app' ? 'Notes App' : 'Case Resolver'} text editor settings`}
+          href={`/admin/settings/text-editors#text-editor-instance-${engineInstance}`}
+        >
+          te
+        </a>
+      ) : null}
+    </div>
   ),
 }));
 

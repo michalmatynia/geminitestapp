@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  isBaseIntegrationSlug,
+  isPlaywrightProgrammableSlug,
+  isTraderaIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   getProductListingRepository,
   listingExistsAcrossProviders,
 } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { listCanonicalBaseProductListings } from '@/features/integrations/services/base-listing-canonicalization';
-import { enqueueTraderaListingJob } from '@/features/jobs/server';
+import { enqueuePlaywrightListingJob, enqueueTraderaListingJob } from '@/features/jobs/server';
 import { getProductRepository, parseJsonBody } from '@/features/products/server';
 import {
   productListingCreatePayloadSchema,
@@ -16,12 +20,6 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-
-const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
-  const normalized = (value ?? '').trim().toLowerCase();
-  return normalized === 'base' || normalized === 'base-com' || normalized === 'baselinker';
-};
 
 const requireProductId = (productId: string | null | undefined): string => {
   if (!productId) {
@@ -118,9 +116,15 @@ export async function POST_handler(
       productId,
       integrationId: data.integrationId,
       connectionId: data.connectionId,
-      status: isTraderaIntegrationSlug(integration.slug) ? 'queued' : 'pending',
+      status:
+        isTraderaIntegrationSlug(integration.slug) ||
+        isPlaywrightProgrammableSlug(integration.slug)
+          ? 'queued'
+          : 'pending',
       marketplaceData: isTraderaIntegrationSlug(integration.slug)
         ? { source: 'manual-listing', marketplace: 'tradera' }
+        : isPlaywrightProgrammableSlug(integration.slug)
+          ? { source: 'manual-listing', marketplace: 'playwright-programmable' }
         : isBaseIntegrationSlug(integration.slug)
           ? { source: 'manual-listing', marketplace: 'base' }
           : { source: 'manual-listing' },
@@ -149,6 +153,25 @@ export async function POST_handler(
         queued: true,
         queue: {
           name: 'tradera-listings',
+          jobId,
+          enqueuedAt,
+        },
+      };
+      return NextResponse.json(response, { status: 201 });
+    }
+
+    if (isPlaywrightProgrammableSlug(integration.slug)) {
+      const enqueuedAt = new Date().toISOString();
+      const jobId = await enqueuePlaywrightListingJob({
+        listingId: listing.id,
+        action: 'list',
+        source: 'api',
+      });
+      const response: ProductListingCreateResponse = {
+        ...listing,
+        queued: true,
+        queue: {
+          name: 'playwright-programmable-listings',
           jobId,
           enqueuedAt,
         },

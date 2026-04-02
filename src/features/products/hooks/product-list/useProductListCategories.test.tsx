@@ -146,4 +146,55 @@ describe('useProductListCategories', () => {
       })
     );
   });
+
+  it('defers the category batch endpoint until explicitly enabled', async () => {
+    apiGetMock.mockResolvedValue({
+      'catalog-1': [
+        {
+          id: 'category-1',
+          catalogId: 'catalog-1',
+          name_en: 'Keychains',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+    const { result, rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) =>
+        useProductListCategories({
+          data: [
+            {
+              ...createProduct(),
+              categoryId: 'category-1',
+              catalogId: 'catalog-1',
+            },
+          ],
+          nameLocale: 'name_en',
+          enabled,
+        }),
+      {
+        initialProps: { enabled: false },
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoryNameById.get('category-1')).toBeUndefined();
+    });
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+
+    rerender({ enabled: true });
+
+    await waitFor(() => {
+      expect(result.current.categoryNameById.get('category-1')).toBe('Keychains');
+    });
+
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/products/categories/batch?catalogIds=catalog-1',
+      expect.objectContaining({
+        timeout: 60_000,
+      })
+    );
+  });
 });

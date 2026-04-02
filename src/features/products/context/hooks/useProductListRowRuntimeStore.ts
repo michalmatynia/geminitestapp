@@ -7,6 +7,8 @@ export type ProductListRowRuntimeStoreState = Pick<
   | 'integrationBadgeStatuses'
   | 'traderaBadgeIds'
   | 'traderaBadgeStatuses'
+  | 'playwrightProgrammableBadgeIds'
+  | 'playwrightProgrammableBadgeStatuses'
   | 'queuedProductIds'
   | 'productAiRunStatusByProductId'
 >;
@@ -25,6 +27,8 @@ export const EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT: ProductListRowRuntimeConte
   integrationStatus: 'not_started',
   showTraderaBadge: false,
   traderaStatus: 'not_started',
+  showPlaywrightProgrammableBadge: false,
+  playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,
 });
 
@@ -53,6 +57,8 @@ const areProductListRowRuntimeSnapshotsEqual = (
   left.integrationStatus === right.integrationStatus &&
   left.showTraderaBadge === right.showTraderaBadge &&
   left.traderaStatus === right.traderaStatus &&
+  left.showPlaywrightProgrammableBadge === right.showPlaywrightProgrammableBadge &&
+  left.playwrightProgrammableStatus === right.playwrightProgrammableStatus &&
   areProductAiRunFeedbacksEqual(left.productAiRunFeedback, right.productAiRunFeedback);
 
 const areProductListRowRuntimeStoreStatesEqual = (
@@ -63,6 +69,8 @@ const areProductListRowRuntimeStoreStatesEqual = (
   left.integrationBadgeStatuses === right.integrationBadgeStatuses &&
   left.traderaBadgeIds === right.traderaBadgeIds &&
   left.traderaBadgeStatuses === right.traderaBadgeStatuses &&
+  left.playwrightProgrammableBadgeIds === right.playwrightProgrammableBadgeIds &&
+  left.playwrightProgrammableBadgeStatuses === right.playwrightProgrammableBadgeStatuses &&
   left.queuedProductIds === right.queuedProductIds &&
   left.productAiRunStatusByProductId === right.productAiRunStatusByProductId;
 
@@ -100,6 +108,9 @@ export const createProductListRowRuntimeStore = (
           (normalizedBaseProductId.length > 0 ? 'active' : 'not_started'),
         showTraderaBadge: state.traderaBadgeIds.has(productId),
         traderaStatus: state.traderaBadgeStatuses.get(productId) ?? 'not_started',
+        showPlaywrightProgrammableBadge: state.playwrightProgrammableBadgeIds.has(productId),
+        playwrightProgrammableStatus:
+          state.playwrightProgrammableBadgeStatuses.get(productId) ?? 'not_started',
         productAiRunFeedback: resolveProductAiRunFeedbackForList({
           productId,
           queuedProductIds: state.queuedProductIds,

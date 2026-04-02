@@ -706,6 +706,15 @@ export const traderaListingJobInputSchema = z.object({
 
 export type TraderaListingJobInput = z.infer<typeof traderaListingJobInputSchema>;
 
+export const playwrightListingJobInputSchema = z.object({
+  listingId: z.string(),
+  action: z.enum(['list', 'relist']),
+  source: z.enum(['manual', 'scheduler', 'api']).optional(),
+  jobId: z.string().optional(),
+});
+
+export type PlaywrightListingJobInput = z.infer<typeof playwrightListingJobInputSchema>;
+
 export const traderaCategoryRecordSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -845,6 +854,7 @@ export const integrationDefinitions = [
   { name: 'Allegro', slug: 'allegro' },
   { name: 'Baselinker', slug: 'baselinker' },
   { name: 'LinkedIn', slug: 'linkedin' },
+  { name: 'Playwright (Programmable)', slug: 'playwright-programmable' },
 ] as const;
 
 /**

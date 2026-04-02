@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -31,7 +31,14 @@ const adminQueryResultRef = {
 };
 
 const useLiteSettingsMapMock = vi.fn(() => liteQueryResultRef.current);
-const useSettingsMapMock = vi.fn(() => adminQueryResultRef.current);
+const useSettingsMapMock = vi.fn((options?: { scope?: string; enabled?: boolean }) =>
+  options?.enabled === false
+    ? {
+        ...adminQueryResultRef.current,
+        data: new Map<string, string>(),
+      }
+    : adminQueryResultRef.current
+);
 
 vi.mock('next/navigation', () => ({
   usePathname: () => pathnameRef.current,
@@ -47,9 +54,13 @@ vi.mock('@/shared/hooks/use-settings', async (importOriginal) => {
   };
 });
 
-function SettingsProbe(): React.JSX.Element {
+function SettingsProbe({
+  settingKey = 'missing',
+}: {
+  settingKey?: string;
+}): React.JSX.Element {
   const store = useSettingsStore();
-  const value = store.get('missing') ?? 'empty';
+  const value = store.get(settingKey) ?? 'empty';
   return (
     <div>
       <div data-testid='value'>{value}</div>
@@ -105,6 +116,42 @@ describe('SettingsStoreProvider', () => {
 
     expect(useLiteSettingsMapMock).toHaveBeenCalledWith({ enabled: false });
     expect(useSettingsMapMock).toHaveBeenCalledWith({ scope: 'light', enabled: false });
+  });
+
+  it('bootstraps admin mode from lite settings before hydrating the broader light scope', () => {
+    vi.useFakeTimers();
+    liteQueryResultRef.current = {
+      data: new Map<string, string>([['query_status_panel_enabled', 'true']]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+    adminQueryResultRef.current = {
+      data: new Map<string, string>([['admin_menu_favorites', '["products"]']]),
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: vi.fn(),
+    };
+
+    render(
+      <SettingsStoreProvider mode='admin'>
+        <SettingsProbe settingKey='admin_menu_favorites' />
+      </SettingsStoreProvider>
+    );
+
+    expect(useLiteSettingsMapMock).toHaveBeenCalledWith({ enabled: true });
+    expect(useSettingsMapMock).toHaveBeenLastCalledWith({ scope: 'light', enabled: false });
+    expect(screen.getByTestId('value')).toHaveTextContent('empty');
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(useSettingsMapMock).toHaveBeenLastCalledWith({ scope: 'light', enabled: true });
+    expect(screen.getByTestId('value')).toHaveTextContent('["products"]');
+    vi.useRealTimers();
   });
 
   it('falls back to an empty map when hydrated query data is not a Map instance', () => {

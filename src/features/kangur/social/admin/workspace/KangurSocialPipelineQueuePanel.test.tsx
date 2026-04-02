@@ -78,6 +78,44 @@ describe('KangurSocialPipelineQueuePanel', () => {
     vi.restoreAllMocks();
   });
 
+  it('defers the compact queue status bootstrap until after the initial mount', async () => {
+    vi.useFakeTimers();
+    apiGetMock.mockResolvedValueOnce({
+      deliveryMode: 'queue',
+      workerState: 'idle',
+      redisAvailable: true,
+      workerLocal: false,
+      running: true,
+      healthy: true,
+      processing: false,
+      activeCount: 0,
+      waitingCount: 1,
+      failedCount: 0,
+      completedCount: 2,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
+      isPaused: false,
+    });
+
+    try {
+      render(<KangurSocialPipelineQueuePanel variant='compact' />);
+
+      expect(apiGetMock).not.toHaveBeenCalled();
+
+      await act(async () => {
+        vi.advanceTimersByTime(1);
+        await Promise.resolve();
+      });
+
+      expect(apiGetMock).toHaveBeenCalledWith('/api/kangur/social-pipeline/status', {
+        timeout: 60_000,
+      });
+    } finally {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
   it('hides run now while the full queue panel already has active pipeline work', async () => {
     apiGetMock
       .mockResolvedValueOnce({

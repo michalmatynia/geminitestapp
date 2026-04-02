@@ -209,6 +209,8 @@ export function ContentSection({
         Write the primary campaign body with the shared rich-text editor.
       </div>
       <DocumentWysiwygEditor
+        engineInstance='filemaker_email'
+        showBrand
         value={draft.bodyHtml ?? ''}
         onChange={(value) => {
           updateCampaignDraft(setDraft, (current) => ({
@@ -217,9 +219,6 @@ export function ContentSection({
           }));
         }}
         placeholder='Write your campaign email...'
-        enableAdvancedTools
-        allowFontFamily
-        allowTextAlign
       />
       <FormField
         label='Campaign plain-text override'

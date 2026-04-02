@@ -29,7 +29,6 @@ import {
   useRuntimeState,
   useRuntimeActions,
 } from '../context';
-import { usePaletteWithTriggerButtons } from './ai-paths-settings/hooks/usePaletteWithTriggerButtons';
 import {
   CanvasRunControlNotice,
   CanvasSelectedWireDataPane,
@@ -43,6 +42,10 @@ type PaletteGroup = {
   title: string;
   types: NodeDefinition['type'][];
   icon: string;
+};
+
+type CanvasSidebarProps = {
+  palette: NodeDefinition[];
 };
 
 const readPortRuntimeValue = (
@@ -112,7 +115,7 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
   },
 ];
 
-export function CanvasSidebar(): React.JSX.Element {
+export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Element {
   const titleFieldId = React.useId();
   const descriptionFieldId = React.useId();
   const sourceConnectorDataId = React.useId();
@@ -135,7 +138,6 @@ export function CanvasSidebar(): React.JSX.Element {
   const { setPaletteCollapsed, togglePaletteGroup } = usePresetsActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen, setSimulationOpenNodeId } = useSelectionActions();
-  const palette: NodeDefinition[] = usePaletteWithTriggerButtons();
   const {
     handleDragStart,
     updateSelectedNode,

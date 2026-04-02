@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   useGraphActions,
@@ -69,6 +69,37 @@ export function useAiPathsSettingsState({
   } = useRuntimeActions();
   const { runtimeState, parserSamples, updaterSamples, pathDebugSnapshots, lastRunAt, lastError } =
     useRuntimeState();
+  const [triggerButtonsReady, setTriggerButtonsReady] = useState(false);
+
+  useEffect(() => {
+    if (activeTab !== 'canvas') {
+      setTriggerButtonsReady(false);
+      return;
+    }
+
+    if (triggerButtonsReady) return;
+
+    if (typeof window === 'undefined') {
+      setTriggerButtonsReady(true);
+      return;
+    }
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleHandle = window.requestIdleCallback(() => {
+        setTriggerButtonsReady(true);
+      });
+      return (): void => {
+        window.cancelIdleCallback?.(idleHandle);
+      };
+    }
+
+    const timeoutHandle = window.setTimeout(() => {
+      setTriggerButtonsReady(true);
+    }, 1);
+    return (): void => {
+      window.clearTimeout(timeoutHandle);
+    };
+  }, [activeTab, triggerButtonsReady]);
 
   const normalizeTriggerLabel = (value?: string | null): string =>
     value === 'Product Modal - Context Grabber'
@@ -159,6 +190,7 @@ export function useAiPathsSettingsState({
     fitToNodes,
     resetView,
   } = useAiPathsCanvasInteractions({
+    enabled: activeTab === 'canvas',
     isPathSwitching,
     confirmNodeSwitch: (nextNodeId) => confirmNodeSwitch(nextNodeId),
     confirm,
@@ -206,7 +238,9 @@ export function useAiPathsSettingsState({
     reportAiPathsError,
   });
 
-  const paletteWithTriggerButtons = usePaletteWithTriggerButtons();
+  const paletteWithTriggerButtons = usePaletteWithTriggerButtons({
+    enabled: activeTab === 'canvas' && triggerButtonsReady,
+  });
 
   const {
     parserSampleLoading,
@@ -296,6 +330,7 @@ export function useAiPathsSettingsState({
   useAiPathsRunHistory({
     activePathId,
     toast,
+    enabled: activeTab === 'canvas',
   });
 
   const handleCanonicalEdgesDetected = useCallback(

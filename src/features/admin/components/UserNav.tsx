@@ -2,6 +2,7 @@
 
 import { LogOut, LogIn, SparklesIcon } from 'lucide-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import { useState } from 'react';
 
 import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
@@ -26,14 +27,19 @@ export function UserNav(): React.ReactNode {
   const { setAiDrawerOpen } = useAdminLayoutActions();
   const settingsStore = useSettingsStore();
   const updateSettings = useUpdateSettingsBulk();
+  const [isOpen, setIsOpen] = useState(false);
 
   const parseEnabled = (value: string | undefined, fallback: boolean): boolean => {
     if (value === undefined) return fallback;
     return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
   };
 
-  const queryPanelEnabled = parseEnabled(settingsStore.get('query_status_panel_enabled'), false);
-  const queryPanelOpen = parseEnabled(settingsStore.get('query_status_panel_open'), false);
+  const queryPanelEnabled = isOpen
+    ? parseEnabled(settingsStore.get('query_status_panel_enabled'), false)
+    : false;
+  const queryPanelOpen = isOpen
+    ? parseEnabled(settingsStore.get('query_status_panel_open'), false)
+    : false;
   const triggerId = 'admin-user-nav-trigger';
   const contentId = 'admin-user-nav-content';
 
@@ -63,7 +69,7 @@ export function UserNav(): React.ReactNode {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           id={triggerId}
@@ -77,78 +83,80 @@ export function UserNav(): React.ReactNode {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent id={contentId} className='z-[95] w-56' align='end'>
-        <DropdownMenuLabel className='font-normal'>
-          <div className='flex flex-col space-y-1'>
-            <p className='text-sm font-medium leading-none'>{session.user?.name}</p>
-            <p className='text-xs leading-none text-muted-foreground'>{session.user?.email}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() => {
-            setAiDrawerOpen(true);
-          }}
-        >
-          <SparklesIcon className='mr-2 h-4 w-4' />
-          <span>AI warnings</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className='flex flex-col items-stretch gap-2'
-          onSelect={(event: Event) => event.preventDefault()}
-        >
-          <div className='text-xs font-medium text-muted-foreground'>Query Panel</div>
-          <ToggleRow
-            label='Enable Panel'
-            checked={queryPanelEnabled}
-            onCheckedChange={(checked: boolean): void =>
-              setQueryPanelSetting('query_status_panel_enabled', checked)
-            }
-            className='bg-transparent border-none p-0 hover:bg-transparent'
-            labelClassName='text-sm font-normal normal-case tracking-normal'
-          />
-          <ToggleRow
-            label='Open Panel'
-            checked={queryPanelOpen}
-            onCheckedChange={(checked: boolean): void =>
-              setQueryPanelSetting('query_status_panel_open', checked)
-            }
-            disabled={!queryPanelEnabled}
-            className='bg-transparent border-none p-0 hover:bg-transparent'
-            labelClassName='text-sm font-normal normal-case tracking-normal'
-          />
-          <div className='flex w-full justify-end'>
-            <Button
-              variant='outline'
-              size='sm'
-              className='h-7 px-2 text-xs'
-              onClick={() =>
-                updateSettings.mutate([
-                  { key: 'query_status_panel_enabled', value: 'false' },
-                  { key: 'query_status_panel_open', value: 'false' },
-                ])
+      {isOpen ? (
+        <DropdownMenuContent id={contentId} className='z-[95] w-56' align='end'>
+          <DropdownMenuLabel className='font-normal'>
+            <div className='flex flex-col space-y-1'>
+              <p className='text-sm font-medium leading-none'>{session.user?.name}</p>
+              <p className='text-xs leading-none text-muted-foreground'>{session.user?.email}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
+              setAiDrawerOpen(true);
+            }}
+          >
+            <SparklesIcon className='mr-2 h-4 w-4' />
+            <span>AI warnings</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className='flex flex-col items-stretch gap-2'
+            onSelect={(event: Event) => event.preventDefault()}
+          >
+            <div className='text-xs font-medium text-muted-foreground'>Query Panel</div>
+            <ToggleRow
+              label='Enable Panel'
+              checked={queryPanelEnabled}
+              onCheckedChange={(checked: boolean): void =>
+                setQueryPanelSetting('query_status_panel_enabled', checked)
               }
-            >
-              Switch Panel Off
-            </Button>
+              className='bg-transparent border-none p-0 hover:bg-transparent'
+              labelClassName='text-sm font-normal normal-case tracking-normal'
+            />
+            <ToggleRow
+              label='Open Panel'
+              checked={queryPanelOpen}
+              onCheckedChange={(checked: boolean): void =>
+                setQueryPanelSetting('query_status_panel_open', checked)
+              }
+              disabled={!queryPanelEnabled}
+              className='bg-transparent border-none p-0 hover:bg-transparent'
+              labelClassName='text-sm font-normal normal-case tracking-normal'
+            />
+            <div className='flex w-full justify-end'>
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-7 px-2 text-xs'
+                onClick={() =>
+                  updateSettings.mutate([
+                    { key: 'query_status_panel_enabled', value: 'false' },
+                    { key: 'query_status_panel_open', value: 'false' },
+                  ])
+                }
+              >
+                Switch Panel Off
+              </Button>
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <div className='flex items-center justify-between px-2 py-1.5'>
+            <span className='text-sm font-medium'>Appearance</span>
+            <ThemeToggleComponent />
           </div>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <div className='flex items-center justify-between px-2 py-1.5'>
-          <span className='text-sm font-medium'>Appearance</span>
-          <ThemeToggleComponent />
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => {
-            void signOut();
-          }}
-        >
-          <LogOut className='mr-2 h-4 w-4' />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              void signOut();
+            }}
+          >
+            <LogOut className='mr-2 h-4 w-4' />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      ) : null}
     </DropdownMenu>
   );
 }

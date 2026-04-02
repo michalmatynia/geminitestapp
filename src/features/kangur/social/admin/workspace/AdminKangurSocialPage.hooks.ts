@@ -15,8 +15,14 @@ import { useSocialModelTelemetry } from './hooks/useSocialModelTelemetry';
 import { KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT } from '@/features/kangur/social/shared/social-playwright-capture';
 import { parseDatetimeLocal } from './AdminKangurSocialPage.Constants';
 
-export function useAdminKangurSocialPage() {
-  const settings = useSocialSettings();
+type UseAdminKangurSocialPageOptions = {
+  preloadSettingsModalData?: boolean;
+};
+
+export function useAdminKangurSocialPage(options?: UseAdminKangurSocialPageOptions) {
+  const settings = useSocialSettings({
+    preloadSettingsModalData: options?.preloadSettingsModalData,
+  });
   const brainRoutingModelId = settings.brainModelOptions.effectiveModelId || null;
   const visionRoutingModelId = settings.visionModelOptions.effectiveModelId || null;
   const resolvedBrainModelId = settings.brainModelId || brainRoutingModelId;

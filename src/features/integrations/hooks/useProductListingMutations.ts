@@ -461,6 +461,9 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       if (queueName === 'tradera-listings') {
         setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
       }
+      if (queueName === 'playwright-programmable-listings') {
+        setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued');
+      }
       await invalidateProductListingsAndBadges(queryClient, productId);
     },
   });

@@ -84,6 +84,16 @@ const TraderaStatusButton = dynamic(
     loading: () => null,
   }
 );
+const PlaywrightStatusButton = dynamic(
+  () =>
+    import('./columns/buttons/PlaywrightStatusButton').then(
+      (mod: typeof import('./columns/buttons/PlaywrightStatusButton')) => mod.PlaywrightStatusButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 const CircleIconButton = (props: {
   onClick?: () => void;
@@ -379,12 +389,14 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
     onIntegrationsClick: handleClick,
     onExportSettingsClick,
   } = useProductListRowActionsContext();
-  const { showTriggerRunFeedback } = useProductListRowVisualsContext();
+  const { showTriggerRunFeedback, triggerButtonsReady = true } = useProductListRowVisualsContext();
   const {
     showMarketplaceBadge,
     integrationStatus: status,
     showTraderaBadge,
     traderaStatus,
+    showPlaywrightProgrammableBadge,
+    playwrightProgrammableStatus,
   } = useProductListRowRuntime(product.id, product.baseProductId);
 
   const queryClient = useQueryClient();
@@ -433,21 +445,30 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         onOpenIntegrations={(recoveryContext): void => handleClick(product, recoveryContext)}
         onOpenExportSettings={(): void => onExportSettingsClick(product)}
       />
-      <TriggerButtonBar
-        location='product_row'
-        entityType='product'
-        entityId={product.id}
-        getEntityJson={(): Record<string, unknown> =>
-          buildTriggeredProductEntityJson({
-            product,
-            values: {},
-          })}
-        showRunFeedback={showTriggerRunFeedback}
-        className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
-      />
+      {triggerButtonsReady ? (
+        <TriggerButtonBar
+          location='product_row'
+          entityType='product'
+          entityId={product.id}
+          getEntityJson={(): Record<string, unknown> =>
+            buildTriggeredProductEntityJson({
+              product,
+              values: {},
+            })}
+          showRunFeedback={showTriggerRunFeedback}
+          className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
+        />
+      ) : null}
       {showTraderaBadge && (
         <TraderaStatusButton
           status={traderaStatus}
+          prefetchListings={prefetchListings}
+          onOpenListings={(): void => handleClick(product)}
+        />
+      )}
+      {showPlaywrightProgrammableBadge && (
+        <PlaywrightStatusButton
+          status={playwrightProgrammableStatus}
           prefetchListings={prefetchListings}
           onOpenListings={(): void => handleClick(product)}
         />

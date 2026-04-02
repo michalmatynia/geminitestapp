@@ -432,12 +432,11 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                 />
               </FormField>
               <DocumentWysiwygEditor
+                engineInstance='filemaker_email'
+                showBrand
                 value={replyHtml}
                 onChange={setReplyHtml}
                 placeholder='Write your reply...'
-                enableAdvancedTools
-                allowFontFamily
-                allowTextAlign
               />
               <div className='flex justify-end'>
                 <Button

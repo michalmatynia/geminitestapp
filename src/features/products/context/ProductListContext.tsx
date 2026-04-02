@@ -62,6 +62,7 @@ const ProductListModalsContext = createContext<ProductListModalsContextType | nu
 
 type ProductListProviderValue = ProductListContextType & {
   triggerListingStatusHighlight: (productId: string) => void;
+  rowRuntimeReady: boolean;
 };
 
 type ProductListRuntimeBridgeProps = {
@@ -70,6 +71,7 @@ type ProductListRuntimeBridgeProps = {
   productAiRunStatusByProductId: ProductListContextType['productAiRunStatusByProductId'];
   rowRuntimeStore: ProductListRowRuntimeStore;
   triggerListingStatusHighlight: (productId: string) => void;
+  enabled: boolean;
 };
 
 function useProductListRuntimeBridge({
@@ -78,6 +80,7 @@ function useProductListRuntimeBridge({
   productAiRunStatusByProductId,
   rowRuntimeStore,
   triggerListingStatusHighlight,
+  enabled,
 }: ProductListRuntimeBridgeProps): void {
   const visibleProductIds = useMemo(
     () =>
@@ -92,12 +95,15 @@ function useProductListRuntimeBridge({
     integrationBadgeStatuses,
     traderaBadgeIds,
     traderaBadgeStatuses,
-  } = useIntegrationListingBadges(visibleProductIds);
+    playwrightProgrammableBadgeIds,
+    playwrightProgrammableBadgeStatuses,
+  } = useIntegrationListingBadges(visibleProductIds, { enabled });
 
   useProductListListingStatuses({
     data,
     integrationBadgeStatuses,
     traderaBadgeStatuses,
+    playwrightProgrammableBadgeStatuses,
     visibleProductIdSet,
     triggerJobCompletionHighlight: triggerListingStatusHighlight,
   });
@@ -108,12 +114,16 @@ function useProductListRuntimeBridge({
       integrationBadgeStatuses,
       traderaBadgeIds,
       traderaBadgeStatuses,
+      playwrightProgrammableBadgeIds,
+      playwrightProgrammableBadgeStatuses,
       queuedProductIds,
       productAiRunStatusByProductId,
     });
   }, [
     integrationBadgeIds,
     integrationBadgeStatuses,
+    playwrightProgrammableBadgeIds,
+    playwrightProgrammableBadgeStatuses,
     productAiRunStatusByProductId,
     queuedProductIds,
     rowRuntimeStore,
@@ -230,6 +240,8 @@ export function ProductListProvider({
       integrationBadgeStatuses: value.integrationBadgeStatuses,
       traderaBadgeIds: value.traderaBadgeIds,
       traderaBadgeStatuses: value.traderaBadgeStatuses,
+      playwrightProgrammableBadgeIds: value.playwrightProgrammableBadgeIds,
+      playwrightProgrammableBadgeStatuses: value.playwrightProgrammableBadgeStatuses,
       queuedProductIds: value.queuedProductIds,
       productAiRunStatusByProductId: value.productAiRunStatusByProductId,
     });
@@ -253,6 +265,7 @@ export function ProductListProvider({
     productAiRunStatusByProductId: value.productAiRunStatusByProductId,
     rowRuntimeStore,
     triggerListingStatusHighlight: value.triggerListingStatusHighlight,
+    enabled: value.rowRuntimeReady,
   });
 
   return (

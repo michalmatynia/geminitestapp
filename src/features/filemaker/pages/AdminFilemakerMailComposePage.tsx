@@ -343,12 +343,11 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
           </div>
 
           <DocumentWysiwygEditor
+            engineInstance='filemaker_email'
+            showBrand
             value={bodyHtml}
             onChange={setBodyHtml}
             placeholder='Write your email...'
-            enableAdvancedTools
-            allowFontFamily
-            allowTextAlign
           />
 
           {accountId ? (

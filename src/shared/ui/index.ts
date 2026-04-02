@@ -80,6 +80,8 @@ export type { FolderTreePanelProps } from './FolderTreePanel';
 export { FocusModeTogglePortal } from './FocusModeTogglePortal';
 export { MasterTreeSettingsButton } from './MasterTreeSettingsButton';
 export type { MasterTreeSettingsButtonProps } from './MasterTreeSettingsButton';
+export { TextEditorEngineBrandButton } from './TextEditorEngineBrandButton';
+export type { TextEditorEngineBrandButtonProps } from './TextEditorEngineBrandButton';
 export { Badge, badgeVariants } from './badge';
 export type { BadgeProps } from './badge';
 export { DataTableSortableHeader, DataTable } from './data-table';

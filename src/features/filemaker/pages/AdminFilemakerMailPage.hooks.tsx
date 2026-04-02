@@ -43,6 +43,9 @@ export interface MailPageState {
   threads: FilemakerMailThread[];
   selection: MailPageSelection;
   setSelection: React.Dispatch<React.SetStateAction<MailPageSelection>>;
+  selectedAccountId: MailPageSelection['accountId'];
+  selectedMailboxPath: MailPageSelection['mailboxPath'];
+  selectedPanel: MailPageSelection['panel'];
   isNavigationLoading: boolean;
   isThreadsLoading: boolean;
   isSavingAccount: boolean;
@@ -76,6 +79,7 @@ export interface MailPageState {
   tableActions: PanelAction[];
   handleSaveAccount: () => Promise<void>;
   handleSyncAccount: (accountId: string) => Promise<void>;
+  router: ReturnType<typeof useRouter>;
 }
 
 export function useAdminFilemakerMailPageState(): MailPageState {
@@ -615,6 +619,7 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     deepSearchQuery,
     setDeepSearchQuery,
     deepSearchResults,
+    setDeepSearchResults,
     isSearching,
     folderAllowlistValue,
     setFolderAllowlistValue,
@@ -625,6 +630,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     recentUnreadOnly,
     setRecentUnreadOnly,
     attentionAccounts,
+    selectedAccountId,
+    selectedMailboxPath,
+    selectedPanel,
     selectedAccount,
     selectedFolder,
     selectedAccountLabel,

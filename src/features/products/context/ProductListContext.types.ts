@@ -1,5 +1,6 @@
 import type {
   Catalog,
+  ProductAdvancedFilterPreset,
   PriceGroupWithDetails,
   ProductDraft,
   ProductWithImages,
@@ -58,6 +59,8 @@ export interface ProductListContextType {
   setEndDate: (value: string) => void;
   advancedFilter: string;
   activeAdvancedFilterPresetId: string | null;
+  advancedFilterPresets: ProductAdvancedFilterPreset[];
+  setAdvancedFilterPresets: (presets: ProductAdvancedFilterPreset[]) => Promise<void>;
   setAdvancedFilter: (value: string) => void;
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
@@ -97,6 +100,8 @@ export interface ProductListContextType {
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeIds: Set<string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
   productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
   categoryNameById: ReadonlyMap<string, string>;
@@ -180,6 +185,8 @@ export interface ProductListFiltersContextType {
   setEndDate: (value: string) => void;
   advancedFilter: string;
   activeAdvancedFilterPresetId: string | null;
+  advancedFilterPresets: ProductAdvancedFilterPreset[];
+  setAdvancedFilterPresets: (presets: ProductAdvancedFilterPreset[]) => Promise<void>;
   setAdvancedFilter: (value: string) => void;
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
@@ -245,6 +252,7 @@ export interface ProductListHeaderActionsContextType {
   activeDrafts: ProductDraft[];
   showTriggerRunFeedback: boolean;
   setShowTriggerRunFeedback: (show: boolean) => void;
+  triggerButtonsReady: boolean;
 }
 
 export interface ProductListRowActionsContextType {
@@ -267,6 +275,7 @@ export interface ProductListRowVisualsContextType {
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
   showTriggerRunFeedback: boolean;
+  triggerButtonsReady: boolean;
   imageExternalBaseUrl: string | null;
 }
 
@@ -275,6 +284,8 @@ export interface ProductListRowRuntimeContextType {
   integrationStatus: string;
   showTraderaBadge: boolean;
   traderaStatus: string;
+  showPlaywrightProgrammableBadge: boolean;
+  playwrightProgrammableStatus: string;
   productAiRunFeedback: ProductAiRunFeedback | null;
 }
 

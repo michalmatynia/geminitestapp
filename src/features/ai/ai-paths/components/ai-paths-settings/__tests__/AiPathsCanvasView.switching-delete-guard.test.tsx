@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
   AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
@@ -64,27 +64,27 @@ vi.mock('../../canvas-sidebar', () => ({
 }));
 
 vi.mock('../../cluster-presets-panel', () => ({
-  ClusterPresetsPanel: () => null,
+  ClusterPresetsPanel: () => <div data-testid='cluster-presets-panel' />,
 }));
 
 vi.mock('../../graph-model-debug-panel', () => ({
-  GraphModelDebugPanel: () => null,
+  GraphModelDebugPanel: () => <div data-testid='graph-model-debug-panel' />,
 }));
 
 vi.mock('../../run-history-panel', () => ({
-  RunHistoryPanel: () => null,
+  RunHistoryPanel: () => <div data-testid='run-history-panel' />,
 }));
 
 vi.mock('../../runtime-event-log-panel', () => ({
-  RuntimeEventLogPanel: () => null,
+  RuntimeEventLogPanel: () => <div data-testid='runtime-event-log-panel' />,
 }));
 
 vi.mock('../panels/AiPathsRuntimeAnalysis', () => ({
-  AiPathsRuntimeAnalysis: () => null,
+  AiPathsRuntimeAnalysis: () => <div data-testid='runtime-analysis-panel' />,
 }));
 
 vi.mock('../sections/AiPathsLiveLog', () => ({
-  AiPathsLiveLog: () => null,
+  AiPathsLiveLog: () => <div data-testid='live-log-panel' />,
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
@@ -94,6 +94,10 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
 }));
 
 describe('AiPathsCanvasView switch guard', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('loads canonical runtime-kernel controls without strict-native compatibility settings', async () => {
     mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([]);
     pageContextMock = {
@@ -178,7 +182,7 @@ describe('AiPathsCanvasView switch guard', () => {
         AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
         AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
       ],
-      { timeoutMs: 8_000, bypassCache: true }
+      { timeoutMs: 8_000 }
     );
   });
 
@@ -528,5 +532,91 @@ describe('AiPathsCanvasView switch guard', () => {
       nodeTypes: ['template', 'parser'],
       codeObjectResolverIds: ['resolver.path'],
     });
+  });
+
+  it('defers secondary sidebar and diagnostics panels until after the idle bootstrap', async () => {
+    vi.useFakeTimers();
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([]);
+    pageContextMock = {
+      activeTab: 'canvas',
+      isFocusMode: false,
+      renderActions: (actions: unknown) => actions,
+      confirmNodeSwitch: async () => true,
+      savePathConfig: vi.fn(async () => true),
+      saving: false,
+      setPathSettingsModalOpen: vi.fn(),
+      activePathId: 'path-main',
+      nodeValidationEnabled: true,
+      updateAiPathsValidation: vi.fn(),
+      validationPreflightReport: {
+        score: 100,
+        failedRules: 0,
+        blocked: false,
+        shouldWarn: false,
+        findings: [],
+        recommendations: [],
+        schemaVersion: 1,
+        skippedRuleIds: [],
+        moduleImpact: {},
+      },
+      handleOpenNodeValidator: vi.fn(),
+      docsTooltipsEnabled: true,
+      setDocsTooltipsEnabled: vi.fn(),
+      handleTogglePathLock: vi.fn(),
+      isPathLocked: false,
+      handleRunNodeValidationCheck: vi.fn(),
+      toast: vi.fn(),
+      autoSaveLabel: '',
+      autoSaveVariant: 'neutral',
+      lastRunAt: null,
+      isPathNameEditing: false,
+      renameDraft: '',
+      setRenameDraft: vi.fn(),
+      commitPathNameEdit: vi.fn(),
+      cancelPathNameEdit: vi.fn(),
+      startPathNameEdit: vi.fn(),
+      pathName: 'Path Main',
+      pathSwitchOptions: [{ label: 'Path Main', value: 'path-main' }],
+      handleSwitchPath: vi.fn(),
+      isPathSwitching: false,
+      lastError: null,
+      persistLastError: vi.fn(async () => undefined),
+      incrementLoadNonce: vi.fn(),
+      handleClearConnectorData: vi.fn(async () => undefined),
+      handleClearHistory: vi.fn(async () => undefined),
+      handleDeleteSelectedNode: vi.fn(),
+      isPathActive: true,
+      handleTogglePathActive: vi.fn(),
+      hasHistory: false,
+      selectionScopeMode: 'portion',
+      setSelectionScopeMode: vi.fn(),
+      dataContractReport: { byNodeId: {} },
+      setDataContractInspectorNodeId: vi.fn(),
+      paths: [
+        { id: 'path-main', name: 'Path Main', createdAt: '2026-03-05', updatedAt: '2026-03-05' },
+      ],
+      pathConfigs: { 'path-main': { id: 'path-main', extensions: {} } },
+      persistPathSettings: vi.fn(async () => undefined),
+      palette: [],
+    };
+
+    render(<AiPathsCanvasView />);
+
+    expect(screen.getByTestId('canvas-board')).toBeInTheDocument();
+    expect(screen.getByTestId('canvas-sidebar')).toBeInTheDocument();
+    expect(screen.queryByTestId('cluster-presets-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-event-log-panel')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-analysis-panel')).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+
+    expect(screen.getByTestId('cluster-presets-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('graph-model-debug-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('run-history-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('runtime-event-log-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('runtime-analysis-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('live-log-panel')).toBeInTheDocument();
   });
 });

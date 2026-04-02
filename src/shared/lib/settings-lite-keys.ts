@@ -1,4 +1,6 @@
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
+import { CMS_DOMAIN_SETTINGS_KEY } from '@/shared/contracts/cms';
+import { CMS_THEME_SETTINGS_KEY } from '@/shared/contracts/cms-theme';
 import {
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
@@ -19,6 +21,11 @@ import {
 } from '@/shared/contracts/master-folder-tree';
 import { CLIENT_LOGGING_KEYS, OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
+import {
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+  PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,
+  PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
+} from '@/shared/lib/products/constants';
 import { folderTreeInstanceValues } from '@/shared/utils/folder-tree-profiles-v2';
 
 const FOLDER_TREE_UI_STATE_V2_LITE_KEYS = folderTreeInstanceValues.map(
@@ -30,6 +37,10 @@ const FOLDER_TREE_PROFILE_V2_LITE_KEYS = folderTreeInstanceValues.map(
 
 export const LITE_SETTINGS_KEYS: readonly string[] = [
   APP_FONT_SET_SETTING_KEY,
+  'admin_menu_favorites',
+  'admin_menu_section_colors',
+  'admin_menu_custom_enabled',
+  'admin_menu_custom_nav',
   'background_sync_enabled',
   'background_sync_interval_seconds',
   'query_status_panel_enabled',
@@ -40,6 +51,8 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   'noteSettings:editorMode',
   'case_resolver_default_document_format_v1',
   'case_resolver_settings_v1',
+  CMS_DOMAIN_SETTINGS_KEY,
+  CMS_THEME_SETTINGS_KEY,
   KANGUR_DAILY_THEME_SETTINGS_KEY,
   KANGUR_DAWN_THEME_SETTINGS_KEY,
   KANGUR_SUNSET_THEME_SETTINGS_KEY,
@@ -50,9 +63,13 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   KANGUR_TEST_SUITES_SETTING_KEY,
   KANGUR_TEST_QUESTIONS_SETTING_KEY,
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
+  'kangur_social_settings_v1',
   ...FOLDER_TREE_UI_STATE_V2_LITE_KEYS,
   ...FOLDER_TREE_PROFILE_V2_LITE_KEYS,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+  PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
+  PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,
   CLIENT_LOGGING_KEYS.tags,
   OBSERVABILITY_LOGGING_KEYS.infoEnabled,

@@ -39,6 +39,34 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
+type DeferredRuntimeKernelSettingsTarget = {
+  requestIdleCallback?: (callback: () => void) => number;
+  cancelIdleCallback?: (handle: number) => void;
+  setTimeout: (handler: () => void, timeout?: number) => number;
+  clearTimeout: (handle: number) => void;
+};
+
+function scheduleDeferredCanvasViewTask(
+  target: DeferredRuntimeKernelSettingsTarget,
+  onReady: () => void
+): () => void {
+  if (typeof target.requestIdleCallback === 'function') {
+    const idleHandle = target.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      target.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = target.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    target.clearTimeout(timeoutHandle);
+  };
+}
+
 export function AiPathsCanvasView(): React.JSX.Element | null {
   const router = useRouter();
   const {
@@ -51,6 +79,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     saving,
     setPathSettingsModalOpen,
     activePathId,
+    diagnosticsReady,
     nodeValidationEnabled: nodeValidationEnabledFromContext,
     updateAiPathsValidation,
     validationPreflightReport,
@@ -90,6 +119,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     paths,
     pathConfigs,
     persistPathSettings,
+    palette,
   } = useAiPathsSettingsPageContext();
   const canvasContainerRef = React.useRef<HTMLDivElement | null>(null);
   const isRightSidebarCollapsed = false;
@@ -118,11 +148,18 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const persistLastErrorSafe = persistLastError ?? (async (): Promise<void> => undefined);
   const bumpLoadNonce = incrementLoadNonce ?? (() => undefined);
   const confirmNodeSwitchSafe = confirmNodeSwitch ?? (async (): Promise<boolean> => true);
+  const validationDiagnosticsReady = diagnosticsReady !== false;
   const nodeValidationEnabled = nodeValidationEnabledFromContext !== false;
-  const validationBlocked = Boolean(validationPreflightReport?.blocked);
-  const validationWarn = Boolean(validationPreflightReport?.shouldWarn);
-  const validationScore = validationPreflightReport?.score ?? 0;
-  const validationFailedRules = validationPreflightReport?.failedRules ?? 0;
+  const validationBlocked =
+    validationDiagnosticsReady && Boolean(validationPreflightReport?.blocked);
+  const validationWarn =
+    validationDiagnosticsReady && Boolean(validationPreflightReport?.shouldWarn);
+  const validationScore = validationDiagnosticsReady
+    ? (validationPreflightReport?.score ?? 0)
+    : null;
+  const validationFailedRules = validationDiagnosticsReady
+    ? (validationPreflightReport?.failedRules ?? 0)
+    : null;
   const selectedCount = selectedNodeIdsCtx.length;
   const removeSelection = handleDeleteSelectedNode ?? (() => undefined);
   const canDeleteSelection = !isPathSwitching && (selectedCount > 0 || Boolean(selectedEdgeIdCtx));
@@ -132,7 +169,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const activePath = activePathId ?? null;
   const switchPath = handleSwitchPath ?? (() => undefined);
   const pathOptions = Array.isArray(pathSwitchOptions) ? pathSwitchOptions : [];
-  const nodeDiagnosticsById = dataContractReport?.byNodeId ?? {};
+  const nodeDiagnosticsById = validationDiagnosticsReady ? dataContractReport?.byNodeId ?? {} : {};
   const focusDataContractNode = setDataContractInspectorNodeId ?? (() => undefined);
   const [runtimeKernelNodeTypesDraft, setRuntimeKernelNodeTypesDraft] = React.useState<string>('');
   const [runtimeKernelPersistedNodeTypes, setRuntimeKernelPersistedNodeTypes] = React.useState<
@@ -145,6 +182,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   >([]);
   const [runtimeKernelLoading, setRuntimeKernelLoading] = React.useState(true);
   const [runtimeKernelSaving, setRuntimeKernelSaving] = React.useState(false);
+  const [secondaryPanelsReady, setSecondaryPanelsReady] = React.useState(false);
   const [pathRuntimeKernelNodeTypesDraft, setPathRuntimeKernelNodeTypesDraft] =
     React.useState<string>('');
   const [pathRuntimeKernelPersistedNodeTypes, setPathRuntimeKernelPersistedNodeTypes] =
@@ -163,7 +201,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
           AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
           AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
         ],
-        { timeoutMs: 8_000, bypassCache: true }
+        { timeoutMs: 8_000 }
       );
       const settingsMap = new Map(records.map((record) => [record.key, record.value]));
       const nodeTypes =
@@ -186,8 +224,33 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   }, []);
 
   React.useEffect(() => {
-    void loadRuntimeKernelSettings();
+    if (typeof window === 'undefined') {
+      void loadRuntimeKernelSettings();
+      return;
+    }
+
+    return scheduleDeferredCanvasViewTask(window, () => {
+      void loadRuntimeKernelSettings();
+    });
   }, [loadRuntimeKernelSettings]);
+
+  React.useEffect(() => {
+    if (activeTab !== 'canvas') {
+      setSecondaryPanelsReady(false);
+      return;
+    }
+
+    if (secondaryPanelsReady) return;
+
+    if (typeof window === 'undefined') {
+      setSecondaryPanelsReady(true);
+      return;
+    }
+
+    return scheduleDeferredCanvasViewTask(window, () => {
+      setSecondaryPanelsReady(true);
+    });
+  }, [activeTab, secondaryPanelsReady]);
 
   const runtimeKernelDraftNodeTypes = React.useMemo(
     () => parseRuntimeKernelNodeTypes(runtimeKernelNodeTypesDraft) ?? [],
@@ -434,6 +497,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     status={
                       !nodeValidationEnabled
                         ? 'Validation: off'
+                        : !validationDiagnosticsReady
+                          ? 'Validation: loading'
                         : validationBlocked
                           ? 'Validation: blocked'
                           : validationWarn
@@ -443,6 +508,8 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     variant={
                       !nodeValidationEnabled
                         ? 'neutral'
+                        : !validationDiagnosticsReady
+                          ? 'neutral'
                         : validationBlocked
                           ? 'error'
                           : validationWarn
@@ -453,14 +520,28 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     className='font-medium'
                   />
                   <StatusBadge
-                    status={`Validation score: ${validationScore}`}
+                    status={
+                      validationDiagnosticsReady
+                        ? `Validation score: ${validationScore}`
+                        : 'Validation score: loading'
+                    }
                     variant='neutral'
                     size='sm'
                     className='font-medium'
                   />
                   <StatusBadge
-                    status={`Failed rules: ${validationFailedRules}`}
-                    variant={validationFailedRules > 0 ? 'warning' : 'success'}
+                    status={
+                      validationDiagnosticsReady
+                        ? `Failed rules: ${validationFailedRules}`
+                        : 'Failed rules: loading'
+                    }
+                    variant={
+                      !validationDiagnosticsReady
+                        ? 'neutral'
+                        : (validationFailedRules ?? 0) > 0
+                          ? 'warning'
+                          : 'success'
+                    }
                     size='sm'
                     className='font-medium'
                   />
@@ -883,17 +964,21 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         {!isRightSidebarCollapsed && (
           <div className='w-[400px] flex-shrink-0 border-l border-border/60'>
             <div className='h-full space-y-4 overflow-y-auto p-4'>
-              <CanvasSidebar />
-              <ClusterPresetsPanel />
-              <GraphModelDebugPanel />
-              <RunHistoryPanel />
+              <CanvasSidebar palette={palette} />
+              {secondaryPanelsReady ? (
+                <>
+                  <ClusterPresetsPanel />
+                  <GraphModelDebugPanel />
+                  <RunHistoryPanel />
+                </>
+              ) : null}
             </div>
           </div>
         )}
       </div>
 
-      {!isFocusMode && <RuntimeEventLogPanel />}
-      {!isFocusMode && (
+      {!isFocusMode && secondaryPanelsReady && <RuntimeEventLogPanel />}
+      {!isFocusMode && secondaryPanelsReady && (
         <div className={`${UI_GRID_RELAXED_CLASSNAME} lg:grid-cols-2`}>
           <AiPathsRuntimeAnalysis />
           <AiPathsLiveLog />

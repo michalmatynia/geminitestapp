@@ -85,4 +85,52 @@ describe('useIntegrationOperations listing badges query', () => {
       );
     });
   });
+
+  it('keeps listing badge polling cold when explicitly disabled', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    renderHook(
+      () =>
+        useIntegrationListingBadges([' product-2 ', 'product-1', 'product-2'], {
+          enabled: false,
+        }),
+      {
+        wrapper,
+      }
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+  });
+
+  it('parses programmable Playwright marketplace statuses alongside Base and Tradera badges', async () => {
+    apiGetMock.mockResolvedValue({
+      'product-1': {
+        base: 'active',
+        tradera: 'queued',
+        playwrightProgrammable: ' Processing ',
+      },
+    });
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useIntegrationListingBadges(['product-1']), {
+      wrapper,
+    });
+
+    await waitFor(() => {
+      expect(result.current.playwrightProgrammableBadgeIds.has('product-1')).toBe(true);
+      expect(result.current.playwrightProgrammableBadgeStatuses.get('product-1')).toBe('processing');
+    });
+
+    expect(result.current.integrationBadgeStatuses.get('product-1')).toBe('active');
+    expect(result.current.traderaBadgeStatuses.get('product-1')).toBe('queued');
+  });
 });

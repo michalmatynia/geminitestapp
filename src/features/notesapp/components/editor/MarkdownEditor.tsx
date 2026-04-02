@@ -9,7 +9,7 @@ import {
   useNoteEditorContext,
   useNoteFilesContext,
 } from '@/features/notesapp/context/NoteFormContext';
-import { useToast } from '@/shared/ui';
+import { TextEditorEngineBrandButton, useToast } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
 import { renderMarkdownToHtml } from '../../utils';
@@ -86,8 +86,11 @@ export function MarkdownEditor(): React.JSX.Element {
   );
 
   return (
-    <MarkdownSplitEditorProvider value={editorContextValue}>
-      <MarkdownSplitEditor />
-    </MarkdownSplitEditorProvider>
+    <div className='relative'>
+      <MarkdownSplitEditorProvider value={editorContextValue}>
+        <MarkdownSplitEditor />
+      </MarkdownSplitEditorProvider>
+      <TextEditorEngineBrandButton instance='notes_app' />
+    </div>
   );
 }

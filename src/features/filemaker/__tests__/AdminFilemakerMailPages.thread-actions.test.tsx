@@ -116,6 +116,14 @@ describe('AdminFilemakerMail pages thread actions flows', () => {
     render(<AdminFilemakerMailThreadPage />);
 
     await screen.findByText('Alice');
+    expect(
+      screen.getByRole('link', {
+        name: 'Open Filemaker Email text editor settings',
+      })
+    ).toHaveAttribute(
+      'href',
+      '/admin/settings/text-editors#text-editor-instance-filemaker_email'
+    );
     fireEvent.change(screen.getByLabelText('Subject'), {
       target: { value: 'Re: Hello again' },
     });

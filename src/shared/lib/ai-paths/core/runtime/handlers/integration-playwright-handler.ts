@@ -8,6 +8,7 @@ import { playwrightNodeApi, type PlaywrightNodeRunSnapshot } from '@/shared/lib/
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { normalizePlaywrightConfig } from '../../playwright/default-config';
+import { buildCaptureRouteUrl } from '../../playwright/capture-defaults';
 import { coerceInput, parseJsonSafe, renderTemplate } from '../../utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -191,9 +192,28 @@ export const handlePlaywright: NodeHandler = async ({
       : {};
     const normalizedCapture = normalizeCaptureConfig(playwrightConfig.capture);
     const personaId = playwrightConfig.personaId?.trim();
+
+    // Build the input payload, injecting config-defined capture routes when the
+    // captures port is not wired (batch-capture nodes configured inline).
+    const inputPayload = buildInputPayload(nodeInputs);
+    if (!inputPayload['captures'] && playwrightConfig.captureRoutes?.length) {
+      const baseUrl = playwrightConfig.captureBaseUrl?.trim() ?? '';
+      inputPayload['captures'] = playwrightConfig.captureRoutes.map((route) => ({
+        id: route.id,
+        title: route.title,
+        url: buildCaptureRouteUrl(baseUrl, route.path),
+        selector: route.selector ?? null,
+        waitForMs: route.waitForMs ?? null,
+        waitForSelectorMs: route.waitForSelectorMs ?? null,
+      }));
+    }
+    if (!inputPayload['appearanceMode'] && playwrightConfig.captureAppearanceMode?.trim()) {
+      inputPayload['appearanceMode'] = playwrightConfig.captureAppearanceMode.trim();
+    }
+
     const enqueueResult = await playwrightNodeApi.enqueue({
       script,
-      input: buildInputPayload(nodeInputs),
+      input: inputPayload,
       ...(startUrl ? { startUrl } : {}),
       timeoutMs: playwrightConfig.timeoutMs ?? 120000,
       waitForResult: playwrightConfig.waitForResult ?? true,

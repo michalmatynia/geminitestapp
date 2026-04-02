@@ -117,6 +117,34 @@ export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object
 
 const OPEN_KEY = 'adminMenuOpenIds.v2';
 
+type DeferredAdminMenuSettingsTarget = {
+  requestIdleCallback?: (callback: () => void) => number;
+  cancelIdleCallback?: (handle: number) => void;
+  setTimeout: (handler: () => void, timeout?: number) => number;
+  clearTimeout: (handle: number) => void;
+};
+
+const scheduleDeferredAdminMenuSettingsHydration = (
+  target: DeferredAdminMenuSettingsTarget,
+  onReady: () => void
+): (() => void) => {
+  if (typeof target.requestIdleCallback === 'function') {
+    const idleHandle = target.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      target.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = target.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    target.clearTimeout(timeoutHandle);
+  };
+};
+
 export default function Menu(): React.ReactNode {
   const { isMenuCollapsed } = useAdminLayoutState();
   const { setIsMenuCollapsed, setIsProgrammaticallyCollapsed } = useAdminLayoutActions();
@@ -129,6 +157,7 @@ export default function Menu(): React.ReactNode {
   const [closedAutoIds, setClosedAutoIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [menuSettingsReady, setMenuSettingsReady] = useState(false);
   const deferredQuery = useDeferredValue(query);
 
   const { data: chatbotSessions = [], refetch: refetchChatbotSessions } = useChatbotSessions({
@@ -172,6 +201,18 @@ export default function Menu(): React.ReactNode {
     if (!pendingHref) return;
     if (isActiveHref(pathname, pendingHref, false)) setPendingHref(null);
   }, [pathname, pendingHref]);
+
+  useEffect(() => {
+    if (menuSettingsReady) return;
+    if (typeof window === 'undefined') {
+      setMenuSettingsReady(true);
+      return;
+    }
+
+    return scheduleDeferredAdminMenuSettingsHydration(window, () => {
+      setMenuSettingsReady(true);
+    });
+  }, [menuSettingsReady]);
 
   const handleOpenChat = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>): void => {
@@ -222,25 +263,31 @@ export default function Menu(): React.ReactNode {
   settingsStoreRef.current = settingsStore;
   const settingsMap = settingsStore.map;
   const favoriteIds = useMemo<string[]>(() => {
+    if (!menuSettingsReady) return [];
     const raw = settingsStoreRef.current.get(ADMIN_MENU_FAVORITES_KEY);
     const parsed = parseAdminMenuJson<string[]>(raw, []);
     return parsed.filter((id: string): id is string => typeof id === 'string' && id.length > 0);
-  }, [settingsMap]);
+  }, [menuSettingsReady, settingsMap]);
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const sectionColors = useMemo<Record<string, string>>(() => {
+    if (!menuSettingsReady) return {};
     const raw = settingsStoreRef.current.get(ADMIN_MENU_SECTION_COLORS_KEY);
     const parsed = parseAdminMenuJson<Record<string, string> | null>(raw, null);
     return parsed && typeof parsed === 'object' ? parsed : {};
-  }, [settingsMap]);
+  }, [menuSettingsReady, settingsMap]);
   const customEnabled = useMemo(
-    () => parseAdminMenuBoolean(settingsStoreRef.current.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false),
-    [settingsMap]
+    () =>
+      menuSettingsReady
+        ? parseAdminMenuBoolean(settingsStoreRef.current.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false)
+        : false,
+    [menuSettingsReady, settingsMap]
   );
   const customNav = useMemo<AdminMenuCustomNode[]>(() => {
+    if (!menuSettingsReady) return [];
     const raw = settingsStoreRef.current.get(ADMIN_MENU_CUSTOM_NAV_KEY);
     const parsed = parseAdminMenuJson<AdminMenuCustomNode[]>(raw, []);
     return normalizeAdminMenuCustomNav(parsed);
-  }, [settingsMap]);
+  }, [menuSettingsReady, settingsMap]);
 
   const baseNav = useMemo(
     () => buildAdminNav({ onOpenChat: handleOpenChat, onCreatePageClick: handleCreatePageClick }),
@@ -302,19 +349,21 @@ export default function Menu(): React.ReactNode {
   );
   const allGroupIds = useMemo(() => collectGroupIds(navWithFavorites), [navWithFavorites]);
 
-  const [lastPathnameForClosed, setLastPathnameForClosed] = useState(pathname);
-  if (pathname !== lastPathnameForClosed) {
-    setLastPathnameForClosed(pathname);
-    if (!normalizedQuery) {
-      setClosedAutoIds((prev: Set<string>) => {
-        const next = new Set<string>();
-        prev.forEach((id: string) => {
-          if (autoOpenIds.has(id)) next.add(id);
-        });
-        return next;
+  const lastPathnameForClosedRef = useRef(pathname);
+  useEffect(() => {
+    if (pathname === lastPathnameForClosedRef.current) return;
+
+    lastPathnameForClosedRef.current = pathname;
+    if (normalizedQuery) return;
+
+    setClosedAutoIds((prev: Set<string>) => {
+      const next = new Set<string>();
+      prev.forEach((id: string) => {
+        if (autoOpenIds.has(id)) next.add(id);
       });
-    }
-  }
+      return next;
+    });
+  }, [autoOpenIds, normalizedQuery, pathname]);
 
   const effectiveOpenIds = useMemo(() => {
     if (normalizedQuery) {

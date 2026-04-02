@@ -388,7 +388,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   };
 
   const handleSynthEnvelopeSliderChange = (
-    controlId: 'attackMs' | 'decayMs' | 'sustainLevel' | 'releaseMs',
+    controlId: string,
     nextValue: number
   ): void => {
     switch (controlId) {

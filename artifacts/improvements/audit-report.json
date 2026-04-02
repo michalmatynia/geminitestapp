@@ -1,6 +1,6 @@
 {
   "kind": "general-improvement-report",
-  "generatedAt": "2026-03-27T13:36:31.760Z",
+  "generatedAt": "2026-04-02T10:00:51.157Z",
   "phase": "audit",
   "executionMode": "executed",
   "allowWrite": false,
@@ -25,7 +25,7 @@
       ],
       "instructions": [],
       "script": "products:audit:missing-parameters",
-      "durationMs": 10475
+      "durationMs": 2837
     },
     {
       "id": "repo-quality-api-error-sources",
@@ -41,7 +41,7 @@
       ],
       "instructions": [],
       "script": "check:api-error-sources",
-      "durationMs": 3395
+      "durationMs": 283
     },
     {
       "id": "repo-quality-canonical-sitewide",
@@ -54,7 +54,7 @@
       "outputs": [],
       "instructions": [],
       "script": "canonical:check:sitewide",
-      "durationMs": 11671
+      "durationMs": 1615
     }
   ]
 }

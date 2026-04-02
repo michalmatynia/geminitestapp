@@ -6,6 +6,7 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 const {
   baseQuickExportButtonMock,
   dynamicComponentIndex,
+  playwrightStatusButtonMock,
   triggerButtonBarMock,
   traderaStatusButtonMock,
   useProductListRowActionsContextMock,
@@ -15,6 +16,7 @@ const {
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
   dynamicComponentIndex: { current: 0 },
+  playwrightStatusButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   traderaStatusButtonMock: vi.fn(),
   useProductListRowActionsContextMock: vi.fn(),
@@ -58,6 +60,10 @@ vi.mock('next/dynamic', () => ({
       if (stubIndex === 2) {
         traderaStatusButtonMock(props);
         return <button type='button'>TR</button>;
+      }
+      if (stubIndex === 3) {
+        playwrightStatusButtonMock(props);
+        return <button type='button'>PW</button>;
       }
       return null;
     };
@@ -192,6 +198,7 @@ describe('ProductListMobileCards', () => {
       categoryNameById: new Map([['category-1', 'Keychains']]),
       thumbnailSource: 'file',
       showTriggerRunFeedback: true,
+      triggerButtonsReady: true,
       imageExternalBaseUrl: null,
     });
     useProductListRowRuntimeMock.mockReturnValue({
@@ -199,6 +206,8 @@ describe('ProductListMobileCards', () => {
       integrationStatus: 'completed',
       showTraderaBadge: false,
       traderaStatus: 'not_started',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
       productAiRunFeedback: null,
     });
 
@@ -227,6 +236,8 @@ describe('ProductListMobileCards', () => {
       integrationStatus: 'completed',
       showTraderaBadge: false,
       traderaStatus: 'not_started',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
       productAiRunFeedback: {
         runId: 'run-completed',
         status: 'completed',
@@ -276,5 +287,46 @@ describe('ProductListMobileCards', () => {
     render(<ProductListMobileCards />);
 
     expect(screen.getByText('Imported')).toBeInTheDocument();
+  });
+
+  it('renders the programmable Playwright status button on mobile cards', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: false,
+      traderaStatus: 'not_started',
+      showPlaywrightProgrammableBadge: true,
+      playwrightProgrammableStatus: 'queued',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByRole('button', { name: 'PW' })).toBeInTheDocument();
+    expect(playwrightStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'queued',
+        prefetchListings: expect.any(Function),
+        onOpenListings: expect.any(Function),
+      })
+    );
+  });
+
+  it('keeps mobile trigger buttons deferred until row runtime is ready', () => {
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      priceGroups: [],
+      currencyCode: 'USD',
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+      thumbnailSource: 'file',
+      showTriggerRunFeedback: true,
+      triggerButtonsReady: false,
+      imageExternalBaseUrl: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.queryByTestId('trigger-button-bar')).toBeNull();
+    expect(triggerButtonBarMock).not.toHaveBeenCalled();
   });
 });

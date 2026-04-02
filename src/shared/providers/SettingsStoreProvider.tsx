@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import React, { createContext, useContext, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLiteSettingsMap, useSettingsMap } from '@/shared/hooks/use-settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -50,6 +50,31 @@ const parseNumber = (value: string | undefined, fallback?: number): number | und
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const scheduleDeferredAdminSettingsHydration = (onReady: () => void): (() => void) => {
+  if (typeof window === 'undefined') {
+    onReady();
+    return (): void => {
+      // no-op
+    };
+  }
+
+  if (typeof window.requestIdleCallback === 'function') {
+    const idleHandle = window.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      window.cancelIdleCallback(idleHandle);
+    };
+  }
+
+  const timeoutHandle = window.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    window.clearTimeout(timeoutHandle);
+  };
+};
+
 const resolveCurrentPathname = (pathname: string | null): string => {
   if (typeof window !== 'undefined' && typeof window.location.pathname === 'string') {
     return window.location.pathname;
@@ -71,6 +96,20 @@ const areSettingsMapsEqual = (
   return true;
 };
 
+const mergeSettingsMaps = (
+  base: ReadonlyMap<string, string>,
+  override: ReadonlyMap<string, string>
+): Map<string, string> => {
+  if (base.size === 0) return new Map(override);
+  if (override.size === 0) return new Map(base);
+
+  const merged = new Map(base);
+  override.forEach((value, key) => {
+    merged.set(key, value);
+  });
+  return merged;
+};
+
 export function SettingsStoreProvider({
   children,
   mode = 'lite',
@@ -90,19 +129,73 @@ export function SettingsStoreProvider({
   const isAdminRoute = currentPathname.startsWith('/admin');
   const shouldSuppressLiteQuery = suppressOwnQuery || (!useAdmin && isAdminRoute);
   const shouldSuppressAdminQuery = suppressOwnQuery;
+  const [shouldHydrateAdminSettings, setShouldHydrateAdminSettings] = useState(false);
+
+  useEffect(() => {
+    if (!shouldUseAdminSettings || shouldSuppressAdminQuery) {
+      if (shouldHydrateAdminSettings) {
+        setShouldHydrateAdminSettings(false);
+      }
+      return;
+    }
+    if (shouldHydrateAdminSettings) return;
+
+    return scheduleDeferredAdminSettingsHydration(() => {
+      setShouldHydrateAdminSettings(true);
+    });
+  }, [
+    shouldHydrateAdminSettings,
+    shouldSuppressAdminQuery,
+    shouldUseAdminSettings,
+  ]);
+
   const adminQuery = useSettingsMap({
     scope: 'light',
-    enabled: shouldUseAdminSettings && !shouldSuppressAdminQuery,
+    enabled: shouldUseAdminSettings && !shouldSuppressAdminQuery && shouldHydrateAdminSettings,
   });
   const liteQuery = useLiteSettingsMap({
-    enabled: !shouldUseAdminSettings && !shouldSuppressLiteQuery,
+    enabled: !shouldSuppressLiteQuery,
   });
+
   const settingsQuery = shouldUseAdminSettings ? adminQuery : liteQuery;
-  const mapData = settingsQuery.data;
-  const isLoading = settingsQuery.isLoading;
-  const isFetching = settingsQuery.isFetching;
-  const error = settingsQuery.error ?? null;
-  const refetch = settingsQuery.refetch;
+  const mergedAdminMap = useMemo(() => {
+    if (!shouldUseAdminSettings) return emptyMap;
+
+    const liteMap = liteQuery.data instanceof Map ? liteQuery.data : emptyMap;
+    const fullMap = adminQuery.data instanceof Map ? adminQuery.data : emptyMap;
+    return mergeSettingsMaps(liteMap, fullMap);
+  }, [adminQuery.data, liteQuery.data, shouldUseAdminSettings]);
+
+  const mapData = shouldUseAdminSettings ? mergedAdminMap : settingsQuery.data;
+  const isLoading = shouldUseAdminSettings
+    ? liteQuery.isLoading && mergedAdminMap.size === 0
+    : settingsQuery.isLoading;
+  const isFetching = shouldUseAdminSettings
+    ? liteQuery.isFetching || adminQuery.isFetching
+    : settingsQuery.isFetching;
+  const error = shouldUseAdminSettings
+    ? liteQuery.error ?? (mergedAdminMap.size === 0 ? adminQuery.error : null) ?? null
+    : settingsQuery.error ?? null;
+  const refetch = useMemo(
+    () => () => {
+      if (shouldUseAdminSettings) {
+        if (!shouldHydrateAdminSettings) {
+          setShouldHydrateAdminSettings(true);
+        }
+        void liteQuery.refetch();
+        void adminQuery.refetch();
+        return;
+      }
+      void settingsQuery.refetch();
+    },
+    [
+      adminQuery,
+      liteQuery,
+      settingsQuery,
+      shouldHydrateAdminSettings,
+      shouldUseAdminSettings,
+    ]
+  );
   const stableMapRef = useRef<Map<string, string>>(emptyMap);
   const stableMap = useMemo(() => {
     const nextMap = mapData instanceof Map ? mapData : emptyMap;
@@ -132,7 +225,7 @@ export function SettingsStoreProvider({
       getNumber: (key: string, fallback?: number): number | undefined =>
         parseNumber(map.get(key), fallback),
       refetch: (): void => {
-        void refetch();
+        refetch();
       },
     };
   }, [error, isLoading, refetch, stableMap]);

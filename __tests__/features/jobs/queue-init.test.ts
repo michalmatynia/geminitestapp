@@ -62,6 +62,7 @@ vi.mock('@/server/queues/kangur', () => ({
 }));
 vi.mock('@/server/queues/filemaker', () => ({
   startFilemakerEmailCampaignQueue: vi.fn(),
+  startFilemakerEmailCampaignSchedulerQueue: vi.fn(),
 }));
 
 describe('queue-init', () => {

@@ -13,6 +13,16 @@ export const TRADERA_SETTINGS_KEYS = {
   selectorProfile: 'tradera_selector_profile',
 } as const;
 
+export const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selling/new';
+export const TRADERA_LEGACY_LISTING_FORM_URL =
+  'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
+
+export const normalizeTraderaListingFormUrl = (value: string | null | undefined): string => {
+  const trimmed = value?.trim();
+  if (!trimmed) return TRADERA_DIRECT_LISTING_FORM_URL;
+  return trimmed === TRADERA_LEGACY_LISTING_FORM_URL ? TRADERA_DIRECT_LISTING_FORM_URL : trimmed;
+};
+
 export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   defaultDurationHours: 72,
   autoRelistEnabled: true,
@@ -20,7 +30,7 @@ export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   schedulerEnabled: false,
   schedulerIntervalMs: 5 * 60 * 1000,
   allowSimulatedSuccess: false,
-  listingFormUrl: 'https://www.tradera.com/sell/item/new',
+  listingFormUrl: TRADERA_DIRECT_LISTING_FORM_URL,
   selectorProfile: 'default',
 };
 
@@ -78,8 +88,9 @@ export const resolveTraderaSystemSettings = (lookup: SettingLookup): TraderaSyst
       lookup.get(TRADERA_SETTINGS_KEYS.allowSimulatedSuccess),
       defaults.allowSimulatedSuccess
     ),
-    listingFormUrl:
-      lookup.get(TRADERA_SETTINGS_KEYS.listingFormUrl)?.trim() || defaults.listingFormUrl,
+    listingFormUrl: normalizeTraderaListingFormUrl(
+      lookup.get(TRADERA_SETTINGS_KEYS.listingFormUrl) ?? defaults.listingFormUrl
+    ),
     selectorProfile:
       lookup.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() || defaults.selectorProfile,
   };

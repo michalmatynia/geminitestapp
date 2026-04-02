@@ -251,9 +251,6 @@ export const getMarketplaceButtonClass = (
   if (FAILURE_STATUSES.has(normalized)) {
     return 'border-rose-400/70 bg-rose-500/15 text-rose-100 hover:border-rose-300/80 hover:bg-rose-500/25';
   }
-  if (marketplace === 'tradera') {
-    return 'border-cyan-400/70 bg-cyan-500/15 text-cyan-100 hover:border-cyan-300/80 hover:bg-cyan-500/25';
-  }
   if (marketplace === 'playwright') {
     return 'border-fuchsia-400/70 bg-fuchsia-500/15 text-fuchsia-100 hover:border-fuchsia-300/80 hover:bg-fuchsia-500/25';
   }

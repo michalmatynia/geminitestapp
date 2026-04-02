@@ -9,7 +9,13 @@ import { internalError } from '@/shared/errors/app-error';
 type ProductListingsModalViewContextValue = {
   product: ProductWithImages;
   onClose: () => void;
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  onStartListing?:
+    | ((
+        integrationId: string,
+        connectionId: string,
+        options?: { autoSubmit?: boolean }
+      ) => void)
+    | undefined;
   filterIntegrationSlug?: string | null | undefined;
   onListingsUpdated?: (() => void) | undefined;
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;

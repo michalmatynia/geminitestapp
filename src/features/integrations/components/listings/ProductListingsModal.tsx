@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { ExportLogViewer } from '@/features/integrations/components/listings/ExportLogViewer';
 import {
   BASE_INTEGRATION_SLUGS,
+  PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
 } from '@/features/integrations/constants/slugs';
 import {
@@ -35,7 +36,13 @@ import { ProductListingsLoading } from './product-listings-modal/ProductListings
 import { ProductListingsStartPanel } from './product-listings-modal/ProductListingsStartPanel';
 
 interface ProductListingsModalProps extends EntityModalProps<ProductWithImages> {
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  onStartListing?:
+    | ((
+        integrationId: string,
+        connectionId: string,
+        options?: { autoSubmit?: boolean }
+      ) => void)
+    | undefined;
   filterIntegrationSlug?: string | null | undefined;
   onListingsUpdated?: (() => void) | undefined;
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
@@ -43,6 +50,17 @@ interface ProductListingsModalProps extends EntityModalProps<ProductWithImages> 
 
 const normalizeSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
+
+const resolveIntegrationScopeLabel = (
+  filterIntegrationSlug: string | null | undefined
+): string | null => {
+  const filter = normalizeSlug(filterIntegrationSlug);
+  if (!filter) return null;
+  if (BASE_INTEGRATION_SLUGS.has(filter)) return 'Base.com';
+  if (TRADERA_INTEGRATION_SLUGS.has(filter)) return 'Tradera';
+  if (filter === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'Playwright';
+  return filterIntegrationSlug?.trim() || null;
+};
 
 const matchesIntegrationSlug = (
   listingSlug: string,
@@ -76,11 +94,10 @@ function ProductListingsModalContent(): React.JSX.Element {
       : listings;
   }, [listings, filterIntegrationSlug]);
 
+  const integrationScopeLabel = resolveIntegrationScopeLabel(filterIntegrationSlug);
   const isBaseFilter = BASE_INTEGRATION_SLUGS.has(normalizeSlug(filterIntegrationSlug));
-  const statusTargetLabel: string = isBaseFilter
-    ? 'Base.com'
-    : (filterIntegrationSlug ?? 'integration');
-  const canStartListing: boolean = Boolean(onStartListing) && !filterIntegrationSlug;
+  const statusTargetLabel: string = integrationScopeLabel ?? 'integration';
+  const canStartListing: boolean = Boolean(onStartListing);
   const productListingsViewContextValue: ProductListingsViewContextValue = useMemo(
     () => ({
       filteredListings,
@@ -91,9 +108,12 @@ function ProductListingsModalContent(): React.JSX.Element {
     }),
     [filterIntegrationSlug, filteredListings, isBaseFilter, statusTargetLabel]
   );
+  const modalTitle = integrationScopeLabel
+    ? `${integrationScopeLabel} - ${productName}`
+    : `Integrations - ${productName}`;
 
   return (
-    <DetailModal isOpen={true} onClose={onClose} title={`Integrations - ${productName}`} size='xl'>
+    <DetailModal isOpen={true} onClose={onClose} title={modalTitle} size='xl'>
       <ProductListingsConfirmDialogs />
 
       <div className='space-y-4'>

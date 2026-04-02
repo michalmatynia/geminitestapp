@@ -9,12 +9,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   adminLayoutMock,
   captureExceptionMock,
+  readOptionalRequestHeadersMock,
   readOptionalServerAuthSessionMock,
   readOptionalRequestCookiesMock,
   redirectMock,
 } = vi.hoisted(() => ({
   adminLayoutMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   captureExceptionMock: vi.fn(),
+  readOptionalRequestHeadersMock: vi.fn(),
   readOptionalServerAuthSessionMock: vi.fn(),
   readOptionalRequestCookiesMock: vi.fn(),
   redirectMock: vi.fn(),
@@ -36,6 +38,10 @@ vi.mock('@/shared/lib/request/optional-cookies', () => ({
   readOptionalRequestCookies: readOptionalRequestCookiesMock,
 }));
 
+vi.mock('@/shared/lib/request/optional-headers', () => ({
+  readOptionalRequestHeaders: readOptionalRequestHeadersMock,
+}));
+
 vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: captureExceptionMock,
@@ -47,6 +53,7 @@ describe('admin app layout', () => {
     vi.resetModules();
     vi.clearAllMocks();
     adminLayoutMock.mockImplementation(({ children }: { children: ReactNode }) => <>{children}</>);
+    readOptionalRequestHeadersMock.mockResolvedValue(null);
     readOptionalServerAuthSessionMock.mockResolvedValue({
       user: {
         id: 'user-1',
@@ -89,6 +96,36 @@ describe('admin app layout', () => {
       undefined
     );
     expect(readOptionalRequestCookiesMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses the forwarded admin session header without calling server auth again', async () => {
+    readOptionalRequestHeadersMock.mockResolvedValue(
+      new Headers({
+        'x-admin-layout-session':
+          '%7B%22user%22%3A%7B%22id%22%3A%22user-edge%22%2C%22name%22%3A%22Edge%20Admin%22%2C%22email%22%3A%22edge%40example.com%22%2C%22role%22%3A%22admin%22%2C%22roleLevel%22%3A100%2C%22isElevated%22%3Atrue%2C%22roleAssigned%22%3Atrue%2C%22permissions%22%3A%5B%22settings.manage%22%5D%2C%22accountDisabled%22%3Afalse%2C%22accountBanned%22%3Afalse%7D%7D',
+      })
+    );
+
+    const { default: Layout } = await import('@/app/(admin)/layout');
+
+    const layout = await Layout({
+      children: <div data-testid='admin-content'>admin</div>,
+    });
+    render(layout);
+
+    expect(readOptionalServerAuthSessionMock).not.toHaveBeenCalled();
+    expect(adminLayoutMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canReadAdminSettings: true,
+        session: expect.objectContaining({
+          user: expect.objectContaining({
+            id: 'user-edge',
+            email: 'edge@example.com',
+          }),
+        }),
+      }),
+      undefined
+    );
   });
 
   it('captures cookie read errors and falls back to the default menu state', async () => {

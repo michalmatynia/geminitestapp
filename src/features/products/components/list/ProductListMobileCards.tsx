@@ -62,6 +62,17 @@ const BaseQuickExportButton = dynamic(
   }
 );
 
+const TraderaQuickListButton = dynamic(
+  () =>
+    import('./columns/buttons/TraderaQuickListButton').then(
+      (mod: typeof import('./columns/buttons/TraderaQuickListButton')) => mod.TraderaQuickListButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const TraderaStatusButton = dynamic(
   () =>
     import('./columns/buttons/TraderaStatusButton').then(
@@ -365,8 +376,19 @@ const renderProductListMobileCard = ({
           status={status}
           prefetchListings={() => prefetchListings(product.id)}
           showMarketplaceBadge={showMarketplaceBadge}
-          onOpenIntegrations={(recoveryContext) => onIntegrationsClick(product, recoveryContext)}
+          onOpenIntegrations={(recoveryContext) =>
+            onIntegrationsClick(product, recoveryContext, 'baselinker')
+          }
           onOpenExportSettings={() => onExportSettingsClick(product)}
+        />
+        <TraderaQuickListButton
+          product={product}
+          prefetchListings={() => prefetchListings(product.id)}
+          onOpenIntegrations={(recoveryContext) =>
+            onIntegrationsClick(product, recoveryContext, 'tradera')
+          }
+          showTraderaBadge={showTraderaBadge}
+          traderaStatus={traderaStatus}
         />
 
         {triggerButtonsReady ? (
@@ -386,9 +408,12 @@ const renderProductListMobileCard = ({
 
         {showTraderaBadge && (
           <TraderaStatusButton
+            productId={product.id}
             status={traderaStatus}
             prefetchListings={() => prefetchListings(product.id)}
-            onOpenListings={() => onIntegrationsClick(product)}
+            onOpenListings={(recoveryContext) =>
+              onIntegrationsClick(product, recoveryContext, 'tradera')
+            }
           />
         )}
 
@@ -396,7 +421,9 @@ const renderProductListMobileCard = ({
           <PlaywrightStatusButton
             status={playwrightProgrammableStatus}
             prefetchListings={() => prefetchListings(product.id)}
-            onOpenListings={() => onIntegrationsClick(product)}
+            onOpenListings={() =>
+              onIntegrationsClick(product, undefined, 'playwright-programmable')
+            }
           />
         )}
       </div>

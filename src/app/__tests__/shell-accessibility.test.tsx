@@ -22,7 +22,14 @@ vi.mock('@/features/kangur/public', () => ({
 }));
 
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
-  getFrontPageSetting: vi.fn(async () => null),
+  resolveFrontPageSelection: vi.fn(async () => ({
+    enabled: false,
+    setting: null,
+    publicOwner: 'cms',
+    redirectPath: null,
+    source: 'disabled',
+    fallbackReason: null,
+  })),
   shouldApplyFrontPageAppSelection: () => false,
 }));
 

@@ -101,6 +101,8 @@ describe('ProductFilters Component', () => {
     setEndDate: vi.fn(),
     advancedFilter: '',
     activeAdvancedFilterPresetId: null,
+    advancedFilterPresets: [],
+    setAdvancedFilterPresets: vi.fn(),
     setAdvancedFilter: vi.fn(),
     setAdvancedFilterState: vi.fn(),
     filtersCollapsedByDefault: false,
@@ -214,6 +216,7 @@ describe('ProductFilters Component', () => {
             value={{
               ...(mockContextValue as ProductListContextType),
               activeAdvancedFilterPresetId: 'preset-1',
+              advancedFilterPresets: mockPreferences.advancedFilterPresets,
               setAdvancedFilterState,
             }}
           >
@@ -266,6 +269,7 @@ describe('ProductFilters Component', () => {
           <ProductListProvider
             value={{
               ...(mockContextValue as ProductListContextType),
+              advancedFilterPresets: mockPreferences.advancedFilterPresets,
               setAdvancedFilterState,
             }}
           >

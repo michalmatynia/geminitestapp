@@ -6,6 +6,7 @@ import type {
   BaseInventory,
   CategoryMappingWithDetails,
   IntegrationWithConnections,
+  TraderaDefaultConnectionPreferenceResponse,
 } from '@/shared/contracts/integrations';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { api, ApiError } from '@/shared/lib/api-client';
@@ -100,6 +101,29 @@ export function useDefaultExportConnection(): SingleQuery<BaseDefaultConnectionP
       queryKey,
       tags: ['integrations', 'connection'],
       description: 'Loads integrations default export connection.',
+    },
+  });
+}
+
+export function useDefaultTraderaConnection(): SingleQuery<TraderaDefaultConnectionPreferenceResponse> {
+  const queryKey = integrationKeys.selection.traderaDefaultConnection();
+  const queryFn = async (): Promise<TraderaDefaultConnectionPreferenceResponse> =>
+    api.get<TraderaDefaultConnectionPreferenceResponse>(
+      '/api/v2/integrations/exports/tradera/default-connection'
+    );
+
+  return createSingleQueryV2({
+    id: 'default-tradera-connection',
+    queryKey,
+    queryFn,
+    meta: {
+      source: 'shared.hooks.useDefaultTraderaConnection',
+      operation: 'detail',
+      resource: 'integrations.default-tradera-connection',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'tradera', 'connection'],
+      description: 'Loads integrations default Tradera connection.',
     },
   });
 }

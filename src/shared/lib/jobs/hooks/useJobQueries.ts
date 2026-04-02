@@ -17,7 +17,7 @@ export function useIntegrationJobs(): ListQuery<ProductJob> {
   const queryKey = jobKeys.integrations();
   return createListQueryV2({
     queryKey,
-    queryFn: getIntegrationJobs,
+    queryFn: ({ signal }) => getIntegrationJobs(signal),
     refetchInterval: (query: Query<ProductJob[], Error, ProductJob[], readonly unknown[]>) => {
       const data = query.state.data;
       if (!Array.isArray(data)) return 5000;

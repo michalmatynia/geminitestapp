@@ -8,6 +8,7 @@ describe('settings-lite-keys', () => {
     expect(LITE_SETTINGS_KEYS).toContain('admin_menu_section_colors');
     expect(LITE_SETTINGS_KEYS).toContain('admin_menu_custom_enabled');
     expect(LITE_SETTINGS_KEYS).toContain('admin_menu_custom_nav');
+    expect(LITE_SETTINGS_KEYS).toContain('front_page_app');
   });
 
   it('includes the CMS, Social, and Products bootstrap keys used on slow admin routes', () => {

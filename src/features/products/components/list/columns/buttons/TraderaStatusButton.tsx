@@ -2,24 +2,47 @@
 
 import React from 'react';
 
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { readPersistedTraderaQuickListFeedback } from './traderaQuickListFeedback';
 
-import { getMarketplaceButtonClass } from '../product-column-utils';
+import { FAILURE_STATUSES, getMarketplaceButtonClass, normalizeMarketplaceStatus } from '../product-column-utils';
 
 export function TraderaStatusButton(props: {
+  productId: string;
   status: string;
   prefetchListings: () => void;
-  onOpenListings: () => void;
+  onOpenListings: (recoveryContext?: ProductListingsRecoveryContext) => void;
 }): React.JSX.Element {
-  const { status, prefetchListings, onOpenListings } = props;
-
-  const label = `Manage Tradera listing (${status}).`;
+  const { productId, status, prefetchListings, onOpenListings } = props;
+  const normalizedStatus = normalizeMarketplaceStatus(status);
+  const isFailureState = FAILURE_STATUSES.has(normalizedStatus);
+  const persistedFeedback = isFailureState
+    ? readPersistedTraderaQuickListFeedback(productId)
+    : null;
+  const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
+    ? {
+      source:
+        normalizedStatus === 'auth_required' || normalizedStatus === 'needs_login'
+          ? 'tradera_quick_export_auth_required'
+          : 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: normalizedStatus,
+      runId: persistedFeedback?.runId ?? null,
+      requestId: persistedFeedback?.requestId ?? null,
+      integrationId: persistedFeedback?.integrationId ?? null,
+      connectionId: persistedFeedback?.connectionId ?? null,
+    }
+    : undefined;
+  const label = isFailureState
+    ? `Open Tradera recovery options (${status}).`
+    : `Manage Tradera listing (${status}).`;
 
   return (
     <Button
       type='button'
-      onClick={onOpenListings}
+      onClick={() => onOpenListings(recoveryContext)}
       onMouseEnter={prefetchListings}
       onFocus={prefetchListings}
       variant='ghost'

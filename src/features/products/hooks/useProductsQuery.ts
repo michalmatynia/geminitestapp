@@ -160,8 +160,8 @@ export function useProducts(
   options?: UseProductsOptions
 ): ListQuery<ProductWithImages> {
   const queryKey = QUERY_KEYS.products.list(filters);
-  const queryFn = async (): Promise<ProductWithImages[]> => {
-    const data = await getProducts(filters);
+  const queryFn = async (context: { signal: AbortSignal }): Promise<ProductWithImages[]> => {
+    const data = await getProducts(filters, context.signal);
     return z.array(productSchema).parse(data) as ProductWithImages[];
   };
 
@@ -193,7 +193,8 @@ export function useProductsCount(
 ): SingleQuery<number> {
   const id = JSON.stringify(filters);
   const queryKey = QUERY_KEYS.products.count(filters);
-  const queryFn = async (): Promise<number> => countProducts(filters);
+  const queryFn = async (context: { signal: AbortSignal }): Promise<number> =>
+    countProducts(filters, context.signal);
 
   return createSingleQueryV2({
     id,
@@ -241,9 +242,11 @@ export function useProductsWithCount(
   const query = createPaginatedListQueryV2<ProductWithImages>({
     id: JSON.stringify(filters) + ':paged',
     queryKey,
-    queryFn: async () => {
+    queryFn: async (context) => {
       try {
-        const { products, total } = parseProductsPagedResult(await getProductsWithCount(filters));
+        const { products, total } = parseProductsPagedResult(
+          await getProductsWithCount(filters, context.signal)
+        );
         return { items: products, total };
       } catch (error) {
         logClientCatch(error, {
@@ -297,10 +300,10 @@ export function useProductsWithCount(
 
     void prefetchQueryV2(queryClient, {
       queryKey: nextQueryKey,
-      queryFn: async () => {
+      queryFn: async (context) => {
         try {
           const { products, total } = parseProductsPagedResult(
-            await getProductsWithCount(nextFilters)
+            await getProductsWithCount(nextFilters, context.signal)
           );
           return { items: products, total };
         } catch (error) {

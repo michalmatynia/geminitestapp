@@ -2,22 +2,16 @@ import { mkdir, readdir, stat, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 
 import { internalError } from '@/shared/errors/app-error';
+import {
+  TRADERA_COOKIE_ACCEPT_SELECTORS,
+  TRADERA_LOGIN_SUCCESS_SELECTORS,
+} from '@/features/integrations/services/tradera-listing/config';
 
 import type { Locator, Page } from 'playwright';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
-export const TRADERA_SUCCESS_SELECTOR = [
-  'a[href*="logout"]',
-  'a:has-text("Logga ut")',
-  'a:has-text("Logout")',
-  'a:has-text("Mina sidor")',
-  'a:has-text("My pages")',
-  'button[aria-label*="Account"]',
-  'button[aria-label*="Profile"]',
-  'a[href*="/profile"]',
-  'a[href*="/my"]',
-].join(', ');
+export const TRADERA_SUCCESS_SELECTOR = TRADERA_LOGIN_SUCCESS_SELECTORS.join(', ');
 
 export const TRADERA_ERROR_SELECTOR = [
   '[data-testid*="error"]',
@@ -216,6 +210,26 @@ export const createTraderaBrowserTestUtils = (input: {
     }
   };
 
+  const acceptCookieConsent = async (): Promise<boolean> => {
+    for (const selector of TRADERA_COOKIE_ACCEPT_SELECTORS) {
+      const locator = input.page.locator(selector).first();
+      const count = await safeCount(locator, `Cookie consent ${selector}`).catch(() => 0);
+      if (!count) continue;
+      const visible = await safeIsVisible(locator, `Cookie consent ${selector}`).catch(
+        () => false
+      );
+      if (!visible) continue;
+      try {
+        await humanizedClick(locator);
+        await input.page.waitForTimeout(600);
+        return true;
+      } catch (error) {
+        logClientError(error);
+      }
+    }
+    return false;
+  };
+
   return {
     safeWaitForSelector,
     safeWaitFor,
@@ -228,6 +242,7 @@ export const createTraderaBrowserTestUtils = (input: {
     humanizedPause,
     humanizedClick,
     humanizedFill,
+    acceptCookieConsent,
     successSelector: TRADERA_SUCCESS_SELECTOR,
     errorSelector: TRADERA_ERROR_SELECTOR,
   };

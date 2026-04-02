@@ -45,6 +45,8 @@ const attachTimingHeaders = (
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
+const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
+
 const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadgeKey | null => {
   const normalized = (slug ?? '').trim().toLowerCase();
   if (isCanonicalBaseIntegrationSlug(normalized)) return 'base';
@@ -153,6 +155,15 @@ const buildPayload = async (
   };
 
   const byProduct = new Map<string, MarketplaceBadgeEntry>();
+  const candidateMetaByKey = new Map<
+    string,
+    {
+      status: string;
+      updatedAtMs: number;
+      rank: number;
+      success: boolean;
+    }
+  >();
   const assembleStart = performance.now();
   for (const listing of listings) {
     const marketplace =
@@ -163,22 +174,50 @@ const buildPayload = async (
     if (!marketplace) continue;
 
     const normalizedStatus = normalizeStatus(listing.status);
+    const candidateKey = `${listing.productId}:${marketplace}`;
     const current = byProduct.get(listing.productId) ?? {};
-    const currentStatus = current[marketplace];
-    if (!currentStatus) {
+    const currentMeta = candidateMetaByKey.get(candidateKey);
+    const nextMeta = {
+      status: normalizedStatus || 'unknown',
+      updatedAtMs: Date.parse(listing.updatedAt ?? '') || 0,
+      rank: statusRank[normalizedStatus] ?? -1,
+      success: SUCCESS_STATUSES.has(normalizedStatus),
+    };
+
+    if (!currentMeta) {
       byProduct.set(listing.productId, {
         ...current,
-        [marketplace]: normalizedStatus || 'unknown',
+        [marketplace]: nextMeta.status,
       });
+      candidateMetaByKey.set(candidateKey, nextMeta);
       continue;
     }
-    const currentRank = statusRank[currentStatus] ?? -1;
-    const nextRank = statusRank[normalizedStatus] ?? -1;
-    if (nextRank > currentRank) {
+
+    const shouldReplace = (() => {
+      if (currentMeta.success !== nextMeta.success) {
+        return nextMeta.success;
+      }
+
+      if (!currentMeta.success && !nextMeta.success) {
+        if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+          return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+        }
+        return nextMeta.rank > currentMeta.rank;
+      }
+
+      if (nextMeta.rank !== currentMeta.rank) {
+        return nextMeta.rank > currentMeta.rank;
+      }
+
+      return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+    })();
+
+    if (shouldReplace) {
       byProduct.set(listing.productId, {
         ...current,
-        [marketplace]: normalizedStatus || 'unknown',
+        [marketplace]: nextMeta.status,
       });
+      candidateMetaByKey.set(candidateKey, nextMeta);
     }
   }
   if (timings) {

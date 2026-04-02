@@ -74,6 +74,17 @@ const BaseQuickExportButton = dynamic(
   }
 );
 
+const TraderaQuickListButton = dynamic(
+  () =>
+    import('./columns/buttons/TraderaQuickListButton').then(
+      (mod: typeof import('./columns/buttons/TraderaQuickListButton')) => mod.TraderaQuickListButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const TraderaStatusButton = dynamic(
   () =>
     import('./columns/buttons/TraderaStatusButton').then(
@@ -442,8 +453,19 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         status={status}
         prefetchListings={prefetchListings}
         showMarketplaceBadge={showMarketplaceBadge}
-        onOpenIntegrations={(recoveryContext): void => handleClick(product, recoveryContext)}
+        onOpenIntegrations={(recoveryContext): void =>
+          handleClick(product, recoveryContext, 'baselinker')
+        }
         onOpenExportSettings={(): void => onExportSettingsClick(product)}
+      />
+      <TraderaQuickListButton
+        product={product}
+        prefetchListings={prefetchListings}
+        onOpenIntegrations={(recoveryContext): void =>
+          handleClick(product, recoveryContext, 'tradera')
+        }
+        showTraderaBadge={showTraderaBadge}
+        traderaStatus={traderaStatus}
       />
       {triggerButtonsReady ? (
         <TriggerButtonBar
@@ -461,16 +483,19 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
       ) : null}
       {showTraderaBadge && (
         <TraderaStatusButton
+          productId={product.id}
           status={traderaStatus}
           prefetchListings={prefetchListings}
-          onOpenListings={(): void => handleClick(product)}
+          onOpenListings={(recoveryContext): void =>
+            handleClick(product, recoveryContext, 'tradera')
+          }
         />
       )}
       {showPlaywrightProgrammableBadge && (
         <PlaywrightStatusButton
           status={playwrightProgrammableStatus}
           prefetchListings={prefetchListings}
-          onOpenListings={(): void => handleClick(product)}
+          onOpenListings={(): void => handleClick(product, undefined, 'playwright-programmable')}
         />
       )}
     </div>

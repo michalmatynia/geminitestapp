@@ -38,7 +38,7 @@ const kangurAiTutorComposerPath = path.join(
 );
 const kangurParentDashboardAiTutorWidgetPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.tsx'
+  'src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx'
 );
 const kangurHomeActionsWidgetPath = path.join(
   process.cwd(),

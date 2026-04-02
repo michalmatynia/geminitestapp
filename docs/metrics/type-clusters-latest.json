@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-31T03:40:00.983Z",
+  "generatedAt": "2026-04-02T15:08:24.764Z",
   "status": "ok",
   "scanner": {
     "name": "scan-type-clusters",
@@ -18,16 +18,317 @@
     "minClusterSize": 2
   },
   "summary": {
-    "filesScanned": 8986,
-    "exportedDeclarationsScanned": 5668,
-    "candidateDeclarationsScanned": 5647,
-    "exactShapeClusters": 0,
-    "nearShapeClusters": 0,
-    "clustersAfterFilters": 0,
-    "declarationsInClusters": 0,
-    "highestRiskScore": 0
+    "filesScanned": 9090,
+    "exportedDeclarationsScanned": 5731,
+    "candidateDeclarationsScanned": 5710,
+    "exactShapeClusters": 5,
+    "nearShapeClusters": 3,
+    "clustersAfterFilters": 8,
+    "declarationsInClusters": 16,
+    "highestRiskScore": 13
   },
-  "clusters": [],
+  "clusters": [
+    {
+      "clusterId": "near-0001",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 13,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur",
+        "shared"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "47f9b03eda02",
+        "memberCount": 2,
+        "preview": "prop:description?:string; prop:title?:string"
+      },
+      "declarations": [
+        {
+          "name": "TextEditorEngineSettingsMeta",
+          "kind": "type",
+          "path": "src/shared/lib/text-editor-engine/types.ts",
+          "line": 26,
+          "domain": "shared",
+          "usageCount": 2
+        },
+        {
+          "name": "LessonCopyOverride",
+          "kind": "type",
+          "path": "src/features/kangur/lessons/lesson-catalog-i18n.overrides.ts",
+          "line": 9,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0002",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 12,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur",
+        "shared:contracts"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "a64b1e223761",
+        "memberCount": 7,
+        "preview": "prop:description?:string; prop:id:string; prop:path:string; prop:selector?:string; prop:title:string; prop:waitForMs?:number; prop:waitForSelectorMs?:number"
+      },
+      "declarations": [
+        {
+          "name": "PlaywrightCaptureRoute",
+          "kind": "type",
+          "path": "src/shared/contracts/playwright.ts",
+          "line": 113,
+          "domain": "shared:contracts",
+          "usageCount": 2
+        },
+        {
+          "name": "KangurSocialCapturePreset",
+          "kind": "type",
+          "path": "src/features/kangur/social/shared/social-capture-presets.ts",
+          "line": 3,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0003",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "type-expression",
+        "normalizedShapeHash": "4003905b8de3",
+        "memberCount": 1,
+        "preview": "'all' | 'draft' | 'scheduled' | 'published' | 'failed'"
+      },
+      "declarations": [
+        {
+          "name": "KangurSocialPostListStatus",
+          "kind": "type",
+          "path": "src/features/kangur/social/hooks/useKangurSocialPosts.ts",
+          "line": 27,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        },
+        {
+          "name": "KangurSocialPostListStatus",
+          "kind": "type",
+          "path": "src/features/kangur/social/server/social-posts-repository.ts",
+          "line": 25,
+          "domain": "feature:kangur",
+          "usageCount": 1
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0005",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur",
+        "feature:playwright"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "7fa60a059dfb",
+        "memberCount": 3,
+        "preview": "prop:issue:string | null; prop:resolvedUrl:string | null; prop:routeId:string"
+      },
+      "declarations": [
+        {
+          "name": "KangurSocialProgrammableCaptureRouteValidation",
+          "kind": "type",
+          "path": "src/features/kangur/social/shared/social-playwright-capture.ts",
+          "line": 120,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "PlaywrightCaptureRouteValidation",
+          "kind": "type",
+          "path": "src/features/playwright/engine/playwright-capture-validator.ts",
+          "line": 3,
+          "domain": "feature:playwright",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "near-0003",
+      "clusterKind": "near-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 10,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur",
+        "feature:playwright"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "1ed31a15ccab",
+        "memberCount": 4,
+        "preview": "prop:firstIssue:string | null; prop:isValid:boolean; prop:issueCount:number; prop:routes:KangurSocialProgrammableCaptureRouteValidation[]"
+      },
+      "declarations": [
+        {
+          "name": "KangurSocialProgrammableCaptureValidationResult",
+          "kind": "type",
+          "path": "src/features/kangur/social/shared/social-playwright-capture.ts",
+          "line": 126,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "PlaywrightCaptureValidationResult",
+          "kind": "type",
+          "path": "src/features/playwright/engine/playwright-capture-validator.ts",
+          "line": 9,
+          "domain": "feature:playwright",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0001",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:filemaker"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "4b53a736335a",
+        "memberCount": 2,
+        "preview": "prop:count:number; prop:reason:string"
+      },
+      "declarations": [
+        {
+          "name": "FilemakerEmailCampaignSchedulerSkipReason",
+          "kind": "type",
+          "path": "src/features/filemaker/server/filemakerEmailCampaignScheduler.ts",
+          "line": 52,
+          "domain": "feature:filemaker",
+          "usageCount": 0
+        },
+        {
+          "name": "FilemakerEmailCampaignSchedulerSkipReason",
+          "kind": "type",
+          "path": "src/features/filemaker/settings/campaign-scheduling.ts",
+          "line": 8,
+          "domain": "feature:filemaker",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0002",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:filemaker"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "f0c8f39807f9",
+        "memberCount": 2,
+        "preview": "prop:campaignId:string; prop:message:string"
+      },
+      "declarations": [
+        {
+          "name": "FilemakerEmailCampaignSchedulerLaunchFailure",
+          "kind": "type",
+          "path": "src/features/filemaker/server/filemakerEmailCampaignScheduler.ts",
+          "line": 57,
+          "domain": "feature:filemaker",
+          "usageCount": 0
+        },
+        {
+          "name": "FilemakerEmailCampaignSchedulerLaunchFailure",
+          "kind": "type",
+          "path": "src/features/filemaker/settings/campaign-scheduling.ts",
+          "line": 13,
+          "domain": "feature:filemaker",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    },
+    {
+      "clusterId": "exact-0004",
+      "clusterKind": "exact-shape",
+      "canonicalDtoCandidate": null,
+      "riskScore": 8,
+      "declarationCount": 2,
+      "domains": [
+        "feature:kangur"
+      ],
+      "signature": {
+        "shapeKind": "structural-members",
+        "normalizedShapeHash": "2830e80c052d",
+        "memberCount": 5,
+        "preview": "prop:page:number; prop:pageSize:number; prop:posts:KangurSocialPost[]; prop:statusCounts:Record<Exclude<KangurSocialPostListStatus, 'all'>, number>; prop:total:number"
+      },
+      "declarations": [
+        {
+          "name": "KangurSocialPostsPageResult",
+          "kind": "type",
+          "path": "src/features/kangur/social/hooks/useKangurSocialPosts.ts",
+          "line": 37,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        },
+        {
+          "name": "KangurSocialPostsPage",
+          "kind": "type",
+          "path": "src/features/kangur/social/server/social-posts-repository.ts",
+          "line": 27,
+          "domain": "feature:kangur",
+          "usageCount": 0
+        }
+      ],
+      "notes": [
+        "Review semantics before consolidating structurally similar declarations into one DTO."
+      ]
+    }
+  ],
   "notes": [
     "This is a scanner scaffold output. Risk and clustering heuristics are intentionally conservative.",
     "Use clusters as review candidates before moving declarations to canonical DTO modules."

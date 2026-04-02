@@ -6,6 +6,7 @@ import { useProductListings } from '@/features/integrations/hooks/useListingQuer
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type {
+  PlaywrightRelistBrowserMode,
   ProductListingWithDetails,
 } from '@/shared/contracts/integrations';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
@@ -40,6 +41,7 @@ export interface ProductListingsUIState {
   savingInventoryId: string | null;
   syncingImages: string | null;
   relistingListing: string | null;
+  relistingBrowserMode: PlaywrightRelistBrowserMode | null;
   openingTraderaLogin: string | null;
   inventoryOverrides: Record<string, string>;
   setInventoryOverrides: React.Dispatch<React.SetStateAction<Record<string, string>>>;
@@ -62,7 +64,13 @@ export interface ProductListingsModals {
   isSyncImagesConfirmOpen: boolean;
   setIsSyncImagesConfirmOpen: (open: boolean) => void;
   onClose: () => void;
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  onStartListing?:
+    | ((
+        integrationId: string,
+        connectionId: string,
+        options?: { autoSubmit?: boolean }
+      ) => void)
+    | undefined;
   filterIntegrationSlug?: string | null | undefined;
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 }
@@ -93,12 +101,18 @@ export interface ProductListingsActions {
   handlePurgeListing: (listingId: string) => Promise<void>;
   handleSaveInventoryId: (listingId: string) => Promise<void>;
   handleSyncBaseImages: (baseListing: ProductListingWithDetails | null) => Promise<void>;
-  handleRelistTradera: (listingId: string) => Promise<void>;
+  handleRelistTradera: (
+    listingId: string,
+    options?: {
+      skipSessionPreflight?: boolean;
+      browserMode?: PlaywrightRelistBrowserMode;
+    }
+  ) => Promise<void>;
   handleOpenTraderaLogin: (
     listingId: string,
     integrationId: string,
     connectionId: string
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   handleExportAgain: (listingId: string) => Promise<void>;
   handleExportImagesOnly: (listingId: string, preset?: ImageRetryPreset) => Promise<void>;
   handleImageRetry: (preset: ImageRetryPreset) => Promise<void>;
@@ -125,7 +139,13 @@ export function ProductListingsProvider({
   children: React.ReactNode;
   onListingsUpdated?: (() => void) | undefined;
   onClose: () => void;
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  onStartListing?:
+    | ((
+        integrationId: string,
+        connectionId: string,
+        options?: { autoSubmit?: boolean }
+      ) => void)
+    | undefined;
   filterIntegrationSlug?: string | null | undefined;
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 }): React.JSX.Element {
@@ -141,6 +161,8 @@ export function ProductListingsProvider({
   const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
   const [syncingImages, setSyncingImages] = useState<string | null>(null);
   const [relistingListing, setRelistingListing] = useState<string | null>(null);
+  const [relistingBrowserMode, setRelistingBrowserMode] =
+    useState<PlaywrightRelistBrowserMode | null>(null);
   const [openingTraderaLogin, setOpeningTraderaLogin] = useState<string | null>(null);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
   const [listingToPurge, setListingToPurge] = useState<string | null>(null);
@@ -169,6 +191,7 @@ export function ProductListingsProvider({
     setListingToPurge,
     setLogsOpen,
     setOpeningTraderaLogin,
+    setRelistingBrowserMode,
     setPurgingListing,
     setRelistingListing,
     setSavingInventoryId,
@@ -194,6 +217,7 @@ export function ProductListingsProvider({
       savingInventoryId,
       syncingImages,
       relistingListing,
+      relistingBrowserMode,
       openingTraderaLogin,
       inventoryOverrides,
       setInventoryOverrides,
@@ -207,6 +231,7 @@ export function ProductListingsProvider({
       savingInventoryId,
       syncingImages,
       relistingListing,
+      relistingBrowserMode,
       openingTraderaLogin,
       inventoryOverrides,
       historyOpenByListing,

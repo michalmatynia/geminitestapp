@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-01'
+last_reviewed: '2026-04-02'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,31 +8,31 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-01T22:10:10.340Z
+Generated at: 2026-04-02T18:23:44.241Z
 
 ## Snapshot
 
-- Source files: 9028
-- Source lines: 1506103
-- use client files: 1673
+- Source files: 9139
+- Source lines: 1526942
+- use client files: 1688
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/filemaker/components/FilemakerMailSidebar.tsx` (986 LOC)
+- Largest file: `src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx` (990 LOC)
 - API routes: 30
-- API delegated server routes: 172
+- API delegated server routes: 176
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 298/30 (993.3%)
-- Cross-feature dependency pairs: 0
+- API explicit cache policy coverage: 302/30 (1006.7%)
+- Cross-feature dependency pairs: 2
 - Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 322
-- Prop-drilling chains (depth >= 4): 95
+- Prop-drilling chains (depth >= 3): 240
+- Prop-drilling chains (depth >= 4): 66
 
 ## Top API Hotspots (by LOC)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 231 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 235 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 228 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
 | `src/app/api/databases/[[...path]]/route.ts` | 203 |
@@ -52,16 +52,21 @@ Generated at: 2026-04-01T22:10:10.340Z
 
 | Edge | References |
 | --- | ---: |
+| `integrations -> ai` | 1 |
+| `integrations -> playwright` | 1 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
+| `src/features/products/components/list/ProductColumns.test.tsx` | 1056 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx` | 990 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
 | `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 989 |
 | `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 986 |
+| `src/app/api/settings/handler.ts` | 982 |
 | `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx` | 982 |
 | `src/features/kangur/ui/services/geometry-drawing.ts` | 981 |
 | `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 977 |
@@ -74,6 +79,3 @@ Generated at: 2026-04-01T22:10:10.340Z
 | `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 967 |
-| `src/features/kangur/ui/components/GeometryBasicsWorkshopGame.tsx` | 964 |
-| `src/shared/contracts/cms-theme.ts` | 964 |
-| `src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.ts` | 962 |

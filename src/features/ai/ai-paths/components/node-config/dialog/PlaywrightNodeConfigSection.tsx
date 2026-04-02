@@ -26,9 +26,9 @@ import {
   FormField,
   insetPanelVariants,
 } from '@/shared/ui';
+import { PlaywrightCaptureRoutesEditor } from '@/shared/ui/playwright/PlaywrightCaptureRoutesEditor';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
-import { PlaywrightCaptureRoutesEditor } from './PlaywrightCaptureRoutesEditor';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const PLAYWRIGHT_CAPTURE_BATCH_NODE_TYPE_ID = 'playwright-capture-batch';

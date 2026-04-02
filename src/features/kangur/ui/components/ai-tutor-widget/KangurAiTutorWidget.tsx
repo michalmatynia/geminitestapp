@@ -23,10 +23,10 @@ import {
 } from './KangurAiTutorWidget.state';
 
 export function KangurAiTutorWidget(): React.JSX.Element | null {
-  useActivateKangurAiTutorContent();
+  const { value: tutorRuntime, sessionRegistryValue } = useKangurAiTutorRuntime();
+  useActivateKangurAiTutorContent(tutorRuntime.isOpen);
   const prefersReducedMotion = useReducedMotion();
   const tutorContent = useKangurAiTutorContent();
-  const { value: tutorRuntime, sessionRegistryValue } = useKangurAiTutorRuntime();
   const authState = useOptionalKangurAuth();
   const loginModal = useKangurLoginModal();
   const widgetState = useKangurAiTutorWidgetState();

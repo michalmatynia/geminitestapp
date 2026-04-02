@@ -191,11 +191,16 @@ export function useOptionalKangurAiTutorContent():
 
 /**
  * Call this hook to trigger the AI tutor content API fetch.
- * Typically called from the dynamically-loaded AI tutor widget.
+ * Typically called from the dynamically-loaded AI tutor widget once the
+ * tutor is actually opened, so optional content does not block page mount.
  */
-export function useActivateKangurAiTutorContent(): void {
+export function useActivateKangurAiTutorContent(enabled = true): void {
   const activate = useContext(KangurAiTutorContentActivationContext);
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     activate?.();
-  }, [activate]);
+  }, [activate, enabled]);
 }

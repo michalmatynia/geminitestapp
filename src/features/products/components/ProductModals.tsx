@@ -427,6 +427,7 @@ export function ProductModals(): React.JSX.Element {
     onEditSave,
     integrationsProduct,
     integrationsRecoveryContext,
+    integrationsFilterIntegrationSlug,
     onCloseIntegrations,
     onStartListing,
     showListProductModal,
@@ -502,6 +503,7 @@ export function ProductModals(): React.JSX.Element {
           onClose={onCloseIntegrations}
           onStartListing={onStartListing}
           onListingsUpdated={onListingsUpdated}
+          filterIntegrationSlug={integrationsFilterIntegrationSlug}
           recoveryContext={integrationsRecoveryContext}
         />
       )}
@@ -514,6 +516,7 @@ export function ProductModals(): React.JSX.Element {
           onSuccess={onListProductSuccess}
           initialIntegrationId={listProductPreset?.integrationId ?? null}
           initialConnectionId={listProductPreset?.connectionId ?? null}
+          autoSubmitOnOpen={Boolean(listProductPreset?.autoSubmit)}
         />
       )}
 

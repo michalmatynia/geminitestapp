@@ -8,6 +8,7 @@ const pathnameState = {
 
 const routerPushMock = vi.fn();
 const routerReplaceMock = vi.fn();
+const routerPrefetchMock = vi.fn();
 const settingsGetMock = vi.fn();
 
 vi.mock('next/navigation', () => ({
@@ -15,7 +16,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: routerPushMock,
     replace: routerReplaceMock,
-    prefetch: vi.fn(),
+    prefetch: routerPrefetchMock,
   }),
 }));
 
@@ -137,6 +138,7 @@ describe('Menu', () => {
     pathnameState.value = '/admin/cms/pages';
     routerPushMock.mockReset();
     routerReplaceMock.mockReset();
+    routerPrefetchMock.mockReset();
     settingsGetMock.mockReset();
     settingsGetMock.mockReturnValue(undefined);
   });
@@ -176,5 +178,56 @@ describe('Menu', () => {
     await waitFor(() => {
       expect(screen.getByTestId('nav-tree-open-ids')).toHaveTextContent('products');
     });
+  });
+
+  it('prefetches the most-used admin destinations after the first idle tick', async () => {
+    const requestIdleCallbackDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      'requestIdleCallback'
+    );
+    const cancelIdleCallbackDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      'cancelIdleCallback'
+    );
+
+    try {
+      const requestIdleCallbackMock = vi.fn((callback: () => void) => {
+        callback();
+        return 1;
+      });
+
+      Object.defineProperty(window, 'requestIdleCallback', {
+        configurable: true,
+        value: requestIdleCallbackMock,
+      });
+      Object.defineProperty(window, 'cancelIdleCallback', {
+        configurable: true,
+        value: vi.fn(),
+      });
+
+      render(<Menu />);
+
+      await waitFor(() => {
+        expect(requestIdleCallbackMock).toHaveBeenCalled();
+      });
+
+      expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/products');
+      expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/integrations');
+      expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/kangur/social');
+      expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/settings');
+      expect(routerPrefetchMock).toHaveBeenCalledWith('/admin/ai-paths');
+      expect(routerPrefetchMock).not.toHaveBeenCalledWith('/admin/cms/pages');
+    } finally {
+      if (requestIdleCallbackDescriptor) {
+        Object.defineProperty(window, 'requestIdleCallback', requestIdleCallbackDescriptor);
+      } else {
+        Reflect.deleteProperty(window, 'requestIdleCallback');
+      }
+      if (cancelIdleCallbackDescriptor) {
+        Object.defineProperty(window, 'cancelIdleCallback', cancelIdleCallbackDescriptor);
+      } else {
+        Reflect.deleteProperty(window, 'cancelIdleCallback');
+      }
+    }
   });
 });

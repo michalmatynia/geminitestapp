@@ -87,6 +87,11 @@ function ActivatorHarness(): React.JSX.Element {
   return <Harness />;
 }
 
+function ConditionalActivatorHarness({ enabled }: { enabled: boolean }): React.JSX.Element {
+  useActivateKangurAiTutorContent(enabled);
+  return <Harness />;
+}
+
 describe('KangurAiTutorContentContext', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -245,5 +250,40 @@ describe('KangurAiTutorContentContext', () => {
     });
 
     expect(apiGetMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for explicit activation before loading optional AI Tutor content', async () => {
+    apiGetMock.mockResolvedValue({
+      ...DEFAULT_KANGUR_AI_TUTOR_CONTENT,
+      navigation: {
+        ...DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation,
+        restoreTutorLabel: 'Deferred Tutor Label',
+      },
+    });
+    authStateMock.mockReturnValue({ isAuthenticated: true });
+
+    const view = render(
+      <KangurAiTutorContentProvider>
+        <ConditionalActivatorHarness enabled={false} />
+      </KangurAiTutorContentProvider>
+    );
+
+    expect(screen.getByTestId('restore-label')).toHaveTextContent(
+      DEFAULT_KANGUR_AI_TUTOR_CONTENT.navigation.restoreTutorLabel
+    );
+    expect(apiGetMock).not.toHaveBeenCalled();
+
+    view.rerender(
+      <KangurAiTutorContentProvider>
+        <ConditionalActivatorHarness enabled />
+      </KangurAiTutorContentProvider>
+    );
+
+    await waitFor(() => {
+      expect(apiGetMock).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('restore-label')).toHaveTextContent('Deferred Tutor Label');
+    });
   });
 });

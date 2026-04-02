@@ -564,6 +564,42 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
 
+  it('captures failure screenshot, html, and state artifacts when a run throws after page creation', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime({
+      pageUrl: 'https://www.tradera.com/en/login',
+      pageTitle: 'Tradera Login',
+      html: '<html><body>login form</body></html>',
+      screenshotBytes: 'failure-png',
+    });
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: `
+          export default async function run() {
+            throw new Error('AUTH_REQUIRED: Tradera login requires manual verification.');
+          };
+        `,
+      },
+    });
+
+    expect(run.status).toBe('failed');
+    expect(run.error).toContain('AUTH_REQUIRED: Tradera login requires manual verification.');
+    expect(run.artifacts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'failure', kind: 'screenshot', mimeType: 'image/png' }),
+        expect.objectContaining({ name: 'failure', kind: 'html', mimeType: 'text/html' }),
+        expect.objectContaining({
+          name: 'failure-state',
+          kind: 'json',
+          mimeType: 'application/json',
+        }),
+      ])
+    );
+  });
+
   it('persists emitted outputs while a background run is still running', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
     const runtime = await createPlaywrightRuntime();

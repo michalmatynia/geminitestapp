@@ -4,12 +4,10 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Suspense, type JSX } from 'react';
 
+import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
 import { getKangurCanonicalPublicHref, getKangurHomeHref, KangurFeatureRouteShell } from '@/features/kangur/public';
 import { readSanitizedKangurAliasLoginSearchParams } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
-
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home/home-helpers';
 
 type KangurAliasLoginSearchParams = Record<string, string | string[] | undefined>;
 
@@ -32,24 +30,20 @@ export const renderKangurLoginAliasRoute = async ({
   const translations = resolvedLocale
     ? await getTranslations({ locale: resolvedLocale, namespace: 'KangurPublic' })
     : await getTranslations('KangurPublic');
-  const shouldRedirectToCanonical = shouldApplyFrontPageAppSelection();
+  const frontPageSelection = await resolveFrontPageSelection();
 
-  if (shouldRedirectToCanonical) {
-    const frontPageSetting = await getFrontPageSetting();
-
-    if (getFrontPagePublicOwner(frontPageSetting) === 'kangur') {
-      const resolvedSearchParams = await readSanitizedKangurAliasLoginSearchParams({
-        searchParams,
-        pathname: localizeAliasPath('/kangur/login', resolvedLocale),
-        fallbackHref: localizeAliasPath(getKangurHomeHref('/'), resolvedLocale),
-      });
-      redirect(
-        localizeAliasPath(
-          getKangurCanonicalPublicHref(['login'], resolvedSearchParams),
-          resolvedLocale
-        )
-      );
-    }
+  if (frontPageSelection.publicOwner === 'kangur') {
+    const resolvedSearchParams = await readSanitizedKangurAliasLoginSearchParams({
+      searchParams,
+      pathname: localizeAliasPath('/kangur/login', resolvedLocale),
+      fallbackHref: localizeAliasPath(getKangurHomeHref('/'), resolvedLocale),
+    });
+    redirect(
+      localizeAliasPath(
+        getKangurCanonicalPublicHref(['login'], resolvedSearchParams),
+        resolvedLocale
+      )
+    );
   }
 
   return (

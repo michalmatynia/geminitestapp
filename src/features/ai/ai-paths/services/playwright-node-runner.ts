@@ -728,6 +728,57 @@ const executePlaywrightNodeRun = async (
     isFinalizingLiveState = true;
     const existingRun = await readPlaywrightNodeRun(runId);
     const message = error instanceof Error ? error.message : String(error);
+    if (page) {
+      try {
+        const failureScreenshotArtifact = await saveFileArtifact(
+          runArtifactsDir,
+          'failure',
+          'png',
+          await page.screenshot({ fullPage: true }),
+          'image/png',
+          'screenshot'
+        );
+        artifacts.push(failureScreenshotArtifact);
+      } catch (captureError) {
+        void ErrorSystem.captureException(captureError);
+      }
+
+      try {
+        const failureHtmlArtifact = await saveFileArtifact(
+          runArtifactsDir,
+          'failure',
+          'html',
+          await page.content(),
+          'text/html',
+          'html'
+        );
+        artifacts.push(failureHtmlArtifact);
+      } catch (captureError) {
+        void ErrorSystem.captureException(captureError);
+      }
+
+      try {
+        const failureSnapshotArtifact = await saveFileArtifact(
+          runArtifactsDir,
+          'failure-state',
+          'json',
+          `${JSON.stringify(
+            {
+              error: message,
+              finalUrl: page.url(),
+              title: await page.title().catch(() => ''),
+            },
+            null,
+            2
+          )}\n`,
+          'application/json',
+          'json'
+        );
+        artifacts.push(failureSnapshotArtifact);
+      } catch (captureError) {
+        void ErrorSystem.captureException(captureError);
+      }
+    }
     logs.push(`[runtime][error] ${message}`);
     const failedState: PlaywrightNodeRunRecord = {
       runId,

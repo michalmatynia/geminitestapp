@@ -35,6 +35,7 @@ import * as baseRequest from '../[id]/connections/[connectionId]/base/request/ro
 import * as baseTest from '../[id]/connections/[connectionId]/base/test/route-handler';
 import * as connectionTest from '../[id]/connections/[connectionId]/test/route-handler';
 import * as exportsBaseSetting from '../exports/base/[setting]/route-handler';
+import * as exportsTraderaSetting from '../exports/tradera/[setting]/route-handler';
 import * as imagesSyncBaseAll from '../images/sync-base/all/route-handler';
 import * as importsBase from '../imports/base/route-handler';
 import * as importsBaseParameters from '../imports/base/parameters/route-handler';
@@ -141,6 +142,7 @@ const ROUTES: RouteDefinition[] = [
   { pattern: ['connections', param('id')], module: connectionsById },
   { pattern: ['connections', param('id'), 'session'], module: connectionSession },
   { pattern: ['exports', 'base', param('setting')], module: exportsBaseSetting },
+  { pattern: ['exports', 'tradera', param('setting')], module: exportsTraderaSetting },
   { pattern: ['images', 'sync-base', 'all'], module: imagesSyncBaseAll },
   { pattern: ['imports', 'base'], module: importsBase },
   { pattern: ['imports', 'base', 'parameters'], module: importsBaseParameters },

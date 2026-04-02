@@ -11,7 +11,11 @@ import {
 } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { listCanonicalBaseProductListings } from '@/features/integrations/services/base-listing-canonicalization';
-import { enqueuePlaywrightListingJob, enqueueTraderaListingJob } from '@/features/jobs/server';
+import {
+  enqueuePlaywrightListingJob,
+  enqueueTraderaListingJob,
+  initializeQueues,
+} from '@/features/jobs/server';
 import { getProductRepository, parseJsonBody } from '@/features/products/server';
 import {
   productListingCreatePayloadSchema,
@@ -19,6 +23,7 @@ import {
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { resolveError } from '@/shared/errors/resolve-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const requireProductId = (productId: string | null | undefined): string => {
@@ -43,9 +48,16 @@ export async function GET_handler(
     return NextResponse.json(listings);
   } catch (error) {
     void ErrorSystem.captureException(error);
+    const resolved = resolveError(error, {
+      fallbackMessage: 'Failed to load marketplace listings.',
+    });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
-      { status: 500 }
+      {
+        error: resolved.message,
+        code: resolved.code,
+        ...(resolved.meta ? { details: resolved.meta } : {}),
+      },
+      { status: resolved.httpStatus }
     );
   }
 }
@@ -142,6 +154,7 @@ export async function POST_handler(
     });
 
     if (isTraderaIntegrationSlug(integration.slug)) {
+      initializeQueues();
       const enqueuedAt = new Date().toISOString();
       const jobId = await enqueueTraderaListingJob({
         listingId: listing.id,
@@ -161,6 +174,7 @@ export async function POST_handler(
     }
 
     if (isPlaywrightProgrammableSlug(integration.slug)) {
+      initializeQueues();
       const enqueuedAt = new Date().toISOString();
       const jobId = await enqueuePlaywrightListingJob({
         listingId: listing.id,
@@ -183,9 +197,16 @@ export async function POST_handler(
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
     void ErrorSystem.captureException(error);
+    const resolved = resolveError(error, {
+      fallbackMessage: 'Failed to create marketplace listing.',
+    });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
-      { status: 500 }
+      {
+        error: resolved.message,
+        code: resolved.code,
+        ...(resolved.meta ? { details: resolved.meta } : {}),
+      },
+      { status: resolved.httpStatus }
     );
   }
 }

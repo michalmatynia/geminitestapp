@@ -8,8 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   buildSlugMetadataMock,
   frontendPublicOwnerKangurShellMock,
-  getFrontPagePublicOwnerMock,
-  getFrontPageSettingMock,
+  resolveFrontPageSelectionMock,
   getKangurStorefrontInitialStateMock,
   getTranslationsMock,
   loadSlugRenderDataMock,
@@ -18,12 +17,10 @@ const {
   redirectMock,
   renderCmsPageMock,
   resolveSlugToPageMock,
-  shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   buildSlugMetadataMock: vi.fn(),
   frontendPublicOwnerKangurShellMock: vi.fn(),
-  getFrontPagePublicOwnerMock: vi.fn(),
-  getFrontPageSettingMock: vi.fn(),
+  resolveFrontPageSelectionMock: vi.fn(),
   getKangurStorefrontInitialStateMock: vi.fn(),
   getTranslationsMock: vi.fn(),
   loadSlugRenderDataMock: vi.fn(),
@@ -32,7 +29,6 @@ const {
   redirectMock: vi.fn(),
   renderCmsPageMock: vi.fn(),
   resolveSlugToPageMock: vi.fn(),
-  shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -46,12 +42,7 @@ vi.mock('next-intl/server', () => ({
 }));
 
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
-  getFrontPageSetting: getFrontPageSettingMock,
-  shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
-}));
-
-vi.mock('@/shared/lib/front-page-app', () => ({
-  getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
+  resolveFrontPageSelection: resolveFrontPageSelectionMock,
 }));
 
 vi.mock('@/features/kangur/server', () => ({
@@ -88,9 +79,14 @@ describe('canonical login route helpers', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
-    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'kangur',
+      publicOwner: 'kangur',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
     getTranslationsMock.mockImplementation(async (...args: unknown[]) => {
       const localeArg =
         args.length === 1 && typeof args[0] === 'object' && args[0] !== null
@@ -130,8 +126,14 @@ describe('canonical login route helpers', () => {
   });
 
   it('renders the localized CMS login page when CMS owns the public frontend', async () => {
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'cms' });
-    getFrontPagePublicOwnerMock.mockReturnValue('cms');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'cms',
+      publicOwner: 'cms',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
     resolveSlugToPageMock.mockResolvedValue({
       id: 'page-login',
       name: 'Login',
@@ -164,8 +166,14 @@ describe('canonical login route helpers', () => {
   });
 
   it('falls back to CMS page metadata when CMS owns the canonical login route', async () => {
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'cms' });
-    getFrontPagePublicOwnerMock.mockReturnValue('cms');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'cms',
+      publicOwner: 'cms',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
     resolveSlugToPageMock.mockResolvedValue({
       id: 'page-login',
       name: 'Login',

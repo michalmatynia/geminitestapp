@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { auth } from '@/features/auth/edge';
 import { siteRouting } from '@/i18n/routing';
+import { buildAdminLayoutSessionHeaderValue, ADMIN_LAYOUT_SESSION_HEADER } from '@/shared/lib/auth/admin-layout-session';
 import {
   getDefaultSiteLocaleCode,
   getPathLocale,
@@ -10,6 +11,8 @@ import {
 } from '@/shared/lib/i18n/site-locale';
 import { applyEdgeTrafficGuard } from '@/shared/lib/security/edge-traffic-guard';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
+
+import type { Session } from 'next-auth';
 
 const intlMiddleware = createIntlMiddleware(siteRouting);
 
@@ -48,13 +51,14 @@ const finalizeResponse = (request: NextRequest, response: NextResponse): NextRes
   return response;
 };
 
-const baseProxy = (request: NextRequest): NextResponse => {
-  const response = NextResponse.next();
+const baseProxy = (request: NextRequest, requestHeaders?: Headers): NextResponse => {
+  const response = requestHeaders ? NextResponse.next({ request: { headers: requestHeaders } }) : NextResponse.next();
   return finalizeResponse(request, response);
 };
 
 type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
+type AuthenticatedProxyRequest = NextRequest & { auth?: Session | null };
 
 const isApiRequest = (pathname: string): boolean => pathname === '/api' || pathname.startsWith('/api/');
 
@@ -157,11 +161,20 @@ const resolveAdminRedirectResponse = (request: NextRequest): NextResponse | null
   return finalizeResponse(request, NextResponse.redirect(new URL(destination, request.url), 307));
 };
 
+const buildAdminRequestHeaders = (request: AuthenticatedProxyRequest): Headers | null => {
+  const sessionHeaderValue = buildAdminLayoutSessionHeaderValue(request.auth ?? null);
+  if (!sessionHeaderValue) return null;
+
+  const forwardedHeaders = new Headers(request.headers);
+  forwardedHeaders.set(ADMIN_LAYOUT_SESSION_HEADER, sessionHeaderValue);
+  return forwardedHeaders;
+};
+
 const handler =
   typeof auth === 'function'
     ? auth(
-      (request: NextRequest): Response =>
-        resolveAdminRedirectResponse(request) ?? baseProxy(request)
+      (request: AuthenticatedProxyRequest): Response =>
+        resolveAdminRedirectResponse(request) ?? baseProxy(request, buildAdminRequestHeaders(request) ?? undefined)
     )
     : null;
 

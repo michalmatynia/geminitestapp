@@ -550,6 +550,8 @@ describe('Lessons page subject filtering', () => {
 
     const openingSectionButton = screen.getByRole('button', { name: /opening section/i });
     fireEvent.click(openingSectionButton);
+    act(() => { vi.runAllTimers(); });
+    act(() => { vi.runAllTimers(); });
 
     expect(openingSectionButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('region').firstElementChild).toHaveClass('w-full', 'items-center');
@@ -607,6 +609,8 @@ describe('Lessons page subject filtering', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /opening section/i }));
+    act(() => { vi.runAllTimers(); });
+    act(() => { vi.runAllTimers(); });
     fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
 
     expect(screen.getByTestId('mock-active-lesson-view')).toHaveTextContent('lesson-english');
@@ -713,6 +717,9 @@ describe('Lessons page subject filtering', () => {
       .closest('button');
     expect(adverbsSubsectionButton).not.toBeNull();
     fireEvent.click(adverbsSubsectionButton as HTMLButtonElement);
+    act(() => {
+      vi.runAllTimers();
+    });
 
     expect(screen.getByTestId('lesson-card-lesson-english-adverbs')).toBeInTheDocument();
     expect(
@@ -735,6 +742,9 @@ describe('Lessons page subject filtering', () => {
       .closest('button');
     expect(frequencySubsectionButton).not.toBeNull();
     fireEvent.click(frequencySubsectionButton as HTMLButtonElement);
+    act(() => {
+      vi.runAllTimers();
+    });
 
     expect(screen.getByTestId('lesson-card-lesson-english-adverbs')).toBeInTheDocument();
     expect(
@@ -818,6 +828,8 @@ describe('Lessons page subject filtering', () => {
       .closest('button');
     expect(subsectionButton).not.toBeNull();
     fireEvent.click(subsectionButton as HTMLButtonElement);
+    act(() => { vi.runAllTimers(); });
+    act(() => { vi.runAllTimers(); });
 
     expect(screen.getByTestId('lesson-card-lesson-english-comparatives')).toBeInTheDocument();
     expect(lessonCatalogHookCallsMock).toHaveBeenCalledWith(

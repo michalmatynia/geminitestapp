@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KANGUR_LAUNCH_ROUTE_SETTINGS_KEY } from '@/shared/contracts/kangur-settings-keys';
 import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { KANGUR_SLOT_ASSIGNMENTS_KEY, KANGUR_THEME_CATALOG_KEY } from '@/shared/contracts/kangur';
@@ -19,16 +20,21 @@ const mocks = vi.hoisted(() => ({
   findOneMock: vi.fn(),
   updateOneMock: vi.fn(),
   primeFrontPageSettingRuntimeMock: vi.fn(),
+  primeKangurLaunchRouteRuntimeMock: vi.fn(),
+  writeKangurLaunchRouteDevSnapshotMock: vi.fn(),
+  writeFrontPageDevSnapshotMock: vi.fn(),
   invalidateAppDbProviderCacheMock: vi.fn(),
   invalidateCollectionProviderMapCacheMock: vi.fn(),
   invalidateDatabaseEnginePolicyCacheMock: vi.fn(),
   invalidateFileStorageSettingsCacheMock: vi.fn(),
   logSystemEventMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
   ensureKangurStorefrontAppearanceSettingsSeededMock: vi.fn(),
   ensureKangurThemePresetManifestSeededMock: vi.fn(),
   ensureKangurThemeCatalogSeededMock: vi.fn(),
   ensureKangurThemeSlotAssignmentsSeededMock: vi.fn(),
   readKangurSettingValueMock: vi.fn(),
+  upsertKangurSettingValueMock: vi.fn(),
   isKangurSettingKeyMock: vi.fn(),
   listKangurSettingsMock: vi.fn(),
 }));
@@ -125,8 +131,24 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: mocks.logSystemEventMock,
 }));
 
+vi.mock('next/cache', () => ({
+  revalidatePath: mocks.revalidatePathMock,
+}));
+
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   primeFrontPageSettingRuntime: mocks.primeFrontPageSettingRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/server/launch-route', () => ({
+  primeKangurLaunchRouteRuntime: mocks.primeKangurLaunchRouteRuntimeMock,
+}));
+
+vi.mock('@/features/kangur/server/launch-route-dev-snapshot', () => ({
+  writeKangurLaunchRouteDevSnapshot: mocks.writeKangurLaunchRouteDevSnapshotMock,
+}));
+
+vi.mock('@/shared/lib/front-page-dev-snapshot', () => ({
+  writeFrontPageDevSnapshot: mocks.writeFrontPageDevSnapshotMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -143,7 +165,7 @@ vi.mock('@/features/kangur/services/kangur-settings-repository', async () => {
     isKangurSettingKey: mocks.isKangurSettingKeyMock,
     listKangurSettings: mocks.listKangurSettingsMock,
     readKangurSettingValue: mocks.readKangurSettingValueMock,
-    upsertKangurSettingValue: vi.fn(async () => null),
+    upsertKangurSettingValue: mocks.upsertKangurSettingValueMock,
   };
 });
 
@@ -176,7 +198,11 @@ describe('settings handler', () => {
       })),
     });
     mocks.logSystemEventMock.mockResolvedValue(undefined);
+    mocks.revalidatePathMock.mockReset();
     mocks.primeFrontPageSettingRuntimeMock.mockReturnValue(null);
+    mocks.primeKangurLaunchRouteRuntimeMock.mockReturnValue('web_mobile_view');
+    mocks.writeKangurLaunchRouteDevSnapshotMock.mockResolvedValue('web_mobile_view');
+    mocks.writeFrontPageDevSnapshotMock.mockResolvedValue(null);
     mocks.isKangurStorefrontInitialStateDependencyKeyMock.mockReturnValue(false);
     mocks.parseJsonBodyMock.mockResolvedValue({
       ok: true,
@@ -196,6 +222,10 @@ describe('settings handler', () => {
       value: '{}',
     });
     mocks.readKangurSettingValueMock.mockResolvedValue(null);
+    mocks.upsertKangurSettingValueMock.mockImplementation(async (key: string, value: string) => ({
+      key,
+      value,
+    }));
     mocks.isKangurSettingKeyMock.mockReturnValue(false);
     mocks.listKangurSettingsMock.mockResolvedValue([]);
   });
@@ -261,6 +291,14 @@ describe('settings handler', () => {
       value: 'kangur',
     });
     expect(mocks.primeFrontPageSettingRuntimeMock).toHaveBeenCalledWith('kangur');
+    expect(mocks.writeFrontPageDevSnapshotMock).toHaveBeenCalledWith('kangur');
+    expect(mocks.revalidatePathMock).toHaveBeenCalledWith('/', 'layout');
+    expect(mocks.revalidatePathMock).toHaveBeenCalledWith('/');
+    expect(mocks.revalidatePathMock).toHaveBeenCalledWith('/login');
+    expect(mocks.revalidatePathMock).toHaveBeenCalledWith('/kangur/login');
+    expect(mocks.revalidatePathMock).toHaveBeenCalledWith('/en');
+    expect(mocks.revalidatePathMock).toHaveBeenCalledWith('/en/login');
+    expect(mocks.revalidatePathMock).toHaveBeenCalledWith('/en/kangur/login');
     expect(mocks.logSystemEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'info',
@@ -344,6 +382,8 @@ describe('settings handler', () => {
       value: 'cms',
     });
     expect(mocks.primeFrontPageSettingRuntimeMock).toHaveBeenCalledWith('cms');
+    expect(mocks.writeFrontPageDevSnapshotMock).toHaveBeenCalledWith('cms');
+    expect(mocks.revalidatePathMock).toHaveBeenCalledWith('/', 'layout');
     expect(mocks.logSystemEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'warn',
@@ -387,6 +427,40 @@ describe('settings handler', () => {
     await expect(response.json()).resolves.toEqual({
       key: 'kangur_storefront_default_mode_v1',
       value: 'sunset',
+    });
+  });
+
+  it('primes the Kangur launch route runtime cache when the launch route setting changes', async () => {
+    mocks.isKangurSettingKeyMock.mockReturnValue(true);
+    mocks.parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+        value: JSON.stringify({ route: 'dedicated_app' }),
+      },
+    });
+
+    const response = await POST_handler(
+      new NextRequest('http://localhost/api/settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+          value: JSON.stringify({ route: 'dedicated_app' }),
+        }),
+      }),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.primeKangurLaunchRouteRuntimeMock).toHaveBeenCalledWith(
+      JSON.stringify({ route: 'dedicated_app' })
+    );
+    expect(mocks.writeKangurLaunchRouteDevSnapshotMock).toHaveBeenCalledWith(
+      JSON.stringify({ route: 'dedicated_app' })
+    );
+    await expect(response.json()).resolves.toEqual({
+      key: KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
+      value: JSON.stringify({ route: 'dedicated_app' }),
     });
   });
 

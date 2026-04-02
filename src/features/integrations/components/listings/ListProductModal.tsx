@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 import {
   ListingSettingsProvider,
   useListingSelection,
@@ -24,14 +26,17 @@ import { TraderaListingSettings } from './TraderaListingSettings';
 interface ListProductModalProps extends EntityModalProps<ProductWithImages> {
   initialIntegrationId?: string | null;
   initialConnectionId?: string | null;
+  autoSubmitOnOpen?: boolean;
 }
 
 function ListProductModalContent(): React.JSX.Element {
-  const { product, onClose, onSuccess, hasPresetSelection } = useListProductModalViewContext();
+  const { product, onClose, onSuccess, hasPresetSelection, autoSubmitOnOpen } =
+    useListProductModalViewContext();
   const {
     integrations,
     loadingIntegrations: loading,
     selectedConnectionId,
+    selectedIntegration,
     isBaseComIntegration,
     isTraderaIntegration,
   } = useListingSelection();
@@ -41,6 +46,20 @@ function ListProductModalContent(): React.JSX.Element {
   );
 
   const productName = product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
+  const selectedIntegrationName = selectedIntegration?.name?.trim() || null;
+  const modalTitle = isBaseComIntegration
+    ? `Export to Base.com - ${productName}`
+    : isTraderaIntegration
+      ? `List on Tradera - ${productName}`
+      : selectedIntegrationName
+        ? `List on ${selectedIntegrationName} - ${productName}`
+        : `List Product - ${productName}`;
+  const saveText = isBaseComIntegration
+    ? 'Export to Base.com'
+    : isTraderaIntegration
+      ? 'List on Tradera'
+      : 'List Product';
+  const autoSubmitAttemptedRef = useRef(false);
 
   const integrationsWithConnections = integrations.filter(
     (i: IntegrationWithConnections) => i.connections.length > 0
@@ -49,16 +68,24 @@ function ListProductModalContent(): React.JSX.Element {
     void handleImageRetry(preset, onSuccess);
   };
 
+  useEffect(() => {
+    if (!autoSubmitOnOpen || autoSubmitAttemptedRef.current) return;
+    if (loading || !selectedConnectionId) return;
+
+    autoSubmitAttemptedRef.current = true;
+    void handleSubmit(onSuccess);
+  }, [autoSubmitOnOpen, handleSubmit, loading, onSuccess, selectedConnectionId]);
+
   return (
     <FormModal
       open={true}
       onClose={onClose}
-      title={`List Product - ${productName}`}
+      title={modalTitle}
       onSave={() => {
         void handleSubmit(onSuccess);
       }}
       isSaving={submitting}
-      saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Product'}
+      saveText={saveText}
       cancelText='Cancel'
       size='md'
     >
@@ -107,6 +134,7 @@ export function ListProductModal(props: ListProductModalProps): React.JSX.Elemen
     isOpen = true,
     initialIntegrationId,
     initialConnectionId,
+    autoSubmitOnOpen = false,
     item: product,
     onClose,
     onSuccess,
@@ -125,6 +153,7 @@ export function ListProductModal(props: ListProductModalProps): React.JSX.Elemen
           onClose,
           onSuccess: onSuccess ?? (() => {}),
           hasPresetSelection: Boolean(initialIntegrationId && initialConnectionId),
+          autoSubmitOnOpen,
         }}
       >
         <ListProductModalContent />

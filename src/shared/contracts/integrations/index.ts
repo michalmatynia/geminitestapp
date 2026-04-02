@@ -38,6 +38,7 @@ import type {
   SaveConnectionOptions,
 } from './connections';
 import {
+  playwrightRelistBrowserModeSchema,
   productListingSchema,
   type BaseCategory,
   type CategoryMapping,
@@ -147,6 +148,10 @@ export type {
  * Session DTOs
  */
 
+const sessionCookieSameSiteSchema = z
+  .enum(['lax', 'strict', 'none', 'Lax', 'Strict', 'None'])
+  .transform((value) => value.toLowerCase() as 'lax' | 'strict' | 'none');
+
 export const sessionCookieSchema = z.object({
   name: z.string(),
   value: z.string(),
@@ -155,7 +160,7 @@ export const sessionCookieSchema = z.object({
   expires: z.number().optional(),
   httpOnly: z.boolean().optional(),
   secure: z.boolean().optional(),
-  sameSite: z.enum(['lax', 'strict', 'none']).optional(),
+  sameSite: sessionCookieSameSiteSchema.optional(),
 });
 
 export type SessionCookie = z.infer<typeof sessionCookieSchema>;
@@ -416,6 +421,22 @@ export type BaseDefaultConnectionPreferenceResponse = z.infer<
   typeof baseDefaultConnectionPreferenceResponseSchema
 >;
 
+export const traderaDefaultConnectionPreferencePayloadSchema = z.object({
+  connectionId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type TraderaDefaultConnectionPreferencePayload = z.infer<
+  typeof traderaDefaultConnectionPreferencePayloadSchema
+>;
+
+export const traderaDefaultConnectionPreferenceResponseSchema = z.object({
+  connectionId: z.string().nullable(),
+});
+
+export type TraderaDefaultConnectionPreferenceResponse = z.infer<
+  typeof traderaDefaultConnectionPreferenceResponseSchema
+>;
+
 export const baseStockFallbackPreferencePayloadSchema = z.object({
   enabled: z.boolean(),
 });
@@ -521,6 +542,8 @@ export const integrationConnectionBasicSchema = z.object({
   id: z.string(),
   name: z.string(),
   integrationId: z.string(),
+  traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
+  hasPlaywrightListingScript: z.boolean().optional(),
   traderaDefaultTemplateId: z.string().nullable().optional(),
   traderaDefaultDurationHours: z.number().nullable().optional(),
   traderaAutoRelistEnabled: z.boolean().nullable().optional(),
@@ -702,6 +725,7 @@ export const traderaListingJobInputSchema = z.object({
   action: z.enum(['list', 'relist']),
   source: z.enum(['manual', 'scheduler', 'api']).optional(),
   jobId: z.string().optional(),
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
 });
 
 export type TraderaListingJobInput = z.infer<typeof traderaListingJobInputSchema>;
@@ -711,6 +735,7 @@ export const playwrightListingJobInputSchema = z.object({
   action: z.enum(['list', 'relist']),
   source: z.enum(['manual', 'scheduler', 'api']).optional(),
   jobId: z.string().optional(),
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
 });
 
 export type PlaywrightListingJobInput = z.infer<typeof playwrightListingJobInputSchema>;
@@ -840,7 +865,12 @@ export type ProductListingRepository = {
   getListingsByProductIds: (productIds: string[]) => Promise<ProductListing[]>;
   getListingsByConnection: (connectionId: string) => Promise<ProductListing[]>;
   listAllListings: () => Promise<
-    Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+    Array<
+      Pick<
+        ProductListing,
+        'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'
+      >
+    >
   >;
 };
 

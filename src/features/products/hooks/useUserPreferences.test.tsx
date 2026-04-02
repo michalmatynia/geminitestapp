@@ -154,6 +154,25 @@ describe('useUserPreferences page size normalization', () => {
     expect(result.current.preferences.thumbnailSource).toBe('base64');
   });
 
+  it('passes the TanStack abort signal into the preferences request', async () => {
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    renderHook(() => useUserPreferences(), { wrapper });
+
+    await waitFor(() => {
+      expect(apiGetMock).toHaveBeenCalled();
+    });
+
+    expect(apiGetMock.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
+      })
+    );
+  });
+
   it('stores advanced filter presets as JSON so they can be reused on the next reload', async () => {
     const queryClient = createQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) => (

@@ -60,6 +60,10 @@ export default function AddIntegrationPage(): React.JSX.Element {
   const { toast } = useToast();
 
   useEffect(() => {
+    router.prefetch('/admin/integrations');
+  }, [router]);
+
+  useEffect(() => {
     if (!integrationsQuery.isError) return;
     logClientError(integrationsQuery.error, {
       context: { source: 'AddIntegrationPage', action: 'loadIntegrations' },

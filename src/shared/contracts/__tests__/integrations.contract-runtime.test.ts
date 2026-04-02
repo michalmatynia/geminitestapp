@@ -44,6 +44,25 @@ describe('integrations contract runtime', () => {
     expect(parsed.origins[0]?.localStorage[0]?.name).toBe('token');
   });
 
+  it('normalizes Playwright-native sameSite casing in storage-state cookies', () => {
+    const parsed = playwrightStorageStateSchema.parse({
+      cookies: [
+        {
+          name: 'session',
+          value: 'abc',
+          domain: '.example.com',
+          path: '/',
+          httpOnly: true,
+          secure: true,
+          sameSite: 'Lax',
+        },
+      ],
+      origins: [],
+    });
+
+    expect(parsed.cookies[0]?.sameSite).toBe('lax');
+  });
+
   it('uses the same typed storage-state fields inside session payloads', () => {
     const parsed = sessionPayloadSchema.parse({
       cookies: [],

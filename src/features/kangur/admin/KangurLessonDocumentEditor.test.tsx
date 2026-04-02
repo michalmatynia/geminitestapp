@@ -20,8 +20,8 @@ vi.mock('@/shared/lib/document-editor/public', () => ({
   ),
 }));
 
-vi.mock('@/shared/ui/cms-appearance/CmsStorefrontAppearance', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui/cms-appearance/CmsStorefrontAppearance')>();
+vi.mock('@/features/cms/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/cms/public')>();
   return {
     ...actual,
     MediaLibraryPanel: ({
@@ -47,6 +47,11 @@ vi.mock('@/shared/ui/cms-appearance/CmsStorefrontAppearance', async (importOrigi
 import { KangurLessonDocumentEditor } from '@/features/kangur/admin/KangurLessonDocumentEditor';
 import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';
 import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '@/shared/ui/toast';
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
 
 const arithmeticLesson: KangurLesson = {
   id: 'lesson-adding',
@@ -69,9 +74,13 @@ function renderEditor(
   lesson: KangurLesson | null = null
 ): ReturnType<typeof render> {
   return render(
-    <LessonContentEditorProvider lesson={lesson} document={value} onChange={onChange}>
-      <KangurLessonDocumentEditor />
-    </LessonContentEditorProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <LessonContentEditorProvider lesson={lesson} document={value} onChange={onChange}>
+          <KangurLessonDocumentEditor />
+        </LessonContentEditorProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -95,9 +104,13 @@ function StatefulEditorHarness({
   );
 
   return (
-    <LessonContentEditorProvider lesson={lesson} document={document} onChange={handleChange}>
-      <KangurLessonDocumentEditor />
-    </LessonContentEditorProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <LessonContentEditorProvider lesson={lesson} document={document} onChange={handleChange}>
+          <KangurLessonDocumentEditor />
+        </LessonContentEditorProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }
 

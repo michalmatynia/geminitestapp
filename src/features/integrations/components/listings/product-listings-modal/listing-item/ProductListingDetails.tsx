@@ -3,13 +3,16 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 
-import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
+import {
+  PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
+  TRADERA_INTEGRATION_SLUGS,
+} from '@/features/integrations/constants/slugs';
 import {
   useProductListingsData,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations';
-import { StatusBadge, Card, MetadataItem, Hint, Button } from '@/shared/ui';
+import { StatusBadge, Card, MetadataItem, Hint, Button, ExternalLink, JsonViewer } from '@/shared/ui';
 import type { ProductListingWithDetailsProps } from './types';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {
@@ -24,6 +27,112 @@ const formatListValue = (value: string | null | undefined): string => (value ? v
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+
+const readString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const readBoolean = (value: unknown): boolean | null =>
+  typeof value === 'boolean' ? value : null;
+
+const resolveHistoryBrowserMode = (
+  fields: string[] | null | undefined
+): string | null => {
+  const match = (Array.isArray(fields) ? fields : []).find((field) =>
+    field.startsWith('browser_mode:')
+  );
+  if (!match) return null;
+  const value = match.slice('browser_mode:'.length).trim();
+  return value || null;
+};
+
+const resolveDisplayHistoryFields = (
+  fields: string[] | null | undefined
+): string[] => (Array.isArray(fields) ? fields.filter((field) => !field.startsWith('browser_mode:')) : []);
+
+const resolveTraderaExecutionSummary = (
+  marketplaceData: Record<string, unknown> | null | undefined
+): {
+  executedAt: string | null;
+  mode: string | null;
+  browserMode: string | null;
+  requestedBrowserMode: string | null;
+  scriptSource: string | null;
+  listingFormUrl: string | null;
+  pendingBrowserMode: string | null;
+  pendingRequestId: string | null;
+  pendingQueuedAt: string | null;
+  runId: string | null;
+  errorCategory: string | null;
+  requestId: string | null;
+  publishVerified: boolean | null;
+  listingUrl: string | null;
+  rawResult: unknown;
+} => {
+  const marketplaceRecord = toRecord(marketplaceData);
+  const traderaData = toRecord(marketplaceRecord['tradera']);
+  const lastExecution = toRecord(traderaData['lastExecution']);
+  const pendingExecution = toRecord(traderaData['pendingExecution']);
+  const metadata = toRecord(lastExecution['metadata']);
+
+  return {
+    executedAt: readString(lastExecution['executedAt']),
+    mode: readString(metadata['scriptMode']) ?? readString(metadata['mode']),
+    browserMode: readString(metadata['browserMode']),
+    requestedBrowserMode: readString(metadata['requestedBrowserMode']),
+    scriptSource: readString(metadata['scriptSource']),
+    listingFormUrl: readString(metadata['listingFormUrl']) ?? readString(metadata['startUrl']),
+    pendingBrowserMode: readString(pendingExecution['requestedBrowserMode']),
+    pendingRequestId: readString(pendingExecution['requestId']),
+    pendingQueuedAt: readString(pendingExecution['queuedAt']),
+    runId: readString(metadata['runId']),
+    errorCategory: readString(lastExecution['errorCategory']) ?? readString(traderaData['lastErrorCategory']),
+    requestId: readString(lastExecution['requestId']),
+    publishVerified: readBoolean(metadata['publishVerified']),
+    listingUrl: readString(marketplaceRecord['listingUrl']),
+    rawResult: metadata['rawResult'] ?? null,
+  };
+};
+
+const resolvePlaywrightExecutionSummary = (
+  marketplaceData: Record<string, unknown> | null | undefined
+): {
+  executedAt: string | null;
+  browserMode: string | null;
+  requestedBrowserMode: string | null;
+  pendingBrowserMode: string | null;
+  pendingRequestId: string | null;
+  pendingQueuedAt: string | null;
+  runId: string | null;
+  errorCategory: string | null;
+  requestId: string | null;
+  publishVerified: boolean | null;
+  listingUrl: string | null;
+  rawResult: unknown;
+} => {
+  const marketplaceRecord = toRecord(marketplaceData);
+  const playwrightData = toRecord(marketplaceRecord['playwright']);
+  const lastExecution = toRecord(playwrightData['lastExecution']);
+  const pendingExecution = toRecord(playwrightData['pendingExecution']);
+  const metadata = toRecord(lastExecution['metadata']);
+
+  return {
+    executedAt: readString(lastExecution['executedAt']),
+    browserMode: readString(metadata['browserMode']),
+    requestedBrowserMode: readString(metadata['requestedBrowserMode']),
+    pendingBrowserMode: readString(pendingExecution['requestedBrowserMode']),
+    pendingRequestId: readString(pendingExecution['requestId']),
+    pendingQueuedAt: readString(pendingExecution['queuedAt']),
+    runId: readString(metadata['runId']),
+    errorCategory: readString(lastExecution['errorCategory']) ?? readString(playwrightData['lastErrorCategory']),
+    requestId: readString(lastExecution['requestId']),
+    publishVerified: readBoolean(metadata['publishVerified']),
+    listingUrl: readString(marketplaceRecord['listingUrl']),
+    rawResult: metadata['rawResult'] ?? null,
+  };
+};
+
 type ProductListingDetailsProps = ProductListingWithDetailsProps;
 
 export function ProductListingDetails(props: ProductListingDetailsProps): React.JSX.Element {
@@ -37,6 +146,10 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
   const isTraderaListing = TRADERA_INTEGRATION_SLUGS.has(
     normalizeIntegrationSlug(listing.integration.slug)
   );
+  const isPlaywrightListing =
+    normalizeIntegrationSlug(listing.integration.slug) === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG;
+  const traderaExecution = resolveTraderaExecutionSummary(listing.marketplaceData);
+  const playwrightExecution = resolvePlaywrightExecutionSummary(listing.marketplaceData);
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
@@ -111,11 +224,209 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.pendingQueuedAt ? (
+            <MetadataItem
+              label='Pending relist'
+              value={formatTimestamp(traderaExecution.pendingQueuedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.pendingBrowserMode ? (
+            <MetadataItem
+              label='Pending browser mode'
+              value={traderaExecution.pendingBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.pendingRequestId ? (
+            <MetadataItem
+              label='Pending queue job'
+              value={traderaExecution.pendingRequestId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.executedAt ? (
+            <MetadataItem
+              label='Last execution'
+              value={formatTimestamp(traderaExecution.executedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.mode ? (
+            <MetadataItem
+              label='Run mode'
+              value={traderaExecution.mode}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && (traderaExecution.browserMode || traderaExecution.requestedBrowserMode) ? (
+            <MetadataItem
+              label='Browser mode'
+              value={traderaExecution.browserMode ?? traderaExecution.requestedBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.scriptSource ? (
+            <MetadataItem
+              label='Script source'
+              value={traderaExecution.scriptSource}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.listingFormUrl ? (
+            <MetadataItem
+              label='Start URL'
+              value={traderaExecution.listingFormUrl}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.runId ? (
+            <MetadataItem
+              label='Run ID'
+              value={traderaExecution.runId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.requestId ? (
+            <MetadataItem
+              label='Queue job'
+              value={traderaExecution.requestId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.publishVerified !== null ? (
+            <MetadataItem
+              label='Publish verified'
+              value={traderaExecution.publishVerified ? 'Yes' : 'No'}
+              valueClassName={traderaExecution.publishVerified ? 'text-emerald-400' : 'text-rose-400'}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.listingUrl ? (
+            <MetadataItem
+              label='Listing URL'
+              value={(
+                <ExternalLink href={traderaExecution.listingUrl} className='text-sky-400 hover:text-sky-300'>
+                  Open listing
+                </ExternalLink>
+              )}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.errorCategory ? (
+            <MetadataItem
+              label='Error category'
+              value={traderaExecution.errorCategory}
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.executedAt ? (
+            <MetadataItem
+              label='Last execution'
+              value={formatTimestamp(playwrightExecution.executedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.pendingQueuedAt ? (
+            <MetadataItem
+              label='Pending relist'
+              value={formatTimestamp(playwrightExecution.pendingQueuedAt)}
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.pendingBrowserMode ? (
+            <MetadataItem
+              label='Pending browser mode'
+              value={playwrightExecution.pendingBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.pendingRequestId ? (
+            <MetadataItem
+              label='Pending queue job'
+              value={playwrightExecution.pendingRequestId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && (playwrightExecution.browserMode || playwrightExecution.requestedBrowserMode) ? (
+            <MetadataItem
+              label='Browser mode'
+              value={playwrightExecution.browserMode ?? playwrightExecution.requestedBrowserMode}
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.runId ? (
+            <MetadataItem
+              label='Run ID'
+              value={playwrightExecution.runId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.requestId ? (
+            <MetadataItem
+              label='Queue job'
+              value={playwrightExecution.requestId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.publishVerified !== null ? (
+            <MetadataItem
+              label='Publish verified'
+              value={playwrightExecution.publishVerified ? 'Yes' : 'No'}
+              valueClassName={playwrightExecution.publishVerified ? 'text-emerald-400' : 'text-rose-400'}
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.listingUrl ? (
+            <MetadataItem
+              label='Listing URL'
+              value={(
+                <ExternalLink href={playwrightExecution.listingUrl} className='text-sky-400 hover:text-sky-300'>
+                  Open listing
+                </ExternalLink>
+              )}
+              variant='minimal'
+            />
+          ) : null}
+          {isPlaywrightListing && playwrightExecution.errorCategory ? (
+            <MetadataItem
+              label='Error category'
+              value={playwrightExecution.errorCategory}
+              variant='minimal'
+            />
+          ) : null}
           {isBaseListing && (
             <MetadataItem label='Exported fields' value={getExportFieldsLabel()} variant='subtle' />
           )}
         </div>
       </div>
+
+      {isTraderaListing && traderaExecution.rawResult ? (
+        <div className='mt-4'>
+          <JsonViewer
+            title='Tradera run result'
+            data={traderaExecution.rawResult}
+            maxHeight={220}
+            className='bg-white/5'
+          />
+        </div>
+      ) : null}
+      {isPlaywrightListing && playwrightExecution.rawResult ? (
+        <div className='mt-4'>
+          <JsonViewer
+            title='Playwright run result'
+            data={playwrightExecution.rawResult}
+            maxHeight={220}
+            className='bg-white/5'
+          />
+        </div>
+      ) : null}
 
       {listing.exportHistory && listing.exportHistory.length > 0 ? (
         <Card variant='glass' padding='none' className='mt-4 bg-white/5 overflow-hidden'>
@@ -148,8 +459,12 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
             <div className='p-3 space-y-3 border-t border-white/5 max-h-60 overflow-y-auto'>
               {(listing.exportHistory ?? [])
                 .slice(0, 10)
-                .map((event: ProductListingExportEvent, index: number) => (
-                  <div key={`${listing.id}-export-${index}`} className='space-y-1.5'>
+                .map((event: ProductListingExportEvent, index: number) => {
+                  const historyBrowserMode = resolveHistoryBrowserMode(event.fields);
+                  const historyDisplayFields = resolveDisplayHistoryFields(event.fields);
+
+                  return (
+                    <div key={`${listing.id}-export-${index}`} className='space-y-1.5'>
                     <div className='flex items-center justify-between'>
                       <span className='text-[10px] font-mono text-gray-400'>
                         {formatTimestamp(event.exportedAt)}
@@ -172,6 +487,13 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
                         value={formatListValue(event.warehouseId)}
                         variant='subtle'
                       />
+                      {(isPlaywrightListing || isTraderaListing) && historyBrowserMode && (
+                        <MetadataItem
+                          label='Browser mode'
+                          value={historyBrowserMode}
+                          variant='subtle'
+                        />
+                      )}
                       {event.externalListingId && (
                         <MetadataItem
                           label='External ID'
@@ -180,10 +502,18 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
                           variant='subtle'
                         />
                       )}
+                      {event.requestId && (
+                        <MetadataItem
+                          label='Request ID'
+                          value={event.requestId}
+                          mono
+                          variant='subtle'
+                        />
+                      )}
                       <MetadataItem
                         label='Fields'
                         value={
-                          event.fields && event.fields.length > 0 ? event.fields.join(', ') : '—'
+                          historyDisplayFields.length > 0 ? historyDisplayFields.join(', ') : '—'
                         }
                         variant='subtle'
                       />
@@ -191,8 +521,9 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
                     {index < Math.min(listing.exportHistory?.length ?? 0, 10) - 1 && (
                       <div className='mt-3 border-b border-white/5' />
                     )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
             </div>
           ) : null}
         </Card>

@@ -6,6 +6,8 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 const {
   baseQuickExportButtonMock,
   playwrightStatusButtonMock,
+  traderaQuickListButtonMock,
+  traderaStatusButtonMock,
   triggerButtonBarMock,
   useProductListActionsContextMock,
   useProductListHeaderActionsContextMock,
@@ -15,6 +17,8 @@ const {
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
   playwrightStatusButtonMock: vi.fn(),
+  traderaQuickListButtonMock: vi.fn(),
+  traderaStatusButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   useProductListActionsContextMock: vi.fn(),
   useProductListHeaderActionsContextMock: vi.fn(),
@@ -58,10 +62,24 @@ vi.mock('./columns/buttons/BaseQuickExportButton', () => ({
   },
 }));
 
+vi.mock('./columns/buttons/TraderaQuickListButton', () => ({
+  TraderaQuickListButton: (props: Record<string, unknown>) => {
+    traderaQuickListButtonMock(props);
+    return <button type='button'>T+</button>;
+  },
+}));
+
 vi.mock('./columns/buttons/PlaywrightStatusButton', () => ({
   PlaywrightStatusButton: (props: Record<string, unknown>) => {
     playwrightStatusButtonMock(props);
     return <button type='button'>PW</button>;
+  },
+}));
+
+vi.mock('./columns/buttons/TraderaStatusButton', () => ({
+  TraderaStatusButton: (props: Record<string, unknown>) => {
+    traderaStatusButtonMock(props);
+    return <button type='button'>TR</button>;
   },
 }));
 
@@ -197,6 +215,130 @@ describe('ProductColumns queued badge', () => {
     render(cell);
 
     expect(screen.getByText('Queued')).toBeInTheDocument();
+  });
+
+  it('passes Tradera badge runtime into the quick export button', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showTraderaBadge: false,
+        traderaStatus: 'queued',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    const cell = integrationsColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    await waitFor(() => {
+      expect(traderaQuickListButtonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          product: expect.objectContaining({ id: 'product-1' }),
+          showTraderaBadge: false,
+          traderaStatus: 'queued',
+          prefetchListings: expect.any(Function),
+          onOpenIntegrations: expect.any(Function),
+        })
+      );
+    });
+  });
+
+  it('scopes Base quick export recovery to the Base listings modal', async () => {
+    const product = createProduct();
+    const onIntegrationsClick = vi.fn();
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick: vi.fn(),
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(baseQuickExportButtonMock).toHaveBeenCalled();
+    });
+
+    const props = baseQuickExportButtonMock.mock.calls.at(-1)?.[0] as
+      | { onOpenIntegrations?: ((recoveryContext?: unknown) => void) | undefined }
+      | undefined;
+
+    props?.onOpenIntegrations?.({ source: 'base_quick_export_failed' });
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      { source: 'base_quick_export_failed' },
+      'baselinker'
+    );
+  });
+
+  it('scopes Tradera quick export recovery to the Tradera listings modal', async () => {
+    const product = createProduct();
+    const onIntegrationsClick = vi.fn();
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick: vi.fn(),
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(traderaQuickListButtonMock).toHaveBeenCalled();
+    });
+
+    const props = traderaQuickListButtonMock.mock.calls.at(-1)?.[0] as
+      | { onOpenIntegrations?: ((recoveryContext?: unknown) => void) | undefined }
+      | undefined;
+
+    props?.onOpenIntegrations?.({ source: 'tradera_quick_export_failed' });
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      { source: 'tradera_quick_export_failed' },
+      'tradera'
+    );
+  });
+
+  it('passes productId into the Tradera status button when the badge is visible', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showTraderaBadge: true,
+        traderaStatus: 'auth_required',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          status: 'auth_required',
+          prefetchListings: expect.any(Function),
+          onOpenListings: expect.any(Function),
+        })
+      );
+    });
   });
 
   it('prefers the tracker-backed running badge over the queued fallback', () => {

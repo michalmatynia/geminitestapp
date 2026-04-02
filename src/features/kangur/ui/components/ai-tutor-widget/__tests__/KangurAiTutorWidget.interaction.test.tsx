@@ -44,6 +44,7 @@ const mocks = vi.hoisted(() => {
   };
   const audioPlayMock = vi.fn().mockResolvedValue(undefined);
   const audioPauseMock = vi.fn();
+  const useActivateKangurAiTutorContentMock = vi.fn();
 
   return {
     settingsStoreMock,
@@ -67,6 +68,7 @@ const mocks = vi.hoisted(() => {
     speechSynthesisMock,
     audioPlayMock,
     audioPauseMock,
+    useActivateKangurAiTutorContentMock,
   };
 });
 const { withKangurClientError, withKangurClientErrorSync } = vi.hoisted(() =>
@@ -162,7 +164,7 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
-  useActivateKangurAiTutorContent: () => {},
+  useActivateKangurAiTutorContent: mocks.useActivateKangurAiTutorContentMock,
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorRuntime.hook', () => ({
@@ -383,5 +385,47 @@ describe('KangurAiTutorWidget - Interaction', () => {
         messageIndex: 0,
       })
     );
+  });
+
+  it('activates optional tutor content only after the tutor is opened', () => {
+    mocks.useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: { enabled: true, uiMode: 'anchored' },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      isOpen: false,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: mocks.openChatMock,
+      closeChat: mocks.closeChatMock,
+      sendMessage: mocks.sendMessageMock,
+      setHighlightedText: mocks.setHighlightedTextMock,
+    });
+
+    const view = render(<KangurAiTutorWidget />);
+    expect(mocks.useActivateKangurAiTutorContentMock).toHaveBeenLastCalledWith(false);
+
+    mocks.useKangurAiTutorMock.mockReturnValue({
+      enabled: true,
+      tutorSettings: { enabled: true, uiMode: 'anchored' },
+      tutorName: 'Pomocnik',
+      tutorMoodId: 'neutral',
+      isOpen: true,
+      messages: [],
+      isLoading: false,
+      isUsageLoading: false,
+      highlightedText: null,
+      usageSummary: null,
+      openChat: mocks.openChatMock,
+      closeChat: mocks.closeChatMock,
+      sendMessage: mocks.sendMessageMock,
+      setHighlightedText: mocks.setHighlightedTextMock,
+    });
+
+    view.rerender(<KangurAiTutorWidget />);
+    expect(mocks.useActivateKangurAiTutorContentMock).toHaveBeenLastCalledWith(true);
   });
 });

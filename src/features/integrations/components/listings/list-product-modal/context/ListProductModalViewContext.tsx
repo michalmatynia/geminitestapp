@@ -10,6 +10,7 @@ type ListProductModalViewContextValue = {
   onClose: () => void;
   onSuccess: () => void;
   hasPresetSelection: boolean;
+  autoSubmitOnOpen: boolean;
 };
 
 const ListProductModalViewContext = React.createContext<ListProductModalViewContextValue | null>(

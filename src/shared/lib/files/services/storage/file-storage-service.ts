@@ -138,7 +138,12 @@ export const getPublicPathFromStoredPath = (filepath: string): string | null => 
   return normalized;
 };
 
-const toAbsoluteUrl = (value: string, baseUrl: string): string => {
+export const resolveAppBaseUrl = (): string =>
+  process.env['NEXT_PUBLIC_APP_URL']?.trim() ||
+  process.env['NEXTAUTH_URL']?.trim() ||
+  'http://localhost:3000';
+
+export const toAbsoluteUrl = (value: string, baseUrl: string): string => {
   if (isHttpFilepath(value)) return value;
   if (!baseUrl) return value;
   try {

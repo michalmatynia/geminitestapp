@@ -262,7 +262,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
   const query = createSingleQueryV2<UserPreferencesResponse, ProductListPreferences>({
     id: 'current',
     queryKey: userPreferencesQueryKey,
-    queryFn: () => fetchUserPreferences(),
+    queryFn: (context) => fetchUserPreferences(context.signal),
     select: mapProductListPreferences,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,

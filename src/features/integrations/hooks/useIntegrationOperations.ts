@@ -208,9 +208,13 @@ export function useIntegrationModalOperations(): {
   setIntegrationsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   showListProductModal: boolean;
   setShowListProductModal: Dispatch<SetStateAction<boolean>>;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
+  listProductPreset:
+    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
+    | null;
   setListProductPreset: Dispatch<
-    SetStateAction<{ integrationId: string; connectionId: string } | null>
+    SetStateAction<
+      { integrationId: string; connectionId: string; autoSubmit?: boolean } | null
+    >
   >;
   exportSettingsProduct: ProductWithImages | null;
   setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
@@ -224,6 +228,7 @@ export function useIntegrationModalOperations(): {
   const [listProductPreset, setListProductPreset] = useState<{
     integrationId: string;
     connectionId: string;
+    autoSubmit?: boolean;
   } | null>(null);
   const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(
     null
@@ -257,7 +262,9 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
   setIntegrationsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   showListProductModal: boolean;
   setShowListProductModal: Dispatch<SetStateAction<boolean>>;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
+  listProductPreset:
+    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
+    | null;
   setListProductPreset: Dispatch<
     SetStateAction<{ integrationId: string; connectionId: string } | null>
   >;

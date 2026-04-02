@@ -2,7 +2,9 @@ import { redirect } from 'next/navigation';
 
 import { AdminLayout } from '@/features/admin/public';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
+import { ADMIN_LAYOUT_SESSION_HEADER, parseAdminLayoutSessionHeaderValue } from '@/shared/lib/auth/admin-layout-session';
 import { readOptionalRequestCookies } from '@/shared/lib/request/optional-cookies';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { JSX } from 'react';
@@ -37,7 +39,12 @@ export default async function Layout({
   let session: Awaited<ReturnType<typeof readOptionalServerAuthSession>> = null;
   let canReadAdminSettings = false;
   try {
-    session = await readOptionalServerAuthSession();
+    const requestHeaders = await readOptionalRequestHeaders();
+    session = parseAdminLayoutSessionHeaderValue(requestHeaders?.get(ADMIN_LAYOUT_SESSION_HEADER));
+
+    if (!session?.user?.id) {
+      session = await readOptionalServerAuthSession();
+    }
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'admin.layout',

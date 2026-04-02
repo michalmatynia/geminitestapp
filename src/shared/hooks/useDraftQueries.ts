@@ -32,9 +32,10 @@ export function useDraftQueries(
 
   return createListQueryV2<ProductDraft>({
     queryKey,
-    queryFn: () =>
+    queryFn: (context) =>
       api.get<ProductDraft[]>('/api/drafts', {
         params: notebookId ? { notebookId } : undefined,
+        signal: context.signal,
       }),
     enabled: options?.enabled ?? true,
     meta: {

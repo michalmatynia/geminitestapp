@@ -20,6 +20,7 @@ const {
   useProductFormCoreMock,
   productFormProviderPropsMock,
   triggerButtonBarMock,
+  listProductModalPropsMock,
   productListingsModalPropsMock,
   getNextProviderInstanceIdMock,
   resetProviderInstanceCounterMock,
@@ -31,6 +32,7 @@ const {
     useProductFormCoreMock: vi.fn(),
     productFormProviderPropsMock: vi.fn(),
     triggerButtonBarMock: vi.fn(),
+    listProductModalPropsMock: vi.fn(),
     productListingsModalPropsMock: vi.fn(),
     getNextProviderInstanceIdMock: (): number => {
       providerInstanceCounter += 1;
@@ -132,7 +134,10 @@ vi.mock('@/features/integrations/public', () => ({
     productListingsModalPropsMock(props);
     return <div data-testid='product-listings-modal' />;
   },
-  ListProductModal: (props: any) => <div data-testid='list-product-modal' />,
+  ListProductModal: (props: any) => {
+    listProductModalPropsMock(props);
+    return <div data-testid='list-product-modal' />;
+  },
   MassListProductModal: (props: any) => <div data-testid='mass-list-product-modal' />,
 }));
 
@@ -172,6 +177,7 @@ describe('ProductModals', () => {
     onEditSave: vi.fn(),
     integrationsProduct: null,
     integrationsRecoveryContext: null,
+    integrationsFilterIntegrationSlug: null,
     onCloseIntegrations: vi.fn(),
     onStartListing: vi.fn(),
     showListProductModal: false,
@@ -258,6 +264,7 @@ describe('ProductModals', () => {
       useProductListModalsContextMock.mockReturnValue(
         buildContext({
           integrationsProduct: createProduct(),
+          integrationsFilterIntegrationSlug: 'tradera',
           integrationsRecoveryContext: {
             source: 'base_quick_export_failed',
             integrationSlug: 'baselinker',
@@ -270,12 +277,13 @@ describe('ProductModals', () => {
       render(<ProductModals />);
 
       await waitFor(() => {
-        expect(productListingsModalPropsMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            item: expect.objectContaining({ id: 'product-1' }),
-            recoveryContext: {
-              source: 'base_quick_export_failed',
-              integrationSlug: 'baselinker',
+          expect(productListingsModalPropsMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              item: expect.objectContaining({ id: 'product-1' }),
+              filterIntegrationSlug: 'tradera',
+              recoveryContext: {
+                source: 'base_quick_export_failed',
+                integrationSlug: 'baselinker',
               status: 'failed',
               runId: 'run-failed-42',
             },
@@ -298,6 +306,33 @@ describe('ProductModals', () => {
           expect.objectContaining({
             item: expect.objectContaining({ id: 'product-1' }),
             filterIntegrationSlug: 'baselinker',
+          })
+        );
+      });
+    });
+
+    it('passes Tradera recovery auto-submit preset into the list product modal', async () => {
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          integrationsProduct: createProduct(),
+          showListProductModal: true,
+          listProductPreset: {
+            integrationId: 'integration-tradera-1',
+            connectionId: 'conn-tradera-1',
+            autoSubmit: true,
+          },
+        })
+      );
+
+      render(<ProductModals />);
+
+      await waitFor(() => {
+        expect(listProductModalPropsMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            item: expect.objectContaining({ id: 'product-1' }),
+            initialIntegrationId: 'integration-tradera-1',
+            initialConnectionId: 'conn-tradera-1',
+            autoSubmitOnOpen: true,
           })
         );
       });

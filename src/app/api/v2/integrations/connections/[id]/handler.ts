@@ -33,6 +33,8 @@ const connectionSchema = z.object({
   playwrightEmulateDevice: z.boolean().optional(),
   playwrightDeviceName: z.string().optional(),
   playwrightPersonaId: z.string().trim().nullable().optional(),
+  traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
+  playwrightListingScript: z.string().nullable().optional(),
   allegroUseSandbox: z.boolean().optional(),
   traderaDefaultTemplateId: z.string().trim().nullable().optional(),
   traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
@@ -179,6 +181,12 @@ export async function PUT_handler(
     ...(typeof data.playwrightPersonaId === 'string' || data.playwrightPersonaId === null
       ? { playwrightPersonaId: data.playwrightPersonaId ?? null }
       : {}),
+    ...(typeof data.traderaBrowserMode === 'string' || data.traderaBrowserMode === null
+      ? { traderaBrowserMode: data.traderaBrowserMode ?? 'builtin' }
+      : {}),
+    ...(typeof data.playwrightListingScript === 'string' || data.playwrightListingScript === null
+      ? { playwrightListingScript: data.playwrightListingScript ?? null }
+      : {}),
     ...(typeof data.allegroUseSandbox === 'boolean'
       ? { allegroUseSandbox: data.allegroUseSandbox }
       : {}),
@@ -254,6 +262,9 @@ export async function PUT_handler(
     playwrightEmulateDevice: connection.playwrightEmulateDevice,
     playwrightDeviceName: connection.playwrightDeviceName,
     playwrightPersonaId: connection.playwrightPersonaId ?? null,
+    traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
+    playwrightListingScript: connection.playwrightListingScript ?? null,
+    hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
     traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,

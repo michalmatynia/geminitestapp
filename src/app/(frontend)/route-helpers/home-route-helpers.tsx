@@ -7,11 +7,10 @@ import { getCmsRepository, getSlugsForDomain, isDomainZoningEnabled, resolveCmsD
 import { getKangurPublicLaunchHref } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
 import { HomeContent } from '../home/HomeContent';
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home/home-helpers';
+import { resolveFrontPageSelection } from '../home/home-helpers';
 import { createHomeTimingRecorder } from '../home/home-timing';
 
 type RenderHomeRouteOptions = {
@@ -35,23 +34,20 @@ export const renderHomeRoute = async ({
   const resolvedLocale = resolveHomeLocale(locale);
   const { withTiming, flush } = createHomeTimingRecorder();
 
-  const shouldApplyFrontPageSelection = shouldApplyFrontPageAppSelection();
-  const frontPageSetting = shouldApplyFrontPageSelection
-    ? await withTiming('frontPageSetting', getFrontPageSetting)
-    : null;
-  const publicOwner = getFrontPagePublicOwner(frontPageSetting);
-  const redirectPath = getFrontPageRedirectPath(frontPageSetting);
+  const frontPageSelection = await withTiming('frontPageSelection', resolveFrontPageSelection);
+  const publicOwner = frontPageSelection.publicOwner;
+  const redirectPath = frontPageSelection.redirectPath;
   const kangurLaunchRoute =
-    shouldApplyFrontPageSelection && publicOwner === 'kangur'
+    frontPageSelection.enabled && publicOwner === 'kangur'
       ? await withTiming('kangurLaunchRoute', () => getKangurConfiguredLaunchRoute())
       : null;
 
-  if (shouldApplyFrontPageSelection && redirectPath) {
+  if (frontPageSelection.enabled && redirectPath) {
     await flush();
     redirect(localizePublicPath(redirectPath, resolvedLocale));
   }
 
-  if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
+  if (frontPageSelection.enabled && publicOwner === 'kangur') {
     await flush();
     redirect(localizePublicPath(getKangurPublicLaunchHref(kangurLaunchRoute ?? undefined), resolvedLocale));
   }

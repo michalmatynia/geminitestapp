@@ -2,18 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   authMock,
-  getFrontPagePublicOwnerMock,
-  getFrontPageSettingMock,
   notFoundMock,
   redirectMock,
-  shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
-  getFrontPagePublicOwnerMock: vi.fn(),
-  getFrontPageSettingMock: vi.fn(),
   notFoundMock: vi.fn(),
   redirectMock: vi.fn(),
-  shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -27,15 +21,6 @@ vi.mock('@/features/auth/server', () => ({
   readOptionalServerAuthSession: authMock,
 }));
 
-vi.mock('@/app/(frontend)/home/home-helpers', () => ({
-  getFrontPageSetting: getFrontPageSettingMock,
-  shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
-}));
-
-vi.mock('@/shared/lib/front-page-app', () => ({
-  getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
-}));
-
 describe('kangur alias route', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -46,9 +31,6 @@ describe('kangur alias route', () => {
     notFoundMock.mockImplementation(() => {
       throw new Error('notFound');
     });
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(false);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'cms' });
-    getFrontPagePublicOwnerMock.mockReturnValue('cms');
     authMock.mockResolvedValue(null);
   });
 
@@ -93,10 +75,6 @@ describe('kangur alias route', () => {
   });
 
   it('does not redirect blocked games aliases to the canonical public route for non-super-admin users', async () => {
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
-    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
-
     const { default: KangurAliasPage } = await import('@/app/(frontend)/kangur/(app)/[...slug]/page');
 
     await expect(
@@ -111,9 +89,6 @@ describe('kangur alias route', () => {
   });
 
   it('resolves games aliases for exact super admins when Kangur owns home', async () => {
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
-    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
     authMock.mockResolvedValue({
       user: {
         role: 'super_admin',

@@ -32,14 +32,16 @@ describe('useDraftQueries', () => {
   it('keeps drafts queries enabled by default', async () => {
     const { result } = renderHook(() => useDraftQueries());
     const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const signal = new AbortController().signal;
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.queryKey).toEqual([...draftKeys.lists(), { notebookId: 'all' }]);
     expect(config.enabled).toBe(true);
 
-    await expect(config.queryFn()).resolves.toEqual([]);
+    await expect(config.queryFn({ signal })).resolves.toEqual([]);
     expect(apiGetMock).toHaveBeenCalledWith('/api/drafts', {
       params: undefined,
+      signal,
     });
   });
 

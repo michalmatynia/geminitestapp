@@ -12,6 +12,8 @@ const createConnectionSchema = z
     name: z.string().trim().min(1),
     username: z.string().trim().optional(),
     password: z.string().trim().min(1),
+    traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
+    playwrightListingScript: z.string().trim().nullable().optional(),
     traderaDefaultTemplateId: z.string().trim().nullable().optional(),
     traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
     traderaAutoRelistEnabled: z.boolean().optional(),
@@ -88,6 +90,9 @@ export async function GET_handler(
     playwrightEmulateDevice: connection.playwrightEmulateDevice,
     playwrightDeviceName: connection.playwrightDeviceName,
     playwrightPersonaId: connection.playwrightPersonaId ?? null,
+    traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
+    playwrightListingScript: connection.playwrightListingScript ?? null,
+    hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
     traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,
@@ -154,6 +159,12 @@ export async function POST_handler(
         baseApiToken: encryptedPassword,
         baseTokenUpdatedAt: new Date().toISOString(),
       }
+      : {}),
+    ...(typeof data.traderaBrowserMode === 'string' || data.traderaBrowserMode === null
+      ? { traderaBrowserMode: data.traderaBrowserMode ?? 'builtin' }
+      : {}),
+    ...(typeof data.playwrightListingScript === 'string' || data.playwrightListingScript === null
+      ? { playwrightListingScript: data.playwrightListingScript ?? null }
       : {}),
     ...(typeof data.traderaDefaultTemplateId === 'string' || data.traderaDefaultTemplateId === null
       ? { traderaDefaultTemplateId: data.traderaDefaultTemplateId ?? null }
@@ -226,6 +237,9 @@ export async function POST_handler(
     playwrightEmulateDevice: created.playwrightEmulateDevice,
     playwrightDeviceName: created.playwrightDeviceName,
     playwrightPersonaId: created.playwrightPersonaId ?? null,
+    traderaBrowserMode: created.traderaBrowserMode ?? 'builtin',
+    playwrightListingScript: created.playwrightListingScript ?? null,
+    hasPlaywrightListingScript: Boolean(created.playwrightListingScript?.trim()),
     traderaDefaultTemplateId: created.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: created.traderaDefaultDurationHours ?? 72,
     traderaAutoRelistEnabled: created.traderaAutoRelistEnabled ?? true,

@@ -1,33 +1,33 @@
 {
-  "generatedAt": "2026-04-01T22:10:10.340Z",
+  "generatedAt": "2026-04-02T18:23:44.241Z",
   "source": {
-    "totalFiles": 9028,
-    "totalLines": 1506103,
-    "useClientFiles": 1673,
-    "hooksWithoutUseClient": 0,
-    "filesOver800": 89,
+    "totalFiles": 9139,
+    "totalLines": 1526942,
+    "useClientFiles": 1688,
+    "hooksWithoutUseClient": 1,
+    "filesOver800": 88,
     "filesOver1000": 0,
     "filesOver1500": 0,
     "largestFile": {
-      "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-      "lines": 986
+      "path": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx",
+      "lines": 990
     }
   },
   "api": {
     "totalRoutes": 30,
     "routesWithApiHandler": 126,
-    "delegatedServerRoutes": 172,
+    "delegatedServerRoutes": 176,
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 39,
     "revalidateRoutes": 12,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 8,
-    "routesWithExplicitCachePolicy": 298,
+    "routesWithExplicitCachePolicy": 302,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
         "path": "src/app/api/v2/integrations/[[...path]]/route.ts",
-        "lines": 231
+        "lines": 235
       },
       {
         "path": "src/app/api/agentcreator/[[...path]]/route.ts",
@@ -115,28 +115,37 @@
     "sharedToFeaturesTotalImports": 0
   },
   "architecture": {
-    "crossFeatureEdgePairs": 0,
-    "topCrossFeatureEdges": [],
+    "crossFeatureEdgePairs": 2,
+    "topCrossFeatureEdges": [
+      {
+        "edge": "integrations -> ai",
+        "references": 1
+      },
+      {
+        "edge": "integrations -> playwright",
+        "references": 1
+      }
+    ],
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2418,
-        "lines": 525446
+        "files": 2425,
+        "lines": 525896
       },
       {
         "feature": "ai",
-        "files": 1169,
-        "lines": 236546
+        "files": 1170,
+        "lines": 237316
       },
       {
         "feature": "case-resolver",
-        "files": 304,
-        "lines": 66447
+        "files": 305,
+        "lines": 66492
       },
       {
         "feature": "products",
-        "files": 301,
-        "lines": 60360
+        "files": 307,
+        "lines": 63159
       },
       {
         "feature": "cms",
@@ -145,13 +154,13 @@
       },
       {
         "feature": "integrations",
-        "files": 236,
-        "lines": 35046
+        "files": 264,
+        "lines": 41591
       },
       {
         "feature": "filemaker",
-        "files": 134,
-        "lines": 33454
+        "files": 149,
+        "lines": 37716
       },
       {
         "feature": "prompt-exploder",
@@ -160,13 +169,13 @@
       },
       {
         "feature": "notesapp",
-        "files": 88,
-        "lines": 12909
+        "files": 89,
+        "lines": 13040
       },
       {
         "feature": "admin",
-        "files": 49,
-        "lines": 9139
+        "files": 53,
+        "lines": 9911
       },
       {
         "feature": "auth",
@@ -221,17 +230,17 @@
       {
         "feature": "jobs",
         "files": 5,
-        "lines": 566
+        "lines": 574
+      },
+      {
+        "feature": "playwright",
+        "files": 13,
+        "lines": 508
       },
       {
         "feature": "gsap",
         "files": 5,
         "lines": 409
-      },
-      {
-        "feature": "playwright",
-        "files": 8,
-        "lines": 197
       },
       {
         "feature": "tooltip-engine",
@@ -432,12 +441,20 @@
   "hotspots": {
     "topFilesByLines": [
       {
+        "path": "src/features/products/components/list/ProductColumns.test.tsx",
+        "lines": 1056
+      },
+      {
         "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
         "lines": 999
       },
       {
         "path": "src/shared/lib/products/services/product-ai-graph-model-payload.test.ts",
         "lines": 991
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx",
+        "lines": 990
       },
       {
         "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",
@@ -450,6 +467,10 @@
       {
         "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
         "lines": 986
+      },
+      {
+        "path": "src/app/api/settings/handler.ts",
+        "lines": 982
       },
       {
         "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx",
@@ -520,6 +541,14 @@
         "lines": 958
       },
       {
+        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.test.tsx",
+        "lines": 956
+      },
+      {
+        "path": "src/shared/contracts/integrations/index.ts",
+        "lines": 952
+      },
+      {
         "path": "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
         "lines": 948
       },
@@ -530,26 +559,6 @@
       {
         "path": "src/features/kangur/ui/KangurFeatureApp.test.tsx",
         "lines": 944
-      },
-      {
-        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.test.tsx",
-        "lines": 943
-      },
-      {
-        "path": "src/app/api/settings/handler.ts",
-        "lines": 936
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/runtime/__tests__/client-native-code-object-registry-contract-subset.test.ts",
-        "lines": 935
-      },
-      {
-        "path": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.test.tsx",
-        "lines": 934
-      },
-      {
-        "path": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
-        "lines": 933
       }
     ],
     "topPagesByLines": [
@@ -602,10 +611,6 @@
         "lines": 17
       },
       {
-        "path": "src/app/[locale]/(frontend)/page.tsx",
-        "lines": 17
-      },
-      {
         "path": "src/app/[locale]/(frontend)/products/[id]/page.tsx",
         "lines": 17
       },
@@ -632,12 +637,16 @@
       {
         "path": "src/app/(admin)/admin/chatbot/page.tsx",
         "lines": 15
+      },
+      {
+        "path": "src/app/(admin)/admin/integrations/marketplaces/page.tsx",
+        "lines": 15
       }
     ]
   },
   "propDrilling": {
-    "candidateChains": 322,
-    "depthGte4Chains": 95,
+    "candidateChains": 240,
+    "depthGte4Chains": 66,
     "forwardingComponents": 120
   }
 }

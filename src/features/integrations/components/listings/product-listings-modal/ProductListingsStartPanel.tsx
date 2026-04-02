@@ -4,11 +4,23 @@ import Link from 'next/link';
 import React from 'react';
 
 import { useIntegrationSelection } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
-import { useProductListingsModals } from '@/features/integrations/context/ProductListingsContext';
+import {
+  useProductListingsData,
+  useProductListingsModals,
+} from '@/features/integrations/context/ProductListingsContext';
+import { useProductListingsViewContext } from '@/features/integrations/components/listings/product-listings-modal/context/ProductListingsViewContext';
+import { readPersistedTraderaQuickListFeedback } from '@/features/products/components/list/columns/buttons/traderaQuickListFeedback';
 import { Button, Alert, LoadingState, IntegrationSelector, Card } from '@/shared/ui';
 
 export function ProductListingsStartPanel(): React.JSX.Element {
-  const { onStartListing } = useProductListingsModals();
+  const { product } = useProductListingsData();
+  const { onStartListing, recoveryContext } = useProductListingsModals();
+  const { filterIntegrationSlug, statusTargetLabel } = useProductListingsViewContext();
+  const persistedTraderaFeedback =
+    recoveryContext?.source === 'tradera_quick_export_auth_required' ||
+    recoveryContext?.source === 'tradera_quick_export_failed'
+      ? readPersistedTraderaQuickListFeedback(product.id)
+      : null;
   const {
     integrations,
     loading: loadingIntegrations,
@@ -16,7 +28,12 @@ export function ProductListingsStartPanel(): React.JSX.Element {
     selectedConnectionId,
     setSelectedIntegrationId,
     setSelectedConnectionId,
-  } = useIntegrationSelection();
+  } = useIntegrationSelection(
+    recoveryContext?.integrationId ?? persistedTraderaFeedback?.integrationId ?? null,
+    recoveryContext?.connectionId ?? persistedTraderaFeedback?.connectionId ?? null,
+    { filterIntegrationSlug }
+  );
+  const isScopedMarketplaceFlow = Boolean(filterIntegrationSlug);
 
   if (loadingIntegrations) {
     return (
@@ -29,9 +46,9 @@ export function ProductListingsStartPanel(): React.JSX.Element {
   if (integrations.length === 0) {
     return (
       <Alert variant='warning'>
-        No connected integrations.{' '}
+        {isScopedMarketplaceFlow ? `No connected ${statusTargetLabel} accounts.` : 'No connected integrations.'}{' '}
         <Link href='/admin/integrations' className='underline hover:text-yellow-100'>
-          Set up an integration
+          Set up {isScopedMarketplaceFlow ? `${statusTargetLabel} integration` : 'an integration'}
         </Link>
         .
       </Alert>
@@ -41,6 +58,14 @@ export function ProductListingsStartPanel(): React.JSX.Element {
   return (
     <Card variant='subtle' padding='md' className='bg-card/40'>
       <div className='space-y-4'>
+        {isScopedMarketplaceFlow && (
+          <div className='space-y-1 text-center'>
+            <div className='text-sm font-semibold text-white'>{statusTargetLabel} options</div>
+            <p className='text-xs text-gray-300'>
+              Continue with a {statusTargetLabel} account only.
+            </p>
+          </div>
+        )}
         <IntegrationSelector
           integrations={integrations}
           selectedIntegrationId={selectedIntegrationId}

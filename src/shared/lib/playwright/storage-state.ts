@@ -42,7 +42,7 @@ const sanitizeCookieName = (value: unknown): string | null => {
 };
 
 const sanitizeCookieDomain = (value: unknown): string | null => {
-  const domain = readOptionalString(value)?.replace(/^\.+/, '') ?? null;
+  const domain = readOptionalString(value) ?? null;
   if (!domain || domain.includes(':') || domain.includes('/') || domain.includes(' ')) {
     return null;
   }

@@ -1,13 +1,21 @@
+import { access, stat } from 'node:fs/promises';
+import path from 'node:path';
+
 import { chromium, devices, type BrowserContextOptions, type Page } from 'playwright';
 
-import { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
+import { normalizeTraderaListingFormUrl, TraderaSystemSettings } from '@/features/integrations/constants/tradera';
 import { decryptSecret } from '@/features/integrations/server';
 import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
-import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
-import { internalError, notFoundError } from '@/shared/errors/app-error';
+import type {
+  IntegrationConnectionRecord,
+  PlaywrightRelistBrowserMode,
+  ProductListing,
+} from '@/shared/contracts/integrations';
+import type { ProductWithImages } from '@/shared/contracts/products';
+import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import {
@@ -26,27 +34,351 @@ import {
   extractExternalListingId,
   captureTraderaListingDebugArtifacts,
 } from './utils';
+import {
+  resolveAppBaseUrl,
+  toAbsoluteUrl,
+} from '@/shared/lib/files/services/storage/file-storage-service';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { getIntegrationRepository } from '../integration-repository';
+import { runPlaywrightListingScript } from '../playwright-listing/runner';
+import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
 
+export type TraderaBrowserListingResult = {
+  externalListingId: string;
+  listingUrl?: string;
+  simulated?: boolean;
+  metadata?: Record<string, unknown>;
+};
 
+const resolveProductImageUrls = (product: ProductWithImages): string[] => {
+  const urls = new Set<string>();
+  (product.imageLinks ?? []).forEach((v) => { const t = v.trim(); if (t) urls.add(t); });
+  (product.images ?? []).forEach((image) => {
+    [image.imageFile?.publicUrl, image.imageFile?.url, image.imageFile?.thumbnailUrl, image.imageFile?.filepath]
+      .forEach((c) => { const t = typeof c === 'string' ? c.trim() : ''; if (t) urls.add(t); });
+  });
+  return Array.from(urls);
+};
+
+const MIN_TRADERA_IMAGE_BYTES = 10_240;
+
+const toAbsolutePublicFilePath = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('/')) return null;
+  return path.join(process.cwd(), 'public', trimmed.replace(/^\/+/, ''));
+};
+
+const resolveLocalProductImagePaths = async (
+  product: ProductWithImages
+): Promise<string[]> => {
+  const candidates = new Set<string>();
+
+  (product.images ?? []).forEach((image) => {
+    const filepath = image.imageFile?.filepath;
+    if (typeof filepath === 'string' && filepath.trim()) {
+      const absolutePath = toAbsolutePublicFilePath(filepath);
+      if (absolutePath) {
+        candidates.add(absolutePath);
+      }
+    }
+  });
+
+  const validPaths: string[] = [];
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      const stats = await stat(candidate);
+      if (stats.isFile() && stats.size >= MIN_TRADERA_IMAGE_BYTES) {
+        validPaths.push(candidate);
+      }
+    } catch {
+      // Ignore missing or unreadable image files and fall back to URL downloads.
+    }
+  }
+
+  return validPaths;
+};
+
+const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v6';
+
+const buildTraderaScriptInput = async ({
+  product,
+  listing,
+  systemSettings,
+  connection,
+}: {
+  product: ProductWithImages;
+  listing: ProductListing;
+  systemSettings: TraderaSystemSettings;
+  connection: IntegrationConnectionRecord;
+}): Promise<Record<string, unknown>> => {
+  const title = product.name_en || product.name_pl || product.name_de || product.sku || `Listing ${listing.productId}`;
+  const description = product.description_en || product.description_pl || product.description_de || title;
+  const appBaseUrl = resolveAppBaseUrl();
+  const images = resolveProductImageUrls(product).map((u) => toAbsoluteUrl(u, appBaseUrl));
+  const localImagePaths = await resolveLocalProductImagePaths(product);
+  // Credentials passed in-memory only — never written to disk or job queue
+  const username = connection.username ?? null;
+  const password = connection.password ? decryptSecret(connection.password) : null;
+
+  return {
+    product, bundle: product, entityJson: JSON.stringify(product),
+    productId: product.id, listingId: listing.id,
+    integrationId: listing.integrationId, connectionId: listing.connectionId,
+    baseProductId: product.baseProductId ?? product.id,
+    sku: product.sku ?? null, title, description,
+    price: typeof product.price === 'number' && Number.isFinite(product.price) ? product.price : null,
+    localImagePaths,
+    images, imageUrls: images, username, password,
+    appBaseUrl,
+    durationHours: listing.relistPolicy?.durationHours ?? null,
+    autoRelistEnabled: listing.relistPolicy?.enabled ?? null,
+    autoRelistLeadMinutes: listing.relistPolicy?.leadMinutes ?? null,
+    templateId: listing.relistPolicy?.templateId ?? null,
+    traderaConfig: { listingFormUrl: systemSettings.listingFormUrl },
+  };
+};
+
+const usesLegacyDefaultTraderaQuickListScript = (script: string | null | undefined): boolean => {
+  const normalized = typeof script === 'string' ? script : '';
+  return (
+    normalized.includes('await import(\'node:fs/promises\')') &&
+    normalized.includes('tradera-quicklist')
+  );
+};
+
+const isManagedTraderaQuickListScript = (script: string | null | undefined): boolean => {
+  const normalized = typeof script === 'string' ? script : '';
+  return (
+    normalized.includes('const ACTIVE_URL = \'https://www.tradera.com/en/my/listings?tab=active\';') &&
+    normalized.includes('log?.(\'tradera.quicklist.start\'') &&
+    normalized.includes('FAIL_SELL_PAGE_INVALID: Tradera create listing page did not load.')
+  );
+};
+
+const usesStaleManagedDefaultTraderaQuickListScript = (
+  script: string | null | undefined
+): boolean => {
+  const normalized = typeof script === 'string' ? script : '';
+  return (
+    isManagedTraderaQuickListScript(normalized) &&
+    !normalized.includes(CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER)
+  );
+};
+
+const resolveEffectiveTraderaListingScript = (
+  connection: IntegrationConnectionRecord
+): { script: string; source: 'connection' | 'default-fallback' | 'legacy-default-refresh' } => {
+  const configured = connection.playwrightListingScript?.trim() ?? '';
+  if (!configured) {
+    return {
+      script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+      source: 'default-fallback',
+    };
+  }
+
+  if (usesLegacyDefaultTraderaQuickListScript(configured)) {
+    return {
+      script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+      source: 'legacy-default-refresh',
+    };
+  }
+
+  if (usesStaleManagedDefaultTraderaQuickListScript(configured)) {
+    return {
+      script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+      source: 'legacy-default-refresh',
+    };
+  }
+
+  return {
+    script: configured,
+    source: 'connection',
+  };
+};
+
+const resolveResultBrowserMode = (
+  requestedBrowserMode: PlaywrightRelistBrowserMode,
+  effectiveBrowserMode: 'headless' | 'headed' | undefined
+): 'headless' | 'headed' | null =>
+  effectiveBrowserMode ??
+  (requestedBrowserMode === 'headed'
+    ? 'headed'
+    : requestedBrowserMode === 'headless'
+      ? 'headless'
+      : null);
+
+const runTraderaBrowserListingScripted = async ({
+  listing,
+  connection,
+  systemSettings,
+  browserMode,
+}: {
+  listing: ProductListing;
+  connection: IntegrationConnectionRecord;
+  systemSettings: TraderaSystemSettings;
+  source: 'manual' | 'scheduler' | 'api';
+  action: 'list' | 'relist';
+  browserMode: PlaywrightRelistBrowserMode;
+}): Promise<TraderaBrowserListingResult> => {
+  const normalizedListingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
+  const { script, source: scriptSource } = resolveEffectiveTraderaListingScript(connection);
+
+  if (
+    scriptSource === 'legacy-default-refresh' &&
+    connection.playwrightListingScript !== DEFAULT_TRADERA_QUICKLIST_SCRIPT
+  ) {
+    try {
+      const integrationRepository = await getIntegrationRepository();
+      await integrationRepository.updateConnection(connection.id, {
+        playwrightListingScript: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+      });
+    } catch (error) {
+      logClientError(error);
+    }
+  }
+
+  const productRepository = await getProductRepository();
+  const product = await productRepository.getProductById(listing.productId);
+  if (!product) {
+    throw notFoundError('Product not found', { productId: listing.productId });
+  }
+
+  let result;
+  try {
+    const scriptInput = await buildTraderaScriptInput({
+      product,
+      listing,
+      systemSettings,
+      connection,
+    });
+    result = await runPlaywrightListingScript({
+      script,
+      input: scriptInput,
+      connection,
+      browserMode,
+    });
+  } catch (error) {
+    if (isAppError(error)) {
+      throw error.withMeta({
+        scriptMode: 'scripted',
+        scriptSource,
+        requestedBrowserMode: browserMode,
+        listingFormUrl: normalizedListingFormUrl,
+      });
+    }
+
+    const rawMeta =
+      error &&
+      typeof error === 'object' &&
+      'meta' in error &&
+      error['meta'] &&
+      typeof error['meta'] === 'object'
+        ? (error['meta'] as Record<string, unknown>)
+        : null;
+
+    throw internalError(
+      error instanceof Error ? error.message : 'Tradera scripted listing failed.',
+      {
+        ...(rawMeta ?? {}),
+        scriptMode: 'scripted',
+        scriptSource,
+        requestedBrowserMode: browserMode,
+        listingFormUrl: normalizedListingFormUrl,
+      }
+    ).withCause(error);
+  }
+
+  if (!result.externalListingId) {
+    throw internalError(
+      `Tradera scripted listing did not return an external listing id (run ${result.runId}).`,
+      {
+        scriptMode: 'scripted',
+        scriptSource,
+        requestedBrowserMode: browserMode,
+        listingFormUrl: normalizedListingFormUrl,
+        runId: result.runId,
+        rawResult: result.rawResult,
+        publishVerified: result.publishVerified,
+      }
+    );
+  }
+
+  if (result.publishVerified === false) {
+    throw internalError(
+      `Tradera scripted listing reported an unverified publish result (run ${result.runId}).`,
+      {
+        scriptMode: 'scripted',
+        scriptSource,
+        requestedBrowserMode: browserMode,
+        listingFormUrl: normalizedListingFormUrl,
+        runId: result.runId,
+        rawResult: result.rawResult,
+        publishVerified: result.publishVerified,
+      }
+    );
+  }
+
+  return {
+    externalListingId: result.externalListingId,
+    ...(result.listingUrl ? { listingUrl: result.listingUrl } : {}),
+    metadata: {
+      scriptMode: 'scripted',
+      scriptSource,
+      runId: result.runId,
+      requestedBrowserMode: browserMode,
+      listingFormUrl: normalizedListingFormUrl,
+      browserMode: resolveResultBrowserMode(browserMode, result.effectiveBrowserMode),
+      rawResult: result.rawResult,
+      publishVerified: result.publishVerified,
+    },
+  };
+};
 
 export const ensureLoggedIn = async (
   page: Page,
   connection: IntegrationConnectionRecord,
   listingFormUrl: string
 ): Promise<void> => {
-  const isLoggedIn = async (): Promise<boolean> =>
-    page
+  const normalizedListingFormUrl = normalizeTraderaListingFormUrl(listingFormUrl);
+  const hasStoredSession = Boolean(connection.playwrightStorageState?.trim());
+  const sessionCheckUrl = 'https://www.tradera.com/en/my/listings?tab=active';
+  const isLoggedIn = async (): Promise<boolean> => {
+    const successVisible = await page
       .locator(LOGIN_SUCCESS_SELECTOR)
       .first()
       .isVisible()
       .catch(() => false);
+    if (successVisible) return true;
 
-  await page.goto('https://www.tradera.com/en', {
+    const loginFormVisible = await page
+      .locator(LOGIN_FORM_SELECTOR)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (loginFormVisible) return false;
+
+    const currentUrl = page.url().trim().toLowerCase();
+    return currentUrl.includes('/my/') || currentUrl.includes('/my?');
+  };
+
+  await page.goto(sessionCheckUrl, {
     waitUntil: 'domcontentloaded',
     timeout: 30_000,
   });
-  if (await isLoggedIn()) return;
+  if (await isLoggedIn()) {
+    await page.goto(normalizedListingFormUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+    return;
+  }
+
+  if (hasStoredSession) {
+    throw internalError(
+      'AUTH_REQUIRED: Stored Tradera session expired or requires manual verification.'
+    );
+  }
 
   await page.goto('https://www.tradera.com/login', {
     waitUntil: 'domcontentloaded',
@@ -84,7 +416,7 @@ export const ensureLoggedIn = async (
     throw internalError('AUTH_REQUIRED: Tradera login failed or requires manual verification.');
   }
 
-  await page.goto(listingFormUrl, {
+  await page.goto(normalizedListingFormUrl, {
     waitUntil: 'domcontentloaded',
     timeout: 30_000,
   });
@@ -96,23 +428,37 @@ export const runTraderaBrowserListing = async ({
   systemSettings,
   source,
   action,
+  browserMode,
 }: {
   listing: ProductListing;
   connection: IntegrationConnectionRecord;
   systemSettings: TraderaSystemSettings;
   source: 'manual' | 'scheduler' | 'api';
   action: 'list' | 'relist';
-}): Promise<{ externalListingId: string; listingUrl?: string; simulated?: boolean }> => {
-  const listingFormUrl = systemSettings.listingFormUrl;
+  browserMode: PlaywrightRelistBrowserMode;
+}): Promise<TraderaBrowserListingResult> => {
+  if (connection.traderaBrowserMode === 'scripted' || browserMode !== 'connection_default') {
+    return runTraderaBrowserListingScripted({
+      listing,
+      connection,
+      systemSettings,
+      source,
+      action,
+      browserMode,
+    });
+  }
+
+  const listingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
   const storageState = parsePersistedStorageState(connection.playwrightStorageState);
   const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
+  const effectiveHeadless = playwrightSettings.headless;
   const emulateDevice = playwrightSettings.emulateDevice;
   const deviceName = playwrightSettings.deviceName;
   const deviceProfile =
     emulateDevice && deviceName && devices[deviceName] ? devices[deviceName] : null;
 
   const browser = await chromium.launch({
-    headless: playwrightSettings.headless,
+    headless: effectiveHeadless,
     slowMo: playwrightSettings.slowMo,
     ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
       ? {
@@ -190,7 +536,17 @@ export const runTraderaBrowserListing = async ({
     const finalUrl = page.url();
     const externalListingId = extractExternalListingId(finalUrl);
     if (externalListingId) {
-      return { externalListingId, listingUrl: finalUrl };
+      return {
+        externalListingId,
+        listingUrl: finalUrl,
+        metadata: {
+          scriptMode: 'builtin',
+          requestedBrowserMode: browserMode,
+          listingFormUrl,
+          browserMode: effectiveHeadless ? 'headless' : 'headed',
+          publishVerified: true,
+        },
+      };
     }
 
     if (systemSettings.allowSimulatedSuccess) {
@@ -198,6 +554,14 @@ export const runTraderaBrowserListing = async ({
       return {
         externalListingId: `sim-${Date.now()}`,
         simulated: true,
+        metadata: {
+          scriptMode: 'builtin',
+          requestedBrowserMode: browserMode,
+          listingFormUrl,
+          browserMode: effectiveHeadless ? 'headless' : 'headed',
+          publishVerified: true,
+          simulated: true,
+        },
         ...(maybeListingUrl ? { listingUrl: maybeListingUrl } : {}),
       };
     }
@@ -209,11 +573,11 @@ export const runTraderaBrowserListing = async ({
     logClientError(error);
     const debugArtifacts = await captureTraderaListingDebugArtifacts(page, listing.id, action);
     if (debugArtifacts) {
+      if (isAppError(error)) {
+        throw error.withMeta({ debugArtifacts });
+      }
       const message = error instanceof Error ? error.message : String(error);
-      throw internalError(`${message}
-
-Debug:
-${debugArtifacts}`);
+      throw internalError(message, { debugArtifacts }).withCause(error);
     }
     throw error;
   } finally {

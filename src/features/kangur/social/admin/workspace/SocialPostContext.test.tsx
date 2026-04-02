@@ -5,6 +5,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const { useAdminKangurSocialPageMock } = vi.hoisted(() => ({
   useAdminKangurSocialPageMock: vi.fn(),
@@ -61,8 +62,15 @@ function SocialPostContextConsumer(): React.JSX.Element {
 }
 
 describe('SocialPostContext', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
   });
 
   it('forwards missing-addon actions and state from the social page hook', () => {
@@ -80,9 +88,11 @@ describe('SocialPostContext', () => {
     );
 
     render(
-      <SocialPostProvider>
-        <SocialPostContextConsumer />
-      </SocialPostProvider>
+      <QueryClientProvider client={queryClient}>
+        <SocialPostProvider>
+          <SocialPostContextConsumer />
+        </SocialPostProvider>
+      </QueryClientProvider>
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh missing add-ons' }));
@@ -109,9 +119,11 @@ describe('SocialPostContext', () => {
     );
 
     render(
-      <SocialPostProvider>
-        <SocialPostContextConsumer />
-      </SocialPostProvider>
+      <QueryClientProvider client={queryClient}>
+        <SocialPostProvider>
+          <SocialPostContextConsumer />
+        </SocialPostProvider>
+      </QueryClientProvider>
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh missing add-ons' }));

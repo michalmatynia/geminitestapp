@@ -2,17 +2,23 @@ import 'server-only';
 
 import { isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
 import {
+  decryptSecret,
   findProductListingByIdAcrossProviders,
   getIntegrationRepository,
 } from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
 import type {
   IntegrationConnectionRecord,
+  PlaywrightRelistBrowserMode,
   PlaywrightListingJobInput,
   ProductListing,
 } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
+import {
+  resolveAppBaseUrl,
+  toAbsoluteUrl,
+} from '@/shared/lib/files/services/storage/file-storage-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { runPlaywrightListingScript } from './playwright-listing/runner';
@@ -28,6 +34,9 @@ export type PlaywrightListingExecutionResult = {
   errorCategory: string | null;
   metadata?: Record<string, unknown>;
 };
+
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 
 const resolveProductImageUrls = (product: ProductWithImages): string[] => {
   const urls = new Set<string>();
@@ -66,19 +75,26 @@ const resolvePrimaryDescription = (product: ProductWithImages, fallbackTitle: st
 export const buildPlaywrightListingInput = ({
   product,
   listing,
+  connection,
 }: {
   product: ProductWithImages;
   listing: ProductListing;
+  connection: IntegrationConnectionRecord;
 }): Record<string, unknown> => {
   const title = resolvePrimaryTitle(product);
   const description = resolvePrimaryDescription(product, title);
-  const images = resolveProductImageUrls(product);
+  const appBaseUrl = resolveAppBaseUrl();
+  const images = resolveProductImageUrls(product).map((u) => toAbsoluteUrl(u, appBaseUrl));
+  // Credentials passed in-memory only — never written to disk or job queue
+  const username = connection.username ?? null;
+  const password = connection.password ? decryptSecret(connection.password) : null;
 
   return {
     productId: product.id,
     listingId: listing.id,
     integrationId: listing.integrationId,
     connectionId: listing.connectionId,
+    baseProductId: product.baseProductId ?? product.id,
     title,
     description,
     price: typeof product.price === 'number' && Number.isFinite(product.price) ? product.price : null,
@@ -88,6 +104,9 @@ export const buildPlaywrightListingInput = ({
     asin: product.asin ?? null,
     images,
     imageUrls: images,
+    username,
+    password,
+    appBaseUrl,
     bundle: product,
     product,
     entityJson: JSON.stringify(product),
@@ -102,9 +121,23 @@ const ensureProgrammablePlaywrightConnection = (connection: IntegrationConnectio
   return script;
 };
 
+const resolveRequestedBrowserMode = (
+  browserMode: PlaywrightRelistBrowserMode | undefined
+): PlaywrightRelistBrowserMode => browserMode ?? 'connection_default';
+
+const buildPlaywrightHistoryFields = (
+  browserMode: string | null | undefined
+): string[] | null => {
+  const normalizedBrowserMode =
+    typeof browserMode === 'string' && browserMode.trim().length > 0 ? browserMode.trim() : null;
+  if (!normalizedBrowserMode) return null;
+  return [`browser_mode:${normalizedBrowserMode}`];
+};
+
 export const runPlaywrightListing = async (
   input: PlaywrightListingJobInput
 ): Promise<PlaywrightListingExecutionResult> => {
+  const requestedBrowserMode = resolveRequestedBrowserMode(input.browserMode);
   try {
     const resolvedListing = await findProductListingByIdAcrossProviders(input.listingId);
     if (!resolvedListing) {
@@ -164,8 +197,9 @@ export const runPlaywrightListing = async (
     const script = ensureProgrammablePlaywrightConnection(connection);
     const result = await runPlaywrightListingScript({
       script,
-      input: buildPlaywrightListingInput({ product, listing }),
+      input: buildPlaywrightListingInput({ product, listing, connection }),
       connection,
+      browserMode: requestedBrowserMode,
     });
 
     const expiresAt =
@@ -182,6 +216,10 @@ export const runPlaywrightListing = async (
       error: null,
       errorCategory: null,
       metadata: {
+        runId: result.runId,
+        browserMode: result.effectiveBrowserMode,
+        requestedBrowserMode,
+        publishVerified: result.publishVerified,
         rawResult: result.rawResult,
       },
     };
@@ -198,6 +236,9 @@ export const runPlaywrightListing = async (
       expiresAt: null,
       error: error instanceof Error ? error.message : 'Programmable Playwright listing failed.',
       errorCategory: 'EXECUTION_FAILED',
+      metadata: {
+        requestedBrowserMode,
+      },
     };
   }
 };
@@ -214,10 +255,40 @@ export const processPlaywrightListingJob = async (input: PlaywrightListingJobInp
   }
 
   const now = new Date();
+  const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);
+  const previousPlaywrightData = toRecord(previousMarketplaceData['playwright']);
+  const requestedBrowserMode = resolveRequestedBrowserMode(input.browserMode);
+  const effectiveBrowserMode =
+    typeof result.metadata?.['browserMode'] === 'string' ? result.metadata['browserMode'] : null;
+  const historyFields = buildPlaywrightHistoryFields(effectiveBrowserMode ?? requestedBrowserMode);
   const marketplaceData = {
-    ...(resolved.listing.marketplaceData ?? {}),
+    ...previousMarketplaceData,
     marketplace: 'playwright-programmable',
     listingUrl: result.listingUrl,
+    playwright: {
+      ...previousPlaywrightData,
+      pendingExecution: null,
+      lastErrorCategory: result.ok ? null : result.errorCategory,
+      lastExecution: {
+        executedAt: now.toISOString(),
+        requestId: input.jobId ?? null,
+        errorCategory: result.errorCategory,
+        metadata: {
+          runId:
+            typeof result.metadata?.['runId'] === 'string'
+              ? result.metadata['runId']
+              : null,
+          browserMode:
+            effectiveBrowserMode,
+          requestedBrowserMode,
+          publishVerified:
+            typeof result.metadata?.['publishVerified'] === 'boolean'
+              ? result.metadata['publishVerified']
+              : null,
+          rawResult: result.metadata?.['rawResult'] ?? null,
+        },
+      },
+    },
   };
 
   if (result.ok) {
@@ -238,6 +309,7 @@ export const processPlaywrightListingJob = async (input: PlaywrightListingJobInp
       failureReason: null,
       relist: input.action === 'relist',
       requestId: input.jobId ?? null,
+      fields: historyFields,
     });
     return;
   }
@@ -256,6 +328,7 @@ export const processPlaywrightListingJob = async (input: PlaywrightListingJobInp
     failureReason: result.error ?? 'Programmable Playwright listing failed.',
     relist: input.action === 'relist',
     requestId: input.jobId ?? null,
+    fields: historyFields,
   });
   throw new Error(result.error ?? 'Programmable Playwright listing failed.');
 };

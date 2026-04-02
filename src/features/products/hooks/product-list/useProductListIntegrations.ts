@@ -15,6 +15,7 @@ export function useProductListIntegrations() {
       ({
         fetchIntegrationsWithConnections,
         fetchPreferredBaseConnection,
+        fetchPreferredTraderaConnection,
         integrationSelectionQueryKeys,
       }) => {
         void prefetchQueryV2(queryClient, {
@@ -41,6 +42,19 @@ export function useProductListIntegrations() {
             domain: 'integrations',
             tags: ['integrations', 'default-connection', 'prefetch'],
             description: 'Loads integrations default connection.',
+          },
+        })();
+        void prefetchQueryV2(queryClient, {
+          queryKey: normalizeQueryKey(integrationSelectionQueryKeys.traderaDefaultConnection),
+          queryFn: fetchPreferredTraderaConnection,
+          staleTime: 5 * 60 * 1000,
+          meta: {
+            source: 'products.hooks.useProductListIntegrations.prefetchTraderaDefault',
+            operation: 'detail',
+            resource: 'integrations.tradera-default-connection',
+            domain: 'integrations',
+            tags: ['integrations', 'tradera', 'default-connection', 'prefetch'],
+            description: 'Loads integrations Tradera default connection.',
           },
         })();
       }

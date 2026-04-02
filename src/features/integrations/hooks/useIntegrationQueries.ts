@@ -4,6 +4,7 @@ export { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQue
 export {
   useBaseInventories,
   useDefaultExportConnection,
+  useDefaultTraderaConnection,
   useDefaultExportInventory,
 } from '@/shared/hooks/useIntegrationQueries';
 import { fetchSettingsCached } from '@/shared/api/settings-client';

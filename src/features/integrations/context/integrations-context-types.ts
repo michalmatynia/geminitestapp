@@ -28,6 +28,8 @@ export const createEmptyConnectionForm = (): ConnectionFormState => ({
   name: '',
   username: '',
   password: '',
+  traderaBrowserMode: 'builtin',
+  playwrightListingScript: '',
   traderaDefaultTemplateId: '',
   traderaDefaultDurationHours: 72,
   traderaAutoRelistEnabled: true,

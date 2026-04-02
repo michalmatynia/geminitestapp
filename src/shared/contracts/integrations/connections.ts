@@ -6,6 +6,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   integrationId: z.string(),
   username: z.string().optional(),
   password: z.string().optional(),
+  hasPlaywrightStorageState: z.boolean().optional(),
   playwrightStorageState: z.string().nullable().optional(),
   playwrightStorageStateUpdatedAt: z.string().nullable().optional(),
   playwrightPersonaId: z.string().nullable().optional(),
@@ -48,6 +49,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   hasBaseApiToken: z.boolean().optional(),
   baseTokenUpdatedAt: z.string().nullable().optional(),
   baseLastInventoryId: z.string().nullable().optional(),
+  traderaBrowserMode: z.enum(['builtin', 'scripted']).nullable().optional(),
   traderaDefaultTemplateId: z.string().nullable().optional(),
   traderaDefaultDurationHours: z.number().optional(),
   traderaAutoRelistEnabled: z.boolean().optional(),
@@ -105,6 +107,8 @@ export type ConnectionFormState = {
   name: string;
   username: string;
   password: string;
+  traderaBrowserMode: 'builtin' | 'scripted';
+  playwrightListingScript: string;
   traderaDefaultTemplateId: string;
   traderaDefaultDurationHours: number;
   traderaAutoRelistEnabled: boolean;

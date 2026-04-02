@@ -3,18 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   authMock,
-  getFrontPagePublicOwnerMock,
-  getFrontPageSettingMock,
+  resolveFrontPageSelectionMock,
   getKangurCanonicalPublicHrefMock,
   redirectMock,
-  shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
-  getFrontPagePublicOwnerMock: vi.fn(),
-  getFrontPageSettingMock: vi.fn(),
+  resolveFrontPageSelectionMock: vi.fn(),
   getKangurCanonicalPublicHrefMock: vi.fn(),
   redirectMock: vi.fn(),
-  shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -32,12 +28,7 @@ vi.mock('next-intl/server', () => ({
 }));
 
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
-  getFrontPageSetting: getFrontPageSettingMock,
-  shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
-}));
-
-vi.mock('@/shared/lib/front-page-app', () => ({
-  getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
+  resolveFrontPageSelection: resolveFrontPageSelectionMock,
 }));
 
 vi.mock('@/features/kangur/public', async () => {
@@ -86,9 +77,14 @@ describe('kangur login alias route', () => {
     redirectMock.mockImplementation((href: string) => {
       throw new Error(`redirect:${href}`);
     });
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
-    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'kangur',
+      publicOwner: 'kangur',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
     authMock.mockResolvedValue(null);
     getKangurCanonicalPublicHrefMock.mockImplementation(
       (slug: string[], searchParams?: Record<string, string | string[] | undefined>) =>
@@ -175,8 +171,14 @@ describe('kangur login alias route', () => {
   });
 
   it('renders the legacy login shell when Kangur does not own home', async () => {
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'cms' });
-    getFrontPagePublicOwnerMock.mockReturnValue('cms');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'cms',
+      publicOwner: 'cms',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
 
     const { default: Page } = await import('@/app/(frontend)/kangur/login/page');
     const result = await Page({});

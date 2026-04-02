@@ -10,12 +10,10 @@ import {
   loadSlugRenderData,
   resolveSlugToPage,
 } from '@/app/(frontend)/cms/slug-page-data';
+import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
 import { getKangurPublicLaunchHref } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchRoute, requireAccessibleKangurSlugRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
-
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home/home-helpers';
 
 import type { Metadata } from 'next';
 
@@ -33,12 +31,7 @@ type CmsSlugMetadataOptions = {
 };
 
 const isKangurFrontPageSelected = async (): Promise<boolean> => {
-  if (!shouldApplyFrontPageAppSelection()) {
-    return false;
-  }
-
-  const frontPageSetting = await getFrontPageSetting();
-  return getFrontPagePublicOwner(frontPageSetting) === 'kangur';
+  return (await resolveFrontPageSelection()).publicOwner === 'kangur';
 };
 
 const resolveSlugLocale = (locale?: string | null): string | undefined =>

@@ -2,17 +2,20 @@
 
 import { useState } from 'react';
 
+import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   useListingBaseComSettings,
   useListingSelection,
   useListingTraderaSettings,
 } from '@/features/integrations/context/ListingSettingsContext';
+import { useUpdateDefaultTraderaConnection } from '@/features/integrations/hooks/useIntegrationMutations';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
+import { ensureTraderaBrowserSession } from '@/features/integrations/utils/tradera-browser-session';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
@@ -40,6 +43,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
   const {
     selectedIntegrationId,
     selectedConnectionId,
+    selectedIntegration,
     isBaseComIntegration,
     isTraderaIntegration,
   } = useListingSelection();
@@ -55,8 +59,12 @@ export function useListProductForm(productId: string): UseListProductFormResult 
 
   const exportToBaseMutation = useExportToBaseMutation(productId);
   const createListingMutation = useCreateListingMutation(productId);
+  const updateDefaultTraderaConnectionMutation = useUpdateDefaultTraderaConnection();
 
-  const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
+  const submitting =
+    exportToBaseMutation.isPending ||
+    createListingMutation.isPending ||
+    updateDefaultTraderaConnectionMutation.isPending;
 
   const createExportRequestId = (): string =>
     `base-export-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -121,6 +129,18 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         }
         onSuccess();
       } else {
+        const isTraderaBrowserIntegration =
+          isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+        if (isTraderaBrowserIntegration && selectedConnectionId) {
+          const sessionResult = await ensureTraderaBrowserSession({
+            integrationId: selectedIntegrationId,
+            connectionId: selectedConnectionId,
+          });
+          if (sessionResult.savedSession) {
+            toast('Tradera login session refreshed.', { variant: 'success' });
+          }
+        }
+
         const response = await createListingMutation.mutateAsync({
           integrationId: selectedIntegrationId,
           connectionId: selectedConnectionId,
@@ -137,6 +157,25 @@ export function useListProductForm(productId: string): UseListProductFormResult 
             : {}),
         });
         if (isTraderaIntegration) {
+          if (
+            isTraderaBrowserIntegration &&
+            selectedConnectionId
+          ) {
+            try {
+              await updateDefaultTraderaConnectionMutation.mutateAsync({
+                connectionId: selectedConnectionId,
+              });
+            } catch (preferenceError: unknown) {
+              logClientCatch(preferenceError, {
+                source: 'ListProductModal',
+                action: 'persistDefaultTraderaConnection',
+                productId,
+                integrationId: selectedIntegrationId,
+                connectionId: selectedConnectionId,
+                level: 'warn',
+              });
+            }
+          }
           const queue = response.queue;
           toast(
             queue?.jobId

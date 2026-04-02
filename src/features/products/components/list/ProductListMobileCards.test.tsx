@@ -5,8 +5,8 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 
 const {
   baseQuickExportButtonMock,
-  dynamicComponentIndex,
   playwrightStatusButtonMock,
+  traderaQuickListButtonMock,
   triggerButtonBarMock,
   traderaStatusButtonMock,
   useProductListRowActionsContextMock,
@@ -15,8 +15,8 @@ const {
   useProductListSelectionContextMock,
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
-  dynamicComponentIndex: { current: 0 },
   playwrightStatusButtonMock: vi.fn(),
+  traderaQuickListButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   traderaStatusButtonMock: vi.fn(),
   useProductListRowActionsContextMock: vi.fn(),
@@ -46,22 +46,26 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 });
 
 vi.mock('next/dynamic', () => ({
-  default: () => {
-    const stubIndex = dynamicComponentIndex.current++;
+  default: (loader: () => Promise<unknown>) => {
+    const loaderSource = String(loader);
     const DynamicStub = (props: Record<string, unknown>): React.JSX.Element | null => {
-      if (stubIndex === 0) {
+      if (loaderSource.includes('TriggerButtonBar')) {
         triggerButtonBarMock(props);
         return <div data-testid='trigger-button-bar' />;
       }
-      if (stubIndex === 1) {
+      if (loaderSource.includes('BaseQuickExportButton')) {
         baseQuickExportButtonMock(props);
         return <button type='button'>BL</button>;
       }
-      if (stubIndex === 2) {
+      if (loaderSource.includes('TraderaQuickListButton')) {
+        traderaQuickListButtonMock(props);
+        return <button type='button'>T+</button>;
+      }
+      if (loaderSource.includes('TraderaStatusButton')) {
         traderaStatusButtonMock(props);
         return <button type='button'>TR</button>;
       }
-      if (stubIndex === 3) {
+      if (loaderSource.includes('PlaywrightStatusButton')) {
         playwrightStatusButtonMock(props);
         return <button type='button'>PW</button>;
       }
@@ -175,7 +179,6 @@ describe('ProductListMobileCards', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.resetModules();
-    dynamicComponentIndex.current = 0;
 
     useProductListSelectionContextMock.mockReturnValue({
       data: [createProduct()],
@@ -226,6 +229,108 @@ describe('ProductListMobileCards', () => {
         onOpenIntegrations: expect.any(Function),
         onOpenExportSettings: expect.any(Function),
         prefetchListings: expect.any(Function),
+      })
+    );
+  });
+
+  it('passes Tradera badge runtime into the mobile quick export button', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: false,
+      traderaStatus: 'queued',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByRole('button', { name: 'T+' })).toBeInTheDocument();
+    expect(traderaQuickListButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        product: expect.objectContaining({ id: 'product-1' }),
+        showTraderaBadge: false,
+        traderaStatus: 'queued',
+        prefetchListings: expect.any(Function),
+        onOpenIntegrations: expect.any(Function),
+      })
+    );
+  });
+
+  it('scopes mobile Base quick export recovery to the Base listings modal', () => {
+    const onIntegrationsClick = vi.fn();
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onProductEditClick: vi.fn(),
+      onProductDeleteClick: vi.fn(),
+      onDuplicateProduct: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick: vi.fn(),
+      onPrefetchProductDetail: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    const props = baseQuickExportButtonMock.mock.calls.at(-1)?.[0] as
+      | { onOpenIntegrations?: ((recoveryContext?: unknown) => void) | undefined }
+      | undefined;
+
+    props?.onOpenIntegrations?.({ source: 'base_quick_export_failed' });
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      { source: 'base_quick_export_failed' },
+      'baselinker'
+    );
+  });
+
+  it('scopes mobile Tradera quick export recovery to the Tradera listings modal', () => {
+    const onIntegrationsClick = vi.fn();
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onProductEditClick: vi.fn(),
+      onProductDeleteClick: vi.fn(),
+      onDuplicateProduct: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick: vi.fn(),
+      onPrefetchProductDetail: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    const props = traderaQuickListButtonMock.mock.calls.at(-1)?.[0] as
+      | { onOpenIntegrations?: ((recoveryContext?: unknown) => void) | undefined }
+      | undefined;
+
+    props?.onOpenIntegrations?.({ source: 'tradera_quick_export_failed' });
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      { source: 'tradera_quick_export_failed' },
+      'tradera'
+    );
+  });
+
+  it('passes productId into the mobile Tradera status button when the badge is visible', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: true,
+      traderaStatus: 'auth_required',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'product-1',
+        status: 'auth_required',
+        prefetchListings: expect.any(Function),
+        onOpenListings: expect.any(Function),
       })
     );
   });

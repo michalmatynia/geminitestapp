@@ -2,11 +2,14 @@
 
 import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
 import { Button, ListPanel, StatusBadge, Badge, Card } from '@/shared/ui';
 
 export function IntegrationList(): React.JSX.Element {
+  const router = useRouter();
   const {
     handleIntegrationClick,
     integrationSlugs,
@@ -17,6 +20,10 @@ export function IntegrationList(): React.JSX.Element {
     baselinkerDefinition,
     linkedinDefinition,
   } = useIntegrationList();
+
+  useEffect(() => {
+    router.prefetch('/admin/integrations/add');
+  }, [router]);
 
   return (
     <ListPanel

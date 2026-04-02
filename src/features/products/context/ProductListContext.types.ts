@@ -93,7 +93,8 @@ export interface ProductListContextType {
   onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (
     row: ProductWithImages,
-    recoveryContext?: ProductListingsRecoveryContext
+    recoveryContext?: ProductListingsRecoveryContext,
+    filterIntegrationSlug?: string | null
   ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;
@@ -125,12 +126,19 @@ export interface ProductListContextType {
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
   integrationsRecoveryContext: ProductListingsRecoveryContext | null;
+  integrationsFilterIntegrationSlug: string | null;
   onCloseIntegrations: () => void;
-  onStartListing: (integrationId: string, connectionId: string) => void;
+  onStartListing: (
+    integrationId: string,
+    connectionId: string,
+    options?: { autoSubmit?: boolean }
+  ) => void;
   showListProductModal: boolean;
   onCloseListProduct: () => void;
   onListProductSuccess: () => void;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
+  listProductPreset:
+    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
+    | null;
   exportSettingsProduct: ProductWithImages | null;
   onCloseExportSettings: () => void;
   onListingsUpdated: () => void;
@@ -238,7 +246,8 @@ export interface ProductListActionsContextType {
   onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (
     row: ProductWithImages,
-    recoveryContext?: ProductListingsRecoveryContext
+    recoveryContext?: ProductListingsRecoveryContext,
+    filterIntegrationSlug?: string | null
   ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   categoryNameById: ReadonlyMap<string, string>;
@@ -263,7 +272,8 @@ export interface ProductListRowActionsContextType {
   onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (
     row: ProductWithImages,
-    recoveryContext?: ProductListingsRecoveryContext
+    recoveryContext?: ProductListingsRecoveryContext,
+    filterIntegrationSlug?: string | null
   ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
 }
@@ -306,12 +316,19 @@ export interface ProductListModalsContextType {
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
   integrationsRecoveryContext: ProductListingsRecoveryContext | null;
+  integrationsFilterIntegrationSlug: string | null;
   onCloseIntegrations: () => void;
-  onStartListing: (integrationId: string, connectionId: string) => void;
+  onStartListing: (
+    integrationId: string,
+    connectionId: string,
+    options?: { autoSubmit?: boolean }
+  ) => void;
   showListProductModal: boolean;
   onCloseListProduct: () => void;
   onListProductSuccess: () => void;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
+  listProductPreset:
+    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
+    | null;
   exportSettingsProduct: ProductWithImages | null;
   onCloseExportSettings: () => void;
   onListingsUpdated: () => void;

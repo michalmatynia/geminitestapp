@@ -1,4 +1,7 @@
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home/home-helpers';
+import {
+  resolveFrontPageSelection,
+  shouldApplyFrontPageAppSelection,
+} from '@/app/(frontend)/home/home-helpers';
 import {
   getKangurAuthBootstrapScript,
   getKangurStorefrontInitialState,
@@ -122,20 +125,26 @@ export default async function FrontendLayout({
   const isCanonicalPublicLogin = isCanonicalPublicLoginRequest(requestPathname);
   const isRootPublicRoute = isRootPublicRequest(requestPathname);
   const shouldUseFrontPageAppSelection = shouldApplyFrontPageAppSelection();
-  const shouldResolveFrontPageSelection =
-    shouldUseFrontPageAppSelection && !isExplicitKangurAlias && !requestHeadersTimedOut;
-  const frontPageSettingPromise = shouldResolveFrontPageSelection
-    ? layoutTiming.withTiming('frontPageSetting', getFrontPageSetting)
+  const shouldResolveFrontPageSelection = shouldUseFrontPageAppSelection && !isExplicitKangurAlias;
+  const frontPageSelectionPromise = shouldResolveFrontPageSelection
+    ? layoutTiming.withTiming('frontPageSelection', resolveFrontPageSelection)
     : Promise.resolve(null);
   const themePromise = getCmsThemeSettings();
 
-  const frontPageSetting: string | null = await frontPageSettingPromise;
+  const frontPageSelection = await frontPageSelectionPromise;
   const publicOwner: FrontendPublicOwner =
-    shouldResolveFrontPageSelection && frontPageSetting === 'kangur' ? 'kangur' : 'cms';
+    shouldResolveFrontPageSelection && frontPageSelection
+      ? frontPageSelection.publicOwner
+      : 'cms';
+  const expectsRootRedirectToKangur =
+    publicOwner === 'kangur' && isRootPublicRoute && !isExplicitKangurAlias && !isCanonicalPublicLogin;
   const shouldRenderStandaloneKangurShell =
-    publicOwner === 'kangur' && !isExplicitKangurAlias && !isCanonicalPublicLogin;
+    publicOwner === 'kangur' &&
+    !isExplicitKangurAlias &&
+    !isCanonicalPublicLogin &&
+    !expectsRootRedirectToKangur;
   const shouldInjectKangurAuthBootstrap =
-    publicOwner === 'kangur' || isCanonicalPublicLogin;
+    (publicOwner === 'kangur' && !expectsRootRedirectToKangur) || isCanonicalPublicLogin;
   const shouldLoadKangurStorefrontBootstrap =
     publicOwner === 'kangur' && shouldRenderStandaloneKangurShell;
   const publicRouteFamily: FrontendPublicRouteFamily = resolveFrontendPublicRouteFamily({
@@ -167,15 +176,19 @@ export default async function FrontendLayout({
     pathname: requestPathname,
     publicOwner,
     routeFamily: publicRouteFamily,
-    flags: {
-      explicitKangurAlias: isExplicitKangurAlias,
-      canonicalPublicLogin: isCanonicalPublicLogin,
-      rootPublicRoute: isRootPublicRoute,
-      renderStandaloneKangurShell: shouldRenderStandaloneKangurShell,
-      injectKangurAuthBootstrap: shouldInjectKangurAuthBootstrap,
-      loadKangurStorefrontBootstrap: shouldLoadKangurStorefrontBootstrap,
-    },
-  });
+      flags: {
+        explicitKangurAlias: isExplicitKangurAlias,
+        canonicalPublicLogin: isCanonicalPublicLogin,
+        rootPublicRoute: isRootPublicRoute,
+        requestHeadersTimedOut,
+        frontPageSelectionSource: frontPageSelection?.source ?? null,
+        frontPageSelectionFallbackReason: frontPageSelection?.fallbackReason ?? null,
+        expectsRootRedirectToKangur,
+        renderStandaloneKangurShell: shouldRenderStandaloneKangurShell,
+        injectKangurAuthBootstrap: shouldInjectKangurAuthBootstrap,
+        loadKangurStorefrontBootstrap: shouldLoadKangurStorefrontBootstrap,
+      },
+    });
   const inlineFrontendLoadTimingPayload: FrontendLoadTimingPayload | null =
     frontendLoadTimingPayload
       ? {

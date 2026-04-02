@@ -7,23 +7,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   authMock,
   getKangurConfiguredLaunchRouteMock,
-  getFrontPagePublicOwnerMock,
-  getFrontPageSettingMock,
+  resolveFrontPageSelectionMock,
   notFoundMock,
   permanentRedirectMock,
   redirectMock,
   requireAccessibleKangurSlugRouteMock,
-  shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
   getKangurConfiguredLaunchRouteMock: vi.fn(),
-  getFrontPagePublicOwnerMock: vi.fn(),
-  getFrontPageSettingMock: vi.fn(),
+  resolveFrontPageSelectionMock: vi.fn(),
   notFoundMock: vi.fn(),
   permanentRedirectMock: vi.fn(),
   redirectMock: vi.fn(),
   requireAccessibleKangurSlugRouteMock: vi.fn(),
-  shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', async (importOriginal) => {
@@ -43,12 +39,7 @@ vi.mock('@/features/auth/server', () => ({
 }));
 
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
-  getFrontPageSetting: getFrontPageSettingMock,
-  shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
-}));
-
-vi.mock('@/shared/lib/front-page-app', () => ({
-  getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
+  resolveFrontPageSelection: resolveFrontPageSelectionMock,
 }));
 
 vi.mock('@/features/kangur/server', () => {
@@ -115,9 +106,14 @@ describe('frontend slug launch route', () => {
     notFoundMock.mockImplementation(() => {
       throw new Error('notFound');
     });
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
-    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'kangur',
+      publicOwner: 'kangur',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
     authMock.mockResolvedValue(null);
     requireAccessibleKangurSlugRouteMock.mockImplementation(async (slugSegments: readonly string[]) => {
       const slug = slugSegments[0]?.trim().toLowerCase();

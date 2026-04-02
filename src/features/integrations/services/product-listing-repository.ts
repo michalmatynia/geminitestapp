@@ -396,17 +396,34 @@ const mongoRepository: ProductListingRepository = {
   },
 
   listAllListings: async (): Promise<
-    Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+    Array<
+      Pick<
+        ProductListing,
+        'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'
+      >
+    >
   > => {
     const collection = await getListingCollection();
     const listings = await collection
-      .find({}, { projection: { productId: 1, status: 1, integrationId: 1, marketplaceData: 1 } })
+      .find(
+        {},
+        {
+          projection: {
+            productId: 1,
+            status: 1,
+            integrationId: 1,
+            marketplaceData: 1,
+            updatedAt: 1,
+          },
+        }
+      )
       .toArray();
     return listings.map((l) => ({
       productId: normalizeLookupIdOrFallback(l.productId),
       status: l.status,
       integrationId: normalizeLookupIdOrFallback(l.integrationId),
       marketplaceData: l.marketplaceData ?? null,
+      updatedAt: l.updatedAt.toISOString(),
     }));
   },
 };

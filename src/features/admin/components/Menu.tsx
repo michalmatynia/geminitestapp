@@ -116,6 +116,13 @@ export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object
 );
 
 const OPEN_KEY = 'adminMenuOpenIds.v2';
+const POPULAR_ADMIN_PREFETCH_HREFS = [
+  '/admin/products',
+  '/admin/integrations',
+  '/admin/kangur/social',
+  '/admin/settings',
+  '/admin/ai-paths',
+] as const;
 
 type DeferredAdminMenuSettingsTarget = {
   requestIdleCallback?: (callback: () => void) => number;
@@ -159,6 +166,7 @@ export default function Menu(): React.ReactNode {
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [menuSettingsReady, setMenuSettingsReady] = useState(false);
   const deferredQuery = useDeferredValue(query);
+  const hasPrefetchedPopularRoutesRef = useRef(false);
 
   const { data: chatbotSessions = [], refetch: refetchChatbotSessions } = useChatbotSessions({
     enabled: shouldPrefetchChatbotSessions,
@@ -213,6 +221,32 @@ export default function Menu(): React.ReactNode {
       setMenuSettingsReady(true);
     });
   }, [menuSettingsReady]);
+
+  useEffect(() => {
+    if (hasPrefetchedPopularRoutesRef.current) return;
+    if (typeof window === 'undefined') return;
+
+    hasPrefetchedPopularRoutesRef.current = true;
+    return scheduleDeferredAdminMenuSettingsHydration(window, () => {
+      POPULAR_ADMIN_PREFETCH_HREFS.forEach((href: string) => {
+        if (isActiveHref(pathname, href, false)) return;
+        router.prefetch(href);
+      });
+    });
+  }, [pathname, router]);
+
+  useEffect(() => {
+    if (hasPrefetchedPopularRoutesRef.current) return;
+    if (typeof window === 'undefined') return;
+
+    hasPrefetchedPopularRoutesRef.current = true;
+    return scheduleDeferredAdminMenuSettingsHydration(window, () => {
+      POPULAR_ADMIN_PREFETCH_HREFS.forEach((href: string) => {
+        if (isActiveHref(pathname, href, false)) return;
+        router.prefetch(href);
+      });
+    });
+  }, [pathname, router]);
 
   const handleOpenChat = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>): void => {

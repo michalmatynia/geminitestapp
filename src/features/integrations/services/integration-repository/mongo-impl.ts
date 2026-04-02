@@ -39,6 +39,7 @@ type IntegrationConnectionDocument = {
   name: string;
   username: string;
   password: string;
+  traderaBrowserMode?: 'builtin' | 'scripted';
   playwrightStorageState?: string | null;
   playwrightStorageStateUpdatedAt?: Date | null;
   playwrightHeadless?: boolean;

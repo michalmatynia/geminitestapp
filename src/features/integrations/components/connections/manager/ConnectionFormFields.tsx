@@ -7,9 +7,24 @@ import {
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
+import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import { Checkbox, FormField, Input, Label, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
+import {
+  Button,
+  Checkbox,
+  FormField,
+  Input,
+  Label,
+  SelectSimple,
+  Textarea,
+  UI_CENTER_ROW_SPACED_CLASSNAME,
+} from '@/shared/ui';
+
+const TRADERA_BROWSER_MODE_OPTIONS = [
+  { value: 'builtin', label: 'Built-in form automation' },
+  { value: 'scripted', label: 'Playwright script' },
+] as const;
 
 type ConnectionFormFieldsProps = {
   integrationSlug: string;
@@ -33,6 +48,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isCreateMode = mode === 'create';
   const isTradera = isTraderaIntegrationSlug(integrationSlug);
   const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);
+  const isTraderaBrowser = isTradera && !isTraderaApi;
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
@@ -140,6 +156,63 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       </FormField>
       {isTradera && (
         <>
+          {isTraderaBrowser && (
+            <>
+              <FormField label='Browser automation mode'>
+                <SelectSimple
+                  id={`${idPrefix}-traderaBrowserMode`}
+                  value={form.traderaBrowserMode}
+                  onValueChange={(nextValue): void =>
+                    setForm((prev) => ({
+                      ...prev,
+                      traderaBrowserMode:
+                        nextValue === 'scripted' ? 'scripted' : 'builtin',
+                      playwrightListingScript:
+                        nextValue === 'scripted' && !prev.playwrightListingScript.trim()
+                          ? DEFAULT_TRADERA_QUICKLIST_SCRIPT
+                          : prev.playwrightListingScript,
+                    }))
+                  }
+                  options={[...TRADERA_BROWSER_MODE_OPTIONS]}
+                  ariaLabel='Browser automation mode'
+                  placeholder='Browser automation mode'
+                />
+              </FormField>
+              {form.traderaBrowserMode === 'scripted' && (
+                <FormField label='Playwright listing script'>
+                  <Textarea
+                    variant='subtle'
+                    rows={14}
+                    value={form.playwrightListingScript}
+                    onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                      setForm((prev) => ({
+                        ...prev,
+                        playwrightListingScript: event.target.value,
+                      }))
+                    }
+                    placeholder={DEFAULT_TRADERA_QUICKLIST_SCRIPT}
+                    aria-label='Playwright listing script'
+                    title='Playwright listing script'
+                  />
+                  <div className='mt-2 flex justify-end'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='xs'
+                      onClick={(): void =>
+                        setForm((prev) => ({
+                          ...prev,
+                          playwrightListingScript: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+                        }))
+                      }
+                    >
+                      Load default Tradera script
+                    </Button>
+                  </div>
+                </FormField>
+              )}
+            </>
+          )}
           <FormField label='Default template ID (optional)'>
             <Input
               variant='subtle'

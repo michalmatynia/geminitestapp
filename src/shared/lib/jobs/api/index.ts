@@ -20,8 +20,8 @@ export type { TraderaQueueHealthResponse };
 /**
  * Fetch integration jobs
  */
-export async function getIntegrationJobs(): Promise<ProductJob[]> {
-  return api.get<ProductJob[]>('/api/v2/integrations/jobs');
+export async function getIntegrationJobs(signal?: AbortSignal): Promise<ProductJob[]> {
+  return api.get<ProductJob[]>('/api/v2/integrations/jobs', signal ? { signal } : undefined);
 }
 
 /**

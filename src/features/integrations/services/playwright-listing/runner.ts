@@ -1,16 +1,27 @@
 import 'server-only';
 
 import { enqueuePlaywrightNodeRun } from '@/features/ai/ai-paths/services/playwright-node-runner';
+import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
+import type {
+  IntegrationConnectionRecord,
+  PlaywrightRelistBrowserMode,
+} from '@/shared/contracts/integrations';
+import { internalError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
-import { resolveConnectionPlaywrightSettings } from '../tradera-playwright-settings';
+import {
+  parsePersistedStorageState,
+  resolveConnectionPlaywrightSettings,
+} from '../tradera-playwright-settings';
 
 export type PlaywrightListingResult = {
+  runId: string;
   externalListingId: string | null;
   listingUrl: string | null;
   expiresAt: string | null;
+  publishVerified: boolean | null;
+  effectiveBrowserMode: 'headless' | 'headed';
   rawResult: Record<string, unknown>;
 };
 
@@ -24,6 +35,31 @@ const extractStringField = (obj: Record<string, unknown>, key: string): string |
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 };
 
+const extractBooleanField = (obj: Record<string, unknown>, key: string): boolean | null => {
+  const value = obj[key];
+  return typeof value === 'boolean' ? value : null;
+};
+
+const extractTrimmedString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const resolveListingRunStartUrl = (input: Record<string, unknown>): string | undefined => {
+  const directStartUrl = extractTrimmedString(input['startUrl']);
+  if (directStartUrl) {
+    return directStartUrl;
+  }
+
+  const traderaConfig = input['traderaConfig'];
+  if (isObjectRecord(traderaConfig)) {
+    const listingFormUrl = extractTrimmedString(traderaConfig['listingFormUrl']);
+    if (listingFormUrl) {
+      return normalizeTraderaListingFormUrl(listingFormUrl);
+    }
+  }
+
+  return undefined;
+};
+
 /**
  * Executes a Playwright listing script against the product data and returns
  * a parsed result. The script must emit('result', { listingUrl, externalListingId, expiresAt? }).
@@ -34,15 +70,21 @@ export const runPlaywrightListingScript = async ({
   connection,
   contextRegistry,
   timeoutMs = 120_000,
+  browserMode = 'connection_default',
 }: {
   script: string;
   input: Record<string, unknown>;
   connection: IntegrationConnectionRecord;
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
   timeoutMs?: number;
+  browserMode?: PlaywrightRelistBrowserMode;
 }): Promise<PlaywrightListingResult> => {
   const settings = await resolveConnectionPlaywrightSettings(connection);
   const personaId = connection.playwrightPersonaId?.trim() || undefined;
+  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
+  const effectiveHeadless =
+    browserMode === 'headless' ? true : browserMode === 'headed' ? false : settings.headless;
+  const startUrl = resolveListingRunStartUrl(input);
 
   const run = await enqueuePlaywrightNodeRun({
     request: {
@@ -50,10 +92,12 @@ export const runPlaywrightListingScript = async ({
       input,
       timeoutMs,
       browserEngine: 'chromium',
+      ...(startUrl ? { startUrl } : {}),
       ...(contextRegistry ? { contextRegistry } : {}),
       ...(personaId ? { personaId } : {}),
+      ...(storageState ? { contextOptions: { storageState } } : {}),
       settingsOverrides: {
-        headless: settings.headless,
+        headless: effectiveHeadless,
         slowMo: settings.slowMo,
         timeout: settings.timeout,
         navigationTimeout: settings.navigationTimeout,
@@ -69,7 +113,10 @@ export const runPlaywrightListingScript = async ({
   });
 
   if (run.status === 'failed') {
-    throw new Error(run.error ?? 'Playwright listing script failed.');
+    throw internalError(run.error ?? 'Playwright listing script failed.', {
+      runId: run.runId,
+      runStatus: run.status,
+    });
   }
 
   const resultPayload = run.result;
@@ -80,9 +127,12 @@ export const runPlaywrightListingScript = async ({
   const resultValue = isObjectRecord(outputs['result']) ? outputs['result'] : isObjectRecord(outputs) ? outputs : {};
 
   return {
+    runId: run.runId,
     externalListingId: extractStringField(resultValue, 'externalListingId'),
     listingUrl: extractStringField(resultValue, 'listingUrl'),
     expiresAt: extractStringField(resultValue, 'expiresAt'),
+    publishVerified: extractBooleanField(resultValue, 'publishVerified'),
+    effectiveBrowserMode: effectiveHeadless ? 'headless' : 'headed',
     rawResult: resultValue,
   };
 };
@@ -106,6 +156,7 @@ export const runPlaywrightImportScript = async ({
 }): Promise<PlaywrightImportResult> => {
   const settings = await resolveConnectionPlaywrightSettings(connection);
   const personaId = connection.playwrightPersonaId?.trim() || undefined;
+  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
 
   const run = await enqueuePlaywrightNodeRun({
     request: {
@@ -115,6 +166,7 @@ export const runPlaywrightImportScript = async ({
       browserEngine: 'chromium',
       ...(contextRegistry ? { contextRegistry } : {}),
       ...(personaId ? { personaId } : {}),
+      ...(storageState ? { contextOptions: { storageState } } : {}),
       settingsOverrides: {
         headless: settings.headless,
         slowMo: settings.slowMo,
@@ -132,7 +184,10 @@ export const runPlaywrightImportScript = async ({
   });
 
   if (run.status === 'failed') {
-    throw new Error(run.error ?? 'Playwright import script failed.');
+    throw internalError(run.error ?? 'Playwright import script failed.', {
+      runId: run.runId,
+      runStatus: run.status,
+    });
   }
 
   const resultPayload = run.result;

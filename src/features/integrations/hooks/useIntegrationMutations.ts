@@ -16,6 +16,8 @@ import type {
   IntegrationConnection,
   IntegrationDisconnectResponse,
   TestConnectionResponse,
+  TraderaDefaultConnectionPreferencePayload,
+  TraderaDefaultConnectionPreferenceResponse,
 } from '@/shared/contracts/integrations';
 import type { MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -329,5 +331,28 @@ export function useUpdateDefaultExportConnection() {
       QUERY_KEYS.integrations.selection.defaultConnection(),
       QUERY_KEYS.integrations.importExport.pref('default-connection'),
     ],
+  });
+}
+
+export function useUpdateDefaultTraderaConnection() {
+  return createUpdateMutationV2<
+    TraderaDefaultConnectionPreferenceResponse,
+    TraderaDefaultConnectionPreferencePayload
+  >({
+    mutationFn: (variables) =>
+      api.post<TraderaDefaultConnectionPreferenceResponse>(
+        '/api/v2/integrations/exports/tradera/default-connection',
+        variables
+      ),
+    mutationKey: QUERY_KEYS.integrations.selection.traderaDefaultConnection(),
+    meta: {
+      source: 'integrations.hooks.useUpdateDefaultTraderaConnection',
+      operation: 'update',
+      resource: 'integrations.exports.tradera.default-connection',
+      domain: 'integrations',
+      tags: ['integrations', 'exports', 'tradera', 'default-connection'],
+      description: 'Updates integrations exports Tradera default connection.',
+    },
+    invalidateKeys: [QUERY_KEYS.integrations.selection.traderaDefaultConnection()],
   });
 }

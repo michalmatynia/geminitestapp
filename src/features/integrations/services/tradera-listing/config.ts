@@ -1,11 +1,16 @@
-export const LOGIN_SUCCESS_SELECTOR = [
+export const TRADERA_LOGIN_SUCCESS_SELECTORS = [
   'a[href*="logout"]',
   'a:has-text("Logga ut")',
   'a:has-text("Logout")',
   'a:has-text("Mina sidor")',
   'a:has-text("My pages")',
+  'button[aria-label*="Account"]',
+  'button[aria-label*="Profile"]',
   'a[href*="/profile"]',
-].join(', ');
+  'a[href*="/my"]',
+] as const;
+
+export const LOGIN_SUCCESS_SELECTOR = TRADERA_LOGIN_SUCCESS_SELECTORS.join(', ');
 
 export const LOGIN_FORM_SELECTOR = [
   '#sign-in-form',
@@ -22,13 +27,43 @@ export const LOGIN_BUTTON_SELECTORS = [
   'button:has-text("Logga in")',
 ];
 
-export const TITLE_SELECTORS = ['input[name="title"]', '#title', '[data-testid*="title"] input'];
+export const TRADERA_COOKIE_ACCEPT_SELECTORS = [
+  '#onetrust-accept-btn-handler',
+  'button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',
+  'button:has-text("Accept all cookies")',
+  'button:has-text("Accept all")',
+  'button:has-text("Acceptera alla cookies")',
+  'button:has-text("Acceptera alla kakor")',
+  'button:has-text("Godkänn alla cookies")',
+  'button:has-text("Tillåt alla cookies")',
+] as const;
+
+export const TITLE_SELECTORS = [
+  'input[name="shortDescription"]',
+  '#shortDescription',
+  'input[name="title"]',
+  '#title',
+  '[data-testid*="title"] input',
+  'input[placeholder*="headline" i]',
+];
 export const DESCRIPTION_SELECTORS = [
+  '#tip-tap-editor',
+  '[aria-label="Description"][contenteditable="true"]',
   'textarea[name="description"]',
   '#description',
   '[data-testid*="description"] textarea',
+  '[contenteditable="true"]',
+  '[role="textbox"][contenteditable="true"]',
 ];
-export const PRICE_SELECTORS = ['input[name="price"]', '#price', 'input[data-testid*="price"]'];
+export const PRICE_SELECTORS = [
+  'input[name="price_fixedPrice"]',
+  '#price_fixedPrice',
+  'input[name="price"]',
+  '#price',
+  'input[data-testid*="price"]',
+  'input[inputmode="decimal"]',
+  'input[placeholder*="price" i]',
+];
 export const SUBMIT_SELECTORS = [
   'button[type="submit"]',
   'button:has-text("Publicera")',

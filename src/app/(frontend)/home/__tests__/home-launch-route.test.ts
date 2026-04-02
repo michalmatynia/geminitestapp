@@ -3,25 +3,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   getCmsRepositoryMock,
   getKangurConfiguredLaunchRouteMock,
-  getFrontPagePublicOwnerMock,
-  getFrontPageRedirectPathMock,
-  getFrontPageSettingMock,
+  resolveFrontPageSelectionMock,
   getSlugsForDomainMock,
   redirectMock,
   permanentRedirectMock,
   resolveCmsDomainFromHeadersMock,
-  shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   getCmsRepositoryMock: vi.fn(),
   getKangurConfiguredLaunchRouteMock: vi.fn(),
-  getFrontPagePublicOwnerMock: vi.fn(),
-  getFrontPageRedirectPathMock: vi.fn(),
-  getFrontPageSettingMock: vi.fn(),
+  resolveFrontPageSelectionMock: vi.fn(),
   getSlugsForDomainMock: vi.fn(),
   redirectMock: vi.fn(),
   permanentRedirectMock: vi.fn(),
   resolveCmsDomainFromHeadersMock: vi.fn(),
-  shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -40,13 +34,7 @@ vi.mock('@/features/cms/server', () => ({
 }));
 
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
-  getFrontPageSetting: getFrontPageSettingMock,
-  shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
-}));
-
-vi.mock('@/shared/lib/front-page-app', () => ({
-  getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
-  getFrontPageRedirectPath: getFrontPageRedirectPathMock,
+  resolveFrontPageSelection: resolveFrontPageSelectionMock,
 }));
 
 vi.mock('@/features/kangur/public', () => ({
@@ -67,10 +55,14 @@ describe('frontend home launch route', () => {
     redirectMock.mockImplementation((href: string) => {
       throw new Error(`redirect:${href}`);
     });
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
-    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
-    getFrontPageRedirectPathMock.mockReturnValue(null);
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'kangur',
+      publicOwner: 'kangur',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
   });
 
   it('redirects the root home route into the web shell with a dedicated-app launch hint', async () => {

@@ -164,9 +164,15 @@ describe('useProductsWithCount', () => {
     );
 
     await waitFor(() => {
-      expect(getProductsWithCountMock).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 2, pageSize: 2 })
-      );
+      expect(
+        getProductsWithCountMock.mock.calls.some(
+          ([filters]) =>
+            typeof filters === 'object' &&
+            filters !== null &&
+            (filters as { page?: number; pageSize?: number }).page === 2 &&
+            (filters as { pageSize?: number }).pageSize === 2
+        )
+      ).toBe(true);
     });
   });
 
@@ -261,5 +267,32 @@ describe('useProductsWithCount', () => {
         name_en: 'Keychains',
       })
     );
+  });
+
+  it('passes the TanStack abort signal into the paged product request', async () => {
+    getProductsWithCountMock.mockResolvedValue({
+      products: [createProduct('signal-1')],
+      total: 1,
+    });
+
+    const queryClient = createQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    renderHook(
+      () =>
+        useProductsWithCount({
+          page: 1,
+          pageSize: 20,
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(getProductsWithCountMock).toHaveBeenCalled();
+    });
+
+    expect(getProductsWithCountMock.mock.calls[0]?.[1]).toBeInstanceOf(AbortSignal);
   });
 });

@@ -188,6 +188,26 @@ export async function apiClient<T>(
   }
 
   const method = normalizeMethod(customConfig.method, Boolean(customConfig.body));
+  const callerSignal = isAbortSignalInstance(customConfig.signal) ? customConfig.signal : undefined;
+  const requestAbortController =
+    typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+  let removeCallerAbortListener: (() => void) | undefined;
+
+  if (callerSignal && requestAbortController) {
+    const forwardCallerAbort = (): void => {
+      requestAbortController.abort();
+    };
+
+    if (callerSignal.aborted) {
+      requestAbortController.abort();
+    } else {
+      callerSignal.addEventListener('abort', forwardCallerAbort, { once: true });
+      removeCallerAbortListener = () => {
+        callerSignal.removeEventListener('abort', forwardCallerAbort);
+      };
+    }
+  }
+
   const config = cleanConfig({
     method,
     ...customConfig,
@@ -197,13 +217,15 @@ export async function apiClient<T>(
       ...customConfig.headers,
     } as Record<string, string>),
   }) as RequestInit;
-  if (isAbortSignalInstance(customConfig.signal)) {
-    config.signal = customConfig.signal;
+  if (requestAbortController) {
+    config.signal = requestAbortController.signal;
+  } else if (callerSignal) {
+    config.signal = callerSignal;
   }
 
   const requestKey = buildRequestKey(method, url);
   const canApplyBrowserGetGuards =
-    isBrowserRuntime() && method === 'GET' && !isAbortSignalInstance(customConfig.signal);
+    isBrowserRuntime() && method === 'GET' && !callerSignal;
 
   clearExpiredCooldown(requestKey, Date.now());
   if (canApplyBrowserGetGuards) {
@@ -220,19 +242,24 @@ export async function apiClient<T>(
 
   let timer: ReturnType<typeof setTimeout> | undefined;
   let bodyTimer: ReturnType<typeof setTimeout> | undefined;
+  let didRequestTimeout = false;
+  let didBodyTimeout = false;
+  const requestAbortSignal = requestAbortController?.signal ?? callerSignal;
 
   const executeRequest = async (): Promise<T> => {
     const fetchPromise = fetch(url, config);
     const response =
       timeout > 0
         ? await Promise.race<Response>([
-          fetchPromise,
-          new Promise<Response>((_, reject) => {
-            timer = setTimeout(() => {
-              reject(new Error(`Request timeout after ${timeout}ms`));
-            }, timeout);
-          }),
-        ])
+            fetchPromise,
+            new Promise<Response>((_, reject) => {
+              timer = setTimeout(() => {
+                didRequestTimeout = true;
+                requestAbortController?.abort();
+                reject(new Error(`Request timeout after ${timeout}ms`));
+              }, timeout);
+            }),
+          ])
         : await fetchPromise;
 
     if (timer) {
@@ -256,6 +283,8 @@ export async function apiClient<T>(
       }),
       new Promise<never>((_, reject) => {
         bodyTimer = setTimeout(() => {
+          didBodyTimeout = true;
+          requestAbortController?.abort();
           reject(new Error(`Response body timeout after ${bodyTimeout}ms`));
         }, bodyTimeout);
       }),
@@ -329,11 +358,20 @@ export async function apiClient<T>(
     try {
       return await executeRequest();
     } catch (error) {
+      if (didRequestTimeout) {
+        throw new Error(`Request timeout after ${timeout}ms`);
+      }
+
+      if (didBodyTimeout) {
+        const bodyTimeout = Math.max(timeout, 30_000);
+        throw new Error(`Response body timeout after ${bodyTimeout}ms`);
+      }
+
       if (error instanceof ApiError) {
         throw error;
       }
 
-      if (isAbortLikeError(error, config.signal)) {
+      if (isAbortLikeError(error, requestAbortSignal ?? config.signal)) {
         if (error instanceof Error) {
           if (error.name !== 'AbortError') {
             const abortError = new Error(error.message);
@@ -373,6 +411,7 @@ export async function apiClient<T>(
       if (canApplyBrowserGetGuards) {
         browserGetInFlightRequests.delete(requestKey);
       }
+      removeCallerAbortListener?.();
     }
   })();
 

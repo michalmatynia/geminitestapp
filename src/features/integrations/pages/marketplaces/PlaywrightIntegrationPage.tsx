@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
-import { PlaywrightCaptureRoutesEditor } from '@/features/ai/ai-paths/components/node-config/dialog/PlaywrightCaptureRoutesEditor';
 import { PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG } from '@/features/integrations/constants/slugs';
 import {
   useIntegrationConnections,
@@ -16,7 +15,7 @@ import {
   parsePlaywrightFieldMapperJson,
   type PlaywrightFieldMapperTargetField,
 } from '@/features/integrations/services/playwright-listing/field-mapper';
-import { PlaywrightSettingsForm } from '@/features/playwright/components/PlaywrightSettingsForm';
+import { PlaywrightSettingsForm } from '@/shared/ui/playwright/PlaywrightSettingsForm';
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
 import { playwrightConfigCaptureRouteSchema } from '@/shared/contracts/ai-paths-core/nodes/external-nodes';
 import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
@@ -24,6 +23,7 @@ import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { api } from '@/shared/lib/api-client';
 import { createEmptyPlaywrightCaptureRoute } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
+import { PlaywrightCaptureRoutesEditor } from '@/shared/ui/playwright/PlaywrightCaptureRoutesEditor';
 import {
   AdminIntegrationsPageLayout,
   Button,

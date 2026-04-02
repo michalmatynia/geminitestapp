@@ -146,6 +146,8 @@ export function useIntegrationsActionsImpl(args: {
     const formData = options.formData;
     const isTraderaIntegration = isTraderaIntegrationSlug(args.activeIntegration.slug);
     const isTraderaApiIntegration = isTraderaApiIntegrationSlug(args.activeIntegration.slug);
+    const isTraderaBrowserIntegration =
+      isTraderaIntegration && !isTraderaApiIntegration;
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -171,12 +173,28 @@ export function useIntegrationsActionsImpl(args: {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }
+    if (
+      isTraderaBrowserIntegration &&
+      formData.traderaBrowserMode === 'scripted' &&
+      !formData.playwrightListingScript.trim()
+    ) {
+      toast('Playwright listing script is required for scripted Tradera mode.', {
+        variant: 'error',
+      });
+      return null;
+    }
     const payload: Record<string, unknown> = {
       name: normalizedName,
       username: normalizedUsername,
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
       ...(isTraderaIntegration
         ? {
+          ...(isTraderaBrowserIntegration
+            ? {
+              traderaBrowserMode: formData.traderaBrowserMode,
+              playwrightListingScript: formData.playwrightListingScript.trim() || null,
+            }
+            : {}),
           traderaDefaultTemplateId: formData.traderaDefaultTemplateId.trim() || null,
           traderaDefaultDurationHours: Math.max(
             1,

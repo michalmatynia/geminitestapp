@@ -15,7 +15,7 @@ import {
 
 import type { ReactNode } from 'react';
 
-type KangurChoiceDialogOption = {
+export type KangurChoiceDialogOption = {
   ariaLabel?: string;
   id: string;
   label: ReactNode;

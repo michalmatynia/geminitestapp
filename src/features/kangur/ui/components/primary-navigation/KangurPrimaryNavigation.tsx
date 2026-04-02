@@ -779,7 +779,7 @@ export function KangurPrimaryNavigation({
           options: ageGroupOptions,
         })}
         subjectDialog={buildKangurPrimaryNavigationSubjectDialog({
-          ageGroup,
+          ageGroup: ageGroup,
           defaultSubjectLabel,
           isSixYearOld,
           navTranslations,

@@ -41,6 +41,7 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   'admin_menu_section_colors',
   'admin_menu_custom_enabled',
   'admin_menu_custom_nav',
+  'front_page_app',
   'background_sync_enabled',
   'background_sync_interval_seconds',
   'query_status_panel_enabled',

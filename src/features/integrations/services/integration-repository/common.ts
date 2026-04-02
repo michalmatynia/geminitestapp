@@ -19,6 +19,7 @@ export const ACTIVE_TEMPLATE_SETTING_KEY = 'base_export_active_template_id';
 export const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 
 export const CONNECTION_DEFAULTS = {
+  traderaBrowserMode: 'builtin' as const,
   playwrightHeadless: true,
   playwrightSlowMo: 0,
   playwrightTimeout: 30000,
@@ -291,6 +292,8 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     baseApiToken: (d['baseApiToken'] as string) ?? null,
     baseTokenUpdatedAt: toIsoStringOrNull(d['baseTokenUpdatedAt']),
     baseLastInventoryId: (d['baseLastInventoryId'] as string) ?? null,
+    traderaBrowserMode:
+      d['traderaBrowserMode'] === 'scripted' ? 'scripted' : CONNECTION_DEFAULTS.traderaBrowserMode,
     traderaDefaultTemplateId:
       (d['traderaDefaultTemplateId'] as string) ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
     traderaDefaultDurationHours:

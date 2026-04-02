@@ -25,6 +25,8 @@ export function useProductListModals({
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
   const [integrationsRecoveryContext, setIntegrationsRecoveryContext] =
     useState<ProductListingsRecoveryContext | null>(null);
+  const [integrationsFilterIntegrationSlug, setIntegrationsFilterIntegrationSlug] =
+    useState<string | null>(null);
 
   const {
     integrationsProduct,
@@ -47,16 +49,19 @@ export function useProductListModals({
   const handleOpenIntegrationsModal = useCallback(
     (
       product: ProductWithImages,
-      recoveryContext?: ProductListingsRecoveryContext
+      recoveryContext?: ProductListingsRecoveryContext,
+      filterIntegrationSlug?: string | null
     ) => {
       prefetchIntegrationSelectionData();
       prefetchProductListingsData(product.id);
       setIntegrationsRecoveryContext(recoveryContext ?? null);
+      setIntegrationsFilterIntegrationSlug(filterIntegrationSlug?.trim() || null);
       setIntegrationsProduct(product);
     },
     [
       prefetchIntegrationSelectionData,
       prefetchProductListingsData,
+      setIntegrationsFilterIntegrationSlug,
       setIntegrationsProduct,
       setIntegrationsRecoveryContext,
     ]
@@ -73,8 +78,14 @@ export function useProductListModals({
   const handleCloseIntegrations = useCallback(() => {
     setIntegrationsProduct(null);
     setIntegrationsRecoveryContext(null);
+    setIntegrationsFilterIntegrationSlug(null);
     setShowListProductModal(false);
-  }, [setIntegrationsProduct, setIntegrationsRecoveryContext, setShowListProductModal]);
+  }, [
+    setIntegrationsFilterIntegrationSlug,
+    setIntegrationsProduct,
+    setIntegrationsRecoveryContext,
+    setShowListProductModal,
+  ]);
 
   const handleCloseListProduct = useCallback(() => {
     setShowListProductModal(false);
@@ -83,12 +94,30 @@ export function useProductListModals({
 
   const handleListProductSuccess = useCallback(() => {
     setListProductPreset(null);
+    setIntegrationsRecoveryContext(null);
+    if (integrationsProduct?.id) {
+      refreshProductListingsData(integrationsProduct.id);
+    }
     baseHandleListProductSuccess();
-  }, [setListProductPreset, baseHandleListProductSuccess]);
+  }, [
+    baseHandleListProductSuccess,
+    integrationsProduct?.id,
+    refreshProductListingsData,
+    setIntegrationsRecoveryContext,
+    setListProductPreset,
+  ]);
 
   const handleStartListing = useCallback(
-    (integrationId: string, connectionId: string) => {
-      setListProductPreset({ integrationId, connectionId });
+    (
+      integrationId: string,
+      connectionId: string,
+      options?: { autoSubmit?: boolean }
+    ) => {
+      setListProductPreset({
+        integrationId,
+        connectionId,
+        ...(options?.autoSubmit ? { autoSubmit: true } : {}),
+      });
       setShowListProductModal(true);
     },
     [setListProductPreset, setShowListProductModal]
@@ -161,6 +190,7 @@ export function useProductListModals({
     handleAddToMarketplace,
     integrationsProduct,
     integrationsRecoveryContext,
+    integrationsFilterIntegrationSlug,
     showListProductModal,
     listProductPreset,
     exportSettingsProduct,

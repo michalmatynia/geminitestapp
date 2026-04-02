@@ -12,10 +12,12 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   };
 });
 
+import { ApiError } from '@/shared/lib/api-client';
 import {
   TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
   ensureTraderaBrowserSession,
   hasSavedTraderaBrowserSession,
+  isTraderaBrowserAuthRequiredMessage,
 } from './tradera-browser-session';
 
 describe('tradera-browser-session', () => {
@@ -75,5 +77,44 @@ describe('tradera-browser-session', () => {
         steps: [{ step: 'Manual login', status: 'ok' }],
       })
     ).toBe(false);
+  });
+
+  it('surfaces captcha/manual-verification guidance from the connection-test step log', async () => {
+    const apiError = new ApiError('Bad Request', 400);
+    apiError.payload = {
+      ok: false,
+      steps: [
+        {
+          step: 'Captcha required',
+          status: 'pending',
+          timestamp: '2026-04-02T15:00:00.000Z',
+          detail: 'Solve the captcha in the opened browser window to continue.',
+        },
+      ],
+    };
+    apiPostMock.mockRejectedValue(apiError);
+
+    await expect(
+      ensureTraderaBrowserSession({
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+      })
+    ).rejects.toThrow(
+      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+    );
+  });
+
+  it('detects auth-required messages from captcha/manual-verification wording', () => {
+    expect(
+      isTraderaBrowserAuthRequiredMessage(
+        'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+      )
+    ).toBe(true);
+    expect(
+      isTraderaBrowserAuthRequiredMessage(
+        'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
+      )
+    ).toBe(true);
+    expect(isTraderaBrowserAuthRequiredMessage('Unexpected network error')).toBe(false);
   });
 });

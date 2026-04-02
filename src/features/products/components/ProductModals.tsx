@@ -12,6 +12,7 @@ import {
   useProductListHeaderActionsContext,
   useProductListModalsContext,
 } from '@/features/products/context/ProductListContext';
+import { resolveProductListingsIntegrationScope } from '@/features/integrations/utils/product-listings-recovery';
 import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
@@ -461,6 +462,10 @@ export function ProductModals(): React.JSX.Element {
   const editProviderKey = editingProduct
     ? ['edit', editingProduct.id, hydratedEditingProduct ? 'h' : 'p'].join(':')
     : 'edit';
+  const effectiveIntegrationsFilterIntegrationSlug = resolveProductListingsIntegrationScope({
+    filterIntegrationSlug: integrationsFilterIntegrationSlug,
+    recoveryContext: integrationsRecoveryContext,
+  });
 
   return (
     <>
@@ -503,7 +508,7 @@ export function ProductModals(): React.JSX.Element {
           onClose={onCloseIntegrations}
           onStartListing={onStartListing}
           onListingsUpdated={onListingsUpdated}
-          filterIntegrationSlug={integrationsFilterIntegrationSlug}
+          filterIntegrationSlug={effectiveIntegrationsFilterIntegrationSlug}
           recoveryContext={integrationsRecoveryContext}
         />
       )}

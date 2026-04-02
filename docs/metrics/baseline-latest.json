@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-02T18:23:44.241Z",
+  "generatedAt": "2026-04-02T20:21:32.018Z",
   "source": {
-    "totalFiles": 9139,
-    "totalLines": 1526942,
-    "useClientFiles": 1688,
-    "hooksWithoutUseClient": 1,
+    "totalFiles": 9143,
+    "totalLines": 1530199,
+    "useClientFiles": 1690,
+    "hooksWithoutUseClient": 2,
     "filesOver800": 88,
     "filesOver1000": 0,
     "filesOver1500": 0,
     "largestFile": {
-      "path": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx",
-      "lines": 990
+      "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
+      "lines": 986
     }
   },
   "api": {
@@ -115,17 +115,8 @@
     "sharedToFeaturesTotalImports": 0
   },
   "architecture": {
-    "crossFeatureEdgePairs": 2,
-    "topCrossFeatureEdges": [
-      {
-        "edge": "integrations -> ai",
-        "references": 1
-      },
-      {
-        "edge": "integrations -> playwright",
-        "references": 1
-      }
-    ],
+    "crossFeatureEdgePairs": 0,
+    "topCrossFeatureEdges": [],
     "featureSizeByLines": [
       {
         "feature": "kangur",
@@ -134,8 +125,8 @@
       },
       {
         "feature": "ai",
-        "files": 1170,
-        "lines": 237316
+        "files": 1172,
+        "lines": 237219
       },
       {
         "feature": "case-resolver",
@@ -144,8 +135,8 @@
       },
       {
         "feature": "products",
-        "files": 307,
-        "lines": 63159
+        "files": 308,
+        "lines": 63444
       },
       {
         "feature": "cms",
@@ -155,7 +146,7 @@
       {
         "feature": "integrations",
         "files": 264,
-        "lines": 41591
+        "lines": 44016
       },
       {
         "feature": "filemaker",
@@ -436,13 +427,18 @@
         "useMemoCount": 2,
         "total": 15
       }
-    ]
+    ],
+    "highComplexityHooksCount": 166
   },
   "hotspots": {
     "topFilesByLines": [
       {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
-        "lines": 1056
+        "lines": 1093
+      },
+      {
+        "path": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
+        "lines": 1076
       },
       {
         "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
@@ -451,10 +447,6 @@
       {
         "path": "src/shared/lib/products/services/product-ai-graph-model-payload.test.ts",
         "lines": 991
-      },
-      {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx",
-        "lines": 990
       },
       {
         "path": "src/app/api/kangur/ai-tutor/chat/handler.ts",
@@ -541,12 +533,12 @@
         "lines": 958
       },
       {
-        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.test.tsx",
-        "lines": 956
+        "path": "src/shared/contracts/integrations/index.ts",
+        "lines": 957
       },
       {
-        "path": "src/shared/contracts/integrations/index.ts",
-        "lines": 952
+        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.test.tsx",
+        "lines": 956
       },
       {
         "path": "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",

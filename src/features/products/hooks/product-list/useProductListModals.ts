@@ -3,9 +3,36 @@
 import { useCallback, useState } from 'react';
 
 import { useIntegrationModalOperations } from '@/features/integrations/public';
+import {
+  isTraderaQuickExportRecoveryContext,
+  resolveProductListingsIntegrationScope,
+} from '@/features/integrations/utils/product-listings-recovery';
+import { readPersistedTraderaQuickListFeedback } from '@/features/products/components/list/columns/buttons/traderaQuickListFeedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import type { Toast } from '@/shared/contracts/ui';
+
+const enrichRecoveryContext = (
+  productId: string,
+  recoveryContext?: ProductListingsRecoveryContext
+): ProductListingsRecoveryContext | null => {
+  if (!recoveryContext) return null;
+
+  if (!isTraderaQuickExportRecoveryContext(recoveryContext)) {
+    return recoveryContext;
+  }
+
+  const persistedFeedback = readPersistedTraderaQuickListFeedback(productId);
+  if (!persistedFeedback) return recoveryContext;
+
+  return {
+    ...recoveryContext,
+    runId: recoveryContext.runId ?? persistedFeedback.runId ?? null,
+    requestId: recoveryContext.requestId ?? persistedFeedback.requestId ?? null,
+    integrationId: recoveryContext.integrationId ?? persistedFeedback.integrationId ?? null,
+    connectionId: recoveryContext.connectionId ?? persistedFeedback.connectionId ?? null,
+  };
+};
 
 export function useProductListModals({
   handleOpenCreateModal,
@@ -52,10 +79,14 @@ export function useProductListModals({
       recoveryContext?: ProductListingsRecoveryContext,
       filterIntegrationSlug?: string | null
     ) => {
+      const resolvedFilterIntegrationSlug = resolveProductListingsIntegrationScope({
+        filterIntegrationSlug,
+        recoveryContext,
+      });
       prefetchIntegrationSelectionData();
       prefetchProductListingsData(product.id);
-      setIntegrationsRecoveryContext(recoveryContext ?? null);
-      setIntegrationsFilterIntegrationSlug(filterIntegrationSlug?.trim() || null);
+      setIntegrationsRecoveryContext(enrichRecoveryContext(product.id, recoveryContext));
+      setIntegrationsFilterIntegrationSlug(resolvedFilterIntegrationSlug);
       setIntegrationsProduct(product);
     },
     [

@@ -47,7 +47,7 @@ export interface CategoryMapperData {
 }
 
 export interface CategoryMapperActions {
-  handleFetchFromBase: () => Promise<void>;
+  handleFetchExternalCategories: () => Promise<void>;
   handleAutoMatchByName: () => void;
   handleMappingChange: (externalCategoryId: string, internalCategoryId: string | null) => void;
   handleSave: () => Promise<void>;

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
+import { resolveProductListingsIntegrationScope } from '@/features/integrations/utils/product-listings-recovery';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type {
@@ -73,6 +74,7 @@ export interface ProductListingsModals {
     | undefined;
   filterIntegrationSlug?: string | null | undefined;
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
+  setRecoveryContext: React.Dispatch<React.SetStateAction<ProductListingsRecoveryContext | null>>;
 }
 const ModalsContext = createContext<ProductListingsModals | null>(null);
 export const useProductListingsModals = () => {
@@ -167,6 +169,21 @@ export function ProductListingsProvider({
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
   const [listingToPurge, setListingToPurge] = useState<string | null>(null);
   const [isSyncImagesConfirmOpen, setIsSyncImagesConfirmOpen] = useState(false);
+  const [resolvedRecoveryContext, setResolvedRecoveryContext] =
+    useState<ProductListingsRecoveryContext | null>(recoveryContext ?? null);
+
+  useEffect(() => {
+    setResolvedRecoveryContext(recoveryContext ?? null);
+  }, [recoveryContext]);
+
+  const resolvedFilterIntegrationSlug = useMemo(
+    () =>
+      resolveProductListingsIntegrationScope({
+        filterIntegrationSlug,
+        recoveryContext: resolvedRecoveryContext,
+      }),
+    [filterIntegrationSlug, resolvedRecoveryContext]
+  );
 
   const listingsQuery = useProductListings(product.id);
   const listings = listingsQuery.data ?? [];
@@ -248,8 +265,9 @@ export function ProductListingsProvider({
       setIsSyncImagesConfirmOpen,
       onClose,
       onStartListing,
-      filterIntegrationSlug,
-      recoveryContext,
+      filterIntegrationSlug: resolvedFilterIntegrationSlug,
+      recoveryContext: resolvedRecoveryContext,
+      setRecoveryContext: setResolvedRecoveryContext,
     }),
     [
       listingToDelete,
@@ -257,8 +275,8 @@ export function ProductListingsProvider({
       isSyncImagesConfirmOpen,
       onClose,
       onStartListing,
-      filterIntegrationSlug,
-      recoveryContext,
+      resolvedRecoveryContext,
+      resolvedFilterIntegrationSlug,
     ]
   );
 

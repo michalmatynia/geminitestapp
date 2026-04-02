@@ -24,6 +24,11 @@ import {
   USERNAME_SELECTORS,
   PASSWORD_SELECTORS,
   LOGIN_BUTTON_SELECTORS,
+  TRADERA_AUTH_ERROR_SELECTORS,
+  TRADERA_CAPTCHA_HINTS,
+  TRADERA_COOKIE_ACCEPT_SELECTORS,
+  TRADERA_MANUAL_VERIFICATION_TEXT_HINTS,
+  TRADERA_MANUAL_VERIFICATION_URL_HINTS,
   TITLE_SELECTORS,
   DESCRIPTION_SELECTORS,
   PRICE_SELECTORS,
@@ -42,12 +47,23 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { getIntegrationRepository } from '../integration-repository';
 import { runPlaywrightListingScript } from '../playwright-listing/runner';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
+import { resolveTraderaCategoryMappingForProduct } from './category-mapping';
 
 export type TraderaBrowserListingResult = {
   externalListingId: string;
   listingUrl?: string;
   simulated?: boolean;
   metadata?: Record<string, unknown>;
+};
+
+type TraderaAuthState = {
+  successVisible: boolean;
+  loginFormVisible: boolean;
+  currentUrl: string;
+  loggedIn: boolean;
+  errorText: string;
+  captchaDetected: boolean;
+  manualVerificationDetected: boolean;
 };
 
 const resolveProductImageUrls = (product: ProductWithImages): string[] => {
@@ -99,7 +115,109 @@ const resolveLocalProductImagePaths = async (
   return validPaths;
 };
 
-const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v6';
+const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v8';
+
+const includesAnyHint = (value: string, hints: readonly string[]): boolean => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  return hints.some((hint) => normalized.includes(hint));
+};
+
+const acceptTraderaCookies = async (page: Page): Promise<void> => {
+  for (const selector of TRADERA_COOKIE_ACCEPT_SELECTORS) {
+    const locator = page.locator(selector).first();
+    const visible = await locator.isVisible().catch(() => false);
+    if (!visible) continue;
+    await locator.click().catch(() => undefined);
+    await page.waitForTimeout(500).catch(() => undefined);
+    return;
+  }
+};
+
+const readVisibleLocatorText = async (page: Page, selectors: readonly string[]): Promise<string> => {
+  for (const selector of selectors) {
+    const locator = page.locator(selector).first();
+    const visible = await locator.isVisible().catch(() => false);
+    if (!visible) continue;
+    const text = await locator.innerText().catch(() => '');
+    if (text.trim()) {
+      return text.trim();
+    }
+  }
+  return '';
+};
+
+const readTraderaAuthState = async (page: Page): Promise<TraderaAuthState> => {
+  const successVisible = await page
+    .locator(LOGIN_SUCCESS_SELECTOR)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const loginFormVisible = await page
+    .locator(LOGIN_FORM_SELECTOR)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const currentUrl = page.url().trim();
+  const normalizedUrl = currentUrl.toLowerCase();
+  const errorText = await readVisibleLocatorText(page, TRADERA_AUTH_ERROR_SELECTORS);
+  const normalizedErrorText = errorText.toLowerCase();
+  const captchaDetected =
+    includesAnyHint(normalizedErrorText, TRADERA_CAPTCHA_HINTS) ||
+    includesAnyHint(normalizedUrl, TRADERA_MANUAL_VERIFICATION_URL_HINTS.filter((hint) =>
+      hint.includes('captcha')
+    ));
+  const manualVerificationDetected =
+    captchaDetected ||
+    includesAnyHint(normalizedErrorText, TRADERA_MANUAL_VERIFICATION_TEXT_HINTS) ||
+    includesAnyHint(normalizedUrl, TRADERA_MANUAL_VERIFICATION_URL_HINTS);
+  const loggedIn =
+    successVisible ||
+    (!loginFormVisible &&
+      (normalizedUrl.includes('/my/') ||
+        normalizedUrl.includes('/my?') ||
+        normalizedUrl.includes('/selling')));
+
+  return {
+    successVisible,
+    loginFormVisible,
+    currentUrl,
+    loggedIn,
+    errorText,
+    captchaDetected,
+    manualVerificationDetected,
+  };
+};
+
+const buildTraderaAuthRequiredError = ({
+  hasStoredSession,
+  authState,
+}: {
+  hasStoredSession: boolean;
+  authState: TraderaAuthState;
+}) =>
+  internalError(
+    hasStoredSession
+      ? authState.captchaDetected
+        ? 'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification (captcha). Refresh the saved browser session.'
+        : authState.manualVerificationDetected
+          ? 'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification. Refresh the saved browser session.'
+          : 'AUTH_REQUIRED: Stored Tradera session expired or requires manual verification.'
+      : authState.captchaDetected
+        ? 'AUTH_REQUIRED: Tradera login requires manual verification (captcha).'
+        : authState.manualVerificationDetected
+          ? 'AUTH_REQUIRED: Tradera login requires manual verification.'
+          : 'AUTH_REQUIRED: Tradera login failed or requires manual verification.',
+    {
+      currentUrl: authState.currentUrl,
+      errorText: authState.errorText || null,
+      successVisible: authState.successVisible,
+      loginFormVisible: authState.loginFormVisible,
+      captchaDetected: authState.captchaDetected,
+      manualVerificationDetected: authState.manualVerificationDetected,
+      hasStoredSession,
+    }
+  );
 
 const buildTraderaScriptInput = async ({
   product,
@@ -117,6 +235,10 @@ const buildTraderaScriptInput = async ({
   const appBaseUrl = resolveAppBaseUrl();
   const images = resolveProductImageUrls(product).map((u) => toAbsoluteUrl(u, appBaseUrl));
   const localImagePaths = await resolveLocalProductImagePaths(product);
+  const mappedCategory = await resolveTraderaCategoryMappingForProduct({
+    connectionId: connection.id,
+    product,
+  });
   // Credentials passed in-memory only — never written to disk or job queue
   const username = connection.username ?? null;
   const password = connection.password ? decryptSecret(connection.password) : null;
@@ -131,6 +253,18 @@ const buildTraderaScriptInput = async ({
     localImagePaths,
     images, imageUrls: images, username, password,
     appBaseUrl,
+    ...(mappedCategory
+      ? {
+        traderaCategory: {
+          externalId: mappedCategory.externalCategoryId,
+          name: mappedCategory.externalCategoryName,
+          path: mappedCategory.externalCategoryPath,
+          segments: mappedCategory.pathSegments,
+          internalCategoryId: mappedCategory.internalCategoryId,
+          catalogId: mappedCategory.catalogId,
+        },
+      }
+      : {}),
     durationHours: listing.relistPolicy?.durationHours ?? null,
     autoRelistEnabled: listing.relistPolicy?.enabled ?? null,
     autoRelistLeadMinutes: listing.relistPolicy?.leadMinutes ?? null,
@@ -245,8 +379,9 @@ const runTraderaBrowserListingScripted = async ({
   }
 
   let result;
+  let scriptInput: Record<string, unknown> | null = null;
   try {
-    const scriptInput = await buildTraderaScriptInput({
+    scriptInput = await buildTraderaScriptInput({
       product,
       listing,
       systemSettings,
@@ -331,6 +466,26 @@ const runTraderaBrowserListingScripted = async ({
       browserMode: resolveResultBrowserMode(browserMode, result.effectiveBrowserMode),
       rawResult: result.rawResult,
       publishVerified: result.publishVerified,
+      categoryId:
+        scriptInput &&
+        typeof scriptInput['traderaCategory'] === 'object' &&
+        scriptInput['traderaCategory'] &&
+        typeof (scriptInput['traderaCategory'] as Record<string, unknown>)['externalId'] === 'string'
+          ? ((scriptInput['traderaCategory'] as Record<string, unknown>)['externalId'] as string)
+          : null,
+      categoryPath:
+        scriptInput &&
+        typeof scriptInput['traderaCategory'] === 'object' &&
+        scriptInput['traderaCategory'] &&
+        typeof (scriptInput['traderaCategory'] as Record<string, unknown>)['path'] === 'string'
+          ? ((scriptInput['traderaCategory'] as Record<string, unknown>)['path'] as string)
+          : null,
+      categorySource:
+        scriptInput &&
+        typeof scriptInput['traderaCategory'] === 'object' &&
+        scriptInput['traderaCategory']
+          ? 'categoryMapper'
+          : 'fallback',
     },
   };
 };
@@ -343,47 +498,34 @@ export const ensureLoggedIn = async (
   const normalizedListingFormUrl = normalizeTraderaListingFormUrl(listingFormUrl);
   const hasStoredSession = Boolean(connection.playwrightStorageState?.trim());
   const sessionCheckUrl = 'https://www.tradera.com/en/my/listings?tab=active';
-  const isLoggedIn = async (): Promise<boolean> => {
-    const successVisible = await page
-      .locator(LOGIN_SUCCESS_SELECTOR)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    if (successVisible) return true;
-
-    const loginFormVisible = await page
-      .locator(LOGIN_FORM_SELECTOR)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    if (loginFormVisible) return false;
-
-    const currentUrl = page.url().trim().toLowerCase();
-    return currentUrl.includes('/my/') || currentUrl.includes('/my?');
-  };
 
   await page.goto(sessionCheckUrl, {
     waitUntil: 'domcontentloaded',
     timeout: 30_000,
   });
-  if (await isLoggedIn()) {
+  await acceptTraderaCookies(page);
+  const initialAuthState = await readTraderaAuthState(page);
+  if (initialAuthState.loggedIn) {
     await page.goto(normalizedListingFormUrl, {
       waitUntil: 'domcontentloaded',
       timeout: 30_000,
     });
+    await acceptTraderaCookies(page);
     return;
   }
 
   if (hasStoredSession) {
-    throw internalError(
-      'AUTH_REQUIRED: Stored Tradera session expired or requires manual verification.'
-    );
+    throw buildTraderaAuthRequiredError({
+      hasStoredSession: true,
+      authState: initialAuthState,
+    });
   }
 
   await page.goto('https://www.tradera.com/login', {
     waitUntil: 'domcontentloaded',
     timeout: 30_000,
   });
+  await acceptTraderaCookies(page);
   await page.waitForSelector(LOGIN_FORM_SELECTOR, {
     state: 'attached',
     timeout: 20_000,
@@ -411,15 +553,29 @@ export const ensureLoggedIn = async (
     }),
     submitButton.click(),
   ]);
+  await page.waitForTimeout(1500).catch(() => undefined);
+  await acceptTraderaCookies(page);
 
-  if (!(await isLoggedIn())) {
-    throw internalError('AUTH_REQUIRED: Tradera login failed or requires manual verification.');
+  const postLoginAuthState = await readTraderaAuthState(page);
+  if (!postLoginAuthState.loggedIn) {
+    throw buildTraderaAuthRequiredError({
+      hasStoredSession: false,
+      authState: postLoginAuthState,
+    });
   }
 
   await page.goto(normalizedListingFormUrl, {
     waitUntil: 'domcontentloaded',
     timeout: 30_000,
   });
+  await acceptTraderaCookies(page);
+  const listingAuthState = await readTraderaAuthState(page);
+  if (!listingAuthState.loggedIn && (listingAuthState.loginFormVisible || listingAuthState.manualVerificationDetected)) {
+    throw buildTraderaAuthRequiredError({
+      hasStoredSession: false,
+      authState: listingAuthState,
+    });
+  }
 };
 
 export const runTraderaBrowserListing = async ({

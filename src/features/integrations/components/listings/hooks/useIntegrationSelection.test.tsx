@@ -114,4 +114,66 @@ describe('useIntegrationSelection', () => {
     expect(result.current.selectedIntegrationId).toBe('integration-tradera-1');
     expect(result.current.selectedConnectionId).toBe('conn-tradera-2');
   });
+
+  it('updates the selected Tradera target when the initial recovery ids change after mount', async () => {
+    createMultiQueryV2Mock.mockReturnValue([
+      { data: { connectionId: 'conn-base-1' } },
+      { data: { connectionId: 'conn-tradera-1' } },
+      {
+        data: [
+          {
+            id: 'integration-tradera-1',
+            name: 'Tradera A',
+            slug: 'tradera',
+            connections: [
+              { id: 'conn-tradera-1', name: 'Alpha', integrationId: 'integration-tradera-1' },
+            ],
+          },
+          {
+            id: 'integration-tradera-2',
+            name: 'Tradera B',
+            slug: 'tradera',
+            connections: [
+              { id: 'conn-tradera-2', name: 'Bravo', integrationId: 'integration-tradera-2' },
+            ],
+          },
+        ],
+        isPending: false,
+      },
+    ]);
+
+    const { result, rerender } = renderHook(
+      ({
+        integrationId,
+        connectionId,
+      }: {
+        integrationId: string | null;
+        connectionId: string | null;
+      }) =>
+        useIntegrationSelection(integrationId, connectionId, {
+          filterIntegrationSlug: 'tradera',
+        }),
+      {
+        initialProps: {
+          integrationId: 'integration-tradera-1',
+          connectionId: 'conn-tradera-1',
+        },
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.selectedIntegrationId).toBe('integration-tradera-1');
+    });
+    expect(result.current.selectedConnectionId).toBe('conn-tradera-1');
+
+    rerender({
+      integrationId: 'integration-tradera-2',
+      connectionId: 'conn-tradera-2',
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedIntegrationId).toBe('integration-tradera-2');
+    });
+    expect(result.current.selectedConnectionId).toBe('conn-tradera-2');
+  });
 });

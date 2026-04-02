@@ -5,19 +5,35 @@ import {
   resolveConnectionPlaywrightSettings,
 } from '@/features/integrations/services/tradera-playwright-settings';
 import { loadTraderaSystemSettings } from '@/features/integrations/services/tradera-system-settings';
+import { getTraderaCategories } from '@/features/integrations/services/tradera-api-client';
 import {
   IntegrationConnectionRecord,
   TraderaCategoryRecord,
 } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { ensureLoggedIn } from './browser';
+import { resolveTraderaPublicApiCredentials } from './api';
 import { findVisibleLocator } from './utils';
 
 
 export const fetchTraderaCategoriesForConnection = async (
   connection: IntegrationConnectionRecord
 ): Promise<TraderaCategoryRecord[]> => {
+  try {
+    const categories = await getTraderaCategories(resolveTraderaPublicApiCredentials(connection));
+    if (categories.length > 0) {
+      return categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+        parentId: category.parentId ?? '0',
+      }));
+    }
+  } catch (error) {
+    logClientError(error);
+  }
+
   const systemSettings = await loadTraderaSystemSettings();
   const listingFormUrl = systemSettings.listingFormUrl;
 

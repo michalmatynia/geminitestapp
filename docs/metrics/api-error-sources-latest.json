@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-02T10:00:49.531Z",
+  "generatedAt": "2026-04-02T21:14:54.167Z",
   "status": "warn",
   "summary": {
     "total": 2,
@@ -7,8 +7,8 @@
     "warningCount": 2,
     "infoCount": 0,
     "status": "warn",
-    "routeFileCount": 301,
-    "handlerFileCount": 420
+    "routeFileCount": 302,
+    "handlerFileCount": 422
   },
   "scope": {
     "root": "src/app/api"
@@ -43,5 +43,5 @@
       "infoCount": 0
     }
   ],
-  "durationMs": 92
+  "durationMs": 164
 }

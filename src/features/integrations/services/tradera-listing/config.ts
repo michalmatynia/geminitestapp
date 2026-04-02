@@ -38,6 +38,46 @@ export const TRADERA_COOKIE_ACCEPT_SELECTORS = [
   'button:has-text("Tillåt alla cookies")',
 ] as const;
 
+export const TRADERA_AUTH_ERROR_SELECTORS = [
+  '[data-testid*="error"]',
+  '[data-test*="error"]',
+  '[role="alert"]',
+  '.alert',
+  '.form-error',
+  '.error',
+  '.text-red-500',
+] as const;
+
+export const TRADERA_CAPTCHA_HINTS = [
+  'captcha',
+  'recaptcha',
+  'fylla i captcha',
+  'captcha:n',
+] as const;
+
+export const TRADERA_MANUAL_VERIFICATION_TEXT_HINTS = [
+  ...TRADERA_CAPTCHA_HINTS,
+  'verification',
+  'verify',
+  'manual verification',
+  'security check',
+  'two-factor',
+  '2fa',
+  'bankid',
+  'engangskod',
+  'säkerhetskontroll',
+] as const;
+
+export const TRADERA_MANUAL_VERIFICATION_URL_HINTS = [
+  '/challenge',
+  '/captcha',
+  '/verify',
+  '/verification',
+  '/bankid',
+  '/two-factor',
+  '/2fa',
+] as const;
+
 export const TITLE_SELECTORS = [
   'input[name="shortDescription"]',
   '#shortDescription',

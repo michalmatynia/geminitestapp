@@ -68,6 +68,9 @@ const resolveTraderaExecutionSummary = (
   requestId: string | null;
   publishVerified: boolean | null;
   listingUrl: string | null;
+  categoryId: string | null;
+  categoryPath: string | null;
+  categorySource: string | null;
   rawResult: unknown;
 } => {
   const marketplaceRecord = toRecord(marketplaceData);
@@ -91,6 +94,9 @@ const resolveTraderaExecutionSummary = (
     requestId: readString(lastExecution['requestId']),
     publishVerified: readBoolean(metadata['publishVerified']),
     listingUrl: readString(marketplaceRecord['listingUrl']),
+    categoryId: readString(metadata['categoryId']),
+    categoryPath: readString(metadata['categoryPath']),
+    categorySource: readString(metadata['categorySource']),
     rawResult: metadata['rawResult'] ?? null,
   };
 };
@@ -302,6 +308,28 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               label='Publish verified'
               value={traderaExecution.publishVerified ? 'Yes' : 'No'}
               valueClassName={traderaExecution.publishVerified ? 'text-emerald-400' : 'text-rose-400'}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categorySource ? (
+            <MetadataItem
+              label='Category source'
+              value={traderaExecution.categorySource}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categoryId ? (
+            <MetadataItem
+              label='Category ID'
+              value={traderaExecution.categoryId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.categoryPath ? (
+            <MetadataItem
+              label='Category path'
+              value={traderaExecution.categoryPath}
               variant='minimal'
             />
           ) : null}

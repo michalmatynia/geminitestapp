@@ -1,4 +1,4 @@
-import type { ThemeSettings } from '@/shared/contracts/cms-theme';
+import { DEFAULT_CLOCK_THEME, type ThemeSettings } from '@/shared/contracts/cms-theme';
 import { toCssPx } from '../CmsStorefrontAppearance.utils';
 import {
   resolveButtonHeight,
@@ -33,7 +33,7 @@ export const resolveKangurRuntimeThemeVars = (theme: ThemeSettings): Record<stri
   const stackGap = resolveStackGap(theme);
   const navGroupRadius = resolveKangurNavGroupRadius(theme);
   const navItemRadius = resolveKangurNavItemRadius(theme);
-  const clockTheme = theme.clockTheme;
+  const clockTheme = theme.clockTheme || DEFAULT_CLOCK_THEME;
 
   return {
     '--kangur-font-heading': theme.headingFont,

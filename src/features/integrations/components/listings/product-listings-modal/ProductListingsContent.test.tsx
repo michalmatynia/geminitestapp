@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   handleOpenTraderaLoginMock,
   onStartListingMock,
+  setRecoveryContextMock,
   useProductListingsDataMock,
   useProductListingsModalsMock,
   useProductListingsActionsMock,
@@ -12,6 +13,7 @@ const {
 } = vi.hoisted(() => ({
   handleOpenTraderaLoginMock: vi.fn(),
   onStartListingMock: vi.fn(),
+  setRecoveryContextMock: vi.fn(),
   useProductListingsDataMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
   useProductListingsActionsMock: vi.fn(),
@@ -65,6 +67,7 @@ describe('ProductListingsContent', () => {
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: onStartListingMock,
       recoveryContext: null,
+      setRecoveryContext: setRecoveryContextMock,
     });
     useProductListingsActionsMock.mockReturnValue({
       handleOpenTraderaLogin: handleOpenTraderaLoginMock,
@@ -86,6 +89,7 @@ describe('ProductListingsContent', () => {
         integrationId: 'integration-tradera-1',
         connectionId: 'conn-tradera-1',
       },
+      setRecoveryContext: setRecoveryContextMock,
     });
 
     render(
@@ -128,6 +132,7 @@ describe('ProductListingsContent', () => {
         integrationId: 'integration-tradera-1',
         connectionId: 'conn-tradera-1',
       },
+      setRecoveryContext: setRecoveryContextMock,
     });
 
     render(
@@ -157,6 +162,7 @@ describe('ProductListingsContent', () => {
         runId: null,
         requestId: 'job-tradera-1',
       },
+      setRecoveryContext: setRecoveryContextMock,
     });
 
     render(
@@ -207,6 +213,7 @@ describe('ProductListingsContent', () => {
         runId: null,
         requestId: 'job-tradera-target',
       },
+      setRecoveryContext: setRecoveryContextMock,
     });
 
     render(
@@ -273,6 +280,10 @@ describe('ProductListingsContent', () => {
     expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
       '"requestId":"job-tradera-target"'
     );
+    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+      '"status":"auth_required"'
+    );
+    expect(setRecoveryContextMock).toHaveBeenCalled();
   });
 
   it('matches the Tradera recovery listing by run id when queue job is unavailable', async () => {
@@ -285,6 +296,7 @@ describe('ProductListingsContent', () => {
         runId: 'run-tradera-target',
         requestId: null,
       },
+      setRecoveryContext: setRecoveryContextMock,
     });
 
     render(
@@ -355,6 +367,10 @@ describe('ProductListingsContent', () => {
     expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
       '"runId":"run-tradera-target"'
     );
+    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+      '"status":"failed"'
+    );
+    expect(setRecoveryContextMock).toHaveBeenCalled();
   });
 
   it('prefers the freshest failed Tradera listing when recovery ids are unavailable', async () => {
@@ -367,6 +383,7 @@ describe('ProductListingsContent', () => {
         runId: null,
         requestId: null,
       },
+      setRecoveryContext: setRecoveryContextMock,
     });
 
     render(

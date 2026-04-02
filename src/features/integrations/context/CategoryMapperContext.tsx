@@ -266,14 +266,14 @@ export function CategoryMapperProvider({
     return (): void => clearTimeout(timer);
   }, [selectedCatalogId]);
 
-  const handleFetchFromBase = async (): Promise<void> => {
+  const handleFetchExternalCategories = async (): Promise<void> => {
     try {
       const result = await fetchMutation.mutateAsync({ connectionId });
       toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
       logClientCatch(error, {
-        source: 'BaseCategoryMapper',
-        action: 'fetchFromBase',
+        source: 'CategoryMapper',
+        action: 'fetchExternalCategories',
         connectionId,
       });
       const message = error instanceof Error ? error.message : 'Failed to fetch categories';
@@ -374,7 +374,7 @@ export function CategoryMapperProvider({
       setPendingMappings(new Map());
     } catch (error: unknown) {
       logClientCatch(error, {
-        source: 'BaseCategoryMapper',
+        source: 'CategoryMapper',
         action: 'saveMappings',
         connectionId,
         catalogId: selectedCatalogId,
@@ -459,7 +459,7 @@ export function CategoryMapperProvider({
 
   const actionsValue = useMemo<CategoryMapperActions>(
     () => ({
-      handleFetchFromBase,
+      handleFetchExternalCategories,
       handleAutoMatchByName,
       handleMappingChange,
       handleSave,
@@ -468,7 +468,7 @@ export function CategoryMapperProvider({
       saveMutation,
     }),
     [
-      handleFetchFromBase,
+      handleFetchExternalCategories,
       handleAutoMatchByName,
       handleMappingChange,
       handleSave,

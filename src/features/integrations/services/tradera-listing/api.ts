@@ -2,6 +2,7 @@ import { decryptSecret } from '@/features/integrations/server';
 import {
   addTraderaShopItem,
   TraderaApiCredentials,
+  TraderaPublicApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
 import { IntegrationConnectionRecord, ProductListing } from '@/shared/contracts/integrations';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
@@ -12,6 +13,7 @@ import {
   DEFAULT_TRADERA_API_PAYMENT_CONDITION,
   DEFAULT_TRADERA_API_SHIPPING_CONDITION,
 } from './config';
+import { resolveTraderaCategoryMappingForProduct } from './category-mapping';
 import { toPositiveInt, toRecord } from './utils';
 
 const decryptTrimmedSecret = (value: string | null | undefined): string =>
@@ -55,20 +57,88 @@ export const resolveTraderaApiCredentials = (
   };
 };
 
-export const resolveTraderaApiCategoryId = (
+export const resolveTraderaPublicApiCredentials = (
+  connection: IntegrationConnectionRecord
+): TraderaPublicApiCredentials => {
+  return {
+    appId: requirePositiveCredential(
+      toPositiveInt(connection.traderaApiAppId),
+      'Tradera API App ID is missing. Update the connection credentials.'
+    ),
+    appKey: requireSecretCredential(
+      decryptTrimmedSecret(connection.traderaApiAppKey),
+      'Tradera API App Key is missing. Update the connection credentials.'
+    ),
+    sandbox: connection.traderaApiSandbox ?? false,
+  };
+};
+
+export const resolveTraderaApiCategoryId = async (
   listing: ProductListing,
-  product: { categoryId?: string | null | undefined }
-): number => {
+  product: {
+    categoryId?: string | null | undefined;
+    id?: string | null | undefined;
+    catalogId?: string | null | undefined;
+    catalogs?: Array<{ catalogId?: string | null | undefined }> | null | undefined;
+  }
+): Promise<{
+  categoryId: number;
+  source: 'marketplaceData' | 'categoryMapper' | 'product' | 'env' | 'default';
+  categoryPath: string | null;
+  categoryName: string | null;
+}> => {
   const listingData = toRecord(listing.marketplaceData);
   const traderaData = toRecord(listingData['tradera']);
   const fromMarketplaceData = toPositiveInt(traderaData['categoryId']);
-  if (fromMarketplaceData) return fromMarketplaceData;
+  if (fromMarketplaceData) {
+    return {
+      categoryId: fromMarketplaceData,
+      source: 'marketplaceData',
+      categoryPath: null,
+      categoryName: null,
+    };
+  }
+
+  const mappedCategory = await resolveTraderaCategoryMappingForProduct({
+    connectionId: listing.connectionId,
+    product: product as never,
+  });
+  const fromCategoryMapper = toPositiveInt(mappedCategory?.externalCategoryId ?? null);
+  if (fromCategoryMapper) {
+    return {
+      categoryId: fromCategoryMapper,
+      source: 'categoryMapper',
+      categoryPath: mappedCategory?.externalCategoryPath ?? null,
+      categoryName: mappedCategory?.externalCategoryName ?? null,
+    };
+  }
 
   const fromProduct = toPositiveInt(product?.categoryId ?? null);
-  if (fromProduct) return fromProduct;
+  if (fromProduct) {
+    return {
+      categoryId: fromProduct,
+      source: 'product',
+      categoryPath: null,
+      categoryName: null,
+    };
+  }
 
   const fromEnv = toPositiveInt(process.env['TRADERA_API_DEFAULT_CATEGORY_ID']);
-  return fromEnv ?? DEFAULT_TRADERA_API_CATEGORY_ID;
+  if (fromEnv) {
+    return {
+      categoryId: fromEnv,
+      source: 'env',
+      categoryPath: null,
+      categoryName: null,
+    };
+  }
+
+  return {
+    categoryId: DEFAULT_TRADERA_API_CATEGORY_ID,
+    source: 'default',
+    categoryPath: null,
+    categoryName: null,
+  };
 };
 
 export const runTraderaApiListing = async ({
@@ -105,7 +175,12 @@ export const runTraderaApiListing = async ({
     typeof product.stock === 'number' && Number.isFinite(product.stock) && product.stock > 0
       ? Math.floor(product.stock)
       : 1;
-  const categoryId = resolveTraderaApiCategoryId(listing, product);
+  const {
+    categoryId,
+    source: categorySource,
+    categoryPath,
+    categoryName,
+  } = await resolveTraderaApiCategoryId(listing, product);
   const addResult = await addTraderaShopItem({
     credentials,
     input: {
@@ -128,6 +203,9 @@ export const runTraderaApiListing = async ({
       requestResultCode: addResult.resultCode,
       requestResultMessage: addResult.resultMessage,
       categoryId,
+      categorySource,
+      categoryPath,
+      categoryName,
       quantity,
       sandbox: credentials.sandbox ?? false,
     },

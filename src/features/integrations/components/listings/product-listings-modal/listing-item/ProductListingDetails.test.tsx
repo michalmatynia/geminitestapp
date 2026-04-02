@@ -88,6 +88,9 @@ describe('ProductListingDetails', () => {
                     listingFormUrl: 'https://www.tradera.com/en/selling/new',
                     runId: 'run-123',
                     publishVerified: false,
+                    categorySource: 'categoryMapper',
+                    categoryId: '101',
+                    categoryPath: 'Collectibles > Pins',
                     rawResult: {
                       status: 'publish_failed',
                       step: 'verify-active-listing',
@@ -118,6 +121,12 @@ describe('ProductListingDetails', () => {
     expect(screen.getAllByText('job-tradera-1').length).toBeGreaterThan(1);
     expect(screen.getByText('Publish verified:')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();
+    expect(screen.getByText('Category source:')).toBeInTheDocument();
+    expect(screen.getByText('categoryMapper')).toBeInTheDocument();
+    expect(screen.getByText('Category ID:')).toBeInTheDocument();
+    expect(screen.getByText('101')).toBeInTheDocument();
+    expect(screen.getByText('Category path:')).toBeInTheDocument();
+    expect(screen.getByText('Collectibles > Pins')).toBeInTheDocument();
     expect(screen.getByText('Listing URL:')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
       'href',

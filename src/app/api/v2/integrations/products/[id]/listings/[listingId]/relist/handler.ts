@@ -34,7 +34,7 @@ export async function POST_handler(
     throw badRequestError('Product id and listing id are required');
   }
 
-  const rawBody = await req.json().catch(() => ({}));
+  const rawBody: unknown = await req.json().catch(() => ({}));
   const payloadResult = productListingRelistPayloadSchema.safeParse(rawBody);
   if (!payloadResult.success) {
     throw badRequestError('Invalid relist payload');

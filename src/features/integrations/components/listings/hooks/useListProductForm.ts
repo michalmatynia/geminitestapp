@@ -15,7 +15,10 @@ import {
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
-import { ensureTraderaBrowserSession } from '@/features/integrations/utils/tradera-browser-session';
+import {
+  ensureTraderaBrowserSession,
+  isTraderaBrowserAuthRequiredMessage,
+} from '@/features/integrations/utils/tradera-browser-session';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
@@ -193,7 +196,11 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         productId,
         integrationId: selectedIntegrationId,
       });
-      setError(err instanceof Error ? err.message : 'Failed to list product');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to list product';
+      if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+        toast(errorMessage, { variant: 'error' });
+      }
+      setError(errorMessage);
     }
   };
 

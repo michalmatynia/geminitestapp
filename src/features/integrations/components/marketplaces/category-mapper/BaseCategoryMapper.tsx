@@ -7,11 +7,17 @@ import { BaseProducerMapper } from './BaseProducerMapper';
 import { BaseTagMapper } from './BaseTagMapper';
 import { CategoryMapperTable } from './CategoryMapperTable';
 
+const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
+
 export function BaseCategoryMapper(): React.JSX.Element {
   const { selectedConnection } = useCategoryMapperPageSelection();
   if (!selectedConnection) {
     return <></>;
   }
+
+  const isBaseConnection = BASE_MARKETPLACE_SLUGS.has(
+    selectedConnection.integration.slug.toLowerCase()
+  );
 
   return (
     <CategoryMapperProvider
@@ -20,8 +26,8 @@ export function BaseCategoryMapper(): React.JSX.Element {
     >
       <div className='space-y-6'>
         <CategoryMapperTable />
-        <BaseProducerMapper />
-        <BaseTagMapper />
+        {isBaseConnection ? <BaseProducerMapper /> : null}
+        {isBaseConnection ? <BaseTagMapper /> : null}
       </div>
     </CategoryMapperProvider>
   );

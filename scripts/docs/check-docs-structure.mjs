@@ -468,7 +468,9 @@ async function run() {
   const issues = [];
 
   const rootDocs = await listRootDocs();
-  const docsDirectories = await listDocDirectoriesRecursive();
+  const baseDocsDirectories = await listDocDirectoriesRecursive('docs');
+  const featureDocsDirectories = await listDocDirectoriesRecursive('src/features');
+  const docsDirectories = [...baseDocsDirectories, ...featureDocsDirectories];
   const allowlist = new Set(manifest.rootAllowlist);
   const supersededRootDocs = await listSupersededRootDocs(rootDocs);
   const markdownDirectoryHubExemptions = new Set(
@@ -500,7 +502,9 @@ async function run() {
     }
   }
 
-  const allMarkdownDocs = await listMarkdownDocsRecursive();
+  const docsMarkdownFiles = await listMarkdownDocsRecursive('docs');
+  const featureMarkdownFiles = await listMarkdownDocsRecursive('src/features');
+  const allMarkdownDocs = [...docsMarkdownFiles, ...featureMarkdownFiles];
 
   for (const relativePath of allMarkdownDocs) {
     const { frontmatter } = await readMarkdownDocState(relativePath);
@@ -535,6 +539,7 @@ async function run() {
   }
 
   for (const relativePath of docsDirectories) {
+    if (!relativePath.startsWith('docs/')) continue;
     const directMarkdownFiles = await listDirectMarkdownFiles(relativePath);
     const directNonMarkdownFiles = await listDirectNonMarkdownFiles(relativePath);
 
@@ -548,6 +553,7 @@ async function run() {
   }
 
   for (const relativePath of docsDirectories) {
+    if (!relativePath.startsWith('docs/')) continue;
     if (markdownDirectoryHubExemptions.has(relativePath)) {
       continue;
     }
@@ -564,6 +570,7 @@ async function run() {
   }
 
   for (const relativePath of docsDirectories) {
+    if (!relativePath.startsWith('docs/')) continue;
     if (markdownDirectoryHubExemptions.has(relativePath)) {
       continue;
     }

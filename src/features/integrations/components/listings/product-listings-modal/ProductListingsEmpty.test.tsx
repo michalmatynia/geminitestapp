@@ -5,21 +5,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   handleOpenTraderaLoginMock,
   onStartListingMock,
-  useProductListingsDataMock,
   useProductListingsModalsMock,
   useProductListingsActionsMock,
   useProductListingsUIStateMock,
 } = vi.hoisted(() => ({
   handleOpenTraderaLoginMock: vi.fn(),
   onStartListingMock: vi.fn(),
-  useProductListingsDataMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
   useProductListingsActionsMock: vi.fn(),
   useProductListingsUIStateMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
-  useProductListingsData: () => useProductListingsDataMock(),
   useProductListingsModals: () => useProductListingsModalsMock(),
   useProductListingsActions: () => useProductListingsActionsMock(),
   useProductListingsUIState: () => useProductListingsUIStateMock(),
@@ -34,7 +31,6 @@ import {
   type ProductListingsViewContextValue,
 } from './context/ProductListingsViewContext';
 import { ProductListingsEmpty } from './ProductListingsEmpty';
-import { persistTraderaQuickListFeedback } from '@/features/products/components/list/columns/buttons/traderaQuickListFeedback';
 
 const baseViewContextValue: ProductListingsViewContextValue = {
   filteredListings: [],
@@ -47,11 +43,7 @@ const baseViewContextValue: ProductListingsViewContextValue = {
 describe('ProductListingsEmpty', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.sessionStorage.clear();
     handleOpenTraderaLoginMock.mockResolvedValue(true);
-    useProductListingsDataMock.mockReturnValue({
-      product: { id: 'product-1' },
-    });
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: onStartListingMock,
       recoveryContext: null,
@@ -164,46 +156,5 @@ describe('ProductListingsEmpty', () => {
       'conn-tradera-1'
     );
     expect(onStartListingMock).not.toHaveBeenCalled();
-  });
-
-  it('falls back to persisted Tradera quick-export feedback when recovery ids are missing', async () => {
-    persistTraderaQuickListFeedback('product-1', 'failed', {
-      requestId: 'job-tradera-persisted',
-      integrationId: 'integration-tradera-persisted',
-      connectionId: 'conn-tradera-persisted',
-    });
-
-    useProductListingsModalsMock.mockReturnValue({
-      onStartListing: onStartListingMock,
-      recoveryContext: {
-        source: 'tradera_quick_export_failed',
-        integrationSlug: 'tradera',
-        status: 'failed',
-        runId: null,
-        requestId: null,
-      },
-    });
-
-    render(
-      <ProductListingsViewProvider value={baseViewContextValue}>
-        <ProductListingsEmpty />
-      </ProductListingsViewProvider>
-    );
-
-    expect(screen.getByText('job-tradera-persisted')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Login and continue listing' }));
-    await Promise.resolve();
-
-    expect(handleOpenTraderaLoginMock).toHaveBeenCalledWith(
-      'recovery',
-      'integration-tradera-persisted',
-      'conn-tradera-persisted'
-    );
-    expect(onStartListingMock).toHaveBeenCalledWith(
-      'integration-tradera-persisted',
-      'conn-tradera-persisted',
-      { autoSubmit: true }
-    );
   });
 });

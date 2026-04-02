@@ -110,6 +110,28 @@ vi.mock('@/app/(frontend)/home/home-helpers', () => {
     FRONT_PAGE_ALLOWED: frontPageAllowed,
     getFrontPageSetting: getFrontPageSettingMock,
     shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
+    resolveFrontPageSelection: async () => {
+      const enabled = shouldApplyFrontPageAppSelectionMock();
+      if (!enabled) {
+        return {
+          enabled: false,
+          setting: null,
+          publicOwner: 'cms',
+          redirectPath: null,
+          source: 'disabled',
+          fallbackReason: null,
+        };
+      }
+      const setting = await getFrontPageSettingMock();
+      return {
+        enabled: true,
+        setting,
+        publicOwner: getFrontPagePublicOwnerMock(setting),
+        redirectPath: getFrontPageRedirectPathMock(setting),
+        source: 'mongo',
+        fallbackReason: null,
+      };
+    },
   };
 });
 
@@ -125,7 +147,7 @@ describe('front page app selection', () => {
     getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
     headersMock.mockResolvedValue(new Headers());
     flushMock.mockResolvedValue(undefined);
-    homeContentMock.mockReturnValue(null);
+    homeContentMock.mockReturnValue('home-content');
     resolveCmsDomainFromHeadersMock.mockResolvedValue({ id: 'default-domain' });
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
     getFrontPagePublicOwnerMock.mockImplementation((value: string | null | undefined) =>

@@ -68,6 +68,16 @@ vi.mock('@/features/integrations/public', () => ({
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
   ensureTraderaBrowserSession: (...args: unknown[]) =>
     ensureTraderaBrowserSessionMock(...args) as Promise<unknown>,
+  isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
+    const normalized = value?.trim().toLowerCase() ?? '';
+    return (
+      normalized.includes('auth_required') ||
+      normalized.includes('manual verification') ||
+      normalized.includes('captcha') ||
+      normalized.includes('login requires') ||
+      normalized.includes('session expired')
+    );
+  },
 }));
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
@@ -194,26 +204,45 @@ describe('TraderaQuickListButton', () => {
     );
   });
 
-  it('persists failed feedback when the session preflight fails', async () => {
-    ensureTraderaBrowserSessionMock.mockRejectedValue(new Error('Manual login required'));
+  it('persists auth_required feedback when the session preflight requires manual verification', async () => {
+    const onOpenIntegrations = vi.fn();
+    ensureTraderaBrowserSessionMock.mockRejectedValue(
+      new Error('Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.')
+    );
 
-    renderButton();
+    renderButton({ onOpenIntegrations });
 
     fireEvent.click(screen.getByRole('button', { name: 'One-click export to Tradera' }));
 
     await waitFor(() => {
-      expect(toastMock).toHaveBeenCalledWith('Manual login required', { variant: 'error' });
+      expect(toastMock).toHaveBeenCalledWith(
+        'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+        { variant: 'error' }
+      );
     });
 
-    const button = screen.getByRole('button', { name: 'Open Tradera recovery options (failed).' });
+    const button = screen.getByRole('button', {
+      name: 'Open Tradera recovery options (auth_required).',
+    });
     expect(button.className).toContain('border-rose-400/70');
-    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain('"failed"');
+    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+      '"auth_required"'
+    );
     expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
       '"integrationId":"integration-tradera-1"'
     );
     expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
       '"connectionId":"conn-tradera-1"'
     );
+    expect(onOpenIntegrations).toHaveBeenCalledWith({
+      source: 'tradera_quick_export_auth_required',
+      integrationSlug: 'tradera',
+      status: 'auth_required',
+      runId: null,
+      requestId: null,
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
   });
 
   it('does not queue a listing when the Tradera session could not be saved', async () => {
@@ -587,7 +616,9 @@ describe('TraderaQuickListButton', () => {
       traderaStatus: 'auth_required',
     });
 
-    const button = screen.getByRole('button', { name: 'Open Tradera recovery options (failed).' });
+    const button = screen.getByRole('button', {
+      name: 'Open Tradera recovery options (auth_required).',
+    });
     expect(button.className).toContain('border-rose-400/70');
 
     fireEvent.click(button);

@@ -23,6 +23,7 @@ import {
   isBaseIntegrationSlug,
   useGenericExportToBaseMutation,
 } from '@/features/integrations/public';
+import { createBaseRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import {
   subscribeToTrackedAiPathRun,
@@ -729,12 +730,10 @@ export function BaseQuickExportButton(props: {
       ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
       : label;
   const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
-    ? {
-      source: 'base_quick_export_failed',
-      integrationSlug: 'baselinker',
+    ? createBaseRecoveryContext({
       status: resolvedButtonStatus,
       runId: trackedExportRunIdRef.current,
-    }
+    })
     : undefined;
 
   return (

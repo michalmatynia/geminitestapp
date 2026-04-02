@@ -8,21 +8,21 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-02T18:23:44.241Z
+Generated at: 2026-04-02T20:21:32.018Z
 
 ## Snapshot
 
-- Source files: 9139
-- Source lines: 1526942
-- use client files: 1688
+- Source files: 9143
+- Source lines: 1530199
+- use client files: 1690
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx` (990 LOC)
+- Largest file: `src/features/filemaker/components/FilemakerMailSidebar.tsx` (986 LOC)
 - API routes: 30
 - API delegated server routes: 176
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 302/30 (1006.7%)
-- Cross-feature dependency pairs: 2
+- Cross-feature dependency pairs: 0
 - Shared -> features imports: 0
 - setInterval occurrences: 0
 - Prop-drilling chains (depth >= 3): 240
@@ -52,17 +52,15 @@ Generated at: 2026-04-02T18:23:44.241Z
 
 | Edge | References |
 | --- | ---: |
-| `integrations -> ai` | 1 |
-| `integrations -> playwright` | 1 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
-| `src/features/products/components/list/ProductColumns.test.tsx` | 1056 |
+| `src/features/products/components/list/ProductColumns.test.tsx` | 1093 |
+| `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts` | 1076 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/sections/AiPathsCanvasView.tsx` | 990 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
 | `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 989 |
 | `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 986 |

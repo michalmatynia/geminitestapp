@@ -1,11 +1,9 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { persistTraderaQuickListFeedback } from '@/features/products/components/list/columns/buttons/traderaQuickListFeedback';
 
-const { useIntegrationSelectionMock, useProductListingsDataMock, useProductListingsModalsMock } = vi.hoisted(() => ({
+const { useIntegrationSelectionMock, useProductListingsModalsMock } = vi.hoisted(() => ({
   useIntegrationSelectionMock: vi.fn(),
-  useProductListingsDataMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
 }));
 
@@ -14,7 +12,6 @@ vi.mock('@/features/integrations/components/listings/hooks/useIntegrationSelecti
 }));
 
 vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
-  useProductListingsData: () => useProductListingsDataMock(),
   useProductListingsModals: () => useProductListingsModalsMock(),
 }));
 
@@ -45,10 +42,6 @@ const baseViewContextValue: ProductListingsViewContextValue = {
 describe('ProductListingsStartPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.sessionStorage.clear();
-    useProductListingsDataMock.mockReturnValue({
-      product: { id: 'product-1' },
-    });
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: vi.fn(),
       recoveryContext: null,
@@ -105,41 +98,32 @@ describe('ProductListingsStartPanel', () => {
     );
   });
 
-  it('falls back to persisted Tradera quick-export feedback when recovery ids are missing', () => {
-    persistTraderaQuickListFeedback('product-1', 'failed', {
-      requestId: 'job-tradera-persisted',
-      integrationId: 'integration-tradera-9',
-      connectionId: 'conn-tradera-9',
-    });
-
+  it('derives Tradera scoping from recovery context when the view filter is still unset', () => {
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: vi.fn(),
       recoveryContext: {
         source: 'tradera_quick_export_failed',
         integrationSlug: 'tradera',
         status: 'failed',
-        runId: null,
-        requestId: 'job-tradera-persisted',
+        runId: 'run-tradera-1',
+        integrationId: 'integration-tradera-7',
+        connectionId: 'conn-tradera-7',
       },
     });
 
     render(
-      <ProductListingsViewProvider
-        value={{
-          ...baseViewContextValue,
-          statusTargetLabel: 'Tradera',
-          filterIntegrationSlug: 'tradera',
-        }}
-      >
+      <ProductListingsViewProvider value={baseViewContextValue}>
         <ProductListingsStartPanel />
       </ProductListingsViewProvider>
     );
 
     expect(useIntegrationSelectionMock).toHaveBeenCalledWith(
-      'integration-tradera-9',
-      'conn-tradera-9',
+      'integration-tradera-7',
+      'conn-tradera-7',
       { filterIntegrationSlug: 'tradera' }
     );
+    expect(screen.getByText('Tradera options')).toBeInTheDocument();
+    expect(screen.getByText('Continue with a Tradera account only.')).toBeInTheDocument();
   });
 
   it('starts listing with the selected integration and connection', () => {

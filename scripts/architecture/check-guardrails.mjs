@@ -42,6 +42,8 @@ const collectPropDrillingGuardrail = async () => {
     fields: {
       depthGte4Chains: 'highPriorityChainCount',
       componentsWithForwarding: 'componentsWithForwarding',
+      highPropCountComponentCount: 'highPropCountComponentCount',
+      passThroughHotspotCount: 'passThroughHotspotCount',
     },
   });
 };

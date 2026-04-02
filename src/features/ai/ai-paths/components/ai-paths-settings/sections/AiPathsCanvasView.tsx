@@ -3,7 +3,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
-import { useSelectionActions, useSelectionState } from '@/features/ai/ai-paths/context';
 import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
 
 import { AiPathsLiveLog } from './AiPathsLiveLog';
@@ -26,7 +25,6 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     renderActions,
     confirmNodeSwitch,
     setPathSettingsModalOpen,
-    activePathId,
     diagnosticsReady,
     dataContractReport,
     setDataContractInspectorNodeId,
@@ -36,15 +34,9 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const isRightSidebarCollapsed = false;
   const setIsFocusMode = onFocusModeChange ?? (() => undefined);
 
-  const {
-    selectionToolMode,
-  } = useSelectionState();
-  const { setSelectionToolMode } = useSelectionActions();
-
   const openPathSettings = setPathSettingsModalOpen ?? (() => undefined);
   const confirmNodeSwitchSafe = confirmNodeSwitch ?? (async (): Promise<boolean> => true);
   const validationDiagnosticsReady = diagnosticsReady !== false;
-  const activePath = activePathId ?? null;
   const nodeDiagnosticsById = validationDiagnosticsReady ? dataContractReport?.byNodeId ?? {} : {};
   const focusDataContractNode = setDataContractInspectorNodeId ?? (() => undefined);
   
@@ -67,10 +59,15 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       return;
     }
 
-    if (typeof (window as any).requestIdleCallback === 'function') {
-      const idleHandle = (window as any).requestIdleCallback(onReady);
+    const extendedWindow = window as unknown as {
+      requestIdleCallback?: (cb: () => void) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    if (typeof extendedWindow.requestIdleCallback === 'function') {
+      const idleHandle = extendedWindow.requestIdleCallback(onReady);
       return (): void => {
-        (window as any).cancelIdleCallback?.(idleHandle);
+        extendedWindow.cancelIdleCallback?.(idleHandle);
       };
     }
 

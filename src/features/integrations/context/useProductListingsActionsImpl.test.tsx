@@ -31,6 +31,16 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
   ensureTraderaBrowserSession: (...args: unknown[]) =>
     ensureTraderaBrowserSessionMock(...args) as Promise<unknown>,
+  isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
+    const normalized = value?.trim().toLowerCase() ?? '';
+    return (
+      normalized.includes('auth_required') ||
+      normalized.includes('manual verification') ||
+      normalized.includes('captcha') ||
+      normalized.includes('login requires') ||
+      normalized.includes('session expired')
+    );
+  },
 }));
 
 import { useProductListingsActionsImpl } from './useProductListingsActionsImpl';
@@ -220,5 +230,79 @@ describe('useProductListingsActionsImpl', () => {
     expect(success).toBe(true);
     expect(refetchListingsQuery).toHaveBeenCalled();
     expect(onListingsUpdated).toHaveBeenCalled();
+  });
+
+  it('shows a toast for Tradera auth-required relist preflight failures', async () => {
+    const setError = vi.fn();
+    ensureTraderaBrowserSessionMock.mockRejectedValue(
+      new Error(
+        'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+      )
+    );
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        {
+          ...buildBaseParams({
+            listings: [
+              {
+                id: 'listing-1',
+                integrationId: 'integration-tradera-1',
+                connectionId: 'connection-tradera-1',
+                integration: { slug: 'tradera' },
+              },
+            ],
+          }),
+          setError,
+        }
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleRelistTradera('listing-1');
+    });
+
+    expect(toastMock).toHaveBeenCalledWith(
+      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
+      { variant: 'error' }
+    );
+    expect(setError).toHaveBeenCalledWith(
+      'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
+    );
+    expect(relistTraderaMutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('shows a toast for Tradera auth-required manual login failures', async () => {
+    const setError = vi.fn();
+    ensureTraderaBrowserSessionMock.mockRejectedValue(
+      new Error(
+        'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
+      )
+    );
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl({
+        ...buildBaseParams(),
+        setError,
+      })
+    );
+
+    let success = true;
+    await act(async () => {
+      success = await result.current.handleOpenTraderaLogin(
+        'recovery',
+        'integration-tradera-1',
+        'connection-tradera-1'
+      );
+    });
+
+    expect(success).toBe(false);
+    expect(toastMock).toHaveBeenCalledWith(
+      'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.',
+      { variant: 'error' }
+    );
+    expect(setError).toHaveBeenCalledWith(
+      'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
+    );
   });
 });

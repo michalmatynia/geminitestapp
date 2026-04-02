@@ -441,8 +441,9 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     }))
     .map((h) => ({ ...h, total: h.useEffectCount + h.useCallbackCount + h.useMemoCount }))
     .filter((h) => h.total > 0)
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 25);
+    .sort((a, b) => b.total - a.total);
+    
+  const highComplexityHooksCount = hookComplexity.filter((h) => h.total > 4).length;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -490,7 +491,8 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     codeHealth: {
       deepRelativeImportCount: deepRelativeImportFiles.length,
       circularFeatureDeps,
-      hookComplexity,
+      hookComplexity: hookComplexity.slice(0, 25),
+      highComplexityHooksCount,
     },
     hotspots: {
       topFilesByLines: getTopByLineCount(sourceRecords, 30),
@@ -522,7 +524,7 @@ export const formatCompactSummary = (metrics) => {
   if (metrics.codeHealth) {
     lines.push(`Deep relative imports (3+ levels): ${metrics.codeHealth.deepRelativeImportCount}`);
     lines.push(`Circular feature deps: ${metrics.codeHealth.circularFeatureDeps.length}`);
-    lines.push(`Top hook complexity: ${metrics.codeHealth.hookComplexity.length} hooks tracked`);
+    lines.push(`Top hook complexity: ${metrics.codeHealth.hookComplexity.length} hooks tracked (hooks with total > 4: ${metrics.codeHealth.highComplexityHooksCount})`);
   }
   if (metrics.propDrilling) {
     lines.push(

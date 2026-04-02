@@ -34,6 +34,7 @@ const {
 vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
   redirect: redirectMock,
+  permanentRedirect: redirectMock,
 }));
 
 vi.mock('next-intl/server', () => ({
@@ -46,6 +47,28 @@ vi.mock('next-intl/server', () => ({
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
+  resolveFrontPageSelection: async () => {
+    const enabled = shouldApplyFrontPageAppSelectionMock();
+    if (!enabled) {
+      return {
+        enabled: false,
+        setting: null,
+        publicOwner: 'cms',
+        redirectPath: null,
+        source: 'disabled',
+        fallbackReason: null,
+      };
+    }
+    const setting = await getFrontPageSettingMock();
+    return {
+      enabled: true,
+      setting,
+      publicOwner: getFrontPagePublicOwnerMock(setting),
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    };
+  },
 }));
 
 vi.mock('@/shared/lib/front-page-app', () => ({

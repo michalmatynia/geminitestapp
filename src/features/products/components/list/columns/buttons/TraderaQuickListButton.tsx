@@ -11,7 +11,8 @@ import {
   useCreateListingMutation,
 } from '@/features/integrations/public';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
-import { ensureTraderaBrowserSession } from '@/features/integrations/utils/tradera-browser-session';
+import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
+import { ensureTraderaBrowserSession, isTraderaBrowserAuthRequiredMessage } from '@/features/integrations/utils/tradera-browser-session';
 import type {
   IntegrationWithConnections,
   ProductListingsRecoveryContext,
@@ -39,7 +40,7 @@ import {
   normalizeMarketplaceStatus,
 } from '../product-column-utils';
 
-type TraderaQuickListFeedbackStatus = 'processing' | 'queued' | 'failed';
+type TraderaQuickListFeedbackStatus = 'processing' | 'queued' | 'failed' | 'auth_required';
 
 type BasicTraderaConnection = IntegrationWithConnections['connections'][number];
 
@@ -368,15 +369,15 @@ export function TraderaQuickListButton(props: {
           'Tradera login session could not be saved. Complete login verification and retry.',
           { variant: 'error' }
         );
-        onOpenIntegrations?.({
-          source: 'tradera_quick_export_auth_required',
-          integrationSlug: 'tradera',
-          status: 'auth_required',
-          runId: localFeedback?.runId ?? null,
-          requestId: null,
-          integrationId: recoveryTarget.integrationId,
-          connectionId: recoveryTarget.connectionId,
-        });
+        onOpenIntegrations?.(
+          createTraderaRecoveryContext({
+            status: 'auth_required',
+            runId: localFeedback?.runId ?? null,
+            requestId: null,
+            integrationId: recoveryTarget.integrationId,
+            connectionId: recoveryTarget.connectionId,
+          })
+        );
         return;
       }
 
@@ -433,15 +434,29 @@ export function TraderaQuickListButton(props: {
         onOpenIntegrations?.();
         return;
       }
-      setFeedbackStatus('failed', attemptedRecoveryTarget);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to queue Tradera listing.';
+      const authRequired = isTraderaBrowserAuthRequiredMessage(errorMessage);
+      setFeedbackStatus(authRequired ? 'auth_required' : 'failed', attemptedRecoveryTarget);
       logClientCatch(error, {
         source: 'TraderaQuickListButton',
         action: 'quickList',
         productId: product.id,
       });
-      toast(error instanceof Error ? error.message : 'Failed to queue Tradera listing.', {
+      toast(errorMessage, {
         variant: 'error',
       });
+      if (authRequired && onOpenIntegrations && attemptedRecoveryTarget) {
+        onOpenIntegrations(
+          createTraderaRecoveryContext({
+            status: 'auth_required',
+            runId: localFeedback?.runId ?? null,
+            requestId: localFeedback?.requestId ?? null,
+            integrationId: attemptedRecoveryTarget.integrationId,
+            connectionId: attemptedRecoveryTarget.connectionId,
+          })
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -471,21 +486,16 @@ export function TraderaQuickListButton(props: {
   const shouldUseFilledMarketplaceTone = hasServerStatus || localFeedbackStatus !== null;
   const isFailureState = FAILURE_STATUSES.has(normalizeMarketplaceStatus(resolvedButtonStatus));
   const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
-    ? {
-      source:
-        resolvedButtonStatus === 'auth_required' || resolvedButtonStatus === 'needs_login'
-          ? 'tradera_quick_export_auth_required'
-          : 'tradera_quick_export_failed',
-      integrationSlug: 'tradera',
+    ? createTraderaRecoveryContext({
       status: resolvedButtonStatus,
       runId: localFeedback?.runId ?? null,
       requestId: localFeedback?.requestId ?? null,
       integrationId: localFeedback?.integrationId ?? null,
       connectionId: localFeedback?.connectionId ?? null,
-    }
+    })
     : undefined;
   const resolvedLabel = isFailureState
-    ? 'Open Tradera recovery options (failed).'
+    ? `Open Tradera recovery options (${resolvedButtonStatus}).`
     : 'One-click export to Tradera';
 
   return (

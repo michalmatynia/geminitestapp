@@ -3,12 +3,14 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  BASE_INTEGRATION_SLUGS,
   TRADERA_INTEGRATION_SLUGS,
   isBaseIntegrationSlug,
-  normalizeIntegrationSlug,
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
+import {
+  matchesProductListingsIntegrationScope,
+  normalizeProductListingsIntegrationScope,
+} from '@/features/integrations/utils/product-listings-recovery';
 import type {
   BaseDefaultConnectionPreferenceResponse,
   IntegrationWithConnections,
@@ -27,15 +29,7 @@ const matchesFilterIntegrationSlug = (
   filterIntegrationSlug: string
 ): boolean => {
   if (!filterIntegrationSlug) return true;
-
-  const normalizedIntegrationSlug = normalizeIntegrationSlug(integrationSlug);
-  if (BASE_INTEGRATION_SLUGS.has(filterIntegrationSlug)) {
-    return BASE_INTEGRATION_SLUGS.has(normalizedIntegrationSlug);
-  }
-  if (TRADERA_INTEGRATION_SLUGS.has(filterIntegrationSlug)) {
-    return TRADERA_INTEGRATION_SLUGS.has(normalizedIntegrationSlug);
-  }
-  return normalizedIntegrationSlug === filterIntegrationSlug;
+  return matchesProductListingsIntegrationScope(integrationSlug, filterIntegrationSlug);
 };
 
 const integrationSelectionKeys = {
@@ -83,9 +77,9 @@ export function useIntegrationSelection(
   setSelectedIntegrationId: Dispatch<SetStateAction<string>>;
   setSelectedConnectionId: Dispatch<SetStateAction<string>>;
 } {
-  const normalizedFilterIntegrationSlug = normalizeIntegrationSlug(
-    options?.filterIntegrationSlug ?? null
-  );
+  const normalizedFilterIntegrationSlug =
+    normalizeProductListingsIntegrationScope(options?.filterIntegrationSlug ?? null)?.toLowerCase() ??
+    '';
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>(
     initialIntegrationId ?? ''
   );
@@ -93,6 +87,13 @@ export function useIntegrationSelection(
     initialConnectionId ?? ''
   );
   const initializedRef = useRef(false);
+  const lastAppliedInitialSelectionRef = useRef<{
+    integrationId: string | null;
+    connectionId: string | null;
+  }>({
+    integrationId: initialIntegrationId?.trim() || null,
+    connectionId: initialConnectionId?.trim() || null,
+  });
 
   const results = createMultiQueryV2({
     queries: [
@@ -190,13 +191,69 @@ export function useIntegrationSelection(
       if (initialConnectionId) {
         setSelectedConnectionId(initialConnectionId);
       }
+      lastAppliedInitialSelectionRef.current = {
+        integrationId: initialIntegrationId.trim() || null,
+        connectionId: initialConnectionId?.trim() || null,
+      };
       return;
     }
 
     const firstIntegration = integrations[0];
     if (!firstIntegration) return;
     setSelectedIntegrationId(firstIntegration.id);
+    lastAppliedInitialSelectionRef.current = {
+      integrationId: initialIntegrationId?.trim() || null,
+      connectionId: initialConnectionId?.trim() || null,
+    };
   }, [initialConnectionId, initialIntegrationId, integrations, loading]);
+
+  useEffect(() => {
+    if (!initializedRef.current || loading || integrations.length === 0) return;
+
+    const normalizedInitialIntegrationId = initialIntegrationId?.trim() || null;
+    const normalizedInitialConnectionId = initialConnectionId?.trim() || null;
+    const lastAppliedSelection = lastAppliedInitialSelectionRef.current;
+
+    if (
+      lastAppliedSelection.integrationId === normalizedInitialIntegrationId &&
+      lastAppliedSelection.connectionId === normalizedInitialConnectionId
+    ) {
+      return;
+    }
+
+    lastAppliedInitialSelectionRef.current = {
+      integrationId: normalizedInitialIntegrationId,
+      connectionId: normalizedInitialConnectionId,
+    };
+
+    if (!normalizedInitialIntegrationId) return;
+
+    const integration = integrations.find(
+      (entry: IntegrationWithConnections) => entry.id === normalizedInitialIntegrationId
+    );
+    if (!integration) return;
+
+    if (selectedIntegrationId !== normalizedInitialIntegrationId) {
+      setSelectedIntegrationId(normalizedInitialIntegrationId);
+    }
+
+    const connectionIds =
+      integration.connections?.map((connection: { id: string }): string => connection.id) ?? [];
+    if (
+      normalizedInitialConnectionId &&
+      connectionIds.includes(normalizedInitialConnectionId) &&
+      selectedConnectionId !== normalizedInitialConnectionId
+    ) {
+      setSelectedConnectionId(normalizedInitialConnectionId);
+    }
+  }, [
+    initialConnectionId,
+    initialIntegrationId,
+    integrations,
+    loading,
+    selectedConnectionId,
+    selectedIntegrationId,
+  ]);
 
   useEffect(() => {
     if (!selectedIntegrationId || integrations.length === 0) return;

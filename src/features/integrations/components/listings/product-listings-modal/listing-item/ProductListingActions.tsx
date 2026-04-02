@@ -27,6 +27,19 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 const readString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
+const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('login') ||
+    normalized.includes('verification') ||
+    normalized.includes('captcha') ||
+    normalized.includes('auth') ||
+    normalized.includes('session expired')
+  );
+};
+
 type ProductListingActionsProps = ProductListingWithDetailsProps;
 
 export function ProductListingActions(props: ProductListingActionsProps): React.JSX.Element {
@@ -86,15 +99,14 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const traderaErrorCategory = (
     readString(traderaLastExecution['errorCategory']) ?? readString(traderaData['lastErrorCategory']) ?? ''
   ).trim().toLowerCase();
+  const traderaExecutionError = readString(traderaLastExecution['error']);
   const traderaFailureReason = (listing.failureReason ?? '').trim().toLowerCase();
   const traderaNeedsManualLogin =
     isTraderaBrowserListing &&
     ['failed', 'needs_login', 'auth_required'].includes(normalizedListingStatus) &&
     (traderaErrorCategory === 'auth' ||
-      traderaFailureReason.includes('login') ||
-      traderaFailureReason.includes('verification') ||
-      traderaFailureReason.includes('captcha') ||
-      traderaFailureReason.includes('auth'));
+      hasTraderaAuthSignal(traderaFailureReason) ||
+      hasTraderaAuthSignal(traderaExecutionError));
   const isRelistingCurrentListing = relistingListing === listing.id;
   const isRelistingPlaywrightHeadless =
     isRelistingCurrentListing && relistingBrowserMode === 'headless';

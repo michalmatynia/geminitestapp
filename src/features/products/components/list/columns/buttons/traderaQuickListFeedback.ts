@@ -1,4 +1,4 @@
-type TraderaQuickListFeedbackStatus = 'processing' | 'queued' | 'failed';
+type TraderaQuickListFeedbackStatus = 'processing' | 'queued' | 'failed' | 'auth_required';
 
 export type PersistedTraderaQuickListFeedback = {
   productId: string;
@@ -63,7 +63,12 @@ const readPersistedFeedbackMap = (): Record<string, PersistedTraderaQuickListFee
           ? record['connectionId'].trim()
           : null;
 
-      if (status !== 'processing' && status !== 'queued' && status !== 'failed') {
+      if (
+        status !== 'processing' &&
+        status !== 'queued' &&
+        status !== 'failed' &&
+        status !== 'auth_required'
+      ) {
         return;
       }
 

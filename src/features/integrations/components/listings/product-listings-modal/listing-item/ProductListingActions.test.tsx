@@ -194,6 +194,35 @@ describe('ProductListingActions', () => {
     expect(screen.getByRole('button', { name: 'Login and retry relist' })).toBeInTheDocument();
   });
 
+  it('shows the login-and-retry action when the raw Tradera execution error indicates auth recovery is needed', () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'failed',
+            failureReason: 'Listing failed.',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  error: 'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.',
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Login and retry relist' })).toBeInTheDocument();
+  });
+
   it('keeps the persisted queued Tradera relist mode visible after the local spinner clears', () => {
     render(
       <ProductListingActions

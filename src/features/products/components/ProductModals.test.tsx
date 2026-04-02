@@ -292,6 +292,37 @@ describe('ProductModals', () => {
       });
     });
 
+    it('derives the listings modal marketplace filter from recovery context when the explicit filter is missing', async () => {
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          integrationsProduct: createProduct(),
+          integrationsFilterIntegrationSlug: null,
+          integrationsRecoveryContext: {
+            source: 'tradera_quick_export_failed',
+            integrationSlug: 'tradera',
+            status: 'failed',
+            runId: 'run-tradera-42',
+          },
+        })
+      );
+
+      render(<ProductModals />);
+
+      await waitFor(() => {
+        expect(productListingsModalPropsMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            item: expect.objectContaining({ id: 'product-1' }),
+            filterIntegrationSlug: 'tradera',
+            recoveryContext: expect.objectContaining({
+              source: 'tradera_quick_export_failed',
+              integrationSlug: 'tradera',
+              runId: 'run-tradera-42',
+            }),
+          })
+        );
+      });
+    });
+
     it('routes export settings products through the Base-filtered listings modal', async () => {
       useProductListModalsContextMock.mockReturnValue(
         buildContext({

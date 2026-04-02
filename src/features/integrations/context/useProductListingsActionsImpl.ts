@@ -16,7 +16,10 @@ import {
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
-import { ensureTraderaBrowserSession } from '@/features/integrations/utils/tradera-browser-session';
+import {
+  ensureTraderaBrowserSession,
+  isTraderaBrowserAuthRequiredMessage,
+} from '@/features/integrations/utils/tradera-browser-session';
 import type {
   PlaywrightRelistBrowserMode,
   ProductListingWithDetails,
@@ -270,7 +273,11 @@ export const useProductListingsActionsImpl = ({
           listingId,
           productId,
         });
-        setError(err instanceof Error ? err.message : 'Failed to queue relist');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to queue relist';
+        if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+          toast(errorMessage, { variant: 'error' });
+        }
+        setError(errorMessage);
       } finally {
         setRelistingListing(null);
         setRelistingBrowserMode(null);
@@ -315,7 +322,12 @@ export const useProductListingsActionsImpl = ({
           integrationId,
           connectionId,
         });
-        setError(err instanceof Error ? err.message : 'Failed to open Tradera login window');
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to open Tradera login window';
+        if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+          toast(errorMessage, { variant: 'error' });
+        }
+        setError(errorMessage);
         return false;
       } finally {
         setOpeningTraderaLogin(null);

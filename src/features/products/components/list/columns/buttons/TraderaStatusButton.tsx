@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -22,18 +23,13 @@ export function TraderaStatusButton(props: {
     ? readPersistedTraderaQuickListFeedback(productId)
     : null;
   const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
-    ? {
-      source:
-        normalizedStatus === 'auth_required' || normalizedStatus === 'needs_login'
-          ? 'tradera_quick_export_auth_required'
-          : 'tradera_quick_export_failed',
-      integrationSlug: 'tradera',
+    ? createTraderaRecoveryContext({
       status: normalizedStatus,
       runId: persistedFeedback?.runId ?? null,
       requestId: persistedFeedback?.requestId ?? null,
       integrationId: persistedFeedback?.integrationId ?? null,
       connectionId: persistedFeedback?.connectionId ?? null,
-    }
+    })
     : undefined;
   const label = isFailureState
     ? `Open Tradera recovery options (${status}).`

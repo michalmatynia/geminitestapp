@@ -32,7 +32,7 @@ export function CategoryMapperTable(): React.JSX.Element {
   const {
     getMappingForExternal,
     handleMappingChange,
-    handleFetchFromBase,
+    handleFetchExternalCategories,
     handleAutoMatchByName,
     handleSave,
     fetchMutation,
@@ -110,7 +110,7 @@ export function CategoryMapperTable(): React.JSX.Element {
     return (
       <CompactEmptyState
         title='No external categories found'
-        description='Click "Fetch Categories" to load from Base.com.'
+        description={`Click "Fetch Categories" to load categories from ${connectionName}.`}
         className='py-8'
        />
     );
@@ -127,7 +127,7 @@ export function CategoryMapperTable(): React.JSX.Element {
       description={`Connection: ${connectionName}`}
       headerActions={
         <CategoryMapperTableHeaderActions
-          onFetch={() => void handleFetchFromBase()}
+          onFetch={() => void handleFetchExternalCategories()}
           isFetching={isFetchPending}
           onAutoMatchByName={handleAutoMatchByName}
           autoMatchDisabled={isAutoMatchDisabled}

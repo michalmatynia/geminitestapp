@@ -191,7 +191,10 @@ const buildContextValue = (
   integrationBadgeStatuses: new Map(),
   traderaBadgeIds: new Set(),
   traderaBadgeStatuses: new Map(),
+  playwrightProgrammableBadgeIds: new Set(),
+  playwrightProgrammableBadgeStatuses: new Map(),
   queuedProductIds: new Set(),
+  productAiRunStatusByProductId: new Map(),
   categoryNameById: new Map(),
   thumbnailSource: 'file',
   imageExternalBaseUrl: '',
@@ -530,7 +533,8 @@ describe('Admin Products List UI', () => {
         integrationSlug: 'baselinker',
         status: 'failed',
         runId: 'run-failed-recovery',
-      }
+      },
+      'baselinker'
     );
     expect(exportCalls).toBe(0);
   });

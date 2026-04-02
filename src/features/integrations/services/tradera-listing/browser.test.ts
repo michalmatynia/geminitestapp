@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getProductByIdMock, runPlaywrightListingScriptMock, updateConnectionMock, accessMock, statMock } = vi.hoisted(() => ({
+const {
+  getProductByIdMock,
+  runPlaywrightListingScriptMock,
+  updateConnectionMock,
+  accessMock,
+  statMock,
+  listCategoryMappingsMock,
+} = vi.hoisted(() => ({
   getProductByIdMock: vi.fn(),
   runPlaywrightListingScriptMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   accessMock: vi.fn(),
   statMock: vi.fn(),
+  listCategoryMappingsMock: vi.fn(),
 }));
 
 vi.mock('node:fs/promises', () => ({
@@ -33,13 +41,22 @@ vi.mock('../integration-repository', () => ({
   }),
 }));
 
+vi.mock('../category-mapping-repository', () => ({
+  getCategoryMappingRepository: () => ({
+    listByConnection: listCategoryMappingsMock,
+  }),
+}));
+
 vi.mock('../playwright-listing/runner', () => ({
   runPlaywrightListingScript: (...args: unknown[]) =>
     runPlaywrightListingScriptMock(...args) as Promise<unknown>,
 }));
 
 import { ensureLoggedIn, runTraderaBrowserListing } from './browser';
-import { LOGIN_SUCCESS_SELECTOR } from './config';
+import {
+  LOGIN_SUCCESS_SELECTOR,
+  TRADERA_AUTH_ERROR_SELECTORS,
+} from './config';
 import { TRADERA_SUCCESS_SELECTOR } from '../tradera-browser-test-utils';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
 
@@ -53,7 +70,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v6');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v8');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';");
@@ -72,6 +89,13 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const localImagePaths = Array.isArray(input?.localImagePaths)');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const resolveUploadFiles = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isListingFormReady = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForListingFormReady = async (timeoutMs = 20_000) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const AUTOFILL_PENDING_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const applyCategorySelection = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_CATEGORY_SET: Mapped Tradera category segment');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('Autofilling your listing');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_IMAGE_SET_INVALID: Continue completed the image step but the listing editor never became ready.');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('input[name="shortDescription"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('#tip-tap-editor');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('#price_fixedPrice');
@@ -94,6 +118,9 @@ describe('runTraderaBrowserListing scripted mode', () => {
       id: 'product-1',
       sku: 'SKU-1',
       baseProductId: 'BASE-1',
+      categoryId: 'internal-category-1',
+      catalogId: 'catalog-1',
+      catalogs: [{ catalogId: 'catalog-1' }],
       name_en: 'Example title',
       description_en: 'Example description',
       price: 123,
@@ -106,6 +133,42 @@ describe('runTraderaBrowserListing scripted mode', () => {
         },
       ],
     });
+    listCategoryMappingsMock.mockResolvedValue([
+      {
+        id: 'mapping-1',
+        connectionId: 'connection-1',
+        externalCategoryId: '101',
+        internalCategoryId: 'internal-category-1',
+        catalogId: 'catalog-1',
+        isActive: true,
+        createdAt: '2026-04-02T10:00:00.000Z',
+        updatedAt: '2026-04-02T10:00:00.000Z',
+        externalCategory: {
+          id: 'external-category-101',
+          connectionId: 'connection-1',
+          externalId: '101',
+          name: 'Pins',
+          parentExternalId: '100',
+          path: 'Collectibles > Pins',
+          depth: 1,
+          isLeaf: true,
+          metadata: null,
+          fetchedAt: '2026-04-02T10:00:00.000Z',
+          createdAt: '2026-04-02T10:00:00.000Z',
+          updatedAt: '2026-04-02T10:00:00.000Z',
+        },
+        internalCategory: {
+          id: 'internal-category-1',
+          name: 'Pins',
+          description: null,
+          color: null,
+          parentId: null,
+          catalogId: 'catalog-1',
+          createdAt: '2026-04-02T10:00:00.000Z',
+          updatedAt: '2026-04-02T10:00:00.000Z',
+        },
+      },
+    ]);
   });
 
   it('returns scripted run metadata on success', async () => {
@@ -163,6 +226,14 @@ describe('runTraderaBrowserListing scripted mode', () => {
           traderaConfig: {
             listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
           },
+          traderaCategory: {
+            externalId: '101',
+            name: 'Pins',
+            path: 'Collectibles > Pins',
+            segments: ['Collectibles', 'Pins'],
+            internalCategoryId: 'internal-category-1',
+            catalogId: 'catalog-1',
+          },
         }),
       })
     );
@@ -178,6 +249,9 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         rawResult: { listingUrl: 'https://www.tradera.com/item/123' },
         publishVerified: true,
+        categoryId: '101',
+        categoryPath: 'Collectibles > Pins',
+        categorySource: 'categoryMapper',
       },
     });
   });
@@ -233,6 +307,9 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         rawResult: { listingUrl: 'https://www.tradera.com/item/456' },
         publishVerified: true,
+        categoryId: '101',
+        categoryPath: 'Collectibles > Pins',
+        categorySource: 'categoryMapper',
       },
     });
   });
@@ -293,6 +370,9 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         rawResult: { listingUrl: 'https://www.tradera.com/item/789' },
         publishVerified: true,
+        categoryId: '101',
+        categoryPath: 'Collectibles > Pins',
+        categorySource: 'categoryMapper',
       },
     });
   });
@@ -427,6 +507,9 @@ describe('runTraderaBrowserListing scripted mode', () => {
         browserMode: 'headed',
         rawResult: { listingUrl: 'https://www.tradera.com/item/headed-recovery' },
         publishVerified: true,
+        categoryId: '101',
+        categoryPath: 'Collectibles > Pins',
+        categorySource: 'categoryMapper',
       },
     });
   });
@@ -528,5 +611,111 @@ describe('ensureLoggedIn', () => {
         timeout: 30_000,
       })
     );
+  });
+
+  it('raises a captcha-specific auth_required error after submit when Tradera demands manual verification', async () => {
+    let currentUrl = 'about:blank';
+    let phase: 'session-check' | 'login' | 'post-login' = 'session-check';
+
+    const usernameField = {
+      count: async () => 1,
+      isVisible: async () => true,
+      fill: vi.fn(),
+      click: vi.fn(),
+      innerText: vi.fn(async () => ''),
+    };
+    const passwordField = {
+      count: async () => 1,
+      isVisible: async () => true,
+      fill: vi.fn(),
+      click: vi.fn(),
+      innerText: vi.fn(async () => ''),
+    };
+    const submitButton = {
+      count: async () => 1,
+      isVisible: async () => true,
+      fill: vi.fn(),
+      click: vi.fn(async () => {
+        phase = 'post-login';
+      }),
+      innerText: vi.fn(async () => ''),
+    };
+
+    const buildLocator = (selector: string) => ({
+      first: () => {
+        if (selector === '#email' || selector === 'input[name="email"]' || selector === 'input[type="email"]') {
+          return usernameField;
+        }
+        if (selector === '#password' || selector === 'input[name="password"]' || selector === 'input[type="password"]') {
+          return passwordField;
+        }
+        if (
+          selector === 'button[data-login-submit="true"]' ||
+          selector === '#sign-in-form button[type="submit"]' ||
+          selector === 'button:has-text("Sign in")' ||
+          selector === 'button:has-text("Logga in")'
+        ) {
+          return submitButton;
+        }
+
+        return {
+          count: async () => 1,
+          isVisible: async () => {
+            if (selector === LOGIN_SUCCESS_SELECTOR) return false;
+            if (selector === '#sign-in-form' || selector === 'form[data-sign-in-form="true"]' || selector === 'form[action*="login"]') {
+              return phase !== 'session-check';
+            }
+            if (TRADERA_AUTH_ERROR_SELECTORS.includes(selector as never)) {
+              return phase === 'post-login';
+            }
+            return false;
+          },
+          fill: vi.fn(),
+          click: vi.fn(),
+          innerText: vi.fn(async () =>
+            TRADERA_AUTH_ERROR_SELECTORS.includes(selector as never)
+              ? 'Please complete the captcha challenge.'
+              : ''
+          ),
+        };
+      },
+    });
+
+    const gotoMock = vi.fn(async (url: string) => {
+      currentUrl = url;
+      if (url.includes('/my/listings')) {
+        currentUrl = 'https://www.tradera.com/en/login';
+        phase = 'session-check';
+        return;
+      }
+      if (url.includes('/login')) {
+        currentUrl = 'https://www.tradera.com/en/login';
+        phase = 'login';
+      }
+    });
+
+    const page = {
+      goto: gotoMock,
+      url: () => currentUrl,
+      locator: buildLocator,
+      waitForSelector: vi.fn(),
+      waitForNavigation: vi.fn(),
+      waitForTimeout: vi.fn(async () => undefined),
+    };
+
+    await expect(
+      ensureLoggedIn(
+        page as never,
+        {
+          username: 'user@example.com',
+          password: 'encrypted-password',
+        } as never,
+        'https://www.tradera.com/en/selling/new'
+      )
+    ).rejects.toThrow('AUTH_REQUIRED: Tradera login requires manual verification (captcha).');
+
+    expect(usernameField.fill).toHaveBeenCalledWith('user@example.com');
+    expect(passwordField.fill).toHaveBeenCalledWith('decrypted:encrypted-password');
+    expect(submitButton.click).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,17 +3,19 @@
 import React, { useMemo } from 'react';
 
 import { ExportLogViewer } from '@/features/integrations/components/listings/ExportLogViewer';
-import {
-  BASE_INTEGRATION_SLUGS,
-  PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
-  TRADERA_INTEGRATION_SLUGS,
-} from '@/features/integrations/constants/slugs';
+import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
   ProductListingsProvider,
   useProductListingsData,
   useProductListingsLogs,
   useProductListingsModals,
 } from '@/features/integrations/context/ProductListingsContext';
+import {
+  matchesProductListingsIntegrationScope,
+  normalizeProductListingsIntegrationScope,
+  resolveProductListingsIntegrationScope,
+  resolveProductListingsIntegrationScopeLabel,
+} from '@/features/integrations/utils/product-listings-recovery';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
@@ -48,65 +50,44 @@ interface ProductListingsModalProps extends EntityModalProps<ProductWithImages> 
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 }
 
-const normalizeSlug = (value: string | null | undefined): string =>
-  (value ?? '').trim().toLowerCase();
-
-const resolveIntegrationScopeLabel = (
-  filterIntegrationSlug: string | null | undefined
-): string | null => {
-  const filter = normalizeSlug(filterIntegrationSlug);
-  if (!filter) return null;
-  if (BASE_INTEGRATION_SLUGS.has(filter)) return 'Base.com';
-  if (TRADERA_INTEGRATION_SLUGS.has(filter)) return 'Tradera';
-  if (filter === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'Playwright';
-  return filterIntegrationSlug?.trim() || null;
-};
-
-const matchesIntegrationSlug = (
-  listingSlug: string,
-  filterIntegrationSlug: string | null | undefined
-): boolean => {
-  const filter = normalizeSlug(filterIntegrationSlug);
-  if (!filter) return true;
-  const listing = normalizeSlug(listingSlug);
-  if (BASE_INTEGRATION_SLUGS.has(filter)) {
-    return BASE_INTEGRATION_SLUGS.has(listing);
-  }
-  if (TRADERA_INTEGRATION_SLUGS.has(filter)) {
-    return TRADERA_INTEGRATION_SLUGS.has(listing);
-  }
-  return listing === filter;
-};
-
 function ProductListingsModalContent(): React.JSX.Element {
   const { product, listings, isLoading, error } = useProductListingsData();
   const { exportLogs } = useProductListingsLogs();
-  const { onClose, onStartListing, filterIntegrationSlug } = useProductListingsModals();
+  const { onClose, onStartListing, filterIntegrationSlug, recoveryContext } =
+    useProductListingsModals();
 
   const productName: string =
     product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
+  const effectiveFilterIntegrationSlug = resolveProductListingsIntegrationScope({
+    filterIntegrationSlug,
+    recoveryContext,
+  });
 
   const filteredListings: ProductListingWithDetails[] = useMemo(() => {
-    return filterIntegrationSlug
+    return effectiveFilterIntegrationSlug
       ? listings.filter((listing: ProductListingWithDetails): boolean =>
-        matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
+        matchesProductListingsIntegrationScope(listing.integration.slug, effectiveFilterIntegrationSlug)
       )
       : listings;
-  }, [listings, filterIntegrationSlug]);
+  }, [effectiveFilterIntegrationSlug, listings]);
 
-  const integrationScopeLabel = resolveIntegrationScopeLabel(filterIntegrationSlug);
-  const isBaseFilter = BASE_INTEGRATION_SLUGS.has(normalizeSlug(filterIntegrationSlug));
+  const integrationScopeLabel = resolveProductListingsIntegrationScopeLabel(
+    effectiveFilterIntegrationSlug
+  );
+  const isBaseFilter = BASE_INTEGRATION_SLUGS.has(
+    normalizeProductListingsIntegrationScope(effectiveFilterIntegrationSlug)?.toLowerCase() ?? ''
+  );
   const statusTargetLabel: string = integrationScopeLabel ?? 'integration';
   const canStartListing: boolean = Boolean(onStartListing);
   const productListingsViewContextValue: ProductListingsViewContextValue = useMemo(
     () => ({
       filteredListings,
       statusTargetLabel,
-      filterIntegrationSlug,
+      filterIntegrationSlug: effectiveFilterIntegrationSlug,
       isBaseFilter,
-      showSync: Boolean(filterIntegrationSlug),
+      showSync: Boolean(effectiveFilterIntegrationSlug),
     }),
-    [filterIntegrationSlug, filteredListings, isBaseFilter, statusTargetLabel]
+    [effectiveFilterIntegrationSlug, filteredListings, isBaseFilter, statusTargetLabel]
   );
   const modalTitle = integrationScopeLabel
     ? `${integrationScopeLabel} - ${productName}`
@@ -172,16 +153,29 @@ export function ProductListingsModal({
   onListingsUpdated,
   recoveryContext,
 }: ProductListingsModalProps): React.JSX.Element | null {
+  const effectiveFilterIntegrationSlug = resolveProductListingsIntegrationScope({
+    filterIntegrationSlug,
+    recoveryContext,
+  });
   const viewContextValue = React.useMemo(
     () => ({
       product: product!,
       onClose,
       ...(onStartListing !== undefined && { onStartListing }),
-      ...(filterIntegrationSlug !== undefined && { filterIntegrationSlug }),
+      ...(effectiveFilterIntegrationSlug !== null && {
+        filterIntegrationSlug: effectiveFilterIntegrationSlug,
+      }),
       ...(onListingsUpdated !== undefined && { onListingsUpdated }),
       ...(recoveryContext !== undefined && { recoveryContext }),
     }),
-    [filterIntegrationSlug, onClose, onListingsUpdated, onStartListing, product, recoveryContext]
+    [
+      effectiveFilterIntegrationSlug,
+      onClose,
+      onListingsUpdated,
+      onStartListing,
+      product,
+      recoveryContext,
+    ]
   );
 
   if (!product || !isOpen) return null;

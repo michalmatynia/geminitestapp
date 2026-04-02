@@ -4,6 +4,7 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { persistTraderaQuickListFeedback } from '@/features/products/components/list/columns/buttons/traderaQuickListFeedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
@@ -67,6 +68,7 @@ describe('useProductListModals', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     integrationModalState.integrationsProduct = null;
+    window.sessionStorage.clear();
   });
 
   it('clears Tradera recovery context after listing success', () => {
@@ -124,5 +126,76 @@ describe('useProductListModals', () => {
     });
 
     expect(result.current.integrationsFilterIntegrationSlug).toBe('tradera');
+  });
+
+  it('derives the marketplace filter from recovery context when no filter is provided', () => {
+    const recoveryContext: ProductListingsRecoveryContext = {
+      source: 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: 'failed',
+      runId: null,
+      requestId: 'job-tradera-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    };
+
+    const { result } = renderHook(() =>
+      useProductListModals({
+        handleOpenCreateModal: vi.fn(),
+        prefetchIntegrationSelectionData: vi.fn(),
+        prefetchProductListingsData: vi.fn(),
+        refreshProductListingsData: vi.fn(),
+        rowSelection: {},
+        toast: vi.fn(),
+      })
+    );
+
+    act(() => {
+      result.current.handleOpenIntegrationsModal(createProduct(), recoveryContext);
+    });
+
+    expect(result.current.integrationsFilterIntegrationSlug).toBe('tradera');
+  });
+
+  it('enriches Tradera recovery context from persisted quick-export feedback', () => {
+    persistTraderaQuickListFeedback('product-1', 'failed', {
+      runId: 'run-tradera-1',
+      requestId: 'job-tradera-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+
+    const recoveryContext: ProductListingsRecoveryContext = {
+      source: 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: 'failed',
+      runId: null,
+      requestId: null,
+      integrationId: undefined,
+      connectionId: undefined,
+    };
+
+    const { result } = renderHook(() =>
+      useProductListModals({
+        handleOpenCreateModal: vi.fn(),
+        prefetchIntegrationSelectionData: vi.fn(),
+        prefetchProductListingsData: vi.fn(),
+        refreshProductListingsData: vi.fn(),
+        rowSelection: {},
+        toast: vi.fn(),
+      })
+    );
+
+    act(() => {
+      result.current.handleOpenIntegrationsModal(createProduct(), recoveryContext, 'tradera');
+    });
+
+    expect(result.current.integrationsRecoveryContext).toEqual({
+      ...recoveryContext,
+      runId: 'run-tradera-1',
+      requestId: 'job-tradera-1',
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
   });
 });

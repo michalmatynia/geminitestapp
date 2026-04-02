@@ -12,7 +12,6 @@ export function AiPathsCanvasToolbar(): React.JSX.Element | null {
   const router = useRouter();
   const {
     activePathId,
-    confirmNodeSwitch,
     savePathConfig,
     saving,
     setPathSettingsModalOpen,

@@ -101,6 +101,20 @@ describe('ProductListingDetails', () => {
                       actionDelayMax: 800,
                     },
                     publishVerified: false,
+                    latestStage: 'fields_filled',
+                    latestStageUrl: 'https://www.tradera.com/en/selling/draft/69cfa5c39050080001c3a2c9',
+                    failureArtifacts: [
+                      {
+                        name: 'failure',
+                        path: 'ai-paths-playwright-runs/run-123/failure.png',
+                        kind: 'screenshot',
+                        mimeType: 'image/png',
+                      },
+                    ],
+                    logTail: [
+                      '[user] tradera.quicklist.start',
+                      '[runtime][error] FAIL_PUBLISH_VALIDATION',
+                    ],
                     categorySource: 'categoryMapper',
                     categoryMappingReason: 'mapped',
                     categoryMatchScope: 'catalog_match',
@@ -151,6 +165,12 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('220-800 ms')).toBeInTheDocument();
     expect(screen.getByText('Publish verified:')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();
+    expect(screen.getByText('Last stage:')).toBeInTheDocument();
+    expect(screen.getByText('fields_filled')).toBeInTheDocument();
+    expect(screen.getByText('Stage URL:')).toBeInTheDocument();
+    expect(
+      screen.getByText('https://www.tradera.com/en/selling/draft/69cfa5c39050080001c3a2c9')
+    ).toBeInTheDocument();
     expect(screen.getByText('Category source:')).toBeInTheDocument();
     expect(screen.getByText('categoryMapper')).toBeInTheDocument();
     expect(screen.getByText('Category mapping reason:')).toBeInTheDocument();
@@ -172,6 +192,9 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('AUTH')).toBeInTheDocument();
     expect(screen.getByText('Tradera run result')).toBeInTheDocument();
     expect(screen.getByText(/publish_failed/)).toBeInTheDocument();
+    expect(screen.getByText('Tradera failure diagnostics')).toBeInTheDocument();
+    expect(screen.getByText(/failure\.png/)).toBeInTheDocument();
+    expect(screen.getByText(/\[runtime\]\[error\] FAIL_PUBLISH_VALIDATION/)).toBeInTheDocument();
   });
 
   it('falls back to Tradera lastErrorCategory when lastExecution has no category', () => {

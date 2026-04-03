@@ -596,6 +596,10 @@ describe('enqueuePlaywrightNodeRun', () => {
             throw new Error('AUTH_REQUIRED: Tradera login requires manual verification.');
           };
         `,
+        failureHoldOpenMs: 5,
+        settingsOverrides: {
+          headless: false,
+        },
       },
     });
 

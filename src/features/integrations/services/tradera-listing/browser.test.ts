@@ -85,13 +85,14 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v43');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v47');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('helpers,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const humanClick = async (target, options) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const humanFill = async (target, value, options) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const humanType = async (value, options) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const humanPress = async (key, options) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const emitStage = (stage, extra = {}) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const normalizedConfiguredSellUrl =');
@@ -106,6 +107,10 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DRAFT_IMAGE_REMOVE_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-testid*="photo"] input[type="file"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('input[type="file"][name*="image" i]');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const IMAGE_UPLOAD_TRIGGER_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Add images")');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Lägg till bilder")');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-testid*="image-picker"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button[aria-label*="Radera" i]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('a[aria-label*="Ta bort" i]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-testid*="remove"]');
@@ -143,9 +148,14 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const advancePastImagesStep = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const localImagePaths = Array.isArray(input?.localImagePaths)');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const resolveUploadFiles = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const ensureImageInputReady = async (attempts = 4) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.image.trigger_opened'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.image_input.retry'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clearDraftImagesIfPresent = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findFieldTriggerByLabels = async (labels) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const byRoleContains = page');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("getByRole('menu'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const byRoleContainsMenu = page');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const byRoleLink = page');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const byRoleContainsLink = page');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("getByRole('combobox'");
@@ -188,15 +198,16 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isListingFormReady = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForListingFormReady = async (timeoutMs = 20_000) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("new RegExp('/selling(?:[?#]|$)').test(currentUrl)");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("page.waitForURL(new RegExp('/selling(?:/new)?(?:[?#]|$)|/sell(?:/new)?(?:[?#]|$)', 'i')");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("page.waitForURL(");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("/selling(?:/(?:new|draft(?:/[^/?#]+)?))?(?:[?#/]|$)|/sell(?:/new)?(?:[?#/]|$)");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clearFocusedEditableField = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await humanPress('Delete', { pauseBefore: false, pauseAfter: false }).catch(");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await humanPress('Backspace', { pauseBefore: false, pauseAfter: false }).catch(");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("page.getByRole('button', { name: new RegExp('^' + escapedPattern + '$', 'i') }).first()");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("page.getByRole('link', { name: new RegExp(escapedPattern, 'i') }).first()");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('ancestor-or-self::*[self::button or self::a or @role="button" or @role="link"][1]');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menu" or self::div or self::label][1]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menuitem" or @role="menuitemradio" or @role="option" or @role="radio"][1]');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('following::*[(self::button or self::a or @role="button" or @role="link" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu")][1]');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('following::*[(self::button or self::a or @role="button" or @role="link" or @role="menu" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu")][1]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const AUTOFILL_PENDING_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);');
@@ -395,6 +406,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: 'export default async function run() {}',
         browserMode: 'headed',
+        disableStartUrlBootstrap: true,
+        failureHoldOpenMs: 10_000,
         input: expect.objectContaining({
           baseProductId: 'BASE-1',
           sku: 'SKU-1',
@@ -467,6 +480,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
           deviceName: 'Desktop Chrome',
         },
         rawResult: { listingUrl: 'https://www.tradera.com/item/123' },
+        latestStage: null,
+        latestStageUrl: null,
         publishVerified: true,
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',
@@ -535,6 +550,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
+        failureHoldOpenMs: 10_000,
       })
     );
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
@@ -569,6 +585,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
           deviceName: 'Desktop Chrome',
         },
         rawResult: { listingUrl: 'https://www.tradera.com/item/456' },
+        latestStage: null,
+        latestStageUrl: null,
         publishVerified: true,
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',
@@ -642,6 +660,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
+        failureHoldOpenMs: 10_000,
       })
     );
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
@@ -676,6 +695,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
           deviceName: 'Desktop Chrome',
         },
         rawResult: { listingUrl: 'https://www.tradera.com/item/789' },
+        latestStage: null,
+        latestStageUrl: null,
         publishVerified: true,
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',
@@ -844,6 +865,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
+        failureHoldOpenMs: 10_000,
       })
     );
     expect(result).toEqual({
@@ -875,6 +897,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
           deviceName: 'Desktop Chrome',
         },
         rawResult: { listingUrl: 'https://www.tradera.com/item/headed-recovery' },
+        latestStage: null,
+        latestStageUrl: null,
         publishVerified: true,
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',

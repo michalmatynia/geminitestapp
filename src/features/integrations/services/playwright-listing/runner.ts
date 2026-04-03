@@ -83,6 +83,28 @@ const resolveListingRunStartUrl = (input: Record<string, unknown>): string | und
   return undefined;
 };
 
+const resolveRunnerOutputs = (
+  resultPayload: unknown
+): {
+  outputs: Record<string, unknown>;
+  resultValue: Record<string, unknown>;
+  finalUrl: string | null;
+} => {
+  const payloadRecord = isObjectRecord(resultPayload) ? resultPayload : {};
+  const outputs = isObjectRecord(payloadRecord['outputs']) ? payloadRecord['outputs'] : payloadRecord;
+  const resultValue = isObjectRecord(outputs['result'])
+    ? outputs['result']
+    : isObjectRecord(outputs)
+      ? outputs
+      : {};
+
+  return {
+    outputs,
+    resultValue,
+    finalUrl: extractStringField(payloadRecord, 'finalUrl'),
+  };
+};
+
 const buildExecutionSettingsSummary = (
   settings: PlaywrightSettings
 ): PlaywrightExecutionSettingsSummary => ({
@@ -114,6 +136,8 @@ export const runPlaywrightListingScript = async ({
   contextRegistry,
   timeoutMs = 120_000,
   browserMode = 'connection_default',
+  disableStartUrlBootstrap = false,
+  failureHoldOpenMs,
 }: {
   script: string;
   input: Record<string, unknown>;
@@ -121,19 +145,22 @@ export const runPlaywrightListingScript = async ({
   contextRegistry?: ContextRegistryConsumerEnvelope | null;
   timeoutMs?: number;
   browserMode?: PlaywrightRelistBrowserMode;
+  disableStartUrlBootstrap?: boolean;
+  failureHoldOpenMs?: number;
 }): Promise<PlaywrightListingResult> => {
   const settings = await resolveConnectionPlaywrightSettings(connection);
   const personaId = connection.playwrightPersonaId?.trim() || undefined;
   const storageState = parsePersistedStorageState(connection.playwrightStorageState);
   const effectiveHeadless =
     browserMode === 'headless' ? true : browserMode === 'headed' ? false : settings.headless;
-  const startUrl = resolveListingRunStartUrl(input);
+  const startUrl = disableStartUrlBootstrap ? undefined : resolveListingRunStartUrl(input);
 
   const run = await enqueuePlaywrightNodeRun({
     request: {
       script,
       input,
       timeoutMs,
+      ...(typeof failureHoldOpenMs === 'number' ? { failureHoldOpenMs } : {}),
       browserEngine: 'chromium',
       ...(startUrl ? { startUrl } : {}),
       ...(contextRegistry ? { contextRegistry } : {}),
@@ -164,18 +191,24 @@ export const runPlaywrightListingScript = async ({
   });
 
   if (run.status === 'failed') {
+    const { resultValue, finalUrl } = resolveRunnerOutputs(run.result);
     throw internalError(run.error ?? 'Playwright listing script failed.', {
       runId: run.runId,
       runStatus: run.status,
+      rawResult: Object.keys(resultValue).length > 0 ? resultValue : null,
+      latestStage: extractStringField(resultValue, 'stage'),
+      latestStageUrl: extractStringField(resultValue, 'currentUrl') ?? finalUrl,
+      failureArtifacts: (Array.isArray(run.artifacts) ? run.artifacts : []).map((artifact) => ({
+        name: artifact.name,
+        path: artifact.path,
+        kind: artifact.kind ?? null,
+        mimeType: artifact.mimeType ?? null,
+      })),
+      logTail: (Array.isArray(run.logs) ? run.logs : []).slice(-12),
     });
   }
 
-  const resultPayload = run.result;
-  const outputs = isObjectRecord(resultPayload)
-    ? (isObjectRecord(resultPayload['outputs']) ? resultPayload['outputs'] : resultPayload)
-    : {};
-
-  const resultValue = isObjectRecord(outputs['result']) ? outputs['result'] : isObjectRecord(outputs) ? outputs : {};
+  const { resultValue } = resolveRunnerOutputs(run.result);
 
   return {
     runId: run.runId,

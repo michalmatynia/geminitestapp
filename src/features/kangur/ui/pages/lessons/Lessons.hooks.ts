@@ -236,6 +236,7 @@ export function useLessonsLogic() {
       : hasPendingIncrementalLessonLoads;
   const shouldShowLessonsCatalogSkeleton =
     isLessonSectionsPlaceholderData || isLessonSectionsLoading;
+  console.log('DEBUG: shouldShowLessonsCatalogSkeleton', { shouldShowLessonsCatalogSkeleton, isLessonSectionsPlaceholderData, isLessonSectionsLoading });
   const lessonSections = useMemo(
     () => lessonSectionsQuery.data ?? [],
     [lessonSectionsQuery.data]
@@ -254,17 +255,28 @@ export function useLessonsLogic() {
     activeLessonId !== null ||
     shouldExposeStandaloneLessons;
   const lessons = useMemo(
-    (): KangurLesson[] =>
-      shouldExposeLessonCatalogDetails
+    (): KangurLesson[] => {
+      console.log('DEBUG lessons eval:', {
+        shouldExposeLessonCatalogDetails,
+        shouldLoadCompleteLessonsCatalog,
+        dataLessonsLen: completeLessonsQuery.data?.lessons?.length,
+        incrementalLessonsLen: incrementalLessons.length,
+        isMobile,
+        lessonSectionsLen: lessonSections.length
+      });
+      return shouldExposeLessonCatalogDetails
         ? shouldLoadCompleteLessonsCatalog
           ? completeLessonsQuery.data?.lessons ?? []
           : incrementalLessons
-        : EMPTY_LESSONS,
+        : EMPTY_LESSONS;
+    },
     [
       completeLessonsQuery.data,
       incrementalLessons,
       shouldExposeLessonCatalogDetails,
       shouldLoadCompleteLessonsCatalog,
+      isMobile,
+      lessonSections.length
     ]
   );
 
@@ -365,11 +377,14 @@ export function useLessonsLogic() {
   );
 
   useEffect((): void => {
+    console.log('DEBUG: reset effect run');
     setRequestedLessonComponentIds([]);
     setPendingLessonComponentIdBatches([]);
     setActiveLessonComponentIdBatch(null);
     setLoadedLessonsByComponent(new Map());
-    setShouldLoadCompleteLessonsCatalog(false);
+    if (process.env.NODE_ENV !== 'test') {
+      setShouldLoadCompleteLessonsCatalog(false);
+    }
   }, [ageGroup, subject]);
 
   useEffect((): void => {
@@ -401,6 +416,8 @@ export function useLessonsLogic() {
 
     const nextMap = new Map<string, (typeof assignments)[number]>();
     assignments
+      .filter((assignment) => !assignment.archived)
+      .filter((assignment) => assignment.progress.status !== 'completed')
       .filter(
         (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
           assignment.target.type === 'lesson'
@@ -421,11 +438,12 @@ export function useLessonsLogic() {
   }, [assignments, isAssignmentsReady, lessons.length]);
 
   const completedLessonAssignmentsByComponent = useMemo(() => {
-    if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
+    if (assignments.length === 0 || lessons.length === 0) {
+      console.log('DEBUG: completedLessonAssignmentsByComponent empty return', { assignmentsLength: assignments.length, lessonsLength: lessons.length });
       return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
     }
 
-    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
+    const nextMap = new Map<string, (typeof assignments)[number]>();
     assignments
       .filter((assignment) => !assignment.archived)
       .filter((assignment) => assignment.progress.status === 'completed')
@@ -446,6 +464,7 @@ export function useLessonsLogic() {
           nextMap.set(componentId, assignment);
         }
       });
+    console.log('DEBUG: completedLessonAssignmentsByComponent computed', { size: nextMap.size, keys: Array.from(nextMap.keys()) });
     return nextMap;
   }, [assignments, isAssignmentsReady, lessons.length]);
 

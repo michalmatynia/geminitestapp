@@ -295,9 +295,12 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
 
     await trigger.scrollIntoViewIfNeeded().catch(() => undefined);
     await Promise.allSettled([
-      page.waitForURL(new RegExp('/selling(?:/new)?(?:[?#]|$)|/sell(?:/new)?(?:[?#]|$)', 'i'), {
-        timeout: 15_000,
-      }),
+      page.waitForURL(
+        new RegExp('/selling(?:/(?:new|draft(?:/[^/?#]+)?))?(?:[?#/]|$)|/sell(?:/new)?(?:[?#/]|$)', 'i'),
+        {
+          timeout: 15_000,
+        }
+      ),
       page.waitForLoadState('domcontentloaded', { timeout: 20_000 }),
       humanClick(trigger, { pauseAfter: false }),
     ]);

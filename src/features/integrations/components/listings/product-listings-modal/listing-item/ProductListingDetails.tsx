@@ -71,6 +71,10 @@ const resolveTraderaExecutionSummary = (
   requestId: string | null;
   publishVerified: boolean | null;
   listingUrl: string | null;
+  latestStage: string | null;
+  latestStageUrl: string | null;
+  failureArtifacts: unknown;
+  logTail: unknown;
   playwrightPersonaId: string | null;
   playwrightSlowMo: number | null;
   playwrightTimeout: number | null;
@@ -112,6 +116,12 @@ const resolveTraderaExecutionSummary = (
     requestId: readString(lastExecution['requestId']),
     publishVerified: readBoolean(metadata['publishVerified']),
     listingUrl: readString(marketplaceRecord['listingUrl']),
+    latestStage: readString(metadata['latestStage']) ?? readString(toRecord(metadata['rawResult'])['stage']),
+    latestStageUrl:
+      readString(metadata['latestStageUrl']) ??
+      readString(toRecord(metadata['rawResult'])['currentUrl']),
+    failureArtifacts: metadata['failureArtifacts'] ?? null,
+    logTail: metadata['logTail'] ?? null,
     playwrightPersonaId: readString(metadata['playwrightPersonaId']),
     playwrightSlowMo: readNumber(playwrightSettings['slowMo']),
     playwrightTimeout: readNumber(playwrightSettings['timeout']),
@@ -404,6 +414,21 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.latestStage ? (
+            <MetadataItem
+              label='Last stage'
+              value={traderaExecution.latestStage}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.latestStageUrl ? (
+            <MetadataItem
+              label='Stage URL'
+              value={traderaExecution.latestStageUrl}
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.categorySource ? (
             <MetadataItem
               label='Category source'
@@ -555,6 +580,20 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
           <JsonViewer
             title='Tradera run result'
             data={traderaExecution.rawResult}
+            maxHeight={220}
+            className='bg-white/5'
+          />
+        </div>
+      ) : null}
+      {isTraderaListing &&
+      (traderaExecution.failureArtifacts || traderaExecution.logTail) ? (
+        <div className='mt-4'>
+          <JsonViewer
+            title='Tradera failure diagnostics'
+            data={{
+              failureArtifacts: traderaExecution.failureArtifacts,
+              logTail: traderaExecution.logTail,
+            }}
             maxHeight={220}
             className='bg-white/5'
           />

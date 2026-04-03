@@ -1,3 +1,5 @@
+import { handleLinkedinApiTest } from './handler.linkedin';
+import { handleTraderaApiTest } from './handler.tradera-api';
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium, devices, type BrowserContextOptions } from 'playwright';
 
@@ -11,7 +13,6 @@ import {
 } from '@/features/integrations/constants/tradera';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
-import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api-client';
 import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
 import {
   resolveConnectionPlaywrightSettings,
@@ -39,16 +40,6 @@ const TRADERA_LISTING_FORM_URL = normalizeTraderaListingFormUrl(
   DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl
 );
 
-const toPositiveInt = (value: unknown): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return Math.floor(value);
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed);
-  }
-  return null;
-};
 
 /**
  * POST /api/v2/integrations/[id]/connections/[connectionId]/test
@@ -137,163 +128,11 @@ export async function postTestConnectionHandler(
   }
 
   if (isTraderaApiIntegrationSlug(integration.slug)) {
-    if (manualMode) {
-      pushStep('Manual mode', 'ok', 'Manual login mode does not apply to Tradera API connections.');
-    }
-
-    pushStep('Decrypting credentials', 'pending', 'Validating Tradera API credentials');
-    const appId = toPositiveInt(connection.traderaApiAppId);
-    const userId = toPositiveInt(connection.traderaApiUserId);
-    const encryptedAppKey = connection.traderaApiAppKey;
-    const encryptedToken = connection.traderaApiToken;
-
-    if (!appId) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API App ID is missing. Update the connection first.'
-      );
-    }
-    if (!userId) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API User ID is missing. Update the connection first.'
-      );
-    }
-    if (!encryptedAppKey) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API App Key is missing. Update the connection first. Password fallback is disabled.'
-      );
-    }
-    if (!encryptedToken) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API token is missing. Update the connection first. Password fallback is disabled.'
-      );
-    }
-
-    let appKey: string;
-    let token: string;
-    try {
-      appKey = decryptSecret(encryptedAppKey).trim();
-      token = decryptSecret(encryptedToken).trim();
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return fail(
-        'Decrypting credentials',
-        `Unable to decrypt Tradera API credentials: ${message}`
-      );
-    }
-    if (!appKey || !token) {
-      return fail('Decrypting credentials', 'Tradera API credentials are empty after decryption.');
-    }
-    pushStep('Decrypting credentials', 'ok', 'Tradera API credentials decrypted');
-
-    pushStep('Testing API connection', 'pending', 'Calling RestrictedService.GetUserInfo');
-    try {
-      const profile = await getTraderaUserInfo({
-        appId,
-        appKey,
-        userId,
-        token,
-        sandbox: connection.traderaApiSandbox ?? false,
-      });
-      await repo.updateConnection(connection.id, {
-        traderaApiTokenUpdatedAt: new Date(),
-      });
-      pushStep(
-        'Testing API connection',
-        'ok',
-        profile.alias
-          ? `Authenticated as ${profile.alias}.`
-          : `Authenticated as user ${profile.userId}.`
-      );
-      const response: TestConnectionResponse = {
-        ok: true,
-        steps,
-        profile,
-      };
-
-      return NextResponse.json(response);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return fail('Testing API connection', message);
-    }
+    return handleTraderaApiTest(connection, repo, manualMode, steps, pushStep, fail);
   }
 
   if (integration.slug === 'linkedin') {
-    pushStep('Checking LinkedIn token', 'pending', 'Validating LinkedIn access token');
-    const encryptedToken = connection.linkedinAccessToken?.trim();
-    if (!encryptedToken) {
-      return fail(
-        'Checking LinkedIn token',
-        'LinkedIn access token is missing. Authorize LinkedIn in Admin > Integrations.'
-      );
-    }
-
-    let accessToken: string;
-    try {
-      accessToken = decryptSecret(encryptedToken).trim();
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      return fail(
-        'Checking LinkedIn token',
-        'Unable to decrypt LinkedIn access token. Reauthorize LinkedIn in Admin > Integrations.'
-      );
-    }
-    if (!accessToken) {
-      return fail('Checking LinkedIn token', 'LinkedIn access token is empty after decryption.');
-    }
-
-    const expiresAtValue = connection.linkedinExpiresAt;
-    const expiresAt =
-      typeof expiresAtValue === 'string'
-        ? expiresAtValue.trim()
-        : expiresAtValue instanceof Date
-          ? expiresAtValue.toISOString()
-          : '';
-    if (expiresAt) {
-      const expiresMs =
-        expiresAtValue instanceof Date ? expiresAtValue.getTime() : Date.parse(expiresAt);
-      if (!Number.isNaN(expiresMs) && expiresMs < Date.now()) {
-        return fail(
-          'Checking LinkedIn token',
-          `LinkedIn access token expired at ${expiresAt}. Reauthorize LinkedIn in Admin > Integrations.`
-        );
-      }
-    }
-    pushStep('Checking LinkedIn token', 'ok', 'Token present and not expired');
-
-    pushStep('Testing LinkedIn API', 'pending', 'Calling LinkedIn /v2/userinfo endpoint');
-    try {
-      const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!profileRes.ok) {
-        const body = await profileRes.text().catch(() => '');
-        return fail(
-          'Testing LinkedIn API',
-          `LinkedIn API returned ${profileRes.status}: ${body.slice(0, 200)}`
-        );
-      }
-      const profile = await profileRes.json() as { sub?: string; name?: string };
-      const personUrn = connection.linkedinPersonUrn ?? (profile.sub ? `urn:li:person:${profile.sub}` : null);
-      const displayName = profile.name ?? personUrn ?? 'Unknown';
-      pushStep('Testing LinkedIn API', 'ok', `Authenticated as ${displayName}`);
-
-      const response: TestConnectionResponse = {
-        ok: true,
-        steps,
-        profile: { alias: displayName },
-      };
-      return NextResponse.json(response);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return fail('Testing LinkedIn API', message);
-    }
+    return handleLinkedinApiTest(connection, steps, pushStep, fail);
   }
 
   if (!isTraderaBrowserIntegrationSlug(integration.slug)) {

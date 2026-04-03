@@ -307,6 +307,14 @@ export const PART_3 = `        expectedValue,
     const byRoleVisible = await byRole.isVisible().catch(() => false);
     if (byRoleVisible) return byRole;
 
+    const byRoleMenu = page
+      .getByRole('menu', {
+        name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i'),
+      })
+      .first();
+    const byRoleMenuVisible = await byRoleMenu.isVisible().catch(() => false);
+    if (byRoleMenuVisible) return byRoleMenu;
+
     const byRoleLink = page
       .getByRole('link', {
         name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i'),
@@ -322,6 +330,14 @@ export const PART_3 = `        expectedValue,
       .first();
     const byRoleContainsVisible = await byRoleContains.isVisible().catch(() => false);
     if (byRoleContainsVisible) return byRoleContains;
+
+    const byRoleContainsMenu = page
+      .getByRole('menu', {
+        name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
+      })
+      .first();
+    const byRoleContainsMenuVisible = await byRoleContainsMenu.isVisible().catch(() => false);
+    if (byRoleContainsMenuVisible) return byRoleContainsMenu;
 
     const byRoleContainsLink = page
       .getByRole('link', {
@@ -343,7 +359,7 @@ export const PART_3 = `        expectedValue,
       .locator(
         'xpath=//*[normalize-space(text())="' +
           escaped +
-          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or self::div or self::label][1]'
+          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menu" or self::div or self::label][1]'
       )
       .first();
     const exactTextVisible = await exactTextTrigger.isVisible().catch(() => false);
@@ -353,7 +369,7 @@ export const PART_3 = `        expectedValue,
       .locator(
         'xpath=//*[normalize-space(text())="' +
           escaped +
-          '"]/following::*[(self::button or self::a or @role="button" or @role="link" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu")][1]'
+          '"]/following::*[(self::button or self::a or @role="button" or @role="link" or @role="menu" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu")][1]'
       )
       .first();
     const labeledControlVisible = await labeledControlTrigger.isVisible().catch(() => false);

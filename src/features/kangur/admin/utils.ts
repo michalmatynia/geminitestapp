@@ -30,33 +30,24 @@ export const resolvePageSectionOptions = (
   sectionDescription: page?.sectionDescription?.trim() || '',
 });
 
+type LessonRecipeFamily = 'time' | 'arithmetic' | 'geometry' | 'logic';
+
+const LESSON_RECIPE_FAMILY_BY_COMPONENT_ID = new Map<KangurLessonComponentId, LessonRecipeFamily>([
+  ['clock', 'time'],
+  ['calendar', 'time'],
+  ['adding', 'arithmetic'],
+  ['subtracting', 'arithmetic'],
+  ['multiplication', 'arithmetic'],
+  ['division', 'arithmetic'],
+  ['geometry_basics', 'geometry'],
+  ['geometry_shapes', 'geometry'],
+  ['geometry_symmetry', 'geometry'],
+  ['geometry_perimeter', 'geometry'],
+]);
+
 export const getLessonRecipeFamily = (
   componentId: KangurLessonComponentId | null | undefined
-): 'time' | 'arithmetic' | 'geometry' | 'logic' => {
-  if (componentId === 'clock' || componentId === 'calendar') {
-    return 'time';
-  }
-  if (
-    componentId === 'adding' ||
-    componentId === 'subtracting' ||
-    componentId === 'multiplication' ||
-    componentId === 'division'
-  ) {
-    return 'arithmetic';
-  }
-  if (
-    componentId === 'geometry_basics' ||
-    componentId === 'geometry_shapes' ||
-    componentId === 'geometry_symmetry' ||
-    componentId === 'geometry_perimeter'
-  ) {
-    return 'geometry';
-  }
-  if (componentId?.startsWith('english_')) {
-    return 'logic';
-  }
-  return 'logic';
-};
+): LessonRecipeFamily => (componentId ? LESSON_RECIPE_FAMILY_BY_COMPONENT_ID.get(componentId) : null) ?? 'logic';
 
 export const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));

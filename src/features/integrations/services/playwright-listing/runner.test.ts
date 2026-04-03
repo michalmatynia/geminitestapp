@@ -178,6 +178,32 @@ describe('runPlaywrightListingScript', () => {
     });
   });
 
+  it('can skip startUrl bootstrap so Tradera scripts control sell-page navigation', async () => {
+    const connection = {
+      playwrightPersonaId: 'persona-1',
+      playwrightStorageState: 'encrypted-state',
+    };
+
+    await runPlaywrightListingScript({
+      script: 'export default async function run() {}',
+      input: {
+        title: 'Example',
+        traderaConfig: {
+          listingFormUrl: 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts',
+        },
+      },
+      connection: connection as never,
+      disableStartUrlBootstrap: true,
+    });
+
+    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+      request: expect.not.objectContaining({
+        startUrl: expect.anything(),
+      }),
+      waitForResult: true,
+    });
+  });
+
   it('preserves the Playwright run id when the node runner fails', async () => {
     enqueuePlaywrightNodeRunMock.mockResolvedValue({
       runId: 'run-failed-1',

@@ -119,7 +119,8 @@ const resolveLocalProductImagePaths = async (
   return validPaths;
 };
 
-const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v43';
+const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v47';
+const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 10_000;
 
 const includesAnyHint = (value: string, hints: readonly string[]): boolean => {
   const normalized = value.trim().toLowerCase();
@@ -477,6 +478,9 @@ const runTraderaBrowserListingScripted = async ({
       input: scriptInput,
       connection,
       browserMode,
+      disableStartUrlBootstrap: true,
+      failureHoldOpenMs:
+        browserMode === 'headed' ? TRADERA_HEADED_FAILURE_HOLD_OPEN_MS : undefined,
     });
   } catch (error) {
     if (isAppError(error)) {
@@ -521,6 +525,12 @@ const runTraderaBrowserListingScripted = async ({
         listingFormUrl: normalizedListingFormUrl,
         runId: result.runId,
         rawResult: result.rawResult,
+        latestStage:
+          typeof result.rawResult?.['stage'] === 'string' ? result.rawResult['stage'] : null,
+        latestStageUrl:
+          typeof result.rawResult?.['currentUrl'] === 'string'
+            ? result.rawResult['currentUrl']
+            : null,
         publishVerified: result.publishVerified,
         ...requestedExecutionMetadata,
       }
@@ -537,6 +547,12 @@ const runTraderaBrowserListingScripted = async ({
         listingFormUrl: normalizedListingFormUrl,
         runId: result.runId,
         rawResult: result.rawResult,
+        latestStage:
+          typeof result.rawResult?.['stage'] === 'string' ? result.rawResult['stage'] : null,
+        latestStageUrl:
+          typeof result.rawResult?.['currentUrl'] === 'string'
+            ? result.rawResult['currentUrl']
+            : null,
         publishVerified: result.publishVerified,
         ...requestedExecutionMetadata,
       }
@@ -556,6 +572,12 @@ const runTraderaBrowserListingScripted = async ({
       playwrightPersonaId: result.personaId,
       playwrightSettings: result.executionSettings,
       rawResult: result.rawResult,
+      latestStage:
+        typeof result.rawResult?.['stage'] === 'string' ? result.rawResult['stage'] : null,
+      latestStageUrl:
+        typeof result.rawResult?.['currentUrl'] === 'string'
+          ? result.rawResult['currentUrl']
+          : null,
       publishVerified: result.publishVerified,
       categoryMappingReason:
         scriptInput &&

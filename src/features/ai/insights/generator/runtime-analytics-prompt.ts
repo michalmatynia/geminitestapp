@@ -19,14 +19,22 @@ export type RuntimeKernelParityAssessment = {
   signals: string[];
 };
 
-export const assessRuntimeKernelParityRisk = (
+type RuntimeKernelParityRates = {
+  sampledRuns: number;
+  sampledHistoryEntries: number;
+  coverageRate: number;
+  v3Rate: number;
+  compatibilityRate: number;
+  unknownRate: number;
+  missingResolutionRate: number;
+};
+
+const resolveRuntimeKernelParityRates = (
   summary: AiPathRuntimeAnalyticsSummary
-): RuntimeKernelParityAssessment => {
+): RuntimeKernelParityRates => {
   const kernelParity = summary.traces.kernelParity;
   const sampledRuns = kernelParity.sampledRuns;
-  const runsWithKernelParity = kernelParity.runsWithKernelParity;
   const sampledHistoryEntries = kernelParity.sampledHistoryEntries;
-  const strategyCounts = kernelParity.strategyCounts;
   const resolutionSourceCounts = kernelParity.resolutionSourceCounts;
   const resolutionSourceTotal =
     resolutionSourceCounts.override +
@@ -34,56 +42,79 @@ export const assessRuntimeKernelParityRisk = (
     resolutionSourceCounts.missing +
     resolutionSourceCounts.unknown;
 
-  const coverageRate = safeRate(runsWithKernelParity, sampledRuns);
-  const v3Rate = safeRate(strategyCounts.code_object_v3, sampledHistoryEntries);
-  const compatibilityRate = safeRate(strategyCounts.compatibility, sampledHistoryEntries);
-  const unknownRate = safeRate(strategyCounts.unknown, sampledHistoryEntries);
-  const missingResolutionRate = safeRate(resolutionSourceCounts.missing, resolutionSourceTotal);
+  return {
+    sampledRuns,
+    sampledHistoryEntries,
+    coverageRate: safeRate(kernelParity.runsWithKernelParity, sampledRuns),
+    v3Rate: safeRate(kernelParity.strategyCounts.code_object_v3, sampledHistoryEntries),
+    compatibilityRate: safeRate(
+      kernelParity.strategyCounts.compatibility,
+      sampledHistoryEntries
+    ),
+    unknownRate: safeRate(kernelParity.strategyCounts.unknown, sampledHistoryEntries),
+    missingResolutionRate: safeRate(resolutionSourceCounts.missing, resolutionSourceTotal),
+  };
+};
 
-  const highRisk =
-    sampledRuns <= 0 ||
-    sampledHistoryEntries <= 0 ||
-    coverageRate < 70 ||
-    v3Rate < 60 ||
-    unknownRate >= 20 ||
-    missingResolutionRate >= 20;
+const resolveRuntimeKernelParityRiskLevel = (
+  rates: RuntimeKernelParityRates
+): RuntimeKernelParityRiskLevel => {
+  const highRiskSignals = [
+    rates.sampledRuns <= 0,
+    rates.sampledHistoryEntries <= 0,
+    rates.coverageRate < 70,
+    rates.v3Rate < 60,
+    rates.unknownRate >= 20,
+    rates.missingResolutionRate >= 20,
+  ];
+  if (highRiskSignals.some(Boolean)) return 'high';
 
-  const mediumRisk =
-    !highRisk && (coverageRate < 90 || v3Rate < 85 || unknownRate > 0 || missingResolutionRate > 0);
+  const mediumRiskSignals = [
+    rates.coverageRate < 90,
+    rates.v3Rate < 85,
+    rates.unknownRate > 0,
+    rates.missingResolutionRate > 0,
+  ];
+  return mediumRiskSignals.some(Boolean) ? 'medium' : 'low';
+};
 
-  const riskLevel: RuntimeKernelParityRiskLevel = highRisk ? 'high' : mediumRisk ? 'medium' : 'low';
+const buildRuntimeKernelParitySignals = (rates: RuntimeKernelParityRates): string[] => {
+  const signals = [
+    rates.sampledRuns <= 0
+      ? 'no sampled runs in selected window'
+      : rates.coverageRate < 90
+        ? `kernel parity telemetry coverage ${formatPercent(rates.coverageRate)}`
+        : null,
+    rates.sampledHistoryEntries <= 0 ? 'no sampled runtime history entries' : null,
+    rates.sampledHistoryEntries > 0 && rates.v3Rate < 85
+      ? `code_object_v3 share ${formatPercent(rates.v3Rate)}`
+      : null,
+    rates.sampledHistoryEntries > 0 && rates.unknownRate > 0
+      ? `unknown strategy share ${formatPercent(rates.unknownRate)}`
+      : null,
+    rates.missingResolutionRate > 0
+      ? `missing resolution source rate ${formatPercent(rates.missingResolutionRate)}`
+      : null,
+  ].filter((signal): signal is string => Boolean(signal));
 
-  const signals: string[] = [];
-  if (sampledRuns <= 0) {
-    signals.push('no sampled runs in selected window');
-  } else if (coverageRate < 90) {
-    signals.push(`kernel parity telemetry coverage ${formatPercent(coverageRate)}`);
-  }
-  if (sampledHistoryEntries <= 0) {
-    signals.push('no sampled runtime history entries');
-  } else {
-    if (v3Rate < 85) {
-      signals.push(`code_object_v3 share ${formatPercent(v3Rate)}`);
-    }
-    if (unknownRate > 0) {
-      signals.push(`unknown strategy share ${formatPercent(unknownRate)}`);
-    }
-  }
-  if (missingResolutionRate > 0) {
-    signals.push(`missing resolution source rate ${formatPercent(missingResolutionRate)}`);
-  }
-  if (signals.length === 0) {
-    signals.push('coverage and v3 share are within rollout guardrails');
-  }
+  return signals.length > 0
+    ? signals
+    : ['coverage and v3 share are within rollout guardrails'];
+};
+
+export const assessRuntimeKernelParityRisk = (
+  summary: AiPathRuntimeAnalyticsSummary
+): RuntimeKernelParityAssessment => {
+  const rates = resolveRuntimeKernelParityRates(summary);
 
   return {
-    riskLevel,
-    coverageRate,
-    v3Rate,
-    compatibilityRate,
-    unknownRate,
-    missingResolutionRate,
-    signals,
+    riskLevel: resolveRuntimeKernelParityRiskLevel(rates),
+    coverageRate: rates.coverageRate,
+    v3Rate: rates.v3Rate,
+    compatibilityRate: rates.compatibilityRate,
+    unknownRate: rates.unknownRate,
+    missingResolutionRate: rates.missingResolutionRate,
+    signals: buildRuntimeKernelParitySignals(rates),
   };
 };
 

@@ -1,22 +1,22 @@
 {
   "summary": {
-    "generatedAt": "2026-04-03T11:23:50.490Z",
-    "scannedSourceFiles": 6691,
-    "scannedJsxFiles": 2485,
+    "generatedAt": "2026-04-03T11:32:41.995Z",
+    "scannedSourceFiles": 6693,
+    "scannedJsxFiles": 2486,
     "componentCount": 4333,
     "componentsWithForwarding": 120,
-    "componentsWithAnyForwarding": 302,
-    "resolvedTransitionCount": 1340,
-    "depth2CandidateChainCount": 1340,
+    "componentsWithAnyForwarding": 301,
+    "resolvedTransitionCount": 1320,
+    "depth2CandidateChainCount": 1320,
     "candidateChainCount": 266,
     "highPriorityChainCount": 76,
     "unknownSpreadForwardingCount": 12,
-    "highPropCountComponentCount": 53,
-    "passThroughHotspotCount": 95,
+    "highPropCountComponentCount": 51,
+    "passThroughHotspotCount": 94,
     "topFeatureScopes": [
       {
         "scope": "feature:kangur",
-        "count": 257
+        "count": 256
       },
       {
         "scope": "shared-ui",
@@ -11394,32 +11394,6 @@
       "depth": 2,
       "rootFanout": 3,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "stepTestIdPrefix",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "stepTestIdPrefix",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 72,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx#AiTutorMoodSection",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurStatusChip.tsx#KangurStatusChip",
       "componentPath": [
@@ -13570,58 +13544,6 @@
           "targetProp": "translations",
           "relativePath": "src/features/kangur/ui/components/learner-profile/KangurLearnerProfilePerformanceWidget.tsx",
           "line": 254
-        }
-      ]
-    },
-    {
-      "score": 64,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid"
-      ],
-      "propPath": [
-        "stepTestIdPrefix",
-        "stepTestIdPrefix"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid",
-          "sourceProp": "stepTestIdPrefix",
-          "targetProp": "stepTestIdPrefix",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 797
-        }
-      ]
-    },
-    {
-      "score": 64,
-      "depth": 2,
-      "rootFanout": 3,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail"
-      ],
-      "propPath": [
-        "stepTestIdPrefix",
-        "stepTestIdPrefix"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-          "sourceProp": "stepTestIdPrefix",
-          "targetProp": "stepTestIdPrefix",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 830
         }
       ]
     },
@@ -28086,240 +28008,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "showKeyboardModeSwitch",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "showKeyboardModeSwitch",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "showSynthEnvelopeButton",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "showSynthEnvelopeButton",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "showSynthGlideModeSwitch",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "showSynthGlideModeSwitch",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "showSynthOscSettingsPanel",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "showSynthOscSettingsPanel",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "showSynthWaveformSwitch",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "showSynthWaveformSwitch",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "onKeyboardModeChange",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "onKeyboardModeChange",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "onSynthGlideModeChange",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "onSynthGlideModeChange",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "onSynthOscSettingsChange",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "onSynthOscSettingsChange",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider"
-      ],
-      "propPath": [
-        "onSynthWaveformChange",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.context.tsx#KangurMusicPianoRollProvider",
-          "sourceProp": "onSynthWaveformChange",
-          "targetProp": "value",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 763
-        }
-      ]
-    },
-    {
-      "score": 52,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx#MusicPianoRollFreePlayGame",
       "sinkComponentId": "src/features/kangur/ui/design/primitives/KangurButton.tsx#KangurButton",
       "componentPath": [
@@ -36770,214 +36458,6 @@
       "depth": 2,
       "rootFanout": 1,
       "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid"
-      ],
-      "propPath": [
-        "activeStepIndex",
-        "activeStepIndex"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid",
-          "sourceProp": "activeStepIndex",
-          "targetProp": "activeStepIndex",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 797
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid"
-      ],
-      "propPath": [
-        "expectedStepIndex",
-        "expectedStepIndex"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollGrid.tsx#KangurMusicPianoRollGrid",
-          "sourceProp": "expectedStepIndex",
-          "targetProp": "expectedStepIndex",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 797
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail"
-      ],
-      "propPath": [
-        "keys",
-        "keys"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-          "sourceProp": "keys",
-          "targetProp": "keys",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 830
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail"
-      ],
-      "propPath": [
-        "keyTestIdPrefix",
-        "keyTestIdPrefix"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-          "sourceProp": "keyTestIdPrefix",
-          "targetProp": "keyTestIdPrefix",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 830
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail"
-      ],
-      "propPath": [
-        "pressedNoteId",
-        "pressedNoteId"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-          "sourceProp": "pressedNoteId",
-          "targetProp": "pressedNoteId",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 830
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail"
-      ],
-      "propPath": [
-        "pressedVelocity",
-        "pressedVelocity"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-          "sourceProp": "pressedVelocity",
-          "targetProp": "pressedVelocity",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 830
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail"
-      ],
-      "propPath": [
-        "onSynthGestureChange",
-        "onSynthGestureChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-          "sourceProp": "onSynthGestureChange",
-          "targetProp": "onSynthGestureChange",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 830
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
-      "rootComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "sinkComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-      "componentPath": [
-        "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-        "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail"
-      ],
-      "propPath": [
-        "onSynthGestureStart",
-        "onSynthGestureStart"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-          "toComponentId": "src/features/kangur/ui/components/music/KangurMusicPianoRollKeyboardRail.tsx#KangurMusicPianoRollKeyboardRail",
-          "sourceProp": "onSynthGestureStart",
-          "targetProp": "onSynthGestureStart",
-          "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-          "line": 830
-        }
-      ]
-    },
-    {
-      "score": 44,
-      "depth": 2,
-      "rootFanout": 1,
-      "distinctFeatureCount": 1,
       "rootComponentId": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx#MusicMelodyRepeatGame",
       "sinkComponentId": "src/features/kangur/ui/components/KangurPracticeGameChrome.tsx#KangurPracticeGameSummaryActions",
       "componentPath": [
@@ -38614,15 +38094,6 @@
   ],
   "componentBacklog": [
     {
-      "componentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "name": "KangurMusicPianoRoll",
-      "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 18,
-      "outgoingTransitionCount": 20,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx#KangurAiTutorGuidedCalloutBody",
       "name": "KangurAiTutorGuidedCalloutBody",
       "relativePath": "src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx",
@@ -39692,18 +39163,18 @@
       "forwardedPropCount": 3,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
+    },
+    {
+      "componentId": "src/features/kangur/ui/components/game-setup/KangurGameOperationPracticeAssignmentBanner.tsx#KangurGameOperationPracticeAssignmentBanner",
+      "name": "KangurGameOperationPracticeAssignmentBanner",
+      "relativePath": "src/features/kangur/ui/components/game-setup/KangurGameOperationPracticeAssignmentBanner.tsx",
+      "feature": "feature:kangur",
+      "forwardedPropCount": 3,
+      "outgoingTransitionCount": 3,
+      "hasUnknownSpreadForwarding": false
     }
   ],
   "forwardingComponentBacklog": [
-    {
-      "componentId": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx#KangurMusicPianoRoll",
-      "name": "KangurMusicPianoRoll",
-      "relativePath": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.tsx",
-      "feature": "feature:kangur",
-      "forwardedPropCount": 18,
-      "outgoingTransitionCount": 20,
-      "hasUnknownSpreadForwarding": false
-    },
     {
       "componentId": "src/features/kangur/ui/components/KangurAiTutorGuidedCallout.core.tsx#KangurAiTutorGuidedCalloutBody",
       "name": "KangurAiTutorGuidedCalloutBody",

@@ -291,41 +291,71 @@ export const normalizeLoadedPathName = (_pathId: string, name: unknown): string 
   return typeof name === 'string' ? name.trim() : '';
 };
 
+type NormalizedLoadedPathMeta = PathMeta & {
+  createdAtInferred: boolean;
+  updatedAtInferred: boolean;
+};
+
+const normalizeLoadedPathTimestamp = (
+  value: unknown,
+  fallbackValue: string
+): { value: string; inferred: boolean } =>
+  typeof value === 'string' && value.trim().length > 0
+    ? { value, inferred: false }
+    : { value: fallbackValue, inferred: true };
+
+const normalizeLoadedPathMeta = (
+  meta: PathMeta,
+  fallbackTimestamp: string
+): NormalizedLoadedPathMeta | null => {
+  const id = typeof meta.id === 'string' ? meta.id.trim() : '';
+  if (!id) return null;
+
+  const normalizedCreatedAt = normalizeLoadedPathTimestamp(meta.createdAt, fallbackTimestamp);
+  const normalizedUpdatedAt = normalizeLoadedPathTimestamp(
+    meta.updatedAt,
+    normalizedCreatedAt.value
+  );
+  return {
+    ...meta,
+    id,
+    name: normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`,
+    createdAt: normalizedCreatedAt.value,
+    updatedAt: normalizedUpdatedAt.value,
+    createdAtInferred: normalizedCreatedAt.inferred,
+    updatedAtInferred: normalizedUpdatedAt.inferred,
+  };
+};
+
+const mergeNormalizedPathMeta = (
+  existing: NormalizedLoadedPathMeta | undefined,
+  nextMeta: NormalizedLoadedPathMeta
+): NormalizedLoadedPathMeta => {
+  if (!existing) return nextMeta;
+  if (existing.updatedAtInferred !== nextMeta.updatedAtInferred) {
+    return existing.updatedAtInferred ? nextMeta : existing;
+  }
+
+  const existingUpdatedAt = Date.parse(existing.updatedAt || '') || 0;
+  const nextUpdatedAt = Date.parse(nextMeta.updatedAt || '') || 0;
+  return nextUpdatedAt >= existingUpdatedAt ? nextMeta : existing;
+};
+
+const toPathMeta = ({
+  createdAtInferred: _createdAtInferred,
+  updatedAtInferred: _updatedAtInferred,
+  ...meta
+}: NormalizedLoadedPathMeta): PathMeta => meta;
+
 export const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
-  const byId = new Map<string, PathMeta>();
+  const byId = new Map<string, NormalizedLoadedPathMeta>();
   metas.forEach((meta: PathMeta) => {
-    const id = typeof meta.id === 'string' ? meta.id.trim() : '';
-    if (!id) return;
-    const normalizedName = normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
-    const fallbackTimestamp = new Date().toISOString();
-    const normalizedCreatedAt =
-      typeof meta.createdAt === 'string' && meta.createdAt.trim().length > 0
-        ? meta.createdAt
-        : fallbackTimestamp;
-    const normalizedUpdatedAt =
-      typeof meta.updatedAt === 'string' && meta.updatedAt.trim().length > 0
-        ? meta.updatedAt
-        : normalizedCreatedAt;
-    const normalizedMeta: PathMeta = {
-      ...meta,
-      id,
-      name: normalizedName,
-      createdAt: normalizedCreatedAt,
-      updatedAt: normalizedUpdatedAt,
-    };
-    const existing = byId.get(id);
-    if (!existing) {
-      byId.set(id, normalizedMeta);
-      return;
-    }
-    const existingUpdatedAt = Date.parse(existing.updatedAt || '') || 0;
-    const nextUpdatedAt = Date.parse(normalizedMeta.updatedAt || '') || 0;
-    if (nextUpdatedAt >= existingUpdatedAt) {
-      byId.set(id, normalizedMeta);
-    }
+    const normalizedMeta = normalizeLoadedPathMeta(meta, new Date().toISOString());
+    if (!normalizedMeta) return;
+    byId.set(normalizedMeta.id, mergeNormalizedPathMeta(byId.get(normalizedMeta.id), normalizedMeta));
   });
 
-  return Array.from(byId.values()).sort((a: PathMeta, b: PathMeta): number =>
-    b.updatedAt.localeCompare(a.updatedAt)
-  );
+  return Array.from(byId.values())
+    .map(toPathMeta)
+    .sort((a: PathMeta, b: PathMeta): number => b.updatedAt.localeCompare(a.updatedAt));
 };

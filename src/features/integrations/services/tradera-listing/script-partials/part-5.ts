@@ -15,9 +15,11 @@ export const PART_5 = `        }
       configuredDeliveryOptionLabel,
       requiresConfiguredDeliveryOption,
     });
+    emitStage('started');
 
     await page.goto(ACTIVE_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await ensureLoggedIn();
+    emitStage('active_loaded');
 
     const baseProductDuplicate = await checkDuplicate(baseProductId);
     if (baseProductDuplicate.duplicateFound) {
@@ -29,23 +31,23 @@ export const PART_5 = `        }
       throw new Error('SKIP_PRODUCT_DUPLICATE_FOUND: Duplicate active Tradera listing for ' + sku + '.');
       }
     }
+    emitStage('duplicate_checked');
 
     await gotoSellPage();
     // Wait for SPA to fully render the listing form
     await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
     await wait(1500);
+    emitStage('sell_page_ready');
     await clearDraftImagesIfPresent();
+    emitStage('draft_cleared');
 
     // Wait for the image input to appear — Tradera's SPA may take time to render it
-    let imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
+    const imageInput = await ensureImageInputReady();
     if (!imageInput) {
-      log?.('tradera.quicklist.image_input.waiting', { selectors: IMAGE_INPUT_SELECTORS });
-      await wait(3000);
-      imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
-    }
-    if (!imageInput) {
+      const editorReady = await isListingEditorReady();
       await captureFailureArtifacts('image-input-missing', {
         url: page.url(),
+        editorReady,
         html: await page.content().catch(() => '').then((h) => h.slice(0, 2000)),
       });
       throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload input not found.');
@@ -54,6 +56,9 @@ export const PART_5 = `        }
     await imageInput.setInputFiles(uploadFiles);
     await advancePastImagesStep();
     await wait(1000);
+    emitStage('images_uploaded', {
+      imageCount: Array.isArray(uploadFiles) ? uploadFiles.length : null,
+    });
 
     await applyCategorySelection();
     await chooseBuyNowListingFormat();
@@ -104,6 +109,7 @@ export const PART_5 = `        }
       errorPrefix: 'FAIL_PRICE_SET',
       normalize: normalizePriceValue,
     });
+    emitStage('fields_filled');
 
     const prePublishValidationMessages = await collectValidationMessages();
     const publishDisabled = await isControlDisabled(publishButton);
@@ -123,6 +129,7 @@ export const PART_5 = `        }
     }
 
     const previousUrl = page.url();
+    emitStage('publish_clicked');
     await Promise.allSettled([
       page.waitForLoadState('domcontentloaded', { timeout: 25_000 }),
       humanClick(publishButton, { pauseAfter: false }),
@@ -179,6 +186,8 @@ export const PART_5 = `        }
     }
 
     const result = {
+      stage: 'publish_verified',
+      currentUrl: page.url(),
       externalListingId,
       listingUrl,
       publishVerified: true,
@@ -186,6 +195,9 @@ export const PART_5 = `        }
     emit('result', result);
     return result;
   } catch (error) {
+    emitStage('failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     await captureFailureArtifacts('run-failure', {
       error: error instanceof Error ? error.message : String(error),
     });

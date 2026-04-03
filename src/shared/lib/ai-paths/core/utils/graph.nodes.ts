@@ -17,6 +17,13 @@ type ResolvedNodePortCardinalitySource =
 
 const definitionInputContractsByType = new Map<string, Record<string, PortContract>>();
 const definitionOutputContractsByType = new Map<string, Record<string, PortContract>>();
+const LEGACY_MANY_INPUT_PORT_NAMES = new Set(['bundle', 'result', 'context', 'images', 'imageurls']);
+
+const canonicalizePortLookupKey = (portName: string): string =>
+  normalizePortName(portName)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 
 palette.forEach((definition): void => {
   if (!definition?.type) return;
@@ -57,6 +64,24 @@ const resolvePortContract = (
 
 const normalizeNodePortCardinality = (value: unknown): NodePortCardinality | null =>
   value === 'many' ? 'many' : value === 'single' ? 'single' : null;
+
+const resolveLegacyRuntimeInputCardinality = (
+  inputCardinality: Record<string, InputCardinality> | undefined,
+  portName: string
+): InputCardinality | null => {
+  if (inputCardinality?.[portName]) {
+    return inputCardinality[portName];
+  }
+  if (!inputCardinality) {
+    return null;
+  }
+
+  const normalizedPortName = canonicalizePortLookupKey(portName);
+  const matchingEntry = Object.entries(inputCardinality).find(
+    ([rawKey]) => canonicalizePortLookupKey(rawKey) === normalizedPortName
+  );
+  return matchingEntry?.[1] ?? null;
+};
 
 const normalizePortValueKind = (value: unknown): NodePortValueKind => {
   switch (value) {
@@ -113,28 +138,10 @@ const getLegacyInputCardinality = (node: AiNode, portName: string): InputCardina
   const runtimeInputCardinality = (
     node.config?.runtime as { inputCardinality?: Record<string, InputCardinality> } | undefined
   )?.inputCardinality;
-  if (runtimeInputCardinality?.[portName]) {
-    return runtimeInputCardinality[portName];
-  }
-  const normalizedPortName = normalizePortName(portName).trim().toLowerCase();
-  if (runtimeInputCardinality) {
-    for (const [rawKey, value] of Object.entries(runtimeInputCardinality)) {
-      if (normalizePortName(rawKey).trim().toLowerCase() === normalizedPortName) {
-        return value;
-      }
-    }
-  }
-  const name = portName.toLowerCase();
-  if (
-    name === 'bundle' ||
-    name === 'result' ||
-    name === 'context' ||
-    name === 'images' ||
-    name === 'imageurls'
-  ) {
-    return 'many';
-  }
-  return 'one';
+  const runtimeCardinality = resolveLegacyRuntimeInputCardinality(runtimeInputCardinality, portName);
+  if (runtimeCardinality) return runtimeCardinality;
+
+  return LEGACY_MANY_INPUT_PORT_NAMES.has(canonicalizePortLookupKey(portName)) ? 'many' : 'one';
 };
 
 export const getNodeInputPortCardinality = (node: AiNode, portName: string): InputCardinality => {
@@ -151,13 +158,13 @@ export const getResolvedNodeInputPortContract = (
   )?.inputCardinality;
   const legacyCardinality = getLegacyInputCardinality(node, portName);
   const cardinalityFallback = legacyCardinality === 'many' ? 'many' : 'single';
-  const normalizedPortName = normalizePortName(portName).trim().toLowerCase();
+  const normalizedPortName = canonicalizePortLookupKey(portName);
   let cardinalitySource: ResolvedNodePortCardinalitySource = 'legacy';
   if (runtimeInputCardinality?.[portName]) {
     cardinalitySource = 'runtime_cardinality';
   } else if (runtimeInputCardinality) {
     for (const [rawKey] of Object.entries(runtimeInputCardinality)) {
-      if (normalizePortName(rawKey).trim().toLowerCase() === normalizedPortName) {
+      if (canonicalizePortLookupKey(rawKey) === normalizedPortName) {
         cardinalitySource = 'runtime_cardinality';
         break;
       }

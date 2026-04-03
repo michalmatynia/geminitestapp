@@ -4,10 +4,7 @@ import { randomUUID } from 'crypto';
 import { createRequire } from 'module';
 import os from 'os';
 import path from 'path';
-import vm from 'vm';
 
-import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 import {
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
   playwrightSettingsSchema,
@@ -23,6 +20,15 @@ import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+import { parseUserScript, safeStringify } from './playwright-node-runner.parser';
+export * from './playwright-node-runner.types';
+import type {
+  PlaywrightNodeRunArtifact,
+  PlaywrightNodeRunRecord,
+  PlaywrightNodeRunRequest,
+  PlaywrightNodeArtifactReadResult,
+} from './playwright-node-runner.types';
+
 import type {
   Browser,
   BrowserContext,
@@ -34,7 +40,7 @@ import type {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
+export const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
 const RUN_TTL_MS = 24 * 60 * 60 * 1000;
 const nodeFs = getFsPromises();
 
@@ -43,16 +49,6 @@ const getPlaywright = (): typeof import('playwright') => {
   return requireFn('playwright') as typeof import('playwright');
 };
 
-const safeStringify = (value: unknown): string => {
-  if (typeof value === 'string') return value;
-  if (value === null || value === undefined) return '';
-  try {
-    return JSON.stringify(value);
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return '[unserializable]';
-  }
-};
 
 type PlaywrightHelperTarget = {
   scrollIntoViewIfNeeded?: (() => Promise<unknown> | unknown) | undefined;
@@ -142,53 +138,6 @@ const cleanupOldRuns = async (): Promise<void> => {
   }
 };
 
-export type PlaywrightNodeRunArtifact = {
-  name: string;
-  path: string;
-  mimeType?: string | null;
-  kind?: string | null;
-};
-
-export type PlaywrightNodeRunRecord = {
-  runId: string;
-  ownerUserId: string | null;
-  status: ImageStudioRunStatus;
-  startedAt: string | null;
-  completedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  result?: unknown;
-  error?: string | null;
-  artifacts: PlaywrightNodeRunArtifact[];
-  logs: string[];
-};
-
-export type PlaywrightNodeRunRequest = {
-  script: string;
-  input?: Record<string, unknown> | undefined;
-  startUrl?: string | undefined;
-  timeoutMs?: number | undefined;
-  browserEngine?: 'chromium' | 'firefox' | 'webkit' | undefined;
-  personaId?: string | undefined;
-  settingsOverrides?: Record<string, unknown> | undefined;
-  launchOptions?: Record<string, unknown> | undefined;
-  contextOptions?: Record<string, unknown> | undefined;
-  policyAllowedHosts?: string[] | undefined;
-  contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
-  capture?:
-    | {
-        screenshot?: boolean | undefined;
-        html?: boolean | undefined;
-        video?: boolean | undefined;
-        trace?: boolean | undefined;
-      }
-    | undefined;
-};
-
-export type PlaywrightNodeArtifactReadResult = {
-  artifact: PlaywrightNodeRunArtifact;
-  content: Buffer;
-};
 
 const writeRunState = async (run: PlaywrightNodeRunRecord): Promise<void> => {
   await ensureRunRoot();
@@ -198,7 +147,7 @@ const writeRunState = async (run: PlaywrightNodeRunRecord): Promise<void> => {
   await nodeFs.rename(tempPath, targetPath);
 };
 
-const nowIso = (): string => new Date().toISOString();
+export const nowIso = (): string => new Date().toISOString();
 
 const buildBaseRunState = (runId: string): PlaywrightNodeRunRecord => {
   const now = nowIso();
@@ -215,7 +164,7 @@ const buildBaseRunState = (runId: string): PlaywrightNodeRunRecord => {
   };
 };
 
-const updateRunState = async (
+export const updateRunState = async (
   runId: string,
   patch: Partial<PlaywrightNodeRunRecord>
 ): Promise<PlaywrightNodeRunRecord> => {
@@ -351,49 +300,6 @@ const buildContextOptions = (
   return merged;
 };
 
-const parseUserScript = (
-  source: string,
-  logs: string[]
-): ((context: Record<string, unknown>) => Promise<unknown>) => {
-  const normalizedSource = source.replace(/^\s*export\s+default\s+/m, 'const defaultExport = ');
-  const bootstrap = `
-    "use strict";
-    let __playwrightNodeFn = null;
-    const module = { exports: {} };
-    const exports = module.exports;
-    ${normalizedSource}
-    if (typeof run === 'function') __playwrightNodeFn = run;
-    if (!__playwrightNodeFn && typeof defaultExport === 'function') __playwrightNodeFn = defaultExport;
-    if (!__playwrightNodeFn && typeof module.exports === 'function') __playwrightNodeFn = module.exports;
-    if (!__playwrightNodeFn && module.exports && typeof module.exports.default === 'function') __playwrightNodeFn = module.exports.default;
-    if (!__playwrightNodeFn && exports && typeof exports.default === 'function') __playwrightNodeFn = exports.default;
-    __playwrightNodeFn;
-  `;
-  const script = new vm.Script(bootstrap, {
-    filename: 'ai-paths-playwright-node.user.js',
-  });
-  const sandbox = {
-    console: {
-      log: (...args: unknown[]) => logs.push(`[console.log] ${args.map(safeStringify).join(' ')}`),
-      info: (...args: unknown[]) =>
-        logs.push(`[console.info] ${args.map(safeStringify).join(' ')}`),
-      warn: (...args: unknown[]) =>
-        logs.push(`[console.warn] ${args.map(safeStringify).join(' ')}`),
-      error: (...args: unknown[]) =>
-        logs.push(`[console.error] ${args.map(safeStringify).join(' ')}`),
-    },
-    setTimeout,
-    clearTimeout,
-    URL,
-    TextEncoder,
-    TextDecoder,
-  };
-  const resolved: unknown = script.runInNewContext(sandbox, { timeout: 250 });
-  if (typeof resolved !== 'function') {
-    throw new Error('Playwright script must export a default async function or define `run`.');
-  }
-  return resolved as (context: Record<string, unknown>) => Promise<unknown>;
-};
 
 const normalizePolicyAllowedHosts = (hosts: string[] | undefined): Set<string> => {
   if (!Array.isArray(hosts) || hosts.length === 0) {
@@ -460,262 +366,16 @@ const registerOutboundPolicyRoute = async (
   });
 };
 
-const resolveRelativeArtifactPath = (artifactPath: string): string =>
-  path.relative(RUN_ROOT_DIR, artifactPath).replace(/\\/g, '/');
-
-const saveFileArtifact = async (
-  runArtifactsDir: string,
-  name: string,
-  extension: string,
-  content: string | Buffer,
-  mimeType: string,
-  kind: string
-): Promise<PlaywrightNodeRunArtifact> => {
-  const safeName = name.trim().replace(/[^a-zA-Z0-9-_]+/g, '_') || kind;
-  const fileName = `${safeName}-${Date.now()}.${extension}`;
-  const filePath = joinRuntimePath(runArtifactsDir, fileName);
-  await nodeFs.writeFile(filePath, content);
-  return {
-    name,
-    path: resolveRelativeArtifactPath(filePath),
-    mimeType,
-    kind,
-  };
-};
-
-type LiveRunStateCoordinator = {
-  queueUpdate: (patchFactory: () => Partial<PlaywrightNodeRunRecord>) => void;
-  flush: () => Promise<void>;
-  finalize: () => void;
-};
-
-const createLiveRunStateCoordinator = (runId: string): LiveRunStateCoordinator => {
-  let liveStateWriteChain: Promise<void> = Promise.resolve();
-  let isFinalizingLiveState = false;
-  return {
-    queueUpdate: (patchFactory: () => Partial<PlaywrightNodeRunRecord>): void => {
-      if (isFinalizingLiveState) return;
-      liveStateWriteChain = liveStateWriteChain
-        .then(async () => {
-          if (isFinalizingLiveState) return;
-          await updateRunState(runId, patchFactory());
-        })
-        .catch((error) => {
-          void ErrorSystem.captureException(error);
-        });
-    },
-    flush: async (): Promise<void> => {
-      await liveStateWriteChain.catch((error) => {
-        void ErrorSystem.captureException(error);
-      });
-    },
-    finalize: (): void => {
-      isFinalizingLiveState = true;
-    },
-  };
-};
-
-const captureFinalRunArtifacts = async (params: {
-  artifacts: PlaywrightNodeRunArtifact[];
-  context: BrowserContext | null;
-  logs: string[];
-  page: Page;
-  request: PlaywrightNodeRunRequest;
-  runArtifactsDir: string;
-}): Promise<void> => {
-  const { artifacts, context, logs, page, request, runArtifactsDir } = params;
-  if (request.capture?.screenshot) {
-    artifacts.push(
-      await saveFileArtifact(
-        runArtifactsDir,
-        'final',
-        'png',
-        await page.screenshot({ fullPage: true }),
-        'image/png',
-        'screenshot'
-      )
-    );
-  }
-  if (request.capture?.html) {
-    artifacts.push(
-      await saveFileArtifact(
-        runArtifactsDir,
-        'final',
-        'html',
-        await page.content(),
-        'text/html',
-        'html'
-      )
-    );
-  }
-  if (request.capture?.trace && context) {
-    const tracePath = path.join(runArtifactsDir, `trace-${Date.now()}.zip`);
-    await context.tracing.stop({ path: tracePath });
-    artifacts.push({
-      name: 'trace',
-      path: resolveRelativeArtifactPath(tracePath),
-      mimeType: 'application/zip',
-      kind: 'trace',
-    });
-    logs.push('[runtime] Trace capture saved.');
-  }
-};
-
-const buildCompletedRunState = async (params: {
-  artifacts: PlaywrightNodeRunArtifact[];
-  emittedOutputs: Record<string, unknown>;
-  existingRun: PlaywrightNodeRunRecord | null;
-  inlineArtifacts: Array<{ name: string; value: unknown }>;
-  logs: string[];
-  page: Page;
-  returnValue: unknown;
-  runId: string;
-  startedAt: string;
-}): Promise<PlaywrightNodeRunRecord> => {
-  const { artifacts, emittedOutputs, existingRun, inlineArtifacts, logs, page, returnValue, runId, startedAt } =
-    params;
-  const completedAt = nowIso();
-  return {
-    runId,
-    ownerUserId: existingRun?.ownerUserId ?? null,
-    status: 'completed',
-    startedAt,
-    completedAt,
-    createdAt: existingRun?.createdAt ?? startedAt,
-    updatedAt: completedAt,
-    result: {
-      returnValue,
-      outputs: emittedOutputs,
-      inlineArtifacts,
-      finalUrl: page.url(),
-      title: await page.title().catch(() => ''),
-    },
-    error: null,
-    artifacts,
-    logs,
-  };
-};
-
-const captureFailureArtifacts = async (params: {
-  artifacts: PlaywrightNodeRunArtifact[];
-  errorMessage: string;
-  page: Page | null;
-  runArtifactsDir: string;
-}): Promise<void> => {
-  const { artifacts, errorMessage, page, runArtifactsDir } = params;
-  if (!page) return;
-
-  try {
-    artifacts.push(
-      await saveFileArtifact(
-        runArtifactsDir,
-        'failure',
-        'png',
-        await page.screenshot({ fullPage: true }),
-        'image/png',
-        'screenshot'
-      )
-    );
-  } catch (captureError) {
-    void ErrorSystem.captureException(captureError);
-  }
-
-  try {
-    artifacts.push(
-      await saveFileArtifact(
-        runArtifactsDir,
-        'failure',
-        'html',
-        await page.content(),
-        'text/html',
-        'html'
-      )
-    );
-  } catch (captureError) {
-    void ErrorSystem.captureException(captureError);
-  }
-
-  try {
-    artifacts.push(
-      await saveFileArtifact(
-        runArtifactsDir,
-        'failure-state',
-        'json',
-        `${JSON.stringify(
-          {
-            error: errorMessage,
-            finalUrl: page.url(),
-            title: await page.title().catch(() => ''),
-          },
-          null,
-          2
-        )}\n`,
-        'application/json',
-        'json'
-      )
-    );
-  } catch (captureError) {
-    void ErrorSystem.captureException(captureError);
-  }
-};
-
-const buildFailedRunState = (params: {
-  artifacts: PlaywrightNodeRunArtifact[];
-  errorMessage: string;
-  existingRun: PlaywrightNodeRunRecord | null;
-  logs: string[];
-  runId: string;
-  startedAt: string;
-}): PlaywrightNodeRunRecord => {
-  const { artifacts, errorMessage, existingRun, logs, runId, startedAt } = params;
-  const completedAt = nowIso();
-  return {
-    runId,
-    ownerUserId: existingRun?.ownerUserId ?? null,
-    status: 'failed',
-    startedAt,
-    completedAt,
-    createdAt: existingRun?.createdAt ?? startedAt,
-    updatedAt: completedAt,
-    result: null,
-    error: errorMessage,
-    artifacts,
-    logs,
-  };
-};
-
-const persistVideoArtifact = async (params: {
-  artifacts: PlaywrightNodeRunArtifact[];
-  logs: string[];
-  page: Page | null;
-  request: PlaywrightNodeRunRequest;
-  runArtifactsDir: string;
-}): Promise<boolean> => {
-  const { artifacts, logs, page, request, runArtifactsDir } = params;
-  if (!page || !request.capture?.video) {
-    return false;
-  }
-  try {
-    const video = page.video();
-    if (!video) {
-      return false;
-    }
-    const videoPath = await video.path();
-    const targetVideoPath = path.join(runArtifactsDir, `video-${Date.now()}.webm`);
-    await nodeFs.copyFile(videoPath, targetVideoPath);
-    artifacts.push({
-      name: 'video',
-      path: resolveRelativeArtifactPath(targetVideoPath),
-      mimeType: 'video/webm',
-      kind: 'video',
-    });
-    logs.push('[runtime] Video capture saved.');
-    return true;
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return false;
-  }
-};
+import {
+  resolveRelativeArtifactPath,
+  saveFileArtifact,
+  createLiveRunStateCoordinator,
+  captureFinalRunArtifacts,
+  buildCompletedRunState,
+  captureFailureArtifacts,
+  buildFailedRunState,
+  persistVideoArtifact
+} from './playwright-node-runner.artifacts';
 
 const executePlaywrightNodeRun = async (
   runId: string,

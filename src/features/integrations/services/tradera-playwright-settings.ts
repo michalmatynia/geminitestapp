@@ -32,24 +32,42 @@ const toPlaywrightSameSite = (
   }
 };
 
-const normalizeStorageState = (state: PlaywrightStorageState): PersistedStorageState => ({
-  cookies: state.cookies.map((cookie) => ({
+const normalizeStorageStateCookie = (
+  cookie: PlaywrightStorageState['cookies'][number]
+): PersistedStorageState['cookies'][number] => {
+  const {
+    domain = '',
+    path = '/',
+    expires = -1,
+    httpOnly = false,
+    secure = false,
+  } = cookie;
+
+  return {
     name: cookie.name,
     value: cookie.value,
-    domain: cookie.domain ?? '',
-    path: cookie.path ?? '/',
-    expires: cookie.expires ?? -1,
-    httpOnly: cookie.httpOnly ?? false,
-    secure: cookie.secure ?? false,
+    domain,
+    path,
+    expires,
+    httpOnly,
+    secure,
     sameSite: toPlaywrightSameSite(cookie.sameSite),
+  };
+};
+
+const normalizeStorageStateOrigin = (
+  origin: PlaywrightStorageState['origins'][number]
+): PersistedStorageState['origins'][number] => ({
+  origin: origin.origin,
+  localStorage: origin.localStorage.map((entry) => ({
+    name: entry.name,
+    value: entry.value,
   })),
-  origins: state.origins.map((origin) => ({
-    origin: origin.origin,
-    localStorage: origin.localStorage.map((entry) => ({
-      name: entry.name,
-      value: entry.value,
-    })),
-  })),
+});
+
+const normalizeStorageState = (state: PlaywrightStorageState): PersistedStorageState => ({
+  cookies: state.cookies.map(normalizeStorageStateCookie),
+  origins: state.origins.map(normalizeStorageStateOrigin),
 });
 
 export type TraderaPlaywrightRuntimeSettings = {

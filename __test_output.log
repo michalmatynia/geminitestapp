@@ -1,0 +1,752 @@
+
+> libapp2@0.1.0 test:unit
+> vitest run --project unit __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp[39m
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2muses shared chips for lesson library assignment and mastery states
+[22m[39museKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent computed { size: [33m1[39m, keys: [ [32m'clock'[39m ] }
+useKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+useKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+
+[90mstderr[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2muses shared chips for lesson library assignment and mastery states
+[22m[39mReceived `false` for a non-boolean attribute `prefetch`.
+
+If you want to write it to the DOM, pass a string instead: prefetch="false" or prefetch={value.toString()}.
+
+If you used to conditionally omit it with prefetch={condition && value}, pass prefetch={condition ? value : undefined} instead.
+Received `false` for a non-boolean attribute `scroll`.
+
+If you want to write it to the DOM, pass a string instead: scroll="false" or scroll={value.toString()}.
+
+If you used to conditionally omit it with scroll={condition && value}, pass scroll={condition ? value : undefined} instead.
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2muses shared chips for lesson library assignment and mastery states
+[22m[39museKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2muses shared chips for lesson library assignment and mastery states
+[22m[39museKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mshows a compact completed parent-assignment pill in the active lesson header
+[22m[39museKangurLessons mock returning lessons count: [33m2[39m
+DEBUG: lessonAssignmentsByComponent computed { size: [33m1[39m, keys: [ [32m'adding'[39m ] }
+useKangurLessons mock returning lessons count: [33m2[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m2[39m }
+useKangurLessons mock returning lessons count: [33m2[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m2[39m }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mshows a compact completed parent-assignment pill in the active lesson header
+[22m[39museKangurLessons mock returning lessons count: [33m2[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m2[39m }
+useKangurLessons mock returning lessons count: [33m2[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m2[39m }
+useKangurLessons mock returning lessons count: [33m2[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m2[39m }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mshows a compact completed parent-assignment pill in the active lesson header
+[22m[39museKangurLessons mock returning lessons count: [33m2[39m
+DEBUG: lessonAssignmentsByComponent computed { size: [33m1[39m, keys: [ [32m'adding'[39m ] }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mshows a compact completed parent-assignment pill in the active lesson header
+[22m[39museKangurLessons mock returning lessons count: [33m2[39m
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mkeeps the selected lesson title in the active header while still using Mongo-backed copy
+[22m[39museKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+useKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+useKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mkeeps the selected lesson title in the active header while still using Mongo-backed copy
+[22m[39museKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mkeeps the selected lesson title in the active header while still using Mongo-backed copy
+[22m[39museKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+useKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+useKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mkeeps the selected lesson title in the active header while still using Mongo-backed copy
+[22m[39museKangurLessons mock returning lessons count: [33m1[39m
+DEBUG: lessonAssignmentsByComponent empty return { assignmentsLength: [33m0[39m, lessonsLength: [33m1[39m }
+
+[90mstdout[2m | __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22m[2mLessons Page Content[2m > [22m[2mkeeps the selected lesson title in the active header while still using Mongo-backed copy
+[22m[39museKangurLessons mock returning lessons count: [33m1[39m
+
+ [31m❯[39m [30m[42m unit [49m[39m __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx [2m([22m[2m3 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 3459[2mms[22m[39m
+[31m     [31m×[31m uses shared chips for lesson library assignment and mastery states[39m[33m 1142[2mms[22m[39m
+[31m     [31m×[31m shows a compact completed parent-assignment pill in the active lesson header[39m[33m 1196[2mms[22m[39m
+[31m     [31m×[31m keeps the selected lesson title in the active header while still using Mongo-backed copy[39m[33m 1117[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22mLessons Page Content[2m > [22muses shared chips for lesson library assignment and mastery states
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an element with the text: /Priorytet rodzica/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)] kangur-shell-viewport-height kangur-premium-bg"[39m
+      [33mid[39m=[32m"kangur-lessons-page"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33maria-label[39m=[32m"Przejdź do głównej treści"[39m
+        [33mclass[39m=[32m"sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70"[39m
+        [33mhref[39m=[32m"#kangur-lessons-main"[39m
+      [36m>[39m
+        [0mPrzejdź do głównej treści[0m
+      [36m</a>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative z-10 flex w-full flex-col items-center kangur-shell-viewport-height"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"kangur-top-bar sticky inset-x-0 top-0 z-40 w-full"[39m
+          [33mdata-testid[39m=[32m"kangur-page-top-bar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex w-full flex-col items-stretch kangur-panel-gap px-4 sm:px-6 lg:px-8 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap justify-center"[39m
+            [33mdata-testid[39m=[32m"kangur-page-top-bar-content"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 flex-1 items-center"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-hidden[39m=[32m"false"[39m
+                [33mclass[39m=[32m"hidden w-full min-w-0 sm:block"[39m
+              [36m>[39m
+                [36m<nav[39m
+                  [33maria-label[39m=[32m"Główna nawigacja Kangur"[39m
+                  [33mclass[39m=[32m"kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid w-full min-w-0 grid-cols-2 gap-2 max-[420px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center"[39m
+                    [33mdata-testid[39m=[32m"kangur-primary-nav-primary-actions"[39m
+                  [36m>[39m
+                    [36m<a[39m
+                      [33maria-label[39m=[32m"Strona główna"[39m
+                      [33mclass[39m=[32m"max-w-full cursor-pointer touch-manipulation select-none active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none disabled:active:scale-100 kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 border font-semibold tracking-[-0.02em] transition-all duration-200 focus-visible:ring-indigo-300/70 kangur-button-size-md [@media(pointer:coarse)]:min-h-11 px-3 sm:px-4"[39m
+                      [33mdata-doc-id[39m=[32m"top_nav_home"[39m
+                      [33mdata-nav-state[39m=[32m"idle"[39m
+                      [33mdata-testid[39m=[32m"kangur-primary-nav-home"[39m
+                      [33mhref[39m=[32m"/kangur"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex flex-col items-center justify-center"[39m
+                        [33mdata-testid[39m=[32m"kangur-home-brand"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"[39m
+                          [33mdata-testid[39m=[32m"kangur-home-logo"[39m
+                        [36m>[39m
+                          [36m<svg[39m
+                            [33maria-hidden[39m=[32m"true"[39m
+                            [33mclass[39m=[32m"h-[24px] w-auto overflow-visible sm:h-[28px] -translate-y-[1px]"[39m
+                            [33mfill[39m=[32m"none"[39m
+                            [33mfocusable[39m=[32m"false"[39m
+                            [33mviewBox[39m=[32m"20 24 710 182"[39m
+                            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                          [36m>[39m
+                            [36m<defs>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-word-grad"[39m
+                                [33mx1[39m=[32m"36"[39m
+                                [33mx2[39m=[32m"550"[39m
+                                [33my1[39m=[32m"52"[39m
+                                [33my2[39m=[32m"200"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-start, #4457D7)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0.55"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-mid, #5566F2)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-end, #7C52FF)"[39m
+                                [36m/>[39m
+                              [36m</lineargradient>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-ring-grad"[39m
+                                [33mx1[39m=[32m"586"[39m
+                                [33mx2[39m=[32m"710"[39m
+                                [33my1[39m=[32m"58"[39m
+                                [33my2[39m=[32m"182"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-ring-start, #4F63F8)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)] kangur-shell-viewport-height kangur-premium-bg"[39m
+      [33mid[39m=[32m"kangur-lessons-page"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33maria-label[39m=[32m"Przejdź do głównej treści"[39m
+        [33mclass[39m=[32m"sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70"[39m
+        [33mhref[39m=[32m"#kangur-lessons-main"[39m
+      [36m>[39m
+        [0mPrzejdź do głównej treści[0m
+      [36m</a>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative z-10 flex w-full flex-col items-center kangur-shell-viewport-height"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"kangur-top-bar sticky inset-x-0 top-0 z-40 w-full"[39m
+          [33mdata-testid[39m=[32m"kangur-page-top-bar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex w-full flex-col items-stretch kangur-panel-gap px-4 sm:px-6 lg:px-8 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap justify-center"[39m
+            [33mdata-testid[39m=[32m"kangur-page-top-bar-content"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 flex-1 items-center"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-hidden[39m=[32m"false"[39m
+                [33mclass[39m=[32m"hidden w-full min-w-0 sm:block"[39m
+              [36m>[39m
+                [36m<nav[39m
+                  [33maria-label[39m=[32m"Główna nawigacja Kangur"[39m
+                  [33mclass[39m=[32m"kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid w-full min-w-0 grid-cols-2 gap-2 max-[420px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center"[39m
+                    [33mdata-testid[39m=[32m"kangur-primary-nav-primary-actions"[39m
+                  [36m>[39m
+                    [36m<a[39m
+                      [33maria-label[39m=[32m"Strona główna"[39m
+                      [33mclass[39m=[32m"max-w-full cursor-pointer touch-manipulation select-none active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none disabled:active:scale-100 kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 border font-semibold tracking-[-0.02em] transition-all duration-200 focus-visible:ring-indigo-300/70 kangur-button-size-md [@media(pointer:coarse)]:min-h-11 px-3 sm:px-4"[39m
+                      [33mdata-doc-id[39m=[32m"top_nav_home"[39m
+                      [33mdata-nav-state[39m=[32m"idle"[39m
+                      [33mdata-testid[39m=[32m"kangur-primary-nav-home"[39m
+                      [33mhref[39m=[32m"/kangur"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex flex-col items-center justify-center"[39m
+                        [33mdata-testid[39m=[32m"kangur-home-brand"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"[39m
+                          [33mdata-testid[39m=[32m"kangur-home-logo"[39m
+                        [36m>[39m
+                          [36m<svg[39m
+                            [33maria-hidden[39m=[32m"true"[39m
+                            [33mclass[39m=[32m"h-[24px] w-auto overflow-visible sm:h-[28px] -translate-y-[1px]"[39m
+                            [33mfill[39m=[32m"none"[39m
+                            [33mfocusable[39m=[32m"false"[39m
+                            [33mviewBox[39m=[32m"20 24 710 182"[39m
+                            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                          [36m>[39m
+                            [36m<defs>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-word-grad"[39m
+                                [33mx1[39m=[32m"36"[39m
+                                [33mx2[39m=[32m"550"[39m
+                                [33my1[39m=[32m"52"[39m
+                                [33my2[39m=[32m"200"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-start, #4457D7)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0.55"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-mid, #5566F2)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-end, #7C52FF)"[39m
+                                [36m/>[39m
+                              [36m</lineargradient>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-ring-grad"[39m
+                                [33mx1[39m=[32m"586"[39m
+                                [33mx2[39m=[32m"710"[39m
+                                [33my1[39m=[32m"58"[39m
+                                [33my2[39m=[32m"182"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-ring-start, #4F63F8)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"...
+[90m [2m❯[22m waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:[2m163:27[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m86:33[22m[39m
+[36m [2m❯[22m __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx:[2m372:25[22m[39m
+    [90m370| [39m
+    [90m371| [39m    expect(await screen.findByText(/Opanowane 92%/i)).toBeInTheDocumen…
+    [90m372| [39m    expect(await screen.findByText(/Priorytet rodzica/i)).toBeInTheDoc…
+    [90m   | [39m                        [31m^[39m
+    [90m373| [39m  })[33m;[39m
+    [90m374| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22mLessons Page Content[2m > [22mshows a compact completed parent-assignment pill in the active lesson header
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an element by: [data-testid="active-lesson-parent-completed-chip"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)] kangur-shell-viewport-height kangur-premium-bg"[39m
+      [33mid[39m=[32m"kangur-lessons-page"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33maria-label[39m=[32m"Przejdź do głównej treści"[39m
+        [33mclass[39m=[32m"sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70"[39m
+        [33mhref[39m=[32m"#kangur-lessons-main"[39m
+      [36m>[39m
+        [0mPrzejdź do głównej treści[0m
+      [36m</a>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative z-10 flex w-full flex-col items-center kangur-shell-viewport-height"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"kangur-top-bar sticky inset-x-0 top-0 z-40 w-full"[39m
+          [33mdata-testid[39m=[32m"kangur-page-top-bar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex w-full flex-col items-stretch kangur-panel-gap px-4 sm:px-6 lg:px-8 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap justify-center"[39m
+            [33mdata-testid[39m=[32m"kangur-page-top-bar-content"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 flex-1 items-center"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-hidden[39m=[32m"false"[39m
+                [33mclass[39m=[32m"hidden w-full min-w-0 sm:block"[39m
+              [36m>[39m
+                [36m<nav[39m
+                  [33maria-label[39m=[32m"Główna nawigacja Kangur"[39m
+                  [33mclass[39m=[32m"kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid w-full min-w-0 grid-cols-2 gap-2 max-[420px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center"[39m
+                    [33mdata-testid[39m=[32m"kangur-primary-nav-primary-actions"[39m
+                  [36m>[39m
+                    [36m<a[39m
+                      [33maria-label[39m=[32m"Strona główna"[39m
+                      [33mclass[39m=[32m"max-w-full cursor-pointer touch-manipulation select-none active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none disabled:active:scale-100 kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 border font-semibold tracking-[-0.02em] transition-all duration-200 focus-visible:ring-indigo-300/70 kangur-button-size-md [@media(pointer:coarse)]:min-h-11 px-3 sm:px-4"[39m
+                      [33mdata-doc-id[39m=[32m"top_nav_home"[39m
+                      [33mdata-nav-state[39m=[32m"idle"[39m
+                      [33mdata-testid[39m=[32m"kangur-primary-nav-home"[39m
+                      [33mhref[39m=[32m"/kangur"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex flex-col items-center justify-center"[39m
+                        [33mdata-testid[39m=[32m"kangur-home-brand"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"[39m
+                          [33mdata-testid[39m=[32m"kangur-home-logo"[39m
+                        [36m>[39m
+                          [36m<svg[39m
+                            [33maria-hidden[39m=[32m"true"[39m
+                            [33mclass[39m=[32m"h-[24px] w-auto overflow-visible sm:h-[28px] -translate-y-[1px]"[39m
+                            [33mfill[39m=[32m"none"[39m
+                            [33mfocusable[39m=[32m"false"[39m
+                            [33mviewBox[39m=[32m"20 24 710 182"[39m
+                            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                          [36m>[39m
+                            [36m<defs>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-word-grad"[39m
+                                [33mx1[39m=[32m"36"[39m
+                                [33mx2[39m=[32m"550"[39m
+                                [33my1[39m=[32m"52"[39m
+                                [33my2[39m=[32m"200"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-start, #4457D7)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0.55"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-mid, #5566F2)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-end, #7C52FF)"[39m
+                                [36m/>[39m
+                              [36m</lineargradient>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-ring-grad"[39m
+                                [33mx1[39m=[32m"586"[39m
+                                [33mx2[39m=[32m"710"[39m
+                                [33my1[39m=[32m"58"[39m
+                                [33my2[39m=[32m"182"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-ring-start, #4F63F8)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)] kangur-shell-viewport-height kangur-premium-bg"[39m
+      [33mid[39m=[32m"kangur-lessons-page"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33maria-label[39m=[32m"Przejdź do głównej treści"[39m
+        [33mclass[39m=[32m"sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70"[39m
+        [33mhref[39m=[32m"#kangur-lessons-main"[39m
+      [36m>[39m
+        [0mPrzejdź do głównej treści[0m
+      [36m</a>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative z-10 flex w-full flex-col items-center kangur-shell-viewport-height"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"kangur-top-bar sticky inset-x-0 top-0 z-40 w-full"[39m
+          [33mdata-testid[39m=[32m"kangur-page-top-bar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex w-full flex-col items-stretch kangur-panel-gap px-4 sm:px-6 lg:px-8 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap justify-center"[39m
+            [33mdata-testid[39m=[32m"kangur-page-top-bar-content"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 flex-1 items-center"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-hidden[39m=[32m"false"[39m
+                [33mclass[39m=[32m"hidden w-full min-w-0 sm:block"[39m
+              [36m>[39m
+                [36m<nav[39m
+                  [33maria-label[39m=[32m"Główna nawigacja Kangur"[39m
+                  [33mclass[39m=[32m"kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid w-full min-w-0 grid-cols-2 gap-2 max-[420px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center"[39m
+                    [33mdata-testid[39m=[32m"kangur-primary-nav-primary-actions"[39m
+                  [36m>[39m
+                    [36m<a[39m
+                      [33maria-label[39m=[32m"Strona główna"[39m
+                      [33mclass[39m=[32m"max-w-full cursor-pointer touch-manipulation select-none active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none disabled:active:scale-100 kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 border font-semibold tracking-[-0.02em] transition-all duration-200 focus-visible:ring-indigo-300/70 kangur-button-size-md [@media(pointer:coarse)]:min-h-11 px-3 sm:px-4"[39m
+                      [33mdata-doc-id[39m=[32m"top_nav_home"[39m
+                      [33mdata-nav-state[39m=[32m"idle"[39m
+                      [33mdata-testid[39m=[32m"kangur-primary-nav-home"[39m
+                      [33mhref[39m=[32m"/kangur"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex flex-col items-center justify-center"[39m
+                        [33mdata-testid[39m=[32m"kangur-home-brand"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"[39m
+                          [33mdata-testid[39m=[32m"kangur-home-logo"[39m
+                        [36m>[39m
+                          [36m<svg[39m
+                            [33maria-hidden[39m=[32m"true"[39m
+                            [33mclass[39m=[32m"h-[24px] w-auto overflow-visible sm:h-[28px] -translate-y-[1px]"[39m
+                            [33mfill[39m=[32m"none"[39m
+                            [33mfocusable[39m=[32m"false"[39m
+                            [33mviewBox[39m=[32m"20 24 710 182"[39m
+                            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                          [36m>[39m
+                            [36m<defs>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-word-grad"[39m
+                                [33mx1[39m=[32m"36"[39m
+                                [33mx2[39m=[32m"550"[39m
+                                [33my1[39m=[32m"52"[39m
+                                [33my2[39m=[32m"200"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-start, #4457D7)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0.55"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-mid, #5566F2)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-end, #7C52FF)"[39m
+                                [36m/>[39m
+                              [36m</lineargradient>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-ring-grad"[39m
+                                [33mx1[39m=[32m"586"[39m
+                                [33mx2[39m=[32m"710"[39m
+                                [33my1[39m=[32m"58"[39m
+                                [33my2[39m=[32m"182"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-ring-start, #4F63F8)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"...
+[90m [2m❯[22m waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:[2m163:27[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m86:33[22m[39m
+[36m [2m❯[22m __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx:[2m397:25[22m[39m
+    [90m395| [39m    fireEvent.click(await screen.findByRole('button', { name: /dodawan…
+    [90m396| [39m
+    [90m397| [39m    expect(await screen.findByTestId('active-lesson-parent-completed-c…
+    [90m   | [39m                        [31m^[39m
+    [90m398| [39m    expect(await screen.findByText(/Ukończone dla rodzica/i)).toBeInTh…
+    [90m399| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[42m unit [49m[39m __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx[2m > [22mLessons Page Content[2m > [22mkeeps the selected lesson title in the active header while still using Mongo-backed copy
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an element with the text: Mongo zadanie rodzica. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)] kangur-shell-viewport-height kangur-premium-bg"[39m
+      [33mid[39m=[32m"kangur-lessons-page"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33maria-label[39m=[32m"Przejdź do głównej treści"[39m
+        [33mclass[39m=[32m"sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70"[39m
+        [33mhref[39m=[32m"#kangur-lessons-main"[39m
+      [36m>[39m
+        [0mPrzejdź do głównej treści[0m
+      [36m</a>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative z-10 flex w-full flex-col items-center kangur-shell-viewport-height"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"kangur-top-bar sticky inset-x-0 top-0 z-40 w-full"[39m
+          [33mdata-testid[39m=[32m"kangur-page-top-bar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex w-full flex-col items-stretch kangur-panel-gap px-4 sm:px-6 lg:px-8 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap justify-center"[39m
+            [33mdata-testid[39m=[32m"kangur-page-top-bar-content"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 flex-1 items-center"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-hidden[39m=[32m"false"[39m
+                [33mclass[39m=[32m"hidden w-full min-w-0 sm:block"[39m
+              [36m>[39m
+                [36m<nav[39m
+                  [33maria-label[39m=[32m"Główna nawigacja Kangur"[39m
+                  [33mclass[39m=[32m"kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid w-full min-w-0 grid-cols-2 gap-2 max-[420px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center"[39m
+                    [33mdata-testid[39m=[32m"kangur-primary-nav-primary-actions"[39m
+                  [36m>[39m
+                    [36m<a[39m
+                      [33maria-label[39m=[32m"Strona główna"[39m
+                      [33mclass[39m=[32m"max-w-full cursor-pointer touch-manipulation select-none active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none disabled:active:scale-100 kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 border font-semibold tracking-[-0.02em] transition-all duration-200 focus-visible:ring-indigo-300/70 kangur-button-size-md [@media(pointer:coarse)]:min-h-11 px-3 sm:px-4"[39m
+                      [33mdata-doc-id[39m=[32m"top_nav_home"[39m
+                      [33mdata-nav-state[39m=[32m"idle"[39m
+                      [33mdata-testid[39m=[32m"kangur-primary-nav-home"[39m
+                      [33mhref[39m=[32m"/kangur"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex flex-col items-center justify-center"[39m
+                        [33mdata-testid[39m=[32m"kangur-home-brand"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"[39m
+                          [33mdata-testid[39m=[32m"kangur-home-logo"[39m
+                        [36m>[39m
+                          [36m<svg[39m
+                            [33maria-hidden[39m=[32m"true"[39m
+                            [33mclass[39m=[32m"h-[24px] w-auto overflow-visible sm:h-[28px] -translate-y-[1px]"[39m
+                            [33mfill[39m=[32m"none"[39m
+                            [33mfocusable[39m=[32m"false"[39m
+                            [33mviewBox[39m=[32m"20 24 710 182"[39m
+                            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                          [36m>[39m
+                            [36m<defs>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-word-grad"[39m
+                                [33mx1[39m=[32m"36"[39m
+                                [33mx2[39m=[32m"550"[39m
+                                [33my1[39m=[32m"52"[39m
+                                [33my2[39m=[32m"200"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-start, #4457D7)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0.55"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-mid, #5566F2)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-end, #7C52FF)"[39m
+                                [36m/>[39m
+                              [36m</lineargradient>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-ring-grad"[39m
+                                [33mx1[39m=[32m"586"[39m
+                                [33mx2[39m=[32m"710"[39m
+                                [33my1[39m=[32m"58"[39m
+                                [33my2[39m=[32m"182"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-ring-start, #4F63F8)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative isolate flex w-full flex-col items-center overflow-hidden [color:var(--kangur-page-text)] kangur-shell-viewport-height kangur-premium-bg"[39m
+      [33mid[39m=[32m"kangur-lessons-page"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33maria-label[39m=[32m"Przejdź do głównej treści"[39m
+        [33mclass[39m=[32m"sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-full focus:bg-white/96 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-indigo-700 focus:shadow-[0_18px_40px_-28px_rgba(79,99,216,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70"[39m
+        [33mhref[39m=[32m"#kangur-lessons-main"[39m
+      [36m>[39m
+        [0mPrzejdź do głównej treści[0m
+      [36m</a>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"relative z-10 flex w-full flex-col items-center kangur-shell-viewport-height"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"kangur-top-bar sticky inset-x-0 top-0 z-40 w-full"[39m
+          [33mdata-testid[39m=[32m"kangur-page-top-bar"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex w-full flex-col items-stretch kangur-panel-gap px-4 sm:px-6 lg:px-8 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap justify-center"[39m
+            [33mdata-testid[39m=[32m"kangur-page-top-bar-content"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 flex-1 items-center"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33maria-hidden[39m=[32m"false"[39m
+                [33mclass[39m=[32m"hidden w-full min-w-0 sm:block"[39m
+              [36m>[39m
+                [36m<nav[39m
+                  [33maria-label[39m=[32m"Główna nawigacja Kangur"[39m
+                  [33mclass[39m=[32m"kangur-nav-group flex w-full min-w-0 max-w-full flex-col items-stretch gap-2 border p-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"grid w-full min-w-0 grid-cols-2 gap-2 max-[420px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center"[39m
+                    [33mdata-testid[39m=[32m"kangur-primary-nav-primary-actions"[39m
+                  [36m>[39m
+                    [36m<a[39m
+                      [33maria-label[39m=[32m"Strona główna"[39m
+                      [33mclass[39m=[32m"max-w-full cursor-pointer touch-manipulation select-none active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ring-offset-white disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none disabled:active:scale-100 kangur-nav-item group relative inline-flex min-w-0 items-center justify-center gap-2 border font-semibold tracking-[-0.02em] transition-all duration-200 focus-visible:ring-indigo-300/70 kangur-button-size-md [@media(pointer:coarse)]:min-h-11 px-3 sm:px-4"[39m
+                      [33mdata-doc-id[39m=[32m"top_nav_home"[39m
+                      [33mdata-nav-state[39m=[32m"idle"[39m
+                      [33mdata-testid[39m=[32m"kangur-primary-nav-home"[39m
+                      [33mhref[39m=[32m"/kangur"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"flex flex-col items-center justify-center"[39m
+                        [33mdata-testid[39m=[32m"kangur-home-brand"[39m
+                      [36m>[39m
+                        [36m<span[39m
+                          [33mclass[39m=[32m"flex items-center justify-center transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"[39m
+                          [33mdata-testid[39m=[32m"kangur-home-logo"[39m
+                        [36m>[39m
+                          [36m<svg[39m
+                            [33maria-hidden[39m=[32m"true"[39m
+                            [33mclass[39m=[32m"h-[24px] w-auto overflow-visible sm:h-[28px] -translate-y-[1px]"[39m
+                            [33mfill[39m=[32m"none"[39m
+                            [33mfocusable[39m=[32m"false"[39m
+                            [33mviewBox[39m=[32m"20 24 710 182"[39m
+                            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                          [36m>[39m
+                            [36m<defs>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-word-grad"[39m
+                                [33mx1[39m=[32m"36"[39m
+                                [33mx2[39m=[32m"550"[39m
+                                [33my1[39m=[32m"52"[39m
+                                [33my2[39m=[32m"200"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-start, #4457D7)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0.55"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-mid, #5566F2)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-word-end, #7C52FF)"[39m
+                                [36m/>[39m
+                              [36m</lineargradient>[39m
+                              [36m<lineargradient[39m
+                                [33mgradientUnits[39m=[32m"userSpaceOnUse"[39m
+                                [33mid[39m=[32m"kangur-primary-nav-logo-ring-grad"[39m
+                                [33mx1[39m=[32m"586"[39m
+                                [33mx2[39m=[32m"710"[39m
+                                [33my1[39m=[32m"58"[39m
+                                [33my2[39m=[32m"182"[39m
+                              [36m>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"0"[39m
+                                  [33mstop-color[39m=[32m"var(--kangur-logo-ring-start, #4F63F8)"[39m
+                                [36m/>[39m
+                                [36m<stop[39m
+                                  [33moffset[39m=[32m"1"[39m
+                                  [33mstop-color[39m=[32m"...
+[90m [2m❯[22m waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:[2m163:27[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m86:33[22m[39m
+[36m [2m❯[22m __tests__/features/kangur/ui/pages/Lessons.page-content.test.tsx:[2m420:25[22m[39m
+    [90m418| [39m
+    [90m419| [39m    expect(await screen.findAllByText('Nauka zegara')).not.toHaveLengt…
+    [90m420| [39m    expect(await screen.findByText('Mongo zadanie rodzica')).toBeInThe…
+    [90m   | [39m                        [31m^[39m
+    [90m421| [39m    expect(await screen.findByText('Mongo materiał lekcji')).toBeInThe…
+    [90m422| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[90m (3)[39m
+[2m   Start at [22m 13:31:11
+[2m   Duration [22m 8.25s[2m (transform 3.44s, setup 222ms, import 4.18s, tests 3.46s, environment 296ms)[22m
+

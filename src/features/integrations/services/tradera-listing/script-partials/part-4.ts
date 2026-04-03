@@ -318,6 +318,61 @@ export const PART_4 = `          );
     return downloaded;
   };
 
+  const isListingEditorReady = async () => {
+    const readyLocators = await Promise.all([
+      firstVisible(TITLE_SELECTORS),
+      firstVisible(DESCRIPTION_SELECTORS),
+      firstVisible(PRICE_SELECTORS),
+      firstVisible(PUBLISH_SELECTORS),
+    ]);
+
+    return readyLocators.some(Boolean);
+  };
+
+  const openImageUploadControlsIfPresent = async () => {
+    for (const selector of IMAGE_UPLOAD_TRIGGER_SELECTORS) {
+      const locator = page.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      if (!count) continue;
+
+      for (let index = 0; index < count; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+
+        await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
+        await humanClick(candidate).catch(() => undefined);
+        await wait(800);
+        log?.('tradera.quicklist.image.trigger_opened', { selector });
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const ensureImageInputReady = async (attempts = 4) => {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      const imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
+      if (imageInput) {
+        return imageInput;
+      }
+
+      const editorReady = await isListingEditorReady();
+      const triggerOpened = await openImageUploadControlsIfPresent();
+      log?.('tradera.quicklist.image_input.retry', {
+        attempt,
+        editorReady,
+        triggerOpened,
+        url: page.url(),
+      });
+
+      await wait(triggerOpened ? 1200 : editorReady ? 1500 : 1000);
+    }
+
+    return firstExisting(IMAGE_INPUT_SELECTORS);
+  };
+
   const resolveUploadFiles = async () => {
     if (localImagePaths.length) {
       log?.('tradera.quicklist.image.local_paths', {

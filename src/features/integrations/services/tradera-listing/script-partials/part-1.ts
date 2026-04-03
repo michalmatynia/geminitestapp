@@ -7,7 +7,7 @@ export const PART_1 = `export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v43
+  // tradera-quicklist-default:v47
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -72,6 +72,31 @@ export const PART_1 = `export default async function run({
     'input[type="file"][name*="image" i]',
     'input[type="file"][name*="photo" i]',
     'input[type="file"]',
+  ];
+  const IMAGE_UPLOAD_TRIGGER_SELECTORS = [
+    'button[aria-label*="Add images" i]',
+    'button[aria-label*="Add image" i]',
+    'button[aria-label*="Upload images" i]',
+    'button[aria-label*="Upload image" i]',
+    'button[aria-label*="Lägg till bilder" i]',
+    'button[aria-label*="Lägg till bild" i]',
+    'button[aria-label*="Lägg till foton" i]',
+    'button:has-text("Add images")',
+    'button:has-text("Add image")',
+    'button:has-text("Upload images")',
+    'button:has-text("Upload image")',
+    'button:has-text("Lägg till bilder")',
+    'button:has-text("Lägg till bild")',
+    'button:has-text("Lägg till foton")',
+    'a:has-text("Add images")',
+    'a:has-text("Lägg till bilder")',
+    '[data-testid*="add-image"]',
+    '[data-testid*="add-photo"]',
+    '[data-testid*="upload-image"]',
+    '[data-testid*="upload-photo"]',
+    '[data-testid*="image-upload"]',
+    '[data-testid*="photo-upload"]',
+    '[data-testid*="image-picker"]',
   ];
   const DRAFT_IMAGE_REMOVE_SELECTORS = [
     'button[aria-label*="Remove image" i]',
@@ -273,7 +298,7 @@ export const PART_1 = `export default async function run({
   const rawDescription = toText(input?.description) || title;
   const description = rawDescription.includes('Item reference:')
     ? rawDescription
-    : rawDescription + '\n\nItem reference: ' + baseProductId;
+    : rawDescription + '\\n\\nItem reference: ' + baseProductId;
   const price = toNumber(input?.price) ?? 1;
   const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)
     ? input.traderaCategory.segments
@@ -352,6 +377,21 @@ export const PART_1 = `export default async function run({
       return;
     }
     await page.keyboard.press(key);
+  };
+
+  const emitStage = (stage, extra = {}) => {
+    if (typeof emit !== 'function') {
+      return;
+    }
+    let currentUrl = null;
+    try {
+      currentUrl = typeof page?.url === 'function' ? page.url() : null;
+    } catch {}
+    emit('result', {
+      stage,
+      ...(currentUrl ? { currentUrl } : {}),
+      ...extra,
+    });
   };
 
   const toSafeArtifactName = (value) =>

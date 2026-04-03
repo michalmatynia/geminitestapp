@@ -57,6 +57,13 @@ export {
   resolveCaseResolverUploadFolder,
 } from './settings-workspace-helpers';
 
+const resolveParsedDefaultDocumentFormatCandidate = (parsed: unknown): unknown => {
+  const direct = normalizeCaseResolverDefaultDocumentFormatValue(parsed);
+  if (direct) return direct;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  return (parsed as Record<string, unknown>)['defaultDocumentFormat'] ?? null;
+};
+
 export const parseCaseResolverDefaultDocumentFormat = (
   raw: string | null | undefined,
   fallback: CaseResolverDefaultDocumentFormat = 'wysiwyg'
@@ -66,14 +73,9 @@ export const parseCaseResolverDefaultDocumentFormat = (
 
   if (typeof raw === 'string') {
     const parsed = parseJsonSetting<unknown>(raw, null);
-    const parsedDirect = normalizeCaseResolverDefaultDocumentFormatValue(parsed);
-    if (parsedDirect) return parsedDirect;
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      const record = parsed as Record<string, unknown>;
-      const candidate = record['defaultDocumentFormat'] ?? null;
-      const parsedFromObject = normalizeCaseResolverDefaultDocumentFormatValue(candidate);
-      if (parsedFromObject) return parsedFromObject;
-    }
+    const parsedCandidate = resolveParsedDefaultDocumentFormatCandidate(parsed);
+    const parsedFormat = normalizeCaseResolverDefaultDocumentFormatValue(parsedCandidate);
+    if (parsedFormat) return parsedFormat;
   }
 
   return fallback;

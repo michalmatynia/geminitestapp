@@ -40,8 +40,6 @@ import type {
 } from './KangurMusicPianoRoll.types';
 import {
   clamp,
-  formatPitchDetuneLabel,
-  formatStereoPanLabel,
   KANGUR_PIANO_ROLL_ENGINE_CLASSNAME,
   nowMs,
   resolvePointerContactSpan,
@@ -58,6 +56,7 @@ import { KangurMusicPianoRollControls } from './KangurMusicPianoRollControls';
 import { KangurMusicPianoRollGrid } from './KangurMusicPianoRollGrid';
 import { KangurMusicPianoRollKeyboardRail } from './KangurMusicPianoRollKeyboardRail';
 import { KangurMusicPianoRollProvider } from './KangurMusicPianoRoll.context';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 export type {
   KangurMusicKeyboardMode,
@@ -270,16 +269,6 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     [keys]
   );
   const activeSynthGestureCount = activeSynthGestures.length;
-  const activeSynthPitchKey =
-    activeSynthGesture === null ? null : (keyDefinitionById.get(activeSynthGesture.noteId) ?? null);
-  const activeSynthPitchDetuneLabel =
-    activeSynthGesture === null ? '' : formatPitchDetuneLabel(activeSynthGesture.pitchCentsFromKey);
-  const activeSynthPitchPercent =
-    activeSynthGesture === null
-      ? null
-      : Math.round(activeSynthGesture.normalizedHorizontalPosition * 100);
-  const activeSynthPanLabel =
-    activeSynthGesture === null ? null : formatStereoPanLabel(activeSynthGesture.stereoPan);
   const shouldShowTransportRail =
     isFreePlayMode ||
     activeTransportStep !== null ||
@@ -726,6 +715,80 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     });
   };
 
+  const providerValue = {
+    activeOscTab,
+    activeStepIndex,
+    activeSynthGesture: activeSynthGesture as any,
+    activeSynthGestureCount,
+    activeSynthGestures: activeSynthGestures as any,
+    activeSynthGesturesRef: activeSynthGesturesRef as any,
+    activeTransportStep: activeTransportStep as any,
+    currentCursorStep: currentCursorStep as any,
+    expectedStepIndex,
+    expectedTransportStep: expectedTransportStep as any,
+    isCompactMobile,
+    isFreePlayMode,
+    isInteractive,
+    isSixYearOldVisualMode,
+    isSynthEnvelopeDialogOpen,
+    isSynthOscPanelOpen,
+    keyButtonRefs: keyButtonRefs as any,
+    keyDefinitionById: keyDefinitionById as any,
+    keys: keys as any,
+    keyTestIdPrefix,
+    laneKeys: laneKeys as any,
+    measureCount,
+    pressedNoteId: pressedNoteId as any,
+    pressedVelocity,
+    recentKeyPulses: recentKeyPulses as any,
+    resolvedCompletedCount,
+    resolvedKeyboardMode,
+    resolvedLaneHeightPx,
+    resolvedMelody: resolvedMelody as any,
+    resolvedMinStepWidthPx,
+    resolvedOsc1Config,
+    resolvedOsc2Config,
+    resolvedShowLaneLabels,
+    resolvedShowMeasureGuides,
+    resolvedStepCount,
+    resolvedSynthEnvelope,
+    resolvedSynthGlideMode,
+    resolvedSynthWaveform,
+    resolvedUnitsPerMeasure,
+    shouldShowTransportRail,
+    showKeyboardModeSwitch,
+    showSynthEnvelopeButton,
+    showSynthGlideModeSwitch,
+    showSynthOscSettingsPanel,
+    showSynthWaveformSwitch,
+    stepElementRefs: stepElementRefs as any,
+    stepTestIdPrefix,
+    synthAxisAnchors: synthAxisAnchors as any,
+    onActiveOscTabChange: setActiveOscTab,
+    onClearPress: clearPress as any,
+    onEndSynthGesture: endSynthGesture as any,
+    onKeyboardModeChange: handleKeyboardModeChange,
+    onOpenSynthEnvelopeDialog: () => setSynthEnvelopeDialogOpen(true),
+    onCloseSynthEnvelopeDialog: () => setSynthEnvelopeDialogOpen(false),
+    onResolveGestureDynamics: resolveGestureDynamics as any,
+    onResolveSynthGestureDetails: resolveSynthGestureDetails as any,
+    onResolveSynthPitchAtPoint: resolveSynthPitchAtPoint as any,
+    onResolveVerticalPosition: resolveVerticalPosition as any,
+    onStartPress: startPress as any,
+    onSynthEnvelopeReset: handleSynthEnvelopeReset,
+    onSynthEnvelopeSliderChange: handleSynthEnvelopeSliderChange,
+    onSynthGestureChange: onSynthGestureChange as any,
+    onSynthGestureStart: onSynthGestureStart as any,
+    onSynthGlideModeChange: handleSynthGlideModeChange,
+    onSynthOscPanelToggle: () => setSynthOscPanelOpen((prev) => !prev),
+    onSynthOscSettingsChange: handleSynthOscSettingsChange,
+    onSynthWaveformChange: handleSynthWaveformChange,
+    onTriggerKeyPulse: triggerKeyPulse as any,
+    onTriggerPress: triggerPress as any,
+    onUpdatePressFromPointerEvent: updatePressFromPointerEvent as any,
+    syncActiveSynthGestures,
+  };
+
   return (
     <div
       className={cn(
@@ -760,107 +823,11 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
           </div>
         ) : null}
 
-        <KangurMusicPianoRollProvider
-          value={{
-            activeOscTab,
-            isCompactMobile,
-            isSixYearOldVisualMode,
-            isSynthEnvelopeDialogOpen,
-            isSynthOscPanelOpen,
-            resolvedKeyboardMode,
-            resolvedOsc1Config,
-            resolvedOsc2Config,
-            resolvedSynthEnvelope,
-            resolvedSynthGlideMode,
-            resolvedSynthWaveform,
-            showKeyboardModeSwitch,
-            showSynthEnvelopeButton,
-            showSynthGlideModeSwitch,
-            showSynthOscSettingsPanel,
-            showSynthWaveformSwitch,
-            stepTestIdPrefix,
-            onActiveOscTabChange: setActiveOscTab,
-            onKeyboardModeChange: handleKeyboardModeChange,
-            onOpenSynthEnvelopeDialog: () => setSynthEnvelopeDialogOpen(true),
-            onCloseSynthEnvelopeDialog: () => setSynthEnvelopeDialogOpen(false),
-            onSynthEnvelopeReset: handleSynthEnvelopeReset,
-            onSynthEnvelopeSliderChange: handleSynthEnvelopeSliderChange,
-            onSynthGlideModeChange: handleSynthGlideModeChange,
-            onSynthOscPanelToggle: () => setSynthOscPanelOpen((prev) => !prev),
-            onSynthOscSettingsChange: handleSynthOscSettingsChange,
-            onSynthWaveformChange: handleSynthWaveformChange,
-          }}
-        >
+        <KangurMusicPianoRollProvider value={providerValue as any}>
           <KangurMusicPianoRollControls />
+          <KangurMusicPianoRollGrid />
+          <KangurMusicPianoRollKeyboardRail />
         </KangurMusicPianoRollProvider>
-
-        <KangurMusicPianoRollGrid
-          activeStepIndex={activeStepIndex}
-          activeSynthGesture={activeSynthGesture}
-          activeSynthGestureCount={activeSynthGestureCount}
-          activeSynthPanLabel={activeSynthPanLabel}
-          activeSynthPitchDetuneLabel={activeSynthPitchDetuneLabel}
-          activeSynthPitchKey={activeSynthPitchKey}
-          activeSynthPitchPercent={activeSynthPitchPercent}
-          activeTransportStep={activeTransportStep}
-          currentCursorStep={currentCursorStep}
-          expectedStepIndex={expectedStepIndex}
-          expectedTransportStep={expectedTransportStep}
-          isCompactMobile={isCompactMobile}
-          isFreePlayMode={isFreePlayMode}
-          isSixYearOldVisualMode={isSixYearOldVisualMode}
-          laneKeys={laneKeys}
-          measureCount={measureCount}
-          resolvedCompletedCount={resolvedCompletedCount}
-          resolvedKeyboardMode={resolvedKeyboardMode}
-          resolvedLaneHeightPx={resolvedLaneHeightPx}
-          resolvedMelody={resolvedMelody}
-          resolvedMinStepWidthPx={resolvedMinStepWidthPx}
-          resolvedShowLaneLabels={resolvedShowLaneLabels}
-          resolvedShowMeasureGuides={resolvedShowMeasureGuides}
-          resolvedStepCount={resolvedStepCount}
-          resolvedSynthGlideMode={resolvedSynthGlideMode}
-          resolvedSynthWaveform={resolvedSynthWaveform}
-          resolvedUnitsPerMeasure={resolvedUnitsPerMeasure}
-          shouldShowTransportRail={shouldShowTransportRail}
-          stepElementRefs={stepElementRefs}
-          stepTestIdPrefix={stepTestIdPrefix}
-        />
-
-        <KangurMusicPianoRollKeyboardRail
-          activePressesRef={activePressesRef}
-          activeSynthGesture={activeSynthGesture}
-          activeSynthGestures={activeSynthGestures}
-          activeSynthGesturesRef={activeSynthGesturesRef}
-          activeTransportStep={activeTransportStep}
-          expectedTransportStep={expectedTransportStep}
-          isCoarsePointer={isCoarsePointer}
-          isCompactMobile={isCompactMobile}
-          isInteractive={isInteractive}
-          keyButtonRefs={keyButtonRefs}
-          keyDefinitionById={keyDefinitionById}
-          keys={keys}
-          keyTestIdPrefix={keyTestIdPrefix}
-          pressedNoteId={pressedNoteId}
-          pressedVelocity={pressedVelocity}
-          recentKeyPulses={recentKeyPulses}
-          resolvedKeyboardMode={resolvedKeyboardMode}
-          stepTestIdPrefix={stepTestIdPrefix}
-          synthAxisAnchors={synthAxisAnchors}
-          syncActiveSynthGestures={syncActiveSynthGestures}
-          onClearPress={clearPress}
-          onEndSynthGesture={endSynthGesture}
-          onResolveGestureDynamics={resolveGestureDynamics}
-          onResolveSynthGestureDetails={resolveSynthGestureDetails}
-          onResolveSynthPitchAtPoint={resolveSynthPitchAtPoint}
-          onResolveVerticalPosition={resolveVerticalPosition}
-          onStartPress={startPress}
-          onSynthGestureChange={onSynthGestureChange}
-          onSynthGestureStart={onSynthGestureStart}
-          onTriggerKeyPulse={triggerKeyPulse}
-          onTriggerPress={triggerPress}
-          onUpdatePressFromPointerEvent={updatePressFromPointerEvent}
-        />
       </div>
     </div>
   );

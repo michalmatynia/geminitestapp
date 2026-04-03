@@ -134,28 +134,47 @@ const getAudioState = (): AudioPlaybackState => {
   return created;
 };
 
-const resolveAudioContext = async (): Promise<AudioContext | null> => {
+const resolveAudioContextCtor = (): typeof AudioContext | null => {
   if (!hasWebAudio()) return null;
-  const state = getAudioState();
   const globalAudio = resolveGlobalAudioConstructors();
   const Ctor = globalAudio.AudioContext ?? globalAudio.webkitAudioContext;
-  if (!Ctor) return null;
+  return Ctor ?? null;
+};
+
+const ensureAudioContextInstance = (
+  state: AudioPlaybackState,
+  Ctor: typeof AudioContext
+): AudioContext => {
   if (!state.context || state.context.state === 'closed') {
     state.context = new Ctor();
   }
-  if (state.context.state === 'suspended') {
-    try {
-      await state.context.resume();
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'ai-paths.audio',
-        action: 'resolveAudioContext.resume',
-      });
-
-      // Ignore; caller decides fallback status.
-    }
-  }
   return state.context;
+};
+
+const resumeAudioContextIfNeeded = async (context: AudioContext): Promise<void> => {
+  if (context.state !== 'suspended') {
+    return;
+  }
+
+  try {
+    await context.resume();
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'ai-paths.audio',
+      action: 'resolveAudioContext.resume',
+    });
+
+    // Ignore; caller decides fallback status.
+  }
+};
+
+const resolveAudioContext = async (): Promise<AudioContext | null> => {
+  const Ctor = resolveAudioContextCtor();
+  if (!Ctor) return null;
+  const state = getAudioState();
+  const context = ensureAudioContextInstance(state, Ctor);
+  await resumeAudioContextIfNeeded(context);
+  return context;
 };
 
 const stopActivePlayback = (nodeId: string): void => {

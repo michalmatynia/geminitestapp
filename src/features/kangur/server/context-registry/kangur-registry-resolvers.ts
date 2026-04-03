@@ -322,6 +322,88 @@ export const buildLoginActivitySummary = (input: {
   return lines.join(' ');
 };
 
+type RuntimeTextSection = Extract<
+  NonNullable<ContextRuntimeDocument['sections']>[number],
+  { kind: 'text' }
+>;
+
+const upsertRuntimeTextSection = (
+  sections: NonNullable<ContextRuntimeDocument['sections']>,
+  nextSection: RuntimeTextSection | null
+): NonNullable<ContextRuntimeDocument['sections']> => {
+  if (!nextSection) {
+    return sections;
+  }
+
+  const existingSectionIndex = sections.findIndex((section) => section.id === nextSection.id);
+  return existingSectionIndex >= 0
+    ? sections.map((section, index) => (index === existingSectionIndex ? nextSection : section))
+    : [...sections, nextSection];
+};
+
+const buildQuestionReviewSummary = (
+  document: ContextRuntimeDocument,
+  reviewSummary: string,
+  selectedChoiceFacts: { selectedChoiceSummary: string } | null
+): string => {
+  const revealedExplanation = readTrimmedString(document.facts?.['revealedExplanation']);
+  const correctChoiceLabel = readTrimmedString(document.facts?.['correctChoiceLabel']);
+  const summary = [
+    reviewSummary,
+    selectedChoiceFacts?.selectedChoiceSummary,
+    revealedExplanation,
+    correctChoiceLabel ? `Correct choice: ${correctChoiceLabel}.` : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return summary || reviewSummary;
+};
+
+const buildAugmentedTestSurfaceSections = (
+  document: ContextRuntimeDocument,
+  resultSummary: string | null,
+  reviewSummary: string | null,
+  selectedChoiceFacts: { selectedChoiceSummary: string } | null
+): NonNullable<ContextRuntimeDocument['sections']> => {
+  const sections = document.sections ?? [];
+  const sectionsWithResult = upsertRuntimeTextSection(
+    sections,
+    resultSummary === null
+      ? null
+      : {
+        id: 'test_result',
+        kind: 'text',
+        title: 'Test result summary',
+        text: resultSummary,
+      }
+  );
+
+  return upsertRuntimeTextSection(
+    sectionsWithResult,
+    reviewSummary === null
+      ? null
+      : {
+        id: 'question_review',
+        kind: 'text',
+        title: 'Question review',
+        text: buildQuestionReviewSummary(document, reviewSummary, selectedChoiceFacts),
+      }
+  );
+};
+
+const buildAugmentedTestSurfaceFacts = (
+  document: ContextRuntimeDocument,
+  resultSummary: string | null,
+  reviewSummary: string | null,
+  selectedChoiceFacts: { selectedChoiceSummary: string } | null
+): Record<string, unknown> => ({
+  ...(document.facts ?? {}),
+  ...(selectedChoiceFacts ?? {}),
+  ...(reviewSummary ? { reviewSummary } : {}),
+  ...(resultSummary ? { resultSummary } : {}),
+});
+
 export const augmentKangurTestSurfaceRuntimeDocument = (
   document: ContextRuntimeDocument | null,
   {
@@ -344,68 +426,19 @@ export const augmentKangurTestSurfaceRuntimeDocument = (
     return document;
   }
 
-  const sections = document.sections ?? [];
-  const nextResultSection =
-    resultSummary === null
-      ? null
-      : {
-        id: 'test_result',
-        kind: 'text' as const,
-        title: 'Test result summary',
-        text: resultSummary,
-      };
-  const sectionsWithResult =
-    nextResultSection === null
-      ? sections
-      : (() => {
-        const existingResultSectionIndex = sections.findIndex(
-          (section) => section.id === 'test_result'
-        );
-        return existingResultSectionIndex >= 0
-          ? sections.map((section, index) =>
-            index === existingResultSectionIndex ? nextResultSection : section
-          )
-          : [...sections, nextResultSection];
-      })();
-  const existingReviewSectionIndex = sectionsWithResult.findIndex(
-    (section) => section.id === 'question_review'
-  );
-  const nextReviewSection =
-    reviewSummary === null
-      ? null
-      : {
-        id: 'question_review',
-        kind: 'text' as const,
-        title: 'Question review',
-        text:
-          [
-            reviewSummary,
-            selectedChoiceFacts?.selectedChoiceSummary,
-            readTrimmedString(document.facts?.['revealedExplanation']),
-            readTrimmedString(document.facts?.['correctChoiceLabel'])
-              ? `Correct choice: ${readTrimmedString(document.facts?.['correctChoiceLabel'])}.`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' ') || reviewSummary,
-      };
-  const mergedSections =
-    nextReviewSection === null
-      ? sectionsWithResult
-      : existingReviewSectionIndex >= 0
-        ? sectionsWithResult.map((section, index) =>
-          index === existingReviewSectionIndex ? nextReviewSection : section
-        )
-        : [...sectionsWithResult, nextReviewSection];
-
   return {
     ...document,
-    facts: {
-      ...(document.facts ?? {}),
-      ...(selectedChoiceFacts ?? {}),
-      ...(reviewSummary ? { reviewSummary } : {}),
-      ...(resultSummary ? { resultSummary } : {}),
-    },
-    sections: mergedSections,
+    facts: buildAugmentedTestSurfaceFacts(
+      document,
+      resultSummary,
+      reviewSummary,
+      selectedChoiceFacts
+    ),
+    sections: buildAugmentedTestSurfaceSections(
+      document,
+      resultSummary,
+      reviewSummary,
+      selectedChoiceFacts
+    ),
   };
 };

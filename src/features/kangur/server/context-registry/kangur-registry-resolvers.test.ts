@@ -10,6 +10,7 @@ import {
 import { type KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
 
 import {
+  augmentKangurTestSurfaceRuntimeDocument,
   buildLessonDocumentSnippetCards,
   buildLessonDocumentSnippets,
   extractBlockSnippets,
@@ -206,5 +207,58 @@ describe('kangur-registry-resolvers snippet cards', () => {
       'Image caption',
       'Image narration',
     ]);
+  });
+
+  it('upserts test result and review sections while merging revealed facts', () => {
+    const document = {
+      id: 'doc-1',
+      entityType: 'kangur_test',
+      title: 'Test doc',
+      summary: null,
+      facts: {
+        revealedExplanation: 'Because 2 + 2 = 4.',
+        correctChoiceLabel: 'B',
+      },
+      sections: [
+        {
+          id: 'test_result',
+          kind: 'text',
+          title: 'Old result',
+          text: 'Previous result text',
+        },
+      ],
+    };
+
+    expect(
+      augmentKangurTestSurfaceRuntimeDocument(document, {
+        resultSummary: 'Score: 8/10.',
+        reviewSummary: 'You missed one arithmetic question.',
+        selectedChoiceFacts: { selectedChoiceSummary: 'Selected choice: A.' },
+        testContextType: 'kangur_test',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        facts: expect.objectContaining({
+          resultSummary: 'Score: 8/10.',
+          reviewSummary: 'You missed one arithmetic question.',
+          selectedChoiceSummary: 'Selected choice: A.',
+        }),
+        sections: [
+          {
+            id: 'test_result',
+            kind: 'text',
+            title: 'Test result summary',
+            text: 'Score: 8/10.',
+          },
+          {
+            id: 'question_review',
+            kind: 'text',
+            title: 'Question review',
+            text:
+              'You missed one arithmetic question. Selected choice: A. Because 2 + 2 = 4. Correct choice: B.',
+          },
+        ],
+      })
+    );
   });
 });

@@ -317,6 +317,19 @@ const inferReferenceKind = (refId: string): KangurKnowledgeNodeKind => {
   return 'policy';
 };
 
+const isLocalizedRecord = <T>(
+  value: LocalizedValue<T> | undefined
+): value is Partial<Record<string, T>> =>
+  !Array.isArray(value) && typeof value === 'object' && value !== null;
+
+const resolveLocalizedRecordValue = <T>(
+  localizedRecord: Partial<Record<string, T>>,
+  locale: string
+): T | undefined =>
+  localizedRecord[locale] ??
+  localizedRecord['pl'] ??
+  Object.values(localizedRecord).find((entry): entry is T => entry !== undefined);
+
 const resolveLocalizedValue = <T>(
   value: LocalizedValue<T> | undefined,
   locale: string
@@ -324,11 +337,10 @@ const resolveLocalizedValue = <T>(
   if (value === undefined) {
     return undefined;
   }
-  if (Array.isArray(value) || typeof value !== 'object' || value === null) {
+  if (!isLocalizedRecord(value)) {
     return value as T;
   }
-  const localizedRecord = value as Partial<Record<string, T>>;
-  return localizedRecord[locale] ?? localizedRecord['pl'] ?? Object.values(localizedRecord)[0];
+  return resolveLocalizedRecordValue(value, locale);
 };
 
 const inferReferenceTitle = (refId: string, locale: string): string => {

@@ -110,19 +110,29 @@ const isWriteResultOperation = (config: DatabaseConfig, result: RuntimePortValue
 const readDatabaseErrorText = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
-const extractDatabaseErrorFromRecord = (value: unknown): string | null => {
+const readDatabaseErrorFromRecord = (value: unknown): string | null => {
   if (!isObjectRecord(value)) {
     return null;
   }
   return readDatabaseErrorText(value['error']);
 };
 
+const DATABASE_ERROR_RESULT_KEYS = ['bundle', 'result'] as const;
+
 const extractDatabaseError = (result: RuntimePortValues): string | null => {
-  return (
-    readDatabaseErrorText(result['error']) ??
-    extractDatabaseErrorFromRecord(result['bundle']) ??
-    extractDatabaseErrorFromRecord(result['result'])
-  );
+  const directError = readDatabaseErrorText(result['error']);
+  if (directError) {
+    return directError;
+  }
+
+  for (const key of DATABASE_ERROR_RESULT_KEYS) {
+    const nestedError = readDatabaseErrorFromRecord(result[key]);
+    if (nestedError) {
+      return nestedError;
+    }
+  }
+
+  return null;
 };
 
 const extractWriteOutcome = (result: RuntimePortValues): DatabaseWriteOutcome | null => {

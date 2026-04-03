@@ -75,6 +75,45 @@ export const clonePromptExploderDocument = (
   }
 };
 
+const resolvePromptExploderLibraryItemId = (args: {
+  existingItem: PromptExploderLibraryItem | null;
+  createItemId: () => string;
+}): string => args.existingItem?.id ?? args.createItemId();
+
+const resolveNonEmptyTrimmedString = (value: string): string | null => {
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const resolvePromptExploderLibraryItemCreatedAt = (args: {
+  existingItem: PromptExploderLibraryItem | null;
+  now: string;
+}): string => args.existingItem?.createdAt ?? args.now;
+
+const resolvePromptExploderLibraryItemName = (args: {
+  prompt: string;
+  libraryNameDraft: string;
+  existingItem: PromptExploderLibraryItem | null;
+}): string => {
+  const draftName = resolveNonEmptyTrimmedString(args.libraryNameDraft);
+  if (draftName) {
+    return draftName;
+  }
+
+  return args.existingItem?.name || derivePromptExploderLibraryItemName(args.prompt);
+};
+
+const buildPromptExploderLibraryDocumentSnapshot = (args: {
+  documentState: PromptExploderDocument | null;
+  prompt: string;
+}): PromptExploderDocument | null =>
+  args.documentState
+    ? clonePromptExploderDocument({
+        ...args.documentState,
+        sourcePrompt: args.prompt,
+      })
+    : null;
+
 export const buildPromptExploderLibraryItem = (args: {
   prompt: string;
   libraryNameDraft: string;
@@ -84,24 +123,26 @@ export const buildPromptExploderLibraryItem = (args: {
   createItemId?: () => string;
 }): PromptExploderLibraryItem => {
   const createItemId = args.createItemId ?? createPromptExploderLibraryItemId;
-  const itemId = args.existingItem?.id ?? createItemId();
-  const itemName =
-    args.libraryNameDraft.trim() ||
-    args.existingItem?.name ||
-    derivePromptExploderLibraryItemName(args.prompt);
-  const documentSnapshot = args.documentState
-    ? clonePromptExploderDocument({
-      ...args.documentState,
-      sourcePrompt: args.prompt,
-    })
-    : null;
+  const itemId = resolvePromptExploderLibraryItemId({
+    existingItem: args.existingItem,
+    createItemId,
+  });
+  const itemName = resolvePromptExploderLibraryItemName({
+    prompt: args.prompt,
+    libraryNameDraft: args.libraryNameDraft,
+    existingItem: args.existingItem,
+  });
+  const documentSnapshot = buildPromptExploderLibraryDocumentSnapshot({
+    documentState: args.documentState,
+    prompt: args.prompt,
+  });
 
   return {
     id: itemId,
     name: itemName,
     prompt: args.prompt,
     document: documentSnapshot,
-    createdAt: args.existingItem?.createdAt ?? args.now,
+    createdAt: resolvePromptExploderLibraryItemCreatedAt(args),
     updatedAt: args.now,
   };
 };

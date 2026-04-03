@@ -596,27 +596,24 @@ export const resolveKangurAssignmentCountdownLabel = (
     return null;
   }
 
-  const startTimestamp = Date.parse(params.timeLimitStartsAt ?? params.createdAt ?? '');
-  if (!Number.isFinite(startTimestamp)) {
+  const startTimestamp = resolveKangurAssignmentCountdownStartTimestamp(params);
+  if (startTimestamp === null) {
     return null;
   }
 
   const now = params.now ?? Date.now();
-  const timeLimitMinutes = params.timeLimitMinutes ?? 0;
-  const deadline = startTimestamp + timeLimitMinutes * 60_000;
+  const deadline = resolveKangurAssignmentCountdownDeadline(
+    startTimestamp,
+    params.timeLimitMinutes ?? 0
+  );
   const remainingMs = deadline - now;
 
   if (remainingMs <= 0) {
     return translateAssignmentsRuntimeWithFallback(localizer, 'time.expired', 'Czas minął');
   }
 
-  const totalSeconds = Math.floor(remainingMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
   return formatKangurAssignmentRemainingTimeLabel(
-    { hours, minutes, seconds },
+    resolveKangurAssignmentRemainingTimeParts(remainingMs),
     localizer
   );
 };
@@ -627,6 +624,27 @@ const hasKangurAssignmentCountdown = (
   params.status !== 'completed' &&
   typeof params.timeLimitMinutes === 'number' &&
   Number.isFinite(params.timeLimitMinutes);
+
+const resolveKangurAssignmentCountdownStartTimestamp = (
+  params: Parameters<typeof resolveKangurAssignmentCountdownLabel>[0]
+): number | null => {
+  const timestamp = Date.parse(params.timeLimitStartsAt ?? params.createdAt ?? '');
+  return Number.isFinite(timestamp) ? timestamp : null;
+};
+
+const resolveKangurAssignmentCountdownDeadline = (
+  startTimestamp: number,
+  timeLimitMinutes: number
+): number => startTimestamp + timeLimitMinutes * 60_000;
+
+const resolveKangurAssignmentRemainingTimeParts = (remainingMs: number) => {
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  return {
+    hours: Math.floor(totalSeconds / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  };
+};
 
 const formatKangurAssignmentRemainingTimeLabel = (
   input: { hours: number; minutes: number; seconds: number },
@@ -946,29 +964,43 @@ export const parseKangurMixedTrainingQuickStartParams = (
     return null;
   }
 
-  const categories = categoriesValue
-    .split(',')
-    .map((value) => value.trim())
-    .filter(
-      (value): value is KangurOperation =>
-        value.length > 0 &&
-        value !== 'mixed' &&
-        value in PRACTICE_OPERATION_DIFFICULTY
-    );
-  const count = Number.parseInt(countValue, 10);
+  const categories = parseKangurMixedTrainingCategories(categoriesValue);
+  const count = parseKangurMixedTrainingCount(countValue);
+  const difficulty = parseKangurMixedTrainingDifficulty(difficultyValue);
 
-  if (
-    categories.length === 0 ||
-    !Number.isFinite(count) ||
-    count <= 0 ||
-    !['easy', 'medium', 'hard'].includes(difficultyValue)
-  ) {
+  if (categories.length === 0 || count === null || difficulty === null) {
     return null;
   }
 
   return {
     categories,
     count,
-    difficulty: difficultyValue as KangurDifficulty,
+    difficulty,
   };
 };
+
+const normalizeKangurMixedTrainingCategory = (value: string): KangurOperation | null => {
+  const normalized = value.trim();
+  if (
+    normalized.length === 0 ||
+    normalized === 'mixed' ||
+    !(normalized in PRACTICE_OPERATION_DIFFICULTY)
+  ) {
+    return null;
+  }
+  return normalized as KangurOperation;
+};
+
+const parseKangurMixedTrainingCategories = (value: string): KangurOperation[] =>
+  value
+    .split(',')
+    .map(normalizeKangurMixedTrainingCategory)
+    .filter((category): category is KangurOperation => category !== null);
+
+const parseKangurMixedTrainingCount = (value: string): number | null => {
+  const count = Number.parseInt(value, 10);
+  return Number.isFinite(count) && count > 0 ? count : null;
+};
+
+const parseKangurMixedTrainingDifficulty = (value: string): KangurDifficulty | null =>
+  value === 'easy' || value === 'medium' || value === 'hard' ? value : null;

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   normalizeRuntimeKernelConfigRecord,
+  normalizeRuntimeKernelConfigRecordDetailed,
   normalizeRuntimeKernelValueSource,
   parseRuntimeKernelCodeObjectResolverIds,
   parseRuntimeKernelNodeTypes,
@@ -82,6 +83,28 @@ describe('runtime-kernel-config helpers', () => {
     ).toEqual({
       nodeTypes: ['template_node', 'parser'],
       codeObjectResolverIds: ['resolver.primary', 'resolver.fallback'],
+    });
+  });
+
+  it('reports changed fields when canonical values are normalized or legacy aliases are removed', () => {
+    expect(
+      normalizeRuntimeKernelConfigRecordDetailed(
+        {
+          nodeTypes: ' Template Node, parser ',
+          [DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD]: ' resolver.primary ',
+          [DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD]: DEPRECATED_RUNTIME_KERNEL_MODE_ALIAS,
+        },
+        {
+          translateLegacyAliases: true,
+        }
+      )
+    ).toEqual({
+      changed: true,
+      value: {
+        nodeTypes: ['template_node', 'parser'],
+        codeObjectResolverIds: ['resolver.primary'],
+      },
+      changedFields: ['mode', 'nodeTypes', 'codeObjectResolverIds'],
     });
   });
 });

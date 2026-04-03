@@ -57,6 +57,24 @@ const parsePolicyTemplateId = (value: unknown): string | null | undefined => {
   return normalized;
 };
 
+const resolvePositivePolicyInteger = (value: unknown, fallback: number): number => {
+  const parsed = parsePolicyInteger(value);
+  return parsed !== null && parsed > 0 ? parsed : fallback;
+};
+
+const resolveNonNegativePolicyInteger = (value: unknown, fallback: number): number => {
+  const parsed = parsePolicyInteger(value);
+  return parsed !== null && parsed >= 0 ? parsed : fallback;
+};
+
+const resolvePolicyTemplateId = (
+  value: unknown,
+  fallback: string | null
+): string | null => {
+  const parsed = parsePolicyTemplateId(value);
+  return parsed !== undefined ? parsed : fallback;
+};
+
 export const resolveEffectiveListingSettings = (
   listing: ProductListing,
   connection: IntegrationConnectionRecord,
@@ -71,21 +89,13 @@ export const resolveEffectiveListingSettings = (
   const policy = toPolicyRecord(listing.relistPolicy);
   if (!policy) return fallback;
 
-  const durationCandidate = parsePolicyInteger(policy['durationHours']);
-  const leadMinutesCandidate = parsePolicyInteger(policy['leadMinutes']);
-  const enabledCandidate = parsePolicyBoolean(policy['enabled']);
-  const templateCandidate = parsePolicyTemplateId(policy['templateId']);
-
   return {
-    durationHours:
-      durationCandidate !== null && durationCandidate > 0
-        ? durationCandidate
-        : fallback.durationHours,
-    autoRelistEnabled: enabledCandidate ?? fallback.autoRelistEnabled,
-    autoRelistLeadMinutes:
-      leadMinutesCandidate !== null && leadMinutesCandidate >= 0
-        ? leadMinutesCandidate
-        : fallback.autoRelistLeadMinutes,
-    templateId: templateCandidate !== undefined ? templateCandidate : fallback.templateId,
+    durationHours: resolvePositivePolicyInteger(policy['durationHours'], fallback.durationHours),
+    autoRelistEnabled: parsePolicyBoolean(policy['enabled']) ?? fallback.autoRelistEnabled,
+    autoRelistLeadMinutes: resolveNonNegativePolicyInteger(
+      policy['leadMinutes'],
+      fallback.autoRelistLeadMinutes
+    ),
+    templateId: resolvePolicyTemplateId(policy['templateId'], fallback.templateId),
   };
 };

@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import KangurPracticeAssignmentBanner from '@/features/kangur/ui/components/KangurPracticeAssignmentBanner';
+import KangurPracticeAssignmentBanner from "@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBanner";
 
 describe('KangurPracticeAssignmentBanner', () => {
   it('renders a direct practice-priority banner with the matching assignment CTA', () => {

@@ -17,13 +17,20 @@ const COMPRESSIBLE_SETTING_KEYS = new Set<string>([
 export const shouldCompressSettingValue = (key: string): boolean =>
   COMPRESSIBLE_SETTING_KEYS.has(key);
 
+const isCompressedSettingValue = (value: string): boolean =>
+  value.startsWith(COMPRESSED_SETTING_PREFIX);
+
+const decodeCompressedSettingPayload = (value: string): string | null => {
+  const encoded = value.slice(COMPRESSED_SETTING_PREFIX.length);
+  const decompressedUnknown: unknown = gunzipSync(Buffer.from(encoded, 'base64'));
+  if (!Buffer.isBuffer(decompressedUnknown)) return null;
+  return decompressedUnknown.toString('utf8');
+};
+
 export const decodeSettingValue = (key: string, value: string): string => {
-  if (!value.startsWith(COMPRESSED_SETTING_PREFIX)) return value;
+  if (!isCompressedSettingValue(value)) return value;
   try {
-    const encoded = value.slice(COMPRESSED_SETTING_PREFIX.length);
-    const decompressedUnknown: unknown = gunzipSync(Buffer.from(encoded, 'base64'));
-    if (!Buffer.isBuffer(decompressedUnknown)) return value;
-    return decompressedUnknown.toString('utf8');
+    return decodeCompressedSettingPayload(value) ?? value;
   } catch (error) {
     logClientCatch(error, {
       source: 'settings-compression',
@@ -41,7 +48,7 @@ export const decodeSettingValue = (key: string, value: string): string => {
 
 export const encodeSettingValue = (key: string, value: string): string => {
   if (!shouldCompressSettingValue(key)) return value;
-  if (value.startsWith(COMPRESSED_SETTING_PREFIX) && decodeSettingValue(key, value) !== value) {
+  if (isCompressedSettingValue(value) && decodeSettingValue(key, value) !== value) {
     return value;
   }
   try {

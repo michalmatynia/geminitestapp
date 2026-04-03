@@ -11,6 +11,15 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 type FetcherResolvedSource = 'live_context' | 'simulation_id' | 'live_context_override';
+type FetcherEntityState = {
+  entityId: string | null;
+  entityType: string | null;
+  entity: Record<string, unknown> | null;
+};
+type FetcherResolvedState = FetcherEntityState & {
+  sourceTag: 'trigger_fetcher' | 'simulation_fetcher';
+  resolvedSource: FetcherResolvedSource;
+};
 
 const DEFAULT_FETCHER_SOURCE_MODE: FetcherSourceMode = 'live_context';
 const ENTITY_OBJECT_CONTEXT_KEYS = ['entity', 'entityJson', 'product'] as const;
@@ -155,6 +164,206 @@ const appendFetcherEntityAliases = (
   }
 };
 
+const hydrateFetcherEntity = async (args: {
+  entityId: string | null;
+  entityType: string | null;
+  fetchEntityCached: NodeHandlerContext['fetchEntityCached'];
+  toast: NodeHandlerContext['toast'];
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+  node: NodeHandlerContext['node'];
+  sourceMode: FetcherSourceMode;
+  phase: 'live' | 'simulation';
+}): Promise<Record<string, unknown> | null> => {
+  if (!args.entityId || !args.entityType) return null;
+
+  try {
+    const entity = await args.fetchEntityCached(args.entityType, args.entityId);
+    if (!entity) {
+      args.toast(`No ${args.entityType} data found for ID ${args.entityId}.`, {
+        variant: 'error',
+      });
+    }
+    return entity;
+  } catch (error) {
+    logClientError(error);
+    args.reportAiPathsError(
+      error,
+      {
+        service: 'ai-paths-runtime',
+        nodeId: args.node.id,
+        nodeType: args.node.type,
+        fetcherSourceMode: args.sourceMode,
+        entityId: args.entityId,
+        entityType: args.entityType,
+      },
+      `Fetcher ${args.phase} hydration failed for ${args.entityType}:${args.entityId}`
+    );
+    return null;
+  }
+};
+
+const resolveSimulationEntity = async (args: {
+  simulationEntityId: string | null;
+  simulationEntityType: string | null;
+  fetchEntityCached: NodeHandlerContext['fetchEntityCached'];
+  toast: NodeHandlerContext['toast'];
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+  node: NodeHandlerContext['node'];
+  sourceMode: FetcherSourceMode;
+}): Promise<FetcherEntityState> => ({
+  entityId: args.simulationEntityId,
+  entityType: args.simulationEntityType,
+  entity: await hydrateFetcherEntity({
+    entityId: args.simulationEntityId,
+    entityType: args.simulationEntityType,
+    fetchEntityCached: args.fetchEntityCached,
+    toast: args.toast,
+    reportAiPathsError: args.reportAiPathsError,
+    node: args.node,
+    sourceMode: args.sourceMode,
+    phase: 'simulation',
+  }),
+});
+
+const resolveSimulationSourceSelection = async (args: {
+  liveEntityId: string | null;
+  liveEntityType: string | null;
+  liveEntity: Record<string, unknown> | null;
+  simulationEntityId: string | null;
+  simulationEntityType: string | null;
+  incomingContextRecord: Record<string, unknown> | null;
+  triggerContextRecord: Record<string, unknown> | null;
+  fetchEntityCached: NodeHandlerContext['fetchEntityCached'];
+  toast: NodeHandlerContext['toast'];
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+  node: NodeHandlerContext['node'];
+  sourceMode: FetcherSourceMode;
+}): Promise<FetcherResolvedState> => {
+  if (
+    shouldPreferLiveEntityOverSimulation({
+      liveEntityId: args.liveEntityId,
+      liveEntityType: args.liveEntityType,
+      simulationEntityId: args.simulationEntityId,
+      simulationEntityType: args.simulationEntityType,
+      incomingContextRecord: args.incomingContextRecord,
+      triggerContextRecord: args.triggerContextRecord,
+    })
+  ) {
+    return {
+      entityId: args.liveEntityId,
+      entityType: args.liveEntityType,
+      entity: args.liveEntity,
+      sourceTag: 'trigger_fetcher',
+      resolvedSource: 'live_context_override',
+    };
+  }
+
+  if (!args.simulationEntityId) {
+    throw new Error(
+      `Fetcher ${args.node.title ?? args.node.id} is set to "Simulated entity by ID" but no entity ID is configured.`
+    );
+  }
+
+  const simulated = await resolveSimulationEntity(args);
+  return {
+    ...simulated,
+    sourceTag: 'simulation_fetcher',
+    resolvedSource: 'simulation_id',
+  };
+};
+
+const resolveLiveThenSimulationSourceSelection = async (args: {
+  liveEntityId: string | null;
+  liveEntityType: string | null;
+  liveEntity: Record<string, unknown> | null;
+  simulationEntityId: string | null;
+  simulationEntityType: string | null;
+  fetchEntityCached: NodeHandlerContext['fetchEntityCached'];
+  toast: NodeHandlerContext['toast'];
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+  node: NodeHandlerContext['node'];
+  sourceMode: FetcherSourceMode;
+}): Promise<FetcherResolvedState> => {
+  const hasLiveReference = Boolean(args.liveEntityId && args.liveEntityType);
+  if (!hasLiveReference && args.simulationEntityId) {
+    const simulated = await resolveSimulationEntity(args);
+    return {
+      ...simulated,
+      sourceTag: 'simulation_fetcher',
+      resolvedSource: 'simulation_id',
+    };
+  }
+
+  return {
+    entityId: args.liveEntityId,
+    entityType: args.liveEntityType,
+    entity: args.liveEntity,
+    sourceTag: 'trigger_fetcher',
+    resolvedSource: 'live_context',
+  };
+};
+
+const resolveFetcherSourceSelection = async (args: {
+  sourceMode: FetcherSourceMode;
+  liveEntityId: string | null;
+  liveEntityType: string | null;
+  liveEntity: Record<string, unknown> | null;
+  simulationEntityId: string | null;
+  simulationEntityType: string | null;
+  incomingContextRecord: Record<string, unknown> | null;
+  triggerContextRecord: Record<string, unknown> | null;
+  fetchEntityCached: NodeHandlerContext['fetchEntityCached'];
+  toast: NodeHandlerContext['toast'];
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+  node: NodeHandlerContext['node'];
+}): Promise<FetcherResolvedState> => {
+  if (args.sourceMode === 'simulation_id') {
+    return resolveSimulationSourceSelection(args);
+  }
+  if (args.sourceMode === 'live_then_simulation') {
+    return resolveLiveThenSimulationSourceSelection(args);
+  }
+  return {
+    entityId: args.liveEntityId,
+    entityType: args.liveEntityType,
+    entity: args.liveEntity,
+    sourceTag: 'trigger_fetcher',
+    resolvedSource: 'live_context',
+  };
+};
+
+const hasResolvedFetcherEntity = (entity: unknown): boolean =>
+  isObjectRecord(entity) && Object.keys(entity).length > 0;
+
+const shouldFailMissingResolvedSimulationEntity = (args: {
+  resolvedSource: FetcherResolvedSource;
+  resolvedEntityId: string | null;
+  resolvedEntityType: string | null;
+  sourceMode: FetcherSourceMode;
+  strictFlowMode: boolean;
+}): boolean =>
+  args.resolvedSource === 'simulation_id' &&
+  Boolean(args.resolvedEntityId && args.resolvedEntityType) &&
+  (args.sourceMode === 'simulation_id' || args.strictFlowMode);
+
+const buildFetcherMetaPayload = (args: {
+  base: Record<string, unknown>;
+  now: string;
+  sourceMode: FetcherSourceMode;
+  resolvedSource: FetcherResolvedSource;
+  resolvedEntityId: string | null;
+  resolvedEntityType: string | null;
+  activePathId: string | null;
+}): Record<string, unknown> => ({
+  ...args.base,
+  fetchedAt: args.now,
+  fetcherSourceMode: args.sourceMode,
+  fetcherResolvedSource: args.resolvedSource,
+  entityId: args.resolvedEntityId,
+  entityType: args.resolvedEntityType,
+  pathId: args.activePathId,
+});
+
 export const handleFetcher: NodeHandler = async ({
   node,
   nodeInputs,
@@ -196,26 +405,16 @@ export const handleFetcher: NodeHandler = async ({
     readEntityObjectFromContext(triggerContextRecord);
 
   if (!liveEntity && liveEntityId && liveEntityType) {
-    try {
-      liveEntity = await fetchEntityCached(liveEntityType, liveEntityId);
-      if (!liveEntity) {
-        toast(`No ${liveEntityType} data found for ID ${liveEntityId}.`, { variant: 'error' });
-      }
-    } catch (error) {
-      logClientError(error);
-      reportAiPathsError(
-        error,
-        {
-          service: 'ai-paths-runtime',
-          nodeId: node.id,
-          nodeType: node.type,
-          fetcherSourceMode: sourceMode,
-          entityId: liveEntityId,
-          entityType: liveEntityType,
-        },
-        `Fetcher live hydration failed for ${liveEntityType}:${liveEntityId}`
-      );
-    }
+    liveEntity = await hydrateFetcherEntity({
+      entityId: liveEntityId,
+      entityType: liveEntityType,
+      fetchEntityCached,
+      toast,
+      reportAiPathsError,
+      node,
+      sourceMode,
+      phase: 'live',
+    });
   }
 
   const configEntityId =
@@ -228,100 +427,35 @@ export const handleFetcher: NodeHandler = async ({
   const simulationEntityId = configEntityId ?? liveEntityId;
   const simulationEntityType = configEntityType;
 
-  const resolveSimulation = async (): Promise<{
-    entityId: string | null;
-    entityType: string | null;
-    entity: Record<string, unknown> | null;
-  }> => {
-    if (!simulationEntityId) {
-      return { entityId: null, entityType: simulationEntityType, entity: null };
-    }
-    try {
-      const entity = await fetchEntityCached(simulationEntityType, simulationEntityId);
-      if (!entity) {
-        toast(`No ${simulationEntityType} data found for ID ${simulationEntityId}.`, {
-          variant: 'error',
-        });
-      }
-      return {
-        entityId: simulationEntityId,
-        entityType: simulationEntityType,
-        entity,
-      };
-    } catch (error) {
-      logClientError(error);
-      reportAiPathsError(
-        error,
-        {
-          service: 'ai-paths-runtime',
-          nodeId: node.id,
-          nodeType: node.type,
-          fetcherSourceMode: sourceMode,
-          entityId: simulationEntityId,
-          entityType: simulationEntityType,
-        },
-        `Fetcher simulation hydration failed for ${simulationEntityType}:${simulationEntityId}`
-      );
-      return {
-        entityId: simulationEntityId,
-        entityType: simulationEntityType,
-        entity: null,
-      };
-    }
-  };
+  const resolved = await resolveFetcherSourceSelection({
+    sourceMode,
+    liveEntityId,
+    liveEntityType,
+    liveEntity,
+    simulationEntityId,
+    simulationEntityType,
+    incomingContextRecord,
+    triggerContextRecord,
+    fetchEntityCached,
+    toast,
+    reportAiPathsError,
+    node,
+  });
 
-  let resolvedEntityId = liveEntityId;
-  let resolvedEntityType = liveEntityType;
-  let resolvedEntity = liveEntity;
-  let sourceTag: 'trigger_fetcher' | 'simulation_fetcher' = 'trigger_fetcher';
-  let resolvedSource: FetcherResolvedSource = 'live_context';
+  const resolvedEntityId = resolved.entityId;
+  const resolvedEntityType = resolved.entityType;
+  const resolvedEntity = resolved.entity;
+  const sourceTag = resolved.sourceTag;
+  const resolvedSource = resolved.resolvedSource;
 
-  if (sourceMode === 'simulation_id') {
-    if (
-      shouldPreferLiveEntityOverSimulation({
-        liveEntityId,
-        liveEntityType,
-        simulationEntityId,
-        simulationEntityType,
-        incomingContextRecord,
-        triggerContextRecord,
-      })
-    ) {
-      resolvedEntityId = liveEntityId;
-      resolvedEntityType = liveEntityType;
-      resolvedEntity = liveEntity;
-      resolvedSource = 'live_context_override';
-    } else {
-      if (!simulationEntityId) {
-        throw new Error(
-          `Fetcher ${node.title ?? node.id} is set to "Simulated entity by ID" but no entity ID is configured.`
-        );
-      }
-      const simulated = await resolveSimulation();
-      resolvedEntityId = simulated.entityId;
-      resolvedEntityType = simulated.entityType;
-      resolvedEntity = simulated.entity;
-      sourceTag = 'simulation_fetcher';
-      resolvedSource = 'simulation_id';
-    }
-  } else if (sourceMode === 'live_then_simulation') {
-    const hasLiveReference = Boolean(liveEntityId && liveEntityType);
-    if (!hasLiveReference && simulationEntityId) {
-      const simulated = await resolveSimulation();
-      resolvedEntityId = simulated.entityId;
-      resolvedEntityType = simulated.entityType;
-      resolvedEntity = simulated.entity;
-      sourceTag = 'simulation_fetcher';
-      resolvedSource = 'simulation_id';
-    }
-  }
-
-  const hasResolvedEntity =
-    isObjectRecord(resolvedEntity) && Object.keys(resolvedEntity).length > 0;
-  const shouldFailMissingSimulationEntity =
-    resolvedSource === 'simulation_id' &&
-    Boolean(resolvedEntityId && resolvedEntityType) &&
-    (sourceMode === 'simulation_id' || strictFlowMode);
+  const hasResolvedEntity = hasResolvedFetcherEntity(resolvedEntity);
+  const shouldFailMissingSimulationEntity = shouldFailMissingResolvedSimulationEntity({
+    resolvedSource,
+    resolvedEntityId,
+    resolvedEntityType,
+    sourceMode,
+    strictFlowMode,
+  });
 
   if (shouldFailMissingSimulationEntity && !hasResolvedEntity) {
     throw new Error(
@@ -342,13 +476,15 @@ export const handleFetcher: NodeHandler = async ({
   });
 
   const meta: Record<string, unknown> = {
-    ...incomingMetaRecord,
-    fetchedAt: now,
-    fetcherSourceMode: sourceMode,
-    fetcherResolvedSource: resolvedSource,
-    entityId: resolvedEntityId,
-    entityType: resolvedEntityType,
-    pathId: activePathId,
+    ...buildFetcherMetaPayload({
+      base: incomingMetaRecord,
+      now,
+      sourceMode,
+      resolvedSource,
+      resolvedEntityId,
+      resolvedEntityType,
+      activePathId,
+    }),
   };
 
   return {

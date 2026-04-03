@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/shared/lib/app-embeds';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useToast } from '@/shared/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -17,7 +18,15 @@ interface AppEmbedsContextType {
   isSaving: boolean;
 }
 
-const AppEmbedsContext = createContext<AppEmbedsContextType | undefined>(undefined);
+const {
+  Context: AppEmbedsContext,
+  useStrictContext: useAppEmbeds,
+} = createStrictContext<AppEmbedsContextType>({
+  hookName: 'useAppEmbeds',
+  providerName: 'AppEmbedsProvider',
+  displayName: 'AppEmbedsContext',
+  errorFactory: internalError,
+});
 
 export function AppEmbedsProvider({ children }: { children: React.ReactNode }): React.ReactNode {
   const { toast } = useToast();
@@ -88,10 +97,4 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
   return <AppEmbedsContext.Provider value={value}>{children}</AppEmbedsContext.Provider>;
 }
 
-export function useAppEmbeds(): AppEmbedsContextType {
-  const context = useContext(AppEmbedsContext);
-  if (context === undefined) {
-    throw internalError('useAppEmbeds must be used within an AppEmbedsProvider');
-  }
-  return context;
-}
+export { useAppEmbeds };

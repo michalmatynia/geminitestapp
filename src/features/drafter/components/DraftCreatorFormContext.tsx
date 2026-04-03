@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { ImageFileSelection } from '@/shared/contracts/files';
@@ -14,6 +14,15 @@ import type {
 } from '@/shared/contracts/products';
 import type { ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
+const createDraftCreatorStrictContext = <T,>(hookName: string, displayName: string) =>
+  createStrictContext<T>({
+    hookName,
+    providerName: 'a DraftCreatorFormProvider',
+    displayName,
+    errorFactory: internalError,
+  });
 
 // --- Basic Info Context ---
 export interface DraftCreatorBasicInfo {
@@ -36,13 +45,13 @@ export interface DraftCreatorBasicInfo {
   resolvedIconColor: string;
   openIconLibrary: () => void;
 }
-const BasicInfoContext = createContext<DraftCreatorBasicInfo | null>(null);
-export const useDraftCreatorBasicInfo = () => {
-  const context = useContext(BasicInfoContext);
-  if (!context)
-    throw internalError('useDraftCreatorBasicInfo must be used within DraftCreatorFormProvider');
-  return context;
-};
+export const {
+  Context: BasicInfoContext,
+  useStrictContext: useDraftCreatorBasicInfo,
+} = createDraftCreatorStrictContext<DraftCreatorBasicInfo>(
+  'useDraftCreatorBasicInfo',
+  'DraftCreatorBasicInfoContext'
+);
 
 // --- Product Data Context ---
 export interface DraftCreatorProductData {
@@ -89,13 +98,13 @@ export interface DraftCreatorProductData {
   baseProductId: string;
   setBaseProductId: (next: string) => void;
 }
-const ProductDataContext = createContext<DraftCreatorProductData | null>(null);
-export const useDraftCreatorProductData = () => {
-  const context = useContext(ProductDataContext);
-  if (!context)
-    throw internalError('useDraftCreatorProductData must be used within DraftCreatorFormProvider');
-  return context;
-};
+export const {
+  Context: ProductDataContext,
+  useStrictContext: useDraftCreatorProductData,
+} = createDraftCreatorStrictContext<DraftCreatorProductData>(
+  'useDraftCreatorProductData',
+  'DraftCreatorProductDataContext'
+);
 
 // --- Metadata Context ---
 export interface DraftCreatorMetadata {
@@ -115,13 +124,13 @@ export interface DraftCreatorMetadata {
   selectedProducerIds: string[];
   setSelectedProducerIds: (nextIds: string[]) => void;
 }
-const MetadataContext = createContext<DraftCreatorMetadata | null>(null);
-export const useDraftCreatorMetadata = () => {
-  const context = useContext(MetadataContext);
-  if (!context)
-    throw internalError('useDraftCreatorMetadata must be used within DraftCreatorFormProvider');
-  return context;
-};
+export const {
+  Context: MetadataContext,
+  useStrictContext: useDraftCreatorMetadata,
+} = createDraftCreatorStrictContext<DraftCreatorMetadata>(
+  'useDraftCreatorMetadata',
+  'DraftCreatorMetadataContext'
+);
 
 // --- Images Context ---
 export interface DraftCreatorImages {
@@ -130,13 +139,13 @@ export interface DraftCreatorImages {
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   imageManagerController: ProductImageManagerController;
 }
-const ImagesContext = createContext<DraftCreatorImages | null>(null);
-export const useDraftCreatorImages = () => {
-  const context = useContext(ImagesContext);
-  if (!context)
-    throw internalError('useDraftCreatorImages must be used within DraftCreatorFormProvider');
-  return context;
-};
+export const {
+  Context: ImagesContext,
+  useStrictContext: useDraftCreatorImages,
+} = createDraftCreatorStrictContext<DraftCreatorImages>(
+  'useDraftCreatorImages',
+  'DraftCreatorImagesContext'
+);
 
 // --- Parameters Context ---
 export interface DraftCreatorParameters {
@@ -148,13 +157,13 @@ export interface DraftCreatorParameters {
   updateParameterValue: (index: number, value: string) => void;
   removeParameterValue: (index: number) => void;
 }
-const ParametersContext = createContext<DraftCreatorParameters | null>(null);
-export const useDraftCreatorParameters = () => {
-  const context = useContext(ParametersContext);
-  if (!context)
-    throw internalError('useDraftCreatorParameters must be used within DraftCreatorFormProvider');
-  return context;
-};
+export const {
+  Context: ParametersContext,
+  useStrictContext: useDraftCreatorParameters,
+} = createDraftCreatorStrictContext<DraftCreatorParameters>(
+  'useDraftCreatorParameters',
+  'DraftCreatorParametersContext'
+);
 
 // --- Context Aggregator ---
 export interface DraftCreatorFormContextValue

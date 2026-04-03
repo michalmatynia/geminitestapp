@@ -27,7 +27,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
-import KangurPriorityAssignments from '@/features/kangur/ui/components/KangurPriorityAssignments';
+import { KangurPriorityAssignments } from "@/features/kangur/ui/components/assignments/KangurPriorityAssignments";
 
 describe('KangurPriorityAssignments', () => {
   beforeEach(() => {

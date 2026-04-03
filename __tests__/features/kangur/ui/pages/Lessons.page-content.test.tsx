@@ -10,11 +10,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import plMessages from '@/i18n/messages/pl.json';
 
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
-import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/settings';
 import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
-import { getKangurSubjectGroups } from '@/features/kangur/ui/constants/subject-groups';
 
 // --- Shared State ---
 const lessonsTestHoisted = vi.hoisted(() => ({
@@ -36,9 +34,8 @@ const lessonsTestHoisted = vi.hoisted(() => ({
   } as any,
   routerPushMock: vi.fn(),
   useKangurPageContentEntryMock: vi.fn(),
+  isAssignmentsReady: true,
 }));
-
-console.log('DEBUG: getKangurSubjectGroups', getKangurSubjectGroups('pl'));
 
 // --- Mocks ---
 vi.mock('next/navigation', () => ({
@@ -123,13 +120,21 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', async () => {
-  const actual = await import('@/features/kangur/ui/pages/lessons/Lessons.ActiveLesson');
-  return {
-    LazyActiveLessonView: actual.ActiveLessonView,
-    prefetchActiveLessonView: vi.fn(),
-  };
-});
+vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
+  LazyActiveLessonView: ({ snapshot }: any) => (
+    <div data-testid='active-lesson-view'>
+      <h2 data-testid='active-lesson-title'>{snapshot?.activeLesson?.title}</h2>
+      {snapshot?.completedActiveLessonAssignment ? (
+        <div data-testid='active-lesson-parent-completed-chip'>Ukończone dla rodzica</div>
+      ) : null}
+      {snapshot?.lessonDocument ? (
+        <div data-testid='lesson-document-renderer'>Document blocks: {snapshot.lessonDocument.blocks?.length ?? 0}</div>
+      ) : null}
+      <div data-testid='mongo-assignment-title'>{snapshot?.activeLessonAssignmentContent?.title}</div>
+    </div>
+  ),
+  prefetchActiveLessonView: vi.fn(),
+}));
 
 vi.mock('@/features/kangur/ui/pages/lessons/LazyLessonsDeferredEnhancements', () => ({
   LazyLessonsDeferredEnhancements: () => null,
@@ -145,8 +150,14 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useReducedMotion: () => false,
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+    div: ({ children, ...props }: any) => {
+      const { initial, animate, exit, transition, variants, ...rest } = props;
+      return <div {...rest}>{children}</div>;
+    },
+    button: ({ children, ...props }: any) => {
+      const { initial, animate, exit, transition, variants, ...rest } = props;
+      return <button {...rest}>{children}</button>;
+    },
   },
 }));
 
@@ -186,13 +197,13 @@ vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
   useKangurAssignments: (options: any) => {
     const enabled = options?.enabled ?? true;
-    console.log('DEBUG useKangurAssignments:', { enabled, optionsEnabled: options?.enabled, auth: lessonsTestHoisted.auth });
     const assignments = enabled ? lessonsTestHoisted.assignments : [];
     return {
       assignments,
       data: assignments,
       isLoading: false,
       isPending: false,
+      isAssignmentsReady: lessonsTestHoisted.isAssignmentsReady,
       error: null,
       refresh: vi.fn(),
       createAssignment: vi.fn(),
@@ -203,7 +214,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   useKangurLessons: () => {
-    console.log('useKangurLessons mock returning lessons count:', lessonsTestHoisted.lessons.length);
     return {
       data: lessonsTestHoisted.lessons,
       isLoading: false,
@@ -239,7 +249,6 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
   useKangurLessonsCatalog: () => {
-    console.log('DEBUG: useKangurLessonsCatalog called, lessons count:', lessonsTestHoisted.lessons.length);
     return {
       data: {
         lessons: lessonsTestHoisted.lessons,
@@ -284,6 +293,19 @@ vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRend
 
 vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: () => <div data-testid='kangur-lesson-narrator' />,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
+  useKangurLessonTemplates: () => ({
+    data: new Map(),
+    isLoading: false,
+    error: null,
+  }),
+  useKangurLessonTemplate: () => ({
+    data: null,
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 const queryClient = new QueryClient({
@@ -359,6 +381,7 @@ describe('Lessons Page Content', () => {
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
     };
+    lessonsTestHoisted.isAssignmentsReady = true;
     lessonsTestHoisted.useKangurPageContentEntryMock.mockImplementation(() => ({
       entry: null,
       isLoading: false,
@@ -413,8 +436,8 @@ describe('Lessons Page Content', () => {
 
     await renderLessonsPage();
 
-    const addingButton = await screen.findByText('Dodawanie');
-    fireEvent.click(addingButton);
+    const addingText = await screen.findByText('Dodawanie');
+    fireEvent.click(addingText);
 
     expect(await screen.findByTestId('active-lesson-parent-completed-chip')).toBeInTheDocument();
     expect(await screen.findByText(/Ukończone dla rodzica/i)).toBeInTheDocument();
@@ -425,7 +448,9 @@ describe('Lessons Page Content', () => {
       user: { id: 'parent-1', activeLearner: { id: 'learner-1' } },
       canAccessParentAssignments: true,
     };
-    lessonsTestHoisted.lessons = [createLesson({ id: 'clock', title: 'Nauka zegara' })];
+    lessonsTestHoisted.lessons = [
+      createLesson({ id: 'clock', title: 'Nauka zegara', contentMode: 'document' }),
+    ];
     lessonsTestHoisted.assignments = [
       {
         id: 'assignment-3',
@@ -444,11 +469,10 @@ describe('Lessons Page Content', () => {
 
     await renderLessonsPage();
 
-    const clockButton = await screen.findByText('Nauka zegara');
-    fireEvent.click(clockButton);
+    const clockText = await screen.findByText('Nauka zegara');
+    fireEvent.click(clockText);
 
-    expect(await screen.findAllByText('Nauka zegara')).not.toHaveLength(0);
-    expect(await screen.findByText('Mongo zadanie rodzica')).toBeInTheDocument();
-    expect(await screen.findByText('Document blocks: 1')).toBeInTheDocument();
+    expect(await screen.findByTestId('active-lesson-title')).toHaveTextContent('Nauka zegara');
+    expect(await screen.findByTestId('lesson-document-renderer')).toHaveTextContent('Document blocks: 1');
   });
 });

@@ -99,12 +99,12 @@ const toRate = (numerator: number, denominator: number): number => {
   return numerator / denominator;
 };
 
-const evaluateRuntimeHealth = (args: {
+const buildRuntimeHealthChecks = (args: {
   timingByName: Map<PromptValidationTimingName, number[]>;
   totalErrors: number;
   selectionTotal: number;
   targets: PromptValidationRuntimeSloTargets;
-}): PromptValidationRuntimeHealth => {
+}): PromptValidationRuntimeHealth['checks'] => {
   const pipelineValues = args.timingByName.get('runtime_pipeline_ms') ?? [];
   const explodeValues = args.timingByName.get('explode_ms') ?? [];
   const compileValues = args.timingByName.get('runtime_compile_ms') ?? [];
@@ -113,7 +113,7 @@ const evaluateRuntimeHealth = (args: {
   const compileP95 = percentile(compileValues, 0.95);
   const errorRate = toRate(args.totalErrors, Math.max(1, args.selectionTotal));
 
-  const checks = [
+  return [
     {
       name: 'pipeline_p95',
       ok: pipelineP95 <= args.targets.p95PipelineMs,
@@ -139,15 +139,32 @@ const evaluateRuntimeHealth = (args: {
       target: args.targets.maxErrorRate,
     },
   ];
+};
 
+const resolveRuntimeHealthStatus = (
+  checks: PromptValidationRuntimeHealth['checks']
+): PromptValidationRuntimeHealth['status'] => {
   const failedChecks = checks.filter((check) => !check.ok).length;
   if (failedChecks >= 3) {
-    return { status: 'critical', checks };
+    return 'critical';
   }
   if (failedChecks > 0) {
-    return { status: 'degraded', checks };
+    return 'degraded';
   }
-  return { status: 'ok', checks };
+  return 'ok';
+};
+
+const evaluateRuntimeHealth = (args: {
+  timingByName: Map<PromptValidationTimingName, number[]>;
+  totalErrors: number;
+  selectionTotal: number;
+  targets: PromptValidationRuntimeSloTargets;
+}): PromptValidationRuntimeHealth => {
+  const checks = buildRuntimeHealthChecks(args);
+  return {
+    status: resolveRuntimeHealthStatus(checks),
+    checks,
+  };
 };
 
 export const getPromptValidationObservabilitySnapshot = (

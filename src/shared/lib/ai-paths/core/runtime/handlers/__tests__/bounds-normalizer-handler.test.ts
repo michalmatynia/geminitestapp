@@ -170,6 +170,32 @@ describe('handleBoundsNormalizer', () => {
     });
   });
 
+  it('returns an empty result when gemini_millirelative bounds collapse to non-positive size', () => {
+    const ctx = buildContext(
+      {
+        nodeInputs: {
+          value: [[100, 200, 100, 200]],
+          context: {
+            image: {
+              size: { width: 1000, height: 500 },
+            },
+          },
+        },
+      },
+      {
+        inputFormat: 'gemini_millirelative',
+        imageWidthPath: 'image.size.width',
+        imageHeightPath: 'image.size.height',
+      }
+    );
+
+    expect(handleBoundsNormalizer(ctx)).toEqual({});
+    expect(ctx.toast).toHaveBeenCalledWith(
+      'Bounds Normaliser "Bounds Normaliser": could not extract bounds from input using format "gemini_millirelative".',
+      { variant: 'info' }
+    );
+  });
+
   it('toasts when relative_xywh format is missing image dimensions', () => {
     const ctx = buildContext(
       {

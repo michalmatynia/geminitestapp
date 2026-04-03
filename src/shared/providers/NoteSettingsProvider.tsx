@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  createContext,
-  useContext,
   useEffect,
   useCallback,
   useMemo,
@@ -14,6 +12,7 @@ import {
 import type { NoteSettings } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
 import { useLiteSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import {
   DEFAULT_NOTE_SETTINGS,
@@ -35,10 +34,23 @@ interface NoteSettingsActionsContextType {
   resetToDefaults: () => void;
 }
 
-const NoteSettingsStateContext = createContext<NoteSettingsStateContextType | undefined>(undefined);
-const NoteSettingsActionsContext = createContext<NoteSettingsActionsContextType | undefined>(
-  undefined
-);
+const {
+  Context: NoteSettingsStateContext,
+  useStrictContext: useNoteSettingsStateContext,
+} = createStrictContext<NoteSettingsStateContextType>({
+  hookName: 'useNoteSettingsState',
+  providerName: 'a NoteSettingsProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: NoteSettingsActionsContext,
+  useStrictContext: useNoteSettingsActionsContext,
+} = createStrictContext<NoteSettingsActionsContextType>({
+  hookName: 'useNoteSettingsActions',
+  providerName: 'a NoteSettingsProvider',
+  errorFactory: internalError,
+});
 
 export function NoteSettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [settings, setSettings] = useState<NoteSettings>(DEFAULT_NOTE_SETTINGS);
@@ -215,18 +227,5 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
   );
 }
 
-export function useNoteSettingsState(): NoteSettingsStateContextType {
-  const context = useContext(NoteSettingsStateContext);
-  if (context === undefined) {
-    throw internalError('useNoteSettingsState must be used within a NoteSettingsProvider');
-  }
-  return context;
-}
-
-export function useNoteSettingsActions(): NoteSettingsActionsContextType {
-  const context = useContext(NoteSettingsActionsContext);
-  if (context === undefined) {
-    throw internalError('useNoteSettingsActions must be used within a NoteSettingsProvider');
-  }
-  return context;
-}
+export const useNoteSettingsState = useNoteSettingsStateContext;
+export const useNoteSettingsActions = useNoteSettingsActionsContext;

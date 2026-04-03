@@ -75,13 +75,13 @@ export const clearKangurAssignmentSnapshotsCache = (): void => {
   assignmentSnapshotsInflight.clear();
 };
 
-export const invalidateKangurAssignmentSnapshotsCache = (input: {
+const buildRelatedAssignmentSnapshotsCacheValues = (input: {
   learnerKey: string;
   learnerName: string | null;
   learnerEmail: string | null;
   legacyLearnerKey?: string | null;
-}): void => {
-  const relatedKeys = new Set(
+}): ReadonlySet<string> =>
+  new Set(
     [
       input.learnerKey,
       input.legacyLearnerKey ?? null,
@@ -90,17 +90,26 @@ export const invalidateKangurAssignmentSnapshotsCache = (input: {
     ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
   );
 
-  for (const key of assignmentSnapshotsCache.keys()) {
-    if (isRelatedAssignmentSnapshotsCacheKey(key, relatedKeys)) {
-      assignmentSnapshotsCache.delete(key);
+const invalidateMatchingAssignmentSnapshotsCacheEntries = (
+  entries: Pick<Map<string, unknown>, 'keys' | 'delete'>,
+  relatedValues: ReadonlySet<string>
+): void => {
+  for (const key of entries.keys()) {
+    if (isRelatedAssignmentSnapshotsCacheKey(key, relatedValues)) {
+      entries.delete(key);
     }
   }
+};
 
-  for (const key of assignmentSnapshotsInflight.keys()) {
-    if (isRelatedAssignmentSnapshotsCacheKey(key, relatedKeys)) {
-      assignmentSnapshotsInflight.delete(key);
-    }
-  }
+export const invalidateKangurAssignmentSnapshotsCache = (input: {
+  learnerKey: string;
+  learnerName: string | null;
+  learnerEmail: string | null;
+  legacyLearnerKey?: string | null;
+}): void => {
+  const relatedValues = buildRelatedAssignmentSnapshotsCacheValues(input);
+  invalidateMatchingAssignmentSnapshotsCacheEntries(assignmentSnapshotsCache, relatedValues);
+  invalidateMatchingAssignmentSnapshotsCacheEntries(assignmentSnapshotsInflight, relatedValues);
 };
 
 

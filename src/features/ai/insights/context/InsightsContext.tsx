@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -32,24 +33,26 @@ type InsightsActionsContextValue = Pick<
   'runAnalyticsMutation' | 'runRuntimeAnalyticsMutation' | 'runLogsMutation'
 >;
 
-const InsightsStateContext = createContext<InsightsStateContextValue | undefined>(undefined);
-const InsightsActionsContext = createContext<InsightsActionsContextValue | undefined>(undefined);
+const {
+  Context: InsightsStateContext,
+  useStrictContext: useInsightsStateContext,
+} = createStrictContext<InsightsStateContextValue>({
+  hookName: 'useInsightsState',
+  providerName: 'an InsightsProvider',
+  errorFactory: internalError,
+});
 
-export function useInsightsState(): InsightsStateContextValue {
-  const context = useContext(InsightsStateContext);
-  if (!context) {
-    throw internalError('useInsightsState must be used within an InsightsProvider');
-  }
-  return context;
-}
+const {
+  Context: InsightsActionsContext,
+  useStrictContext: useInsightsActionsContext,
+} = createStrictContext<InsightsActionsContextValue>({
+  hookName: 'useInsightsActions',
+  providerName: 'an InsightsProvider',
+  errorFactory: internalError,
+});
 
-export function useInsightsActions(): InsightsActionsContextValue {
-  const context = useContext(InsightsActionsContext);
-  if (!context) {
-    throw internalError('useInsightsActions must be used within an InsightsProvider');
-  }
-  return context;
-}
+export const useInsightsState = useInsightsStateContext;
+export const useInsightsActions = useInsightsActionsContext;
 
 export function InsightsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();

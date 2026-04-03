@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, useMemo, type JSX, type ReactNode } from 'react';
+import { useMemo, type JSX, type ReactNode } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useBrainRuntime } from './useBrainRuntime';
 
@@ -24,24 +25,26 @@ export type {
   InsightsSnapshot,
 } from './useBrainRuntime';
 
-const BrainStateContext = createContext<BrainStateContextType | undefined>(undefined);
-const BrainActionsContext = createContext<BrainActionsContextType | undefined>(undefined);
+const {
+  Context: BrainStateContext,
+  useStrictContext: useBrainStateContext,
+} = createStrictContext<BrainStateContextType>({
+  hookName: 'useBrainState',
+  providerName: 'a BrainProvider',
+  errorFactory: internalError,
+});
 
-export function useBrainState(): BrainStateContextType {
-  const context = useContext(BrainStateContext);
-  if (!context) {
-    throw internalError('useBrainState must be used within a BrainProvider');
-  }
-  return context;
-}
+const {
+  Context: BrainActionsContext,
+  useStrictContext: useBrainActionsContext,
+} = createStrictContext<BrainActionsContextType>({
+  hookName: 'useBrainActions',
+  providerName: 'a BrainProvider',
+  errorFactory: internalError,
+});
 
-export function useBrainActions(): BrainActionsContextType {
-  const context = useContext(BrainActionsContext);
-  if (!context) {
-    throw internalError('useBrainActions must be used within a BrainProvider');
-  }
-  return context;
-}
+export const useBrainState = useBrainStateContext;
+export const useBrainActions = useBrainActionsContext;
 
 export function useBrain(): BrainContextType {
   const state = useBrainState();

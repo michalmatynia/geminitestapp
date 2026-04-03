@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, ReactNode } from 'react';
+import React, { useMemo, ReactNode } from 'react';
 
 import type {
   ChatbotMessagesData,
@@ -9,40 +9,53 @@ import type {
   ChatbotUIData,
 } from '@/shared/contracts/chatbot';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useChatbotLogic } from '../hooks/useChatbotLogic';
 
+const createChatbotStrictContext = <T,>(hookName: string, displayName: string) =>
+  createStrictContext<T>({
+    hookName,
+    providerName: 'a ChatbotProvider',
+    displayName,
+    errorFactory: internalError,
+  });
+
 // --- Messages Context ---
-const MessagesContext = createContext<ChatbotMessagesData | null>(null);
-export const useChatbotMessages = () => {
-  const context = useContext(MessagesContext);
-  if (!context) throw internalError('useChatbotMessages must be used within ChatbotProvider');
-  return context;
-};
+export const {
+  Context: MessagesContext,
+  useStrictContext: useChatbotMessages,
+} = createChatbotStrictContext<ChatbotMessagesData>(
+  'useChatbotMessages',
+  'ChatbotMessagesContext'
+);
 
 // --- Settings Context ---
-const SettingsContext = createContext<ChatbotSettingsData | null>(null);
-export const useChatbotSettings = () => {
-  const context = useContext(SettingsContext);
-  if (!context) throw internalError('useChatbotSettings must be used within ChatbotProvider');
-  return context;
-};
+export const {
+  Context: SettingsContext,
+  useStrictContext: useChatbotSettings,
+} = createChatbotStrictContext<ChatbotSettingsData>(
+  'useChatbotSettings',
+  'ChatbotSettingsContext'
+);
 
 // --- Sessions Context ---
-const SessionsContext = createContext<ChatbotSessionsData | null>(null);
-export const useChatbotSessions = () => {
-  const context = useContext(SessionsContext);
-  if (!context) throw internalError('useChatbotSessions must be used within ChatbotProvider');
-  return context;
-};
+export const {
+  Context: SessionsContext,
+  useStrictContext: useChatbotSessions,
+} = createChatbotStrictContext<ChatbotSessionsData>(
+  'useChatbotSessions',
+  'ChatbotSessionsContext'
+);
 
 // --- UI / Debug Context ---
-const UIContext = createContext<ChatbotUIData | null>(null);
-export const useChatbotUI = () => {
-  const context = useContext(UIContext);
-  if (!context) throw internalError('useChatbotUI must be used within ChatbotProvider');
-  return context;
-};
+export const {
+  Context: UIContext,
+  useStrictContext: useChatbotUI,
+} = createChatbotStrictContext<ChatbotUIData>(
+  'useChatbotUI',
+  'ChatbotUIContext'
+);
 
 export function ChatbotProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const logic = useChatbotLogic();

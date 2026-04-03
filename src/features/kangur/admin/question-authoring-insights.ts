@@ -378,6 +378,38 @@ const buildIssues = (
   return issues;
 };
 
+const resolveQuestionAuthoringStatus = (
+  blockers: QuestionAuthoringIssue[],
+  warnings: QuestionAuthoringIssue[]
+): QuestionAuthoringStatus => {
+  if (blockers.length > 0) return 'needs-fix';
+  if (warnings.length > 0) return 'needs-review';
+  return 'ready';
+};
+
+const resolveWorkflowDefaultNextAction = (
+  workflowStatus: KangurTestQuestionWorkflowStatus,
+  localizedMessages: (typeof QUESTION_AUTHORING_MESSAGES)[KangurAdminLocaleDto]
+): string => {
+  if (workflowStatus === 'published') {
+    return localizedMessages.publishedClean;
+  }
+  if (workflowStatus === 'ready') {
+    return localizedMessages.readyToPublish;
+  }
+  return localizedMessages.savedDraft;
+};
+
+const resolveQuestionAuthoringNextAction = (args: {
+  draft: QuestionAuthoringDraftLike | KangurTestQuestion;
+  blockers: QuestionAuthoringIssue[];
+  warnings: QuestionAuthoringIssue[];
+  localizedMessages: (typeof QUESTION_AUTHORING_MESSAGES)[KangurAdminLocaleDto];
+}): string =>
+  args.blockers[0]?.message ??
+  args.warnings[0]?.message ??
+  resolveWorkflowDefaultNextAction(args.draft.editorial.workflowStatus, args.localizedMessages);
+
 export const getQuestionAuthoringSummary = (
   draft: QuestionAuthoringDraftLike | KangurTestQuestion,
   locale: string | null | undefined = 'en'
@@ -387,17 +419,13 @@ export const getQuestionAuthoringSummary = (
   const issues = buildIssues(draft, resolvedLocale);
   const blockers = issues.filter((issue) => issue.severity === 'blocker');
   const warnings = issues.filter((issue) => issue.severity === 'warning');
-  const status: QuestionAuthoringStatus =
-    blockers.length > 0 ? 'needs-fix' : warnings.length > 0 ? 'needs-review' : 'ready';
-
-  const nextAction =
-    blockers[0]?.message ||
-    warnings[0]?.message ||
-    (draft.editorial.workflowStatus === 'published'
-      ? localizedMessages.publishedClean
-      : draft.editorial.workflowStatus === 'ready'
-        ? localizedMessages.readyToPublish
-        : localizedMessages.savedDraft);
+  const status = resolveQuestionAuthoringStatus(blockers, warnings);
+  const nextAction = resolveQuestionAuthoringNextAction({
+    draft,
+    blockers,
+    warnings,
+    localizedMessages,
+  });
 
   return {
     status,

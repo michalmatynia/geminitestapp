@@ -61,9 +61,11 @@ describe('resolveTraderaApiCategoryId', () => {
         name: 'Small parcel',
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
       },
       shippingGroupId: 'shipping-group-1',
       shippingCondition: 'Buyer pays shipping',
+      shippingPriceEur: 5,
       reason: 'mapped',
     });
 
@@ -157,6 +159,19 @@ describe('runTraderaApiListing', () => {
       resultCode: 'Ok',
       resultMessage: 'Created',
     });
+    resolveTraderaShippingGroupResolutionForProductMock.mockResolvedValue({
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: 'Small parcel',
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
+      },
+      shippingGroupId: 'shipping-group-1',
+      shippingCondition: 'Buyer pays shipping',
+      shippingPriceEur: 5,
+      reason: 'mapped',
+    });
   });
 
   it('uses category mapper output for Tradera API listings and records the source', async () => {
@@ -201,6 +216,7 @@ describe('runTraderaApiListing', () => {
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
         shippingCondition: 'Buyer pays shipping',
+        shippingPriceEur: 5,
         shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
         quantity: 3,
@@ -230,6 +246,7 @@ describe('runTraderaApiListing', () => {
       shippingGroup: null,
       shippingGroupId: null,
       shippingCondition: null,
+      shippingPriceEur: null,
       reason: 'missing_shipping_group',
     });
 
@@ -269,6 +286,7 @@ describe('runTraderaApiListing', () => {
         shippingGroupId: null,
         shippingGroupName: null,
         shippingCondition: 'Shipping paid by buyer',
+        shippingPriceEur: null,
         shippingConditionSource: 'default',
         shippingConditionReason: 'missing_shipping_group',
       }),

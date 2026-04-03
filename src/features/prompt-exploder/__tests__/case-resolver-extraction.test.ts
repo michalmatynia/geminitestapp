@@ -5,6 +5,7 @@ import {
   buildCaseResolverSegmentCaptureRules,
   type CaseResolverSegmentCaptureRule,
   extractCaseResolverBridgePayloadFromSegments,
+  resolvePartySegment,
   resolveCaseResolverBridgePayloadForTransfer,
 } from '@/features/prompt-exploder/utils/case-resolver-extraction';
 import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
@@ -301,6 +302,50 @@ describe('case resolver extraction bridge payload', () => {
     expect(payload.parties?.addressee?.streetNumber).toBe('15');
     expect(payload.parties?.addressee?.postalCode).toBe('70-812');
     expect(payload.parties?.addressee?.city).toBe('Szczecin');
+  });
+
+  it('prefers heading matches before generic address heuristics and avoids reusing segments', () => {
+    const genericAddress = createSegment({
+      id: 'generic-address',
+      raw: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+      matchedPatternIds: ['segment.case_resolver.extract.address.street'],
+    });
+    const headingAddresser = createSegment({
+      id: 'heading-addresser',
+      raw: 'Jan Nowak\nJasna 10\n00-001 Warszawa\nPolska',
+      matchedPatternIds: ['segment.case_resolver.heading.addresser_person'],
+    });
+    const headingAddressee = createSegment({
+      id: 'heading-addressee',
+      raw: 'Komisariat Policji Szczecin–Dąbie\nul. Pomorska 15\n70-812 Szczecin',
+      matchedPatternIds: ['segment.case_resolver.heading.addressee_organization'],
+    });
+    const usedSegmentIds = new Set<string>();
+    const segments = [genericAddress, headingAddresser, headingAddressee];
+
+    expect(resolvePartySegment(segments, 'addresser', usedSegmentIds)?.id).toBe('heading-addresser');
+    expect(resolvePartySegment(segments, 'addressee', usedSegmentIds)?.id).toBe('heading-addressee');
+    expect(usedSegmentIds).toEqual(new Set(['heading-addresser', 'heading-addressee']));
+  });
+
+  it('supports the expanded party-role union without inventing heuristic matches', () => {
+    const headingSubject = createSegment({
+      id: 'heading-subject',
+      raw: 'Dotyczy',
+      matchedPatternIds: ['segment.case_resolver.heading.subject_or_section'],
+    });
+    const genericAddress = createSegment({
+      id: 'generic-address',
+      raw: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+      matchedPatternIds: ['segment.case_resolver.extract.address.street'],
+    });
+    const usedSegmentIds = new Set<string>();
+    const segments = [headingSubject, genericAddress];
+
+    expect(resolvePartySegment(segments, 'subject', usedSegmentIds)?.id).toBe('heading-subject');
+    expect(resolvePartySegment(segments, 'reference', usedSegmentIds)).toBeNull();
+    expect(resolvePartySegment(segments, 'other', usedSegmentIds)).toBeNull();
+    expect(usedSegmentIds).toEqual(new Set(['heading-subject']));
   });
 
   it('keeps rules-only transfer empty when no capture rules match', () => {

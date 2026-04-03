@@ -166,14 +166,19 @@ export const parseNumberInput = (value: string, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-export const readLessonGroupCount = (metadata: unknown): number | null => {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
-  const groupValue = (metadata as Record<string, unknown>)['kangurLessonGroup'];
-  if (!groupValue || typeof groupValue !== 'object' || Array.isArray(groupValue)) return null;
-  const rawCount = (groupValue as Record<string, unknown>)['lessonCount'];
-  if (typeof rawCount !== 'number' || !Number.isFinite(rawCount)) return null;
-  return rawCount;
-};
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const readFiniteNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+const readLessonGroupMetadata = (metadata: unknown): Record<string, unknown> | null =>
+  asRecord(asRecord(metadata)?.['kangurLessonGroup']);
+
+export const readLessonGroupCount = (metadata: unknown): number | null =>
+  readFiniteNumber(readLessonGroupMetadata(metadata)?.['lessonCount']);
 
 export const clampGridColumnStart = (
   columnStart: number | null,

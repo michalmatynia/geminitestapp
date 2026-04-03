@@ -172,6 +172,45 @@ export const parseKangurRuntimeRef = (ref: ContextRegistryRef): KangurRuntimeRef
   return null;
 };
 
+const buildKangurSurfaceContextRef = (input: {
+  learnerId: string;
+  context: Pick<
+    KangurAiTutorConversationContext,
+    'surface' | 'contentId' | 'questionId' | 'answerRevealed'
+  >;
+}): ContextRegistryRef | null => {
+  const contentId = input.context.contentId?.trim();
+  if (!contentId) {
+    return null;
+  }
+
+  if (input.context.surface === 'lesson') {
+    return createKangurLessonContextRef(input.learnerId, contentId);
+  }
+
+  if (input.context.surface === 'test') {
+    return createKangurTestContextRef({
+      learnerId: input.learnerId,
+      suiteId: contentId,
+      questionId: input.context.questionId ?? null,
+      answerRevealed: input.context.answerRevealed ?? false,
+    });
+  }
+
+  return null;
+};
+
+const dedupeContextRegistryRefs = (refs: ContextRegistryRef[]): ContextRegistryRef[] => {
+  const seen = new Set<string>();
+  return refs.filter((ref) => {
+    if (seen.has(ref.id)) {
+      return false;
+    }
+    seen.add(ref.id);
+    return true;
+  });
+};
+
 export const buildKangurAiTutorContextRegistryRefs = (input: {
   learnerId: string;
   context: Pick<
@@ -183,34 +222,20 @@ export const buildKangurAiTutorContextRegistryRefs = (input: {
     createKangurLearnerSnapshotRef(input.learnerId),
     createKangurLoginActivityRef(input.learnerId),
   ];
-  const contentId = input.context?.contentId?.trim();
   const assignmentId = input.context?.assignmentId?.trim();
-
-  if (input.context?.surface === 'lesson' && contentId) {
-    refs.push(createKangurLessonContextRef(input.learnerId, contentId));
-  }
-
-  if (input.context?.surface === 'test' && contentId) {
-    refs.push(
-      createKangurTestContextRef({
-        learnerId: input.learnerId,
-        suiteId: contentId,
-        questionId: input.context.questionId ?? null,
-        answerRevealed: input.context.answerRevealed ?? false,
-      })
-    );
+  if (input.context) {
+    const surfaceRef = buildKangurSurfaceContextRef({
+      learnerId: input.learnerId,
+      context: input.context,
+    });
+    if (surfaceRef) {
+      refs.push(surfaceRef);
+    }
   }
 
   if (assignmentId) {
     refs.push(createKangurAssignmentContextRef(input.learnerId, assignmentId));
   }
 
-  const seen = new Set<string>();
-  return refs.filter((ref) => {
-    if (seen.has(ref.id)) {
-      return false;
-    }
-    seen.add(ref.id);
-    return true;
-  });
+  return dedupeContextRegistryRefs(refs);
 };

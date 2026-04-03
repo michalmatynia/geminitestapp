@@ -153,26 +153,41 @@ const resolveRankedCompletedPlayers = (
     }))
     .filter(isRankedCompletedPlayer);
 
+const sortRankedCompletedPlayers = (
+  ranked: Array<{ completedAtMs: number; player: KangurDuelPlayer }>
+): Array<{ completedAtMs: number; player: KangurDuelPlayer }> =>
+  [...ranked].sort((left, right) => left.completedAtMs - right.completedAtMs);
+
 const hasSharedFastestCompletion = (
   ranked: Array<{ completedAtMs: number; player: KangurDuelPlayer }>
 ): boolean => ranked.length >= 2 && ranked[0]?.completedAtMs === ranked[1]?.completedAtMs;
 
-const resolveFastestPlayer = (players: KangurDuelPlayer[]): KangurDuelPlayer | null => {
-  if (players.length <= 1) {
-    return players[0] ?? null;
-  }
+const resolveSingleFastestPlayer = (players: KangurDuelPlayer[]): KangurDuelPlayer | null =>
+  players[0] ?? null;
 
-  const ranked = resolveRankedCompletedPlayers(players);
-  if (ranked.length === 0) {
+const shouldResolveSingleFastestPlayer = (players: KangurDuelPlayer[]): boolean =>
+  players.length <= 1;
+
+const resolveFastestPlayerCandidates = (
+  players: KangurDuelPlayer[]
+): Array<{ completedAtMs: number; player: KangurDuelPlayer }> =>
+  sortRankedCompletedPlayers(resolveRankedCompletedPlayers(players));
+
+const resolveFastestRankedPlayer = (
+  ranked: Array<{ completedAtMs: number; player: KangurDuelPlayer }>
+): KangurDuelPlayer | null => {
+  if (ranked.length === 0 || hasSharedFastestCompletion(ranked)) {
     return null;
   }
-
-  ranked.sort((left, right) => left.completedAtMs - right.completedAtMs);
-  if (hasSharedFastestCompletion(ranked)) {
-    return null;
-  }
-
   return ranked[0]?.player ?? null;
+};
+
+const resolveFastestPlayer = (players: KangurDuelPlayer[]): KangurDuelPlayer | null => {
+  if (shouldResolveSingleFastestPlayer(players)) {
+    return resolveSingleFastestPlayer(players);
+  }
+
+  return resolveFastestRankedPlayer(resolveFastestPlayerCandidates(players));
 };
 
 export const resolveLobbyHostInitial = (name: string): string =>

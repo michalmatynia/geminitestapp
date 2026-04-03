@@ -87,6 +87,15 @@ vi.mock('@/features/integrations/public', () => ({
     isPending: false,
     mutateAsync: mutateAsyncMock,
   }),
+  createBaseRecoveryContext: ({ status, runId, requestId, integrationId, connectionId }: any) => ({
+    source: 'base_quick_export_failed',
+    integrationSlug: 'baselinker',
+    status,
+    runId,
+    ...(requestId != null ? { requestId } : {}),
+    ...(integrationId != null ? { integrationId } : {}),
+    ...(connectionId != null ? { connectionId } : {}),
+  }),
 }));
 
 vi.mock('@/shared/lib/query-invalidation', () => ({

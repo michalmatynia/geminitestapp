@@ -17,6 +17,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 
 const KANGUR_SCORES_COLLECTION = 'kangur_scores';
 const KANGUR_SCORES_CLIENT_MUTATION_INDEX = 'kangur_scores_client_mutation_id_unique';
+type KangurScoreFilterSubject = NonNullable<KangurScoreListInput['filters']>['subject'];
 
 type KangurScoreDocument = {
   _id: ObjectId;
@@ -64,6 +65,56 @@ const toMongoSort = (sort: KangurScoreListInput['sort']): Record<string, SortDir
   };
 };
 
+const buildMathsSubjectFilter = (
+  subject: KangurScoreFilterSubject
+): Filter<KangurScoreDocument> => ({
+  $and: [
+    {
+      $or: [
+        { subject },
+        { subject: { $exists: false } },
+        { subject: null },
+      ],
+    },
+    {
+      $nor: [
+        { operation: ENGLISH_OPERATION_REGEX },
+        { operation: ALPHABET_OPERATION_REGEX },
+        { operation: ART_OPERATION_REGEX },
+        { operation: MUSIC_OPERATION_REGEX },
+      ],
+    },
+  ],
+});
+
+const buildRegexSubjectFilter = (
+  subject: KangurScoreFilterSubject,
+  regex: RegExp
+): Filter<KangurScoreDocument> => ({
+  $or: [{ subject }, { operation: { $regex: regex } }],
+});
+
+const resolveSubjectMongoFilter = (
+  subject: KangurScoreFilterSubject
+): Filter<KangurScoreDocument> => {
+  if (subject === 'maths') {
+    return buildMathsSubjectFilter(subject);
+  }
+  if (subject === 'alphabet') {
+    return buildRegexSubjectFilter(subject, ALPHABET_OPERATION_REGEX);
+  }
+  if (subject === 'english') {
+    return buildRegexSubjectFilter(subject, ENGLISH_OPERATION_REGEX);
+  }
+  if (subject === 'art') {
+    return buildRegexSubjectFilter(subject, ART_OPERATION_REGEX);
+  }
+  if (subject === 'music') {
+    return buildRegexSubjectFilter(subject, MUSIC_OPERATION_REGEX);
+  }
+  return { subject };
+};
+
 const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocument> => {
   const filters = input?.filters;
   const query: Filter<KangurScoreDocument> = {};
@@ -76,48 +127,7 @@ const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocumen
     query.operation = filters.operation;
   }
   if (filters.subject) {
-    if (filters.subject === 'maths') {
-      const subjectMatch: Filter<KangurScoreDocument> = {
-        $or: [
-          { subject: filters.subject },
-          { subject: { $exists: false } },
-          { subject: null },
-        ],
-      };
-      const operationMatch: Filter<KangurScoreDocument> = {
-        $nor: [
-          { operation: ENGLISH_OPERATION_REGEX },
-          { operation: ALPHABET_OPERATION_REGEX },
-          { operation: ART_OPERATION_REGEX },
-          { operation: MUSIC_OPERATION_REGEX },
-        ],
-      };
-      query.$and = Array.isArray(query.$and)
-        ? [...query.$and, subjectMatch, operationMatch]
-        : [subjectMatch, operationMatch];
-    } else if (filters.subject === 'alphabet') {
-      query.$or = [
-        { subject: filters.subject },
-        { operation: { $regex: ALPHABET_OPERATION_REGEX } },
-      ];
-    } else if (filters.subject === 'english') {
-      query.$or = [
-        { subject: filters.subject },
-        { operation: { $regex: ENGLISH_OPERATION_REGEX } },
-      ];
-    } else if (filters.subject === 'art') {
-      query.$or = [
-        { subject: filters.subject },
-        { operation: { $regex: ART_OPERATION_REGEX } },
-      ];
-    } else if (filters.subject === 'music') {
-      query.$or = [
-        { subject: filters.subject },
-        { operation: { $regex: MUSIC_OPERATION_REGEX } },
-      ];
-    } else {
-      query.subject = filters.subject;
-    }
+    Object.assign(query, resolveSubjectMongoFilter(filters.subject));
   }
   if (filters.created_by) {
     query.created_by = filters.created_by;

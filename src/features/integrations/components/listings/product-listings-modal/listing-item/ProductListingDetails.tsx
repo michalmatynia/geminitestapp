@@ -92,6 +92,13 @@ const resolveTraderaExecutionSummary = (
   categoryMappingReason: string | null;
   categoryMatchScope: string | null;
   categoryInternalCategoryId: string | null;
+  shippingCondition: string | null;
+  shippingPriceEur: number | null;
+  imageInputSource: string | null;
+  imageUploadSource: string | null;
+  localImagePathCount: number | null;
+  imageUrlCount: number | null;
+  imageSettleState: unknown;
   rawResult: unknown;
 } => {
   const marketplaceRecord = toRecord(marketplaceData);
@@ -139,6 +146,15 @@ const resolveTraderaExecutionSummary = (
     categoryMappingReason: readString(metadata['categoryMappingReason']),
     categoryMatchScope: readString(metadata['categoryMatchScope']),
     categoryInternalCategoryId: readString(metadata['categoryInternalCategoryId']),
+    shippingCondition: readString(metadata['shippingCondition']),
+    shippingPriceEur: readNumber(metadata['shippingPriceEur']),
+    imageInputSource: readString(metadata['imageInputSource']),
+    imageUploadSource:
+      readString(metadata['imageUploadSource']) ??
+      readString(toRecord(metadata['rawResult'])['imageUploadSource']),
+    localImagePathCount: readNumber(metadata['localImagePathCount']),
+    imageUrlCount: readNumber(metadata['imageUrlCount']),
+    imageSettleState: metadata['imageSettleState'] ?? null,
     rawResult: metadata['rawResult'] ?? null,
   };
 };
@@ -473,6 +489,48 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.shippingCondition ? (
+            <MetadataItem
+              label='Shipping condition'
+              value={traderaExecution.shippingCondition}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.shippingPriceEur !== null ? (
+            <MetadataItem
+              label='Shipping EUR'
+              value={traderaExecution.shippingPriceEur.toFixed(2)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.imageInputSource ? (
+            <MetadataItem
+              label='Image input source'
+              value={traderaExecution.imageInputSource}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.imageUploadSource ? (
+            <MetadataItem
+              label='Actual image upload source'
+              value={traderaExecution.imageUploadSource}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.localImagePathCount !== null ? (
+            <MetadataItem
+              label='Local image files'
+              value={String(traderaExecution.localImagePathCount)}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.imageUrlCount !== null ? (
+            <MetadataItem
+              label='Image URLs'
+              value={String(traderaExecution.imageUrlCount)}
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.listingUrl ? (
             <MetadataItem
               label='Listing URL'
@@ -586,13 +644,16 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
         </div>
       ) : null}
       {isTraderaListing &&
-      (traderaExecution.failureArtifacts || traderaExecution.logTail) ? (
+      (traderaExecution.failureArtifacts ||
+        traderaExecution.logTail ||
+        traderaExecution.imageSettleState) ? (
         <div className='mt-4'>
           <JsonViewer
             title='Tradera failure diagnostics'
             data={{
               failureArtifacts: traderaExecution.failureArtifacts,
               logTail: traderaExecution.logTail,
+              imageSettleState: traderaExecution.imageSettleState,
             }}
             maxHeight={220}
             className='bg-white/5'

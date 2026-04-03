@@ -146,32 +146,32 @@ export const resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment =
   value = process.env[PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_ENABLED_ENV]
 ): boolean | null => parseBooleanFromEnvironment(value);
 
+const normalizePortablePathAuditSinkAutoRemediationStrategyValue = (
+  value: string | undefined | null
+): string => String(value ?? '').trim().toLowerCase();
+
+const PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGY_ALIASES = new Map<
+  string,
+  PortablePathAuditSinkAutoRemediationStrategy
+>([
+  ['off', 'none'],
+  ['none', 'none'],
+  ['disabled', 'none'],
+  ['unregister_all', 'unregister_all'],
+  ['unregister-all', 'unregister_all'],
+  ['unregisterall', 'unregister_all'],
+  ['degrade_to_log_only', 'degrade_to_log_only'],
+  ['degrade-to-log-only', 'degrade_to_log_only'],
+  ['log_only', 'degrade_to_log_only'],
+  ['log-only', 'degrade_to_log_only'],
+]);
+
 const resolvePortablePathAuditSinkAutoRemediationStrategy = (
   value: string | undefined | null
 ): PortablePathAuditSinkAutoRemediationStrategy | null => {
-  const normalized = String(value ?? '')
-    .trim()
-    .toLowerCase();
+  const normalized = normalizePortablePathAuditSinkAutoRemediationStrategyValue(value);
   if (normalized.length === 0) return null;
-  if (normalized === 'off' || normalized === 'none' || normalized === 'disabled') {
-    return 'none';
-  }
-  if (
-    normalized === 'unregister_all' ||
-    normalized === 'unregister-all' ||
-    normalized === 'unregisterall'
-  ) {
-    return 'unregister_all';
-  }
-  if (
-    normalized === 'degrade_to_log_only' ||
-    normalized === 'degrade-to-log-only' ||
-    normalized === 'log_only' ||
-    normalized === 'log-only'
-  ) {
-    return 'degrade_to_log_only';
-  }
-  return null;
+  return PORTABLE_PATH_AUDIT_SINK_AUTO_REMEDIATION_STRATEGY_ALIASES.get(normalized) ?? null;
 };
 
 export const resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment = (

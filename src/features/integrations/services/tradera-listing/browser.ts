@@ -41,6 +41,7 @@ import {
 } from './utils';
 import {
   resolveAppBaseUrl,
+  getPublicPathFromStoredPath,
   toAbsoluteUrl,
 } from '@/shared/lib/files/services/storage/file-storage-service';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -82,26 +83,56 @@ const resolveProductImageUrls = (product: ProductWithImages): string[] => {
 
 const MIN_TRADERA_IMAGE_BYTES = 10_240;
 
+const resolveLocalAppHost = (): string | null => {
+  try {
+    return new URL(resolveAppBaseUrl()).host || null;
+  } catch {
+    return null;
+  }
+};
+
 const toAbsolutePublicFilePath = (value: string): string | null => {
   const trimmed = value.trim();
-  if (!trimmed.startsWith('/')) return null;
-  return path.join(process.cwd(), 'public', trimmed.replace(/^\/+/, ''));
+  if (!trimmed) return null;
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      const localAppHost = resolveLocalAppHost();
+      if (!localAppHost || url.host !== localAppHost) {
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  const publicPath = getPublicPathFromStoredPath(trimmed);
+  if (!publicPath?.startsWith('/')) return null;
+  return path.join(process.cwd(), 'public', publicPath.replace(/^\/+/, ''));
 };
 
 const resolveLocalProductImagePaths = async (
   product: ProductWithImages
 ): Promise<string[]> => {
   const candidates = new Set<string>();
+  const addCandidate = (value: string | null | undefined): void => {
+    if (typeof value !== 'string' || !value.trim()) return;
+    const absolutePath = toAbsolutePublicFilePath(value);
+    if (absolutePath) {
+      candidates.add(absolutePath);
+    }
+  };
 
   (product.images ?? []).forEach((image) => {
-    const filepath = image.imageFile?.filepath;
-    if (typeof filepath === 'string' && filepath.trim()) {
-      const absolutePath = toAbsolutePublicFilePath(filepath);
-      if (absolutePath) {
-        candidates.add(absolutePath);
-      }
-    }
+    const imageFileCandidates = [
+      image.imageFile?.filepath,
+      image.imageFile?.publicUrl,
+      image.imageFile?.url,
+    ];
+    imageFileCandidates.forEach(addCandidate);
   });
+  (product.imageLinks ?? []).forEach(addCandidate);
 
   const validPaths: string[] = [];
   for (const candidate of candidates) {
@@ -119,8 +150,36 @@ const resolveLocalProductImagePaths = async (
   return validPaths;
 };
 
-const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v48';
+const resolveScriptInputImageDiagnostics = (
+  scriptInput: Record<string, unknown> | null
+): {
+  imageInputSource: 'local' | 'remote' | 'none';
+  localImagePathCount: number;
+  imageUrlCount: number;
+} => {
+  const localImagePaths = Array.isArray(scriptInput?.['localImagePaths'])
+    ? scriptInput['localImagePaths'].filter(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0
+      )
+    : [];
+  const imageUrls = Array.isArray(scriptInput?.['imageUrls'])
+    ? scriptInput['imageUrls'].filter(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0
+      )
+    : [];
+
+  return {
+    imageInputSource:
+      localImagePaths.length > 0 ? 'local' : imageUrls.length > 0 ? 'remote' : 'none',
+    localImagePathCount: localImagePaths.length,
+    imageUrlCount: imageUrls.length,
+  };
+};
+
+const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v76';
 const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 10_000;
+const TRADERA_IMAGE_SETTLE_TIMEOUT_MESSAGE_PREFIX =
+  'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish. Last state: ';
 
 const includesAnyHint = (value: string, hints: readonly string[]): boolean => {
   const normalized = value.trim().toLowerCase();
@@ -369,6 +428,64 @@ const resolveResultBrowserMode = (
       ? 'headless'
       : null);
 
+const toObjectRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const parseImageSettleStateFromMessage = (
+  message: string | null | undefined
+): Record<string, unknown> | null => {
+  const normalized = typeof message === 'string' ? message : '';
+  const markerIndex = normalized.indexOf(TRADERA_IMAGE_SETTLE_TIMEOUT_MESSAGE_PREFIX);
+  if (markerIndex < 0) {
+    return null;
+  }
+
+  const rawJson = normalized
+    .slice(markerIndex + TRADERA_IMAGE_SETTLE_TIMEOUT_MESSAGE_PREFIX.length)
+    .trim();
+  if (!rawJson) {
+    return null;
+  }
+
+  try {
+    return toObjectRecord(JSON.parse(rawJson));
+  } catch {
+    return null;
+  }
+};
+
+const resolveScriptedFailureImageSettleState = (params: {
+  message?: string | null;
+  rawMeta?: Record<string, unknown> | null;
+}): Record<string, unknown> | null => {
+  const explicitImageSettleState = toObjectRecord(params.rawMeta?.['imageSettleState']);
+  if (explicitImageSettleState) {
+    return explicitImageSettleState;
+  }
+
+  return parseImageSettleStateFromMessage(params.message);
+};
+
+const resolveRawResultImageUploadSource = (
+  rawResult: Record<string, unknown> | null | undefined
+): string | null => {
+  const value = rawResult?.['imageUploadSource'];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+};
+
+const resolveFailureImageUploadSource = (
+  rawMeta: Record<string, unknown> | null | undefined
+): string | null => {
+  const explicit = rawMeta?.['imageUploadSource'];
+  if (typeof explicit === 'string' && explicit.trim().length > 0) {
+    return explicit.trim();
+  }
+
+  return resolveRawResultImageUploadSource(toObjectRecord(rawMeta?.['rawResult']));
+};
+
 const buildPlaywrightExecutionMetadata = ({
   connection,
   settings,
@@ -484,16 +601,7 @@ const runTraderaBrowserListingScripted = async ({
         browserMode === 'headed' ? TRADERA_HEADED_FAILURE_HOLD_OPEN_MS : undefined,
     });
   } catch (error) {
-    if (isAppError(error)) {
-      throw error.withMeta({
-        scriptMode: 'scripted',
-        scriptSource,
-        requestedBrowserMode: browserMode,
-        listingFormUrl: normalizedListingFormUrl,
-        ...requestedExecutionMetadata,
-      });
-    }
-
+    const imageDiagnostics = resolveScriptInputImageDiagnostics(scriptInput);
     const rawMeta =
       error &&
       typeof error === 'object' &&
@@ -502,6 +610,30 @@ const runTraderaBrowserListingScripted = async ({
       typeof error['meta'] === 'object'
         ? (error['meta'] as Record<string, unknown>)
         : null;
+    const imageSettleState = resolveScriptedFailureImageSettleState({
+      message: error instanceof Error ? error.message : null,
+      rawMeta,
+    });
+    const imageUploadSource = resolveFailureImageUploadSource(rawMeta);
+    const structuredFailureMeta =
+      imageSettleState !== null || imageUploadSource !== null
+        ? {
+            ...(imageSettleState !== null ? { imageSettleState } : {}),
+            ...(imageUploadSource !== null ? { imageUploadSource } : {}),
+          }
+        : {};
+
+    if (isAppError(error)) {
+      throw error.withMeta({
+        scriptMode: 'scripted',
+        scriptSource,
+        requestedBrowserMode: browserMode,
+        listingFormUrl: normalizedListingFormUrl,
+        ...requestedExecutionMetadata,
+        ...imageDiagnostics,
+        ...structuredFailureMeta,
+      });
+    }
 
     throw internalError(
       error instanceof Error ? error.message : 'Tradera scripted listing failed.',
@@ -512,9 +644,14 @@ const runTraderaBrowserListingScripted = async ({
         requestedBrowserMode: browserMode,
         listingFormUrl: normalizedListingFormUrl,
         ...requestedExecutionMetadata,
+        ...imageDiagnostics,
+        ...structuredFailureMeta,
       }
     ).withCause(error);
   }
+
+  const imageDiagnostics = resolveScriptInputImageDiagnostics(scriptInput);
+  const actualImageUploadSource = resolveRawResultImageUploadSource(result.rawResult);
 
   if (!result.externalListingId) {
     throw internalError(
@@ -533,7 +670,9 @@ const runTraderaBrowserListingScripted = async ({
             ? result.rawResult['currentUrl']
             : null,
         publishVerified: result.publishVerified,
+        imageUploadSource: actualImageUploadSource,
         ...requestedExecutionMetadata,
+        ...imageDiagnostics,
       }
     );
   }
@@ -555,7 +694,9 @@ const runTraderaBrowserListingScripted = async ({
             ? result.rawResult['currentUrl']
             : null,
         publishVerified: result.publishVerified,
+        imageUploadSource: actualImageUploadSource,
         ...requestedExecutionMetadata,
+        ...imageDiagnostics,
       }
     );
   }
@@ -580,6 +721,8 @@ const runTraderaBrowserListingScripted = async ({
           ? result.rawResult['currentUrl']
           : null,
       publishVerified: result.publishVerified,
+      imageUploadSource: actualImageUploadSource,
+      ...imageDiagnostics,
       categoryMappingReason:
         scriptInput &&
         typeof scriptInput['traderaCategoryMapping'] === 'object' &&

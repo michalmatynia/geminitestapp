@@ -178,23 +178,27 @@ function useKangurPrimaryNavigationMobileMenuFocusTrap({
 
 function useKangurPrimaryNavigationGuestEditingState({
   hasGuestPlayerName,
+  isEditingGuestPlayerName,
   setIsEditingGuestPlayerName,
   showGuestPlayerNameInput,
 }: {
   hasGuestPlayerName: boolean;
+  isEditingGuestPlayerName: boolean;
   setIsEditingGuestPlayerName: React.Dispatch<React.SetStateAction<boolean>>;
   showGuestPlayerNameInput: boolean;
 }): void {
   useEffect(() => {
     if (!showGuestPlayerNameInput) {
-      setIsEditingGuestPlayerName(false);
+      if (isEditingGuestPlayerName) {
+        setIsEditingGuestPlayerName(false);
+      }
       return;
     }
 
-    if (!hasGuestPlayerName) {
+    if (!hasGuestPlayerName && !isEditingGuestPlayerName) {
       setIsEditingGuestPlayerName(true);
     }
-  }, [hasGuestPlayerName, setIsEditingGuestPlayerName, showGuestPlayerNameInput]);
+  }, [hasGuestPlayerName, isEditingGuestPlayerName, setIsEditingGuestPlayerName, showGuestPlayerNameInput]);
 }
 
 function useKangurPrimaryNavigationLoginAnchor({
@@ -348,6 +352,7 @@ export function useKangurPrimaryNavigationRuntime({
   });
   useKangurPrimaryNavigationGuestEditingState({
     hasGuestPlayerName: guestPlayerNameRuntime.hasGuestPlayerName,
+    isEditingGuestPlayerName: guestPlayerNameRuntime.isEditingGuestPlayerName,
     setIsEditingGuestPlayerName: guestPlayerNameRuntime.setIsEditingGuestPlayerName,
     showGuestPlayerNameInput: guestPlayerNameRuntime.showGuestPlayerNameInput,
   });

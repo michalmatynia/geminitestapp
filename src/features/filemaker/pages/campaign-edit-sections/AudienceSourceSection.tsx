@@ -11,18 +11,35 @@ import { useCampaignEditContext } from '../AdminFilemakerCampaignEditPage.contex
 
 export const AudienceSourceSection = () => {
   const { draft, setDraft } = useCampaignEditContext();
+  const primaryPartyKind = draft.audience.partyKinds[0] ?? 'person';
+  const manualPartyIds = draft.audience.includePartyReferences
+    .filter((reference) => reference.kind === primaryPartyKind)
+    .map((reference) => reference.id);
   
   const setPartyKind = (val: FilemakerPartyKind) => {
     setDraft(prev => ({
       ...prev,
-      audience: { ...prev.audience, partyKind: val }
+      audience: {
+        ...prev.audience,
+        partyKinds: [val],
+        includePartyReferences: prev.audience.includePartyReferences.map((reference) => ({
+          ...reference,
+          kind: val,
+        })),
+      }
     }));
   };
 
   const setManualPartyIds = (val: string[]) => {
     setDraft(prev => ({
       ...prev,
-      audience: { ...prev.audience, manualPartyIds: val }
+      audience: {
+        ...prev.audience,
+        includePartyReferences: val.map((id) => ({
+          id,
+          kind: prev.audience.partyKinds[0] ?? 'person',
+        })),
+      }
     }));
   };
 
@@ -32,7 +49,7 @@ export const AudienceSourceSection = () => {
         <FormField label='Recipient Kind'>
           <SelectSimple
             ariaLabel='Recipient kind'
-            value={draft.audience.partyKind}
+            value={primaryPartyKind}
             onValueChange={(value) => setPartyKind(value as FilemakerPartyKind)}
             options={FILEMAKER_PARTY_KIND_OPTIONS}
           />
@@ -40,7 +57,7 @@ export const AudienceSourceSection = () => {
         <FormField label='Manual Party IDs (Comma separated)'>
           <Input
             placeholder='e.g. 123, 456, 789'
-            value={filemakerFormatCommaSeparatedValues(draft.audience.manualPartyIds)}
+            value={filemakerFormatCommaSeparatedValues(manualPartyIds)}
             onChange={(e) => setManualPartyIds(filemakerParseCommaSeparatedValues(e.target.value))}
           />
         </FormField>
@@ -48,13 +65,13 @@ export const AudienceSourceSection = () => {
       <div className='space-y-2'>
         <div className='text-xs font-semibold text-gray-400'>Manual Party References</div>
         <div className='rounded-md border border-border/60 bg-card/25 p-3 text-xs text-gray-500'>
-          {draft.audience.manualPartyIds.length === 0 ? (
+          {manualPartyIds.length === 0 ? (
             'No manual references added. Use the IDs field above for simple targeting.'
           ) : (
             <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3'>
-              {draft.audience.manualPartyIds.map((id) => (
+              {manualPartyIds.map((id) => (
                 <div key={id} className='rounded border border-border/40 p-2'>
-                  <span className='font-medium text-white'>{id}</span> ({draft.audience.partyKind})
+                  <span className='font-medium text-white'>{id}</span> ({primaryPartyKind})
                 </div>
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getLessonRecipeFamily } from './utils';
+import { getLessonRecipeFamily, readLessonGroupCount } from './utils';
 
 describe('getLessonRecipeFamily', () => {
   it('maps time lesson components to the time family', () => {
@@ -16,5 +16,34 @@ describe('getLessonRecipeFamily', () => {
   it('falls back to logic for english and unknown components', () => {
     expect(getLessonRecipeFamily('english_sentence_structure')).toBe('logic');
     expect(getLessonRecipeFamily(null)).toBe('logic');
+  });
+});
+
+describe('readLessonGroupCount', () => {
+  it('reads finite lesson counts from nested lesson-group metadata', () => {
+    expect(
+      readLessonGroupCount({
+        kangurLessonGroup: {
+          lessonCount: 4,
+        },
+      })
+    ).toBe(4);
+  });
+
+  it('returns null for missing, array, and non-finite lesson counts', () => {
+    expect(readLessonGroupCount(null)).toBeNull();
+    expect(readLessonGroupCount([])).toBeNull();
+    expect(
+      readLessonGroupCount({
+        kangurLessonGroup: {
+          lessonCount: Number.NaN,
+        },
+      })
+    ).toBeNull();
+    expect(
+      readLessonGroupCount({
+        kangurLessonGroup: [],
+      })
+    ).toBeNull();
   });
 });

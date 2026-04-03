@@ -23,7 +23,7 @@ import {
   useKangurAiTutorBubblePlacementState,
   useKangurAiTutorFocusLayoutState,
 } from './KangurAiTutorWidget.focus-layout';
-import { getEstimatedBubbleHeight } from '../KangurAiTutorGuidedLayout';
+import { getEstimatedBubbleHeight } from '@/features/kangur/ui/components/KangurAiTutorGuidedLayout';
 import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
 import {
   areTutorSelectionTextsEquivalent,

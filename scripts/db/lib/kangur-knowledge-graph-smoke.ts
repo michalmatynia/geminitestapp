@@ -49,6 +49,41 @@ const normalizeOptionalString = (value: string | null | undefined): string | nul
   return normalized.length > 0 ? normalized : null;
 };
 
+const buildSmokeCaseResult = (input: {
+  smokeCase: KangurKnowledgeGraphSmokeCase;
+  expectedRoute: string | null;
+  expectedAnchorId: string | null;
+  actualRoute: string | null;
+  actualAnchorId: string | null;
+  passed: boolean;
+  reason: string | null;
+}): KangurKnowledgeGraphSmokeCaseResult => ({
+  id: input.smokeCase.id,
+  message: input.smokeCase.message,
+  expectedRoute: input.expectedRoute ?? '',
+  expectedAnchorId: input.expectedAnchorId,
+  actualRoute: input.actualRoute,
+  actualAnchorId: input.actualAnchorId,
+  passed: input.passed,
+  reason: input.reason,
+});
+
+const resolveSmokeCaseRouteMismatchReason = (input: {
+  expectedRoute: string | null;
+  actualRoute: string | null;
+}): 'missing_route' | 'route_mismatch' | null => {
+  if (!input.actualRoute) {
+    return 'missing_route';
+  }
+
+  return input.actualRoute !== input.expectedRoute ? 'route_mismatch' : null;
+};
+
+const hasSmokeCaseAnchorMismatch = (input: {
+  expectedAnchorId: string | null;
+  actualAnchorId: string | null;
+}): boolean => input.expectedAnchorId !== null && input.actualAnchorId !== input.expectedAnchorId;
+
 export const evaluateKangurKnowledgeGraphSmokeCase = (input: {
   smokeCase: KangurKnowledgeGraphSmokeCase;
   websiteHelpTarget?: {
@@ -60,54 +95,42 @@ export const evaluateKangurKnowledgeGraphSmokeCase = (input: {
   const expectedAnchorId = normalizeOptionalString(input.smokeCase.expectedAnchorId);
   const actualRoute = normalizeOptionalString(input.websiteHelpTarget?.route);
   const actualAnchorId = normalizeOptionalString(input.websiteHelpTarget?.anchorId);
+  const routeMismatchReason = resolveSmokeCaseRouteMismatchReason({
+    expectedRoute,
+    actualRoute,
+  });
 
-  if (!actualRoute) {
-    return {
-      id: input.smokeCase.id,
-      message: input.smokeCase.message,
-      expectedRoute: expectedRoute ?? '',
+  if (routeMismatchReason) {
+    return buildSmokeCaseResult({
+      smokeCase: input.smokeCase,
+      expectedRoute,
       expectedAnchorId,
       actualRoute,
       actualAnchorId,
       passed: false,
-      reason: 'missing_route',
-    };
+      reason: routeMismatchReason,
+    });
   }
 
-  if (actualRoute !== expectedRoute) {
-    return {
-      id: input.smokeCase.id,
-      message: input.smokeCase.message,
-      expectedRoute: expectedRoute ?? '',
-      expectedAnchorId,
-      actualRoute,
-      actualAnchorId,
-      passed: false,
-      reason: 'route_mismatch',
-    };
-  }
-
-  if (expectedAnchorId !== null && actualAnchorId !== expectedAnchorId) {
-    return {
-      id: input.smokeCase.id,
-      message: input.smokeCase.message,
-      expectedRoute: expectedRoute ?? '',
+  if (hasSmokeCaseAnchorMismatch({ expectedAnchorId, actualAnchorId })) {
+    return buildSmokeCaseResult({
+      smokeCase: input.smokeCase,
+      expectedRoute,
       expectedAnchorId,
       actualRoute,
       actualAnchorId,
       passed: false,
       reason: 'anchor_mismatch',
-    };
+    });
   }
 
-  return {
-    id: input.smokeCase.id,
-    message: input.smokeCase.message,
-    expectedRoute: expectedRoute ?? '',
+  return buildSmokeCaseResult({
+    smokeCase: input.smokeCase,
+    expectedRoute,
     expectedAnchorId,
     actualRoute,
     actualAnchorId,
     passed: true,
     reason: null,
-  };
+  });
 };

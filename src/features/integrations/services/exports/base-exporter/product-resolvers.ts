@@ -1,4 +1,4 @@
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products';
 
 import {
   getProducerNameFromLookup,
@@ -41,31 +41,55 @@ export const getLocalizedParameterValue = (
   return null;
 };
 
-export const getProductParameterValue = (
+const findMatchingProductParameter = (
   product: ProductWithImages,
-  parameterId: string,
-  languageCode?: string | null
-): string | null => {
+  parameterId: string
+): ProductParameterValue | undefined => {
   const normalizedParameterId = parameterId.trim().toLowerCase();
-  if (!normalizedParameterId) return null;
-  const normalizedLanguageCode =
-    typeof languageCode === 'string' ? languageCode.trim().toLowerCase() : '';
+  if (!normalizedParameterId) return undefined;
   const entries = Array.isArray(product.parameters) ? product.parameters : [];
-  const match = entries.find((entry) => {
+  return entries.find((entry) => {
     const entryParameterId = toTrimmedString(entry?.parameterId);
     return (
       typeof entryParameterId === 'string' &&
       entryParameterId.toLowerCase() === normalizedParameterId
     );
   });
+};
+
+const readLocalizedParameterValues = (
+  value: unknown
+): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const resolvePreferredLocalizedParameterValue = (
+  valuesByLanguage: Record<string, unknown>
+): string | null => {
+  const preferred = ['default', 'en', 'pl', 'de']
+    .map((code: string) => toTrimmedString(valuesByLanguage[code]))
+    .find((value): value is string => Boolean(value));
+  if (preferred) return preferred;
+
+  return (
+    Object.values(valuesByLanguage)
+      .map((value) => toTrimmedString(value))
+      .find((value): value is string => Boolean(value)) ?? null
+  );
+};
+
+export const getProductParameterValue = (
+  product: ProductWithImages,
+  parameterId: string,
+  languageCode?: string | null
+): string | null => {
+  const normalizedLanguageCode =
+    typeof languageCode === 'string' ? languageCode.trim().toLowerCase() : '';
+  const match = findMatchingProductParameter(product, parameterId);
   if (!match) return null;
 
-  const valuesByLanguage =
-    match.valuesByLanguage &&
-    typeof match.valuesByLanguage === 'object' &&
-    !Array.isArray(match.valuesByLanguage)
-      ? (match.valuesByLanguage as Record<string, unknown>)
-      : null;
+  const valuesByLanguage = readLocalizedParameterValues(match.valuesByLanguage);
 
   if (normalizedLanguageCode && valuesByLanguage) {
     const localizedValue = getLocalizedParameterValue(valuesByLanguage, normalizedLanguageCode);
@@ -76,15 +100,8 @@ export const getProductParameterValue = (
   if (directValue) return directValue;
 
   if (valuesByLanguage) {
-    const preferred = ['default', 'en', 'pl', 'de']
-      .map((code: string) => toTrimmedString(valuesByLanguage[code]))
-      .find((value): value is string => Boolean(value));
-    if (preferred) return preferred;
-
-    const fallback = Object.values(valuesByLanguage)
-      .map((value) => toTrimmedString(value))
-      .find((value): value is string => Boolean(value));
-    if (fallback) return fallback;
+    const fallbackValue = resolvePreferredLocalizedParameterValue(valuesByLanguage);
+    if (fallbackValue) return fallbackValue;
   }
 
   // Preserve attached-but-empty product attributes during export.
@@ -113,33 +130,35 @@ export const getProducerEntryName = (entry: ProducerEntry): string | null => {
   );
 };
 
+const readCategoryRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const readCategoryCandidateId = (value: unknown): string | null => {
+  const categoryRecord = readCategoryRecord(value);
+  if (!categoryRecord) return null;
+  return (
+    toTrimmedString(categoryRecord['categoryId']) ??
+    toTrimmedString(categoryRecord['category_id']) ??
+    toTrimmedString(categoryRecord['id']) ??
+    toTrimmedString(categoryRecord['value'])
+  );
+};
+
 export const getProductCategoryId = (product: ProductWithImages): string | null => {
   const record = product as Record<string, unknown>;
   const direct = toTrimmedString(record['categoryId']) ?? toTrimmedString(record['category_id']);
   if (direct) return direct;
 
-  const categoryValue = record['category'];
-  if (categoryValue && typeof categoryValue === 'object') {
-    const categoryRecord = categoryValue as Record<string, unknown>;
-    const nested =
-      toTrimmedString(categoryRecord['categoryId']) ??
-      toTrimmedString(categoryRecord['category_id']) ??
-      toTrimmedString(categoryRecord['id']) ??
-      toTrimmedString(categoryRecord['value']);
-    if (nested) return nested;
-  }
+  const nestedCategoryId = readCategoryCandidateId(record['category']);
+  if (nestedCategoryId) return nestedCategoryId;
 
   const categoriesValue = record['categories'];
   if (Array.isArray(categoriesValue)) {
     for (const categoryEntry of categoriesValue) {
-      if (!categoryEntry || typeof categoryEntry !== 'object') continue;
-      const categoryRecord = categoryEntry as Record<string, unknown>;
-      const nested =
-        toTrimmedString(categoryRecord['categoryId']) ??
-        toTrimmedString(categoryRecord['category_id']) ??
-        toTrimmedString(categoryRecord['id']) ??
-        toTrimmedString(categoryRecord['value']);
-      if (nested) return nested;
+      const categoryId = readCategoryCandidateId(categoryEntry);
+      if (categoryId) return categoryId;
     }
   }
 

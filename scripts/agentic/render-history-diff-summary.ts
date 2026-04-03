@@ -5,73 +5,88 @@ import { pathToFileURL } from 'node:url';
 import { agenticRepoRoot } from './domain-manifests';
 import type { AgenticHistoryDiff } from './diff-history';
 
+const appendSummaryHeading = (lines: string[], heading: string): void => {
+  lines.push('');
+  lines.push(heading);
+};
+
+const appendBulletLines = (lines: string[], entries: string[]): void => {
+  entries.forEach((entry) => {
+    lines.push(entry);
+  });
+};
+
+const appendSummarySection = (
+  lines: string[],
+  heading: string,
+  entries: string[]
+): void => {
+  if (entries.length === 0) {
+    return;
+  }
+  appendSummaryHeading(lines, heading);
+  appendBulletLines(lines, entries);
+};
+
+const hasAgenticHistoryDiffDrift = (diff: AgenticHistoryDiff): boolean =>
+  diff.newlyAttemptedHighRiskSuppressions.length > 0 ||
+  diff.newlyHighRiskBundles.length > 0 ||
+  diff.riskEscalations.length > 0 ||
+  diff.addedBundles.length > 0 ||
+  diff.removedBundles.length > 0 ||
+  diff.validationDecisionChanged.changed ||
+  diff.selectionChanges.length > 0;
+
 export function renderAgenticHistoryDiffSummary(diff: AgenticHistoryDiff): string {
   const lines: string[] = ['## Agentic history diff'];
+  appendSummarySection(
+    lines,
+    '### Warning: attempted suppression prevented for high-risk bundles',
+    diff.newlyAttemptedHighRiskSuppressions.map((bundle) => `- \`${bundle}\``)
+  );
+  appendSummarySection(
+    lines,
+    '### Newly introduced high-risk bundles',
+    diff.newlyHighRiskBundles.map((bundle) => `- \`${bundle}\``)
+  );
+  appendSummarySection(
+    lines,
+    '### Risk escalations',
+    diff.riskEscalations.map(
+      (escalation) =>
+        `- \`${escalation.bundle}\`: \`${escalation.previousPriority}\` -> \`${escalation.currentPriority}\``
+    )
+  );
+  appendSummarySection(
+    lines,
+    '### Bundle set changes',
+    [
+      diff.addedBundles.length > 0
+        ? `- Added: ${diff.addedBundles.map((bundle) => `\`${bundle}\``).join(', ')}`
+        : '',
+      diff.removedBundles.length > 0
+        ? `- Removed: ${diff.removedBundles.map((bundle) => `\`${bundle}\``).join(', ')}`
+        : '',
+    ].filter(Boolean)
+  );
+  appendSummarySection(
+    lines,
+    '### Validation decision change',
+    diff.validationDecisionChanged.changed
+      ? [
+          `- \`${diff.validationDecisionChanged.previous ?? 'none'}\` -> \`${diff.validationDecisionChanged.current ?? 'none'}\``,
+        ]
+      : []
+  );
+  appendSummarySection(
+    lines,
+    '### Bundle selection drift',
+    diff.selectionChanges.map(
+      (change) => `- \`${change.bundle}\`: \`${change.previousState}\` -> \`${change.currentState}\``
+    )
+  );
 
-  if (diff.newlyAttemptedHighRiskSuppressions.length > 0) {
-    lines.push('');
-    lines.push('### Warning: attempted suppression prevented for high-risk bundles');
-    for (const bundle of diff.newlyAttemptedHighRiskSuppressions) {
-      lines.push(`- \`${bundle}\``);
-    }
-  }
-
-  if (diff.newlyHighRiskBundles.length > 0) {
-    lines.push('');
-    lines.push('### Newly introduced high-risk bundles');
-    for (const bundle of diff.newlyHighRiskBundles) {
-      lines.push(`- \`${bundle}\``);
-    }
-  }
-
-  if (diff.riskEscalations.length > 0) {
-    lines.push('');
-    lines.push('### Risk escalations');
-    for (const escalation of diff.riskEscalations) {
-      lines.push(
-        `- \`${escalation.bundle}\`: \`${escalation.previousPriority}\` -> \`${escalation.currentPriority}\``,
-      );
-    }
-  }
-
-  if (diff.addedBundles.length > 0 || diff.removedBundles.length > 0) {
-    lines.push('');
-    lines.push('### Bundle set changes');
-    if (diff.addedBundles.length > 0) {
-      lines.push(`- Added: ${diff.addedBundles.map((bundle) => `\`${bundle}\``).join(', ')}`);
-    }
-    if (diff.removedBundles.length > 0) {
-      lines.push(`- Removed: ${diff.removedBundles.map((bundle) => `\`${bundle}\``).join(', ')}`);
-    }
-  }
-
-  if (diff.validationDecisionChanged.changed) {
-    lines.push('');
-    lines.push('### Validation decision change');
-    lines.push(
-      `- \`${diff.validationDecisionChanged.previous ?? 'none'}\` -> \`${diff.validationDecisionChanged.current ?? 'none'}\``,
-    );
-  }
-
-  if (diff.selectionChanges.length > 0) {
-    lines.push('');
-    lines.push('### Bundle selection drift');
-    for (const change of diff.selectionChanges) {
-      lines.push(
-        `- \`${change.bundle}\`: \`${change.previousState}\` -> \`${change.currentState}\``,
-      );
-    }
-  }
-
-  if (
-    diff.newlyAttemptedHighRiskSuppressions.length === 0 &&
-    diff.newlyHighRiskBundles.length === 0 &&
-    diff.riskEscalations.length === 0 &&
-    diff.addedBundles.length === 0 &&
-    diff.removedBundles.length === 0 &&
-    !diff.validationDecisionChanged.changed &&
-    diff.selectionChanges.length === 0
-  ) {
+  if (!hasAgenticHistoryDiffDrift(diff)) {
     lines.push('');
     lines.push('- No bundle-set or risk-level drift detected.');
   }

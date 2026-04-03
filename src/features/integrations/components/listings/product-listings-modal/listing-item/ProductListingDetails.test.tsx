@@ -115,12 +115,26 @@ describe('ProductListingDetails', () => {
                       '[user] tradera.quicklist.start',
                       '[runtime][error] FAIL_PUBLISH_VALIDATION',
                     ],
+                    imageSettleState: {
+                      selectedImageFileCount: 1,
+                      draftImageRemoveControls: 0,
+                      imageUploadPromptVisible: true,
+                      imageUploadPending: false,
+                      continueButtonVisible: true,
+                      continueButtonDisabled: true,
+                    },
                     categorySource: 'categoryMapper',
                     categoryMappingReason: 'mapped',
                     categoryMatchScope: 'catalog_match',
                     categoryInternalCategoryId: 'internal-category-1',
                     categoryId: '101',
                     categoryPath: 'Collectibles > Pins',
+                    shippingCondition: 'Buyer pays shipping',
+                    shippingPriceEur: 5,
+                    imageInputSource: 'local',
+                    imageUploadSource: 'downloaded',
+                    localImagePathCount: 2,
+                    imageUrlCount: 3,
                     rawResult: {
                       status: 'publish_failed',
                       step: 'verify-active-listing',
@@ -183,6 +197,18 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('101')).toBeInTheDocument();
     expect(screen.getByText('Category path:')).toBeInTheDocument();
     expect(screen.getByText('Collectibles > Pins')).toBeInTheDocument();
+    expect(screen.getByText('Shipping condition:')).toBeInTheDocument();
+    expect(screen.getByText('Buyer pays shipping')).toBeInTheDocument();
+    expect(screen.getByText('Shipping EUR:')).toBeInTheDocument();
+    expect(screen.getByText('5.00')).toBeInTheDocument();
+    expect(screen.getByText('Image input source:')).toBeInTheDocument();
+    expect(screen.getByText('local')).toBeInTheDocument();
+    expect(screen.getByText('Actual image upload source:')).toBeInTheDocument();
+    expect(screen.getByText('downloaded')).toBeInTheDocument();
+    expect(screen.getByText('Local image files:')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('Image URLs:')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
     expect(screen.getByText('Listing URL:')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
       'href',
@@ -195,6 +221,8 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('Tradera failure diagnostics')).toBeInTheDocument();
     expect(screen.getByText(/failure\.png/)).toBeInTheDocument();
     expect(screen.getByText(/\[runtime\]\[error\] FAIL_PUBLISH_VALIDATION/)).toBeInTheDocument();
+    expect(screen.getByText(/selectedImageFileCount/)).toBeInTheDocument();
+    expect(screen.getByText(/continueButtonDisabled/)).toBeInTheDocument();
   });
 
   it('falls back to Tradera lastErrorCategory when lastExecution has no category', () => {

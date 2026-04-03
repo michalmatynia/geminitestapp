@@ -133,6 +133,78 @@ export const PART_4 = `          );
     });
   };
 
+  const clickCheckboxLabelByText = async (root, labels) => {
+    for (const label of labels) {
+      const escapedText = label.replace(/"/g, '\\"');
+      const clickableLabel = root
+        .locator(
+          'xpath=//*[normalize-space(text())="' +
+            escapedText +
+            '"]/ancestor-or-self::*[self::label or self::button or @role="button" or self::div][1]'
+        )
+        .first();
+      const clickableLabelVisible = await clickableLabel.isVisible().catch(() => false);
+      if (!clickableLabelVisible) continue;
+
+      await humanClick(clickableLabel).catch(() => undefined);
+      await wait(350);
+      return true;
+    }
+
+    return false;
+  };
+
+  const setCheckboxChecked = async (locator, labels, desiredChecked, root = page) => {
+    if (!locator) return false;
+
+    const attemptStrategies = [
+      async () => {
+        await humanClick(locator).catch(() => undefined);
+      },
+      async () => {
+        const id = await locator.getAttribute('id').catch(() => null);
+        if (!id) return;
+        const associatedLabel = root.locator('label[for="' + id.replace(/"/g, '\\"') + '"]').first();
+        const associatedLabelVisible = await associatedLabel.isVisible().catch(() => false);
+        if (!associatedLabelVisible) return;
+        await humanClick(associatedLabel).catch(() => undefined);
+      },
+      async () => {
+        await clickCheckboxLabelByText(root, labels).catch(() => undefined);
+      },
+      async () => {
+        await locator.evaluate((element) => {
+          if (element instanceof HTMLElement) {
+            element.click();
+          }
+        }).catch(() => undefined);
+      },
+      async () => {
+        await locator.focus().catch(() => undefined);
+        await humanPress('Space', { pauseBefore: false, pauseAfter: false }).catch(
+          () => undefined
+        );
+      },
+    ];
+
+    for (const attempt of attemptStrategies) {
+      const currentState = await isCheckboxChecked(locator);
+      if (currentState === desiredChecked) {
+        return true;
+      }
+
+      await attempt();
+      await wait(350);
+
+      const nextState = await isCheckboxChecked(locator);
+      if (nextState === desiredChecked) {
+        return true;
+      }
+    }
+
+    return (await isCheckboxChecked(locator)) === desiredChecked;
+  };
+
   const findCheckboxByLabelsWithin = async (root, labels, options = {}) => {
     for (const label of labels) {
       const escapedPattern = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
@@ -193,28 +265,181 @@ export const PART_4 = `          );
   const findVisibleShippingDialog = async () => {
     const dialogs = page.getByRole('dialog');
     const count = await dialogs.count().catch(() => 0);
-    let firstVisibleDialog = null;
 
     for (let index = 0; index < count; index += 1) {
       const candidate = dialogs.nth(index);
       const visible = await candidate.isVisible().catch(() => false);
       if (!visible) continue;
-      if (!firstVisibleDialog) {
-        firstVisibleDialog = candidate;
-      }
 
       const textContent = await candidate.innerText().catch(() => '');
       const normalized = normalizeWhitespace(textContent).toLowerCase();
-      if (
+      const dialogLooksLikeShipping =
         SHIPPING_DIALOG_TITLE_LABELS.some((label) =>
           normalized.includes(normalizeWhitespace(label).toLowerCase())
-        )
-      ) {
+        ) ||
+        (SHIPPING_DIALOG_OPTION_LABELS.some((label) =>
+          normalized.includes(normalizeWhitespace(label).toLowerCase())
+        ) &&
+          (SHIPPING_DIALOG_SAVE_LABELS.some((label) =>
+            normalized.includes(normalizeWhitespace(label).toLowerCase())
+          ) ||
+            SHIPPING_DIALOG_CANCEL_LABELS.some((label) =>
+              normalized.includes(normalizeWhitespace(label).toLowerCase())
+            )));
+
+      if (dialogLooksLikeShipping) {
         return candidate;
       }
     }
 
-    return firstVisibleDialog;
+    return null;
+  };
+
+  const waitForDialogToClose = async (dialog, timeoutMs = 6_000) => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const visible = await dialog.isVisible().catch(() => false);
+      if (!visible) {
+        return true;
+      }
+      await wait(250);
+    }
+
+    return !(await dialog.isVisible().catch(() => false));
+  };
+
+  const waitForDraftSaveSettled = async (timeoutMs = 12_000, minimumQuietMs = 2_000) => {
+    const deadline = Date.now() + timeoutMs;
+    const startedAt = Date.now();
+    let savingSeen = false;
+    let quietPolls = 0;
+
+    while (Date.now() < deadline) {
+      const [savingIndicator, savedIndicator] = await Promise.all([
+        firstVisible(DRAFT_SAVING_SELECTORS),
+        firstVisible(DRAFT_SAVED_SELECTORS),
+      ]);
+      const savingVisible = Boolean(savingIndicator);
+      const savedVisible = Boolean(savedIndicator);
+
+      if (savingVisible) {
+        savingSeen = true;
+        quietPolls = 0;
+      } else {
+        quietPolls += 1;
+      }
+
+      if (
+        !savingVisible &&
+        (savingSeen ||
+          savedVisible ||
+          (Date.now() - startedAt >= minimumQuietMs && quietPolls >= 3))
+      ) {
+        const settledState = {
+          settled: true,
+          savingSeen,
+          savedVisible,
+          quietPolls,
+          minimumQuietMs,
+          elapsedMs: Date.now() - startedAt,
+        };
+        log?.('tradera.quicklist.draft.settled', settledState);
+        return settledState;
+      }
+
+      await wait(300);
+    }
+
+    const [savingIndicator, savedIndicator] = await Promise.all([
+      firstVisible(DRAFT_SAVING_SELECTORS),
+      firstVisible(DRAFT_SAVED_SELECTORS),
+    ]);
+    const timeoutState = {
+      settled: !savingIndicator,
+      savingSeen,
+      savingVisible: Boolean(savingIndicator),
+      savedVisible: Boolean(savedIndicator),
+      quietPolls,
+      minimumQuietMs,
+      elapsedMs: Date.now() - startedAt,
+    };
+    log?.('tradera.quicklist.draft.settle_timeout', timeoutState);
+    return timeoutState;
+  };
+
+  const dismissVisibleShippingDialogIfPresent = async () => {
+    const shippingDialog = await findVisibleShippingDialog();
+    if (!shippingDialog) {
+      return false;
+    }
+
+    const closeButton =
+      (await findButtonByLabelsWithin(shippingDialog, SHIPPING_DIALOG_CLOSE_LABELS)) ||
+      (await findButtonByLabelsWithin(shippingDialog, SHIPPING_DIALOG_CANCEL_LABELS));
+
+    if (!closeButton) {
+      throw new Error(
+        'FAIL_SHIPPING_SET: Tradera shipping dialog was already open and could not be dismissed.'
+      );
+    }
+
+    await humanClick(closeButton, { pauseAfter: false }).catch(() => undefined);
+    const dialogClosed = await waitForDialogToClose(shippingDialog);
+    if (!dialogClosed) {
+      throw new Error(
+        'FAIL_SHIPPING_SET: Tradera shipping dialog stayed open after dismissing it.'
+      );
+    }
+
+    log?.('tradera.quicklist.delivery.dialog_reset', {
+      flow: 'stale-dialog-dismissed',
+    });
+    return true;
+  };
+
+  const resetDeliveryTogglesIfPresent = async () => {
+    const deliveryToggles = [
+      { field: 'delivery-shipping', labels: OFFER_SHIPPING_LABELS },
+      { field: 'delivery-pickup', labels: OFFER_PICKUP_LABELS },
+    ];
+    const resetFields = [];
+
+    for (const toggleDefinition of deliveryToggles) {
+      const toggle = await findCheckboxByLabelsWithin(page, toggleDefinition.labels);
+      if (!toggle) {
+        continue;
+      }
+
+      const isChecked = await isCheckboxChecked(toggle);
+      if (!isChecked) {
+        continue;
+      }
+
+      const toggledOff = await setCheckboxChecked(
+        toggle,
+        toggleDefinition.labels,
+        false,
+        page
+      );
+      const stillChecked = !toggledOff;
+      if (stillChecked) {
+        throw new Error(
+          'FAIL_SHIPPING_SET: Tradera delivery toggle "' +
+            toggleDefinition.field +
+            '" could not be reset from a recovered draft.'
+        );
+      }
+
+      resetFields.push(toggleDefinition.field);
+    }
+
+    if (resetFields.length > 0) {
+      log?.('tradera.quicklist.delivery.reset', {
+        fields: resetFields,
+      });
+    }
+
+    return resetFields;
   };
 
   const applyDeliveryCheckboxSelection = async () => {
@@ -231,11 +456,41 @@ export const PART_4 = `          );
 
     const shippingAlreadyEnabled = await isCheckboxChecked(shippingToggle);
     if (!shippingAlreadyEnabled) {
-      await humanClick(shippingToggle).catch(() => undefined);
+      await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page);
       await wait(700);
     }
 
-    const shippingDialog = await findVisibleShippingDialog();
+    let shippingDialog = await findVisibleShippingDialog();
+    const requiresShippingDialogConfiguration =
+      requiresConfiguredDeliveryOption || configuredDeliveryPriceEur !== null;
+
+    if (!shippingDialog && requiresShippingDialogConfiguration) {
+      await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page);
+      await wait(700);
+      shippingDialog = await findVisibleShippingDialog();
+
+      if (!shippingDialog) {
+        const shippingStillEnabled = await isCheckboxChecked(shippingToggle);
+        if (!shippingStillEnabled) {
+          await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page);
+          await wait(700);
+          shippingDialog = await findVisibleShippingDialog();
+        }
+      }
+
+      if (!shippingDialog) {
+        throw new Error(
+          'FAIL_SHIPPING_SET: Tradera shipping dialog did not open for required delivery configuration.'
+        );
+      }
+
+      log?.('tradera.quicklist.delivery.dialog_reopened', {
+        shippingAlreadyEnabled,
+        requiresConfiguredDeliveryOption,
+        configuredDeliveryPriceEur,
+      });
+    }
+
     if (!shippingDialog) {
       log?.('tradera.quicklist.field.selected', {
         field: 'delivery',
@@ -259,7 +514,12 @@ export const PART_4 = `          );
 
     const optionAlreadyChecked = await isCheckboxChecked(shippingOptionCheckbox);
     if (!optionAlreadyChecked) {
-      await humanClick(shippingOptionCheckbox).catch(() => undefined);
+      await setCheckboxChecked(
+        shippingOptionCheckbox,
+        SHIPPING_DIALOG_OPTION_LABELS,
+        true,
+        shippingDialog
+      );
       await wait(400);
     }
 
@@ -293,10 +553,8 @@ export const PART_4 = `          );
     }
 
     await humanClick(saveButton, { pauseAfter: false }).catch(() => undefined);
-    await wait(900);
-
-    const dialogStillVisible = await shippingDialog.isVisible().catch(() => false);
-    if (dialogStillVisible) {
+    const dialogClosed = await waitForDialogToClose(shippingDialog);
+    if (!dialogClosed) {
       throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog did not close after saving.');
     }
 
@@ -309,9 +567,35 @@ export const PART_4 = `          );
     return true;
   };
 
+  const isInteractiveSelectionTrigger = async (locator) => {
+    if (!locator) return false;
+
+    return locator
+      .evaluate((element) => {
+        const tagName = element.tagName.toLowerCase();
+        const role = (element.getAttribute('role') || '').toLowerCase();
+        const ariaHaspopup = (element.getAttribute('aria-haspopup') || '').toLowerCase();
+
+        return (
+          tagName === 'button' ||
+          tagName === 'a' ||
+          tagName === 'input' ||
+          tagName === 'select' ||
+          role === 'button' ||
+          role === 'link' ||
+          role === 'menu' ||
+          role === 'combobox' ||
+          ariaHaspopup === 'menu' ||
+          ariaHaspopup === 'listbox'
+        );
+      })
+      .catch(() => false);
+  };
+
   const applyDeliverySelection = async () => {
     const deliveryTrigger = await findFieldTriggerByLabels(DELIVERY_FIELD_LABELS);
-    if (deliveryTrigger) {
+    const hasInteractiveDeliveryTrigger = await isInteractiveSelectionTrigger(deliveryTrigger);
+    if (deliveryTrigger && hasInteractiveDeliveryTrigger) {
       return trySelectOptionalFieldValue({
         fieldLabels: DELIVERY_FIELD_LABELS,
         optionLabels: deliveryOptionLabels,
@@ -321,353 +605,47 @@ export const PART_4 = `          );
       });
     }
 
+    if (deliveryTrigger && !hasInteractiveDeliveryTrigger) {
+      log?.('tradera.quicklist.field.skipped', {
+        field: 'delivery',
+        reason: 'non-interactive-delivery-trigger',
+      });
+    }
+
     return applyDeliveryCheckboxSelection();
   };
 
-  const chooseBuyNowListingFormat = async () => {
-    const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);
-    if (!listingFormatTrigger) {
-      throw new Error('FAIL_PRICE_SET: Listing format selector not found.');
-    }
-
-    await humanClick(listingFormatTrigger).catch(() => undefined);
-    await wait(400);
-
-    for (const optionLabel of BUY_NOW_OPTION_LABELS) {
-      if (await clickMenuItemByName(optionLabel)) {
-        return;
-      }
-    }
-
-    throw new Error('FAIL_PRICE_SET: Buy now listing format option not found.');
-  };
-
-  const waitForImageUploadsToSettle = async (timeoutMs = 120_000) => {
-    const isListingFormReady = async () => {
-      const readyLocators = await Promise.all([
-        firstVisible(TITLE_SELECTORS),
-        firstVisible(DESCRIPTION_SELECTORS),
-        firstVisible(PRICE_SELECTORS),
-        firstVisible(PUBLISH_SELECTORS),
-      ]);
-
-      return readyLocators.some(Boolean);
-    };
-
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-      const continueButton = await firstVisible(CONTINUE_SELECTORS);
-      if (continueButton) {
-        const disabled = await continueButton.isDisabled().catch(async () => {
-          return continueButton
-            .evaluate((element) => {
-              return (
-                element.hasAttribute('disabled') ||
-                element.getAttribute('aria-disabled') === 'true'
-              );
-            })
-            .catch(() => true);
-        });
-        if (!disabled) {
-          return true;
-        }
-
-        await wait(1000);
-        continue;
-      }
-
-      if (await isListingFormReady()) {
-        return true;
-      }
-
-      await wait(1000);
-    }
-
-    return false;
-  };
-
-  const advancePastImagesStep = async () => {
-    const isAutofillPending = async () => {
-      const indicator = await firstVisible(AUTOFILL_PENDING_SELECTORS);
-      return Boolean(indicator);
-    };
-
-    const waitForListingFormReady = async (timeoutMs = 20_000) => {
-      const deadline = Date.now() + timeoutMs;
-      while (Date.now() < deadline) {
-        const [titleInput, descriptionInput, priceInput, publishButton, autofillPending] =
-          await Promise.all([
-          firstVisible(TITLE_SELECTORS),
-          firstVisible(DESCRIPTION_SELECTORS),
-          firstVisible(PRICE_SELECTORS),
-          firstVisible(PUBLISH_SELECTORS),
-          isAutofillPending(),
-        ]);
-
-        if (titleInput && descriptionInput && priceInput && publishButton && !autofillPending) {
-          return true;
-        }
-
-        await wait(500);
-      }
-
-      return false;
-    };
-
-    const clickContinueButton = async (button) => {
-      await button.scrollIntoViewIfNeeded().catch(() => undefined);
-      await humanClick(button).catch(() => undefined);
-      await wait(400);
-
-      const stillVisible = await button.isVisible().catch(() => false);
-      if (stillVisible) {
-        await button.evaluate((element) => {
-          element.click();
-        }).catch(() => undefined);
-      }
-    };
-
-    const ready = await waitForImageUploadsToSettle();
-    if (!ready) {
-      throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish.');
-    }
-
-    const actionableContinueButton = await firstVisible(CONTINUE_SELECTORS);
-    if (!actionableContinueButton) {
-      const formReadyWithoutContinue = await waitForListingFormReady(8_000);
-      if (formReadyWithoutContinue) {
-        return false;
-      }
-
-      throw new Error(
-        'FAIL_IMAGE_SET_INVALID: Tradera listing form did not appear after the image step.'
-      );
-    }
-
-    const disabled = await isControlDisabled(actionableContinueButton);
-
-    if (disabled) {
-      return false;
-    }
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      await clickContinueButton(actionableContinueButton);
-
-      const formReady = await waitForListingFormReady(20_000);
-      if (formReady) {
-        return true;
-      }
-
-      const continueStillVisible = await actionableContinueButton.isVisible().catch(() => false);
-      const continueStillDisabled = continueStillVisible
-        ? await actionableContinueButton.isDisabled().catch(() => false)
-        : false;
-
-      if (!continueStillVisible || continueStillDisabled) {
-        break;
-      }
-    }
-
-    throw new Error(
-      'FAIL_IMAGE_SET_INVALID: Continue completed the image step but the listing editor never became ready.'
+  const acknowledgeListingConfirmationIfPresent = async () => {
+    const confirmationCheckbox = await findCheckboxByLabelsWithin(
+      page,
+      LISTING_CONFIRMATION_LABELS
     );
-  };
-
-  const guessExtension = (url, contentType) => {
-    if (typeof contentType === 'string') {
-      if (contentType.includes('png')) return 'png';
-      if (contentType.includes('webp')) return 'webp';
-      if (contentType.includes('gif')) return 'gif';
-      if (contentType.includes('jpeg') || contentType.includes('jpg')) return 'jpg';
-    }
-    try {
-      const pathname = new URL(url).pathname;
-      const match = pathname.match(/\.([a-z0-9]{2,5})\$/i);
-      if (match && match[1]) return match[1].toLowerCase();
-    } catch {}
-    return 'jpg';
-  };
-
-  const downloadImages = async () => {
-    const downloaded = [];
-
-    for (let index = 0; index < imageUrls.length; index += 1) {
-      const sourceUrl = imageUrls[index];
-      if (!sourceUrl) continue;
-      const response = await page.context().request.get(sourceUrl).catch(() => null);
-      if (!response || !response.ok()) {
-        log?.('tradera.quicklist.image.download_failed', { index, sourceUrl, status: response?.status() ?? null });
-        continue;
-      }
-      const bytes = await response.body().catch(() => null);
-      if (!bytes) {
-        log?.('tradera.quicklist.image.download_failed', { index, sourceUrl, reason: 'empty_body' });
-        continue;
-      }
-      if (bytes.byteLength < 10_240) {
-        log?.('tradera.quicklist.image.download_skipped', { index, sourceUrl, reason: 'too_small', size: bytes.byteLength });
-        continue;
-      }
-      const contentType = response.headers()['content-type'] || '';
-      const extension = guessExtension(sourceUrl, contentType);
-      const filename =
-        String(baseProductId).replace(/[^a-zA-Z0-9_-]+/g, '-') +
-        '_' +
-        String(index + 1).padStart(2, '0') +
-        '.' +
-        extension;
-      downloaded.push({
-        name: filename,
-        mimeType: contentType || 'image/jpeg',
-        buffer: bytes,
+    if (!confirmationCheckbox) {
+      log?.('tradera.quicklist.field.skipped', {
+        field: 'listing-confirmation',
+        reason: 'confirmation-checkbox-missing',
       });
+      return false;
     }
 
-    if (!downloaded.length) {
+    const alreadyChecked = await isCheckboxChecked(confirmationCheckbox);
+    if (alreadyChecked) {
+      log?.('tradera.quicklist.field.selected', {
+        field: 'listing-confirmation',
+        option: 'already-checked',
+      });
+      return true;
+    }
+
+    const checkedAfterClick = await setCheckboxChecked(
+      confirmationCheckbox,
+      LISTING_CONFIRMATION_LABELS,
+      true,
+      page
+    );
+    if (!checkedAfterClick) {
       throw new Error(
-        'FAIL_IMAGE_SET_INVALID: No usable product images were downloaded. Attempted ' +
-        imageUrls.length + ' URL(s): ' + imageUrls.slice(0, 3).join(', ') +
-        (imageUrls.length > 3 ? ' ...' : '')
+        'FAIL_PUBLISH_VALIDATION: Tradera listing confirmation checkbox could not be acknowledged.'
       );
     }
-
-    return downloaded;
-  };
-
-  const isListingEditorReady = async () => {
-    const readyLocators = await Promise.all([
-      firstVisible(TITLE_SELECTORS),
-      firstVisible(DESCRIPTION_SELECTORS),
-      firstVisible(PRICE_SELECTORS),
-      firstVisible(PUBLISH_SELECTORS),
-    ]);
-
-    return readyLocators.some(Boolean);
-  };
-
-  const openImageUploadControlsIfPresent = async () => {
-    for (const selector of IMAGE_UPLOAD_TRIGGER_SELECTORS) {
-      const locator = page.locator(selector);
-      const count = await locator.count().catch(() => 0);
-      if (!count) continue;
-
-      for (let index = 0; index < count; index += 1) {
-        const candidate = locator.nth(index);
-        const visible = await candidate.isVisible().catch(() => false);
-        if (!visible) continue;
-
-        await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
-        await humanClick(candidate).catch(() => undefined);
-        await wait(800);
-        log?.('tradera.quicklist.image.trigger_opened', { selector });
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  const ensureImageInputReady = async (attempts = 4) => {
-    for (let attempt = 0; attempt < attempts; attempt += 1) {
-      const imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
-      if (imageInput) {
-        return imageInput;
-      }
-
-      const editorReady = await isListingEditorReady();
-      const triggerOpened = await openImageUploadControlsIfPresent();
-      log?.('tradera.quicklist.image_input.retry', {
-        attempt,
-        editorReady,
-        triggerOpened,
-        url: page.url(),
-      });
-
-      await wait(triggerOpened ? 1200 : editorReady ? 1500 : 1000);
-    }
-
-    return firstExisting(IMAGE_INPUT_SELECTORS);
-  };
-
-  const resolveUploadFiles = async () => {
-    if (localImagePaths.length) {
-      log?.('tradera.quicklist.image.local_paths', {
-        count: localImagePaths.length,
-        sample: localImagePaths.slice(0, 3),
-      });
-      return localImagePaths;
-    }
-
-    return downloadImages();
-  };
-
-  const clearDraftImagesIfPresent = async () => {
-    let removedCount = 0;
-
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      let removedInAttempt = false;
-
-      for (const selector of DRAFT_IMAGE_REMOVE_SELECTORS) {
-        const locator = page.locator(selector);
-        const count = await locator.count().catch(() => 0);
-        if (!count) continue;
-
-        for (let index = 0; index < count; index += 1) {
-          const candidate = locator.nth(index);
-          const visible = await candidate.isVisible().catch(() => false);
-          if (!visible) continue;
-          await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
-          await humanClick(candidate).catch(() => undefined);
-          removedCount += 1;
-          removedInAttempt = true;
-          await wait(500);
-          break;
-        }
-
-        if (removedInAttempt) {
-          break;
-        }
-      }
-
-      if (!removedInAttempt) {
-        break;
-      }
-    }
-
-    if (removedCount > 0) {
-      log?.('tradera.quicklist.draft.reset', { removedCount });
-      await wait(800);
-    }
-
-    return removedCount;
-  };
-
-  const checkDuplicate = async (term) => {
-    if (!term) return false;
-    const activeContextReady = await ensureActiveListingsContext();
-    if (!activeContextReady) {
-      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings context could not be confirmed.');
-    }
-    const searchInput = await openActiveSearchInput();
-    if (!searchInput) {
-      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings search input not found.');
-    }
-
-    await humanFill(searchInput, term, { pauseAfter: false });
-    const searchTrigger = await triggerActiveSearchSubmit();
-    log?.('tradera.quicklist.duplicate.search', { term, searchTrigger });
-    await wait(1200);
-
-    const duplicateMatch = await findListingLinkForTerm(term);
-    log?.('tradera.quicklist.duplicate.result', {
-      term,
-      duplicateFound: Boolean(duplicateMatch),
-      listingUrl: duplicateMatch?.listingUrl || null,
-      listingId: duplicateMatch?.listingId || null,
-    });
-
-    return duplicateMatch
-      ? {
-          duplicateFound: true,
-          listingUrl: duplicateMatch.listingUrl,
-          listingId: duplicateMatch.listingId,`;
+`;

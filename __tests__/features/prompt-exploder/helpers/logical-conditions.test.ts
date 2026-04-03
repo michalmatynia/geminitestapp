@@ -148,6 +148,11 @@ describe('parseLogicalValueText', () => {
     expect(parseLogicalValueText(null)).toBeNull();
     expect(parseLogicalValueText(undefined)).toBeNull();
   });
+
+  it('trims quoted and numeric inputs before parsing', () => {
+    expect(parseLogicalValueText('  "hello"  ')).toBe('hello');
+    expect(parseLogicalValueText('  42  ')).toBe(42);
+  });
 });
 
 describe('formatLogicalValueText', () => {
@@ -184,6 +189,16 @@ describe('parseSubsectionConditionText', () => {
       paramPath: 'mode',
       comparator: 'equals',
       value: 'advanced',
+    });
+  });
+
+  it('parses contains conditions with quoted values', () => {
+    const result = parseSubsectionConditionText('Only if labels contains "priority":');
+    expect(result).toEqual({
+      operator: 'only_if',
+      paramPath: 'labels',
+      comparator: 'contains',
+      value: 'priority',
     });
   });
 

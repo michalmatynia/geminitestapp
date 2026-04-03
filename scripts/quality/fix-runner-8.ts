@@ -9,9 +9,7 @@ src = src.replace(`const nowIso = ():`, `export const nowIso = ():`);
 
 const rootDirRegex = /const RUN_ROOT_DIR = [^;]+;/;
 const match = src.match(rootDirRegex);
-let rootDirVal = '';
 if (match) {
-  rootDirVal = match[0];
   src = src.replace(rootDirRegex, `export ${match[0]}`);
 }
 

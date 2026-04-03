@@ -109,6 +109,9 @@ describe('case-resolver settings', () => {
     expect(parseCaseResolverDefaultDocumentFormat(JSON.stringify({ editorType: 'wysiwyg' }))).toBe(
       'wysiwyg'
     );
+    expect(parseCaseResolverDefaultDocumentFormat(JSON.stringify({ editorType: 'markdown' }))).toBe(
+      'markdown'
+    );
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value')).toBe('wysiwyg');
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value', 'wysiwyg')).toBe('wysiwyg');
   });

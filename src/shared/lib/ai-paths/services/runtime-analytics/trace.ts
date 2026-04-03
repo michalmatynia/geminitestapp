@@ -106,29 +106,40 @@ const extractRuntimeTraceKernelParity = (
   };
 };
 
-export const summarizeRuntimeTraceAnalytics = (input: {
-  runs: AiPathRunRecord[];
-  total?: number;
-}): AiPathRuntimeTraceAnalytics => {
-  const runs = input.runs ?? [];
-  const durations: number[] = [];
-  type NodeAggregate = {
-    nodeId: string;
-    nodeType: string;
-    spanCount: number;
-    failedCount: number;
-    durationCount: number;
-    totalDurationMs: number;
-    maxDurationMs: number;
-  };
-  const nodeAggregates = new Map<string, NodeAggregate>();
-  let sampledSpans = 0;
-  let completedSpans = 0;
-  let failedSpans = 0;
-  let cachedSpans = 0;
-  let slowestSpan: AiPathRuntimeTraceAnalytics['slowestSpan'] = null;
-  const kernelParity: AiPathRuntimeTraceAnalytics['kernelParity'] = {
-    sampledRuns: runs.length,
+type NodeAggregate = {
+  nodeId: string;
+  nodeType: string;
+  spanCount: number;
+  failedCount: number;
+  durationCount: number;
+  totalDurationMs: number;
+  maxDurationMs: number;
+};
+
+type RuntimeTraceSummaryState = {
+  durations: number[];
+  nodeAggregates: Map<string, NodeAggregate>;
+  sampledSpans: number;
+  completedSpans: number;
+  failedSpans: number;
+  cachedSpans: number;
+  slowestSpan: AiPathRuntimeTraceAnalytics['slowestSpan'];
+  kernelParity: AiPathRuntimeTraceAnalytics['kernelParity'];
+  codeObjectIdSet: Set<string>;
+};
+
+const createRuntimeTraceSummaryState = (
+  sampledRuns: number
+): RuntimeTraceSummaryState => ({
+  durations: [],
+  nodeAggregates: new Map<string, NodeAggregate>(),
+  sampledSpans: 0,
+  completedSpans: 0,
+  failedSpans: 0,
+  cachedSpans: 0,
+  slowestSpan: null,
+  kernelParity: {
+    sampledRuns,
     runsWithKernelParity: 0,
     sampledHistoryEntries: 0,
     strategyCounts: {
@@ -143,93 +154,109 @@ export const summarizeRuntimeTraceAnalytics = (input: {
       unknown: 0,
     },
     codeObjectIds: [],
-  };
-  const codeObjectIdSet = new Set<string>();
+  },
+  codeObjectIdSet: new Set<string>(),
+});
 
-  runs.forEach((run: AiPathRunRecord): void => {
-    const parity = extractRuntimeTraceKernelParity(run);
-    if (parity) {
-      kernelParity.runsWithKernelParity += 1;
-      kernelParity.sampledHistoryEntries += parity.sampledHistoryEntries;
-      kernelParity.strategyCounts.compatibility += parity.strategyCounts.compatibility;
-      kernelParity.strategyCounts.code_object_v3 += parity.strategyCounts.code_object_v3;
-      kernelParity.strategyCounts.unknown += parity.strategyCounts.unknown;
-      kernelParity.resolutionSourceCounts.override += parity.resolutionSourceCounts.override;
-      kernelParity.resolutionSourceCounts.registry += parity.resolutionSourceCounts.registry;
-      kernelParity.resolutionSourceCounts.missing += parity.resolutionSourceCounts.missing;
-      kernelParity.resolutionSourceCounts.unknown += parity.resolutionSourceCounts.unknown;
-      parity.codeObjectIds.forEach((codeObjectId: string) => {
-        codeObjectIdSet.add(codeObjectId);
-      });
-    }
-
-    const spans = extractRuntimeTraceNodeSpans(run);
-    spans.forEach((spanValue: unknown): void => {
-      const span = asRecord(spanValue);
-      if (!span) return;
-
-      sampledSpans += 1;
-      const nodeId = toNonEmptyString(span['nodeId']) ?? 'unknown';
-      const nodeType = toNonEmptyString(span['nodeType']) ?? 'unknown';
-      const status = toNonEmptyString(span['status']) ?? 'unknown';
-      if (status === 'completed') completedSpans += 1;
-      if (status === 'failed') failedSpans += 1;
-      if (status === 'cached') cachedSpans += 1;
-      const aggregateKey = `${nodeId}::${nodeType}`;
-      const aggregate = nodeAggregates.get(aggregateKey) ?? {
-        nodeId,
-        nodeType,
-        spanCount: 0,
-        failedCount: 0,
-        durationCount: 0,
-        totalDurationMs: 0,
-        maxDurationMs: 0,
-      };
-      aggregate.spanCount += 1;
-      if (status === 'failed') {
-        aggregate.failedCount += 1;
-      }
-
-      const durationMs = toFiniteDurationMs(
-        span['durationMs'],
-        span['startedAt'],
-        span['finishedAt']
-      );
-      if (durationMs !== null) {
-        durations.push(durationMs);
-        aggregate.durationCount += 1;
-        aggregate.totalDurationMs += durationMs;
-        aggregate.maxDurationMs = Math.max(aggregate.maxDurationMs, durationMs);
-
-        if (!slowestSpan || durationMs > slowestSpan.durationMs) {
-          slowestSpan = {
-            runId: toNonEmptyString(run.id) ?? 'unknown',
-            spanId: toNonEmptyString(span['spanId']) ?? 'unknown',
-            nodeId,
-            nodeType,
-            status,
-            durationMs,
-          };
-        }
-      }
-      nodeAggregates.set(aggregateKey, aggregate);
-    });
+const mergeRuntimeTraceKernelParity = (
+  state: RuntimeTraceSummaryState,
+  parity: NonNullable<ReturnType<typeof extractRuntimeTraceKernelParity>>
+): void => {
+  state.kernelParity.runsWithKernelParity += 1;
+  state.kernelParity.sampledHistoryEntries += parity.sampledHistoryEntries;
+  state.kernelParity.strategyCounts.compatibility += parity.strategyCounts.compatibility;
+  state.kernelParity.strategyCounts.code_object_v3 += parity.strategyCounts.code_object_v3;
+  state.kernelParity.strategyCounts.unknown += parity.strategyCounts.unknown;
+  state.kernelParity.resolutionSourceCounts.override += parity.resolutionSourceCounts.override;
+  state.kernelParity.resolutionSourceCounts.registry += parity.resolutionSourceCounts.registry;
+  state.kernelParity.resolutionSourceCounts.missing += parity.resolutionSourceCounts.missing;
+  state.kernelParity.resolutionSourceCounts.unknown += parity.resolutionSourceCounts.unknown;
+  parity.codeObjectIds.forEach((codeObjectId: string) => {
+    state.codeObjectIdSet.add(codeObjectId);
   });
+};
 
-  durations.sort((a: number, b: number): number => a - b);
-  const avgDurationMs =
-    durations.length > 0
-      ? Math.round(
-        durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
-      )
-      : null;
-  const p95DurationMs =
-    durations.length > 0
-      ? durations[
-        Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
-      ]!
-      : null;
-  const topSlowNodes = Array.from(nodeAggregates.values())
+const resolveRuntimeTraceNodeAggregate = (
+  state: RuntimeTraceSummaryState,
+  nodeId: string,
+  nodeType: string
+): NodeAggregate => {
+  const aggregateKey = `${nodeId}::${nodeType}`;
+  return (
+    state.nodeAggregates.get(aggregateKey) ?? {
+      nodeId,
+      nodeType,
+      spanCount: 0,
+      failedCount: 0,
+      durationCount: 0,
+      totalDurationMs: 0,
+      maxDurationMs: 0,
+    }
+  );
+};
+
+const updateRuntimeTraceSlowestSpan = (
+  state: RuntimeTraceSummaryState,
+  run: AiPathRunRecord,
+  span: Record<string, unknown>,
+  input: {
+    nodeId: string;
+    nodeType: string;
+    status: string;
+    durationMs: number;
+  }
+): void => {
+  if (state.slowestSpan && input.durationMs <= state.slowestSpan.durationMs) {
+    return;
+  }
+
+  state.slowestSpan = {
+    runId: toNonEmptyString(run.id) ?? 'unknown',
+    spanId: toNonEmptyString(span['spanId']) ?? 'unknown',
+    nodeId: input.nodeId,
+    nodeType: input.nodeType,
+    status: input.status,
+    durationMs: input.durationMs,
+  };
+};
+
+const collectRuntimeTraceSpan = (
+  state: RuntimeTraceSummaryState,
+  run: AiPathRunRecord,
+  spanValue: unknown
+): void => {
+  const span = asRecord(spanValue);
+  if (!span) return;
+
+  state.sampledSpans += 1;
+  const nodeId = toNonEmptyString(span['nodeId']) ?? 'unknown';
+  const nodeType = toNonEmptyString(span['nodeType']) ?? 'unknown';
+  const status = toNonEmptyString(span['status']) ?? 'unknown';
+  if (status === 'completed') state.completedSpans += 1;
+  if (status === 'failed') state.failedSpans += 1;
+  if (status === 'cached') state.cachedSpans += 1;
+
+  const aggregateKey = `${nodeId}::${nodeType}`;
+  const aggregate = resolveRuntimeTraceNodeAggregate(state, nodeId, nodeType);
+  aggregate.spanCount += 1;
+  if (status === 'failed') {
+    aggregate.failedCount += 1;
+  }
+
+  const durationMs = toFiniteDurationMs(span['durationMs'], span['startedAt'], span['finishedAt']);
+  if (durationMs !== null) {
+    state.durations.push(durationMs);
+    aggregate.durationCount += 1;
+    aggregate.totalDurationMs += durationMs;
+    aggregate.maxDurationMs = Math.max(aggregate.maxDurationMs, durationMs);
+    updateRuntimeTraceSlowestSpan(state, run, span, { nodeId, nodeType, status, durationMs });
+  }
+
+  state.nodeAggregates.set(aggregateKey, aggregate);
+};
+
+const buildTopSlowNodes = (nodeAggregates: Map<string, NodeAggregate>) =>
+  Array.from(nodeAggregates.values())
     .filter((aggregate) => aggregate.durationCount > 0)
     .map((aggregate) => ({
       nodeId: aggregate.nodeId,
@@ -246,7 +273,9 @@ export const summarizeRuntimeTraceAnalytics = (input: {
       return right.maxDurationMs - left.maxDurationMs;
     })
     .slice(0, TRACE_NODE_HIGHLIGHT_LIMIT);
-  const topFailedNodes = Array.from(nodeAggregates.values())
+
+const buildTopFailedNodes = (nodeAggregates: Map<string, NodeAggregate>) =>
+  Array.from(nodeAggregates.values())
     .filter((aggregate) => aggregate.failedCount > 0)
     .map((aggregate) => ({
       nodeId: aggregate.nodeId,
@@ -262,22 +291,59 @@ export const summarizeRuntimeTraceAnalytics = (input: {
     })
     .slice(0, TRACE_NODE_HIGHLIGHT_LIMIT);
 
+export const summarizeRuntimeTraceAnalytics = (input: {
+  runs: AiPathRunRecord[];
+  total?: number;
+}): AiPathRuntimeTraceAnalytics => {
+  const runs = input.runs ?? [];
+  const state = createRuntimeTraceSummaryState(runs.length);
+
+  runs.forEach((run: AiPathRunRecord): void => {
+    const parity = extractRuntimeTraceKernelParity(run);
+    if (parity) {
+      mergeRuntimeTraceKernelParity(state, parity);
+    }
+
+    const spans = extractRuntimeTraceNodeSpans(run);
+    spans.forEach((spanValue: unknown): void => collectRuntimeTraceSpan(state, run, spanValue));
+  });
+
+  state.durations.sort((a: number, b: number): number => a - b);
+  const avgDurationMs =
+    state.durations.length > 0
+      ? Math.round(
+        state.durations.reduce((sum: number, value: number) => sum + value, 0) /
+          state.durations.length
+      )
+      : null;
+  const p95DurationMs =
+    state.durations.length > 0
+      ? state.durations[
+          Math.min(
+            state.durations.length - 1,
+            Math.max(0, Math.ceil(state.durations.length * 0.95) - 1)
+          )
+      ]!
+      : null;
+  const topSlowNodes = buildTopSlowNodes(state.nodeAggregates);
+  const topFailedNodes = buildTopFailedNodes(state.nodeAggregates);
+
   const total = typeof input.total === 'number' ? Math.max(0, input.total) : runs.length;
   const sampledRuns = runs.length;
-  kernelParity.codeObjectIds = Array.from(codeObjectIdSet).slice(0, 25);
+  state.kernelParity.codeObjectIds = Array.from(state.codeObjectIdSet).slice(0, 25);
   return {
     source: 'db_sample',
     sampledRuns,
-    sampledSpans,
-    completedSpans,
-    failedSpans,
-    cachedSpans,
+    sampledSpans: state.sampledSpans,
+    completedSpans: state.completedSpans,
+    failedSpans: state.failedSpans,
+    cachedSpans: state.cachedSpans,
     avgDurationMs,
     p95DurationMs,
-    slowestSpan,
+    slowestSpan: state.slowestSpan,
     topSlowNodes,
     topFailedNodes,
-    kernelParity,
+    kernelParity: state.kernelParity,
     truncated: total > sampledRuns,
   };
 };

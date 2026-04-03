@@ -57,11 +57,22 @@ export {
   resolveCaseResolverUploadFolder,
 } from './settings-workspace-helpers';
 
-const resolveParsedDefaultDocumentFormatCandidate = (parsed: unknown): unknown => {
-  const direct = normalizeCaseResolverDefaultDocumentFormatValue(parsed);
-  if (direct) return direct;
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-  return (parsed as Record<string, unknown>)['defaultDocumentFormat'] ?? null;
+const readParsedDefaultDocumentFormatCandidates = (parsed: unknown): unknown[] => {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return [parsed];
+  }
+  const record = parsed as Record<string, unknown>;
+  return [parsed, record['defaultDocumentFormat'], record['editorType']];
+};
+
+const resolveParsedDefaultDocumentFormat = (
+  parsed: unknown
+): CaseResolverDefaultDocumentFormat | null => {
+  for (const candidate of readParsedDefaultDocumentFormatCandidates(parsed)) {
+    const normalized = normalizeCaseResolverDefaultDocumentFormatValue(candidate);
+    if (normalized) return normalized;
+  }
+  return null;
 };
 
 export const parseCaseResolverDefaultDocumentFormat = (
@@ -71,12 +82,10 @@ export const parseCaseResolverDefaultDocumentFormat = (
   const direct = normalizeCaseResolverDefaultDocumentFormatValue(raw);
   if (direct) return direct;
 
-  if (typeof raw === 'string') {
-    const parsed = parseJsonSetting<unknown>(raw, null);
-    const parsedCandidate = resolveParsedDefaultDocumentFormatCandidate(parsed);
-    const parsedFormat = normalizeCaseResolverDefaultDocumentFormatValue(parsedCandidate);
-    if (parsedFormat) return parsedFormat;
-  }
+  if (typeof raw !== 'string') return fallback;
+
+  const parsedFormat = resolveParsedDefaultDocumentFormat(parseJsonSetting<unknown>(raw, null));
+  if (parsedFormat) return parsedFormat;
 
   return fallback;
 };

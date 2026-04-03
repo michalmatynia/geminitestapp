@@ -51,10 +51,10 @@ const resolvePortContract = (
   if (contracts[portName]) {
     return contracts[portName] ?? null;
   }
-  const normalizedPortKey = normalizePortName(portName).trim().toLowerCase();
+  const normalizedPortKey = canonicalizePortLookupKey(portName);
   for (const [rawKey, contract] of Object.entries(contracts)) {
     if (!contract) continue;
-    const normalizedContractKey = normalizePortName(rawKey).trim().toLowerCase();
+    const normalizedContractKey = canonicalizePortLookupKey(rawKey);
     if (normalizedContractKey === normalizedPortKey) {
       return contract;
     }
@@ -64,6 +64,12 @@ const resolvePortContract = (
 
 const normalizeNodePortCardinality = (value: unknown): NodePortCardinality | null =>
   value === 'many' ? 'many' : value === 'single' ? 'single' : null;
+
+const readRuntimeInputCardinality = (
+  node: AiNode
+): Record<string, InputCardinality> | undefined =>
+  (node.config?.runtime as { inputCardinality?: Record<string, InputCardinality> } | undefined)
+    ?.inputCardinality;
 
 const resolveLegacyRuntimeInputCardinality = (
   inputCardinality: Record<string, InputCardinality> | undefined,
@@ -82,6 +88,18 @@ const resolveLegacyRuntimeInputCardinality = (
   );
   return matchingEntry?.[1] ?? null;
 };
+
+const hasMatchingPortLookupKey = (
+  values: Record<string, unknown> | undefined,
+  portName: string
+): boolean => {
+  if (!values) return false;
+  const lookupKey = canonicalizePortLookupKey(portName);
+  return Object.keys(values).some((rawKey) => canonicalizePortLookupKey(rawKey) === lookupKey);
+};
+
+const resolveLegacyInputCardinalityFallback = (portName: string): InputCardinality =>
+  LEGACY_MANY_INPUT_PORT_NAMES.has(canonicalizePortLookupKey(portName)) ? 'many' : 'one';
 
 const normalizePortValueKind = (value: unknown): NodePortValueKind => {
   switch (value) {
@@ -135,13 +153,66 @@ const buildResolvedNodePortContract = (args: {
 });
 
 const getLegacyInputCardinality = (node: AiNode, portName: string): InputCardinality => {
-  const runtimeInputCardinality = (
-    node.config?.runtime as { inputCardinality?: Record<string, InputCardinality> } | undefined
-  )?.inputCardinality;
-  const runtimeCardinality = resolveLegacyRuntimeInputCardinality(runtimeInputCardinality, portName);
-  if (runtimeCardinality) return runtimeCardinality;
+  const runtimeCardinality = resolveLegacyRuntimeInputCardinality(
+    readRuntimeInputCardinality(node),
+    portName
+  );
+  return runtimeCardinality ?? resolveLegacyInputCardinalityFallback(portName);
+};
 
-  return LEGACY_MANY_INPUT_PORT_NAMES.has(canonicalizePortLookupKey(portName)) ? 'many' : 'one';
+const resolveInputPortCardinalityFallback = (node: AiNode, portName: string) => {
+  const runtimeInputCardinality = readRuntimeInputCardinality(node);
+  const legacyCardinality = getLegacyInputCardinality(node, portName);
+  return {
+    cardinalityFallback: legacyCardinality === 'many' ? ('many' as const) : ('single' as const),
+    cardinalitySource: hasMatchingPortLookupKey(runtimeInputCardinality, portName)
+      ? ('runtime_cardinality' as const)
+      : ('legacy' as const),
+  };
+};
+
+const resolveInputPortContractCandidate = (
+  node: AiNode,
+  portName: string
+): { contract: PortContract; source: ResolvedNodePortContractSource } | null => {
+  const runtimeContract = resolvePortContract(node.config?.runtime?.inputContracts, portName);
+  if (runtimeContract) {
+    return { contract: runtimeContract, source: 'runtime' };
+  }
+
+  const nodeContract = resolvePortContract(node.inputContracts, portName);
+  if (nodeContract) {
+    return { contract: nodeContract, source: 'node' };
+  }
+
+  const definitionContract = resolvePortContract(
+    definitionInputContractsByType.get(node.type),
+    portName
+  );
+  if (definitionContract) {
+    return { contract: definitionContract, source: 'definition' };
+  }
+
+  return null;
+};
+
+const buildLegacyResolvedNodeInputPortContract = (
+  portName: string,
+  cardinalityFallback: NodePortCardinality,
+  cardinalitySource: ResolvedNodePortCardinalitySource
+): ResolvedNodePortContract => {
+  const normalizedPortName = portName.toLowerCase();
+  return {
+    required:
+      normalizedPortName === 'trigger' ||
+      normalizedPortName === 'prompt' ||
+      normalizedPortName === 'value',
+    cardinality: cardinalityFallback,
+    cardinalitySource,
+    kind: 'unknown',
+    source: 'legacy',
+    declared: false,
+  };
 };
 
 export const getNodeInputPortCardinality = (node: AiNode, portName: string): InputCardinality => {
@@ -153,63 +224,21 @@ export const getResolvedNodeInputPortContract = (
   node: AiNode,
   portName: string
 ): ResolvedNodePortContract => {
-  const runtimeInputCardinality = (
-    node.config?.runtime as { inputCardinality?: Record<string, InputCardinality> } | undefined
-  )?.inputCardinality;
-  const legacyCardinality = getLegacyInputCardinality(node, portName);
-  const cardinalityFallback = legacyCardinality === 'many' ? 'many' : 'single';
-  const normalizedPortName = canonicalizePortLookupKey(portName);
-  let cardinalitySource: ResolvedNodePortCardinalitySource = 'legacy';
-  if (runtimeInputCardinality?.[portName]) {
-    cardinalitySource = 'runtime_cardinality';
-  } else if (runtimeInputCardinality) {
-    for (const [rawKey] of Object.entries(runtimeInputCardinality)) {
-      if (canonicalizePortLookupKey(rawKey) === normalizedPortName) {
-        cardinalitySource = 'runtime_cardinality';
-        break;
-      }
-    }
-  }
-
-  const runtimeContract = resolvePortContract(node.config?.runtime?.inputContracts, portName);
-  if (runtimeContract) {
-    return buildResolvedNodePortContract({
-      contract: runtimeContract,
-      source: 'runtime',
-      cardinalityFallback,
-      cardinalitySource,
-    });
-  }
-  const nodeContract = resolvePortContract(node.inputContracts, portName);
-  if (nodeContract) {
-    return buildResolvedNodePortContract({
-      contract: nodeContract,
-      source: 'node',
-      cardinalityFallback,
-      cardinalitySource,
-    });
-  }
-  const definitionContract = resolvePortContract(
-    definitionInputContractsByType.get(node.type),
+  const { cardinalityFallback, cardinalitySource } = resolveInputPortCardinalityFallback(
+    node,
     portName
   );
-  if (definitionContract) {
+  const contractCandidate = resolveInputPortContractCandidate(node, portName);
+  if (contractCandidate) {
     return buildResolvedNodePortContract({
-      contract: definitionContract,
-      source: 'definition',
+      contract: contractCandidate.contract,
+      source: contractCandidate.source,
       cardinalityFallback,
       cardinalitySource,
     });
   }
-  const name = portName.toLowerCase();
-  return {
-    required: name === 'trigger' || name === 'prompt' || name === 'value',
-    cardinality: cardinalityFallback,
-    cardinalitySource,
-    kind: 'unknown',
-    source: 'legacy',
-    declared: false,
-  };
+
+  return buildLegacyResolvedNodeInputPortContract(portName, cardinalityFallback, cardinalitySource);
 };
 
 export const getNodeInputPortContract = (node: AiNode, portName: string): { required: boolean } => {

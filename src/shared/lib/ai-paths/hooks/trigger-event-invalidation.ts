@@ -10,6 +10,36 @@ import {
   invalidateIntegrationJobs,
 } from '@/shared/lib/query-invalidation';
 
+const buildAiPathTriggerNotificationPayload = (args: {
+  entityId: string | null | undefined;
+  entityType: TriggerEventEntityType;
+  run?: AiPathRunRecord | null;
+}) => ({
+  entityId: args.entityId ?? null,
+  entityType: args.entityType,
+  run: args.run ?? null,
+});
+
+const invalidateAiPathTriggerEntity = (
+  queryClient: QueryClient,
+  entityType: TriggerEventEntityType,
+  entityId: string | null | undefined
+): void => {
+  if (entityType === 'product' && entityId) {
+    void invalidateProductDetail(queryClient, entityId);
+    return;
+  }
+  if (entityType === 'note') {
+    void invalidateNotes(queryClient);
+    return;
+  }
+
+  // @ts-ignore - integration is a valid entity type in the contract but TypeScript is being overly restrictive here.
+  if (entityType === 'integration') {
+    void invalidateIntegrationJobs(queryClient);
+  }
+};
+
 export const handleAiPathTriggerInvalidation = async (args: {
   queryClient: QueryClient;
   runId: string;
@@ -21,21 +51,9 @@ export const handleAiPathTriggerInvalidation = async (args: {
 
   void invalidateAiPathQueue(queryClient);
 
-  notifyAiPathRunEnqueued(runId, {
-    entityId: entityId ?? null,
-    entityType: entityType,
-    run: run ?? null,
-  });
-
-  if (entityType === 'product' && entityId) {
-    void invalidateProductDetail(queryClient, entityId);
-  }
-  if (entityType === 'note') {
-    void invalidateNotes(queryClient);
-  }
-
-  // @ts-ignore - integration is a valid entity type in the contract but TypeScript is being overly restrictive here.
-  if (entityType === 'integration') {
-    void invalidateIntegrationJobs(queryClient);
-  }
+  notifyAiPathRunEnqueued(
+    runId,
+    buildAiPathTriggerNotificationPayload({ entityId, entityType, run })
+  );
+  invalidateAiPathTriggerEntity(queryClient, entityType, entityId);
 };

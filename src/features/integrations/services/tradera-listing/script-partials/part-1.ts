@@ -7,7 +7,7 @@ export const PART_1 = `export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v48
+  // tradera-quicklist-default:v76
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -97,6 +97,40 @@ export const PART_1 = `export default async function run({
     '[data-testid*="image-upload"]',
     '[data-testid*="photo-upload"]',
     '[data-testid*="image-picker"]',
+  ];
+  const IMAGE_REQUIRED_HINT_SELECTORS = [
+    'text=/Add your images first/i',
+    'text=/Add images first/i',
+    'text=/Lägg till bilder först/i',
+    'text=/Lägg till dina bilder först/i',
+  ];
+  const IMAGE_UPLOAD_PENDING_SELECTORS = [
+    'text=/Uploading/i',
+    'text=/Laddar upp/i',
+    '[role="progressbar"]',
+    '[aria-busy="true"]',
+  ];
+  const IMAGE_UPLOAD_ERROR_SELECTORS = [
+    '[role="alert"]',
+    '[aria-live="assertive"]',
+    '[data-testid*="error"]',
+    '[data-testid*="upload-error"]',
+  ];
+  const IMAGE_UPLOAD_ERROR_HINTS = [
+    'something went wrong while uploading the image',
+    'went wrong while uploading the image',
+    'error uploading the image',
+    'error uploading image',
+    'image upload failed',
+    'could not upload image',
+    'kunde inte ladda upp bilden',
+    'något gick fel när bilden laddades upp',
+  ];
+  const UPLOADED_IMAGE_PREVIEW_SELECTORS = [
+    'img[alt^="image " i]',
+    'img[alt^="photo " i]',
+    'img[alt^="bild " i]',
+    'img[alt^="foto " i]',
   ];
   const DRAFT_IMAGE_REMOVE_SELECTORS = [
     'button[aria-label*="Remove image" i]',
@@ -259,6 +293,13 @@ export const PART_1 = `export default async function run({
   const DEPARTMENT_OPTION_LABELS = ['Unisex', 'Dam/Herr', 'Women/Men'];
   const DELIVERY_FIELD_LABELS = ['Delivery', 'Leverans'];
   const OFFER_SHIPPING_LABELS = ['Offer shipping', 'Erbjud frakt', 'Frakt'];
+  const OFFER_PICKUP_LABELS = [
+    'Offer pick-up',
+    'Offer pickup',
+    'Erbjud upphämtning',
+    'Avhämtning',
+    'Upphämtning',
+  ];
   const DELIVERY_OPTION_LABELS = [
     'Buyer pays shipping',
     'Shipping paid by buyer',
@@ -275,6 +316,8 @@ export const PART_1 = `export default async function run({
     'fraktalternativ',
   ];
   const SHIPPING_DIALOG_OPTION_LABELS = ['Other', 'Annat'];
+  const SHIPPING_DIALOG_CLOSE_LABELS = ['Close', 'Stäng'];
+  const SHIPPING_DIALOG_CANCEL_LABELS = ['Cancel', 'Avbryt'];
   const SHIPPING_DIALOG_SAVE_LABELS = ['Save', 'Spara'];
   const SHIPPING_DIALOG_PRICE_INPUT_SELECTORS = [
     'input[inputmode="decimal"]',
@@ -282,10 +325,29 @@ export const PART_1 = `export default async function run({
     'input[type="text"]',
     'input',
   ];
+  const LISTING_CONFIRMATION_LABELS = [
+    'I confirm that the content of the listing is accurate',
+    'I confirm that the content is accurate',
+    'I confirm the listing is accurate',
+    'Jag bekräftar att innehållet i annonsen är korrekt',
+    'Jag bekräftar att annonsen är korrekt',
+  ];
   const AUTOFILL_PENDING_SELECTORS = [
     'text=/Autofilling your listing/i',
     'text=/Autofilling/i',
     'text=/Fyller i din annons/i',
+  ];
+  const DRAFT_SAVING_SELECTORS = [
+    'text=/Saving draft/i',
+    'text=/Saving\\.\\.\\./i',
+    'text=/Sparar utkast/i',
+    'text=/Sparar\\.\\.\\./i',
+  ];
+  const DRAFT_SAVED_SELECTORS = [
+    'text=/Draft is saved/i',
+    'text=/Saved/i',
+    'text=/Utkastet är sparat/i',
+    'text=/Sparat/i',
   ];
 
   const toText = (value) =>

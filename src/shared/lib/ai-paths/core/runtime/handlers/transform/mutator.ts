@@ -91,6 +91,93 @@ const applyStringMutatorReplace = (
   return current.replace(search, replacement);
 };
 
+const applyStringMutatorTrim = (
+  current: string,
+  operation: Extract<StringMutatorOperation, { type: 'trim' }>
+): string => {
+  const mode = (operation.mode as string) ?? 'both';
+  if (mode === 'start' || mode === 'left') {
+    return current.trimStart();
+  }
+  if (mode === 'end' || mode === 'right') {
+    return current.trimEnd();
+  }
+  return current.trim();
+};
+
+const applyStringMutatorCase = (
+  current: string,
+  operation: Extract<StringMutatorOperation, { type: 'case' }>
+): string => {
+  const mode = (operation.mode as string) ?? 'lower';
+  if (mode === 'upper') {
+    return current.toUpperCase();
+  }
+  if (mode === 'title') {
+    return current.replace(
+      /\w\S*/g,
+      (token: string) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase()
+    );
+  }
+  return current.toLowerCase();
+};
+
+const applyStringMutatorAppend = (
+  current: string,
+  operation: Extract<StringMutatorOperation, { type: 'append' }>
+): string => {
+  const value = operation.value ?? '';
+  return operation.position === 'prefix' ? `${value}${current}` : `${current}${value}`;
+};
+
+const applyStringMutatorSlice = (
+  current: string,
+  operation: Extract<StringMutatorOperation, { type: 'slice' }>
+): string => {
+  const start = typeof operation.start === 'number' ? operation.start : undefined;
+  const end = typeof operation.end === 'number' ? operation.end : undefined;
+  return current.slice(start, end);
+};
+
+type StringMutatorOperationHandler = (
+  current: string,
+  operation: StringMutatorOperation
+) => string;
+
+const STRING_MUTATOR_OPERATION_HANDLERS: Partial<
+  Record<StringMutatorOperation['type'], StringMutatorOperationHandler>
+> = {
+  trim: (current, operation) =>
+    applyStringMutatorTrim(current, operation as Extract<StringMutatorOperation, { type: 'trim' }>),
+  replace: (current, operation) =>
+    applyStringMutatorReplace(
+      current,
+      operation as Extract<StringMutatorOperation, { type: 'replace' }>
+    ),
+  remove: (current, operation) =>
+    applyStringMutatorReplace(
+      current,
+      operation as Extract<StringMutatorOperation, { type: 'remove' }>
+    ),
+  case: (current, operation) =>
+    applyStringMutatorCase(current, operation as Extract<StringMutatorOperation, { type: 'case' }>),
+  append: (current, operation) =>
+    applyStringMutatorAppend(
+      current,
+      operation as Extract<StringMutatorOperation, { type: 'append' }>
+    ),
+  slice: (current, operation) =>
+    applyStringMutatorSlice(current, operation as Extract<StringMutatorOperation, { type: 'slice' }>),
+};
+
+const applyStringMutatorOperation = (
+  current: string,
+  operation: StringMutatorOperation
+): string => {
+  const handler = STRING_MUTATOR_OPERATION_HANDLERS[operation.type];
+  return handler ? handler(current, operation) : current;
+};
+
 export const handleStringMutator: NodeHandler = ({
   node,
   nodeInputs,
@@ -104,54 +191,10 @@ export const handleStringMutator: NodeHandler = ({
   const operations = Array.isArray(stringConfig['operations'])
     ? (stringConfig['operations'] as StringMutatorOperation[])
     : [];
-  let current = safeStringify(rawInput);
-  operations.forEach((operation: StringMutatorOperation): void => {
-    switch (operation.type) {
-      case 'trim': {
-        const mode = (operation.mode as string) ?? 'both';
-        if (mode === 'start' || mode === 'left') {
-          current = current.trimStart();
-        } else if (mode === 'end' || mode === 'right') {
-          current = current.trimEnd();
-        } else {
-          current = current.trim();
-        }
-        break;
-      }
-      case 'replace':
-      case 'remove': {
-        current = applyStringMutatorReplace(current, operation);
-        break;
-      }
-      case 'case': {
-        const mode = (operation.mode as string) ?? 'lower';
-        if (mode === 'upper') {
-          current = current.toUpperCase();
-        } else if (mode === 'title') {
-          current = current.replace(
-            /\w\S*/g,
-            (token: string) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase()
-          );
-        } else {
-          current = current.toLowerCase();
-        }
-        break;
-      }
-      case 'append': {
-        const value = operation.value ?? '';
-        const position = operation.position ?? 'suffix';
-        current = position === 'prefix' ? `${value}${current}` : `${current}${value}`;
-        break;
-      }
-      case 'slice': {
-        const start = typeof operation.start === 'number' ? operation.start : undefined;
-        const end = typeof operation.end === 'number' ? operation.end : undefined;
-        current = current.slice(start, end);
-        break;
-      }
-      default:
-        break;
-    }
-  });
-  return { value: current };
+  const value = operations.reduce(
+    (current: string, operation: StringMutatorOperation) =>
+      applyStringMutatorOperation(current, operation),
+    safeStringify(rawInput)
+  );
+  return { value };
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 import type {
   KangurMusicSynthGlideMode,
   KangurMusicKeyboardMode,
@@ -11,6 +11,7 @@ import type {
 } from './music-theory';
 import type { KangurMusicSynthEnvelope } from './useKangurMusicSynth';
 import type {
+  ActiveKeyPressState,
   ActiveSynthGestureState,
   KeyPulseState,
   ResolvedPianoRollStep,
@@ -22,6 +23,7 @@ import type {
 } from './KangurMusicPianoRoll.types';
 
 export type KangurMusicPianoRollContextValue = {
+  activePressesRef: React.MutableRefObject<Map<string, ActiveKeyPressState>>;
   activeOscTab: 'osc1' | 'osc2';
   activeStepIndex: number | null;
   activeSynthGesture: ActiveSynthGestureState<string> | null;
@@ -33,6 +35,7 @@ export type KangurMusicPianoRollContextValue = {
   expectedStepIndex: number | null;
   expectedTransportStep: ResolvedPianoRollStep<string> | null;
   isCompactMobile: boolean;
+  isCoarsePointer: boolean;
   isFreePlayMode: boolean;
   isInteractive: boolean;
   isSixYearOldVisualMode: boolean;
@@ -116,10 +119,12 @@ export function KangurMusicPianoRollProvider({
 
 export function useKangurMusicPianoRollContext<NoteId extends string = string>(): KangurMusicPianoRollContextValue & {
   activeSynthGesture: ActiveSynthGestureState<NoteId> | null;
+  activePressesRef: React.MutableRefObject<Map<NoteId, ActiveKeyPressState>>;
   activeSynthGestures: ActiveSynthGestureState<NoteId>[];
   activeTransportStep: ResolvedPianoRollStep<NoteId> | null;
   currentCursorStep: ResolvedPianoRollStep<NoteId> | null;
   expectedTransportStep: ResolvedPianoRollStep<NoteId> | null;
+  isCoarsePointer: boolean;
   keyDefinitionById: Map<NoteId, KangurMusicPianoKeyDefinition<NoteId>>;
   keys: readonly KangurMusicPianoKeyDefinition<NoteId>[];
   laneKeys: readonly KangurMusicPianoKeyDefinition<NoteId>[];

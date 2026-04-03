@@ -40,7 +40,10 @@ import {
 import {
   getLessonAssignmentTimestamp,
   LESSON_ASSIGNMENT_PRIORITY_ORDER,
+  resolveLessonsActiveLessonAssignments,
 } from './Lessons.utils';
+import type { LessonsActiveLessonSnapshot } from './Lessons.types';
+export type { LessonsActiveLessonSnapshot } from './Lessons.types';
 
 const EMPTY_LESSONS: KangurLesson[] = [];
 const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
@@ -52,6 +55,73 @@ const EMPTY_LESSON_TEMPLATE_MAP = new Map<
   import('@/shared/contracts/kangur-lesson-templates').KangurLessonTemplate
 >();
 const EMPTY_LESSON_DOCUMENTS = {} as KangurLessonDocumentStore;
+
+export function useLessonsActiveLessonRenderSnapshot(input: {
+  activeLesson: KangurLesson | null;
+  activeLessonId: string | null;
+  completedLessonAssignmentsByComponent: Map<KangurLessonComponentId, KangurAssignmentSnapshot>;
+  isCompleteLessonsCatalogLoaded: boolean;
+  isSecretLessonActive: boolean;
+  lessonAssignmentsByComponent: Map<KangurLessonComponentId, KangurAssignmentSnapshot>;
+  orderedLessons: KangurLesson[];
+  progress: ReturnType<typeof useKangurProgressState>;
+  lessonDocument?: import('@/features/kangur/shared/contracts/kangur').KangurLessonDocument | null;
+  activeLessonAssignmentContent?: { title: string } | null;
+}): LessonsActiveLessonSnapshot {
+  const {
+    activeLesson,
+    activeLessonId,
+    completedLessonAssignmentsByComponent,
+    isCompleteLessonsCatalogLoaded,
+    isSecretLessonActive,
+    lessonAssignmentsByComponent,
+    orderedLessons,
+    progress,
+    lessonDocument,
+    activeLessonAssignmentContent,
+  } = input;
+
+  const { activeLessonAssignment, completedActiveLessonAssignment } =
+    resolveLessonsActiveLessonAssignments({
+      activeLesson,
+      completedLessonAssignmentsByComponent,
+      lessonAssignmentsByComponent,
+    });
+
+  return useMemo(
+    () =>
+      activeLesson
+        ? {
+            activeLesson,
+            activeLessonId: activeLessonId ?? activeLesson.id,
+            lessonAssignmentsByComponent,
+            completedLessonAssignmentsByComponent,
+            orderedLessons,
+            isCompleteLessonsCatalogLoaded,
+            isSecretLessonActive,
+            progress,
+            activeLessonAssignment,
+            completedActiveLessonAssignment,
+            lessonDocument,
+            activeLessonAssignmentContent,
+          }
+        : null,
+    [
+      activeLesson,
+      activeLessonId,
+      lessonAssignmentsByComponent,
+      completedLessonAssignmentsByComponent,
+      orderedLessons,
+      isCompleteLessonsCatalogLoaded,
+      isSecretLessonActive,
+      progress,
+      activeLessonAssignment,
+      completedActiveLessonAssignment,
+      lessonDocument,
+      activeLessonAssignmentContent,
+    ]
+  );
+}
 
 export function useLessonsLogic() {
   const routeNavigator = useKangurRouteNavigator();
@@ -78,23 +148,26 @@ export function useLessonsLogic() {
   const [loadedLessonsByComponent, setLoadedLessonsByComponent] = useState<
     Map<KangurLessonComponentId, KangurLesson>
   >(new Map());
-  const [shouldLoadCompleteLessonsCatalog, setShouldLoadCompleteLessonsCatalog] = useState(
-    process.env.NODE_ENV === 'test'
-  );
-  const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(
-    process.env.NODE_ENV === 'test'
-  );
+  const [shouldLoadCompleteLessonsCatalog, setShouldLoadCompleteLessonsCatalog] = useState(false);
+  const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
-  const [focusToken, setFocusToken] = useState<string | null>(null);
-  const [isAssignmentsReady, setIsAssignmentsReady] = useState(
-    process.env.NODE_ENV === 'test'
-  );
+  const [focusToken, setFocusToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    const currentUrl = new URL(window.location.href);
+    const nextFocusToken =
+      readKangurUrlParam(currentUrl.searchParams, 'focus', basePath)?.trim().toLowerCase() ?? null;
+
+    return nextFocusToken && nextFocusToken.length > 0 ? nextFocusToken : null;
+  });
+  const [isAssignmentsReady, setIsAssignmentsReady] = useState(false);
   const lessonTemplateMap = EMPTY_LESSON_TEMPLATE_MAP;
   const shouldLoadLessonCatalogDetails =
     shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0;
-  const shouldLoadLessonRuntimeMetadata =
-    shouldLoadLessonCatalogDetails || activeLessonId !== null;
+  const shouldLoadLessonRuntimeMetadata = activeLessonId !== null;
   const progress = useKangurProgressState({
     enabled: shouldLoadLessonRuntimeMetadata,
   });
@@ -104,7 +177,7 @@ export function useLessonsLogic() {
   const activeLessonContentRef = useRef<HTMLDivElement | null>(null);
   const activeLessonScrollRef = useRef<HTMLDivElement | null>(null);
 
-  const { assignments } = useKangurAssignments({
+  const { assignments = [] } = useKangurAssignments({
     enabled: isAssignmentsReady && canAccessParentAssignments,
     query: {
       includeArchived: false,
@@ -236,7 +309,6 @@ export function useLessonsLogic() {
       : hasPendingIncrementalLessonLoads;
   const shouldShowLessonsCatalogSkeleton =
     isLessonSectionsPlaceholderData || isLessonSectionsLoading;
-  console.log('DEBUG: shouldShowLessonsCatalogSkeleton', { shouldShowLessonsCatalogSkeleton, isLessonSectionsPlaceholderData, isLessonSectionsLoading });
   const lessonSections = useMemo(
     () => lessonSectionsQuery.data ?? [],
     [lessonSectionsQuery.data]
@@ -256,14 +328,6 @@ export function useLessonsLogic() {
     shouldExposeStandaloneLessons;
   const lessons = useMemo(
     (): KangurLesson[] => {
-      console.log('DEBUG lessons eval:', {
-        shouldExposeLessonCatalogDetails,
-        shouldLoadCompleteLessonsCatalog,
-        dataLessonsLen: completeLessonsQuery.data?.lessons?.length,
-        incrementalLessonsLen: incrementalLessons.length,
-        isMobile,
-        lessonSectionsLen: lessonSections.length
-      });
       return shouldExposeLessonCatalogDetails
         ? shouldLoadCompleteLessonsCatalog
           ? completeLessonsQuery.data?.lessons ?? []
@@ -377,7 +441,6 @@ export function useLessonsLogic() {
   );
 
   useEffect((): void => {
-    console.log('DEBUG: reset effect run');
     setRequestedLessonComponentIds([]);
     setPendingLessonComponentIdBatches([]);
     setActiveLessonComponentIdBatch(null);
@@ -408,13 +471,26 @@ export function useLessonsLogic() {
 
     ensureLessonsCatalogLoaded([focusScope.componentId]);
   }, [ageGroup, ensureLessonsCatalogLoaded, focusToken, lessonTemplateMap, subject]);
+
+  useEffect((): void => {
+    if (lessonSectionsQuery.data === undefined) {
+      return;
+    }
+
+    if (focusToken || activeLessonId !== null) {
+      return;
+    }
+
+    if (lessonSections.length === 0) {
+      setShouldLoadCompleteLessonsCatalog(true);
+    }
+  }, [activeLessonId, focusToken, lessonSections, lessonSectionsQuery.data]);
   const lessonAssignmentsByComponent = useMemo(() => {
     if (assignments.length === 0 || lessons.length === 0) {
-      console.log('DEBUG: lessonAssignmentsByComponent empty return', { assignmentsLength: assignments.length, lessonsLength: lessons.length });
       return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
     }
 
-    const nextMap = new Map<string, (typeof assignments)[number]>();
+    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
     assignments
       .filter((assignment) => !assignment.archived)
       .filter((assignment) => assignment.progress.status !== 'completed')
@@ -433,17 +509,15 @@ export function useLessonsLogic() {
           nextMap.set(componentId, assignment);
         }
       });
-    console.log('DEBUG: lessonAssignmentsByComponent computed', { size: nextMap.size, keys: Array.from(nextMap.keys()) });
     return nextMap;
   }, [assignments, isAssignmentsReady, lessons.length]);
 
   const completedLessonAssignmentsByComponent = useMemo(() => {
     if (assignments.length === 0 || lessons.length === 0) {
-      console.log('DEBUG: completedLessonAssignmentsByComponent empty return', { assignmentsLength: assignments.length, lessonsLength: lessons.length });
       return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
     }
 
-    const nextMap = new Map<string, (typeof assignments)[number]>();
+    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
     assignments
       .filter((assignment) => !assignment.archived)
       .filter((assignment) => assignment.progress.status === 'completed')
@@ -464,7 +538,6 @@ export function useLessonsLogic() {
           nextMap.set(componentId, assignment);
         }
       });
-    console.log('DEBUG: completedLessonAssignmentsByComponent computed', { size: nextMap.size, keys: Array.from(nextMap.keys()) });
     return nextMap;
   }, [assignments, isAssignmentsReady, lessons.length]);
 
@@ -556,7 +629,7 @@ export function useLessonsLogic() {
     activeLessonId === null
       ? -1
       : orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
-  const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
+  const activeLesson = activeIdx >= 0 ? (orderedLessons[activeIdx] ?? null) : null;
   const isCompleteLessonsCatalogLoaded =
     shouldExposeLessonCatalogDetails &&
     requestedLessonsCatalogComponentIds === undefined &&
@@ -669,5 +742,7 @@ export function useLessonsLogic() {
     activeLessonScrollRef,
     isSecretLessonActive,
     setIsSecretLessonActive,
+    lessonDocument: null,
+    activeLessonAssignmentContent: null,
   };
 }

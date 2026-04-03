@@ -4,7 +4,7 @@ const { getShippingGroupByIdMock } = vi.hoisted(() => ({
   getShippingGroupByIdMock: vi.fn(),
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/products/services/shipping-group-repository', () => ({
   getShippingGroupRepository: async () => ({
     getShippingGroupById: getShippingGroupByIdMock,
   }),
@@ -28,6 +28,7 @@ describe('selectPreferredTraderaShippingGroupResolution', () => {
       shippingGroup: null,
       shippingGroupId: null,
       shippingCondition: null,
+      shippingPriceEur: null,
       reason: 'missing_shipping_group',
     });
   });
@@ -38,6 +39,7 @@ describe('selectPreferredTraderaShippingGroupResolution', () => {
       name: 'Default parcels',
       catalogId: 'catalog-1',
       traderaShippingCondition: null,
+      traderaShippingPriceEur: 5,
     };
 
     expect(
@@ -51,6 +53,7 @@ describe('selectPreferredTraderaShippingGroupResolution', () => {
       shippingGroup,
       shippingGroupId: 'group-1',
       shippingCondition: null,
+      shippingPriceEur: 5,
       reason: 'shipping_group_without_condition',
     });
   });
@@ -67,6 +70,7 @@ describe('resolveTraderaShippingGroupResolutionForProduct', () => {
       name: 'Small parcel',
       catalogId: 'catalog-1',
       traderaShippingCondition: 'Buyer pays shipping',
+      traderaShippingPriceEur: 5,
     });
 
     await expect(
@@ -81,9 +85,11 @@ describe('resolveTraderaShippingGroupResolutionForProduct', () => {
         name: 'Small parcel',
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
       },
       shippingGroupId: 'group-1',
       shippingCondition: 'Buyer pays shipping',
+      shippingPriceEur: 5,
       reason: 'mapped',
     });
     expect(getShippingGroupByIdMock).toHaveBeenCalledWith('group-1');
@@ -102,6 +108,7 @@ describe('resolveTraderaShippingGroupResolutionForProduct', () => {
       shippingGroup: null,
       shippingGroupId: 'missing-group',
       shippingCondition: null,
+      shippingPriceEur: null,
       reason: 'shipping_group_not_found',
     });
   });

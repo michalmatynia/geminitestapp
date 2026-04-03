@@ -28,7 +28,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   }),
 }));
 
-import KangurLearnerAssignmentsPanel from '@/features/kangur/ui/components/KangurLearnerAssignmentsPanel';
+import { KangurLearnerAssignmentsPanel } from "@/features/kangur/ui/components/assignments/KangurLearnerAssignmentsPanel";
 
 describe('KangurLearnerAssignmentsPanel', () => {
   beforeEach(() => {

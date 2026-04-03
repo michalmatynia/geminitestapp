@@ -2,6 +2,12 @@ import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('next/cache', () => ({
+  unstable_cache: (fn: any) => fn,
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
+
 vi.mock('next/headers', () => ({
   headers: vi.fn(async () => new Headers()),
 }));
@@ -43,7 +49,7 @@ import KangurAppLayout from '@/app/(frontend)/kangur/(app)/layout';
 import {
   CmsStorefrontAppearanceProvider,
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 
 function AppearanceModeProbe(): React.JSX.Element {
   const appearance = useOptionalCmsStorefrontAppearance();

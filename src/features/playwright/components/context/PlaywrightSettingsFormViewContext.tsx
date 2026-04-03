@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 type PlaywrightSettingsFormViewContextValue = {
   onSave?: () => void;
@@ -12,8 +13,14 @@ type PlaywrightSettingsFormViewContextValue = {
   description?: string;
 };
 
-const PlaywrightSettingsFormViewContext =
-  React.createContext<PlaywrightSettingsFormViewContextValue | null>(null);
+const {
+  Context: PlaywrightSettingsFormViewContext,
+  useStrictContext: usePlaywrightSettingsFormView,
+} = createStrictContext<PlaywrightSettingsFormViewContextValue>({
+  hookName: 'usePlaywrightSettingsFormView',
+  providerName: 'PlaywrightSettingsFormViewProvider',
+  errorFactory: internalError,
+});
 
 type PlaywrightSettingsFormViewProviderProps = {
   value: PlaywrightSettingsFormViewContextValue;
@@ -31,12 +38,4 @@ export function PlaywrightSettingsFormViewProvider({
   );
 }
 
-export function usePlaywrightSettingsFormView(): PlaywrightSettingsFormViewContextValue {
-  const context = React.useContext(PlaywrightSettingsFormViewContext);
-  if (!context) {
-    throw internalError(
-      'usePlaywrightSettingsFormView must be used within PlaywrightSettingsFormViewProvider'
-    );
-  }
-  return context;
-}
+export { usePlaywrightSettingsFormView };

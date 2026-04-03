@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useAdminFilemakerPageState } from '../hooks/useAdminFilemakerPageState';
 
@@ -31,11 +32,22 @@ export type AdminFilemakerPageActionsContextValue = Pick<
   AdminFilemakerPageFunctionKeys
 >;
 
-const AdminFilemakerPageStateContext = createContext<AdminFilemakerPageStateContextValue | null>(
-  null
-);
-const AdminFilemakerPageActionsContext =
-  createContext<AdminFilemakerPageActionsContextValue | null>(null);
+const {
+  Context: AdminFilemakerPageStateContext,
+  useStrictContext: useAdminFilemakerPageStateContextValue,
+} = createStrictContext<AdminFilemakerPageStateContextValue>({
+  hookName: 'useAdminFilemakerPageStateContext',
+  providerName: 'AdminFilemakerPageProvider',
+  errorFactory: internalError,
+});
+const {
+  Context: AdminFilemakerPageActionsContext,
+  useStrictContext: useAdminFilemakerPageActionsContextValue,
+} = createStrictContext<AdminFilemakerPageActionsContextValue>({
+  hookName: 'useAdminFilemakerPageActionsContext',
+  providerName: 'AdminFilemakerPageProvider',
+  errorFactory: internalError,
+});
 
 export function AdminFilemakerPageProvider({
   children,
@@ -105,22 +117,5 @@ export function AdminFilemakerPageProvider({
   );
 }
 
-export function useAdminFilemakerPageStateContext(): AdminFilemakerPageStateContextValue {
-  const context = useContext(AdminFilemakerPageStateContext);
-  if (!context) {
-    throw internalError(
-      'useAdminFilemakerPageStateContext must be used within AdminFilemakerPageProvider'
-    );
-  }
-  return context;
-}
-
-export function useAdminFilemakerPageActionsContext(): AdminFilemakerPageActionsContextValue {
-  const context = useContext(AdminFilemakerPageActionsContext);
-  if (!context) {
-    throw internalError(
-      'useAdminFilemakerPageActionsContext must be used within AdminFilemakerPageProvider'
-    );
-  }
-  return context;
-}
+export const useAdminFilemakerPageStateContext = useAdminFilemakerPageStateContextValue;
+export const useAdminFilemakerPageActionsContext = useAdminFilemakerPageActionsContextValue;

@@ -529,6 +529,24 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
+  useKangurLessonsCatalog: (options: LessonsCatalogMockOptions = {}) => {
+    lessonCatalogHookCallsMock(options);
+    const lessons = resolveFilteredCatalogRecords(lessonsState.value, options);
+    const { hasRetainedData, isLoading, isPlaceholderData } = resolveLessonsLoadingMeta();
+
+    return {
+      data: isLoading && !hasRetainedData ? undefined : { lessons },
+      isFetching: isLoading,
+      isLoading: isLoading && !hasRetainedData,
+      isPending: isLoading && !hasRetainedData,
+      isPlaceholderData,
+      isRefetching: hasRetainedData,
+      refetch: vi.fn(),
+    };
+  },
+}));
+
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
   useKangurLessonSections: (options: LessonsCatalogMockOptions = {}) => {
     lessonSectionsHookCallsMock(options);

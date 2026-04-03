@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 
-import { getEstimatedBubbleHeight } from '../KangurAiTutorGuidedLayout';
+import { getEstimatedBubbleHeight } from '@/features/kangur/ui/components/KangurAiTutorGuidedLayout';
 import { getTutorBubblePlacement } from './KangurAiTutorWidget.focus-layout';
 import { getGuestIntroPanelStyle } from './KangurAiTutorWidget.storage';
 import type { KangurAiTutorPanelBodyContextValue } from '../KangurAiTutorPanelBody.context';

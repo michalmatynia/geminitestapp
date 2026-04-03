@@ -7,7 +7,6 @@ import { useKangurAiTutorPanelBodyContext } from '../KangurAiTutorPanelBody.cont
 import { useKangurAiTutorWidgetStateContext } from '../ai-tutor-widget/KangurAiTutorWidget.state';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 import {
   getGuidedCalloutFallbackCopy,

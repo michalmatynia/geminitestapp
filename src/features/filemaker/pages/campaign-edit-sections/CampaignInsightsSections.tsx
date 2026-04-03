@@ -11,6 +11,10 @@ import type {
 import type {
   FilemakerEmailCampaignRun,
 } from '@/shared/contracts/filemaker';
+import {
+  getFilemakerEmailCampaignDeliveriesForRun,
+  summarizeFilemakerEmailCampaignRunDeliveries,
+} from '../../settings';
 import { useCampaignEditContext } from '../AdminFilemakerCampaignEditPage.context';
 
 export const CampaignAnalyticsSection = () => {
@@ -165,20 +169,6 @@ export const RecentRunsSection = () => {
     isUpdatePending,
     router,
   } = useCampaignEditContext();
-
-  const getFilemakerEmailCampaignDeliveriesForRun = (
-    registry: Record<string, any[]>,
-    runId: string
-  ) => registry[runId] || [];
-
-  const summarizeFilemakerEmailCampaignRunDeliveries = (
-    deliveries: any[]
-  ) => ({
-    recipientCount: deliveries.length,
-    deliveredCount: deliveries.filter((d) => d.status === 'delivered').length,
-    failedCount: deliveries.filter((d) => d.status === 'failed').length,
-    skippedCount: deliveries.filter((d) => d.status === 'skipped').length,
-  });
 
   return (
     <FormSection title='Recent Runs' className='space-y-4 p-4'>

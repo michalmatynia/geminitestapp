@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { ColorSchemeColors } from './theme-styles';
 
@@ -11,7 +12,16 @@ interface CmsPageContextValue {
   layout: { fullWidth?: boolean };
 }
 
-const CmsPageContext = createContext<CmsPageContextValue | null>(null);
+export const {
+  Context: CmsPageContext,
+  useStrictContext: useCmsPageContext,
+  useOptionalContext: useOptionalCmsPageContext,
+} = createStrictContext<CmsPageContextValue>({
+  hookName: 'useCmsPageContext',
+  providerName: 'a CmsPageProvider',
+  displayName: 'CmsPageContext',
+  errorFactory: internalError,
+});
 
 export function CmsPageProvider({
   colorSchemes,
@@ -21,16 +31,4 @@ export function CmsPageProvider({
   return (
     <CmsPageContext.Provider value={{ colorSchemes, layout }}>{children}</CmsPageContext.Provider>
   );
-}
-
-export function useCmsPageContext() {
-  const context = useContext(CmsPageContext);
-  if (!context) {
-    throw internalError('useCmsPageContext must be used within a CmsPageProvider');
-  }
-  return context;
-}
-
-export function useOptionalCmsPageContext() {
-  return useContext(CmsPageContext);
 }

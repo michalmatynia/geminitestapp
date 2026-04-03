@@ -48,7 +48,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => settingsStoreMock,
 }));
 
-import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
+import { KangurAssignmentManager } from "@/features/kangur/ui/components/assignment-manager/KangurAssignmentManager";
 
 describe('KangurAssignmentManager', () => {
   beforeEach(() => {

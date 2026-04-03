@@ -119,6 +119,27 @@ const extractQuizLessonDocumentSnippetCards = (
     )
   );
 
+const toLessonSnippetList = (values: Array<string | null | undefined>): string[] =>
+  values.filter((value): value is string => Boolean(readTrimmedString(value)));
+
+const extractTextBlockSnippets = (block: KangurLessonTextBlock): string[] =>
+  toLessonSnippetList([stripHtmlToText(block.html)]);
+
+const extractSvgBlockSnippets = (block: KangurLessonSvgBlock): string[] =>
+  toLessonSnippetList([block.title, block.ttsDescription]);
+
+const extractImageBlockSnippets = (block: KangurLessonImageBlock): string[] =>
+  toLessonSnippetList([block.title, block.caption, block.ttsDescription]);
+
+const extractActivityBlockSnippets = (block: KangurLessonActivityBlock): string[] =>
+  toLessonSnippetList([block.title, block.description, block.ttsDescription]);
+
+const extractCalloutBlockSnippets = (block: KangurLessonCalloutBlock): string[] =>
+  toLessonSnippetList([block.title, stripHtmlToText(block.html)]);
+
+const extractQuizBlockSnippets = (block: KangurLessonQuizBlock): string[] =>
+  toLessonSnippetList([block.question, ...block.choices.map((choice) => choice.text), block.explanation]);
+
 const extractLeafLessonDocumentSnippetCards = (
   block: KangurLessonDocument['blocks'][number]
 ): LessonDocumentSnippetCard[] => {
@@ -149,48 +170,43 @@ export const extractLessonDocumentSnippetCards = (
   return extractLeafLessonDocumentSnippetCards(block);
 };
 
-export const extractBlockSnippets = (block: KangurLessonDocument['blocks'][number]): string[] => {
+const extractLeafBlockSnippets = (block: KangurLessonDocument['blocks'][number]): string[] => {
   switch (block.type) {
     case 'text':
-      return readTrimmedString(stripHtmlToText(block.html)) ? [stripHtmlToText(block.html)] : [];
+      return extractTextBlockSnippets(block);
     case 'svg':
-      return [block.title, block.ttsDescription].filter((value): value is string => Boolean(readTrimmedString(value)));
+      return extractSvgBlockSnippets(block);
     case 'image':
-      return [block.title, block.caption, block.ttsDescription].filter((value): value is string =>
-        Boolean(readTrimmedString(value))
-      );
+      return extractImageBlockSnippets(block);
     case 'activity':
-      return [block.title, block.description, block.ttsDescription].filter((value): value is string =>
-        Boolean(readTrimmedString(value))
-      );
+      return extractActivityBlockSnippets(block);
     case 'callout':
-      return [block.title, stripHtmlToText(block.html)].filter((value): value is string =>
-        Boolean(readTrimmedString(value))
-      );
+      return extractCalloutBlockSnippets(block);
     case 'quiz':
-      return [
-        block.question,
-        ...block.choices.map((choice) => choice.text),
-        block.explanation ?? '',
-      ].filter((value): value is string => Boolean(readTrimmedString(value)));
-    case 'grid':
-      return block.items.flatMap((item) => extractBlockSnippets(item.block));
+      return extractQuizBlockSnippets(block);
     default:
       return [];
   }
 };
 
-export const buildLessonDocumentSnippets = (document: KangurLessonDocument | null | undefined): string[] => {
-  if (!document) {
-    return [];
+export const extractBlockSnippets = (block: KangurLessonDocument['blocks'][number]): string[] => {
+  if (block.type === 'grid') {
+    return block.items.flatMap((item) => extractBlockSnippets(item.block));
   }
-  const snippets = resolveKangurLessonDocumentPages(document).flatMap((page) => [
-    page.sectionTitle ?? '',
-    page.sectionDescription ?? '',
-    page.title ?? '',
-    page.description ?? '',
-    ...page.blocks.flatMap((block) => extractBlockSnippets(block)),
-  ]);
+  return extractLeafBlockSnippets(block);
+};
+
+const collectLessonPageSnippetCandidates = (
+  page: ReturnType<typeof resolveKangurLessonDocumentPages>[number]
+): string[] => [
+  page.sectionTitle ?? '',
+  page.sectionDescription ?? '',
+  page.title ?? '',
+  page.description ?? '',
+  ...page.blocks.flatMap((block) => extractBlockSnippets(block)),
+];
+
+const dedupeLessonSnippets = (snippets: string[]): string[] => {
   const seen = new Set<string>();
   return snippets
     .map((snippet) => truncate(snippet.trim(), 260))
@@ -201,8 +217,21 @@ export const buildLessonDocumentSnippets = (document: KangurLessonDocument | nul
       }
       seen.add(snippet);
       return true;
-    })
-    .slice(0, 8);
+    });
+};
+
+export const buildLessonDocumentSnippets = (
+  document: KangurLessonDocument | null | undefined
+): string[] => {
+  if (!document) {
+    return [];
+  }
+
+  return dedupeLessonSnippets(
+    resolveKangurLessonDocumentPages(document).flatMap((page) =>
+      collectLessonPageSnippetCandidates(page)
+    )
+  ).slice(0, 8);
 };
 
 export const buildLessonDocumentSnippetCards = (

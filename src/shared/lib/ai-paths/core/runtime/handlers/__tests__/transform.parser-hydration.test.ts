@@ -97,6 +97,28 @@ describe('handleParser strict context hydration', () => {
     });
   });
 
+  it('hydrates entity from productId when strict mode uses simulation entity type fallback', async () => {
+    const fetchEntityCached = vi.fn().mockResolvedValue({
+      id: 'product-2',
+      title: 'Floor Lamp',
+      content_en: 'Wood floor lamp.',
+    });
+    const ctx = buildContext({
+      nodeInputs: {
+        context: { productId: 'product-2' },
+      },
+      simulationEntityType: 'product',
+      fetchEntityCached,
+    });
+
+    const output = await handleParser(ctx);
+    expect(fetchEntityCached).toHaveBeenCalledWith('product', 'product-2');
+    expect(output).toMatchObject({
+      title: 'Floor Lamp',
+      content_en: 'Wood floor lamp.',
+    });
+  });
+
   it('keeps bundle object and images output distinct in bundle mode', async () => {
     const ctx = buildContext({
       node: {

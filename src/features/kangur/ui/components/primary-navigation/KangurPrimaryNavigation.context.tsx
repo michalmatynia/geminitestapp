@@ -92,6 +92,14 @@ export type KangurPrimaryNavigationContextValue = {
   tutorContent: PrimaryNavigationState['tutorContent'];
   loginActionRef: PrimaryNavigationRuntime['loginActionRef'];
   mobileMenuRef: PrimaryNavigationRuntime['mobileMenuRef'];
+  commitGuestPlayerName: PrimaryNavigationRuntime['commitGuestPlayerName'];
+  guestPlayerNameValue: PrimaryNavigationRuntime['guestPlayerNameValue'];
+  guestPlayerPlaceholderText: PrimaryNavigationRuntime['guestPlayerPlaceholderText'];
+  handleGuestPlayerNameChange: PrimaryNavigationRuntime['handleGuestPlayerNameChange'];
+  hasGuestPlayerName: PrimaryNavigationRuntime['hasGuestPlayerName'];
+  isEditingGuestPlayerName: PrimaryNavigationRuntime['isEditingGuestPlayerName'];
+  setIsEditingGuestPlayerName: PrimaryNavigationRuntime['setIsEditingGuestPlayerName'];
+  showGuestPlayerNameInput: PrimaryNavigationRuntime['showGuestPlayerNameInput'];
   props: KangurPrimaryNavigationProps;
   derived: {
     isSixYearOld: boolean;

@@ -155,6 +155,71 @@ export const clearRecentAiPathRunEnqueue = (): void => {
   safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
 };
 
+const clearExpiredRecentAiPathRunEnqueueMemoryRecord = (): void => {
+  inMemoryRecentAiPathRunEnqueue = null;
+};
+
+const readRecentAiPathRunEnqueueMemoryRecord = (
+  now: number
+): RecentAiPathRunEnqueueRecord | null => {
+  const record = inMemoryRecentAiPathRunEnqueue;
+  if (!record || record.expiresAt <= now) {
+    clearExpiredRecentAiPathRunEnqueueMemoryRecord();
+    return null;
+  }
+  return record;
+};
+
+const parseRecentAiPathRunEnqueueStorageRecord = (
+  raw: string
+): RecentAiPathRunEnqueueRecord | null => {
+  try {
+    return normalizeRecentAiPathRunEnqueueRecord(JSON.parse(raw));
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'query-invalidation',
+      action: 'parseRecentAiPathRunEnqueue',
+      storageKey: RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY,
+      level: 'warn',
+    });
+    return null;
+  }
+};
+
+const clearInvalidRecentAiPathRunEnqueueStorageRecord = (): void => {
+  safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+};
+
+const readRecentAiPathRunEnqueueStorageRecord = (
+  now: number
+): RecentAiPathRunEnqueueRecord | null => {
+  const raw = safeLocalStorageGetItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+  if (!raw) return null;
+  const record = parseRecentAiPathRunEnqueueStorageRecord(raw);
+  if (!record || record.expiresAt <= now) {
+    clearInvalidRecentAiPathRunEnqueueStorageRecord();
+    return null;
+  }
+  return record;
+};
+
+const selectRecentAiPathRunEnqueueRecord = (
+  memoryRecord: RecentAiPathRunEnqueueRecord | null,
+  storageRecord: RecentAiPathRunEnqueueRecord | null
+): RecentAiPathRunEnqueueRecord | null => {
+  if (!storageRecord) return memoryRecord;
+  if (!memoryRecord) return storageRecord;
+  return storageRecord.at >= memoryRecord.at ? storageRecord : memoryRecord;
+};
+
+const toRecentAiPathRunEnqueueSnapshot = (record: RecentAiPathRunEnqueueRecord) => ({
+  type: record.type,
+  runId: record.runId,
+  entityId: record.entityId,
+  entityType: record.entityType,
+  at: record.at,
+});
+
 export const getRecentAiPathRunEnqueue = (): {
   type: 'run-enqueued';
   runId: string;
@@ -163,56 +228,13 @@ export const getRecentAiPathRunEnqueue = (): {
   at: number;
 } | null => {
   const now = Date.now();
-
-  const memoryRecord =
-    inMemoryRecentAiPathRunEnqueue && inMemoryRecentAiPathRunEnqueue.expiresAt > now
-      ? inMemoryRecentAiPathRunEnqueue
-      : null;
-  if (!memoryRecord) {
-    inMemoryRecentAiPathRunEnqueue = null;
-  }
-
-  let storageRecord: RecentAiPathRunEnqueueRecord | null = null;
-  const raw = safeLocalStorageGetItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-  if (raw) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'query-invalidation',
-        action: 'parseRecentAiPathRunEnqueue',
-        storageKey: RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY,
-        level: 'warn',
-      });
-      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-      parsed = null;
-    }
-
-    const normalized = normalizeRecentAiPathRunEnqueueRecord(parsed);
-    if (!normalized) {
-      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-    } else if (normalized.expiresAt <= now) {
-      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-    } else {
-      storageRecord = normalized;
-    }
-  }
-
-  const record =
-    storageRecord && (!memoryRecord || storageRecord.at >= memoryRecord.at)
-      ? storageRecord
-      : memoryRecord;
+  const memoryRecord = readRecentAiPathRunEnqueueMemoryRecord(now);
+  const storageRecord = readRecentAiPathRunEnqueueStorageRecord(now);
+  const record = selectRecentAiPathRunEnqueueRecord(memoryRecord, storageRecord);
   if (!record) return null;
 
   inMemoryRecentAiPathRunEnqueue = record;
-  return {
-    type: record.type,
-    runId: record.runId,
-    entityId: record.entityId,
-    entityType: record.entityType,
-    at: record.at,
-  };
+  return toRecentAiPathRunEnqueueSnapshot(record);
 };
 
 export const resolveQueueRunSource = (meta?: Record<string, unknown> | null): string | null => {

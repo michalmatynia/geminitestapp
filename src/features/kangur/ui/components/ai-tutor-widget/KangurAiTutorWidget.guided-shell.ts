@@ -13,7 +13,7 @@ import {
   getSelectionGlowStyle,
   getSelectionSpotlightStyle,
   resolveContinuousRotationDegrees,
-} from '../KangurAiTutorGuidedLayout';
+} from '@/features/kangur/ui/components/KangurAiTutorGuidedLayout';
 import { getExpandedRect } from './KangurAiTutorWidget.helpers';
 import {
   AVATAR_SIZE,

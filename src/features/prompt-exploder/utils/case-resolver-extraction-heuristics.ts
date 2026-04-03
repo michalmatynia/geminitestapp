@@ -40,45 +40,83 @@ export const isLikelyAddresseeSegment = (segment: PromptExploderSegment): boolea
   return organizationLine && hasAddressLikeLine(lines);
 };
 
+const ADDRESS_EXTRACT_PREFIX = 'segment.case_resolver.extract.address.';
+
+type PartySegmentConfig = {
+  preferredHeadingId: string;
+  preferredExtractPrefix: string;
+  fallbackPredicate: (segment: PromptExploderSegment) => boolean;
+};
+
+const NEVER_MATCH_SEGMENT = (): boolean => false;
+
+const PARTY_SEGMENT_CONFIG: Record<PromptExploderCaseResolverPartyRole, PartySegmentConfig> = {
+  addresser: {
+    preferredHeadingId: 'segment.case_resolver.heading.addresser_person',
+    preferredExtractPrefix: 'segment.case_resolver.extract.addresser.',
+    fallbackPredicate: isLikelyAddresserSegment,
+  },
+  addressee: {
+    preferredHeadingId: 'segment.case_resolver.heading.addressee_organization',
+    preferredExtractPrefix: 'segment.case_resolver.extract.addressee.',
+    fallbackPredicate: isLikelyAddresseeSegment,
+  },
+  subject: {
+    preferredHeadingId: 'segment.case_resolver.heading.subject_or_section',
+    preferredExtractPrefix: 'segment.case_resolver.extract.subject.',
+    fallbackPredicate: NEVER_MATCH_SEGMENT,
+  },
+  reference: {
+    preferredHeadingId: 'segment.case_resolver.heading.reference',
+    preferredExtractPrefix: 'segment.case_resolver.extract.reference.',
+    fallbackPredicate: NEVER_MATCH_SEGMENT,
+  },
+  other: {
+    preferredHeadingId: 'segment.case_resolver.heading.other',
+    preferredExtractPrefix: 'segment.case_resolver.extract.other.',
+    fallbackPredicate: NEVER_MATCH_SEGMENT,
+  },
+};
+
+const isUnusedSegment = (
+  segment: PromptExploderSegment,
+  usedSegmentIds: Set<string>
+): boolean => !usedSegmentIds.has(segment.id);
+
+const findPartySegmentCandidate = (
+  segments: PromptExploderSegment[],
+  usedSegmentIds: Set<string>,
+  predicate: (segment: PromptExploderSegment) => boolean
+): PromptExploderSegment | null =>
+  segments.find(
+    (segment: PromptExploderSegment): boolean =>
+      isUnusedSegment(segment, usedSegmentIds) && predicate(segment)
+  ) ?? null;
+
+const resolvePartySegmentCandidates = (
+  segments: PromptExploderSegment[],
+  usedSegmentIds: Set<string>,
+  config: PartySegmentConfig
+): PromptExploderSegment[] => [
+  findPartySegmentCandidate(segments, usedSegmentIds, (segment: PromptExploderSegment): boolean =>
+    hasPatternId(segment, config.preferredHeadingId)
+  ),
+  findPartySegmentCandidate(segments, usedSegmentIds, (segment: PromptExploderSegment): boolean =>
+    hasPatternPrefix(segment, config.preferredExtractPrefix)
+  ),
+  findPartySegmentCandidate(segments, usedSegmentIds, (segment: PromptExploderSegment): boolean =>
+    hasPatternPrefix(segment, ADDRESS_EXTRACT_PREFIX) && config.fallbackPredicate(segment)
+  ),
+  findPartySegmentCandidate(segments, usedSegmentIds, config.fallbackPredicate),
+].filter((segment): segment is PromptExploderSegment => segment !== null);
+
 export const resolvePartySegment = (
   segments: PromptExploderSegment[],
   role: PromptExploderCaseResolverPartyRole,
   usedSegmentIds: Set<string>
 ): PromptExploderSegment | null => {
-  const preferredHeadingId =
-    role === 'addresser'
-      ? 'segment.case_resolver.heading.addresser_person'
-      : 'segment.case_resolver.heading.addressee_organization';
-  const preferredExtractPrefix =
-    role === 'addresser'
-      ? 'segment.case_resolver.extract.addresser.'
-      : 'segment.case_resolver.extract.addressee.';
-  const fallbackPredicate =
-    role === 'addresser' ? isLikelyAddresserSegment : isLikelyAddresseeSegment;
-
-  const candidates = [
-    segments.find(
-      (segment: PromptExploderSegment): boolean =>
-        !usedSegmentIds.has(segment.id) && hasPatternId(segment, preferredHeadingId)
-    ) ?? null,
-    segments.find(
-      (segment: PromptExploderSegment): boolean =>
-        !usedSegmentIds.has(segment.id) && hasPatternPrefix(segment, preferredExtractPrefix)
-    ) ?? null,
-    segments.find(
-      (segment: PromptExploderSegment): boolean =>
-        !usedSegmentIds.has(segment.id) &&
-        hasPatternPrefix(segment, 'segment.case_resolver.extract.address.') &&
-        fallbackPredicate(segment)
-    ) ?? null,
-    segments.find(
-      (segment: PromptExploderSegment): boolean =>
-        !usedSegmentIds.has(segment.id) && fallbackPredicate(segment)
-    ) ?? null,
-  ];
-
   const resolved =
-    candidates.find((segment): segment is PromptExploderSegment => segment !== null) ?? null;
+    resolvePartySegmentCandidates(segments, usedSegmentIds, PARTY_SEGMENT_CONFIG[role])[0] ?? null;
   if (resolved) {
     usedSegmentIds.add(resolved.id);
   }

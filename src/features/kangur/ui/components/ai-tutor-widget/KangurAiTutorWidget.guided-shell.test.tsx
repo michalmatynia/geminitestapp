@@ -5,7 +5,7 @@ import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { useKangurAiTutorGuidedShellState } from './KangurAiTutorWidget.guided-shell';
-import { getGuidedSelectionCalloutHeight } from '../KangurAiTutorGuidedLayout';
+import { getGuidedSelectionCalloutHeight } from '@/features/kangur/ui/components/KangurAiTutorGuidedLayout';
 import { AVATAR_SIZE } from './KangurAiTutorWidget.shared';
 
 import type { TutorMotionProfile } from './KangurAiTutorWidget.shared';

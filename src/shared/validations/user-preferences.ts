@@ -26,119 +26,169 @@ const normalizeStringArray = (value: string[] | null): string[] => {
   return Array.from(new Set(normalized));
 };
 
+const resolveDefinedValue = <TInput, TOutput>(
+  value: TInput | undefined,
+  normalizer: (value: TInput) => TOutput
+): TOutput | undefined => (value === undefined ? undefined : normalizer(value));
+
+const setNormalizedPreference = <TKey extends keyof UserPreferencesUpdatePayload>(
+  normalized: Partial<UserPreferencesUpdatePayload>,
+  key: TKey,
+  value: UserPreferencesUpdatePayload[TKey] | undefined
+): void => {
+  if (value !== undefined) {
+    normalized[key] = value;
+  }
+};
+
+const normalizeProductListPageSize = (value: number | null): number | null =>
+  value === null ? null : normalizeProductPageSize(value, 12);
+
+const normalizeDraftIconColor = (value: string | null): string | null =>
+  typeof value === 'string' ? value.toLowerCase() : value;
+
+const normalizeNullableArray = <T>(value: T[] | null): T[] => value ?? [];
+
+const normalizeNullableRecord = <T extends Record<string, unknown>>(value: T | null): T =>
+  value ?? ({} as T);
+
 export const normalizeUserPreferencesUpdatePayload = (
   payload: UserPreferencesUpdatePayload
 ): Partial<UserPreferencesUpdatePayload> => {
   const normalized: Partial<UserPreferencesUpdatePayload> = {};
 
-  if (payload.productListNameLocale !== undefined) {
-    normalized.productListNameLocale = payload.productListNameLocale;
-  }
-  if (payload.productListCatalogFilter !== undefined) {
-    normalized.productListCatalogFilter = normalizeNullableString(payload.productListCatalogFilter);
-  }
-  if (payload.productListCurrencyCode !== undefined) {
-    normalized.productListCurrencyCode = normalizeNullableString(payload.productListCurrencyCode);
-  }
-  if (payload.productListPageSize !== undefined) {
-    normalized.productListPageSize =
-      payload.productListPageSize === null
-        ? null
-        : normalizeProductPageSize(payload.productListPageSize, 12);
-  }
-  if (payload.productListThumbnailSource !== undefined) {
-    normalized.productListThumbnailSource = payload.productListThumbnailSource;
-  }
-  if (payload.productListFiltersCollapsedByDefault !== undefined) {
-    normalized.productListFiltersCollapsedByDefault = payload.productListFiltersCollapsedByDefault;
-  }
-  if (payload.productListShowTriggerRunFeedback !== undefined) {
-    normalized.productListShowTriggerRunFeedback = payload.productListShowTriggerRunFeedback;
-  }
-  if (payload.productListAdvancedFilterPresets !== undefined) {
-    normalized.productListAdvancedFilterPresets = payload.productListAdvancedFilterPresets ?? [];
-  }
-  if (payload.productListAppliedAdvancedFilter !== undefined) {
-    normalized.productListAppliedAdvancedFilter = normalizeNullableString(
-      payload.productListAppliedAdvancedFilter
-    );
-  }
-  if (payload.productListAppliedAdvancedFilterPresetId !== undefined) {
-    normalized.productListAppliedAdvancedFilterPresetId = normalizeNullableString(
-      payload.productListAppliedAdvancedFilterPresetId
-    );
-  }
-  if (payload.productListDraftIconColorMode !== undefined) {
-    normalized.productListDraftIconColorMode = payload.productListDraftIconColorMode;
-  }
-  if (payload.productListDraftIconColor !== undefined) {
-    normalized.productListDraftIconColor =
-      typeof payload.productListDraftIconColor === 'string'
-        ? payload.productListDraftIconColor.toLowerCase()
-        : payload.productListDraftIconColor;
-  }
-  if (payload.aiPathsActivePathId !== undefined) {
-    normalized.aiPathsActivePathId = payload.aiPathsActivePathId;
-  }
-  if (payload.imageStudioLastProjectId !== undefined) {
-    normalized.imageStudioLastProjectId = payload.imageStudioLastProjectId;
-  }
-  if (payload.caseResolverCaseListViewMode !== undefined) {
-    normalized.caseResolverCaseListViewMode = payload.caseResolverCaseListViewMode;
-  }
-  if (payload.caseResolverCaseListSortBy !== undefined) {
-    normalized.caseResolverCaseListSortBy = payload.caseResolverCaseListSortBy;
-  }
-  if (payload.caseResolverCaseListSortOrder !== undefined) {
-    normalized.caseResolverCaseListSortOrder = payload.caseResolverCaseListSortOrder;
-  }
-  if (payload.caseResolverCaseListSearchScope !== undefined) {
-    normalized.caseResolverCaseListSearchScope = payload.caseResolverCaseListSearchScope;
-  }
-  if (payload.caseResolverCaseListFiltersCollapsedByDefault !== undefined) {
-    normalized.caseResolverCaseListFiltersCollapsedByDefault =
-      payload.caseResolverCaseListFiltersCollapsedByDefault;
-  }
-  if (payload.caseResolverCaseListShowNestedContent !== undefined) {
-    normalized.caseResolverCaseListShowNestedContent =
-      payload.caseResolverCaseListShowNestedContent;
-  }
-  if (payload.adminMenuCollapsed !== undefined) {
-    normalized.adminMenuCollapsed = payload.adminMenuCollapsed;
-  }
-  if (payload.adminMenuFavorites !== undefined) {
-    normalized.adminMenuFavorites = normalizeStringArray(payload.adminMenuFavorites) ?? [];
-  }
-  if (payload.adminMenuSectionColors !== undefined) {
-    normalized.adminMenuSectionColors = payload.adminMenuSectionColors ?? {};
-  }
-  if (payload.adminMenuCustomEnabled !== undefined) {
-    normalized.adminMenuCustomEnabled = payload.adminMenuCustomEnabled;
-  }
-  if (payload.adminMenuCustomNav !== undefined) {
-    normalized.adminMenuCustomNav = payload.adminMenuCustomNav ?? [];
-  }
-  if (payload.cmsLastPageId !== undefined) {
-    normalized.cmsLastPageId = payload.cmsLastPageId;
-  }
-  if (payload.cmsActiveDomainId !== undefined) {
-    normalized.cmsActiveDomainId = payload.cmsActiveDomainId;
-  }
-  if (payload.cmsThemeOpenSections !== undefined) {
-    normalized.cmsThemeOpenSections = normalizeStringArray(payload.cmsThemeOpenSections) ?? [];
-  }
-  if (payload.cmsThemeLogoWidth !== undefined) {
-    normalized.cmsThemeLogoWidth = payload.cmsThemeLogoWidth;
-  }
-  if (payload.cmsThemeLogoUrl !== undefined) {
-    normalized.cmsThemeLogoUrl = normalizeNullableString(payload.cmsThemeLogoUrl);
-  }
-  if (payload.cmsPreviewEnabled !== undefined) {
-    normalized.cmsPreviewEnabled = payload.cmsPreviewEnabled;
-  }
-  if (payload.cmsSlideshowPauseOnHoverInEditor !== undefined) {
-    normalized.cmsSlideshowPauseOnHoverInEditor = payload.cmsSlideshowPauseOnHoverInEditor;
-  }
+  setNormalizedPreference(normalized, 'productListNameLocale', payload.productListNameLocale);
+  setNormalizedPreference(
+    normalized,
+    'productListCatalogFilter',
+    resolveDefinedValue(payload.productListCatalogFilter, normalizeNullableString)
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListCurrencyCode',
+    resolveDefinedValue(payload.productListCurrencyCode, normalizeNullableString)
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListPageSize',
+    resolveDefinedValue(payload.productListPageSize, normalizeProductListPageSize)
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListThumbnailSource',
+    payload.productListThumbnailSource
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListFiltersCollapsedByDefault',
+    payload.productListFiltersCollapsedByDefault
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListShowTriggerRunFeedback',
+    payload.productListShowTriggerRunFeedback
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListAdvancedFilterPresets',
+    resolveDefinedValue(payload.productListAdvancedFilterPresets, normalizeNullableArray)
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListAppliedAdvancedFilter',
+    resolveDefinedValue(payload.productListAppliedAdvancedFilter, normalizeNullableString)
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListAppliedAdvancedFilterPresetId',
+    resolveDefinedValue(payload.productListAppliedAdvancedFilterPresetId, normalizeNullableString)
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListDraftIconColorMode',
+    payload.productListDraftIconColorMode
+  );
+  setNormalizedPreference(
+    normalized,
+    'productListDraftIconColor',
+    resolveDefinedValue(payload.productListDraftIconColor, normalizeDraftIconColor)
+  );
+  setNormalizedPreference(normalized, 'aiPathsActivePathId', payload.aiPathsActivePathId);
+  setNormalizedPreference(
+    normalized,
+    'imageStudioLastProjectId',
+    payload.imageStudioLastProjectId
+  );
+  setNormalizedPreference(
+    normalized,
+    'caseResolverCaseListViewMode',
+    payload.caseResolverCaseListViewMode
+  );
+  setNormalizedPreference(
+    normalized,
+    'caseResolverCaseListSortBy',
+    payload.caseResolverCaseListSortBy
+  );
+  setNormalizedPreference(
+    normalized,
+    'caseResolverCaseListSortOrder',
+    payload.caseResolverCaseListSortOrder
+  );
+  setNormalizedPreference(
+    normalized,
+    'caseResolverCaseListSearchScope',
+    payload.caseResolverCaseListSearchScope
+  );
+  setNormalizedPreference(
+    normalized,
+    'caseResolverCaseListFiltersCollapsedByDefault',
+    payload.caseResolverCaseListFiltersCollapsedByDefault
+  );
+  setNormalizedPreference(
+    normalized,
+    'caseResolverCaseListShowNestedContent',
+    payload.caseResolverCaseListShowNestedContent
+  );
+  setNormalizedPreference(normalized, 'adminMenuCollapsed', payload.adminMenuCollapsed);
+  setNormalizedPreference(
+    normalized,
+    'adminMenuFavorites',
+    resolveDefinedValue(payload.adminMenuFavorites, normalizeStringArray)
+  );
+  setNormalizedPreference(
+    normalized,
+    'adminMenuSectionColors',
+    resolveDefinedValue(payload.adminMenuSectionColors, normalizeNullableRecord)
+  );
+  setNormalizedPreference(
+    normalized,
+    'adminMenuCustomEnabled',
+    payload.adminMenuCustomEnabled
+  );
+  setNormalizedPreference(
+    normalized,
+    'adminMenuCustomNav',
+    payload.adminMenuCustomNav
+  );
+  setNormalizedPreference(normalized, 'cmsLastPageId', payload.cmsLastPageId);
+  setNormalizedPreference(normalized, 'cmsActiveDomainId', payload.cmsActiveDomainId);
+  setNormalizedPreference(
+    normalized,
+    'cmsThemeOpenSections',
+    resolveDefinedValue(payload.cmsThemeOpenSections, normalizeStringArray)
+  );
+  setNormalizedPreference(normalized, 'cmsThemeLogoWidth', payload.cmsThemeLogoWidth);
+  setNormalizedPreference(
+    normalized,
+    'cmsThemeLogoUrl',
+    resolveDefinedValue(payload.cmsThemeLogoUrl, normalizeNullableString)
+  );
+  setNormalizedPreference(normalized, 'cmsPreviewEnabled', payload.cmsPreviewEnabled);
+  setNormalizedPreference(
+    normalized,
+    'cmsSlideshowPauseOnHoverInEditor',
+    payload.cmsSlideshowPauseOnHoverInEditor
+  );
 
   return normalized;
 };

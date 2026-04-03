@@ -266,7 +266,7 @@ export function KangurMusicPianoRollGrid(): React.JSX.Element {
                   data-testid={`${stepTestIdPrefix}-transport-pitch`}
                 >
                   Pitch: {activeSynthPitchKey?.shortLabel ?? activeSynthGesture.noteId}
-                  {activeSynthPitchDetuneLabel} · {activeSynthPitchPercent ?? 0}%
+                  {activeSynthPitchDetuneLabel ? ` ${activeSynthPitchDetuneLabel}` : ''} · {activeSynthPitchPercent ?? 0}%
                 </div>
               ) : null}
               {activeSynthGesture ? (

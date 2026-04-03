@@ -8,7 +8,6 @@ import type {
   PlaywrightNodeRunRecord,
   PlaywrightNodeRunRequest,
 } from './playwright-node-runner.types';
-import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 
 const nodeFs = getFsPromises();
 
@@ -268,5 +267,4 @@ export const persistVideoArtifact = async (params: {
     return false;
   }
 };
-
 

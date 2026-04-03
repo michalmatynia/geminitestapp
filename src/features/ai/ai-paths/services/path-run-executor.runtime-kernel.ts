@@ -7,6 +7,33 @@ import {
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
+const resolveRuntimeKernelValueWithSource = (args: {
+  envValue: unknown;
+  pathValue: unknown;
+  settingsValue: unknown;
+  parseValue: (value: unknown) => string[] | undefined;
+}): {
+  value: string[] | undefined;
+  source: RuntimeKernelValueSource;
+} => {
+  const envValue = args.parseValue(args.envValue);
+  if (envValue) {
+    return { value: envValue, source: 'env' };
+  }
+
+  const pathValue = args.parseValue(args.pathValue);
+  if (pathValue) {
+    return { value: pathValue, source: 'path' };
+  }
+
+  const settingsValue = args.parseValue(args.settingsValue);
+  if (settingsValue) {
+    return { value: settingsValue, source: 'settings' };
+  }
+
+  return { value: undefined, source: 'default' };
+};
+
 export const resolveRuntimeKernelConfigForRun = (input: {
   envNodeTypes?: unknown;
   pathNodeTypes?: unknown;
@@ -20,35 +47,25 @@ export const resolveRuntimeKernelConfigForRun = (input: {
   resolverIds: string[] | undefined;
   resolverSource: RuntimeKernelValueSource;
 } => {
-  const envNodeTypes = parseRuntimeKernelNodeTypes(input.envNodeTypes);
-  const pathNodeTypes = parseRuntimeKernelNodeTypes(input.pathNodeTypes);
-  const settingsNodeTypes = parseRuntimeKernelNodeTypes(input.settingNodeTypes);
-  const nodeTypes = envNodeTypes ?? pathNodeTypes ?? settingsNodeTypes;
-  const nodeTypesSource =
-    normalizeRuntimeKernelValueSource(
-      envNodeTypes ? 'env' : pathNodeTypes ? 'path' : settingsNodeTypes ? 'settings' : 'default'
-    ) ?? 'default';
+  const { value: nodeTypes, source: nodeTypesSource } = resolveRuntimeKernelValueWithSource({
+    envValue: input.envNodeTypes,
+    pathValue: input.pathNodeTypes,
+    settingsValue: input.settingNodeTypes,
+    parseValue: parseRuntimeKernelNodeTypes,
+  });
 
-  const envResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.envResolverIds);
-  const pathResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.pathResolverIds);
-  const settingsResolverIds = parseRuntimeKernelCodeObjectResolverIds(input.settingResolverIds);
-  const resolverIds = envResolverIds ?? pathResolverIds ?? settingsResolverIds;
-  const resolverSource =
-    normalizeRuntimeKernelValueSource(
-      envResolverIds
-        ? 'env'
-        : pathResolverIds
-          ? 'path'
-          : settingsResolverIds
-            ? 'settings'
-            : 'default'
-    ) ?? 'default';
+  const { value: resolverIds, source: resolverSource } = resolveRuntimeKernelValueWithSource({
+    envValue: input.envResolverIds,
+    pathValue: input.pathResolverIds,
+    settingsValue: input.settingResolverIds,
+    parseValue: parseRuntimeKernelCodeObjectResolverIds,
+  });
 
   return {
     nodeTypes,
-    nodeTypesSource,
+    nodeTypesSource: normalizeRuntimeKernelValueSource(nodeTypesSource) ?? 'default',
     resolverIds,
-    resolverSource,
+    resolverSource: normalizeRuntimeKernelValueSource(resolverSource) ?? 'default',
   };
 };
 

@@ -1,5 +1,7 @@
-import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLesson, KangurLessonComponentId } from '@/features/kangur/shared/contracts/kangur';
 import type { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
+import type { KangurAssignmentSnapshot } from '@kangur/platform';
+import type { LessonsTutorSessionContext } from './Lessons.types';
 
 export const getLessonMasteryPresentation = (
   lesson: KangurLesson,
@@ -69,3 +71,54 @@ export const LESSON_ASSIGNMENT_PRIORITY_ORDER = {
   medium: 1,
   low: 2,
 } as const;
+
+export const resolveLessonsIsRouteTransitionIdle = (
+  transitionPhase: string | null | undefined
+): boolean =>
+  transitionPhase == null || transitionPhase === 'idle';
+
+export const resolveLessonsActiveLessonAssignments = ({
+  activeLesson,
+  completedLessonAssignmentsByComponent,
+  lessonAssignmentsByComponent,
+}: {
+  activeLesson: KangurLesson | null;
+  completedLessonAssignmentsByComponent: Map<KangurLessonComponentId, KangurAssignmentSnapshot>;
+  lessonAssignmentsByComponent: Map<KangurLessonComponentId, KangurAssignmentSnapshot>;
+}): {
+  activeLessonAssignment: KangurAssignmentSnapshot | null;
+  completedActiveLessonAssignment: KangurAssignmentSnapshot | null;
+} => {
+  if (!activeLesson) {
+    return {
+      activeLessonAssignment: null,
+      completedActiveLessonAssignment: null,
+    };
+  }
+
+  const activeLessonAssignment = lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null;
+
+  return {
+    activeLessonAssignment,
+    completedActiveLessonAssignment: activeLessonAssignment
+      ? null
+      : (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null),
+  };
+};
+
+export const resolveLessonsTutorContext = ({
+  activeLesson,
+  activeLessonAssignment,
+  completedActiveLessonAssignment,
+  pageTitle,
+}: {
+  activeLesson: KangurLesson | null;
+  activeLessonAssignment: { id?: string | null } | null;
+  completedActiveLessonAssignment: { id?: string | null } | null;
+  pageTitle: string;
+}): LessonsTutorSessionContext => ({
+  surface: 'lesson',
+  contentId: activeLesson?.id ?? 'lesson:list',
+  title: activeLesson?.title ?? pageTitle,
+  assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id ?? undefined,
+});

@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useSystemSync } from '@/shared/hooks/sync/useSystemSync';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
@@ -38,8 +39,23 @@ type BackgroundSyncContextValue = {
 type BackgroundSyncStateContextValue = Omit<BackgroundSyncContextValue, 'forceSync'>;
 type BackgroundSyncActionsContextValue = Pick<BackgroundSyncContextValue, 'forceSync'>;
 
-const BackgroundSyncStateContext = createContext<BackgroundSyncStateContextValue | null>(null);
-const BackgroundSyncActionsContext = createContext<BackgroundSyncActionsContextValue | null>(null);
+const {
+  Context: BackgroundSyncStateContext,
+  useStrictContext: useBackgroundSyncState,
+} = createStrictContext<BackgroundSyncStateContextValue>({
+  hookName: 'useBackgroundSyncState',
+  providerName: 'BackgroundSyncProvider',
+  displayName: 'BackgroundSyncStateContext',
+});
+
+const {
+  Context: BackgroundSyncActionsContext,
+  useStrictContext: useBackgroundSyncActions,
+} = createStrictContext<BackgroundSyncActionsContextValue>({
+  hookName: 'useBackgroundSyncActions',
+  providerName: 'BackgroundSyncProvider',
+  displayName: 'BackgroundSyncActionsContext',
+});
 
 const BACKGROUND_SYNC_KEYS = {
   enabled: 'background_sync_enabled',
@@ -136,18 +152,4 @@ export function BackgroundSyncProvider({
   );
 }
 
-export function useBackgroundSyncState(): BackgroundSyncStateContextValue {
-  const context = useContext(BackgroundSyncStateContext);
-  if (!context) {
-    throw new Error('useBackgroundSyncState must be used within BackgroundSyncProvider');
-  }
-  return context;
-}
-
-export function useBackgroundSyncActions(): BackgroundSyncActionsContextValue {
-  const context = useContext(BackgroundSyncActionsContext);
-  if (!context) {
-    throw new Error('useBackgroundSyncActions must be used within BackgroundSyncProvider');
-  }
-  return context;
-}
+export { useBackgroundSyncState, useBackgroundSyncActions };

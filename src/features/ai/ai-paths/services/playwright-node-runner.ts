@@ -16,7 +16,7 @@ import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/c
 import { sanitizePlaywrightStorageState } from '@/shared/lib/playwright/storage-state';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
-import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
+import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -367,7 +367,6 @@ const registerOutboundPolicyRoute = async (
 };
 
 import {
-  resolveRelativeArtifactPath,
   saveFileArtifact,
   createLiveRunStateCoordinator,
   captureFinalRunArtifacts,

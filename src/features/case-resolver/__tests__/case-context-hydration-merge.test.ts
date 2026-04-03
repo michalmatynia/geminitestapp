@@ -312,6 +312,39 @@ describe('case resolver workspace hydration merge', () => {
     ]);
   });
 
+  it('keeps store workspace when a newer navigation snapshot misses the requested file', () => {
+    const requestedCase = createCaseResolverFile({
+      id: 'case-requested',
+      fileType: 'case',
+      name: 'Requested Case',
+    });
+    const storeWorkspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      id: 'workspace-store',
+      files: [requestedCase],
+      activeFileId: requestedCase.id,
+      workspaceRevision: 4,
+    };
+    const navigationWorkspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      id: 'workspace-nav',
+      files: [],
+      workspaceRevision: 5,
+    };
+
+    const selection = resolvePreferredCaseResolverWorkspace({
+      storeWorkspace,
+      navigationWorkspace,
+      hasStoreWorkspace: true,
+      hasNavigationWorkspace: true,
+      requestedFileId: requestedCase.id,
+    });
+
+    expect(selection.source).toBe('store');
+    expect(selection.reason).toBe('store_only');
+    expect(selection.workspace.files.some((file) => file.id === requestedCase.id)).toBe(true);
+  });
+
   it('uses navigation workspace when store is unavailable and requested file is present in navigation cache', () => {
     const requestedCase = createCaseResolverFile({
       id: 'case-requested',

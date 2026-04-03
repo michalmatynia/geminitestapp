@@ -104,7 +104,15 @@ export const findVisibleLocator = async (page: Page, selectors: string[]) => {
 };
 
 export const extractExternalListingId = (url: string): string | null => {
-  const match = url.match(/(\d{6,})/);
-  if (!match?.[1]) return null;
-  return match[1];
+  try {
+    const parsedUrl = new URL(url, 'https://www.tradera.com');
+    const pathname = parsedUrl.pathname || '';
+    const match = pathname.match(/\/(?:item|listing)\/(\d{6,})(?:[/?#]|$)/i);
+    if (!match?.[1]) return null;
+    return match[1];
+  } catch {
+    const match = url.match(/(?:^|\/)(?:item|listing)\/(\d{6,})(?:[/?#]|$)/i);
+    if (!match?.[1]) return null;
+    return match[1];
+  }
 };

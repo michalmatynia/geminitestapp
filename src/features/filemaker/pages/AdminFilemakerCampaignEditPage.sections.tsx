@@ -5,7 +5,6 @@ import React from 'react';
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import type {
   FilemakerEmailCampaign,
-  FilemakerPartyReference,
 } from '@/shared/contracts/filemaker';
 import { Badge, Button, FormField, FormSection, Input, SelectSimple, Textarea } from '@/shared/ui';
 
@@ -279,8 +278,6 @@ export function CampaignTestSendSection(): React.JSX.Element {
 
 export function AudienceSection(): React.JSX.Element {
   const { draft, setDraft, organizationOptions, eventOptions, partyOptions } = useCampaignEditContext();
-  const primaryPartyKind = draft.audience.partyKinds[0] ?? 'person';
-  const manualPartyIds = draft.audience.includePartyReferences.map((reference) => reference.id);
 
   return (
     <div className='space-y-4'>

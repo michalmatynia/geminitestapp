@@ -140,7 +140,7 @@ describe('handleFunctionNode', () => {
       config: {
         function: {
           script: `
-            const original = { foo: { bar: inputs.value } };
+            const original = 5;
             const withSet = context.utils.set(original, 'foo.baz', context.utils.ensureNumber('3', 0));
             const read = context.utils.get(withSet, 'foo.baz');
             return { result: read, cloned: context.utils.clone(withSet) };
@@ -155,7 +155,7 @@ describe('handleFunctionNode', () => {
     });
     const result = await handleFunctionNode(context);
     expect(result.result).toBe(3);
-    expect(result.cloned).toBeDefined();
+    expect(result.cloned).toEqual({ foo: { baz: 3 } });
   });
 
   it('returns compile error metadata on invalid script', async () => {
@@ -187,5 +187,36 @@ describe('handleFunctionNode', () => {
     expect(result.status).toBe('failed');
     expect(result.errorCode).toBe('FUNCTION_SCRIPT_RUNTIME_ERROR');
     expect(result.error).toContain('Boom');
+  });
+
+  it('blocks forbidden tokens in safe mode', async () => {
+    const node = buildNode({
+      config: {
+        function: {
+          script: 'return process.env.NODE_ENV;',
+          safeMode: true,
+        },
+      },
+    });
+    const context = buildContext({ node });
+    const result = await handleFunctionNode(context);
+    expect(result.status).toBe('failed');
+    expect(result.errorCode).toBe('FUNCTION_SAFE_MODE_FORBIDDEN_TOKEN');
+  });
+
+  it('fails when the output type does not match expectedType', async () => {
+    const node = buildNode({
+      config: {
+        function: {
+          script: 'return "done";',
+          expectedType: 'number',
+        },
+      },
+    });
+    const context = buildContext({ node });
+    const result = await handleFunctionNode(context);
+    expect(result.status).toBe('failed');
+    expect(result.errorCode).toBe('FUNCTION_OUTPUT_TYPE_MISMATCH');
+    expect(result.error).toContain('expected number, got string');
   });
 });

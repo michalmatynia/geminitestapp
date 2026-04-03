@@ -56,7 +56,6 @@ import { KangurMusicPianoRollControls } from './KangurMusicPianoRollControls';
 import { KangurMusicPianoRollGrid } from './KangurMusicPianoRollGrid';
 import { KangurMusicPianoRollKeyboardRail } from './KangurMusicPianoRollKeyboardRail';
 import { KangurMusicPianoRollProvider } from './KangurMusicPianoRoll.context';
-import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 
 export type {
   KangurMusicKeyboardMode,
@@ -716,6 +715,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
   };
 
   const providerValue = {
+    activePressesRef: activePressesRef as any,
     activeOscTab,
     activeStepIndex,
     activeSynthGesture: activeSynthGesture as any,
@@ -727,6 +727,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     expectedStepIndex,
     expectedTransportStep: expectedTransportStep as any,
     isCompactMobile,
+    isCoarsePointer,
     isFreePlayMode,
     isInteractive,
     isSixYearOldVisualMode,

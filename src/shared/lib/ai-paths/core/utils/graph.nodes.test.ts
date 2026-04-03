@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 
-import { getNodeInputPortCardinality } from './graph.nodes';
+import { getNodeInputPortCardinality, getResolvedNodeInputPortContract } from './graph.nodes';
 
 const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
   ({
@@ -40,5 +40,45 @@ describe('getNodeInputPortCardinality', () => {
 
     expect(getNodeInputPortCardinality(node, 'bundle')).toBe('many');
     expect(getNodeInputPortCardinality(node, 'value')).toBe('one');
+  });
+
+  it('resolves runtime contracts while preserving alias-matched runtime cardinality sources', () => {
+    const node = buildNode({
+      inputs: ['image_urls'],
+      config: {
+        runtime: {
+          inputCardinality: {
+            imageUrls: 'many',
+          },
+          inputContracts: {
+            imageUrls: {
+              required: true,
+              kind: 'image_url',
+            },
+          },
+        },
+      },
+    });
+
+    expect(getResolvedNodeInputPortContract(node, 'image_urls')).toMatchObject({
+      required: true,
+      cardinality: 'many',
+      cardinalitySource: 'runtime_cardinality',
+      kind: 'image_url',
+      source: 'runtime',
+      declared: true,
+    });
+  });
+
+  it('marks legacy prompt ports as required when no contracts are declared', () => {
+    const node = buildNode({
+      inputs: ['prompt'],
+    });
+
+    expect(getResolvedNodeInputPortContract(node, 'prompt')).toMatchObject({
+      required: true,
+      source: 'legacy',
+      declared: false,
+    });
   });
 });

@@ -69,7 +69,13 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
 
   const extractListingId = (value) => {
     if (typeof value !== 'string') return null;
-    const match = value.match(/(\d{6,})/);
+    try {
+      const url = new URL(value, 'https://www.tradera.com');
+      const pathname = url.pathname || '';
+      const match = pathname.match(/\/(?:item|listing)\/(\d{6,})(?:[/?#]|$)/i);
+      return match && match[1] ? match[1] : null;
+    } catch {}
+    const match = value.match(/(?:^|\/)(?:item|listing)\/(\d{6,})(?:[/?#]|$)/i);
     return match && match[1] ? match[1] : null;
   };
 
@@ -113,6 +119,35 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
         listingUrl,
         listingId: extractListingId(listingUrl),
         text: candidateInfo.containerText || candidateInfo.text || '',
+      };
+    }
+
+    return null;
+  };
+
+  const findVisibleListingLink = async () => {
+    const candidates = page.locator('a[href*="/item/"], a[href*="/listing/"]');
+    const count = await candidates.count().catch(() => 0);
+
+    for (let index = 0; index < Math.min(count, 20); index += 1) {
+      const candidate = candidates.nth(index);
+      const visible = await candidate.isVisible().catch(() => false);
+      if (!visible) continue;
+
+      const href = await candidate.getAttribute('href').catch(() => null);
+      if (!href) continue;
+
+      let listingUrl = href;
+      try {
+        listingUrl = new URL(href, page.url()).toString();
+      } catch {}
+
+      const listingId = extractListingId(listingUrl);
+      if (!listingId) continue;
+
+      return {
+        listingUrl,
+        listingId,
       };
     }
 

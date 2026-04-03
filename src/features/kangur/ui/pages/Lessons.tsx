@@ -1,23 +1,35 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { useTranslations } from 'next-intl';
-import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
-import { LazyAnimatePresence } from '@/features/kangur/ui/components/LazyAnimatePresence';
-import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
-import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
 import { useKangurRoutePageReady } from '@/features/kangur/ui/hooks/useKangurRoutePageReady';
-import { LessonsProvider, useLessons } from './lessons/LessonsContext';
+import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
+import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
+import {
+  LessonsProvider,
+  useLessons,
+} from './lessons/LessonsContext';
 import { LessonsCatalog } from './lessons/Lessons.Catalog';
-import { LazyActiveLessonView } from './lessons/LazyActiveLessonView';
+import {
+  LazyActiveLessonView,
+} from './lessons/LazyActiveLessonView';
 import { LazyLessonsDeferredEnhancements } from './lessons/LazyLessonsDeferredEnhancements';
+import {
+  useLessonsActiveLessonRenderSnapshot,
+  type LessonsActiveLessonSnapshot,
+} from './lessons/Lessons.hooks';
+import {
+  resolveLessonsActiveLessonAssignments,
+  resolveLessonsIsRouteTransitionIdle,
+  resolveLessonsTutorContext,
+} from './lessons/Lessons.utils';
 
 const LESSONS_DEFERRED_ENHANCEMENTS_IDLE_TIMEOUT_MS = 120;
 
 type LessonsTutorSessionContext = ComponentProps<typeof LazyLessonsDeferredEnhancements>['sessionContext'];
-type LessonsActiveLessonSnapshot = ComponentProps<typeof LazyActiveLessonView>['snapshot'];
 
 function LessonsRouteShellReadyReporter() {
   const routeTransitionState = useOptionalKangurRouteTransitionState();
@@ -34,105 +46,6 @@ function LessonsRouteShellReadyReporter() {
   return null;
 }
 
-const resolveLessonsIsRouteTransitionIdle = (
-  routeTransitionState: ReturnType<typeof useOptionalKangurRouteTransitionState>
-): boolean =>
-  routeTransitionState?.transitionPhase == null || routeTransitionState.transitionPhase === 'idle';
-
-const resolveLessonsActiveLessonAssignments = ({
-  activeLesson,
-  completedLessonAssignmentsByComponent,
-  lessonAssignmentsByComponent,
-}: {
-  activeLesson: ReturnType<typeof useLessons>['activeLesson'];
-  completedLessonAssignmentsByComponent: ReturnType<typeof useLessons>['completedLessonAssignmentsByComponent'];
-  lessonAssignmentsByComponent: ReturnType<typeof useLessons>['lessonAssignmentsByComponent'];
-}): {
-  activeLessonAssignment: { id?: string | null } | null;
-  completedActiveLessonAssignment: { id?: string | null } | null;
-} => {
-  if (!activeLesson) {
-    return {
-      activeLessonAssignment: null,
-      completedActiveLessonAssignment: null,
-    };
-  }
-
-  const activeLessonAssignment = lessonAssignmentsByComponent.get(activeLesson.componentId) ?? null;
-
-  return {
-    activeLessonAssignment,
-    completedActiveLessonAssignment: activeLessonAssignment
-      ? null
-      : (completedLessonAssignmentsByComponent.get(activeLesson.componentId) ?? null),
-  };
-};
-
-const resolveLessonsTutorContext = ({
-  activeLesson,
-  activeLessonAssignment,
-  completedActiveLessonAssignment,
-  pageTitle,
-}: {
-  activeLesson: ReturnType<typeof useLessons>['activeLesson'];
-  activeLessonAssignment: { id?: string | null } | null;
-  completedActiveLessonAssignment: { id?: string | null } | null;
-  pageTitle: string;
-}): LessonsTutorSessionContext => ({
-  surface: 'lesson',
-  contentId: activeLesson?.id ?? 'lesson:list',
-  title: activeLesson?.title ?? pageTitle,
-  assignmentId: activeLessonAssignment?.id ?? completedActiveLessonAssignment?.id ?? undefined,
-});
-
-function useLessonsActiveLessonRenderSnapshot(input: {
-  activeLesson: ReturnType<typeof useLessons>['activeLesson'];
-  activeLessonId: ReturnType<typeof useLessons>['activeLessonId'];
-  completedLessonAssignmentsByComponent: ReturnType<typeof useLessons>['completedLessonAssignmentsByComponent'];
-  isCompleteLessonsCatalogLoaded: ReturnType<typeof useLessons>['isCompleteLessonsCatalogLoaded'];
-  isSecretLessonActive: ReturnType<typeof useLessons>['isSecretLessonActive'];
-  lessonAssignmentsByComponent: ReturnType<typeof useLessons>['lessonAssignmentsByComponent'];
-  orderedLessons: ReturnType<typeof useLessons>['orderedLessons'];
-  progress: ReturnType<typeof useLessons>['progress'];
-}): LessonsActiveLessonSnapshot {
-  const {
-    activeLesson,
-    activeLessonId,
-    completedLessonAssignmentsByComponent,
-    isCompleteLessonsCatalogLoaded,
-    isSecretLessonActive,
-    lessonAssignmentsByComponent,
-    orderedLessons,
-    progress,
-  } = input;
-
-  return useMemo(
-    () =>
-      activeLesson
-        ? {
-            activeLesson,
-            activeLessonId: activeLessonId ?? activeLesson.id,
-            lessonAssignmentsByComponent,
-            completedLessonAssignmentsByComponent,
-            orderedLessons,
-            isCompleteLessonsCatalogLoaded,
-            isSecretLessonActive,
-            progress,
-          }
-        : undefined,
-    [
-      activeLesson,
-      activeLessonId,
-      completedLessonAssignmentsByComponent,
-      isCompleteLessonsCatalogLoaded,
-      isSecretLessonActive,
-      lessonAssignmentsByComponent,
-      orderedLessons,
-      progress,
-    ]
-  );
-}
-
 function useLessonsPageNavigation(input: {
   basePath: string;
   guestPlayerName: string;
@@ -140,7 +53,7 @@ function useLessonsPageNavigation(input: {
   openLoginModal: () => void;
   setGuestPlayerName: (value: string) => void;
   user: ReturnType<typeof useLessons>['auth']['user'];
-}): KangurPrimaryNavigationProps {
+}): any {
   const { basePath, guestPlayerName, logout, openLoginModal, setGuestPlayerName, user } = input;
   const handleLogout = useCallback(() => {
     logout(false);
@@ -243,25 +156,23 @@ function LessonsDeferredEnhancementsGate(props: {
 
 function LessonsPageBody(props: {
   activeLesson: ReturnType<typeof useLessons>['activeLesson'];
-  activeLessonId: ReturnType<typeof useLessons>['activeLessonId'];
   snapshot: LessonsActiveLessonSnapshot;
 }): React.JSX.Element {
-  const { activeLesson, activeLessonId, snapshot } = props;
+  const { activeLesson, snapshot } = props;
 
   if (!activeLesson) {
     return <LessonsCatalog />;
   }
 
   return (
-    <LazyAnimatePresence mode='wait'>
-      <LazyActiveLessonView key={activeLessonId ?? activeLesson.id} snapshot={snapshot} />
-    </LazyAnimatePresence>
+    <LazyActiveLessonView snapshot={snapshot ?? undefined} />
   );
 }
 
 function LessonsContent() {
   const pageTranslations = useTranslations('KangurLessonsPage');
   const routeTransitionState = useOptionalKangurRouteTransitionState();
+  const lessons = useLessons();
   const {
     auth,
     basePath,
@@ -277,10 +188,12 @@ function LessonsContent() {
     setGuestPlayerName,
     isLessonSectionsLoading,
     shouldShowLessonsCatalogSkeleton,
-  } = useLessons();
+    lessonDocument,
+    activeLessonAssignmentContent,
+  } = lessons;
   const { openLoginModal } = useKangurLoginModal();
   const { user, logout } = auth;
-  const isRouteTransitionIdle = resolveLessonsIsRouteTransitionIdle(routeTransitionState);
+  const isRouteTransitionIdle = resolveLessonsIsRouteTransitionIdle(routeTransitionState?.transitionPhase);
   const { activeLessonAssignment, completedActiveLessonAssignment } =
     resolveLessonsActiveLessonAssignments({
       activeLesson,
@@ -302,6 +215,8 @@ function LessonsContent() {
     lessonAssignmentsByComponent,
     orderedLessons,
     progress,
+    lessonDocument,
+    activeLessonAssignmentContent,
   });
   const navigation = useLessonsPageNavigation({
     basePath,
@@ -344,7 +259,6 @@ function LessonsContent() {
       >
         <LessonsPageBody
           activeLesson={activeLesson}
-          activeLessonId={activeLessonId}
           snapshot={activeLessonRenderSnapshot}
         />
       </KangurStandardPageLayout>

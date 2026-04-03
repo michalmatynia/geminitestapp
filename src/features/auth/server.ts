@@ -19,7 +19,13 @@ if (typeof auth === 'function') {
 }
 
 export * from './auth';
-export { invalidateAuthAccessCache } from './services/auth-access';
+export {
+  getAuthDefaultRoleId,
+  getAuthPermissions,
+  getAuthRoles,
+  getAuthUserRoles,
+  invalidateAuthAccessCache,
+} from './services/auth-access';
 export * from './services/auth-login-challenge';
 export { getAuthDataProvider, requireAuthProvider } from '@/shared/lib/auth/services/auth-provider';
 export type { AuthDbProvider } from '@/shared/lib/auth/services/auth-provider';

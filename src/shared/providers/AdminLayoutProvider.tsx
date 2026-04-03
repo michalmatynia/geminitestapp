@@ -1,26 +1,31 @@
 'use client';
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import type { AdminLayoutActions, AdminLayoutState } from '@/shared/contracts/admin';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type { AdminLayoutActions, AdminLayoutState };
 
-const StateContext = createContext<AdminLayoutState | null>(null);
+const {
+  Context: StateContext,
+  useStrictContext: useAdminLayoutState,
+} = createStrictContext<AdminLayoutState>({
+  hookName: 'useAdminLayoutState',
+  providerName: 'AdminLayoutProvider',
+  displayName: 'AdminLayoutStateContext',
+});
 
-export const useAdminLayoutState = () => {
-  const context = useContext(StateContext);
-  if (!context) throw new Error('useAdminLayoutState must be used within an AdminLayoutProvider');
-  return context;
-};
+const {
+  Context: ActionsContext,
+  useStrictContext: useAdminLayoutActions,
+} = createStrictContext<AdminLayoutActions>({
+  hookName: 'useAdminLayoutActions',
+  providerName: 'AdminLayoutProvider',
+  displayName: 'AdminLayoutActionsContext',
+});
 
-const ActionsContext = createContext<AdminLayoutActions | null>(null);
-
-export const useAdminLayoutActions = () => {
-  const context = useContext(ActionsContext);
-  if (!context) throw new Error('useAdminLayoutActions must be used within an AdminLayoutProvider');
-  return context;
-};
+export { useAdminLayoutState, useAdminLayoutActions };
 
 export function AdminLayoutProvider({
   children,

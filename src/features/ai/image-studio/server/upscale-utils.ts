@@ -117,16 +117,16 @@ export const resolveUpscaleOutputDimensions = (
   return { width, height };
 };
 
-export const resolveUpscaleOutputDimensionsByResolution = (
-  sourceWidth: number,
-  sourceHeight: number,
-  targetWidth: number,
-  targetHeight: number
-): { width: number; height: number; scale: number } => {
+const assertValidUpscaleSourceDimensions = (sourceWidth: number, sourceHeight: number): void => {
   if (!(sourceWidth > 0 && sourceHeight > 0)) {
     throw new Error('Source image dimensions are invalid.');
   }
+};
 
+const resolveTargetUpscaleDimensions = (
+  targetWidth: number,
+  targetHeight: number
+): { width: number; height: number } => {
   if (!(targetWidth > 0 && targetHeight > 0)) {
     throw new Error('Target resolution is invalid.');
   }
@@ -136,7 +136,15 @@ export const resolveUpscaleOutputDimensionsByResolution = (
   if (!validateUpscaleOutputDimensions(width, height)) {
     throw new Error('Upscaled output exceeds upscale processing limits.');
   }
+  return { width, height };
+};
 
+const assertTargetResolutionUpscalesSource = (
+  sourceWidth: number,
+  sourceHeight: number,
+  width: number,
+  height: number
+): void => {
   if (
     width < sourceWidth ||
     height < sourceHeight ||
@@ -146,6 +154,17 @@ export const resolveUpscaleOutputDimensionsByResolution = (
       'Target resolution must upscale at least one dimension and not reduce source dimensions.'
     );
   }
+};
+
+export const resolveUpscaleOutputDimensionsByResolution = (
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number
+): { width: number; height: number; scale: number } => {
+  assertValidUpscaleSourceDimensions(sourceWidth, sourceHeight);
+  const { width, height } = resolveTargetUpscaleDimensions(targetWidth, targetHeight);
+  assertTargetResolutionUpscalesSource(sourceWidth, sourceHeight, width, height);
 
   const scale = normalizeUpscaleScale(Math.max(width / sourceWidth, height / sourceHeight));
   return { width, height, scale };

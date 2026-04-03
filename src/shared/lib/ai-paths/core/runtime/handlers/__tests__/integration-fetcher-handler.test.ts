@@ -252,4 +252,50 @@ describe('handleFetcher', () => {
     );
     expect(fetchEntityCached).toHaveBeenCalledWith('product', 'p-sim');
   });
+
+  it('falls back to simulation fetches when live-then-simulation mode has no live reference', async () => {
+    const fetchEntityCached = vi.fn(async (_entityType: string, entityId: string) =>
+      entityId === 'p-sim' ? { id: 'p-sim', sku: 'SIM-2' } : null
+    );
+    const node = buildNode({
+      config: {
+        fetcher: {
+          sourceMode: 'live_then_simulation',
+          entityType: 'product',
+          entityId: 'p-sim',
+        },
+      },
+    });
+    const context = buildContext(
+      node,
+      {
+        trigger: true,
+        context: {
+          location: { pathname: '/admin/products' },
+        },
+      },
+      {
+        fetchEntityCached,
+      }
+    );
+
+    const result = await handleFetcher(context);
+
+    expect(result['entityId']).toBe('p-sim');
+    expect(result['entityType']).toBe('product');
+    expect(result['context']).toEqual(
+      expect.objectContaining({
+        entityId: 'p-sim',
+        entityType: 'product',
+        contextSource: 'simulation_fetcher',
+      })
+    );
+    expect(result['meta']).toEqual(
+      expect.objectContaining({
+        fetcherSourceMode: 'live_then_simulation',
+        fetcherResolvedSource: 'simulation_id',
+      })
+    );
+    expect(fetchEntityCached).toHaveBeenCalledWith('product', 'p-sim');
+  });
 });

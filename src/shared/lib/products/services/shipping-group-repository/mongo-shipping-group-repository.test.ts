@@ -72,6 +72,7 @@ describe('mongo-shipping-group-repository', () => {
         description: 'Small parcel products',
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
         createdAt: now,
         updatedAt: now,
       },
@@ -97,6 +98,7 @@ describe('mongo-shipping-group-repository', () => {
         name: 'Small Items',
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
       }),
     ]);
   });
@@ -112,6 +114,7 @@ describe('mongo-shipping-group-repository', () => {
         description: null,
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
         createdAt: now,
         updatedAt: now,
       })
@@ -121,6 +124,7 @@ describe('mongo-shipping-group-repository', () => {
         description: 'Bigger parcel products',
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Seller pays shipping',
+        traderaShippingPriceEur: 20,
         createdAt: now,
         updatedAt: now,
       })
@@ -130,6 +134,7 @@ describe('mongo-shipping-group-repository', () => {
         description: 'Bigger parcel products',
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Seller pays shipping',
+        traderaShippingPriceEur: 20,
         createdAt: now,
         updatedAt: now,
       });
@@ -146,6 +151,7 @@ describe('mongo-shipping-group-repository', () => {
       description: null,
       catalogId: 'catalog-1',
       traderaShippingCondition: 'Buyer pays shipping',
+      traderaShippingPriceEur: 5,
     });
     const updated = await mongoShippingGroupRepository.updateShippingGroup(
       shippingGroupId.toString(),
@@ -153,6 +159,7 @@ describe('mongo-shipping-group-repository', () => {
         name: 'Large Items',
         description: 'Bigger parcel products',
         traderaShippingCondition: 'Seller pays shipping',
+        traderaShippingPriceEur: 20,
       }
     );
     const byName = await mongoShippingGroupRepository.findByName('catalog-1', 'Large Items');
@@ -166,6 +173,7 @@ describe('mongo-shipping-group-repository', () => {
       description: null,
       catalogId: 'catalog-1',
       traderaShippingCondition: 'Buyer pays shipping',
+      traderaShippingPriceEur: 5,
       createdAt: now,
       updatedAt: now,
     });
@@ -177,6 +185,7 @@ describe('mongo-shipping-group-repository', () => {
           name: 'Large Items',
           description: 'Bigger parcel products',
           traderaShippingCondition: 'Seller pays shipping',
+          traderaShippingPriceEur: 20,
           updatedAt: expect.any(Date),
         }),
       }

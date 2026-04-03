@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 type RuleListDragContextValue = {
   draggableEnabled: boolean;
@@ -12,7 +13,15 @@ type RuleListDragContextValue = {
   setDragOverKey: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-const RuleListDragContext = React.createContext<RuleListDragContextValue | null>(null);
+const {
+  Context: RuleListDragContext,
+  useStrictContext: useRuleListDragContext,
+} = createStrictContext<RuleListDragContextValue>({
+  hookName: 'useRuleListDragContext',
+  providerName: 'a RuleListDragProvider',
+  displayName: 'RuleListDragContext',
+  errorFactory: internalError,
+});
 
 type RuleListDragProviderProps = {
   value: RuleListDragContextValue;
@@ -24,14 +33,6 @@ export function RuleListDragProvider({
   children,
 }: RuleListDragProviderProps): React.JSX.Element {
   return <RuleListDragContext.Provider value={value}>{children}</RuleListDragContext.Provider>;
-}
-
-function useRuleListDragContext(): RuleListDragContextValue {
-  const context = React.useContext(RuleListDragContext);
-  if (!context) {
-    throw internalError('useRuleListDragContext must be used within RuleListDragProvider');
-  }
-  return context;
 }
 
 export type RuleItemDragState = {

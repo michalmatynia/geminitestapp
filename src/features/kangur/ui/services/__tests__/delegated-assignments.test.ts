@@ -9,6 +9,7 @@ import {
   filterKangurAssignmentsBySubject,
   mapKangurPracticeAssignmentsByOperation,
   parseKangurMixedTrainingQuickStartParams,
+  resolveKangurAssignmentCountdownLabel,
   resolveKangurAssignmentSubject,
   selectKangurPracticeAssignmentForScreen,
   selectKangurPriorityAssignments,
@@ -301,6 +302,46 @@ describe('delegated assignments helpers', () => {
       count: 10,
       difficulty: 'medium',
     });
+  });
+
+  it('rejects delegated mixed training presets with unsupported categories or difficulty', () => {
+    const preset = parseKangurMixedTrainingQuickStartParams(
+      new URLSearchParams({
+        categories: 'mixed,invalid',
+        count: '10',
+        difficulty: 'expert',
+      })
+    );
+
+    expect(preset).toBeNull();
+  });
+
+  it('builds countdown labels from assignment timing and handles expiry defensively', () => {
+    expect(
+      resolveKangurAssignmentCountdownLabel({
+        createdAt: '2026-04-03T10:00:00.000Z',
+        now: Date.parse('2026-04-03T10:05:20.000Z'),
+        status: 'in_progress',
+        timeLimitMinutes: 10,
+      })
+    ).toBe('Pozostało: 4 min 40 s');
+
+    expect(
+      resolveKangurAssignmentCountdownLabel({
+        timeLimitStartsAt: '2026-04-03T10:00:00.000Z',
+        now: Date.parse('2026-04-03T10:12:00.000Z'),
+        status: 'in_progress',
+        timeLimitMinutes: 10,
+      })
+    ).toBe('Czas minął');
+
+    expect(
+      resolveKangurAssignmentCountdownLabel({
+        createdAt: 'not-a-date',
+        status: 'in_progress',
+        timeLimitMinutes: 10,
+      })
+    ).toBeNull();
   });
 
   it('prefers the active matching result assignment, then falls back to the latest completed one', () => {

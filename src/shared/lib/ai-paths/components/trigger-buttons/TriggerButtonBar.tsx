@@ -8,6 +8,7 @@ import type {
   AiTriggerButtonRecord,
 } from '@/shared/contracts/ai-trigger-buttons';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   ActionMenu,
   Button,
@@ -54,8 +55,14 @@ type TriggerButtonToggleRuntimeValue = {
   onCheckedChange: (nextChecked: boolean) => void;
 };
 
-const TriggerButtonToggleRuntimeContext =
-  React.createContext<TriggerButtonToggleRuntimeValue | null>(null);
+const {
+  Context: TriggerButtonToggleRuntimeContext,
+  useStrictContext: useTriggerButtonToggleRuntime,
+} = createStrictContext<TriggerButtonToggleRuntimeValue>({
+  hookName: 'useTriggerButtonToggleRuntime',
+  providerName: 'TriggerButtonToggleRuntimeContext.Provider',
+  displayName: 'TriggerButtonToggleRuntimeContext',
+});
 const PRODUCT_RUN_FEEDBACK_LOCATIONS = new Set<AiTriggerButtonLocation>([
   'product_row',
   'product_modal',
@@ -216,16 +223,6 @@ function TriggerRunFeedback(props: {
       ) : null}
     </div>
   );
-}
-
-function useTriggerButtonToggleRuntime(): TriggerButtonToggleRuntimeValue {
-  const runtime = React.useContext(TriggerButtonToggleRuntimeContext);
-  if (!runtime) {
-    throw new Error(
-      'useTriggerButtonToggleRuntime must be used within TriggerButtonToggleRuntimeContext.Provider'
-    );
-  }
-  return runtime;
 }
 
 function TriggerButtonToggleControl(): React.JSX.Element {

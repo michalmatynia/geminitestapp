@@ -1,6 +1,42 @@
 import { describe, expect, it } from 'vitest';
 
-import { getLessonRecipeFamily, readLessonGroupCount } from './utils';
+import {
+  applyLessonTemplateToFormData,
+  getLessonRecipeFamily,
+  readLessonGroupCount,
+  toLessonFormData,
+  toLocalizedLessonFormData,
+} from './utils';
+
+const buildLesson = (overrides: Record<string, unknown> = {}) =>
+  ({
+    componentId: 'clock',
+    contentMode: 'document',
+    subject: 'math',
+    ageGroup: '7_9',
+    title: 'Original title',
+    description: 'Original description',
+    emoji: '⏰',
+    color: '#123456',
+    activeBg: '#654321',
+    enabled: true,
+    ...overrides,
+  }) as any;
+
+const buildTemplate = (overrides: Record<string, unknown> = {}) =>
+  ({
+    componentId: 'calendar',
+    subject: 'logic',
+    ageGroup: '10_12',
+    label: 'Template label',
+    title: 'Template title',
+    description: 'Template description',
+    emoji: '📅',
+    color: '#abcdef',
+    activeBg: '#fedcba',
+    sortOrder: 0,
+    ...overrides,
+  }) as any;
 
 describe('getLessonRecipeFamily', () => {
   it('maps time lesson components to the time family', () => {
@@ -45,5 +81,70 @@ describe('readLessonGroupCount', () => {
         kangurLessonGroup: [],
       })
     ).toBeNull();
+  });
+});
+
+describe('lesson form helpers', () => {
+  it('maps raw lesson fields into editable lesson form data', () => {
+    expect(toLessonFormData(buildLesson())).toEqual({
+      componentId: 'clock',
+      contentMode: 'document',
+      subject: 'math',
+      ageGroup: '7_9',
+      title: 'Original title',
+      description: 'Original description',
+      emoji: '⏰',
+      color: '#123456',
+      activeBg: '#654321',
+      enabled: true,
+    });
+  });
+
+  it('applies localized template overrides while preserving missing age groups', () => {
+    expect(
+      toLocalizedLessonFormData(buildLesson(), buildTemplate({ ageGroup: undefined }))
+    ).toEqual({
+      componentId: 'clock',
+      contentMode: 'document',
+      subject: 'logic',
+      ageGroup: '7_9',
+      title: 'Template title',
+      description: 'Template description',
+      emoji: '📅',
+      color: '#abcdef',
+      activeBg: '#fedcba',
+      enabled: true,
+    });
+  });
+
+  it('applies lesson templates to form data while switching the component id', () => {
+    expect(
+      applyLessonTemplateToFormData(
+        {
+          componentId: 'clock',
+          contentMode: 'document',
+          subject: 'math',
+          ageGroup: '7_9',
+          title: 'Draft title',
+          description: 'Draft description',
+          emoji: '📝',
+          color: '#111111',
+          activeBg: '#222222',
+          enabled: false,
+        },
+        buildTemplate({ ageGroup: undefined })
+      )
+    ).toEqual({
+      componentId: 'calendar',
+      contentMode: 'document',
+      subject: 'logic',
+      ageGroup: '7_9',
+      title: 'Template title',
+      description: 'Template description',
+      emoji: '📅',
+      color: '#abcdef',
+      activeBg: '#fedcba',
+      enabled: false,
+    });
   });
 });

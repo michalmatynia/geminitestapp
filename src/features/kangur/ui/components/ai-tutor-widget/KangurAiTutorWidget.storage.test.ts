@@ -81,4 +81,116 @@ describe('KangurAiTutorWidget storage', () => {
 
     expect(result.current.drawingDraftSnapshot).toBe('draft-snapshot-1');
   });
+
+  it('loads a persisted pending follow-up only when the stored record matches the public shape', () => {
+    window.sessionStorage.setItem(
+      KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
+      JSON.stringify({
+        pendingFollowUp: {
+          version: 1,
+          href: '/lesson?tab=practice',
+          pathname: '/lesson',
+          search: '?tab=practice',
+          actionId: 'review-answer',
+          actionLabel: 'Review answer',
+          actionReason: 'The learner asked for a recap.',
+          actionPage: 'lesson',
+          messageIndex: 2,
+          hasQuery: true,
+          sourceSurface: 'lesson_page',
+          sourceContentId: 'content-1',
+          sourceTitle: 'Clock lesson',
+          sourcePathname: '/lesson',
+          sourceSearch: '?tab=practice',
+          createdAt: '2026-04-03T18:00:00.000Z',
+        },
+      })
+    );
+
+    expect(storageModule.loadPersistedPendingTutorFollowUp()).toEqual({
+      version: 1,
+      href: '/lesson?tab=practice',
+      pathname: '/lesson',
+      search: '?tab=practice',
+      actionId: 'review-answer',
+      actionLabel: 'Review answer',
+      actionReason: 'The learner asked for a recap.',
+      actionPage: 'lesson',
+      messageIndex: 2,
+      hasQuery: true,
+      sourceSurface: 'lesson_page',
+      sourceContentId: 'content-1',
+      sourceTitle: 'Clock lesson',
+      sourcePathname: '/lesson',
+      sourceSearch: '?tab=practice',
+      createdAt: '2026-04-03T18:00:00.000Z',
+    });
+
+    window.sessionStorage.setItem(
+      KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
+      JSON.stringify({
+        pendingFollowUp: {
+          version: 1,
+          href: '/lesson?tab=practice',
+          pathname: '/lesson',
+          search: '?tab=practice',
+          actionId: 'review-answer',
+          actionLabel: 'Review answer',
+          actionReason: 'The learner asked for a recap.',
+          actionPage: 'lesson',
+          messageIndex: 2,
+          hasQuery: true,
+          sourceSurface: 42,
+          sourceContentId: 'content-1',
+          sourceTitle: 'Clock lesson',
+          sourcePathname: '/lesson',
+          sourceSearch: '?tab=practice',
+          createdAt: '2026-04-03T18:00:00.000Z',
+        },
+      })
+    );
+
+    expect(storageModule.loadPersistedPendingTutorFollowUp()).toBeNull();
+  });
+
+  it('loads a persisted panel position only for supported mode and snap values', () => {
+    window.sessionStorage.setItem(
+      KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
+      JSON.stringify({
+        panelPosition: {
+          version: 1,
+          left: 120,
+          top: 260,
+          mode: 'manual',
+          snap: 'bottom-right',
+          updatedAt: '2026-04-03T18:10:00.000Z',
+        },
+      })
+    );
+
+    expect(storageModule.loadPersistedTutorPanelPosition()).toEqual({
+      version: 1,
+      left: 120,
+      top: 260,
+      mode: 'manual',
+      snap: 'bottom-right',
+      updatedAt: '2026-04-03T18:10:00.000Z',
+    });
+
+    window.sessionStorage.setItem(
+      KANGUR_AI_TUTOR_WIDGET_STORAGE_KEY,
+      JSON.stringify({
+        panelPosition: {
+          version: 1,
+          left: 120,
+          top: 260,
+          mode: 'floating',
+          snap: 'bottom-right',
+          updatedAt: '2026-04-03T18:10:00.000Z',
+        },
+      })
+    );
+
+    expect(storageModule.loadPersistedTutorPanelPosition()).toBeNull();
+  });
 });

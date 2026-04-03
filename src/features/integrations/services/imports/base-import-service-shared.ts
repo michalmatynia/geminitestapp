@@ -112,14 +112,28 @@ export const addCurrencyCandidate = (target: Set<string>, value: unknown): void 
 
 export const sanitizeSku = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
-export const guessMimeType = (url: string): string => {
-  const lower = url.toLowerCase();
-  if (lower.endsWith('.png')) return 'image/png';
-  if (lower.endsWith('.webp')) return 'image/webp';
-  if (lower.endsWith('.gif')) return 'image/gif';
-  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-  return 'image/jpeg';
+const MIME_TYPE_BY_IMAGE_EXTENSION: Record<string, string> = {
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
 };
+
+const resolveImageExtension = (url: string): string | null => {
+  const normalized = url.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  const withoutHash = normalized.split('#', 1)[0] ?? normalized;
+  const pathname = (withoutHash.split('?', 1)[0] ?? withoutHash).trim();
+  const extension = pathname.split('.').pop()?.trim() ?? '';
+  return extension.length > 0 ? extension : null;
+};
+
+export const guessMimeType = (url: string): string =>
+  MIME_TYPE_BY_IMAGE_EXTENSION[resolveImageExtension(url) ?? ''] ?? 'image/jpeg';
 
 export const extractFilename = (url: string, fallback: string): string => {
   try {

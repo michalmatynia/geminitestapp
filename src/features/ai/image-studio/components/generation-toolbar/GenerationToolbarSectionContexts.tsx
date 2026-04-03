@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type { SelectOption };
 
@@ -157,7 +158,12 @@ export type GenerationToolbarAutoScalerSectionRuntimeValue = {
 };
 
 function createSectionRuntimeContext<T>(name: string) {
-  const Context = createContext<T | null>(null);
+  const { Context, useStrictContext } = createStrictContext<T>({
+    hookName: name,
+    providerName: 'its provider',
+    displayName: `${name}Context`,
+    errorFactory: internalError,
+  });
 
   const Provider = ({
     value,
@@ -167,15 +173,7 @@ function createSectionRuntimeContext<T>(name: string) {
     children: React.ReactNode;
   }): React.JSX.Element => <Context.Provider value={value}>{children}</Context.Provider>;
 
-  const useRuntime = (): T => {
-    const context = useContext(Context);
-    if (!context) {
-      throw internalError(`${name} must be used within its provider`);
-    }
-    return context;
-  };
-
-  return [Provider, useRuntime] as const;
+  return [Provider, useStrictContext] as const;
 }
 
 export const [

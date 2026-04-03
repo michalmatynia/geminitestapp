@@ -73,6 +73,7 @@ describe('mongo-shipping-group-repository', () => {
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
         traderaShippingPriceEur: 5,
+        autoAssignCategoryIds: [],
         createdAt: now,
         updatedAt: now,
       },
@@ -99,6 +100,7 @@ describe('mongo-shipping-group-repository', () => {
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
         traderaShippingPriceEur: 5,
+        autoAssignCategoryIds: [],
       }),
     ]);
   });
@@ -115,6 +117,7 @@ describe('mongo-shipping-group-repository', () => {
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
         traderaShippingPriceEur: 5,
+        autoAssignCategoryIds: [],
         createdAt: now,
         updatedAt: now,
       })
@@ -125,6 +128,7 @@ describe('mongo-shipping-group-repository', () => {
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Seller pays shipping',
         traderaShippingPriceEur: 20,
+        autoAssignCategoryIds: [],
         createdAt: now,
         updatedAt: now,
       })
@@ -135,6 +139,7 @@ describe('mongo-shipping-group-repository', () => {
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Seller pays shipping',
         traderaShippingPriceEur: 20,
+        autoAssignCategoryIds: [],
         createdAt: now,
         updatedAt: now,
       });
@@ -152,6 +157,7 @@ describe('mongo-shipping-group-repository', () => {
       catalogId: 'catalog-1',
       traderaShippingCondition: 'Buyer pays shipping',
       traderaShippingPriceEur: 5,
+      autoAssignCategoryIds: [],
     });
     const updated = await mongoShippingGroupRepository.updateShippingGroup(
       shippingGroupId.toString(),
@@ -174,6 +180,7 @@ describe('mongo-shipping-group-repository', () => {
       catalogId: 'catalog-1',
       traderaShippingCondition: 'Buyer pays shipping',
       traderaShippingPriceEur: 5,
+      autoAssignCategoryIds: [],
       createdAt: now,
       updatedAt: now,
     });
@@ -181,13 +188,13 @@ describe('mongo-shipping-group-repository', () => {
     expect(mocks.shippingGroupUpdateOne).toHaveBeenCalledWith(
       { _id: expect.any(ObjectId) },
       {
-        $set: expect.objectContaining({
+        $set: {
           name: 'Large Items',
           description: 'Bigger parcel products',
           traderaShippingCondition: 'Seller pays shipping',
           traderaShippingPriceEur: 20,
-          updatedAt: expect.any(Date),
-        }),
+          updatedAt: now,
+        },
       }
     );
     expect(updated.name).toBe('Large Items');

@@ -189,6 +189,16 @@ export const createProductSchema = productSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  category: true,
+  shippingGroup: true,
+  shippingGroupSource: true,
+  shippingGroupResolutionReason: true,
+  shippingGroupMatchedCategoryRuleIds: true,
+  shippingGroupMatchingGroupNames: true,
+  tags: true,
+  producers: true,
+  images: true,
+  catalogs: true,
 });
 
 export type CreateProduct = z.infer<typeof createProductSchema>;

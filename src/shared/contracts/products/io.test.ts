@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { productCreateInputSchema, productUpdateInputSchema } from './io';
+import {
+  createProductSchema,
+  productCreateInputSchema,
+  productUpdateInputSchema,
+  updateProductSchema,
+} from './io';
 
 describe('product io schemas', () => {
   it('normalizes numeric form fields on create payloads', () => {
@@ -31,5 +36,67 @@ describe('product io schemas', () => {
     });
 
     expect(parsed.sku).toBeNull();
+  });
+
+  it('keeps read-only shipping group metadata out of create DTOs', () => {
+    const parsed = createProductSchema.parse({
+      sku: 'SKU-1',
+      baseProductId: null,
+      defaultPriceGroupId: null,
+      ean: null,
+      gtin: null,
+      asin: null,
+      name: { en: 'Product 1' },
+      description: { en: '' },
+      supplierName: null,
+      supplierLink: null,
+      priceComment: null,
+      stock: 1,
+      price: 10,
+      sizeLength: null,
+      sizeWidth: null,
+      weight: null,
+      length: null,
+      published: false,
+      categoryId: 'category-1',
+      shippingGroupId: 'shipping-group-1',
+      catalogId: 'catalog-1',
+      shippingGroupSource: 'category_rule',
+      shippingGroupResolutionReason: 'category_rule',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroupMatchingGroupNames: ['Jewellery 7 EUR'],
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: 'Jewellery 7 EUR',
+        catalogId: 'catalog-1',
+        autoAssignCategoryIds: ['category-1'],
+      },
+    });
+
+    expect(parsed).not.toHaveProperty('shippingGroupSource');
+    expect(parsed).not.toHaveProperty('shippingGroupResolutionReason');
+    expect(parsed).not.toHaveProperty('shippingGroupMatchedCategoryRuleIds');
+    expect(parsed).not.toHaveProperty('shippingGroupMatchingGroupNames');
+    expect(parsed).not.toHaveProperty('shippingGroup');
+  });
+
+  it('keeps read-only shipping group metadata out of update DTOs', () => {
+    const parsed = updateProductSchema.parse({
+      shippingGroupSource: 'manual',
+      shippingGroupResolutionReason: 'manual',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroupMatchingGroupNames: ['Manual parcel'],
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: 'Manual parcel',
+        catalogId: 'catalog-1',
+      },
+    });
+
+    expect(parsed).not.toHaveProperty('shippingGroupSource');
+    expect(parsed).not.toHaveProperty('shippingGroupResolutionReason');
+    expect(parsed).not.toHaveProperty('shippingGroupMatchedCategoryRuleIds');
+    expect(parsed).not.toHaveProperty('shippingGroupMatchingGroupNames');
+    expect(parsed).not.toHaveProperty('shippingGroup');
   });
 });

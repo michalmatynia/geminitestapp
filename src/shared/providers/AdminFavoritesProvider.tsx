@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import type { IdLabelOption } from '@/shared/contracts/base';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type AdminFavoriteCandidate = IdLabelOption<string>;
 
@@ -11,7 +12,12 @@ export type AdminFavoritesContextValue = {
   resolveCandidate: (pathname: string | null, searchParams: URLSearchParams) => AdminFavoriteCandidate | null;
 };
 
-const AdminFavoritesContext = React.createContext<AdminFavoritesContextValue | undefined>(undefined);
+const { Context: AdminFavoritesContext, useOptionalContext: useOptionalAdminFavoritesContext } =
+  createStrictContext<AdminFavoritesContextValue>({
+    hookName: 'useAdminFavorites',
+    providerName: 'AdminFavoritesProvider',
+    displayName: 'AdminFavoritesContext',
+  });
 
 export function AdminFavoritesProvider({
   value,
@@ -24,7 +30,7 @@ export function AdminFavoritesProvider({
 }
 
 export function useAdminFavorites(): AdminFavoritesContextValue {
-  const context = React.useContext(AdminFavoritesContext);
+  const context = useOptionalAdminFavoritesContext();
   if (!context) {
     return {
       favoritesKey: '',

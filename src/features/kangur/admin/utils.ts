@@ -52,6 +52,110 @@ export const getLessonRecipeFamily = (
 export const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
+type LessonTemplateFormField =
+  | 'subject'
+  | 'ageGroup'
+  | 'title'
+  | 'description'
+  | 'emoji'
+  | 'color'
+  | 'activeBg';
+
+const LESSON_TEMPLATE_FORM_FIELDS: readonly LessonTemplateFormField[] = [
+  'subject',
+  'ageGroup',
+  'title',
+  'description',
+  'emoji',
+  'color',
+  'activeBg',
+];
+
+const setLessonTemplateFormField = (
+  target: LessonFormData,
+  field: LessonTemplateFormField,
+  value: LessonFormData[LessonTemplateFormField]
+): void => {
+  switch (field) {
+    case 'subject':
+      target.subject = value as LessonFormData['subject'];
+      break;
+    case 'ageGroup':
+      target.ageGroup = value as LessonFormData['ageGroup'];
+      break;
+    case 'title':
+      target.title = value as LessonFormData['title'];
+      break;
+    case 'description':
+      target.description = value as LessonFormData['description'];
+      break;
+    case 'emoji':
+      target.emoji = value as LessonFormData['emoji'];
+      break;
+    case 'color':
+      target.color = value as LessonFormData['color'];
+      break;
+    case 'activeBg':
+      target.activeBg = value as LessonFormData['activeBg'];
+      break;
+  }
+};
+
+const applyDefinedLessonFormOverrides = (
+  formData: LessonFormData,
+  overrides: Partial<Pick<LessonFormData, LessonTemplateFormField>>
+): LessonFormData => {
+  const nextFormData = { ...formData };
+  for (const field of LESSON_TEMPLATE_FORM_FIELDS) {
+    const value = overrides[field];
+    if (value !== undefined) {
+      setLessonTemplateFormField(nextFormData, field, value);
+    }
+  }
+  return nextFormData;
+};
+
+const readLessonTemplateFormField = (
+  template: KangurLessonTemplate,
+  field: LessonTemplateFormField
+): LessonFormData[LessonTemplateFormField] | undefined => {
+  switch (field) {
+    case 'subject':
+      return template.subject;
+    case 'ageGroup':
+      return template.ageGroup;
+    case 'title':
+      return template.title;
+    case 'description':
+      return template.description;
+    case 'emoji':
+      return template.emoji;
+    case 'color':
+      return template.color;
+    case 'activeBg':
+      return template.activeBg;
+  }
+};
+
+const resolveLessonTemplateFormOverrides = (
+  template?: KangurLessonTemplate | null
+): Partial<Pick<LessonFormData, LessonTemplateFormField>> => {
+  if (!template) {
+    return {};
+  }
+
+  return LESSON_TEMPLATE_FORM_FIELDS.reduce<Partial<Pick<LessonFormData, LessonTemplateFormField>>>(
+    (overrides, field) => {
+      const value = readLessonTemplateFormField(template, field);
+      if (value !== undefined) {
+        return { ...overrides, [field]: value };
+      }
+      return overrides;
+    },
+    {}
+  );
+};
+
 export const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
   componentId: lesson.componentId,
   contentMode: lesson.contentMode,
@@ -68,16 +172,11 @@ export const toLessonFormData = (lesson: KangurLesson): LessonFormData => ({
 export const toLocalizedLessonFormData = (
   lesson: KangurLesson,
   template?: KangurLessonTemplate | null
-): LessonFormData => ({
-  ...toLessonFormData(lesson),
-  subject: template?.subject ?? lesson.subject,
-  ageGroup: template?.ageGroup ?? lesson.ageGroup,
-  title: template?.title ?? lesson.title,
-  description: template?.description ?? lesson.description,
-  emoji: template?.emoji ?? lesson.emoji,
-  color: template?.color ?? lesson.color,
-  activeBg: template?.activeBg ?? lesson.activeBg,
-});
+): LessonFormData =>
+  applyDefinedLessonFormOverrides(
+    toLessonFormData(lesson),
+    resolveLessonTemplateFormOverrides(template)
+  );
 
 export const applyLessonTemplateToFormData = (
   formData: LessonFormData,
@@ -88,15 +187,8 @@ export const applyLessonTemplateToFormData = (
   }
 
   return {
-    ...formData,
+    ...applyDefinedLessonFormOverrides(formData, resolveLessonTemplateFormOverrides(template)),
     componentId: template.componentId,
-    subject: template.subject ?? formData.subject,
-    ageGroup: template.ageGroup ?? formData.ageGroup,
-    title: template.title,
-    description: template.description,
-    emoji: template.emoji,
-    color: template.color,
-    activeBg: template.activeBg,
   };
 };
 

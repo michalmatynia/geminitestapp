@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import type {
   DatabaseType,
@@ -10,31 +10,37 @@ import type {
   DatabasePagination,
 } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useDatabasePreview } from '../hooks/useDatabaseQueries';
 
 // --- Granular Contexts ---
 
-const ConfigContext = createContext<DatabaseUiConfig | null>(null);
-export const useDatabaseConfig = () => {
-  const context = useContext(ConfigContext);
-  if (!context) throw internalError('useDatabaseConfig must be used within a DatabaseProvider');
-  return context;
-};
+const { Context: ConfigContext, useStrictContext: useDatabaseConfig } =
+  createStrictContext<DatabaseUiConfig>({
+    hookName: 'useDatabaseConfig',
+    providerName: 'a DatabaseProvider',
+    displayName: 'DatabaseConfigContext',
+    errorFactory: internalError,
+  });
 
-const DataContext = createContext<DatabaseData | null>(null);
-export const useDatabaseData = () => {
-  const context = useContext(DataContext);
-  if (!context) throw internalError('useDatabaseData must be used within a DatabaseProvider');
-  return context;
-};
+const { Context: DataContext, useStrictContext: useDatabaseData } =
+  createStrictContext<DatabaseData>({
+    hookName: 'useDatabaseData',
+    providerName: 'a DatabaseProvider',
+    displayName: 'DatabaseDataContext',
+    errorFactory: internalError,
+  });
 
-const PaginationContext = createContext<DatabasePagination | null>(null);
-export const useDatabasePagination = () => {
-  const context = useContext(PaginationContext);
-  if (!context) throw internalError('useDatabasePagination must be used within a DatabaseProvider');
-  return context;
-};
+const { Context: PaginationContext, useStrictContext: useDatabasePagination } =
+  createStrictContext<DatabasePagination>({
+    hookName: 'useDatabasePagination',
+    providerName: 'a DatabaseProvider',
+    displayName: 'DatabasePaginationContext',
+    errorFactory: internalError,
+  });
+
+export { useDatabaseConfig, useDatabaseData, useDatabasePagination };
 
 export function DatabaseProvider({
   children,

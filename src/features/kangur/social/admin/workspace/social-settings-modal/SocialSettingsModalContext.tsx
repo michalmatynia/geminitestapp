@@ -1,12 +1,24 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
+
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
 import { useSocialPostContext } from '../SocialPostContext';
 import { useSocialSettingsModalState } from './SocialSettingsModal.hooks';
 
 type SocialSettingsModalState = ReturnType<typeof useSocialSettingsModalState>;
 
-const SocialSettingsModalContext = createContext<SocialSettingsModalState | null>(null);
+const {
+  Context: SocialSettingsModalContext,
+  useStrictContext: useSocialSettingsModalContext,
+} = createStrictContext<SocialSettingsModalState>({
+  hookName: 'useSocialSettingsModalContext',
+  providerName: 'a SocialSettingsModalProvider',
+  displayName: 'SocialSettingsModalContext',
+});
+
+export { useSocialSettingsModalContext };
 
 export function SocialSettingsModalProvider({ children }: { children: React.ReactNode }) {
   const context = useSocialPostContext();
@@ -17,12 +29,4 @@ export function SocialSettingsModalProvider({ children }: { children: React.Reac
       {children}
     </SocialSettingsModalContext.Provider>
   );
-}
-
-export function useSocialSettingsModalContext() {
-  const context = useContext(SocialSettingsModalContext);
-  if (!context) {
-    throw new Error('useSocialSettingsModalContext must be used within a SocialSettingsModalProvider');
-  }
-  return context;
 }

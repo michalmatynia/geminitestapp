@@ -29,6 +29,19 @@ const resolveFallbackAccessibleLabel = ({
   return undefined;
 };
 
+const resolveAccessibleTextState = (
+  children: React.ReactNode
+): { textContent: string; hasText: boolean } => {
+  const textContent = getTextContent(children).trim();
+  return {
+    textContent,
+    hasText: textContent.length > 0,
+  };
+};
+
+const hasAccessibleReference = (ariaLabelledBy: string | undefined): boolean =>
+  Boolean(ariaLabelledBy?.trim());
+
 export const resolveAccessibleLabel = ({
   children,
   ariaLabel,
@@ -47,15 +60,15 @@ export const resolveAccessibleLabel = ({
   ariaLabel?: string;
   hasAccessibleLabel: boolean;
 } => {
-  const textContent = getTextContent(children).trim();
-  const hasText = textContent.length > 0;
+  const { textContent, hasText } = resolveAccessibleTextState(children);
   const resolvedAriaLabel = resolveFallbackAccessibleLabel({
     ariaLabel,
     title,
     fallbackLabel,
     hasText,
   });
-  const hasAccessibleLabel = hasText || Boolean(resolvedAriaLabel) || Boolean(ariaLabelledBy);
+  const hasAccessibleLabel =
+    hasText || Boolean(resolvedAriaLabel) || hasAccessibleReference(ariaLabelledBy);
   return {
     textContent,
     hasText,

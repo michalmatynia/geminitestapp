@@ -10,6 +10,7 @@ import type {
 } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { playwrightDeviceOptions } from '@/shared/lib/playwright/settings';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   CollapsibleSection,
   FormActions,
@@ -28,7 +29,17 @@ export type {
   PlaywrightSettingsProviderProps,
 };
 
-const PlaywrightSettingsContext = React.createContext<PlaywrightSettingsContextType | null>(null);
+const {
+  Context: PlaywrightSettingsContext,
+  useStrictContext: usePlaywrightSettings,
+} = createStrictContext<PlaywrightSettingsContextType>({
+  hookName: 'usePlaywrightSettings',
+  providerName: 'a PlaywrightSettingsProvider',
+  displayName: 'PlaywrightSettingsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+export { usePlaywrightSettings };
 
 export function PlaywrightSettingsProvider({
   settings,
@@ -42,14 +53,6 @@ export function PlaywrightSettingsProvider({
   );
 }
 
-export function usePlaywrightSettings(): PlaywrightSettingsContextType {
-  const context = React.useContext(PlaywrightSettingsContext);
-  if (!context) {
-    throw internalError('usePlaywrightSettings must be used within a PlaywrightSettingsProvider');
-  }
-  return context;
-}
-
 type PlaywrightSettingsFormViewContextValue = {
   onSave?: () => void;
   saveLabel?: string;
@@ -58,8 +61,15 @@ type PlaywrightSettingsFormViewContextValue = {
   description?: string;
 };
 
-const PlaywrightSettingsFormViewContext =
-  React.createContext<PlaywrightSettingsFormViewContextValue | null>(null);
+const {
+  Context: PlaywrightSettingsFormViewContext,
+  useStrictContext: usePlaywrightSettingsFormView,
+} = createStrictContext<PlaywrightSettingsFormViewContextValue>({
+  hookName: 'usePlaywrightSettingsFormView',
+  providerName: 'PlaywrightSettingsFormViewProvider',
+  displayName: 'PlaywrightSettingsFormViewContext',
+  errorFactory: (message) => internalError(message),
+});
 
 type PlaywrightSettingsFormViewProviderProps = {
   value: PlaywrightSettingsFormViewContextValue;
@@ -75,16 +85,6 @@ function PlaywrightSettingsFormViewProvider({
       {children}
     </PlaywrightSettingsFormViewContext.Provider>
   );
-}
-
-function usePlaywrightSettingsFormView(): PlaywrightSettingsFormViewContextValue {
-  const context = React.useContext(PlaywrightSettingsFormViewContext);
-  if (!context) {
-    throw internalError(
-      'usePlaywrightSettingsFormView must be used within PlaywrightSettingsFormViewProvider'
-    );
-  }
-  return context;
 }
 
 const toNumber = (value: string, fallback: number): number => {

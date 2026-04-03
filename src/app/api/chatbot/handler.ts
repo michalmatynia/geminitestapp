@@ -6,10 +6,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   buildPersonaChatMemoryContext,
   persistAgentPersonaExchangeMemory,
-} from '@/features/ai/agentcreator/server/persona-memory';
-import { mergeContextRegistryResolutionBundles } from '@/features/ai/ai-context-registry/context/page-context-shared';
-import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
-import { buildChatbotContextRegistrySystemPrompt } from '@/features/ai/chatbot/context-registry/system-prompt';
+  mergeContextRegistryResolutionBundles,
+  contextRegistryEngine,
+  buildChatbotContextRegistrySystemPrompt,
+} from '@/features/ai/server';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import type { AgentPersonaMoodId } from '@/shared/contracts/agents';
 import { contextRegistryConsumerEnvelopeSchema } from '@/shared/contracts/ai-context-registry';

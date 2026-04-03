@@ -31,6 +31,17 @@ describe('agentcreator route matcher', () => {
     expect(paramsWithLiteral).toEqual({ personaId: 'p-42' });
   });
 
+  it('rejects extra segments that do not match an optional literal token', () => {
+    const pattern: Parameters<typeof __testables.matchPattern>[0] = [
+      'personas',
+      { param: 'personaId' },
+      { literal: 'memory', optional: true },
+    ];
+
+    const params = __testables.matchPattern(pattern, ['personas', 'p-42', 'visuals']);
+    expect(params).toBeNull();
+  });
+
   it('returns null when required literals mismatch', () => {
     const pattern: Parameters<typeof __testables.matchPattern>[0] = [
       'teaching',

@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { AiNode } from '@/shared/lib/ai-paths';
 
 export type SelectionToolMode = 'pan' | 'select';
@@ -45,8 +46,25 @@ export interface SelectionActions {
 // Contexts (split for re-render optimization)
 // ---------------------------------------------------------------------------
 
-const SelectionStateContext = createContext<SelectionState | null>(null);
-const SelectionActionsContext = createContext<SelectionActions | null>(null);
+const {
+  Context: SelectionStateContext,
+  useStrictContext: useSelectionState,
+} = createStrictContext<SelectionState>({
+  hookName: 'useSelectionState',
+  providerName: 'a SelectionProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: SelectionActionsContext,
+  useStrictContext: useSelectionActions,
+} = createStrictContext<SelectionActions>({
+  hookName: 'useSelectionActions',
+  providerName: 'a SelectionProvider',
+  errorFactory: internalError,
+});
+
+export { useSelectionState, useSelectionActions };
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -206,27 +224,3 @@ export function SelectionProvider({
 // ---------------------------------------------------------------------------
 // Consumer Hooks
 // ---------------------------------------------------------------------------
-
-/**
- * Get the current selection state.
- * Components using this will re-render when any selection state changes.
- */
-export function useSelectionState(): SelectionState {
-  const context = useContext(SelectionStateContext);
-  if (!context) {
-    throw internalError('useSelectionState must be used within a SelectionProvider');
-  }
-  return context;
-}
-
-/**
- * Get selection actions.
- * Components using this will NOT re-render when state changes.
- */
-export function useSelectionActions(): SelectionActions {
-  const context = useContext(SelectionActionsContext);
-  if (!context) {
-    throw internalError('useSelectionActions must be used within a SelectionProvider');
-  }
-  return context;
-}

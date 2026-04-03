@@ -1,4 +1,5 @@
-import { createContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface NoteMetadataData {
   title: string;
@@ -14,4 +15,12 @@ export interface NoteMetadataData {
   getReadableTextColor: (bgColor: string) => string;
 }
 
-export const NoteMetadataContext = createContext<NoteMetadataData | null>(null);
+const { Context: NoteMetadataContext, useStrictContext: useNoteMetadataContext } =
+  createStrictContext<NoteMetadataData>({
+    hookName: 'useNoteMetadataContext',
+    providerName: 'NoteFormProvider',
+    displayName: 'NoteMetadataContext',
+    errorFactory: internalError,
+  });
+
+export { NoteMetadataContext, useNoteMetadataContext };

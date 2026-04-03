@@ -6,6 +6,7 @@ import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { RequestPreviewImage } from '@/features/ai/image-studio/utils/run-request-preview';
 import type { ParamLeaf } from '@/shared/contracts/prompt-engine';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export interface ActionHistoryEntrySummary {
   id: string;
@@ -77,7 +78,14 @@ export type RightSidebarContextValue = {
   sequenceRunBusy: boolean;
 };
 
-const RightSidebarContext = React.createContext<RightSidebarContextValue | null>(null);
+const { Context: RightSidebarContext, useStrictContext: useRightSidebarContext } =
+  createStrictContext<RightSidebarContextValue>({
+    hookName: 'useRightSidebarContext',
+    providerName: 'RightSidebarProvider',
+    displayName: 'RightSidebarContext',
+    errorFactory: () =>
+      internalError('useRightSidebarContext must be used inside RightSidebarProvider'),
+  });
 
 export function RightSidebarProvider({
   value,
@@ -88,11 +96,4 @@ export function RightSidebarProvider({
 }): React.JSX.Element {
   return <RightSidebarContext.Provider value={value}>{children}</RightSidebarContext.Provider>;
 }
-
-export function useRightSidebarContext(): RightSidebarContextValue {
-  const context = React.useContext(RightSidebarContext);
-  if (!context) {
-    throw internalError('useRightSidebarContext must be used inside RightSidebarProvider');
-  }
-  return context;
-}
+export { useRightSidebarContext };

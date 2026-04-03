@@ -6,6 +6,7 @@ import {
   buildUpscaleRequestRelationType,
   deriveUpscaleScaleFromOutputDimensions,
   normalizeUpscaleScale,
+  resolveUpscaleExecutionDimensions,
   resolveUpscaleOutputDimensionsByResolution,
   resolveUpscaleOutputDimensions,
   validateUpscaleOutputDimensions,
@@ -100,5 +101,34 @@ describe('upscale-utils', () => {
     ).toBe(2.9297);
     expect(validateUpscaleOutputDimensions(8192, 8192)).toBe(true);
     expect(validateUpscaleOutputDimensions(30000, 30000)).toBe(false);
+  });
+
+  it('resolves execution dimensions for scale and target-resolution strategies', () => {
+    expect(
+      resolveUpscaleExecutionDimensions({
+        sourceWidth: 1024,
+        sourceHeight: 512,
+        strategy: 'scale',
+        scale: 2,
+      })
+    ).toEqual({
+      width: 2048,
+      height: 1024,
+      scale: 2,
+    });
+
+    expect(
+      resolveUpscaleExecutionDimensions({
+        sourceWidth: 1024,
+        sourceHeight: 512,
+        strategy: 'target_resolution',
+        targetWidth: 3000,
+        targetHeight: 1500,
+      })
+    ).toEqual({
+      width: 3000,
+      height: 1500,
+      scale: 2.9297,
+    });
   });
 });

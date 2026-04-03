@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -38,8 +39,22 @@ export interface BindingsActions {
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
-const BindingsStateContext = createContext<BindingsState | null>(null);
-const BindingsActionsContext = createContext<BindingsActions | null>(null);
+const bindingsStateContextResult = createStrictContext<BindingsState>({
+  hookName: 'useBindingsState',
+  providerName: 'BindingsProvider',
+  displayName: 'BindingsStateContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const bindingsActionsContextResult = createStrictContext<BindingsActions>({
+  hookName: 'useBindingsActions',
+  providerName: 'BindingsProvider',
+  displayName: 'BindingsActionsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const BindingsStateContext = bindingsStateContextResult.Context;
+const BindingsActionsContext = bindingsActionsContextResult.Context;
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -209,16 +224,8 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
 
 // ── Hook exports ─────────────────────────────────────────────────────────────
 
-export const useBindingsState = (): BindingsState => {
-  const ctx = React.useContext(BindingsStateContext);
-  if (!ctx) throw internalError('useBindingsState must be used within BindingsProvider');
-  return ctx;
-};
+export const useBindingsState = bindingsStateContextResult.useStrictContext;
 
-export const useBindingsActions = (): BindingsActions => {
-  const ctx = React.useContext(BindingsActionsContext);
-  if (!ctx) throw internalError('useBindingsActions must be used within BindingsProvider');
-  return ctx;
-};
+export const useBindingsActions = bindingsActionsContextResult.useStrictContext;
 
 export { BindingsStateContext, BindingsActionsContext };

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useCaseResolverFolderTreeRuntime } from './useCaseResolverFolderTreeRuntime';
 
@@ -29,42 +30,41 @@ export {
   resolveCaseResolverRootTreeNodes,
 } from './case-resolver-folder-tree-utils';
 
-const CaseResolverFolderTreeDataContext =
-  createContext<CaseResolverFolderTreeDataContextValue | null>(null);
-const CaseResolverFolderTreeUiStateContext =
-  createContext<CaseResolverFolderTreeUiStateContextValue | null>(null);
-const CaseResolverFolderTreeUiActionsContext =
-  createContext<CaseResolverFolderTreeUiActionsContextValue | null>(null);
+const {
+  Context: CaseResolverFolderTreeDataContext,
+  useStrictContext: useCaseResolverFolderTreeDataContext,
+} = createStrictContext<CaseResolverFolderTreeDataContextValue>({
+  hookName: 'useCaseResolverFolderTreeDataContext',
+  providerName: 'CaseResolverFolderTreeProvider',
+  displayName: 'CaseResolverFolderTreeDataContext',
+  errorFactory: internalError,
+});
 
-export function useCaseResolverFolderTreeDataContext(): CaseResolverFolderTreeDataContextValue {
-  const context = useContext(CaseResolverFolderTreeDataContext);
-  if (!context) {
-    throw internalError(
-      'useCaseResolverFolderTreeDataContext must be used within CaseResolverFolderTreeProvider'
-    );
-  }
-  return context;
-}
+const {
+  Context: CaseResolverFolderTreeUiStateContext,
+  useStrictContext: useCaseResolverFolderTreeUiStateContext,
+} = createStrictContext<CaseResolverFolderTreeUiStateContextValue>({
+  hookName: 'useCaseResolverFolderTreeUiStateContext',
+  providerName: 'CaseResolverFolderTreeProvider',
+  displayName: 'CaseResolverFolderTreeUiStateContext',
+  errorFactory: internalError,
+});
 
-export function useCaseResolverFolderTreeUiStateContext(): CaseResolverFolderTreeUiStateContextValue {
-  const context = useContext(CaseResolverFolderTreeUiStateContext);
-  if (!context) {
-    throw internalError(
-      'useCaseResolverFolderTreeUiStateContext must be used within CaseResolverFolderTreeProvider'
-    );
-  }
-  return context;
-}
+const {
+  Context: CaseResolverFolderTreeUiActionsContext,
+  useStrictContext: useCaseResolverFolderTreeUiActionsContext,
+} = createStrictContext<CaseResolverFolderTreeUiActionsContextValue>({
+  hookName: 'useCaseResolverFolderTreeUiActionsContext',
+  providerName: 'CaseResolverFolderTreeProvider',
+  displayName: 'CaseResolverFolderTreeUiActionsContext',
+  errorFactory: internalError,
+});
 
-export function useCaseResolverFolderTreeUiActionsContext(): CaseResolverFolderTreeUiActionsContextValue {
-  const context = useContext(CaseResolverFolderTreeUiActionsContext);
-  if (!context) {
-    throw internalError(
-      'useCaseResolverFolderTreeUiActionsContext must be used within CaseResolverFolderTreeProvider'
-    );
-  }
-  return context;
-}
+export {
+  useCaseResolverFolderTreeDataContext,
+  useCaseResolverFolderTreeUiActionsContext,
+  useCaseResolverFolderTreeUiStateContext,
+};
 
 export function useCaseResolverFolderTreeUiContext(): CaseResolverFolderTreeUiContextValue {
   const state = useCaseResolverFolderTreeUiStateContext();

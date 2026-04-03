@@ -222,6 +222,31 @@ export const isReplacementAllowedForField = (
   return replacementFields.includes(fieldName);
 };
 
+const hasPatternFormatterAutoApplyBaseConfig = (
+  pattern: ProductValidationPattern,
+  validationScope: ProductValidationInstanceScope
+): boolean => {
+  if (!pattern.enabled) return false;
+  if (pattern.replacementAutoApply !== true) return false;
+  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
+  if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope)) return false;
+  return isPatternReplacementEnabledForValidationScope(
+    pattern.replacementAppliesToScopes,
+    validationScope
+  );
+};
+
+const doesPatternFormatterAutoApplyMatchField = (
+  pattern: ProductValidationPattern,
+  fieldName: string
+): boolean => {
+  const { target, locale } = resolveFieldTargetAndLocale(fieldName);
+  if (!target) return false;
+  if (pattern.target !== target) return false;
+  if (!isPatternLocaleMatch(pattern.locale, locale)) return false;
+  return isReplacementAllowedForField(pattern, fieldName);
+};
+
 /**
  * Validator docs: see docs/validator/function-reference.md#core.ispatternconfiguredforformatterautoapply
  */
@@ -233,25 +258,9 @@ export const isPatternConfiguredForFormatterAutoApply = ({
   pattern: ProductValidationPattern;
   fieldName: string;
   validationScope: ProductValidationInstanceScope;
-}): boolean => {
-  if (!pattern.enabled) return false;
-  if (pattern.replacementAutoApply !== true) return false;
-  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
-  if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope)) return false;
-  if (
-    !isPatternReplacementEnabledForValidationScope(
-      pattern.replacementAppliesToScopes,
-      validationScope
-    )
-  ) {
-    return false;
-  }
-  const { target, locale } = resolveFieldTargetAndLocale(fieldName);
-  if (!target) return false;
-  if (pattern.target !== target) return false;
-  if (!isPatternLocaleMatch(pattern.locale, locale)) return false;
-  return isReplacementAllowedForField(pattern, fieldName);
-};
+}): boolean =>
+  hasPatternFormatterAutoApplyBaseConfig(pattern, validationScope) &&
+  doesPatternFormatterAutoApplyMatchField(pattern, fieldName);
 
 /**
  * Validator docs: see docs/validator/function-reference.md#core.allowspatternexecutionwithoutregexmatch

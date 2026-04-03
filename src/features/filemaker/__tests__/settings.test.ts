@@ -358,6 +358,43 @@ describe('filemaker settings', () => {
     );
   });
 
+  it('falls back to stored ids when person or organization names are blank', () => {
+    const database = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        persons: [createPersonRecord({ id: 'p-blank', firstName: '', lastName: '' })],
+        organizations: [createOrganizationRecord({ id: 'o-blank', name: '' })],
+        events: [],
+        addresses: [],
+        addressLinks: [],
+        phoneNumbers: [],
+        phoneNumberLinks: [],
+        emails: [],
+        emailLinks: [],
+        eventOrganizationLinks: [],
+      })
+    );
+
+    expect(buildFilemakerPartyOptions(database)).toEqual([
+      {
+        value: 'organization:o-blank',
+        label: 'o-blank',
+        kind: 'organization',
+      },
+      {
+        value: 'person:p-blank',
+        label: 'p-blank',
+        kind: 'person',
+      },
+    ]);
+    expect(resolveFilemakerPartyLabel(database, { kind: 'person', id: 'p-blank' })).toBe(
+      'p-blank'
+    );
+    expect(resolveFilemakerPartyLabel(database, { kind: 'organization', id: 'o-blank' })).toBe(
+      'o-blank'
+    );
+  });
+
   it('rejects legacy version 1 database payloads', () => {
     expect(() =>
       parseFilemakerDatabase(

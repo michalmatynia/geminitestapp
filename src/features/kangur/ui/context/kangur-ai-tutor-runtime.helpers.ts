@@ -356,17 +356,31 @@ export const omitUndefinedFields = <T extends Record<string, unknown>>(value: T)
     Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)
   ) as T;
 
+const TUTOR_MEMORY_FOCUS_LABEL_CANDIDATE_SELECTORS = [
+  (context: KangurAiTutorConversationContext) => context.focusLabel,
+  (context: KangurAiTutorConversationContext) => context.title,
+  (context: KangurAiTutorConversationContext) => context.selectedText,
+  (context: KangurAiTutorConversationContext) => context.currentQuestion,
+  (context: KangurAiTutorConversationContext) => context.contentId,
+] as const;
+
+const resolveTutorMemoryFocusLabelCandidate = (
+  context: KangurAiTutorConversationContext
+): string | null => {
+  for (const selectCandidate of TUTOR_MEMORY_FOCUS_LABEL_CANDIDATE_SELECTORS) {
+    const candidate = normalizeTutorMemoryText(selectCandidate(context), 160);
+    if (candidate) {
+      return candidate;
+    }
+  }
+
+  return null;
+};
+
 const buildTutorMemoryFocusLabel = (
   context: KangurAiTutorConversationContext
 ): string | undefined => {
-  const candidate =
-    normalizeTutorMemoryText(context.focusLabel, 160) ??
-    normalizeTutorMemoryText(context.title, 160) ??
-    normalizeTutorMemoryText(context.selectedText, 160) ??
-    normalizeTutorMemoryText(context.currentQuestion, 160) ??
-    normalizeTutorMemoryText(context.contentId, 160);
-
-  return candidate ?? undefined;
+  return resolveTutorMemoryFocusLabelCandidate(context) ?? undefined;
 };
 
 const buildTutorMemoryRecommendedAction = (input: {
@@ -452,6 +466,41 @@ export const buildLearnerMemoryFromCompletedFollowUp = (input: {
 // Equality helpers
 // ---------------------------------------------------------------------------
 
+const TUTOR_CONTEXT_EQUALITY_KEYS = [
+  'surface',
+  'contentId',
+  'description',
+  'questionId',
+  'selectedChoiceLabel',
+  'selectedChoiceText',
+  'selectedText',
+  'answerRevealed',
+  'promptMode',
+  'focusKind',
+  'focusId',
+  'focusLabel',
+  'assignmentId',
+  'interactionIntent',
+] as const;
+
+const TUTOR_KNOWLEDGE_REFERENCE_EQUALITY_KEYS = [
+  'sourceCollection',
+  'sourceRecordId',
+  'sourcePath',
+] as const;
+
+const areContextFieldsEqual = (
+  left: KangurAiTutorConversationContext,
+  right: KangurAiTutorConversationContext
+): boolean =>
+  TUTOR_CONTEXT_EQUALITY_KEYS.every((key) => left[key] === right[key]);
+
+const areKnowledgeReferencesEqual = (
+  left: KangurAiTutorConversationContext['knowledgeReference'],
+  right: KangurAiTutorConversationContext['knowledgeReference']
+): boolean =>
+  TUTOR_KNOWLEDGE_REFERENCE_EQUALITY_KEYS.every((key) => left?.[key] === right?.[key]);
+
 export const areConversationContextsEqual = (
   left: KangurAiTutorConversationContext | null,
   right: KangurAiTutorConversationContext | null
@@ -464,24 +513,9 @@ export const areConversationContextsEqual = (
     return left === right;
   }
 
-  return (
-    left.surface === right.surface &&
-    left.contentId === right.contentId &&
-    left.description === right.description &&
-    left.questionId === right.questionId &&
-    left.selectedChoiceLabel === right.selectedChoiceLabel &&
-    left.selectedChoiceText === right.selectedChoiceText &&
-    left.selectedText === right.selectedText &&
-    left.answerRevealed === right.answerRevealed &&
-    left.promptMode === right.promptMode &&
-    left.focusKind === right.focusKind &&
-    left.focusId === right.focusId &&
-    left.focusLabel === right.focusLabel &&
-    left.assignmentId === right.assignmentId &&
-    left.knowledgeReference?.sourceCollection === right.knowledgeReference?.sourceCollection &&
-    left.knowledgeReference?.sourceRecordId === right.knowledgeReference?.sourceRecordId &&
-    left.knowledgeReference?.sourcePath === right.knowledgeReference?.sourcePath &&
-    left.interactionIntent === right.interactionIntent
+  return areContextFieldsEqual(left, right) && areKnowledgeReferencesEqual(
+    left.knowledgeReference,
+    right.knowledgeReference
   );
 };
 

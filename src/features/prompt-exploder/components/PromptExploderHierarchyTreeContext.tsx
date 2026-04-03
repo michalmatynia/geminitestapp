@@ -3,10 +3,11 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { PromptExploderListItem } from '../types';
 
-type PromptExploderHierarchyTreeContextValue = {
+export type PromptExploderHierarchyTreeContextValue = {
   items: PromptExploderListItem[];
   onChange: (nextItems: PromptExploderListItem[]) => void;
   emptyLabel: string;
@@ -16,8 +17,18 @@ type PromptExploderHierarchyTreeContextValue = {
   }) => React.ReactNode;
 };
 
-const PromptExploderHierarchyTreeContext =
-  React.createContext<PromptExploderHierarchyTreeContextValue | null>(null);
+const {
+  Context: PromptExploderHierarchyTreeContext,
+  useStrictContext: usePromptExploderHierarchyTreeContext,
+} = createStrictContext<PromptExploderHierarchyTreeContextValue>({
+  hookName: 'usePromptExploderHierarchyTreeContext',
+  providerName: 'PromptExploderHierarchyTreeProvider',
+  displayName: 'PromptExploderHierarchyTreeContext',
+  errorFactory: () =>
+    internalError(
+      'usePromptExploderHierarchyTreeContext must be used inside PromptExploderHierarchyTreeProvider'
+    ),
+});
 
 export function PromptExploderHierarchyTreeProvider({
   value,
@@ -33,12 +44,4 @@ export function PromptExploderHierarchyTreeProvider({
   );
 }
 
-export function usePromptExploderHierarchyTreeContext(): PromptExploderHierarchyTreeContextValue {
-  const context = React.useContext(PromptExploderHierarchyTreeContext);
-  if (!context) {
-    throw internalError(
-      'usePromptExploderHierarchyTreeContext must be used inside PromptExploderHierarchyTreeProvider'
-    );
-  }
-  return context;
-}
+export { usePromptExploderHierarchyTreeContext };

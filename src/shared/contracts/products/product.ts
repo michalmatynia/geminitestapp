@@ -169,6 +169,13 @@ export const productSchema = dtoBaseSchema.extend({
   catalogId: z.string(),
   category: productCategorySchema.optional(),
   shippingGroup: productShippingGroupSchema.optional(),
+  shippingGroupSource: z.enum(['manual', 'category_rule']).nullable().optional(),
+  shippingGroupResolutionReason: z
+    .enum(['manual', 'manual_missing', 'category_rule', 'multiple_category_rules', 'none'])
+    .nullable()
+    .optional(),
+  shippingGroupMatchedCategoryRuleIds: z.array(z.string()).optional(),
+  shippingGroupMatchingGroupNames: z.array(z.string()).optional(),
   tags: z.array(productTagRelationSchema).optional(),
   producers: z.array(productProducerRelationSchema).optional(),
   images: z.array(productImageSchema).optional(),

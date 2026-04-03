@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, type JSX, type ReactNode } from 'react';
+import { type JSX, type ReactNode } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useJobQueueRuntime } from './useJobQueueRuntime';
 
@@ -17,8 +18,20 @@ export type {
   JobQueueStateValue,
 } from './job-queue/types';
 
-const JobQueueStateContext = createContext<JobQueueStateValue | null>(null);
-const JobQueueActionsContext = createContext<JobQueueActionsValue | null>(null);
+const { Context: JobQueueStateContext, useStrictContext: useJobQueueState } =
+  createStrictContext<JobQueueStateValue>({
+    hookName: 'useJobQueueState',
+    providerName: 'JobQueueProvider',
+    displayName: 'JobQueueStateContext',
+    errorFactory: internalError,
+  });
+const { Context: JobQueueActionsContext, useStrictContext: useJobQueueActions } =
+  createStrictContext<JobQueueActionsValue>({
+    hookName: 'useJobQueueActions',
+    providerName: 'JobQueueProvider',
+    displayName: 'JobQueueActionsContext',
+    errorFactory: internalError,
+  });
 
 type JobQueueProviderProps = {
   children: ReactNode;
@@ -61,18 +74,4 @@ export function JobQueueProvider(props: JobQueueProviderProps): JSX.Element {
   );
 }
 
-export function useJobQueueState(): JobQueueStateValue {
-  const context = useContext(JobQueueStateContext);
-  if (!context) {
-    throw internalError('useJobQueueState must be used within JobQueueProvider');
-  }
-  return context;
-}
-
-export function useJobQueueActions(): JobQueueActionsValue {
-  const context = useContext(JobQueueActionsContext);
-  if (!context) {
-    throw internalError('useJobQueueActions must be used within JobQueueProvider');
-  }
-  return context;
-}
+export { useJobQueueState, useJobQueueActions };

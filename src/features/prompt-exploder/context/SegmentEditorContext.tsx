@@ -3,7 +3,6 @@
 import {
   createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -14,6 +13,7 @@ import {
 
 import type { LabelValueOptionDto } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useToast } from '@/shared/ui';
 import {
   promptExploderCreateApprovalDraftFromSegment,
@@ -77,8 +77,22 @@ export interface SegmentEditorActions {
 
 const PatternsContext = createContext<SegmentEditorPatternsState | null>(null);
 
-const SegmentEditorStateContext = createContext<SegmentEditorState | null>(null);
-const SegmentEditorActionsContext = createContext<SegmentEditorActions | null>(null);
+const segmentEditorStateContextResult = createStrictContext<SegmentEditorState>({
+  hookName: 'useSegmentEditorState',
+  providerName: 'SegmentEditorProvider',
+  displayName: 'SegmentEditorStateContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const segmentEditorActionsContextResult = createStrictContext<SegmentEditorActions>({
+  hookName: 'useSegmentEditorActions',
+  providerName: 'SegmentEditorProvider',
+  displayName: 'SegmentEditorActionsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const SegmentEditorStateContext = segmentEditorStateContextResult.Context;
+const SegmentEditorActionsContext = segmentEditorActionsContextResult.Context;
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -302,16 +316,8 @@ export function SegmentEditorProvider({
 
 // ── Hook exports ─────────────────────────────────────────────────────────────
 
-export const useSegmentEditorState = (): SegmentEditorState => {
-  const ctx = useContext(SegmentEditorStateContext);
-  if (!ctx) throw internalError('useSegmentEditorState must be used within SegmentEditorProvider');
-  return ctx;
-};
+export const useSegmentEditorState = segmentEditorStateContextResult.useStrictContext;
 
-export const useSegmentEditorActions = (): SegmentEditorActions => {
-  const ctx = useContext(SegmentEditorActionsContext);
-  if (!ctx) throw internalError('useSegmentEditorActions must be used within SegmentEditorProvider');
-  return ctx;
-};
+export const useSegmentEditorActions = segmentEditorActionsContextResult.useStrictContext;
 
 export { SegmentEditorStateContext, SegmentEditorActionsContext };

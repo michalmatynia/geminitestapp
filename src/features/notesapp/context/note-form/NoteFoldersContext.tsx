@@ -1,4 +1,5 @@
-import { createContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface NoteFoldersData {
   selectedFolderId: string;
@@ -6,4 +7,12 @@ export interface NoteFoldersData {
   flatFolders: Array<{ id: string; name: string; level: number }>;
 }
 
-export const NoteFoldersContext = createContext<NoteFoldersData | null>(null);
+const { Context: NoteFoldersContext, useStrictContext: useNoteFoldersContext } =
+  createStrictContext<NoteFoldersData>({
+    hookName: 'useNoteFoldersContext',
+    providerName: 'NoteFormProvider',
+    displayName: 'NoteFoldersContext',
+    errorFactory: internalError,
+  });
+
+export { NoteFoldersContext, useNoteFoldersContext };

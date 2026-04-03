@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useMemo, type Dispatch, type SetStateAction } from 'react';
+import { useMemo, type Dispatch, type SetStateAction } from 'react';
 
 import type {
   ProductValidationPattern,
@@ -10,6 +10,7 @@ import type {
   ProductValidationAcceptIssueInput,
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { FieldValidatorIssue } from '../validation-engine/core';
 
@@ -27,17 +28,13 @@ export interface ProductValidationStateValue {
   visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
 }
 
-const ProductValidationStateContext = createContext<ProductValidationStateValue | null>(null);
-
-export function useProductValidationState(): ProductValidationStateValue {
-  const ctx = useContext(ProductValidationStateContext);
-  if (!ctx) {
-    throw internalError(
-      'useProductValidationState must be used within ProductValidationSettingsProvider'
-    );
-  }
-  return ctx;
-}
+const { Context: ProductValidationStateContext, useStrictContext: useProductValidationState } =
+  createStrictContext<ProductValidationStateValue>({
+    hookName: 'useProductValidationState',
+    providerName: 'ProductValidationSettingsProvider',
+    displayName: 'ProductValidationStateContext',
+    errorFactory: internalError,
+  });
 
 // ── Actions sub-context ──────────────────────────────────────────────────────
 // Stable function references — subscribers do NOT re-render on state changes.
@@ -53,17 +50,17 @@ export interface ProductValidationActionsValue {
   acceptIssue: (input: ProductValidationAcceptIssueInput) => Promise<void>;
 }
 
-const ProductValidationActionsContext = createContext<ProductValidationActionsValue | null>(null);
+const {
+  Context: ProductValidationActionsContext,
+  useStrictContext: useProductValidationActions,
+} = createStrictContext<ProductValidationActionsValue>({
+  hookName: 'useProductValidationActions',
+  providerName: 'ProductValidationSettingsProvider',
+  displayName: 'ProductValidationActionsContext',
+  errorFactory: internalError,
+});
 
-export function useProductValidationActions(): ProductValidationActionsValue {
-  const ctx = useContext(ProductValidationActionsContext);
-  if (!ctx) {
-    throw internalError(
-      'useProductValidationActions must be used within ProductValidationSettingsProvider'
-    );
-  }
-  return ctx;
-}
+export { useProductValidationActions, useProductValidationState };
 
 // ── Combined type & hook ─────────────────────────────────────────────────────
 

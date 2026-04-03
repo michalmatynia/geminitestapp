@@ -170,19 +170,23 @@ export const remapProductSyncProfilesSetting = (
   }
 };
 
-export const toIsoStringOrNull = (value: unknown): string | null => {
-  if (value == null) return null;
+const isValidDate = (value: Date): boolean => Number.isFinite(value.getTime());
+
+const resolveDateLikeValue = (value: unknown): Date | null => {
   if (value instanceof Date) {
-    const timestamp = value.getTime();
-    return Number.isFinite(timestamp) ? value.toISOString() : null;
+    return isValidDate(value) ? value : null;
   }
+
   if (typeof value === 'string' || typeof value === 'number') {
     const parsed = new Date(value);
-    const timestamp = parsed.getTime();
-    return Number.isFinite(timestamp) ? parsed.toISOString() : null;
+    return isValidDate(parsed) ? parsed : null;
   }
+
   return null;
 };
+
+export const toIsoStringOrNull = (value: unknown): string | null =>
+  resolveDateLikeValue(value)?.toISOString() ?? null;
 
 export const toRequiredIsoString = (value: unknown): string =>
   toIsoStringOrNull(value) ?? new Date(0).toISOString();

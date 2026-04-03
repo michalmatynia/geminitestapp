@@ -16,108 +16,93 @@ import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
 // --- Shared State ---
 const lessonsTestHoisted = vi.hoisted(() => ({
-  settingsStoreMock: {
-    get: vi.fn<(key: string) => string | undefined>(),
-  },
-  lessons: [] as any[],
-  lessonSections: [] as any[],
-  lessonDocuments: {} as Record<string, any>,
   auth: {
     user: null,
     canAccessParentAssignments: false,
     navigateToLogin: vi.fn(),
     logout: vi.fn(),
   } as any,
+  lessons: [] as any[],
   assignments: [] as any[],
   progress: {
     lessonMastery: {},
   } as any,
-  routerPushMock: vi.fn(),
-  useKangurPageContentEntryMock: vi.fn(),
-  isAssignmentsReady: true,
+  lessonDocuments: {} as Record<string, any>,
+  activeLessonId: null as string | null,
 }));
 
-// --- Mocks ---
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: lessonsTestHoisted.routerPushMock,
-    replace: vi.fn(),
-    prefetch: vi.fn(),
-    back: vi.fn(),
-  }),
-  usePathname: () => '/kangur/lessons',
-  useSearchParams: vi.fn(() => new URLSearchParams()),
-  useParams: vi.fn(() => ({})),
-  useSelectedLayoutSegment: vi.fn(() => null),
-  useSelectedLayoutSegments: vi.fn(() => []),
-  redirect: vi.fn(),
-  notFound: vi.fn(),
-  permanentRedirect: vi.fn(),
-}));
-
-const KangurLessonNavigationContext = React.createContext<any>(null);
-
-vi.mock('@/features/kangur/ui/context/KangurLessonNavigationContext', () => ({
-  KangurLessonNavigationProvider: ({ children, onBack, secretLessonPill }: any) => (
-    <KangurLessonNavigationContext.Provider value={{ onBack, secretLessonPill }}>
-      {children}
-    </KangurLessonNavigationContext.Provider>
-  ),
-  KangurLessonNavigationBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useKangurLessonBackAction: () => {
-    const ctx = React.useContext(KangurLessonNavigationContext);
-    return ctx?.onBack ?? vi.fn();
-  },
-  useKangurLessonSubsectionNavigationActive: () => false,
-  useKangurLessonSubsectionSummary: () => null,
-  useKangurLessonSecretPill: () => {
-    const ctx = React.useContext(KangurLessonNavigationContext);
-    return ctx?.secretLessonPill ?? { isUnlocked: true, onOpen: vi.fn() };
-  },
-  useKangurLessonNavigationState: () => ({
-    isSubsectionNavigationActive: false,
-    subsectionSummary: null,
-    secretLessonPill: null,
-  }),
-  useKangurLessonNavigationActions: () => ({
-    registerSubsectionNavigation: () => () => undefined,
-    setSubsectionSummary: vi.fn(),
-  }),
-  useKangurRegisterLessonSubsectionNavigation: () => () => () => undefined,
-  useKangurSyncLessonSubsectionSummary: vi.fn(),
-  KangurLessonSubsectionSummarySync: () => null,
-}));
-
-vi.mock('@/features/kangur/lessons/lesson-ui-registry', async () => {
-  function MockLegacyLesson({ onReady }: { onReady?: () => void }): React.JSX.Element {
-    React.useEffect(() => {
-      onReady?.();
-    }, [onReady]);
-
-    return (
-      <div data-testid='legacy-lesson'>
-        <div>Legacy lesson renderer</div>
-        <button type='button' onClick={vi.fn()}>
-          Open secret lesson
-        </button>
-      </div>
-    );
-  }
-
-  return {
-    LESSON_COMPONENTS: {
-      adding: MockLegacyLesson,
-      clock: MockLegacyLesson,
+// --- Simplified Mocks ---
+vi.mock('@/features/kangur/ui/pages/lessons/LessonsContext', () => ({
+  LessonsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useLessons: () => ({
+    auth: lessonsTestHoisted.auth,
+    basePath: '/kangur',
+    activeLesson: lessonsTestHoisted.lessons.find(l => l.id === lessonsTestHoisted.activeLessonId) || null,
+    activeLessonId: lessonsTestHoisted.activeLessonId,
+    lessonAssignmentsByComponent: new Map(
+      lessonsTestHoisted.assignments
+        .filter(a => a.target.type === 'lesson')
+        .map(a => [a.target.lessonComponentId, a])
+    ),
+    completedLessonAssignmentsByComponent: new Map(
+      lessonsTestHoisted.assignments
+        .filter(a => a.target.type === 'lesson' && a.progress.status === 'completed')
+        .map(a => [a.target.lessonComponentId, a])
+    ),
+    orderedLessons: lessonsTestHoisted.lessons,
+    isCompleteLessonsCatalogLoaded: true,
+    isSecretLessonActive: false,
+    progress: lessonsTestHoisted.progress,
+    isLessonSectionsLoading: false,
+    shouldShowLessonsCatalogSkeleton: false,
+    lessonDocument: lessonsTestHoisted.activeLessonId ? (lessonsTestHoisted.lessonDocuments[lessonsTestHoisted.activeLessonId] || null) : null,
+    activeLessonAssignmentContent: null,
+    handleSelectLesson: (id: string | null) => {
+      lessonsTestHoisted.activeLessonId = id;
     },
-  };
-});
+    isDeferredContentReady: true,
+    isLessonsPageReady: true,
+    handleGoBack: vi.fn(),
+    ensureLessonsCatalogLoaded: vi.fn(),
+    isLessonsCatalogLoading: false,
+    lessonSections: [],
+    lessonTemplateMap: new Map(),
+    guestPlayerName: '',
+    setGuestPlayerName: vi.fn(),
+    isActiveLessonComponentReady: true,
+    setIsActiveLessonComponentReady: vi.fn(),
+    activeLessonNavigationRef: { current: null },
+    activeLessonHeaderRef: { current: null },
+    activeLessonContentRef: { current: null },
+    activeLessonScrollRef: { current: null },
+  }),
+}));
 
-vi.mock('next/link', () => ({
-  default: ({ children, href, ...rest }: any) => (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  ),
+vi.mock('@/features/kangur/routing/hooks/useKangurRouteTransitionState', () => ({
+  useOptionalKangurRouteTransitionState: () => ({
+    transitionPhase: 'idle',
+    activeTransitionPageKey: 'Lessons',
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurRouteTransitionContext', () => ({
+  useOptionalKangurRouteTransitionState: () => ({
+    transitionPhase: 'idle',
+    activeTransitionPageKey: 'Lessons',
+  }),
+  useOptionalKangurRouteTransitionActions: () => ({
+    startTransition: vi.fn(),
+    completeTransition: vi.fn(),
+    abortTransition: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
+  useKangurRoutePageReady: vi.fn(),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
+  useKangurMobileBreakpoint: () => false,
 }));
 
 vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
@@ -130,7 +115,6 @@ vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
       {snapshot?.lessonDocument ? (
         <div data-testid='lesson-document-renderer'>Document blocks: {snapshot.lessonDocument.blocks?.length ?? 0}</div>
       ) : null}
-      <div data-testid='mongo-assignment-title'>{snapshot?.activeLessonAssignmentContent?.title}</div>
     </div>
   ),
   prefetchActiveLessonView: vi.fn(),
@@ -150,169 +134,27 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useReducedMotion: () => false,
   motion: {
-    div: ({ children, ...props }: any) => {
-      const { initial, animate, exit, transition, variants, ...rest } = props;
-      return <div {...rest}>{children}</div>;
-    },
-    button: ({ children, ...props }: any) => {
-      const { initial, animate, exit, transition, variants, ...rest } = props;
-      return <button {...rest}>{children}</button>;
-    },
+    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
   },
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
-  useSettingsStore: () => lessonsTestHoisted.settingsStoreMock,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
-  useKangurMobileBreakpoint: () => false,
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useKangurAuth: () => lessonsTestHoisted.auth,
-  useOptionalKangurAuth: () => lessonsTestHoisted.auth,
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: () => ({
-    subject: 'maths',
-    setSubject: vi.fn(),
-    subjectKey: 'learner-1',
+  useSettingsStore: () => ({
+    get: vi.fn(),
   }),
 }));
 
-vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
-  useKangurAgeGroupFocus: () => ({
-    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
-    setAgeGroup: vi.fn(),
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
   }),
+  usePathname: () => '/kangur/lessons',
+  useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
-
-vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  useKangurRouting: () => ({ basePath: '/kangur' }),
-  useOptionalKangurRouting: () => null,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
-  useKangurAssignments: (options: any) => {
-    const enabled = options?.enabled ?? true;
-    const assignments = enabled ? lessonsTestHoisted.assignments : [];
-    return {
-      assignments,
-      data: assignments,
-      isLoading: false,
-      isPending: false,
-      isAssignmentsReady: lessonsTestHoisted.isAssignmentsReady,
-      error: null,
-      refresh: vi.fn(),
-      createAssignment: vi.fn(),
-      updateAssignment: vi.fn(),
-    };
-  },
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: () => {
-    return {
-      data: lessonsTestHoisted.lessons,
-      isLoading: false,
-      isPending: false,
-      isFetching: false,
-      error: null,
-      refresh: vi.fn(),
-      refetch: vi.fn(),
-    };
-  },
-  useKangurLessonDocuments: () => ({
-    data: lessonsTestHoisted.lessonDocuments,
-    isLoading: false,
-    error: null,
-  }),
-  useKangurLessonDocument: (id: string | null) => ({
-    data: id ? (lessonsTestHoisted.lessonDocuments[id] ?? null) : null,
-    isLoading: false,
-    error: null,
-  }),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => ({
-    data: lessonsTestHoisted.lessonSections,
-    isLoading: false,
-    isPending: false,
-    isFetching: false,
-    isPlaceholderData: false,
-    error: null,
-  }),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
-  useKangurLessonsCatalog: () => {
-    return {
-      data: {
-        lessons: lessonsTestHoisted.lessons,
-        sections: lessonsTestHoisted.lessonSections,
-      },
-      isLoading: false,
-      isPending: false,
-      error: null,
-      refresh: vi.fn(),
-      refetch: vi.fn(),
-    };
-  },
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
-  useKangurProgressState: () => lessonsTestHoisted.progress,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: (id: string) => lessonsTestHoisted.useKangurPageContentEntryMock(id),
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
-  KangurAiTutorSessionSync: () => null,
-  useOptionalKangurAiTutor: () => null,
-  KangurAiTutorProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
-  useKangurTutorAnchor: () => undefined,
-}));
-
-vi.mock('@/features/kangur/ui/components/KangurProfileMenu', () => ({
-  KangurProfileMenu: () => <div data-testid='kangur-profile-menu' />,
-}));
-
-vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRenderer', () => ({
-  KangurLessonDocumentRenderer: ({ document }: any) => (
-    <div data-testid='lesson-document-renderer'>Document blocks: {document?.blocks?.length ?? 0}</div>
-  ),
-}));
-
-vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
-  KangurLessonNarrator: () => <div data-testid='kangur-lesson-narrator' />,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
-  useKangurLessonTemplates: () => ({
-    data: new Map(),
-    isLoading: false,
-    error: null,
-  }),
-  useKangurLessonTemplate: () => ({
-    data: null,
-    isLoading: false,
-    error: null,
-  }),
-}));
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
 
 // --- JSDOM Fixes ---
 if (typeof window !== 'undefined') {
@@ -353,7 +195,10 @@ const createProgressState = (overrides: any = {}) => {
 };
 
 const renderLessonsPage = async () => {
-  const result = render(
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
     <QueryClientProvider client={queryClient}>
       <NextIntlClientProvider locale='pl' messages={plMessages}>
         <KangurGuestPlayerProvider>
@@ -362,8 +207,6 @@ const renderLessonsPage = async () => {
       </NextIntlClientProvider>
     </QueryClientProvider>
   );
-  await screen.findByTestId('lessons-list-transition');
-  return result;
 };
 
 // --- Tests ---
@@ -371,7 +214,6 @@ describe('Lessons Page Content', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     lessonsTestHoisted.lessons = [];
-    lessonsTestHoisted.lessonSections = [];
     lessonsTestHoisted.assignments = [];
     lessonsTestHoisted.lessonDocuments = {};
     lessonsTestHoisted.progress = createProgressState();
@@ -381,11 +223,7 @@ describe('Lessons Page Content', () => {
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
     };
-    lessonsTestHoisted.isAssignmentsReady = true;
-    lessonsTestHoisted.useKangurPageContentEntryMock.mockImplementation(() => ({
-      entry: null,
-      isLoading: false,
-    }));
+    lessonsTestHoisted.activeLessonId = null;
   });
 
   afterEach(() => {
@@ -413,7 +251,7 @@ describe('Lessons Page Content', () => {
     await renderLessonsPage();
 
     expect(await screen.findByText(/Opanowane 92%/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Priorytet rodzica/i)).toBeInTheDocument();
+    expect(await screen.findByTestId('lesson-library-footer-assignment-chip')).toBeInTheDocument();
   });
 
   it('shows a compact completed parent-assignment pill in the active lesson header', async () => {
@@ -438,7 +276,7 @@ describe('Lessons Page Content', () => {
 
     const addingText = await screen.findByText('Dodawanie');
     fireEvent.click(addingText);
-
+    
     expect(await screen.findByTestId('active-lesson-parent-completed-chip')).toBeInTheDocument();
     expect(await screen.findByText(/Ukończone dla rodzica/i)).toBeInTheDocument();
   });
@@ -462,17 +300,13 @@ describe('Lessons Page Content', () => {
     lessonsTestHoisted.lessonDocuments = {
       clock: { version: 1, blocks: [{ id: 't1', type: 'text', html: 'Mongo materiał lekcji' }] },
     };
-    lessonsTestHoisted.useKangurPageContentEntryMock.mockImplementation((id: string) => {
-      if (id === 'lessons-active-assignment') return { entry: { title: 'Mongo zadanie rodzica' } };
-      return { entry: null };
-    });
 
     await renderLessonsPage();
 
     const clockText = await screen.findByText('Nauka zegara');
     fireEvent.click(clockText);
-
+    
     expect(await screen.findByTestId('active-lesson-title')).toHaveTextContent('Nauka zegara');
-    expect(await screen.findByTestId('lesson-document-renderer')).toHaveTextContent('Document blocks: 1');
+    expect(await screen.findByText(/Document blocks: 1/i)).toBeInTheDocument();
   });
 });

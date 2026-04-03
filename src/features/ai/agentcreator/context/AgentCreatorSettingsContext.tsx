@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import React, { useState, ReactNode, useMemo } from 'react';
 
 import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator/utils/constants';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 // --- Granular Contexts ---
 
@@ -11,13 +12,14 @@ export interface AgentCreatorModes {
   agentModeEnabled: boolean;
   setAgentModeEnabled: (value: boolean) => void;
 }
-const ModesContext = createContext<AgentCreatorModes | null>(null);
-export const useAgentCreatorModes = () => {
-  const context = useContext(ModesContext);
-  if (!context)
-    throw internalError('useAgentCreatorModes must be used within AgentCreatorSettingsProvider');
-  return context;
-};
+const { Context: ModesContext, useStrictContext: useAgentCreatorModes } =
+  createStrictContext<AgentCreatorModes>({
+    hookName: 'useAgentCreatorModes',
+    providerName: 'AgentCreatorSettingsProvider',
+    displayName: 'AgentCreatorModesContext',
+    errorFactory: internalError,
+  });
+export { useAgentCreatorModes };
 
 export interface AgentCreatorPerformance {
   agentMaxSteps: number | undefined;
@@ -37,15 +39,14 @@ export interface AgentCreatorPerformance {
   agentLoopBackoffMaxMs: number | undefined;
   setAgentLoopBackoffMaxMs: (value: number | undefined) => void;
 }
-const PerformanceContext = createContext<AgentCreatorPerformance | null>(null);
-export const useAgentCreatorPerformance = () => {
-  const context = useContext(PerformanceContext);
-  if (!context)
-    throw internalError(
-      'useAgentCreatorPerformance must be used within AgentCreatorSettingsProvider'
-    );
-  return context;
-};
+const { Context: PerformanceContext, useStrictContext: useAgentCreatorPerformance } =
+  createStrictContext<AgentCreatorPerformance>({
+    hookName: 'useAgentCreatorPerformance',
+    providerName: 'AgentCreatorSettingsProvider',
+    displayName: 'AgentCreatorPerformanceContext',
+    errorFactory: internalError,
+  });
+export { useAgentCreatorPerformance };
 
 export interface AgentCreatorOperations {
   agentBrowser: string | undefined;
@@ -57,15 +58,14 @@ export interface AgentCreatorOperations {
   agentRequireHumanApproval: boolean | undefined;
   setAgentRequireHumanApproval: (value: boolean | undefined) => void;
 }
-const OperationsContext = createContext<AgentCreatorOperations | null>(null);
-export const useAgentCreatorOperations = () => {
-  const context = useContext(OperationsContext);
-  if (!context)
-    throw internalError(
-      'useAgentCreatorOperations must be used within AgentCreatorSettingsProvider'
-    );
-  return context;
-};
+const { Context: OperationsContext, useStrictContext: useAgentCreatorOperations } =
+  createStrictContext<AgentCreatorOperations>({
+    hookName: 'useAgentCreatorOperations',
+    providerName: 'AgentCreatorSettingsProvider',
+    displayName: 'AgentCreatorOperationsContext',
+    errorFactory: internalError,
+  });
+export { useAgentCreatorOperations };
 
 export function AgentCreatorSettingsProvider({
   children,

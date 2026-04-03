@@ -241,6 +241,39 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
     categoryNameById,
     productNameKey ?? 'name_en'
   );
+  const autoShippingGroupLabel =
+    product.shippingGroupSource === 'category_rule' ? product.shippingGroup?.name?.trim() ?? '' : '';
+  const autoShippingRuleLabel = useMemo(() => {
+    if (product.shippingGroupSource !== 'category_rule') {
+      return '';
+    }
+    const labels = (product.shippingGroupMatchedCategoryRuleIds ?? [])
+      .map((categoryId) => categoryNameById.get(categoryId) ?? categoryId)
+      .filter((label) => label.trim().length > 0);
+    return labels.join(', ');
+  }, [categoryNameById, product.shippingGroupMatchedCategoryRuleIds, product.shippingGroupSource]);
+  const autoShippingTooltipLabel = autoShippingRuleLabel
+    ? `Auto shipping group: ${autoShippingGroupLabel} via ${autoShippingRuleLabel}`
+    : `Auto shipping group: ${autoShippingGroupLabel}`;
+  const shippingRuleConflictLabel = useMemo(() => {
+    if (product.shippingGroupResolutionReason !== 'multiple_category_rules') {
+      return '';
+    }
+    const labels = product.shippingGroupMatchingGroupNames ?? [];
+    return labels.join(', ');
+  }, [product.shippingGroupMatchingGroupNames, product.shippingGroupResolutionReason]);
+  const shippingRuleConflictTooltip = autoShippingRuleLabel
+    ? `Shipping rule conflict: ${shippingRuleConflictLabel} via ${autoShippingRuleLabel}`
+    : `Shipping rule conflict: ${shippingRuleConflictLabel}`;
+  const missingManualShippingLabel =
+    product.shippingGroupResolutionReason === 'manual_missing' &&
+    typeof product.shippingGroupId === 'string' &&
+    product.shippingGroupId.trim().length > 0
+      ? product.shippingGroupId.trim()
+      : '';
+  const missingManualShippingTooltip = missingManualShippingLabel
+    ? `Manual shipping group is missing: ${missingManualShippingLabel}`
+    : 'Manual shipping group is missing';
 
   return (
     <div className='min-w-0 cursor-text select-text'>
@@ -285,6 +318,45 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
             {categoryLabel}
           </button>
         </Tooltip>
+        {autoShippingGroupLabel && (
+          <>
+            <span aria-hidden='true' className='text-gray-600'>
+              |
+            </span>
+            <Tooltip content={autoShippingTooltipLabel}>
+              <span className='max-w-[12rem] truncate' title={autoShippingTooltipLabel}>
+                Auto ship: {autoShippingGroupLabel}
+              </span>
+            </Tooltip>
+          </>
+        )}
+        {shippingRuleConflictLabel && (
+          <>
+            <span aria-hidden='true' className='text-gray-600'>
+              |
+            </span>
+            <Tooltip content={shippingRuleConflictTooltip}>
+              <span
+                className='max-w-[12rem] truncate text-amber-300'
+                title={shippingRuleConflictTooltip}
+              >
+                Ship conflict
+              </span>
+            </Tooltip>
+          </>
+        )}
+        {missingManualShippingLabel && (
+          <>
+            <span aria-hidden='true' className='text-gray-600'>
+              |
+            </span>
+            <Tooltip content={missingManualShippingTooltip}>
+              <span className='max-w-[12rem] truncate text-amber-300' title={missingManualShippingTooltip}>
+                Ship missing
+              </span>
+            </Tooltip>
+          </>
+        )}
         {isImported && (
           <Tooltip
             content={

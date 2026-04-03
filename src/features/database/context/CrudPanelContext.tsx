@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useContext, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import type { DatabaseTableDetail } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export interface CrudPanelContextValue {
   selectedTable: string;
@@ -37,24 +38,23 @@ export type CrudPanelActionsContextValue = Pick<
   | 'setSuccessMessage'
 >;
 
-const CrudPanelStateContext = createContext<CrudPanelStateContextValue | null>(null);
-const CrudPanelActionsContext = createContext<CrudPanelActionsContextValue | null>(null);
+const { Context: CrudPanelStateContext, useStrictContext: useCrudPanelStateContext } =
+  createStrictContext<CrudPanelStateContextValue>({
+    hookName: 'useCrudPanelStateContext',
+    providerName: 'a CrudPanelProvider',
+    displayName: 'CrudPanelStateContext',
+    errorFactory: internalError,
+  });
 
-export function useCrudPanelStateContext(): CrudPanelStateContextValue {
-  const context = useContext(CrudPanelStateContext);
-  if (!context) {
-    throw internalError('useCrudPanelStateContext must be used within a CrudPanelProvider');
-  }
-  return context;
-}
+const { Context: CrudPanelActionsContext, useStrictContext: useCrudPanelActionsContext } =
+  createStrictContext<CrudPanelActionsContextValue>({
+    hookName: 'useCrudPanelActionsContext',
+    providerName: 'a CrudPanelProvider',
+    displayName: 'CrudPanelActionsContext',
+    errorFactory: internalError,
+  });
 
-export function useCrudPanelActionsContext(): CrudPanelActionsContextValue {
-  const context = useContext(CrudPanelActionsContext);
-  if (!context) {
-    throw internalError('useCrudPanelActionsContext must be used within a CrudPanelProvider');
-  }
-  return context;
-}
+export { useCrudPanelStateContext, useCrudPanelActionsContext };
 
 export function CrudPanelProvider({
   stateValue,

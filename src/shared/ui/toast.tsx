@@ -1,9 +1,10 @@
 'use client';
 
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle, type LucideIcon } from 'lucide-react';
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -34,8 +35,21 @@ type ToastSettingsContextValue = {
   updateSettings: (settings: ToastSettings) => void;
 };
 
-const ToastContext = createContext<ToastContextValue | null>(null);
-const ToastSettingsContext = createContext<ToastSettingsContextValue | null>(null);
+const { Context: ToastContext, useOptionalContext: useOptionalToastContext, useStrictContext: useToast } =
+  createStrictContext<ToastContextValue>({
+    hookName: 'useToast',
+    providerName: 'a ToastProvider.',
+    displayName: 'ToastContext',
+  });
+
+const { Context: ToastSettingsContext, useStrictContext: useToastSettings } =
+  createStrictContext<ToastSettingsContextValue>({
+    hookName: 'useToastSettings',
+    providerName: 'a ToastProvider.',
+    displayName: 'ToastSettingsContext',
+  });
+
+export { useToast, useToastSettings };
 
 const defaultSettings: ToastSettings = {
   position: 'top-right',
@@ -263,16 +277,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
   );
 }
 
-export function useToast(): ToastContextValue {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider.');
-  }
-  return context;
-}
-
 export function useOptionalToast(): ToastContextValue {
-  const context = useContext(ToastContext);
+  const context = useOptionalToastContext();
   return (
     context ?? {
       toast: (): void => {
@@ -280,12 +286,4 @@ export function useOptionalToast(): ToastContextValue {
       },
     }
   );
-}
-
-export function useToastSettings(): ToastSettingsContextValue {
-  const context = useContext(ToastSettingsContext);
-  if (!context) {
-    throw new Error('useToastSettings must be used within a ToastProvider.');
-  }
-  return context;
 }

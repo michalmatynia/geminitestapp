@@ -28,6 +28,12 @@ import {
   parseProductForm,
   type ParsedProductImageSequenceEntry,
 } from '@/shared/lib/products/services/product-service-form-utils';
+import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
+import { getShippingGroupRepository } from '@/shared/lib/products/services/shipping-group-repository';
+import {
+  resolveEffectiveShippingGroup,
+  resolveProductPrimaryCatalogId,
+} from '@/shared/lib/products/utils/effective-shipping-group';
 import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -39,6 +45,110 @@ const resolveProductRepository = async (
 
 const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
   getImageFileRepository();
+
+const toTrimmedString = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+
+const enrichProductsWithEffectiveShippingGroups = async <TProduct extends ProductWithImages>(
+  products: TProduct[],
+  provider: ProductDbProvider
+): Promise<TProduct[]> => {
+  if (products.length === 0) {
+    return products;
+  }
+
+  const primaryCatalogIds = Array.from(
+    new Set(
+      products
+        .map((product) => resolveProductPrimaryCatalogId(product))
+        .filter((catalogId): catalogId is string => typeof catalogId === 'string' && catalogId.length > 0)
+    )
+  );
+  const manualShippingGroupIds = Array.from(
+    new Set(
+      products
+        .map((product) => toTrimmedString(product.shippingGroupId))
+        .filter((shippingGroupId): shippingGroupId is string => shippingGroupId.length > 0)
+    )
+  );
+
+  if (primaryCatalogIds.length === 0 && manualShippingGroupIds.length === 0) {
+    return products;
+  }
+
+  const [shippingGroupRepository, categoryRepository] = await Promise.all([
+    getShippingGroupRepository(provider),
+    getCategoryRepository(provider),
+  ]);
+
+  const [shippingGroupsByCatalogEntries, categoriesByCatalogEntries, manualShippingGroupEntries] =
+    await Promise.all([
+      Promise.all(
+        primaryCatalogIds.map(async (catalogId) => [
+          catalogId,
+          await shippingGroupRepository.listShippingGroups({ catalogId }),
+        ] as const)
+      ),
+      Promise.all(
+        primaryCatalogIds.map(async (catalogId) => [
+          catalogId,
+          await categoryRepository.listCategories({ catalogId }),
+        ] as const)
+      ),
+      Promise.all(
+        manualShippingGroupIds.map(async (shippingGroupId) => [
+          shippingGroupId,
+          await shippingGroupRepository.getShippingGroupById(shippingGroupId),
+        ] as const)
+      ),
+    ]);
+
+  const shippingGroupsByCatalog = new Map(shippingGroupsByCatalogEntries);
+  const categoriesByCatalog = new Map(categoriesByCatalogEntries);
+  const manualShippingGroupsById = new Map(
+    manualShippingGroupEntries.filter((entry): entry is readonly [string, NonNullable<(typeof entry)[1]>] => entry[1] !== null)
+  );
+  const shippingGroupNamesById = new Map<string, string>();
+  for (const shippingGroups of shippingGroupsByCatalog.values()) {
+    for (const shippingGroup of shippingGroups) {
+      shippingGroupNamesById.set(toTrimmedString(shippingGroup.id), shippingGroup.name);
+    }
+  }
+  for (const [shippingGroupId, shippingGroup] of manualShippingGroupsById.entries()) {
+    shippingGroupNamesById.set(shippingGroupId, shippingGroup.name);
+  }
+
+  return products.map((product) => {
+    const primaryCatalogId = resolveProductPrimaryCatalogId(product);
+    const manualShippingGroupId = toTrimmedString(product.shippingGroupId);
+    const resolution = resolveEffectiveShippingGroup({
+      product,
+      shippingGroups: primaryCatalogId ? (shippingGroupsByCatalog.get(primaryCatalogId) ?? []) : [],
+      categories: primaryCatalogId ? (categoriesByCatalog.get(primaryCatalogId) ?? []) : [],
+      manualShippingGroup: manualShippingGroupId
+        ? (manualShippingGroupsById.get(manualShippingGroupId) ?? null)
+        : null,
+    });
+    const matchingGroupNames = resolution.matchingShippingGroupIds
+      .map((shippingGroupId) => shippingGroupNamesById.get(shippingGroupId) ?? '')
+      .filter((shippingGroupName): shippingGroupName is string => shippingGroupName.length > 0);
+
+    return {
+      ...product,
+      ...(resolution.shippingGroup ? { shippingGroup: resolution.shippingGroup } : {}),
+      ...(resolution.source ? { shippingGroupSource: resolution.source } : {}),
+      ...(resolution.reason !== 'none'
+        ? { shippingGroupResolutionReason: resolution.reason }
+        : {}),
+      ...(resolution.matchedCategoryRuleIds.length > 0
+        ? { shippingGroupMatchedCategoryRuleIds: resolution.matchedCategoryRuleIds }
+        : {}),
+      ...(matchingGroupNames.length > 0
+        ? { shippingGroupMatchingGroupNames: matchingGroupNames }
+        : {}),
+    };
+  });
+};
 
 const normalizeCreateProductPayloadForStorage = <TData extends Record<string, unknown>>(
   data: TData
@@ -290,7 +400,7 @@ async function getProducts(
       );
     }
 
-    return products;
+    return await enrichProductsWithEffectiveShippingGroups(products, provider);
   } catch (error) {
     void ErrorSystem.captureException(error);
     void ErrorSystem.captureException(error, {
@@ -310,7 +420,8 @@ async function getProductById(
   const productRepository = await resolveProductRepository(provider);
   const product = await productRepository.getProductById(id);
   if (!product) return null;
-  return product;
+  const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups([product], provider);
+  return enrichedProduct ?? null;
 }
 
 async function getProductBySku(
@@ -321,7 +432,11 @@ async function getProductBySku(
   const productRepository = await resolveProductRepository(provider);
   const product = await productRepository.getProductBySku(sku);
   if (!product) return null;
-  return product as ProductWithImages;
+  const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups(
+    [product as ProductWithImages],
+    provider
+  );
+  return enrichedProduct ?? null;
 }
 
 async function getProductsBySkus(
@@ -331,7 +446,7 @@ async function getProductsBySkus(
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
   const products = await productRepository.getProductsBySkus(skus);
-  return products as ProductWithImages[];
+  return await enrichProductsWithEffectiveShippingGroups(products as ProductWithImages[], provider);
 }
 
 async function findProductsByBaseIds(
@@ -343,7 +458,7 @@ async function findProductsByBaseIds(
   const productRepository = await resolveProductRepository(provider);
 
   const products = await productRepository.findProductsByBaseIds(baseIds);
-  return products as ProductWithImages[];
+  return await enrichProductsWithEffectiveShippingGroups(products as ProductWithImages[], provider);
 }
 
 async function createProduct(
@@ -409,7 +524,8 @@ async function createProduct(
     metadata: { productId: refreshed.id },
   });
 
-  return refreshed;
+  const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups([refreshed], provider);
+  return enrichedProduct ?? refreshed;
 }
 
 async function bulkCreateProducts(
@@ -530,7 +646,8 @@ async function updateProduct(
     metadata: { productId: refreshed.id },
   });
 
-  return refreshed;
+  const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups([refreshed], provider);
+  return enrichedProduct ?? refreshed;
 }
 async function duplicateProduct(
   id: string,
@@ -653,7 +770,11 @@ async function getProductsWithCount(
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
-  return await productRepository.getProductsWithCount(filters);
+  const result = await productRepository.getProductsWithCount(filters);
+  return {
+    products: await enrichProductsWithEffectiveShippingGroups(result.products, provider),
+    total: result.total,
+  };
 }
 
 export const productService = {

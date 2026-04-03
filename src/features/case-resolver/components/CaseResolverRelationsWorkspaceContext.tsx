@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import type {
   CaseResolverAssetFile,
@@ -8,6 +8,7 @@ import type {
   CaseResolverRelationGraph,
 } from '@/shared/contracts/case-resolver';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export interface CaseResolverRelationsWorkspaceContextValue {
   relationGraph: CaseResolverRelationGraph;
@@ -19,8 +20,17 @@ export interface CaseResolverRelationsWorkspaceContextValue {
   };
 }
 
-const CaseResolverRelationsWorkspaceContext =
-  createContext<CaseResolverRelationsWorkspaceContextValue | null>(null);
+const {
+  Context: CaseResolverRelationsWorkspaceContext,
+  useStrictContext: useCaseResolverRelationsWorkspaceContext,
+} = createStrictContext<CaseResolverRelationsWorkspaceContextValue>({
+  hookName: 'useCaseResolverRelationsWorkspaceContext',
+  providerName: 'CaseResolverRelationsWorkspaceProvider',
+  displayName: 'CaseResolverRelationsWorkspaceContext',
+  errorFactory: internalError,
+});
+
+export { useCaseResolverRelationsWorkspaceContext };
 
 export function CaseResolverRelationsWorkspaceProvider({
   children,
@@ -34,14 +44,4 @@ export function CaseResolverRelationsWorkspaceProvider({
       {children}
     </CaseResolverRelationsWorkspaceContext.Provider>
   );
-}
-
-export function useCaseResolverRelationsWorkspaceContext() {
-  const context = useContext(CaseResolverRelationsWorkspaceContext);
-  if (!context) {
-    throw internalError(
-      'useCaseResolverRelationsWorkspaceContext must be used within CaseResolverRelationsWorkspaceProvider'
-    );
-  }
-  return context;
 }

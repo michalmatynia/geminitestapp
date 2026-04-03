@@ -364,6 +364,27 @@ describe('buildFieldIssues', () => {
     ).toBe(false);
   });
 
+  it('rejects formatter auto-apply when the field target does not match the pattern target', () => {
+    const pattern = makePattern({
+      regex: '^AUTO$',
+      target: 'name',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementValue: 'Normalized name',
+      replacementFields: ['name_en'],
+      replacementAppliesToScopes: ['product_create'],
+      appliesToScopes: ['product_create'],
+    });
+
+    expect(
+      isPatternConfiguredForFormatterAutoApply({
+        pattern,
+        fieldName: 'sku',
+        validationScope: 'product_create',
+      })
+    ).toBe(false);
+  });
+
   it('supports category inference driven by Name EN segment #4', () => {
     const pattern = makePattern({
       regex: '^$',

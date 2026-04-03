@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  createContext,
-  useContext,
   useState,
   useMemo,
   useRef,
@@ -11,6 +9,7 @@ import {
 } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { AiPathRunRecord, AiPathRunEventRecord } from '@/shared/lib/ai-paths';
 
 import {
@@ -132,8 +131,25 @@ export interface RunHistoryActions {
 // Contexts (split for re-render optimization)
 // ---------------------------------------------------------------------------
 
-const RunHistoryStateContext = createContext<RunHistoryState | null>(null);
-const RunHistoryActionsContext = createContext<RunHistoryActions | null>(null);
+const {
+  Context: RunHistoryStateContext,
+  useStrictContext: useRunHistoryState,
+} = createStrictContext<RunHistoryState>({
+  hookName: 'useRunHistoryState',
+  providerName: 'a RunHistoryProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: RunHistoryActionsContext,
+  useStrictContext: useRunHistoryActions,
+} = createStrictContext<RunHistoryActions>({
+  hookName: 'useRunHistoryActions',
+  providerName: 'a RunHistoryProvider',
+  errorFactory: internalError,
+});
+
+export { useRunHistoryState, useRunHistoryActions };
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -349,27 +365,3 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
 // ---------------------------------------------------------------------------
 // Consumer Hooks
 // ---------------------------------------------------------------------------
-
-/**
- * Get the current run history state.
- * Components using this will re-render when run history state changes.
- */
-export function useRunHistoryState(): RunHistoryState {
-  const context = useContext(RunHistoryStateContext);
-  if (!context) {
-    throw internalError('useRunHistoryState must be used within a RunHistoryProvider');
-  }
-  return context;
-}
-
-/**
- * Get run history actions.
- * Components using this will NOT re-render when state changes.
- */
-export function useRunHistoryActions(): RunHistoryActions {
-  const context = useContext(RunHistoryActionsContext);
-  if (!context) {
-    throw internalError('useRunHistoryActions must be used within a RunHistoryProvider');
-  }
-  return context;
-}

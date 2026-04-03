@@ -83,14 +83,23 @@ function isDataUrl(value: string): boolean {
   return value.trim().startsWith('data:');
 }
 
-function guessExtensionFromMime(mime: string | null | undefined): string | null {
+const MIME_EXTENSION_CANDIDATES = [
+  ['jpeg', '.jpg'],
+  ['png', '.png'],
+  ['webp', '.webp'],
+  ['gif', '.gif'],
+  ['svg', '.svg'],
+] as const;
+
+export function guessExtensionFromMime(mime: string | null | undefined): string | null {
   const clean = (mime ?? '').toLowerCase();
   if (!clean) return null;
-  if (clean.includes('jpeg')) return '.jpg';
-  if (clean.includes('png')) return '.png';
-  if (clean.includes('webp')) return '.webp';
-  if (clean.includes('gif')) return '.gif';
-  if (clean.includes('svg')) return '.svg';
+
+  const match = MIME_EXTENSION_CANDIDATES.find(([candidate]) => clean.includes(candidate));
+  if (match) {
+    return match[1];
+  }
+
   return null;
 }
 

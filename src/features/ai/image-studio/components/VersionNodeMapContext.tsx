@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { VersionEdge, VersionNode } from '../context/VersionGraphContext';
 
@@ -40,7 +41,14 @@ type VersionNodeMapContextValue = {
   onPanTo: (x: number, y: number) => void;
 };
 
-const VersionNodeMapContext = React.createContext<VersionNodeMapContextValue | null>(null);
+const { Context: VersionNodeMapContext, useStrictContext: useVersionNodeMapContext } =
+  createStrictContext<VersionNodeMapContextValue>({
+    hookName: 'useVersionNodeMapContext',
+    providerName: 'VersionNodeMapProvider',
+    displayName: 'VersionNodeMapContext',
+    errorFactory: () =>
+      internalError('useVersionNodeMapContext must be used inside VersionNodeMapProvider'),
+  });
 
 export function VersionNodeMapProvider({
   value,
@@ -51,11 +59,4 @@ export function VersionNodeMapProvider({
 }): React.JSX.Element {
   return <VersionNodeMapContext.Provider value={value}>{children}</VersionNodeMapContext.Provider>;
 }
-
-export function useVersionNodeMapContext(): VersionNodeMapContextValue {
-  const context = React.useContext(VersionNodeMapContext);
-  if (!context) {
-    throw internalError('useVersionNodeMapContext must be used inside VersionNodeMapProvider');
-  }
-  return context;
-}
+export { useVersionNodeMapContext };

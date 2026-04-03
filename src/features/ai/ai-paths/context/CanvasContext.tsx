@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  createContext,
-  useContext,
   useState,
   useMemo,
   useRef,
@@ -13,6 +11,7 @@ import {
 
 import { internalError } from '@/shared/errors/app-error';
 import { clampScale } from '@/shared/lib/ai-paths';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -100,9 +99,34 @@ const DEFAULT_VIEW: ViewState = { x: -600, y: -320, scale: 1 };
 // Contexts (split for re-render optimization)
 // ---------------------------------------------------------------------------
 
-const CanvasStateContext = createContext<CanvasState | null>(null);
-const CanvasActionsContext = createContext<CanvasActions | null>(null);
-const CanvasRefsContext = createContext<CanvasRefs | null>(null);
+const {
+  Context: CanvasStateContext,
+  useStrictContext: useCanvasState,
+} = createStrictContext<CanvasState>({
+  hookName: 'useCanvasState',
+  providerName: 'a CanvasProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: CanvasActionsContext,
+  useStrictContext: useCanvasActions,
+} = createStrictContext<CanvasActions>({
+  hookName: 'useCanvasActions',
+  providerName: 'a CanvasProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: CanvasRefsContext,
+  useStrictContext: useCanvasRefs,
+} = createStrictContext<CanvasRefs>({
+  hookName: 'useCanvasRefs',
+  providerName: 'a CanvasProvider',
+  errorFactory: internalError,
+});
+
+export { useCanvasState, useCanvasActions, useCanvasRefs };
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -248,38 +272,3 @@ export function CanvasProvider({
 // ---------------------------------------------------------------------------
 // Consumer Hooks
 // ---------------------------------------------------------------------------
-
-/**
- * Get the current canvas state.
- * Components using this will re-render when canvas state changes.
- */
-export function useCanvasState(): CanvasState {
-  const context = useContext(CanvasStateContext);
-  if (!context) {
-    throw internalError('useCanvasState must be used within a CanvasProvider');
-  }
-  return context;
-}
-
-/**
- * Get canvas actions.
- * Components using this will NOT re-render when state changes.
- */
-export function useCanvasActions(): CanvasActions {
-  const context = useContext(CanvasActionsContext);
-  if (!context) {
-    throw internalError('useCanvasActions must be used within a CanvasProvider');
-  }
-  return context;
-}
-
-/**
- * Get canvas refs (viewport and canvas DOM elements).
- */
-export function useCanvasRefs(): CanvasRefs {
-  const context = useContext(CanvasRefsContext);
-  if (!context) {
-    throw internalError('useCanvasRefs must be used within a CanvasProvider');
-  }
-  return context;
-}

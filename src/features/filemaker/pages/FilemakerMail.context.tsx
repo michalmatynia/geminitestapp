@@ -1,9 +1,21 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
+
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
 import { useAdminFilemakerMailPageState, type MailPageState } from './AdminFilemakerMailPage.hooks';
 
-const MailPageContext = createContext<MailPageState | null>(null);
+const {
+  Context: MailPageContext,
+  useStrictContext: useMailPageContext,
+} = createStrictContext<MailPageState>({
+  hookName: 'useMailPageContext',
+  providerName: 'a MailPageProvider',
+  displayName: 'MailPageContext',
+});
+
+export { useMailPageContext };
 
 export function MailPageProvider({ children }: { children: React.ReactNode }) {
   const state = useAdminFilemakerMailPageState();
@@ -12,12 +24,4 @@ export function MailPageProvider({ children }: { children: React.ReactNode }) {
       {children}
     </MailPageContext.Provider>
   );
-}
-
-export function useMailPageContext(): MailPageState {
-  const context = useContext(MailPageContext);
-  if (!context) {
-    throw new Error('useMailPageContext must be used within a MailPageProvider');
-  }
-  return context;
 }

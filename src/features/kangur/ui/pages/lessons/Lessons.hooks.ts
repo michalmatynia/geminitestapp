@@ -328,9 +328,12 @@ export function useLessonsLogic() {
     shouldExposeStandaloneLessons;
   const lessons = useMemo(
     (): KangurLesson[] => {
+      const data = completeLessonsQuery.data;
+      const completeLessons = Array.isArray(data) ? data : (data as any)?.lessons ?? [];
+
       return shouldExposeLessonCatalogDetails
         ? shouldLoadCompleteLessonsCatalog
-          ? completeLessonsQuery.data?.lessons ?? []
+          ? completeLessons
           : incrementalLessons
         : EMPTY_LESSONS;
     },
@@ -629,7 +632,14 @@ export function useLessonsLogic() {
     activeLessonId === null
       ? -1
       : orderedLessons.findIndex((lesson) => lesson.id === activeLessonId);
-  const activeLesson = activeIdx >= 0 ? (orderedLessons[activeIdx] ?? null) : null;
+  const activeLesson = activeIdx >= 0 ? orderedLessons[activeIdx] : null;
+  console.log('DEBUG: useLessonsLogic activeLesson check', {
+    activeLessonId,
+    lessonsLen: lessons.length,
+    orderedLessonsLen: orderedLessons.length,
+    activeIdx,
+    hasActiveLesson: !!activeLesson
+  });
   const isCompleteLessonsCatalogLoaded =
     shouldExposeLessonCatalogDetails &&
     requestedLessonsCatalogComponentIds === undefined &&

@@ -113,6 +113,24 @@ describe('Clock theme palette', () => {
     );
   });
 
+  it('respects explicit lesson clock hand visibility and highlight overrides', () => {
+    renderWithIntl(
+      <AnalogClock
+        hours={8}
+        minutes={30}
+        highlightMinute
+        showHourHand={false}
+        showMinuteHand
+      />
+    );
+
+    expect(screen.queryByTestId('clock-lesson-hour-hand')).toBeNull();
+    expect(screen.getByTestId('clock-lesson-minute-hand')).toHaveAttribute(
+      'stroke',
+      KANGUR_CLOCK_THEME_COLORS.highlightMinuteHand
+    );
+  });
+
   it('uses storefront theme vars in lesson animations', () => {
     renderWithIntl(
       <>

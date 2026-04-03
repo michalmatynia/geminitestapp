@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import type {
   PromptExploderLearnedTemplate,
@@ -11,6 +11,7 @@ import type {
 } from '@/shared/contracts/prompt-exploder';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 
 import {
@@ -57,8 +58,24 @@ export type PromptExploderSettingsActions = ReturnType<typeof useSettingsActions
   updateSettingsBulk: ReturnType<typeof useUpdateSettingsBulk>;
 };
 
-export const SettingsStateContext = createContext<PromptExploderSettingsState | null>(null);
-export const SettingsActionsContext = createContext<PromptExploderSettingsActions | null>(null);
+const settingsStateContextResult = createStrictContext<PromptExploderSettingsState>({
+  hookName: 'useSettingsState',
+  providerName: 'SettingsProvider',
+  displayName: 'SettingsStateContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const settingsActionsContextResult = createStrictContext<PromptExploderSettingsActions>({
+  hookName: 'useSettingsActions',
+  providerName: 'SettingsProvider',
+  displayName: 'SettingsActionsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+export const SettingsStateContext = settingsStateContextResult.Context;
+export const SettingsActionsContext = settingsActionsContextResult.Context;
+export const useSettingsState = settingsStateContextResult.useStrictContext;
+export const useSettingsActions = settingsActionsContextResult.useStrictContext;
 
 export function SettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const settingsQuery = useSettingsMap();
@@ -152,20 +169,4 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       </SettingsActionsContext.Provider>
     </SettingsStateContext.Provider>
   );
-}
-
-export function useSettingsState(): PromptExploderSettingsState {
-  const context = useContext(SettingsStateContext);
-  if (!context) {
-    throw internalError('useSettingsState must be used within SettingsProvider');
-  }
-  return context;
-}
-
-export function useSettingsActions(): PromptExploderSettingsActions {
-  const context = useContext(SettingsActionsContext);
-  if (!context) {
-    throw internalError('useSettingsActions must be used within SettingsProvider');
-  }
-  return context;
 }

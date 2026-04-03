@@ -5,9 +5,13 @@ import { ActivityTypes } from '@/shared/constants/observability';
 
 const {
   repositoryMock,
+  shippingGroupRepositoryMock,
+  categoryRepositoryMock,
   imageRepositoryMock,
   getProductRepositoryMock,
   getProductDataProviderMock,
+  getShippingGroupRepositoryMock,
+  getCategoryRepositoryMock,
   uploadFileMock,
   deleteFileFromStorageMock,
   getImageFileRepositoryMock,
@@ -43,12 +47,21 @@ const {
     replaceProductProducers: vi.fn(),
     replaceProductNotes: vi.fn(),
   },
+  shippingGroupRepositoryMock: {
+    listShippingGroups: vi.fn(),
+    getShippingGroupById: vi.fn(),
+  },
+  categoryRepositoryMock: {
+    listCategories: vi.fn(),
+  },
   imageRepositoryMock: {
     getImageFileById: vi.fn(),
     deleteImageFile: vi.fn(),
   },
   getProductRepositoryMock: vi.fn(),
   getProductDataProviderMock: vi.fn(),
+  getShippingGroupRepositoryMock: vi.fn(),
+  getCategoryRepositoryMock: vi.fn(),
   uploadFileMock: vi.fn(),
   deleteFileFromStorageMock: vi.fn(),
   getImageFileRepositoryMock: vi.fn(),
@@ -67,6 +80,14 @@ vi.mock('@/shared/lib/products/services/product-repository', () => ({
 
 vi.mock('@/shared/lib/products/services/product-provider', () => ({
   getProductDataProvider: getProductDataProviderMock,
+}));
+
+vi.mock('@/shared/lib/products/services/shipping-group-repository', () => ({
+  getShippingGroupRepository: getShippingGroupRepositoryMock,
+}));
+
+vi.mock('@/shared/lib/products/services/category-repository', () => ({
+  getCategoryRepository: getCategoryRepositoryMock,
 }));
 
 vi.mock('@/shared/lib/products/validations', () => ({
@@ -146,6 +167,8 @@ describe('productService parameter normalization', () => {
 
     getProductDataProviderMock.mockResolvedValue('mongodb');
     getProductRepositoryMock.mockResolvedValue(repositoryMock);
+    getShippingGroupRepositoryMock.mockResolvedValue(shippingGroupRepositoryMock);
+    getCategoryRepositoryMock.mockResolvedValue(categoryRepositoryMock);
     getImageFileRepositoryMock.mockResolvedValue(imageRepositoryMock);
     logActivityMock.mockResolvedValue(undefined);
 
@@ -182,6 +205,9 @@ describe('productService parameter normalization', () => {
     repositoryMock.replaceProductTags.mockResolvedValue(undefined);
     repositoryMock.replaceProductProducers.mockResolvedValue(undefined);
     repositoryMock.replaceProductNotes.mockResolvedValue(undefined);
+    shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([]);
+    shippingGroupRepositoryMock.getShippingGroupById.mockResolvedValue(null);
+    categoryRepositoryMock.listCategories.mockResolvedValue([]);
     imageRepositoryMock.getImageFileById.mockResolvedValue({
       id: 'image-file-1',
       filepath: '/uploads/product-1.png',
@@ -386,6 +412,185 @@ describe('productService parameter normalization', () => {
       createProductRecord(),
     ]);
     expect(await productService.findProductsByBaseIds([], { provider: 'mongodb' as any })).toEqual([]);
+  });
+
+  it('hydrates category-rule shipping groups onto read results', async () => {
+    repositoryMock.getProducts.mockResolvedValue([
+      createProductRecord({
+        categoryId: 'category-rings',
+        catalogId: 'catalog-1',
+        shippingGroupId: null,
+      }),
+    ]);
+    shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([
+      {
+        id: 'shipping-group-1',
+        name: 'Jewellery 7 EUR',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 7,
+        autoAssignCategoryIds: ['category-jewellery'],
+      },
+    ]);
+    categoryRepositoryMock.listCategories.mockResolvedValue([
+      {
+        id: 'category-jewellery',
+        name: 'Jewellery',
+        description: null,
+        catalogId: 'catalog-1',
+        parentId: null,
+      },
+      {
+        id: 'category-rings',
+        name: 'Rings',
+        description: null,
+        catalogId: 'catalog-1',
+        parentId: 'category-jewellery',
+      },
+    ]);
+
+    const [product] = await productService.getProducts(
+      { published: true },
+      { provider: 'mongodb' as any }
+    );
+
+    expect(product).toEqual(
+      expect.objectContaining({
+        shippingGroup: expect.objectContaining({
+          id: 'shipping-group-1',
+          name: 'Jewellery 7 EUR',
+        }),
+        shippingGroupSource: 'category_rule',
+        shippingGroupResolutionReason: 'category_rule',
+        shippingGroupMatchedCategoryRuleIds: ['category-jewellery'],
+        shippingGroupMatchingGroupNames: ['Jewellery 7 EUR'],
+      })
+    );
+  });
+
+  it('prefers the manual shipping group over category rules on read helpers', async () => {
+    repositoryMock.getProductById.mockResolvedValue(
+      createProductRecord({
+        shippingGroupId: 'shipping-group-manual',
+        categoryId: 'category-rings',
+        catalogId: 'catalog-1',
+      })
+    );
+    shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([
+      {
+        id: 'shipping-group-1',
+        name: 'Jewellery 7 EUR',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 7,
+        autoAssignCategoryIds: ['category-jewellery'],
+      },
+    ]);
+    shippingGroupRepositoryMock.getShippingGroupById.mockResolvedValue({
+      id: 'shipping-group-manual',
+      name: 'Manual parcel',
+      description: null,
+      catalogId: 'catalog-1',
+      traderaShippingCondition: 'Buyer pays shipping',
+      traderaShippingPriceEur: 5,
+      autoAssignCategoryIds: [],
+    });
+    categoryRepositoryMock.listCategories.mockResolvedValue([
+      {
+        id: 'category-jewellery',
+        name: 'Jewellery',
+        description: null,
+        catalogId: 'catalog-1',
+        parentId: null,
+      },
+      {
+        id: 'category-rings',
+        name: 'Rings',
+        description: null,
+        catalogId: 'catalog-1',
+        parentId: 'category-jewellery',
+      },
+    ]);
+
+    const product = await productService.getProductById('product-1', {
+      provider: 'mongodb' as any,
+    });
+
+    expect(product).toEqual(
+      expect.objectContaining({
+        shippingGroup: expect.objectContaining({
+          id: 'shipping-group-manual',
+          name: 'Manual parcel',
+        }),
+        shippingGroupSource: 'manual',
+        shippingGroupResolutionReason: 'manual',
+        shippingGroupMatchingGroupNames: ['Manual parcel'],
+      })
+    );
+    expect(product).not.toHaveProperty('shippingGroupMatchedCategoryRuleIds');
+  });
+
+  it('hydrates ambiguous shipping-rule matches onto read results', async () => {
+    repositoryMock.getProducts.mockResolvedValue([
+      createProductRecord({
+        categoryId: 'category-rings',
+        catalogId: 'catalog-1',
+        shippingGroupId: null,
+      }),
+    ]);
+    shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([
+      {
+        id: 'shipping-group-1',
+        name: 'Jewellery 7 EUR',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 7,
+        autoAssignCategoryIds: ['category-jewellery'],
+      },
+      {
+        id: 'shipping-group-2',
+        name: 'Rings 5 EUR',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 5,
+        autoAssignCategoryIds: ['category-rings'],
+      },
+    ]);
+    categoryRepositoryMock.listCategories.mockResolvedValue([
+      {
+        id: 'category-jewellery',
+        name: 'Jewellery',
+        description: null,
+        catalogId: 'catalog-1',
+        parentId: null,
+      },
+      {
+        id: 'category-rings',
+        name: 'Rings',
+        description: null,
+        catalogId: 'catalog-1',
+        parentId: 'category-jewellery',
+      },
+    ]);
+
+    const [product] = await productService.getProducts(
+      { published: true },
+      { provider: 'mongodb' as any }
+    );
+
+    expect(product).toEqual(
+      expect.objectContaining({
+        shippingGroupResolutionReason: 'multiple_category_rules',
+        shippingGroupMatchedCategoryRuleIds: ['category-jewellery', 'category-rings'],
+        shippingGroupMatchingGroupNames: ['Jewellery 7 EUR', 'Rings 5 EUR'],
+      })
+    );
+    expect(product).not.toHaveProperty('shippingGroup');
+    expect(product).not.toHaveProperty('shippingGroupSource');
   });
 
   it('captures repository errors from getProducts', async () => {

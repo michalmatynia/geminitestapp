@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import type { Toast } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type {
   AiNode,
   DbNodePreset,
@@ -36,12 +37,14 @@ export interface AiPathSelectionData {
   selectedNode: AiNode | null;
   onDirtyChange: (dirty: boolean) => void;
 }
-const AiPathSelectionContext = createContext<AiPathSelectionData | null>(null);
-export const useAiPathSelection = (): AiPathSelectionData => {
-  const context = useContext(AiPathSelectionContext);
-  if (!context) throw internalError('useAiPathSelection must be used within AiPathConfigProvider');
-  return context;
-};
+const { Context: AiPathSelectionContext, useStrictContext: useAiPathSelection } =
+  createStrictContext<AiPathSelectionData>({
+    hookName: 'useAiPathSelection',
+    providerName: 'AiPathConfigProvider',
+    displayName: 'AiPathSelectionContext',
+    errorFactory: internalError,
+  });
+export { useAiPathSelection };
 
 // --- Graph Context ---
 export interface AiPathGraphData {
@@ -50,12 +53,14 @@ export interface AiPathGraphData {
   activePathId: string | null;
   isPathLocked: boolean;
 }
-const AiPathGraphContext = createContext<AiPathGraphData | null>(null);
-export const useAiPathGraph = (): AiPathGraphData => {
-  const context = useContext(AiPathGraphContext);
-  if (!context) throw internalError('useAiPathGraph must be used within AiPathConfigProvider');
-  return context;
-};
+const { Context: AiPathGraphContext, useStrictContext: useAiPathGraph } =
+  createStrictContext<AiPathGraphData>({
+    hookName: 'useAiPathGraph',
+    providerName: 'AiPathConfigProvider',
+    displayName: 'AiPathGraphContext',
+    errorFactory: internalError,
+  });
+export { useAiPathGraph };
 
 // --- Runtime Context ---
 export interface AiPathRuntimeData {
@@ -80,12 +85,14 @@ export interface AiPathRuntimeData {
   onSendToAi: (databaseNodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
 }
-const AiPathRuntimeContext = createContext<AiPathRuntimeData | null>(null);
-export const useAiPathRuntime = (): AiPathRuntimeData => {
-  const context = useContext(AiPathRuntimeContext);
-  if (!context) throw internalError('useAiPathRuntime must be used within AiPathConfigProvider');
-  return context;
-};
+const { Context: AiPathRuntimeContext, useStrictContext: useAiPathRuntime } =
+  createStrictContext<AiPathRuntimeData>({
+    hookName: 'useAiPathRuntime',
+    providerName: 'AiPathConfigProvider',
+    displayName: 'AiPathRuntimeContext',
+    errorFactory: internalError,
+  });
+export { useAiPathRuntime };
 
 // --- Presets Context ---
 export interface AiPathPresetsData {
@@ -96,12 +103,14 @@ export interface AiPathPresetsData {
   setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
 }
-const AiPathPresetsContext = createContext<AiPathPresetsData | null>(null);
-export const useAiPathPresets = (): AiPathPresetsData => {
-  const context = useContext(AiPathPresetsContext);
-  if (!context) throw internalError('useAiPathPresets must be used within AiPathConfigProvider');
-  return context;
-};
+const { Context: AiPathPresetsContext, useStrictContext: useAiPathPresets } =
+  createStrictContext<AiPathPresetsData>({
+    hookName: 'useAiPathPresets',
+    providerName: 'AiPathConfigProvider',
+    displayName: 'AiPathPresetsContext',
+    errorFactory: internalError,
+  });
+export { useAiPathPresets };
 
 // --- Orchestrator/Actions Context ---
 export interface AiPathOrchestratorData {
@@ -118,14 +127,14 @@ export interface AiPathOrchestratorData {
   }) => Promise<boolean>;
   toast: Toast;
 }
-const AiPathOrchestratorContext = createContext<AiPathOrchestratorData | null>(null);
-export const useAiPathOrchestrator = (): AiPathOrchestratorData => {
-  const context = useContext(AiPathOrchestratorContext);
-  if (!context) {
-    throw internalError('useAiPathOrchestrator must be used within AiPathConfigProvider');
-  }
-  return context;
-};
+const { Context: AiPathOrchestratorContext, useStrictContext: useAiPathOrchestrator } =
+  createStrictContext<AiPathOrchestratorData>({
+    hookName: 'useAiPathOrchestrator',
+    providerName: 'AiPathConfigProvider',
+    displayName: 'AiPathOrchestratorContext',
+    errorFactory: internalError,
+  });
+export { useAiPathOrchestrator };
 
 type AiPathConfigValue = AiPathSelectionData &
   AiPathGraphData &

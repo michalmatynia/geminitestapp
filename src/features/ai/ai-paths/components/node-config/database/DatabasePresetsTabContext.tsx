@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import type { DatabasePresetOption } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type DatabasePresetsTabContextValue = {
   builtInPresets?: DatabasePresetOption[];
@@ -26,10 +27,22 @@ export type DatabasePresetsTabActionsContextValue = Pick<
   DatabasePresetsTabActionKey
 >;
 
-const DatabasePresetsTabStateContext =
-  React.createContext<DatabasePresetsTabStateContextValue | null>(null);
-const DatabasePresetsTabActionsContext =
-  React.createContext<DatabasePresetsTabActionsContextValue | null>(null);
+const { Context: DatabasePresetsTabStateContext, useStrictContext: useDatabasePresetsTabStateContext } =
+  createStrictContext<DatabasePresetsTabStateContextValue>({
+    hookName: 'useDatabasePresetsTabStateContext',
+    providerName: 'DatabasePresetsTabContextProvider',
+    displayName: 'DatabasePresetsTabStateContext',
+    errorFactory: internalError,
+  });
+const {
+  Context: DatabasePresetsTabActionsContext,
+  useStrictContext: useDatabasePresetsTabActionsContext,
+} = createStrictContext<DatabasePresetsTabActionsContextValue>({
+  hookName: 'useDatabasePresetsTabActionsContext',
+  providerName: 'DatabasePresetsTabContextProvider',
+  displayName: 'DatabasePresetsTabActionsContext',
+  errorFactory: internalError,
+});
 
 export function DatabasePresetsTabContextProvider({
   value,
@@ -65,22 +78,4 @@ export function DatabasePresetsTabContextProvider({
   );
 }
 
-export function useDatabasePresetsTabStateContext(): DatabasePresetsTabStateContextValue {
-  const context = React.useContext(DatabasePresetsTabStateContext);
-  if (!context) {
-    throw internalError(
-      'useDatabasePresetsTabStateContext must be used within DatabasePresetsTabContextProvider'
-    );
-  }
-  return context;
-}
-
-export function useDatabasePresetsTabActionsContext(): DatabasePresetsTabActionsContextValue {
-  const context = React.useContext(DatabasePresetsTabActionsContext);
-  if (!context) {
-    throw internalError(
-      'useDatabasePresetsTabActionsContext must be used within DatabasePresetsTabContextProvider'
-    );
-  }
-  return context;
-}
+export { useDatabasePresetsTabStateContext, useDatabasePresetsTabActionsContext };

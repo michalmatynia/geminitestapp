@@ -19,6 +19,7 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Badge, Button, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -43,8 +44,17 @@ type PromptExploderTreeNodeRuntimeContextValue = {
   releaseDragHandle: () => void;
 };
 
-const PromptExploderTreeNodeRuntimeContext =
-  React.createContext<PromptExploderTreeNodeRuntimeContextValue | null>(null);
+const {
+  Context: PromptExploderTreeNodeRuntimeContext,
+  useStrictContext: usePromptExploderTreeNodeRuntimeContext,
+} = createStrictContext<PromptExploderTreeNodeRuntimeContextValue>({
+  hookName: 'usePromptExploderTreeNodeRuntimeContext',
+  providerName: 'a PromptExploderTreeNodeRuntimeProvider',
+  displayName: 'PromptExploderTreeNodeRuntimeContext',
+  errorFactory: (message) => internalError(message),
+});
+
+export { usePromptExploderTreeNodeRuntimeContext };
 
 export function PromptExploderTreeNodeRuntimeProvider({
   value,
@@ -58,16 +68,6 @@ export function PromptExploderTreeNodeRuntimeProvider({
       {children}
     </PromptExploderTreeNodeRuntimeContext.Provider>
   );
-}
-
-export function usePromptExploderTreeNodeRuntimeContext(): PromptExploderTreeNodeRuntimeContextValue {
-  const context = React.useContext(PromptExploderTreeNodeRuntimeContext);
-  if (!context) {
-    throw internalError(
-      'usePromptExploderTreeNodeRuntimeContext must be used within a PromptExploderTreeNodeRuntimeProvider'
-    );
-  }
-  return context;
 }
 
 type PromptExploderTreeNodeProps = FolderTreeViewportRenderNodeInput;

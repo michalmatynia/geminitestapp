@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 
 import type {
   AgentTeachingAgentRecord,
@@ -8,6 +8,7 @@ import type {
 } from '@/shared/contracts/agent-teaching';
 import { internalError } from '@/shared/errors/app-error';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeachingQueries';
 
@@ -26,28 +27,21 @@ interface AgentTeachingActionsContextType {
 
 type AgentTeachingContextType = AgentTeachingStateContextType & AgentTeachingActionsContextType;
 
-const AgentTeachingStateContext = createContext<AgentTeachingStateContextType | null>(null);
-const AgentTeachingActionsContext = createContext<AgentTeachingActionsContextType | null>(null);
-
-export const useAgentTeachingState = (): AgentTeachingStateContextType => {
-  const context = useContext(AgentTeachingStateContext);
-  if (!context) {
-    throw internalError(
-      'useAgentTeachingState must be used within an AgentTeachingProvider'
-    );
-  }
-  return context;
-};
-
-export const useAgentTeachingActions = (): AgentTeachingActionsContextType => {
-  const context = useContext(AgentTeachingActionsContext);
-  if (!context) {
-    throw internalError(
-      'useAgentTeachingActions must be used within an AgentTeachingProvider'
-    );
-  }
-  return context;
-};
+const { Context: AgentTeachingStateContext, useStrictContext: useAgentTeachingState } =
+  createStrictContext<AgentTeachingStateContextType>({
+    hookName: 'useAgentTeachingState',
+    providerName: 'an AgentTeachingProvider',
+    displayName: 'AgentTeachingStateContext',
+    errorFactory: internalError,
+  });
+const { Context: AgentTeachingActionsContext, useStrictContext: useAgentTeachingActions } =
+  createStrictContext<AgentTeachingActionsContextType>({
+    hookName: 'useAgentTeachingActions',
+    providerName: 'an AgentTeachingProvider',
+    displayName: 'AgentTeachingActionsContext',
+    errorFactory: internalError,
+  });
+export { useAgentTeachingState, useAgentTeachingActions };
 
 export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
   const state = useAgentTeachingState();

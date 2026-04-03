@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   SettingsStoreProvider,
   useSettingsStore,
+  useSettingsStoreFetching,
   type SettingsStoreValue,
 } from '@/shared/providers/SettingsStoreProvider';
 
@@ -81,6 +82,11 @@ function SettingsMapProbe({
   }, [onMapChange, store.map]);
 
   return null;
+}
+
+function SettingsFetchingProbe(): React.JSX.Element {
+  const isFetching = useSettingsStoreFetching();
+  return <div data-testid='fetching'>{String(isFetching)}</div>;
 }
 
 describe('SettingsStoreProvider', () => {
@@ -171,6 +177,11 @@ describe('SettingsStoreProvider', () => {
 
     expect(screen.getByTestId('value')).toHaveTextContent('empty');
     expect(screen.getByTestId('loading')).toHaveTextContent('false');
+  });
+
+  it('returns false from useSettingsStoreFetching outside provider fallback', () => {
+    render(<SettingsFetchingProbe />);
+    expect(screen.getByTestId('fetching')).toHaveTextContent('false');
   });
 
   it('preserves the previous map reference when refetched settings are unchanged', () => {

@@ -395,19 +395,30 @@ export const collectCascadeSlotIds = (
   return collectReachableSlotIds(resolvedRootSlotId, childIdsBySource);
 };
 
-const isGenerationDerivedSlotMetadata = (metadata: Record<string, unknown> | null): boolean => {
+const GENERATION_DERIVED_RELATION_PREFIXES = [
+  'generation:',
+  'center:',
+  'crop:',
+  'upscale:',
+  'autoscale:',
+  'sequence:',
+] as const;
+
+const readNormalizedSlotMetadataField = (
+  metadata: Record<string, unknown> | null,
+  key: string
+): string => asTrimmedString(metadata?.[key])?.toLowerCase() ?? '';
+
+const hasGenerationDerivedRelationType = (relationType: string): boolean =>
+  GENERATION_DERIVED_RELATION_PREFIXES.some((prefix) => relationType.startsWith(prefix));
+
+export const isGenerationDerivedSlotMetadata = (
+  metadata: Record<string, unknown> | null
+): boolean => {
   if (!metadata) return false;
-  const role = asTrimmedString(metadata['role'])?.toLowerCase() ?? '';
+  const role = readNormalizedSlotMetadataField(metadata, 'role');
   if (role === 'generation') return true;
-  const relationType = asTrimmedString(metadata['relationType'])?.toLowerCase() ?? '';
-  return (
-    relationType.startsWith('generation:') ||
-    relationType.startsWith('center:') ||
-    relationType.startsWith('crop:') ||
-    relationType.startsWith('upscale:') ||
-    relationType.startsWith('autoscale:') ||
-    relationType.startsWith('sequence:')
-  );
+  return hasGenerationDerivedRelationType(readNormalizedSlotMetadataField(metadata, 'relationType'));
 };
 
 const hasDirectDerivedSlotChildren = async (params: {

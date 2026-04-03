@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useDatabaseBackupsState } from '../hooks/useDatabaseBackupsState';
 
@@ -52,10 +53,27 @@ export type DatabaseBackupsActionsContextValue = Pick<
   | 'saveDailySchedule'
 >;
 
-const DatabaseBackupsStateContext = createContext<DatabaseBackupsStateContextValue | null>(null);
-const DatabaseBackupsActionsContext = createContext<DatabaseBackupsActionsContextValue | null>(
-  null
-);
+const {
+  Context: DatabaseBackupsStateContext,
+  useStrictContext: useDatabaseBackupsStateContext,
+} = createStrictContext<DatabaseBackupsStateContextValue>({
+  hookName: 'useDatabaseBackupsStateContext',
+  providerName: 'a DatabaseBackupsProvider',
+  displayName: 'DatabaseBackupsStateContext',
+  errorFactory: internalError,
+});
+
+const {
+  Context: DatabaseBackupsActionsContext,
+  useStrictContext: useDatabaseBackupsActionsContext,
+} = createStrictContext<DatabaseBackupsActionsContextValue>({
+  hookName: 'useDatabaseBackupsActionsContext',
+  providerName: 'a DatabaseBackupsProvider',
+  displayName: 'DatabaseBackupsActionsContext',
+  errorFactory: internalError,
+});
+
+export { useDatabaseBackupsStateContext, useDatabaseBackupsActionsContext };
 
 export function DatabaseBackupsProvider({
   children,
@@ -113,22 +131,4 @@ export function DatabaseBackupsProvider({
       </DatabaseBackupsStateContext.Provider>
     </DatabaseBackupsActionsContext.Provider>
   );
-}
-
-export function useDatabaseBackupsStateContext(): DatabaseBackupsStateContextValue {
-  const context = useContext(DatabaseBackupsStateContext);
-  if (!context) {
-    throw internalError('useDatabaseBackupsStateContext must be used within a DatabaseBackupsProvider');
-  }
-  return context;
-}
-
-export function useDatabaseBackupsActionsContext(): DatabaseBackupsActionsContextValue {
-  const context = useContext(DatabaseBackupsActionsContext);
-  if (!context) {
-    throw internalError(
-      'useDatabaseBackupsActionsContext must be used within a DatabaseBackupsProvider'
-    );
-  }
-  return context;
 }

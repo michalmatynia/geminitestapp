@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { assertSettingsManageAccess } from '@/features/auth/server';
-import { sendFilemakerEmailCampaignTest } from '@/features/filemaker/server';
-import type {
-  FilemakerEmailCampaignTestSendRequest,
-  FilemakerEmailCampaignTestSendResponse,
-} from '@/features/filemaker/types';
+import {
+  sendFilemakerEmailCampaignTest,
+  type FilemakerEmailCampaignTestSendRequest,
+  type FilemakerEmailCampaignTestSendResponse,
+} from '@/features/filemaker/server';
 import { filemakerEmailCampaignTestSendRequestSchema } from '@/shared/contracts/filemaker';
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

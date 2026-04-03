@@ -20,6 +20,7 @@ import {
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
 import { parseString, isCaseResolverDraggableFileNode } from './CaseResolverFolderTree.helpers';
+import { resolveCaseResolverTreeNodeClickAction } from './CaseResolverTreeNode.helpers';
 import { useCaseResolverTreeNodeRuntimeContext } from './CaseResolverTreeNodeRuntimeContext';
 import { useCaseResolverPageActions } from '../context/CaseResolverPageContext';
 
@@ -197,32 +198,39 @@ export function CaseResolverTreeNode(props: CaseResolverTreeNodeProps): React.JS
                   : 'text-gray-300 hover:bg-muted/50';
 
   const handleClick = (event?: React.MouseEvent<HTMLElement>): void => {
-    if (isCaseEntryNode) return;
-    if (!isSelected) {
+    const resolution = resolveCaseResolverTreeNodeClickAction({
+      isCaseEntryNode,
+      isSelected,
+      isVirtualSectionNode,
+      folderPath,
+      fileId,
+      fileType,
+      assetId,
+    });
+
+    if (resolution.shouldSelectNode) {
       select(event);
     }
-    if (isVirtualSectionNode) return;
-    if (folderPath !== null) {
-      onSelectFolder(folderPath);
-      return;
-    }
-    if (fileId) {
-      if (fileType === 'case') {
+
+    switch (resolution.action.type) {
+      case 'select_folder':
+        onSelectFolder(resolution.action.folderPath);
         return;
-      }
-      if (isSelected && fileType !== 'case') {
+      case 'deactivate_active_file':
         onDeactivateActiveFile();
         return;
-      }
-      if (fileType === 'document' || fileType === 'scanfile') {
-        onEditFile(fileId);
-      } else {
-        onSelectFile(fileId);
-      }
-      return;
-    }
-    if (assetId) {
-      onSelectAsset(assetId);
+      case 'edit_file':
+        onEditFile(resolution.action.fileId);
+        return;
+      case 'select_file':
+        onSelectFile(resolution.action.fileId);
+        return;
+      case 'select_asset':
+        onSelectAsset(resolution.action.assetId);
+        return;
+      case 'noop':
+      default:
+        return;
     }
   };
 

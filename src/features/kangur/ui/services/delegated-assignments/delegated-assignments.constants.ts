@@ -1,7 +1,5 @@
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
-import type {
-  KangurLessonSubject,
-} from '@/features/kangur/shared/contracts/kangur';
+import type { KangurLessonSubject } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurAssignmentCatalogItem } from './delegated-assignments.types';
 
 export const ASSIGNMENT_PRIORITY_ORDER = {
@@ -31,6 +29,28 @@ export const PRACTICE_ASSIGNMENT_RUNTIME_KEYS: Record<string, string> = {
   'practice-powers': 'practicePowers',
   'practice-roots': 'practiceRoots',
   'practice-clock': 'practiceClock',
+};
+
+export const MIXED_TRAINING_CATEGORIES = [
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+  'decimals',
+  'powers',
+  'roots',
+] as const;
+
+export const PRACTICE_OPERATION_DIFFICULTY: Record<string, string> = {
+  addition: 'medium',
+  subtraction: 'medium',
+  multiplication: 'hard',
+  division: 'medium',
+  decimals: 'medium',
+  powers: 'hard',
+  roots: 'hard',
+  clock: 'medium',
+  mixed: 'medium',
 };
 
 export const PRACTICE_ASSIGNMENT_ITEMS: KangurAssignmentCatalogItem[] = [

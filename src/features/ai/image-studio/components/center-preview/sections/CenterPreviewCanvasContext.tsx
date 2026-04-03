@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import type {
   PreviewCanvasCropRect,
@@ -8,6 +8,7 @@ import type {
 } from '@/features/ai/image-studio/context/UiContext';
 import type { VectorShape } from '@/shared/contracts/vector';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { VectorDrawingContextValue } from '@/shared/lib/vector-drawing';
 
 export interface CenterPreviewCanvasContextValue {
@@ -33,7 +34,13 @@ export interface CenterPreviewCanvasContextValue {
   onRevealInTreeFromCanvas: () => void;
 }
 
-const CenterPreviewCanvasContext = createContext<CenterPreviewCanvasContextValue | null>(null);
+const { Context: CenterPreviewCanvasContext, useStrictContext: useCenterPreviewCanvasContext } =
+  createStrictContext<CenterPreviewCanvasContextValue>({
+    hookName: 'useCenterPreviewCanvasContext',
+    providerName: 'CenterPreviewCanvasSectionProvider',
+    displayName: 'CenterPreviewCanvasContext',
+    errorFactory: internalError,
+  });
 
 export function CenterPreviewCanvasSectionProvider({
   children,
@@ -48,13 +55,4 @@ export function CenterPreviewCanvasSectionProvider({
     </CenterPreviewCanvasContext.Provider>
   );
 }
-
-export function useCenterPreviewCanvasContext(): CenterPreviewCanvasContextValue {
-  const context = useContext(CenterPreviewCanvasContext);
-  if (!context) {
-    throw internalError(
-      'useCenterPreviewCanvasContext must be used within CenterPreviewCanvasSectionProvider'
-    );
-  }
-  return context;
-}
+export { useCenterPreviewCanvasContext };

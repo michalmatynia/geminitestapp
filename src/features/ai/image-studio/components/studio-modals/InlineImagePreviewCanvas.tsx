@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -26,18 +27,14 @@ type InlinePreviewControlsRuntimeValue = {
   resetViewport: () => void;
 };
 
-const InlinePreviewControlsRuntimeContext =
-  React.createContext<InlinePreviewControlsRuntimeValue | null>(null);
-
-function useInlinePreviewControlsRuntime(): InlinePreviewControlsRuntimeValue {
-  const runtime = React.useContext(InlinePreviewControlsRuntimeContext);
-  if (!runtime) {
-    throw new Error(
-      'useInlinePreviewControlsRuntime must be used within InlinePreviewControlsRuntimeContext.Provider'
-    );
-  }
-  return runtime;
-}
+const {
+  Context: InlinePreviewControlsRuntimeContext,
+  useStrictContext: useInlinePreviewControlsRuntime,
+} = createStrictContext<InlinePreviewControlsRuntimeValue>({
+  hookName: 'useInlinePreviewControlsRuntime',
+  providerName: 'InlinePreviewControlsRuntimeContext.Provider',
+  displayName: 'InlinePreviewControlsRuntimeContext',
+});
 
 function InlineImagePreviewControls(): React.JSX.Element {
   const { hasImage, zoom, applyZoomDelta, resetViewport } = useInlinePreviewControlsRuntime();

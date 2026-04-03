@@ -47,6 +47,31 @@ describe('mongoActivityRepository', () => {
     expect(skip).toHaveBeenCalledWith(0);
   });
 
+  it('should build array type and search filters when listing activity logs', async () => {
+    const toArray = vi.fn().mockResolvedValue([]);
+    const skip = vi.fn().mockReturnValue({ toArray });
+    const limit = vi.fn().mockReturnValue({ skip });
+    const sort = vi.fn().mockReturnValue({ limit });
+    const find = vi.fn().mockReturnValue({ sort });
+    const collection = vi.fn().mockReturnValue({ find });
+    vi.mocked(getMongoDb).mockResolvedValue({
+      collection,
+    } as Awaited<ReturnType<typeof getMongoDb>>);
+
+    await mongoActivityRepository.listActivity({
+      types: ['login', 'logout'],
+      type: 'ignored',
+      entityType: 'session',
+      search: 'abc',
+    });
+
+    expect(find).toHaveBeenCalledWith({
+      type: { $in: ['login', 'logout'] },
+      entityType: 'session',
+      description: { $regex: 'abc', $options: 'i' },
+    });
+  });
+
   it('should create an activity log', async () => {
     const insertedId = new ObjectId('507f1f77bcf86cd799439012');
     const insertOne = vi.fn().mockResolvedValue({ insertedId });
@@ -73,6 +98,29 @@ describe('mongoActivityRepository', () => {
         entityId: 'e1',
         entityType: 'type',
         metadata: { foo: 'bar' },
+      })
+    );
+  });
+
+  it('should default nullable create fields to null', async () => {
+    const insertedId = new ObjectId('507f1f77bcf86cd799439013');
+    const insertOne = vi.fn().mockResolvedValue({ insertedId });
+    const collection = vi.fn().mockReturnValue({ insertOne });
+    vi.mocked(getMongoDb).mockResolvedValue({
+      collection,
+    } as Awaited<ReturnType<typeof getMongoDb>>);
+
+    await mongoActivityRepository.createActivity({
+      type: 'test',
+      description: 'desc',
+    });
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: null,
+        entityId: null,
+        entityType: null,
+        metadata: null,
       })
     );
   });

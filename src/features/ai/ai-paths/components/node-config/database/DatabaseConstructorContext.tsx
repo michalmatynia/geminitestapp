@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiQuery, DatabasePresetOption, SchemaData } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type {
   DatabaseConfig,
   DatabaseOperation,
@@ -84,10 +85,22 @@ export type DatabaseConstructorActionsContextValue = Pick<
   DatabaseConstructorActionKey
 >;
 
-const DatabaseConstructorStateContext =
-  React.createContext<DatabaseConstructorStateContextValue | null>(null);
-const DatabaseConstructorActionsContext =
-  React.createContext<DatabaseConstructorActionsContextValue | null>(null);
+const { Context: DatabaseConstructorStateContext, useStrictContext: useDatabaseConstructorStateContext } =
+  createStrictContext<DatabaseConstructorStateContextValue>({
+    hookName: 'useDatabaseConstructorStateContext',
+    providerName: 'DatabaseConstructorContextProvider',
+    displayName: 'DatabaseConstructorStateContext',
+    errorFactory: internalError,
+  });
+const {
+  Context: DatabaseConstructorActionsContext,
+  useStrictContext: useDatabaseConstructorActionsContext,
+} = createStrictContext<DatabaseConstructorActionsContextValue>({
+  hookName: 'useDatabaseConstructorActionsContext',
+  providerName: 'DatabaseConstructorContextProvider',
+  displayName: 'DatabaseConstructorActionsContext',
+  errorFactory: internalError,
+});
 
 export function DatabaseConstructorContextProvider({
   value,
@@ -245,22 +258,4 @@ export function DatabaseConstructorContextProvider({
   );
 }
 
-export function useDatabaseConstructorStateContext(): DatabaseConstructorStateContextValue {
-  const context = React.useContext(DatabaseConstructorStateContext);
-  if (!context) {
-    throw internalError(
-      'useDatabaseConstructorStateContext must be used within DatabaseConstructorContextProvider'
-    );
-  }
-  return context;
-}
-
-export function useDatabaseConstructorActionsContext(): DatabaseConstructorActionsContextValue {
-  const context = React.useContext(DatabaseConstructorActionsContext);
-  if (!context) {
-    throw internalError(
-      'useDatabaseConstructorActionsContext must be used within DatabaseConstructorContextProvider'
-    );
-  }
-  return context;
-}
+export { useDatabaseConstructorStateContext, useDatabaseConstructorActionsContext };

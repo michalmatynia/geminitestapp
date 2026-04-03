@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type {
   AiNode,
   AiPathRuntimeNodeStatusMap,
@@ -110,7 +111,13 @@ export interface CanvasBoardUIContextValue {
   onSelectEdge: (edgeId: string) => void;
 }
 
-const CanvasBoardUIContext = createContext<CanvasBoardUIContextValue | null>(null);
+const { Context: CanvasBoardUIContext, useStrictContext: useCanvasBoardUI } =
+  createStrictContext<CanvasBoardUIContextValue>({
+    hookName: 'useCanvasBoardUI',
+    providerName: 'CanvasBoardUIProvider',
+    displayName: 'CanvasBoardUIContext',
+    errorFactory: internalError,
+  });
 
 export function CanvasBoardUIProvider({
   children,
@@ -121,14 +128,7 @@ export function CanvasBoardUIProvider({
 }) {
   return <CanvasBoardUIContext.Provider value={value}>{children}</CanvasBoardUIContext.Provider>;
 }
-
-export function useCanvasBoardUI() {
-  const context = useContext(CanvasBoardUIContext);
-  if (!context) {
-    throw internalError('useCanvasBoardUI must be used within CanvasBoardUIProvider');
-  }
-  return context;
-}
+export { useCanvasBoardUI };
 
 export function useCanvasBoardUIState(): CanvasBoardUIContextValue {
   return useCanvasBoardUI();

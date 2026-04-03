@@ -4,12 +4,10 @@ import { z } from 'zod';
 import {
   isKangurSettingKey,
   listKangurSettingsByKeys,
-} from '@/features/kangur/server';
-import {
   KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
   ensureKangurStorefrontAppearanceSettingsSeeded,
-} from '@/features/kangur/server-source';
-import { ensureKangurThemePresetManifestSeeded } from '@/features/kangur/appearance/server/theme-preset-manifest-source';
+  ensureKangurThemePresetManifestSeeded,
+} from '@/features/kangur/server';
 import { KANGUR_THEME_PRESET_MANIFEST_KEY } from '@/shared/contracts/kangur-settings-keys';
 import type { MongoStringSettingRecord } from '@/shared/contracts/settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

@@ -420,11 +420,15 @@ describe('runTraderaBrowserListing scripted mode', () => {
         catalogId: 'catalog-1',
         traderaShippingCondition: 'Buyer pays shipping',
         traderaShippingPriceEur: 5,
+        autoAssignCategoryIds: [],
       },
       shippingGroupId: 'shipping-group-1',
       shippingCondition: 'Buyer pays shipping',
       shippingPriceEur: 5,
+      shippingGroupSource: 'manual',
       reason: 'mapped',
+      matchedCategoryRuleIds: [],
+      matchingShippingGroupIds: ['shipping-group-1'],
     });
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
       headless: true,
@@ -544,9 +548,12 @@ describe('runTraderaBrowserListing scripted mode', () => {
             shippingGroupId: 'shipping-group-1',
             shippingGroupName: 'Small parcel',
             shippingGroupCatalogId: 'catalog-1',
+            shippingGroupSource: 'manual',
             shippingCondition: 'Buyer pays shipping',
             shippingPriceEur: 5,
             reason: 'mapped',
+            matchedCategoryRuleIds: [],
+            matchingShippingGroupIds: ['shipping-group-1'],
           },
         }),
       })
@@ -595,10 +602,13 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categorySource: 'categoryMapper',
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
+        shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
         shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
+        matchedCategoryRuleIds: [],
+        matchingShippingGroupIds: ['shipping-group-1'],
       },
     });
   });
@@ -789,10 +799,13 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categorySource: 'categoryMapper',
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
+        shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
         shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
+        matchedCategoryRuleIds: [],
+        matchingShippingGroupIds: ['shipping-group-1'],
       },
     });
   });
@@ -904,10 +917,13 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categorySource: 'categoryMapper',
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
+        shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
         shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
+        matchedCategoryRuleIds: [],
+        matchingShippingGroupIds: ['shipping-group-1'],
       },
     });
   });
@@ -1177,10 +1193,13 @@ describe('runTraderaBrowserListing scripted mode', () => {
         categorySource: 'categoryMapper',
         shippingGroupId: 'shipping-group-1',
         shippingGroupName: 'Small parcel',
+        shippingGroupSource: 'manual',
         shippingCondition: 'Buyer pays shipping',
         shippingPriceEur: 5,
         shippingConditionSource: 'shippingGroup',
         shippingConditionReason: 'mapped',
+        matchedCategoryRuleIds: [],
+        matchingShippingGroupIds: ['shipping-group-1'],
       },
     });
   });

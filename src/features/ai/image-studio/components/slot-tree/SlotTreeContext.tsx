@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {
@@ -43,10 +43,12 @@ export interface SlotTreeContextValue {
   deleteSlotMutationPending: boolean;
 }
 
-export const SlotTreeContext = createContext<SlotTreeContextValue | null>(null);
+const { Context: SlotTreeContext, useStrictContext: useSlotTreeContext } =
+  createStrictContext<SlotTreeContextValue>({
+    hookName: 'useSlotTreeContext',
+    providerName: 'SlotTree',
+    displayName: 'SlotTreeContext',
+    errorFactory: internalError,
+  });
 
-export function useSlotTreeContext(): SlotTreeContextValue {
-  const context = useContext(SlotTreeContext);
-  if (!context) throw internalError('useSlotTreeContext must be used within SlotTree');
-  return context;
-}
+export { SlotTreeContext, useSlotTreeContext };

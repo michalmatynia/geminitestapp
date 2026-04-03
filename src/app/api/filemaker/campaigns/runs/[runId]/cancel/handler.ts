@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { assertSettingsManageAccess } from '@/features/auth/server';
-import { cancelFilemakerEmailCampaignRun } from '@/features/filemaker/server';
-import type { FilemakerEmailCampaignCancelRunResponse } from '@/features/filemaker/types';
+import {
+  cancelFilemakerEmailCampaignRun,
+  type FilemakerEmailCampaignCancelRunResponse,
+} from '@/features/filemaker/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function POST_handler(

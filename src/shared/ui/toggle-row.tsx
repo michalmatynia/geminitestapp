@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import type { ToggleRowProps } from '@/shared/contracts/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Card } from './card';
@@ -16,11 +17,17 @@ type ToggleRowContextValue = ToggleRowProps & {
   errorId?: string;
 };
 
-const ToggleRowContext = createContext<ToggleRowContextValue | null>(null);
+const {
+  Context: ToggleRowContext,
+  useStrictContext: useToggleRowContext,
+} = createStrictContext<ToggleRowContextValue>({
+  hookName: 'ToggleRowControl',
+  providerName: 'ToggleRow',
+  displayName: 'ToggleRowContext',
+});
 
 function ToggleRowControl(): React.JSX.Element {
-  const context = useContext(ToggleRowContext);
-  if (!context) throw new Error('ToggleRowControl must be used within ToggleRow');
+  const context = useToggleRowContext();
 
   const {
     variant = 'checkbox',

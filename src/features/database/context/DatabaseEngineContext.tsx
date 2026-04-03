@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import {
   useDatabaseEngineState,
@@ -35,8 +36,27 @@ export type DatabaseEngineActionsContextValue = Pick<
   | 'refetchAll'
 >;
 
-const DatabaseEngineStateContext = createContext<DatabaseEngineStateContextValue | null>(null);
-const DatabaseEngineActionsContext = createContext<DatabaseEngineActionsContextValue | null>(null);
+const {
+  Context: DatabaseEngineStateContext,
+  useStrictContext: useDatabaseEngineStateContext,
+} = createStrictContext<DatabaseEngineStateContextValue>({
+  hookName: 'useDatabaseEngineStateContext',
+  providerName: 'a DatabaseEngineProvider',
+  displayName: 'DatabaseEngineStateContext',
+  errorFactory: internalError,
+});
+
+const {
+  Context: DatabaseEngineActionsContext,
+  useStrictContext: useDatabaseEngineActionsContext,
+} = createStrictContext<DatabaseEngineActionsContextValue>({
+  hookName: 'useDatabaseEngineActionsContext',
+  providerName: 'a DatabaseEngineProvider',
+  displayName: 'DatabaseEngineActionsContext',
+  errorFactory: internalError,
+});
+
+export { useDatabaseEngineStateContext, useDatabaseEngineActionsContext };
 
 export function DatabaseEngineProvider({
   children,
@@ -75,20 +95,4 @@ export function DatabaseEngineProvider({
       </DatabaseEngineStateContext.Provider>
     </DatabaseEngineActionsContext.Provider>
   );
-}
-
-export function useDatabaseEngineStateContext(): DatabaseEngineStateContextValue {
-  const context = useContext(DatabaseEngineStateContext);
-  if (!context) {
-    throw internalError('useDatabaseEngineStateContext must be used within a DatabaseEngineProvider');
-  }
-  return context;
-}
-
-export function useDatabaseEngineActionsContext(): DatabaseEngineActionsContextValue {
-  const context = useContext(DatabaseEngineActionsContext);
-  if (!context) {
-    throw internalError('useDatabaseEngineActionsContext must be used within a DatabaseEngineProvider');
-  }
-  return context;
 }

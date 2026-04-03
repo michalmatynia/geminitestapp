@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   collectCascadeSlotIds,
   getSourceSlotIdsFromMetadata,
+  isGenerationDerivedSlotMetadata,
   resolveSlotIdAliases,
 } from '@/features/ai/image-studio/server/slot-repository';
 
@@ -66,5 +67,12 @@ describe('slot-repository utility helpers', () => {
         { _id: 'child-1', metadata: { sourceSlotId: 'root-1' }, imageFileId: null, screenshotFileId: null },
       ])
     ).toEqual([]);
+  });
+
+  it('detects generation-derived slot metadata from role and relation type', () => {
+    expect(isGenerationDerivedSlotMetadata({ role: ' Generation ' })).toBe(true);
+    expect(isGenerationDerivedSlotMetadata({ relationType: 'upscale:variant' })).toBe(true);
+    expect(isGenerationDerivedSlotMetadata({ relationType: 'analysis:layout' })).toBe(false);
+    expect(isGenerationDerivedSlotMetadata(null)).toBe(false);
   });
 });

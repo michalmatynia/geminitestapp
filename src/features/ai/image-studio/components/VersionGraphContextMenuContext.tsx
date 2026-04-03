@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
@@ -19,9 +20,18 @@ type VersionGraphContextMenuValue = {
   onCopyId: (nodeId: string) => void;
 };
 
-const VersionGraphContextMenuContext = React.createContext<VersionGraphContextMenuValue | null>(
-  null
-);
+const {
+  Context: VersionGraphContextMenuContext,
+  useStrictContext: useVersionGraphContextMenuContext,
+} = createStrictContext<VersionGraphContextMenuValue>({
+  hookName: 'useVersionGraphContextMenuContext',
+  providerName: 'VersionGraphContextMenuProvider',
+  displayName: 'VersionGraphContextMenuContext',
+  errorFactory: () =>
+    internalError(
+      'useVersionGraphContextMenuContext must be used inside VersionGraphContextMenuProvider'
+    ),
+});
 
 export function VersionGraphContextMenuProvider({
   value,
@@ -36,13 +46,4 @@ export function VersionGraphContextMenuProvider({
     </VersionGraphContextMenuContext.Provider>
   );
 }
-
-export function useVersionGraphContextMenuContext(): VersionGraphContextMenuValue {
-  const context = React.useContext(VersionGraphContextMenuContext);
-  if (!context) {
-    throw internalError(
-      'useVersionGraphContextMenuContext must be used inside VersionGraphContextMenuProvider'
-    );
-  }
-  return context;
-}
+export { useVersionGraphContextMenuContext };

@@ -140,6 +140,42 @@ const initialStats = (total = 0): BaseImportRunStats => ({
   parameterImportSummary: createEmptyRunParameterImportSummary(),
 });
 
+const RUN_ITEM_STATUS_COUNTER_FIELDS = {
+  processing: 'processing',
+  imported: 'imported',
+  updated: 'updated',
+  skipped: 'skipped',
+  failed: 'failed',
+} as const satisfies Partial<Record<BaseImportItemStatus, keyof BaseImportRunStats>>;
+
+const incrementRunStatsForItemStatus = (
+  stats: BaseImportRunStats,
+  status: BaseImportItemRecord['status']
+): void => {
+  const field = RUN_ITEM_STATUS_COUNTER_FIELDS[status as keyof typeof RUN_ITEM_STATUS_COUNTER_FIELDS];
+  if (!field) {
+    return;
+  }
+
+  stats[field] += 1;
+};
+
+const applyItemParameterImportSummary = (
+  summary: BaseImportRunParameterImportSummary,
+  itemSummary: unknown
+): void => {
+  const normalized = normalizeParameterImportSummary(itemSummary);
+  if (!normalized) {
+    return;
+  }
+
+  summary.itemsApplied += 1;
+  summary.extracted += normalized.extracted;
+  summary.resolved += normalized.resolved;
+  summary.created += normalized.created;
+  summary.written += normalized.written;
+};
+
 const normalizeRunStats = (value: unknown): BaseImportRunStats => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return initialStats(0);
@@ -531,19 +567,8 @@ export const computeBaseImportRunStats = (items: BaseImportItemRecord[]): BaseIm
   const parameterImportSummary =
     stats.parameterImportSummary ?? createEmptyRunParameterImportSummary();
   for (const item of items) {
-    if (item.status === 'processing') stats.processing += 1;
-    if (item.status === 'imported') stats.imported += 1;
-    if (item.status === 'updated') stats.updated += 1;
-    if (item.status === 'skipped') stats.skipped += 1;
-    if (item.status === 'failed') stats.failed += 1;
-    const itemSummary = normalizeParameterImportSummary(item.parameterImportSummary);
-    if (itemSummary) {
-      parameterImportSummary.itemsApplied += 1;
-      parameterImportSummary.extracted += itemSummary.extracted;
-      parameterImportSummary.resolved += itemSummary.resolved;
-      parameterImportSummary.created += itemSummary.created;
-      parameterImportSummary.written += itemSummary.written;
-    }
+    incrementRunStatsForItemStatus(stats, item.status);
+    applyItemParameterImportSummary(parameterImportSummary, item.parameterImportSummary);
   }
   stats.pending = Math.max(
     0,

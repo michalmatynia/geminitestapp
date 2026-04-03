@@ -3,6 +3,7 @@
  */
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -13,6 +14,8 @@ import {
   CmsStorefrontAppearanceProvider,
   resolveCmsStorefrontAppearance,
   resolveKangurStorefrontAppearance,
+  useCmsStorefrontAppearanceActions,
+  useCmsStorefrontAppearanceState,
   useOptionalCmsStorefrontAppearance,
 } from './CmsStorefrontAppearance';
 
@@ -27,6 +30,15 @@ const TEST_STORAGE_KEY = 'cms-storefront-appearance-test-mode';
 describe('CmsStorefrontAppearance', () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+  it('throws when strict storefront appearance hooks are used outside the provider', () => {
+    expect(() => renderHook(() => useCmsStorefrontAppearanceState())).toThrow(
+      'useCmsStorefrontAppearanceState must be used within a CmsStorefrontAppearanceProvider'
+    );
+    expect(() => renderHook(() => useCmsStorefrontAppearanceActions())).toThrow(
+      'useCmsStorefrontAppearanceActions must be used within a CmsStorefrontAppearanceProvider'
+    );
   });
 
   it('updates the selected appearance mode', () => {

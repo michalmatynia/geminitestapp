@@ -18,6 +18,7 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import type {
   ContextRuntimeDocument,
+  ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
 import {
   type LessonDocumentSnippetCard,
@@ -268,34 +269,67 @@ export const buildLessonDocumentSnippetCards = (
     .slice(0, 24);
 };
 
+const isLessonAssignmentForComponent = (
+  assignment: KangurAssignmentSnapshot,
+  componentId: KangurLesson['componentId']
+): boolean =>
+  assignment.target.type === 'lesson' && assignment.target.lessonComponentId === componentId;
+
+const findContextSelectedLessonAssignment = (
+  assignments: KangurAssignmentSnapshot[],
+  assignmentId: string | undefined
+): KangurAssignmentSnapshot | null => {
+  if (!assignmentId) {
+    return null;
+  }
+  return assignments.find((assignment) => assignment.id === assignmentId) ?? null;
+};
+
+const findLessonAssignmentByCompletionState = (
+  assignments: KangurAssignmentSnapshot[],
+  componentId: KangurLesson['componentId'],
+  completed: boolean
+): KangurAssignmentSnapshot | null =>
+  assignments.find(
+    (assignment) =>
+      isLessonAssignmentForComponent(assignment, componentId) &&
+      (assignment.progress.status === 'completed') === completed
+  ) ?? null;
+
 export const findRelevantLessonAssignment = (
   lesson: KangurLesson,
   assignments: KangurAssignmentSnapshot[],
   context?: Pick<KangurAiTutorConversationContext, 'assignmentId'>
 ): KangurAssignmentSnapshot | null => {
-  if (context?.assignmentId) {
-    const exact = assignments.find((assignment) => assignment.id === context.assignmentId);
-    if (exact) {
-      return exact;
-    }
+  const exact = findContextSelectedLessonAssignment(assignments, context?.assignmentId);
+  if (exact) {
+    return exact;
   }
-  const active = assignments.find(
-    (assignment) =>
-      assignment.target.type === 'lesson' &&
-      assignment.target.lessonComponentId === lesson.componentId &&
-      assignment.progress.status !== 'completed'
-  );
-  if (active) {
-    return active;
-  }
+
   return (
-    assignments.find(
-      (assignment) =>
-        assignment.target.type === 'lesson' &&
-        assignment.target.lessonComponentId === lesson.componentId
-    ) ?? null
+    findLessonAssignmentByCompletionState(assignments, lesson.componentId, false) ??
+    findLessonAssignmentByCompletionState(assignments, lesson.componentId, true)
   );
 };
+
+const buildLearnerLoginActivityLine = (
+  learnerDisplayName: string,
+  lastLearnerSignInAt: string | null
+): string =>
+  lastLearnerSignInAt
+    ? `${learnerDisplayName} last signed into Kangur at ${lastLearnerSignInAt}.`
+    : `No recent Kangur learner sign-in was recorded for ${learnerDisplayName}.`;
+
+const buildParentLoginActivityLine = (lastParentLoginAt: string | null): string =>
+  lastParentLoginAt
+    ? `The parent last logged into Kangur at ${lastParentLoginAt}.`
+    : 'No recent Kangur parent login was recorded.';
+
+const buildWeeklyLoginCountsLine = (input: {
+  learnerSignInCount7d: number;
+  parentLoginCount7d: number;
+}): string =>
+  `In the last 7 days there were ${input.learnerSignInCount7d} learner sign-ins and ${input.parentLoginCount7d} parent Kangur logins.`;
 
 export const buildLoginActivitySummary = (input: {
   learnerDisplayName: string | null;
@@ -305,37 +339,31 @@ export const buildLoginActivitySummary = (input: {
   lastLearnerSignInAt: string | null;
 }): string => {
   const learnerLabel = input.learnerDisplayName ?? 'This learner';
-  const lines: string[] = [];
-  if (input.lastLearnerSignInAt) {
-    lines.push(`${learnerLabel} last signed into Kangur at ${input.lastLearnerSignInAt}.`);
-  } else {
-    lines.push(`No recent Kangur learner sign-in was recorded for ${learnerLabel}.`);
-  }
-  if (input.lastParentLoginAt) {
-    lines.push(`The parent last logged into Kangur at ${input.lastParentLoginAt}.`);
-  } else {
-    lines.push('No recent Kangur parent login was recorded.');
-  }
-  lines.push(
-    `In the last 7 days there were ${input.learnerSignInCount7d} learner sign-ins and ${input.parentLoginCount7d} parent Kangur logins.`
-  );
-  return lines.join(' ');
+  return [
+    buildLearnerLoginActivityLine(learnerLabel, input.lastLearnerSignInAt),
+    buildParentLoginActivityLine(input.lastParentLoginAt),
+    buildWeeklyLoginCountsLine(input),
+  ].join(' ');
 };
 
-type RuntimeTextSection = Extract<
-  NonNullable<ContextRuntimeDocument['sections']>[number],
-  { kind: 'text' }
->;
+type RuntimeDocumentSections = NonNullable<ContextRuntimeDocument['sections']>;
+type RuntimeTextSection = ContextRuntimeDocumentSection & {
+  id: string;
+  kind: 'text';
+  text: string;
+};
 
 const upsertRuntimeTextSection = (
-  sections: NonNullable<ContextRuntimeDocument['sections']>,
+  sections: RuntimeDocumentSections,
   nextSection: RuntimeTextSection | null
-): NonNullable<ContextRuntimeDocument['sections']> => {
+): RuntimeDocumentSections => {
   if (!nextSection) {
     return sections;
   }
 
-  const existingSectionIndex = sections.findIndex((section) => section.id === nextSection.id);
+  const existingSectionIndex = sections.findIndex(
+    (section: ContextRuntimeDocumentSection) => section.id === nextSection.id
+  );
   return existingSectionIndex >= 0
     ? sections.map((section, index) => (index === existingSectionIndex ? nextSection : section))
     : [...sections, nextSection];
@@ -366,7 +394,7 @@ const buildAugmentedTestSurfaceSections = (
   reviewSummary: string | null,
   selectedChoiceFacts: { selectedChoiceSummary: string } | null
 ): NonNullable<ContextRuntimeDocument['sections']> => {
-  const sections = document.sections ?? [];
+  const sections: RuntimeDocumentSections = document.sections ?? [];
   const sectionsWithResult = upsertRuntimeTextSection(
     sections,
     resultSummary === null

@@ -8,22 +8,18 @@ import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {
   invalidateKangurStorefrontInitialStateCache,
   isKangurStorefrontInitialStateDependencyKey,
-} from '@/features/kangur/server';
-import { primeKangurLaunchRouteRuntime } from '@/features/kangur/server/launch-route';
-import { writeKangurLaunchRouteDevSnapshot } from '@/features/kangur/server/launch-route-dev-snapshot';
-import {
+  primeKangurLaunchRouteRuntime,
   KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
   ensureKangurStorefrontAppearanceSettingsSeeded,
-} from '@/features/kangur/server-source';
-import { ensureKangurThemeCatalogSeeded } from '@/features/kangur/appearance/server/theme-catalog-source';
-import { ensureKangurThemePresetManifestSeeded } from '@/features/kangur/appearance/server/theme-preset-manifest-source';
-import { ensureKangurThemeSlotAssignmentsSeeded } from '@/features/kangur/appearance/server/theme-slot-assignments-source';
-import {
+  ensureKangurThemeCatalogSeeded,
+  ensureKangurThemePresetManifestSeeded,
+  ensureKangurThemeSlotAssignmentsSeeded,
   isKangurSettingKey,
   listKangurSettings,
   readKangurSettingValue,
   upsertKangurSettingValue,
 } from '@/features/kangur/server';
+import { writeKangurLaunchRouteDevSnapshot } from '@/features/kangur/server/launch-route-dev-snapshot';
 import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/server';
 import {
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,

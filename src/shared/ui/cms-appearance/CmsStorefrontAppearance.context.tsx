@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CmsStorefrontAppearanceMode,
   CmsStorefrontAppearanceContextValue,
@@ -9,6 +9,7 @@ import {
 } from './CmsStorefrontAppearance.contracts';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 type CmsStorefrontAppearanceStateContextValue = {
   mode: CmsStorefrontAppearanceMode;
@@ -18,10 +19,25 @@ type CmsStorefrontAppearanceActionsContextValue = {
   setMode: React.Dispatch<React.SetStateAction<CmsStorefrontAppearanceMode>>;
 };
 
-const CmsStorefrontAppearanceStateContext =
-  createContext<CmsStorefrontAppearanceStateContextValue | null>(null);
-const CmsStorefrontAppearanceActionsContext =
-  createContext<CmsStorefrontAppearanceActionsContextValue | null>(null);
+const {
+  Context: CmsStorefrontAppearanceStateContext,
+  useStrictContext: useCmsStorefrontAppearanceStateContext,
+  useOptionalContext: useOptionalCmsStorefrontAppearanceStateContext,
+} = createStrictContext<CmsStorefrontAppearanceStateContextValue>({
+  hookName: 'useCmsStorefrontAppearanceState',
+  providerName: 'a CmsStorefrontAppearanceProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: CmsStorefrontAppearanceActionsContext,
+  useStrictContext: useCmsStorefrontAppearanceActionsContext,
+  useOptionalContext: useOptionalCmsStorefrontAppearanceActionsContext,
+} = createStrictContext<CmsStorefrontAppearanceActionsContextValue>({
+  hookName: 'useCmsStorefrontAppearanceActions',
+  providerName: 'a CmsStorefrontAppearanceProvider',
+  errorFactory: internalError,
+});
 
 const canUseLocalStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -102,25 +118,8 @@ export function CmsStorefrontAppearanceProvider({
   );
 }
 
-export function useCmsStorefrontAppearanceState(): CmsStorefrontAppearanceStateContextValue {
-  const context = useContext(CmsStorefrontAppearanceStateContext);
-  if (!context) {
-    throw internalError(
-      'useCmsStorefrontAppearanceState must be used within a CmsStorefrontAppearanceProvider'
-    );
-  }
-  return context;
-}
-
-export function useCmsStorefrontAppearanceActions(): CmsStorefrontAppearanceActionsContextValue {
-  const context = useContext(CmsStorefrontAppearanceActionsContext);
-  if (!context) {
-    throw internalError(
-      'useCmsStorefrontAppearanceActions must be used within a CmsStorefrontAppearanceProvider'
-    );
-  }
-  return context;
-}
+export const useCmsStorefrontAppearanceState = useCmsStorefrontAppearanceStateContext;
+export const useCmsStorefrontAppearanceActions = useCmsStorefrontAppearanceActionsContext;
 
 export function useCmsStorefrontAppearance(): CmsStorefrontAppearanceContextValue {
   const state = useCmsStorefrontAppearanceState();
@@ -131,8 +130,8 @@ export function useCmsStorefrontAppearance(): CmsStorefrontAppearanceContextValu
 export function useOptionalCmsStorefrontAppearance():
   | CmsStorefrontAppearanceContextValue
   | null {
-  const state = useContext(CmsStorefrontAppearanceStateContext);
-  const actions = useContext(CmsStorefrontAppearanceActionsContext);
+  const state = useOptionalCmsStorefrontAppearanceStateContext();
+  const actions = useOptionalCmsStorefrontAppearanceActionsContext();
   return useMemo(() => {
     if (!state || !actions) return null;
     return { ...state, ...actions };

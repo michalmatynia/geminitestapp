@@ -4,13 +4,23 @@ import React from 'react';
 
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 type Asset3DPreviewModalViewContextValue = {
   asset: Asset3DRecord;
 };
 
-const Asset3DPreviewModalViewContext =
-  React.createContext<Asset3DPreviewModalViewContextValue | null>(null);
+const {
+  Context: Asset3DPreviewModalViewContext,
+  useStrictContext: useAsset3DPreviewModalViewContext,
+} = createStrictContext<Asset3DPreviewModalViewContextValue>({
+  hookName: 'useAsset3DPreviewModalViewContext',
+  providerName: 'Asset3DPreviewModalViewProvider',
+  displayName: 'Asset3DPreviewModalViewContext',
+  errorFactory: internalError,
+});
+
+export { useAsset3DPreviewModalViewContext };
 
 type Asset3DPreviewModalViewProviderProps = {
   value: Asset3DPreviewModalViewContextValue;
@@ -26,14 +36,4 @@ export function Asset3DPreviewModalViewProvider({
       {children}
     </Asset3DPreviewModalViewContext.Provider>
   );
-}
-
-export function useAsset3DPreviewModalViewContext(): Asset3DPreviewModalViewContextValue {
-  const context = React.useContext(Asset3DPreviewModalViewContext);
-  if (!context) {
-    throw internalError(
-      'useAsset3DPreviewModalViewContext must be used within Asset3DPreviewModalViewProvider'
-    );
-  }
-  return context;
 }

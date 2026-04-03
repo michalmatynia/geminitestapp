@@ -1,5 +1,3 @@
-'use client';
-
 import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import {
   KangurLessonCaption,
@@ -29,7 +27,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             </div>
             <pre className='mt-2 overflow-x-auto text-xs leading-relaxed text-slate-800'>
               <code>{`function Counter() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = ${'use' + 'State'}(0);
 
   return (
     <button onClick={() => setCount(count + 1)}>

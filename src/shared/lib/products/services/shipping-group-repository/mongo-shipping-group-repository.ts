@@ -21,9 +21,24 @@ interface ProductShippingGroupDoc extends Document {
   catalogId: string;
   traderaShippingCondition: string | null;
   traderaShippingPriceEur: number | null;
+  autoAssignCategoryIds: string[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const normalizeCategoryIdList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  const unique = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== 'string') continue;
+    const trimmed = item.trim();
+    if (!trimmed) continue;
+    unique.add(trimmed);
+  }
+
+  return Array.from(unique);
+};
 
 const toShippingGroupDomain = (doc: ProductShippingGroupDoc): ProductShippingGroup => ({
   id: doc._id.toString(),
@@ -36,6 +51,7 @@ const toShippingGroupDomain = (doc: ProductShippingGroupDoc): ProductShippingGro
     Number.isFinite(doc.traderaShippingPriceEur)
       ? doc.traderaShippingPriceEur
       : null,
+  autoAssignCategoryIds: normalizeCategoryIdList(doc.autoAssignCategoryIds),
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
 });
@@ -77,6 +93,7 @@ export const mongoShippingGroupRepository: ShippingGroupRepository = {
       catalogId: data.catalogId,
       traderaShippingCondition: data.traderaShippingCondition ?? null,
       traderaShippingPriceEur: data.traderaShippingPriceEur ?? null,
+      autoAssignCategoryIds: normalizeCategoryIdList(data.autoAssignCategoryIds),
       createdAt: now,
       updatedAt: now,
     };
@@ -104,6 +121,9 @@ export const mongoShippingGroupRepository: ShippingGroupRepository = {
     }
     if (data.traderaShippingPriceEur !== undefined) {
       set.traderaShippingPriceEur = data.traderaShippingPriceEur;
+    }
+    if (data.autoAssignCategoryIds !== undefined) {
+      set.autoAssignCategoryIds = normalizeCategoryIdList(data.autoAssignCategoryIds);
     }
 
     await db

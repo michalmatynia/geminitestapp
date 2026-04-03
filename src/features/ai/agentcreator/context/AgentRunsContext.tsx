@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import type {
   AgentAuditLogRecordDto as AgentAuditLogRecord,
@@ -9,6 +9,7 @@ import type {
   AgentRunRecord,
 } from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import {
   useAgentAudits,
@@ -34,8 +35,20 @@ export interface AgentRunsActionsContextValue {
   setSelectedAgentRunId: (id: string | null) => void;
 }
 
-const AgentRunsStateContext = createContext<AgentRunsContextValue | null>(null);
-const AgentRunsActionsContext = createContext<AgentRunsActionsContextValue | null>(null);
+const { Context: AgentRunsStateContext, useStrictContext: useAgentRunsState } =
+  createStrictContext<AgentRunsContextValue>({
+    hookName: 'useAgentRunsState',
+    providerName: 'AgentRunsProvider',
+    displayName: 'AgentRunsStateContext',
+    errorFactory: internalError,
+  });
+const { Context: AgentRunsActionsContext, useStrictContext: useAgentRunsActions } =
+  createStrictContext<AgentRunsActionsContextValue>({
+    hookName: 'useAgentRunsActions',
+    providerName: 'AgentRunsProvider',
+    displayName: 'AgentRunsActionsContext',
+    errorFactory: internalError,
+  });
 
 export function AgentRunsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
@@ -107,21 +120,7 @@ export function AgentRunsProvider({ children }: { children: React.ReactNode }): 
   );
 }
 
-export function useAgentRunsState(): AgentRunsContextValue {
-  const context = useContext(AgentRunsStateContext);
-  if (!context) {
-    throw internalError('useAgentRunsState must be used within AgentRunsProvider');
-  }
-  return context;
-}
-
-export function useAgentRunsActions(): AgentRunsActionsContextValue {
-  const context = useContext(AgentRunsActionsContext);
-  if (!context) {
-    throw internalError('useAgentRunsActions must be used within AgentRunsProvider');
-  }
-  return context;
-}
+export { useAgentRunsState, useAgentRunsActions };
 
 export function useAgentRunsContext(): AgentRunsContextValue & AgentRunsActionsContextValue {
   const state = useAgentRunsState();

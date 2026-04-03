@@ -711,6 +711,87 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByRole('button', { name: 'Nested Keychains' })).toBeInTheDocument();
   });
 
+  it('shows the auto-assigned shipping group summary in the name cell', () => {
+    const product = createProduct({
+      shippingGroupSource: 'category_rule',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: 'Jewellery 7 EUR',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 7,
+        autoAssignCategoryIds: ['category-1'],
+      },
+    });
+
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByText('Auto ship: Jewellery 7 EUR')).toBeInTheDocument();
+    expect(screen.getByTitle('Auto shipping group: Jewellery 7 EUR via Keychains')).toBeInTheDocument();
+  });
+
+  it('shows a shipping-rule conflict summary when multiple automatic rules match', () => {
+    const product = createProduct({
+      shippingGroupResolutionReason: 'multiple_category_rules',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroupMatchingGroupNames: ['Jewellery 7 EUR', 'Rings 5 EUR'],
+    });
+
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByText('Ship conflict')).toBeInTheDocument();
+    expect(
+      screen.getByTitle('Shipping rule conflict: Jewellery 7 EUR, Rings 5 EUR')
+    ).toBeInTheDocument();
+  });
+
+  it('shows a missing manual shipping-group summary when the assigned group no longer exists', () => {
+    const product = createProduct({
+      shippingGroupId: 'missing-group',
+      shippingGroupResolutionReason: 'manual_missing',
+    });
+
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByText('Ship missing')).toBeInTheDocument();
+    expect(screen.getByTitle('Manual shipping group is missing: missing-group')).toBeInTheDocument();
+  });
+
   it('does not render the imported badge when a product is only linked by Base id', () => {
     const product = createProduct({
       baseProductId: 'base-123',

@@ -16,17 +16,13 @@ import {
   toPersistedFilemakerEmailCampaignEventRegistry,
   toPersistedFilemakerEmailCampaignSuppressionRegistry,
   upsertFilemakerEmailCampaignSuppressionEntry,
-} from '@/features/filemaker/server';
-import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
+  parseFilemakerCampaignUnsubscribeToken,
+  type FilemakerEmailCampaignPreferenceStatus,
+  type FilemakerEmailCampaignPreferencesRequest,
+  type FilemakerEmailCampaignPreferencesResponse,
 } from '@/features/filemaker/server';
-import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
-import type {
-  FilemakerEmailCampaignPreferenceStatus,
-  FilemakerEmailCampaignPreferencesRequest,
-  FilemakerEmailCampaignPreferencesResponse,
-} from '@/features/filemaker/types';
 import { filemakerEmailCampaignPreferencesRequestSchema } from '@/shared/contracts/filemaker';
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

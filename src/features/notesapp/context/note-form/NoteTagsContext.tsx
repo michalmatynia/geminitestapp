@@ -1,4 +1,5 @@
-import { createContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { internalError } from '@/shared/errors/app-error';
 
 import type { TagRecord } from '@/shared/contracts/notes';
 
@@ -16,4 +17,12 @@ export interface NoteTagsData {
   handleFilterByTag: (tagId: string) => void;
 }
 
-export const NoteTagsContext = createContext<NoteTagsData | null>(null);
+const { Context: NoteTagsContext, useStrictContext: useNoteTagsContext } =
+  createStrictContext<NoteTagsData>({
+    hookName: 'useNoteTagsContext',
+    providerName: 'NoteFormProvider',
+    displayName: 'NoteTagsContext',
+    errorFactory: internalError,
+  });
+
+export { NoteTagsContext, useNoteTagsContext };

@@ -1,12 +1,28 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { MasterFolderTreeShell } from './useMasterFolderTreeShell';
 
-export const MasterFolderTreeShellContext = createContext<MasterFolderTreeShell | null>(null);
+const {
+  Context: MasterFolderTreeShellContext,
+  useStrictContext: useMasterFolderTreeShellContext,
+  useOptionalContext: useOptionalMasterFolderTreeShellContext,
+} = createStrictContext<MasterFolderTreeShell>({
+  hookName: 'useMasterFolderTreeShellContext',
+  providerName: 'MasterFolderTreeShellProvider',
+  displayName: 'MasterFolderTreeShellContext',
+  errorFactory: internalError,
+});
+
+export {
+  MasterFolderTreeShellContext,
+  useMasterFolderTreeShellContext,
+  useOptionalMasterFolderTreeShellContext,
+};
 
 export function MasterFolderTreeShellProvider({
   children,
@@ -20,18 +36,4 @@ export function MasterFolderTreeShellProvider({
       {children}
     </MasterFolderTreeShellContext.Provider>
   );
-}
-
-export function useMasterFolderTreeShellContext() {
-  const context = useContext(MasterFolderTreeShellContext);
-  if (!context) {
-    throw internalError(
-      'useMasterFolderTreeShellContext must be used within MasterFolderTreeShellProvider'
-    );
-  }
-  return context;
-}
-
-export function useOptionalMasterFolderTreeShellContext() {
-  return useContext(MasterFolderTreeShellContext);
 }

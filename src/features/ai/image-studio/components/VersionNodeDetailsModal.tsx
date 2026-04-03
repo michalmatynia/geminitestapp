@@ -10,18 +10,15 @@ import { Hint } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { useOptionalVersionNodeDetailsModalRuntime } from './VersionNodeDetailsModalRuntimeContext';
+import {
+  formatVersionNodeIdList,
+  resolveOperationSummary,
+} from './VersionNodeDetailsModal.helpers';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
 type VersionNodeDetailsModalProps = EntityModalProps<VersionNode> & {
   getSlotImageSrc: (slot: ImageStudioSlotRecord) => string | null;
-};
-
-type OperationSummary = {
-  label: string;
-  relationType: string;
-  timestamp: string | null;
-  operationMetadata: Record<string, unknown> | null;
 };
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
@@ -72,89 +69,6 @@ const formatResolution = (
   return `${width}x${height}`;
 };
 
-const resolveOperationSummary = (slot: ImageStudioSlotRecord): OperationSummary => {
-  const metadata = asRecord(slot.metadata) ?? {};
-  const relationType = asString(metadata['relationType'])?.toLowerCase() ?? '';
-
-  const cropMeta = asRecord(metadata['crop']);
-  const centerMeta = asRecord(metadata['center']);
-  const upscaleMeta = asRecord(metadata['upscale']);
-  const autoscaleMeta = asRecord(metadata['autoscale']);
-
-  if (relationType.startsWith('crop:')) {
-    return {
-      label: 'Crop',
-      relationType,
-      timestamp: asString(cropMeta?.['timestamp']) ?? asString(metadata['timestamp']) ?? null,
-      operationMetadata: cropMeta,
-    };
-  }
-  if (relationType.startsWith('center:')) {
-    return {
-      label: 'Center',
-      relationType,
-      timestamp: asString(centerMeta?.['timestamp']) ?? asString(metadata['timestamp']) ?? null,
-      operationMetadata: centerMeta,
-    };
-  }
-  if (relationType.startsWith('upscale:')) {
-    return {
-      label: 'Upscale',
-      relationType,
-      timestamp: asString(upscaleMeta?.['timestamp']) ?? asString(metadata['timestamp']) ?? null,
-      operationMetadata: upscaleMeta,
-    };
-  }
-  if (relationType.startsWith('autoscale:')) {
-    return {
-      label: 'Auto Scaler',
-      relationType,
-      timestamp: asString(autoscaleMeta?.['timestamp']) ?? asString(metadata['timestamp']) ?? null,
-      operationMetadata: autoscaleMeta,
-    };
-  }
-  if (relationType.startsWith('mask:')) {
-    return {
-      label: 'Mask',
-      relationType,
-      timestamp: asString(metadata['attachedAt']) ?? null,
-      operationMetadata: metadata,
-    };
-  }
-  if (relationType.startsWith('merge:')) {
-    return {
-      label: 'Merge',
-      relationType,
-      timestamp: null,
-      operationMetadata: metadata,
-    };
-  }
-  if (relationType.startsWith('composite:')) {
-    return {
-      label: 'Composite',
-      relationType,
-      timestamp: null,
-      operationMetadata: metadata,
-    };
-  }
-  if (relationType.startsWith('generation:')) {
-    return {
-      label: 'Generation',
-      relationType,
-      timestamp: null,
-      operationMetadata: metadata,
-    };
-  }
-
-  const role = asString(metadata['role'])?.toLowerCase() ?? '';
-  return {
-    label: role ? role[0]?.toUpperCase() + role.slice(1) : 'Unknown',
-    relationType: relationType || 'n/a',
-    timestamp: null,
-    operationMetadata: metadata,
-  };
-};
-
 const DetailsGrid = (props: { rows: Array<LabeledOptionDto<string>> }): React.JSX.Element => {
   const { rows } = props;
 
@@ -193,7 +107,7 @@ export function VersionNodeDetailsModal(
     const slot = node.slot;
     const metadata = readMeta(slot);
     const metadataRecord = asRecord(slot.metadata) ?? {};
-    const operationSummary = resolveOperationSummary(slot);
+    const operationSummary = resolveOperationSummary(metadataRecord);
     const imageSrc = getSlotImageSrc(slot);
 
     const generationParams = asRecord(metadataRecord['generationParams']);
@@ -260,15 +174,15 @@ export function VersionNodeDetailsModal(
       { label: 'Primary Source Slot', value: metadata.sourceSlotId ?? 'n/a' },
       {
         label: 'Source Slot IDs',
-        value: sourceSlotIds.length > 0 ? sourceSlotIds.join(', ') : 'n/a',
+        value: formatVersionNodeIdList(sourceSlotIds),
       },
       {
         label: 'Parent Node IDs',
-        value: node.parentIds.length > 0 ? node.parentIds.join(', ') : 'n/a',
+        value: formatVersionNodeIdList(node.parentIds),
       },
       {
         label: 'Child Node IDs',
-        value: node.childIds.length > 0 ? node.childIds.join(', ') : 'n/a',
+        value: formatVersionNodeIdList(node.childIds),
       },
       { label: 'Descendant Count', value: String(node.descendantCount) },
     ];

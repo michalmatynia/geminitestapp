@@ -9,7 +9,10 @@ import {
   BASE_IMPORT_RETRY_MAX_DELAY_MS,
   BASE_INTEGRATION_SLUGS,
   MAX_IMAGES_PER_PRODUCT,
+  extractFilename,
+  guessMimeType,
   normalizeSelectedIds,
+  sanitizeSku,
   shouldReuseIdempotentRun,
   shouldFilterToUniqueOnly,
   type ProductLookupMaps,
@@ -89,6 +92,22 @@ describe('base-import-service-shared', () => {
       '1002',
       '1003',
     ]);
+  });
+
+  it('sanitizes sku values and guesses image mime types from normalized extensions', () => {
+    expect(sanitizeSku('  SKU 12/34  ')).toBe('SKU_12_34');
+    expect(guessMimeType('https://cdn.example.com/photo.PNG?size=lg#preview')).toBe('image/png');
+    expect(guessMimeType('/assets/item.webp')).toBe('image/webp');
+    expect(guessMimeType('gallery/animated.GIF')).toBe('image/gif');
+    expect(guessMimeType('catalog/item.jpeg')).toBe('image/jpeg');
+    expect(guessMimeType('catalog/item.unknown')).toBe('image/jpeg');
+  });
+
+  it('extracts filenames from URLs and falls back safely for invalid inputs', () => {
+    expect(extractFilename('https://cdn.example.com/path/to/image.jpg?size=lg', 'fallback.jpg')).toBe(
+      'image.jpg'
+    );
+    expect(extractFilename('not a valid url', 'fallback.jpg')).toBe('fallback.jpg');
   });
 
   it('applies unique-only filter when enabled and no explicit selection', () => {

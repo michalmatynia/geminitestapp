@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useGenerationRuntime } from './useGenerationRuntime';
 
@@ -18,8 +19,20 @@ export type {
   GenerationActions,
 } from './GenerationContext.types';
 
-const GenerationStateContext = createContext<GenerationState | null>(null);
-const GenerationActionsContext = createContext<GenerationActions | null>(null);
+const { Context: GenerationStateContext, useStrictContext: useGenerationState } =
+  createStrictContext<GenerationState>({
+    hookName: 'useGenerationState',
+    providerName: 'a GenerationProvider',
+    displayName: 'GenerationStateContext',
+    errorFactory: internalError,
+  });
+const { Context: GenerationActionsContext, useStrictContext: useGenerationActions } =
+  createStrictContext<GenerationActions>({
+    hookName: 'useGenerationActions',
+    providerName: 'a GenerationProvider',
+    displayName: 'GenerationActionsContext',
+    errorFactory: internalError,
+  });
 
 export function GenerationProvider({
   children,
@@ -35,18 +48,4 @@ export function GenerationProvider({
   );
 }
 
-export function useGenerationState(): GenerationState {
-  const context = useContext(GenerationStateContext);
-  if (!context) {
-    throw internalError('useGenerationState must be used within a GenerationProvider');
-  }
-  return context;
-}
-
-export function useGenerationActions(): GenerationActions {
-  const context = useContext(GenerationActionsContext);
-  if (!context) {
-    throw internalError('useGenerationActions must be used within a GenerationProvider');
-  }
-  return context;
-}
+export { useGenerationState, useGenerationActions };

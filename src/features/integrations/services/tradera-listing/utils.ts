@@ -116,3 +116,22 @@ export const extractExternalListingId = (url: string): string | null => {
     return match[1];
   }
 };
+
+export const includesAnyHint = (value: string, hints: readonly string[]): boolean => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  return hints.some((hint) => normalized.includes(hint));
+};
+
+export const readVisibleLocatorText = async (page: Page, selectors: readonly string[]): Promise<string> => {
+  for (const selector of selectors) {
+    const locator = page.locator(selector).first();
+    const visible = await locator.isVisible().catch(() => false);
+    if (!visible) continue;
+    const text = await locator.innerText().catch(() => '');
+    if (text.trim()) {
+      return text.trim();
+    }
+  }
+  return '';
+};

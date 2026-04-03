@@ -4,10 +4,6 @@ import {
   enqueueFilemakerEmailCampaignRunJob,
   startFilemakerEmailCampaignQueue,
 } from '@/features/jobs/server';
-import type {
-  FilemakerEmailCampaignProcessRunRequest,
-  FilemakerEmailCampaignProcessRunResponse,
-} from '@/features/filemaker/types';
 import {
   filemakerEmailCampaignProcessRunRequestSchema,
 } from '@/shared/contracts/filemaker';
@@ -25,8 +21,10 @@ import {
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   resolveFilemakerEmailCampaignRetryableDeliveries,
+  readFilemakerCampaignSettingValue,
+  type FilemakerEmailCampaignProcessRunRequest,
+  type FilemakerEmailCampaignProcessRunResponse,
 } from '@/features/filemaker/server';
-import { readFilemakerCampaignSettingValue } from '@/features/filemaker/server';
 
 export async function POST_handler(
   req: NextRequest,

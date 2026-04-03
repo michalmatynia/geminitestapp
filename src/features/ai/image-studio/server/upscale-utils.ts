@@ -191,6 +191,30 @@ export const deriveUpscaleScaleFromOutputDimensions = (input: {
   );
 };
 
+export const resolveUpscaleExecutionDimensions = (input: {
+  sourceWidth: number;
+  sourceHeight: number;
+  strategy: ImageStudioUpscaleStrategy;
+  scale?: number;
+  targetWidth?: number;
+  targetHeight?: number;
+}): { width: number; height: number; scale: number } =>
+  input.strategy === 'target_resolution'
+    ? resolveUpscaleOutputDimensionsByResolution(
+        input.sourceWidth,
+        input.sourceHeight,
+        input.targetWidth ?? Number.NaN,
+        input.targetHeight ?? Number.NaN
+      )
+    : {
+        ...resolveUpscaleOutputDimensions(
+          input.sourceWidth,
+          input.sourceHeight,
+          input.scale ?? Number.NaN
+        ),
+        scale: normalizeUpscaleScale(input.scale ?? Number.NaN),
+      };
+
 export async function upscaleImageWithSharp(input: {
   sourceBuffer: Buffer;
   sourceWidth: number;
@@ -208,22 +232,7 @@ export async function upscaleImageWithSharp(input: {
   scale: number;
   strategy: ImageStudioUpscaleStrategy;
 }> {
-  const resolved =
-    input.strategy === 'target_resolution'
-      ? resolveUpscaleOutputDimensionsByResolution(
-        input.sourceWidth,
-        input.sourceHeight,
-        input.targetWidth ?? Number.NaN,
-        input.targetHeight ?? Number.NaN
-      )
-      : {
-        ...resolveUpscaleOutputDimensions(
-          input.sourceWidth,
-          input.sourceHeight,
-          input.scale ?? Number.NaN
-        ),
-        scale: normalizeUpscaleScale(input.scale ?? Number.NaN),
-      };
+  const resolved = resolveUpscaleExecutionDimensions(input);
   const { width, height } = resolved;
   const outputBuffer = await sharp(input.sourceBuffer)
     .resize({

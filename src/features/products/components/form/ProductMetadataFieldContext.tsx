@@ -8,6 +8,7 @@ import type {
   ProductCategory,
   ProductTag,
 } from '@/shared/contracts/products';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type ProductMetadataFieldContextValue = {
   catalogs?: CatalogRecord[];
@@ -43,10 +44,23 @@ export type ProductMetadataFieldActionsContextValue = Pick<
   ProductMetadataFieldActionKey
 >;
 
-const ProductMetadataFieldStateContext =
-  React.createContext<ProductMetadataFieldStateContextValue | null>(null);
-const ProductMetadataFieldActionsContext =
-  React.createContext<ProductMetadataFieldActionsContextValue | null>(null);
+const {
+  Context: ProductMetadataFieldStateContext,
+  useOptionalContext: useOptionalProductMetadataFieldStateContext,
+} = createStrictContext<ProductMetadataFieldStateContextValue>({
+  hookName: 'useProductMetadataFieldStateContext',
+  providerName: 'ProductMetadataFieldProvider',
+  displayName: 'ProductMetadataFieldStateContext',
+});
+
+const {
+  Context: ProductMetadataFieldActionsContext,
+  useOptionalContext: useOptionalProductMetadataFieldActionsContext,
+} = createStrictContext<ProductMetadataFieldActionsContextValue>({
+  hookName: 'useProductMetadataFieldActionsContext',
+  providerName: 'ProductMetadataFieldProvider',
+  displayName: 'ProductMetadataFieldActionsContext',
+});
 
 export function ProductMetadataFieldProvider({
   value,
@@ -105,10 +119,7 @@ export function ProductMetadataFieldProvider({
   );
 }
 
-export function useOptionalProductMetadataFieldStateContext(): ProductMetadataFieldStateContextValue | null {
-  return React.useContext(ProductMetadataFieldStateContext);
-}
-
-export function useOptionalProductMetadataFieldActionsContext(): ProductMetadataFieldActionsContextValue | null {
-  return React.useContext(ProductMetadataFieldActionsContext);
-}
+export {
+  useOptionalProductMetadataFieldActionsContext,
+  useOptionalProductMetadataFieldStateContext,
+};

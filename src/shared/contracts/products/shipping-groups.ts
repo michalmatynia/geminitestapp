@@ -2,11 +2,31 @@ import { z } from 'zod';
 
 import { namedDtoSchema } from '../base';
 
+const normalizeCategoryIdList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  const unique = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== 'string') continue;
+    const trimmed = item.trim();
+    if (!trimmed) continue;
+    unique.add(trimmed);
+  }
+
+  return Array.from(unique);
+};
+
+const shippingGroupCategoryIdsSchema = z.preprocess(
+  normalizeCategoryIdList,
+  z.array(z.string().min(1)).default([])
+);
+
 export const productShippingGroupSchema = namedDtoSchema.extend({
   description: z.string().nullable().optional(),
   catalogId: z.string(),
   traderaShippingCondition: z.string().nullable().optional(),
   traderaShippingPriceEur: z.number().finite().nonnegative().nullable().optional(),
+  autoAssignCategoryIds: shippingGroupCategoryIdsSchema,
 });
 
 export type ProductShippingGroup = z.infer<typeof productShippingGroupSchema>;
@@ -17,6 +37,7 @@ export const createProductShippingGroupSchema = z.object({
   catalogId: z.string().min(1, 'Catalog ID is required'),
   traderaShippingCondition: z.string().nullable().optional(),
   traderaShippingPriceEur: z.number().finite().nonnegative().nullable().optional(),
+  autoAssignCategoryIds: shippingGroupCategoryIdsSchema.optional(),
 });
 
 export type ProductShippingGroupCreateInput = z.infer<typeof createProductShippingGroupSchema>;
@@ -27,6 +48,7 @@ export const updateProductShippingGroupSchema = z.object({
   catalogId: z.string().min(1).optional(),
   traderaShippingCondition: z.string().nullable().optional(),
   traderaShippingPriceEur: z.number().finite().nonnegative().nullable().optional(),
+  autoAssignCategoryIds: shippingGroupCategoryIdsSchema.optional(),
 });
 
 export type ProductShippingGroupUpdateInput = z.infer<typeof updateProductShippingGroupSchema>;

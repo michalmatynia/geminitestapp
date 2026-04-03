@@ -2,25 +2,20 @@
 
 import React from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { StatusBadge } from '@/shared/ui';
 
 type RunningIndicatorRuntimeValue = {
   label: string;
 };
 
-const RunningIndicatorRuntimeContext = React.createContext<RunningIndicatorRuntimeValue | null>(
-  null
-);
-
-function useRunningIndicatorRuntime(): RunningIndicatorRuntimeValue {
-  const runtime = React.useContext(RunningIndicatorRuntimeContext);
-  if (!runtime) {
-    throw new Error(
-      'useRunningIndicatorRuntime must be used within RunningIndicatorRuntimeContext.Provider'
-    );
-  }
-  return runtime;
-}
+const {
+  Context: RunningIndicatorRuntimeContext,
+  useStrictContext: useRunningIndicatorRuntime,
+} = createStrictContext<RunningIndicatorRuntimeValue>({
+  hookName: 'useRunningIndicatorRuntime',
+  providerName: 'RunningIndicatorRuntimeContext.Provider',
+});
 
 function RunningIndicatorBadge(): React.JSX.Element {
   const { label } = useRunningIndicatorRuntime();

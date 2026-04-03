@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type ProductImagesTabContextValue = {
   showFileManager?: boolean;
@@ -28,10 +29,23 @@ export type ProductImagesTabActionsContextValue = Pick<
   ProductImagesTabActionKey
 >;
 
-const ProductImagesTabStateContext = createContext<ProductImagesTabStateContextValue | null>(null);
-const ProductImagesTabActionsContext = createContext<ProductImagesTabActionsContextValue | null>(
-  null
-);
+const {
+  Context: ProductImagesTabStateContext,
+  useOptionalContext: useOptionalProductImagesTabStateContext,
+} = createStrictContext<ProductImagesTabStateContextValue>({
+  hookName: 'useProductImagesTabStateContext',
+  providerName: 'ProductImagesTabProvider',
+  displayName: 'ProductImagesTabStateContext',
+});
+
+const {
+  Context: ProductImagesTabActionsContext,
+  useOptionalContext: useOptionalProductImagesTabActionsContext,
+} = createStrictContext<ProductImagesTabActionsContextValue>({
+  hookName: 'useProductImagesTabActionsContext',
+  providerName: 'ProductImagesTabProvider',
+  displayName: 'ProductImagesTabActionsContext',
+});
 
 type ProductImagesTabProviderProps = {
   value: ProductImagesTabContextValue;
@@ -92,10 +106,7 @@ export function ProductImagesTabProvider({
   );
 }
 
-export function useOptionalProductImagesTabStateContext(): ProductImagesTabStateContextValue | null {
-  return useContext(ProductImagesTabStateContext);
-}
-
-export function useOptionalProductImagesTabActionsContext(): ProductImagesTabActionsContextValue | null {
-  return useContext(ProductImagesTabActionsContext);
-}
+export {
+  useOptionalProductImagesTabActionsContext,
+  useOptionalProductImagesTabStateContext,
+};

@@ -22,55 +22,9 @@ import { ValidatorPatternModalPolicySection } from './modal/ValidatorPatternModa
 import { ValidatorPatternModalRuntimeSection } from './modal/ValidatorPatternModalRuntimeSection';
 import { ValidatorPatternModalSimulatorSection } from './modal/ValidatorPatternModalSimulatorSection';
 import { CHAIN_MODE_OPTIONS } from './validator-pattern-modal-options';
+import { buildSemanticTransitionNotice } from './ValidatorPatternModal.helpers';
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
-
-const buildSemanticTransitionNotice = ({
-  kind,
-  previousTitle,
-  currentTitle,
-}: {
-  kind: 'none' | 'recognized' | 'cleared' | 'preserved' | 'updated' | 'migrated';
-  previousTitle: string | null;
-  currentTitle: string | null;
-}): { tone: 'info' | 'warning'; title: string; body: string } | null => {
-  switch (kind) {
-    case 'recognized':
-      return currentTitle
-        ? {
-            tone: 'info',
-            title: 'Semantic Metadata Detected',
-            body: `This rule now matches "${currentTitle}" and will be saved with semantic metadata.`,
-          }
-        : null;
-    case 'cleared':
-      return previousTitle
-        ? {
-            tone: 'warning',
-            title: 'Converted To Generic Rule',
-            body: `This rule no longer matches "${previousTitle}" and will be saved as a generic custom validator.`,
-          }
-        : null;
-    case 'migrated':
-      return previousTitle && currentTitle
-        ? {
-            tone: 'info',
-            title: 'Semantic Operation Migrated',
-            body: `This rule no longer matches "${previousTitle}" and now matches "${currentTitle}". Saving will migrate its semantic metadata.`,
-          }
-        : null;
-    case 'updated':
-      return currentTitle
-        ? {
-            tone: 'info',
-            title: 'Semantic Metadata Updated',
-            body: `This rule still matches "${currentTitle}", but its semantic metadata has been updated to reflect the edited shape.`,
-          }
-        : null;
-    default:
-      return null;
-  }
-};
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatternmodal

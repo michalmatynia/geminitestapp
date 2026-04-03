@@ -441,6 +441,9 @@ const toShippingGroupUpdatePayload = (
   if (data.traderaShippingPriceEur !== undefined) {
     payload.traderaShippingPriceEur = data.traderaShippingPriceEur;
   }
+  if (data.autoAssignCategoryIds !== undefined) {
+    payload.autoAssignCategoryIds = data.autoAssignCategoryIds;
+  }
 
   return payload;
 };

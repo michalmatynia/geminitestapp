@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getShippingGroupRepository } from '@/features/products/server';
-import { createProductShippingGroupSchema } from '@/shared/contracts/products';
+import {
+  createProductShippingGroupSchema,
+  type ProductShippingGroup,
+} from '@/shared/contracts/products';
 export { createProductShippingGroupSchema as productShippingGroupCreateSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';
+
+import {
+  normalizeShippingGroupRuleCategoryIdsForCatalog,
+  validateShippingGroupRuleConflictsOrThrow,
+} from './rule-validation';
 
 export const querySchema = catalogIdQuerySchema;
 
@@ -27,6 +35,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof createProductShippingGroupSchema>;
   const { name, catalogId } = data;
+  const normalizedAutoAssignCategoryIds = await normalizeShippingGroupRuleCategoryIdsForCatalog({
+    catalogId,
+    categoryIds: data.autoAssignCategoryIds ?? [],
+  });
 
   const repository = await getShippingGroupRepository();
   const existing = await repository.findByName(catalogId, name);
@@ -38,12 +50,25 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     });
   }
 
+  await validateShippingGroupRuleConflictsOrThrow({
+    draftShippingGroup: {
+      id: '__draft-shipping-group__',
+      name,
+      description: data.description ?? null,
+      catalogId,
+      traderaShippingCondition: data.traderaShippingCondition ?? null,
+      traderaShippingPriceEur: data.traderaShippingPriceEur ?? null,
+      autoAssignCategoryIds: normalizedAutoAssignCategoryIds,
+    } satisfies ProductShippingGroup,
+  });
+
   const shippingGroup = await repository.createShippingGroup({
     name,
     description: data.description ?? null,
     catalogId,
     traderaShippingCondition: data.traderaShippingCondition ?? null,
     traderaShippingPriceEur: data.traderaShippingPriceEur ?? null,
+    autoAssignCategoryIds: normalizedAutoAssignCategoryIds,
   });
 
   return NextResponse.json(shippingGroup, { status: 201 });

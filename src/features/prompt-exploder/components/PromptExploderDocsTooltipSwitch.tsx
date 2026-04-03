@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { HelpCircle } from 'lucide-react';
+
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Tooltip } from '@/shared/ui';
 
 export type PromptExploderDocsTooltipSwitchRuntimeContextValue = {
@@ -9,18 +11,19 @@ export type PromptExploderDocsTooltipSwitchRuntimeContextValue = {
   onDocsTooltipsChange: (enabled: boolean) => void;
 };
 
-export const PromptExploderDocsTooltipSwitchRuntimeContext =
-  React.createContext<PromptExploderDocsTooltipSwitchRuntimeContextValue | null>(null);
+const {
+  Context: PromptExploderDocsTooltipSwitchRuntimeContext,
+  useStrictContext: usePromptExploderDocsTooltipSwitchRuntime,
+} = createStrictContext<PromptExploderDocsTooltipSwitchRuntimeContextValue>({
+  hookName: 'usePromptExploderDocsTooltipSwitchRuntime',
+  providerName: 'a PromptExploderDocsTooltipSwitchRuntimeContext.Provider',
+  displayName: 'PromptExploderDocsTooltipSwitchRuntimeContext',
+});
 
-export function usePromptExploderDocsTooltipSwitchRuntime(): PromptExploderDocsTooltipSwitchRuntimeContextValue {
-  const context = React.useContext(PromptExploderDocsTooltipSwitchRuntimeContext);
-  if (!context) {
-    throw new Error(
-      'usePromptExploderDocsTooltipSwitchRuntime must be used within a PromptExploderDocsTooltipSwitchRuntimeContext.Provider'
-    );
-  }
-  return context;
-}
+export {
+  PromptExploderDocsTooltipSwitchRuntimeContext,
+  usePromptExploderDocsTooltipSwitchRuntime,
+};
 
 export function PromptExploderDocsTooltipSwitchFromRuntime(): React.JSX.Element {
   const { docsTooltipsEnabled, onDocsTooltipsChange } =

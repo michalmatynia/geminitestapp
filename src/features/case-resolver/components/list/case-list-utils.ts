@@ -75,6 +75,154 @@ export const formatCaseTimestamp = (value: string | null | undefined): string =>
   return CASE_ROW_TIMESTAMP_FORMATTER.format(parsed);
 };
 
+type CaseTreeNodeSortBy =
+  | 'updated'
+  | 'created'
+  | 'happeningDate'
+  | 'name'
+  | 'status'
+  | 'signature'
+  | 'locked'
+  | 'sent';
+
+type CaseTreeNodeComparable = {
+  node: MasterTreeNode;
+  caseFile: CaseResolverFile | null;
+};
+
+type CaseTreeSiblingComparisonInput = {
+  left: CaseTreeNodeComparable;
+  right: CaseTreeNodeComparable;
+  caseIdentifierPathById: Map<string, string>;
+  direction: 1 | -1;
+  sortOrder: 'asc' | 'desc';
+};
+
+type CaseTreeSiblingComparator = (input: CaseTreeSiblingComparisonInput) => number;
+
+const readCaseTreeNodeMetadata = (node: MasterTreeNode): Record<string, unknown> | null => {
+  const metadata = node.metadata;
+  return metadata && typeof metadata === 'object' ? metadata : null;
+};
+
+const resolveCaseTreeNodeFile = (
+  node: MasterTreeNode,
+  filesById: Map<string, CaseResolverFile>
+): CaseResolverFile | null => {
+  const caseId = fromCaseResolverCaseNodeId(node.id);
+  return caseId ? (filesById.get(caseId) ?? null) : null;
+};
+
+const resolveCaseTreeNodeTimestamp = (
+  comparable: CaseTreeNodeComparable,
+  key: 'created' | 'updated'
+): number => {
+  if (comparable.caseFile) {
+    return key === 'updated'
+      ? parseTimestampMs(comparable.caseFile.updatedAt ?? comparable.caseFile.createdAt)
+      : parseTimestampMs(comparable.caseFile.createdAt);
+  }
+
+  const metadata = readCaseTreeNodeMetadata(comparable.node);
+  const createdAt = typeof metadata?.['createdAt'] === 'string' ? metadata['createdAt'] : null;
+  const updatedAt = typeof metadata?.['updatedAt'] === 'string' ? metadata['updatedAt'] : null;
+  return key === 'updated'
+    ? parseTimestampMs(updatedAt ?? createdAt)
+    : parseTimestampMs(createdAt);
+};
+
+const compareCaseTreeSiblingName: CaseTreeSiblingComparator = ({ left, right, direction }) => {
+  const delta = left.node.name.localeCompare(right.node.name);
+  return delta === 0 ? 0 : delta * direction;
+};
+
+const compareCaseTreeSiblingTimestamp = (
+  input: CaseTreeSiblingComparisonInput,
+  key: 'created' | 'updated'
+): number => {
+  const delta =
+    resolveCaseTreeNodeTimestamp(input.left, key) - resolveCaseTreeNodeTimestamp(input.right, key);
+  return delta === 0 ? 0 : delta * input.direction;
+};
+
+const compareCaseTreeSiblingHappeningDate: CaseTreeSiblingComparator = ({
+  left,
+  right,
+  direction,
+}) => {
+  const leftHappeningDate = resolveNodeHappeningDateMs(left.node, left.caseFile);
+  const rightHappeningDate = resolveNodeHappeningDateMs(right.node, right.caseFile);
+  if (leftHappeningDate.hasValue !== rightHappeningDate.hasValue) {
+    return leftHappeningDate.hasValue ? -1 : 1;
+  }
+  if (!leftHappeningDate.hasValue || !rightHappeningDate.hasValue) return 0;
+  const delta = leftHappeningDate.timestampMs - rightHappeningDate.timestampMs;
+  return delta === 0 ? 0 : delta * direction;
+};
+
+const compareCaseTreeSiblingStatus: CaseTreeSiblingComparator = ({ left, right, direction }) => {
+  const delta =
+    resolveCaseStatusRank(left.caseFile?.caseStatus) -
+    resolveCaseStatusRank(right.caseFile?.caseStatus);
+  return delta === 0 ? 0 : delta * direction;
+};
+
+const compareCaseTreeSiblingSignature: CaseTreeSiblingComparator = ({
+  left,
+  right,
+  caseIdentifierPathById,
+  direction,
+  sortOrder,
+}) => {
+  const leftSignatureLabel = resolveSignatureLabel(left.caseFile, caseIdentifierPathById);
+  const rightSignatureLabel = resolveSignatureLabel(right.caseFile, caseIdentifierPathById);
+  const leftIsEmpty = leftSignatureLabel.length === 0;
+  const rightIsEmpty = rightSignatureLabel.length === 0;
+  if (leftIsEmpty !== rightIsEmpty) {
+    if (sortOrder === 'asc') return leftIsEmpty ? 1 : -1;
+    return leftIsEmpty ? -1 : 1;
+  }
+  if (leftIsEmpty || rightIsEmpty) return 0;
+  const delta = leftSignatureLabel.localeCompare(rightSignatureLabel);
+  return delta === 0 ? 0 : delta * direction;
+};
+
+const compareCaseTreeSiblingFlag = (
+  input: CaseTreeSiblingComparisonInput,
+  key: 'isLocked' | 'isSent'
+): number => {
+  const delta =
+    resolveBinaryRank(input.left.caseFile?.[key]) - resolveBinaryRank(input.right.caseFile?.[key]);
+  return delta === 0 ? 0 : delta * input.direction;
+};
+
+const compareCaseTreeSiblingFallback = (
+  left: CaseTreeNodeComparable,
+  right: CaseTreeNodeComparable
+): number => {
+  const orderDelta =
+    resolveCaseTreeOrderValue(left.caseFile) - resolveCaseTreeOrderValue(right.caseFile);
+  if (orderDelta !== 0) return orderDelta;
+  const nameDelta = left.node.name.localeCompare(right.node.name);
+  if (nameDelta !== 0) return nameDelta;
+  return left.node.id.localeCompare(right.node.id);
+};
+
+const CASE_TREE_SIBLING_COMPARATORS: Record<CaseTreeNodeSortBy, CaseTreeSiblingComparator> = {
+  name: compareCaseTreeSiblingName,
+  created: (input: CaseTreeSiblingComparisonInput): number =>
+    compareCaseTreeSiblingTimestamp(input, 'created'),
+  happeningDate: compareCaseTreeSiblingHappeningDate,
+  updated: (input: CaseTreeSiblingComparisonInput): number =>
+    compareCaseTreeSiblingTimestamp(input, 'updated'),
+  status: compareCaseTreeSiblingStatus,
+  signature: compareCaseTreeSiblingSignature,
+  locked: (input: CaseTreeSiblingComparisonInput): number =>
+    compareCaseTreeSiblingFlag(input, 'isLocked'),
+  sent: (input: CaseTreeSiblingComparisonInput): number =>
+    compareCaseTreeSiblingFlag(input, 'isSent'),
+};
+
 export const sortCaseTreeNodes = ({
   nodes,
   filesById,
@@ -85,33 +233,9 @@ export const sortCaseTreeNodes = ({
   nodes: MasterTreeNode[];
   filesById: Map<string, CaseResolverFile>;
   caseIdentifierPathById: Map<string, string>;
-  sortBy:
-    | 'updated'
-    | 'created'
-    | 'happeningDate'
-    | 'name'
-    | 'status'
-    | 'signature'
-    | 'locked'
-    | 'sent';
+  sortBy: CaseTreeNodeSortBy;
   sortOrder: 'asc' | 'desc';
 }): MasterTreeNode[] => {
-  const resolveNodeTimestamp = (node: MasterTreeNode, key: 'created' | 'updated'): number => {
-    const caseId = fromCaseResolverCaseNodeId(node.id);
-    const caseFile = caseId ? (filesById.get(caseId) ?? null) : null;
-    if (caseFile) {
-      return key === 'updated'
-        ? parseTimestampMs(caseFile.updatedAt ?? caseFile.createdAt)
-        : parseTimestampMs(caseFile.createdAt);
-    }
-    const metadata = node.metadata && typeof node.metadata === 'object' ? node.metadata : null;
-    const createdAt = typeof metadata?.['createdAt'] === 'string' ? metadata['createdAt'] : null;
-    const updatedAt = typeof metadata?.['updatedAt'] === 'string' ? metadata['updatedAt'] : null;
-    return key === 'updated'
-      ? parseTimestampMs(updatedAt ?? createdAt)
-      : parseTimestampMs(createdAt);
-  };
-
   const sortedIndexByNodeId = new Map<string, number>();
   const nodesByParentId = new Map<string | null, MasterTreeNode[]>();
   nodes.forEach((node: MasterTreeNode): void => {
@@ -122,73 +246,27 @@ export const sortCaseTreeNodes = ({
   });
 
   const direction = sortOrder === 'asc' ? 1 : -1;
+  const compareSiblings = CASE_TREE_SIBLING_COMPARATORS[sortBy];
   nodesByParentId.forEach((siblings: MasterTreeNode[]): void => {
-    const orderedSiblings = [...siblings].sort(
-      (left: MasterTreeNode, right: MasterTreeNode): number => {
-        const leftCaseId = fromCaseResolverCaseNodeId(left.id);
-        const rightCaseId = fromCaseResolverCaseNodeId(right.id);
-        const leftCaseFile = leftCaseId ? (filesById.get(leftCaseId) ?? null) : null;
-        const rightCaseFile = rightCaseId ? (filesById.get(rightCaseId) ?? null) : null;
-
-        if (sortBy === 'name') {
-          const nameDelta = left.name.localeCompare(right.name);
-          if (nameDelta !== 0) return nameDelta * direction;
-        } else if (sortBy === 'created') {
-          const createdDelta =
-            resolveNodeTimestamp(left, 'created') - resolveNodeTimestamp(right, 'created');
-          if (createdDelta !== 0) return createdDelta * direction;
-        } else if (sortBy === 'happeningDate') {
-          const leftHappeningDate = resolveNodeHappeningDateMs(left, leftCaseFile);
-          const rightHappeningDate = resolveNodeHappeningDateMs(right, rightCaseFile);
-          if (leftHappeningDate.hasValue !== rightHappeningDate.hasValue) {
-            return leftHappeningDate.hasValue ? -1 : 1;
-          }
-          if (leftHappeningDate.hasValue && rightHappeningDate.hasValue) {
-            const happeningDateDelta =
-              leftHappeningDate.timestampMs - rightHappeningDate.timestampMs;
-            if (happeningDateDelta !== 0) return happeningDateDelta * direction;
-          }
-        } else if (sortBy === 'updated') {
-          const updatedDelta =
-            resolveNodeTimestamp(left, 'updated') - resolveNodeTimestamp(right, 'updated');
-          if (updatedDelta !== 0) return updatedDelta * direction;
-        } else if (sortBy === 'status') {
-          const statusDelta =
-            resolveCaseStatusRank(leftCaseFile?.caseStatus) -
-            resolveCaseStatusRank(rightCaseFile?.caseStatus);
-          if (statusDelta !== 0) return statusDelta * direction;
-        } else if (sortBy === 'signature') {
-          const leftSignatureLabel = resolveSignatureLabel(leftCaseFile, caseIdentifierPathById);
-          const rightSignatureLabel = resolveSignatureLabel(rightCaseFile, caseIdentifierPathById);
-          const leftIsEmpty = leftSignatureLabel.length === 0;
-          const rightIsEmpty = rightSignatureLabel.length === 0;
-          if (leftIsEmpty !== rightIsEmpty) {
-            if (sortOrder === 'asc') return leftIsEmpty ? 1 : -1;
-            return leftIsEmpty ? -1 : 1;
-          }
-          if (!leftIsEmpty && !rightIsEmpty) {
-            const signatureDelta = leftSignatureLabel.localeCompare(rightSignatureLabel);
-            if (signatureDelta !== 0) return signatureDelta * direction;
-          }
-        } else if (sortBy === 'locked') {
-          const lockedDelta =
-            resolveBinaryRank(leftCaseFile?.isLocked) - resolveBinaryRank(rightCaseFile?.isLocked);
-          if (lockedDelta !== 0) return lockedDelta * direction;
-        } else if (sortBy === 'sent') {
-          const sentDelta =
-            resolveBinaryRank(leftCaseFile?.isSent) - resolveBinaryRank(rightCaseFile?.isSent);
-          if (sentDelta !== 0) return sentDelta * direction;
-        }
-
-        const orderDelta =
-          resolveCaseTreeOrderValue(leftCaseFile) - resolveCaseTreeOrderValue(rightCaseFile);
-        if (orderDelta !== 0) return orderDelta;
-        const nameDelta = left.name.localeCompare(right.name);
-        if (nameDelta !== 0) return nameDelta;
-        return left.id.localeCompare(right.id);
-      }
-    );
-    orderedSiblings.forEach((node: MasterTreeNode, index: number): void => {
+    const orderedSiblings = siblings
+      .map(
+        (node: MasterTreeNode): CaseTreeNodeComparable => ({
+          node,
+          caseFile: resolveCaseTreeNodeFile(node, filesById),
+        })
+      )
+      .sort((left: CaseTreeNodeComparable, right: CaseTreeNodeComparable): number => {
+        const primaryDelta = compareSiblings({
+          left,
+          right,
+          caseIdentifierPathById,
+          direction,
+          sortOrder,
+        });
+        if (primaryDelta !== 0) return primaryDelta;
+        return compareCaseTreeSiblingFallback(left, right);
+      });
+    orderedSiblings.forEach(({ node }: CaseTreeNodeComparable, index: number): void => {
       sortedIndexByNodeId.set(node.id, index);
     });
   });

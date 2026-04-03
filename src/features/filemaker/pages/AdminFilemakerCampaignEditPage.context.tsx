@@ -1,11 +1,23 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
+
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
 import { useAdminFilemakerCampaignEditState } from './AdminFilemakerCampaignEditPage.hooks';
 
 type CampaignEditState = ReturnType<typeof useAdminFilemakerCampaignEditState>;
 
-const CampaignEditContext = createContext<CampaignEditState | null>(null);
+const {
+  Context: CampaignEditContext,
+  useStrictContext: useCampaignEditContext,
+} = createStrictContext<CampaignEditState>({
+  hookName: 'useCampaignEditContext',
+  providerName: 'a CampaignEditProvider',
+  displayName: 'CampaignEditContext',
+});
+
+export { useCampaignEditContext };
 
 export function CampaignEditProvider({ children }: { children: React.ReactNode }) {
   const state = useAdminFilemakerCampaignEditState();
@@ -17,12 +29,4 @@ export function CampaignEditProvider({ children }: { children: React.ReactNode }
       {children}
     </CampaignEditContext.Provider>
   );
-}
-
-export function useCampaignEditContext() {
-  const context = useContext(CampaignEditContext);
-  if (!context) {
-    throw new Error('useCampaignEditContext must be used within a CampaignEditProvider');
-  }
-  return context;
 }

@@ -15,6 +15,7 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useFileUploadEventsPanelContext } from './context/FileUploadEventsPanelContext';
 import { useFileUploadEventsContext } from '../../contexts/FileUploadEventsContext';
 import { useFileUploadEventsTableProps } from '../../hooks/useFileUploadEventsTableProps';
+import { resolveFileUploadEventsFilterUpdate } from './FileUploadEventsTable.helpers';
 
 const FILE_UPLOAD_STATUS_OPTIONS: Array<LabeledOptionDto<'all' | 'success' | 'error'>> = [
   { value: 'all', label: 'All statuses' },
@@ -77,23 +78,21 @@ export function FileUploadEventsTable(): React.JSX.Element {
 
   const handleFilterChange = (key: string, value: unknown) => {
     setPage(1);
-    switch (key) {
-      case 'status':
-        setStatus(value === 'error' || value === 'success' || value === 'all' ? value : 'all');
-        break;
-      case 'category':
-        setCategory(typeof value === 'string' ? value : '');
-        break;
-      case 'projectId':
-        setProjectId(typeof value === 'string' ? value : '');
-        break;
-      case 'fromDate':
-        setFromDate(typeof value === 'string' ? value : '');
-        break;
-      case 'toDate':
-        setToDate(typeof value === 'string' ? value : '');
-        break;
+    const update = resolveFileUploadEventsFilterUpdate(key, value);
+    if (!update) return;
+
+    if (update.key === 'status') {
+      setStatus(update.value);
+      return;
     }
+
+    const filterSetters = {
+      category: setCategory,
+      projectId: setProjectId,
+      fromDate: setFromDate,
+      toDate: setToDate,
+    } as const;
+    filterSetters[update.key](update.value);
   };
 
   const footer = (

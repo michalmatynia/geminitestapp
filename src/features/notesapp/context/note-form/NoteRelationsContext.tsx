@@ -1,4 +1,5 @@
-import { createContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { internalError } from '@/shared/errors/app-error';
 
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 
@@ -21,4 +22,12 @@ export interface NoteRelationsData {
   handleSelectRelatedNote: (noteId: string) => void;
 }
 
-export const NoteRelationsContext = createContext<NoteRelationsData | null>(null);
+const { Context: NoteRelationsContext, useStrictContext: useNoteRelationsContext } =
+  createStrictContext<NoteRelationsData>({
+    hookName: 'useNoteRelationsContext',
+    providerName: 'NoteFormProvider',
+    displayName: 'NoteRelationsContext',
+    errorFactory: internalError,
+  });
+
+export { NoteRelationsContext, useNoteRelationsContext };

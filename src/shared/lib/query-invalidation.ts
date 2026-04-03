@@ -33,6 +33,50 @@ type RecentAiPathRunEnqueueRecord = {
   expiresAt: number;
 };
 
+const readRecentAiPathRunEnqueueStringField = (
+  record: Record<string, unknown>,
+  key: 'runId' | 'entityId' | 'entityType',
+  options?: { lowercase?: boolean }
+): string | null => {
+  const value = record[key];
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return options?.lowercase ? trimmed.toLowerCase() : trimmed;
+};
+
+const readRecentAiPathRunEnqueueNumberField = (
+  record: Record<string, unknown>,
+  key: 'at' | 'expiresAt',
+  options?: { positive?: boolean }
+): number | null => {
+  const value = record[key];
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+  if (options?.positive ? value <= 0 : value < 0) {
+    return null;
+  }
+  return value;
+};
+
+const buildRecentAiPathRunEnqueueRecord = (input: {
+  runId: string;
+  entityId: string | null;
+  entityType: string | null;
+  at: number;
+  expiresAt: number;
+}): RecentAiPathRunEnqueueRecord => ({
+  type: 'run-enqueued',
+  runId: input.runId,
+  entityId: input.entityId,
+  entityType: input.entityType,
+  at: input.at,
+  expiresAt: input.expiresAt,
+});
+
 const normalizeString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
@@ -94,37 +138,23 @@ const normalizeRecentAiPathRunEnqueueRecord = (
 ): RecentAiPathRunEnqueueRecord | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
-  const runId =
-    typeof record['runId'] === 'string' && record['runId'].trim().length > 0
-      ? record['runId'].trim()
-      : null;
-  const entityId =
-    typeof record['entityId'] === 'string' && record['entityId'].trim().length > 0
-      ? record['entityId'].trim()
-      : null;
-  const entityType =
-    typeof record['entityType'] === 'string' && record['entityType'].trim().length > 0
-      ? record['entityType'].trim().toLowerCase()
-      : null;
-  const at =
-    typeof record['at'] === 'number' && Number.isFinite(record['at']) && record['at'] >= 0
-      ? record['at']
-      : null;
-  const expiresAt =
-    typeof record['expiresAt'] === 'number' &&
-    Number.isFinite(record['expiresAt']) &&
-    record['expiresAt'] > 0
-      ? record['expiresAt']
-      : null;
+  const runId = readRecentAiPathRunEnqueueStringField(record, 'runId');
+  const entityId = readRecentAiPathRunEnqueueStringField(record, 'entityId');
+  const entityType = readRecentAiPathRunEnqueueStringField(record, 'entityType', {
+    lowercase: true,
+  });
+  const at = readRecentAiPathRunEnqueueNumberField(record, 'at');
+  const expiresAt = readRecentAiPathRunEnqueueNumberField(record, 'expiresAt', {
+    positive: true,
+  });
   if (!runId || at === null || expiresAt === null) return null;
-  return {
-    type: 'run-enqueued',
+  return buildRecentAiPathRunEnqueueRecord({
     runId,
     entityId,
     entityType,
     at,
     expiresAt,
-  };
+  });
 };
 
 export const rememberRecentAiPathRunEnqueue = (
@@ -138,14 +168,13 @@ export const rememberRecentAiPathRunEnqueue = (
     typeof parsed.at === 'number' && Number.isFinite(parsed.at) && parsed.at >= 0
       ? parsed.at
       : Date.now();
-  const record: RecentAiPathRunEnqueueRecord = {
-    type: 'run-enqueued',
+  const record = buildRecentAiPathRunEnqueueRecord({
     runId: parsed.runId,
     entityId: parsed.entityId ?? null,
     entityType: parsed.entityType ?? null,
     at,
     expiresAt: Date.now() + ttlMs,
-  };
+  });
   inMemoryRecentAiPathRunEnqueue = record;
   safeLocalStorageSetItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY, JSON.stringify(record));
 };

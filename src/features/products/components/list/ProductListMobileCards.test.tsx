@@ -394,6 +394,69 @@ describe('ProductListMobileCards', () => {
     expect(screen.getByText('Imported')).toBeInTheDocument();
   });
 
+  it('shows the auto-assigned shipping group on mobile cards', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          shippingGroupSource: 'category_rule',
+          shippingGroupMatchedCategoryRuleIds: ['category-1'],
+          shippingGroup: {
+            id: 'shipping-group-1',
+            name: 'Jewellery 7 EUR',
+            description: null,
+            catalogId: 'catalog-1',
+            traderaShippingCondition: 'Buyer pays shipping',
+            traderaShippingPriceEur: 7,
+            autoAssignCategoryIds: ['category-1'],
+          },
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Auto shipping: Jewellery 7 EUR')).toBeInTheDocument();
+    expect(screen.getByText('Auto via: Keychains')).toBeInTheDocument();
+  });
+
+  it('shows a shipping-rule conflict on mobile cards', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          shippingGroupResolutionReason: 'multiple_category_rules',
+          shippingGroupMatchingGroupNames: ['Jewellery 7 EUR', 'Rings 5 EUR'],
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Ship conflict')).toBeInTheDocument();
+    expect(screen.getByText('Jewellery 7 EUR, Rings 5 EUR')).toBeInTheDocument();
+  });
+
+  it('shows a missing manual shipping-group on mobile cards', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          shippingGroupId: 'missing-group',
+          shippingGroupResolutionReason: 'manual_missing',
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Ship missing')).toBeInTheDocument();
+    expect(screen.getByText('missing-group')).toBeInTheDocument();
+  });
+
   it('renders the programmable Playwright status button on mobile cards', () => {
     useProductListRowRuntimeMock.mockReturnValue({
       showMarketplaceBadge: true,

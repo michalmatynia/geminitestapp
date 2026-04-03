@@ -1,4 +1,5 @@
-import { createContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { internalError } from '@/shared/errors/app-error';
 
 export interface NoteContentData {
   content: string;
@@ -9,4 +10,12 @@ export interface NoteContentData {
   canRedo: boolean;
 }
 
-export const NoteContentContext = createContext<NoteContentData | null>(null);
+const { Context: NoteContentContext, useStrictContext: useNoteContentContext } =
+  createStrictContext<NoteContentData>({
+    hookName: 'useNoteContentContext',
+    providerName: 'NoteFormProvider',
+    displayName: 'NoteContentContext',
+    errorFactory: internalError,
+  });
+
+export { NoteContentContext, useNoteContentContext };

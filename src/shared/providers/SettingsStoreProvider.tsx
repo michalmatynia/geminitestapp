@@ -1,9 +1,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLiteSettingsMap, useSettingsMap } from '@/shared/hooks/use-settings';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type SettingsStoreValue = {
@@ -19,11 +20,23 @@ export type SettingsStoreValue = {
 
 // Stable context — only changes when map data, error, or loading state changes.
 // Does NOT change when isFetching toggles during background re-validation.
-const SettingsStoreContext = createContext<SettingsStoreValue | null>(null);
+const { Context: SettingsStoreContext, useOptionalContext: useOptionalSettingsStoreContext } =
+  createStrictContext<SettingsStoreValue>({
+    hookName: 'useSettingsStore',
+    providerName: 'SettingsStoreProvider',
+    displayName: 'SettingsStoreContext',
+  });
 
 // Volatile context — changes on every fetch cycle. Only subscribe if you need
 // real-time fetching state (e.g. a "refreshing" spinner).
-const SettingsStoreFetchingContext = createContext<boolean>(false);
+const {
+  Context: SettingsStoreFetchingContext,
+  useOptionalContext: useOptionalSettingsStoreFetchingContext,
+} = createStrictContext<boolean>({
+  hookName: 'useSettingsStoreFetching',
+  providerName: 'SettingsStoreProvider',
+  displayName: 'SettingsStoreFetchingContext',
+});
 
 const emptyMap = new Map<string, string>();
 const fallbackStore: SettingsStoreValue = {
@@ -238,7 +251,7 @@ export function SettingsStoreProvider({
 }
 
 export function useSettingsStore(): SettingsStoreValue {
-  const context = useContext(SettingsStoreContext);
+  const context = useOptionalSettingsStoreContext();
   if (!context) {
     if (process.env['NODE_ENV'] === 'development') {
       logClientError(new Error('Missing SettingsStoreProvider context; returning defaults.'), {
@@ -255,5 +268,5 @@ export function useSettingsStore(): SettingsStoreValue {
  * a "refreshing" indicator — most consumers should use useSettingsStore() instead.
  */
 export function useSettingsStoreFetching(): boolean {
-  return useContext(SettingsStoreFetchingContext);
+  return useOptionalSettingsStoreFetchingContext() ?? false;
 }

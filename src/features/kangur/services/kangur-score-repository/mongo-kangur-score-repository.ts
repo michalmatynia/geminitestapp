@@ -94,25 +94,61 @@ const buildRegexSubjectFilter = (
   $or: [{ subject }, { operation: { $regex: regex } }],
 });
 
+type RegexBackedKangurScoreSubject = 'alphabet' | 'english' | 'art' | 'music';
+
+const SUBJECT_FILTER_REGEX_BY_SUBJECT: Record<RegexBackedKangurScoreSubject, RegExp> = {
+  alphabet: ALPHABET_OPERATION_REGEX,
+  english: ENGLISH_OPERATION_REGEX,
+  art: ART_OPERATION_REGEX,
+  music: MUSIC_OPERATION_REGEX,
+};
+
+const isRegexBackedKangurScoreSubject = (
+  subject: KangurScoreFilterSubject
+): subject is RegexBackedKangurScoreSubject =>
+  subject === 'alphabet' || subject === 'english' || subject === 'art' || subject === 'music';
+
 const resolveSubjectMongoFilter = (
   subject: KangurScoreFilterSubject
 ): Filter<KangurScoreDocument> => {
   if (subject === 'maths') {
     return buildMathsSubjectFilter(subject);
   }
-  if (subject === 'alphabet') {
-    return buildRegexSubjectFilter(subject, ALPHABET_OPERATION_REGEX);
-  }
-  if (subject === 'english') {
-    return buildRegexSubjectFilter(subject, ENGLISH_OPERATION_REGEX);
-  }
-  if (subject === 'art') {
-    return buildRegexSubjectFilter(subject, ART_OPERATION_REGEX);
-  }
-  if (subject === 'music') {
-    return buildRegexSubjectFilter(subject, MUSIC_OPERATION_REGEX);
+  if (isRegexBackedKangurScoreSubject(subject)) {
+    return buildRegexSubjectFilter(subject, SUBJECT_FILTER_REGEX_BY_SUBJECT[subject]);
   }
   return { subject };
+};
+
+type KangurScoreFilterValue = NonNullable<KangurScoreListInput['filters']>;
+type KangurScoreFilterKey = keyof KangurScoreFilterValue;
+
+const applyMongoScoreFilter = (
+  query: Filter<KangurScoreDocument>,
+  filters: KangurScoreFilterValue,
+  key: KangurScoreFilterKey
+): void => {
+  const value = filters[key];
+  if (!value) {
+    return;
+  }
+  switch (key) {
+    case 'player_name':
+      query.player_name = value;
+      return;
+    case 'operation':
+      query.operation = value;
+      return;
+    case 'subject':
+      Object.assign(query, resolveSubjectMongoFilter(value));
+      return;
+    case 'created_by':
+      query.created_by = value;
+      return;
+    case 'learner_id':
+      query.learner_id = value;
+      return;
+  }
 };
 
 const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocument> => {
@@ -120,20 +156,8 @@ const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocumen
   const query: Filter<KangurScoreDocument> = {};
   if (!filters) return query;
 
-  if (filters.player_name) {
-    query.player_name = filters.player_name;
-  }
-  if (filters.operation) {
-    query.operation = filters.operation;
-  }
-  if (filters.subject) {
-    Object.assign(query, resolveSubjectMongoFilter(filters.subject));
-  }
-  if (filters.created_by) {
-    query.created_by = filters.created_by;
-  }
-  if (filters.learner_id) {
-    query.learner_id = filters.learner_id;
+  for (const key of Object.keys(filters) as KangurScoreFilterKey[]) {
+    applyMongoScoreFilter(query, filters, key);
   }
   return query;
 };

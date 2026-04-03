@@ -11,10 +11,12 @@ import { type KangurLessonDocument } from '@/features/kangur/shared/contracts/ka
 
 import {
   augmentKangurTestSurfaceRuntimeDocument,
+  buildLoginActivitySummary,
   buildLessonDocumentSnippetCards,
   buildLessonDocumentSnippets,
   extractBlockSnippets,
   extractLessonDocumentSnippetCards,
+  findRelevantLessonAssignment,
 } from './kangur-registry-resolvers';
 
 describe('kangur-registry-resolvers snippet cards', () => {
@@ -259,6 +261,74 @@ describe('kangur-registry-resolvers snippet cards', () => {
           },
         ],
       })
+    );
+  });
+});
+
+describe('kangur-registry-resolvers assignment and activity helpers', () => {
+  it('prefers the assignment explicitly selected in conversation context', () => {
+    const lesson = { componentId: 'clock' } as any;
+    const assignments = [
+      {
+        id: 'assignment-completed',
+        target: { type: 'lesson', lessonComponentId: 'clock' },
+        progress: { status: 'completed' },
+      },
+      {
+        id: 'assignment-active',
+        target: { type: 'lesson', lessonComponentId: 'clock' },
+        progress: { status: 'in_progress' },
+      },
+    ] as any;
+
+    expect(
+      findRelevantLessonAssignment(lesson, assignments, { assignmentId: 'assignment-completed' })
+    ).toMatchObject({ id: 'assignment-completed' });
+  });
+
+  it('falls back to the active lesson assignment before completed matches', () => {
+    const lesson = { componentId: 'clock' } as any;
+    const assignments = [
+      {
+        id: 'assignment-completed',
+        target: { type: 'lesson', lessonComponentId: 'clock' },
+        progress: { status: 'completed' },
+      },
+      {
+        id: 'assignment-active',
+        target: { type: 'lesson', lessonComponentId: 'clock' },
+        progress: { status: 'assigned' },
+      },
+    ] as any;
+
+    expect(findRelevantLessonAssignment(lesson, assignments)).toMatchObject({
+      id: 'assignment-active',
+    });
+  });
+
+  it('builds login activity summaries for both recent and missing activity states', () => {
+    expect(
+      buildLoginActivitySummary({
+        learnerDisplayName: 'Ada',
+        parentLoginCount7d: 2,
+        learnerSignInCount7d: 5,
+        lastParentLoginAt: '2026-04-02T12:00:00.000Z',
+        lastLearnerSignInAt: '2026-04-03T08:30:00.000Z',
+      })
+    ).toBe(
+      'Ada last signed into Kangur at 2026-04-03T08:30:00.000Z. The parent last logged into Kangur at 2026-04-02T12:00:00.000Z. In the last 7 days there were 5 learner sign-ins and 2 parent Kangur logins.'
+    );
+
+    expect(
+      buildLoginActivitySummary({
+        learnerDisplayName: null,
+        parentLoginCount7d: 0,
+        learnerSignInCount7d: 0,
+        lastParentLoginAt: null,
+        lastLearnerSignInAt: null,
+      })
+    ).toBe(
+      'No recent Kangur learner sign-in was recorded for This learner. No recent Kangur parent login was recorded. In the last 7 days there were 0 learner sign-ins and 0 parent Kangur logins.'
     );
   });
 });

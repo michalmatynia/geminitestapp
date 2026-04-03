@@ -370,22 +370,28 @@ export const getTraderaCategories = async (
   return parseTraderaCategoriesXml(categoryXml);
 };
 
-export const addTraderaShopItem = async ({
-  input,
-  credentials,
-}: {
-  input: TraderaAddShopItemInput;
-  credentials: TraderaApiCredentials;
-}): Promise<TraderaAddShopItemResult> => {
-  const safeTitle = normalizeText(input.title).slice(0, 100);
-  const safeDescription = normalizeText(input.description);
+type NormalizedTraderaShopItemInput = {
+  title: string;
+  description: string;
+  categoryId: number;
+  acceptedBuyerId: number;
+  shippingCondition: string;
+  paymentCondition: string;
+  priceText: string;
+  quantity: number;
+};
+
+const normalizeTraderaShopItemInput = (
+  input: TraderaAddShopItemInput
+): NormalizedTraderaShopItemInput => {
+  const title = normalizeText(input.title).slice(0, 100);
+  const description = normalizeText(input.description);
   const categoryId = toPositiveInt(input.categoryId);
-  const quantity = Math.max(1, toPositiveInt(input.quantity) ?? 1);
-  const acceptedBuyerId = Math.max(0, toPositiveInt(input.acceptedBuyerId ?? 0) ?? 0);
-  if (!safeTitle) {
+
+  if (!title) {
     throw configurationError('Tradera item title is required.');
   }
-  if (!safeDescription) {
+  if (!description) {
     throw configurationError('Tradera item description is required.');
   }
   if (!categoryId) {
@@ -395,29 +401,64 @@ export const addTraderaShopItem = async ({
     throw configurationError('Tradera price must be greater than 0.');
   }
 
-  const response = await callTraderaSoap({
-    service: 'restricted',
-    method: 'AddShopItem',
-    bodyXml: `
+  return {
+    title,
+    description,
+    categoryId,
+    acceptedBuyerId: Math.max(0, toPositiveInt(input.acceptedBuyerId ?? 0) ?? 0),
+    shippingCondition: input.shippingCondition,
+    paymentCondition: input.paymentCondition,
+    priceText: input.price.toFixed(2),
+    quantity: Math.max(1, toPositiveInt(input.quantity) ?? 1),
+  };
+};
+
+const buildAddShopItemBodyXml = (input: NormalizedTraderaShopItemInput): string => `
 <shopItemData>
-  <Title>${escapeXml(safeTitle)}</Title>
-  <Description>${escapeXml(safeDescription)}</Description>
-  <CategoryId>${categoryId}</CategoryId>
-  <AcceptedBuyerId>${acceptedBuyerId}</AcceptedBuyerId>
+  <Title>${escapeXml(input.title)}</Title>
+  <Description>${escapeXml(input.description)}</Description>
+  <CategoryId>${input.categoryId}</CategoryId>
+  <AcceptedBuyerId>${input.acceptedBuyerId}</AcceptedBuyerId>
   <ShippingCondition>${escapeXml(input.shippingCondition)}</ShippingCondition>
   <PaymentCondition>${escapeXml(input.paymentCondition)}</PaymentCondition>
-  <Price>${input.price.toFixed(2)}</Price>
-  <Quantity>${quantity}</Quantity>
-</shopItemData>`,
-    credentials,
-  });
+  <Price>${input.priceText}</Price>
+  <Quantity>${input.quantity}</Quantity>
+</shopItemData>`;
 
+const parseAddShopItemResponse = (response: string): { itemId: number; requestId: number | null } => {
   const itemId = toPositiveInt(extractFirstTagValue(response, 'ItemId'));
   const requestId = toPositiveInt(extractFirstTagValue(response, 'RequestId'));
   if (!itemId) {
     throw externalServiceError('Tradera API did not return a valid item ID for AddShopItem.');
   }
+  return { itemId, requestId };
+};
 
+const resolvePolledRequestFailure = ({
+  requestId,
+  resultCode,
+  resultMessage,
+}: {
+  requestId: number;
+  resultCode: string | null;
+  resultMessage: string | null;
+}): void => {
+  const normalizedCode = normalizeText(resultCode);
+  if (!normalizedCode || ['Ok', 'WaitingToBeProcessed', 'Processing'].includes(normalizedCode)) {
+    return;
+  }
+  const detail = normalizeText(resultMessage) || 'Unknown Tradera API error.';
+  throw externalServiceError(`Tradera request ${requestId} failed (${normalizedCode}): ${detail}`);
+};
+
+const resolveAddShopItemResult = async ({
+  response,
+  credentials,
+}: {
+  response: string;
+  credentials: TraderaApiCredentials;
+}): Promise<TraderaAddShopItemResult> => {
+  const { itemId, requestId } = parseAddShopItemResponse(response);
   if (!requestId) {
     return {
       itemId,
@@ -431,11 +472,11 @@ export const addTraderaShopItem = async ({
     requestId,
     credentials,
   });
-  const code = normalizeText(requestResult.code);
-  if (code && !['Ok', 'WaitingToBeProcessed', 'Processing'].includes(code)) {
-    const detail = normalizeText(requestResult.message) || 'Unknown Tradera API error.';
-    throw externalServiceError(`Tradera request ${requestId} failed (${code}): ${detail}`);
-  }
+  resolvePolledRequestFailure({
+    requestId,
+    resultCode: requestResult.code,
+    resultMessage: requestResult.message,
+  });
 
   return {
     itemId,
@@ -443,4 +484,26 @@ export const addTraderaShopItem = async ({
     resultCode: requestResult.code,
     resultMessage: requestResult.message,
   };
+};
+
+export const addTraderaShopItem = async ({
+  input,
+  credentials,
+}: {
+  input: TraderaAddShopItemInput;
+  credentials: TraderaApiCredentials;
+}): Promise<TraderaAddShopItemResult> => {
+  const normalizedInput = normalizeTraderaShopItemInput(input);
+
+  const response = await callTraderaSoap({
+    service: 'restricted',
+    method: 'AddShopItem',
+    bodyXml: buildAddShopItemBodyXml(normalizedInput),
+    credentials,
+  });
+
+  return resolveAddShopItemResult({
+    response,
+    credentials,
+  });
 };

@@ -16,6 +16,13 @@ import type {
   ProductWithImages,
 } from '@/shared/contracts/products';
 import { PAGE_CONTEXT_ENGINE_VERSION } from '@/shared/lib/ai-context-registry/page-context-shared';
+import {
+  pickProductTitle,
+  resolveProductEditorEntityKey,
+  resolveProductEditorTitle,
+  summarizeVariant,
+  trimText,
+} from './workspace.helpers';
 
 export const PRODUCT_EDITOR_CONTEXT_ROOT_IDS = [
   'page:product-editor',
@@ -78,41 +85,6 @@ interface BuildProductStudioWorkspaceContextBundleInput {
 
 const encodeSegment = (value: string): string => encodeURIComponent(value.trim());
 
-const trimText = (value: string | null | undefined, maxLength: number): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const normalized = value.trim();
-  if (!normalized) {
-    return null;
-  }
-  if (normalized.length <= maxLength) {
-    return normalized;
-  }
-  return `${normalized.slice(0, Math.max(0, maxLength - 1))}...`;
-};
-
-const pickProductTitle = (product: ProductWithImages): string =>
-  trimText(product.name_en, 120) ??
-  trimText(product.name_pl, 120) ??
-  trimText(product.name_de, 120) ??
-  trimText(product.sku, 120) ??
-  product.id;
-
-const resolveProductEditorEntityKey = ({
-  productId,
-  draftId,
-}: {
-  productId: string | null;
-  draftId: string | null;
-}): string => trimText(productId, 120) ?? trimText(draftId, 120) ?? 'unsaved';
-
-const resolveProductEditorTitle = (input: BuildProductEditorWorkspaceContextBundleInput): string =>
-  trimText(input.productTitle, 120) ??
-  trimText(input.productId, 120) ??
-  trimText(input.draftId, 120) ??
-  'Unsaved product';
-
 const createProductEditorWorkspaceRef = ({
   productId,
   draftId,
@@ -139,16 +111,6 @@ const summarizeImageSlot = (slot: ProductImageSlotPreview): Record<string, unkno
   index: slot.index,
   label: slot.label,
   src: slot.src,
-});
-
-const summarizeVariant = (
-  variant: ProductStudioVariantsResponse['variants'][number]
-): Record<string, unknown> => ({
-  id: variant.id,
-  name: variant.name,
-  folderPath: variant.folderPath ?? null,
-  createdAt: variant.createdAt ?? null,
-  imagePath: variant.imageFile?.filepath ?? variant.imageUrl ?? null,
 });
 
 const summarizeAuditEntry = (entry: ProductStudioAuditEntry): Record<string, unknown> => ({

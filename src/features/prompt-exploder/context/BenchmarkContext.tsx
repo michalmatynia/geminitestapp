@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import type { ParseCustomBenchmarkCasesResult } from '@/shared/contracts/prompt-exploder';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -74,8 +75,22 @@ export interface BenchmarkActions {
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
-const BenchmarkStateContext = createContext<BenchmarkState | null>(null);
-const BenchmarkActionsContext = createContext<BenchmarkActions | null>(null);
+const benchmarkStateContextResult = createStrictContext<BenchmarkState>({
+  hookName: 'useBenchmarkState',
+  providerName: 'BenchmarkProvider',
+  displayName: 'BenchmarkStateContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const benchmarkActionsContextResult = createStrictContext<BenchmarkActions>({
+  hookName: 'useBenchmarkActions',
+  providerName: 'BenchmarkProvider',
+  displayName: 'BenchmarkActionsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const BenchmarkStateContext = benchmarkStateContextResult.Context;
+const BenchmarkActionsContext = benchmarkActionsContextResult.Context;
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -396,16 +411,8 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
 
 // ── Hook exports ─────────────────────────────────────────────────────────────
 
-export const useBenchmarkState = (): BenchmarkState => {
-  const ctx = React.useContext(BenchmarkStateContext);
-  if (!ctx) throw internalError('useBenchmarkState must be used within BenchmarkProvider');
-  return ctx;
-};
+export const useBenchmarkState = benchmarkStateContextResult.useStrictContext;
 
-export const useBenchmarkActions = (): BenchmarkActions => {
-  const ctx = React.useContext(BenchmarkActionsContext);
-  if (!ctx) throw internalError('useBenchmarkActions must be used within BenchmarkProvider');
-  return ctx;
-};
+export const useBenchmarkActions = benchmarkActionsContextResult.useStrictContext;
 
 export { BenchmarkStateContext, BenchmarkActionsContext };

@@ -1,4 +1,5 @@
-import { createContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { internalError } from '@/shared/errors/app-error';
 
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 
@@ -29,4 +30,12 @@ export interface NoteFilesData {
   isImageFile: (mimetype: string) => boolean;
 }
 
-export const NoteFilesContext = createContext<NoteFilesData | null>(null);
+const { Context: NoteFilesContext, useStrictContext: useNoteFilesContext } =
+  createStrictContext<NoteFilesData>({
+    hookName: 'useNoteFilesContext',
+    providerName: 'NoteFormProvider',
+    displayName: 'NoteFilesContext',
+    errorFactory: internalError,
+  });
+
+export { NoteFilesContext, useNoteFilesContext };

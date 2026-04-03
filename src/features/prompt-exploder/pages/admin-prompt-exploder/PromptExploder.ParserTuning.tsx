@@ -13,6 +13,7 @@ import {
   Textarea,
 } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import {
   SettingsActionsContext,
@@ -37,8 +38,18 @@ type PromptExploderParserTuningContextValue = {
   isBusy: boolean;
 };
 
-const PromptExploderParserTuningContext =
-  React.createContext<PromptExploderParserTuningContextValue | null>(null);
+const {
+  Context: PromptExploderParserTuningContext,
+  useStrictContext: usePromptExploderParserTuningContext,
+} = createStrictContext<PromptExploderParserTuningContextValue>({
+  hookName: 'usePromptExploderParserTuningContext',
+  providerName: 'PromptExploderParserTuningProvider',
+  displayName: 'PromptExploderParserTuningContext',
+  errorFactory: () =>
+    internalError(
+      'usePromptExploderParserTuningContext must be used inside PromptExploderParserTuningProvider'
+    ),
+});
 
 export function PromptExploderParserTuningProvider({
   value,
@@ -83,16 +94,6 @@ export function PromptExploderParserTuningProvider({
       {children}
     </PromptExploderParserTuningContext.Provider>
   );
-}
-
-function usePromptExploderParserTuningContext(): PromptExploderParserTuningContextValue {
-  const context = React.useContext(PromptExploderParserTuningContext);
-  if (!context) {
-    throw internalError(
-      'usePromptExploderParserTuningContext must be used inside PromptExploderParserTuningProvider'
-    );
-  }
-  return context;
 }
 
 export function PromptExploderParserTuningPanel(): React.JSX.Element {

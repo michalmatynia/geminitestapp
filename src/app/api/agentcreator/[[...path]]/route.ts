@@ -13,6 +13,7 @@ import type {
   CatchAllRouteParams as Params,
   CatchAllRoutePathParams as RouteParams,
 } from '@/shared/lib/api/catch-all-router';
+import { matchCatchAllPattern } from '@/shared/lib/api/catch-all-router';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 
 import * as agentIndex from '../agent/route-handler';
@@ -78,49 +79,8 @@ const ROUTES: RouteDefinition[] = [
   },
   { pattern: ['teaching', 'collections', { param: 'collectionId' }], module: teachingCollectionById },
 ];
-
-const matchPattern = (pattern: RoutePattern, segments: string[]): Params | null => {
-  const params: Params = {};
-  let index = 0;
-
-  for (const token of pattern) {
-    const segment = segments[index];
-
-    if (typeof token === 'string') {
-      if (segment !== token) {
-        return null;
-      }
-      index += 1;
-      continue;
-    }
-
-    if ('param' in token) {
-      if (!segment) {
-        return null;
-      }
-      params[token.param] = segment;
-      index += 1;
-      continue;
-    }
-
-    if ('literal' in token) {
-      if (segment === token.literal) {
-        index += 1;
-        continue;
-      }
-      if (token.optional) {
-        continue;
-      }
-      return null;
-    }
-  }
-
-  if (index < segments.length) {
-    return null;
-  }
-
-  return params;
-};
+const matchPattern = (pattern: RoutePattern, segments: string[]): Params | null =>
+  matchCatchAllPattern(pattern, segments);
 
 const notFound = async (request: NextRequest, source: string): Promise<Response> =>
   createErrorResponse(notFoundError('Not Found'), { request, source });

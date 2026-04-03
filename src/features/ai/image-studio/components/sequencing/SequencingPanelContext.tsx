@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { SequenceRunStatus, SequencerDisplayState } from './sequencing-types';
 
@@ -45,7 +46,13 @@ export interface SequencingPanelContextValue {
   >;
 }
 
-const SequencingPanelContext = createContext<SequencingPanelContextValue | null>(null);
+const { Context: SequencingPanelContext, useStrictContext: useSequencingPanelContext } =
+  createStrictContext<SequencingPanelContextValue>({
+    hookName: 'useSequencingPanelContext',
+    providerName: 'SequencingPanelProvider',
+    displayName: 'SequencingPanelContext',
+    errorFactory: internalError,
+  });
 
 export function SequencingPanelProvider({
   children,
@@ -58,11 +65,4 @@ export function SequencingPanelProvider({
     <SequencingPanelContext.Provider value={value}>{children}</SequencingPanelContext.Provider>
   );
 }
-
-export function useSequencingPanelContext() {
-  const context = useContext(SequencingPanelContext);
-  if (!context) {
-    throw internalError('useSequencingPanelContext must be used within SequencingPanelProvider');
-  }
-  return context;
-}
+export { useSequencingPanelContext };

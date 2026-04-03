@@ -184,6 +184,10 @@ type ProductListMobileCardResolvedProps = {
   isImported: boolean;
   skuLabel: string;
   categoryLabel: string;
+  autoShippingGroupLabel: string;
+  autoShippingRuleLabel: string;
+  shippingRuleConflictLabel: string;
+  missingManualShippingLabel: string;
   thumbnailUrl: string | null;
   createdAtLabel: string;
   displayPrice: number | null;
@@ -207,6 +211,10 @@ const renderProductListMobileCard = ({
   isImported,
   skuLabel,
   categoryLabel,
+  autoShippingGroupLabel,
+  autoShippingRuleLabel,
+  shippingRuleConflictLabel,
+  missingManualShippingLabel,
   thumbnailUrl,
   createdAtLabel,
   displayPrice,
@@ -271,6 +279,26 @@ const renderProductListMobileCard = ({
               </span>
               <span className='truncate'>Category: {categoryLabel}</span>
             </div>
+            {autoShippingGroupLabel && (
+              <div className='space-y-0.5'>
+                <div className='truncate'>Auto shipping: {autoShippingGroupLabel}</div>
+                {autoShippingRuleLabel ? (
+                  <div className='truncate'>Auto via: {autoShippingRuleLabel}</div>
+                ) : null}
+              </div>
+            )}
+            {shippingRuleConflictLabel ? (
+              <div className='space-y-0.5 text-amber-300'>
+                <div className='truncate'>Ship conflict</div>
+                <div className='truncate'>{shippingRuleConflictLabel}</div>
+              </div>
+            ) : null}
+            {missingManualShippingLabel ? (
+              <div className='space-y-0.5 text-amber-300'>
+                <div className='truncate'>Ship missing</div>
+                <div className='truncate'>{missingManualShippingLabel}</div>
+              </div>
+            ) : null}
             {(isImported || productAiRunFeedback) && (
               <div className='flex flex-wrap items-center gap-2'>
                 {isImported && (
@@ -453,6 +481,27 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
   const isImported = hasImportedProductOrigin(product);
   const skuLabel = product.sku?.trim() || 'No SKU';
   const categoryLabel = resolveProductCategoryLabel(product, rowVisuals.categoryNameById, nameKey);
+  const autoShippingGroupLabel =
+    product.shippingGroupSource === 'category_rule' ? product.shippingGroup?.name?.trim() ?? '' : '';
+  const autoShippingRuleLabel =
+    product.shippingGroupSource === 'category_rule'
+      ? (product.shippingGroupMatchedCategoryRuleIds ?? [])
+          .map((categoryId) => rowVisuals.categoryNameById.get(categoryId) ?? categoryId)
+          .filter((label) => label.trim().length > 0)
+          .join(', ')
+      : '';
+  const shippingRuleConflictLabel =
+    product.shippingGroupResolutionReason === 'multiple_category_rules'
+      ? (product.shippingGroupMatchingGroupNames ?? [])
+          .filter((label) => label.trim().length > 0)
+          .join(', ')
+      : '';
+  const missingManualShippingLabel =
+    product.shippingGroupResolutionReason === 'manual_missing' &&
+    typeof product.shippingGroupId === 'string' &&
+    product.shippingGroupId.trim().length > 0
+      ? product.shippingGroupId.trim()
+      : '';
   const thumbnailUrl = resolveThumbnailUrl(
     product,
     rowVisuals.thumbnailSource,
@@ -498,6 +547,10 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
     isImported,
     skuLabel,
     categoryLabel,
+    autoShippingGroupLabel,
+    autoShippingRuleLabel,
+    shippingRuleConflictLabel,
+    missingManualShippingLabel,
     thumbnailUrl,
     createdAtLabel,
     displayPrice,

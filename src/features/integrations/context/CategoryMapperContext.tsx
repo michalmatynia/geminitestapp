@@ -1,8 +1,6 @@
 'use client';
 
 import React, {
-  createContext,
-  useContext,
   useState,
   useMemo,
   useEffect,
@@ -34,9 +32,9 @@ import type {
   CategoryMapperActions,
 } from '@/shared/contracts/integrations';
 import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
-import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { createStrictContext } from './createStrictContext';
 
 // --- Granular Contexts ---
 
@@ -44,20 +42,17 @@ export interface CategoryMapperConfig {
   connectionId: string;
   connectionName: string;
 }
-const ConfigContext = createContext<CategoryMapperConfig | null>(null);
-export const useCategoryMapperConfig = () => {
-  const context = useContext(ConfigContext);
-  if (!context)
-    throw internalError('useCategoryMapperConfig must be used within CategoryMapperProvider');
-  return context;
-};
+export const { Context: ConfigContext, useValue: useCategoryMapperConfig } =
+  createStrictContext<CategoryMapperConfig>({
+    displayName: 'CategoryMapperConfigContext',
+    errorMessage: 'useCategoryMapperConfig must be used within CategoryMapperProvider',
+  });
 
-const DataContext = createContext<CategoryMapperData | null>(null);
-export const useCategoryMapperData = () => {
-  const context = useContext(DataContext);
-  if (!context) throw internalError('useCategoryMapperData must be used within CategoryMapperProvider');
-  return context;
-};
+export const { Context: DataContext, useValue: useCategoryMapperData } =
+  createStrictContext<CategoryMapperData>({
+    displayName: 'CategoryMapperDataContext',
+    errorMessage: 'useCategoryMapperData must be used within CategoryMapperProvider',
+  });
 
 export interface CategoryMapperUIState {
   pendingMappings: Map<string, string | null>;
@@ -71,21 +66,17 @@ export interface CategoryMapperUIState {
   }>;
   stats: { total: number; mapped: number; unmapped: number; pending: number; stale: number };
 }
-const UIStateContext = createContext<CategoryMapperUIState | null>(null);
-export const useCategoryMapperUIState = () => {
-  const context = useContext(UIStateContext);
-  if (!context)
-    throw internalError('useCategoryMapperUIState must be used within CategoryMapperProvider');
-  return context;
-};
+export const { Context: UIStateContext, useValue: useCategoryMapperUIState } =
+  createStrictContext<CategoryMapperUIState>({
+    displayName: 'CategoryMapperUIStateContext',
+    errorMessage: 'useCategoryMapperUIState must be used within CategoryMapperProvider',
+  });
 
-const ActionsContext = createContext<CategoryMapperActions | null>(null);
-export const useCategoryMapperActions = () => {
-  const context = useContext(ActionsContext);
-  if (!context)
-    throw internalError('useCategoryMapperActions must be used within CategoryMapperProvider');
-  return context;
-};
+export const { Context: ActionsContext, useValue: useCategoryMapperActions } =
+  createStrictContext<CategoryMapperActions>({
+    displayName: 'CategoryMapperActionsContext',
+    errorMessage: 'useCategoryMapperActions must be used within CategoryMapperProvider',
+  });
 
 const normalizeParentExternalId = (value: string | null | undefined): string | null => {
   const candidate = typeof value === 'string' ? value.trim() : '';

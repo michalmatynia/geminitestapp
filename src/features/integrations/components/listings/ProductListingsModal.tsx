@@ -2,7 +2,6 @@
 
 import React, { useMemo } from 'react';
 
-import { ExportLogViewer } from '@/features/integrations/components/listings/ExportLogViewer';
 import {
   ProductListingsProvider,
   useProductListingsData,
@@ -26,7 +25,9 @@ import {
   createProductListingsViewContextValue,
   type ProductListingsViewContextValue,
 } from './product-listings-modal/context/ProductListingsViewContext';
+import { ExportLogsPanel } from './ExportLogsPanel';
 import { resolveProductListingsModalTitle } from './product-listings-copy';
+import { resolveProductListingsProductName } from './product-listings-labels';
 import { ProductListingsConfirmDialogs } from './product-listings-modal/ProductListingsConfirmDialogs';
 import { ProductListingsContent } from './product-listings-modal/ProductListingsContent';
 import { ProductListingsEmpty } from './product-listings-modal/ProductListingsEmpty';
@@ -52,8 +53,7 @@ function ProductListingsModalContent(): React.JSX.Element {
   const { exportLogs } = useProductListingsLogs();
   const { onClose, onStartListing, filterIntegrationSlug } = useProductListingsModals();
 
-  const productName: string =
-    product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
+  const productName = resolveProductListingsProductName(product);
   const effectiveFilterIntegrationSlug = filterIntegrationSlug ?? null;
   const productListingsViewContextValue: ProductListingsViewContextValue = useMemo(
     () =>
@@ -93,11 +93,7 @@ function ProductListingsModalContent(): React.JSX.Element {
           </ProductListingsViewProvider>
         )}
 
-        {exportLogs.length > 0 && (
-          <div className='mt-4 border-t border pt-4'>
-            <ExportLogViewer />
-          </div>
-        )}
+        <ExportLogsPanel logs={exportLogs} />
       </div>
     </DetailModal>
   );

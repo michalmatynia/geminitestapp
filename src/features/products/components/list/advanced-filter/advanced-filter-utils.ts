@@ -6,6 +6,7 @@ import {
   type ProductAdvancedFilterGroup,
   type ProductAdvancedFilterOperator,
   type ProductAdvancedFilterPreset,
+  type ProductAdvancedFilterRule,
 } from '@/shared/contracts/products';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -165,6 +166,314 @@ export const createEmptyGroup = (): ProductAdvancedFilterGroup => ({
   not: false,
   rules: [createEmptyCondition()],
 });
+
+export const appendConditionToGroup = (
+  group: ProductAdvancedFilterGroup
+): ProductAdvancedFilterGroup => ({
+  ...group,
+  rules: [...group.rules, createEmptyCondition()],
+});
+
+export const appendGroupToGroup = (
+  group: ProductAdvancedFilterGroup
+): ProductAdvancedFilterGroup => ({
+  ...group,
+  rules: [...group.rules, createEmptyGroup()],
+});
+
+export const replaceRuleInGroup = (
+  group: ProductAdvancedFilterGroup,
+  ruleId: string,
+  nextRule: ProductAdvancedFilterRule
+): ProductAdvancedFilterGroup => ({
+  ...group,
+  rules: group.rules.map((rule: ProductAdvancedFilterRule) =>
+    rule.id === ruleId ? nextRule : rule
+  ),
+});
+
+export const removeRuleFromGroup = (
+  group: ProductAdvancedFilterGroup,
+  ruleId: string
+): ProductAdvancedFilterGroup => {
+  const nextRules = group.rules.filter((rule: ProductAdvancedFilterRule) => rule.id !== ruleId);
+  return {
+    ...group,
+    rules: nextRules.length > 0 ? nextRules : [createEmptyCondition()],
+  };
+};
+
+export const moveRuleInGroup = (
+  group: ProductAdvancedFilterGroup,
+  ruleId: string,
+  direction: -1 | 1
+): ProductAdvancedFilterGroup | null => {
+  const currentIndex = group.rules.findIndex((rule: ProductAdvancedFilterRule) => rule.id === ruleId);
+  if (currentIndex < 0) return null;
+
+  const targetIndex = currentIndex + direction;
+  if (targetIndex < 0 || targetIndex >= group.rules.length) {
+    return null;
+  }
+
+  const nextRules = [...group.rules];
+  const [movedRule] = nextRules.splice(currentIndex, 1);
+  if (!movedRule) return null;
+
+  nextRules.splice(targetIndex, 0, movedRule);
+  return {
+    ...group,
+    rules: nextRules,
+  };
+};
+
+export const duplicateRuleInGroup = (
+  group: ProductAdvancedFilterGroup,
+  ruleId: string
+): ProductAdvancedFilterGroup | null => {
+  const currentIndex = group.rules.findIndex((rule: ProductAdvancedFilterRule) => rule.id === ruleId);
+  if (currentIndex < 0) return null;
+
+  const sourceRule = group.rules[currentIndex];
+  if (!sourceRule) return null;
+
+  const nextRules = [...group.rules];
+  nextRules.splice(currentIndex + 1, 0, duplicateRuleWithNewIds(sourceRule));
+  return {
+    ...group,
+    rules: nextRules,
+  };
+};
+
+export const stripConditionValues = (
+  condition: ProductAdvancedFilterCondition
+): ProductAdvancedFilterCondition => {
+  const { value: _value, valueTo: _valueTo, ...rest } = condition;
+  return rest as ProductAdvancedFilterCondition;
+};
+
+export const stripConditionValueTo = (
+  condition: ProductAdvancedFilterCondition
+): ProductAdvancedFilterCondition => {
+  const { valueTo: _valueTo, ...rest } = condition;
+  return rest as ProductAdvancedFilterCondition;
+};
+
+export const duplicateRuleWithNewIds = (
+  rule: ProductAdvancedFilterRule
+): ProductAdvancedFilterRule => {
+  if (rule.type === 'condition') {
+    return {
+      ...rule,
+      id: createRuleId(),
+    };
+  }
+
+  return {
+    ...rule,
+    id: createRuleId(),
+    rules: rule.rules.map((child: ProductAdvancedFilterRule) => duplicateRuleWithNewIds(child)),
+  };
+};
+
+export const buildConditionValidationMessage = (
+  condition: ProductAdvancedFilterCondition
+): string | null => {
+  if (!isValueRequired(condition.operator)) {
+    return null;
+  }
+
+  const fieldConfig = getFieldConfig(condition.field);
+  const valueKind = fieldConfig.kind;
+
+  if (isMultiValueOperator(condition.operator)) {
+    if (!Array.isArray(condition.value) || condition.value.length === 0) {
+      return 'At least one value is required.';
+    }
+    if (
+      valueKind === 'number' &&
+      condition.value.some((value: unknown) => typeof value !== 'number' || !Number.isFinite(value))
+    ) {
+      return 'All values must be numbers.';
+    }
+    return null;
+  }
+
+  if (
+    condition.value === undefined ||
+    condition.value === null ||
+    (typeof condition.value === 'string' && condition.value.trim().length === 0)
+  ) {
+    return 'Value is required.';
+  }
+
+  if (Array.isArray(condition.value)) {
+    return 'Value must be a single item.';
+  }
+
+  if (
+    valueKind === 'number' &&
+    (typeof condition.value !== 'number' || !Number.isFinite(condition.value))
+  ) {
+    return 'Value must be a number.';
+  }
+
+  if (valueKind === 'boolean' && typeof condition.value !== 'boolean') {
+    return 'Value must be true or false.';
+  }
+
+  if (isSecondValueRequired(condition.operator)) {
+    if (
+      condition.valueTo === undefined ||
+      condition.valueTo === null ||
+      (typeof condition.valueTo === 'string' && condition.valueTo.trim().length === 0)
+    ) {
+      return 'Second value is required.';
+    }
+
+    if (Array.isArray(condition.valueTo)) {
+      return 'Second value must be a single item.';
+    }
+
+    if (
+      valueKind === 'number' &&
+      (typeof condition.valueTo !== 'number' || !Number.isFinite(condition.valueTo))
+    ) {
+      return 'Second value must be a number.';
+    }
+
+    if (valueKind === 'boolean' && typeof condition.valueTo !== 'boolean') {
+      return 'Second value must be true or false.';
+    }
+  }
+
+  return null;
+};
+
+export const buildConditionForFieldChange = (
+  condition: ProductAdvancedFilterCondition,
+  nextField: ProductAdvancedFilterField
+): ProductAdvancedFilterCondition => {
+  const nextOperator = supportsOperator(nextField, condition.operator)
+    ? condition.operator
+    : getDefaultOperatorForField(nextField);
+
+  return stripConditionValues({
+    ...condition,
+    field: nextField,
+    operator: nextOperator,
+  });
+};
+
+export const buildConditionForOperatorChange = (
+  condition: ProductAdvancedFilterCondition,
+  nextOperator: ProductAdvancedFilterOperator
+): ProductAdvancedFilterCondition => {
+  let nextCondition: ProductAdvancedFilterCondition = {
+    ...condition,
+    operator: nextOperator,
+  };
+
+  if (!isValueRequired(nextOperator)) {
+    return stripConditionValues(nextCondition);
+  }
+
+  if (isMultiValueOperator(nextOperator)) {
+    if (!Array.isArray(nextCondition.value)) {
+      if (
+        nextCondition.value === undefined ||
+        nextCondition.value === null ||
+        nextCondition.value === ''
+      ) {
+        const { value: _value, ...rest } = nextCondition;
+        nextCondition = rest as ProductAdvancedFilterCondition;
+      } else {
+        nextCondition = {
+          ...nextCondition,
+          value: [nextCondition.value],
+        };
+      }
+    }
+    return stripConditionValueTo(nextCondition);
+  }
+
+  if (Array.isArray(nextCondition.value)) {
+    const firstValue = nextCondition.value[0];
+    if (firstValue === undefined) {
+      const { value: _value, ...rest } = nextCondition;
+      nextCondition = rest as ProductAdvancedFilterCondition;
+    } else {
+      nextCondition = {
+        ...nextCondition,
+        value: firstValue,
+      };
+    }
+  }
+
+  if (!isSecondValueRequired(nextOperator)) {
+    nextCondition = stripConditionValueTo(nextCondition);
+  }
+
+  return nextCondition;
+};
+
+export const buildConditionForValueChange = (
+  condition: ProductAdvancedFilterCondition,
+  kind: AdvancedFieldKind,
+  rawValue: string
+): ProductAdvancedFilterCondition => {
+  if (isMultiValueOperator(condition.operator)) {
+    const normalized = normalizeMultiValueInput(kind, rawValue);
+    if (normalized.length === 0) {
+      const { value: _value, ...rest } = condition;
+      return rest as ProductAdvancedFilterCondition;
+    }
+    return {
+      ...condition,
+      value: normalized,
+    };
+  }
+
+  if (rawValue === '') {
+    const { value: _value, ...rest } = condition;
+    return rest as ProductAdvancedFilterCondition;
+  }
+
+  return {
+    ...condition,
+    value: normalizeConditionValue(kind, rawValue),
+  };
+};
+
+export const buildConditionForBooleanValueChange = (
+  condition: ProductAdvancedFilterCondition,
+  nextValue: string
+): ProductAdvancedFilterCondition => {
+  if (!nextValue) {
+    const { value: _value, ...rest } = condition;
+    return rest as ProductAdvancedFilterCondition;
+  }
+
+  return {
+    ...condition,
+    value: nextValue === 'true',
+  };
+};
+
+export const buildConditionForValueToChange = (
+  condition: ProductAdvancedFilterCondition,
+  kind: AdvancedFieldKind,
+  rawValue: string
+): ProductAdvancedFilterCondition => {
+  if (rawValue === '') {
+    const { valueTo: _valueTo, ...rest } = condition;
+    return rest as ProductAdvancedFilterCondition;
+  }
+  return {
+    ...condition,
+    valueTo: normalizeConditionValue(kind, rawValue),
+  };
+};
 
 export const parseAdvancedFilterPayload = (
   payload: string | null | undefined

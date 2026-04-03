@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   PORTABLE_PATH_JSON_SCHEMA_KINDS,
@@ -7,9 +7,13 @@ import {
   type PortablePathJsonSchemaKind,
 } from '../../../src/shared/lib/ai-paths/portable-engine';
 import {
+  buildPortableSchemaDiffSummaryPayload,
   buildPortableSchemaDiffAllowlistSuggestions,
   classifyPortableSchemaDiffChanges,
   evaluatePortableSchemaDiffStrictViolations,
+  logPortableSchemaDiffSummary,
+  type PortableSchemaDiffClassificationEntry,
+  type PortableSchemaDiffClassificationReport,
   validatePortableSchemaDiffAllowlist,
 } from '../../../scripts/ai-paths/check-portable-schema-diff';
 
@@ -38,6 +42,29 @@ const createSchemaDiffReport = (
     entries,
   };
 };
+
+const createClassificationEntry = (
+  overrides: Partial<PortableSchemaDiffClassificationEntry> = {}
+): PortableSchemaDiffClassificationEntry => ({
+  kind: overrides.kind ?? 'portable_package',
+  currentHash: overrides.currentHash ?? 'current-portable-package-hash',
+  vNextHash: overrides.vNextHash ?? 'next-portable-package-hash',
+  breakRisk: overrides.breakRisk ?? 'breaking',
+  reason: overrides.reason ?? 'Schema changed.',
+  allowlisted: overrides.allowlisted ?? false,
+  governance: overrides.governance ?? null,
+});
+
+const createClassificationReport = (
+  overrides: Partial<PortableSchemaDiffClassificationReport> = {}
+): PortableSchemaDiffClassificationReport => ({
+  expectedNonBreaking: overrides.expectedNonBreaking ?? [],
+  expectedBreaking: overrides.expectedBreaking ?? [],
+  unexpectedBreaking: overrides.unexpectedBreaking ?? [],
+  missingGovernanceEntries: overrides.missingGovernanceEntries ?? [],
+  expiredAllowlistEntries: overrides.expiredAllowlistEntries ?? [],
+  staleAllowlistEntries: overrides.staleAllowlistEntries ?? [],
+});
 
 describe('check-portable-schema-diff', () => {
   it('classifies unknown changed schema hashes as unexpected breaking', () => {
@@ -231,5 +258,133 @@ describe('check-portable-schema-diff', () => {
       new Date('2026-03-05T00:00:00.000Z')
     );
     expect(buildPortableSchemaDiffAllowlistSuggestions(classified)).toEqual([]);
+  });
+
+  it('builds summary payload counts for guardrail logging', () => {
+    const classification = createClassificationReport({
+      expectedNonBreaking: [createClassificationEntry({ breakRisk: 'non_breaking' })],
+      expectedBreaking: [createClassificationEntry({ kind: 'semantic_canvas' })],
+      unexpectedBreaking: [createClassificationEntry({ kind: 'portable_envelope' })],
+      missingGovernanceEntries: [createClassificationEntry({ allowlisted: true })],
+      expiredAllowlistEntries: [
+        {
+          kind: 'semantic_canvas',
+          vNextHash: 'expired-semantic-canvas-hash',
+          breakRisk: 'breaking',
+        },
+      ],
+      staleAllowlistEntries: [
+        {
+          kind: 'portable_envelope',
+          vNextHash: 'stale-portable-envelope-hash',
+          breakRisk: 'non_breaking',
+        },
+      ],
+    });
+
+    expect(
+      buildPortableSchemaDiffSummaryPayload({
+        classification,
+        diff: createSchemaDiffReport({
+          portable_package: 'next-portable-package-hash',
+          semantic_canvas: 'next-semantic-canvas-hash',
+        }),
+        strict: true,
+        suggestedAllowlistEntries: [
+          {
+            kind: 'portable_package',
+            vNextHash: 'next-portable-package-hash',
+            breakRisk: 'breaking',
+          },
+        ],
+      })
+    ).toMatchObject({
+      strict: true,
+      hasSchemaChanges: true,
+      changedKinds: ['portable_package', 'semantic_canvas'],
+      summary: {
+        expectedNonBreaking: 1,
+        expectedBreaking: 1,
+        unexpectedBreaking: 1,
+        missingGovernanceEntries: 1,
+        expiredAllowlistEntries: 1,
+        staleAllowlistEntries: 1,
+        suggestedAllowlistEntries: 1,
+      },
+    });
+  });
+
+  it('logs human-readable summary lines for strict violations and suggestions', () => {
+    const logger = {
+      log: vi.fn(),
+      error: vi.fn(),
+    };
+    const classification = createClassificationReport({
+      missingGovernanceEntries: [
+        createClassificationEntry({
+          kind: 'portable_package',
+          allowlisted: true,
+        }),
+      ],
+      expiredAllowlistEntries: [
+        {
+          kind: 'semantic_canvas',
+          vNextHash: 'expired-semantic-canvas-hash',
+          breakRisk: 'breaking',
+        },
+      ],
+      staleAllowlistEntries: [
+        {
+          kind: 'portable_envelope',
+          vNextHash: 'stale-portable-envelope-hash',
+          breakRisk: 'non_breaking',
+        },
+      ],
+      unexpectedBreaking: [
+        createClassificationEntry({
+          kind: 'semantic_canvas',
+          currentHash: 'current-semantic-canvas-hash',
+          vNextHash: 'next-semantic-canvas-hash',
+          reason: 'Canvas contract changed.',
+        }),
+      ],
+    });
+
+    logPortableSchemaDiffSummary({
+      json: false,
+      logger,
+      ok: false,
+      payload: buildPortableSchemaDiffSummaryPayload({
+        classification,
+        diff: createSchemaDiffReport({
+          semantic_canvas: 'next-semantic-canvas-hash',
+        }),
+        strict: true,
+        suggestedAllowlistEntries: [
+          {
+            kind: 'semantic_canvas',
+            vNextHash: 'next-semantic-canvas-hash',
+            breakRisk: 'breaking',
+          },
+        ],
+      }),
+    });
+
+    expect(logger.log).toHaveBeenCalledWith(
+      '[ai-paths:portable-schema-diff] strict=true changed=true'
+    );
+    expect(logger.log).toHaveBeenCalledWith(
+      '[ai-paths:portable-schema-diff] stale allowlist entries: portable_envelope@stale-portable-envelope-hash'
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      '[ai-paths:portable-schema-diff] allowlisted changes missing governance metadata: portable_package@next-portable-package-hash'
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      '[ai-paths:portable-schema-diff] expired allowlist entries: semantic_canvas@expired-semantic-canvas-hash'
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      '[ai-paths:portable-schema-diff] unexpected_breaking kind=semantic_canvas current=current-semantic-canvas-hash vnext=next-semantic-canvas-hash reason=Canvas contract changed.'
+    );
+    expect(logger.error).toHaveBeenCalledWith('[ai-paths:portable-schema-diff] guardrail failed');
   });
 });

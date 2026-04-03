@@ -59,15 +59,10 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       return;
     }
 
-    const extendedWindow = window as unknown as {
-      requestIdleCallback?: (cb: () => void) => number;
-      cancelIdleCallback?: (handle: number) => void;
-    };
-
-    if (typeof extendedWindow.requestIdleCallback === 'function') {
-      const idleHandle = extendedWindow.requestIdleCallback(onReady);
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleHandle = window.requestIdleCallback(onReady);
       return (): void => {
-        extendedWindow.cancelIdleCallback?.(idleHandle);
+        window.cancelIdleCallback?.(idleHandle);
       };
     }
 

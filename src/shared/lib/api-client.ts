@@ -359,12 +359,40 @@ export async function apiClient<T>(
       return await executeRequest();
     } catch (error) {
       if (didRequestTimeout) {
-        throw new Error(`Request timeout after ${timeout}ms`);
+        const timeoutError = new Error(`Request timeout after ${timeout}ms`);
+        if (logError) {
+          logClientError(timeoutError, {
+            context: {
+              endpoint,
+              method: config.method,
+              traceId: getTraceId(),
+              params,
+            },
+          });
+          if (isLoggableObject(timeoutError)) {
+            timeoutError.__logged = true;
+          }
+        }
+        throw timeoutError;
       }
 
       if (didBodyTimeout) {
         const bodyTimeout = Math.max(timeout, 30_000);
-        throw new Error(`Response body timeout after ${bodyTimeout}ms`);
+        const timeoutError = new Error(`Response body timeout after ${bodyTimeout}ms`);
+        if (logError) {
+          logClientError(timeoutError, {
+            context: {
+              endpoint,
+              method: config.method,
+              traceId: getTraceId(),
+              params,
+            },
+          });
+          if (isLoggableObject(timeoutError)) {
+            timeoutError.__logged = true;
+          }
+        }
+        throw timeoutError;
       }
 
       if (error instanceof ApiError) {

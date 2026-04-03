@@ -5,6 +5,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';
+import { ListingSettingsModalProvider } from './ListingSettingsModalProvider';
 import { resolveSelectProductForListingModalCopy } from './product-listings-copy';
 import { SelectProductForListingModalProvider } from './select-product-modal/context/SelectProductForListingModalContext';
 import {
@@ -13,7 +14,6 @@ import {
 } from './select-product-modal/context/SelectProductForListingModalViewContext';
 import { IntegrationSettingsSection } from './select-product-modal/IntegrationSettingsSection';
 import { ProductListSection } from './select-product-modal/ProductListSection';
-import { ListingSettingsProvider } from '../../context/ListingSettingsContext';
 
 interface SelectProductForListingModalProps extends EntityModalProps<never> {
   initialIntegrationId?: string | null;
@@ -83,9 +83,9 @@ export function SelectProductForListingModal(
   if (!isOpen) return null;
 
   return (
-    <ListingSettingsProvider
-      initialIntegrationId={initialIntegrationId ?? null}
-      initialConnectionId={initialConnectionId ?? null}
+    <ListingSettingsModalProvider
+      initialIntegrationId={initialIntegrationId}
+      initialConnectionId={initialConnectionId}
     >
       <SelectProductForListingModalViewProvider
         value={{
@@ -95,7 +95,7 @@ export function SelectProductForListingModal(
       >
         <SelectProductForListingModalContent />
       </SelectProductForListingModalViewProvider>
-    </ListingSettingsProvider>
+    </ListingSettingsModalProvider>
   );
 }
 

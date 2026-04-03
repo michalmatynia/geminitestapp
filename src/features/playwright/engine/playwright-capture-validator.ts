@@ -1,17 +1,8 @@
-import type { PlaywrightCaptureRoute } from '@/shared/contracts/playwright';
-
-export type PlaywrightCaptureRouteValidation = {
-  routeId: string;
-  resolvedUrl: string | null;
-  issue: string | null;
-};
-
-export type PlaywrightCaptureValidationResult = {
-  isValid: boolean;
-  issueCount: number;
-  firstIssue: string | null;
-  routes: PlaywrightCaptureRouteValidation[];
-};
+import type {
+  PlaywrightCaptureRoute,
+  PlaywrightCaptureRouteValidation,
+  PlaywrightCaptureValidationResult,
+} from '@/shared/contracts/playwright';
 
 /** Resolves a capture route URL by joining baseUrl + path. No application-specific query params are added. */
 export const resolvePlaywrightCaptureRouteUrl = (
@@ -88,3 +79,5 @@ export const validatePlaywrightCaptureRoutes = (
     routes: validatedRoutes,
   };
 };
+
+export type { PlaywrightCaptureRouteValidation, PlaywrightCaptureValidationResult };

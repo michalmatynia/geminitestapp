@@ -7,6 +7,53 @@ import {
   mergeContextRegistryResolutionBundles,
 } from '../page-context-shared';
 
+const KANGUR_RUNTIME_REFS = [
+  {
+    id: 'runtime:kangur:learner:abc',
+    kind: 'runtime_document',
+    providerId: 'kangur',
+  },
+] as const;
+
+const KANGUR_GAME_BUNDLE: ContextRegistryResolutionBundle = {
+  refs: [...KANGUR_RUNTIME_REFS],
+  nodes: [
+    {
+      id: 'page:kangur-game',
+      kind: 'page',
+      name: 'Kangur Game',
+      description: 'Game surface.',
+      tags: ['kangur'],
+      permissions: {
+        readScopes: ['ctx:read'],
+        riskTier: 'none',
+        classification: 'internal',
+      },
+      version: '1.0.0',
+      updatedAtISO: '2026-03-09T00:00:00.000Z',
+      source: { type: 'code', ref: 'test' },
+    },
+  ],
+  documents: [
+    {
+      id: 'runtime:kangur:learner:abc',
+      kind: 'runtime_document',
+      entityType: 'kangur_learner_snapshot',
+      title: 'Learner Snapshot',
+      summary: 'Current learner state.',
+      tags: ['kangur'],
+      relatedNodeIds: ['page:kangur-game'],
+    },
+  ],
+  truncated: false,
+  engineVersion: 'registry:test|providers:kangur@1',
+};
+
+const KANGUR_RUNTIME_CONSUMER_REFS = [
+  { id: 'page:kangur-game', kind: 'static_node' },
+  ...KANGUR_RUNTIME_REFS,
+] as const;
+
 describe('page-context-shared', () => {
   it('dedupes refs while preserving richer runtime metadata', () => {
     const refs = mergeContextRegistryRefs(
@@ -39,43 +86,7 @@ describe('page-context-shared', () => {
   });
 
   it('merges bundles and builds a consumer envelope from roots and runtime refs', () => {
-    const bundle: ContextRegistryResolutionBundle = {
-      refs: [
-        { id: 'runtime:kangur:learner:abc', kind: 'runtime_document', providerId: 'kangur' },
-      ],
-      nodes: [
-        {
-          id: 'page:kangur-game',
-          kind: 'page',
-          name: 'Kangur Game',
-          description: 'Game surface.',
-          tags: ['kangur'],
-          permissions: {
-            readScopes: ['ctx:read'],
-            riskTier: 'none',
-            classification: 'internal',
-          },
-          version: '1.0.0',
-          updatedAtISO: '2026-03-09T00:00:00.000Z',
-          source: { type: 'code', ref: 'test' },
-        },
-      ],
-      documents: [
-        {
-          id: 'runtime:kangur:learner:abc',
-          kind: 'runtime_document',
-          entityType: 'kangur_learner_snapshot',
-          title: 'Learner Snapshot',
-          summary: 'Current learner state.',
-          tags: ['kangur'],
-          relatedNodeIds: ['page:kangur-game'],
-        },
-      ],
-      truncated: false,
-      engineVersion: 'registry:test|providers:kangur@1',
-    };
-
-    const mergedBundle = mergeContextRegistryResolutionBundles(bundle);
+    const mergedBundle = mergeContextRegistryResolutionBundles(KANGUR_GAME_BUNDLE);
     const envelope = buildContextRegistryConsumerEnvelope({
       rootNodeIds: ['page:kangur-game'],
       refs: [{ id: 'runtime:kangur:learner:abc', kind: 'runtime_document' }],
@@ -83,25 +94,11 @@ describe('page-context-shared', () => {
     });
 
     expect(envelope).toEqual({
-      refs: [
-        { id: 'page:kangur-game', kind: 'static_node' },
-        {
-          id: 'runtime:kangur:learner:abc',
-          kind: 'runtime_document',
-          providerId: 'kangur',
-        },
-      ],
+      refs: KANGUR_RUNTIME_CONSUMER_REFS,
       engineVersion: 'registry:test|providers:kangur@1',
       resolved: {
-        ...bundle,
-        refs: [
-          { id: 'page:kangur-game', kind: 'static_node' },
-          {
-            id: 'runtime:kangur:learner:abc',
-            kind: 'runtime_document',
-            providerId: 'kangur',
-          },
-        ],
+        ...KANGUR_GAME_BUNDLE,
+        refs: KANGUR_RUNTIME_CONSUMER_REFS,
       },
     });
   });

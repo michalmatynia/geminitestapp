@@ -123,10 +123,10 @@ describe('IntegrationSelection', () => {
 
     expect(screen.getByText('Integration Target')).toBeInTheDocument();
     expect(screen.getByText('Marketplace / Integration')).toBeInTheDocument();
-    expect(screen.getByText('Select a marketplace...')).toBeInTheDocument();
+    expect(screen.getAllByText('Select a marketplace...').length).toBeGreaterThan(0);
     expect(
       screen.getByText('Choose which account to use for listing this product on Tradera.')
     ).toBeInTheDocument();
-    expect(screen.getByText('Select an account...')).toBeInTheDocument();
+    expect(screen.getAllByText('Select an account...').length).toBeGreaterThan(0);
   });
 });

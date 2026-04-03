@@ -5,22 +5,15 @@ import type { FilemakerEmailCampaign } from '../types';
 const FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_VERSION = 1;
 const DAY_MS = 24 * 60 * 60 * 1_000;
 
-export type FilemakerEmailCampaignSchedulerSkipReason = {
-  reason: string;
-  count: number;
-};
+import { type FilemakerEmailCampaignSchedulerSkipReason, type FilemakerEmailCampaignSchedulerLaunchFailure } from '@/shared/contracts/filemaker';
 
-export type FilemakerEmailCampaignSchedulerLaunchFailure = {
-  campaignId: string;
-  message: string;
-};
-
-export type FilemakerEmailCampaignSchedulerLaunchedRun = {
+type FilemakerEmailCampaignSchedulerLaunchedRun = {
   campaignId: string;
   runId: string;
   queuedDeliveryCount: number;
-  launchMode: 'scheduled' | 'recurring';
+  launchMode: Extract<FilemakerEmailCampaign['launch']['mode'], 'scheduled' | 'recurring'>;
 };
+
 
 export type FilemakerEmailCampaignSchedulerStatus = {
   version: number;

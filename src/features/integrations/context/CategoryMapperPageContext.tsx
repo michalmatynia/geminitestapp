@@ -1,11 +1,11 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
+import { createStrictContext } from './createStrictContext';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 const CATEGORY_MAPPING_MARKETPLACE_SLUGS = new Set([...BASE_MARKETPLACE_SLUGS, 'tradera']);
@@ -22,13 +22,11 @@ export interface CategoryMapperPageData {
   integrations: IntegrationWithConnections[];
   loading: boolean;
 }
-const DataContext = createContext<CategoryMapperPageData | null>(null);
-export const useCategoryMapperPageData = () => {
-  const context = useContext(DataContext);
-  if (!context)
-    throw internalError('useCategoryMapperPageData must be used within CategoryMapperPageProvider');
-  return context;
-};
+export const { Context: DataContext, useValue: useCategoryMapperPageData } =
+  createStrictContext<CategoryMapperPageData>({
+    displayName: 'CategoryMapperPageDataContext',
+    errorMessage: 'useCategoryMapperPageData must be used within CategoryMapperPageProvider',
+  });
 
 export interface CategoryMapperPageSelection {
   selectedConnectionId: string | null;
@@ -36,15 +34,11 @@ export interface CategoryMapperPageSelection {
   isSupportedConnection: boolean;
   setSelectedConnectionId: (connectionId: string) => void;
 }
-const SelectionContext = createContext<CategoryMapperPageSelection | null>(null);
-export const useCategoryMapperPageSelection = () => {
-  const context = useContext(SelectionContext);
-  if (!context)
-    throw internalError(
-      'useCategoryMapperPageSelection must be used within CategoryMapperPageProvider'
-    );
-  return context;
-};
+export const { Context: SelectionContext, useValue: useCategoryMapperPageSelection } =
+  createStrictContext<CategoryMapperPageSelection>({
+    displayName: 'CategoryMapperPageSelectionContext',
+    errorMessage: 'useCategoryMapperPageSelection must be used within CategoryMapperPageProvider',
+  });
 
 type CategoryMapperPageProviderProps = {
   children: React.ReactNode;

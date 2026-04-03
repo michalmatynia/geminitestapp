@@ -36,72 +36,48 @@ import {
 } from './nodes/utils';
 import { normalizeValidationPatternNode } from './nodes/validation';
 
+type NodeNormalizer = (node: AiNode) => AiNode | null;
+
+const NODE_NORMALIZERS: Partial<Record<NodeType, NodeNormalizer>> = {
+  context: normalizeContextNode as NodeNormalizer,
+  trigger: normalizeTriggerNode as NodeNormalizer,
+  fetcher: normalizeFetcherNode as NodeNormalizer,
+  simulation: normalizeSimulationNode as NodeNormalizer,
+  mapper: normalizeMapperNode as NodeNormalizer,
+  parser: normalizeParserNode as NodeNormalizer,
+  regex: normalizeRegexNode as NodeNormalizer,
+  database: normalizeDatabaseNode as NodeNormalizer,
+  db_schema: normalizeDbSchemaNode as NodeNormalizer,
+  model: normalizeModelNode as NodeNormalizer,
+  agent: normalizeAgentNode as NodeNormalizer,
+  audio_oscillator: normalizeAudioOscillatorNode as NodeNormalizer,
+  audio_speaker: normalizeAudioSpeakerNode as NodeNormalizer,
+  router: normalizeRouterNode as NodeNormalizer,
+  delay: normalizeDelayNode as NodeNormalizer,
+  poll: normalizePollNode as NodeNormalizer,
+  http: normalizeHttpNode as NodeNormalizer,
+  api_advanced: normalizeApiAdvancedNode as NodeNormalizer,
+  validation_pattern: normalizeValidationPatternNode as NodeNormalizer,
+  mutator: normalizeMutatorNode as NodeNormalizer,
+  string_mutator: normalizeStringMutatorNode as NodeNormalizer,
+  validator: normalizeValidatorNode as NodeNormalizer,
+  constant: normalizeConstantNode as NodeNormalizer,
+  math: normalizeMathNode as NodeNormalizer,
+  template: normalizeTemplateNode as NodeNormalizer,
+  bundle: normalizeBundleNode as NodeNormalizer,
+  compare: normalizeCompareNode as NodeNormalizer,
+  playwright: normalizePlaywrightNode as NodeNormalizer,
+  viewer: normalizeViewerNode as NodeNormalizer,
+};
+
+const normalizeNode = (node: AiNode): AiNode | null => {
+  const normalizer = NODE_NORMALIZERS[node.type];
+  return normalizer ? normalizer(node) : node;
+};
+
 export const normalizeNodes = (items: AiNode[]): AiNode[] => {
   const normalized = items
-    .map((node: AiNode): AiNode | null => {
-      switch (node.type) {
-        case 'context':
-          return normalizeContextNode(node);
-        case 'trigger':
-          return normalizeTriggerNode(node);
-        case 'fetcher':
-          return normalizeFetcherNode(node);
-        case 'simulation':
-          return normalizeSimulationNode(node);
-        case 'mapper':
-          return normalizeMapperNode(node);
-        case 'parser':
-          return normalizeParserNode(node);
-        case 'regex':
-          return normalizeRegexNode(node);
-        case 'database':
-          return normalizeDatabaseNode(node);
-        case 'db_schema':
-          return normalizeDbSchemaNode(node);
-        case 'model':
-          return normalizeModelNode(node);
-        case 'agent':
-          return normalizeAgentNode(node);
-        case 'audio_oscillator':
-          return normalizeAudioOscillatorNode(node);
-        case 'audio_speaker':
-          return normalizeAudioSpeakerNode(node);
-        case 'router':
-          return normalizeRouterNode(node);
-        case 'delay':
-          return normalizeDelayNode(node);
-        case 'poll':
-          return normalizePollNode(node);
-        case 'http':
-          return normalizeHttpNode(node);
-        case 'api_advanced':
-          return normalizeApiAdvancedNode(node);
-        case 'validation_pattern':
-          return normalizeValidationPatternNode(node);
-        case 'mutator':
-          return normalizeMutatorNode(node);
-        case 'string_mutator':
-          return normalizeStringMutatorNode(node);
-        case 'validator':
-          return normalizeValidatorNode(node);
-        case 'constant':
-          return normalizeConstantNode(node);
-        case 'math':
-          return normalizeMathNode(node);
-        case 'template':
-          return normalizeTemplateNode(node);
-        case 'bundle':
-          return normalizeBundleNode(node);
-        case 'compare':
-          return normalizeCompareNode(node);
-        case 'playwright':
-          return normalizePlaywrightNode(node);
-        case 'viewer':
-          return normalizeViewerNode(node);
-        default:
-          return node;
-      }
-    })
+    .map(normalizeNode)
     .filter((node: AiNode | null): node is AiNode => Boolean(node));
   return backfillNodePortContracts(normalized).nodes.map(
     (node: AiNode): AiNode => ({

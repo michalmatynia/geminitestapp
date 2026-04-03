@@ -4,8 +4,14 @@ import {
 } from '@/features/kangur/lesson-documents';
 import type {
   KangurAssignmentSnapshot,
+  KangurLessonActivityBlock,
+  KangurLessonCalloutBlock,
   KangurLesson,
   KangurLessonDocument,
+  KangurLessonImageBlock,
+  KangurLessonQuizBlock,
+  KangurLessonSvgBlock,
+  KangurLessonTextBlock,
 } from '@/features/kangur/shared/contracts/kangur';
 import type {
   KangurAiTutorConversationContext,
@@ -53,63 +59,94 @@ export const createLessonDocumentSnippetCard = (
   };
 };
 
-export const extractLessonDocumentSnippetCards = (
+const toLessonDocumentSnippetCardList = (
+  card: LessonDocumentSnippetCard | null
+): LessonDocumentSnippetCard[] => (card ? [card] : []);
+
+const extractTextLessonDocumentSnippetCards = (
+  block: KangurLessonTextBlock
+): LessonDocumentSnippetCard[] =>
+  toLessonDocumentSnippetCardList(
+    createLessonDocumentSnippetCard(`${block.id}:text`, stripHtmlToText(block.html), block.ttsText)
+  );
+
+const extractSvgLessonDocumentSnippetCards = (
+  block: KangurLessonSvgBlock
+): LessonDocumentSnippetCard[] =>
+  toLessonDocumentSnippetCardList(
+    createLessonDocumentSnippetCard(`${block.id}:svg`, block.title, block.ttsDescription)
+  );
+
+const extractImageLessonDocumentSnippetCards = (
+  block: KangurLessonImageBlock
+): LessonDocumentSnippetCard[] => {
+  const text = readTrimmedString(block.title) ?? block.caption;
+  const explanation = readTrimmedString(block.ttsDescription) ?? block.caption;
+  return toLessonDocumentSnippetCardList(
+    createLessonDocumentSnippetCard(`${block.id}:image`, text, explanation)
+  );
+};
+
+const extractActivityLessonDocumentSnippetCards = (
+  block: KangurLessonActivityBlock
+): LessonDocumentSnippetCard[] => {
+  const text = readTrimmedString(block.title) ?? block.description;
+  const explanation = readTrimmedString(block.ttsDescription) ?? block.description;
+  return toLessonDocumentSnippetCardList(
+    createLessonDocumentSnippetCard(`${block.id}:activity`, text, explanation)
+  );
+};
+
+const extractCalloutLessonDocumentSnippetCards = (
+  block: KangurLessonCalloutBlock
+): LessonDocumentSnippetCard[] => {
+  const htmlText = stripHtmlToText(block.html);
+  const text = readTrimmedString(block.title) ?? htmlText;
+  const explanation = readTrimmedString(block.ttsText) ?? htmlText;
+  return toLessonDocumentSnippetCardList(
+    createLessonDocumentSnippetCard(`${block.id}:callout`, text, explanation)
+  );
+};
+
+const extractQuizLessonDocumentSnippetCards = (
+  block: KangurLessonQuizBlock
+): LessonDocumentSnippetCard[] =>
+  toLessonDocumentSnippetCardList(
+    createLessonDocumentSnippetCard(
+      `${block.id}:quiz`,
+      stripHtmlToText(block.question),
+      block.explanation || block.ttsText
+    )
+  );
+
+const extractLeafLessonDocumentSnippetCards = (
   block: KangurLessonDocument['blocks'][number]
 ): LessonDocumentSnippetCard[] => {
   switch (block.type) {
     case 'text':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:text`,
-          stripHtmlToText(block.html),
-          block.ttsText
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+      return extractTextLessonDocumentSnippetCards(block);
     case 'svg':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:svg`,
-          block.title,
-          block.ttsDescription
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+      return extractSvgLessonDocumentSnippetCards(block);
     case 'image':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:image`,
-          block.title || block.caption,
-          block.ttsDescription || block.caption
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+      return extractImageLessonDocumentSnippetCards(block);
     case 'activity':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:activity`,
-          block.title || block.description,
-          block.ttsDescription || block.description
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+      return extractActivityLessonDocumentSnippetCards(block);
     case 'callout':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:callout`,
-          block.title || stripHtmlToText(block.html),
-          block.ttsText || stripHtmlToText(block.html)
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
+      return extractCalloutLessonDocumentSnippetCards(block);
     case 'quiz':
-      return [
-        createLessonDocumentSnippetCard(
-          `${block.id}:quiz`,
-          stripHtmlToText(block.question),
-          block.explanation || block.ttsText
-        ),
-      ].filter((card): card is LessonDocumentSnippetCard => Boolean(card));
-    case 'grid':
-      return block.items.flatMap((item) => extractLessonDocumentSnippetCards(item.block));
+      return extractQuizLessonDocumentSnippetCards(block);
     default:
       return [];
   }
+};
+
+export const extractLessonDocumentSnippetCards = (
+  block: KangurLessonDocument['blocks'][number]
+): LessonDocumentSnippetCard[] => {
+  if (block.type === 'grid') {
+    return block.items.flatMap((item) => extractLessonDocumentSnippetCards(item.block));
+  }
+  return extractLeafLessonDocumentSnippetCards(block);
 };
 
 export const extractBlockSnippets = (block: KangurLessonDocument['blocks'][number]): string[] => {

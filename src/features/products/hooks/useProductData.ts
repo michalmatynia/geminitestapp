@@ -41,7 +41,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
 const PRODUCT_UPDATE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('update');
 const PRODUCT_DELETE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('delete');
-const PRODUCT_UPDATE_MUTATION_QUERY_KEY = [...productsAllQueryKey, 'mutation', 'update'] as const;
 
 type ProductListCacheValue =
   | ProductWithImages[]
@@ -298,7 +297,11 @@ export function useUpdateProductMutation(): UseMutationResult<
       return updateProduct(id, data);
     },
     {
-      queryKey: PRODUCT_UPDATE_MUTATION_QUERY_KEY,
+      queryKey: QUERY_KEYS.products.lists(),
+      extraInvalidateKeys: (variables) => [
+        QUERY_KEYS.products.counts(),
+        QUERY_KEYS.products.detail(variables.id),
+      ],
       meta: {
         source: 'products.hooks.useUpdateProductMutation',
         operation: 'update',

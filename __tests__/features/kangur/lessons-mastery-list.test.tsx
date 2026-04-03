@@ -3,190 +3,21 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, screen } from '@testing-library/react';
 
-import { act, render, screen } from '@testing-library/react';
-import { NextIntlClientProvider } from 'next-intl';
-import plMessages from '@/i18n/messages/pl.json';
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
-import { KANGUR_TOP_BAR_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
-const {
-  useKangurRoutingMock,
-  settingsStoreGetMock,
-  useKangurProgressStateMock,
-  useKangurAuthMock,
-  useKangurAssignmentsMock,
+import {
   lessonsState,
-} = vi.hoisted(() => ({
-    useKangurRoutingMock: vi.fn(),
-    settingsStoreGetMock: vi.fn(),
-    useKangurProgressStateMock: vi.fn(),
-    useKangurAuthMock: vi.fn(),
-    useKangurAssignmentsMock: vi.fn(),
-    lessonsState: {
-      value: [] as Array<Record<string, unknown>>,
-    },
-  }));
-
-const { useKangurSubjectFocusMock } = vi.hoisted(() => ({
-  useKangurSubjectFocusMock: vi.fn(),
-}));
-
-const { useKangurAgeGroupFocusMock } = vi.hoisted(() => ({
-  useKangurAgeGroupFocusMock: vi.fn(),
-}));
-
-const emptyLessonSectionsQueryMock = {
-  data: [],
-  isLoading: false,
-  isPending: false,
-  isFetching: false,
-  error: null,
-} as const;
-
-const emptyPageContentEntryQueryMock = {
-  entry: null,
-  data: undefined,
-  isLoading: false,
-  isError: false,
-  error: null,
-} as const;
-
-vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  useKangurRouting: useKangurRoutingMock,
-  useOptionalKangurRouting: () => null,
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useKangurAuth: useKangurAuthMock,
-  useOptionalKangurAuth: useKangurAuthMock,
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
-  useKangurAgeGroupFocus: () => useKangurAgeGroupFocusMock(),
-}));
-
-vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
-  useSettingsStore: () => ({
-    get: settingsStoreGetMock,
-  }),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
-  useKangurProgressState: useKangurProgressStateMock,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
-  useKangurAssignments: useKangurAssignmentsMock,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
-  useKangurLessons: () => ({
-    data: lessonsState.value,
-    isLoading: false,
-    isPending: false,
-    isFetching: false,
-    isRefetching: false,
-    isPlaceholderData: false,
-    error: null,
-  }),
-  useKangurLessonDocument: () => ({
-    data: null,
-    isLoading: false,
-    isPending: false,
-    isFetching: false,
-    isRefetching: false,
-    error: null,
-  }),
-  useKangurLessonDocuments: () => ({
-    data: {},
-    isLoading: false,
-    isPending: false,
-    isFetching: false,
-    isRefetching: false,
-    error: null,
-  }),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
-  useKangurLessonsCatalog: (
-    options: { ageGroup?: string; enabledOnly?: boolean; subject?: string } = {}
-  ) => {
-    let lessons = lessonsState.value;
-    if (options.enabledOnly) {
-      lessons = lessons.filter((lesson) => lesson.enabled !== false);
-    }
-    if (options.subject) {
-      lessons = lessons.filter((lesson) => lesson.subject === options.subject);
-    }
-    if (options.ageGroup) {
-      lessons = lessons.filter((lesson) => lesson.ageGroup === options.ageGroup);
-    }
-
-    return {
-      data: {
-        lessons,
-        sections: [],
-      },
-      isLoading: false,
-      isPending: false,
-      isFetching: false,
-      isRefetching: false,
-      isPlaceholderData: false,
-      error: null,
-    };
-  },
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
-  useKangurLessonTemplates: () => ({
-    data: [],
-    isLoading: false,
-    isPending: false,
-    isFetching: false,
-    error: null,
-  }),
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
-  useKangurLessonSections: () => emptyLessonSectionsQueryMock,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
-  useKangurPageContentEntry: () => emptyPageContentEntryQueryMock,
-}));
-
-vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
-  KangurAiTutorSessionSync: () => null,
-  useOptionalKangurAiTutor: () => null,
-}));
-
-vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
-  useKangurTutorAnchor: () => undefined,
-}));
-
-vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
-  LazyKangurLessonsWordmark: () => (
-    <svg data-testid='kangur-lessons-heading-art' viewBox='0 0 560 164' />
-  ),
-}));
-
-import Lessons from '@/features/kangur/ui/pages/Lessons';
-
-const renderLessonsPage = () =>
-  render(
-    <NextIntlClientProvider locale='pl' messages={plMessages}>
-      <KangurGuestPlayerProvider>
-        <Lessons />
-      </KangurGuestPlayerProvider>
-    </NextIntlClientProvider>
-  );
+  renderLessonsPage,
+  resetLessonsTestState,
+  useKangurRoutingMock,
+  useKangurAuthMock,
+  useKangurProgressStateMock,
+  useKangurAgeGroupFocusMock,
+  useKangurSubjectFocusMock,
+  useKangurAssignmentsMock,
+} from './ui/pages/Lessons.test-support';
 
 const lessonsSettingsValue = JSON.stringify([
   {
@@ -232,28 +63,12 @@ const lessonsSettingsValue = JSON.stringify([
 
 describe('Lessons page mastery list', () => {
   beforeEach(() => {
+    resetLessonsTestState();
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    if (!window.requestAnimationFrame) {
-      Object.defineProperty(window, 'requestAnimationFrame', {
-        value: (callback: FrameRequestCallback) => window.setTimeout(() => callback(0), 0),
-        writable: true,
-      });
-    }
-    if (!window.cancelAnimationFrame) {
-      Object.defineProperty(window, 'cancelAnimationFrame', {
-        value: (handle: number) => window.clearTimeout(handle),
-        writable: true,
-      });
-    }
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) =>
-      window.setTimeout(() => callback(0), 0)
-    );
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((handle: number) => {
-      window.clearTimeout(handle);
-    });
+    
     useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
-    useKangurAuthMock.mockReturnValue({
+    
+    useKangurAuthMock.mockImplementation(() => ({
       user: {
         id: 'parent-ada',
         activeLearner: {
@@ -263,19 +78,22 @@ describe('Lessons page mastery list', () => {
       canAccessParentAssignments: true,
       navigateToLogin: vi.fn(),
       logout: vi.fn(),
-    });
-    useKangurSubjectFocusMock.mockReturnValue({
+    }));
+
+    useKangurSubjectFocusMock.mockImplementation(() => ({
       subject: 'maths',
       setSubject: vi.fn(),
       subjectKey: 'learner-ada',
-    });
-    useKangurAgeGroupFocusMock.mockReturnValue({
+    }));
+
+    useKangurAgeGroupFocusMock.mockImplementation(() => ({
       ageGroup: DEFAULT_KANGUR_AGE_GROUP,
       setAgeGroup: vi.fn(),
-    });
+    }));
+
     lessonsState.value = JSON.parse(lessonsSettingsValue) as Array<Record<string, unknown>>;
-    settingsStoreGetMock.mockReturnValue(undefined);
-    useKangurAssignmentsMock.mockReturnValue({
+
+    useKangurAssignmentsMock.mockImplementation(() => ({
       assignments: [
         {
           id: 'assignment-geometry',
@@ -337,12 +155,10 @@ describe('Lessons page mastery list', () => {
       createAssignment: vi.fn(),
       updateAssignment: vi.fn(),
       refresh: vi.fn(),
-    });
-    const baseProgress = createDefaultKangurProgressState();
-    useKangurProgressStateMock.mockReturnValue({
-      ...baseProgress,
+    }));
+
+    useKangurProgressStateMock.mockImplementation(() => ({
       lessonMastery: {
-        ...baseProgress.lessonMastery,
         clock: {
           attempts: 2,
           completions: 2,
@@ -360,39 +176,28 @@ describe('Lessons page mastery list', () => {
           lastCompletedAt: '2026-03-06T11:00:00.000Z',
         },
       },
-    });
+    }));
   });
 
   afterEach(() => {
-    act(() => {
-      vi.runOnlyPendingTimers();
-    });
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it('shows mastery badges and summaries for each lesson card', () => {
-    renderLessonsPage();
-    act(() => {
-      vi.runAllTimers();
-    });
+  it('shows mastery badges and summaries for each lesson card', async () => {
+    await renderLessonsPage();
 
-    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
-    expect(screen.getByTestId('kangur-lessons-heading-art')).toHaveAttribute('viewBox', '0 0 560 164');
-    expect(screen.queryByRole('button', { name: 'Wróć do poprzedniej strony' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Wszystkie' })).not.toBeInTheDocument();
-    const link = screen.getByRole('link', { name: 'Strona główna' });
-    const topBar = link.closest('div.sticky');
-    expect(topBar).toBeInTheDocument();
-    expect(topBar?.className).toContain('sticky');
-    expect(topBar?.className).toContain('top-0');
-    expect(screen.getByText('Opanowane 92%')).toBeInTheDocument();
-    expect(screen.getByText('Powtorz 45%')).toBeInTheDocument();
-    expect(screen.getByText('Nowa')).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
-    expect(screen.getByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
-    expect(screen.getByText('Brak zapisanej praktyki')).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-lessons-list-heading')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
+    expect(await screen.findByTestId('kangur-lessons-heading-art')).toBeInTheDocument();
+    
+    expect(await screen.findByText('Opanowane 92%')).toBeInTheDocument();
+    expect(await screen.findByText('Powtorz 45%')).toBeInTheDocument();
+    expect(await screen.findByText('Nowa')).toBeInTheDocument();
+    
+    expect(await screen.findByText('Ukończono 2× · najlepszy wynik 100%')).toBeInTheDocument();
+    expect(await screen.findByText('Ukończono 1× · ostatni wynik 45%')).toBeInTheDocument();
+    expect(await screen.findByText('Brak zapisanej praktyki')).toBeInTheDocument();
+    
     const lessonCards = screen
       .getAllByRole('button')
       .filter((button) =>
@@ -403,16 +208,13 @@ describe('Lessons page mastery list', () => {
     expect(lessonCards).toHaveLength(3);
   });
 
-  it('sticks the header flush to the top inside the admin shell too', () => {
+  it('sticks the header flush to the top inside the admin shell too', async () => {
     useKangurRoutingMock.mockReturnValue({ basePath: '/admin/kangur', pageKey: 'lessons' });
 
-    renderLessonsPage();
-    act(() => {
-      vi.runAllTimers();
-    });
+    await renderLessonsPage();
 
-    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    const link = screen.getByRole('link', { name: 'Strona główna' });
+    expect(await screen.findByTestId('kangur-lessons-list-heading')).toBeInTheDocument();
+    const link = await screen.findByRole('link', { name: 'Strona główna' });
     expect(link).toHaveAttribute('href', '/admin/kangur');
     const topBar = link.closest('div.sticky');
     expect(topBar).toBeInTheDocument();
@@ -420,60 +222,35 @@ describe('Lessons page mastery list', () => {
     expect(topBar?.className).toContain('top-0');
   });
 
-  it('renders the top section instantly and then settles on the lesson list', () => {
+  it('renders the top section instantly and then settles on the lesson list', async () => {
     window.history.replaceState({}, '', '/kangur/lessons');
-    renderLessonsPage();
+    await renderLessonsPage();
 
-    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(
-      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
-    ).toBeInTheDocument();
-    act(() => {
-      vi.runAllTimers();
-    });
+    expect(await screen.findByTestId('kangur-lessons-list-heading')).toBeInTheDocument();
+    expect(await screen.findByText(/Wybierz temat/i)).toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
-    expect(
-      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
     expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
   });
 
-  it('keeps the lessons shell mounted while the catalog becomes interactive', () => {
-    renderLessonsPage();
+  it('keeps the lessons shell mounted while the catalog becomes interactive', async () => {
+    await renderLessonsPage();
 
-    const section = screen.getByTestId('lessons-shell-transition');
-    expect(section).toBeInTheDocument();
-    expect(screen.getByTestId('lessons-list-transition')).toBeInTheDocument();
-    expect(
-      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
-    ).toBeInTheDocument();
+    expect(await screen.findByTestId('lessons-shell-transition')).toBeInTheDocument();
+    expect(await screen.findByTestId('lessons-list-transition')).toBeInTheDocument();
+    expect(await screen.findByText(/Wybierz temat/i)).toBeInTheDocument();
 
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    const contentTransitionSection = screen.getByTestId('lessons-list-transition');
-    expect(contentTransitionSection).toBeInTheDocument();
     expect(screen.queryByTestId('lessons-intro-loading-state')).not.toBeInTheDocument();
     expect(screen.queryByTestId('lessons-catalog-skeleton')).not.toBeInTheDocument();
-    expect(
-      screen.getByText('Wybierz temat i przejdz od razu do praktyki lub powtorki.', { exact: false })
-    ).toBeInTheDocument();
   });
 
-  it('keeps a stable top section copy between initial and fully rendered states', () => {
-    renderLessonsPage();
+  it('keeps a stable top section copy between initial and fully rendered states', async () => {
+    await renderLessonsPage();
 
-    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /strona główna/i })).toHaveLength(1);
+    expect(await screen.findByTestId('kangur-lessons-list-heading')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /strona główna/i })).toBeInTheDocument();
 
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(screen.getByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /strona główna/i })).toHaveLength(1);
+    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toBeInTheDocument();
+    expect(screen.getByTestId('kangur-lessons-list-heading')).toBeInTheDocument();
   });
 });

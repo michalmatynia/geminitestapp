@@ -666,13 +666,11 @@ export function LessonsCatalog() {
     isLessonSectionsLoading,
     shouldShowLessonsCatalogSkeleton,
   } = useLessons();
-  const [isPageContentReady, setIsPageContentReady] = useState(false);
+  const [isPageContentReady, setIsPageContentReady] = useState(true);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      setIsPageContentReady(true);
-      return;
-    }
+    // Keep effect for potential side effects but don't gate rendering
+    if (typeof window === 'undefined') return;
 
     let timeoutId: number | null = null;
     const frameId =

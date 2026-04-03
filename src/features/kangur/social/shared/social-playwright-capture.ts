@@ -12,6 +12,7 @@ import {
   PLAYWRIGHT_DEFAULT_CAPTURE_SCRIPT,
   createEmptyPlaywrightCaptureRoute,
 } from '@/features/playwright/engine';
+import type { PlaywrightCaptureValidationResult } from '@/shared/contracts/playwright';
 
 // ---------------------------------------------------------------------------
 // Backward-compatible aliases — script and timeout are now owned by the engine.
@@ -117,23 +118,12 @@ export const resolveKangurSocialProgrammableCaptureRoutePreview = (
   }
 };
 
-export type KangurSocialProgrammableCaptureRouteValidation = {
-  routeId: string;
-  resolvedUrl: string | null;
-  issue: string | null;
-};
 
-export type KangurSocialProgrammableCaptureValidationResult = {
-  isValid: boolean;
-  issueCount: number;
-  firstIssue: string | null;
-  routes: KangurSocialProgrammableCaptureRouteValidation[];
-};
 
 export const validateKangurSocialProgrammableCaptureRoutes = (
   routes: KangurSocialProgrammableCaptureRoute[],
   baseUrl: string
-): KangurSocialProgrammableCaptureValidationResult => {
+): PlaywrightCaptureValidationResult => {
   const seenTargets = new Map<string, string>();
   const validatedRoutes = routes.map((route, index) => {
     const preview = resolveKangurSocialProgrammableCaptureRoutePreview(route.path, baseUrl);

@@ -5,7 +5,7 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
   artifacts,
   log,
 }) {
-  // tradera-quicklist-default:v17
+  // tradera-quicklist-default:v39
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -31,12 +31,21 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     '#title',
     '[data-testid*="title"] input',
     'input[placeholder*="headline" i]',
+    'input[placeholder*="rubrik" i]',
+    'input[aria-label*="title" i]',
+    'input[aria-label*="titel" i]',
+    'input[aria-label*="rubrik" i]',
   ];
   const DESCRIPTION_SELECTORS = [
     '#tip-tap-editor',
     '[aria-label="Description"][contenteditable="true"]',
+    '[aria-label="Beskrivning"][contenteditable="true"]',
+    '[aria-label*="description" i][contenteditable="true"]',
+    '[aria-label*="beskriv" i][contenteditable="true"]',
     'textarea[name="description"]',
     '#description',
+    'textarea[placeholder*="description" i]',
+    'textarea[placeholder*="beskriv" i]',
     '[data-testid*="description"] textarea',
     '[contenteditable="true"]',
     '[role="textbox"][contenteditable="true"]',
@@ -49,11 +58,17 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     'input[data-testid*="price"]',
     'input[inputmode="decimal"]',
     'input[placeholder*="price" i]',
+    'input[placeholder*="pris" i]',
+    'input[aria-label*="price" i]',
+    'input[aria-label*="pris" i]',
   ];
   const IMAGE_INPUT_SELECTORS = [
     'input[type="file"][accept*="image"]',
     '[data-testid*="image"] input[type="file"]',
+    '[data-testid*="photo"] input[type="file"]',
     '[data-testid*="upload"] input[type="file"]',
+    'input[type="file"][name*="image" i]',
+    'input[type="file"][name*="photo" i]',
     'input[type="file"]',
   ];
   const DRAFT_IMAGE_REMOVE_SELECTORS = [
@@ -62,24 +77,44 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     'button[aria-label*="Remove photo" i]',
     'button[aria-label*="Delete photo" i]',
     'button[aria-label*="Ta bort" i]',
+    'button[aria-label*="Radera" i]',
+    'a[aria-label*="Ta bort" i]',
+    'a[aria-label*="Radera" i]',
     '[data-testid*="remove-image"]',
     '[data-testid*="delete-image"]',
     '[data-testid*="remove-photo"]',
     '[data-testid*="delete-photo"]',
+    '[data-testid*="remove"]',
+    '[data-testid*="delete"]',
     'button:has-text("Remove image")',
     'button:has-text("Delete image")',
     'button:has-text("Ta bort")',
+    'button:has-text("Radera")',
+    'a:has-text("Ta bort")',
+    'a:has-text("Radera")',
   ];
   const CONTINUE_SELECTORS = [
+    'button[aria-label*="Continue" i]',
+    'button[aria-label*="Fortsätt" i]',
+    'button[aria-label*="Next" i]',
     'button:has-text("Continue")',
     'button:has-text("Fortsätt")',
     'button:has-text("Next")',
+    '[data-testid*="continue"]',
+    '[data-testid*="next"]',
   ];
   const PUBLISH_SELECTORS = [
     'button[type="submit"]',
+    'button[aria-label*="Publish" i]',
+    'button[aria-label*="Review and publish" i]',
+    'button[aria-label*="Publicera" i]',
+    'button[aria-label*="Granska och publicera" i]',
     'button:has-text("Publish")',
+    'button:has-text("Review and publish")',
     'button:has-text("Publicera")',
+    'button:has-text("Granska och publicera")',
     'button:has-text("Lägg upp")',
+    '[data-testid*="publish"]',
   ];
   const VALIDATION_MESSAGE_SELECTORS = [
     '[role="alert"]',
@@ -105,6 +140,23 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     'main button:has-text("Sök")',
     'main [data-testid*="search"] button',
     'main button[type="submit"]',
+  ];
+  const ACTIVE_SEARCH_TRIGGER_LABELS = ['Search', 'Sök'];
+  const GLOBAL_HEADER_SEARCH_HINTS = [
+    'items, sellers or a category',
+    'artiklar, säljare eller en kategori',
+    'artiklar, säljare eller kategori',
+    'what are you looking for',
+    'vad letar du efter',
+  ];
+  const ACTIVE_TAB_LABELS = ['Active', 'Aktiva'];
+  const ACTIVE_TAB_STATE_SELECTORS = [
+    '[aria-current="page"]:has-text("Active")',
+    '[aria-current="true"]:has-text("Active")',
+    '[role="tab"][aria-selected="true"]:has-text("Active")',
+    '[aria-current="page"]:has-text("Aktiva")',
+    '[aria-current="true"]:has-text("Aktiva")',
+    '[role="tab"][aria-selected="true"]:has-text("Aktiva")',
   ];
   const LOGIN_FORM_SELECTORS = [
     '#sign-in-form',
@@ -146,12 +198,28 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     'button:has-text("Create a New Listing")',
     'button:has-text("Create new listing")',
     'button:has-text("Skapa en ny annons")',
+    'button:has-text("Skapa annons")',
+    'button:has-text("Ny annons")',
     'a:has-text("Create a New Listing")',
     'a:has-text("Create new listing")',
     'a:has-text("Skapa en ny annons")',
+    'a:has-text("Skapa annons")',
+    'a:has-text("Ny annons")',
     '[data-testid*="create"]',
     '[data-testid*="new-listing"]',
   ];
+  const CREATE_LISTING_TRIGGER_LABELS = [
+    'Create a New Listing',
+    'Create new listing',
+    'Skapa en ny annons',
+    'Skapa annons',
+    'Ny annons',
+  ];
+  const CATEGORY_FIELD_LABELS = ['Category', 'Kategori'];
+  const FALLBACK_CATEGORY_OPTION_LABELS = ['Other', 'Övrigt'];
+  const FALLBACK_CATEGORY_MAX_DEPTH = 3;
+  const LISTING_FORMAT_FIELD_LABELS = ['Listing format', 'Annonsformat'];
+  const BUY_NOW_OPTION_LABELS = ['Buy now', 'Buy Now', 'Fixed price', 'Köp nu', 'Fast pris'];
   const CONDITION_FIELD_LABELS = ['Condition', 'Skick'];
   const CONDITION_OPTION_LABELS = [
     'Unused',
@@ -215,6 +283,7 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
       ? mappedCategorySegments.join(' > ')
       : toText(input?.traderaCategory?.path) || toText(input?.traderaCategory?.name);
   const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);
+  const requiresConfiguredDeliveryOption = Boolean(configuredDeliveryOptionLabel);
   const deliveryOptionLabels = configuredDeliveryOptionLabel
     ? [
         configuredDeliveryOptionLabel,
@@ -526,27 +595,71 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
   };
 
   const isCreateListingPage = async () => {
+    const currentUrl = page.url().toLowerCase();
+
+    // /selling/new is unambiguously the create listing page — trust the URL
+    if (currentUrl.includes('/selling/new')) {
+      log?.('tradera.quicklist.page_detection', { method: 'url_selling_new', currentUrl });
+      return true;
+    }
+
+    // /selling or /selling? might be a dashboard or redirect — verify with DOM
+    if (
+      currentUrl.includes('/selling?') ||
+      /\/selling(?:$|[?#])/.test(currentUrl)
+    ) {
+      const hasImageInput = Boolean(await firstExisting(IMAGE_INPUT_SELECTORS));
+      const hasContinue = Boolean(await firstVisible(CONTINUE_SELECTORS));
+      const hasTitleInput = Boolean(await firstVisible(TITLE_SELECTORS));
+      const hasPublishButton = Boolean(await firstVisible(PUBLISH_SELECTORS));
+      if (hasImageInput || hasContinue || hasTitleInput || hasPublishButton) {
+        log?.('tradera.quicklist.page_detection', { method: 'url_selling_with_dom', currentUrl, hasImageInput, hasContinue, hasTitleInput, hasPublishButton });
+        return true;
+      }
+    }
+
+    // Original checks: title+publish or heading
     const titleInput = await firstVisible(TITLE_SELECTORS);
     const publishButton = await firstVisible(PUBLISH_SELECTORS);
     const heading = await page
-      .getByRole('heading', { name: /Create( a)? new listing|Skapa en ny annons/i })
+      .getByRole('heading', { name: /Create( a)? new listing|Skapa en ny annons|Skapa annons|New listing|Ny annons/i })
       .first()
       .isVisible()
       .catch(() => false);
-    return Boolean((titleInput && publishButton) || heading);
+    if (titleInput && publishButton) {
+      log?.('tradera.quicklist.page_detection', { method: 'title_and_publish', currentUrl });
+      return true;
+    }
+    if (heading) {
+      log?.('tradera.quicklist.page_detection', { method: 'heading', currentUrl });
+      return true;
+    }
+    return false;
   };
 
   const findCreateListingTrigger = async () => {
-    const triggerLocators = [
-      page.getByRole('button', { name: /Create( a)? New Listing|Create( a)? new listing|Skapa en ny annons/i }).first(),
-      page.getByRole('link', { name: /Create( a)? New Listing|Create( a)? new listing|Skapa en ny annons/i }).first(),
-      page.getByText(/Create( a)? New Listing|Create( a)? new listing|Skapa en ny annons/i).first(),
-    ];
+    for (const label of CREATE_LISTING_TRIGGER_LABELS) {
+      const escapedPattern = label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&');
+      const escapedText = label.replace(/"/g, '\\"');
+      const triggerLocators = [
+        page.getByRole('button', { name: new RegExp('^' + escapedPattern + '$', 'i') }).first(),
+        page.getByRole('link', { name: new RegExp('^' + escapedPattern + '$', 'i') }).first(),
+        page.getByRole('button', { name: new RegExp(escapedPattern, 'i') }).first(),
+        page.getByRole('link', { name: new RegExp(escapedPattern, 'i') }).first(),
+        page
+          .locator(
+            'xpath=//*[normalize-space(text())="' +
+              escapedText +
+              '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link"][1]'
+          )
+          .first(),
+      ];
 
-    for (const locator of triggerLocators) {
-      const visible = await locator.isVisible().catch(() => false);
-      if (visible) {
-        return locator;
+      for (const locator of triggerLocators) {
+        const visible = await locator.isVisible().catch(() => false);
+        if (visible) {
+          return locator;
+        }
       }
     }
 
@@ -581,7 +694,9 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
 
     await trigger.scrollIntoViewIfNeeded().catch(() => undefined);
     await Promise.allSettled([
-      page.waitForURL(/\/selling\/new|\/sell(\/new)?/i, { timeout: 15_000 }),
+      page.waitForURL(/\/selling(?:\/new)?(?:[?#]|$)|\/sell(?:\/new)?(?:[?#]|$)/i, {
+        timeout: 15_000,
+      }),
       page.waitForLoadState('domcontentloaded', { timeout: 20_000 }),
       trigger.click(),
     ]);
@@ -619,6 +734,12 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     throw new Error('FAIL_SELL_PAGE_INVALID: Tradera create listing page did not load.');
   };
 
+  const clearFocusedEditableField = async () => {
+    await page.keyboard.press('ControlOrMeta+A').catch(() => undefined);
+    await page.keyboard.press('Delete').catch(() => undefined);
+    await page.keyboard.press('Backspace').catch(() => undefined);
+  };
+
   const setTextField = async (locator, value) => {
     const tagName = await locator.evaluate((element) => element.tagName.toLowerCase()).catch(() => '');
     const isContentEditable = await locator.evaluate((element) => element.isContentEditable).catch(() => false);
@@ -630,12 +751,13 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
 
     if (isContentEditable) {
       await locator.click();
-      await page.keyboard.press('ControlOrMeta+A').catch(() => undefined);
+      await clearFocusedEditableField();
       await page.keyboard.type(value);
       return;
     }
 
     await locator.click();
+    await clearFocusedEditableField();
     await page.keyboard.type(value);
   };
 
@@ -706,9 +828,11 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
           if (!metadata) continue;
           if (metadata.insideHeader) continue;
           if (metadata.name === 'q') continue;
+          const normalizedAria = metadata.aria.toLowerCase();
+          const normalizedPlaceholder = metadata.placeholder.toLowerCase();
           if (
-            metadata.aria.toLowerCase().includes('items, sellers or a category') ||
-            metadata.placeholder.toLowerCase().includes('what are you looking for')
+            GLOBAL_HEADER_SEARCH_HINTS.some((hint) => normalizedAria.includes(hint)) ||
+            GLOBAL_HEADER_SEARCH_HINTS.some((hint) => normalizedPlaceholder.includes(hint))
           ) {
             continue;
           }
@@ -723,12 +847,24 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     let searchInput = await findScopedSearchInput();
     if (searchInput) return searchInput;
 
-    const searchButton = page.locator('main button').filter({ hasText: /^Search$/i }).first();
-    const searchButtonVisible = await searchButton.isVisible().catch(() => false);
-    if (searchButtonVisible) {
+    for (const label of ACTIVE_SEARCH_TRIGGER_LABELS) {
+      const searchButton = page
+        .locator('main button')
+        .filter({
+          hasText: new RegExp(
+            '^' + label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&') + '$',
+            'i'
+          ),
+        })
+        .first();
+      const searchButtonVisible = await searchButton.isVisible().catch(() => false);
+      if (!searchButtonVisible) continue;
       await searchButton.click();
       await wait(500);
       searchInput = await findScopedSearchInput();
+      if (searchInput) {
+        break;
+      }
     }
 
     return searchInput;
@@ -747,8 +883,72 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     return 'enter';
   };
 
+  const findActiveTabTrigger = async () => {
+    for (const label of ACTIVE_TAB_LABELS) {
+      const tabCandidate = page.getByRole('tab', { name: new RegExp('^' + label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&') + '$', 'i') }).first();
+      const tabVisible = await tabCandidate.isVisible().catch(() => false);
+      if (tabVisible) return tabCandidate;
+
+      const partialTabCandidate = page
+        .getByRole('tab', {
+          name: new RegExp(label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&'), 'i'),
+        })
+        .first();
+      const partialTabVisible = await partialTabCandidate.isVisible().catch(() => false);
+      if (partialTabVisible) return partialTabCandidate;
+
+      const linkCandidate = page.getByRole('link', { name: new RegExp('^' + label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&') + '$', 'i') }).first();
+      const linkVisible = await linkCandidate.isVisible().catch(() => false);
+      if (linkVisible) return linkCandidate;
+
+      const partialLinkCandidate = page
+        .getByRole('link', {
+          name: new RegExp(label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&'), 'i'),
+        })
+        .first();
+      const partialLinkVisible = await partialLinkCandidate.isVisible().catch(() => false);
+      if (partialLinkVisible) return partialLinkCandidate;
+
+      const buttonCandidate = page.getByRole('button', { name: new RegExp('^' + label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&') + '$', 'i') }).first();
+      const buttonVisible = await buttonCandidate.isVisible().catch(() => false);
+      if (buttonVisible) return buttonCandidate;
+
+      const partialButtonCandidate = page
+        .getByRole('button', {
+          name: new RegExp(label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&'), 'i'),
+        })
+        .first();
+      const partialButtonVisible = await partialButtonCandidate.isVisible().catch(() => false);
+      if (partialButtonVisible) return partialButtonCandidate;
+    }
+
+    return null;
+  };
+
+  const ensureActiveListingsContext = async () => {
+    const hasActiveTabState = Boolean(await firstVisible(ACTIVE_TAB_STATE_SELECTORS));
+    const currentUrl = page.url().toLowerCase();
+    if (currentUrl.includes('tab=active') || hasActiveTabState) {
+      return true;
+    }
+
+    const activeTabTrigger = await findActiveTabTrigger();
+    if (!activeTabTrigger) {
+      return false;
+    }
+
+    await activeTabTrigger.click().catch(() => undefined);
+    await wait(700);
+
+    const afterClickUrl = page.url().toLowerCase();
+    const hasActiveStateAfterClick = Boolean(await firstVisible(ACTIVE_TAB_STATE_SELECTORS));
+    return afterClickUrl.includes('tab=active') || hasActiveStateAfterClick;
+  };
+
   const clickMenuItemByName = async (name) => {
-    const candidate = page.getByRole('menuitem', { name: new RegExp('^' + name.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&') + '$', 'i') }).first();
+    const normalizedNamePattern = name.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&');
+
+    const candidate = page.getByRole('menuitem', { name: new RegExp('^' + normalizedNamePattern + '$', 'i') }).first();
     const visible = await candidate.isVisible().catch(() => false);
     if (visible) {
       await candidate.click();
@@ -756,8 +956,116 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
       return true;
     }
 
+    const menuItemRadioCandidate = page
+      .getByRole('menuitemradio', {
+        name: new RegExp('^' + normalizedNamePattern + '$', 'i'),
+      })
+      .first();
+    const menuItemRadioVisible = await menuItemRadioCandidate.isVisible().catch(() => false);
+    if (menuItemRadioVisible) {
+      await menuItemRadioCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const optionCandidate = page
+      .getByRole('option', {
+        name: new RegExp('^' + normalizedNamePattern + '$', 'i'),
+      })
+      .first();
+    const optionVisible = await optionCandidate.isVisible().catch(() => false);
+    if (optionVisible) {
+      await optionCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const radioCandidate = page
+      .getByRole('radio', {
+        name: new RegExp('^' + normalizedNamePattern + '$', 'i'),
+      })
+      .first();
+    const radioVisible = await radioCandidate.isVisible().catch(() => false);
+    if (radioVisible) {
+      await radioCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const linkCandidate = page.getByRole('link', {
+      name: new RegExp('^' + normalizedNamePattern + '$', 'i'),
+    }).first();
+    const linkVisible = await linkCandidate.isVisible().catch(() => false);
+    if (linkVisible) {
+      await linkCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialMenuItemCandidate = page
+      .getByRole('menuitem', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialMenuItemVisible = await partialMenuItemCandidate.isVisible().catch(() => false);
+    if (partialMenuItemVisible) {
+      await partialMenuItemCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialMenuItemRadioCandidate = page
+      .getByRole('menuitemradio', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialMenuItemRadioVisible = await partialMenuItemRadioCandidate
+      .isVisible()
+      .catch(() => false);
+    if (partialMenuItemRadioVisible) {
+      await partialMenuItemRadioCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialOptionCandidate = page
+      .getByRole('option', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialOptionVisible = await partialOptionCandidate.isVisible().catch(() => false);
+    if (partialOptionVisible) {
+      await partialOptionCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialRadioCandidate = page
+      .getByRole('radio', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialRadioVisible = await partialRadioCandidate.isVisible().catch(() => false);
+    if (partialRadioVisible) {
+      await partialRadioCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialLinkCandidate = page
+      .getByRole('link', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialLinkVisible = await partialLinkCandidate.isVisible().catch(() => false);
+    if (partialLinkVisible) {
+      await partialLinkCandidate.click();
+      await wait(400);
+      return true;
+    }
+
     const buttonCandidate = page.getByRole('button', {
-      name: new RegExp('^' + name.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&') + '$', 'i'),
+      name: new RegExp('^' + normalizedNamePattern + '$', 'i'),
     }).first();
     const buttonVisible = await buttonCandidate.isVisible().catch(() => false);
     if (buttonVisible) {
@@ -766,11 +1074,23 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
       return true;
     }
 
+    const partialButtonCandidate = page
+      .getByRole('button', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialButtonVisible = await partialButtonCandidate.isVisible().catch(() => false);
+    if (partialButtonVisible) {
+      await partialButtonCandidate.click();
+      await wait(400);
+      return true;
+    }
+
     const textFallback = page
       .locator(
         'xpath=//*[normalize-space(text())="' +
           name.replace(/"/g, '\\"') +
-          '"]/ancestor-or-self::*[self::button or @role="button" or @role="menuitem" or self::div or self::label][1]'
+          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menuitem" or @role="menuitemradio" or @role="option" or @role="radio"][1]'
       )
       .first();
     const fallbackVisible = await textFallback.isVisible().catch(() => false);
@@ -786,15 +1106,57 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     const byRoleVisible = await byRole.isVisible().catch(() => false);
     if (byRoleVisible) return byRole;
 
+    const byRoleLink = page
+      .getByRole('link', {
+        name: new RegExp('^' + label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&') + '$', 'i'),
+      })
+      .first();
+    const byRoleLinkVisible = await byRoleLink.isVisible().catch(() => false);
+    if (byRoleLinkVisible) return byRoleLink;
+
+    const byRoleContains = page
+      .getByRole('button', {
+        name: new RegExp(label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&'), 'i'),
+      })
+      .first();
+    const byRoleContainsVisible = await byRoleContains.isVisible().catch(() => false);
+    if (byRoleContainsVisible) return byRoleContains;
+
+    const byRoleContainsLink = page
+      .getByRole('link', {
+        name: new RegExp(label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&'), 'i'),
+      })
+      .first();
+    const byRoleContainsLinkVisible = await byRoleContainsLink.isVisible().catch(() => false);
+    if (byRoleContainsLinkVisible) return byRoleContainsLink;
+
+    const byCombobox = page
+      .getByRole('combobox', {
+        name: new RegExp(label.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&'), 'i'),
+      })
+      .first();
+    const byComboboxVisible = await byCombobox.isVisible().catch(() => false);
+    if (byComboboxVisible) return byCombobox;
+
     const exactTextTrigger = page
       .locator(
         'xpath=//*[normalize-space(text())="' +
           escaped +
-          '"]/ancestor-or-self::*[self::button or @role="button" or self::div or self::label][1]'
+          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or self::div or self::label][1]'
       )
       .first();
     const exactTextVisible = await exactTextTrigger.isVisible().catch(() => false);
     if (exactTextVisible) return exactTextTrigger;
+
+    const labeledControlTrigger = page
+      .locator(
+        'xpath=//*[normalize-space(text())="' +
+          escaped +
+          '"]/following::*[(self::button or self::a or @role="button" or @role="link" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu")][1]'
+      )
+      .first();
+    const labeledControlVisible = await labeledControlTrigger.isVisible().catch(() => false);
+    if (labeledControlVisible) return labeledControlTrigger;
 
     return null;
   };
@@ -810,7 +1172,7 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
   };
 
   const chooseFallbackCategory = async () => {
-    const categoryTrigger = await findFieldTriggerByLabel('Category');
+    const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);
     if (!categoryTrigger) {
       throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
     }
@@ -818,17 +1180,36 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     await categoryTrigger.click().catch(() => undefined);
     await wait(400);
 
-    const selectedTopLevel = await clickMenuItemByName('Other');
-    if (!selectedTopLevel) {
-      throw new Error('FAIL_CATEGORY_SET: Fallback top-level category "Other" not found.');
-    }
+    let selectedDepth = 0;
 
-    const secondLevelOther = page.getByRole('menuitem', { name: /^Other$/i }).first();
-    const secondLevelVisible = await secondLevelOther.isVisible().catch(() => false);
-    if (secondLevelVisible) {
-      await secondLevelOther.click();
+    for (let depth = 0; depth < FALLBACK_CATEGORY_MAX_DEPTH; depth += 1) {
+      let selectedAtDepth = false;
+      for (const optionLabel of FALLBACK_CATEGORY_OPTION_LABELS) {
+        selectedAtDepth = await clickMenuItemByName(optionLabel);
+        if (selectedAtDepth) {
+          selectedDepth += 1;
+          break;
+        }
+      }
+
+      if (!selectedAtDepth) {
+        if (depth === 0) {
+          throw new Error(
+            'FAIL_CATEGORY_SET: Fallback top-level category "' +
+              FALLBACK_CATEGORY_OPTION_LABELS.join('" or "') +
+              '" not found.'
+          );
+        }
+        break;
+      }
+
       await wait(400);
     }
+
+    log?.('tradera.quicklist.category.fallback', {
+      selectedDepth,
+      maxDepth: FALLBACK_CATEGORY_MAX_DEPTH,
+    });
   };
 
   const chooseMappedCategory = async (segments) => {
@@ -836,7 +1217,7 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
       return false;
     }
 
-    const categoryTrigger = await findFieldTriggerByLabel('Category');
+    const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);
     if (!categoryTrigger) {
       throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
     }
@@ -870,10 +1251,26 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     await chooseFallbackCategory();
   };
 
-  const trySelectOptionalFieldValue = async ({ fieldLabels, optionLabels, fieldKey }) => {
+  const trySelectOptionalFieldValue = async ({
+    fieldLabels,
+    optionLabels,
+    fieldKey,
+    requiredOptionLabel = null,
+    failureCode = 'FAIL_PUBLISH_VALIDATION',
+  }) => {
     const trigger = await findFieldTriggerByLabels(fieldLabels);
     if (!trigger) {
       log?.('tradera.quicklist.field.skipped', { field: fieldKey, reason: 'trigger-missing' });
+      if (requiredOptionLabel) {
+        throw new Error(
+          failureCode +
+            ': Required Tradera ' +
+            fieldKey +
+            ' field was not available for option "' +
+            requiredOptionLabel +
+            '".'
+        );
+      }
       return false;
     }
 
@@ -891,12 +1288,25 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     log?.('tradera.quicklist.field.unresolved', {
       field: fieldKey,
       options: optionLabels,
+      requiredOptionLabel,
     });
+
+    if (requiredOptionLabel) {
+      throw new Error(
+        failureCode +
+          ': Required Tradera ' +
+          fieldKey +
+          ' option "' +
+          requiredOptionLabel +
+          '" was not found.'
+      );
+    }
+
     return false;
   };
 
   const chooseBuyNowListingFormat = async () => {
-    const listingFormatTrigger = await findFieldTriggerByLabel('Listing format');
+    const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);
     if (!listingFormatTrigger) {
       throw new Error('FAIL_PRICE_SET: Listing format selector not found.');
     }
@@ -904,9 +1314,11 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     await listingFormatTrigger.click().catch(() => undefined);
     await wait(400);
 
-    if (await clickMenuItemByName('Buy now')) return;
-    if (await clickMenuItemByName('Buy Now')) return;
-    if (await clickMenuItemByName('Fixed price')) return;
+    for (const optionLabel of BUY_NOW_OPTION_LABELS) {
+      if (await clickMenuItemByName(optionLabel)) {
+        return;
+      }
+    }
 
     throw new Error('FAIL_PRICE_SET: Buy now listing format option not found.');
   };
@@ -1158,6 +1570,10 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
 
   const checkDuplicate = async (term) => {
     if (!term) return false;
+    const activeContextReady = await ensureActiveListingsContext();
+    if (!activeContextReady) {
+      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings context could not be confirmed.');
+    }
     const searchInput = await openActiveSearchInput();
     if (!searchInput) {
       throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings search input not found.');
@@ -1197,6 +1613,7 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
       imageCount: imageUrls.length,
       mappedCategoryPath,
       configuredDeliveryOptionLabel,
+      requiresConfiguredDeliveryOption,
     });
 
     await page.goto(ACTIVE_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
@@ -1214,10 +1631,23 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     }
 
     await gotoSellPage();
+    // Wait for SPA to fully render the listing form
+    await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
+    await wait(1500);
     await clearDraftImagesIfPresent();
 
-    const imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
+    // Wait for the image input to appear — Tradera's SPA may take time to render it
+    let imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
     if (!imageInput) {
+      log?.('tradera.quicklist.image_input.waiting', { selectors: IMAGE_INPUT_SELECTORS });
+      await wait(3000);
+      imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
+    }
+    if (!imageInput) {
+      await captureFailureArtifacts('image-input-missing', {
+        url: page.url(),
+        html: await page.content().catch(() => '').then((h) => h.slice(0, 2000)),
+      });
       throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload input not found.');
     }
     const uploadFiles = await resolveUploadFiles();
@@ -1241,6 +1671,8 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
       fieldLabels: DELIVERY_FIELD_LABELS,
       optionLabels: deliveryOptionLabels,
       fieldKey: 'delivery',
+      requiredOptionLabel: configuredDeliveryOptionLabel,
+      failureCode: 'FAIL_SHIPPING_SET',
     });
     await wait(500);
 
@@ -1303,10 +1735,23 @@ export const DEFAULT_TRADERA_QUICKLIST_SCRIPT = String.raw`export default async 
     if (!externalListingId) {
       await page.goto(ACTIVE_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await ensureLoggedIn();
-      const duplicateResult = await checkDuplicate(baseProductId);
-      if (duplicateResult.duplicateFound) {
+      const verificationTerms = [baseProductId, sku].filter((value) => Boolean(value));
+      for (const verificationTerm of verificationTerms) {
+        const duplicateResult = await checkDuplicate(verificationTerm);
+        log?.('tradera.quicklist.publish.verify', {
+          term: verificationTerm,
+          duplicateFound: duplicateResult.duplicateFound,
+          listingUrl: duplicateResult.listingUrl || null,
+          listingId: duplicateResult.listingId || null,
+        });
+        if (!duplicateResult.duplicateFound) {
+          continue;
+        }
         listingUrl = duplicateResult.listingUrl || listingUrl;
         externalListingId = duplicateResult.listingId || extractListingId(listingUrl);
+        if (externalListingId) {
+          break;
+        }
       }
     }
 

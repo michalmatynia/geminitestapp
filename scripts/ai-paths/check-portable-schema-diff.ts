@@ -394,6 +394,134 @@ export const evaluatePortableSchemaDiffStrictViolations = (
   hasMissingGovernance: classification.missingGovernanceEntries.length > 0,
 });
 
+type PortableSchemaDiffSummaryPayload = {
+  specVersion: typeof AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION;
+  strict: boolean;
+  hasSchemaChanges: boolean;
+  changedKinds: PortablePathJsonSchemaDiffReport['changedKinds'];
+  summary: {
+    expectedNonBreaking: number;
+    expectedBreaking: number;
+    unexpectedBreaking: number;
+    missingGovernanceEntries: number;
+    expiredAllowlistEntries: number;
+    staleAllowlistEntries: number;
+    suggestedAllowlistEntries: number;
+  };
+  classification: PortableSchemaDiffClassificationReport;
+  suggestedAllowlistEntries: PortableSchemaDiffAllowlistEntry[];
+};
+
+const isPortableSchemaDiffGuardrailOk = ({
+  strict,
+  violations,
+}: {
+  strict: boolean;
+  violations: ReturnType<typeof evaluatePortableSchemaDiffStrictViolations>;
+}): boolean =>
+  !strict ||
+  (!violations.hasUnexpectedBreaking &&
+    !violations.hasExpiredAllowlist &&
+    !violations.hasMissingGovernance);
+
+export const buildPortableSchemaDiffSummaryPayload = ({
+  classification,
+  diff,
+  strict,
+  suggestedAllowlistEntries,
+}: {
+  classification: PortableSchemaDiffClassificationReport;
+  diff: PortablePathJsonSchemaDiffReport;
+  strict: boolean;
+  suggestedAllowlistEntries: PortableSchemaDiffAllowlistEntry[];
+}): PortableSchemaDiffSummaryPayload => ({
+  specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
+  strict,
+  hasSchemaChanges: diff.hasChanges,
+  changedKinds: diff.changedKinds,
+  summary: {
+    expectedNonBreaking: classification.expectedNonBreaking.length,
+    expectedBreaking: classification.expectedBreaking.length,
+    unexpectedBreaking: classification.unexpectedBreaking.length,
+    missingGovernanceEntries: classification.missingGovernanceEntries.length,
+    expiredAllowlistEntries: classification.expiredAllowlistEntries.length,
+    staleAllowlistEntries: classification.staleAllowlistEntries.length,
+    suggestedAllowlistEntries: suggestedAllowlistEntries.length,
+  },
+  classification,
+  suggestedAllowlistEntries,
+});
+
+const formatPortableSchemaDiffAllowlistTag = (
+  entry: Pick<PortableSchemaDiffAllowlistEntry, 'kind' | 'vNextHash'>
+): string => `${entry.kind}@${entry.vNextHash}`;
+
+const formatPortableSchemaDiffClassificationTag = (
+  entry: Pick<PortableSchemaDiffClassificationEntry, 'kind' | 'currentHash' | 'vNextHash' | 'reason'>
+): string =>
+  `kind=${entry.kind} current=${entry.currentHash} vnext=${entry.vNextHash} reason=${entry.reason}`;
+
+export const logPortableSchemaDiffSummary = ({
+  json,
+  logger,
+  ok,
+  payload,
+}: {
+  json: boolean;
+  logger: Pick<typeof console, 'log' | 'error'>;
+  ok: boolean;
+  payload: PortableSchemaDiffSummaryPayload;
+}): void => {
+  if (json) {
+    logger.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  logger.log(
+    `[ai-paths:portable-schema-diff] strict=${String(payload.strict)} changed=${String(payload.hasSchemaChanges)}`
+  );
+  logger.log(
+    `[ai-paths:portable-schema-diff] expected_non_breaking=${payload.summary.expectedNonBreaking} expected_breaking=${payload.summary.expectedBreaking} unexpected_breaking=${payload.summary.unexpectedBreaking}`
+  );
+  if (payload.classification.missingGovernanceEntries.length > 0) {
+    logger.error(
+      `[ai-paths:portable-schema-diff] allowlisted changes missing governance metadata: ${payload.classification.missingGovernanceEntries
+        .map(formatPortableSchemaDiffAllowlistTag)
+        .join(', ')}`
+    );
+  }
+  if (payload.classification.expiredAllowlistEntries.length > 0) {
+    logger.error(
+      `[ai-paths:portable-schema-diff] expired allowlist entries: ${payload.classification.expiredAllowlistEntries
+        .map(formatPortableSchemaDiffAllowlistTag)
+        .join(', ')}`
+    );
+  }
+  if (payload.classification.staleAllowlistEntries.length > 0) {
+    logger.log(
+      `[ai-paths:portable-schema-diff] stale allowlist entries: ${payload.classification.staleAllowlistEntries
+        .map(formatPortableSchemaDiffAllowlistTag)
+        .join(', ')}`
+    );
+  }
+  if (payload.classification.unexpectedBreaking.length > 0) {
+    payload.classification.unexpectedBreaking.forEach((entry) => {
+      logger.error(
+        `[ai-paths:portable-schema-diff] unexpected_breaking ${formatPortableSchemaDiffClassificationTag(entry)}`
+      );
+    });
+  }
+  if (payload.suggestedAllowlistEntries.length > 0) {
+    logger.log('[ai-paths:portable-schema-diff] suggested allowlist entries (review before merge):');
+    logger.log(JSON.stringify(payload.suggestedAllowlistEntries, null, 2));
+  }
+  if (ok) {
+    logger.log('[ai-paths:portable-schema-diff] guardrail passed');
+    return;
+  }
+  logger.error('[ai-paths:portable-schema-diff] guardrail failed');
+};
+
 export const runPortableSchemaDiffGuardrail = async (
   options: RunPortableSchemaDiffGuardrailOptions = {}
 ): Promise<{
@@ -416,77 +544,19 @@ export const runPortableSchemaDiffGuardrail = async (
     ? buildPortableSchemaDiffAllowlistSuggestions(classification)
     : [];
   const violations = evaluatePortableSchemaDiffStrictViolations(classification);
-  const ok =
-    !strict ||
-    (!violations.hasUnexpectedBreaking &&
-      !violations.hasExpiredAllowlist &&
-      !violations.hasMissingGovernance);
-
-  const summaryPayload = {
-    specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
-    strict,
-    hasSchemaChanges: diff.hasChanges,
-    changedKinds: diff.changedKinds,
-    summary: {
-      expectedNonBreaking: classification.expectedNonBreaking.length,
-      expectedBreaking: classification.expectedBreaking.length,
-      unexpectedBreaking: classification.unexpectedBreaking.length,
-      missingGovernanceEntries: classification.missingGovernanceEntries.length,
-      expiredAllowlistEntries: classification.expiredAllowlistEntries.length,
-      staleAllowlistEntries: classification.staleAllowlistEntries.length,
-      suggestedAllowlistEntries: suggestedAllowlistEntries.length,
-    },
+  const ok = isPortableSchemaDiffGuardrailOk({ strict, violations });
+  const summaryPayload = buildPortableSchemaDiffSummaryPayload({
     classification,
+    diff,
+    strict,
     suggestedAllowlistEntries,
-  };
-
-  if (options.json) {
-    logger.log(JSON.stringify(summaryPayload, null, 2));
-  } else {
-    logger.log(
-      `[ai-paths:portable-schema-diff] strict=${String(strict)} changed=${String(diff.hasChanges)}`
-    );
-    logger.log(
-      `[ai-paths:portable-schema-diff] expected_non_breaking=${classification.expectedNonBreaking.length} expected_breaking=${classification.expectedBreaking.length} unexpected_breaking=${classification.unexpectedBreaking.length}`
-    );
-    if (classification.missingGovernanceEntries.length > 0) {
-      logger.error(
-        `[ai-paths:portable-schema-diff] allowlisted changes missing governance metadata: ${classification.missingGovernanceEntries
-          .map((entry) => `${entry.kind}@${entry.vNextHash}`)
-          .join(', ')}`
-      );
-    }
-    if (classification.expiredAllowlistEntries.length > 0) {
-      logger.error(
-        `[ai-paths:portable-schema-diff] expired allowlist entries: ${classification.expiredAllowlistEntries
-          .map((entry) => `${entry.kind}@${entry.vNextHash}`)
-          .join(', ')}`
-      );
-    }
-    if (classification.staleAllowlistEntries.length > 0) {
-      logger.log(
-        `[ai-paths:portable-schema-diff] stale allowlist entries: ${classification.staleAllowlistEntries
-          .map((entry) => `${entry.kind}@${entry.vNextHash}`)
-          .join(', ')}`
-      );
-    }
-    if (classification.unexpectedBreaking.length > 0) {
-      for (const entry of classification.unexpectedBreaking) {
-        logger.error(
-          `[ai-paths:portable-schema-diff] unexpected_breaking kind=${entry.kind} current=${entry.currentHash} vnext=${entry.vNextHash} reason=${entry.reason}`
-        );
-      }
-    }
-    if (suggestedAllowlistEntries.length > 0) {
-      logger.log('[ai-paths:portable-schema-diff] suggested allowlist entries (review before merge):');
-      logger.log(JSON.stringify(suggestedAllowlistEntries, null, 2));
-    }
-    if (ok) {
-      logger.log('[ai-paths:portable-schema-diff] guardrail passed');
-    } else {
-      logger.error('[ai-paths:portable-schema-diff] guardrail failed');
-    }
-  }
+  });
+  logPortableSchemaDiffSummary({
+    json: options.json ?? false,
+    logger,
+    ok,
+    payload: summaryPayload,
+  });
 
   return {
     ok,

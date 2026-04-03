@@ -3,7 +3,7 @@
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
@@ -38,7 +38,6 @@ import {
   KANGUR_GRID_TIGHT_CLASSNAME,
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_WRAP_ROW_CLASSNAME,
-  type KangurAccent,
 } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
@@ -49,7 +48,6 @@ import {
 import {
   getKangurMiniGameFinishLabel,
   getKangurMiniGameScoreLabel,
-  type KangurMiniGameTranslate,
 } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { scheduleKangurRoundFeedback } from '@/features/kangur/ui/services/round-transition';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
@@ -62,162 +60,17 @@ import { cn } from '@/features/kangur/shared/utils';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 
 import type { DropResult } from '@hello-pangea/dnd';
-
-type BaseRound = {
-  id: string;
-  accent: KangurAccent;
-};
-
-type ChoiceRound = BaseRound & {
-  kind: 'choice';
-  options: string[];
-  answer: string;
-};
-
-type TimedRound = BaseRound & {
-  kind: 'timed';
-  options: string[];
-  answer: string;
-  timeLimitSec: number;
-};
-
-type OrderRound = BaseRound & {
-  kind: 'order';
-  tokens: string[];
-  answer: string[];
-};
-
-type FillRound = BaseRound & {
-  kind: 'fill';
-  answers: string[];
-  placeholder?: string;
-};
-
-type Round = ChoiceRound | TimedRound | OrderRound | FillRound;
-
-const ROUNDS: Round[] = [
-  {
-    id: 'svo-order',
-    kind: 'choice',
-    accent: 'violet',
-    answer: 'The drummer plays the rhythm.',
-    options: [
-      'Plays the drummer the rhythm.',
-      'The drummer plays the rhythm.',
-      'The rhythm plays the drummer.',
-      'Plays the rhythm the drummer.',
-    ],
-  },
-  {
-    id: 'order-words',
-    kind: 'order',
-    accent: 'sky',
-    tokens: ['My', 'friend', 'always', 'finishes', 'homework', 'on', 'time'],
-    answer: ['My', 'friend', 'always', 'finishes', 'homework', 'on', 'time'],
-  },
-  {
-    id: 'do-question',
-    kind: 'fill',
-    accent: 'indigo',
-    answers: ['do'],
-    placeholder: 'do / does',
-  },
-  {
-    id: 'connector-so',
-    kind: 'timed',
-    accent: 'amber',
-    answer: 'so',
-    options: ['so', 'because', 'but', 'when'],
-    timeLimitSec: 8,
-  },
-  {
-    id: 'frequency-adverb',
-    kind: 'choice',
-    accent: 'teal',
-    answer: 'often',
-    options: ['often', 'after', 'quickly', 'yesterday'],
-  },
-  {
-    id: 'does-negative',
-    kind: 'fill',
-    accent: 'rose',
-    answers: ['doesn\'t', 'does not'],
-    placeholder: 'doesn\'t',
-  },
-];
-
-const TOTAL_ROUNDS = ROUNDS.length;
-
-const getSentenceStructurePrompt = (
-  translate: KangurMiniGameTranslate,
-  roundId: Round['id']
-): string => translate(`englishSentenceStructure.inRound.rounds.${roundId}.prompt`);
-
-const getSentenceStructureHint = (
-  translate: KangurMiniGameTranslate,
-  roundId: Round['id']
-): string => translate(`englishSentenceStructure.inRound.rounds.${roundId}.hint`);
-
-const getSentenceStructureQuestion = (
-  translate: KangurMiniGameTranslate,
-  roundId: Round['id']
-): string => translate(`englishSentenceStructure.inRound.rounds.${roundId}.question`);
-
-const shuffle = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
-
-const reorderWithinList = <T,>(list: T[], startIndex: number, endIndex: number): T[] => {
-  const updated = [...list];
-  const [removed] = updated.splice(startIndex, 1);
-  if (removed === undefined) {
-    return updated;
-  }
-  updated.splice(endIndex, 0, removed);
-  return updated;
-};
-
-const normalizeText = (value: string): string =>
-  value
-    .trim()
-    .toLowerCase()
-    .replace(/[.!?]/g, '')
-    .replace(/\s+/g, ' ');
-
-type RoundState = {
-  selection: string | null;
-  orderTokens: string[];
-  fillValue: string;
-};
-
-const evaluateRound = (
-  round: Round,
-  { selection, orderTokens, fillValue }: RoundState
-): { isCorrect: boolean; correctAnswerLabel: string } => {
-  switch (round.kind) {
-    case 'choice':
-    case 'timed': {
-      const isCorrect =
-        Boolean(selection) &&
-        normalizeText(selection ?? '') === normalizeText(round.answer);
-      return { isCorrect, correctAnswerLabel: round.answer };
-    }
-    case 'order': {
-      const normalizedAnswer = round.answer.map(normalizeText);
-      const normalizedOrder = orderTokens.map(normalizeText);
-      const isCorrect =
-        normalizedAnswer.length === normalizedOrder.length &&
-        normalizedAnswer.every((value, index) => value === normalizedOrder[index]);
-      return { isCorrect, correctAnswerLabel: round.answer.join(' ') };
-    }
-    case 'fill': {
-      const normalizedGuess = normalizeText(fillValue);
-      const normalizedAnswers = round.answers.map(normalizeText);
-      const isCorrect = normalizedAnswers.includes(normalizedGuess);
-      return { isCorrect, correctAnswerLabel: round.answers[0] ?? '' };
-    }
-    default:
-      return { isCorrect: false, correctAnswerLabel: '' };
-  }
-};
+import {
+  createSentenceStructureRoundState,
+  ENGLISH_SENTENCE_STRUCTURE_ROUNDS,
+  evaluateSentenceStructureRound,
+  getSentenceStructureHint,
+  getSentenceStructurePrompt,
+  getSentenceStructureQuestion,
+  isSentenceStructureRoundReady,
+  reorderSentenceStructureList,
+  TOTAL_ENGLISH_SENTENCE_STRUCTURE_ROUNDS,
+} from './EnglishSentenceStructureGame.helpers';
 
 export default function EnglishSentenceStructureGame({
   finishLabel,
@@ -244,7 +97,9 @@ export default function EnglishSentenceStructureGame({
   const autoSubmitRef = useRef(false);
   const timerRef = useRef<SafeTimerId | null>(null);
 
-  const round = ROUNDS[roundIndex] ?? ROUNDS[0]!;
+  const round =
+    ENGLISH_SENTENCE_STRUCTURE_ROUNDS[roundIndex] ??
+    ENGLISH_SENTENCE_STRUCTURE_ROUNDS[0]!;
   const selectedOrderToken =
     round.kind === 'order' && selectedOrderIndex !== null ? orderTokens[selectedOrderIndex] ?? null : null;
   const orderTouchHint =
@@ -259,9 +114,10 @@ export default function EnglishSentenceStructureGame({
   useEffect(() => {
     setFeedback(null);
     setIsChecking(false);
-    setSelection(null);
-    setFillValue('');
-    setOrderTokens(round.kind === 'order' ? shuffle(round.tokens) : []);
+    const nextRoundState = createSentenceStructureRoundState(round);
+    setSelection(nextRoundState.selection);
+    setFillValue(nextRoundState.fillValue);
+    setOrderTokens(nextRoundState.orderTokens);
     setSelectedOrderIndex(null);
     setTimeLeft(round.kind === 'timed' ? round.timeLimitSec : null);
     autoSubmitRef.current = false;
@@ -271,19 +127,15 @@ export default function EnglishSentenceStructureGame({
     }
   }, [roundIndex, round]);
 
-  const isReady = useMemo(() => {
-    switch (round.kind) {
-      case 'choice':
-      case 'timed':
-        return Boolean(selection);
-      case 'order':
-        return orderTokens.length > 0;
-      case 'fill':
-        return fillValue.trim().length > 0;
-      default:
-        return false;
-    }
-  }, [fillValue, orderTokens.length, round.kind, selection]);
+  const isReady = useMemo(
+    () =>
+      isSentenceStructureRoundReady(round, {
+        selection,
+        orderTokens,
+        fillValue,
+      }),
+    [fillValue, orderTokens, round, selection]
+  );
 
   const handleOrderDragEnd = (result: DropResult): void => {
     if (!result.destination || round.kind !== 'order') {
@@ -291,7 +143,7 @@ export default function EnglishSentenceStructureGame({
     }
     const destination = result.destination;
     setOrderTokens((prev) =>
-      reorderWithinList(prev, result.source.index, destination.index)
+      reorderSentenceStructureList(prev, result.source.index, destination.index)
     );
     setSelectedOrderIndex(null);
   };
@@ -303,7 +155,7 @@ export default function EnglishSentenceStructureGame({
       const targetIndex = Math.min(Math.max(index + offset, 0), prev.length - 1);
       if (targetIndex === index) return prev;
       nextIndex = targetIndex;
-      return reorderWithinList(prev, index, targetIndex);
+      return reorderSentenceStructureList(prev, index, targetIndex);
     });
     if (nextIndex >= 0) {
       setSelectedOrderIndex(nextIndex);
@@ -317,10 +169,48 @@ export default function EnglishSentenceStructureGame({
       const safeIndex = Math.min(Math.max(targetIndex, 0), prev.length - 1);
       if (safeIndex === selectedOrderIndex) return prev;
       nextIndex = safeIndex;
-      return reorderWithinList(prev, selectedOrderIndex, safeIndex);
+      return reorderSentenceStructureList(prev, selectedOrderIndex, safeIndex);
     });
     setSelectedOrderIndex(nextIndex);
   };
+
+  const finishSession = useCallback(
+    (nextScore: number): void => {
+      const progress = loadProgress({ ownerKey });
+      const reward = createLessonPracticeReward(progress, {
+        activityKey: 'english_sentence_structure_quiz',
+        lessonKey: 'english_sentence_structure',
+        correctAnswers: nextScore,
+        totalQuestions: TOTAL_ENGLISH_SENTENCE_STRUCTURE_ROUNDS,
+        strongThresholdPercent: 75,
+      });
+      addXp(reward.xp, reward.progressUpdates, { ownerKey });
+      void persistKangurSessionScore({
+        operation: 'english_sentence_structure',
+        score: nextScore,
+        totalQuestions: TOTAL_ENGLISH_SENTENCE_STRUCTURE_ROUNDS,
+        correctAnswers: nextScore,
+        timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
+        xpEarned: reward.xp,
+      });
+      setXpEarned(reward.xp);
+      setXpBreakdown(reward.breakdown ?? []);
+      setDone(true);
+    },
+    [ownerKey]
+  );
+
+  const advanceAfterCheck = useCallback(
+    (nextScore: number): void => {
+      if (roundIndex + 1 >= TOTAL_ENGLISH_SENTENCE_STRUCTURE_ROUNDS) {
+        finishSession(nextScore);
+      } else {
+        setRoundIndex((current) => current + 1);
+      }
+      setIsChecking(false);
+    },
+    [finishSession, roundIndex]
+  );
 
   const handleCheck = (options?: { auto?: boolean }): void => {
     if (isChecking) return;
@@ -334,7 +224,7 @@ export default function EnglishSentenceStructureGame({
       timerRef.current = null;
     }
 
-    const { isCorrect, correctAnswerLabel } = evaluateRound(round, {
+    const { isCorrect, correctAnswerLabel } = evaluateSentenceStructureRound(round, {
       selection,
       orderTokens,
       fillValue,
@@ -350,31 +240,7 @@ export default function EnglishSentenceStructureGame({
     setFeedback({ kind: isCorrect ? 'success' : 'error', text: feedbackText });
 
     scheduleKangurRoundFeedback(() => {
-      if (roundIndex + 1 >= TOTAL_ROUNDS) {
-        const progress = loadProgress({ ownerKey });
-        const reward = createLessonPracticeReward(progress, {
-          activityKey: 'english_sentence_structure_quiz',
-          lessonKey: 'english_sentence_structure',
-          correctAnswers: nextScore,
-          totalQuestions: TOTAL_ROUNDS,
-          strongThresholdPercent: 75,
-        });
-        addXp(reward.xp, reward.progressUpdates, { ownerKey });
-        void persistKangurSessionScore({
-          operation: 'english_sentence_structure',
-          score: nextScore,
-          totalQuestions: TOTAL_ROUNDS,
-          correctAnswers: nextScore,
-          timeTakenSeconds: Math.round((Date.now() - sessionStartedAtRef.current) / 1000),
-          xpEarned: reward.xp,
-        });
-        setXpEarned(reward.xp);
-        setXpBreakdown(reward.breakdown ?? []);
-        setDone(true);
-      } else {
-        setRoundIndex((current) => current + 1);
-      }
-      setIsChecking(false);
+      advanceAfterCheck(nextScore);
     });
   };
 
@@ -427,7 +293,10 @@ export default function EnglishSentenceStructureGame({
   };
 
   if (done) {
-    const percent = Math.round((score / TOTAL_ROUNDS) * 100);
+    const percent = Math.round(
+      (score / TOTAL_ENGLISH_SENTENCE_STRUCTURE_ROUNDS) * 100
+    );
+
     return (
       <KangurPracticeGameSummary dataTestId='english-structure-summary-shell'>
         <KangurPracticeGameSummaryEmoji
@@ -438,7 +307,11 @@ export default function EnglishSentenceStructureGame({
           accent='violet'
           title={
             <KangurHeadline data-testid='english-structure-summary-title'>
-              {getKangurMiniGameScoreLabel(translations, score, TOTAL_ROUNDS)}
+              {getKangurMiniGameScoreLabel(
+                translations,
+                score,
+                TOTAL_ENGLISH_SENTENCE_STRUCTURE_ROUNDS
+              )}
             </KangurHeadline>
           }
         />
@@ -472,7 +345,7 @@ export default function EnglishSentenceStructureGame({
         accent={round.accent}
         currentRound={roundIndex}
         dataTestId='english-structure-progress-bar'
-        totalRounds={TOTAL_ROUNDS}
+        totalRounds={TOTAL_ENGLISH_SENTENCE_STRUCTURE_ROUNDS}
       />
       <KangurGlassPanel
         className={cn('w-full', KANGUR_PANEL_GAP_CLASSNAME)}
@@ -486,7 +359,7 @@ export default function EnglishSentenceStructureGame({
           <p className='text-sm text-slate-500'>
             {translations('englishSentenceStructure.inRound.roundLabel', {
               current: roundIndex + 1,
-              total: TOTAL_ROUNDS,
+              total: TOTAL_ENGLISH_SENTENCE_STRUCTURE_ROUNDS,
             })}
           </p>
           {round.kind === 'timed' ? (

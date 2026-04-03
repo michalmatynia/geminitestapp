@@ -19,6 +19,8 @@ import {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
+export type { KangurSocialPostListStatus } from '@/shared/contracts/kangur-social-posts';
+
 type KangurSocialPostDoc = Omit<KangurSocialPost, 'createdAt' | 'updatedAt'> & {
   createdAt: Date;
   updatedAt: Date;

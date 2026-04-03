@@ -19,6 +19,10 @@ import {
   upsertFilemakerCampaignSettingValue,
 } from './campaign-settings-store';
 import { createFilemakerCampaignRuntimeService } from './campaign-runtime';
+import {
+  type FilemakerEmailCampaignSchedulerLaunchFailure,
+  type FilemakerEmailCampaignSchedulerSkipReason,
+} from '@/shared/contracts/filemaker';
 
 import type {
   FilemakerCampaignRunLaunchResult,
@@ -47,16 +51,6 @@ export type FilemakerEmailCampaignSchedulerDueCampaign = {
   launchMode: Extract<FilemakerEmailCampaign['launch']['mode'], 'scheduled' | 'recurring'>;
   launchReason: string;
   scheduleWindowKey: string;
-};
-
-export type FilemakerEmailCampaignSchedulerSkipReason = {
-  reason: string;
-  count: number;
-};
-
-export type FilemakerEmailCampaignSchedulerLaunchFailure = {
-  campaignId: string;
-  message: string;
 };
 
 export type FilemakerEmailCampaignSchedulerTickResult = {

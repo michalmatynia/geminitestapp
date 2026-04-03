@@ -12,6 +12,65 @@ import {
   PATH_TEMPLATES,
 } from '@/shared/lib/ai-paths/core/utils/path-templates';
 
+const getStarterWorkflowTemplateByIdOrThrow = (templateId: string) => {
+  const entry = getStarterWorkflowTemplateById(templateId);
+  if (!entry) {
+    throw new Error(`Missing ${templateId} entry`);
+  }
+  return entry;
+};
+
+const evaluateStrictRunPreflight = (config: Pick<PathConfig, 'edges' | 'nodes'>) =>
+  evaluateRunPreflight({
+    nodes: config.nodes ?? [],
+    edges: config.edges ?? [],
+    aiPathsValidation: { enabled: true },
+    strictFlowMode: true,
+    mode: 'full',
+  });
+
+const expectSuccessfulStrictRunPreflight = (
+  report: ReturnType<typeof evaluateStrictRunPreflight>
+): void => {
+  expect(report.shouldBlock).toBe(false);
+  expect(report.compileReport.errors).toBe(0);
+  expect(report.dependencyReport?.errors ?? 0).toBe(0);
+};
+
+const hasNodeId = (config: Pick<PathConfig, 'nodes'>, nodeId: string): boolean =>
+  (config.nodes ?? []).some((node) => node.id === nodeId);
+
+const hasDatabaseNodeWithOperation = (
+  config: Pick<PathConfig, 'nodes'>,
+  operation: 'query' | 'update'
+): boolean =>
+  (config.nodes ?? []).some(
+    (node) => node.type === 'database' && node.config?.database?.operation === operation
+  );
+
+const hasDatabaseNodeWithUpdatePayloadMode = (
+  config: Pick<PathConfig, 'nodes'>,
+  updatePayloadMode: 'custom' | 'mapping'
+): boolean =>
+  (config.nodes ?? []).some(
+    (node) =>
+      node.type === 'database' &&
+      node.config?.database?.operation === 'update' &&
+      node.config?.database?.updatePayloadMode === updatePayloadMode
+  );
+
+const toLegacyAliasOnlyEdges = (config: Pick<PathConfig, 'edges'>) =>
+  (config.edges ?? []).map((edge) => ({
+    id: edge.id,
+    source: edge.from,
+    target: edge.to,
+    sourceHandle: edge.fromPort ?? null,
+    targetHandle: edge.toPort ?? null,
+    createdAt: edge.createdAt ?? null,
+    updatedAt: edge.updatedAt ?? null,
+    data: edge.data ?? {},
+  }));
+
 const buildLegacyTranslationPathConfig = (args?: {
   includeParamsRegex?: boolean;
   paramsEdgeToPort?: 'value' | 'result';
@@ -115,13 +174,13 @@ const buildLegacyTranslationPathConfig = (args?: {
   }) as PathConfig;
 
 const buildStaleLiveTranslationPathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
-  if (!entry) throw new Error('Missing starter_translation_en_pl entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_translation_en_pl_v2_live',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_translation_en_pl'),
+    {
+      pathId: 'path_translation_en_pl_v2_live',
+      seededDefault: false,
+    }
+  );
 
   return {
     ...config,
@@ -161,13 +220,13 @@ const buildStaleLiveTranslationPathConfig = (): PathConfig => {
 };
 
 const buildStaleLiveParameterInferencePathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
-  if (!entry) throw new Error('Missing starter_parameter_inference entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_parameter_inference_v2_live',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),
+    {
+      pathId: 'path_parameter_inference_v2_live',
+      seededDefault: false,
+    }
+  );
 
   return {
     ...config,
@@ -221,13 +280,13 @@ const buildStaleLiveParameterInferencePathConfig = (): PathConfig => {
 };
 
 const buildProvenanceOnlyStaleParameterInferencePathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
-  if (!entry) throw new Error('Missing starter_parameter_inference entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_parameter_inference_v2_provenance_only',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),
+    {
+      pathId: 'path_parameter_inference_v2_provenance_only',
+      seededDefault: false,
+    }
+  );
 
   return {
     ...config,
@@ -253,13 +312,13 @@ const buildProvenanceOnlyStaleParameterInferencePathConfig = (): PathConfig => {
 };
 
 const buildMappingModeLegacyParameterInferencePathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
-  if (!entry) throw new Error('Missing starter_parameter_inference entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_parameter_inference_v2_randomized_live',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),
+    {
+      pathId: 'path_parameter_inference_v2_randomized_live',
+      seededDefault: false,
+    }
+  );
 
   const remappedNodeIds = new Map<string, string>();
   (config.nodes ?? []).forEach((node, index) => {
@@ -304,7 +363,7 @@ const buildMappingModeLegacyParameterInferencePathConfig = (): PathConfig => {
     };
   });
 
-  if (!remappedNodes.some((node) => node.type === 'database' && node.config?.database?.operation === 'update')) {
+  if (!hasDatabaseNodeWithOperation({ nodes: remappedNodes }, 'update')) {
     throw new Error('Expected starter_parameter_inference to include a database update node.');
   }
 
@@ -331,13 +390,13 @@ const buildMappingModeLegacyParameterInferencePathConfig = (): PathConfig => {
 };
 
 const buildCustomModeRandomIdParameterInferencePathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
-  if (!entry) throw new Error('Missing starter_parameter_inference entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_3wejpy',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),
+    {
+      pathId: 'path_3wejpy',
+      seededDefault: false,
+    }
+  );
 
   const remappedNodeIds = new Map<string, string>();
   (config.nodes ?? []).forEach((node) => {
@@ -393,13 +452,13 @@ const buildCustomModeRandomIdParameterInferencePathConfig = (): PathConfig => {
 };
 
 const buildV5TranslationPathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
-  if (!entry) throw new Error('Missing starter_translation_en_pl entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_translation_en_pl_v5',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_translation_en_pl'),
+    {
+      pathId: 'path_translation_en_pl_v5',
+      seededDefault: false,
+    }
+  );
 
   return {
     ...config,
@@ -430,13 +489,13 @@ const buildV5TranslationPathConfig = (): PathConfig => {
 };
 
 const buildV5DescriptionInferencePathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_description_inference_lite');
-  if (!entry) throw new Error('Missing starter_description_inference_lite entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_descv3lite',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_description_inference_lite'),
+    {
+      pathId: 'path_descv3lite',
+      seededDefault: false,
+    }
+  );
 
   return {
     ...config,
@@ -467,13 +526,13 @@ const buildV5DescriptionInferencePathConfig = (): PathConfig => {
 };
 
 const buildV14ParameterInferencePathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
-  if (!entry) throw new Error('Missing starter_parameter_inference entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_parameter_inference_v14',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),
+    {
+      pathId: 'path_parameter_inference_v14',
+      seededDefault: false,
+    }
+  );
 
   return {
     ...config,
@@ -504,13 +563,13 @@ const buildV14ParameterInferencePathConfig = (): PathConfig => {
 };
 
 const buildV15ParameterInferencePathConfig = (): PathConfig => {
-  const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
-  if (!entry) throw new Error('Missing starter_parameter_inference entry');
-
-  const config = materializeStarterWorkflowPathConfig(entry, {
-    pathId: 'path_parameter_inference_v15',
-    seededDefault: false,
-  });
+  const config = materializeStarterWorkflowPathConfig(
+    getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),
+    {
+      pathId: 'path_parameter_inference_v15',
+      seededDefault: false,
+    }
+  );
 
   return {
     ...config,
@@ -561,13 +620,13 @@ describe('starter workflow registry', () => {
   });
 
   it('materializes seeded starter configs with provenance', () => {
-    const entry = getStarterWorkflowTemplateById('starter_base_export_blwo');
-    if (!entry) throw new Error('Missing starter_base_export_blwo entry');
-
-    const config = materializeStarterWorkflowPathConfig(entry, {
-      pathId: 'path_base_export_blwo_v1',
-      seededDefault: true,
-    });
+    const config = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_base_export_blwo'),
+      {
+        pathId: 'path_base_export_blwo_v1',
+        seededDefault: true,
+      }
+    );
 
     expect(config.id).toBe('path_base_export_blwo_v1');
     expect(config.extensions?.['aiPathsStarter']).toEqual(
@@ -580,20 +639,14 @@ describe('starter workflow registry', () => {
   });
 
   it('materializes a runnable EN->PL translation starter graph', () => {
-    const entry = getStarterWorkflowTemplateById('starter_translation_en_pl');
-    if (!entry) throw new Error('Missing starter_translation_en_pl entry');
-
-    const config = materializeStarterWorkflowPathConfig(entry, {
-      pathId: 'path_translation_en_pl_runtime',
-      seededDefault: false,
-    });
-    const report = evaluateRunPreflight({
-      nodes: config.nodes,
-      edges: config.edges,
-      aiPathsValidation: { enabled: true },
-      strictFlowMode: true,
-      mode: 'full',
-    });
+    const config = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_translation_en_pl'),
+      {
+        pathId: 'path_translation_en_pl_runtime',
+        seededDefault: false,
+      }
+    );
+    const report = evaluateStrictRunPreflight(config);
 
     expect(config.nodes.some((node) => node.type === 'trigger')).toBe(true);
     expect(report.shouldBlock).toBe(false);
@@ -601,26 +654,16 @@ describe('starter workflow registry', () => {
   });
 
   it('does not resolve starter graphs with legacy edge alias fields', () => {
-    const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
-    if (!entry) throw new Error('Missing starter_parameter_inference entry');
-
-    const canonical = materializeStarterWorkflowPathConfig(entry, {
-      pathId: 'path_starter_alias_only_edges',
-    });
-    const aliasOnlyEdges = (canonical.edges ?? []).map((edge) => ({
-      id: edge.id,
-      source: edge.from,
-      target: edge.to,
-      sourceHandle: edge.fromPort ?? null,
-      targetHandle: edge.toPort ?? null,
-      createdAt: edge.createdAt ?? null,
-      updatedAt: edge.updatedAt ?? null,
-      data: edge.data ?? {},
-    }));
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),
+      {
+        pathId: 'path_starter_alias_only_edges',
+      }
+    );
     const configWithLegacyAliasEdges = {
       ...canonical,
       extensions: {},
-      edges: aliasOnlyEdges,
+      edges: toLegacyAliasOnlyEdges(canonical),
     } as unknown as PathConfig;
 
     const upgraded = upgradeStarterWorkflowPathConfig(configWithLegacyAliasEdges);
@@ -740,13 +783,7 @@ describe('starter workflow registry', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(buildStaleLiveParameterInferencePathConfig());
     const parserNode = (upgraded.config.nodes ?? []).find((node) => node.type === 'parser');
     const parserMappings = parserNode?.config?.parser?.mappings;
-    const report = evaluateRunPreflight({
-      nodes: upgraded.config.nodes ?? [],
-      edges: upgraded.config.edges ?? [],
-      aiPathsValidation: { enabled: true },
-      strictFlowMode: true,
-      mode: 'full',
-    });
+    const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.resolution?.matchedBy).toBe('legacy_alias');
     expect(upgraded.changed).toBe(true);
@@ -757,9 +794,7 @@ describe('starter workflow registry', () => {
     );
     expect(parserMappings?.['title']).toBe('$.name_en');
     expect(parserMappings?.['content_en']).toBe('$.description_en');
-    expect(report.shouldBlock).toBe(false);
-    expect(report.compileReport.errors).toBe(0);
-    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+    expectSuccessfulStrictRunPreflight(report);
   });
 
   it('upgrades stale parameter inference starter provenance on non-default path ids', () => {
@@ -769,21 +804,13 @@ describe('starter workflow registry', () => {
     const seedRouterNode = (upgraded.config.nodes ?? []).find(
       (node) => node.type === 'router' && node.id === 'node-router-seed-params'
     );
-    const report = evaluateRunPreflight({
-      nodes: upgraded.config.nodes ?? [],
-      edges: upgraded.config.edges ?? [],
-      aiPathsValidation: { enabled: true },
-      strictFlowMode: true,
-      mode: 'full',
-    });
+    const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(upgraded.changed).toBe(true);
     expect(seedRouterNode?.inputs).not.toContain('prompt');
     expect(seedRouterNode?.outputs).not.toContain('prompt');
-    expect(report.shouldBlock).toBe(false);
-    expect(report.compileReport.errors).toBe(0);
-    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+    expectSuccessfulStrictRunPreflight(report);
   });
 
   it('upgrades v14 parameter inference configs to repair writeOutcomePolicy on both update nodes', () => {
@@ -815,13 +842,13 @@ describe('starter workflow registry', () => {
   it('fully replaces partial parameter inference graphs that are missing canonical nodes', () => {
     // Simulate a stored config that has only a subset of canonical nodes (e.g., an old
     // partial migration). The overlay cannot add missing nodes, so full replacement is required.
-    const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
-    if (!entry) throw new Error('Missing starter_parameter_inference entry');
-
-    const canonical = materializeStarterWorkflowPathConfig(entry, {
-      pathId: 'path_partial_overlap',
-      seededDefault: false,
-    });
+    const canonical = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow('starter_parameter_inference'),
+      {
+        pathId: 'path_partial_overlap',
+        seededDefault: false,
+      }
+    );
 
     // Keep a subset of canonical nodes — simulates a partially migrated config. Include the
     // prompt node so hasParameterInferencePromptStructure returns true (realistic scenario).
@@ -848,22 +875,14 @@ describe('starter workflow registry', () => {
     } as PathConfig;
 
     const upgraded = upgradeStarterWorkflowPathConfig(partialConfig);
-    const report = evaluateRunPreflight({
-      nodes: upgraded.config.nodes ?? [],
-      edges: upgraded.config.edges ?? [],
-      aiPathsValidation: { enabled: true },
-      strictFlowMode: true,
-      mode: 'full',
-    });
+    const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.changed).toBe(true);
     // All canonical nodes are present after full replacement
-    expect(upgraded.config.nodes.some((node) => node.id === 'node-router-seed-params')).toBe(true);
-    expect(upgraded.config.nodes.some((node) => node.id === 'node-vp-template-params')).toBe(true);
-    expect(upgraded.config.nodes.some((node) => node.id === 'node-lc-template-params')).toBe(true);
-    expect(report.shouldBlock).toBe(false);
-    expect(report.compileReport.errors).toBe(0);
-    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+    expect(hasNodeId(upgraded.config, 'node-router-seed-params')).toBe(true);
+    expect(hasNodeId(upgraded.config, 'node-vp-template-params')).toBe(true);
+    expect(hasNodeId(upgraded.config, 'node-lc-template-params')).toBe(true);
+    expectSuccessfulStrictRunPreflight(report);
   });
 
   it('upgrades v5 translation configs to add writeOutcomePolicy pass on the update node', () => {
@@ -906,67 +925,37 @@ describe('starter workflow registry', () => {
     } as PathConfig;
 
     const upgraded = upgradeStarterWorkflowPathConfig(partiallyUpgraded);
-    const report = evaluateRunPreflight({
-      nodes: upgraded.config.nodes ?? [],
-      edges: upgraded.config.edges ?? [],
-      aiPathsValidation: { enabled: true },
-      strictFlowMode: true,
-      mode: 'full',
-    });
+    const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.changed).toBe(true);
-    expect(upgraded.config.nodes.some((node) => node.id === 'node-model-params')).toBe(true);
-    expect(report.shouldBlock).toBe(false);
-    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+    expect(hasNodeId(upgraded.config, 'node-model-params')).toBe(true);
+    expectSuccessfulStrictRunPreflight(report);
   });
 
   it('fully replaces custom-mode parameter inference graphs with random node IDs (no canonical overlap)', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(
       buildCustomModeRandomIdParameterInferencePathConfig()
     );
-    const report = evaluateRunPreflight({
-      nodes: upgraded.config.nodes ?? [],
-      edges: upgraded.config.edges ?? [],
-      aiPathsValidation: { enabled: true },
-      strictFlowMode: true,
-      mode: 'full',
-    });
+    const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(upgraded.changed).toBe(true);
     // After full replacement all nodes use canonical IDs
-    expect(upgraded.config.nodes.some((node) => node.id === 'node-model-params')).toBe(true);
-    expect(upgraded.config.nodes.some((node) => node.id === 'node-regex-params')).toBe(true);
-    expect(report.shouldBlock).toBe(false);
-    expect(report.compileReport.errors).toBe(0);
-    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+    expect(hasNodeId(upgraded.config, 'node-model-params')).toBe(true);
+    expect(hasNodeId(upgraded.config, 'node-regex-params')).toBe(true);
+    expectSuccessfulStrictRunPreflight(report);
   });
 
   it('fully replaces stale parameter inference graphs with zero canonical node overlap', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(
       buildMappingModeLegacyParameterInferencePathConfig()
     );
-    const report = evaluateRunPreflight({
-      nodes: upgraded.config.nodes ?? [],
-      edges: upgraded.config.edges ?? [],
-      aiPathsValidation: { enabled: true },
-      strictFlowMode: true,
-      mode: 'full',
-    });
+    const report = evaluateStrictRunPreflight(upgraded.config);
 
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
     expect(upgraded.changed).toBe(true);
-    expect(
-      upgraded.config.nodes.some(
-        (node) =>
-          node.type === 'database' &&
-          node.config?.database?.operation === 'update' &&
-          node.config?.database?.updatePayloadMode === 'mapping'
-      )
-    ).toBe(false);
-    expect(upgraded.config.nodes.some((node) => node.id === 'node-router-seed-params')).toBe(true);
-    expect(report.shouldBlock).toBe(false);
-    expect(report.compileReport.errors).toBe(0);
-    expect(report.dependencyReport?.errors ?? 0).toBe(0);
+    expect(hasDatabaseNodeWithUpdatePayloadMode(upgraded.config, 'mapping')).toBe(false);
+    expect(hasNodeId(upgraded.config, 'node-router-seed-params')).toBe(true);
+    expectSuccessfulStrictRunPreflight(report);
   });
 });

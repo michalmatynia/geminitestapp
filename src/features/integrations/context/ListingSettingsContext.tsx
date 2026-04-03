@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
 import type {
@@ -11,10 +11,10 @@ import type {
   BaseInventory,
   IntegrationTemplate as Template,
 } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
 
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';
 import { useIntegrationSelection } from '../components/listings/hooks/useIntegrationSelection';
+import { createStrictContext } from './createStrictContext';
 
 // --- Granular Contexts ---
 
@@ -29,14 +29,14 @@ export interface ListingSelection {
   setSelectedIntegrationId: (id: string) => void;
   setSelectedConnectionId: (id: string) => void;
 }
-const SelectionContext = createContext<ListingSelection | null>(null);
-export const useListingSelection = () => {
-  const context = useContext(SelectionContext);
-  if (!context) throw internalError('useListingSelection must be used within ListingSettingsProvider');
-  return context;
-};
-export const useOptionalListingSelection = (): ListingSelection | null =>
-  useContext(SelectionContext);
+export const {
+  Context: SelectionContext,
+  useValue: useListingSelection,
+  useOptionalValue: useOptionalListingSelection,
+} = createStrictContext<ListingSelection>({
+  displayName: 'ListingSelectionContext',
+  errorMessage: 'useListingSelection must be used within ListingSettingsProvider',
+});
 
 export interface ListingBaseComSettings {
   templates: Template[];
@@ -49,13 +49,11 @@ export interface ListingBaseComSettings {
   allowDuplicateSku: boolean;
   setAllowDuplicateSku: (allowed: boolean) => void;
 }
-const BaseComSettingsContext = createContext<ListingBaseComSettings | null>(null);
-export const useListingBaseComSettings = () => {
-  const context = useContext(BaseComSettingsContext);
-  if (!context)
-    throw internalError('useListingBaseComSettings must be used within ListingSettingsProvider');
-  return context;
-};
+export const { Context: BaseComSettingsContext, useValue: useListingBaseComSettings } =
+  createStrictContext<ListingBaseComSettings>({
+    displayName: 'ListingBaseComSettingsContext',
+    errorMessage: 'useListingBaseComSettings must be used within ListingSettingsProvider',
+  });
 
 export interface ListingTraderaSettings {
   selectedTraderaDurationHours: number;
@@ -67,13 +65,11 @@ export interface ListingTraderaSettings {
   selectedTraderaTemplateId: string;
   setSelectedTraderaTemplateId: (value: string) => void;
 }
-const TraderaSettingsContext = createContext<ListingTraderaSettings | null>(null);
-export const useListingTraderaSettings = () => {
-  const context = useContext(TraderaSettingsContext);
-  if (!context)
-    throw internalError('useListingTraderaSettings must be used within ListingSettingsProvider');
-  return context;
-};
+export const { Context: TraderaSettingsContext, useValue: useListingTraderaSettings } =
+  createStrictContext<ListingTraderaSettings>({
+    displayName: 'ListingTraderaSettingsContext',
+    errorMessage: 'useListingTraderaSettings must be used within ListingSettingsProvider',
+  });
 
 interface ListingSettingsProviderProps {
   children: ReactNode;

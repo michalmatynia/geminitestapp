@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-03-30T15:09:27.115Z",
-  "status": "warn",
+  "generatedAt": "2026-04-03T08:51:11.830Z",
+  "status": "failed",
   "summary": {
-    "total": 11,
-    "errorCount": 0,
-    "warningCount": 11,
+    "total": 13,
+    "errorCount": 13,
+    "warningCount": 0,
     "infoCount": 0,
-    "status": "warn",
-    "fileCount": 6673,
-    "featureCount": 13,
-    "circularDependencyCount": 0
+    "status": "failed",
+    "fileCount": 6675,
+    "featureCount": 11,
+    "circularDependencyCount": 1
   },
   "scope": {
     "root": "src",
@@ -18,25 +18,20 @@
   "featureGraph": {
     "admin": [
       "ai",
-      "foldertree",
       "products",
       "prompt-engine"
     ],
     "ai": [
       "auth",
       "files",
-      "foldertree",
       "viewer3d"
     ],
     "case-resolver": [
       "ai",
-      "document-editor",
-      "filemaker",
-      "foldertree"
+      "filemaker"
     ],
     "cms": [
       "files",
-      "foldertree",
       "gsap",
       "products",
       "viewer3d"
@@ -48,26 +43,21 @@
       "products"
     ],
     "filemaker": [
-      "auth",
-      "document-editor",
-      "foldertree"
+      "auth"
     ],
     "integrations": [
+      "ai",
       "auth",
-      "data-import-export"
+      "data-import-export",
+      "products"
     ],
     "kangur": [
       "ai",
       "auth",
       "cms",
-      "document-editor",
       "files",
-      "foldertree",
-      "integrations"
-    ],
-    "notesapp": [
-      "document-editor",
-      "foldertree"
+      "integrations",
+      "playwright"
     ],
     "observability": [
       "ai"
@@ -75,122 +65,144 @@
     "products": [
       "ai",
       "files",
-      "foldertree",
       "integrations",
       "internationalization"
-    ],
-    "prompt-exploder": [
-      "foldertree"
     ]
   },
-  "circularDependencies": [],
+  "circularDependencies": [
+    [
+      "products",
+      "integrations",
+      "products"
+    ]
+  ],
   "issues": [
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/[...slug]/loading.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "circular-feature-dep",
+      "message": "Circular dependency between features: products -> integrations -> products",
+      "file": null,
+      "line": null,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (5 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/(app)/duels/page.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"products\": @/features/products/components/list/columns/buttons/traderaQuickListFeedback. Use the barrel export instead.",
+      "file": "src/features/integrations/components/listings/product-listings-modal/ProductListingsContent.tsx",
+      "line": 17,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (5 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/(app)/lessons/page.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-paths/services/playwright-node-runner. Use the barrel export instead.",
+      "file": "src/features/integrations/services/playwright-listing/runner.ts",
+      "line": 3,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/(app)/page.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"playwright\": @/features/playwright/components/PlaywrightEngineLogoButton. Use the barrel export instead.",
+      "file": "src/features/kangur/social/admin/workspace/SocialCaptureBrowserTreePanel.tsx",
+      "line": 19,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (5 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/(app)/tests/page.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"playwright\": @/features/playwright/components/PlaywrightEngineSettingsModal. Use the barrel export instead.",
+      "file": "src/features/kangur/social/admin/workspace/SocialCaptureBrowserTreePanel.tsx",
+      "line": 20,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/kangur/loading.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"playwright\": @/features/playwright/engine. Use the barrel export instead.",
+      "file": "src/features/kangur/social/shared/social-playwright-capture.ts",
+      "line": 10,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/login/loading.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
+      "line": 26,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/preview/[id]/loading.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/services/tradera-listing/default-script. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx",
+      "line": 13,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/preview/foldertree-shell-runtime/loading.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx",
+      "line": 14,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (4 levels up). Consider using path aliases.",
-      "file": "src/app/[locale]/(frontend)/products/[id]/loading.tsx",
-      "line": 1,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/tradera-browser-session. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx",
+      "line": 15,
       "column": null,
       "snippet": null,
       "context": null
     },
     {
-      "severity": "warn",
-      "ruleId": "deep-relative-import",
-      "message": "Deep relative import (3 levels up). Consider using path aliases.",
-      "file": "src/shared/lib/ai-paths/core/runtime/handlers/parameter-inference/parameter-inference.merger.ts",
-      "line": 11,
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaStatusButton.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 15,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useProductListModals.ts",
+      "line": 6,
       "column": null,
       "snippet": null,
       "context": null
@@ -198,11 +210,17 @@
   ],
   "rules": [
     {
-      "ruleId": "deep-relative-import",
-      "errorCount": 0,
-      "warningCount": 11,
+      "ruleId": "cross-feature-internal-import",
+      "errorCount": 12,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "circular-feature-dep",
+      "errorCount": 1,
+      "warningCount": 0,
       "infoCount": 0
     }
   ],
-  "durationMs": 364
+  "durationMs": 1625
 }

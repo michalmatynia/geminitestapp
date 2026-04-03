@@ -752,3 +752,13 @@ export type UpsertFilemakerPartyPhoneNumbersResult = {
   invalidPhoneNumberCount: number;
   appliedPhoneNumbers: string[];
 };
+
+export type FilemakerEmailCampaignSchedulerSkipReason = {
+  count: number;
+  reason: string;
+};
+
+export type FilemakerEmailCampaignSchedulerLaunchFailure = {
+  campaignId: string;
+  message: string;
+};

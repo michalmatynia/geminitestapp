@@ -1,9 +1,7 @@
 'use client';
 
 import React, {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -14,6 +12,7 @@ import type {
   ContextRegistryResolutionBundle,
 } from '@/shared/contracts/ai-context-registry';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import {
   buildContextRegistryConsumerEnvelope,
@@ -48,10 +47,27 @@ type ContextRegistryPageActionsValue = Pick<
   'registerSource' | 'unregisterSource'
 >;
 
-const ContextRegistryPageStateContext = createContext<ContextRegistryPageStateValue | null>(null);
-const ContextRegistryPageActionsContext = createContext<ContextRegistryPageActionsValue | null>(
-  null
-);
+const {
+  Context: ContextRegistryPageStateContext,
+  useStrictContext: useRequiredContextRegistryPageState,
+  useOptionalContext: useOptionalContextRegistryPageStateValue,
+} = createStrictContext<ContextRegistryPageStateValue>({
+  hookName: 'useContextRegistryPageState',
+  providerName: 'ContextRegistryPageProvider',
+  displayName: 'ContextRegistryPageStateContext',
+  errorFactory: internalError,
+});
+
+const {
+  Context: ContextRegistryPageActionsContext,
+  useStrictContext: useRequiredContextRegistryPageActions,
+  useOptionalContext: useOptionalContextRegistryPageActionsValue,
+} = createStrictContext<ContextRegistryPageActionsValue>({
+  hookName: 'useContextRegistryPageActions',
+  providerName: 'ContextRegistryPageProvider',
+  displayName: 'ContextRegistryPageActionsContext',
+  errorFactory: internalError,
+});
 
 export function ContextRegistryPageProvider({
   pageId,
@@ -130,19 +146,14 @@ export function ContextRegistryPageProvider({
 }
 
 export function useContextRegistryPageState(): ContextRegistryPageState {
-  const state = useContext(ContextRegistryPageStateContext);
-  const actions = useContext(ContextRegistryPageActionsContext);
-  if (!state || !actions) {
-    throw internalError(
-      'useContextRegistryPageState must be used within ContextRegistryPageProvider'
-    );
-  }
+  const state = useRequiredContextRegistryPageState();
+  const actions = useRequiredContextRegistryPageActions();
   return useMemo(() => ({ ...state, ...actions }), [actions, state]);
 }
 
 export function useOptionalContextRegistryPageState(): ContextRegistryPageState | null {
-  const state = useContext(ContextRegistryPageStateContext);
-  const actions = useContext(ContextRegistryPageActionsContext);
+  const state = useOptionalContextRegistryPageStateValue();
+  const actions = useOptionalContextRegistryPageActionsValue();
   return useMemo(() => {
     if (!state || !actions) {
       return null;
@@ -152,17 +163,11 @@ export function useOptionalContextRegistryPageState(): ContextRegistryPageState 
 }
 
 export function useContextRegistryPageActions(): ContextRegistryPageActionsValue {
-  const actions = useContext(ContextRegistryPageActionsContext);
-  if (!actions) {
-    throw internalError(
-      'useContextRegistryPageActions must be used within ContextRegistryPageProvider'
-    );
-  }
-  return actions;
+  return useRequiredContextRegistryPageActions();
 }
 
 export function useOptionalContextRegistryPageActions(): ContextRegistryPageActionsValue | null {
-  return useContext(ContextRegistryPageActionsContext);
+  return useOptionalContextRegistryPageActionsValue();
 }
 
 export function useContextRegistryPageEnvelope(): ContextRegistryConsumerEnvelope | null {

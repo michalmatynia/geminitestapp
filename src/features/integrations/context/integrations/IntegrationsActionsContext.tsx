@@ -1,11 +1,9 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
 
 import type { IntegrationDefinition, SaveConnectionOptions } from '../integrations-context-types';
+import { createStrictContext } from '../createStrictContext';
 
 export interface IntegrationsActions {
   handleIntegrationClick: (definition: IntegrationDefinition) => Promise<void>;
@@ -30,10 +28,8 @@ export interface IntegrationsActions {
   onOpenSessionModal: () => void;
 }
 
-export const IntegrationsActionsContext = createContext<IntegrationsActions | null>(null);
-
-export const useIntegrationsActions = () => {
-  const context = useContext(IntegrationsActionsContext);
-  if (!context) throw internalError('useIntegrationsActions must be used within IntegrationsProvider');
-  return context;
-};
+export const { Context: IntegrationsActionsContext, useValue: useIntegrationsActions } =
+  createStrictContext<IntegrationsActions>({
+    displayName: 'IntegrationsActionsContext',
+    errorMessage: 'useIntegrationsActions must be used within IntegrationsProvider',
+  });

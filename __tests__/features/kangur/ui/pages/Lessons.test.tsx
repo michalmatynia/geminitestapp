@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -49,9 +49,10 @@ describe('Lessons', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /shapes with svg/i }));
 
+    await waitFor(() => expect(screen.getByTestId('lesson-document-renderer')).toBeInTheDocument());
+
     const activeLessonView = screen.getByTestId('lessons-active-transition');
 
-    expect(screen.getByTestId('lesson-document-renderer')).toBeInTheDocument();
     expect(screen.getByTestId('lessons-document-summary')).toHaveClass('soft-card');
     expect(within(activeLessonView).queryAllByTestId('legacy-lesson')).toHaveLength(0);
     expect(screen.getByRole('button', { name: 'Wróć do listy lekcji' })).toHaveClass(

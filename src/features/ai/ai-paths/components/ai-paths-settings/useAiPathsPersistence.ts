@@ -6,6 +6,7 @@ import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { usePersistenceActions } from '@/features/ai/ai-paths/context/PersistenceContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
+import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
@@ -169,8 +170,8 @@ export function useAiPathsPersistence(
   );
 
   const persistLastError = useCallback(
-    async (error: unknown): Promise<void> => {
-      const message = error instanceof Error ? error.message : error ? String(error) : null;
+    async (error: LastErrorInfo | null): Promise<void> => {
+      const message = error?.message ?? null;
       await enqueueSettingsWrite(async (): Promise<void> => {
         await updateAiPathsSettingsBulk([{ key: AI_PATHS_LAST_ERROR_KEY, value: message ?? '' }]);
       });

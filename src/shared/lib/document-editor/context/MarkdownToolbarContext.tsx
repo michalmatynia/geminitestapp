@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { DocumentEditorMode } from '../types';
 
@@ -37,7 +38,19 @@ export type MarkdownToolbarContextValue = MarkdownToolbarActionHandlers & {
   onInsertFileReference?: (value: string) => void;
 };
 
-export const MarkdownToolbarContext = createContext<MarkdownToolbarContextValue | null>(null);
+export const {
+  Context: MarkdownToolbarContextInternal,
+  useStrictContext: useMarkdownToolbarContext,
+  useOptionalContext: useOptionalMarkdownToolbarContext,
+} = createStrictContext<MarkdownToolbarContextValue>({
+  hookName: 'useMarkdownToolbarContext',
+  providerName: 'MarkdownToolbarProvider',
+  displayName: 'MarkdownToolbarContext',
+  errorFactory: internalError,
+});
+
+export const MarkdownToolbarContext =
+  MarkdownToolbarContextInternal as React.Context<MarkdownToolbarContextValue | null>;
 
 type MarkdownToolbarProviderProps = {
   value: MarkdownToolbarContextValue;
@@ -51,16 +64,4 @@ export function MarkdownToolbarProvider({
   return (
     <MarkdownToolbarContext.Provider value={value}>{children}</MarkdownToolbarContext.Provider>
   );
-}
-
-export function useMarkdownToolbarContext(): MarkdownToolbarContextValue {
-  const context = useContext(MarkdownToolbarContext);
-  if (!context) {
-    throw internalError('useMarkdownToolbarContext must be used within MarkdownToolbarProvider');
-  }
-  return context;
-}
-
-export function useOptionalMarkdownToolbarContext(): MarkdownToolbarContextValue | null {
-  return useContext(MarkdownToolbarContext);
 }

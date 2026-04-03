@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/features/integrations/context/createStrictContext';
 
 export type IntegrationModalViewContextValue = {
   integrationName: string;
@@ -19,9 +19,12 @@ export type IntegrationModalViewContextValue = {
   onSavePlaywrightSettings: () => void;
 };
 
-const IntegrationModalViewContext = React.createContext<IntegrationModalViewContextValue | null>(
-  null
-);
+export const { Context: IntegrationModalViewContext, useValue: useIntegrationModalViewContext } =
+  createStrictContext<IntegrationModalViewContextValue>({
+    displayName: 'IntegrationModalViewContext',
+    errorMessage:
+      'useIntegrationModalViewContext must be used within IntegrationModalViewProvider',
+  });
 
 type IntegrationModalViewProviderProps = {
   value: IntegrationModalViewContextValue;
@@ -37,14 +40,4 @@ export function IntegrationModalViewProvider({
       {children}
     </IntegrationModalViewContext.Provider>
   );
-}
-
-export function useIntegrationModalViewContext(): IntegrationModalViewContextValue {
-  const context = React.useContext(IntegrationModalViewContext);
-  if (!context) {
-    throw internalError(
-      'useIntegrationModalViewContext must be used within IntegrationModalViewProvider'
-    );
-  }
-  return context;
 }

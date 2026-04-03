@@ -11,9 +11,4 @@ export {
   validatePlaywrightCaptureRoutes,
 } from './playwright-capture-validator';
 
-export type {
-  PlaywrightCaptureRouteValidation,
-  PlaywrightCaptureValidationResult,
-} from './playwright-capture-validator';
-
 export type { PlaywrightCaptureRoute, PlaywrightEngineConfig } from '@/shared/contracts/playwright';

@@ -4,6 +4,7 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 import { FormSection, SearchInput, LoadingState, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { resolveProductListingsProductName } from '../product-listings-labels';
 import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';
 
 export function ProductListSection(): React.JSX.Element {
@@ -46,7 +47,7 @@ export function ProductListSection(): React.JSX.Element {
             >
               <div className='min-w-0 flex-1'>
                 <p className='text-sm font-medium text-white truncate'>
-                  {product.name_en || product.name_pl || 'Unnamed Product'}
+                  {resolveProductListingsProductName(product)}
                 </p>
                 <p className='text-xs text-gray-500'>SKU: {product.sku || '—'}</p>
               </div>

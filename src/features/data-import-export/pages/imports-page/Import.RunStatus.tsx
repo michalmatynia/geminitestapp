@@ -12,6 +12,12 @@ import {
   useImportExportData,
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { BaseImportItemRecord } from '@/shared/contracts/integrations';
+import {
+  getImportRunErrorItems,
+  getParameterSyncHistoryItems,
+  hasRetryableImportItems,
+  resolveImportRunParameterImportSummary,
+} from './Import.RunStatus.helpers';
 
 export function ImportRunStatusSection(): React.JSX.Element | null {
   const { activeImportRun, loadingImportRun } = useImportExportData();
@@ -20,110 +26,27 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
 
   const activeRun = activeImportRun?.run ?? null;
   const activeRunStats = activeRun?.stats ?? null;
+  const activeRunItems = activeImportRun?.items ?? [];
 
   const runHasRetryableItems = React.useMemo(
-    (): boolean =>
-      Boolean(
-        activeImportRun?.items.some(
-          (item: BaseImportItemRecord) => item.status === 'failed' || item.status === 'pending'
-        )
-      ),
-    [activeImportRun?.items]
+    (): boolean => hasRetryableImportItems(activeRunItems),
+    [activeRunItems]
   );
 
   const runErrorItems = React.useMemo(
-    () =>
-      (activeImportRun?.items ?? [])
-        .filter((item: BaseImportItemRecord) => item.status === 'failed' || item.errorMessage)
-        .slice(0, 10),
-    [activeImportRun?.items]
+    (): BaseImportItemRecord[] => getImportRunErrorItems(activeRunItems),
+    [activeRunItems]
   );
 
-  const activeRunParameterImportSummary = React.useMemo(() => {
-    const fromRun = activeRun?.stats?.parameterImportSummary;
-    if (
-      fromRun &&
-      (fromRun.itemsApplied > 0 ||
-        fromRun.extracted > 0 ||
-        fromRun.resolved > 0 ||
-        fromRun.created > 0 ||
-        fromRun.written > 0)
-    ) {
-      return fromRun;
-    }
-    const items = activeImportRun?.items ?? [];
-    if (items.length === 0) return null;
-    const aggregated = items.reduce(
-      (
-        acc: {
-          itemsApplied: number;
-          extracted: number;
-          resolved: number;
-          created: number;
-          written: number;
-        },
-        item: BaseImportItemRecord
-      ) => {
-        const summary = item.parameterImportSummary;
-        if (!summary) return acc;
-        const extracted =
-          typeof summary.extracted === 'number' && Number.isFinite(summary.extracted)
-            ? Math.max(0, Math.floor(summary.extracted))
-            : 0;
-        const resolved =
-          typeof summary.resolved === 'number' && Number.isFinite(summary.resolved)
-            ? Math.max(0, Math.floor(summary.resolved))
-            : 0;
-        const created =
-          typeof summary.created === 'number' && Number.isFinite(summary.created)
-            ? Math.max(0, Math.floor(summary.created))
-            : 0;
-        const written =
-          typeof summary.written === 'number' && Number.isFinite(summary.written)
-            ? Math.max(0, Math.floor(summary.written))
-            : 0;
-        return {
-          itemsApplied: acc.itemsApplied + 1,
-          extracted: acc.extracted + extracted,
-          resolved: acc.resolved + resolved,
-          created: acc.created + created,
-          written: acc.written + written,
-        };
-      },
-      {
-        itemsApplied: 0,
-        extracted: 0,
-        resolved: 0,
-        created: 0,
-        written: 0,
-      }
-    );
-    if (
-      aggregated.itemsApplied === 0 &&
-      aggregated.extracted === 0 &&
-      aggregated.resolved === 0 &&
-      aggregated.created === 0 &&
-      aggregated.written === 0
-    ) {
-      return null;
-    }
-    return aggregated;
-  }, [activeImportRun?.items, activeRun?.stats?.parameterImportSummary]);
+  const activeRunParameterImportSummary = React.useMemo(
+    () =>
+      resolveImportRunParameterImportSummary(activeRun?.stats?.parameterImportSummary, activeRunItems),
+    [activeRun?.stats?.parameterImportSummary, activeRunItems]
+  );
 
   const parameterSyncHistoryItems = React.useMemo(
-    () =>
-      (activeImportRun?.items ?? [])
-        .filter((item: BaseImportItemRecord) => Boolean(item.parameterImportSummary))
-        .sort((a: BaseImportItemRecord, b: BaseImportItemRecord) => {
-          const aTime = Date.parse(a.finishedAt ?? a.updatedAt ?? '');
-          const bTime = Date.parse(b.finishedAt ?? b.updatedAt ?? '');
-          if (!Number.isFinite(aTime) && !Number.isFinite(bTime)) return 0;
-          if (!Number.isFinite(aTime)) return 1;
-          if (!Number.isFinite(bTime)) return -1;
-          return bTime - aTime;
-        })
-        .slice(0, 8),
-    [activeImportRun?.items]
+    (): BaseImportItemRecord[] => getParameterSyncHistoryItems(activeRunItems),
+    [activeRunItems]
   );
 
   if (!activeRun) return null;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
 import {
@@ -16,10 +16,8 @@ import type {
 } from '@/shared/contracts/integrations';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import {
-  internalError,
-} from '@/shared/errors/app-error';
 
+import { createStrictContext } from './createStrictContext';
 import { useProductListingsActionsImpl } from './useProductListingsActionsImpl';
 
 // --- Granular Contexts ---
@@ -31,13 +29,11 @@ export interface ProductListingsData {
   error: string | null;
   setError: (error: string | null) => void;
 }
-const DataContext = createContext<ProductListingsData | null>(null);
-export const useProductListingsData = () => {
-  const context = useContext(DataContext);
-  if (!context)
-    throw internalError('useProductListingsData must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: DataContext, useValue: useProductListingsData } =
+  createStrictContext<ProductListingsData>({
+    displayName: 'ProductListingsDataContext',
+    errorMessage: 'useProductListingsData must be used within ProductListingsProvider',
+  });
 
 export interface ProductListingsUIState {
   deletingFromBase: string | null;
@@ -53,13 +49,11 @@ export interface ProductListingsUIState {
   historyOpenByListing: Record<string, boolean>;
   setHistoryOpenByListing: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
-const UIStateContext = createContext<ProductListingsUIState | null>(null);
-export const useProductListingsUIState = () => {
-  const context = useContext(UIStateContext);
-  if (!context)
-    throw internalError('useProductListingsUIState must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: UIStateContext, useValue: useProductListingsUIState } =
+  createStrictContext<ProductListingsUIState>({
+    displayName: 'ProductListingsUIStateContext',
+    errorMessage: 'useProductListingsUIState must be used within ProductListingsProvider',
+  });
 
 export interface ProductListingsModals {
   listingToDelete: string | null;
@@ -80,13 +74,11 @@ export interface ProductListingsModals {
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
   setRecoveryContext: React.Dispatch<React.SetStateAction<ProductListingsRecoveryContext | null>>;
 }
-const ModalsContext = createContext<ProductListingsModals | null>(null);
-export const useProductListingsModals = () => {
-  const context = useContext(ModalsContext);
-  if (!context)
-    throw internalError('useProductListingsModals must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: ModalsContext, useValue: useProductListingsModals } =
+  createStrictContext<ProductListingsModals>({
+    displayName: 'ProductListingsModalsContext',
+    errorMessage: 'useProductListingsModals must be used within ProductListingsProvider',
+  });
 
 export interface ProductListingsLogs {
   exportLogs: CapturedLog[];
@@ -94,13 +86,11 @@ export interface ProductListingsLogs {
   setLogsOpen: (open: boolean) => void;
   lastExportListingId: string | null;
 }
-const LogsContext = createContext<ProductListingsLogs | null>(null);
-export const useProductListingsLogs = () => {
-  const context = useContext(LogsContext);
-  if (!context)
-    throw internalError('useProductListingsLogs must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: LogsContext, useValue: useProductListingsLogs } =
+  createStrictContext<ProductListingsLogs>({
+    displayName: 'ProductListingsLogsContext',
+    errorMessage: 'useProductListingsLogs must be used within ProductListingsProvider',
+  });
 
 export interface ProductListingsActions {
   handleDeleteFromBase: (listingId: string) => Promise<void>;
@@ -124,13 +114,11 @@ export interface ProductListingsActions {
   handleImageRetry: (preset: ImageRetryPreset) => Promise<void>;
   refetchListings: () => Promise<void>;
 }
-const ActionsContext = createContext<ProductListingsActions | null>(null);
-export const useProductListingsActions = () => {
-  const context = useContext(ActionsContext);
-  if (!context)
-    throw internalError('useProductListingsActions must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: ActionsContext, useValue: useProductListingsActions } =
+  createStrictContext<ProductListingsActions>({
+    displayName: 'ProductListingsActionsContext',
+    errorMessage: 'useProductListingsActions must be used within ProductListingsProvider',
+  });
 
 export function ProductListingsProvider({
   product,

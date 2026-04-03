@@ -43,6 +43,7 @@ type CropMode = Exclude<GenerationToolbarCropMode, 'canvas_overflow'>;
 
 type UpscaleActionResponse = ImageStudioUpscaleResponse;
 type CropActionResponse = ImageStudioCropResponse;
+type UpscaleActionMode = 'client_data_url' | 'server_sharp';
 
 type CreateGenerationToolbarActionHandlersDeps = {
   clientProcessingImageSrc: string | null;
@@ -104,6 +105,16 @@ type CropCanvasContextPayload = {
     height: number;
   };
 };
+
+type UpscaleRequestPayloadResolution =
+  | {
+    errorMessage: null;
+    payload: UpscaleRequestStrategyPayload;
+  }
+  | {
+    errorMessage: string;
+    payload: null;
+  };
 
 const toCropDiagnosticsPayload = (
   diagnostics: CropRectResolutionDiagnostics | null
@@ -167,7 +178,7 @@ const appendUpscaleStrategyToFormData = (
 };
 
 const buildUpscaleRequestBody = (
-  mode: 'client_data_url' | 'server_sharp',
+  mode: UpscaleActionMode,
   request: UpscaleRequestStrategyPayload,
   requestId: string
 ): Record<string, unknown> => ({
@@ -184,6 +195,324 @@ const shouldFallbackToServerUpscale = (error: unknown): boolean => {
   const apiError = error as ApiError | null;
   if (apiError?.status !== 400) return false;
   return /invalid request payload|invalid upscale payload/i.test(apiError.message);
+};
+
+const normalizeProjectId = (projectId: string | null): string => projectId?.trim() ?? '';
+
+const mergeCreatedSlotIntoSnapshot = (
+  createdSlot: ImageStudioSlotRecord | null | undefined,
+  slotsSnapshot: ImageStudioSlotRecord[]
+): ImageStudioSlotRecord[] => {
+  if (!createdSlot?.id) {
+    return slotsSnapshot;
+  }
+  return [createdSlot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlot.id)];
+};
+
+const persistMutationProjectSlots = async ({
+  createdSlot,
+  fetchProjectSlots,
+  projectId,
+  queryClient,
+}: {
+  createdSlot: ImageStudioSlotRecord | null | undefined;
+  fetchProjectSlots: CreateGenerationToolbarActionHandlersDeps['fetchProjectSlots'];
+  projectId: string | null;
+  queryClient: QueryClient;
+}): Promise<void> => {
+  const normalizedProjectId = normalizeProjectId(projectId);
+  if (!normalizedProjectId) return;
+  await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+  const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
+  patchImageStudioSlotsCache(queryClient, normalizedProjectId, (current) => ({
+    ...current,
+    slots: mergeCreatedSlotIntoSnapshot(createdSlot, slotsSnapshot),
+  }));
+};
+
+const syncCreatedSlotSelection = ({
+  createdSlot,
+  setSelectedSlotId,
+  setWorkingSlotId,
+}: {
+  createdSlot: ImageStudioSlotRecord | null | undefined;
+  setSelectedSlotId: CreateGenerationToolbarActionHandlersDeps['setSelectedSlotId'];
+  setWorkingSlotId: CreateGenerationToolbarActionHandlersDeps['setWorkingSlotId'];
+}): void => {
+  if (!createdSlot?.id) return;
+  setSelectedSlotId(createdSlot.id);
+  setWorkingSlotId(createdSlot.id);
+};
+
+export const resolveUpscaleRequestPayload = async ({
+  resolveUpscaleSourceDimensions,
+  upscaleMaxOutputSide,
+  upscaleScale,
+  upscaleStrategy,
+  upscaleTargetHeight,
+  upscaleTargetWidth,
+}: Pick<
+  CreateGenerationToolbarActionHandlersDeps,
+  | 'resolveUpscaleSourceDimensions'
+  | 'upscaleMaxOutputSide'
+  | 'upscaleScale'
+  | 'upscaleStrategy'
+  | 'upscaleTargetHeight'
+  | 'upscaleTargetWidth'
+>): Promise<UpscaleRequestPayloadResolution> => {
+  if (upscaleStrategy === 'scale') {
+    const scale = Number(upscaleScale);
+    if (!Number.isFinite(scale) || scale <= 1 || scale > 8) {
+      return {
+        errorMessage: 'Upscale multiplier must be greater than 1 and at most 8.',
+        payload: null,
+      };
+    }
+    return {
+      errorMessage: null,
+      payload: { strategy: 'scale', scale },
+    };
+  }
+
+  const parsedTargetWidth = Math.floor(Number(upscaleTargetWidth));
+  const parsedTargetHeight = Math.floor(Number(upscaleTargetHeight));
+  if (!(parsedTargetWidth > 0 && parsedTargetHeight > 0)) {
+    return {
+      errorMessage: 'Enter both target width and target height as positive integers.',
+      payload: null,
+    };
+  }
+  if (parsedTargetWidth > upscaleMaxOutputSide || parsedTargetHeight > upscaleMaxOutputSide) {
+    return {
+      errorMessage: `Target resolution side cannot exceed ${upscaleMaxOutputSide}px.`,
+      payload: null,
+    };
+  }
+
+  const sourceDimensions = await resolveUpscaleSourceDimensions();
+  const isWidthUpscaled = parsedTargetWidth > sourceDimensions.width;
+  const isHeightUpscaled = parsedTargetHeight > sourceDimensions.height;
+  if (
+    parsedTargetWidth < sourceDimensions.width ||
+    parsedTargetHeight < sourceDimensions.height ||
+    (!isWidthUpscaled && !isHeightUpscaled)
+  ) {
+    return {
+      errorMessage:
+        'Target resolution must upscale at least one side and not reduce source dimensions.',
+      payload: null,
+    };
+  }
+
+  return {
+    errorMessage: null,
+    payload: {
+      strategy: 'target_resolution',
+      targetWidth: parsedTargetWidth,
+      targetHeight: parsedTargetHeight,
+    },
+  };
+};
+
+const resolveRequestedUpscaleMode = (mode: UpscaleMode): UpscaleActionMode =>
+  mode === 'client_canvas' ? 'client_data_url' : 'server_sharp';
+
+const resolveUpscaleFallbackMessage = (error: unknown): string =>
+  isClientUpscaleCrossOriginError(error)
+    ? 'Client upscale was blocked by cross-origin restrictions; used server upscale instead.'
+    : 'Client upscale upload payload was rejected; used server upscale instead.';
+
+const formatUpscaleFactorLabel = (scale: number): string => `${Number(scale.toFixed(2))}x`;
+
+const resolveUpscaleLabel = ({
+  request,
+  response,
+}: {
+  request: UpscaleRequestStrategyPayload;
+  response: UpscaleActionResponse;
+}): string => {
+  const effectiveStrategy = response.strategy ?? request.strategy;
+  if (effectiveStrategy === 'target_resolution') {
+    const fallbackTargetWidth = request.strategy === 'target_resolution' ? request.targetWidth : null;
+    const fallbackTargetHeight =
+      request.strategy === 'target_resolution' ? request.targetHeight : null;
+    return `${response.targetWidth ?? fallbackTargetWidth}x${response.targetHeight ?? fallbackTargetHeight}`;
+  }
+  const resolvedScale = response.scale ?? (request.strategy === 'scale' ? request.scale : 2);
+  return formatUpscaleFactorLabel(resolvedScale);
+};
+
+const resolveUpscaleModeLabel = (mode: UpscaleActionMode): 'Client' | 'Server' =>
+  mode === 'client_data_url' ? 'Client' : 'Server';
+
+export const buildUpscaleSuccessToastMessage = ({
+  request,
+  resolvedMode,
+  response,
+}: {
+  request: UpscaleRequestStrategyPayload;
+  resolvedMode: UpscaleActionMode;
+  response: UpscaleActionResponse;
+}): string => {
+  const effectiveMode = response.effectiveMode ?? resolvedMode;
+  const createdLabel = response.slot?.name?.trim() || `Upscale ${resolveUpscaleLabel({
+    request,
+    response,
+  })}`;
+  return `Created ${createdLabel} (${resolveUpscaleModeLabel(effectiveMode)} upscale).`;
+};
+
+const postServerUpscale = async ({
+  abortController,
+  deps,
+  mode,
+  request,
+  requestId,
+  workingSlotId,
+}: {
+  abortController: AbortController;
+  deps: CreateGenerationToolbarActionHandlersDeps;
+  mode: UpscaleActionMode;
+  request: UpscaleRequestStrategyPayload;
+  requestId: string;
+  workingSlotId: string;
+}): Promise<UpscaleActionResponse> => {
+  deps.setUpscaleStatus('processing');
+  return withUpscaleRetry(
+    () =>
+      api
+        .post<unknown>(
+          `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
+          buildUpscaleRequestBody(mode, request, requestId),
+          {
+            signal: abortController.signal,
+            timeout: deps.upscaleRequestTimeoutMs,
+            headers: { 'x-idempotency-key': requestId },
+          }
+        )
+        .then((raw) => imageStudioUpscaleResponseSchema.parse(raw)),
+    abortController.signal
+  );
+};
+
+const postClientUpscale = async ({
+  abortController,
+  deps,
+  request,
+  requestId,
+  sourceImageSrc,
+  workingSlotId,
+}: {
+  abortController: AbortController;
+  deps: CreateGenerationToolbarActionHandlersDeps;
+  request: UpscaleRequestStrategyPayload;
+  requestId: string;
+  sourceImageSrc: string;
+  workingSlotId: string;
+}): Promise<UpscaleActionResponse> => {
+  deps.setUpscaleStatus('preparing');
+  const clientUpscale = await upscaleCanvasImage(
+    sourceImageSrc,
+    request,
+    deps.upscaleSmoothingQuality
+  );
+  let uploadBlob: Blob;
+  try {
+    uploadBlob = await dataUrlToUploadBlob(clientUpscale.dataUrl);
+  } catch (error) {
+    logClientError(error);
+    throw new Error('Failed to prepare client upscaled image for upload.');
+  }
+
+  deps.setUpscaleStatus('uploading');
+  return withUpscaleRetry(() => {
+    const formData = new FormData();
+    formData.append('mode', 'client_data_url');
+    appendUpscaleStrategyToFormData(formData, request);
+    formData.append('smoothingQuality', deps.upscaleSmoothingQuality);
+    formData.append('requestId', requestId);
+    formData.append('image', uploadBlob, `upscale-client-${Date.now()}.png`);
+    return api
+      .post<unknown>(
+        `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
+        formData,
+        {
+          signal: abortController.signal,
+          timeout: deps.upscaleRequestTimeoutMs,
+          headers: { 'x-idempotency-key': requestId },
+        }
+      )
+      .then((raw) => imageStudioUpscaleResponseSchema.parse(raw));
+  }, abortController.signal);
+};
+
+const runUpscaleRequest = async ({
+  abortController,
+  deps,
+  request,
+  requestId,
+  workingSlotId,
+}: {
+  abortController: AbortController;
+  deps: CreateGenerationToolbarActionHandlersDeps;
+  request: UpscaleRequestStrategyPayload;
+  requestId: string;
+  workingSlotId: string;
+}): Promise<{
+  resolvedMode: UpscaleActionMode;
+  response: UpscaleActionResponse;
+}> => {
+  const requestedMode = resolveRequestedUpscaleMode(deps.upscaleMode);
+  if (requestedMode === 'server_sharp') {
+    return {
+      resolvedMode: requestedMode,
+      response: await postServerUpscale({
+        abortController,
+        deps,
+        mode: requestedMode,
+        request,
+        requestId,
+        workingSlotId,
+      }),
+    };
+  }
+
+  const sourceForClientUpscale = deps.clientProcessingImageSrc || deps.workingSlotImageSrc;
+  if (!sourceForClientUpscale) {
+    throw new Error('No client image source is available for upscale.');
+  }
+
+  try {
+    return {
+      resolvedMode: requestedMode,
+      response: await postClientUpscale({
+        abortController,
+        deps,
+        request,
+        requestId,
+        sourceImageSrc: sourceForClientUpscale,
+        workingSlotId,
+      }),
+    };
+  } catch (error) {
+    logClientError(error);
+    if (!shouldFallbackToServerUpscale(error)) {
+      throw error;
+    }
+    const response = await postServerUpscale({
+      abortController,
+      deps,
+      mode: 'server_sharp',
+      request,
+      requestId,
+      workingSlotId,
+    });
+    deps.toast(resolveUpscaleFallbackMessage(error), { variant: 'info' });
+    return {
+      resolvedMode: 'server_sharp',
+      response,
+    };
+  }
 };
 
 export const createGenerationToolbarActionHandlers = (
@@ -209,50 +538,15 @@ export const createGenerationToolbarActionHandlers = (
       return;
     }
 
-    let upscaleRequestPayload: UpscaleRequestStrategyPayload;
-    if (deps.upscaleStrategy === 'scale') {
-      const scale = Number(deps.upscaleScale);
-      if (!Number.isFinite(scale) || scale <= 1 || scale > 8) {
-        deps.toast('Upscale multiplier must be greater than 1 and at most 8.', { variant: 'info' });
-        return;
-      }
-      upscaleRequestPayload = { strategy: 'scale', scale };
-    } else {
-      const parsedTargetWidth = Math.floor(Number(deps.upscaleTargetWidth));
-      const parsedTargetHeight = Math.floor(Number(deps.upscaleTargetHeight));
-      if (!(parsedTargetWidth > 0 && parsedTargetHeight > 0)) {
-        deps.toast('Enter both target width and target height as positive integers.', {
-          variant: 'info',
-        });
-        return;
-      }
-      if (
-        parsedTargetWidth > deps.upscaleMaxOutputSide ||
-        parsedTargetHeight > deps.upscaleMaxOutputSide
-      ) {
-        deps.toast(`Target resolution side cannot exceed ${deps.upscaleMaxOutputSide}px.`, {
-          variant: 'info',
-        });
-        return;
-      }
-      const sourceDimensions = await deps.resolveUpscaleSourceDimensions();
-      if (
-        parsedTargetWidth < sourceDimensions.width ||
-        parsedTargetHeight < sourceDimensions.height ||
-        (parsedTargetWidth === sourceDimensions.width &&
-          parsedTargetHeight === sourceDimensions.height)
-      ) {
-        deps.toast(
-          'Target resolution must upscale at least one side and not reduce source dimensions.',
-          { variant: 'info' }
-        );
-        return;
-      }
-      upscaleRequestPayload = {
-        strategy: 'target_resolution',
-        targetWidth: parsedTargetWidth,
-        targetHeight: parsedTargetHeight,
-      };
+    const upscaleRequestResolution = await resolveUpscaleRequestPayload(deps);
+    if (upscaleRequestResolution.errorMessage) {
+      deps.toast(upscaleRequestResolution.errorMessage, { variant: 'info' });
+      return;
+    }
+    const upscaleRequestPayload = upscaleRequestResolution.payload;
+    if (!upscaleRequestPayload) {
+      deps.toast('Failed to resolve upscale request.', { variant: 'error' });
+      return;
     }
 
     deps.upscaleRequestInFlightRef.current = true;
@@ -262,137 +556,36 @@ export const createGenerationToolbarActionHandlers = (
     const abortController = new AbortController();
     deps.upscaleAbortControllerRef.current = abortController;
     try {
-      const mode = deps.upscaleMode === 'client_canvas' ? 'client_data_url' : 'server_sharp';
-      let response: UpscaleActionResponse;
-      let resolvedMode: 'client_data_url' | 'server_sharp' = mode;
-      if (mode === 'client_data_url') {
-        const sourceForClientUpscale = deps.clientProcessingImageSrc || deps.workingSlotImageSrc;
-        if (!sourceForClientUpscale) {
-          throw new Error('No client image source is available for upscale.');
-        }
-        try {
-          deps.setUpscaleStatus('preparing');
-          const clientUpscale = await upscaleCanvasImage(
-            sourceForClientUpscale,
-            upscaleRequestPayload,
-            deps.upscaleSmoothingQuality
-          );
-          let uploadBlob: Blob;
-          try {
-            uploadBlob = await dataUrlToUploadBlob(clientUpscale.dataUrl);
-          } catch (error) {
-            logClientError(error);
-            throw new Error('Failed to prepare client upscaled image for upload.');
-          }
+      const { response, resolvedMode } = await runUpscaleRequest({
+        abortController,
+        deps,
+        request: upscaleRequestPayload,
+        requestId: upscaleRequestId,
+        workingSlotId,
+      });
 
-          deps.setUpscaleStatus('uploading');
-          response = await withUpscaleRetry(() => {
-            const formData = new FormData();
-            formData.append('mode', mode);
-            appendUpscaleStrategyToFormData(formData, upscaleRequestPayload);
-            formData.append('smoothingQuality', deps.upscaleSmoothingQuality);
-            formData.append('requestId', upscaleRequestId);
-            formData.append('image', uploadBlob, `upscale-client-${Date.now()}.png`);
-            return api
-              .post<unknown>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
-                formData,
-                {
-                  signal: abortController.signal,
-                  timeout: deps.upscaleRequestTimeoutMs,
-                  headers: { 'x-idempotency-key': upscaleRequestId },
-                }
-              )
-              .then((raw) => imageStudioUpscaleResponseSchema.parse(raw));
-          }, abortController.signal);
-        } catch (error) {
-          logClientError(error);
-          if (!shouldFallbackToServerUpscale(error)) {
-            throw error;
-          }
-          deps.setUpscaleStatus('processing');
-          response = await withUpscaleRetry(
-            () =>
-              api
-                .post<unknown>(
-                  `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
-                  buildUpscaleRequestBody('server_sharp', upscaleRequestPayload, upscaleRequestId),
-                  {
-                    signal: abortController.signal,
-                    timeout: deps.upscaleRequestTimeoutMs,
-                    headers: { 'x-idempotency-key': upscaleRequestId },
-                  }
-                )
-                .then((raw) => imageStudioUpscaleResponseSchema.parse(raw)),
-            abortController.signal
-          );
-          resolvedMode = 'server_sharp';
-          const fallbackMessage = isClientUpscaleCrossOriginError(error)
-            ? 'Client upscale was blocked by cross-origin restrictions; used server upscale instead.'
-            : 'Client upscale upload payload was rejected; used server upscale instead.';
-          deps.toast(fallbackMessage, { variant: 'info' });
-        }
-      } else {
-        deps.setUpscaleStatus('processing');
-        response = await withUpscaleRetry(
-          () =>
-            api
-              .post<unknown>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
-                buildUpscaleRequestBody(mode, upscaleRequestPayload, upscaleRequestId),
-                {
-                  signal: abortController.signal,
-                  timeout: deps.upscaleRequestTimeoutMs,
-                  headers: { 'x-idempotency-key': upscaleRequestId },
-                }
-              )
-              .then((raw) => imageStudioUpscaleResponseSchema.parse(raw)),
-          abortController.signal
-        );
-      }
+      deps.setUpscaleStatus('persisting');
+      await persistMutationProjectSlots({
+        createdSlot: response.slot,
+        fetchProjectSlots: deps.fetchProjectSlots,
+        projectId: deps.projectId,
+        queryClient: deps.queryClient,
+      });
 
-      const normalizedProjectId = deps.projectId?.trim() ?? '';
-      if (normalizedProjectId) {
-        deps.setUpscaleStatus('persisting');
-        await invalidateImageStudioSlots(deps.queryClient, normalizedProjectId);
-        const slotsSnapshot = await deps.fetchProjectSlots(normalizedProjectId);
-        const createdSlotId = response.slot?.id ?? '';
-        const mergedSlots = createdSlotId
-          ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
-          : slotsSnapshot;
-        patchImageStudioSlotsCache(deps.queryClient, normalizedProjectId, (current) => ({
-          ...current,
-          slots: mergedSlots,
-        }));
-      }
+      syncCreatedSlotSelection({
+        createdSlot: response.slot,
+        setSelectedSlotId: deps.setSelectedSlotId,
+        setWorkingSlotId: deps.setWorkingSlotId,
+      });
 
-      if (response.slot?.id) {
-        deps.setSelectedSlotId(response.slot.id);
-        deps.setWorkingSlotId(response.slot.id);
-      }
-
-      const effectiveMode = response.effectiveMode ?? resolvedMode;
-      const modeLabel = effectiveMode === 'client_data_url' ? 'Client' : 'Server';
-      const effectiveStrategy = response.strategy ?? upscaleRequestPayload.strategy;
-      const fallbackTargetWidth =
-        upscaleRequestPayload.strategy === 'target_resolution'
-          ? upscaleRequestPayload.targetWidth
-          : null;
-      const fallbackTargetHeight =
-        upscaleRequestPayload.strategy === 'target_resolution'
-          ? upscaleRequestPayload.targetHeight
-          : null;
-      const upscaleLabel =
-        effectiveStrategy === 'target_resolution'
-          ? `${response.targetWidth ?? fallbackTargetWidth}x${response.targetHeight ?? fallbackTargetHeight}`
-          : `${Number(
-            (
-              response.scale ??
-                (upscaleRequestPayload.strategy === 'scale' ? upscaleRequestPayload.scale : 2)
-            ).toFixed(2)
-          )}x`;
-      const createdLabel = response.slot?.name?.trim() || `Upscale ${upscaleLabel}`;
-      deps.toast(`Created ${createdLabel} (${modeLabel} upscale).`, { variant: 'success' });
+      deps.toast(
+        buildUpscaleSuccessToastMessage({
+          request: upscaleRequestPayload,
+          resolvedMode,
+          response,
+        }),
+        { variant: 'success' }
+      );
     } catch (error) {
       logClientError(error);
       if (isUpscaleAbortError(error)) {
@@ -557,25 +750,19 @@ export const createGenerationToolbarActionHandlers = (
         );
       }
 
-      const normalizedProjectId = deps.projectId?.trim() ?? '';
-      if (normalizedProjectId) {
-        deps.setCropStatus('persisting');
-        await invalidateImageStudioSlots(deps.queryClient, normalizedProjectId);
-        const slotsSnapshot = await deps.fetchProjectSlots(normalizedProjectId);
-        const createdSlotId = response.slot?.id ?? '';
-        const mergedSlots = createdSlotId
-          ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
-          : slotsSnapshot;
-        patchImageStudioSlotsCache(deps.queryClient, normalizedProjectId, (current) => ({
-          ...current,
-          slots: mergedSlots,
-        }));
-      }
+      deps.setCropStatus('persisting');
+      await persistMutationProjectSlots({
+        createdSlot: response.slot,
+        fetchProjectSlots: deps.fetchProjectSlots,
+        projectId: deps.projectId,
+        queryClient: deps.queryClient,
+      });
 
-      if (response.slot?.id) {
-        deps.setSelectedSlotId(response.slot.id);
-        deps.setWorkingSlotId(response.slot.id);
-      }
+      syncCreatedSlotSelection({
+        createdSlot: response.slot,
+        setSelectedSlotId: deps.setSelectedSlotId,
+        setWorkingSlotId: deps.setWorkingSlotId,
+      });
 
       const createdLabel = response.slot?.name?.trim() || 'Cropped variant';
       const effectiveMode = response.effectiveMode ?? resolvedMode;

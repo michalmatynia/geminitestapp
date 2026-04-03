@@ -1,17 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import React from 'react';
 
 import { useIntegrationSelection } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import { useProductListingsModals } from '@/features/integrations/context/ProductListingsContext';
 import { useProductListingsViewContext } from '@/features/integrations/components/listings/product-listings-modal/context/ProductListingsViewContext';
-import { Button, Alert, LoadingState, IntegrationSelector, Card } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui';
 
-import {
-  resolveIntegrationSelectionEmptyStateCopy,
-  resolveIntegrationSelectionLoadingMessage,
-} from '../product-listings-copy';
+import { ConnectedIntegrationSelector } from '../ConnectedIntegrationSelector';
+import { resolveIntegrationSelectionEmptyStateCopy } from '../product-listings-copy';
 
 export function ProductListingsStartPanel(): React.JSX.Element {
   const { onStartListing, recoveryContext } = useProductListingsModals();
@@ -33,25 +30,25 @@ export function ProductListingsStartPanel(): React.JSX.Element {
     isScopedMarketplaceFlow,
     statusTargetLabel,
   });
+  const selector = (
+    <ConnectedIntegrationSelector
+      integrations={integrations}
+      loading={loadingIntegrations}
+      selectedIntegrationId={selectedIntegrationId}
+      selectedConnectionId={selectedConnectionId}
+      setSelectedIntegrationId={setSelectedIntegrationId}
+      setSelectedConnectionId={setSelectedConnectionId}
+      emptyStateVariant='alert-link'
+      emptyStateMessage={emptyStateMessage}
+      emptyStateSetupLabel={setupLabel}
+      loadingVariant='loading-state'
+      loadingContainerClassName='flex items-center justify-center py-8'
+      loadingSize='sm'
+    />
+  );
 
-  if (loadingIntegrations) {
-    return (
-      <div className='flex items-center justify-center py-8'>
-        <LoadingState message={resolveIntegrationSelectionLoadingMessage()} size='sm' />
-      </div>
-    );
-  }
-
-  if (integrations.length === 0) {
-    return (
-      <Alert variant='warning'>
-        {emptyStateMessage}{' '}
-        <Link href='/admin/integrations' className='underline hover:text-yellow-100'>
-          {setupLabel}
-        </Link>
-        .
-      </Alert>
-    );
+  if (loadingIntegrations || integrations.length === 0) {
+    return selector;
   }
 
   return (
@@ -65,13 +62,7 @@ export function ProductListingsStartPanel(): React.JSX.Element {
             </p>
           </div>
         )}
-        <IntegrationSelector
-          integrations={integrations}
-          selectedIntegrationId={selectedIntegrationId}
-          onIntegrationChange={setSelectedIntegrationId}
-          selectedConnectionId={selectedConnectionId}
-          onConnectionChange={setSelectedConnectionId}
-        />
+        {selector}
 
         <div className='flex justify-center'>
           <Button

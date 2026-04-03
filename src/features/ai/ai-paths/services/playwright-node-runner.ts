@@ -444,6 +444,240 @@ const saveFileArtifact = async (
   };
 };
 
+type LiveRunStateCoordinator = {
+  queueUpdate: (patchFactory: () => Partial<PlaywrightNodeRunRecord>) => void;
+  flush: () => Promise<void>;
+  finalize: () => void;
+};
+
+const createLiveRunStateCoordinator = (runId: string): LiveRunStateCoordinator => {
+  let liveStateWriteChain: Promise<void> = Promise.resolve();
+  let isFinalizingLiveState = false;
+  return {
+    queueUpdate: (patchFactory: () => Partial<PlaywrightNodeRunRecord>): void => {
+      if (isFinalizingLiveState) return;
+      liveStateWriteChain = liveStateWriteChain
+        .then(async () => {
+          if (isFinalizingLiveState) return;
+          await updateRunState(runId, patchFactory());
+        })
+        .catch((error) => {
+          void ErrorSystem.captureException(error);
+        });
+    },
+    flush: async (): Promise<void> => {
+      await liveStateWriteChain.catch((error) => {
+        void ErrorSystem.captureException(error);
+      });
+    },
+    finalize: (): void => {
+      isFinalizingLiveState = true;
+    },
+  };
+};
+
+const captureFinalRunArtifacts = async (params: {
+  artifacts: PlaywrightNodeRunArtifact[];
+  context: BrowserContext | null;
+  logs: string[];
+  page: Page;
+  request: PlaywrightNodeRunRequest;
+  runArtifactsDir: string;
+}): Promise<void> => {
+  const { artifacts, context, logs, page, request, runArtifactsDir } = params;
+  if (request.capture?.screenshot) {
+    artifacts.push(
+      await saveFileArtifact(
+        runArtifactsDir,
+        'final',
+        'png',
+        await page.screenshot({ fullPage: true }),
+        'image/png',
+        'screenshot'
+      )
+    );
+  }
+  if (request.capture?.html) {
+    artifacts.push(
+      await saveFileArtifact(
+        runArtifactsDir,
+        'final',
+        'html',
+        await page.content(),
+        'text/html',
+        'html'
+      )
+    );
+  }
+  if (request.capture?.trace && context) {
+    const tracePath = path.join(runArtifactsDir, `trace-${Date.now()}.zip`);
+    await context.tracing.stop({ path: tracePath });
+    artifacts.push({
+      name: 'trace',
+      path: resolveRelativeArtifactPath(tracePath),
+      mimeType: 'application/zip',
+      kind: 'trace',
+    });
+    logs.push('[runtime] Trace capture saved.');
+  }
+};
+
+const buildCompletedRunState = async (params: {
+  artifacts: PlaywrightNodeRunArtifact[];
+  emittedOutputs: Record<string, unknown>;
+  existingRun: PlaywrightNodeRunRecord | null;
+  inlineArtifacts: Array<{ name: string; value: unknown }>;
+  logs: string[];
+  page: Page;
+  returnValue: unknown;
+  runId: string;
+  startedAt: string;
+}): Promise<PlaywrightNodeRunRecord> => {
+  const { artifacts, emittedOutputs, existingRun, inlineArtifacts, logs, page, returnValue, runId, startedAt } =
+    params;
+  const completedAt = nowIso();
+  return {
+    runId,
+    ownerUserId: existingRun?.ownerUserId ?? null,
+    status: 'completed',
+    startedAt,
+    completedAt,
+    createdAt: existingRun?.createdAt ?? startedAt,
+    updatedAt: completedAt,
+    result: {
+      returnValue,
+      outputs: emittedOutputs,
+      inlineArtifacts,
+      finalUrl: page.url(),
+      title: await page.title().catch(() => ''),
+    },
+    error: null,
+    artifacts,
+    logs,
+  };
+};
+
+const captureFailureArtifacts = async (params: {
+  artifacts: PlaywrightNodeRunArtifact[];
+  errorMessage: string;
+  page: Page | null;
+  runArtifactsDir: string;
+}): Promise<void> => {
+  const { artifacts, errorMessage, page, runArtifactsDir } = params;
+  if (!page) return;
+
+  try {
+    artifacts.push(
+      await saveFileArtifact(
+        runArtifactsDir,
+        'failure',
+        'png',
+        await page.screenshot({ fullPage: true }),
+        'image/png',
+        'screenshot'
+      )
+    );
+  } catch (captureError) {
+    void ErrorSystem.captureException(captureError);
+  }
+
+  try {
+    artifacts.push(
+      await saveFileArtifact(
+        runArtifactsDir,
+        'failure',
+        'html',
+        await page.content(),
+        'text/html',
+        'html'
+      )
+    );
+  } catch (captureError) {
+    void ErrorSystem.captureException(captureError);
+  }
+
+  try {
+    artifacts.push(
+      await saveFileArtifact(
+        runArtifactsDir,
+        'failure-state',
+        'json',
+        `${JSON.stringify(
+          {
+            error: errorMessage,
+            finalUrl: page.url(),
+            title: await page.title().catch(() => ''),
+          },
+          null,
+          2
+        )}\n`,
+        'application/json',
+        'json'
+      )
+    );
+  } catch (captureError) {
+    void ErrorSystem.captureException(captureError);
+  }
+};
+
+const buildFailedRunState = (params: {
+  artifacts: PlaywrightNodeRunArtifact[];
+  errorMessage: string;
+  existingRun: PlaywrightNodeRunRecord | null;
+  logs: string[];
+  runId: string;
+  startedAt: string;
+}): PlaywrightNodeRunRecord => {
+  const { artifacts, errorMessage, existingRun, logs, runId, startedAt } = params;
+  const completedAt = nowIso();
+  return {
+    runId,
+    ownerUserId: existingRun?.ownerUserId ?? null,
+    status: 'failed',
+    startedAt,
+    completedAt,
+    createdAt: existingRun?.createdAt ?? startedAt,
+    updatedAt: completedAt,
+    result: null,
+    error: errorMessage,
+    artifacts,
+    logs,
+  };
+};
+
+const persistVideoArtifact = async (params: {
+  artifacts: PlaywrightNodeRunArtifact[];
+  logs: string[];
+  page: Page | null;
+  request: PlaywrightNodeRunRequest;
+  runArtifactsDir: string;
+}): Promise<boolean> => {
+  const { artifacts, logs, page, request, runArtifactsDir } = params;
+  if (!page || !request.capture?.video) {
+    return false;
+  }
+  try {
+    const video = page.video();
+    if (!video) {
+      return false;
+    }
+    const videoPath = await video.path();
+    const targetVideoPath = path.join(runArtifactsDir, `video-${Date.now()}.webm`);
+    await nodeFs.copyFile(videoPath, targetVideoPath);
+    artifacts.push({
+      name: 'video',
+      path: resolveRelativeArtifactPath(targetVideoPath),
+      mimeType: 'video/webm',
+      kind: 'video',
+    });
+    logs.push('[runtime] Video capture saved.');
+    return true;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    return false;
+  }
+};
+
 const executePlaywrightNodeRun = async (
   runId: string,
   request: PlaywrightNodeRunRequest
@@ -459,24 +693,7 @@ const executePlaywrightNodeRun = async (
     logs,
     artifacts,
   });
-  let liveStateWriteChain: Promise<void> = Promise.resolve();
-  let isFinalizingLiveState = false;
-  const queueLiveRunStateUpdate = (patchFactory: () => Partial<PlaywrightNodeRunRecord>): void => {
-    if (isFinalizingLiveState) return;
-    liveStateWriteChain = liveStateWriteChain
-      .then(async () => {
-        if (isFinalizingLiveState) return;
-        await updateRunState(runId, patchFactory());
-      })
-      .catch((error) => {
-        void ErrorSystem.captureException(error);
-      });
-  };
-  const flushLiveRunStateUpdates = async (): Promise<void> => {
-    await liveStateWriteChain.catch((error) => {
-      void ErrorSystem.captureException(error);
-    });
-  };
+  const liveRunState = createLiveRunStateCoordinator(runId);
 
   const playwright = getPlaywright();
   const personaSettings = await resolvePersonaSettings(request.personaId);
@@ -574,7 +791,7 @@ const executePlaywrightNodeRun = async (
         const normalizedPort = port.trim();
         if (!normalizedPort) return;
         emittedOutputs[normalizedPort] = value;
-        queueLiveRunStateUpdate(() => ({
+        liveRunState.queueUpdate(() => ({
           result: buildLiveResultSnapshot(),
         }));
       },
@@ -638,7 +855,7 @@ const executePlaywrightNodeRun = async (
         },
         add: (name: string, value: unknown): void => {
           inlineArtifacts.push({ name: name.trim() || 'artifact', value });
-          queueLiveRunStateUpdate(() => ({
+          liveRunState.queueUpdate(() => ({
             result: buildLiveResultSnapshot(),
           }));
         },
@@ -660,165 +877,62 @@ const executePlaywrightNodeRun = async (
       'Playwright script timed out.'
     );
 
-    if (request.capture?.screenshot) {
-      const screenshotArtifact = await saveFileArtifact(
-        runArtifactsDir,
-        'final',
-        'png',
-        await page.screenshot({ fullPage: true }),
-        'image/png',
-        'screenshot'
-      );
-      artifacts.push(screenshotArtifact);
-    }
-    if (request.capture?.html) {
-      const htmlArtifact = await saveFileArtifact(
-        runArtifactsDir,
-        'final',
-        'html',
-        await page.content(),
-        'text/html',
-        'html'
-      );
-      artifacts.push(htmlArtifact);
-    }
-
-    if (request.capture?.trace && context) {
-      const tracePath = path.join(runArtifactsDir, `trace-${Date.now()}.zip`);
-      await context.tracing.stop({ path: tracePath });
-      artifacts.push({
-        name: 'trace',
-        path: resolveRelativeArtifactPath(tracePath),
-        mimeType: 'application/zip',
-        kind: 'trace',
-      });
-      logs.push('[runtime] Trace capture saved.');
-    }
-
-    const completedAt = nowIso();
-    await flushLiveRunStateUpdates();
-    isFinalizingLiveState = true;
-    const existingRun = await readPlaywrightNodeRun(runId);
-    const result = {
-      returnValue,
-      outputs: emittedOutputs,
-      inlineArtifacts,
-      finalUrl: page.url(),
-      title: await page.title().catch(() => ''),
-    };
-    const finalState: PlaywrightNodeRunRecord = {
-      runId,
-      ownerUserId: existingRun?.ownerUserId ?? null,
-      status: 'completed',
-      startedAt,
-      completedAt,
-      createdAt: existingRun?.createdAt ?? startedAt,
-      updatedAt: completedAt,
-      result,
-      error: null,
+    await captureFinalRunArtifacts({
       artifacts,
+      context,
       logs,
-    };
+      page,
+      request,
+      runArtifactsDir,
+    });
+
+    await liveRunState.flush();
+    liveRunState.finalize();
+    const existingRun = await readPlaywrightNodeRun(runId);
+    const finalState = await buildCompletedRunState({
+      artifacts,
+      emittedOutputs,
+      existingRun,
+      inlineArtifacts,
+      logs,
+      page,
+      returnValue,
+      runId,
+      startedAt,
+    });
     await writeRunState(finalState);
     return finalState;
   } catch (error) {
     void ErrorSystem.captureException(error);
-    const completedAt = nowIso();
-    await flushLiveRunStateUpdates();
-    isFinalizingLiveState = true;
+    await liveRunState.flush();
+    liveRunState.finalize();
     const existingRun = await readPlaywrightNodeRun(runId);
     const message = error instanceof Error ? error.message : String(error);
-    if (page) {
-      try {
-        const failureScreenshotArtifact = await saveFileArtifact(
-          runArtifactsDir,
-          'failure',
-          'png',
-          await page.screenshot({ fullPage: true }),
-          'image/png',
-          'screenshot'
-        );
-        artifacts.push(failureScreenshotArtifact);
-      } catch (captureError) {
-        void ErrorSystem.captureException(captureError);
-      }
-
-      try {
-        const failureHtmlArtifact = await saveFileArtifact(
-          runArtifactsDir,
-          'failure',
-          'html',
-          await page.content(),
-          'text/html',
-          'html'
-        );
-        artifacts.push(failureHtmlArtifact);
-      } catch (captureError) {
-        void ErrorSystem.captureException(captureError);
-      }
-
-      try {
-        const failureSnapshotArtifact = await saveFileArtifact(
-          runArtifactsDir,
-          'failure-state',
-          'json',
-          `${JSON.stringify(
-            {
-              error: message,
-              finalUrl: page.url(),
-              title: await page.title().catch(() => ''),
-            },
-            null,
-            2
-          )}\n`,
-          'application/json',
-          'json'
-        );
-        artifacts.push(failureSnapshotArtifact);
-      } catch (captureError) {
-        void ErrorSystem.captureException(captureError);
-      }
-    }
-    logs.push(`[runtime][error] ${message}`);
-    const failedState: PlaywrightNodeRunRecord = {
-      runId,
-      ownerUserId: existingRun?.ownerUserId ?? null,
-      status: 'failed',
-      startedAt,
-      completedAt,
-      createdAt: existingRun?.createdAt ?? startedAt,
-      updatedAt: completedAt,
-      result: null,
-      error: message,
+    await captureFailureArtifacts({
       artifacts,
+      errorMessage: message,
+      page,
+      runArtifactsDir,
+    });
+    logs.push(`[runtime][error] ${message}`);
+    const failedState = buildFailedRunState({
+      artifacts,
+      errorMessage: message,
+      existingRun,
       logs,
-    };
+      runId,
+      startedAt,
+    });
     await writeRunState(failedState);
     return failedState;
   } finally {
-    let shouldPersistArtifacts = false;
-    if (page && request.capture?.video) {
-      try {
-        const video = page.video();
-        if (video) {
-          const videoPath = await video.path();
-          const targetVideoPath = path.join(runArtifactsDir, `video-${Date.now()}.webm`);
-          await nodeFs.copyFile(videoPath, targetVideoPath);
-          artifacts.push({
-            name: 'video',
-            path: resolveRelativeArtifactPath(targetVideoPath),
-            mimeType: 'video/webm',
-            kind: 'video',
-          });
-          logs.push('[runtime] Video capture saved.');
-          shouldPersistArtifacts = true;
-        }
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-      
-        // best effort
-      }
-    }
+    const shouldPersistArtifacts = await persistVideoArtifact({
+      artifacts,
+      logs,
+      page,
+      request,
+      runArtifactsDir,
+    });
     if (shouldPersistArtifacts) {
       await updateRunState(runId, { artifacts, logs }).catch(() => undefined);
     }

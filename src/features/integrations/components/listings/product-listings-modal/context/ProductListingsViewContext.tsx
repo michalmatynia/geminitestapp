@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import { BASE_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
   matchesProductListingsIntegrationScope,
@@ -9,7 +7,7 @@ import {
   resolveProductListingsIntegrationScopeLabel,
 } from '@/features/integrations/utils/product-listings-recovery';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
+import { createStrictViewContext } from '../../createStrictViewContext';
 
 export type ProductListingsViewContextValue = {
   filteredListings: ProductListingWithDetails[];
@@ -21,35 +19,13 @@ export type ProductListingsViewContextValue = {
   showSync: boolean;
 };
 
-const ProductListingsViewContext = React.createContext<ProductListingsViewContextValue | null>(
-  null
-);
-
-type ProductListingsViewProviderProps = {
-  value: ProductListingsViewContextValue;
-  children: React.ReactNode;
-};
-
-export function ProductListingsViewProvider({
-  value,
-  children,
-}: ProductListingsViewProviderProps): React.JSX.Element {
-  return (
-    <ProductListingsViewContext.Provider value={value}>
-      {children}
-    </ProductListingsViewContext.Provider>
-  );
-}
-
-export function useProductListingsViewContext(): ProductListingsViewContextValue {
-  const context = React.useContext(ProductListingsViewContext);
-  if (!context) {
-    throw internalError(
-      'useProductListingsViewContext must be used within ProductListingsViewProvider'
-    );
-  }
-  return context;
-}
+export const {
+  Provider: ProductListingsViewProvider,
+  useValue: useProductListingsViewContext,
+} = createStrictViewContext<ProductListingsViewContextValue>({
+  providerName: 'ProductListingsViewProvider',
+  errorMessage: 'useProductListingsViewContext must be used within ProductListingsViewProvider',
+});
 
 export function createProductListingsViewContextValue({
   listings,

@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-03-30T15:09:26.619Z",
+  "generatedAt": "2026-04-03T08:51:14.364Z",
   "status": "passed",
   "summary": {
-    "total": 47,
+    "total": 2,
     "errorCount": 0,
     "warningCount": 0,
-    "infoCount": 47,
+    "infoCount": 2,
     "status": "passed",
-    "fileCount": 6673
+    "fileCount": 6675
   },
   "scope": {
     "root": "src",
@@ -16,20 +16,13 @@
   },
   "trendCounters": {
     "doubleAssertionCount": 0,
-    "anyCount": 29,
-    "eslintDisableCount": 17,
+    "anyCount": 0,
+    "eslintDisableCount": 1,
     "nonNullAssertionCount": 1,
     "tsIgnoreCount": 0,
     "tsExpectErrorCount": 0
   },
   "eslintDisabledRules": {
-    "@typescript-eslint/no-unsafe-assignment": 3,
-    "@typescript-eslint/no-unsafe-member-access": 3,
-    "@typescript-eslint/no-unsafe-argument": 3,
-    "@typescript-eslint/no-confusing-void-expression": 2,
-    "@typescript-eslint/no-unsafe-call": 2,
-    "@typescript-eslint/no-explicit-any": 2,
-    "@typescript-eslint/no-misused-promises": 1,
     "@typescript-eslint/no-unsafe-return": 1
   },
   "issues": [
@@ -45,460 +38,10 @@
     },
     {
       "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx",
-      "line": 133,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-misused-promises",
-      "file": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-      "line": 5,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-confusing-void-expression",
-      "file": "src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx",
-      "line": 6,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.components.tsx",
-      "line": 27,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/components/music/KangurMusicPianoRoll.components.tsx",
-      "line": 35,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
-      "file": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
-      "file": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx",
-      "line": 2,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
-      "file": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx",
-      "line": 3,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-confusing-void-expression",
-      "file": "src/features/kangur/ui/components/music/MusicMelodyRepeatGame.tsx",
-      "line": 4,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
-      "file": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
-      "file": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx",
-      "line": 2,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
-      "file": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx",
-      "line": 3,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
-      "file": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx",
-      "line": 4,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
-      "file": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx",
-      "line": 5,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/components/music/MusicPianoRollFreePlayGame.tsx",
-      "line": 48,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-assignment",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 1,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-member-access",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 2,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-call",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 3,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
       "ruleId": "eslint-disable",
       "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-return",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 4,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-unsafe-argument",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 5,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "eslint-disable",
-      "message": "eslint-disable comment disabling: @typescript-eslint/no-explicit-any",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
+      "file": "src/features/kangur/ui/KangurLoginPage.test-support.tsx",
       "line": 6,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 38,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 40,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 41,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 42,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 45,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 48,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 49,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 50,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 51,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 52,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 133,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 134,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 135,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 140,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 202,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 203,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 204,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 205,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 206,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 207,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 208,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 209,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 211,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 249,
-      "column": null,
-      "snippet": null,
-      "context": null
-    },
-    {
-      "severity": "info",
-      "ruleId": "explicit-any",
-      "message": "Explicit `any` type usage. Consider using a specific type or `unknown`.",
-      "file": "src/features/kangur/ui/pages/GamesLibrary.tabs.tsx",
-      "line": 250,
       "column": null,
       "snippet": null,
       "context": null
@@ -509,13 +52,7 @@
       "ruleId": "eslint-disable",
       "errorCount": 0,
       "warningCount": 0,
-      "infoCount": 17
-    },
-    {
-      "ruleId": "explicit-any",
-      "errorCount": 0,
-      "warningCount": 0,
-      "infoCount": 29
+      "infoCount": 1
     },
     {
       "ruleId": "non-null-assertion",
@@ -524,5 +61,5 @@
       "infoCount": 1
     }
   ],
-  "durationMs": 1949
+  "durationMs": 2264
 }

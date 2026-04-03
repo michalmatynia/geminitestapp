@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
-interface MarkdownSplitEditorContextValue {
+export interface MarkdownSplitEditorContextValue {
   value: string;
   onChange: (nextValue: string) => void;
   readOnly?: boolean;
@@ -30,9 +31,19 @@ interface MarkdownSplitEditorContextValue {
   textareaClassName?: string;
 }
 
-export const MarkdownSplitEditorContext = createContext<MarkdownSplitEditorContextValue | null>(
-  null
-);
+export const {
+  Context: MarkdownSplitEditorContextInternal,
+  useStrictContext: useMarkdownSplitEditorContext,
+  useOptionalContext: useOptionalMarkdownSplitEditorContext,
+} = createStrictContext<MarkdownSplitEditorContextValue>({
+  hookName: 'useMarkdownSplitEditorContext',
+  providerName: 'MarkdownSplitEditorProvider',
+  displayName: 'MarkdownSplitEditorContext',
+  errorFactory: internalError,
+});
+
+export const MarkdownSplitEditorContext =
+  MarkdownSplitEditorContextInternal as React.Context<MarkdownSplitEditorContextValue | null>;
 
 export function MarkdownSplitEditorProvider({
   children,
@@ -46,18 +57,4 @@ export function MarkdownSplitEditorProvider({
       {children}
     </MarkdownSplitEditorContext.Provider>
   );
-}
-
-export function useMarkdownSplitEditorContext() {
-  const context = useContext(MarkdownSplitEditorContext);
-  if (!context) {
-    throw internalError(
-      'useMarkdownSplitEditorContext must be used within MarkdownSplitEditorProvider'
-    );
-  }
-  return context;
-}
-
-export function useOptionalMarkdownSplitEditorContext() {
-  return useContext(MarkdownSplitEditorContext);
 }

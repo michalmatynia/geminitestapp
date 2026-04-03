@@ -47,6 +47,7 @@ export const dbSpecificUnitTestFiles = [
   'src/shared/lib/products/services/product-repository/mongo-product-repository.filters.test.ts',
   'src/shared/lib/products/services/product-repository/mongo-product-repository.helpers.test.ts',
   'src/shared/lib/products/services/product-repository/mongo-product-repository-mappers.shared-lib.test.ts',
+  'src/shared/lib/products/services/shipping-group-repository/mongo-shipping-group-repository.test.ts',
   'src/shared/lib/products/services/tag-repository/mongo-tag-repository.test.ts',
   'src/shared/lib/products/services/validation-pattern-repository/mongo-validation-pattern-repository.behavior.test.ts',
 ];

@@ -18,6 +18,8 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
+export type { KangurSocialPostListStatus } from '@/shared/contracts/kangur-social-posts';
+
 export type KangurSocialPostsScope = 'public' | 'admin';
 
 type SocialPostsQueryOptions = {

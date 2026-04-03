@@ -26,17 +26,29 @@ const buildInvalidCaseResolverEdgeError = (
     ...(meta ?? {}),
   });
 
-export const parseCanonicalCaseResolverEdge = (input: unknown, context: string): CaseResolverEdge => {
+const findUnsupportedCaseResolverEdgeKeys = (record: Record<string, unknown>): string[] =>
+  Object.keys(record).filter(
+    (key: string): boolean => !CANONICAL_CASE_RESOLVER_EDGE_KEYS.has(key)
+  );
+
+const parseCaseResolverEdgeRecord = (
+  input: unknown,
+  context: string
+): Record<string, unknown> => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {
       reason: 'edge_not_object',
     });
   }
 
-  const record = input as Record<string, unknown>;
-  const unsupportedKeys = Object.keys(record).filter(
-    (key: string): boolean => !CANONICAL_CASE_RESOLVER_EDGE_KEYS.has(key)
-  );
+  return input as Record<string, unknown>;
+};
+
+const assertSupportedCaseResolverEdgeKeys = (
+  record: Record<string, unknown>,
+  context: string
+): void => {
+  const unsupportedKeys = findUnsupportedCaseResolverEdgeKeys(record);
   if (unsupportedKeys.length > 0) {
     throw buildInvalidCaseResolverEdgeError(
       'Case Resolver edge payload includes unsupported fields.',
@@ -44,36 +56,55 @@ export const parseCanonicalCaseResolverEdge = (input: unknown, context: string):
       { unsupportedKeys }
     );
   }
+};
 
+const parseValidatedCaseResolverEdge = (
+  record: Record<string, unknown>,
+  context: string
+): CaseResolverEdge => {
   const validation = caseResolverEdgeSchema.safeParse(record);
-  if (!validation.success) {
-    throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {
-      issues: validation.error.flatten(),
-    });
+  if (validation.success) {
+    return validation.data;
   }
 
-  const edge = validation.data;
+  throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {
+    issues: validation.error.flatten(),
+  });
+};
+
+const normalizeCaseResolverEdgeHandle = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const assertCanonicalCaseResolverEdgeEndpoints = (
+  edge: CaseResolverEdge,
+  context: string
+): { source: string; target: string } => {
   const source = typeof edge.source === 'string' ? edge.source.trim() : '';
   const target = typeof edge.target === 'string' ? edge.target.trim() : '';
-  if (!source || !target) {
-    throw buildInvalidCaseResolverEdgeError(
-      'Case Resolver edges must use canonical source/target fields.',
-      context,
-      {
-        edgeId: edge.id,
-      }
-    );
+  if (source && target) {
+    return { source, target };
   }
 
-  const normalizeHandle = (value: unknown): string | null => {
-    if (typeof value !== 'string') {
-      return null;
+  throw buildInvalidCaseResolverEdgeError(
+    'Case Resolver edges must use canonical source/target fields.',
+    context,
+    {
+      edgeId: edge.id,
     }
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : null;
-  };
-  const sourceHandle = normalizeHandle(edge.sourceHandle);
-  const targetHandle = normalizeHandle(edge.targetHandle);
+  );
+};
+
+const assertAllowedCaseResolverEdgeHandles = (
+  edge: CaseResolverEdge,
+  context: string
+): { sourceHandle: string | null; targetHandle: string | null } => {
+  const sourceHandle = normalizeCaseResolverEdgeHandle(edge.sourceHandle);
+  const targetHandle = normalizeCaseResolverEdgeHandle(edge.targetHandle);
   if (
     (sourceHandle !== null && FORBIDDEN_CASE_RESOLVER_EDGE_HANDLE_NAMES.has(sourceHandle)) ||
     (targetHandle !== null && FORBIDDEN_CASE_RESOLVER_EDGE_HANDLE_NAMES.has(targetHandle))
@@ -88,6 +119,16 @@ export const parseCanonicalCaseResolverEdge = (input: unknown, context: string):
       }
     );
   }
+
+  return { sourceHandle, targetHandle };
+};
+
+export const parseCanonicalCaseResolverEdge = (input: unknown, context: string): CaseResolverEdge => {
+  const record = parseCaseResolverEdgeRecord(input, context);
+  assertSupportedCaseResolverEdgeKeys(record, context);
+  const edge = parseValidatedCaseResolverEdge(record, context);
+  const { source, target } = assertCanonicalCaseResolverEdgeEndpoints(edge, context);
+  const { sourceHandle, targetHandle } = assertAllowedCaseResolverEdgeHandles(edge, context);
 
   return {
     ...edge,

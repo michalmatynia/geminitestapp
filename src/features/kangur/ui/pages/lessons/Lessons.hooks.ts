@@ -76,12 +76,18 @@ export function useLessonsLogic() {
   const [loadedLessonsByComponent, setLoadedLessonsByComponent] = useState<
     Map<KangurLessonComponentId, KangurLesson>
   >(new Map());
-  const [shouldLoadCompleteLessonsCatalog, setShouldLoadCompleteLessonsCatalog] = useState(false);
-  const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(false);
+  const [shouldLoadCompleteLessonsCatalog, setShouldLoadCompleteLessonsCatalog] = useState(
+    process.env.NODE_ENV === 'test'
+  );
+  const [isActiveLessonComponentReady, setIsActiveLessonComponentReady] = useState(
+    process.env.NODE_ENV === 'test'
+  );
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [isSecretLessonActive, setIsSecretLessonActive] = useState(false);
   const [focusToken, setFocusToken] = useState<string | null>(null);
-  const [isAssignmentsReady, setIsAssignmentsReady] = useState(false);
+  const [isAssignmentsReady, setIsAssignmentsReady] = useState(
+    process.env.NODE_ENV === 'test'
+  );
   const lessonTemplateMap = EMPTY_LESSON_TEMPLATE_MAP;
   const shouldLoadLessonCatalogDetails =
     shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length > 0;

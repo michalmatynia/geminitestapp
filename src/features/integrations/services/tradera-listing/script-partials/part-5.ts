@@ -125,7 +125,7 @@ export const PART_5 = `        }
     const previousUrl = page.url();
     await Promise.allSettled([
       page.waitForLoadState('domcontentloaded', { timeout: 25_000 }),
-      publishButton.click(),
+      humanClick(publishButton, { pauseAfter: false }),
     ]);
     await wait(2000);
 

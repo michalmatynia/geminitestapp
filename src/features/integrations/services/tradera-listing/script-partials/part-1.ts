@@ -1,11 +1,13 @@
+/* eslint-disable no-useless-escape */
 export const PART_1 = `export default async function run({
   page,
   input,
   emit,
   artifacts,
   log,
+  helpers,
 }) {
-  // tradera-quicklist-default:v40
+  // tradera-quicklist-default:v43
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -308,7 +310,48 @@ export const PART_1 = `export default async function run({
     : [];
 
   const wait = async (ms) => {
+    if (helpers && typeof helpers.sleep === 'function') {
+      await helpers.sleep(ms);
+      return;
+    }
     await page.waitForTimeout(ms);
+  };
+
+  const humanClick = async (target, options) => {
+    if (!target) return;
+    if (helpers && typeof helpers.click === 'function') {
+      await helpers.click(target, options);
+      return;
+    }
+    if (options?.scroll !== false && typeof target.scrollIntoViewIfNeeded === 'function') {
+      await target.scrollIntoViewIfNeeded().catch(() => undefined);
+    }
+    await target.click(options?.clickOptions);
+  };
+
+  const humanFill = async (target, value, options) => {
+    if (!target) return;
+    if (helpers && typeof helpers.fill === 'function') {
+      await helpers.fill(target, value, options);
+      return;
+    }
+    await target.fill(value);
+  };
+
+  const humanType = async (value, options) => {
+    if (helpers && typeof helpers.type === 'function') {
+      await helpers.type(value, options);
+      return;
+    }
+    await page.keyboard.type(value);
+  };
+
+  const humanPress = async (key, options) => {
+    if (helpers && typeof helpers.press === 'function') {
+      await helpers.press(key, options);
+      return;
+    }
+    await page.keyboard.press(key);
   };
 
   const toSafeArtifactName = (value) =>

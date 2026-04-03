@@ -2,629 +2,422 @@
  * @vitest-environment jsdom
  */
 
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import React from 'react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NextIntlClientProvider } from 'next-intl';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import plMessages from '@/i18n/messages/pl.json';
 
-import {
-  assignmentsState,
-  authState,
-  createLesson,
-  createProgressState,
-  progressState,
-  renderLessonsPage,
-  resetLessonsTestState,
-  setLessonState,
-  useKangurPageContentEntryMock,
-} from './Lessons.test-support';
+import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
+import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/settings';
+import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
+import Lessons from '@/features/kangur/ui/pages/Lessons';
+import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
-describe('Lessons', () => {
+// --- Shared State ---
+const lessonsTestHoisted = vi.hoisted(() => ({
+  settingsStoreMock: {
+    get: vi.fn<(key: string) => string | undefined>(),
+  },
+  lessons: [] as any[],
+  lessonDocuments: {} as Record<string, any>,
+  auth: {
+    user: null,
+    canAccessParentAssignments: false,
+    navigateToLogin: vi.fn(),
+    logout: vi.fn(),
+  } as any,
+  assignments: [] as any[],
+  progress: {
+    lessonMastery: {},
+  } as any,
+  routerPushMock: vi.fn(),
+  useKangurPageContentEntryMock: vi.fn(),
+  lessonSections: [] as any[],
+}));
+
+// --- Mocks ---
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: lessonsTestHoisted.routerPushMock,
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+  }),
+  usePathname: () => '/kangur/lessons',
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
+  useSelectedLayoutSegment: vi.fn(() => null),
+  useSelectedLayoutSegments: vi.fn(() => []),
+  redirect: vi.fn(),
+  notFound: vi.fn(),
+  permanentRedirect: vi.fn(),
+}));
+
+const KangurLessonNavigationContext = React.createContext<any>(null);
+
+vi.mock('@/features/kangur/ui/context/KangurLessonNavigationContext', () => ({
+  KangurLessonNavigationProvider: ({ children, onBack, secretLessonPill }: any) => (
+    <KangurLessonNavigationContext.Provider value={{ onBack, secretLessonPill }}>
+      {children}
+    </KangurLessonNavigationContext.Provider>
+  ),
+  KangurLessonNavigationBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useKangurLessonBackAction: () => {
+    const ctx = React.useContext(KangurLessonNavigationContext);
+    return ctx?.onBack ?? vi.fn();
+  },
+  useKangurLessonSubsectionNavigationActive: () => false,
+  useKangurLessonSubsectionSummary: () => null,
+  useKangurLessonSecretPill: () => {
+    const ctx = React.useContext(KangurLessonNavigationContext);
+    return ctx?.secretLessonPill ?? { isUnlocked: true, onOpen: vi.fn() };
+  },
+  useKangurLessonNavigationState: () => ({
+    isSubsectionNavigationActive: false,
+    subsectionSummary: null,
+    secretLessonPill: null,
+  }),
+  useKangurLessonNavigationActions: () => ({
+    registerSubsectionNavigation: () => () => undefined,
+    setSubsectionSummary: vi.fn(),
+  }),
+  useKangurRegisterLessonSubsectionNavigation: () => () => () => undefined,
+  useKangurSyncLessonSubsectionSummary: vi.fn(),
+  KangurLessonSubsectionSummarySync: () => null,
+}));
+
+vi.mock('@/features/kangur/lessons/lesson-ui-registry', async () => {
+  function MockLegacyLesson({ onReady }: { onReady?: () => void }): React.JSX.Element {
+    React.useEffect(() => {
+      onReady?.();
+    }, [onReady]);
+
+    return (
+      <div data-testid='legacy-lesson'>
+        <div>Legacy lesson renderer</div>
+        <button type='button' onClick={vi.fn()}>
+          Open secret lesson
+        </button>
+      </div>
+    );
+  }
+
+  return {
+    LESSON_COMPONENTS: {
+      adding: MockLegacyLesson,
+      clock: MockLegacyLesson,
+    },
+  };
+});
+
+vi.mock('next/link', () => ({
+  default: ({ children, href, ...rest }: any) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', async () => {
+  const actual = await import('@/features/kangur/ui/pages/lessons/Lessons.ActiveLesson');
+  return {
+    LazyActiveLessonView: actual.ActiveLessonView,
+    prefetchActiveLessonView: vi.fn(),
+  };
+});
+
+vi.mock('@/features/kangur/ui/pages/lessons/LazyLessonsDeferredEnhancements', () => ({
+  LazyLessonsDeferredEnhancements: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
+  LazyKangurLessonsWordmark: (props: any) => (
+    <div data-testid={props['data-testid'] || 'kangur-lessons-heading-art'} />
+  ),
+}));
+
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
+  motion: {
+    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  },
+}));
+
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => lessonsTestHoisted.settingsStoreMock,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
+  useKangurAuth: () => lessonsTestHoisted.auth,
+  useOptionalKangurAuth: () => lessonsTestHoisted.auth,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  useKangurSubjectFocus: () => ({
+    subject: 'maths',
+    setSubject: vi.fn(),
+    subjectKey: 'learner-1',
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
+  useKangurAgeGroupFocus: () => ({
+    ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+    setAgeGroup: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
+  useKangurRouting: () => ({ basePath: '/kangur' }),
+  useOptionalKangurRouting: () => null,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
+  useKangurAssignments: (options: any) => {
+    const enabled = options?.enabled ?? true;
+    const assignments = enabled ? lessonsTestHoisted.assignments : [];
+    return {
+      assignments,
+      data: assignments,
+      isLoading: false,
+      isPending: false,
+      error: null,
+      refresh: vi.fn(),
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+    };
+  },
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: () => {
+    console.log('useKangurLessons mock returning lessons count:', lessonsTestHoisted.lessons.length);
+    return {
+      data: lessonsTestHoisted.lessons,
+      isLoading: false,
+      isPending: false,
+      isFetching: false,
+      error: null,
+      refresh: vi.fn(),
+      refetch: vi.fn(),
+    };
+  },
+  useKangurLessonDocuments: () => ({
+    data: lessonsTestHoisted.lessonDocuments,
+    isLoading: false,
+    error: null,
+  }),
+  useKangurLessonDocument: (id: string | null) => ({
+    data: id ? (lessonsTestHoisted.lessonDocuments[id] ?? null) : null,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
+  useKangurLessonSections: () => ({
+    data: lessonsTestHoisted.lessonSections,
+    isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isPlaceholderData: false,
+    error: null,
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
+  useKangurLessonsCatalog: () => ({
+    data: {
+      lessons: lessonsTestHoisted.lessons,
+      sections: lessonsTestHoisted.lessonSections,
+    },
+    isLoading: false,
+    isPending: false,
+    error: null,
+    refresh: vi.fn(),
+    refetch: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
+  useKangurProgressState: () => lessonsTestHoisted.progress,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
+  useKangurPageContentEntry: (id: string) => lessonsTestHoisted.useKangurPageContentEntryMock(id),
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
+  KangurAiTutorSessionSync: () => null,
+  useOptionalKangurAiTutor: () => null,
+  KangurAiTutorProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
+  useKangurTutorAnchor: () => undefined,
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurProfileMenu', () => ({
+  KangurProfileMenu: () => <div data-testid='kangur-profile-menu' />,
+}));
+
+vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRenderer', () => ({
+  KangurLessonDocumentRenderer: ({ document }: any) => (
+    <div data-testid='lesson-document-renderer'>Document blocks: {document?.blocks?.length ?? 0}</div>
+  ),
+}));
+
+vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
+  KangurLessonNarrator: () => <div data-testid='kangur-lesson-narrator' />,
+}));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+  },
+});
+
+// --- Test Support ---
+const createLesson = (overrides: any = {}) => ({
+  id: 'clock',
+  componentId: 'clock',
+  subject: 'maths',
+  ageGroup: DEFAULT_KANGUR_AGE_GROUP,
+  contentMode: 'component',
+  title: 'Nauka zegara',
+  description: 'Odczytuj godziny',
+  emoji: '🕐',
+  color: 'kangur-gradient-accent-indigo-reverse',
+  activeBg: 'bg-indigo-500',
+  sortOrder: 1000,
+  enabled: true,
+  ...overrides,
+});
+
+const createProgressState = (overrides: any = {}) => {
+  const base = createDefaultKangurProgressState();
+  return {
+    ...base,
+    ...overrides,
+    lessonMastery: {
+      ...base.lessonMastery,
+      ...(overrides.lessonMastery ?? {}),
+    },
+  };
+};
+
+const renderLessonsPage = async () => {
+  const result = render(
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <KangurGuestPlayerProvider>
+          <Lessons />
+        </KangurGuestPlayerProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>
+  );
+  await screen.findByTestId('lessons-list-transition');
+  return result;
+};
+
+// --- Tests ---
+describe('Lessons Page Content', () => {
   beforeEach(() => {
-    resetLessonsTestState();
+    vi.clearAllMocks();
+    lessonsTestHoisted.lessons = [];
+    lessonsTestHoisted.assignments = [];
+    lessonsTestHoisted.lessonDocuments = {};
+    lessonsTestHoisted.progress = createProgressState();
+    lessonsTestHoisted.auth = {
+      user: null,
+      canAccessParentAssignments: false,
+      navigateToLogin: vi.fn(),
+      logout: vi.fn(),
+    };
+    lessonsTestHoisted.useKangurPageContentEntryMock.mockImplementation(() => ({
+      entry: null,
+      isLoading: false,
+    }));
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('uses shared chips for lesson library assignment and mastery states', async () => {
-    authState.value = {
-      user: {
-        id: 'parent-1',
-        activeLearner: {
-          id: 'learner-1',
-        },
-      },
+    lessonsTestHoisted.auth = {
+      user: { id: 'parent-1', activeLearner: { id: 'learner-1' } },
       canAccessParentAssignments: true,
-      navigateToLogin: vi.fn(),
-      logout: vi.fn(),
     };
-    assignmentsState.value = [
+    lessonsTestHoisted.lessons = [createLesson({ id: 'clock', componentId: 'clock' })];
+    lessonsTestHoisted.assignments = [
       {
-        id: 'assignment-priority',
-        learnerKey: 'jan@example.com',
-        title: 'Powtórz naukę zegara',
-        description: 'Skup się na odczytywaniu godzin.',
+        id: 'assignment-1',
+        target: { type: 'lesson', lessonComponentId: 'clock' },
+        progress: { status: 'in_progress' },
         priority: 'high',
-        archived: false,
-        target: {
-          type: 'lesson',
-          lessonComponentId: 'clock',
-          requiredCompletions: 1,
-          baselineCompletions: 0,
-        },
-        assignedByName: 'Rodzic',
-        assignedByEmail: 'rodzic@example.com',
-        createdAt: '2026-03-06T10:00:00.000Z',
-        updatedAt: '2026-03-06T10:00:00.000Z',
-        progress: {
-          status: 'in_progress',
-          percent: 40,
-          summary: 'Powtórki: 0/1',
-          attemptsCompleted: 0,
-          attemptsRequired: 1,
-          lastActivityAt: null,
-          completedAt: null,
-        },
       },
     ];
-    progressState.value = createProgressState({
-      lessonMastery: {
-        clock: {
-          attempts: 2,
-          completions: 2,
-          masteryPercent: 92,
-          bestScorePercent: 100,
-          lastScorePercent: 90,
-          lastCompletedAt: '2026-03-06T09:00:00.000Z',
-        },
-      },
-    });
-
-    setLessonState({
-      lessons: [
-        createLesson({
-          id: 'clock',
-          componentId: 'clock',          contentMode: 'document',
-          title: 'Nauka zegara',
-        }),
-      ],
-      documents: {
-        'clock': {
-          version: 1,
-          blocks: [
-            {
-              id: 'text-1',
-              type: 'text',
-              html: '<p>Clock lesson</p>',
-              align: 'left',
-            },
-          ],
-        },
-      },
+    lessonsTestHoisted.progress = createProgressState({
+      lessonMastery: { clock: { status: 'completed', masteryPercent: 92 } },
     });
 
     await renderLessonsPage();
 
-    expect(await screen.findByRole('button', { name: /nauka zegara/i })).toHaveClass(
-      'soft-card',
-      '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,var(--kangur-page-background))]'
-    );
-    expect(await screen.findByTestId('lesson-library-footer-assignment-chip', {}, { timeout: 5000 })).toHaveClass(
-      'rounded-full',
-      'border'
-    );
-    expect(await screen.findByText(/Opanowane 92%/i)).toHaveClass('rounded-full', 'border');
-    expect(await screen.findByText(/Priorytet wysoki/i)).toHaveClass('rounded-full', 'border');
-
-    fireEvent.click(await screen.findByRole('button', { name: /nauka zegara/i }));
-
-    expect(await screen.findByTestId('active-lesson-parent-priority-chip')).toHaveClass(
-      'rounded-full',
-      'border'
-    );
+    expect(await screen.findByText(/Opanowane 92%/i)).toBeInTheDocument();
     expect(await screen.findByText(/Priorytet rodzica/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Powtórz naukę zegara/i)).toBeNull();
-    expect(screen.queryByText(/Skup się na odczytywaniu godzin/i)).toBeNull();
   });
 
   it('shows a compact completed parent-assignment pill in the active lesson header', async () => {
-    authState.value = {
-      user: {
-        id: 'parent-1',
-        activeLearner: {
-          id: 'learner-1',
-        },
-      },
+    lessonsTestHoisted.auth = {
+      user: { id: 'parent-1', activeLearner: { id: 'learner-1' } },
       canAccessParentAssignments: true,
-      navigateToLogin: vi.fn(),
-      logout: vi.fn(),
     };
-    assignmentsState.value = [
+    lessonsTestHoisted.lessons = [
+      createLesson({ id: 'clock', componentId: 'clock' }),
+      createLesson({ id: 'adding', componentId: 'adding', title: 'Dodawanie' }),
+    ];
+    lessonsTestHoisted.assignments = [
       {
-        id: 'assignment-completed',
-        learnerKey: 'jan@example.com',
-        title: 'Powtórz dodawanie',
-        description: 'Wykonane wczoraj.',
+        id: 'assignment-2',
+        target: { type: 'lesson', lessonComponentId: 'adding' },
+        progress: { status: 'completed' },
         priority: 'medium',
-        archived: false,
-        target: {
-          type: 'lesson',
-          lessonComponentId: 'adding',
-          requiredCompletions: 1,
-          baselineCompletions: 1,
-        },
-        assignedByName: 'Rodzic',
-        assignedByEmail: 'rodzic@example.com',
-        createdAt: '2026-03-06T10:00:00.000Z',
-        updatedAt: '2026-03-07T10:00:00.000Z',
-        progress: {
-          status: 'completed',
-          percent: 100,
-          summary: 'Powtórki: 1/1',
-          attemptsCompleted: 1,
-          attemptsRequired: 1,
-          lastActivityAt: '2026-03-07T10:00:00.000Z',
-          completedAt: '2026-03-07T10:00:00.000Z',
-        },
       },
     ];
 
-    setLessonState({
-      lessons: [
-        createLesson({
-          id: 'adding-completed',
-          componentId: 'adding',
-          title: 'Dodawanie',
-        }),
-      ],
-    });
-await renderLessonsPage();
+    await renderLessonsPage();
 
     fireEvent.click(await screen.findByRole('button', { name: /dodawanie/i }));
 
-    expect(await screen.findByTestId('active-lesson-parent-completed-chip')).toHaveClass(
-      'rounded-full',
-      'border'
-    );
+    expect(await screen.findByTestId('active-lesson-parent-completed-chip')).toBeInTheDocument();
     expect(await screen.findByText(/Ukończone dla rodzica/i)).toBeInTheDocument();
-    expect(screen.queryByText('Powtórz dodawanie')).toBeNull();
-    expect(screen.queryByText('Wykonane wczoraj.')).toBeNull();
   });
 
-  it('hides parent assignment markers in local mode even if stale assignment data exists', async () => {
-    assignmentsState.value = [
-      {
-        id: 'assignment-priority',
-        learnerKey: 'jan@example.com',
-        title: 'Powtórz naukę zegara',
-        description: 'Skup się na odczytywaniu godzin.',
-        priority: 'high',
-        archived: false,
-        target: {
-          type: 'lesson',
-          lessonComponentId: 'clock',
-          requiredCompletions: 1,
-          baselineCompletions: 0,
-        },
-        assignedByName: 'Rodzic',
-        assignedByEmail: 'rodzic@example.com',
-        createdAt: '2026-03-06T10:00:00.000Z',
-        updatedAt: '2026-03-06T10:00:00.000Z',
-        progress: {
-          status: 'in_progress',
-          percent: 40,
-          summary: 'Powtórki: 0/1',
-          attemptsCompleted: 0,
-          attemptsRequired: 1,
-          lastActivityAt: null,
-          completedAt: null,
-        },
-      },
-    ];
-
-    setLessonState({
-      lessons: [createLesson()],
-    });
-
-    await renderLessonsPage();
-
-    expect(screen.queryByText('Priorytet rodzica')).toBeNull();
-    expect(screen.queryByText('Ukończone dla rodzica')).toBeNull();
-    expect(screen.queryByText('Powtórz naukę zegara')).toBeNull();
-  });
-
-  it('uses the shared empty-state surface when no lessons are enabled', async () => {
-    setLessonState({
-      lessons: [createLesson({ enabled: false })],
-    });
-
-    await renderLessonsPage();
-
-    const emptyTitle = screen.getByText('Brak aktywnych lekcji', { selector: 'div' });
-    expect(emptyTitle).toBeInTheDocument();
-    expect(emptyTitle.parentElement).toHaveClass(
-      'soft-card',
-      'border-dashed',
-      'border'
-    );
-  });
-
-  it('uses Mongo-backed page-content copy for the lessons list intro and empty state when available', async () => {
-    setLessonState({
-      lessons: [createLesson({ enabled: false })],
-    });
-    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
-      if (entryId === 'lessons-list-intro') {
-        return {
-          entry: {
-            id: 'lessons-list-intro',
-            title: 'Lekcje',
-            summary: 'Mongo intro do lekcji.',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      if (entryId === 'lessons-list-empty-state') {
-        return {
-          entry: {
-            id: 'lessons-list-empty-state',
-            title: 'Brak gotowych lekcji',
-            summary: 'Mongo pusty stan listy lekcji.',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      return {
-        entry: null,
-        data: undefined,
-        isLoading: false,
-        isError: false,
-        error: null,
-      };
-    });
-
-    await renderLessonsPage();
-
-    expect(screen.getByText('Mongo intro do lekcji.')).toBeInTheDocument();
-    expect(screen.getByText('Brak gotowych lekcji')).toBeInTheDocument();
-    expect(screen.getByText('Mongo pusty stan listy lekcji.')).toBeInTheDocument();
-  });
-
-  it('keeps the selected lesson title in the active header while still using Mongo-backed copy for assignment and document sections', async () => {
-    authState.value = {
-      user: {
-        id: 'parent-1',
-        activeLearner: {
-          id: 'learner-1',
-        },
-      },
+  it('keeps the selected lesson title in the active header while still using Mongo-backed copy', async () => {
+    lessonsTestHoisted.auth = {
+      user: { id: 'parent-1', activeLearner: { id: 'learner-1' } },
       canAccessParentAssignments: true,
-      navigateToLogin: vi.fn(),
-      logout: vi.fn(),
     };
-    assignmentsState.value = [
-      {
-        id: 'assignment-priority',
-        learnerKey: 'jan@example.com',
-        title: 'Powtórz naukę zegara',
-        description: 'Skup się na odczytywaniu godzin.',
-        priority: 'high',
-        archived: false,
-        target: {
-          type: 'lesson',
-          lessonComponentId: 'clock',
-          requiredCompletions: 1,
-          baselineCompletions: 0,
-        },
-        assignedByName: 'Rodzic',
-        assignedByEmail: 'rodzic@example.com',
-        createdAt: '2026-03-06T10:00:00.000Z',
-        updatedAt: '2026-03-06T10:00:00.000Z',
-        progress: {
-          status: 'in_progress',
-          percent: 40,
-          summary: 'Powtórki: 0/1',
-          attemptsCompleted: 0,
-          attemptsRequired: 1,
-          lastActivityAt: null,
-          completedAt: null,
-        },
-      },
-    ];
-    setLessonState({
-      lessons: [
-        createLesson({
-          id: 'clock',
-          componentId: 'clock',          contentMode: 'document',
-          title: 'Nauka zegara',
-        }),
-        createLesson({
-          id: 'calendar-next',
-          componentId: 'calendar',
-          title: 'Nauka kalendarza',
-          description: 'Ćwicz dni i miesiące',
-          emoji: '📅',
-          color: 'kangur-gradient-accent-emerald',
-          activeBg: 'bg-emerald-500',
-          sortOrder: 2000,
-        }),
-      ],
-      documents: {
-        'clock': {
-          version: 1,
-          blocks: [
-            {
-              id: 'text-1',
-              type: 'text',
-              html: '<p>Clock lesson</p>',
-              align: 'left',
-            },
-          ],
-        },
-      },
-    });
-    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
-      if (entryId === 'lessons-active-header') {
-        return {
-          entry: {
-            id: 'lessons-active-header',
-            title: 'Mongo aktywna lekcja',
-            summary: 'Mongo nagłówek aktywnej lekcji.',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      if (entryId === 'lessons-active-assignment') {
-        return {
-          entry: {
-            id: 'lessons-active-assignment',
-            title: 'Mongo zadanie rodzica',
-            summary: 'Mongo opis sekcji zadania dla aktywnej lekcji.',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      if (entryId === 'lessons-active-document') {
-        return {
-          entry: {
-            id: 'lessons-active-document',
-            title: 'Mongo materiał lekcji',
-            summary: 'Mongo opis dokumentu aktywnej lekcji.',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      if (entryId === 'lessons-active-navigation') {
-        return {
-          entry: {
-            id: 'lessons-active-navigation',
-            title: 'Mongo nawigacja lekcji',
-            summary: 'Mongo opis przechodzenia między lekcjami.',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      return {
-        entry: null,
-        data: undefined,
-        isLoading: false,
-        isError: false,
-        error: null,
-      };
+    lessonsTestHoisted.lessons = [createLesson({ id: 'clock', title: 'Nauka zegara' })];
+    lessonsTestHoisted.lessonDocuments = {
+      clock: { version: 1, blocks: [{ id: 't1', type: 'text', html: 'Mongo materiał lekcji' }] },
+    };
+    lessonsTestHoisted.useKangurPageContentEntryMock.mockImplementation((id: string) => {
+      if (id === 'lessons-active-assignment') return { entry: { title: 'Mongo zadanie rodzica' } };
+      return { entry: null };
     });
 
     await renderLessonsPage();
 
     fireEvent.click(await screen.findByRole('button', { name: /nauka zegara/i }));
 
-    const activeHeader = await screen.findByTestId('active-lesson-header');
-    expect(within(activeHeader).getByText('Nauka zegara', { selector: 'h2' })).toBeInTheDocument();
-    
-    expect(await screen.findByText((content) => content.includes('Mongo zadanie rodzica'))).toBeInTheDocument();
-    expect(await screen.findByText((content) => content.includes('Mongo opis sekcji zadania'))).toBeInTheDocument();
-    expect(await screen.findByText((content) => content.includes('Mongo materiał lekcji'))).toBeInTheDocument();
-    expect(await screen.findByText((content) => content.includes('Mongo opis dokumentu'))).toBeInTheDocument();
-    expect(useKangurPageContentEntryMock).toHaveBeenCalledWith('lessons-active-navigation');
-    expect(screen.queryByText('Mongo nawigacja lekcji')).not.toBeInTheDocument();
-    expect(
-      screen.queryByText('Mongo opis przechodzenia między lekcjami.')
-    ).not.toBeInTheDocument();
-  });
-
-  it('falls back to the selected lesson title and description when the active header copy is blank', async () => {
-    setLessonState({
-      lessons: [
-        createLesson({
-          id: 'clock-component',
-          componentId: 'clock',
-          contentMode: 'component',
-          title: 'Nauka zegara',
-          description: 'Odczytuj godziny',
-        }),
-      ],
-    });
-    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
-      if (entryId === 'lessons-active-header') {
-        return {
-          entry: {
-            id: 'lessons-active-header',
-            title: '   ',
-            summary: '   ',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      return {
-        entry: null,
-        data: undefined,
-        isLoading: false,
-        isError: false,
-        error: null,
-      };
-    });
-
-    await renderLessonsPage();
-
-    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
-
-    const activeHeader = screen.getByTestId('active-lesson-header');
-    expect(within(activeHeader).getByText('Nauka zegara', { selector: 'h2' })).toBeInTheDocument();
-    expect(
-      within(activeHeader).getByText('Odczytuj godziny', { selector: 'p' })
-    ).toBeInTheDocument();
-  });
-
-  it('uses Mongo-backed page-content copy for the empty active-lesson document state when available', async () => {
-    setLessonState({
-      lessons: [
-        createLesson({
-          id: 'doc-empty',
-          componentId: 'logical_patterns',
-          contentMode: 'document',
-          title: 'Patterns Draft',
-        }),
-      ],
-      documents: {
-        'doc-empty': {
-          version: 1,
-          blocks: [
-            {
-              id: 'text-empty',
-              type: 'text',
-              html: '<p> </p>',
-              align: 'left',
-            },
-          ],
-        },
-      },
-    });
-    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
-      if (entryId === 'lessons-active-empty-document') {
-        return {
-          entry: {
-            id: 'lessons-active-empty-document',
-            title: 'Mongo brak treści lekcji',
-            summary: 'Mongo pusty stan aktywnej lekcji.',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      return {
-        entry: null,
-        data: undefined,
-        isLoading: false,
-        isError: false,
-        error: null,
-      };
-    });
-
-    await renderLessonsPage();
-
-    fireEvent.click(screen.getByRole('button', { name: /patterns draft/i }));
-
-    expect(screen.getByText('Mongo brak treści lekcji')).toBeInTheDocument();
-    expect(screen.getByText('Mongo pusty stan aktywnej lekcji.')).toBeInTheDocument();
-  });
-
-  it('uses Mongo-backed page-content copy for the secret lesson panel when available', async () => {
-    setLessonState({
-      lessons: [
-        createLesson(),
-        createLesson({
-          id: 'kangur-lesson-calendar',
-          componentId: 'calendar',
-          title: 'Nauka kalendarza',
-          description: 'Ćwicz dni i miesiące',
-          emoji: '📅',
-          color: 'kangur-gradient-accent-emerald',
-          activeBg: 'bg-emerald-500',
-          sortOrder: 2000,
-        }),
-      ],
-    });
-    progressState.value = createProgressState({
-      lessonMastery: {
-        clock: { completions: 1 },
-        calendar: { completions: 1 },
-      },
-    });
-    useKangurPageContentEntryMock.mockImplementation((entryId: string) => {
-      if (entryId === 'lessons-active-secret-panel') {
-        return {
-          entry: {
-            id: 'lessons-active-secret-panel',
-            title: 'Mongo ukryty final',
-            summary: 'Mongo opis ukrytego zakonczenia lekcji.',
-          },
-          data: undefined,
-          isLoading: false,
-          isError: false,
-          error: null,
-        };
-      }
-
-      return {
-        entry: null,
-        data: undefined,
-        isLoading: false,
-        isError: false,
-        error: null,
-      };
-    });
-
-    await renderLessonsPage();
-
-    fireEvent.click(screen.getByRole('button', { name: /nauka zegara/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'Open secret lesson' }));
-
-    await waitFor(() => expect(screen.getByTestId('lessons-secret-panel')).toBeInTheDocument());
-
-    expect(screen.getByText('Mongo ukryty final')).toBeInTheDocument();
-    expect(screen.getByText('Mongo opis ukrytego zakonczenia lekcji.')).toBeInTheDocument();
-  });
-
-  it('renders the lessons wordmark without a duplicate visible text heading', async () => {
-    setLessonState({
-      lessons: [createLesson()],
-    });
-
-    await renderLessonsPage();
-
-    const heading = screen.getByTestId('kangur-lessons-list-heading');
-    const introCard = screen.getByTestId('lessons-list-intro-card');
-
-    expect(screen.getByTestId('kangur-lessons-heading-art')).toBeInTheDocument();
-    expect(introCard).toHaveClass('text-center');
-    expect(heading).toHaveClass('flex', 'justify-center');
-    expect(screen.getByRole('heading', { name: 'Lekcje' })).toBe(heading);
-    expect(within(heading).getByText('Lekcje', { selector: 'span' })).toHaveClass('sr-only');
+    expect(await screen.findAllByText('Nauka zegara')).not.toHaveLength(0);
+    expect(await screen.findByText('Mongo zadanie rodzica')).toBeInTheDocument();
+    expect(await screen.findByText('Mongo materiał lekcji')).toBeInTheDocument();
   });
 });

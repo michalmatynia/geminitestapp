@@ -14,6 +14,7 @@ import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingCont
 import { useKangurSubjectFocus } from '@/features/kangur/ui/context/KangurSubjectFocusContext';
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 import { useKangurLessons } from '@/features/kangur/ui/hooks/useKangurLessons';
+import { useKangurLessonsCatalog } from '@/features/kangur/ui/hooks/useKangurLessonsCatalog';
 import { useKangurLessonSections } from '@/features/kangur/ui/hooks/useKangurLessonSections';
 import { useKangurProgressState } from '@/features/kangur/ui/hooks/useKangurProgressState';
 import { useKangurMobileBreakpoint } from '@/features/kangur/ui/hooks/useKangurMobileBreakpoint';
@@ -41,6 +42,7 @@ import {
   LESSON_ASSIGNMENT_PRIORITY_ORDER,
 } from './Lessons.utils';
 
+const EMPTY_LESSONS: KangurLesson[] = [];
 const EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT = new Map<
   KangurLessonComponentId,
   KangurAssignmentSnapshot
@@ -196,7 +198,7 @@ export function useLessonsLogic() {
     shouldLoadCompleteLessonsCatalog || requestedLessonComponentIds.length === 0
       ? undefined
       : requestedLessonComponentIds;
-  const completeLessonsQuery = useKangurLessons({
+  const completeLessonsQuery = useKangurLessonsCatalog({
     subject,
     ageGroup,
     enabledOnly: true,
@@ -255,9 +257,9 @@ export function useLessonsLogic() {
     (): KangurLesson[] =>
       shouldExposeLessonCatalogDetails
         ? shouldLoadCompleteLessonsCatalog
-          ? completeLessonsQuery.data ?? []
+          ? completeLessonsQuery.data?.lessons ?? []
           : incrementalLessons
-        : [],
+        : EMPTY_LESSONS,
     [
       completeLessonsQuery.data,
       incrementalLessons,
@@ -393,11 +395,11 @@ export function useLessonsLogic() {
   }, [ageGroup, ensureLessonsCatalogLoaded, focusToken, lessonTemplateMap, subject]);
   const lessonAssignmentsByComponent = useMemo(() => {
     if (assignments.length === 0 || lessons.length === 0) {
+      console.log('DEBUG: lessonAssignmentsByComponent empty return', { assignmentsLength: assignments.length, lessonsLength: lessons.length });
       return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
     }
 
     const nextMap = new Map<string, (typeof assignments)[number]>();
-    // console.log('Building assignments map, assignments count:', assignments.length, 'lessons count:', lessons.length);
     assignments
       .filter(
         (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
@@ -405,7 +407,6 @@ export function useLessonsLogic() {
       )
       .forEach((assignment) => {
         const componentId = assignment.target.lessonComponentId;
-        // console.log('Mapping assignment to componentId:', componentId);
         const existing = nextMap.get(componentId);
         if (
           !existing ||
@@ -415,6 +416,7 @@ export function useLessonsLogic() {
           nextMap.set(componentId, assignment);
         }
       });
+    console.log('DEBUG: lessonAssignmentsByComponent computed', { size: nextMap.size, keys: Array.from(nextMap.keys()) });
     return nextMap;
   }, [assignments, isAssignmentsReady, lessons.length]);
 

@@ -1,182 +1,56 @@
 'use client';
 
-import type { CSSProperties, MutableRefObject } from 'react';
+import type { CSSProperties } from 'react';
 
 import { cn } from '@/features/kangur/shared/utils';
 
 import type {
-  ActiveKeyPressState,
   ActiveSynthGestureState,
-  KeyPulseState,
-  SynthPitchResolution,
 } from './KangurMusicPianoRoll.types';
-import type {
-  KangurMusicKeyboardMode,
-  KangurMusicPianoKeyDefinition,
-} from './music-theory';
 import {
   clamp,
   KANGUR_MUSIC_PIANO_ROLL_MOTION_CSS_VARIABLES,
   KANGUR_PIANO_ROLL_KEY_CLASSNAME,
   VIBRATO_DEAD_ZONE,
 } from './KangurMusicPianoRoll.utils';
+import { useKangurMusicPianoRollContext } from './KangurMusicPianoRoll.context';
 
-type KangurMusicPianoRollKeyboardRailProps<NoteId extends string> = {
-  activePressesRef: MutableRefObject<Map<NoteId, ActiveKeyPressState>>;
-  activeSynthGesture: ActiveSynthGestureState<NoteId> | null;
-  activeSynthGestures: ActiveSynthGestureState<NoteId>[];
-  activeSynthGesturesRef: MutableRefObject<Map<number, ActiveSynthGestureState<NoteId>>>;
-  activeTransportStep: { noteId: NoteId } | null;
-  expectedTransportStep: { noteId: NoteId } | null;
-  isCoarsePointer: boolean;
-  isCompactMobile: boolean;
-  isInteractive: boolean;
-  keyButtonRefs: MutableRefObject<Map<NoteId, HTMLButtonElement>>;
-  keyDefinitionById: Map<NoteId, KangurMusicPianoKeyDefinition<NoteId>>;
-  keys: readonly KangurMusicPianoKeyDefinition<NoteId>[];
-  keyTestIdPrefix: string;
-  pressedNoteId: NoteId | null;
-  pressedVelocity: number | null;
-  recentKeyPulses: Map<NoteId, KeyPulseState>;
-  resolvedKeyboardMode: KangurMusicKeyboardMode;
-  stepTestIdPrefix: string;
-  synthAxisAnchors: Array<{
-    key: KangurMusicPianoKeyDefinition<NoteId>;
-    normalizedPosition: number;
-  }>;
-  syncActiveSynthGestures: () => void;
-  onClearPress: (noteId: NoteId) => void;
-  onEndSynthGesture: (
-    gesture: ActiveSynthGestureState<NoteId>,
-    event: React.PointerEvent<HTMLButtonElement>,
-  ) => void;
-  onResolveGestureDynamics: (activePress: ActiveKeyPressState) => {
-    brightness: number;
-    velocity: number;
-  };
-  onResolveSynthGestureDetails: (input: {
-    anchorSemitonePosition: number;
-    brightness: number;
-    frequencyHz: number;
-    interactionId: string;
-    nearestSemitonePosition: number;
-    noteId: NoteId;
-    normalizedHorizontalPosition: number;
-    pitchSemitonePosition: number;
-    previousVibratoDepth?: number;
-    pointerType: 'keyboard' | 'mouse' | 'pen' | 'touch';
-    velocity: number;
-    normalizedVerticalPosition: number;
-  }) => {
-    brightness: number;
-    frequencyHz: number;
-    interactionId: string;
-    keyboardMode: KangurMusicKeyboardMode;
-    noteId: NoteId;
-    normalizedHorizontalPosition: number;
-    normalizedVerticalPosition: number;
-    pitchCentsFromKey: number;
-    pitchSemitoneOffset: number;
-    pointerType: 'keyboard' | 'mouse' | 'pen' | 'touch';
-    stereoPan: number;
-    velocity: number;
-    vibratoDepth: number;
-    vibratoRateHz: number;
-  };
-  onResolveSynthPitchAtPoint: (input: {
-    clientX: number;
-    fallbackKey: KangurMusicPianoKeyDefinition<NoteId>;
-    fallbackRect: DOMRect;
-    pointerType?: 'keyboard' | 'mouse' | 'pen' | 'touch';
-    preferredNoteId?: NoteId;
-  }) => SynthPitchResolution<NoteId>;
-  onResolveVerticalPosition: (clientY: number, rect: DOMRect) => number;
-  onStartPress: (
-    noteId: NoteId,
-    pointerType: 'keyboard' | 'mouse' | 'pen' | 'touch',
-    event?: React.PointerEvent<HTMLButtonElement>,
-  ) => void;
-  onSynthGestureChange?: (details: {
-    brightness: number;
-    frequencyHz: number;
-    interactionId: string;
-    keyboardMode: KangurMusicKeyboardMode;
-    noteId: NoteId;
-    normalizedHorizontalPosition: number;
-    normalizedVerticalPosition: number;
-    pitchCentsFromKey: number;
-    pitchSemitoneOffset: number;
-    pointerType: 'keyboard' | 'mouse' | 'pen' | 'touch';
-    stereoPan: number;
-    velocity: number;
-    vibratoDepth: number;
-    vibratoRateHz: number;
-  }) => void;
-  onSynthGestureStart?: (details: {
-    brightness: number;
-    frequencyHz: number;
-    interactionId: string;
-    keyboardMode: KangurMusicKeyboardMode;
-    noteId: NoteId;
-    normalizedHorizontalPosition: number;
-    normalizedVerticalPosition: number;
-    pitchCentsFromKey: number;
-    pitchSemitoneOffset: number;
-    pointerType: 'keyboard' | 'mouse' | 'pen' | 'touch';
-    stereoPan: number;
-    velocity: number;
-    vibratoDepth: number;
-    vibratoRateHz: number;
-  }) => void;
-  onTriggerKeyPulse: (noteId: NoteId, energy: number, phase: 'glide' | 'press') => void;
-  onTriggerPress: (
-    noteId: NoteId,
-    options?: {
-      interactionId?: string | null;
-      keepPressActive?: boolean;
-      pointerType?: 'keyboard' | 'mouse' | 'pen' | 'touch';
-    },
-  ) => { brightness: number; velocity: number } | null;
-  onUpdatePressFromPointerEvent: (
-    noteId: NoteId,
-    event: React.PointerEvent<HTMLButtonElement>,
-  ) => ActiveKeyPressState | null;
-};
+export function KangurMusicPianoRollKeyboardRail(): React.JSX.Element {
+  const {
+    activePressesRef,
+    activeSynthGesture,
+    activeSynthGestures,
+    activeSynthGesturesRef,
+    activeTransportStep,
+    expectedTransportStep,
+    isCoarsePointer,
+    isCompactMobile,
+    isInteractive,
+    keyButtonRefs,
+    keyDefinitionById,
+    keys,
+    keyTestIdPrefix,
+    pressedNoteId,
+    pressedVelocity,
+    recentKeyPulses,
+    resolvedKeyboardMode,
+    stepTestIdPrefix,
+    synthAxisAnchors,
+    syncActiveSynthGestures,
+    onClearPress,
+    onEndSynthGesture,
+    onResolveGestureDynamics,
+    onResolveSynthGestureDetails,
+    onResolveSynthPitchAtPoint,
+    onResolveVerticalPosition,
+    onStartPress,
+    onSynthGestureChange,
+    onSynthGestureStart,
+    onTriggerKeyPulse,
+    onTriggerPress,
+    onUpdatePressFromPointerEvent,
+  } = useKangurMusicPianoRollContext();
 
-export function KangurMusicPianoRollKeyboardRail<NoteId extends string>({
-  activePressesRef,
-  activeSynthGesture,
-  activeSynthGestures,
-  activeSynthGesturesRef,
-  activeTransportStep,
-  expectedTransportStep,
-  isCoarsePointer,
-  isCompactMobile,
-  isInteractive,
-  keyButtonRefs,
-  keyDefinitionById,
-  keys,
-  keyTestIdPrefix,
-  pressedNoteId,
-  pressedVelocity,
-  recentKeyPulses,
-  resolvedKeyboardMode,
-  stepTestIdPrefix,
-  synthAxisAnchors,
-  syncActiveSynthGestures,
-  onClearPress,
-  onEndSynthGesture,
-  onResolveGestureDynamics,
-  onResolveSynthGestureDetails,
-  onResolveSynthPitchAtPoint,
-  onResolveVerticalPosition,
-  onStartPress,
-  onSynthGestureChange,
-  onSynthGestureStart,
-  onTriggerKeyPulse,
-  onTriggerPress,
-  onUpdatePressFromPointerEvent,
-}: KangurMusicPianoRollKeyboardRailProps<NoteId>): React.JSX.Element {
   return (
     <div
       className={cn(
@@ -441,7 +315,7 @@ export function KangurMusicPianoRollKeyboardRail<NoteId extends string>({
                   pointerType,
                   velocity: pressDetails.velocity,
                 });
-                const nextGesture: ActiveSynthGestureState<NoteId> = {
+                const nextGesture: ActiveSynthGestureState<string> = {
                   anchorSemitonePosition: pitchResolution.pitchSemitonePosition,
                   ...synthDetails,
                   keyRect,
@@ -498,7 +372,7 @@ export function KangurMusicPianoRollKeyboardRail<NoteId extends string>({
                   pointerType: gesture.pointerType,
                   velocity: Number(clamp(gesture.velocity * 0.42 + liveDynamics.velocity * 0.58, 0.24, 1).toFixed(2)),
                 });
-                const nextGesture: ActiveSynthGestureState<NoteId> = {
+                const nextGesture: ActiveSynthGestureState<string> = {
                   anchorSemitonePosition: gesture.anchorSemitonePosition,
                   ...synthDetails,
                   keyRect: targetKeyRect,
@@ -539,7 +413,7 @@ export function KangurMusicPianoRollKeyboardRail<NoteId extends string>({
                     updatedPress === null
                       ? { brightness: gesture.brightness, velocity: gesture.velocity }
                       : onResolveGestureDynamics(updatedPress);
-                  const finalGesture: ActiveSynthGestureState<NoteId> = {
+                  const finalGesture: ActiveSynthGestureState<string> = {
                     anchorSemitonePosition: gesture.anchorSemitonePosition,
                     ...onResolveSynthGestureDetails({
                       anchorSemitonePosition: gesture.anchorSemitonePosition,

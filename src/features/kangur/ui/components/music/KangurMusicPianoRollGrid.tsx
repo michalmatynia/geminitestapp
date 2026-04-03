@@ -1,53 +1,15 @@
-import type { MutableRefObject } from 'react';
+'use client';
 
 import { cn } from '@/features/kangur/shared/utils';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 
 import type {
-  ResolvedPianoRollStep,
-  ActiveSynthGestureState,
-} from './KangurMusicPianoRoll.types';
-import type {
-  KangurMusicKeyboardMode,
-  KangurMusicPianoKeyDefinition,
   KangurMusicSynthGlideMode,
   KangurMusicSynthWaveform,
 } from './music-theory';
 import { KANGUR_MUSIC_SYNTH_GLIDE_MODE_LABELS, KANGUR_MUSIC_SYNTH_WAVEFORM_LABELS } from './music-theory';
 import { KangurMusicWaveformIcon } from './music-waveform-icons';
-
-type KangurMusicPianoRollGridProps<NoteId extends string> = {
-  activeStepIndex: number | null;
-  activeSynthGesture: ActiveSynthGestureState<NoteId> | null;
-  activeSynthGestureCount: number;
-  activeSynthPanLabel: string | null;
-  activeSynthPitchDetuneLabel: string;
-  activeSynthPitchKey: KangurMusicPianoKeyDefinition<NoteId> | null;
-  activeSynthPitchPercent: number | null;
-  activeTransportStep: ResolvedPianoRollStep<NoteId> | null;
-  currentCursorStep: ResolvedPianoRollStep<NoteId> | null;
-  expectedStepIndex: number | null;
-  expectedTransportStep: ResolvedPianoRollStep<NoteId> | null;
-  isCompactMobile: boolean;
-  isFreePlayMode: boolean;
-  isSixYearOldVisualMode: boolean;
-  laneKeys: readonly KangurMusicPianoKeyDefinition<NoteId>[];
-  measureCount: number;
-  resolvedCompletedCount: number;
-  resolvedKeyboardMode: KangurMusicKeyboardMode;
-  resolvedLaneHeightPx: number;
-  resolvedMelody: readonly ResolvedPianoRollStep<NoteId>[];
-  resolvedMinStepWidthPx: number;
-  resolvedShowLaneLabels: boolean;
-  resolvedShowMeasureGuides: boolean;
-  resolvedStepCount: number;
-  resolvedSynthGlideMode: KangurMusicSynthGlideMode;
-  resolvedSynthWaveform: KangurMusicSynthWaveform;
-  resolvedUnitsPerMeasure: number;
-  shouldShowTransportRail: boolean;
-  stepElementRefs: MutableRefObject<Map<number, HTMLDivElement>>;
-  stepTestIdPrefix: string;
-};
+import { useKangurMusicPianoRollContext } from './KangurMusicPianoRoll.context';
 
 const renderMusicKeyboardModeCue = ({
   icon,
@@ -106,38 +68,41 @@ const renderMusicTransportWaveformCue = ({
   />
 );
 
-export function KangurMusicPianoRollGrid<NoteId extends string>({
-  activeStepIndex,
-  activeSynthGesture,
-  activeSynthGestureCount,
-  activeSynthPanLabel,
-  activeSynthPitchDetuneLabel,
-  activeSynthPitchKey,
-  activeSynthPitchPercent,
-  activeTransportStep,
-  currentCursorStep,
-  expectedStepIndex,
-  expectedTransportStep,
-  isCompactMobile,
-  isFreePlayMode,
-  isSixYearOldVisualMode,
-  laneKeys,
-  measureCount,
-  resolvedCompletedCount,
-  resolvedKeyboardMode,
-  resolvedLaneHeightPx,
-  resolvedMelody,
-  resolvedMinStepWidthPx,
-  resolvedShowLaneLabels,
-  resolvedShowMeasureGuides,
-  resolvedStepCount,
-  resolvedSynthGlideMode,
-  resolvedSynthWaveform,
-  resolvedUnitsPerMeasure,
-  shouldShowTransportRail,
-  stepElementRefs,
-  stepTestIdPrefix,
-}: KangurMusicPianoRollGridProps<NoteId>): React.JSX.Element {
+export function KangurMusicPianoRollGrid(): React.JSX.Element {
+  const {
+    activeStepIndex,
+    activeSynthGesture,
+    activeSynthGestureCount,
+    activeTransportStep,
+    currentCursorStep,
+    expectedStepIndex,
+    expectedTransportStep,
+    isCompactMobile,
+    isFreePlayMode,
+    isSixYearOldVisualMode,
+    laneKeys,
+    measureCount,
+    resolvedCompletedCount,
+    resolvedKeyboardMode,
+    resolvedLaneHeightPx,
+    resolvedMelody,
+    resolvedMinStepWidthPx,
+    resolvedShowLaneLabels,
+    resolvedShowMeasureGuides,
+    resolvedStepCount,
+    resolvedSynthGlideMode,
+    resolvedSynthWaveform,
+    resolvedUnitsPerMeasure,
+    shouldShowTransportRail,
+    stepElementRefs,
+    stepTestIdPrefix,
+  } = useKangurMusicPianoRollContext();
+
+  const activeSynthPanLabel = activeSynthGesture ? (activeSynthGesture.stereoPan === 0 ? 'C' : activeSynthGesture.stereoPan < 0 ? `L${Math.round(Math.abs(activeSynthGesture.stereoPan) * 100)}` : `R${Math.round(activeSynthGesture.stereoPan * 100)}`) : null;
+  const activeSynthPitchDetuneLabel = activeSynthGesture ? (activeSynthGesture.pitchCentsFromKey === 0 ? '' : activeSynthGesture.pitchCentsFromKey > 0 ? `+${activeSynthGesture.pitchCentsFromKey}c` : `${activeSynthGesture.pitchCentsFromKey}c`) : '';
+  const activeSynthPitchKey = activeSynthGesture ? (laneKeys.find(k => k.id === activeSynthGesture.noteId) ?? null) : null;
+  const activeSynthPitchPercent = activeSynthGesture ? Math.round(activeSynthGesture.normalizedHorizontalPosition * 100) : null;
+
   const transportModeIconTestId = `${stepTestIdPrefix}-transport-mode-icon`;
   const transportGlideModeDetailTestId = `${stepTestIdPrefix}-transport-glide-mode-detail`;
   const transportGlideModeIconTestId = `${stepTestIdPrefix}-transport-glide-mode-icon`;

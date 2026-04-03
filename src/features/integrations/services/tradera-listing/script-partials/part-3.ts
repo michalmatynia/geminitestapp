@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 export const PART_3 = `        expectedValue,
         currentValue,
       });
@@ -59,7 +60,7 @@ export const PART_3 = `        expectedValue,
         .first();
       const searchButtonVisible = await searchButton.isVisible().catch(() => false);
       if (!searchButtonVisible) continue;
-      await searchButton.click();
+      await humanClick(searchButton);
       await wait(500);
       searchInput = await findScopedSearchInput();
       if (searchInput) {
@@ -73,12 +74,12 @@ export const PART_3 = `        expectedValue,
   const triggerActiveSearchSubmit = async () => {
     const submitButton = await firstVisible(ACTIVE_SEARCH_SUBMIT_SELECTORS);
     if (submitButton) {
-      await submitButton.click().catch(() => undefined);
+      await humanClick(submitButton).catch(() => undefined);
       await wait(500);
       return 'button';
     }
 
-    await page.keyboard.press('Enter').catch(() => undefined);
+    await humanPress('Enter', { pauseBefore: false, pauseAfter: false }).catch(() => undefined);
     await wait(500);
     return 'enter';
   };
@@ -137,7 +138,7 @@ export const PART_3 = `        expectedValue,
       return false;
     }
 
-    await activeTabTrigger.click().catch(() => undefined);
+    await humanClick(activeTabTrigger).catch(() => undefined);
     await wait(700);
 
     const afterClickUrl = page.url().toLowerCase();
@@ -151,7 +152,7 @@ export const PART_3 = `        expectedValue,
     const candidate = page.getByRole('menuitem', { name: new RegExp('^' + normalizedNamePattern + '\$', 'i') }).first();
     const visible = await candidate.isVisible().catch(() => false);
     if (visible) {
-      await candidate.click();
+      await humanClick(candidate);
       await wait(400);
       return true;
     }
@@ -163,7 +164,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const menuItemRadioVisible = await menuItemRadioCandidate.isVisible().catch(() => false);
     if (menuItemRadioVisible) {
-      await menuItemRadioCandidate.click();
+      await humanClick(menuItemRadioCandidate);
       await wait(400);
       return true;
     }
@@ -175,7 +176,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const optionVisible = await optionCandidate.isVisible().catch(() => false);
     if (optionVisible) {
-      await optionCandidate.click();
+      await humanClick(optionCandidate);
       await wait(400);
       return true;
     }
@@ -187,7 +188,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const radioVisible = await radioCandidate.isVisible().catch(() => false);
     if (radioVisible) {
-      await radioCandidate.click();
+      await humanClick(radioCandidate);
       await wait(400);
       return true;
     }
@@ -197,7 +198,7 @@ export const PART_3 = `        expectedValue,
     }).first();
     const linkVisible = await linkCandidate.isVisible().catch(() => false);
     if (linkVisible) {
-      await linkCandidate.click();
+      await humanClick(linkCandidate);
       await wait(400);
       return true;
     }
@@ -209,7 +210,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const partialMenuItemVisible = await partialMenuItemCandidate.isVisible().catch(() => false);
     if (partialMenuItemVisible) {
-      await partialMenuItemCandidate.click();
+      await humanClick(partialMenuItemCandidate);
       await wait(400);
       return true;
     }
@@ -223,7 +224,7 @@ export const PART_3 = `        expectedValue,
       .isVisible()
       .catch(() => false);
     if (partialMenuItemRadioVisible) {
-      await partialMenuItemRadioCandidate.click();
+      await humanClick(partialMenuItemRadioCandidate);
       await wait(400);
       return true;
     }
@@ -235,7 +236,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const partialOptionVisible = await partialOptionCandidate.isVisible().catch(() => false);
     if (partialOptionVisible) {
-      await partialOptionCandidate.click();
+      await humanClick(partialOptionCandidate);
       await wait(400);
       return true;
     }
@@ -247,7 +248,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const partialRadioVisible = await partialRadioCandidate.isVisible().catch(() => false);
     if (partialRadioVisible) {
-      await partialRadioCandidate.click();
+      await humanClick(partialRadioCandidate);
       await wait(400);
       return true;
     }
@@ -259,7 +260,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const partialLinkVisible = await partialLinkCandidate.isVisible().catch(() => false);
     if (partialLinkVisible) {
-      await partialLinkCandidate.click();
+      await humanClick(partialLinkCandidate);
       await wait(400);
       return true;
     }
@@ -269,7 +270,7 @@ export const PART_3 = `        expectedValue,
     }).first();
     const buttonVisible = await buttonCandidate.isVisible().catch(() => false);
     if (buttonVisible) {
-      await buttonCandidate.click();
+      await humanClick(buttonCandidate);
       await wait(400);
       return true;
     }
@@ -281,7 +282,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const partialButtonVisible = await partialButtonCandidate.isVisible().catch(() => false);
     if (partialButtonVisible) {
-      await partialButtonCandidate.click();
+      await humanClick(partialButtonCandidate);
       await wait(400);
       return true;
     }
@@ -295,7 +296,7 @@ export const PART_3 = `        expectedValue,
       .first();
     const fallbackVisible = await textFallback.isVisible().catch(() => false);
     if (!fallbackVisible) return false;
-    await textFallback.click().catch(() => undefined);
+    await humanClick(textFallback).catch(() => undefined);
     await wait(400);
     return true;
   };
@@ -377,7 +378,7 @@ export const PART_3 = `        expectedValue,
       throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
     }
 
-    await categoryTrigger.click().catch(() => undefined);
+    await humanClick(categoryTrigger).catch(() => undefined);
     await wait(400);
 
     let selectedDepth = 0;

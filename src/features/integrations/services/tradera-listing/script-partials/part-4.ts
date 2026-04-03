@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 export const PART_4 = `          );
         }
         break;
@@ -22,7 +23,7 @@ export const PART_4 = `          );
       throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
     }
 
-    await categoryTrigger.click().catch(() => undefined);
+    await humanClick(categoryTrigger).catch(() => undefined);
     await wait(400);
 
     for (const segment of segments) {
@@ -74,7 +75,7 @@ export const PART_4 = `          );
       return false;
     }
 
-    await trigger.click().catch(() => undefined);
+    await humanClick(trigger).catch(() => undefined);
     await wait(400);
 
     for (const optionLabel of optionLabels) {
@@ -84,7 +85,9 @@ export const PART_4 = `          );
       return true;
     }
 
-    await page.keyboard.press('Escape').catch(() => undefined);
+    await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+      () => undefined
+    );
     log?.('tradera.quicklist.field.unresolved', {
       field: fieldKey,
       options: optionLabels,
@@ -111,7 +114,7 @@ export const PART_4 = `          );
       throw new Error('FAIL_PRICE_SET: Listing format selector not found.');
     }
 
-    await listingFormatTrigger.click().catch(() => undefined);
+    await humanClick(listingFormatTrigger).catch(() => undefined);
     await wait(400);
 
     for (const optionLabel of BUY_NOW_OPTION_LABELS) {
@@ -197,7 +200,7 @@ export const PART_4 = `          );
 
     const clickContinueButton = async (button) => {
       await button.scrollIntoViewIfNeeded().catch(() => undefined);
-      await button.click().catch(() => undefined);
+      await humanClick(button).catch(() => undefined);
       await wait(400);
 
       const stillVisible = await button.isVisible().catch(() => false);
@@ -343,7 +346,7 @@ export const PART_4 = `          );
           const visible = await candidate.isVisible().catch(() => false);
           if (!visible) continue;
           await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
-          await candidate.click().catch(() => undefined);
+          await humanClick(candidate).catch(() => undefined);
           removedCount += 1;
           removedInAttempt = true;
           await wait(500);
@@ -379,8 +382,7 @@ export const PART_4 = `          );
       throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings search input not found.');
     }
 
-    await searchInput.fill('');
-    await searchInput.fill(term);
+    await humanFill(searchInput, term, { pauseAfter: false });
     const searchTrigger = await triggerActiveSearchSubmit();
     log?.('tradera.quicklist.duplicate.search', { term, searchTrigger });
     await wait(1200);

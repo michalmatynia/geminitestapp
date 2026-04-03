@@ -1,14 +1,8 @@
+import { PlaywrightCaptureRoute } from '@/shared/contracts/playwright';
+
 import { KANGUR_BASE_PATH, KANGUR_PAGE_TO_SLUG } from '@/features/kangur/config/routing';
 
-export type KangurSocialCapturePreset = {
-  id: string;
-  title: string;
-  path: string;
-  description?: string;
-  selector?: string;
-  waitForMs?: number;
-  waitForSelectorMs?: number;
-};
+export type KangurSocialCapturePreset = PlaywrightCaptureRoute;
 
 const buildPath = (slug: string): string => `${KANGUR_BASE_PATH}/${slug}`;
 const buildGameScreenPath = (screen: string): string =>
@@ -20,6 +14,9 @@ export const KANGUR_SOCIAL_CAPTURE_PRESETS: KangurSocialCapturePreset[] = [
     title: 'Kangur Game Home',
     path: buildPath(KANGUR_PAGE_TO_SLUG['Game'] ?? 'game'),
     description: 'Learner home and quick-start hub.',
+    selector: null,
+    waitForMs: null,
+    waitForSelectorMs: null,
   },
   {
     id: 'clock-quiz',
@@ -53,35 +50,53 @@ export const KANGUR_SOCIAL_CAPTURE_PRESETS: KangurSocialCapturePreset[] = [
     title: 'Lessons Library',
     path: buildPath(KANGUR_PAGE_TO_SLUG['Lessons'] ?? 'lessons'),
     description: 'Lesson catalog and progress overview.',
+    selector: null,
+    waitForMs: null,
+    waitForSelectorMs: null,
   },
   {
     id: 'tests',
     title: 'Tests & Exams',
     path: buildPath(KANGUR_PAGE_TO_SLUG['Tests'] ?? 'tests'),
     description: 'Kangur test suites and exam prep.',
+    selector: null,
+    waitForMs: null,
+    waitForSelectorMs: null,
   },
   {
     id: 'profile',
     title: 'Learner Profile',
     path: buildPath(KANGUR_PAGE_TO_SLUG['LearnerProfile'] ?? 'profile'),
     description: 'Progress, streaks, and recommendations.',
+    selector: null,
+    waitForMs: null,
+    waitForSelectorMs: null,
   },
   {
     id: 'parent-dashboard',
     title: 'Parent Dashboard',
     path: buildPath(KANGUR_PAGE_TO_SLUG['ParentDashboard'] ?? 'parent-dashboard'),
     description: 'Parent monitoring and assignments.',
+    selector: null,
+    waitForMs: null,
+    waitForSelectorMs: null,
   },
   {
     id: 'duels',
     title: 'Duels Lobby',
     path: buildPath(KANGUR_PAGE_TO_SLUG['Duels'] ?? 'duels'),
     description: 'Multiplayer lobby and duels entry.',
+    selector: null,
+    waitForMs: null,
+    waitForSelectorMs: null,
   },
   {
     id: 'social-updates',
     title: 'Social Updates',
     path: buildPath(KANGUR_PAGE_TO_SLUG['SocialUpdates'] ?? 'social-updates'),
     description: 'Latest Kangur update stream.',
+    selector: null,
+    waitForMs: null,
+    waitForSelectorMs: null,
   },
 ];

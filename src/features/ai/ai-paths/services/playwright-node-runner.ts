@@ -54,6 +54,45 @@ const safeStringify = (value: unknown): string => {
   }
 };
 
+type PlaywrightHelperTarget = {
+  scrollIntoViewIfNeeded?: (() => Promise<unknown> | unknown) | undefined;
+  click?: ((options?: Record<string, unknown>) => Promise<unknown> | unknown) | undefined;
+  boundingBox?:
+    | (() =>
+        | Promise<{ x: number; y: number; width: number; height: number } | null>
+        | { x: number; y: number; width: number; height: number }
+        | null)
+    | undefined;
+};
+
+const normalizeDelayRange = (min: number, max: number): { min: number; max: number } => {
+  const safeMin = Math.max(0, Math.trunc(Number.isFinite(min) ? min : 0));
+  const safeMax = Math.max(0, Math.trunc(Number.isFinite(max) ? max : 0));
+  return {
+    min: Math.min(safeMin, safeMax),
+    max: Math.max(safeMin, safeMax),
+  };
+};
+
+const pickDelayInRange = (min: number, max: number): number => {
+  const normalized = normalizeDelayRange(min, max);
+  if (normalized.min === normalized.max) {
+    return normalized.min;
+  }
+  return normalized.min + Math.floor(Math.random() * (normalized.max - normalized.min + 1));
+};
+
+const pickSignedOffset = (magnitude: number): number => {
+  const safeMagnitude = Math.max(0, Math.trunc(Number.isFinite(magnitude) ? magnitude : 0));
+  if (safeMagnitude === 0) {
+    return 0;
+  }
+  return Math.floor(Math.random() * (safeMagnitude * 2 + 1)) - safeMagnitude;
+};
+
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
+
 const resolveRunStatePath = (runId: string): string => path.join(RUN_ROOT_DIR, `${runId}.json`);
 
 const resolveRunArtifactsDir = (runId: string): string => path.join(RUN_ROOT_DIR, runId);
@@ -780,6 +819,120 @@ const executePlaywrightNodeRun = async (
       inlineArtifacts: [...inlineArtifacts],
     });
     const userScript = parseUserScript(request.script, logs);
+    const sleep = async (ms: number): Promise<void> => {
+      const safeMs = Math.max(0, Math.trunc(ms));
+      await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
+    };
+    const pauseForRange = async (min: number, max: number): Promise<number> => {
+      const delayMs = pickDelayInRange(min, max);
+      if (delayMs > 0) {
+        await sleep(delayMs);
+      }
+      return delayMs;
+    };
+    const pauseForAction = async (): Promise<number> =>
+      pauseForRange(effectiveSettings.actionDelayMin, effectiveSettings.actionDelayMax);
+    const typeText = async (
+      value: string,
+      options?: {
+        delayMs?: number | null;
+        typeOptions?: Record<string, unknown>;
+      }
+    ): Promise<void> => {
+      if (!page?.keyboard?.type) {
+        throw new Error('Playwright keyboard.type is not available.');
+      }
+      const typeOptions = { ...(options?.typeOptions ?? {}) };
+      const delayMs =
+        options?.delayMs == null
+          ? pickDelayInRange(effectiveSettings.inputDelayMin, effectiveSettings.inputDelayMax)
+          : Math.max(0, Math.trunc(options.delayMs));
+      if (delayMs > 0 && typeOptions['delay'] === undefined) {
+        typeOptions['delay'] = delayMs;
+      }
+      await page.keyboard.type(value, typeOptions);
+    };
+    const pressKey = async (
+      key: string,
+      options?: {
+        delayMs?: number | null;
+        pressOptions?: Record<string, unknown>;
+      }
+    ): Promise<void> => {
+      if (!page?.keyboard?.press) {
+        throw new Error('Playwright keyboard.press is not available.');
+      }
+      const pressOptions = { ...(options?.pressOptions ?? {}) };
+      const delayMs =
+        options?.delayMs == null
+          ? pickDelayInRange(effectiveSettings.inputDelayMin, effectiveSettings.inputDelayMax)
+          : Math.max(0, Math.trunc(options.delayMs));
+      if (delayMs > 0 && pressOptions['delay'] === undefined) {
+        pressOptions['delay'] = delayMs;
+      }
+      await page.keyboard.press(key, pressOptions);
+    };
+    const moveMouseToTarget = async (target: PlaywrightHelperTarget): Promise<boolean> => {
+      if (!effectiveSettings.humanizeMouse || !page?.mouse || typeof target?.boundingBox !== 'function') {
+        return false;
+      }
+      const box = await Promise.resolve(target.boundingBox()).catch(() => null);
+      if (
+        !box ||
+        !Number.isFinite(box.x) ||
+        !Number.isFinite(box.y) ||
+        !Number.isFinite(box.width) ||
+        !Number.isFinite(box.height)
+      ) {
+        return false;
+      }
+      const jitter = Math.max(0, Math.trunc(effectiveSettings.mouseJitter));
+      const safeWidth = Math.max(2, box.width);
+      const safeHeight = Math.max(2, box.height);
+      const centerX = box.x + safeWidth / 2;
+      const centerY = box.y + safeHeight / 2;
+      const offsetX = pickSignedOffset(jitter);
+      const offsetY = pickSignedOffset(jitter);
+      const targetX = clampNumber(centerX + offsetX, box.x + 1, box.x + safeWidth - 1);
+      const targetY = clampNumber(centerY + offsetY, box.y + 1, box.y + safeHeight - 1);
+      const steps = Math.max(6, Math.min(24, 8 + jitter));
+      await page.mouse.move(targetX, targetY, { steps });
+      return true;
+    };
+    const focusTarget = async (
+      target: PlaywrightHelperTarget,
+      options?: {
+        scroll?: boolean;
+        clickDelayMs?: number | null;
+        clickOptions?: Record<string, unknown>;
+      }
+    ): Promise<boolean> => {
+      if (!target) {
+        throw new Error('Playwright helper target is required.');
+      }
+      if (options?.scroll !== false && typeof target.scrollIntoViewIfNeeded === 'function') {
+        await Promise.resolve(target.scrollIntoViewIfNeeded()).catch(() => undefined);
+      }
+      await moveMouseToTarget(target).catch(() => false);
+      if (typeof target.click !== 'function') {
+        return false;
+      }
+      const clickOptions = { ...(options?.clickOptions ?? {}) };
+      const clickDelay =
+        options?.clickDelayMs == null
+          ? pickDelayInRange(effectiveSettings.clickDelayMin, effectiveSettings.clickDelayMax)
+          : Math.max(0, Math.trunc(options.clickDelayMs));
+      if (clickDelay > 0 && clickOptions['delay'] === undefined) {
+        clickOptions['delay'] = clickDelay;
+      }
+      await Promise.resolve(target.click(clickOptions));
+      return true;
+    };
+    const clearFocusedField = async (): Promise<void> => {
+      await pressKey('ControlOrMeta+A', { delayMs: 0 });
+      await pressKey('Delete', { delayMs: 0 });
+      await pressKey('Backspace', { delayMs: 0 });
+    };
     const userContext = {
       browser,
       context,
@@ -864,9 +1017,104 @@ const executePlaywrightNodeRun = async (
         logs.push(`[user] ${args.map(safeStringify).join(' ')}`);
       },
       helpers: {
-        sleep: async (ms: number): Promise<void> => {
-          const safeMs = Math.max(0, Math.trunc(ms));
-          await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
+        sleep,
+        actionPause: async (): Promise<number> => pauseForAction(),
+        click: async (
+          target: PlaywrightHelperTarget,
+          options?: {
+            scroll?: boolean;
+            pauseBefore?: boolean;
+            pauseAfter?: boolean;
+            delayMs?: number | null;
+            clickOptions?: Record<string, unknown>;
+          }
+        ): Promise<void> => {
+          if (options?.pauseBefore !== false) {
+            await pauseForAction();
+          }
+          await focusTarget(target, {
+            scroll: options?.scroll,
+            clickDelayMs: options?.delayMs,
+            clickOptions: options?.clickOptions,
+          });
+          if (options?.pauseAfter !== false) {
+            await pauseForAction();
+          }
+        },
+        fill: async (
+          target: PlaywrightHelperTarget,
+          value: string,
+          options?: {
+            scroll?: boolean;
+            pauseBefore?: boolean;
+            pauseAfter?: boolean;
+            delayMs?: number | null;
+            clear?: boolean;
+            clickOptions?: Record<string, unknown>;
+          }
+        ): Promise<void> => {
+          if (options?.pauseBefore !== false) {
+            await pauseForAction();
+          }
+          const focused = await focusTarget(target, {
+            scroll: options?.scroll,
+            clickDelayMs: options?.delayMs,
+            clickOptions: options?.clickOptions,
+          });
+          if (!focused) {
+            throw new Error('Playwright fill helper target is not focusable.');
+          }
+          if (options?.clear !== false) {
+            await clearFocusedField();
+          }
+          if (value) {
+            await typeText(String(value), {
+              delayMs: options?.delayMs,
+            });
+          }
+          if (options?.pauseAfter !== false) {
+            await pauseForAction();
+          }
+        },
+        type: async (
+          value: string,
+          options?: {
+            pauseBefore?: boolean;
+            pauseAfter?: boolean;
+            delayMs?: number | null;
+            typeOptions?: Record<string, unknown>;
+          }
+        ): Promise<void> => {
+          if (options?.pauseBefore !== false) {
+            await pauseForAction();
+          }
+          await typeText(String(value), {
+            delayMs: options?.delayMs,
+            typeOptions: options?.typeOptions,
+          });
+          if (options?.pauseAfter !== false) {
+            await pauseForAction();
+          }
+        },
+        press: async (
+          key: string,
+          options?: {
+            pauseBefore?: boolean;
+            pauseAfter?: boolean;
+            delayMs?: number | null;
+            pressOptions?: Record<string, unknown>;
+          }
+        ): Promise<void> => {
+          if (options?.pauseBefore !== false) {
+            await pauseForAction();
+          }
+          await pressKey(key, {
+            delayMs: options?.delayMs,
+            pressOptions: options?.pressOptions,
+          });
+          if (options?.pauseAfter !== false) {
+            await pauseForAction();
+          }
         },
       },
     };

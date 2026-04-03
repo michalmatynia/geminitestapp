@@ -572,7 +572,6 @@ export const resetLessonsTestState = (): void => {
   useKangurAssignmentsMock.mockImplementation((options: { enabled?: boolean } = {}) => {
     const enabled = options.enabled ?? true;
     const assignments = enabled ? [...assignmentsState.value] : [];
-    if (assignments.length > 0) console.log('Returning assignments target:', JSON.stringify((assignments[0] as any).target));
     return {
       assignments,
       data: assignments,

@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(String(message || ''))
     );
   };
@@ -9,7 +10,7 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
       if (!count) continue;
       const visible = await locator.isVisible().catch(() => false);
       if (!visible) continue;
-      await locator.click().catch(() => undefined);
+      await humanClick(locator).catch(() => undefined);
       await wait(600);
       return true;
     }
@@ -173,11 +174,11 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
       throw new Error('AUTH_REQUIRED: Tradera login requires manual verification.');
     }
 
-    await usernameInput.fill(username);
-    await passwordInput.fill(password);
+    await humanFill(usernameInput, username);
+    await humanFill(passwordInput, password);
     await Promise.allSettled([
       page.waitForLoadState('domcontentloaded', { timeout: 20_000 }),
-      loginButton.click(),
+      humanClick(loginButton, { pauseAfter: false }),
     ]);
     await wait(1500);
     await acceptCookiesIfPresent();
@@ -197,9 +198,9 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
   const isCreateListingPage = async () => {
     const currentUrl = page.url().toLowerCase();
 
-    // /selling/new is unambiguously the create listing page — trust the URL
-    if (currentUrl.includes('/selling/new')) {
-      log?.('tradera.quicklist.page_detection', { method: 'url_selling_new', currentUrl });
+    // /selling/new or /selling/draft/<id> — Tradera redirects /selling/new to a draft URL
+    if (currentUrl.includes('/selling/new') || currentUrl.includes('/selling/draft/')) {
+      log?.('tradera.quicklist.page_detection', { method: 'url_selling_new_or_draft', currentUrl });
       return true;
     }
 
@@ -298,7 +299,7 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
         timeout: 15_000,
       }),
       page.waitForLoadState('domcontentloaded', { timeout: 20_000 }),
-      trigger.click(),
+      humanClick(trigger, { pauseAfter: false }),
     ]);
     await acceptCookiesIfPresent();
 
@@ -317,19 +318,13 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
   };
 
   const gotoSellPage = async () => {
+    // Auth is already verified before gotoSellPage is called (ensureLoggedIn on ACTIVE_URL).
+    // Do NOT call ensureLoggedIn here — on /selling/new the auth detection is unreliable
+    // (LOGIN_FORM_SELECTORS like form[action*="login"] can false-positive on listing pages).
     for (const candidate of SELL_URL_CANDIDATES) {
       log?.('tradera.quicklist.sell_page.trying', { candidate });
       await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await acceptCookiesIfPresent();
-      await ensureLoggedIn();
-
-      // After login the URL may have changed — re-navigate to the candidate
-      const postLoginUrl = page.url().toLowerCase();
-      if (!postLoginUrl.includes('/selling')) {
-        log?.('tradera.quicklist.sell_page.renavigating', { postLoginUrl, candidate });
-        await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-        await acceptCookiesIfPresent();
-      }
 
       const entryPoint = await waitForSellEntryPoint();
       log?.('tradera.quicklist.sell_page.entry_point', { candidate, entryPoint, url: page.url() });
@@ -346,9 +341,15 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
   };
 
   const clearFocusedEditableField = async () => {
-    await page.keyboard.press('ControlOrMeta+A').catch(() => undefined);
-    await page.keyboard.press('Delete').catch(() => undefined);
-    await page.keyboard.press('Backspace').catch(() => undefined);
+    await humanPress('ControlOrMeta+A', { pauseBefore: false, pauseAfter: false }).catch(
+      () => undefined
+    );
+    await humanPress('Delete', { pauseBefore: false, pauseAfter: false }).catch(
+      () => undefined
+    );
+    await humanPress('Backspace', { pauseBefore: false, pauseAfter: false }).catch(
+      () => undefined
+    );
   };
 
   const setTextField = async (locator, value) => {
@@ -356,20 +357,20 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
     const isContentEditable = await locator.evaluate((element) => element.isContentEditable).catch(() => false);
 
     if (tagName === 'input' || tagName === 'textarea') {
-      await locator.fill(value);
+      await humanFill(locator, value);
       return;
     }
 
     if (isContentEditable) {
-      await locator.click();
+      await humanClick(locator);
       await clearFocusedEditableField();
-      await page.keyboard.type(value);
+      await humanType(value, { pauseBefore: false, pauseAfter: false });
       return;
     }
 
-    await locator.click();
+    await humanClick(locator);
     await clearFocusedEditableField();
-    await page.keyboard.type(value);
+    await humanType(value, { pauseBefore: false, pauseAfter: false });
   };
 
   const readFieldValue = async (locator) => {

@@ -9,12 +9,11 @@ import {
   SectionHeader,
 } from '@/shared/ui';
 
-import {
-  getFilemakerEmailCampaignDeliveriesForRun,
-  summarizeFilemakerEmailCampaignRunDeliveries,
-} from '../settings';
 import { formatTimestamp } from './filemaker-page-utils';
-import { useAdminFilemakerCampaignEditState } from './AdminFilemakerCampaignEditPage.hooks';
+import {
+  CampaignEditProvider,
+  useCampaignEditContext,
+} from './AdminFilemakerCampaignEditPage.context';
 import {
   CampaignDetailsSection,
   ContentSection,
@@ -27,51 +26,28 @@ import {
   RecentRunsSection,
 } from './AdminFilemakerCampaignEditPage.sections';
 
-export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
+function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
   const {
     isCreateMode,
     existingCampaign,
     draft,
-    setDraft,
     launchingMode,
     ConfirmationModal,
-    suppressionEmailDraft,
-    setSuppressionEmailDraft,
-    testRecipientEmailDraft,
-    setTestRecipientEmailDraft,
     isTestSendPending,
-    suppressionReasonDraft,
-    setSuppressionReasonDraft,
-    suppressionNotesDraft,
-    setSuppressionNotesDraft,
-    organizationOptions,
-    eventOptions,
-    partyOptions,
-    mailAccountOptions,
     selectedMailAccount,
     preview,
-    launchEvaluation,
     recentRuns,
-    suppressionEntries,
-    analytics,
     nextAutomationAt,
     schedulerFailureMessage,
     saveCampaign,
     handleLaunch,
-    handleSendTestEmail,
     handleDuplicateCampaign,
     handleToggleArchiveCampaign,
     handleDeleteCampaign,
-    handleAddSuppressionEntry,
-    handleRemoveSuppressionEntry,
     isLoading,
     isUpdatePending,
     router,
-    deliveryRegistry,
-    attemptRegistry,
-    handleRunAction,
-    isRunActionPending,
-  } = useAdminFilemakerCampaignEditState();
+  } = useCampaignEditContext();
 
   if (!isCreateMode && !existingCampaign && !isLoading) {
     return (
@@ -226,57 +202,24 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
         </div>
       ) : null}
 
-      <CampaignDetailsSection
-        draft={draft}
-        setDraft={setDraft}
-        mailAccountOptions={mailAccountOptions}
-        selectedMailAccount={selectedMailAccount}
-      />
-      <ContentSection draft={draft} setDraft={setDraft} />
-      <CampaignTestSendSection
-        testRecipientEmailDraft={testRecipientEmailDraft}
-        setTestRecipientEmailDraft={setTestRecipientEmailDraft}
-        handleSendTestEmail={handleSendTestEmail}
-        isTestSendPending={isTestSendPending}
-        selectedMailAccount={selectedMailAccount}
-      />
-      <AudienceSection
-        draft={draft}
-        setDraft={setDraft}
-        eventOptions={eventOptions}
-        organizationOptions={organizationOptions}
-        partyOptions={partyOptions}
-      />
-      <LaunchSection draft={draft} setDraft={setDraft} />
-      <DeliveryGovernanceSection
-        suppressionEntries={suppressionEntries}
-        suppressionEmailDraft={suppressionEmailDraft}
-        setSuppressionEmailDraft={setSuppressionEmailDraft}
-        suppressionReasonDraft={suppressionReasonDraft}
-        setSuppressionReasonDraft={setSuppressionReasonDraft}
-        suppressionNotesDraft={suppressionNotesDraft}
-        setSuppressionNotesDraft={setSuppressionNotesDraft}
-        handleAddSuppressionEntry={() => { void handleAddSuppressionEntry(); }}
-        handleRemoveSuppressionEntry={(email: string) => { void handleRemoveSuppressionEntry(email); }}
-        isUpdatePending={isUpdatePending}
-        unsubscribeLinkTemplate='{{unsubscribe_url}}'
-        preferencesLinkTemplate='{{preferences_url}}'
-        manageAllPreferencesLinkTemplate='{{manage_all_preferences_url}}'
-      />
-      <AudiencePreviewSection preview={preview} launchEvaluation={launchEvaluation} />
-      <CampaignAnalyticsSection analytics={analytics} />
-      <RecentRunsSection
-        recentRuns={recentRuns}
-        deliveryRegistry={deliveryRegistry}
-        attemptRegistry={attemptRegistry}
-        getFilemakerEmailCampaignDeliveriesForRun={getFilemakerEmailCampaignDeliveriesForRun}
-        summarizeFilemakerEmailCampaignRunDeliveries={summarizeFilemakerEmailCampaignRunDeliveries}
-        handleRunAction={handleRunAction}
-        isRunActionPending={isRunActionPending}
-        isUpdatePending={isUpdatePending}
-        router={router}
-      />
+      <CampaignDetailsSection />
+      <ContentSection />
+      <CampaignTestSendSection />
+      <AudienceSection />
+      <LaunchSection />
+      <DeliveryGovernanceSection />
+      <AudiencePreviewSection />
+      <CampaignAnalyticsSection />
+      <RecentRunsSection />
       <ConfirmationModal />
     </div>
+  );
+}
+
+export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
+  return (
+    <CampaignEditProvider>
+      <AdminFilemakerCampaignEditPageContent />
+    </CampaignEditProvider>
   );
 }

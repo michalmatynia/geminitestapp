@@ -69,6 +69,13 @@ type PlaywrightRuntime = {
     url: ReturnType<typeof vi.fn>;
     title: ReturnType<typeof vi.fn>;
     video: ReturnType<typeof vi.fn>;
+    keyboard: {
+      type: ReturnType<typeof vi.fn>;
+      press: ReturnType<typeof vi.fn>;
+    };
+    mouse: {
+      move: ReturnType<typeof vi.fn>;
+    };
   };
   routes: RouteProbe[];
   videoSourcePath: string | null;
@@ -103,6 +110,13 @@ const createPlaywrightRuntime = async (options?: {
     content: vi.fn(async () => options?.html ?? '<html><body>snapshot</body></html>'),
     url: vi.fn(() => options?.pageUrl ?? 'https://allowed.example.com/final'),
     title: vi.fn(async () => options?.pageTitle ?? 'Final Title'),
+    keyboard: {
+      type: vi.fn(async () => undefined),
+      press: vi.fn(async () => undefined),
+    },
+    mouse: {
+      move: vi.fn(async () => undefined),
+    },
     video: vi.fn(() =>
       videoSourcePath
         ? {
@@ -652,5 +666,67 @@ describe('enqueuePlaywrightNodeRun', () => {
         return current?.status ?? null;
       })
       .toBe('completed');
+  });
+
+  it('exposes persona-aware interaction helpers for clicks and typing', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const target = {
+      scrollIntoViewIfNeeded: vi.fn(async () => undefined),
+      boundingBox: vi.fn(async () => ({
+        x: 10,
+        y: 20,
+        width: 120,
+        height: 40,
+      })),
+      click: vi.fn(async () => undefined),
+    };
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: `
+          export default async ({ helpers, input }) => {
+            await helpers.click(input.target, { pauseBefore: false, pauseAfter: false });
+            await helpers.fill(input.target, 'hello world', { pauseBefore: false, pauseAfter: false });
+            await helpers.press('Escape', { pauseBefore: false, pauseAfter: false });
+            await helpers.type('typed text', { pauseBefore: false, pauseAfter: false });
+            return { ok: true };
+          };
+        `,
+        input: { target },
+        settingsOverrides: {
+          humanizeMouse: true,
+          mouseJitter: 8,
+          clickDelayMin: 11,
+          clickDelayMax: 11,
+          inputDelayMin: 7,
+          inputDelayMax: 7,
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+        },
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(target.scrollIntoViewIfNeeded).toHaveBeenCalled();
+    expect(target.boundingBox).toHaveBeenCalled();
+    expect(runtime.page.mouse.move).toHaveBeenCalled();
+    expect(target.click).toHaveBeenCalledWith(expect.objectContaining({ delay: 11 }));
+    expect(runtime.page.keyboard.press).toHaveBeenCalledWith('ControlOrMeta+A', {});
+    expect(runtime.page.keyboard.type).toHaveBeenCalledWith(
+      'hello world',
+      expect.objectContaining({ delay: 7 })
+    );
+    expect(runtime.page.keyboard.press).toHaveBeenCalledWith(
+      'Escape',
+      expect.objectContaining({ delay: 7 })
+    );
+    expect(runtime.page.keyboard.type).toHaveBeenCalledWith(
+      'typed text',
+      expect.objectContaining({ delay: 7 })
+    );
   });
 });

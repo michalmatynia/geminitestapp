@@ -7,7 +7,6 @@ import type {
   FilemakerEmailCampaign,
   FilemakerPartyReference,
 } from '@/shared/contracts/filemaker';
-import type { FilemakerMailAccount } from '@/shared/contracts/filemaker-mail';
 import { Badge, Button, FormField, FormSection, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 import { AudienceSourceSection } from './campaign-edit-sections/AudienceSourceSection';
@@ -23,17 +22,9 @@ import {
   LAUNCH_MODE_OPTIONS,
 } from './AdminFilemakerCampaignEditPage.utils';
 
-import type {
-  FilemakerEmailCampaignAudiencePreview,
-  FilemakerEmailCampaignLaunchEvaluation,
-} from '../types/campaigns';
+import { useCampaignEditContext } from './AdminFilemakerCampaignEditPage.context';
 
 type CampaignDraftSetter = React.Dispatch<React.SetStateAction<FilemakerEmailCampaign>>;
-
-type OptionLike = {
-  value: string;
-  label: string;
-};
 
 const SHARED_DELIVERY_OPTION_VALUE = '__shared__';
 
@@ -52,17 +43,9 @@ const updateCampaignDraft = (
   setDraft((current) => update(current));
 };
 
-export function CampaignDetailsSection({
-  draft,
-  setDraft,
-  mailAccountOptions,
-  selectedMailAccount,
-}: {
-  draft: FilemakerEmailCampaign;
-  setDraft: CampaignDraftSetter;
-  mailAccountOptions: OptionLike[];
-  selectedMailAccount: FilemakerMailAccount | null;
-}): React.JSX.Element {
+export function CampaignDetailsSection(): React.JSX.Element {
+  const { draft, setDraft, mailAccountOptions, selectedMailAccount } = useCampaignEditContext();
+  
   const selectedMailAccountSummary = selectedMailAccount
     ? `${selectedMailAccount.name} <${selectedMailAccount.emailAddress}>`
     : null;
@@ -196,13 +179,8 @@ export function CampaignDetailsSection({
   );
 }
 
-export function ContentSection({
-  draft,
-  setDraft,
-}: {
-  draft: FilemakerEmailCampaign;
-  setDraft: CampaignDraftSetter;
-}): React.JSX.Element {
+export function ContentSection(): React.JSX.Element {
+  const { draft, setDraft } = useCampaignEditContext();
   return (
     <FormSection title='Campaign Content' className='space-y-4 p-4'>
       <div className='text-sm text-gray-400'>
@@ -240,19 +218,15 @@ export function ContentSection({
   );
 }
 
-export function CampaignTestSendSection({
-  testRecipientEmailDraft,
-  setTestRecipientEmailDraft,
-  handleSendTestEmail,
-  isTestSendPending,
-  selectedMailAccount,
-}: {
-  testRecipientEmailDraft: string;
-  setTestRecipientEmailDraft: React.Dispatch<React.SetStateAction<string>>;
-  handleSendTestEmail: () => Promise<void>;
-  isTestSendPending: boolean;
-  selectedMailAccount: FilemakerMailAccount | null;
-}): React.JSX.Element {
+export function CampaignTestSendSection(): React.JSX.Element {
+  const {
+    testRecipientEmailDraft,
+    setTestRecipientEmailDraft,
+    handleSendTestEmail,
+    isTestSendPending,
+    selectedMailAccount,
+  } = useCampaignEditContext();
+
   return (
     <FormSection title='Test Delivery' className='space-y-4 p-4'>
       <div className='space-y-2 text-sm text-gray-400'>
@@ -303,58 +277,14 @@ export function CampaignTestSendSection({
   );
 }
 
-export function AudienceSection({
-  draft,
-  setDraft,
-  organizationOptions,
-  eventOptions,
-  partyOptions,
-}: {
-  draft: FilemakerEmailCampaign;
-  setDraft: CampaignDraftSetter;
-  organizationOptions: OptionLike[];
-  eventOptions: OptionLike[];
-  partyOptions: OptionLike[];
-}): React.JSX.Element {
+export function AudienceSection(): React.JSX.Element {
+  const { draft, setDraft, organizationOptions, eventOptions, partyOptions } = useCampaignEditContext();
   const primaryPartyKind = draft.audience.partyKinds[0] ?? 'person';
   const manualPartyIds = draft.audience.includePartyReferences.map((reference) => reference.id);
 
   return (
     <div className='space-y-4'>
-      <AudienceSourceSection
-        partyKind={primaryPartyKind}
-        setPartyKind={(value) => {
-          updateCampaignDraft(setDraft, (current) => ({
-            ...current,
-            audience: {
-              ...current.audience,
-              partyKinds: [value],
-              includePartyReferences: current.audience.includePartyReferences.map(
-                (reference): FilemakerPartyReference => ({
-                  ...reference,
-                  kind: value,
-                })
-              ),
-            },
-          }));
-        }}
-        manualPartyIds={manualPartyIds}
-        setManualPartyIds={(value) => {
-          updateCampaignDraft(setDraft, (current) => ({
-            ...current,
-            audience: {
-              ...current.audience,
-              includePartyReferences: value.map(
-                (id): FilemakerPartyReference => ({
-                  kind: primaryPartyKind,
-                  id,
-                })
-              ),
-            },
-          }));
-        }}
-        manualPartyReferences={draft.audience.includePartyReferences}
-      />
+      <AudienceSourceSection />
       <FormSection title='Audience Filters' className='space-y-4 p-4'>
         <div className='flex flex-wrap gap-2 text-[10px]'>
           <Badge variant='outline'>Organizations: {organizationOptions.length}</Badge>
@@ -442,13 +372,8 @@ export function AudienceSection({
   );
 }
 
-export function LaunchSection({
-  draft,
-  setDraft,
-}: {
-  draft: FilemakerEmailCampaign;
-  setDraft: CampaignDraftSetter;
-}): React.JSX.Element {
+export function LaunchSection(): React.JSX.Element {
+  const { draft, setDraft } = useCampaignEditContext();
   return (
     <FormSection title='Launch Rules' className='space-y-4 p-4'>
       <div className='grid gap-4 md:grid-cols-2'>
@@ -608,13 +533,8 @@ export function LaunchSection({
   );
 }
 
-export function AudiencePreviewSection({
-  preview,
-  launchEvaluation,
-}: {
-  preview: FilemakerEmailCampaignAudiencePreview;
-  launchEvaluation: FilemakerEmailCampaignLaunchEvaluation;
-}): React.JSX.Element {
+export function AudiencePreviewSection(): React.JSX.Element {
+  const { preview, launchEvaluation } = useCampaignEditContext();
   return (
     <FormSection title='Audience Preview' className='space-y-4 p-4'>
       <div className='flex flex-wrap gap-2 text-[10px]'>

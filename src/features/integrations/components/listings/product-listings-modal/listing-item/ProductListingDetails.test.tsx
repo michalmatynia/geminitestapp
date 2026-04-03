@@ -87,6 +87,19 @@ describe('ProductListingDetails', () => {
                     scriptSource: 'legacy-default-refresh',
                     listingFormUrl: 'https://www.tradera.com/en/selling/new',
                     runId: 'run-123',
+                    playwrightPersonaId: 'persona-natural',
+                    playwrightSettings: {
+                      slowMo: 85,
+                      timeout: 30000,
+                      navigationTimeout: 45000,
+                      humanizeMouse: true,
+                      clickDelayMin: 40,
+                      clickDelayMax: 140,
+                      inputDelayMin: 30,
+                      inputDelayMax: 110,
+                      actionDelayMin: 220,
+                      actionDelayMax: 800,
+                    },
                     publishVerified: false,
                     categorySource: 'categoryMapper',
                     categoryMappingReason: 'mapped',
@@ -120,8 +133,22 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('https://www.tradera.com/en/selling/new')).toBeInTheDocument();
     expect(screen.getByText('Run ID:')).toBeInTheDocument();
     expect(screen.getByText('run-123')).toBeInTheDocument();
+    expect(screen.getByText('Persona:')).toBeInTheDocument();
+    expect(screen.getByText('persona-natural')).toBeInTheDocument();
     expect(screen.getByText('Queue job:')).toBeInTheDocument();
     expect(screen.getAllByText('job-tradera-1').length).toBeGreaterThan(1);
+    expect(screen.getByText('SlowMo:')).toBeInTheDocument();
+    expect(screen.getByText('85 ms')).toBeInTheDocument();
+    expect(screen.getByText('Timeouts:')).toBeInTheDocument();
+    expect(screen.getByText('30000 / 45000 ms')).toBeInTheDocument();
+    expect(screen.getByText('Humanized input:')).toBeInTheDocument();
+    expect(screen.getByText('On')).toBeInTheDocument();
+    expect(screen.getByText('Click delay:')).toBeInTheDocument();
+    expect(screen.getByText('40-140 ms')).toBeInTheDocument();
+    expect(screen.getByText('Input delay:')).toBeInTheDocument();
+    expect(screen.getByText('30-110 ms')).toBeInTheDocument();
+    expect(screen.getByText('Action delay:')).toBeInTheDocument();
+    expect(screen.getByText('220-800 ms')).toBeInTheDocument();
     expect(screen.getByText('Publish verified:')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();
     expect(screen.getByText('Category source:')).toBeInTheDocument();

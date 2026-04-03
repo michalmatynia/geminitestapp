@@ -57,6 +57,14 @@ export type TraderaPlaywrightRuntimeSettings = {
   slowMo: number;
   timeout: number;
   navigationTimeout: number;
+  humanizeMouse: boolean;
+  mouseJitter: number;
+  clickDelayMin: number;
+  clickDelayMax: number;
+  inputDelayMin: number;
+  inputDelayMax: number;
+  actionDelayMin: number;
+  actionDelayMax: number;
   proxyEnabled: boolean;
   proxyServer: string;
   proxyUsername: string;
@@ -115,6 +123,21 @@ export const resolveConnectionPlaywrightSettings = async (
     timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
     navigationTimeout:
       connection.playwrightNavigationTimeout ?? defaultPlaywrightSettings.navigationTimeout,
+    humanizeMouse:
+      connection.playwrightHumanizeMouse ?? defaultPlaywrightSettings.humanizeMouse,
+    mouseJitter: connection.playwrightMouseJitter ?? defaultPlaywrightSettings.mouseJitter,
+    clickDelayMin:
+      connection.playwrightClickDelayMin ?? defaultPlaywrightSettings.clickDelayMin,
+    clickDelayMax:
+      connection.playwrightClickDelayMax ?? defaultPlaywrightSettings.clickDelayMax,
+    inputDelayMin:
+      connection.playwrightInputDelayMin ?? defaultPlaywrightSettings.inputDelayMin,
+    inputDelayMax:
+      connection.playwrightInputDelayMax ?? defaultPlaywrightSettings.inputDelayMax,
+    actionDelayMin:
+      connection.playwrightActionDelayMin ?? defaultPlaywrightSettings.actionDelayMin,
+    actionDelayMax:
+      connection.playwrightActionDelayMax ?? defaultPlaywrightSettings.actionDelayMax,
     proxyEnabled: connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
     proxyServer: connection.playwrightProxyServer?.trim() ?? '',
     proxyUsername: connection.playwrightProxyUsername?.trim() ?? '',
@@ -144,6 +167,30 @@ export const resolveConnectionPlaywrightSettings = async (
       personaSettings['navigationTimeout'],
       base.navigationTimeout,
       1000
+    ),
+    humanizeMouse: toBoolean(personaSettings['humanizeMouse'], base.humanizeMouse),
+    mouseJitter: toFiniteNumber(personaSettings['mouseJitter'], base.mouseJitter, 0),
+    clickDelayMin: toFiniteNumber(personaSettings['clickDelayMin'], base.clickDelayMin, 0),
+    clickDelayMax: toFiniteNumber(
+      personaSettings['clickDelayMax'],
+      base.clickDelayMax,
+      0
+    ),
+    inputDelayMin: toFiniteNumber(personaSettings['inputDelayMin'], base.inputDelayMin, 0),
+    inputDelayMax: toFiniteNumber(
+      personaSettings['inputDelayMax'],
+      base.inputDelayMax,
+      0
+    ),
+    actionDelayMin: toFiniteNumber(
+      personaSettings['actionDelayMin'],
+      base.actionDelayMin,
+      0
+    ),
+    actionDelayMax: toFiniteNumber(
+      personaSettings['actionDelayMax'],
+      base.actionDelayMax,
+      0
     ),
     proxyEnabled: toBoolean(personaSettings['proxyEnabled'], base.proxyEnabled),
     proxyServer: toTrimmedString(personaSettings['proxyServer'], base.proxyServer),

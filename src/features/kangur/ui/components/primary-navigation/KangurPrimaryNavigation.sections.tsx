@@ -24,6 +24,7 @@ import {
 import {
   useKangurPrimaryNavigationState,
 } from './KangurPrimaryNavigation.hooks';
+import { useKangurPrimaryNavigationContext } from './KangurPrimaryNavigation.context';
 import {
   buildActionWithClose,
   buildPrimaryNavigationLogoutAction,
@@ -170,42 +171,30 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
 }
 
 export function KangurPrimaryNavigationAuthActions({
-  commitGuestPlayerName,
-  effectiveIsAuthenticated,
-  fallbackCopy,
-  guestPlayerName,
-  guestPlayerNameValue,
-  guestPlayerPlaceholderText,
-  handleGuestPlayerNameChange,
-  hasGuestPlayerName,
-  isEditingGuestPlayerName,
-  isLoggingOut,
-  loginActionRef,
-  mobileNavItemClassName,
   onActionClick,
-  onLogin,
-  onLogout,
-  setIsEditingGuestPlayerName,
-  showGuestPlayerNameInput,
 }: {
-  commitGuestPlayerName: () => void;
-  effectiveIsAuthenticated: boolean;
-  fallbackCopy: ReturnType<typeof useKangurPrimaryNavigationState>['fallbackCopy'];
-  guestPlayerName?: string;
-  guestPlayerNameValue: string;
-  guestPlayerPlaceholderText: string;
-  handleGuestPlayerNameChange: (value: string) => void;
-  hasGuestPlayerName: boolean;
-  isEditingGuestPlayerName: boolean;
-  isLoggingOut: boolean;
-  loginActionRef: React.RefObject<HTMLButtonElement | null>;
-  mobileNavItemClassName: string;
   onActionClick?: () => void;
-  onLogin?: () => void;
-  onLogout: () => void;
-  setIsEditingGuestPlayerName: React.Dispatch<React.SetStateAction<boolean>>;
-  showGuestPlayerNameInput: boolean;
 }): React.ReactNode {
+  const {
+    effectiveIsAuthenticated,
+    fallbackCopy,
+    isLoggingOut,
+    onLogout,
+    loginActionRef,
+    props,
+    derived,
+    commitGuestPlayerName,
+    guestPlayerNameValue,
+    handleGuestPlayerNameChange,
+    hasGuestPlayerName,
+    isEditingGuestPlayerName,
+    setIsEditingGuestPlayerName,
+    showGuestPlayerNameInput,
+  } = useKangurPrimaryNavigationContext();
+
+  const { mobileNavItemClassName } = derived;
+  const { guestPlayerName, guestPlayerNamePlaceholder: guestPlayerPlaceholderText, onLogin } = props;
+
   if (effectiveIsAuthenticated) {
     return renderNavAction(
       buildActionWithClose(
@@ -232,7 +221,7 @@ export function KangurPrimaryNavigationAuthActions({
           fallbackCopy={fallbackCopy}
           guestPlayerName={guestPlayerName}
           guestPlayerNameValue={guestPlayerNameValue}
-          guestPlayerPlaceholderText={guestPlayerPlaceholderText}
+          guestPlayerPlaceholderText={guestPlayerPlaceholderText ?? ''}
           handleGuestPlayerNameChange={handleGuestPlayerNameChange}
           hasGuestPlayerName={hasGuestPlayerName}
           isEditingGuestPlayerName={isEditingGuestPlayerName}
@@ -253,36 +242,26 @@ export function KangurPrimaryNavigationAuthActions({
 }
 
 export function KangurPrimaryNavigationPrimaryActions({
-  appearanceControlsInline,
-  canAccessGamesLibrary,
-  gamesLibraryAction,
-  homeAction,
-  inlineAppearanceWithTutor,
-  isTutorHidden,
-  leading,
-  lessonsAction,
   onActionClick,
-  subjectAction,
-  ageGroupAction,
-  duelsAction,
-  tutorToggleAction,
   wrapperClassName,
 }: {
-  appearanceControlsInline: React.ReactNode;
-  ageGroupAction: KangurNavActionConfig;
-  canAccessGamesLibrary: boolean;
-  duelsAction: KangurNavActionConfig;
-  gamesLibraryAction: KangurNavActionConfig;
-  homeAction: KangurNavActionConfig;
-  inlineAppearanceWithTutor?: boolean;
-  isTutorHidden: boolean;
-  leading?: React.ReactNode;
-  lessonsAction: KangurNavActionConfig;
   onActionClick?: () => void;
-  subjectAction: KangurNavActionConfig;
-  tutorToggleAction: KangurNavActionConfig;
   wrapperClassName?: string;
 }): React.JSX.Element {
+  const { isTutorHidden, derived } = useKangurPrimaryNavigationContext();
+  const {
+    homeAction,
+    canAccessGamesLibrary,
+    gamesLibraryAction,
+    lessonsAction,
+    duelsAction,
+    subjectAction,
+    ageGroupAction,
+    tutorToggleAction,
+    inlineAppearanceWithTutor,
+    appearanceControlsInline,
+  } = derived;
+
   const tutorInlineClassName = [tutorToggleAction.className, 'max-sm:!w-auto']
     .filter(Boolean)
     .join(' ');
@@ -317,7 +296,6 @@ export function KangurPrimaryNavigationPrimaryActions({
       }
       data-testid='kangur-primary-nav-primary-actions'
     >
-      {leading}
       {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
       {canAccessGamesLibrary
         ? renderNavAction(buildActionWithClose(gamesLibraryAction, onActionClick))
@@ -332,58 +310,47 @@ export function KangurPrimaryNavigationPrimaryActions({
 }
 
 export function KangurPrimaryNavigationUtilityActions({
-  accessibleCurrentPage,
-  appearanceControls,
   authActions,
-  basePath,
-  elevatedSessionUser,
-  fallbackCopy,
-  forceLanguageSwitcherFallbackPath,
-  hideAppearanceControls,
-  hideLanguageSwitcher,
-  isCoarsePointer,
-  learnerProfileIsActive,
-  mobileNavItemClassName,
-  onActionClick,
-  onLogout,
-  parentDashboardAction,
-  profileAvatar,
-  profileHref,
-  profileLabel,
-  profileTransitionSourceId,
   rightAccessory,
-  shouldRenderElevatedUserMenu,
-  shouldRenderLanguageSwitcher,
-  shouldRenderProfileMenu,
+  onActionClick,
   testId = 'kangur-primary-nav-utility-actions',
   wrapperClassName,
+  hideAppearanceControls,
+  hideLanguageSwitcher,
 }: {
-  accessibleCurrentPage: KangurPrimaryNavigationProps['currentPage'];
-  appearanceControls: React.ReactNode;
   authActions: React.ReactNode;
-  basePath: string;
-  elevatedSessionUser: ReturnType<typeof useKangurPrimaryNavigationState>['elevatedSessionUser'];
-  fallbackCopy: ReturnType<typeof useKangurPrimaryNavigationState>['fallbackCopy'];
-  forceLanguageSwitcherFallbackPath: boolean;
-  hideAppearanceControls?: boolean;
-  hideLanguageSwitcher?: boolean;
-  isCoarsePointer: boolean;
-  learnerProfileIsActive: boolean;
-  mobileNavItemClassName: string;
-  onActionClick?: () => void;
-  onLogout: () => void;
-  parentDashboardAction: KangurNavActionConfig | null;
-  profileAvatar: ReturnType<typeof useKangurPrimaryNavigationState>['profileAvatar'];
-  profileHref: string;
-  profileLabel: string;
-  profileTransitionSourceId: string;
   rightAccessory: React.ReactNode;
-  shouldRenderElevatedUserMenu: boolean;
-  shouldRenderLanguageSwitcher: boolean;
-  shouldRenderProfileMenu: boolean;
+  onActionClick?: () => void;
   testId?: string;
   wrapperClassName?: string;
+  hideAppearanceControls?: boolean;
+  hideLanguageSwitcher?: boolean;
 }): React.ReactNode {
+  const {
+    elevatedSessionUser,
+    fallbackCopy,
+    isCoarsePointer,
+    onLogout,
+    shouldRenderElevatedUserMenu,
+    shouldRenderProfileMenu,
+    props,
+    derived,
+  } = useKangurPrimaryNavigationContext();
+
+  const {
+    appearanceControls,
+    shouldRenderLanguageSwitcher,
+    basePath,
+    mobileNavItemClassName,
+    parentDashboardAction,
+    profileAvatar,
+    profileHref,
+    profileLabel,
+    profileTransitionSourceId,
+  } = derived;
+
+  const { currentPage: accessibleCurrentPage, forceLanguageSwitcherFallbackPath, learnerProfileIsActive } = props;
+
   const resolvedAppearanceControls = hideAppearanceControls ? null : appearanceControls;
   const resolvedShouldRenderLanguageSwitcher =
     shouldRenderLanguageSwitcher && !hideLanguageSwitcher;

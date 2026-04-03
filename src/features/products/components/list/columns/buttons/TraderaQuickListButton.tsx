@@ -12,7 +12,10 @@ import {
 } from '@/features/integrations/public';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/public';
 import { createTraderaRecoveryContext } from '@/features/integrations/public';
-import { ensureTraderaBrowserSession, isTraderaBrowserAuthRequiredMessage } from '@/features/integrations/public';
+import {
+  isTraderaBrowserAuthRequiredMessage,
+  preflightTraderaQuickListSession,
+} from '@/features/integrations/public';
 import type {
   IntegrationWithConnections,
   ProductListingsRecoveryContext,
@@ -359,16 +362,15 @@ export function TraderaQuickListButton(props: {
       attemptedRecoveryTarget = recoveryTarget;
       setFeedbackStatus('processing', recoveryTarget);
 
-      const sessionResponse = await ensureTraderaBrowserSession({
+      const sessionResponse = await preflightTraderaQuickListSession({
         integrationId: resolvedConnection.integrationId,
         connectionId: resolvedConnection.connection.id,
       });
-      if (!sessionResponse.savedSession) {
+      if (!sessionResponse.ready) {
         setFeedbackStatus('failed', recoveryTarget);
-        toast(
-          'Tradera login session could not be saved. Complete login verification and retry.',
-          { variant: 'error' }
-        );
+        toast('Tradera browser session is not ready. Open recovery options and refresh the session.', {
+          variant: 'error',
+        });
         onOpenIntegrations?.(
           createTraderaRecoveryContext({
             status: 'auth_required',
@@ -413,9 +415,6 @@ export function TraderaQuickListButton(props: {
           connectionId: resolvedConnection.connection.id,
           level: 'warn',
         });
-      }
-      if (sessionResponse.savedSession) {
-        toast('Tradera login session refreshed.', { variant: 'success' });
       }
       toast(
         response.queue?.jobId

@@ -36,6 +36,9 @@ const readString = (value: unknown): string | null =>
 const readBoolean = (value: unknown): boolean | null =>
   typeof value === 'boolean' ? value : null;
 
+const readNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
 const resolveHistoryBrowserMode = (
   fields: string[] | null | undefined
 ): string | null => {
@@ -68,6 +71,17 @@ const resolveTraderaExecutionSummary = (
   requestId: string | null;
   publishVerified: boolean | null;
   listingUrl: string | null;
+  playwrightPersonaId: string | null;
+  playwrightSlowMo: number | null;
+  playwrightTimeout: number | null;
+  playwrightNavigationTimeout: number | null;
+  playwrightHumanizeMouse: boolean | null;
+  playwrightClickDelayMin: number | null;
+  playwrightClickDelayMax: number | null;
+  playwrightInputDelayMin: number | null;
+  playwrightInputDelayMax: number | null;
+  playwrightActionDelayMin: number | null;
+  playwrightActionDelayMax: number | null;
   categoryId: string | null;
   categoryPath: string | null;
   categorySource: string | null;
@@ -81,6 +95,7 @@ const resolveTraderaExecutionSummary = (
   const lastExecution = toRecord(traderaData['lastExecution']);
   const pendingExecution = toRecord(traderaData['pendingExecution']);
   const metadata = toRecord(lastExecution['metadata']);
+  const playwrightSettings = toRecord(metadata['playwrightSettings']);
 
   return {
     executedAt: readString(lastExecution['executedAt']),
@@ -97,6 +112,17 @@ const resolveTraderaExecutionSummary = (
     requestId: readString(lastExecution['requestId']),
     publishVerified: readBoolean(metadata['publishVerified']),
     listingUrl: readString(marketplaceRecord['listingUrl']),
+    playwrightPersonaId: readString(metadata['playwrightPersonaId']),
+    playwrightSlowMo: readNumber(playwrightSettings['slowMo']),
+    playwrightTimeout: readNumber(playwrightSettings['timeout']),
+    playwrightNavigationTimeout: readNumber(playwrightSettings['navigationTimeout']),
+    playwrightHumanizeMouse: readBoolean(playwrightSettings['humanizeMouse']),
+    playwrightClickDelayMin: readNumber(playwrightSettings['clickDelayMin']),
+    playwrightClickDelayMax: readNumber(playwrightSettings['clickDelayMax']),
+    playwrightInputDelayMin: readNumber(playwrightSettings['inputDelayMin']),
+    playwrightInputDelayMax: readNumber(playwrightSettings['inputDelayMax']),
+    playwrightActionDelayMin: readNumber(playwrightSettings['actionDelayMin']),
+    playwrightActionDelayMax: readNumber(playwrightSettings['actionDelayMax']),
     categoryId: readString(metadata['categoryId']),
     categoryPath: readString(metadata['categoryPath']),
     categorySource: readString(metadata['categorySource']),
@@ -301,11 +327,72 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               variant='minimal'
             />
           ) : null}
+          {isTraderaListing && traderaExecution.playwrightPersonaId ? (
+            <MetadataItem
+              label='Persona'
+              value={traderaExecution.playwrightPersonaId}
+              mono
+              variant='minimal'
+            />
+          ) : null}
           {isTraderaListing && traderaExecution.requestId ? (
             <MetadataItem
               label='Queue job'
               value={traderaExecution.requestId}
               mono
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.playwrightSlowMo !== null ? (
+            <MetadataItem
+              label='SlowMo'
+              value={`${traderaExecution.playwrightSlowMo} ms`}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          (traderaExecution.playwrightTimeout !== null ||
+            traderaExecution.playwrightNavigationTimeout !== null) ? (
+            <MetadataItem
+              label='Timeouts'
+              value={`${traderaExecution.playwrightTimeout ?? '—'} / ${traderaExecution.playwrightNavigationTimeout ?? '—'} ms`}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.playwrightHumanizeMouse !== null ? (
+            <MetadataItem
+              label='Humanized input'
+              value={traderaExecution.playwrightHumanizeMouse ? 'On' : 'Off'}
+              valueClassName={
+                traderaExecution.playwrightHumanizeMouse ? 'text-emerald-400' : undefined
+              }
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          traderaExecution.playwrightClickDelayMin !== null &&
+          traderaExecution.playwrightClickDelayMax !== null ? (
+            <MetadataItem
+              label='Click delay'
+              value={`${traderaExecution.playwrightClickDelayMin}-${traderaExecution.playwrightClickDelayMax} ms`}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          traderaExecution.playwrightInputDelayMin !== null &&
+          traderaExecution.playwrightInputDelayMax !== null ? (
+            <MetadataItem
+              label='Input delay'
+              value={`${traderaExecution.playwrightInputDelayMin}-${traderaExecution.playwrightInputDelayMax} ms`}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing &&
+          traderaExecution.playwrightActionDelayMin !== null &&
+          traderaExecution.playwrightActionDelayMax !== null ? (
+            <MetadataItem
+              label='Action delay'
+              value={`${traderaExecution.playwrightActionDelayMin}-${traderaExecution.playwrightActionDelayMax} ms`}
               variant='minimal'
             />
           ) : null}

@@ -6,10 +6,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   toastMock,
   ensureTraderaBrowserSessionMock,
+  preflightTraderaQuickListSessionMock,
   relistTraderaMutateAsyncMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
   ensureTraderaBrowserSessionMock: vi.fn(),
+  preflightTraderaQuickListSessionMock: vi.fn(),
   relistTraderaMutateAsyncMock: vi.fn(),
 }));
 
@@ -31,6 +33,8 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
   ensureTraderaBrowserSession: (...args: unknown[]) =>
     ensureTraderaBrowserSessionMock(...args) as Promise<unknown>,
+  preflightTraderaQuickListSession: (...args: unknown[]) =>
+    preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
   isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
     const normalized = value?.trim().toLowerCase() ?? '';
     return (
@@ -79,12 +83,16 @@ describe('useProductListingsActionsImpl', () => {
       response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
       savedSession: true,
     });
+    preflightTraderaQuickListSessionMock.mockResolvedValue({
+      response: { ok: true, sessionReady: true, steps: [] },
+      ready: true,
+    });
     relistTraderaMutateAsyncMock.mockResolvedValue({
       queue: { jobId: 'job-tradera-relist-1' },
     });
   });
 
-  it('runs Tradera browser session preflight before browser relists', async () => {
+  it('runs fast Tradera quicklist preflight before browser relists', async () => {
     const onListingsUpdated = vi.fn();
     const { result } = renderHook(() =>
       useProductListingsActionsImpl(
@@ -106,14 +114,11 @@ describe('useProductListingsActionsImpl', () => {
       await result.current.handleRelistTradera('listing-1');
     });
 
-    expect(ensureTraderaBrowserSessionMock).toHaveBeenCalledWith({
+    expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
       integrationId: 'integration-tradera-1',
       connectionId: 'connection-tradera-1',
     });
     expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
-    expect(toastMock).toHaveBeenCalledWith('Tradera login session refreshed.', {
-      variant: 'success',
-    });
     expect(toastMock).toHaveBeenCalledWith('Tradera relist queued (job job-tradera-relist-1).', {
       variant: 'success',
     });
@@ -139,7 +144,7 @@ describe('useProductListingsActionsImpl', () => {
       await result.current.handleRelistTradera('listing-1');
     });
 
-    expect(ensureTraderaBrowserSessionMock).not.toHaveBeenCalled();
+    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
     expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
   });
 
@@ -165,7 +170,7 @@ describe('useProductListingsActionsImpl', () => {
       });
     });
 
-    expect(ensureTraderaBrowserSessionMock).not.toHaveBeenCalled();
+    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
     expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
   });
 
@@ -195,7 +200,7 @@ describe('useProductListingsActionsImpl', () => {
       });
     });
 
-    expect(ensureTraderaBrowserSessionMock).not.toHaveBeenCalled();
+    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
     expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({
       listingId: 'listing-1',
       browserMode: 'headed',
@@ -232,9 +237,9 @@ describe('useProductListingsActionsImpl', () => {
     expect(onListingsUpdated).toHaveBeenCalled();
   });
 
-  it('shows a toast for Tradera auth-required relist preflight failures', async () => {
+  it('shows a toast for Tradera auth-required relist quick preflight failures', async () => {
     const setError = vi.fn();
-    ensureTraderaBrowserSessionMock.mockRejectedValue(
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
       new Error(
         'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
       )

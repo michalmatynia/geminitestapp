@@ -45,7 +45,10 @@ import {
 } from '@/shared/lib/files/services/storage/file-storage-service';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getIntegrationRepository } from '../integration-repository';
-import { runPlaywrightListingScript } from '../playwright-listing/runner';
+import {
+  runPlaywrightListingScript,
+  type PlaywrightExecutionSettingsSummary,
+} from '../playwright-listing/runner';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
 import { resolveTraderaCategoryMappingResolutionForProduct } from './category-mapping';
 import { resolveTraderaShippingGroupResolutionForProduct } from './shipping-group';
@@ -364,6 +367,53 @@ const resolveResultBrowserMode = (
       ? 'headless'
       : null);
 
+const buildPlaywrightExecutionMetadata = ({
+  connection,
+  settings,
+  effectiveBrowserMode,
+}: {
+  connection: IntegrationConnectionRecord;
+  settings: {
+    slowMo: number;
+    timeout: number;
+    navigationTimeout: number;
+    humanizeMouse: boolean;
+    mouseJitter: number;
+    clickDelayMin: number;
+    clickDelayMax: number;
+    inputDelayMin: number;
+    inputDelayMax: number;
+    actionDelayMin: number;
+    actionDelayMax: number;
+    proxyEnabled: boolean;
+    emulateDevice: boolean;
+    deviceName: string;
+  };
+  effectiveBrowserMode: 'headless' | 'headed';
+}): {
+  playwrightPersonaId: string | null;
+  playwrightSettings: PlaywrightExecutionSettingsSummary;
+} => ({
+  playwrightPersonaId: connection.playwrightPersonaId?.trim() || null,
+  playwrightSettings: {
+    headless: effectiveBrowserMode === 'headless',
+    slowMo: settings.slowMo,
+    timeout: settings.timeout,
+    navigationTimeout: settings.navigationTimeout,
+    humanizeMouse: settings.humanizeMouse,
+    mouseJitter: settings.mouseJitter,
+    clickDelayMin: settings.clickDelayMin,
+    clickDelayMax: settings.clickDelayMax,
+    inputDelayMin: settings.inputDelayMin,
+    inputDelayMax: settings.inputDelayMax,
+    actionDelayMin: settings.actionDelayMin,
+    actionDelayMax: settings.actionDelayMax,
+    proxyEnabled: settings.proxyEnabled,
+    emulateDevice: settings.emulateDevice,
+    deviceName: settings.deviceName,
+  },
+});
+
 const runTraderaBrowserListingScripted = async ({
   listing,
   connection,
@@ -379,6 +429,19 @@ const runTraderaBrowserListingScripted = async ({
 }): Promise<TraderaBrowserListingResult> => {
   const normalizedListingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
   const { script, source: scriptSource } = resolveEffectiveTraderaListingScript(connection);
+  const resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettings(connection);
+  const requestedExecutionMetadata = buildPlaywrightExecutionMetadata({
+    connection,
+    settings: resolvedPlaywrightSettings,
+    effectiveBrowserMode:
+      browserMode === 'headed'
+        ? 'headed'
+        : browserMode === 'headless'
+          ? 'headless'
+          : resolvedPlaywrightSettings.headless
+            ? 'headless'
+            : 'headed',
+  });
 
   if (
     scriptSource === 'legacy-default-refresh' &&
@@ -422,6 +485,7 @@ const runTraderaBrowserListingScripted = async ({
         scriptSource,
         requestedBrowserMode: browserMode,
         listingFormUrl: normalizedListingFormUrl,
+        ...requestedExecutionMetadata,
       });
     }
 
@@ -442,6 +506,7 @@ const runTraderaBrowserListingScripted = async ({
         scriptSource,
         requestedBrowserMode: browserMode,
         listingFormUrl: normalizedListingFormUrl,
+        ...requestedExecutionMetadata,
       }
     ).withCause(error);
   }
@@ -457,6 +522,7 @@ const runTraderaBrowserListingScripted = async ({
         runId: result.runId,
         rawResult: result.rawResult,
         publishVerified: result.publishVerified,
+        ...requestedExecutionMetadata,
       }
     );
   }
@@ -472,6 +538,7 @@ const runTraderaBrowserListingScripted = async ({
         runId: result.runId,
         rawResult: result.rawResult,
         publishVerified: result.publishVerified,
+        ...requestedExecutionMetadata,
       }
     );
   }
@@ -486,6 +553,8 @@ const runTraderaBrowserListingScripted = async ({
       requestedBrowserMode: browserMode,
       listingFormUrl: normalizedListingFormUrl,
       browserMode: resolveResultBrowserMode(browserMode, result.effectiveBrowserMode),
+      playwrightPersonaId: result.personaId,
+      playwrightSettings: result.executionSettings,
       rawResult: result.rawResult,
       publishVerified: result.publishVerified,
       categoryMappingReason:
@@ -784,6 +853,11 @@ export const runTraderaBrowserListing = async ({
           requestedBrowserMode: browserMode,
           listingFormUrl,
           browserMode: effectiveHeadless ? 'headless' : 'headed',
+          ...buildPlaywrightExecutionMetadata({
+            connection,
+            settings: playwrightSettings,
+            effectiveBrowserMode: effectiveHeadless ? 'headless' : 'headed',
+          }),
           publishVerified: true,
         },
       };
@@ -799,6 +873,11 @@ export const runTraderaBrowserListing = async ({
           requestedBrowserMode: browserMode,
           listingFormUrl,
           browserMode: effectiveHeadless ? 'headless' : 'headed',
+          ...buildPlaywrightExecutionMetadata({
+            connection,
+            settings: playwrightSettings,
+            effectiveBrowserMode: effectiveHeadless ? 'headless' : 'headed',
+          }),
           publishVerified: true,
           simulated: true,
         },

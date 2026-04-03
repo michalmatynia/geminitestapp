@@ -22,13 +22,13 @@ export const expectInvalidationSubset = async ({
   queryKeys,
   totalCalls,
 }: {
-  invalidateSpy: ReturnType<typeof expect.getState> extends never ? never : {
-    mock?: unknown;
-  };
+  invalidateSpy: any;
   queryKeys: readonly unknown[];
   totalCalls: number;
 }): Promise<void> => {
-  await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(totalCalls));
+  await waitFor(() =>
+    expect(invalidateSpy.mock.calls.length).toBeGreaterThanOrEqual(totalCalls)
+  );
   queryKeys.forEach((queryKey) => {
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey });
   });

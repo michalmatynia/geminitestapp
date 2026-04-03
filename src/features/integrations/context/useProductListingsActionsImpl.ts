@@ -19,6 +19,7 @@ import type { CapturedLog } from '@/features/integrations/services/exports/log-c
 import {
   ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
+  preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
 import type {
   PlaywrightRelistBrowserMode,
@@ -239,13 +240,10 @@ export const useProductListingsActionsImpl = ({
           listing.integrationId &&
           listing.connectionId
         ) {
-          const sessionResult = await ensureTraderaBrowserSession({
+          await preflightTraderaQuickListSession({
             integrationId: listing.integrationId,
             connectionId: listing.connectionId,
           });
-          if (sessionResult.savedSession) {
-            toast('Tradera login session refreshed.', { variant: 'success' });
-          }
         }
         const response = await relistTraderaMutation.mutateAsync({
           listingId,

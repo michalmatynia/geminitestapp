@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   toastMock,
-  ensureTraderaBrowserSessionMock,
+  preflightTraderaQuickListSessionMock,
   createListingMutateAsyncMock,
   exportToBaseMutateAsyncMock,
   updateDefaultTraderaConnectionMutateAsyncMock,
@@ -14,7 +14,7 @@ const {
   useListingTraderaSettingsMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
-  ensureTraderaBrowserSessionMock: vi.fn(),
+  preflightTraderaQuickListSessionMock: vi.fn(),
   createListingMutateAsyncMock: vi.fn(),
   exportToBaseMutateAsyncMock: vi.fn(),
   updateDefaultTraderaConnectionMutateAsyncMock: vi.fn(),
@@ -52,8 +52,8 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
 }));
 
 vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
-  ensureTraderaBrowserSession: (...args: unknown[]) =>
-    ensureTraderaBrowserSessionMock(...args) as Promise<unknown>,
+  preflightTraderaQuickListSession: (...args: unknown[]) =>
+    preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
   isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
     const normalized = value?.trim().toLowerCase() ?? '';
     return (
@@ -89,9 +89,9 @@ describe('useListProductForm', () => {
       selectedTraderaAutoRelistLeadMinutes: 30,
       selectedTraderaTemplateId: 'template-tradera-1',
     });
-    ensureTraderaBrowserSessionMock.mockResolvedValue({
-      response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
-      savedSession: true,
+    preflightTraderaQuickListSessionMock.mockResolvedValue({
+      response: { ok: true, sessionReady: true, steps: [] },
+      ready: true,
     });
     createListingMutateAsyncMock.mockResolvedValue({
       queue: { jobId: 'job-tradera-1' },
@@ -102,7 +102,7 @@ describe('useListProductForm', () => {
     });
   });
 
-  it('runs Tradera browser session preflight and persists the preferred connection for browser Tradera', async () => {
+  it('runs fast Tradera quick preflight and persists the preferred connection for browser Tradera', async () => {
     const onSuccess = vi.fn();
     const { result } = renderHook(() => useListProductForm('product-1'));
 
@@ -110,7 +110,7 @@ describe('useListProductForm', () => {
       await result.current.handleSubmit(onSuccess);
     });
 
-    expect(ensureTraderaBrowserSessionMock).toHaveBeenCalledWith({
+    expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
     });
@@ -124,9 +124,6 @@ describe('useListProductForm', () => {
     });
     expect(updateDefaultTraderaConnectionMutateAsyncMock).toHaveBeenCalledWith({
       connectionId: 'conn-tradera-1',
-    });
-    expect(toastMock).toHaveBeenCalledWith('Tradera login session refreshed.', {
-      variant: 'success',
     });
     expect(toastMock).toHaveBeenCalledWith('Tradera listing queued (job job-tradera-1).', {
       variant: 'success',
@@ -160,13 +157,13 @@ describe('useListProductForm', () => {
         templateId: 'template-tradera-1',
       });
     });
-    expect(ensureTraderaBrowserSessionMock).not.toHaveBeenCalled();
+    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
     expect(updateDefaultTraderaConnectionMutateAsyncMock).not.toHaveBeenCalled();
     expect(onSuccess).toHaveBeenCalled();
   });
 
-  it('shows a toast and preserves the auth-required message when Tradera preflight needs manual verification', async () => {
-    ensureTraderaBrowserSessionMock.mockRejectedValue(
+  it('shows a toast and preserves the auth-required message when Tradera quick preflight needs manual verification', async () => {
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
       new Error(
         'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
       )

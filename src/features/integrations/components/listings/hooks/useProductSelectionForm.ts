@@ -13,8 +13,8 @@ import {
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import {
-  ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
+  preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 import { useToast } from '@/shared/ui';
@@ -91,13 +91,10 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
         const isTraderaBrowserIntegration =
           isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
         if (isTraderaBrowserIntegration && selectedConnectionId) {
-          const sessionResult = await ensureTraderaBrowserSession({
+          await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
           });
-          if (sessionResult.savedSession) {
-            toast('Tradera login session refreshed.', { variant: 'success' });
-          }
         }
         await createListingMutation.mutateAsync({
           integrationId: selectedIntegrationId,

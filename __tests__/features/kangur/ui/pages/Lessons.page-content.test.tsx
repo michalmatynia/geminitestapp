@@ -85,7 +85,7 @@ describe('Lessons', () => {
         }),
       ],
       documents: {
-        'clock-doc': {
+        'clock': {
           version: 1,
           blocks: [
             {
@@ -354,7 +354,7 @@ await renderLessonsPage();
         }),
       ],
       documents: {
-        'clock-doc': {
+        'clock': {
           version: 1,
           blocks: [
             {

@@ -16,7 +16,7 @@ const {
   apiPostMock,
   apiPutMock,
   mutateAsyncMock,
-  ensureTraderaBrowserSessionMock,
+  preflightTraderaQuickListSessionMock,
   fetchIntegrationsWithConnectionsMock,
   fetchPreferredTraderaConnectionMock,
   invalidateProductListingsAndBadgesMock,
@@ -25,7 +25,7 @@ const {
   apiPostMock: vi.fn(),
   apiPutMock: vi.fn(),
   mutateAsyncMock: vi.fn(),
-  ensureTraderaBrowserSessionMock: vi.fn(),
+  preflightTraderaQuickListSessionMock: vi.fn(),
   fetchIntegrationsWithConnectionsMock: vi.fn(),
   fetchPreferredTraderaConnectionMock: vi.fn(),
   invalidateProductListingsAndBadgesMock: vi.fn(),
@@ -49,36 +49,27 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/integrations/public', () => ({
-  fetchIntegrationsWithConnections: (...args: unknown[]) =>
-    fetchIntegrationsWithConnectionsMock(...args) as Promise<unknown>,
-  fetchPreferredTraderaConnection: (...args: unknown[]) =>
-    fetchPreferredTraderaConnectionMock(...args) as Promise<unknown>,
-  integrationSelectionQueryKeys: {
-    withConnections: ['integrations', 'with-connections'],
-    traderaDefaultConnection: ['integrations', 'tradera', 'default-connection'],
-  },
-  isTraderaBrowserIntegrationSlug: (value: string | null | undefined) =>
-    (value ?? '').trim().toLowerCase() === 'tradera',
-  useCreateListingMutation: () => ({
-    mutateAsync: mutateAsyncMock,
-  }),
-}));
-
-vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
-  ensureTraderaBrowserSession: (...args: unknown[]) =>
-    ensureTraderaBrowserSessionMock(...args) as Promise<unknown>,
-  isTraderaBrowserAuthRequiredMessage: (value: string | null | undefined) => {
-    const normalized = value?.trim().toLowerCase() ?? '';
-    return (
-      normalized.includes('auth_required') ||
-      normalized.includes('manual verification') ||
-      normalized.includes('captcha') ||
-      normalized.includes('login requires') ||
-      normalized.includes('session expired')
-    );
-  },
-}));
+vi.mock('@/features/integrations/public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/integrations/public')>();
+  return {
+    ...actual,
+    fetchIntegrationsWithConnections: (...args: unknown[]) =>
+      fetchIntegrationsWithConnectionsMock(...args) as Promise<unknown>,
+    fetchPreferredTraderaConnection: (...args: unknown[]) =>
+      fetchPreferredTraderaConnectionMock(...args) as Promise<unknown>,
+    integrationSelectionQueryKeys: {
+      withConnections: ['integrations', 'with-connections'],
+      traderaDefaultConnection: ['integrations', 'tradera', 'default-connection'],
+    },
+    isTraderaBrowserIntegrationSlug: (value: string | null | undefined) =>
+      (value ?? '').trim().toLowerCase() === 'tradera',
+    useCreateListingMutation: () => ({
+      mutateAsync: mutateAsyncMock,
+    }),
+    preflightTraderaQuickListSession: (...args: unknown[]) =>
+      preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
+  };
+});
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateProductListingsAndBadges: (...args: unknown[]) =>
@@ -113,9 +104,9 @@ describe('TraderaQuickListButton', () => {
     vi.useRealTimers();
     window.sessionStorage.clear();
     fetchPreferredTraderaConnectionMock.mockResolvedValue({ connectionId: null });
-    ensureTraderaBrowserSessionMock.mockResolvedValue({
+    preflightTraderaQuickListSessionMock.mockResolvedValue({
       response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
-      savedSession: true,
+      ready: true,
     });
     fetchIntegrationsWithConnectionsMock.mockResolvedValue([
       {
@@ -187,7 +178,7 @@ describe('TraderaQuickListButton', () => {
         connectionId: 'conn-tradera-1',
       });
     });
-    expect(ensureTraderaBrowserSessionMock).toHaveBeenCalledWith({
+    expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
     });
@@ -206,7 +197,7 @@ describe('TraderaQuickListButton', () => {
 
   it('persists auth_required feedback when the session preflight requires manual verification', async () => {
     const onOpenIntegrations = vi.fn();
-    ensureTraderaBrowserSessionMock.mockRejectedValue(
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
       new Error('Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.')
     );
 
@@ -247,9 +238,9 @@ describe('TraderaQuickListButton', () => {
 
   it('does not queue a listing when the Tradera session could not be saved', async () => {
     const onOpenIntegrations = vi.fn();
-    ensureTraderaBrowserSessionMock.mockResolvedValue({
+    preflightTraderaQuickListSessionMock.mockResolvedValue({
       response: { ok: true, steps: [] },
-      savedSession: false,
+      ready: false,
     });
 
     renderButton({ onOpenIntegrations });
@@ -258,7 +249,7 @@ describe('TraderaQuickListButton', () => {
 
     await waitFor(() => {
       expect(toastMock).toHaveBeenCalledWith(
-        'Tradera login session could not be saved. Complete login verification and retry.',
+        'Tradera browser session is not ready. Open recovery options and refresh the session.',
         { variant: 'error' }
       );
     });
@@ -392,9 +383,9 @@ describe('TraderaQuickListButton', () => {
   });
 
   it('keeps the listing queued when persisting the preferred connection fails', async () => {
-    ensureTraderaBrowserSessionMock.mockResolvedValue({
-      response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
-      savedSession: true,
+    preflightTraderaQuickListSessionMock.mockResolvedValue({
+      response: { ok: true, sessionReady: true, steps: [] },
+      ready: true,
     });
     apiPostMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/exports/tradera/default-connection') {
@@ -415,9 +406,6 @@ describe('TraderaQuickListButton', () => {
       'border-amber-400/70'
     );
     expect(toastMock).toHaveBeenCalledWith('Tradera listing queued (job job-tradera-1).', {
-      variant: 'success',
-    });
-    expect(toastMock).toHaveBeenCalledWith('Tradera login session refreshed.', {
       variant: 'success',
     });
   });

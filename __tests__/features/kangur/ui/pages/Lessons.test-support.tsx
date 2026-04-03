@@ -12,54 +12,47 @@ import Lessons from '@/features/kangur/ui/pages/Lessons';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
 const lessonsTestHoisted = vi.hoisted(() => {
-  // Mock requestAnimationFrame to execute immediately
-  // This prevents race conditions with async state updates in jsdom
-  if (typeof window !== "undefined" && !window.requestAnimationFrame) {
-    let frameId = 0;
-    window.requestAnimationFrame = (callback: FrameRequestCallback) => {
-      const id = ++frameId;
-      Promise.resolve().then(() => callback(performance.now()));
-      return id;
+  if (!(globalThis as any).__KANGUR_LESSONS_TEST_STATE__) {
+    (globalThis as any).__KANGUR_LESSONS_TEST_STATE__ = {
+      settingsStoreMock: {
+        get: vi.fn<(key: string) => string | undefined>(),
+      },
+      lessonsState: {
+        value: [] as Array<Record<string, unknown>>,
+      },
+      lessonDocumentsState: {
+        value: {} as Record<string, unknown>,
+      },
+      authState: {
+        value: {
+          user: null,
+          canAccessParentAssignments: false,
+          navigateToLogin: vi.fn(),
+          logout: vi.fn(),
+        },
+      },
+      assignmentsState: {
+        value: [] as Array<Record<string, unknown>>,
+      },
+      progressState: {
+        value: {
+          lessonMastery: {},
+        },
+      },
+      routerPushMock: vi.fn(),
+      useKangurPageContentEntryMock: vi.fn(),
+      lessonSectionsState: {
+        value: [] as Array<Record<string, unknown>>,
+      },
+      useKangurRoutingMock: vi.fn(),
+      useKangurAuthMock: vi.fn(),
+      useKangurProgressStateMock: vi.fn(),
+      useKangurAgeGroupFocusMock: vi.fn(),
+      useKangurSubjectFocusMock: vi.fn(),
+      useKangurAssignmentsMock: vi.fn(),
     };
   }
-
-  return {
-  settingsStoreMock: {
-    get: vi.fn<(key: string) => string | undefined>(),
-  },
-  lessonsState: {
-    value: [] as Array<Record<string, unknown>>,
-  },
-  lessonDocumentsState: {
-    value: {} as Record<string, unknown>,
-  },
-  authState: {
-    value: {
-      user: null,
-      navigateToLogin: vi.fn(),
-      logout: vi.fn(),
-    },
-  },
-  assignmentsState: {
-    value: [] as Array<Record<string, unknown>>,
-  },
-  progressState: {
-    value: {
-      lessonMastery: {},
-    },
-  },
-  routerPushMock: vi.fn(),
-  useKangurPageContentEntryMock: vi.fn(),
-  lessonSectionsState: {
-    value: [] as Array<Record<string, unknown>>,
-  },
-  useKangurRoutingMock: vi.fn(),
-  useKangurAuthMock: vi.fn(),
-  useKangurProgressStateMock: vi.fn(),
-  useKangurAgeGroupFocusMock: vi.fn(),
-  useKangurSubjectFocusMock: vi.fn(),
-  useKangurAssignmentsMock: vi.fn(),
-  };
+  return (globalThis as any).__KANGUR_LESSONS_TEST_STATE__;
 });
 
 export const settingsStoreMock = lessonsTestHoisted.settingsStoreMock;
@@ -579,6 +572,7 @@ export const resetLessonsTestState = (): void => {
   useKangurAssignmentsMock.mockImplementation((options: { enabled?: boolean } = {}) => {
     const enabled = options.enabled ?? true;
     const assignments = enabled ? [...assignmentsState.value] : [];
+    if (assignments.length > 0) console.log('Returning assignments target:', JSON.stringify((assignments[0] as any).target));
     return {
       assignments,
       data: assignments,

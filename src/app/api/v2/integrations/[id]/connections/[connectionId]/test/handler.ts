@@ -33,6 +33,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEFAULT_MANUAL_LOGIN_TIMEOUT_MS = 240000;
 const MAX_MANUAL_LOGIN_TIMEOUT_MS = 600000;
+const QUICKLIST_AUTH_REQUIRED_DETAIL =
+  'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.';
 const TRADERA_LISTING_FORM_URL = normalizeTraderaListingFormUrl(
   DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl
 );
@@ -70,8 +72,14 @@ export async function postTestConnectionHandler(
     requestBody = parsedBody.data;
   }
 
-  const mode = requestBody.mode === 'manual' ? 'manual' : 'auto';
+  const mode =
+    requestBody.mode === 'manual'
+      ? 'manual'
+      : requestBody.mode === 'quicklist_preflight'
+        ? 'quicklist_preflight'
+        : 'auto';
   const manualMode = mode === 'manual';
+  const quicklistPreflightMode = mode === 'quicklist_preflight';
   const rawManualTimeout = requestBody.manualTimeoutMs;
   const manualLoginTimeoutMs =
     typeof rawManualTimeout === 'number' && Number.isFinite(rawManualTimeout)
@@ -299,6 +307,9 @@ export async function postTestConnectionHandler(
   if (manualMode) {
     pushStep('Manual mode', 'ok', `Manual login enabled (timeout ${manualLoginTimeoutMs}ms).`);
   }
+  if (quicklistPreflightMode) {
+    pushStep('Quicklist preflight', 'ok', 'Fast stored-session validation enabled.');
+  }
 
   // Decrypt to ensure credentials are readable with the configured key.
   pushStep(
@@ -307,18 +318,21 @@ export async function postTestConnectionHandler(
     'Validating encryption key and decrypting password'
   );
   const encryptedPassword = connection.password;
-  if (!manualMode && !encryptedPassword) {
+  if (!manualMode && !quicklistPreflightMode && !encryptedPassword) {
     return fail('Decrypting credentials', 'No encrypted password configured for this connection.');
   }
   const loginUsername = connection.username;
-  if (!manualMode && !loginUsername) {
+  if (!manualMode && !quicklistPreflightMode && !loginUsername) {
     return fail('Decrypting credentials', 'No username configured for this connection.');
   }
-  const decryptedPassword = manualMode ? '' : decryptSecret(encryptedPassword as string);
+  const decryptedPassword =
+    manualMode || quicklistPreflightMode ? '' : decryptSecret(encryptedPassword as string);
   pushStep(
     'Decrypting credentials',
     'ok',
-    manualMode ? 'Skipped in manual mode.' : 'Password decrypted successfully'
+    manualMode || quicklistPreflightMode
+      ? 'Skipped in non-credential mode.'
+      : 'Password decrypted successfully'
   );
 
   let storedState: PersistedStorageState | null = null;
@@ -362,27 +376,37 @@ export async function postTestConnectionHandler(
   }
   pushStep('Loading Playwright settings', 'ok', 'Resolved browser runtime settings');
 
-  const configuredHeadless = resolvedPlaywrightSettings.headless;
-  const headless = manualMode ? false : configuredHeadless;
-  const slowMo = resolvedPlaywrightSettings.slowMo;
+  const headless = manualMode
+    ? false
+    : quicklistPreflightMode
+      ? true
+      : resolvedPlaywrightSettings.headless;
+  const slowMo = quicklistPreflightMode ? 0 : resolvedPlaywrightSettings.slowMo;
   const defaultTimeout = resolvedPlaywrightSettings.timeout;
   const navigationTimeout = resolvedPlaywrightSettings.navigationTimeout;
-  const humanizeMouse = connection.playwrightHumanizeMouse ?? false;
-  const mouseJitter = Math.max(0, connection.playwrightMouseJitter ?? 0);
-  const clickDelayMin = Math.max(0, connection.playwrightClickDelayMin ?? 0);
+  const humanizeMouse =
+    quicklistPreflightMode ? false : (connection.playwrightHumanizeMouse ?? false);
+  const mouseJitter = quicklistPreflightMode ? 0 : Math.max(0, connection.playwrightMouseJitter ?? 0);
+  const clickDelayMin = quicklistPreflightMode
+    ? 0
+    : Math.max(0, connection.playwrightClickDelayMin ?? 0);
   const clickDelayMax = Math.max(
     clickDelayMin,
-    connection.playwrightClickDelayMax ?? clickDelayMin
+    quicklistPreflightMode ? clickDelayMin : (connection.playwrightClickDelayMax ?? clickDelayMin)
   );
-  const inputDelayMin = Math.max(0, connection.playwrightInputDelayMin ?? 0);
+  const inputDelayMin = quicklistPreflightMode
+    ? 0
+    : Math.max(0, connection.playwrightInputDelayMin ?? 0);
   const inputDelayMax = Math.max(
     inputDelayMin,
-    connection.playwrightInputDelayMax ?? inputDelayMin
+    quicklistPreflightMode ? inputDelayMin : (connection.playwrightInputDelayMax ?? inputDelayMin)
   );
-  const actionDelayMin = Math.max(0, connection.playwrightActionDelayMin ?? 0);
+  const actionDelayMin = quicklistPreflightMode
+    ? 0
+    : Math.max(0, connection.playwrightActionDelayMin ?? 0);
   const actionDelayMax = Math.max(
     actionDelayMin,
-    connection.playwrightActionDelayMax ?? actionDelayMin
+    quicklistPreflightMode ? actionDelayMin : (connection.playwrightActionDelayMax ?? actionDelayMin)
   );
   const proxyEnabled = resolvedPlaywrightSettings.proxyEnabled;
   const proxyServer = resolvedPlaywrightSettings.proxyServer;
@@ -600,6 +624,23 @@ export async function postTestConnectionHandler(
         const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Reusing session', 'failed', `Failed to check session: ${message}`);
       }
+    }
+
+    if (quicklistPreflightMode) {
+      pushStep('Quicklist preflight', 'pending', 'Validating stored Tradera session');
+      if (!storedState) {
+        return fail('Quicklist preflight', QUICKLIST_AUTH_REQUIRED_DETAIL, 409);
+      }
+      if (!sessionReused) {
+        return fail('Quicklist preflight', QUICKLIST_AUTH_REQUIRED_DETAIL, 409);
+      }
+      pushStep('Quicklist preflight', 'ok', 'Stored session is ready for one-click queueing.');
+      const response: TestConnectionResponse = {
+        ok: true,
+        steps,
+        sessionReady: true,
+      };
+      return NextResponse.json(response);
     }
 
     const loginUrls = [

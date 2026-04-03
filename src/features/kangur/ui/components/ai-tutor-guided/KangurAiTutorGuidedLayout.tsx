@@ -227,37 +227,20 @@ export function KangurAiTutorGuidedCalloutIntro(): JSX.Element | null {
   );
 }
 
-export function KangurAiTutorGuidedCalloutActions({
-  buttons,
-  compactActionClassName,
-  homeOnboardingCanGoBack,
-  isMobileHomeOnboardingSheet,
-  isResolvedSelectionCallout,
-  mode,
-  onAdvanceHomeOnboarding,
-  onBackHomeOnboarding,
-  onClose,
-  onFinishHomeOnboarding,
-  selectionPreparingBadgeInsetClassName,
-  selectionPreparingBadgeLabel,
-  shouldHideResolvedSelectionAnswer,
-  shouldShowSelectionPreparingBadge,
-}: {
-  buttons: GuidedButtons;
-  compactActionClassName: string;
-  homeOnboardingCanGoBack: boolean;
-  isMobileHomeOnboardingSheet: boolean;
-  isResolvedSelectionCallout: boolean;
-  mode: GuidedCalloutStateLike['mode'];
-  onAdvanceHomeOnboarding: () => void;
-  onBackHomeOnboarding: () => void;
-  onClose: () => void;
-  onFinishHomeOnboarding: () => void;
-  selectionPreparingBadgeInsetClassName: string;
-  selectionPreparingBadgeLabel: string;
-  shouldHideResolvedSelectionAnswer: boolean;
-  shouldShowSelectionPreparingBadge: boolean;
-}): JSX.Element {
+export function KangurAiTutorGuidedCalloutActions(): JSX.Element {
+  const {
+    tutorContent,
+    layoutState,
+    selectionDisplayState,
+    guidedCallout,
+    homeOnboardingCanGoBack,
+  } = useGuidedCalloutContext();
+
+  const { buttons } = tutorContent.guidedCallout;
+  const { compactActionClassName, isMobileHomeOnboardingSheet, selectionPreparingBadgeInsetClassName } = layoutState;
+  const { isResolvedSelectionCallout, shouldHideResolvedSelectionAnswer, shouldShowSelectionPreparingBadge } = selectionDisplayState;
+  const { mode, onAdvanceHomeOnboarding, onBackHomeOnboarding, onClose, onFinishHomeOnboarding } = guidedCallout;
+
   return (
     <div
       className={cn(
@@ -319,7 +302,7 @@ export function KangurAiTutorGuidedCalloutActions({
               selectionPreparingBadgeInsetClassName
             )}
           >
-            {selectionPreparingBadgeLabel}
+            {tutorContent.guidedCallout.selectionPreparingBadge}
           </KangurAiTutorChromeBadge>
         ) : null
       ) : (
@@ -337,118 +320,23 @@ export function KangurAiTutorGuidedCalloutActions({
   );
 }
 
-export function KangurAiTutorGuidedCalloutBody({
-  canSendMessages,
-  drawingPanelOpen,
-  fallbackCopy,
-  guidedCallout,
-  handleCloseCallout,
-  handleQuickAction,
-  homeOnboardingCanGoBack,
-  isLoading,
-  layoutState,
-  onAdvanceHomeOnboarding,
-  onBackHomeOnboarding,
-  onFinishHomeOnboarding,
-  sectionLabel,
-  selectionDisplayState,
-  selectionState,
-  sketchState,
-  tutorContent,
-}: {
-  canSendMessages: boolean;
-  drawingPanelOpen: boolean;
-  fallbackCopy: import('../KangurAiTutorGuidedCallout.utils').GuidedCalloutFallbackCopy;
-  guidedCallout: GuidedCalloutStateLike;
-  handleCloseCallout: () => void;
-  handleQuickAction: (...args: any[]) => unknown;
-  homeOnboardingCanGoBack: boolean;
-  isLoading: boolean;
-  layoutState: ReturnType<typeof resolveGuidedCalloutLayoutState>;
-  onAdvanceHomeOnboarding: () => void;
-  onBackHomeOnboarding: () => void;
-  onFinishHomeOnboarding: () => void;
-  sectionLabel: string | null;
-  selectionDisplayState: ReturnType<typeof resolveGuidedSelectionDisplayState>;
-  selectionState: ReturnType<typeof useGuidedCalloutSelectionState>;
-  sketchState: ReturnType<typeof useGuidedCalloutSketchState>;
-  tutorContent: GuidedTutorContent;
-}): JSX.Element {
+export function KangurAiTutorGuidedCalloutBody(): JSX.Element {
+  const {
+    layoutState,
+    selectionDisplayState,
+  } = useGuidedCalloutContext();
+
   return (
     <div className={layoutState.selectionKeepoutClassName}>
-      <KangurAiTutorGuidedCalloutHeader
-        closeAriaLabel={tutorContent.guidedCallout.closeAria}
-        headerLabel={guidedCallout.headerLabel}
-        onClose={handleCloseCallout}
-        showCloseButton={
-          !guidedCallout.showSelectionGuidanceCallout || selectionDisplayState.isResolvedSelectionCallout
-        }
-      />
-      <KangurAiTutorGuidedCalloutStepLabel
-        isMobileHomeOnboardingSheet={layoutState.isMobileHomeOnboardingSheet}
-        stepLabel={guidedCallout.stepLabel}
-      />
-      <KangurAiTutorGuidedCalloutIntro
-        detail={selectionDisplayState.resolvedSelectionDetail}
-        isMobileHomeOnboardingSheet={layoutState.isMobileHomeOnboardingSheet}
-        shouldShowDetail={selectionDisplayState.shouldShowSelectionDetail}
-        shouldShowIntro={selectionDisplayState.shouldShowSelectionIntro}
-        title={guidedCallout.title}
-      />
-      <KangurAiTutorGuidedCalloutSectionCard
-        label={sectionLabel}
-        prefix={tutorContent.guidedCallout.sectionPrefix}
-        shouldShow={guidedCallout.showSectionGuidanceCallout}
-      />
-      <KangurAiTutorGuidedSelectionSourceCard
-        fallbackCopy={fallbackCopy}
-        selectedKnowledgeFragment={selectionState.selectedKnowledgeFragment}
-        selectedKnowledgeSummary={selectionDisplayState.selectedKnowledgeSummary}
-        selectedKnowledgeTitle={selectionDisplayState.selectedKnowledgeTitle}
-        shouldShow={selectionDisplayState.shouldShowSelectedKnowledgeReference}
-      />
+      <KangurAiTutorGuidedCalloutHeader />
+      <KangurAiTutorGuidedCalloutStepLabel />
+      <KangurAiTutorGuidedCalloutIntro />
+      <KangurAiTutorGuidedCalloutSectionCard />
+      <KangurAiTutorGuidedSelectionSourceCard />
       {selectionDisplayState.isResolvedSelectionCallout ? (
-        <KangurAiTutorGuidedSelectionResolvedContent
-          canOpenDrawingPanel={sketchState.canOpenDrawingPanel}
-          canSendMessages={canSendMessages}
-          compactActionClassName={layoutState.compactActionClassName}
-          drawingPanelOpen={drawingPanelOpen}
-          fallbackCopy={fallbackCopy}
-          handleQuickAction={handleQuickAction}
-          hintQuickAction={selectionState.hintQuickAction}
-          isLoading={isLoading}
-          resolvedSelectionAssistantMessage={selectionState.resolvedSelectionAssistantMessage}
-          shouldHideResolvedSelectionAnswer={selectionDisplayState.shouldHideResolvedSelectionAnswer}
-          shouldShowHintFollowUp={selectionDisplayState.shouldShowHintFollowUp}
-          shouldShowSelectionPageContentBadge={selectionDisplayState.shouldShowSelectionPageContentBadge}
-          shouldShowSketchCta={
-            selectionDisplayState.isResolvedSelectionCallout &&
-            (
-              Boolean(selectionDisplayState.selectedKnowledgeSummary) ||
-              Boolean(selectionState.resolvedSelectionAssistantMessage?.content)
-            )
-          }
-          shouldShowSketchHint={sketchState.shouldShowSketchHint}
-          tutorContent={tutorContent}
-          onSketchRequest={sketchState.handleSketchRequest}
-        />
+        <KangurAiTutorGuidedSelectionResolvedContent />
       ) : null}
-      <KangurAiTutorGuidedCalloutActions
-        buttons={tutorContent.guidedCallout.buttons}
-        compactActionClassName={layoutState.compactActionClassName}
-        homeOnboardingCanGoBack={homeOnboardingCanGoBack}
-        isMobileHomeOnboardingSheet={layoutState.isMobileHomeOnboardingSheet}
-        isResolvedSelectionCallout={selectionDisplayState.isResolvedSelectionCallout}
-        mode={guidedCallout.mode}
-        onAdvanceHomeOnboarding={onAdvanceHomeOnboarding}
-        onBackHomeOnboarding={onBackHomeOnboarding}
-        onClose={handleCloseCallout}
-        onFinishHomeOnboarding={onFinishHomeOnboarding}
-        selectionPreparingBadgeInsetClassName={layoutState.selectionPreparingBadgeInsetClassName}
-        selectionPreparingBadgeLabel={tutorContent.guidedCallout.selectionPreparingBadge}
-        shouldHideResolvedSelectionAnswer={selectionDisplayState.shouldHideResolvedSelectionAnswer}
-        shouldShowSelectionPreparingBadge={selectionDisplayState.shouldShowSelectionPreparingBadge}
-      />
+      <KangurAiTutorGuidedCalloutActions />
     </div>
   );
 }

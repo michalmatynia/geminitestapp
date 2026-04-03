@@ -16,8 +16,8 @@ import {
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import {
-  ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
+  preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations';
@@ -135,13 +135,10 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         const isTraderaBrowserIntegration =
           isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
         if (isTraderaBrowserIntegration && selectedConnectionId) {
-          const sessionResult = await ensureTraderaBrowserSession({
+          await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
           });
-          if (sessionResult.savedSession) {
-            toast('Tradera login session refreshed.', { variant: 'success' });
-          }
         }
 
         const response = await createListingMutation.mutateAsync({

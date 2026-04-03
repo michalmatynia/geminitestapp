@@ -8,24 +8,9 @@ import {
   KangurAiTutorChromeBadge,
   KangurAiTutorWarmInsetCard,
 } from '../KangurAiTutorChrome';
-import type { GuidedCalloutFallbackCopy } from '../KangurAiTutorGuidedCallout.utils';
+import { useGuidedCalloutContext } from './KangurAiTutorGuided.context';
 
 import type { JSX } from 'react';
-
-type GuidedSelectionKnowledgeFragment = {
-  explanation?: string | null;
-} | null;
-
-type GuidedTutorContent = {
-  guidedCallout: {
-    selectionSketchCtaLabel?: string | null;
-    selectionSketchHint?: string | null;
-  };
-  messageList: {
-    hintFollowUpActionLabel: string;
-    hintFollowUpQuestion: string;
-  };
-};
 
 const resolveTutorGuidedFallback = (
   value: string | null | undefined,
@@ -38,40 +23,26 @@ const resolveTutorGuidedFallback = (
   return value;
 };
 
-export function KangurAiTutorGuidedCalloutSectionCard({
-  label,
-  prefix,
-  shouldShow,
-}: {
-  label: string | null;
-  prefix: string;
-  shouldShow: boolean;
-}): JSX.Element | null {
-  if (!shouldShow) {
+export function KangurAiTutorGuidedCalloutSectionCard(): JSX.Element | null {
+  const { tutorContent, guidedCallout, sectionLabel } = useGuidedCalloutContext();
+
+  if (!guidedCallout.showSectionGuidanceCallout) {
     return null;
   }
 
   return (
     <KangurAiTutorWarmInsetCard tone='guide' className='mt-3 px-3 py-2 text-xs leading-relaxed'>
-      {prefix}: {label}
+      {tutorContent.guidedCallout.sectionPrefix}: {sectionLabel}
     </KangurAiTutorWarmInsetCard>
   );
 }
 
-export function KangurAiTutorGuidedSelectionSourceCard({
-  fallbackCopy,
-  selectedKnowledgeFragment,
-  selectedKnowledgeSummary,
-  selectedKnowledgeTitle,
-  shouldShow,
-}: {
-  fallbackCopy: GuidedCalloutFallbackCopy;
-  selectedKnowledgeFragment: GuidedSelectionKnowledgeFragment;
-  selectedKnowledgeSummary: string | null;
-  selectedKnowledgeTitle: string | null;
-  shouldShow: boolean;
-}): JSX.Element | null {
-  if (!shouldShow) {
+export function KangurAiTutorGuidedSelectionSourceCard(): JSX.Element | null {
+  const { fallbackCopy, selectionState, selectionDisplayState } = useGuidedCalloutContext();
+  const { selectedKnowledgeFragment } = selectionState;
+  const { selectedKnowledgeSummary, selectedKnowledgeTitle, shouldShowSelectedKnowledgeReference } = selectionDisplayState;
+
+  if (!shouldShowSelectedKnowledgeReference) {
     return null;
   }
 
@@ -102,27 +73,24 @@ export function KangurAiTutorGuidedSelectionSourceCard({
   );
 }
 
-export function KangurAiTutorGuidedSelectionSketchCard({
-  canOpenDrawingPanel,
-  canSendMessages,
-  drawingPanelOpen,
-  fallbackCopy,
-  isLoading,
-  onSketchRequest,
-  shouldShow,
-  shouldShowSketchHint,
-  tutorContent,
-}: {
-  canOpenDrawingPanel: boolean;
-  canSendMessages: boolean;
-  drawingPanelOpen: boolean;
-  fallbackCopy: GuidedCalloutFallbackCopy;
-  isLoading: boolean;
-  onSketchRequest: () => void;
-  shouldShow: boolean;
-  shouldShowSketchHint: boolean;
-  tutorContent: GuidedTutorContent;
-}): JSX.Element | null {
+export function KangurAiTutorGuidedSelectionSketchCard(): JSX.Element | null {
+  const {
+    tutorContent,
+    fallbackCopy,
+    sketchState,
+    selectionDisplayState,
+    panelBody,
+  } = useGuidedCalloutContext();
+
+  const { canOpenDrawingPanel, handleSketchRequest, shouldShowSketchHint } = sketchState;
+  const { isResolvedSelectionCallout, selectedKnowledgeSummary } = selectionDisplayState;
+  const { canSendMessages, drawingPanelOpen, isLoading } = panelBody;
+
+  const shouldShow = isResolvedSelectionCallout && (
+    Boolean(selectedKnowledgeSummary) ||
+    Boolean(useGuidedCalloutContext().selectionState.resolvedSelectionAssistantMessage?.content)
+  );
+
   if (!shouldShow) {
     return null;
   }
@@ -138,7 +106,7 @@ export function KangurAiTutorGuidedSelectionSketchCard({
           size='sm'
           variant='surface'
           disabled={isLoading || !canSendMessages || (drawingPanelOpen && canOpenDrawingPanel)}
-          onClick={onSketchRequest}
+          onClick={handleSketchRequest}
         >
           {resolveTutorGuidedFallback(
             tutorContent.guidedCallout.selectionSketchCtaLabel,
@@ -158,24 +126,21 @@ export function KangurAiTutorGuidedSelectionSketchCard({
   );
 }
 
-export function KangurAiTutorGuidedSelectionHintCard({
-  canSendMessages,
-  compactActionClassName,
-  hintFollowUpActionLabel,
-  hintFollowUpQuestion,
-  isLoading,
-  onSelectHint,
-  shouldShow,
-}: {
-  canSendMessages: boolean;
-  compactActionClassName: string;
-  hintFollowUpActionLabel: string;
-  hintFollowUpQuestion: string;
-  isLoading: boolean;
-  onSelectHint: () => void;
-  shouldShow: boolean;
-}): JSX.Element | null {
-  if (!shouldShow) {
+export function KangurAiTutorGuidedSelectionHintCard(): JSX.Element | null {
+  const {
+    tutorContent,
+    layoutState,
+    selectionDisplayState,
+    selectionState,
+    panelBody,
+  } = useGuidedCalloutContext();
+
+  const { compactActionClassName } = layoutState;
+  const { shouldShowHintFollowUp } = selectionDisplayState;
+  const { hintQuickAction } = selectionState;
+  const { canSendMessages, handleQuickAction, isLoading } = panelBody;
+
+  if (!shouldShowHintFollowUp) {
     return null;
   }
 
@@ -185,7 +150,7 @@ export function KangurAiTutorGuidedSelectionHintCard({
       className='soft-card kangur-chat-card kangur-chat-padding-md border kangur-chat-surface-warm kangur-chat-surface-warm-shadow'
     >
       <div className='text-xs font-medium leading-relaxed [color:var(--kangur-chat-panel-text,var(--kangur-page-text))]'>
-        {hintFollowUpQuestion}
+        {tutorContent.messageList.hintFollowUpQuestion}
       </div>
       <div className='mt-2'>
         <KangurButton
@@ -195,50 +160,25 @@ export function KangurAiTutorGuidedSelectionHintCard({
           size='sm'
           variant='primary'
           disabled={isLoading || !canSendMessages}
-          onClick={onSelectHint}
+          onClick={() => void handleQuickAction(hintQuickAction)}
         >
-          {hintFollowUpActionLabel}
+          {tutorContent.messageList.hintFollowUpActionLabel}
         </KangurButton>
       </div>
     </div>
   );
 }
 
-export function KangurAiTutorGuidedSelectionResolvedContent({
-  canOpenDrawingPanel,
-  canSendMessages,
-  compactActionClassName,
-  drawingPanelOpen,
-  fallbackCopy,
-  handleQuickAction,
-  hintQuickAction,
-  isLoading,
-  resolvedSelectionAssistantMessage,
-  shouldHideResolvedSelectionAnswer,
-  shouldShowHintFollowUp,
-  shouldShowSelectionPageContentBadge,
-  shouldShowSketchCta,
-  shouldShowSketchHint,
-  tutorContent,
-  onSketchRequest,
-}: {
-  canOpenDrawingPanel: boolean;
-  canSendMessages: boolean;
-  compactActionClassName: string;
-  drawingPanelOpen: boolean;
-  fallbackCopy: GuidedCalloutFallbackCopy;
-  handleQuickAction: (...args: any[]) => unknown;
-  hintQuickAction: unknown;
-  isLoading: boolean;
-  resolvedSelectionAssistantMessage: KangurAiTutorRuntimeMessage | null;
-  shouldHideResolvedSelectionAnswer: boolean;
-  shouldShowHintFollowUp: boolean;
-  shouldShowSelectionPageContentBadge: boolean;
-  shouldShowSketchCta: boolean;
-  shouldShowSketchHint: boolean;
-  tutorContent: GuidedTutorContent;
-  onSketchRequest: () => void;
-}): JSX.Element {
+export function KangurAiTutorGuidedSelectionResolvedContent(): JSX.Element {
+  const {
+    fallbackCopy,
+    selectionState,
+    selectionDisplayState,
+  } = useGuidedCalloutContext();
+
+  const { resolvedSelectionAssistantMessage } = selectionState;
+  const { shouldHideResolvedSelectionAnswer, shouldShowSelectionPageContentBadge } = selectionDisplayState;
+
   return (
     <div className='mt-3 space-y-2'>
       {!shouldHideResolvedSelectionAnswer ? (
@@ -260,26 +200,8 @@ export function KangurAiTutorGuidedSelectionResolvedContent({
           </KangurAiTutorWarmInsetCard>
         </>
       ) : null}
-      <KangurAiTutorGuidedSelectionSketchCard
-        canOpenDrawingPanel={canOpenDrawingPanel}
-        canSendMessages={canSendMessages}
-        drawingPanelOpen={drawingPanelOpen}
-        fallbackCopy={fallbackCopy}
-        isLoading={isLoading}
-        onSketchRequest={onSketchRequest}
-        shouldShow={shouldShowSketchCta}
-        shouldShowSketchHint={shouldShowSketchHint}
-        tutorContent={tutorContent}
-      />
-      <KangurAiTutorGuidedSelectionHintCard
-        canSendMessages={canSendMessages}
-        compactActionClassName={compactActionClassName}
-        hintFollowUpActionLabel={tutorContent.messageList.hintFollowUpActionLabel}
-        hintFollowUpQuestion={tutorContent.messageList.hintFollowUpQuestion}
-        isLoading={isLoading}
-        onSelectHint={() => void handleQuickAction(hintQuickAction)}
-        shouldShow={shouldShowHintFollowUp}
-      />
+      <KangurAiTutorGuidedSelectionSketchCard />
+      <KangurAiTutorGuidedSelectionHintCard />
     </div>
   );
 }

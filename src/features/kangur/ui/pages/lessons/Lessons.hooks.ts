@@ -397,17 +397,15 @@ export function useLessonsLogic() {
     }
 
     const nextMap = new Map<string, (typeof assignments)[number]>();
-    console.log('Building assignments map, assignments count:', assignments.length, 'lessons count:', lessons.length);
+    // console.log('Building assignments map, assignments count:', assignments.length, 'lessons count:', lessons.length);
     assignments
-      .filter((assignment) => !assignment.archived)
-      .filter((assignment) => assignment.progress.status !== 'completed')
       .filter(
         (assignment): assignment is (typeof assignments)[number] & { target: { type: 'lesson' } } =>
           assignment.target.type === 'lesson'
       )
       .forEach((assignment) => {
         const componentId = assignment.target.lessonComponentId;
-        console.log('Mapping assignment to componentId:', componentId);
+        // console.log('Mapping assignment to componentId:', componentId);
         const existing = nextMap.get(componentId);
         if (
           !existing ||

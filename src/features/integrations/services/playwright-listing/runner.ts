@@ -14,6 +14,27 @@ import {
   parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
 } from '../tradera-playwright-settings';
+import type { PlaywrightSettings } from '@/shared/contracts/playwright';
+
+export type PlaywrightExecutionSettingsSummary = Pick<
+  PlaywrightSettings,
+  | 'headless'
+  | 'slowMo'
+  | 'timeout'
+  | 'navigationTimeout'
+  | 'humanizeMouse'
+  | 'mouseJitter'
+  | 'clickDelayMin'
+  | 'clickDelayMax'
+  | 'inputDelayMin'
+  | 'inputDelayMax'
+  | 'actionDelayMin'
+  | 'actionDelayMax'
+  | 'emulateDevice'
+  | 'deviceName'
+> & {
+  proxyEnabled: boolean;
+};
 
 export type PlaywrightListingResult = {
   runId: string;
@@ -22,6 +43,8 @@ export type PlaywrightListingResult = {
   expiresAt: string | null;
   publishVerified: boolean | null;
   effectiveBrowserMode: 'headless' | 'headed';
+  personaId: string | null;
+  executionSettings: PlaywrightExecutionSettingsSummary;
   rawResult: Record<string, unknown>;
 };
 
@@ -59,6 +82,26 @@ const resolveListingRunStartUrl = (input: Record<string, unknown>): string | und
 
   return undefined;
 };
+
+const buildExecutionSettingsSummary = (
+  settings: PlaywrightSettings
+): PlaywrightExecutionSettingsSummary => ({
+  headless: settings.headless,
+  slowMo: settings.slowMo,
+  timeout: settings.timeout,
+  navigationTimeout: settings.navigationTimeout,
+  humanizeMouse: settings.humanizeMouse,
+  mouseJitter: settings.mouseJitter,
+  clickDelayMin: settings.clickDelayMin,
+  clickDelayMax: settings.clickDelayMax,
+  inputDelayMin: settings.inputDelayMin,
+  inputDelayMax: settings.inputDelayMax,
+  actionDelayMin: settings.actionDelayMin,
+  actionDelayMax: settings.actionDelayMax,
+  proxyEnabled: settings.proxyEnabled,
+  emulateDevice: settings.emulateDevice,
+  deviceName: settings.deviceName,
+});
 
 /**
  * Executes a Playwright listing script against the product data and returns
@@ -101,6 +144,14 @@ export const runPlaywrightListingScript = async ({
         slowMo: settings.slowMo,
         timeout: settings.timeout,
         navigationTimeout: settings.navigationTimeout,
+        humanizeMouse: settings.humanizeMouse,
+        mouseJitter: settings.mouseJitter,
+        clickDelayMin: settings.clickDelayMin,
+        clickDelayMax: settings.clickDelayMax,
+        inputDelayMin: settings.inputDelayMin,
+        inputDelayMax: settings.inputDelayMax,
+        actionDelayMin: settings.actionDelayMin,
+        actionDelayMax: settings.actionDelayMax,
         proxyEnabled: settings.proxyEnabled,
         proxyServer: settings.proxyServer,
         proxyUsername: settings.proxyUsername,
@@ -133,6 +184,11 @@ export const runPlaywrightListingScript = async ({
     expiresAt: extractStringField(resultValue, 'expiresAt'),
     publishVerified: extractBooleanField(resultValue, 'publishVerified'),
     effectiveBrowserMode: effectiveHeadless ? 'headless' : 'headed',
+    personaId: personaId ?? null,
+    executionSettings: buildExecutionSettingsSummary({
+      ...settings,
+      headless: effectiveHeadless,
+    }),
     rawResult: resultValue,
   };
 };
@@ -172,6 +228,14 @@ export const runPlaywrightImportScript = async ({
         slowMo: settings.slowMo,
         timeout: settings.timeout,
         navigationTimeout: settings.navigationTimeout,
+        humanizeMouse: settings.humanizeMouse,
+        mouseJitter: settings.mouseJitter,
+        clickDelayMin: settings.clickDelayMin,
+        clickDelayMax: settings.clickDelayMax,
+        inputDelayMin: settings.inputDelayMin,
+        inputDelayMax: settings.inputDelayMax,
+        actionDelayMin: settings.actionDelayMin,
+        actionDelayMax: settings.actionDelayMax,
         proxyEnabled: settings.proxyEnabled,
         proxyServer: settings.proxyServer,
         proxyUsername: settings.proxyUsername,

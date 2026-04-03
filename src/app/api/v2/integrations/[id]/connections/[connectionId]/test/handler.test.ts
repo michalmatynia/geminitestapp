@@ -277,4 +277,52 @@ describe('integration connection test handler', () => {
     expect(pageWaitForURLMock).not.toHaveBeenCalled();
     expect(decryptSecretMock).not.toHaveBeenCalledWith('raw-proxy-secret');
   });
+
+  it('supports fast quicklist preflight without opening the sell page or saving session again', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        mode: 'quicklist_preflight',
+      },
+    });
+
+    const response = await postTestConnectionHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/integration-1/connections/connection-1/test',
+        { method: 'POST' }
+      ),
+      {} as never,
+      { id: 'integration-1', connectionId: 'connection-1' }
+    );
+
+    const payload = (await response.json()) as { ok: boolean; sessionReady?: boolean };
+
+    expect(payload.ok).toBe(true);
+    expect(payload.sessionReady).toBe(true);
+    expect(chromiumLaunchMock).toHaveBeenCalledWith({
+      headless: true,
+      slowMo: 0,
+      proxy: {
+        server: 'http://persona-proxy.example:8080',
+        username: 'persona-user',
+        password: 'persona-pass',
+      },
+    });
+    expect(safeGotoMock).toHaveBeenCalledTimes(1);
+    expect(safeGotoMock).toHaveBeenCalledWith(
+      'https://www.tradera.com/en/my/listings?tab=active',
+      expect.objectContaining({
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      }),
+      'Session check'
+    );
+    expect(safeGotoMock).not.toHaveBeenCalledWith(
+      'https://www.tradera.com/en/selling/new',
+      expect.anything(),
+      expect.anything()
+    );
+    expect(updateConnectionMock).not.toHaveBeenCalled();
+    expect(pageWaitForURLMock).not.toHaveBeenCalled();
+  });
 });

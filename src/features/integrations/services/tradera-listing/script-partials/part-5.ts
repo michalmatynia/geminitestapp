@@ -72,13 +72,7 @@ export const PART_5 = `        }
       optionLabels: DEPARTMENT_OPTION_LABELS,
       fieldKey: 'department',
     });
-    await trySelectOptionalFieldValue({
-      fieldLabels: DELIVERY_FIELD_LABELS,
-      optionLabels: deliveryOptionLabels,
-      fieldKey: 'delivery',
-      requiredOptionLabel: configuredDeliveryOptionLabel,
-      failureCode: 'FAIL_SHIPPING_SET',
-    });
+    await applyDeliverySelection();
     await wait(500);
 
     const titleInput = await firstVisible(TITLE_SELECTORS);

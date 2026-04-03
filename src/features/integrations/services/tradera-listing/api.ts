@@ -243,6 +243,7 @@ export const runTraderaApiListing = async ({
       shippingGroupId: shippingGroupResolution.shippingGroupId,
       shippingGroupName: shippingGroupResolution.shippingGroup?.name ?? null,
       shippingCondition,
+      shippingPriceEur: shippingGroupResolution.shippingPriceEur,
       shippingConditionSource,
       shippingConditionReason: shippingGroupResolution.reason,
       quantity,

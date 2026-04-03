@@ -108,6 +108,222 @@ export const PART_4 = `          );
     return false;
   };
 
+  const firstVisibleWithin = async (root, selectors) => {
+    for (const selector of selectors) {
+      const locator = root.locator(selector).first();
+      const count = await locator.count().catch(() => 0);
+      if (!count) continue;
+      const visible = await locator.isVisible().catch(() => false);
+      if (visible) return locator;
+    }
+    return null;
+  };
+
+  const isCheckboxChecked = async (locator) => {
+    if (!locator) return false;
+    return locator.isChecked().catch(async () => {
+      return locator
+        .evaluate((element) => {
+          const input = element instanceof HTMLInputElement ? element : null;
+          return Boolean(
+            input?.checked || element.getAttribute('aria-checked') === 'true'
+          );
+        })
+        .catch(() => false);
+    });
+  };
+
+  const findCheckboxByLabelsWithin = async (root, labels, options = {}) => {
+    for (const label of labels) {
+      const escapedPattern = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+      const exactRoleCheckbox = root
+        .getByRole('checkbox', { name: new RegExp('^' + escapedPattern + '\$', 'i') })
+        .first();
+      const exactRoleVisible = await exactRoleCheckbox.isVisible().catch(() => false);
+      if (exactRoleVisible) return exactRoleCheckbox;
+
+      const partialRoleCheckbox = root
+        .getByRole('checkbox', { name: new RegExp(escapedPattern, 'i') })
+        .first();
+      const partialRoleVisible = await partialRoleCheckbox.isVisible().catch(() => false);
+      if (partialRoleVisible) return partialRoleCheckbox;
+
+      const escapedText = label.replace(/"/g, '\\"');
+      const labeledCheckbox = root
+        .locator(
+          'xpath=//*[normalize-space(text())="' +
+            escapedText +
+            '"]/following::*[self::input[@type="checkbox"] or @role="checkbox"][1]'
+        )
+        .first();
+      const labeledCheckboxVisible = await labeledCheckbox.isVisible().catch(() => false);
+      if (labeledCheckboxVisible) return labeledCheckbox;
+    }
+
+    if (options.fallbackToFirstVisible) {
+      const firstVisibleCheckbox = root.getByRole('checkbox').first();
+      const firstVisibleCheckboxVisible = await firstVisibleCheckbox.isVisible().catch(() => false);
+      if (firstVisibleCheckboxVisible) {
+        return firstVisibleCheckbox;
+      }
+    }
+
+    return null;
+  };
+
+  const findButtonByLabelsWithin = async (root, labels) => {
+    for (const label of labels) {
+      const escapedPattern = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+      const exactButton = root
+        .getByRole('button', { name: new RegExp('^' + escapedPattern + '\$', 'i') })
+        .first();
+      const exactButtonVisible = await exactButton.isVisible().catch(() => false);
+      if (exactButtonVisible) return exactButton;
+
+      const partialButton = root
+        .getByRole('button', { name: new RegExp(escapedPattern, 'i') })
+        .first();
+      const partialButtonVisible = await partialButton.isVisible().catch(() => false);
+      if (partialButtonVisible) return partialButton;
+    }
+
+    return null;
+  };
+
+  const findVisibleShippingDialog = async () => {
+    const dialogs = page.getByRole('dialog');
+    const count = await dialogs.count().catch(() => 0);
+    let firstVisibleDialog = null;
+
+    for (let index = 0; index < count; index += 1) {
+      const candidate = dialogs.nth(index);
+      const visible = await candidate.isVisible().catch(() => false);
+      if (!visible) continue;
+      if (!firstVisibleDialog) {
+        firstVisibleDialog = candidate;
+      }
+
+      const textContent = await candidate.innerText().catch(() => '');
+      const normalized = normalizeWhitespace(textContent).toLowerCase();
+      if (
+        SHIPPING_DIALOG_TITLE_LABELS.some((label) =>
+          normalized.includes(normalizeWhitespace(label).toLowerCase())
+        )
+      ) {
+        return candidate;
+      }
+    }
+
+    return firstVisibleDialog;
+  };
+
+  const applyDeliveryCheckboxSelection = async () => {
+    const shippingToggle = await findCheckboxByLabelsWithin(page, OFFER_SHIPPING_LABELS);
+    if (!shippingToggle) {
+      log?.('tradera.quicklist.field.skipped', { field: 'delivery', reason: 'shipping-toggle-missing' });
+      if (requiresConfiguredDeliveryOption || configuredDeliveryPriceEur !== null) {
+        throw new Error(
+          'FAIL_SHIPPING_SET: Required Tradera delivery controls were not available.'
+        );
+      }
+      return false;
+    }
+
+    const shippingAlreadyEnabled = await isCheckboxChecked(shippingToggle);
+    if (!shippingAlreadyEnabled) {
+      await humanClick(shippingToggle).catch(() => undefined);
+      await wait(700);
+    }
+
+    const shippingDialog = await findVisibleShippingDialog();
+    if (!shippingDialog) {
+      log?.('tradera.quicklist.field.selected', {
+        field: 'delivery',
+        option: 'shipping-toggle',
+        flow: 'checkbox',
+        modalConfigured: false,
+      });
+      return true;
+    }
+
+    const shippingOptionCheckbox = await findCheckboxByLabelsWithin(
+      shippingDialog,
+      SHIPPING_DIALOG_OPTION_LABELS,
+      { fallbackToFirstVisible: true }
+    );
+    if (!shippingOptionCheckbox) {
+      throw new Error(
+        'FAIL_SHIPPING_SET: Tradera shipping option checkbox was not found in the delivery dialog.'
+      );
+    }
+
+    const optionAlreadyChecked = await isCheckboxChecked(shippingOptionCheckbox);
+    if (!optionAlreadyChecked) {
+      await humanClick(shippingOptionCheckbox).catch(() => undefined);
+      await wait(400);
+    }
+
+    if (configuredDeliveryPriceEur === null) {
+      throw new Error(
+        'FAIL_SHIPPING_SET: Tradera shipping price (EUR) is missing' +
+          (configuredShippingGroupName ? ' for shipping group "' + configuredShippingGroupName + '"' : '') +
+          '.'
+      );
+    }
+
+    const shippingPriceInput = await firstVisibleWithin(
+      shippingDialog,
+      SHIPPING_DIALOG_PRICE_INPUT_SELECTORS
+    );
+    if (!shippingPriceInput) {
+      throw new Error('FAIL_SHIPPING_SET: Tradera shipping price input was not found.');
+    }
+
+    await setAndVerifyFieldValue({
+      locator: shippingPriceInput,
+      value: configuredDeliveryPriceEur.toFixed(2),
+      fieldKey: 'delivery-price',
+      errorPrefix: 'FAIL_SHIPPING_SET',
+      normalize: normalizePriceValue,
+    });
+
+    const saveButton = await findButtonByLabelsWithin(shippingDialog, SHIPPING_DIALOG_SAVE_LABELS);
+    if (!saveButton) {
+      throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog save button was not found.');
+    }
+
+    await humanClick(saveButton, { pauseAfter: false }).catch(() => undefined);
+    await wait(900);
+
+    const dialogStillVisible = await shippingDialog.isVisible().catch(() => false);
+    if (dialogStillVisible) {
+      throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog did not close after saving.');
+    }
+
+    log?.('tradera.quicklist.field.selected', {
+      field: 'delivery',
+      option: configuredDeliveryOptionLabel || 'shipping-modal',
+      flow: 'checkbox-modal',
+      shippingPriceEur: configuredDeliveryPriceEur,
+    });
+    return true;
+  };
+
+  const applyDeliverySelection = async () => {
+    const deliveryTrigger = await findFieldTriggerByLabels(DELIVERY_FIELD_LABELS);
+    if (deliveryTrigger) {
+      return trySelectOptionalFieldValue({
+        fieldLabels: DELIVERY_FIELD_LABELS,
+        optionLabels: deliveryOptionLabels,
+        fieldKey: 'delivery',
+        requiredOptionLabel: configuredDeliveryOptionLabel,
+        failureCode: 'FAIL_SHIPPING_SET',
+      });
+    }
+
+    return applyDeliveryCheckboxSelection();
+  };
+
   const chooseBuyNowListingFormat = async () => {
     const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);
     if (!listingFormatTrigger) {

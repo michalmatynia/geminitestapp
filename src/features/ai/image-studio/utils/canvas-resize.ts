@@ -16,6 +16,17 @@ export type { NormalizedImageFrame };
 
 type AxisMode = 'left' | 'center' | 'right';
 type VerticalMode = 'up' | 'center' | 'down';
+const CANVAS_RESIZE_DIRECTIONS = new Set<CanvasResizeDirection>([
+  'up-left',
+  'up',
+  'up-right',
+  'left',
+  'center',
+  'right',
+  'down-left',
+  'down',
+  'down-right',
+]);
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value));
@@ -29,22 +40,8 @@ const normalizeCanvasDimension = (value: number): number =>
 const isPositiveFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0;
 
-const normalizeDirection = (direction: CanvasResizeDirection): CanvasResizeDirection => {
-  switch (direction) {
-    case 'up-left':
-    case 'up':
-    case 'up-right':
-    case 'left':
-    case 'center':
-    case 'right':
-    case 'down-left':
-    case 'down':
-    case 'down-right':
-      return direction;
-    default:
-      return 'down-right';
-  }
-};
+const normalizeDirection = (direction: CanvasResizeDirection): CanvasResizeDirection =>
+  CANVAS_RESIZE_DIRECTIONS.has(direction) ? direction : 'down-right';
 
 const resolveHorizontalMode = (direction: CanvasResizeDirection): AxisMode => {
   if (direction.endsWith('left') || direction === 'left') return 'left';

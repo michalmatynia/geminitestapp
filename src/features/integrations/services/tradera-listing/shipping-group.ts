@@ -12,11 +12,15 @@ export type TraderaShippingGroupResolution = {
   shippingGroup: ProductShippingGroup | null;
   shippingGroupId: string | null;
   shippingCondition: string | null;
+  shippingPriceEur: number | null;
   reason: TraderaShippingGroupResolutionReason;
 };
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
+
+const toFiniteNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
 
 export const selectPreferredTraderaShippingGroupResolution = ({
   product,
@@ -31,6 +35,7 @@ export const selectPreferredTraderaShippingGroupResolution = ({
       shippingGroup: null,
       shippingGroupId: null,
       shippingCondition: null,
+      shippingPriceEur: null,
       reason: 'missing_shipping_group',
     };
   }
@@ -40,16 +45,19 @@ export const selectPreferredTraderaShippingGroupResolution = ({
       shippingGroup: null,
       shippingGroupId,
       shippingCondition: null,
+      shippingPriceEur: null,
       reason: 'shipping_group_not_found',
     };
   }
 
   const shippingCondition = toTrimmedString(shippingGroup.traderaShippingCondition) || null;
+  const shippingPriceEur = toFiniteNumber(shippingGroup.traderaShippingPriceEur);
   if (!shippingCondition) {
     return {
       shippingGroup,
       shippingGroupId,
       shippingCondition: null,
+      shippingPriceEur,
       reason: 'shipping_group_without_condition',
     };
   }
@@ -58,6 +66,7 @@ export const selectPreferredTraderaShippingGroupResolution = ({
     shippingGroup,
     shippingGroupId,
     shippingCondition,
+    shippingPriceEur,
     reason: 'mapped',
   };
 };
@@ -73,6 +82,7 @@ export const resolveTraderaShippingGroupResolutionForProduct = async ({
       shippingGroup: null,
       shippingGroupId: null,
       shippingCondition: null,
+      shippingPriceEur: null,
       reason: 'missing_shipping_group',
     };
   }

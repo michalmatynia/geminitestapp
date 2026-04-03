@@ -119,7 +119,7 @@ const resolveLocalProductImagePaths = async (
   return validPaths;
 };
 
-const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v47';
+const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v48';
 const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 10_000;
 
 const includesAnyHint = (value: string, hints: readonly string[]): boolean => {
@@ -294,6 +294,7 @@ const buildTraderaScriptInput = async ({
       shippingGroupName: shippingGroup?.name ?? null,
       shippingGroupCatalogId: shippingGroup?.catalogId ?? null,
       shippingCondition: shippingGroupResolution.shippingCondition,
+      shippingPriceEur: shippingGroupResolution.shippingPriceEur,
       reason: shippingGroupResolution.reason,
     },
   };
@@ -645,6 +646,14 @@ const runTraderaBrowserListingScripted = async ({
           'shippingCondition'
         ] === 'string'
           ? ((scriptInput['traderaShipping'] as Record<string, unknown>)['shippingCondition'] as string)
+          : null,
+      shippingPriceEur:
+        scriptInput &&
+        typeof scriptInput['traderaShipping'] === 'object' &&
+        scriptInput['traderaShipping'] &&
+        typeof (scriptInput['traderaShipping'] as Record<string, unknown>)['shippingPriceEur'] ===
+          'number'
+          ? ((scriptInput['traderaShipping'] as Record<string, unknown>)['shippingPriceEur'] as number)
           : null,
       shippingConditionSource:
         scriptInput &&

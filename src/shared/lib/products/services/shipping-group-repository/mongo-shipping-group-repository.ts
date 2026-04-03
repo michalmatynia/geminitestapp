@@ -20,6 +20,7 @@ interface ProductShippingGroupDoc extends Document {
   description: string | null;
   catalogId: string;
   traderaShippingCondition: string | null;
+  traderaShippingPriceEur: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +31,11 @@ const toShippingGroupDomain = (doc: ProductShippingGroupDoc): ProductShippingGro
   description: doc.description ?? null,
   catalogId: doc.catalogId?.toString(),
   traderaShippingCondition: doc.traderaShippingCondition ?? null,
+  traderaShippingPriceEur:
+    typeof doc.traderaShippingPriceEur === 'number' &&
+    Number.isFinite(doc.traderaShippingPriceEur)
+      ? doc.traderaShippingPriceEur
+      : null,
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
 });
@@ -70,6 +76,7 @@ export const mongoShippingGroupRepository: ShippingGroupRepository = {
       description: data.description ?? null,
       catalogId: data.catalogId,
       traderaShippingCondition: data.traderaShippingCondition ?? null,
+      traderaShippingPriceEur: data.traderaShippingPriceEur ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -94,6 +101,9 @@ export const mongoShippingGroupRepository: ShippingGroupRepository = {
     if (data.catalogId !== undefined) set.catalogId = data.catalogId;
     if (data.traderaShippingCondition !== undefined) {
       set.traderaShippingCondition = data.traderaShippingCondition;
+    }
+    if (data.traderaShippingPriceEur !== undefined) {
+      set.traderaShippingPriceEur = data.traderaShippingPriceEur;
     }
 
     await db

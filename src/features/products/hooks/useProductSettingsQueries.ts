@@ -438,6 +438,9 @@ const toShippingGroupUpdatePayload = (
   if (data.traderaShippingCondition !== undefined) {
     payload.traderaShippingCondition = data.traderaShippingCondition;
   }
+  if (data.traderaShippingPriceEur !== undefined) {
+    payload.traderaShippingPriceEur = data.traderaShippingPriceEur;
+  }
 
   return payload;
 };

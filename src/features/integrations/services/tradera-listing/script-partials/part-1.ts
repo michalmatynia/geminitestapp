@@ -7,7 +7,7 @@ export const PART_1 = `export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v47
+  // tradera-quicklist-default:v48
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -258,6 +258,7 @@ export const PART_1 = `export default async function run({
   const DEPARTMENT_FIELD_LABELS = ['Department', 'Avdelning'];
   const DEPARTMENT_OPTION_LABELS = ['Unisex', 'Dam/Herr', 'Women/Men'];
   const DELIVERY_FIELD_LABELS = ['Delivery', 'Leverans'];
+  const OFFER_SHIPPING_LABELS = ['Offer shipping', 'Erbjud frakt', 'Frakt'];
   const DELIVERY_OPTION_LABELS = [
     'Buyer pays shipping',
     'Shipping paid by buyer',
@@ -266,6 +267,20 @@ export const PART_1 = `export default async function run({
     'Köparen betalar frakten',
     'Köparen betalar',
     'Frakt betalas av köparen',
+  ];
+  const SHIPPING_DIALOG_TITLE_LABELS = [
+    'Choose 1-2 shipping options',
+    'Choose shipping option',
+    'shipping option',
+    'fraktalternativ',
+  ];
+  const SHIPPING_DIALOG_OPTION_LABELS = ['Other', 'Annat'];
+  const SHIPPING_DIALOG_SAVE_LABELS = ['Save', 'Spara'];
+  const SHIPPING_DIALOG_PRICE_INPUT_SELECTORS = [
+    'input[inputmode="decimal"]',
+    'input[type="number"]',
+    'input[type="text"]',
+    'input',
   ];
   const AUTOFILL_PENDING_SELECTORS = [
     'text=/Autofilling your listing/i',
@@ -310,6 +325,8 @@ export const PART_1 = `export default async function run({
       ? mappedCategorySegments.join(' > ')
       : toText(input?.traderaCategory?.path) || toText(input?.traderaCategory?.name);
   const configuredDeliveryOptionLabel = toText(input?.traderaShipping?.shippingCondition);
+  const configuredDeliveryPriceEur = toNumber(input?.traderaShipping?.shippingPriceEur);
+  const configuredShippingGroupName = toText(input?.traderaShipping?.shippingGroupName);
   const requiresConfiguredDeliveryOption = Boolean(configuredDeliveryOptionLabel);
   const deliveryOptionLabels = configuredDeliveryOptionLabel
     ? [

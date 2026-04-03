@@ -56,6 +56,9 @@ export async function PUT_handler(
     ...(data.traderaShippingCondition !== undefined && {
       traderaShippingCondition: data.traderaShippingCondition,
     }),
+    ...(data.traderaShippingPriceEur !== undefined && {
+      traderaShippingPriceEur: data.traderaShippingPriceEur,
+    }),
   });
 
   return NextResponse.json(shippingGroup);

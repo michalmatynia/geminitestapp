@@ -31,6 +31,7 @@ type ShippingGroupFormData = {
   description: string;
   catalogId: string;
   traderaShippingCondition: string;
+  traderaShippingPriceEur: string;
 };
 
 export function ShippingGroupsSettings(): React.JSX.Element {
@@ -53,6 +54,7 @@ export function ShippingGroupsSettings(): React.JSX.Element {
     description: '',
     catalogId: '',
     traderaShippingCondition: '',
+    traderaShippingPriceEur: '',
   });
 
   const saveShippingGroupMutation = useSaveShippingGroupMutation();
@@ -69,6 +71,7 @@ export function ShippingGroupsSettings(): React.JSX.Element {
       description: '',
       catalogId: selectedCatalogId,
       traderaShippingCondition: '',
+      traderaShippingPriceEur: '',
     });
     setShowModal(true);
   };
@@ -80,6 +83,11 @@ export function ShippingGroupsSettings(): React.JSX.Element {
       description: shippingGroup.description ?? '',
       catalogId: shippingGroup.catalogId,
       traderaShippingCondition: shippingGroup.traderaShippingCondition ?? '',
+      traderaShippingPriceEur:
+        typeof shippingGroup.traderaShippingPriceEur === 'number' &&
+        Number.isFinite(shippingGroup.traderaShippingPriceEur)
+          ? String(shippingGroup.traderaShippingPriceEur)
+          : '',
     });
     setShowModal(true);
   };
@@ -93,6 +101,16 @@ export function ShippingGroupsSettings(): React.JSX.Element {
       toast('Catalog is required.', { variant: 'error' });
       return;
     }
+    const trimmedShippingPrice = formData.traderaShippingPriceEur.trim();
+    if (trimmedShippingPrice) {
+      const parsedShippingPrice = Number(trimmedShippingPrice);
+      if (!Number.isFinite(parsedShippingPrice) || parsedShippingPrice < 0) {
+        toast('Tradera shipping price must be a non-negative EUR amount.', {
+          variant: 'error',
+        });
+        return;
+      }
+    }
 
     try {
       await saveShippingGroupMutation.mutateAsync({
@@ -102,6 +120,7 @@ export function ShippingGroupsSettings(): React.JSX.Element {
           description: formData.description.trim() || null,
           catalogId: formData.catalogId,
           traderaShippingCondition: formData.traderaShippingCondition.trim() || null,
+          traderaShippingPriceEur: trimmedShippingPrice ? Number(trimmedShippingPrice) : null,
         },
       });
 
@@ -198,9 +217,17 @@ export function ShippingGroupsSettings(): React.JSX.Element {
                   id: shippingGroup.id,
                   title: shippingGroup.name,
                   description: shippingGroup.description ?? undefined,
-                  subtitle: shippingGroup.traderaShippingCondition
-                    ? `Tradera: ${shippingGroup.traderaShippingCondition}`
-                    : undefined,
+                  subtitle:
+                    shippingGroup.traderaShippingCondition ||
+                    typeof shippingGroup.traderaShippingPriceEur === 'number'
+                      ? `Tradera: ${
+                          shippingGroup.traderaShippingCondition || 'Shipping modal'
+                        }${
+                          typeof shippingGroup.traderaShippingPriceEur === 'number'
+                            ? ` · EUR ${shippingGroup.traderaShippingPriceEur.toFixed(2)}`
+                            : ''
+                        }`
+                      : undefined,
                   original: shippingGroup,
                 }))}
                 isLoading={loading}
@@ -309,6 +336,28 @@ export function ShippingGroupsSettings(): React.JSX.Element {
                 placeholder='Buyer pays shipping'
                 aria-label='Tradera shipping condition'
                 title='Tradera shipping condition'
+              />
+            </FormField>
+
+            <FormField
+              label='Tradera Shipping Price (EUR)'
+              description='Optional EUR amount to use when Tradera opens the shipping options modal during browser listings.'
+            >
+              <Input
+                className='h-9'
+                type='number'
+                min='0'
+                step='0.01'
+                value={formData.traderaShippingPriceEur}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setFormData((prev: ShippingGroupFormData) => ({
+                    ...prev,
+                    traderaShippingPriceEur: event.target.value,
+                  }))
+                }
+                placeholder='5.00'
+                aria-label='Tradera shipping price in EUR'
+                title='Tradera shipping price in EUR'
               />
             </FormField>
           </div>

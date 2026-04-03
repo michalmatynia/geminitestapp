@@ -43,6 +43,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     description: data.description ?? null,
     catalogId,
     traderaShippingCondition: data.traderaShippingCondition ?? null,
+    traderaShippingPriceEur: data.traderaShippingPriceEur ?? null,
   });
 
   return NextResponse.json(shippingGroup, { status: 201 });

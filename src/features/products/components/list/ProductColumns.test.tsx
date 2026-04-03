@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { createProduct, createRowVisualsContext, createRowRuntimeContext, setupProductListMocks } from './ProductColumns.fixtures';
 
 const {
   baseQuickExportButtonMock,
@@ -85,75 +86,7 @@ vi.mock('./columns/buttons/TraderaStatusButton', () => ({
 
 let getProductColumns: typeof import('./ProductColumns').getProductColumns;
 
-const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
-  ({
-    id: 'product-1',
-    sku: 'KEYCHA1212',
-    baseProductId: null,
-    importSource: null,
-    defaultPriceGroupId: null,
-    ean: null,
-    gtin: null,
-    asin: null,
-    name: { en: 'Keychain', pl: null, de: null },
-    description: { en: '', pl: null, de: null },
-    name_en: 'Keychain',
-    name_pl: null,
-    name_de: null,
-    description_en: null,
-    description_pl: null,
-    description_de: null,
-    supplierName: null,
-    supplierLink: null,
-    priceComment: null,
-    stock: 1,
-    price: 10,
-    sizeLength: null,
-    sizeWidth: null,
-    weight: null,
-    length: null,
-    published: false,
-    categoryId: 'category-1',
-    catalogId: 'catalog-1',
-    tags: [],
-    producers: [],
-    images: [],
-    catalogs: [],
-    parameters: [],
-    imageLinks: [],
-    imageBase64s: [],
-    noteIds: [],
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    ...overrides,
-  }) as ProductWithImages;
 
-const createRowVisualsContext = (
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> => ({
-  productNameKey: 'name_en',
-  priceGroups: [],
-  currencyCode: 'USD',
-  categoryNameById: new Map([['category-1', 'Keychains']]),
-  thumbnailSource: 'file',
-  showTriggerRunFeedback: true,
-  triggerButtonsReady: true,
-  imageExternalBaseUrl: null,
-  ...overrides,
-});
-
-const createRowRuntimeContext = (
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> => ({
-  showMarketplaceBadge: false,
-  integrationStatus: 'not_started',
-  showTraderaBadge: false,
-  traderaStatus: 'not_started',
-  showPlaywrightProgrammableBadge: false,
-  playwrightProgrammableStatus: 'not_started',
-  productAiRunFeedback: null,
-  ...overrides,
-});
 
 describe('ProductColumns queued badge', () => {
   beforeEach(async () => {
@@ -179,19 +112,8 @@ describe('ProductColumns queued badge', () => {
 
   it('renders the queued badge when the product id is currently queued', () => {
     const product = createProduct();
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set(['product-1']),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
+    useProductListActionsContextMock.mockReturnValue({ productNameKey: 'name_en', queuedProductIds: new Set(['product-1']), categoryNameById: new Map([['category-1', 'Keychains']]), });
     useProductListRowRuntimeMock.mockReturnValue(
       createRowRuntimeContext({
         productAiRunFeedback: {
@@ -343,19 +265,8 @@ describe('ProductColumns queued badge', () => {
 
   it('prefers the tracker-backed running badge over the queued fallback', () => {
     const product = createProduct();
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set(['product-1']),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
+    useProductListActionsContextMock.mockReturnValue({ productNameKey: 'name_en', queuedProductIds: new Set(['product-1']), categoryNameById: new Map([['category-1', 'Keychains']]), });
     useProductListRowRuntimeMock.mockReturnValue(
       createRowRuntimeContext({
         productAiRunFeedback: {
@@ -384,19 +295,8 @@ describe('ProductColumns queued badge', () => {
 
   it('renders the terminal completed badge when the tracker reports the finished run status', () => {
     const product = createProduct();
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set(['product-1']),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
+    useProductListActionsContextMock.mockReturnValue({ productNameKey: 'name_en', queuedProductIds: new Set(['product-1']), categoryNameById: new Map([['category-1', 'Keychains']]), });
     useProductListRowRuntimeMock.mockReturnValue(
       createRowRuntimeContext({
         productAiRunFeedback: {
@@ -425,19 +325,7 @@ describe('ProductColumns queued badge', () => {
 
   it('does not render the queued badge when the product id is not queued', () => {
     const product = createProduct();
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -464,19 +352,7 @@ describe('ProductColumns queued badge', () => {
         },
       ] as ProductWithImages['parameters'],
     });
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -496,19 +372,7 @@ describe('ProductColumns queued badge', () => {
       name_en:
         'The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight | Collector Edition',
     });
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {

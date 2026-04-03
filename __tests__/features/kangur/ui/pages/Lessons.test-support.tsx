@@ -576,11 +576,9 @@ export const resetLessonsTestState = (): void => {
     ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     setAgeGroup: vi.fn(),
   }));
-  useKangurAssignmentsMock.mockImplementation(({ enabled = true }: { enabled?: boolean } = {}) => {
-    // In test mode, always return assignments if they exist, to work around async state timing
-    const assignments = process.env.NODE_ENV === 'test' && assignmentsState.value.length > 0
-      ? assignmentsState.value
-      : (enabled ? assignmentsState.value : []);
+  useKangurAssignmentsMock.mockImplementation((options: { enabled?: boolean } = {}) => {
+    const enabled = options.enabled ?? true;
+    const assignments = enabled ? [...assignmentsState.value] : [];
     return {
       assignments,
       data: assignments,

@@ -4,8 +4,17 @@ import React from 'react';
 
 import type { ValidatorSettingsController } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
-const ValidatorSettingsContext = React.createContext<ValidatorSettingsController | null>(null);
+const {
+  Context: ValidatorSettingsContext,
+  useStrictContext: useValidatorSettingsContext,
+} = createStrictContext<ValidatorSettingsController>({
+  hookName: 'useValidatorSettingsContext',
+  providerName: 'ValidatorSettingsProvider',
+  displayName: 'ValidatorSettingsContext',
+  errorFactory: internalError,
+});
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorsettingsprovider
@@ -22,15 +31,4 @@ export function ValidatorSettingsProvider({
   );
 }
 
-/**
- * Validator docs: see docs/validator/function-reference.md#ui.usevalidatorsettingscontext
- */
-export function useValidatorSettingsContext(): ValidatorSettingsController {
-  const context = React.useContext(ValidatorSettingsContext);
-  if (!context) {
-    throw internalError(
-      'useValidatorSettingsContext must be used within ValidatorSettingsProvider'
-    );
-  }
-  return context;
-}
+export { useValidatorSettingsContext };

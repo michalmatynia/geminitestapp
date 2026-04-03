@@ -23,7 +23,7 @@ import {
   isBaseIntegrationSlug,
   useGenericExportToBaseMutation,
 } from '@/features/integrations/public';
-import { createBaseRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
+import { createBaseRecoveryContext } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import {
   subscribeToTrackedAiPathRun,

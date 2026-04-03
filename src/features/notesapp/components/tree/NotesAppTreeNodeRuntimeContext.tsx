@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type NotesAppTreeNodeRuntimeContextValue = {
   controller: MasterFolderTreeController;
@@ -13,9 +14,15 @@ export type NotesAppTreeNodeRuntimeContextValue = {
   DragHandleIcon: React.ComponentType<{ className?: string }>;
 };
 
-const NotesAppTreeNodeRuntimeContext = createContext<NotesAppTreeNodeRuntimeContextValue | null>(
-  null
-);
+const {
+  Context: NotesAppTreeNodeRuntimeContext,
+  useStrictContext: useNotesAppTreeNodeRuntimeContext,
+} = createStrictContext<NotesAppTreeNodeRuntimeContextValue>({
+  hookName: 'useNotesAppTreeNodeRuntimeContext',
+  providerName: 'a NotesAppTreeNodeRuntimeProvider',
+  displayName: 'NotesAppTreeNodeRuntimeContext',
+  errorFactory: internalError,
+});
 
 export function NotesAppTreeNodeRuntimeProvider({
   value,
@@ -31,12 +38,4 @@ export function NotesAppTreeNodeRuntimeProvider({
   );
 }
 
-export function useNotesAppTreeNodeRuntimeContext(): NotesAppTreeNodeRuntimeContextValue {
-  const context = useContext(NotesAppTreeNodeRuntimeContext);
-  if (!context) {
-    throw internalError(
-      'useNotesAppTreeNodeRuntimeContext must be used within a NotesAppTreeNodeRuntimeProvider'
-    );
-  }
-  return context;
-}
+export { useNotesAppTreeNodeRuntimeContext };

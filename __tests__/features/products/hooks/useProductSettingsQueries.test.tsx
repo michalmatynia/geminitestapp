@@ -1,6 +1,5 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as productSettingsApi from '@/features/products/api/settings';
@@ -26,6 +25,11 @@ import {
   useUpdateValidatorSettingsMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import {
+  createProductSettingsTestQueryClient,
+  createProductSettingsTestWrapper,
+  expectInvalidationSubset,
+} from './useProductSettingsQueries.test-helpers';
 
 vi.mock('@/features/products/api/settings', () => ({
   updatePriceGroup: vi.fn(),
@@ -49,25 +53,15 @@ vi.mock('@/features/products/api/settings', () => ({
   updateValidatorSettings: vi.fn(),
 }));
 
-const createTestQueryClient = (): QueryClient =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
 describe('useProductSettingsQueries invalidation', () => {
-  let queryClient: QueryClient;
+  let queryClient: ReturnType<typeof createProductSettingsTestQueryClient>;
+  let wrapper: ReturnType<typeof createProductSettingsTestWrapper>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    queryClient = createTestQueryClient();
+    queryClient = createProductSettingsTestQueryClient();
+    wrapper = createProductSettingsTestWrapper(queryClient);
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }): React.JSX.Element => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
 
   it('useSaveCategoryMutation invalidates metadata/settings/tree category keys', async () => {
     vi.mocked(productSettingsApi.updateCategory).mockResolvedValue({
@@ -88,21 +82,16 @@ describe('useProductSettingsQueries invalidation', () => {
       catalogId: 'catalog-1',
       name: 'Category',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(9));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.categories('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.simpleParameters('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.categories('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.categoryTree('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.simpleParameters('catalog-1'),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 9,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.categories('catalog-1'),
+        QUERY_KEYS.products.metadata.simpleParameters('catalog-1'),
+        productSettingsKeys.categories('catalog-1'),
+        productSettingsKeys.categoryTree('catalog-1'),
+        productSettingsKeys.simpleParameters('catalog-1'),
+      ],
     });
   });
 
@@ -115,12 +104,13 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync({ id: 'tag-1', catalogId: 'catalog-1' });
 
     expect(productSettingsApi.deleteTag).toHaveBeenCalledWith('tag-1');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(9));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.tags('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.tags('catalog-1'),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 9,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.tags('catalog-1'),
+        productSettingsKeys.tags('catalog-1'),
+      ],
     });
   });
 
@@ -150,15 +140,14 @@ describe('useProductSettingsQueries invalidation', () => {
         queryClient: expect.any(QueryClient),
       })
     );
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorSettings(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(true),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(false),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 4,
+      queryKeys: [
+        productSettingsKeys.validatorSettings(),
+        productSettingsKeys.validatorConfig(true),
+        productSettingsKeys.validatorConfig(false),
+      ],
     });
   });
 
@@ -218,12 +207,13 @@ describe('useProductSettingsQueries invalidation', () => {
       id: 'pg-1',
       groupId: 'group-1',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.priceGroups(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.priceGroups(),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 2,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.priceGroups(),
+        productSettingsKeys.priceGroups(),
+      ],
     });
   });
 
@@ -246,12 +236,13 @@ describe('useProductSettingsQueries invalidation', () => {
     expect(productSettingsApi.savePriceGroup).toHaveBeenCalledWith('pg-2', {
       groupId: 'group-2',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.priceGroups(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.priceGroups(),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 2,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.priceGroups(),
+        productSettingsKeys.priceGroups(),
+      ],
     });
   });
 
@@ -266,12 +257,13 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync('pg-2');
 
     expect(productSettingsApi.deletePriceGroup).toHaveBeenCalledWith('pg-2');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.priceGroups(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.priceGroups(),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 2,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.priceGroups(),
+        productSettingsKeys.priceGroups(),
+      ],
     });
   });
 
@@ -291,12 +283,10 @@ describe('useProductSettingsQueries invalidation', () => {
     expect(productSettingsApi.createCatalog).toHaveBeenCalledWith({
       name: 'Catalog 2',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.catalogs(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.catalogs(),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 2,
+      queryKeys: [QUERY_KEYS.products.metadata.catalogs(), productSettingsKeys.catalogs()],
     });
   });
 
@@ -309,12 +299,10 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync('catalog-2');
 
     expect(productSettingsApi.deleteCatalog).toHaveBeenCalledWith('catalog-2');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.catalogs(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.catalogs(),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 2,
+      queryKeys: [QUERY_KEYS.products.metadata.catalogs(), productSettingsKeys.catalogs()],
     });
   });
 
@@ -327,15 +315,14 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync({ id: 'cat-1', catalogId: 'catalog-1' });
 
     expect(productSettingsApi.deleteCategory).toHaveBeenCalledWith('cat-1');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(9));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.categories('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.categories('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.categoryTree('catalog-1'),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 9,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.categories('catalog-1'),
+        productSettingsKeys.categories('catalog-1'),
+        productSettingsKeys.categoryTree('catalog-1'),
+      ],
     });
   });
 
@@ -361,15 +348,14 @@ describe('useProductSettingsQueries invalidation', () => {
       position: 'inside',
       catalogId: 'catalog-1',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(9));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.categories('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.categories('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.categoryTree('catalog-1'),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 9,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.categories('catalog-1'),
+        productSettingsKeys.categories('catalog-1'),
+        productSettingsKeys.categoryTree('catalog-1'),
+      ],
     });
   });
 
@@ -391,12 +377,13 @@ describe('useProductSettingsQueries invalidation', () => {
       catalogId: 'catalog-1',
       name: 'Featured',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(9));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.tags('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.tags('catalog-1'),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 9,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.tags('catalog-1'),
+        productSettingsKeys.tags('catalog-1'),
+      ],
     });
   });
 
@@ -418,18 +405,15 @@ describe('useProductSettingsQueries invalidation', () => {
       catalogId: 'catalog-1',
       name_en: 'Length',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(9));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.parameters('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.simpleParameters('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.parameters('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.simpleParameters('catalog-1'),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 9,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.parameters('catalog-1'),
+        QUERY_KEYS.products.metadata.simpleParameters('catalog-1'),
+        productSettingsKeys.parameters('catalog-1'),
+        productSettingsKeys.simpleParameters('catalog-1'),
+      ],
     });
   });
 
@@ -442,12 +426,13 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync({ id: 'param-1', catalogId: 'catalog-1' });
 
     expect(productSettingsApi.deleteParameter).toHaveBeenCalledWith('param-1');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(9));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.parameters('catalog-1'),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.parameters('catalog-1'),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 9,
+      queryKeys: [
+        QUERY_KEYS.products.metadata.parameters('catalog-1'),
+        productSettingsKeys.parameters('catalog-1'),
+      ],
     });
   });
 
@@ -480,15 +465,14 @@ describe('useProductSettingsQueries invalidation', () => {
         queryClient: expect.any(QueryClient),
       })
     );
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorPatterns(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(true),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(false),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 4,
+      queryKeys: [
+        productSettingsKeys.validatorPatterns(),
+        productSettingsKeys.validatorConfig(true),
+        productSettingsKeys.validatorConfig(false),
+      ],
     });
   });
 
@@ -511,15 +495,14 @@ describe('useProductSettingsQueries invalidation', () => {
     expect(productSettingsApi.updateValidationPattern).toHaveBeenCalledWith('pattern-1', {
       label: 'no-empty-name',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorPatterns(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(true),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(false),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 4,
+      queryKeys: [
+        productSettingsKeys.validatorPatterns(),
+        productSettingsKeys.validatorConfig(true),
+        productSettingsKeys.validatorConfig(false),
+      ],
     });
   });
 
@@ -552,15 +535,14 @@ describe('useProductSettingsQueries invalidation', () => {
         },
       ],
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorPatterns(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(true),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(false),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 4,
+      queryKeys: [
+        productSettingsKeys.validatorPatterns(),
+        productSettingsKeys.validatorConfig(true),
+        productSettingsKeys.validatorConfig(false),
+      ],
     });
   });
 
@@ -575,15 +557,14 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync('pattern-1');
 
     expect(productSettingsApi.deleteValidationPattern).toHaveBeenCalledWith('pattern-1');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorPatterns(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(true),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productSettingsKeys.validatorConfig(false),
+    await expectInvalidationSubset({
+      invalidateSpy,
+      totalCalls: 4,
+      queryKeys: [
+        productSettingsKeys.validatorPatterns(),
+        productSettingsKeys.validatorConfig(true),
+        productSettingsKeys.validatorConfig(false),
+      ],
     });
   });
 });

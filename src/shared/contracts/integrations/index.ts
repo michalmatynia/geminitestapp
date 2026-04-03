@@ -239,6 +239,7 @@ export const testConnectionResponseSchema = z
     steps: z.array(testLogEntrySchema),
     inventoryCount: z.number().optional(),
     profile: z.unknown().optional(),
+    sessionReady: z.boolean().optional(),
   })
   .passthrough();
 
@@ -257,7 +258,11 @@ export const integrationConnectionTestTypeSchema = z.enum(['test', 'base/test', 
 
 export type IntegrationConnectionTestType = z.infer<typeof integrationConnectionTestTypeSchema>;
 
-export const integrationConnectionTestModeSchema = z.enum(['auto', 'manual']);
+export const integrationConnectionTestModeSchema = z.enum([
+  'auto',
+  'manual',
+  'quicklist_preflight',
+]);
 
 export type IntegrationConnectionTestMode = z.infer<typeof integrationConnectionTestModeSchema>;
 

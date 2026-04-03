@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { enqueuePlaywrightNodeRun } from '@/features/ai/ai-paths/services/playwright-node-runner';
+import { enqueuePlaywrightNodeRun } from '@/features/ai/server';
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type {

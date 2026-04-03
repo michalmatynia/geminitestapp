@@ -1,6 +1,6 @@
 import type { ProductShippingGroup, ProductWithImages } from '@/shared/contracts/products';
 
-import { getShippingGroupRepository } from '@/features/products/server';
+import { getShippingGroupRepository } from '@/shared/lib/products/services/shipping-group-repository';
 
 export type TraderaShippingGroupResolutionReason =
   | 'mapped'

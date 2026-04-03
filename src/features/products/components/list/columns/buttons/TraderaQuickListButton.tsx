@@ -10,9 +10,9 @@ import {
   isTraderaBrowserIntegrationSlug,
   useCreateListingMutation,
 } from '@/features/integrations/public';
-import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
-import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
-import { ensureTraderaBrowserSession, isTraderaBrowserAuthRequiredMessage } from '@/features/integrations/utils/tradera-browser-session';
+import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/public';
+import { createTraderaRecoveryContext } from '@/features/integrations/public';
+import { ensureTraderaBrowserSession, isTraderaBrowserAuthRequiredMessage } from '@/features/integrations/public';
 import type {
   IntegrationWithConnections,
   ProductListingsRecoveryContext,
@@ -30,7 +30,7 @@ import {
   persistTraderaQuickListFeedback,
   readPersistedTraderaQuickListFeedback,
   type PersistedTraderaQuickListFeedback,
-} from './traderaQuickListFeedback';
+} from '@/features/integrations/public';
 
 import {
   FAILURE_STATUSES,

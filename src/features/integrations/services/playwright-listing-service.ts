@@ -6,7 +6,7 @@ import {
   findProductListingByIdAcrossProviders,
   getIntegrationRepository,
 } from '@/features/integrations/server';
-import { getProductRepository } from '@/features/products/server';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type {
   IntegrationConnectionRecord,
   PlaywrightRelistBrowserMode,

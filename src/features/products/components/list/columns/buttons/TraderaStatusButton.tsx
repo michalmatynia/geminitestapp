@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
+import { createTraderaRecoveryContext } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { readPersistedTraderaQuickListFeedback } from './traderaQuickListFeedback';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/public';
 
 import { FAILURE_STATUSES, getMarketplaceButtonClass, normalizeMarketplaceStatus } from '../product-column-utils';
 

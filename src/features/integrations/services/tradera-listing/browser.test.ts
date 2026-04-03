@@ -77,7 +77,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v39');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v40');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';");
@@ -174,8 +174,8 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('@role="radio"');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isListingFormReady = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForListingFormReady = async (timeoutMs = 20_000) => {');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('/\\/selling(?:$|[?#])/.test(currentUrl)');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('page.waitForURL(/\\/selling(?:\\/new)?(?:[?#]|$)|\\/sell(?:\\/new)?(?:[?#]|$)/i');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("new RegExp('/selling(?:[?#]|$)').test(currentUrl)");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("page.waitForURL(new RegExp('/selling(?:/new)?(?:[?#]|$)|/sell(?:/new)?(?:[?#]|$)', 'i')");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clearFocusedEditableField = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await page.keyboard.press('Delete').catch(() => undefined);");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await page.keyboard.press('Backspace').catch(() => undefined);");

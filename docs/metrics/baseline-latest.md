@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-02'
+last_reviewed: '2026-04-03'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-02T20:21:32.018Z
+Generated at: 2026-04-03T09:00:02.552Z
 
 ## Snapshot
 
-- Source files: 9143
-- Source lines: 1530199
-- use client files: 1690
-- Files >= 1000 LOC: 0
-- Files >= 1500 LOC: 0
-- Largest file: `src/features/filemaker/components/FilemakerMailSidebar.tsx` (986 LOC)
+- Source files: 9232
+- Source lines: 1544322
+- use client files: 1710
+- Files >= 1000 LOC: 3
+- Files >= 1500 LOC: 1
+- Largest file: `src/features/integrations/services/tradera-listing/default-script.ts` (1795 LOC)
 - API routes: 30
 - API delegated server routes: 176
 - API routes without apiHandler/delegation: 0
@@ -25,8 +25,8 @@ Generated at: 2026-04-02T20:21:32.018Z
 - Cross-feature dependency pairs: 0
 - Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 240
-- Prop-drilling chains (depth >= 4): 66
+- Prop-drilling chains (depth >= 3): 276
+- Prop-drilling chains (depth >= 4): 76
 
 ## Top API Hotspots (by LOC)
 
@@ -57,8 +57,11 @@ Generated at: 2026-04-02T20:21:32.018Z
 
 | File | LOC |
 | --- | ---: |
+| `src/features/integrations/services/tradera-listing/default-script.ts` | 1795 |
+| `src/features/kangur/ui/components/KangurAiTutorGuidedCallout.tsx` | 1242 |
 | `src/features/products/components/list/ProductColumns.test.tsx` | 1093 |
 | `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts` | 1076 |
+| `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 1042 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
@@ -70,10 +73,7 @@ Generated at: 2026-04-02T20:21:32.018Z
 | `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 977 |
 | `src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx` | 976 |
 | `src/features/kangur/ui/services/delegated-assignments.ts` | 975 |
-| `src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts` | 973 |
 | `src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx` | 970 |
 | `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 970 |
 | `src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts` | 969 |
 | `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx` | 968 |
-| `src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx` | 968 |
-| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 967 |

@@ -1,0 +1,400 @@
+export const PART_3 = `        expectedValue,
+        currentValue,
+      });
+    }
+
+    throw new Error(errorPrefix + ': Unable to set Tradera ' + fieldKey + ' field.');
+  };
+
+  const openActiveSearchInput = async () => {
+    const findScopedSearchInput = async () => {
+      for (const selector of ACTIVE_SEARCH_SELECTORS) {
+        const locator = page.locator(selector);
+        const count = await locator.count().catch(() => 0);
+        for (let index = 0; index < count; index += 1) {
+          const candidate = locator.nth(index);
+          const visible = await candidate.isVisible().catch(() => false);
+          if (!visible) continue;
+
+          const metadata = await candidate
+            .evaluate((element) => ({
+              name: element.getAttribute('name') || '',
+              aria: element.getAttribute('aria-label') || '',
+              placeholder: element.getAttribute('placeholder') || '',
+              insideHeader: Boolean(element.closest('header, #site-header, [role="banner"]')),
+            }))
+            .catch(() => null);
+
+          if (!metadata) continue;
+          if (metadata.insideHeader) continue;
+          if (metadata.name === 'q') continue;
+          const normalizedAria = metadata.aria.toLowerCase();
+          const normalizedPlaceholder = metadata.placeholder.toLowerCase();
+          if (
+            GLOBAL_HEADER_SEARCH_HINTS.some((hint) => normalizedAria.includes(hint)) ||
+            GLOBAL_HEADER_SEARCH_HINTS.some((hint) => normalizedPlaceholder.includes(hint))
+          ) {
+            continue;
+          }
+
+          return candidate;
+        }
+      }
+
+      return null;
+    };
+
+    let searchInput = await findScopedSearchInput();
+    if (searchInput) return searchInput;
+
+    for (const label of ACTIVE_SEARCH_TRIGGER_LABELS) {
+      const searchButton = page
+        .locator('main button')
+        .filter({
+          hasText: new RegExp(
+            '^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$',
+            'i'
+          ),
+        })
+        .first();
+      const searchButtonVisible = await searchButton.isVisible().catch(() => false);
+      if (!searchButtonVisible) continue;
+      await searchButton.click();
+      await wait(500);
+      searchInput = await findScopedSearchInput();
+      if (searchInput) {
+        break;
+      }
+    }
+
+    return searchInput;
+  };
+
+  const triggerActiveSearchSubmit = async () => {
+    const submitButton = await firstVisible(ACTIVE_SEARCH_SUBMIT_SELECTORS);
+    if (submitButton) {
+      await submitButton.click().catch(() => undefined);
+      await wait(500);
+      return 'button';
+    }
+
+    await page.keyboard.press('Enter').catch(() => undefined);
+    await wait(500);
+    return 'enter';
+  };
+
+  const findActiveTabTrigger = async () => {
+    for (const label of ACTIVE_TAB_LABELS) {
+      const tabCandidate = page.getByRole('tab', { name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i') }).first();
+      const tabVisible = await tabCandidate.isVisible().catch(() => false);
+      if (tabVisible) return tabCandidate;
+
+      const partialTabCandidate = page
+        .getByRole('tab', {
+          name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
+        })
+        .first();
+      const partialTabVisible = await partialTabCandidate.isVisible().catch(() => false);
+      if (partialTabVisible) return partialTabCandidate;
+
+      const linkCandidate = page.getByRole('link', { name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i') }).first();
+      const linkVisible = await linkCandidate.isVisible().catch(() => false);
+      if (linkVisible) return linkCandidate;
+
+      const partialLinkCandidate = page
+        .getByRole('link', {
+          name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
+        })
+        .first();
+      const partialLinkVisible = await partialLinkCandidate.isVisible().catch(() => false);
+      if (partialLinkVisible) return partialLinkCandidate;
+
+      const buttonCandidate = page.getByRole('button', { name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i') }).first();
+      const buttonVisible = await buttonCandidate.isVisible().catch(() => false);
+      if (buttonVisible) return buttonCandidate;
+
+      const partialButtonCandidate = page
+        .getByRole('button', {
+          name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
+        })
+        .first();
+      const partialButtonVisible = await partialButtonCandidate.isVisible().catch(() => false);
+      if (partialButtonVisible) return partialButtonCandidate;
+    }
+
+    return null;
+  };
+
+  const ensureActiveListingsContext = async () => {
+    const hasActiveTabState = Boolean(await firstVisible(ACTIVE_TAB_STATE_SELECTORS));
+    const currentUrl = page.url().toLowerCase();
+    if (currentUrl.includes('tab=active') || hasActiveTabState) {
+      return true;
+    }
+
+    const activeTabTrigger = await findActiveTabTrigger();
+    if (!activeTabTrigger) {
+      return false;
+    }
+
+    await activeTabTrigger.click().catch(() => undefined);
+    await wait(700);
+
+    const afterClickUrl = page.url().toLowerCase();
+    const hasActiveStateAfterClick = Boolean(await firstVisible(ACTIVE_TAB_STATE_SELECTORS));
+    return afterClickUrl.includes('tab=active') || hasActiveStateAfterClick;
+  };
+
+  const clickMenuItemByName = async (name) => {
+    const normalizedNamePattern = name.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+
+    const candidate = page.getByRole('menuitem', { name: new RegExp('^' + normalizedNamePattern + '\$', 'i') }).first();
+    const visible = await candidate.isVisible().catch(() => false);
+    if (visible) {
+      await candidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const menuItemRadioCandidate = page
+      .getByRole('menuitemradio', {
+        name: new RegExp('^' + normalizedNamePattern + '\$', 'i'),
+      })
+      .first();
+    const menuItemRadioVisible = await menuItemRadioCandidate.isVisible().catch(() => false);
+    if (menuItemRadioVisible) {
+      await menuItemRadioCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const optionCandidate = page
+      .getByRole('option', {
+        name: new RegExp('^' + normalizedNamePattern + '\$', 'i'),
+      })
+      .first();
+    const optionVisible = await optionCandidate.isVisible().catch(() => false);
+    if (optionVisible) {
+      await optionCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const radioCandidate = page
+      .getByRole('radio', {
+        name: new RegExp('^' + normalizedNamePattern + '\$', 'i'),
+      })
+      .first();
+    const radioVisible = await radioCandidate.isVisible().catch(() => false);
+    if (radioVisible) {
+      await radioCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const linkCandidate = page.getByRole('link', {
+      name: new RegExp('^' + normalizedNamePattern + '\$', 'i'),
+    }).first();
+    const linkVisible = await linkCandidate.isVisible().catch(() => false);
+    if (linkVisible) {
+      await linkCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialMenuItemCandidate = page
+      .getByRole('menuitem', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialMenuItemVisible = await partialMenuItemCandidate.isVisible().catch(() => false);
+    if (partialMenuItemVisible) {
+      await partialMenuItemCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialMenuItemRadioCandidate = page
+      .getByRole('menuitemradio', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialMenuItemRadioVisible = await partialMenuItemRadioCandidate
+      .isVisible()
+      .catch(() => false);
+    if (partialMenuItemRadioVisible) {
+      await partialMenuItemRadioCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialOptionCandidate = page
+      .getByRole('option', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialOptionVisible = await partialOptionCandidate.isVisible().catch(() => false);
+    if (partialOptionVisible) {
+      await partialOptionCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialRadioCandidate = page
+      .getByRole('radio', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialRadioVisible = await partialRadioCandidate.isVisible().catch(() => false);
+    if (partialRadioVisible) {
+      await partialRadioCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialLinkCandidate = page
+      .getByRole('link', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialLinkVisible = await partialLinkCandidate.isVisible().catch(() => false);
+    if (partialLinkVisible) {
+      await partialLinkCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const buttonCandidate = page.getByRole('button', {
+      name: new RegExp('^' + normalizedNamePattern + '\$', 'i'),
+    }).first();
+    const buttonVisible = await buttonCandidate.isVisible().catch(() => false);
+    if (buttonVisible) {
+      await buttonCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const partialButtonCandidate = page
+      .getByRole('button', {
+        name: new RegExp(normalizedNamePattern, 'i'),
+      })
+      .first();
+    const partialButtonVisible = await partialButtonCandidate.isVisible().catch(() => false);
+    if (partialButtonVisible) {
+      await partialButtonCandidate.click();
+      await wait(400);
+      return true;
+    }
+
+    const textFallback = page
+      .locator(
+        'xpath=//*[normalize-space(text())="' +
+          name.replace(/"/g, '\\"') +
+          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menuitem" or @role="menuitemradio" or @role="option" or @role="radio"][1]'
+      )
+      .first();
+    const fallbackVisible = await textFallback.isVisible().catch(() => false);
+    if (!fallbackVisible) return false;
+    await textFallback.click().catch(() => undefined);
+    await wait(400);
+    return true;
+  };
+
+  const findFieldTriggerByLabel = async (label) => {
+    const escaped = label.replace(/"/g, '\\"');
+    const byRole = page.getByRole('button', { name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i') }).first();
+    const byRoleVisible = await byRole.isVisible().catch(() => false);
+    if (byRoleVisible) return byRole;
+
+    const byRoleLink = page
+      .getByRole('link', {
+        name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i'),
+      })
+      .first();
+    const byRoleLinkVisible = await byRoleLink.isVisible().catch(() => false);
+    if (byRoleLinkVisible) return byRoleLink;
+
+    const byRoleContains = page
+      .getByRole('button', {
+        name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
+      })
+      .first();
+    const byRoleContainsVisible = await byRoleContains.isVisible().catch(() => false);
+    if (byRoleContainsVisible) return byRoleContains;
+
+    const byRoleContainsLink = page
+      .getByRole('link', {
+        name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
+      })
+      .first();
+    const byRoleContainsLinkVisible = await byRoleContainsLink.isVisible().catch(() => false);
+    if (byRoleContainsLinkVisible) return byRoleContainsLink;
+
+    const byCombobox = page
+      .getByRole('combobox', {
+        name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
+      })
+      .first();
+    const byComboboxVisible = await byCombobox.isVisible().catch(() => false);
+    if (byComboboxVisible) return byCombobox;
+
+    const exactTextTrigger = page
+      .locator(
+        'xpath=//*[normalize-space(text())="' +
+          escaped +
+          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or self::div or self::label][1]'
+      )
+      .first();
+    const exactTextVisible = await exactTextTrigger.isVisible().catch(() => false);
+    if (exactTextVisible) return exactTextTrigger;
+
+    const labeledControlTrigger = page
+      .locator(
+        'xpath=//*[normalize-space(text())="' +
+          escaped +
+          '"]/following::*[(self::button or self::a or @role="button" or @role="link" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu")][1]'
+      )
+      .first();
+    const labeledControlVisible = await labeledControlTrigger.isVisible().catch(() => false);
+    if (labeledControlVisible) return labeledControlTrigger;
+
+    return null;
+  };
+
+  const findFieldTriggerByLabels = async (labels) => {
+    for (const label of labels) {
+      const trigger = await findFieldTriggerByLabel(label);
+      if (trigger) {
+        return trigger;
+      }
+    }
+    return null;
+  };
+
+  const chooseFallbackCategory = async () => {
+    const categoryTrigger = await findFieldTriggerByLabels(CATEGORY_FIELD_LABELS);
+    if (!categoryTrigger) {
+      throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
+    }
+
+    await categoryTrigger.click().catch(() => undefined);
+    await wait(400);
+
+    let selectedDepth = 0;
+
+    for (let depth = 0; depth < FALLBACK_CATEGORY_MAX_DEPTH; depth += 1) {
+      let selectedAtDepth = false;
+      for (const optionLabel of FALLBACK_CATEGORY_OPTION_LABELS) {
+        selectedAtDepth = await clickMenuItemByName(optionLabel);
+        if (selectedAtDepth) {
+          selectedDepth += 1;
+          break;
+        }
+      }
+
+      if (!selectedAtDepth) {
+        if (depth === 0) {
+          throw new Error(
+            'FAIL_CATEGORY_SET: Fallback top-level category "' +
+              FALLBACK_CATEGORY_OPTION_LABELS.join('" or "') +
+              '" not found.'`;

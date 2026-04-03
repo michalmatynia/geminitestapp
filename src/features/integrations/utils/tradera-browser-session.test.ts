@@ -15,9 +15,13 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
 import { ApiError } from '@/shared/lib/api-client';
 import {
   TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
+  TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS,
+  TRADERA_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS,
   ensureTraderaBrowserSession,
   hasSavedTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
+  isTraderaBrowserSessionReady,
+  preflightTraderaQuickListSession,
 } from './tradera-browser-session';
 
 describe('tradera-browser-session', () => {
@@ -41,6 +45,9 @@ describe('tradera-browser-session', () => {
       {
         mode: 'manual',
         manualTimeoutMs: TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
+      },
+      {
+        timeout: TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS,
       }
     );
     expect(result.savedSession).toBe(true);
@@ -60,8 +67,35 @@ describe('tradera-browser-session', () => {
       {
         mode: 'manual',
         manualTimeoutMs: 12345,
+      },
+      {
+        timeout: TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS,
       }
     );
+  });
+
+  it('posts quicklist preflight with a dedicated fast mode and reports ready state', async () => {
+    apiPostMock.mockResolvedValue({
+      ok: true,
+      sessionReady: true,
+      steps: [{ step: 'Quicklist preflight', status: 'ok' }],
+    });
+
+    const result = await preflightTraderaQuickListSession({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
+
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/integration-tradera-1/connections/conn-tradera-1/test',
+      {
+        mode: 'quicklist_preflight',
+      },
+      {
+        timeout: TRADERA_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS,
+      }
+    );
+    expect(result.ready).toBe(true);
   });
 
   it('derives savedSession from the Saving session step only', () => {
@@ -75,6 +109,22 @@ describe('tradera-browser-session', () => {
       hasSavedTraderaBrowserSession({
         ok: true,
         steps: [{ step: 'Manual login', status: 'ok' }],
+      })
+    ).toBe(false);
+  });
+
+  it('derives quicklist readiness from sessionReady', () => {
+    expect(
+      isTraderaBrowserSessionReady({
+        ok: true,
+        sessionReady: true,
+        steps: [],
+      })
+    ).toBe(true);
+    expect(
+      isTraderaBrowserSessionReady({
+        ok: true,
+        steps: [],
       })
     ).toBe(false);
   });

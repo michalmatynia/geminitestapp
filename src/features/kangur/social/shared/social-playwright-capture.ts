@@ -11,7 +11,7 @@ import {
   PLAYWRIGHT_CAPTURE_TIMEOUT_MS,
   PLAYWRIGHT_DEFAULT_CAPTURE_SCRIPT,
   createEmptyPlaywrightCaptureRoute,
-} from '@/features/playwright/engine';
+} from '@/features/playwright/server';
 import type { PlaywrightCaptureValidationResult } from '@/shared/contracts/playwright';
 
 // ---------------------------------------------------------------------------

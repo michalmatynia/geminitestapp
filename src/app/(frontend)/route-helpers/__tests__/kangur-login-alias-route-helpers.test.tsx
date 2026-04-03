@@ -6,12 +6,40 @@ const {
   resolveFrontPageSelectionMock,
   getKangurCanonicalPublicHrefMock,
   redirectMock,
-} = vi.hoisted(() => ({
-  authMock: vi.fn(),
-  resolveFrontPageSelectionMock: vi.fn(),
-  getKangurCanonicalPublicHrefMock: vi.fn(),
-  redirectMock: vi.fn(),
-}));
+  buildCanonicalHref,
+} = vi.hoisted(() => {
+  const buildCanonicalHref = (
+    slug: string[],
+    searchParams?: Record<string, string | string[] | undefined>
+  ): string => {
+    const path = slug.length > 0 ? `/${slug.join('/')}` : '/';
+    const query = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(searchParams ?? {})) {
+      if (Array.isArray(value)) {
+        for (const entry of value) {
+          query.append(key, entry);
+        }
+        continue;
+      }
+
+      if (typeof value === 'string') {
+        query.set(key, value);
+      }
+    }
+
+    const serialized = query.toString();
+    return serialized ? `${path}?${serialized}` : path;
+  };
+
+  return {
+    authMock: vi.fn(),
+    resolveFrontPageSelectionMock: vi.fn(),
+    getKangurCanonicalPublicHrefMock: vi.fn(),
+    redirectMock: vi.fn(),
+    buildCanonicalHref,
+  };
+});
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
@@ -45,30 +73,6 @@ vi.mock('@/features/kangur/public', async () => {
       ),
   };
 });
-
-const buildCanonicalHref = (
-  slug: string[],
-  searchParams?: Record<string, string | string[] | undefined>
-): string => {
-  const path = slug.length > 0 ? `/${slug.join('/')}` : '/';
-  const query = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(searchParams ?? {})) {
-    if (Array.isArray(value)) {
-      for (const entry of value) {
-        query.append(key, entry);
-      }
-      continue;
-    }
-
-    if (typeof value === 'string') {
-      query.set(key, value);
-    }
-  }
-
-  const serialized = query.toString();
-  return serialized ? `${path}?${serialized}` : path;
-};
 
 describe('kangur login alias route', () => {
   beforeEach(() => {

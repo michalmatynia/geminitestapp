@@ -116,7 +116,7 @@ const resolveLocalProductImagePaths = async (
   return validPaths;
 };
 
-const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v39';
+const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v40';
 
 const includesAnyHint = (value: string, hints: readonly string[]): boolean => {
   const normalized = value.trim().toLowerCase();

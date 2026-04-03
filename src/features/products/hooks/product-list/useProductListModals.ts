@@ -6,8 +6,8 @@ import { useIntegrationModalOperations } from '@/features/integrations/public';
 import {
   isTraderaQuickExportRecoveryContext,
   resolveProductListingsIntegrationScope,
-} from '@/features/integrations/utils/product-listings-recovery';
-import { readPersistedTraderaQuickListFeedback } from '@/features/products/components/list/columns/buttons/traderaQuickListFeedback';
+} from '@/features/integrations/public';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/public';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import type { Toast } from '@/shared/contracts/ui';

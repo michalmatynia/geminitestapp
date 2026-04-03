@@ -2,6 +2,9 @@ import type { TestConnectionResponse } from '@/shared/contracts/integrations';
 import { ApiError, api } from '@/shared/lib/api-client';
 
 export const TRADERA_BROWSER_MANUAL_TIMEOUT_MS = 240000;
+export const TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS =
+  TRADERA_BROWSER_MANUAL_TIMEOUT_MS + 30000;
+export const TRADERA_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS = 20000;
 
 export const isTraderaBrowserAuthRequiredMessage = (
   value: string | null | undefined
@@ -21,6 +24,10 @@ export const hasSavedTraderaBrowserSession = (response: TestConnectionResponse):
   Array.isArray(response.steps)
     ? response.steps.some((step) => step.step === 'Saving session' && step.status === 'ok')
     : false;
+
+export const isTraderaBrowserSessionReady = (
+  response: TestConnectionResponse
+): boolean => response.sessionReady === true;
 
 const isTestConnectionResponse = (value: unknown): value is TestConnectionResponse =>
   Boolean(
@@ -69,12 +76,48 @@ export const ensureTraderaBrowserSession = async (params: {
       {
         mode: 'manual',
         manualTimeoutMs: params.manualTimeoutMs ?? TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
+      },
+      {
+        timeout: Math.max(
+          params.manualTimeoutMs ?? TRADERA_BROWSER_MANUAL_TIMEOUT_MS,
+          TRADERA_BROWSER_MANUAL_REQUEST_TIMEOUT_MS
+        ),
       }
     );
 
     return {
       response,
       savedSession: hasSavedTraderaBrowserSession(response),
+    };
+  } catch (error) {
+    if (error instanceof ApiError && isTestConnectionResponse(error.payload)) {
+      const detail = describeManualVerificationFailure(error.payload);
+      if (detail) {
+        throw new Error(detail);
+      }
+    }
+    throw error;
+  }
+};
+
+export const preflightTraderaQuickListSession = async (params: {
+  integrationId: string;
+  connectionId: string;
+}): Promise<{ response: TestConnectionResponse; ready: boolean }> => {
+  try {
+    const response = await api.post<TestConnectionResponse>(
+      `/api/v2/integrations/${params.integrationId}/connections/${params.connectionId}/test`,
+      {
+        mode: 'quicklist_preflight',
+      },
+      {
+        timeout: TRADERA_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS,
+      }
+    );
+
+    return {
+      response,
+      ready: isTraderaBrowserSessionReady(response),
     };
   } catch (error) {
     if (error instanceof ApiError && isTestConnectionResponse(error.payload)) {

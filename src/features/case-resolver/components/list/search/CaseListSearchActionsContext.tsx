@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import React from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export interface CaseListSearchActionsContextValue {
   onPrefetchCase: (caseId: string) => void;
@@ -12,7 +13,15 @@ export interface CaseListSearchActionsContextValue {
   onOpenFile: (file: CaseResolverFile) => void;
 }
 
-const CaseListSearchActionsContext = createContext<CaseListSearchActionsContextValue | null>(null);
+const {
+  Context: CaseListSearchActionsContext,
+  useStrictContext: useCaseListSearchActionsContext,
+} = createStrictContext<CaseListSearchActionsContextValue>({
+  hookName: 'useCaseListSearchActionsContext',
+  providerName: 'a CaseListSearchActionsProvider',
+  displayName: 'CaseListSearchActionsContext',
+  errorFactory: internalError,
+});
 
 export function CaseListSearchActionsProvider({
   value,
@@ -28,12 +37,4 @@ export function CaseListSearchActionsProvider({
   );
 }
 
-export function useCaseListSearchActionsContext(): CaseListSearchActionsContextValue {
-  const context = useContext(CaseListSearchActionsContext);
-  if (!context) {
-    throw internalError(
-      'useCaseListSearchActionsContext must be used within a CaseListSearchActionsProvider'
-    );
-  }
-  return context;
-}
+export { useCaseListSearchActionsContext };

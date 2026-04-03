@@ -392,11 +392,12 @@ export function useLessonsLogic() {
     ensureLessonsCatalogLoaded([focusScope.componentId]);
   }, [ageGroup, ensureLessonsCatalogLoaded, focusToken, lessonTemplateMap, subject]);
   const lessonAssignmentsByComponent = useMemo(() => {
-    if (!isAssignmentsReady || assignments.length === 0 || lessons.length === 0) {
+    if (assignments.length === 0 || lessons.length === 0) {
       return EMPTY_LESSON_ASSIGNMENTS_BY_COMPONENT;
     }
 
-    const nextMap = new Map<KangurLessonComponentId, (typeof assignments)[number]>();
+    const nextMap = new Map<string, (typeof assignments)[number]>();
+    console.log('Building assignments map, assignments count:', assignments.length, 'lessons count:', lessons.length);
     assignments
       .filter((assignment) => !assignment.archived)
       .filter((assignment) => assignment.progress.status !== 'completed')
@@ -406,8 +407,13 @@ export function useLessonsLogic() {
       )
       .forEach((assignment) => {
         const componentId = assignment.target.lessonComponentId;
+        console.log('Mapping assignment to componentId:', componentId);
         const existing = nextMap.get(componentId);
-        if (!existing || LESSON_ASSIGNMENT_PRIORITY_ORDER[assignment.priority] < LESSON_ASSIGNMENT_PRIORITY_ORDER[existing.priority]) {
+        if (
+          !existing ||
+          LESSON_ASSIGNMENT_PRIORITY_ORDER[assignment.priority] <
+            LESSON_ASSIGNMENT_PRIORITY_ORDER[existing.priority]
+        ) {
           nextMap.set(componentId, assignment);
         }
       });

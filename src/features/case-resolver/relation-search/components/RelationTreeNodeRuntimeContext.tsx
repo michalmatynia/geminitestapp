@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { RelationBrowserMode, RelationTreeLookup } from '../types';
 
@@ -18,9 +19,15 @@ export interface RelationTreeNodeRuntimeContextValue {
   onArmDragHandle?: ((fileId: string) => void) | undefined;
 }
 
-const RelationTreeNodeRuntimeContext = createContext<RelationTreeNodeRuntimeContextValue | null>(
-  null
-);
+const {
+  Context: RelationTreeNodeRuntimeContext,
+  useStrictContext: useRelationTreeNodeRuntimeContext,
+} = createStrictContext<RelationTreeNodeRuntimeContextValue>({
+  hookName: 'useRelationTreeNodeRuntimeContext',
+  providerName: 'a RelationTreeNodeRuntimeProvider',
+  displayName: 'RelationTreeNodeRuntimeContext',
+  errorFactory: internalError,
+});
 
 export function RelationTreeNodeRuntimeProvider({
   value,
@@ -36,12 +43,4 @@ export function RelationTreeNodeRuntimeProvider({
   );
 }
 
-export function useRelationTreeNodeRuntimeContext(): RelationTreeNodeRuntimeContextValue {
-  const context = useContext(RelationTreeNodeRuntimeContext);
-  if (!context) {
-    throw internalError(
-      'useRelationTreeNodeRuntimeContext must be used within a RelationTreeNodeRuntimeProvider'
-    );
-  }
-  return context;
-}
+export { useRelationTreeNodeRuntimeContext };

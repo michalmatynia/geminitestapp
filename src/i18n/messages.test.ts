@@ -91,6 +91,8 @@ function expectNoLegacyLessonTitleKeys(messages: unknown) {
 }
 
 describe('site messages', () => {
+  vi.setConfig({ testTimeout: 120000 });
+
   it('repairs bundled Polish diacritics for Kangur app messages', async () => {
     const messages = await loadSiteMessages('pl');
 

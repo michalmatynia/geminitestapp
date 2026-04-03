@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import React from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { CaseResolverTreeIconComponent as FolderIconComponent } from '../../tree-node-icon';
 
@@ -42,7 +43,15 @@ export interface CaseListNodeRuntimeContextValue {
   FolderOpenIcon: FolderIconComponent;
 }
 
-const CaseListNodeRuntimeContext = createContext<CaseListNodeRuntimeContextValue | null>(null);
+const {
+  Context: CaseListNodeRuntimeContext,
+  useStrictContext: useCaseListNodeRuntimeContext,
+} = createStrictContext<CaseListNodeRuntimeContextValue>({
+  hookName: 'useCaseListNodeRuntimeContext',
+  providerName: 'a CaseListNodeRuntimeProvider',
+  displayName: 'CaseListNodeRuntimeContext',
+  errorFactory: internalError,
+});
 
 export function CaseListNodeRuntimeProvider({
   value,
@@ -58,12 +67,4 @@ export function CaseListNodeRuntimeProvider({
   );
 }
 
-export function useCaseListNodeRuntimeContext(): CaseListNodeRuntimeContextValue {
-  const context = useContext(CaseListNodeRuntimeContext);
-  if (!context) {
-    throw internalError(
-      'useCaseListNodeRuntimeContext must be used within a CaseListNodeRuntimeProvider'
-    );
-  }
-  return context;
-}
+export { useCaseListNodeRuntimeContext };

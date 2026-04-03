@@ -152,7 +152,7 @@ export function useGuidedCalloutSelectionState({
   activeSelectedText: string | null;
   guidedTutorTarget: GuidedTutorTarget | null;
   messages: any[];
-  mode: string;
+  mode: string | null;
   selectionConversationContext: any;
   selectionGuidanceHandoffText: string | null;
   selectionResponsePending: any;
@@ -234,7 +234,7 @@ export const resolveGuidedSelectionDisplayState = ({
   isTestSurface: boolean;
   lastInteractionIntent: string | null;
   lastPromptMode: string | null;
-  mode: string;
+  mode: string | null;
   resolvedSelectedKnowledgeLabel: string | null;
   resolvedSelectedKnowledgeReference: any;
   resolvedSelectionAssistantMessage: KangurAiTutorRuntimeMessage | null;
@@ -304,10 +304,10 @@ export const resolveGuidedCalloutLayoutState = ({
   style,
   title,
 }: {
-  avatarPlacement: string;
-  headerLabel: string;
+  avatarPlacement: string | null;
+  headerLabel: string | null;
   isCoarsePointer: boolean;
-  mode: string;
+  mode: string | null;
   resolvedSelectionDetail: string | null | undefined;
   showSelectionGuidanceCallout: boolean;
   stepLabel: string | null;
@@ -317,7 +317,7 @@ export const resolveGuidedCalloutLayoutState = ({
   accessibleCalloutDescription: [stepLabel, resolvedSelectionDetail]
     .filter((value): value is string => Boolean(value))
     .join(' '),
-  accessibleCalloutTitle: title ?? headerLabel,
+  accessibleCalloutTitle: title ?? headerLabel ?? '',
   compactActionClassName: isCoarsePointer
     ? 'w-full min-h-11 px-4 touch-manipulation select-none active:scale-[0.97] sm:w-auto'
     : 'w-full sm:w-auto',

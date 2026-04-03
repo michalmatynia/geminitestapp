@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-02T20:21:32.018Z",
+  "generatedAt": "2026-04-03T09:00:02.552Z",
   "source": {
-    "totalFiles": 9143,
-    "totalLines": 1530199,
-    "useClientFiles": 1690,
-    "hooksWithoutUseClient": 2,
-    "filesOver800": 88,
-    "filesOver1000": 0,
-    "filesOver1500": 0,
+    "totalFiles": 9232,
+    "totalLines": 1544322,
+    "useClientFiles": 1710,
+    "hooksWithoutUseClient": 0,
+    "filesOver800": 89,
+    "filesOver1000": 3,
+    "filesOver1500": 1,
     "largestFile": {
-      "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-      "lines": 986
+      "path": "src/features/integrations/services/tradera-listing/default-script.ts",
+      "lines": 1795
     }
   },
   "api": {
@@ -109,7 +109,7 @@
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 0,
+    "appFeatureDeepImports": 1,
     "featureToSharedTotalImports": 25,
     "featureToAppApiTotalImports": 0,
     "sharedToFeaturesTotalImports": 0
@@ -120,43 +120,43 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2425,
-        "lines": 525896
+        "files": 2431,
+        "lines": 527622
       },
       {
         "feature": "ai",
-        "files": 1172,
-        "lines": 237219
+        "files": 1175,
+        "lines": 238066
       },
       {
         "feature": "case-resolver",
-        "files": 305,
-        "lines": 66492
+        "files": 312,
+        "lines": 67297
       },
       {
         "feature": "products",
-        "files": 308,
-        "lines": 63444
+        "files": 311,
+        "lines": 64769
       },
       {
         "feature": "cms",
         "files": 347,
-        "lines": 52968
+        "lines": 53004
       },
       {
         "feature": "integrations",
-        "files": 264,
-        "lines": 44016
+        "files": 319,
+        "lines": 51714
       },
       {
         "feature": "filemaker",
         "files": 149,
-        "lines": 37716
+        "lines": 37703
       },
       {
         "feature": "prompt-exploder",
         "files": 121,
-        "lines": 26078
+        "lines": 26171
       },
       {
         "feature": "notesapp",
@@ -174,14 +174,14 @@
         "lines": 7381
       },
       {
+        "feature": "data-import-export",
+        "files": 35,
+        "lines": 6892
+      },
+      {
         "feature": "database",
         "files": 35,
         "lines": 6823
-      },
-      {
-        "feature": "data-import-export",
-        "files": 33,
-        "lines": 6714
       },
       {
         "feature": "observability",
@@ -191,7 +191,7 @@
       {
         "feature": "viewer3d",
         "files": 34,
-        "lines": 5218
+        "lines": 5214
       },
       {
         "feature": "prompt-engine",
@@ -226,7 +226,7 @@
       {
         "feature": "playwright",
         "files": 13,
-        "lines": 508
+        "lines": 496
       },
       {
         "feature": "gsap",
@@ -433,12 +433,24 @@
   "hotspots": {
     "topFilesByLines": [
       {
+        "path": "src/features/integrations/services/tradera-listing/default-script.ts",
+        "lines": 1795
+      },
+      {
+        "path": "src/features/kangur/ui/components/KangurAiTutorGuidedCallout.tsx",
+        "lines": 1242
+      },
+      {
         "path": "src/features/products/components/list/ProductColumns.test.tsx",
         "lines": 1093
       },
       {
         "path": "src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts",
         "lines": 1076
+      },
+      {
+        "path": "src/features/ai/ai-paths/services/playwright-node-runner.ts",
+        "lines": 1042
       },
       {
         "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
@@ -485,10 +497,6 @@
         "lines": 975
       },
       {
-        "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",
-        "lines": 973
-      },
-      {
         "path": "src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx",
         "lines": 970
       },
@@ -525,6 +533,10 @@
         "lines": 962
       },
       {
+        "path": "src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts",
+        "lines": 962
+      },
+      {
         "path": "src/features/kangur/admin/components/kangur-theme-settings.copy.ts",
         "lines": 960
       },
@@ -537,20 +549,8 @@
         "lines": 957
       },
       {
-        "path": "src/features/kangur/admin/KangurLessonDocumentEditor.test.tsx",
-        "lines": 956
-      },
-      {
         "path": "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
         "lines": 948
-      },
-      {
-        "path": "src/features/kangur/ui/components/primary-navigation/__tests__/KangurPrimaryNavigation.navigation.test.tsx",
-        "lines": 945
-      },
-      {
-        "path": "src/features/kangur/ui/KangurFeatureApp.test.tsx",
-        "lines": 944
       }
     ],
     "topPagesByLines": [
@@ -603,6 +603,10 @@
         "lines": 17
       },
       {
+        "path": "src/app/[locale]/(frontend)/page.tsx",
+        "lines": 17
+      },
+      {
         "path": "src/app/[locale]/(frontend)/products/[id]/page.tsx",
         "lines": 17
       },
@@ -629,16 +633,12 @@
       {
         "path": "src/app/(admin)/admin/chatbot/page.tsx",
         "lines": 15
-      },
-      {
-        "path": "src/app/(admin)/admin/integrations/marketplaces/page.tsx",
-        "lines": 15
       }
     ]
   },
   "propDrilling": {
-    "candidateChains": 240,
-    "depthGte4Chains": 66,
+    "candidateChains": 276,
+    "depthGte4Chains": 76,
     "forwardingComponents": 120
   }
 }

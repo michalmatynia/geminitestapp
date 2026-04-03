@@ -7,6 +7,7 @@ import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTu
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
 import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
   getGuidedCalloutFallbackCopy,
@@ -56,6 +57,7 @@ export function GuidedCalloutProvider({ children }: { children: React.ReactNode 
     selectionGuidanceHandoffText: widgetState.selectionGuidanceHandoffText,
     selectionResponsePending: widgetState.selectionResponsePending,
     tutorContent,
+    useKangurPageContentEntry,
     visibleQuickActions: panelBody.visibleQuickActions,
   });
   

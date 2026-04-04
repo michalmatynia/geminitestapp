@@ -64,7 +64,11 @@ export async function PUT_handler(
     }
   }
 
-  if (catalogId !== undefined || data.autoAssignCategoryIds !== undefined) {
+  if (
+    catalogId !== undefined ||
+    data.autoAssignCategoryIds !== undefined ||
+    data.autoAssignCurrencyCodes !== undefined
+  ) {
     await validateShippingGroupRuleConflictsOrThrow({
       draftShippingGroup: {
         id: current.id,
@@ -83,6 +87,7 @@ export async function PUT_handler(
           normalizedAutoAssignCategoryIds !== undefined
             ? normalizedAutoAssignCategoryIds
             : (current.autoAssignCategoryIds ?? []),
+        autoAssignCurrencyCodes: data.autoAssignCurrencyCodes ?? (current.autoAssignCurrencyCodes ?? []),
       } satisfies ProductShippingGroup,
       ignoredShippingGroupIds: [shippingGroupId],
     });
@@ -100,6 +105,9 @@ export async function PUT_handler(
     }),
     ...(normalizedAutoAssignCategoryIds !== undefined && {
       autoAssignCategoryIds: normalizedAutoAssignCategoryIds,
+    }),
+    ...(data.autoAssignCurrencyCodes !== undefined && {
+      autoAssignCurrencyCodes: data.autoAssignCurrencyCodes,
     }),
   });
 

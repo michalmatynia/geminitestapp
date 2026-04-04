@@ -107,11 +107,15 @@ function attemptedSuppressionSet(snapshot: AgenticHistorySnapshot): Set<string> 
   );
 }
 
-const DIFF_HISTORY_DEFAULT_ARGUMENTS = {
+const DIFF_HISTORY_DEFAULT_ARGUMENTS: {
+  currentPath: string;
+  previousPath: string;
+  outputPath: string;
+} = {
   currentPath: 'artifacts/agent-history/latest.json',
   previousPath: 'artifacts/agent-history/previous.json',
   outputPath: 'artifacts/agent-history/diff.json',
-} as const;
+};
 
 const filterBundlesByPriority = (
   bundles: readonly string[],

@@ -269,7 +269,7 @@ const isValidPendingFollowUpRecord = (
   }
 
   return (
-    value.version === 1 &&
+    value['version'] === 1 &&
     hasRequiredStringFields(value, PENDING_FOLLOW_UP_REQUIRED_STRING_FIELDS) &&
     hasNullableStringFields(value, PENDING_FOLLOW_UP_NULLABLE_STRING_FIELDS) &&
     hasNumberFields(value, ['messageIndex']) &&
@@ -285,7 +285,7 @@ const isValidPendingNavigationTargetRecord = (
   }
 
   return (
-    value.version === 1 &&
+    value['version'] === 1 &&
     hasRequiredStringFields(value, PENDING_NAVIGATION_REQUIRED_STRING_FIELDS) &&
     hasNullableStringFields(value, PENDING_NAVIGATION_NULLABLE_STRING_FIELDS) &&
     hasNumberFields(value, ['messageIndex'])
@@ -300,7 +300,7 @@ const isValidAvatarPositionRecord = (
   }
 
   return (
-    value.version === 1 &&
+    value['version'] === 1 &&
     hasFiniteNumberFields(value, ['left', 'top']) &&
     hasRequiredStringFields(value, ['updatedAt'])
   );
@@ -314,10 +314,10 @@ const isValidPanelPositionRecord = (
   }
 
   return (
-    value.version === 1 &&
+    value['version'] === 1 &&
     hasFiniteNumberFields(value, ['left', 'top']) &&
-    hasOptionalAllowedField(value.mode, TUTOR_PANEL_POSITION_MODES) &&
-    hasOptionalAllowedField(value.snap, TUTOR_PANEL_SNAP_STATES) &&
+    hasOptionalAllowedField(value['mode'], TUTOR_PANEL_POSITION_MODES) &&
+    hasOptionalAllowedField(value['snap'], TUTOR_PANEL_SNAP_STATES) &&
     hasRequiredStringFields(value, ['updatedAt'])
   );
 };

@@ -106,11 +106,11 @@ describe('KangurPracticeAssignmentBanner', () => {
       'aria-valuenow',
       '40'
     );
-    expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveAttribute(
       'href',
       '/kangur/game?quickStart=operation&operation=division&difficulty=medium'
     );
-    expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveClass(
+    expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveClass(
       'min-h-11',
       'px-4',
       'touch-manipulation'

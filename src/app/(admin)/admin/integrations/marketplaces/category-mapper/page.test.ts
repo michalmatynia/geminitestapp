@@ -1,28 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
-const { redirectMock } = vi.hoisted(() => ({
-  redirectMock: vi.fn(),
-}));
+import { describe, expect, it } from 'vitest';
 
-vi.mock('next/navigation', () => ({
-  redirect: redirectMock,
-}));
+const pageSource = readFileSync(
+  path.join(
+    process.cwd(),
+    'src/app/(admin)/admin/integrations/marketplaces/category-mapper/page.tsx'
+  ),
+  'utf8'
+);
 
-describe('legacy category mapper route', () => {
-  beforeEach(() => {
-    vi.resetModules();
-    vi.clearAllMocks();
-    redirectMock.mockImplementation((href: string) => {
-      throw new Error(`redirect:${href}`);
-    });
+describe('unified category mapper route', () => {
+  it('renders CategoryMapperPage instead of redirecting', () => {
+    expect(pageSource).toContain('CategoryMapperPage');
+    expect(pageSource).not.toMatch(/\bredirect\s*\(/);
   });
 
-  it('redirects to the canonical Base category mapping page', async () => {
-    const { default: Page } = await import(
-      '@/app/(admin)/admin/integrations/marketplaces/category-mapper/page'
-    );
-
-    expect(() => Page()).toThrow('redirect:/admin/integrations/aggregators/base-com/category-mapping');
-    expect(redirectMock).toHaveBeenCalledWith('/admin/integrations/aggregators/base-com/category-mapping');
+  it('imports from the integrations public barrel', () => {
+    expect(pageSource).toMatch(/@\/features\/integrations\/public/);
   });
 });

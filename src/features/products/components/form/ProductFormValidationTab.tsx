@@ -5,7 +5,8 @@ import {
   useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
-import { SelectSimple, ValidatorFormatterToggle } from '@/features/products/ui';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { ValidatorFormatterToggle } from '@/shared/ui/validator-formatter-toggle';
 
 const VALIDATION_DENY_BEHAVIOR_OPTIONS = [
   { value: 'mute_session', label: 'Stop For This Session' },

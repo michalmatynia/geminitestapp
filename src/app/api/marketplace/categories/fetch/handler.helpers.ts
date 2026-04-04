@@ -1,8 +1,8 @@
 import {
   fetchBaseCategories,
-  fetchTraderaCategoriesForConnection,
   resolveBaseConnectionToken,
 } from '@/features/integrations/server';
+import { fetchTraderaCategoriesForConnection } from '@/features/integrations/services/tradera-listing/categories';
 import type {
   BaseCategory,
   IntegrationConnectionRecord,

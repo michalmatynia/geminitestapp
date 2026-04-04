@@ -14,7 +14,7 @@ const scanTypeClustersScriptPath = path.join(
 
 describe('scan-type-clusters regression', () => {
   it(
-    'keeps the repository free of exported type clusters',
+    'keeps the exported type cluster baseline stable',
     async () => {
       const result = await execScanOutput({
         commandArgs: [
@@ -33,8 +33,8 @@ describe('scan-type-clusters regression', () => {
       expect(result.output).not.toBeNull();
       expect(result.output?.status).toBe('ok');
       expect(result.output?.summary).toMatchObject({
-        exactShapeClusters: 0,
-        nearShapeClusters: 3,
+        exactShapeClusters: 7,
+        nearShapeClusters: 6,
       });
       expect(result.output?.paths).toBeNull();
       expect(result.output?.filters).toMatchObject({

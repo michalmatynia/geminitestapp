@@ -2,12 +2,7 @@
 
 import type { RuntimeHistoryEntry, RuntimePortValues } from '@/shared/lib/ai-paths';
 
-import {
-  type RuntimeActions,
-  type RuntimeStateData,
-  useRuntimeActions,
-  useRuntimeState,
-} from './RuntimeContext.shared';
+import { useRuntimeActions, useRuntimeState } from './RuntimeContext.shared';
 
 export { useRuntimeState, useRuntimeActions };
 

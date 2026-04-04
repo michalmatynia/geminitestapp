@@ -148,6 +148,7 @@ export function useOfflineMutation<
       context: TContext | undefined
     ) => Promise<void> | void;
     optimisticUpdate?: (oldData: TContext | undefined, variables: TVariables) => TContext;
+    skipBaseInvalidation?: boolean;
     successMessage?: string;
     errorMessage?: string;
     queuedMessage?: string;
@@ -234,7 +235,9 @@ export function useOfflineMutation<
       }
       if (!isOnline) return;
 
-      void queryClient.invalidateQueries({ queryKey: options.queryKey });
+      if (!options.skipBaseInvalidation) {
+        void queryClient.invalidateQueries({ queryKey: options.queryKey });
+      }
       const extraKeys = resolveExtraKeys(variables);
       extraKeys.forEach((key: readonly unknown[]) => {
         void queryClient.invalidateQueries({ queryKey: key });

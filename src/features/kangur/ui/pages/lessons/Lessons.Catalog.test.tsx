@@ -162,6 +162,7 @@ vi.mock('@/features/kangur/ui/design/primitives', () => ({
       {description}
     </div>
   ),
+  KangurGlassPanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   KangurInfoCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   KangurStatusChip: ({
     children,
@@ -219,13 +220,6 @@ describe('LessonsCatalog', () => {
     });
 
     render(<LessonsCatalog />);
-
-    expect(useKangurPageContentEntryMock).not.toHaveBeenCalled();
-    expect(getLessonMasteryPresentationMock).not.toHaveBeenCalled();
-
-    act(() => {
-      vi.runAllTimers();
-    });
 
     expect(useKangurPageContentEntryMock).toHaveBeenCalledTimes(2);
     expect(getLessonMasteryPresentationMock).not.toHaveBeenCalled();
@@ -306,7 +300,7 @@ describe('LessonsCatalog', () => {
 
     render(<LessonsCatalog />);
 
-    expect(getLessonMasteryPresentationMock).not.toHaveBeenCalled();
+    expect(getLessonMasteryPresentationMock).toHaveBeenCalledTimes(1);
 
     expect(screen.getByTestId('lessons-shell-transition')).toHaveClass(
       ...splitClasses(LESSONS_LIBRARY_LAYOUT_CLASSNAME)
@@ -360,6 +354,15 @@ describe('LessonsCatalog', () => {
   });
 
   it('renders the general adverbs lesson together with adverbs of frequency inside the grammar group', () => {
+    vi.useFakeTimers();
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback): number =>
+        window.setTimeout(() => callback(0), 0)
+      );
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((handle: number) => {
+      window.clearTimeout(handle);
+    });
     lessonCardPropsMock.mockClear();
     const ensureLessonsCatalogLoaded = vi.fn();
     useLessonsMock.mockReturnValue({
@@ -456,6 +459,10 @@ describe('LessonsCatalog', () => {
     expect(adverbsSubsectionButton).not.toBeNull();
     fireEvent.click(adverbsSubsectionButton as HTMLButtonElement);
 
+    act(() => {
+      vi.runAllTimers();
+    });
+
     expect(ensureLessonsCatalogLoaded).toHaveBeenNthCalledWith(1, ['english_adverbs']);
     expect(screen.getByTestId('mock-lesson-card-lesson-english-adverbs')).toBeInTheDocument();
     expect(
@@ -468,6 +475,10 @@ describe('LessonsCatalog', () => {
     expect(frequencySubsectionButton).not.toBeNull();
     fireEvent.click(frequencySubsectionButton as HTMLButtonElement);
 
+    act(() => {
+      vi.runAllTimers();
+    });
+
     expect(ensureLessonsCatalogLoaded).toHaveBeenNthCalledWith(2, [
       'english_adverbs_frequency',
     ]);
@@ -478,6 +489,9 @@ describe('LessonsCatalog', () => {
     expect(
       new Set(lessonCardPropsMock.mock.calls.map(([props]) => props.lesson.id))
     ).toEqual(new Set(['lesson-english-adverbs', 'lesson-english-adverbs-frequency']));
+
+    requestAnimationFrameSpy.mockRestore();
+    vi.useRealTimers();
   });
 
   it('renders the comparatives lesson inside the grammar group next to the other English grammar lessons', () => {

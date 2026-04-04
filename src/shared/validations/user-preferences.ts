@@ -52,6 +52,8 @@ const normalizeNullableArray = <T>(value: T[] | null): T[] => value ?? [];
 const normalizeNullableRecord = <T extends Record<string, unknown>>(value: T | null): T =>
   value ?? ({} as T);
 
+const normalizeAdminMenuCustomNav = <T>(value: T | null): T | [] => value ?? [];
+
 export const normalizeUserPreferencesUpdatePayload = (
   payload: UserPreferencesUpdatePayload
 ): Partial<UserPreferencesUpdatePayload> => {
@@ -168,7 +170,7 @@ export const normalizeUserPreferencesUpdatePayload = (
   setNormalizedPreference(
     normalized,
     'adminMenuCustomNav',
-    payload.adminMenuCustomNav
+    resolveDefinedValue(payload.adminMenuCustomNav, normalizeAdminMenuCustomNav)
   );
   setNormalizedPreference(normalized, 'cmsLastPageId', payload.cmsLastPageId);
   setNormalizedPreference(normalized, 'cmsActiveDomainId', payload.cmsActiveDomainId);

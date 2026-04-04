@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import {
-  Alert,
-  Button,
-  SimpleSettingsList,
-} from '@/shared/ui';
+import { Alert } from '@/shared/ui/alert';
+import { Button } from '@/shared/ui/button';
+import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
+
 import { useShippingGroupsState } from './ShippingGroupsContext';
 import {
   formatCategoryRuleSummary,

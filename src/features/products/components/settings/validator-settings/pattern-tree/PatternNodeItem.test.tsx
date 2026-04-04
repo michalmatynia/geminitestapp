@@ -14,7 +14,7 @@ vi.mock('../ValidatorPatternTreeContext', () => ({
   useValidatorPatternTreeContext: () => useValidatorPatternTreeContextMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/products/ui', () => ({
   TreeContextMenu: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   TreeRow: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   TreeCaret: () => <span data-testid='tree-caret' />,

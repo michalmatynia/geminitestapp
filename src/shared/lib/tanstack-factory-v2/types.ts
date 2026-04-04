@@ -166,6 +166,7 @@ export type EnsureQueryDataV2Config<
   telemetryContext?: Record<string, unknown> | undefined;
   transformError?: (error: unknown) => TError;
   staleTime?: number;
+  logError?: boolean | undefined;
 };
 
 export type SingleQueryConfigV2<

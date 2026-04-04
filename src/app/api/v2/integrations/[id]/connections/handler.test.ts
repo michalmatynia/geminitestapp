@@ -199,4 +199,34 @@ describe('integration connections handler', () => {
       hasPlaywrightListingScript: true,
     });
   });
+
+  it('rejects invalid scripted Tradera Playwright scripts during create', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Tradera browser',
+        username: 'seller@example.com',
+        password: 'secret',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: `
+          if (true) {
+            return { ok: true };
+        `,
+      },
+    });
+
+    await expect(
+      POST_handler(
+        new Request('http://localhost/api/v2/integrations/integration-tradera-1/connections', {
+          method: 'POST',
+        }) as never,
+        {} as never,
+        { id: 'integration-tradera-1' }
+      )
+    ).rejects.toThrow(
+      'Invalid Tradera Playwright listing script. Reset to the managed default or fix the syntax.'
+    );
+
+    expect(createConnectionMock).not.toHaveBeenCalled();
+  });
 });

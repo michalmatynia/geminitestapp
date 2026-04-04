@@ -26,6 +26,7 @@ export interface IntegrationsActions {
   handleAllegroApiRequest: () => Promise<void>;
   onCloseModal: () => void;
   onOpenSessionModal: () => void;
+  handleResetListingScript: () => Promise<void>;
 }
 
 export const { Context: IntegrationsActionsContext, useValue: useIntegrationsActions } =

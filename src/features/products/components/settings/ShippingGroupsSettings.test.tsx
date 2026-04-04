@@ -36,8 +36,11 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useShippingGroups: (...args: unknown[]) => useProductMetadataShippingGroupsMock(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/alert', () => ({
   Alert: ({ children }: { children: React.ReactNode }) => <div role='alert'>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -49,7 +52,13 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/empty-state', () => ({
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
+}));
+
+vi.mock('@/shared/ui/form-section', () => ({
   FormField: ({
     children,
     label,
@@ -65,6 +74,20 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </label>
   ),
+  FormSection: ({
+    children,
+    title,
+  }: {
+    children: React.ReactNode;
+    title: string;
+  }) => (
+    <section aria-label={title}>
+      {children}
+    </section>
+  ),
+}));
+
+vi.mock('@/shared/ui/FormModal', () => ({
   FormModal: ({
     open,
     children,
@@ -90,17 +113,9 @@ vi.mock('@/shared/ui', () => ({
         </button>
       </div>
     ) : null,
-  FormSection: ({
-    children,
-    title,
-  }: {
-    children: React.ReactNode;
-    title: string;
-  }) => (
-    <section aria-label={title}>
-      {children}
-    </section>
-  ),
+}));
+
+vi.mock('@/shared/ui/input', () => ({
   Input: ({
     value,
     onChange,
@@ -108,6 +123,9 @@ vi.mock('@/shared/ui', () => ({
   }: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input value={value ?? ''} onChange={onChange} {...props} />
   ),
+}));
+
+vi.mock('@/shared/ui/multi-select', () => ({
   MultiSelect: ({
     options,
     selected,
@@ -132,6 +150,9 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
   SelectSimple: ({
     value,
     onValueChange,
@@ -155,6 +176,9 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
+}));
+
+vi.mock('@/shared/ui/templates/SimpleSettingsList', () => ({
   SimpleSettingsList: ({
     items,
     onEdit,
@@ -176,6 +200,9 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/textarea', () => ({
   Textarea: ({
     value,
     onChange,
@@ -183,12 +210,15 @@ vi.mock('@/shared/ui', () => ({
   }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
     <textarea value={value ?? ''} onChange={onChange} {...props} />
   ),
+}));
+
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({
     toast: toastMock,
   }),
 }));
 
-vi.mock('@/shared/ui/templates/modals', () => ({
+vi.mock('@/shared/ui/templates/modals/ConfirmModal', () => ({
   ConfirmModal: () => null,
 }));
 

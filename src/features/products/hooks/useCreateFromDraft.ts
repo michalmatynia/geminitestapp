@@ -8,7 +8,8 @@ import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { draftKeys } from '@/shared/lib/query-key-exports';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type UseCreateFromDraftProps = {

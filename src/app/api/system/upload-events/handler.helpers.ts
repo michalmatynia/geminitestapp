@@ -1,7 +1,7 @@
-import type { SuccessErrorStatus } from '@/shared/contracts/base';
+import type { FileUploadEventStatus } from '@/shared/contracts/files';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';
 
-export type UploadEventStatus = SuccessErrorStatus;
+export type UploadEventStatus = FileUploadEventStatus;
 
 export type UploadEventsQueryInput = {
   page: number;

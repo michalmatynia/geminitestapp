@@ -1,19 +1,20 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   fetchProductListings,
+  isMissingProductListingsError,
   productListingsQueryKey,
-} from '@/features/integrations/public';
+} from '@/features/integrations/hooks/useListingQueries';
 import {
   clearPersistedTraderaQuickListFeedback,
   persistTraderaQuickListFeedback,
   readPersistedTraderaQuickListFeedback,
   type PersistedTraderaQuickListFeedback,
   type TraderaQuickListFeedbackStatus,
-} from '@/features/integrations/public';
+} from '@/features/integrations/utils/traderaQuickListFeedback';
 import {
   resolveCompletedAtFromListing,
   resolveListingUrlFromListing,
@@ -34,6 +35,7 @@ import {
 
 export type TraderaFeedbackOptions = {
   completedAt?: number | null | undefined;
+  failureReason?: string | null | undefined;
   runId?: string | null | undefined;
   requestId?: string | null | undefined;
   integrationId?: string | null | undefined;
@@ -114,6 +116,8 @@ export function useTraderaQuickExportFeedback(
       readPersistedTraderaQuickListFeedback(productId)
     );
   const localFeedbackStatus = localFeedback?.status ?? null;
+  const localFeedbackRef = useRef(localFeedback);
+  localFeedbackRef.current = localFeedback;
 
   // Re-read persisted feedback when productId changes
   useEffect(() => {
@@ -136,19 +140,26 @@ export function useTraderaQuickExportFeedback(
     [productId]
   );
 
-  // Sync/clear stale feedback based on server status
+  // Sync/clear stale feedback based on server status.
+  // Uses ref for localFeedback to avoid re-triggering on every local status change.
   useEffect(() => {
+    const currentFeedback = localFeedbackRef.current;
+    const currentStatus = currentFeedback?.status ?? null;
+    const isServerInFlight =
+      PENDING_STATUSES.has(normalizedTraderaStatus) ||
+      PROCESSING_STATUSES.has(normalizedTraderaStatus);
+
     const keepFailureRecoveryContext =
       showTraderaBadge && FAILURE_STATUSES.has(normalizedTraderaStatus);
     const keepQueuedSuccessBridge =
       showTraderaBadge &&
       SUCCESS_STATUSES.has(normalizedTraderaStatus) &&
-      (localFeedback?.status === 'processing' || localFeedback?.status === 'queued');
+      (currentStatus === 'processing' || currentStatus === 'queued');
     const keepCompletedSuccessContext =
-      localFeedback?.status === 'completed' &&
+      currentStatus === 'completed' &&
       (normalizedTraderaStatus === 'not_started' ||
         SUCCESS_STATUSES.has(normalizedTraderaStatus) ||
-        serverStatusInFlight);
+        isServerInFlight);
     if (keepQueuedSuccessBridge) {
       setLocalFeedback(readPersistedTraderaQuickListFeedback(productId));
       return;
@@ -164,13 +175,7 @@ export function useTraderaQuickExportFeedback(
     if (!showTraderaBadge && normalizedTraderaStatus === 'not_started') return;
     clearPersistedTraderaQuickListFeedback(productId);
     setLocalFeedback(null);
-  }, [
-    localFeedback?.status,
-    normalizedTraderaStatus,
-    productId,
-    serverStatusInFlight,
-    showTraderaBadge,
-  ]);
+  }, [normalizedTraderaStatus, productId, showTraderaBadge]);
 
   // Bridge queued→completed when server badge turns active
   useEffect(() => {
@@ -224,6 +229,7 @@ export function useTraderaQuickExportFeedback(
       queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
       queryFn: () => fetchProductListings(productId),
       staleTime: 0,
+      logError: false,
       meta: {
         source:
           'products.components.TraderaQuickListButton.promoteTrackedSuccess',
@@ -241,6 +247,13 @@ export function useTraderaQuickExportFeedback(
       })
       .catch((error: unknown) => {
         if (cancelled) return;
+        if (isMissingProductListingsError(error)) {
+          queryClient.removeQueries({
+            queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
+          });
+          setFeedbackStatus(null);
+          return;
+        }
         logClientCatch(error, {
           source: 'TraderaQuickListButton',
           action: 'promoteTrackedSuccess',

@@ -2,6 +2,7 @@
 
 import {
   ProfilerOnRenderCallback,
+  startTransition,
   useCallback,
   useEffect,
   useMemo,
@@ -10,8 +11,8 @@ import {
   useSyncExternalStore,
 } from 'react';
 
-import { getProductColumns } from '@/features/products/components/list/ProductColumns';
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
+import { loadProductColumns } from '@/features/products/components/list/product-columns-loader';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import { useProductData } from '@/features/products/hooks/useProductData';
 import { useProductSync } from '@/features/products/hooks/useProductEnhancements';
@@ -27,7 +28,8 @@ import {
   type BackgroundSyncEvent,
   useProductListSync,
 } from '@/shared/hooks/sync/useBackgroundSync';
-import { useToast } from '@/shared/ui';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { useToast } from '@/shared/ui/toast';
 
 import { useProductEditHydration } from './product-list/useProductEditHydration';
 import { useProductListCategories } from './product-list/useProductListCategories';
@@ -42,7 +44,7 @@ import { useCreateFromDraft } from './useCreateFromDraft';
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
 
 import type { ProductListContextType } from '../context/ProductListContext';
-import type { Row } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 
 export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
 
@@ -95,6 +97,7 @@ const EMPTY_TRADERA_BADGE_IDS = new Set<string>();
 const EMPTY_TRADERA_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS = new Set<string>();
 const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES = new Map<string, string>();
+const EMPTY_PRODUCT_TABLE_COLUMNS: ColumnDef<ProductWithImages>[] = [];
 
 const buildProductListDebugSnapshot = (args: ProductListDebugSnapshot): ProductListDebugSnapshot => args;
 
@@ -191,6 +194,10 @@ export function useProductListState(): ProductListContextType & {
   const [isMounted, setIsMounted] = useState(false);
   const [draftsReady, setDraftsReady] = useState(false);
   const [rowRuntimeReady, setRowRuntimeReady] = useState(false);
+  const [tableColumns, setTableColumns] = useState<ColumnDef<ProductWithImages>[]>(
+    EMPTY_PRODUCT_TABLE_COLUMNS
+  );
+  const [tableColumnsReady, setTableColumnsReady] = useState(false);
   const { toast } = useToast();
   const { imageExternalBaseUrl } = useProductSettings();
 
@@ -495,6 +502,37 @@ export function useProductListState(): ProductListContextType & {
     });
   }, []);
 
+  useEffect(() => {
+    let isActive = true;
+
+    void loadProductColumns()
+      .then((nextColumns) => {
+        if (!isActive) return;
+
+        startTransition(() => {
+          setTableColumns((currentColumns) =>
+            currentColumns === nextColumns ? currentColumns : nextColumns
+          );
+          setTableColumnsReady(true);
+        });
+      })
+      .catch((error) => {
+        logClientCatch(error, {
+          source: 'useProductListState',
+          action: 'loadProductColumns',
+        });
+
+        if (!isActive) return;
+        startTransition(() => {
+          setTableColumnsReady(true);
+        });
+      });
+
+    return (): void => {
+      isActive = false;
+    };
+  }, []);
+
   const getRowClassName = useCallback(
     (row: Row<ProductWithImages>): string | undefined => {
       const highlightToken = jobCompletionHighlights[row.original.id];
@@ -646,8 +684,6 @@ export function useProductListState(): ProductListContextType & {
     );
     previousDebugSnapshotRef.current = debugSnapshot;
   }, [debugSnapshot, isProductListDebugOpen]);
-
-  const columns = useMemo(() => getProductColumns(), []);
 
   const draftQueries = useDraftQueries as (
     notebookId?: string,
@@ -839,7 +875,7 @@ export function useProductListState(): ProductListContextType & {
     onDeleteSelected: handleDeleteSelectedOpen,
     onAddToMarketplace: handleAddToMarketplace,
     handleProductsTableRender,
-    tableColumns: columns,
+    tableColumns,
     getRowClassName,
     setRefreshTrigger,
     productNameKey: preferences.nameLocale,
@@ -865,7 +901,7 @@ export function useProductListState(): ProductListContextType & {
     setShowTriggerRunFeedback: handleSetShowTriggerRunFeedback,
     imageExternalBaseUrl,
     getRowId: getProductRowId,
-    isLoading: !isMounted || isLoading,
+    isLoading: !isMounted || !tableColumnsReady || isLoading,
     skeletonRows: tableSkeleton,
     maxHeight: 'calc(100vh - 200px)',
     stickyHeader: true,

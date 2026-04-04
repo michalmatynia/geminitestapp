@@ -129,7 +129,7 @@ const resolvePrimaryIssueTargetLabel = (args: {
     presetTitleById: args.presetTitleById,
   });
 
-const resolvePrimaryIssueAttemptLabel = (attemptCount: number | undefined): string =>
+const resolvePrimaryIssueAttemptLabel = (attemptCount: number | null | undefined): string =>
   attemptCount && attemptCount > 1 ? ` after ${attemptCount} attempts` : '';
 
 const resolvePrimaryIssueStatusPhrase = (

@@ -57,4 +57,21 @@ describe('buildAdminNav', () => {
 
     expect(item).not.toBeNull();
   });
+
+  it('routes the Tradera category mapping entry to the Tradera-prefilled mapper page', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const item = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'integrations/marketplaces/tradera/category-mapping' &&
+        entry.label === 'Category Mapping' &&
+        entry.href === '/admin/integrations/marketplaces/category-mapper?marketplace=tradera'
+    );
+
+    expect(item).not.toBeNull();
+  });
 });

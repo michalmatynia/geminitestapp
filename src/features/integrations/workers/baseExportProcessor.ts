@@ -52,6 +52,40 @@ export async function processBaseExportJob(
   };
 
   try {
+    const startedAt = new Date().toISOString();
+    const startedRun = await runRepository
+      .updateRunIfStatus(runId, ['queued'], {
+        status: 'running',
+        startedAt,
+        meta: {
+          ...runMeta,
+          productId,
+          connectionId,
+          inventoryId,
+          requestId,
+          startedAt,
+        },
+      })
+      .catch(() => null);
+
+    if (startedRun) {
+      await runRepository
+        .createRunEvent({
+          runId,
+          level: 'info',
+          message: 'Export to Base.com started.',
+          metadata: {
+            productId,
+            connectionId,
+            inventoryId,
+            imagesOnly,
+            requestId,
+            jobId,
+          },
+        })
+        .catch(() => undefined);
+    }
+
     const segments = await loadSegments();
     const requestImageTransform = imageTransform
       ? {

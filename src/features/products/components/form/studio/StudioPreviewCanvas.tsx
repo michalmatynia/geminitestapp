@@ -3,13 +3,11 @@
 import { ArrowLeftRight, Eye, EyeOff, Undo2 } from 'lucide-react';
 import React from 'react';
 
+import { CenterPreviewProvider, useCenterPreviewContext } from '@/features/ai/image-studio/components/center-preview/CenterPreviewContext';
+import { SplitVariantPreview } from '@/features/ai/image-studio/components/center-preview/SplitVariantPreview';
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
-import {
-  SplitVariantPreview,
-  CenterPreviewProvider,
-  useCenterPreviewContext,
-} from '@/features/ai/public';
-import { Button, FormSection } from '@/features/products/ui';
+import { Button } from '@/shared/ui/button';
+import { FormSection } from '@/shared/ui/form-section';
 
 function StudioPreviewCanvasInner(): React.JSX.Element {
   const { variantImageSrc, sourceImageSrc, canCompareWithSource } = useProductStudioContext();

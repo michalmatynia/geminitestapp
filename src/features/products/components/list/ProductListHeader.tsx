@@ -23,9 +23,12 @@ import type { ProductDraft } from '@/shared/contracts/products';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
-import { FocusModeTogglePortal } from '@/shared/ui/FocusModeTogglePortal';
-import { AdminProductsBreadcrumbs, Button, SelectSimple, Pagination } from '@/shared/ui';
+import { AdminProductsBreadcrumbs } from '@/shared/ui/admin-products-breadcrumbs';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
+import { Button } from '@/shared/ui/button';
+import { FocusModeTogglePortal } from '@/shared/ui/FocusModeTogglePortal';
+import { Pagination } from '@/shared/ui/pagination';
+import { SelectSimple } from '@/shared/ui/select-simple';
 
 const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () =>

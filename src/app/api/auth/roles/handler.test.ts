@@ -24,6 +24,14 @@ const {
 
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
+  getAuthRoles: getAuthRolesMock,
+  getAuthPermissions: getAuthPermissionsMock,
+  getAuthUserRoles: getAuthUserRolesMock,
+  getAuthDefaultRoleId: getAuthDefaultRoleIdMock,
+  invalidateAuthAccessCache: invalidateAuthAccessCacheMock,
+  AUTH_SETTINGS_KEYS: {
+    userRoles: 'auth_user_roles',
+  },
 }));
 
 vi.mock('@/features/auth/services/auth-access', () => ({

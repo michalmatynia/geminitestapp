@@ -4,17 +4,15 @@ import { RefreshCcw, ShoppingBag } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { buildBaseOrderQuickImportFeedback } from '@/features/products/utils/base-order-quick-import-feedback';
-import {
-  AdminProductsPageLayout,
-  Alert,
-  Badge,
-  Button,
-  EmptyState,
-  Input,
-  SearchInput,
-  SelectSimple,
-  StandardDataTablePanel,
-} from '@/shared/ui';
+import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
+import { Alert } from '@/shared/ui/alert';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { Input } from '@/shared/ui/input';
+import { SearchInput } from '@/shared/ui/search-input';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { StandardDataTablePanel } from '@/shared/ui/templates/StandardDataTablePanel';
 
 import {
   LIMIT_OPTIONS,

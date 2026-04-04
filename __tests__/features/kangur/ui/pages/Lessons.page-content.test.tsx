@@ -41,7 +41,7 @@ vi.mock('@/features/kangur/ui/pages/lessons/LessonsContext', () => ({
     activeLessonId: lessonsTestHoisted.activeLessonId,
     lessonAssignmentsByComponent: new Map(
       lessonsTestHoisted.assignments
-        .filter(a => a.target.type === 'lesson')
+        .filter(a => a.target.type === 'lesson' && a.progress.status !== 'completed')
         .map(a => [a.target.lessonComponentId, a])
     ),
     completedLessonAssignmentsByComponent: new Map(
@@ -53,6 +53,7 @@ vi.mock('@/features/kangur/ui/pages/lessons/LessonsContext', () => ({
     isCompleteLessonsCatalogLoaded: true,
     isSecretLessonActive: false,
     progress: lessonsTestHoisted.progress,
+    lessonDocuments: lessonsTestHoisted.lessonDocuments,
     isLessonSectionsLoading: false,
     shouldShowLessonsCatalogSkeleton: false,
     lessonDocument: lessonsTestHoisted.activeLessonId ? (lessonsTestHoisted.lessonDocuments[lessonsTestHoisted.activeLessonId] || null) : null,
@@ -103,6 +104,26 @@ vi.mock('@/features/kangur/ui/hooks/useKangurRoutePageReady', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurMobileBreakpoint', () => ({
   useKangurMobileBreakpoint: () => false,
+}));
+
+vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
+  KangurSubjectFocusProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useKangurSubjectFocus: () => ({
+    subject: 'maths',
+    subjectKey: null,
+    setSubject: vi.fn(),
+  }),
+  useKangurSubjectFocusState: () => ({
+    subject: 'maths',
+    subjectKey: null,
+  }),
+  useOptionalKangurSubjectFocusState: () => ({
+    subject: 'maths',
+    subjectKey: null,
+  }),
+  useKangurSubjectFocusActions: () => ({
+    setSubject: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({

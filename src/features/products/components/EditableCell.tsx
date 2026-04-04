@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useRef, KeyboardEvent, memo } from 'react';
 
 import { useUpdateProductField } from '@/features/products/hooks/useProductsMutations';
-import { Input, useToast } from '@/shared/ui';
+import { Input } from '@/shared/ui/input';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type EditableCellProps = {

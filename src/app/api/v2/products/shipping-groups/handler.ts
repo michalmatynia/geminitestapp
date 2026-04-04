@@ -59,6 +59,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
       traderaShippingCondition: data.traderaShippingCondition ?? null,
       traderaShippingPriceEur: data.traderaShippingPriceEur ?? null,
       autoAssignCategoryIds: normalizedAutoAssignCategoryIds,
+      autoAssignCurrencyCodes: data.autoAssignCurrencyCodes ?? [],
     } satisfies ProductShippingGroup,
   });
 
@@ -69,6 +70,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     traderaShippingCondition: data.traderaShippingCondition ?? null,
     traderaShippingPriceEur: data.traderaShippingPriceEur ?? null,
     autoAssignCategoryIds: normalizedAutoAssignCategoryIds,
+    autoAssignCurrencyCodes: data.autoAssignCurrencyCodes ?? [],
   });
 
   return NextResponse.json(shippingGroup, { status: 201 });

@@ -26,6 +26,7 @@ export const createManualQueryExecutor = <
     options?: { swallowErrors?: boolean }
   ): (() => Promise<TResult | undefined>) => {
   const { queryKey, queryFn, meta, telemetryContext, transformError, staleTime } = config;
+  const shouldLogError = config.logError !== false;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
 
@@ -60,10 +61,12 @@ export const createManualQueryExecutor = <
 
       return data;
     } catch (error) {
-      logClientCatch(error, {
-        source: 'tanstack-factory-v2.executors',
-        action: 'createManualQueryExecutor',
-      });
+      if (shouldLogError) {
+        logClientCatch(error, {
+          source: 'tanstack-factory-v2.executors',
+          action: 'createManualQueryExecutor',
+        });
+      }
       emitFactoryTelemetry({
         entity: 'query',
         stage: telemetryErrorStage(error),

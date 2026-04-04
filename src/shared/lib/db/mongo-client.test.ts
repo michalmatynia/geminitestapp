@@ -36,14 +36,14 @@ describe('mongo-client defaults', () => {
     }
   });
 
-  it('uses faster fallback timeouts in development', async () => {
+  it('uses stable fallback timeouts in development', async () => {
     process.env['NODE_ENV'] = 'development';
 
     const { __testOnly } = await import('./mongo-client');
     const options = __testOnly.getMongoClientOptions();
 
-    expect(options.serverSelectionTimeoutMS).toBe(1000);
-    expect(options.connectTimeoutMS).toBe(1000);
+    expect(options.serverSelectionTimeoutMS).toBe(5000);
+    expect(options.connectTimeoutMS).toBe(5000);
   });
 
   it('preserves explicit timeout overrides', async () => {

@@ -10,7 +10,11 @@ import {
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
-import { Button, FolderTreePanel, FormField, Input } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
+import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
+import { FormField } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { PatternNodeItem } from './pattern-tree/PatternNodeItem';

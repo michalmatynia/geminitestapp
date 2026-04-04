@@ -1,16 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  baseApiRawResultSchema,
   baseActiveTemplatePreferencePayloadSchema,
   baseExportWarehousePreferencePayloadSchema,
   baseExportWarehousePreferenceQuerySchema,
   baseExportWarehousePreferenceResponseSchema,
   baseScopedPreferenceQuerySchema,
+  baseConnectionContextSchema,
   createImportExportTemplateSchema,
+  defaultBaseImportParameterImportSettings,
+  integrationBaseApiRequestSchema,
+  integrationWithConnectionsSchema,
   linkedInProfileResponseSchema,
+  normalizeBaseImportParameterImportSettings,
   oauthTokenResponseSchema,
   playwrightStorageStateSchema,
   sessionPayloadSchema,
+  traderaListingJobInputSchema,
 } from '@/shared/contracts/integrations';
 
 describe('integrations contract runtime', () => {
@@ -151,5 +158,73 @@ describe('integrations contract runtime', () => {
         name: 'profile-slug',
       }).sub
     ).toBe('user-123');
+  });
+
+  it('parses representative api, base-api, and domain exports through the root barrel', () => {
+    expect(
+      integrationBaseApiRequestSchema.parse({
+        integrationId: 'int-1',
+        connectionId: 'conn-1',
+        method: 'products.get',
+      }).method
+    ).toBe('products.get');
+
+    expect(
+      baseApiRawResultSchema.parse({
+        ok: true,
+        statusCode: 200,
+        payload: { status: 'ok' },
+      }).statusCode
+    ).toBe(200);
+
+    expect(
+      baseConnectionContextSchema.parse({
+        baseIntegrationId: 'base-1',
+        connectionId: 'conn-1',
+        token: 'token',
+        issue: null,
+      }).connectionId
+    ).toBe('conn-1');
+
+    expect(
+      integrationWithConnectionsSchema.parse({
+        id: 'int-1',
+        name: 'Tradera',
+        slug: 'tradera',
+        createdAt: '2026-03-11T12:00:00.000Z',
+        updatedAt: '2026-03-11T12:00:00.000Z',
+        connections: [{ id: 'conn-1', name: 'Main', integrationId: 'int-1' }],
+      }).connections[0]?.name
+    ).toBe('Main');
+  });
+
+  it('parses representative tradera and parameter-import exports through the root barrel', () => {
+    expect(
+      traderaListingJobInputSchema.parse({
+        listingId: 'listing-1',
+        action: 'list',
+        source: 'manual',
+      }).source
+    ).toBe('manual');
+
+    expect(defaultBaseImportParameterImportSettings.matchBy).toBe('base_id_then_name');
+
+    expect(
+      normalizeBaseImportParameterImportSettings({
+        enabled: true,
+        mode: 'mapped',
+        languageScope: 'default_only',
+        createMissingParameters: true,
+        overwriteExistingValues: true,
+        matchBy: 'name_only',
+      })
+    ).toEqual({
+      enabled: true,
+      mode: 'mapped',
+      languageScope: 'default_only',
+      createMissingParameters: true,
+      overwriteExistingValues: true,
+      matchBy: 'name_only',
+    });
   });
 });

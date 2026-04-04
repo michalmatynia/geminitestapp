@@ -22,6 +22,13 @@ export const classifyTraderaFailure = (message: string): TraderaFailureCategory 
   ) {
     return 'AUTH';
   }
+  if (
+    normalized.includes('category mapping') ||
+    normalized.includes('fetch tradera categories') ||
+    normalized.includes('map the category')
+  ) {
+    return 'FORM';
+  }
   if (normalized.includes('navigation') || normalized.includes('timeout')) {
     return 'NAVIGATION';
   }
@@ -102,6 +109,9 @@ export const findVisibleLocator = async (page: Page, selectors: string[]) => {
   }
   return null;
 };
+
+export const buildCanonicalTraderaListingUrl = (externalListingId: string): string =>
+  `https://www.tradera.com/item/${externalListingId}`;
 
 export const extractExternalListingId = (url: string): string | null => {
   try {

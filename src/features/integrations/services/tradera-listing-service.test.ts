@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { internalError } from '@/shared/errors/app-error';
+import { badRequestError, internalError } from '@/shared/errors/app-error';
 
 const {
   findProductListingByIdAcrossProvidersMock,
@@ -322,6 +322,59 @@ describe('processTraderaListingJob', () => {
         status: 'auth_required',
         failureReason: 'Tradera login requires manual verification. Open login window and retry.',
         requestId: 'job-tradera-auth',
+      })
+    );
+  });
+
+  it('classifies missing Tradera category mapper setup as a form failure', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockRejectedValue(
+      badRequestError(
+        'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
+      )
+    );
+
+    await expect(
+      processTraderaListingJob({
+        listingId: 'listing-1',
+        action: 'list',
+        source: 'manual',
+        jobId: 'job-tradera-config',
+      })
+    ).rejects.toThrow(
+      'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
+    );
+
+    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'failed');
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        failureReason:
+          'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastErrorCategory: 'FORM',
+            lastExecution: expect.objectContaining({
+              errorCategory: 'FORM',
+            }),
+          }),
+        }),
       })
     );
   });

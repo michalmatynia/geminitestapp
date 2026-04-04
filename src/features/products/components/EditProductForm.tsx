@@ -12,9 +12,10 @@ import {
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { AdminProductsPageLayout, Button } from '@/shared/ui';
+import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
+import { Button } from '@/shared/ui/button';
 
-const FileManager = dynamic(() => import('@/features/files/public'), {
+const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
 });
 

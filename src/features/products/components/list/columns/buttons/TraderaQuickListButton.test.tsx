@@ -13,28 +13,37 @@ import {
 
 const {
   toastMock,
+  apiGetMock,
   apiPostMock,
   apiPutMock,
   mutateAsyncMock,
   preflightTraderaQuickListSessionMock,
+  ensureTraderaBrowserSessionMock,
   fetchIntegrationsWithConnectionsMock,
   fetchPreferredTraderaConnectionMock,
   invalidateProductListingsAndBadgesMock,
+  logClientCatchMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
+  apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
   apiPutMock: vi.fn(),
   mutateAsyncMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
+  ensureTraderaBrowserSessionMock: vi.fn(),
   fetchIntegrationsWithConnectionsMock: vi.fn(),
   fetchPreferredTraderaConnectionMock: vi.fn(),
   invalidateProductListingsAndBadgesMock: vi.fn(),
+  logClientCatchMock: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
+}));
+
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 
@@ -43,33 +52,81 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   return {
     ...actual,
     api: {
+      get: (...args: unknown[]) => apiGetMock(...args) as Promise<unknown>,
       post: (...args: unknown[]) => apiPostMock(...args) as Promise<unknown>,
       put: (...args: unknown[]) => apiPutMock(...args) as Promise<unknown>,
     },
   };
 });
 
-vi.mock('@/features/integrations/public', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/integrations/public')>();
+vi.mock('@/shared/utils/observability/client-error-logger', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/shared/utils/observability/client-error-logger')>();
   return {
     ...actual,
-    fetchIntegrationsWithConnections: (...args: unknown[]) =>
-      fetchIntegrationsWithConnectionsMock(...args) as Promise<unknown>,
-    fetchPreferredTraderaConnection: (...args: unknown[]) =>
-      fetchPreferredTraderaConnectionMock(...args) as Promise<unknown>,
-    integrationSelectionQueryKeys: {
-      withConnections: ['integrations', 'with-connections'],
-      traderaDefaultConnection: ['integrations', 'tradera', 'default-connection'],
-    },
-    isTraderaBrowserIntegrationSlug: (value: string | null | undefined) =>
-      (value ?? '').trim().toLowerCase() === 'tradera',
-    useCreateListingMutation: () => ({
-      mutateAsync: mutateAsyncMock,
-    }),
-    preflightTraderaQuickListSession: (...args: unknown[]) =>
-      preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
+    logClientCatch: (...args: unknown[]) => logClientCatchMock(...args),
   };
 });
+
+vi.mock('@/features/integrations/components/listings/hooks/useIntegrationSelection', () => ({
+  fetchIntegrationsWithConnections: (...args: unknown[]) =>
+    fetchIntegrationsWithConnectionsMock(...args) as Promise<unknown>,
+  fetchPreferredTraderaConnection: (...args: unknown[]) =>
+    fetchPreferredTraderaConnectionMock(...args) as Promise<unknown>,
+  integrationSelectionQueryKeys: {
+    withConnections: ['integrations', 'with-connections'],
+    traderaDefaultConnection: ['integrations', 'tradera', 'default-connection'],
+  },
+}));
+
+vi.mock('@/features/integrations/constants/slugs', () => ({
+  isTraderaBrowserIntegrationSlug: (value: string | null | undefined) =>
+    (value ?? '').trim().toLowerCase() === 'tradera',
+}));
+
+vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
+  useCreateListingMutation: () => ({
+    mutateAsync: mutateAsyncMock,
+  }),
+}));
+
+vi.mock('@/features/integrations/utils/tradera-browser-session', () => ({
+  preflightTraderaQuickListSession: (...args: unknown[]) =>
+    preflightTraderaQuickListSessionMock(...args) as Promise<unknown>,
+  ensureTraderaBrowserSession: (...args: unknown[]) =>
+    ensureTraderaBrowserSessionMock(...args) as Promise<unknown>,
+  isTraderaBrowserAuthRequiredMessage: (message: string) =>
+    message.toLowerCase().includes('auth') ||
+    message.toLowerCase().includes('captcha') ||
+    message.toLowerCase().includes('manual verification'),
+}));
+
+vi.mock('@/features/integrations/utils/product-listings-recovery', () => ({
+  createTraderaRecoveryContext: ({
+    status,
+    runId,
+    failureReason,
+    requestId,
+    integrationId,
+    connectionId,
+  }: {
+    status: string;
+    runId: string | null;
+    failureReason?: string | null;
+    requestId: string | null;
+    integrationId: string | null;
+    connectionId: string | null;
+  }) => ({
+    source: `tradera_quick_export_${status}`,
+    integrationSlug: 'tradera',
+    status,
+    runId,
+    failureReason: failureReason ?? null,
+    requestId,
+    integrationId,
+    connectionId,
+  }),
+}));
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateProductListingsAndBadges: (...args: unknown[]) =>
@@ -108,6 +165,10 @@ describe('TraderaQuickListButton', () => {
       response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
       ready: true,
     });
+    ensureTraderaBrowserSessionMock.mockResolvedValue({
+      response: { ok: true, steps: [{ step: 'Saving session', status: 'ok' }] },
+      savedSession: true,
+    });
     fetchIntegrationsWithConnectionsMock.mockResolvedValue([
       {
         id: 'integration-tradera-1',
@@ -132,6 +193,7 @@ describe('TraderaQuickListButton', () => {
       }
       return Promise.reject(new Error(`Unexpected POST ${url}`));
     });
+    apiGetMock.mockResolvedValue([]);
     apiPutMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/connections/conn-tradera-1') {
         return Promise.resolve({
@@ -230,6 +292,7 @@ describe('TraderaQuickListButton', () => {
       integrationSlug: 'tradera',
       status: 'auth_required',
       runId: null,
+      failureReason: null,
       requestId: null,
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
@@ -242,6 +305,10 @@ describe('TraderaQuickListButton', () => {
       response: { ok: true, steps: [] },
       ready: false,
     });
+    ensureTraderaBrowserSessionMock.mockResolvedValue({
+      response: { ok: false, steps: [] },
+      savedSession: false,
+    });
 
     renderButton({ onOpenIntegrations });
 
@@ -249,11 +316,15 @@ describe('TraderaQuickListButton', () => {
 
     await waitFor(() => {
       expect(toastMock).toHaveBeenCalledWith(
-        'Tradera browser session is not ready. Open recovery options and refresh the session.',
+        'Tradera login session could not be saved. Complete login verification and retry.',
         { variant: 'error' }
       );
     });
 
+    expect(ensureTraderaBrowserSessionMock).toHaveBeenCalledWith({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+    });
     expect(mutateAsyncMock).not.toHaveBeenCalled();
     expect(onOpenIntegrations).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -299,6 +370,31 @@ describe('TraderaQuickListButton', () => {
       expect(screen.queryByRole('button', { name: 'One-click export to Tradera' })).toBeNull();
     });
     expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toBeNull();
+  });
+
+  it('clears stale queued feedback when the tracked product no longer exists', async () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'queued',
+          requestId: 'job-tradera-1',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+    apiGetMock.mockRejectedValue(new ApiError('Product not found', 404));
+
+    renderButton();
+
+    await waitFor(() => {
+      expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toBeNull();
+    });
+    expect(logClientCatchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'One-click export to Tradera' }).className).toContain(
+      'border-gray-500/50'
+    );
   });
 
   it('keeps persisted failed recovery context when a failure badge takes over', async () => {
@@ -616,6 +712,7 @@ describe('TraderaQuickListButton', () => {
       integrationSlug: 'tradera',
       status: 'auth_required',
       runId: null,
+      failureReason: null,
       requestId: null,
       integrationId: null,
       connectionId: null,
@@ -647,6 +744,7 @@ describe('TraderaQuickListButton', () => {
       integrationSlug: 'tradera',
       status: 'failed',
       runId: 'run-tradera-1',
+      failureReason: null,
       requestId: 'job-tradera-1',
       integrationId: null,
       connectionId: null,
@@ -672,5 +770,33 @@ describe('TraderaQuickListButton', () => {
     expect(toastMock).toHaveBeenCalledWith('Product is already listed on this account', {
       variant: 'error',
     });
+  });
+
+  it('shows error toast but does not open integrations modal for non-auth setup errors', async () => {
+    const onOpenIntegrations = vi.fn();
+    mutateAsyncMock.mockRejectedValue(
+      new ApiError(
+        'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
+        400
+      )
+    );
+
+    renderButton({ onOpenIntegrations });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Tradera' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(
+        'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
+        { variant: 'error' }
+      );
+    });
+
+    // Non-auth errors should NOT auto-open the integrations modal — the user
+    // can click the failure-state button to access recovery options instead.
+    expect(onOpenIntegrations).not.toHaveBeenCalled();
+    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+      '"failureReason":"Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry."'
+    );
   });
 });

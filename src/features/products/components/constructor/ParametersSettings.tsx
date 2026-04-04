@@ -10,21 +10,18 @@ import {
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/shared/contracts/products';
 import type { ProductParameter } from '@/shared/contracts/products';
-import {
-  useToast,
-  Button,
-  Input,
-  SelectSimple,
-  FormModal,
-  EmptyState,
-  FormSection,
-  FormField,
-  Textarea,
-  SimpleSettingsList,
-} from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { Button } from '@/shared/ui/button';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { FormModal } from '@/shared/ui/FormModal';
+import { Input } from '@/shared/ui/input';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
+import { Textarea } from '@/shared/ui/textarea';
+import { useToast } from '@/shared/ui/toast';
 
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type ParametersSettingsProps = {
   loading: boolean;

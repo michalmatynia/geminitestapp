@@ -128,6 +128,7 @@ type ProductFormProviderConfigContextType = {
   onSuccess?: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
   requireHydratedEditProduct?: boolean;
+  suppressNonHydratedEditWarning?: boolean;
   nonFormDirtyTrackingLockedRef: { current: boolean };
 };
 
@@ -349,6 +350,7 @@ export function ProductFormProvider(props: {
   onEditSave?: (saved: ProductWithImages) => void;
   requireSku?: boolean;
   requireHydratedEditProduct?: boolean;
+  suppressNonHydratedEditWarning?: boolean;
   initialSku?: string;
   initialCatalogId?: string;
   validatorSessionKey?: string;
@@ -361,6 +363,7 @@ export function ProductFormProvider(props: {
     onEditSave,
     requireSku = true,
     requireHydratedEditProduct = false,
+    suppressNonHydratedEditWarning = false,
     initialSku,
     initialCatalogId,
     validatorSessionKey,
@@ -378,6 +381,7 @@ export function ProductFormProvider(props: {
       onSuccess,
       onEditSave,
       requireHydratedEditProduct,
+      suppressNonHydratedEditWarning,
       nonFormDirtyTrackingLockedRef,
     }),
     [
@@ -385,6 +389,7 @@ export function ProductFormProvider(props: {
       onEditSave,
       onSuccess,
       requireHydratedEditProduct,
+      suppressNonHydratedEditWarning,
       resolvedDraft,
       resolvedProduct,
     ]
@@ -408,7 +413,12 @@ export function ProductFormProvider(props: {
 function ProductFormSubProviders(props: { children: React.ReactNode }) {
   const { children } = props;
 
-  const { product, requireHydratedEditProduct, nonFormDirtyTrackingLockedRef } =
+  const {
+    product,
+    requireHydratedEditProduct,
+    suppressNonHydratedEditWarning,
+    nonFormDirtyTrackingLockedRef,
+  } =
     useProductFormProviderConfigContext();
   const markNonFormInteraction = (): void => {
     nonFormDirtyTrackingLockedRef.current = true;
@@ -419,10 +429,11 @@ function ProductFormSubProviders(props: { children: React.ReactNode }) {
     if (!requireHydratedEditProduct) return;
     if (!product) return;
     if (isEditingProductHydrated(product)) return;
+    if (suppressNonHydratedEditWarning) return;
     if (hydratedWarnedRef.current) return;
     hydratedWarnedRef.current = true;
     warnNonHydratedEditProduct(product);
-  }, [requireHydratedEditProduct, product]);
+  }, [product, requireHydratedEditProduct, suppressNonHydratedEditWarning]);
 
   return (
     <ProductFormInteractionProvider onInteraction={markNonFormInteraction}>

@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from 'react';
 
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { useCatalogs, useParameters } from '@/features/products/hooks/useProductSettingsQueries';
-import { Tabs, TabsContent, TabsList, TabsTrigger, useToast } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { useToast } from '@/shared/ui/toast';
 
 export function ProductConstructorPage(): React.JSX.Element {
   const { toast } = useToast();

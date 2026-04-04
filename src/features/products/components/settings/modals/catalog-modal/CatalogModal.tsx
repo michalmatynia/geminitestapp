@@ -5,8 +5,9 @@ import React from 'react';
 import { useInternationalizationData } from '@/features/internationalization/public';
 import type { Catalog, PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { Alert } from '@/shared/ui';
+import { Alert } from '@/shared/ui/alert';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
+
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { CatalogLanguagesSection } from './CatalogLanguagesSection';
@@ -53,6 +54,7 @@ export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
   } = useCatalogForm({
     catalog,
     languages,
+    priceGroups,
     defaultGroupId,
   });
 

@@ -1,7 +1,8 @@
 import { useFormContext } from 'react-hook-form';
 
 import { ProductFormData } from '@/shared/contracts/products';
-import { Input, FormSection, FormField } from '@/features/products/ui';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
 
 export default function ProductFormImportInfo(): React.JSX.Element {
   const { register } = useFormContext<ProductFormData>();

@@ -8,7 +8,11 @@ import {
   type ProductAdvancedFilterField,
   type ProductAdvancedFilterGroup,
 } from '@/shared/contracts/products';
-import { AppModal, Button, Input, Label, useToast } from '@/shared/ui';
+import { AppModal } from '@/shared/ui/app-modal';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { useToast } from '@/shared/ui/toast';
 
 import {
   createEmptyGroup,
@@ -17,7 +21,6 @@ import {
 } from './advanced-filter-utils';
 import { AdvancedFilterBuilder } from './AdvancedFilterBuilder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 interface AdvancedFilterModalProps {
   open: boolean;

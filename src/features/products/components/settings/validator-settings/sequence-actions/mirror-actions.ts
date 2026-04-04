@@ -4,7 +4,6 @@ import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { buildNameMirrorPolishSequenceBundle } from '@/features/products/lib/validatorSemanticPresets';
 
-
 import { createSequenceGroupId, getPatternSequence } from '../helpers';
 
 import type { CreatePatternMutation } from './types';

@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Badge, Button } from '@/shared/ui';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+
 import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products';
 import {
   formatOrderDate,

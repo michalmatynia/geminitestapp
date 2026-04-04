@@ -22,24 +22,20 @@ import {
   useDefaultExportConnection,
   useIntegrationsWithConnections,
 } from '@/shared/hooks/useIntegrationQueries';
-import { Button, FormModal, IntegrationSelector, Skeleton } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
+import { FormModal } from '@/shared/ui/FormModal';
+import { IntegrationSelector } from '@/shared/ui/integration-selector';
+import { Skeleton } from '@/shared/ui/skeleton';
+
+import { loadProductForm } from './product-form-preload';
 
 export { buildTriggeredProductEntityJson };
-const productFormImport = (): Promise<typeof import('./ProductForm')> => import('./ProductForm');
-const ProductForm = dynamic(productFormImport, {
+const ProductForm = dynamic(loadProductForm, {
   ssr: false,
   loading: () => <EditProductSkeletonContent />,
 });
 
-/** Call from hover/prefetch handlers to start downloading the ProductForm chunk early. */
-let _productFormPreloaded = false;
-export function preloadProductFormChunk(): void {
-  if (_productFormPreloaded) return;
-  _productFormPreloaded = true;
-  void productFormImport();
-}
-
-const FileManager = dynamic(() => import('@/features/files/public'), {
+const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
 });
 
@@ -58,24 +54,26 @@ const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
 
 const ListProductModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) => mod.ListProductModal
+    import('@/features/integrations/components/listings/ListProductModal').then(
+      (mod: typeof import('@/features/integrations/components/listings/ListProductModal')) =>
+        mod.default
     ),
   { ssr: false }
 );
 
 const MassListProductModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) => mod.MassListProductModal
+    import('@/features/integrations/components/listings/MassListProductModal').then(
+      (mod: typeof import('@/features/integrations/components/listings/MassListProductModal')) =>
+        mod.default
     ),
   { ssr: false }
 );
 
 const ProductListingsModal = dynamic(
   () =>
-    import('@/features/integrations/public').then(
-      (mod: typeof import('@/features/integrations/public')) =>
+    import('@/features/integrations/components/listings/ProductListingsModal').then(
+      (mod: typeof import('@/features/integrations/components/listings/ProductListingsModal')) =>
         mod.ProductListingsModal
     ),
   { ssr: false }
@@ -308,6 +306,7 @@ type ProductEditorModalProps = {
   initialSku?: string;
   initialCatalogId?: string;
   requireHydratedEditProduct?: boolean;
+  suppressNonHydratedEditWarning?: boolean;
   showSkeleton?: boolean;
   /** Override to disable save button (e.g. while hydrating fresh data). */
   isSaveDisabledOverride?: boolean;
@@ -330,6 +329,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
     initialSku,
     initialCatalogId,
     requireHydratedEditProduct = false,
+    suppressNonHydratedEditWarning = false,
     showSkeleton = false,
     isSaveDisabledOverride = false,
     validationInstanceScopeOverride,
@@ -343,6 +343,8 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
   const [validatorSessionKey, setValidatorSessionKey] = useState<string>(() =>
     `${providerKey}:session:${isOpen ? 1 : 0}`
   );
+  const shouldSuppressNonHydratedEditWarning =
+    suppressNonHydratedEditWarning || isSaveDisabledOverride;
 
   const onIsSavingChange = useCallback((value: boolean) => setFormIsSaving(value), []);
   const onHasUnsavedChangesChange = useCallback(
@@ -395,6 +397,7 @@ function ProductEditorModal(props: ProductEditorModalProps): React.JSX.Element |
           initialSku={initialSku}
           initialCatalogId={initialCatalogId}
           requireHydratedEditProduct={requireHydratedEditProduct}
+          suppressNonHydratedEditWarning={shouldSuppressNonHydratedEditWarning}
           validatorSessionKey={validatorSessionKey}
         >
           <ProductFormModalBridge

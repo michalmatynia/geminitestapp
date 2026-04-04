@@ -106,17 +106,6 @@ export function CategoryMapperTable(): React.JSX.Element {
   );
 
   const isLoading = externalCategoriesLoading || mappingsLoading;
-
-  if (externalCategories.length === 0 && !isLoading) {
-    return (
-      <CompactEmptyState
-        title='No external categories found'
-        description={`Click "Fetch Categories" to load categories from ${connectionName}.`}
-        className='py-8'
-       />
-    );
-  }
-
   const expandedState = useMemo(
     () => Object.fromEntries(Array.from(expandedIds).map((id) => [id, true])),
     [expandedIds]
@@ -180,6 +169,15 @@ export function CategoryMapperTable(): React.JSX.Element {
         </div>
       }
       isLoading={isLoading}
+      emptyState={
+        !isLoading && externalCategories.length === 0 ? (
+          <CompactEmptyState
+            title='No external categories found'
+            description={`Click "Fetch Categories" to load categories from ${connectionName}.`}
+            className='py-8'
+          />
+        ) : undefined
+      }
       variant='flat'
       columns={columns}
       data={categoryTree}

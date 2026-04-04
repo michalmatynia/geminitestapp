@@ -165,6 +165,11 @@ describe('tradera-browser-session', () => {
         'AUTH_REQUIRED: Stored Tradera session expired and Tradera requires manual verification.'
       )
     ).toBe(true);
+    expect(
+      isTraderaBrowserAuthRequiredMessage(
+        'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.'
+      )
+    ).toBe(true);
     expect(isTraderaBrowserAuthRequiredMessage('Unexpected network error')).toBe(false);
   });
 });

@@ -12,7 +12,11 @@ import {
   type ProductAdvancedFilterRule,
 } from '@/shared/contracts/products';
 import type { SelectSimpleOption } from '@/shared/contracts/ui';
-import { Button, Checkbox, Input, Label, SelectSimple } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { SelectSimple } from '@/shared/ui/select-simple';
 
 import {
   ADVANCED_BOOLEAN_OPTIONS,

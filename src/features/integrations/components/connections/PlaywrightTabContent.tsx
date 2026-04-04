@@ -22,7 +22,7 @@ const CUSTOM_PERSONA_OPTION: LabeledOptionDto<string> = {
 export function PlaywrightTabContent(): React.JSX.Element {
   const { playwrightPersonas, playwrightPersonasLoading } = useIntegrationsData();
   const { playwrightPersonaId } = useIntegrationsForm();
-  const { handleSelectPlaywrightPersona } = useIntegrationsActions();
+  const { handleSelectPlaywrightPersona, handleResetListingScript } = useIntegrationsActions();
   const personaOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> => [
       CUSTOM_PERSONA_OPTION,
@@ -91,6 +91,24 @@ export function PlaywrightTabContent(): React.JSX.Element {
       </FormSection>
 
       <DynamicPlaywrightSettingsForm />
+
+      <FormSection
+        title='Listing script'
+        description='Reset the custom listing script so this connection uses the latest managed default.'
+        className='p-4'
+      >
+        <div className='mt-4'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={(): void => {
+              void handleResetListingScript();
+            }}
+          >
+            Reset to managed default
+          </Button>
+        </div>
+      </FormSection>
     </>
   );
 }

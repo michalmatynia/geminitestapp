@@ -1,6 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 
-import { Card } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui';
 
 import { TraderaRecoveryContinueButton } from './TraderaRecoveryContinueButton';
 
@@ -11,7 +12,19 @@ type TraderaQuickExportRecoveryBannerProps = {
   runId?: string | null | undefined;
   integrationId?: string | null | undefined;
   connectionId?: string | null | undefined;
+  failureReason?: string | null | undefined;
+  canContinue?: boolean;
   variant?: 'compact' | 'full';
+};
+
+const isTraderaCategoryMapperFailure = (failureReason: string | null | undefined): boolean => {
+  const normalized = (failureReason ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('category mapper') ||
+    normalized.includes('category mapping') ||
+    normalized.includes('fetch tradera categories')
+  );
 };
 
 export function TraderaQuickExportRecoveryBanner({
@@ -21,19 +34,32 @@ export function TraderaQuickExportRecoveryBanner({
   runId,
   integrationId,
   connectionId,
+  failureReason,
+  canContinue = Boolean(integrationId && connectionId),
   variant = 'compact',
 }: TraderaQuickExportRecoveryBannerProps): React.JSX.Element {
-  const canContinue = Boolean(integrationId && connectionId);
+  const categoryMapperHref = connectionId
+    ? `/admin/integrations/marketplaces/category-mapper?connectionId=${encodeURIComponent(connectionId)}`
+    : null;
+  const canOpenCategoryMapper = Boolean(
+    !canContinue && categoryMapperHref && isTraderaCategoryMapperFailure(failureReason)
+  );
   const title =
     mode === 'empty'
       ? 'Tradera quick export needs recovery'
-      : 'Tradera quick export requires recovery';
+      : canContinue
+        ? 'Tradera quick export requires recovery'
+        : 'Tradera quick export needs attention';
   const description =
-    mode === 'empty' ? (
+    mode === 'empty' && !canContinue && failureReason ? (
+      failureReason
+    ) : mode === 'empty' ? (
       'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then continue directly into the Tradera listing flow from this modal.'
+    ) : !canContinue && failureReason ? (
+      failureReason
     ) : (
       <>
-        Tradera quick export requires recovery. Review the Tradera listing below and use
+        Review the Tradera listing below and use
         <span className='font-semibold text-white'> Login and continue listing </span>
         if the last run needs manual verification.
       </>
@@ -60,13 +86,20 @@ export function TraderaQuickExportRecoveryBanner({
             <div className='font-mono text-white'>{requestId ?? 'Unavailable'}</div>
           </div>
         </div>
-        {canContinue && (
-          <div className='flex justify-center'>
-            <TraderaRecoveryContinueButton
-              integrationId={integrationId!}
-              connectionId={connectionId!}
-              size='md'
-            />
+        {(canContinue || canOpenCategoryMapper) && (
+          <div className='flex flex-wrap justify-center gap-2'>
+            {canOpenCategoryMapper && categoryMapperHref && (
+              <Button asChild type='button' variant='outline' size='default'>
+                <Link href={categoryMapperHref}>Open Category Mapper</Link>
+              </Button>
+            )}
+            {canContinue && (
+              <TraderaRecoveryContinueButton
+                integrationId={integrationId!}
+                connectionId={connectionId!}
+                size='md'
+              />
+            )}
           </div>
         )}
       </Card>
@@ -77,6 +110,7 @@ export function TraderaQuickExportRecoveryBanner({
     <Card variant='subtle' padding='sm' className='bg-card/60 text-xs text-gray-300'>
       <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <div>
+          <div className='text-sm font-semibold text-white'>{title}</div>
           <div>{description}</div>
           {(requestId || runId) && (
             <div className='mt-2 flex flex-wrap gap-3 font-mono text-[11px] text-gray-400'>
@@ -93,11 +127,20 @@ export function TraderaQuickExportRecoveryBanner({
             </div>
           )}
         </div>
-        {canContinue && (
-          <TraderaRecoveryContinueButton
-            integrationId={integrationId!}
-            connectionId={connectionId!}
-          />
+        {(canContinue || canOpenCategoryMapper) && (
+          <div className='flex shrink-0 flex-wrap gap-2'>
+            {canOpenCategoryMapper && categoryMapperHref && (
+              <Button asChild type='button' variant='outline' size='sm'>
+                <Link href={categoryMapperHref}>Open Category Mapper</Link>
+              </Button>
+            )}
+            {canContinue && (
+              <TraderaRecoveryContinueButton
+                integrationId={integrationId!}
+                connectionId={connectionId!}
+              />
+            )}
+          </div>
         )}
       </div>
     </Card>

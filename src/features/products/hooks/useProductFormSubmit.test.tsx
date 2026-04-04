@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   confirmMock: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({
     toast: mocks.toastMock,
   }),
@@ -27,7 +27,7 @@ vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   }),
 }));
 
-vi.mock('./useProductData', () => ({
+vi.mock('./useProductDataMutations', () => ({
   useCreateProductMutation: () => ({
     mutateAsync: mocks.createMutationMock,
   }),

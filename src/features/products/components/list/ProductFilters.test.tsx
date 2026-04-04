@@ -41,14 +41,7 @@ vi.mock('@/features/products/components/list/advanced-filter', () => ({
   AdvancedFilterModal: () => <div data-testid='advanced-filter-modal' />,
 }));
 
-vi.mock('@/shared/ui/templates/FilterPanel', () => ({
-  FilterPanel: (props: Record<string, unknown>) => {
-    filterPanelMock(props);
-    return <div data-testid='filter-panel'>{props.actions as React.ReactNode}</div>;
-  },
-}));
-
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     className,
@@ -59,6 +52,13 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/templates/FilterPanel', () => ({
+  FilterPanel: (props: Record<string, unknown>) => {
+    filterPanelMock(props);
+    return <div data-testid='filter-panel'>{props.actions as React.ReactNode}</div>;
+  },
 }));
 
 import { ProductFilters } from './ProductFilters';

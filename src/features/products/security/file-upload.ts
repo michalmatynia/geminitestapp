@@ -5,7 +5,6 @@ import { NextRequest } from 'next/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 const CONTROL_CHARACTERS_PATTERN = /\p{Cc}/gu;
 
 type FileValidationResult = {

@@ -1,16 +1,15 @@
 'use client';
 
 import React from 'react';
-import {
-  Alert,
-  Badge,
-  FormField,
-  FormModal,
-  Input,
-  MultiSelect,
-  SelectSimple,
-  Textarea,
-} from '@/shared/ui';
+import { Alert } from '@/shared/ui/alert';
+import { Badge } from '@/shared/ui/badge';
+import { FormField } from '@/shared/ui/form-section';
+import { FormModal } from '@/shared/ui/FormModal';
+import { Input } from '@/shared/ui/input';
+import { MultiSelect } from '@/shared/ui/multi-select';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { Textarea } from '@/shared/ui/textarea';
+
 import { useShippingGroupsState, type ShippingGroupFormData } from './ShippingGroupsContext';
 import {
   DRAFT_SHIPPING_GROUP_ID,

@@ -1,11 +1,11 @@
 'use client';
-
-import { Button, DocumentationSection, useToast } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
+import { DocumentationSection } from '@/shared/ui/documentation-section';
+import { useToast } from '@/shared/ui/toast';
 
 import { VALIDATOR_FUNCTION_DOCS, VALIDATOR_UI_DOCS } from './validator-docs-catalog';
 import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 export function ValidatorDocumentationTab(): React.JSX.Element {
   const { toast } = useToast();

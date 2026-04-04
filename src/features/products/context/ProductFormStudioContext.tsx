@@ -9,7 +9,7 @@ import {
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
 
 export interface ProductFormStudioStateContextType {
   studioProjectId: string | null;

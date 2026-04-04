@@ -25,11 +25,11 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
   fetchQueryV2: (...args: unknown[]) => fetchQueryV2Mock(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 
-vi.mock('@/features/products/hooks/useProductData', () => ({
+vi.mock('@/features/products/hooks/useProductDataMutations', () => ({
   useBulkDeleteProductsMutation: () => ({
     mutateAsync: mutateAsyncMock,
     isPending: false,

@@ -6,6 +6,8 @@ import type { FilemakerEmailCampaign, FilemakerMailAccount } from '../types';
 import { CampaignDetailsSection } from '../pages/AdminFilemakerCampaignEditPage.sections';
 import { createBlankCampaignDraft } from '../pages/AdminFilemakerCampaignEditPage.utils';
 
+const useCampaignEditContextMock = vi.fn();
+
 vi.mock('@/shared/lib/document-editor/public', () => ({
   DocumentWysiwygEditor: () => null,
 }));
@@ -103,6 +105,10 @@ vi.mock('@/shared/ui', () => ({
   }) => <textarea value={value} onChange={onChange} rows={rows} aria-label={ariaLabel} />,
 }));
 
+vi.mock('../pages/AdminFilemakerCampaignEditPage.context', () => ({
+  useCampaignEditContext: () => useCampaignEditContextMock(),
+}));
+
 const createMailAccount = (overrides?: Partial<FilemakerMailAccount>): FilemakerMailAccount => ({
   id: 'mail-account-sales',
   createdAt: '2026-04-02T10:00:00.000Z',
@@ -136,24 +142,26 @@ function CampaignDetailsHarness(): React.JSX.Element {
   const account = useMemo(() => {
     return draft.mailAccountId === 'mail-account-sales' ? createMailAccount() : null;
   }, [draft.mailAccountId]);
+  const mailAccountOptions = [
+    {
+      value: '__shared__',
+      label: 'Shared Filemaker campaign delivery provider',
+    },
+    {
+      value: 'mail-account-sales',
+      label: 'Sales <sales@example.com>',
+    },
+  ];
+  useCampaignEditContextMock.mockReturnValue({
+    draft,
+    setDraft,
+    mailAccountOptions,
+    selectedMailAccount: account,
+  });
 
   return (
     <>
-      <CampaignDetailsSection
-        draft={draft}
-        setDraft={setDraft}
-        mailAccountOptions={[
-          {
-            value: '__shared__',
-            label: 'Shared Filemaker campaign delivery provider',
-          },
-          {
-            value: 'mail-account-sales',
-            label: 'Sales <sales@example.com>',
-          },
-        ]}
-        selectedMailAccount={account}
-      />
+      <CampaignDetailsSection />
       <output data-testid='campaign-mail-account-id'>{draft.mailAccountId ?? ''}</output>
       <output data-testid='campaign-from-name'>{draft.fromName ?? ''}</output>
       <output data-testid='campaign-reply-to'>{draft.replyToEmail ?? ''}</output>

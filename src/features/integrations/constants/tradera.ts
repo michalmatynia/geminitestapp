@@ -17,10 +17,41 @@ export const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selli
 export const TRADERA_LEGACY_LISTING_FORM_URL =
   'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
 
+const TRADERA_ALLOWED_HOSTS = new Set(['www.tradera.com', 'tradera.com']);
+const TRADERA_NEW_LISTING_PATH_PATTERN =
+  /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/new\/?$/i;
+const TRADERA_LEGACY_LISTING_PATH_PATTERN =
+  /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/?$/i;
+
+const isAllowedTraderaListingFormUrl = (value: URL): boolean => {
+  if (!TRADERA_ALLOWED_HOSTS.has(value.host.toLowerCase())) {
+    return false;
+  }
+
+  if (TRADERA_NEW_LISTING_PATH_PATTERN.test(value.pathname)) {
+    return true;
+  }
+
+  return (
+    TRADERA_LEGACY_LISTING_PATH_PATTERN.test(value.pathname) &&
+    value.searchParams.has('redirectToNewIfNoDrafts')
+  );
+};
+
 export const normalizeTraderaListingFormUrl = (value: string | null | undefined): string => {
   const trimmed = value?.trim();
   if (!trimmed) return TRADERA_DIRECT_LISTING_FORM_URL;
-  return trimmed === TRADERA_LEGACY_LISTING_FORM_URL ? TRADERA_DIRECT_LISTING_FORM_URL : trimmed;
+
+  try {
+    const parsed = new URL(trimmed, TRADERA_DIRECT_LISTING_FORM_URL);
+    if (!isAllowedTraderaListingFormUrl(parsed)) {
+      return TRADERA_DIRECT_LISTING_FORM_URL;
+    }
+  } catch {
+    return TRADERA_DIRECT_LISTING_FORM_URL;
+  }
+
+  return TRADERA_DIRECT_LISTING_FORM_URL;
 };
 
 export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
@@ -47,6 +78,9 @@ const toInt = (
   fallback: number,
   options?: { min?: number; max?: number }
 ): number => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return fallback;
+  }
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   const rounded = Math.floor(parsed);

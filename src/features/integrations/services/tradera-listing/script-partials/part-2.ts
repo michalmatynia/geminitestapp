@@ -1,5 +1,4 @@
-/* eslint-disable no-useless-escape */
-export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(String(message || ''))
+export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/i.test(String(message || ''))
     );
   };
 
@@ -274,15 +273,23 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
   };
 
   const findCreateListingTrigger = async () => {
+    const createListingRoot = page.locator('main').first();
+    const rootVisible = await createListingRoot.isVisible().catch(() => false);
+    const root = rootVisible ? createListingRoot : page;
+    const isSafeCreateListingTrigger = async (locator) => {
+      const metadata = await readClickTargetMetadata(locator);
+      return !resolveExternalClickTargetUrl(metadata);
+    };
+
     for (const label of CREATE_LISTING_TRIGGER_LABELS) {
       const escapedPattern = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
       const escapedText = label.replace(/"/g, '\\"');
       const triggerLocators = [
-        page.getByRole('button', { name: new RegExp('^' + escapedPattern + '\$', 'i') }).first(),
-        page.getByRole('link', { name: new RegExp('^' + escapedPattern + '\$', 'i') }).first(),
-        page.getByRole('button', { name: new RegExp(escapedPattern, 'i') }).first(),
-        page.getByRole('link', { name: new RegExp(escapedPattern, 'i') }).first(),
-        page
+        root.getByRole('button', { name: new RegExp('^' + escapedPattern + '\$', 'i') }).first(),
+        root.getByRole('link', { name: new RegExp('^' + escapedPattern + '\$', 'i') }).first(),
+        root.getByRole('button', { name: new RegExp(escapedPattern, 'i') }).first(),
+        root.getByRole('link', { name: new RegExp(escapedPattern, 'i') }).first(),
+        root
           .locator(
             'xpath=//*[normalize-space(text())="' +
               escapedText +
@@ -294,12 +301,31 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
       for (const locator of triggerLocators) {
         const visible = await locator.isVisible().catch(() => false);
         if (visible) {
+          if (!(await isSafeCreateListingTrigger(locator))) {
+            continue;
+          }
           return locator;
         }
       }
     }
 
-    return firstVisible(CREATE_LISTING_TRIGGER_SELECTORS);
+    for (const selector of CREATE_LISTING_TRIGGER_SELECTORS) {
+      const locator = root.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      if (!count) continue;
+
+      for (let index = 0; index < count; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+        if (!(await isSafeCreateListingTrigger(candidate))) {
+          continue;
+        }
+        return candidate;
+      }
+    }
+
+    return null;
   };
 
   const waitForSellEntryPoint = async (timeoutMs = 12_000) => {
@@ -376,6 +402,46 @@ export const PART_2 = `      /(delivery|shipping|ship|leverans|frakt)/i.test(Str
     }
 
     throw new Error('FAIL_SELL_PAGE_INVALID: Tradera create listing page did not load.');
+  };
+
+  const ensureCreateListingPageReady = async (context, recover = false) => {
+    if (await isCreateListingPage()) {
+      return true;
+    }
+
+    const initialUrl = page.url();
+    if (recover) {
+      log?.('tradera.quicklist.sell_page.recover', {
+        context,
+        currentUrl: initialUrl,
+      });
+      try {
+        await gotoSellPage();
+      } catch (error) {
+        log?.('tradera.quicklist.sell_page.recover_failed', {
+          context,
+          currentUrl: initialUrl,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
+      if (await isCreateListingPage()) {
+        return true;
+      }
+    }
+
+    const currentUrl = page.url();
+    await captureFailureArtifacts('listing-page-missing', {
+      context,
+      initialUrl,
+      currentUrl,
+    }).catch(() => undefined);
+    throw new Error(
+      'FAIL_SELL_PAGE_INVALID: Tradera listing editor was not active during ' +
+        context +
+        '. Current URL: ' +
+        currentUrl
+    );
   };
 
   const clearFocusedEditableField = async () => {

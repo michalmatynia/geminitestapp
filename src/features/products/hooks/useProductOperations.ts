@@ -12,7 +12,8 @@ import { api } from '@/shared/lib/api-client';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 const SKU_LOOKUP_TIMEOUT_MS = 30_000;

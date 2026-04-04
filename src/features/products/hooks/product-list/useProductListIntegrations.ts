@@ -3,9 +3,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { isMissingProductListingsError } from '@/features/integrations/hooks/useListingQueries';
 import { loadProductIntegrationsAdapter } from '@/features/products/lib/product-integrations-adapter-loader';
 import { prefetchQueryV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export function useProductListIntegrations() {
   const queryClient = useQueryClient();
@@ -65,10 +67,12 @@ export function useProductListIntegrations() {
     (productId: string): void => {
       if (!productId) return;
       void loadProductIntegrationsAdapter().then(({ fetchProductListings, productListingsQueryKey }) => {
+        const queryKey = normalizeQueryKey(productListingsQueryKey(productId));
         void prefetchQueryV2(queryClient, {
-          queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
+          queryKey,
           queryFn: () => fetchProductListings(productId),
           staleTime: 30 * 1000,
+          logError: false,
           meta: {
             source: 'products.hooks.useProductListIntegrations.prefetchListings',
             operation: 'list',
@@ -77,7 +81,18 @@ export function useProductListIntegrations() {
             tags: ['integrations', 'listings', 'prefetch'],
             description: 'Loads integrations listings.',
           },
-        })();
+        })().catch((error: unknown) => {
+          if (isMissingProductListingsError(error)) {
+            queryClient.removeQueries({ queryKey });
+            return;
+          }
+          logClientCatch(error, {
+            source: 'products.hooks.useProductListIntegrations',
+            action: 'prefetchProductListingsData',
+            productId,
+            level: 'warn',
+          });
+        });
       });
     },
     [queryClient]
@@ -87,10 +102,12 @@ export function useProductListIntegrations() {
     (productId: string): void => {
       if (!productId) return;
       void loadProductIntegrationsAdapter().then(({ fetchProductListings, productListingsQueryKey }) => {
+        const queryKey = normalizeQueryKey(productListingsQueryKey(productId));
         void fetchQueryV2(queryClient, {
-          queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
+          queryKey,
           queryFn: () => fetchProductListings(productId),
           staleTime: 0,
+          logError: false,
           meta: {
             source: 'products.hooks.useProductListIntegrations.refreshListings',
             operation: 'list',
@@ -99,7 +116,18 @@ export function useProductListIntegrations() {
             tags: ['integrations', 'listings', 'fetch'],
             description: 'Loads integrations listings.',
           },
-        })();
+        })().catch((error: unknown) => {
+          if (isMissingProductListingsError(error)) {
+            queryClient.removeQueries({ queryKey });
+            return;
+          }
+          logClientCatch(error, {
+            source: 'products.hooks.useProductListIntegrations',
+            action: 'refreshProductListingsData',
+            productId,
+            level: 'warn',
+          });
+        });
       });
     },
     [queryClient]

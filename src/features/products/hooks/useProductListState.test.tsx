@@ -95,6 +95,27 @@ describe('shouldAdoptIncomingEditProductDetail', () => {
     expect(result).toBe(false);
   });
 
+  it('adopts incoming detail for hydrated product when AI text changed within the same revision', () => {
+    const current = markEditingProductHydrated(
+      createProduct({
+        updatedAt: '2026-03-01T10:00:00.000Z',
+        description_en: 'Old description',
+      })
+    );
+    const incoming = createProduct({
+      updatedAt: '2026-03-01T10:00:00.000Z',
+      description_en: 'Fresh AI description',
+    });
+
+    const result = shouldAdoptIncomingEditProductDetail({
+      currentProduct: current,
+      incomingProduct: incoming,
+      isEditHydrating: false,
+    });
+
+    expect(result).toBe(true);
+  });
+
   it('adopts incoming detail for hydrated product when incoming timestamp is newer', () => {
     const current = markEditingProductHydrated(
       createProduct({ updatedAt: '2026-03-01T10:00:00.000Z' })

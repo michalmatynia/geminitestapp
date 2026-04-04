@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { ConnectionIdDto, SaveResultDto } from '@/shared/contracts/base';
 import type {
   TagMapping,
   TagMappingCreateInput,
@@ -12,7 +11,9 @@ const marketplaceTagMappingsQuerySchema = z.object({
   connectionId: optionalTrimmedQueryString(),
 });
 
-export type MarketplaceTagMappingsListQuery = ConnectionIdDto;
+export type MarketplaceTagMappingsListQuery = {
+  connectionId: string;
+};
 
 export type TagMappingCreateFields = {
   connectionId: string;
@@ -29,7 +30,10 @@ export type TagMappingSaveRepository = {
   create: (input: TagMappingCreateFields) => Promise<TagMapping>;
 };
 
-export type TagMappingSaveResult = SaveResultDto<TagMapping>;
+export type TagMappingSaveResult = {
+  body: TagMapping;
+  status: 200 | 201;
+};
 
 export const parseMarketplaceTagMappingsQuery = (
   rawQuery: unknown

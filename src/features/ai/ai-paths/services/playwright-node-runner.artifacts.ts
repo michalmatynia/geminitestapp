@@ -149,12 +149,42 @@ export const buildCompletedRunState = async (params: {
 
 export const captureFailureArtifacts = async (params: {
   artifacts: PlaywrightNodeRunArtifact[];
+  browserDisconnected?: boolean;
+  contextClosed?: boolean;
   errorMessage: string;
   page: Page | null;
+  pageClosed?: boolean;
+  pageCrashed?: boolean;
   runArtifactsDir: string;
 }): Promise<void> => {
-  const { artifacts, errorMessage, page, runArtifactsDir } = params;
+  const {
+    artifacts,
+    browserDisconnected = false,
+    contextClosed = false,
+    errorMessage,
+    page,
+    pageClosed = false,
+    pageCrashed = false,
+    runArtifactsDir,
+  } = params;
   if (!page) return;
+
+  const resolvedPageClosed =
+    typeof (page as { isClosed?: (() => boolean) | undefined }).isClosed === 'function'
+      ? Boolean((page as { isClosed: () => boolean }).isClosed())
+      : pageClosed;
+
+  const finalUrl =
+    typeof page.url === 'function'
+      ? (() => {
+          try {
+            return page.url();
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+  const title = await page.title().catch(() => '');
 
   try {
     artifacts.push(
@@ -195,8 +225,12 @@ export const captureFailureArtifacts = async (params: {
         `${JSON.stringify(
           {
             error: errorMessage,
-            finalUrl: page.url(),
-            title: await page.title().catch(() => ''),
+            finalUrl,
+            title,
+            browserDisconnected,
+            contextClosed,
+            pageClosed: resolvedPageClosed,
+            pageCrashed,
           },
           null,
           2
@@ -267,4 +301,3 @@ export const persistVideoArtifact = async (params: {
     return false;
   }
 };
-

@@ -3,7 +3,12 @@
 import React from 'react';
 
 import { getProductValidationSemanticOperationUiMetadata } from '@/shared/lib/products/utils/validator-semantic-operations';
-import { Alert, FormField, FormSection, Input, SelectSimple, StatusBadge, Textarea } from '@/shared/ui';
+import { Alert } from '@/shared/ui/alert';
+import { FormField, FormSection } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { StatusBadge } from '@/shared/ui/status-badge';
+import { Textarea } from '@/shared/ui/textarea';
 
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
 import {

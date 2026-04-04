@@ -3,7 +3,11 @@
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Label, SelectSimple, Badge, Button, SearchInput } from '@/shared/ui';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Label } from '@/shared/ui/label';
+import { SearchInput } from '@/shared/ui/search-input';
+import { SelectSimple } from '@/shared/ui/select-simple';
 
 import { useCatalogModalContext } from './context/CatalogModalContext';
 

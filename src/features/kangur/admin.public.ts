@@ -1,0 +1,10 @@
+export { AdminKangurPageShell } from '@/features/kangur/admin/AdminKangurPageShell';
+export { AdminKangurAppearancePage } from '@/features/kangur/admin/AdminKangurAppearancePage';
+export { AdminKangurBuilderPage } from '@/features/kangur/admin/AdminKangurBuilderPage';
+export { AdminKangurContentManagerPage } from '@/features/kangur/admin/AdminKangurContentManagerPage';
+export { AdminKangurDocumentationPage } from '@/features/kangur/admin/AdminKangurDocumentationPage';
+export { AdminKangurLessonsManagerPage } from '@/features/kangur/admin/AdminKangurLessonsManagerPage';
+export { AdminKangurObservabilityPage } from '@/features/kangur/admin/AdminKangurObservabilityPage';
+export { AdminKangurAiTutorContentPage } from '@/features/kangur/admin/AdminKangurAiTutorContentPage';
+export { default as AdminKangurSettingsPage } from '@/features/kangur/admin/AdminKangurSettingsPage';
+export { AdminKangurTestSuitesManagerPage } from '@/features/kangur/admin/AdminKangurTestSuitesManagerPage';

@@ -173,16 +173,6 @@ export function useIntegrationsActionsImpl(args: {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }
-    if (
-      isTraderaBrowserIntegration &&
-      formData.traderaBrowserMode === 'scripted' &&
-      !formData.playwrightListingScript.trim()
-    ) {
-      toast('Playwright listing script is required for scripted Tradera mode.', {
-        variant: 'error',
-      });
-      return null;
-    }
     const payload: Record<string, unknown> = {
       name: normalizedName,
       username: normalizedUsername,
@@ -653,6 +643,28 @@ export function useIntegrationsActionsImpl(args: {
     }
   };
 
+  const handleResetListingScript = useCallback(async (): Promise<void> => {
+    if (!activeConnection || !args.activeIntegration) return;
+    try {
+      await upsertConnectionMutation.mutateAsync({
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
+        payload: {
+          name: activeConnection.name,
+          playwrightListingScript: null,
+        },
+      });
+      toast('Listing script reset to managed default.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleResetListingScript',
+        connectionId: activeConnection?.id,
+      });
+      toast('Failed to reset listing script.', { variant: 'error' });
+    }
+  }, [activeConnection, args.activeIntegration, toast, upsertConnectionMutation]);
+
   const onCloseModal = () => args.setIsModalOpen(false);
   const onOpenSessionModal = () => args.setShowSessionModal(true);
 
@@ -677,6 +689,7 @@ export function useIntegrationsActionsImpl(args: {
     handleAllegroApiRequest,
     onCloseModal,
     onOpenSessionModal,
+    handleResetListingScript,
     savingAllegroSandbox,
   };
 }

@@ -12,7 +12,7 @@ const EXPECTED_DIALOG_SHELL_FILES = [
   'components/assignment-manager/KangurAssignmentManagerTimeLimitModal.tsx',
   'components/music/KangurMusicPianoRollControls.tsx',
   'components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx',
-  'components/primary-navigation/KangurPrimaryNavigation.overlays.tsx',
+  'components/primary-navigation/KangurPrimaryNavigation.tsx',
   'pages/GamesLibraryGameModal.components.tsx',
 ] as const;
 

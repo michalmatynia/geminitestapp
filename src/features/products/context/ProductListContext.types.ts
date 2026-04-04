@@ -12,8 +12,6 @@ import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrat
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ReactNode, ProfilerOnRenderCallback } from 'react';
 
-
-
 export interface ProductListContextType {
   onCreateProduct: () => void;
   onCreateFromDraft: (draftId: string) => void;

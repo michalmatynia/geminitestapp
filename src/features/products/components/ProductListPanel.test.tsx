@@ -52,8 +52,15 @@ vi.mock('@/features/products/hooks/useProductsTableProps', () => ({
   useProductsTableProps: () => useProductsTablePropsMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/alert', () => ({
   Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/AppErrorBoundary', () => ({
+  AppErrorBoundary: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -63,10 +70,16 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/data-table', () => ({
   DataTable: (props: Record<string, unknown>) => {
     dataTableMock(props);
     return <div data-testid='desktop-data-table' />;
   },
+}));
+
+vi.mock('@/shared/ui/empty-state', () => ({
   EmptyState: ({
     title,
     description,
@@ -80,6 +93,9 @@ vi.mock('@/shared/ui', () => ({
       <span>{description}</span>
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/templates/StandardDataTablePanel', () => ({
   StandardDataTablePanel: (props: Record<string, unknown>) => {
     standardDataTablePanelMock(props);
     return (
@@ -94,6 +110,7 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 import { ProductListPanel } from './ProductListPanel';
+import { ProductListTableSurface } from './ProductListTableSurface';
 
 const createDomRect = (overrides: Partial<DOMRect> = {}): DOMRect =>
   ({
@@ -109,7 +126,24 @@ const createDomRect = (overrides: Partial<DOMRect> = {}): DOMRect =>
     ...overrides,
   }) as DOMRect;
 
-describe('ProductListPanel layout contract', () => {
+describe('ProductListPanel loading shell', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useProductListModalsContextMock.mockReturnValue({
+      isPromptOpen: false,
+      setIsPromptOpen: vi.fn(),
+      handleConfirmSku: vi.fn(),
+    });
+  });
+
+  it('renders the lightweight fallback while the table surface is still loading', () => {
+    render(<ProductListPanel />);
+
+    expect(screen.getByTestId('product-list-panel-fallback')).toBeInTheDocument();
+  });
+});
+
+describe('ProductListTableSurface layout contract', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -163,7 +197,7 @@ describe('ProductListPanel layout contract', () => {
   });
 
   it('pins the current panel spacing and enables the desktop table virtualization path', async () => {
-    render(<ProductListPanel />);
+    render(<ProductListTableSurface />);
 
     const panelProps = standardDataTablePanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(panelProps.variant).toBe('flat');

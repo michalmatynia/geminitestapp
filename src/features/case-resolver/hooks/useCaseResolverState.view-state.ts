@@ -237,12 +237,13 @@ export function useCaseResolverStateViewState({
     if (resolution.shouldClearSelectedFolder) {
       setSelectedFolderPath(null);
     }
-    if (resolution.nextActiveFileId !== undefined) {
+    const nextActiveFileId = resolution.nextActiveFileId;
+    if (nextActiveFileId !== undefined) {
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-        if (current.activeFileId === resolution.nextActiveFileId) return current;
+        if (current.activeFileId === nextActiveFileId) return current;
         const nextWorkspace = {
           ...current,
-          activeFileId: resolution.nextActiveFileId,
+          activeFileId: nextActiveFileId,
         };
         syncPersistedWorkspaceTracking(nextWorkspace);
         clearQueuedWorkspacePersistMutation();

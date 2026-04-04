@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-04T13:51:27.509Z
+Generated at: 2026-04-04T20:31:39.103Z
 
 ## Snapshot
 
-- Source files: 9654
-- Source lines: 1588328
-- use client files: 1718
+- Source files: 9739
+- Source lines: 1593475
+- use client files: 1722
 - Files >= 1000 LOC: 1
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/products/components/settings/ShippingGroupsSettings.tsx` (1002 LOC)
+- Largest file: `src/features/products/components/settings/ShippingGroupsSettings.tsx` (1004 LOC)
 - API routes: 30
 - API delegated server routes: 177
 - API routes without apiHandler/delegation: 0
@@ -57,11 +57,12 @@ Generated at: 2026-04-04T13:51:27.509Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/integrations/services/tradera-listing/browser.test.ts` | 1412 |
+| `src/features/integrations/services/tradera-listing/browser.test.ts` | 1906 |
 | `src/features/products/components/list/ProductColumns.test.tsx` | 1038 |
-| `src/features/products/components/settings/ShippingGroupsSettings.tsx` | 1002 |
+| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1016 |
+| `src/features/products/components/settings/ShippingGroupsSettings.tsx` | 1004 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
-| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 998 |
+| `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 992 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
 | `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
 | `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 986 |
@@ -70,10 +71,9 @@ Generated at: 2026-04-04T13:51:27.509Z
 | `src/app/api/settings/handler.ts` | 978 |
 | `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 977 |
 | `src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx` | 976 |
+| `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx` | 974 |
 | `src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx` | 970 |
 | `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 970 |
 | `src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts` | 969 |
 | `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx` | 968 |
-| `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx` | 968 |
-| `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 967 |

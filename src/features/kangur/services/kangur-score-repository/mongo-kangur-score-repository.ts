@@ -140,7 +140,7 @@ const applyMongoScoreFilter = (
       query.operation = value;
       return;
     case 'subject':
-      Object.assign(query, resolveSubjectMongoFilter(value));
+      Object.assign(query, resolveSubjectMongoFilter(value as KangurScoreFilterSubject));
       return;
     case 'created_by':
       query.created_by = value;

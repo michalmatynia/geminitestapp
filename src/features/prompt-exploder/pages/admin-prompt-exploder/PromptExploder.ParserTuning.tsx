@@ -16,8 +16,8 @@ import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import {
-  SettingsActionsContext,
-  SettingsStateContext,
+  useOptionalSettingsActions,
+  useOptionalSettingsState,
   useSettingsActions,
   useSettingsState,
 } from '../../context/SettingsContext';
@@ -59,8 +59,8 @@ export function PromptExploderParserTuningProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const router = useRouter();
-  const settingsState = React.useContext(SettingsStateContext);
-  const settingsActions = React.useContext(SettingsActionsContext);
+  const settingsState = useOptionalSettingsState();
+  const settingsActions = useOptionalSettingsActions();
 
   const resolvedValue = React.useMemo<PromptExploderParserTuningContextValue>(() => {
     if (value) return value;

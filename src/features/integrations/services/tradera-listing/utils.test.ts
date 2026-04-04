@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractExternalListingId } from './utils';
+import { buildCanonicalTraderaListingUrl, extractExternalListingId } from './utils';
+
+describe('buildCanonicalTraderaListingUrl', () => {
+  it('builds the canonical Tradera item url from the external listing id', () => {
+    expect(buildCanonicalTraderaListingUrl('123456789')).toBe(
+      'https://www.tradera.com/item/123456789'
+    );
+  });
+});
 
 describe('extractExternalListingId', () => {
   it('extracts ids only from Tradera item-style listing URLs', () => {

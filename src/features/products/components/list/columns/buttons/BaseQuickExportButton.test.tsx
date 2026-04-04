@@ -33,16 +33,22 @@ const {
   trackedRunListeners: new Map<string, (snapshot: Record<string, unknown>) => void>(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
+}));
+
+vi.mock('@/shared/ui/InsetPanel', () => ({
   InsetPanel: ({
     children,
     className,
   }: React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }) => (
     <div className={className}>{children}</div>
   ),
+}));
+
+vi.mock('@/shared/ui/app-modal', () => ({
   AppModal: ({
     open,
     title,
@@ -58,6 +64,9 @@ vi.mock('@/shared/ui', () => ({
         {children}
       </div>
     ) : null,
+}));
+
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 
@@ -72,7 +81,7 @@ vi.mock('@/shared/lib/api-client', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/components/listings/hooks/useIntegrationSelection', () => ({
   fetchPreferredBaseConnection: (...args: unknown[]) =>
     fetchPreferredBaseConnectionMock(...args) as Promise<unknown>,
   fetchIntegrationsWithConnections: (...args: unknown[]) =>
@@ -81,12 +90,21 @@ vi.mock('@/features/integrations/public', () => ({
     defaultConnection: ['integrations', 'default-connection'],
     withConnections: ['integrations', 'with-connections'],
   },
+}));
+
+vi.mock('@/features/integrations/constants/slugs', () => ({
   isBaseIntegrationSlug: (value: string | null | undefined) =>
     ['baselinker', 'base-com', 'base'].includes((value ?? '').trim().toLowerCase()),
+}));
+
+vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
   useGenericExportToBaseMutation: () => ({
     isPending: false,
     mutateAsync: mutateAsyncMock,
   }),
+}));
+
+vi.mock('@/features/integrations/utils/product-listings-recovery', () => ({
   createBaseRecoveryContext: ({ status, runId, requestId, integrationId, connectionId }: any) => ({
     source: 'base_quick_export_failed',
     integrationSlug: 'baselinker',

@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
+import { Button } from '@/shared/ui/button';
 
-import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { getMarketplaceButtonClass } from '../product-column-utils';

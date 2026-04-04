@@ -4,8 +4,10 @@ import React from 'react';
 
 import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Language } from '@/shared/contracts/internationalization';
-import type { Catalog } from '@/shared/contracts/products';
-import { useToast } from '@/shared/ui';
+import type { Catalog, PriceGroup } from '@/shared/contracts/products';
+import { resolvePriceGroupIdentifierToId } from '@/shared/lib/products/utils/price-group-identifiers';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface CatalogFormState {
@@ -17,6 +19,7 @@ interface CatalogFormState {
 interface UseCatalogFormProps {
   catalog?: Catalog | null | undefined;
   languages: Language[];
+  priceGroups: PriceGroup[];
   defaultGroupId: string;
 }
 
@@ -42,9 +45,13 @@ interface UseCatalogFormReturn {
   handleSubmit: () => Promise<void>;
 }
 
+const arraysEqual = (a: string[], b: string[]): boolean =>
+  a.length === b.length && a.every((value: string, index: number) => value === b[index]);
+
 export function useCatalogForm({
   catalog,
   languages,
+  priceGroups,
   defaultGroupId,
 }: UseCatalogFormProps): UseCatalogFormReturn {
   const [error, setError] = React.useState<string | null>(null);
@@ -99,52 +106,127 @@ export function useCatalogForm({
     [canonicalizeLanguageId, languages]
   );
 
+  const canonicalizePriceGroupId = React.useCallback(
+    (value: string): string => resolvePriceGroupIdentifierToId(priceGroups, value),
+    [priceGroups]
+  );
+
+  const normalizePriceGroupIds = React.useCallback(
+    (values: string[]): string[] =>
+      Array.from(
+        new Set(
+          values
+            .map((value: string) => canonicalizePriceGroupId(value))
+            .filter((value: string) => Boolean(value))
+        )
+      ),
+    [canonicalizePriceGroupId]
+  );
+
   React.useEffect(() => {
+    const normalizedDefaultGroupId = canonicalizePriceGroupId(defaultGroupId);
     if (catalog) {
-      setForm({
+      const nextForm = {
         name: catalog.name,
         description: catalog.description ?? '',
         isDefault: catalog.isDefault,
-      });
+      };
+      setForm((previousForm) =>
+        previousForm.name === nextForm.name &&
+        previousForm.description === nextForm.description &&
+        previousForm.isDefault === nextForm.isDefault
+          ? previousForm
+          : nextForm
+      );
       const nextLanguageIds = Array.from(
         new Set((catalog.languageIds ?? []).map((id: string) => canonicalizeLanguageId(id)))
       ).filter((id: string) => Boolean(id));
-      setSelectedLanguageIds(nextLanguageIds);
+      setSelectedLanguageIds((previousLanguageIds) =>
+        arraysEqual(previousLanguageIds, nextLanguageIds) ? previousLanguageIds : nextLanguageIds
+      );
       const normalizedDefaultLanguageId = catalog.defaultLanguageId
         ? canonicalizeLanguageId(catalog.defaultLanguageId)
         : '';
-      setDefaultLanguageId(
-        nextLanguageIds.includes(normalizedDefaultLanguageId)
-          ? normalizedDefaultLanguageId
-          : (nextLanguageIds[0] ?? '')
+      const nextDefaultLanguageId = nextLanguageIds.includes(normalizedDefaultLanguageId)
+        ? normalizedDefaultLanguageId
+        : (nextLanguageIds[0] ?? '');
+      setDefaultLanguageId((previousDefaultLanguageId) =>
+        previousDefaultLanguageId === nextDefaultLanguageId
+          ? previousDefaultLanguageId
+          : nextDefaultLanguageId
       );
       const nextPriceGroupIds = catalog.priceGroupIds?.length
-        ? catalog.priceGroupIds
-        : defaultGroupId
-          ? [defaultGroupId]
+        ? normalizePriceGroupIds(catalog.priceGroupIds)
+        : normalizedDefaultGroupId
+          ? [normalizedDefaultGroupId]
           : [];
-      setCatalogPriceGroupIds(nextPriceGroupIds);
-      setCatalogDefaultPriceGroupId(
-        catalog.defaultPriceGroupId ?? nextPriceGroupIds[0] ?? defaultGroupId ?? ''
+      const normalizedCatalogDefaultPriceGroupId = catalog.defaultPriceGroupId
+        ? canonicalizePriceGroupId(catalog.defaultPriceGroupId)
+        : '';
+      setCatalogPriceGroupIds((previousPriceGroupIds) =>
+        arraysEqual(previousPriceGroupIds, nextPriceGroupIds)
+          ? previousPriceGroupIds
+          : nextPriceGroupIds
+      );
+      const nextCatalogDefaultPriceGroupId = nextPriceGroupIds.includes(
+        normalizedCatalogDefaultPriceGroupId
+      )
+        ? normalizedCatalogDefaultPriceGroupId
+        : (nextPriceGroupIds[0] ?? normalizedDefaultGroupId ?? '');
+      setCatalogDefaultPriceGroupId((previousDefaultPriceGroupId) =>
+        previousDefaultPriceGroupId === nextCatalogDefaultPriceGroupId
+          ? previousDefaultPriceGroupId
+          : nextCatalogDefaultPriceGroupId
       );
     } else {
-      setForm({
+      const nextForm = {
         name: '',
         description: '',
         isDefault: false,
-      });
-      setSelectedLanguageIds([]);
-      setDefaultLanguageId('');
-      setCatalogPriceGroupIds(defaultGroupId ? [defaultGroupId] : []);
-      setCatalogDefaultPriceGroupId(defaultGroupId ?? '');
+      };
+      setForm((previousForm) =>
+        previousForm.name === nextForm.name &&
+        previousForm.description === nextForm.description &&
+        previousForm.isDefault === nextForm.isDefault
+          ? previousForm
+          : nextForm
+      );
+      setSelectedLanguageIds((previousLanguageIds) =>
+        previousLanguageIds.length === 0 ? previousLanguageIds : []
+      );
+      setDefaultLanguageId((previousDefaultLanguageId) =>
+        previousDefaultLanguageId === '' ? previousDefaultLanguageId : ''
+      );
+      const nextPriceGroupIds = normalizedDefaultGroupId ? [normalizedDefaultGroupId] : [];
+      setCatalogPriceGroupIds((previousPriceGroupIds) =>
+        arraysEqual(previousPriceGroupIds, nextPriceGroupIds)
+          ? previousPriceGroupIds
+          : nextPriceGroupIds
+      );
+      setCatalogDefaultPriceGroupId((previousDefaultPriceGroupId) =>
+        previousDefaultPriceGroupId === normalizedDefaultGroupId
+          ? previousDefaultPriceGroupId
+          : normalizedDefaultGroupId
+      );
     }
-    setError(null);
-    setLanguageQuery('');
-  }, [catalog, defaultGroupId, canonicalizeLanguageId]);
+    setError((previousError) => (previousError === null ? previousError : null));
+    setLanguageQuery((previousLanguageQuery) =>
+      previousLanguageQuery === '' ? previousLanguageQuery : ''
+    );
+  }, [
+    catalog,
+    canonicalizeLanguageId,
+    canonicalizePriceGroupId,
+    defaultGroupId,
+    normalizePriceGroupIds,
+  ]);
 
   const handleSubmit = async (): Promise<void> => {
     if (saveMutation.isPending) return;
     const name = form.name.trim();
+    const normalizedCatalogPriceGroupIds = normalizePriceGroupIds(catalogPriceGroupIds);
+    const normalizedCatalogDefaultPriceGroupId =
+      canonicalizePriceGroupId(catalogDefaultPriceGroupId);
     if (!name) {
       toast('Catalog name is required.', { variant: 'error' });
       return;
@@ -157,11 +239,14 @@ export function useCatalogForm({
       toast('Select a default language.', { variant: 'error' });
       return;
     }
-    if (catalogPriceGroupIds.length === 0) {
+    if (normalizedCatalogPriceGroupIds.length === 0) {
       toast('Select at least one price group.', { variant: 'error' });
       return;
     }
-    if (!catalogDefaultPriceGroupId || !catalogPriceGroupIds.includes(catalogDefaultPriceGroupId)) {
+    if (
+      !normalizedCatalogDefaultPriceGroupId ||
+      !normalizedCatalogPriceGroupIds.includes(normalizedCatalogDefaultPriceGroupId)
+    ) {
       toast('Select a default price group.', { variant: 'error' });
       return;
     }
@@ -174,8 +259,8 @@ export function useCatalogForm({
           description: form.description.trim(),
           languageIds: selectedLanguageIds,
           defaultLanguageId,
-          priceGroupIds: catalogPriceGroupIds,
-          defaultPriceGroupId: catalogDefaultPriceGroupId,
+          priceGroupIds: normalizedCatalogPriceGroupIds,
+          defaultPriceGroupId: normalizedCatalogDefaultPriceGroupId,
           isDefault: form.isDefault,
         },
       });

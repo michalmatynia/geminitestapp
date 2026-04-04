@@ -3,7 +3,12 @@
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Input, Textarea, Label, FormModal, SelectSimple, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
+import { FormModal } from '@/shared/ui/FormModal';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/layout';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { Textarea } from '@/shared/ui/textarea';
 
 import { useCategoryFormContext } from './CategoryFormContext';
 

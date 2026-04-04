@@ -41,10 +41,10 @@ vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
     resolveConnectionPlaywrightSettingsMock(...args),
 }));
 
-vi.mock('@/shared/lib/products/services/productService', () => ({
-  productService: {
+vi.mock('@/shared/lib/products/services/product-repository', () => ({
+  getProductRepository: async () => ({
     getProductById: (...args: unknown[]) => getProductByIdMock(...args),
-  },
+  }),
 }));
 
 vi.mock('./price', () => ({

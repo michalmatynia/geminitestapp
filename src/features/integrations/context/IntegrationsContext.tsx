@@ -202,6 +202,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       handleAllegroApiRequest: actions.handleAllegroApiRequest,
       onCloseModal: actions.onCloseModal,
       onOpenSessionModal: actions.onOpenSessionModal,
+      handleResetListingScript: actions.handleResetListingScript,
     }),
     [actions]
   );

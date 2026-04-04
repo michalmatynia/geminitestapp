@@ -5,6 +5,7 @@ import type {
   KangurLessonComponentId,
   KangurLessonSubject,
   KangurPracticeAssignmentOperation,
+  KangurProgressState,
 } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
 
@@ -451,7 +452,7 @@ export const formatKangurAssignmentLastActivityLabel = (
 export const filterKangurAssignmentCatalog = (
   catalog: KangurAssignmentCatalogItem[],
   searchTerm: string,
-  filter: Record<string, boolean>
+  filter: string
 ): KangurAssignmentCatalogItem[] => {
   return catalog.filter((item) => {
     const matchesSearch =
@@ -460,35 +461,33 @@ export const filterKangurAssignmentCatalog = (
       item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.keywords.some((kw) => kw.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const matchesFilter = Object.values(filter).some((isActive) => isActive)
-      ? Object.entries(filter).some(
-          ([group, isActive]) => isActive && item.group === group
-        )
-      : true;
+    const matchesFilter = filter === 'all' ? true : item.group === filter;
 
     return matchesSearch && matchesFilter;
   });
 };
 
 export const buildRecommendedKangurAssignmentCatalog = (
-  progress: KangurProgressSnapshot | null,
-  localizer?: KangurAssignmentsRuntimeLocalizer
+  progress: KangurProgressState | null,
+  _localizer?: KangurAssignmentsRuntimeLocalizer
 ): KangurAssignmentCatalogItem[] => {
   if (!progress) return [];
 
   const recommendedItems: KangurAssignmentCatalogItem[] = [];
 
   const completedLessons = new Set(
-    progress.lessons?.filter((l) => l.status === 'completed').map((l) => l.id) || []
+    Object.entries(progress.lessonMastery ?? {})
+      .filter(([, lesson]) => lesson?.completions && lesson.completions > 0)
+      .map(([lessonId]) => lessonId)
   );
 
-  const suggestedNextLesson = progress.lessons?.find(
-    (l) => !completedLessons.has(l.id) && l.status !== 'completed'
+  const suggestedNextLesson = Object.values(KANGUR_LESSON_LIBRARY).find(
+    (lesson) => !completedLessons.has(lesson.componentId)
   );
 
   if (suggestedNextLesson) {
     recommendedItems.push({
-      id: `lesson-${suggestedNextLesson.id}`,
+      id: `lesson-${suggestedNextLesson.componentId}`,
       title: suggestedNextLesson.title || 'Następna lekcja',
       description: 'Sugerowana lekcja do ukończenia',
       badge: 'Sugerowane',

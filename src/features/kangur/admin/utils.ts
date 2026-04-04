@@ -71,34 +71,12 @@ const LESSON_TEMPLATE_FORM_FIELDS: readonly LessonTemplateFormField[] = [
   'activeBg',
 ];
 
-const setLessonTemplateFormField = (
+const setLessonTemplateFormField = <Field extends LessonTemplateFormField>(
   target: LessonFormData,
-  field: LessonTemplateFormField,
-  value: LessonFormData[LessonTemplateFormField]
+  field: Field,
+  value: LessonFormData[Field]
 ): void => {
-  switch (field) {
-    case 'subject':
-      target.subject = value as LessonFormData['subject'];
-      break;
-    case 'ageGroup':
-      target.ageGroup = value as LessonFormData['ageGroup'];
-      break;
-    case 'title':
-      target.title = value as LessonFormData['title'];
-      break;
-    case 'description':
-      target.description = value as LessonFormData['description'];
-      break;
-    case 'emoji':
-      target.emoji = value as LessonFormData['emoji'];
-      break;
-    case 'color':
-      target.color = value as LessonFormData['color'];
-      break;
-    case 'activeBg':
-      target.activeBg = value as LessonFormData['activeBg'];
-      break;
-  }
+  target[field] = value;
 };
 
 const applyDefinedLessonFormOverrides = (
@@ -107,7 +85,7 @@ const applyDefinedLessonFormOverrides = (
 ): LessonFormData => {
   const nextFormData = { ...formData };
   for (const field of LESSON_TEMPLATE_FORM_FIELDS) {
-    const value = overrides[field];
+    const value = overrides[field] as LessonFormData[typeof field] | undefined;
     if (value !== undefined) {
       setLessonTemplateFormField(nextFormData, field, value);
     }

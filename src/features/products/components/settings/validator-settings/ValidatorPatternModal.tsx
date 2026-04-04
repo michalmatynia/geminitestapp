@@ -2,18 +2,15 @@
 
 import React from 'react';
 
-
 import type { PatternFormData } from '@/shared/contracts/products';
 import { getProductValidationSemanticOperationUiMetadata } from '@/shared/lib/products/utils/validator-semantic-operations';
-import {
-  Input,
-  MultiSelect,
-  FormModal,
-  Textarea,
-  SelectSimple,
-  StatusToggle,
-  FormField,
-} from '@/shared/ui';
+import { FormField } from '@/shared/ui/form-section';
+import { FormModal } from '@/shared/ui/FormModal';
+import { Input } from '@/shared/ui/input';
+import { MultiSelect } from '@/shared/ui/multi-select';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { StatusToggle } from '@/shared/ui/status-toggle';
+import { Textarea } from '@/shared/ui/textarea';
 
 import { ValidatorPatternModalBasicSection } from './modal/ValidatorPatternModalBasicSection';
 import { ValidatorPatternModalDynamicSection } from './modal/ValidatorPatternModalDynamicSection';

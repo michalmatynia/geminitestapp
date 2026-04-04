@@ -25,10 +25,13 @@ const {
 
 vi.mock('@/features/integrations/server', () => ({
   fetchBaseCategories: fetchBaseCategoriesMock,
-  fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
   getExternalCategoryRepository: getExternalCategoryRepositoryMock,
   getIntegrationRepository: getIntegrationRepositoryMock,
   resolveBaseConnectionToken: resolveBaseConnectionTokenMock,
+}));
+
+vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
+  fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
 }));
 
 import { POST_handler } from './handler';
@@ -166,5 +169,42 @@ describe('marketplace categories fetch handler', () => {
     expect(fetchBaseCategoriesMock).not.toHaveBeenCalled();
     expect(fetchTraderaCategoriesForConnectionMock).not.toHaveBeenCalled();
     expect(syncFromBaseMock).not.toHaveBeenCalled();
+  });
+
+  it('wraps unexpected sync failures with phase metadata', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-1',
+      name: 'Tradera',
+      slug: 'tradera',
+      createdAt: new Date(0).toISOString(),
+      updatedAt: null,
+    });
+    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([
+      { id: 'cat-1', name: 'Category 1', parentId: '0' },
+    ]);
+    syncFromBaseMock.mockRejectedValue(new Error('mongo write failed'));
+
+    const request = new NextRequest('http://localhost/api/marketplace/categories/fetch', {
+      method: 'POST',
+      body: JSON.stringify({
+        connectionId: 'conn-1',
+      }),
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+
+    await expect(POST_handler(request, createContext())).rejects.toMatchObject({
+      message: 'Marketplace categories sync failed unexpectedly.',
+      httpStatus: 500,
+      code: 'INTERNAL_SERVER_ERROR',
+      meta: {
+        connectionId: 'conn-1',
+        sourceName: 'Tradera',
+        phase: 'sync',
+        fetchedCount: 1,
+        sampleExternalIds: ['cat-1'],
+      },
+    });
   });
 });

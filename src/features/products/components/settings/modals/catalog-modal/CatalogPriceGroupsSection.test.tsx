@@ -4,7 +4,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -12,7 +12,13 @@ vi.mock('@/shared/ui', () => ({
     children: React.ReactNode;
     onClick?: () => void;
   }) => <button onClick={onClick}>{children}</button>,
+}));
+
+vi.mock('@/shared/ui/label', () => ({
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
+}));
+
+vi.mock('@/shared/ui/badge', () => ({
   Badge: ({
     children,
     onClick,
@@ -20,6 +26,9 @@ vi.mock('@/shared/ui', () => ({
     children: React.ReactNode;
     onClick?: () => void;
   }) => <button onClick={onClick}>{children}</button>,
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
   SelectSimple: ({
     value,
     onValueChange,

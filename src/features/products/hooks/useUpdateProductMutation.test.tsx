@@ -19,7 +19,7 @@ vi.mock('@/shared/ui', () => ({
 }));
 
 import { getProductDetailQueryKey } from './productCache';
-import { useUpdateProductMutation } from './useProductData';
+import { useUpdateProductMutation } from './useProductDataMutations';
 
 const createQueryClient = (): QueryClient =>
   new QueryClient({

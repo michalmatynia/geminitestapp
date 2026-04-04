@@ -48,17 +48,18 @@ export async function postProductsImportCsvHandler(
 
   const flushBatch = async (): Promise<void> => {
     if (pendingBatch.length === 0) return;
+    const batch = [...pendingBatch];
 
     try {
       const { productService } = await import('@/features/products/server');
-      const createdCount = await productService.bulkCreateProducts(pendingBatch);
+      const createdCount = await productService.bulkCreateProducts(batch);
       successful += createdCount;
-      failed += pendingBatch.length - createdCount;
+      failed += batch.length - createdCount;
     } catch (error) {
       void ErrorSystem.captureException(error);
-      failed += pendingBatch.length;
+      failed += batch.length;
       const message = error instanceof Error ? error.message : 'Batch creation failed';
-      void ErrorSystem.logWarning(`Failed to import batch of ${pendingBatch.length} products`, {
+      void ErrorSystem.logWarning(`Failed to import batch of ${batch.length} products`, {
         service: 'csv-import-v2',
         error: message,
       });

@@ -8,6 +8,7 @@ import {
   type AiPathRunQueueStatus,
 } from '@/shared/contracts/ai-paths-runtime';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { AI_PATHS_CANONICAL_RUN_SOURCE_FILTER } from '@/shared/lib/ai-paths/run-sources';
 
 import {
   DEFAULT_CONCURRENCY,
@@ -67,11 +68,15 @@ const readAiPathRunQueueBaseStatus = async (
   const visibility = options.visibility === 'scoped' ? 'scoped' : 'global';
   const [stats, activeRunsSnapshot, insightsQueueHealth, runtimeAnalytics] = await Promise.all([
     repo.getQueueStats(
-      visibility === 'scoped' && options.userId ? { userId: options.userId } : undefined
+      {
+        ...(visibility === 'scoped' && options.userId ? { userId: options.userId } : {}),
+        ...AI_PATHS_CANONICAL_RUN_SOURCE_FILTER,
+      }
     ),
     repo.listRuns({
       ...(visibility === 'scoped' && options.userId ? { userId: options.userId } : {}),
       statuses: [...ACTIVE_PERSISTED_RUN_STATUSES],
+      ...AI_PATHS_CANONICAL_RUN_SOURCE_FILTER,
       limit: 1,
     }),
     getAiInsightsQueueStatusSnapshot(),

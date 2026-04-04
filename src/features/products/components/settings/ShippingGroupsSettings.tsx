@@ -22,21 +22,19 @@ import {
   formatCategoryRuleSummary,
   normalizeShippingGroupRuleCategoryIds,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
-import {
-  Alert,
-  Button,
-  EmptyState,
-  FormField,
-  FormModal,
-  FormSection,
-  Input,
-  MultiSelect,
-  SelectSimple,
-  SimpleSettingsList,
-  Textarea,
-  useToast,
-} from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { Alert } from '@/shared/ui/alert';
+import { Button } from '@/shared/ui/button';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { FormField, FormSection } from '@/shared/ui/form-section';
+import { FormModal } from '@/shared/ui/FormModal';
+import { Input } from '@/shared/ui/input';
+import { MultiSelect } from '@/shared/ui/multi-select';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
+import { Textarea } from '@/shared/ui/textarea';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useProductSettingsShippingGroupsContext } from './ProductSettingsContext';

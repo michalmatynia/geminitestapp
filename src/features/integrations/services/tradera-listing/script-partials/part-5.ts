@@ -1,11 +1,12 @@
-/* eslint-disable no-useless-escape */
-export const PART_5 = `        }
+export const PART_5 = String.raw`        }
       : {
           duplicateFound: false,
           listingUrl: null,
           listingId: null,
         };
   };
+
+  let currentImageUploadSource = null;
 
   try {
     log?.('tradera.quicklist.start', {
@@ -38,13 +39,12 @@ export const PART_5 = `        }
     // Wait for SPA to fully render the listing form
     await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
     await wait(1500);
+    await ensureCreateListingPageReady('listing-editor bootstrap', true);
     emitStage('sell_page_ready');
     await dismissVisibleShippingDialogIfPresent();
     await resetDeliveryTogglesIfPresent();
     await clearDraftImagesIfPresent();
     emitStage('draft_cleared');
-
-    let currentImageUploadSource = null;
 
     const performImageUpload = async (uploadFiles, uploadSource) => {
       currentImageUploadSource = uploadSource;
@@ -68,15 +68,12 @@ export const PART_5 = `        }
         expectedUploadCount
       );
       if (selectedImageFileCount < Math.max(1, expectedUploadCount)) {
-        await captureFailureArtifacts('image-selection-missing', {
+        log?.('tradera.quicklist.image.selection_pending', {
           url: page.url(),
           uploadSource,
           expectedUploadCount,
           selectedImageFileCount,
         });
-        throw new Error(
-          'FAIL_IMAGE_SET_INVALID: Tradera image input did not accept the selected files.'
-        );
       }
 
       await advancePastImagesStep(imageInput, expectedUploadCount, baselinePreviewCount);

@@ -76,6 +76,8 @@ export const SettingsStateContext = settingsStateContextResult.Context;
 export const SettingsActionsContext = settingsActionsContextResult.Context;
 export const useSettingsState = settingsStateContextResult.useStrictContext;
 export const useSettingsActions = settingsActionsContextResult.useStrictContext;
+export const useOptionalSettingsState = settingsStateContextResult.useOptionalContext;
+export const useOptionalSettingsActions = settingsActionsContextResult.useOptionalContext;
 
 export function SettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const settingsQuery = useSettingsMap();

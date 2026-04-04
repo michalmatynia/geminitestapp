@@ -7,6 +7,7 @@ import { memo, useMemo } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
+import { isMissingProductListingsError } from '@/features/integrations/hooks/useListingQueries';
 import {
   useProductListHeaderActionsContext,
   useProductListRowActionsContext,
@@ -25,10 +26,18 @@ import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
 } from '@/shared/lib/products/utils/priceCalculation';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { Badge, Button, Checkbox, ActionMenu, DropdownMenuItem, Tooltip } from '@/shared/ui';
+import { ActionMenu } from '@/shared/ui/ActionMenu';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
+import { Tooltip } from '@/shared/ui/tooltip';
+
 import { cn } from '@/shared/utils';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   getProductListDisplayName,
@@ -487,11 +496,12 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
   if (!handleClick) return null;
   const prefetchListings = (): void => {
     void loadProductIntegrationsAdapter().then(({ fetchProductListings, productListingsQueryKey }) => {
-      const queryKey = productListingsQueryKey(product.id);
+      const queryKey = normalizeQueryKey(productListingsQueryKey(product.id));
       void prefetchQueryV2(queryClient, {
         queryKey,
         queryFn: () => fetchProductListings(product.id),
         staleTime: 30 * 1000,
+        logError: false,
         meta: {
           source: 'products.columns.integrations.prefetchListings',
           operation: 'list',
@@ -501,7 +511,18 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
           tags: ['integrations', 'listings', 'prefetch'],
           description: 'Loads integrations listings.',
         },
-      })();
+      })().catch((error: unknown) => {
+        if (isMissingProductListingsError(error)) {
+          queryClient.removeQueries({ queryKey });
+          return;
+        }
+        logClientCatch(error, {
+          source: 'products.columns.integrations',
+          action: 'prefetchListings',
+          productId: product.id,
+          level: 'warn',
+        });
+      });
     });
   };
   return (

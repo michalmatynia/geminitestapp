@@ -1,5 +1,4 @@
-/* eslint-disable no-useless-escape */
-export const PART_3 = `        expectedValue,
+export const PART_3 = String.raw`        expectedValue,
         currentValue,
       });
     }
@@ -148,10 +147,60 @@ export const PART_3 = `        expectedValue,
 
   const clickMenuItemByName = async (name) => {
     const normalizedNamePattern = name.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+    const isSafeMenuChoiceTarget = async (locator) => {
+      if (!locator) return false;
+
+      const metadata = await readClickTargetMetadata(locator);
+      if (!metadata) {
+        return true;
+      }
+
+      const hrefCandidate = normalizeWhitespace(metadata.href || metadata.hrefAttribute || '');
+      if (!hrefCandidate || hrefCandidate === '#' || hrefCandidate.startsWith('#')) {
+        return true;
+      }
+      if (/^(javascript|mailto|tel):/i.test(hrefCandidate)) {
+        return true;
+      }
+
+      try {
+        const parsed = new URL(hrefCandidate, page.url());
+        const pathname = parsed.pathname.toLowerCase();
+        if (/\/category\/\d+(?:[/?#]|$)/i.test(pathname)) {
+          log?.('tradera.quicklist.menu_option.skipped_navigation', {
+            name,
+            href: parsed.toString(),
+            reason: 'category-page-link',
+          });
+          return false;
+        }
+      } catch {}
+
+      const insideSelectionUi = await locator
+        .evaluate((element) =>
+          Boolean(
+            element.closest(
+              '[role="menu"], [role="listbox"], [role="dialog"], [aria-modal="true"], [data-radix-popper-content-wrapper]'
+            )
+          )
+        )
+        .catch(() => false);
+
+      if (!insideSelectionUi) {
+        log?.('tradera.quicklist.menu_option.skipped_navigation', {
+          name,
+          href: hrefCandidate,
+          reason: 'outside-selection-ui',
+        });
+      }
+
+      return insideSelectionUi;
+    };
 
     const candidate = page.getByRole('menuitem', { name: new RegExp('^' + normalizedNamePattern + '\$', 'i') }).first();
     const visible = await candidate.isVisible().catch(() => false);
-    if (visible) {
+    if (visible && (await isSafeMenuChoiceTarget(candidate))) {
+      await logClickTarget('menu-option:' + name, candidate);
       await humanClick(candidate);
       await wait(400);
       return true;
@@ -163,7 +212,8 @@ export const PART_3 = `        expectedValue,
       })
       .first();
     const menuItemRadioVisible = await menuItemRadioCandidate.isVisible().catch(() => false);
-    if (menuItemRadioVisible) {
+    if (menuItemRadioVisible && (await isSafeMenuChoiceTarget(menuItemRadioCandidate))) {
+      await logClickTarget('menu-option:' + name, menuItemRadioCandidate);
       await humanClick(menuItemRadioCandidate);
       await wait(400);
       return true;
@@ -175,7 +225,8 @@ export const PART_3 = `        expectedValue,
       })
       .first();
     const optionVisible = await optionCandidate.isVisible().catch(() => false);
-    if (optionVisible) {
+    if (optionVisible && (await isSafeMenuChoiceTarget(optionCandidate))) {
+      await logClickTarget('menu-option:' + name, optionCandidate);
       await humanClick(optionCandidate);
       await wait(400);
       return true;
@@ -187,7 +238,8 @@ export const PART_3 = `        expectedValue,
       })
       .first();
     const radioVisible = await radioCandidate.isVisible().catch(() => false);
-    if (radioVisible) {
+    if (radioVisible && (await isSafeMenuChoiceTarget(radioCandidate))) {
+      await logClickTarget('menu-option:' + name, radioCandidate);
       await humanClick(radioCandidate);
       await wait(400);
       return true;
@@ -197,7 +249,8 @@ export const PART_3 = `        expectedValue,
       name: new RegExp('^' + normalizedNamePattern + '\$', 'i'),
     }).first();
     const linkVisible = await linkCandidate.isVisible().catch(() => false);
-    if (linkVisible) {
+    if (linkVisible && (await isSafeMenuChoiceTarget(linkCandidate))) {
+      await logClickTarget('menu-option:' + name, linkCandidate);
       await humanClick(linkCandidate);
       await wait(400);
       return true;
@@ -209,7 +262,8 @@ export const PART_3 = `        expectedValue,
       })
       .first();
     const partialMenuItemVisible = await partialMenuItemCandidate.isVisible().catch(() => false);
-    if (partialMenuItemVisible) {
+    if (partialMenuItemVisible && (await isSafeMenuChoiceTarget(partialMenuItemCandidate))) {
+      await logClickTarget('menu-option:' + name, partialMenuItemCandidate);
       await humanClick(partialMenuItemCandidate);
       await wait(400);
       return true;
@@ -223,7 +277,11 @@ export const PART_3 = `        expectedValue,
     const partialMenuItemRadioVisible = await partialMenuItemRadioCandidate
       .isVisible()
       .catch(() => false);
-    if (partialMenuItemRadioVisible) {
+    if (
+      partialMenuItemRadioVisible &&
+      (await isSafeMenuChoiceTarget(partialMenuItemRadioCandidate))
+    ) {
+      await logClickTarget('menu-option:' + name, partialMenuItemRadioCandidate);
       await humanClick(partialMenuItemRadioCandidate);
       await wait(400);
       return true;
@@ -235,7 +293,8 @@ export const PART_3 = `        expectedValue,
       })
       .first();
     const partialOptionVisible = await partialOptionCandidate.isVisible().catch(() => false);
-    if (partialOptionVisible) {
+    if (partialOptionVisible && (await isSafeMenuChoiceTarget(partialOptionCandidate))) {
+      await logClickTarget('menu-option:' + name, partialOptionCandidate);
       await humanClick(partialOptionCandidate);
       await wait(400);
       return true;
@@ -247,7 +306,8 @@ export const PART_3 = `        expectedValue,
       })
       .first();
     const partialRadioVisible = await partialRadioCandidate.isVisible().catch(() => false);
-    if (partialRadioVisible) {
+    if (partialRadioVisible && (await isSafeMenuChoiceTarget(partialRadioCandidate))) {
+      await logClickTarget('menu-option:' + name, partialRadioCandidate);
       await humanClick(partialRadioCandidate);
       await wait(400);
       return true;
@@ -259,7 +319,8 @@ export const PART_3 = `        expectedValue,
       })
       .first();
     const partialLinkVisible = await partialLinkCandidate.isVisible().catch(() => false);
-    if (partialLinkVisible) {
+    if (partialLinkVisible && (await isSafeMenuChoiceTarget(partialLinkCandidate))) {
+      await logClickTarget('menu-option:' + name, partialLinkCandidate);
       await humanClick(partialLinkCandidate);
       await wait(400);
       return true;
@@ -269,7 +330,8 @@ export const PART_3 = `        expectedValue,
       name: new RegExp('^' + normalizedNamePattern + '\$', 'i'),
     }).first();
     const buttonVisible = await buttonCandidate.isVisible().catch(() => false);
-    if (buttonVisible) {
+    if (buttonVisible && (await isSafeMenuChoiceTarget(buttonCandidate))) {
+      await logClickTarget('menu-option:' + name, buttonCandidate);
       await humanClick(buttonCandidate);
       await wait(400);
       return true;
@@ -281,7 +343,8 @@ export const PART_3 = `        expectedValue,
       })
       .first();
     const partialButtonVisible = await partialButtonCandidate.isVisible().catch(() => false);
-    if (partialButtonVisible) {
+    if (partialButtonVisible && (await isSafeMenuChoiceTarget(partialButtonCandidate))) {
+      await logClickTarget('menu-option:' + name, partialButtonCandidate);
       await humanClick(partialButtonCandidate);
       await wait(400);
       return true;
@@ -295,7 +358,8 @@ export const PART_3 = `        expectedValue,
       )
       .first();
     const fallbackVisible = await textFallback.isVisible().catch(() => false);
-    if (!fallbackVisible) return false;
+    if (!fallbackVisible || !(await isSafeMenuChoiceTarget(textFallback))) return false;
+    await logClickTarget('menu-option:' + name, textFallback);
     await humanClick(textFallback).catch(() => undefined);
     await wait(400);
     return true;
@@ -303,11 +367,14 @@ export const PART_3 = `        expectedValue,
 
   const findFieldTriggerByLabel = async (label) => {
     const escaped = label.replace(/"/g, '\\"');
-    const byRole = page.getByRole('button', { name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i') }).first();
+    const mainRoot = page.locator('main').first();
+    const mainRootVisible = await mainRoot.isVisible().catch(() => false);
+    const root = mainRootVisible ? mainRoot : page;
+    const byRole = root.getByRole('button', { name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i') }).first();
     const byRoleVisible = await byRole.isVisible().catch(() => false);
     if (byRoleVisible) return byRole;
 
-    const byRoleMenu = page
+    const byRoleMenu = root
       .getByRole('menu', {
         name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i'),
       })
@@ -315,7 +382,7 @@ export const PART_3 = `        expectedValue,
     const byRoleMenuVisible = await byRoleMenu.isVisible().catch(() => false);
     if (byRoleMenuVisible) return byRoleMenu;
 
-    const byRoleLink = page
+    const byRoleLink = root
       .getByRole('link', {
         name: new RegExp('^' + label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&') + '\$', 'i'),
       })
@@ -323,7 +390,7 @@ export const PART_3 = `        expectedValue,
     const byRoleLinkVisible = await byRoleLink.isVisible().catch(() => false);
     if (byRoleLinkVisible) return byRoleLink;
 
-    const byRoleContains = page
+    const byRoleContains = root
       .getByRole('button', {
         name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
       })
@@ -331,7 +398,7 @@ export const PART_3 = `        expectedValue,
     const byRoleContainsVisible = await byRoleContains.isVisible().catch(() => false);
     if (byRoleContainsVisible) return byRoleContains;
 
-    const byRoleContainsMenu = page
+    const byRoleContainsMenu = root
       .getByRole('menu', {
         name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
       })
@@ -339,7 +406,7 @@ export const PART_3 = `        expectedValue,
     const byRoleContainsMenuVisible = await byRoleContainsMenu.isVisible().catch(() => false);
     if (byRoleContainsMenuVisible) return byRoleContainsMenu;
 
-    const byRoleContainsLink = page
+    const byRoleContainsLink = root
       .getByRole('link', {
         name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
       })
@@ -347,7 +414,7 @@ export const PART_3 = `        expectedValue,
     const byRoleContainsLinkVisible = await byRoleContainsLink.isVisible().catch(() => false);
     if (byRoleContainsLinkVisible) return byRoleContainsLink;
 
-    const byCombobox = page
+    const byCombobox = root
       .getByRole('combobox', {
         name: new RegExp(label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&'), 'i'),
       })
@@ -355,7 +422,7 @@ export const PART_3 = `        expectedValue,
     const byComboboxVisible = await byCombobox.isVisible().catch(() => false);
     if (byComboboxVisible) return byCombobox;
 
-    const exactTextTrigger = page
+    const exactTextTrigger = root
       .locator(
         'xpath=//*[normalize-space(text())="' +
           escaped +
@@ -365,7 +432,7 @@ export const PART_3 = `        expectedValue,
     const exactTextVisible = await exactTextTrigger.isVisible().catch(() => false);
     if (exactTextVisible) return exactTextTrigger;
 
-    const labeledControlTrigger = page
+    const labeledControlTrigger = root
       .locator(
         'xpath=//*[normalize-space(text())="' +
           escaped +
@@ -394,6 +461,7 @@ export const PART_3 = `        expectedValue,
       throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
     }
 
+    await logClickTarget('category-trigger:fallback', categoryTrigger);
     await humanClick(categoryTrigger).catch(() => undefined);
     await wait(400);
 

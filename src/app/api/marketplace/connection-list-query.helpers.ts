@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { ConnectionIdDto } from '@/shared/contracts/base';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
@@ -8,7 +7,9 @@ const marketplaceConnectionListQuerySchema = z.object({
   connectionId: optionalTrimmedQueryString(),
 });
 
-export type MarketplaceConnectionListQuery = ConnectionIdDto;
+export type MarketplaceConnectionListQuery = {
+  connectionId: string;
+};
 
 export const parseMarketplaceConnectionListQuery = (
   rawQuery: unknown,

@@ -59,8 +59,8 @@ vi.mock('@/features/integrations/hooks/useListingQueries', () => ({
   productListingsQueryKey: (id: string) => ['integrations', 'listings', id],
 }));
 
-vi.mock('@/features/products/components/list/ProductColumns', () => ({
-  getProductColumns: () => [],
+vi.mock('@/features/products/components/list/product-columns-loader', () => ({
+  loadProductColumns: () => Promise.resolve([]),
 }));
 
 vi.mock('@/features/products/components/list/ProductTableSkeleton', () => ({
@@ -157,16 +157,20 @@ vi.mock('@/features/products/hooks/useUserPreferences', () => ({
       pageSize: 20,
       appliedAdvancedFilter: '',
       appliedAdvancedFilterPresetId: null,
+      advancedFilterPresets: [],
       nameLocale: 'name_en',
       currencyCode: 'USD',
       filtersCollapsedByDefault: false,
       thumbnailSource: 'file',
+      showTriggerRunFeedback: true,
     },
     loading: false,
     setNameLocale: vi.fn(),
     setCatalogFilter: vi.fn(),
     setCurrencyCode: vi.fn(),
     setPageSize: vi.fn(),
+    setShowTriggerRunFeedback: vi.fn(),
+    setAdvancedFilterPresets: vi.fn(),
     setAppliedAdvancedFilterState: vi.fn(),
   }),
 }));
@@ -230,7 +234,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: mocks.toast }),
 }));
 

@@ -4,7 +4,10 @@ import React from 'react';
 
 import type { PatternFormData } from '@/shared/contracts/products';
 import { normalizeProductValidationPatternReplacementScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
-import { MultiSelect, SelectSimple, FormField, ToggleRow } from '@/shared/ui';
+import { FormField } from '@/shared/ui/form-section';
+import { MultiSelect } from '@/shared/ui/multi-select';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { ToggleRow } from '@/shared/ui/toggle-row';
 
 import { PATTERN_SCOPE_OPTIONS } from '../constants';
 import {

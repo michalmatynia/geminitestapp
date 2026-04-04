@@ -4,7 +4,8 @@ import { GripVertical, Layers } from 'lucide-react';
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/shared/lib/foldertree/public';
-import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
+import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui/tree';
+
 import { cn } from '@/shared/utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 

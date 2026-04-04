@@ -115,6 +115,7 @@ describe('product shipping groups handler module', () => {
       traderaShippingCondition: 'Buyer pays shipping',
       traderaShippingPriceEur: 7,
       autoAssignCategoryIds: ['category-jewellery'],
+      autoAssignCurrencyCodes: [],
     });
   });
 
@@ -141,6 +142,7 @@ describe('product shipping groups handler module', () => {
       traderaShippingCondition: 'Buyer pays shipping',
       traderaShippingPriceEur: 7,
       autoAssignCategoryIds: ['category-jewellery'],
+      autoAssignCurrencyCodes: [],
     });
   });
 });

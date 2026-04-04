@@ -16,7 +16,10 @@ export const isTraderaBrowserAuthRequiredMessage = (
     normalized.includes('manual verification') ||
     normalized.includes('captcha') ||
     normalized.includes('login requires') ||
-    normalized.includes('session expired')
+    normalized.includes('session expired') ||
+    normalized.includes('session has expired') ||
+    normalized.includes('session is missing or expired') ||
+    normalized.includes('missing or expired')
   );
 };
 

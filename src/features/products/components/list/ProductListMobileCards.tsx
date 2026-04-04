@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { memo, useCallback, type ReactNode } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
+import { isMissingProductListingsError } from '@/features/integrations/hooks/useListingQueries';
 import {
   useProductListRowActionsContext,
   useProductListRowRuntime,
@@ -22,9 +23,16 @@ import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
 } from '@/shared/lib/products/utils/priceCalculation';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { ActionMenu, Badge, Button, Checkbox, DropdownMenuItem } from '@/shared/ui';
+import { ActionMenu } from '@/shared/ui/ActionMenu';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
+
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   getProductDisplayName,
@@ -585,11 +593,12 @@ export const ProductListMobileCards = memo(function ProductListMobileCards() {
   const prefetchListings = useCallback(
     (productId: string): void => {
       void loadProductIntegrationsAdapter().then(({ fetchProductListings, productListingsQueryKey }) => {
-        const queryKey = productListingsQueryKey(productId);
+        const queryKey = normalizeQueryKey(productListingsQueryKey(productId));
         void prefetchQueryV2(queryClient, {
           queryKey,
           queryFn: () => fetchProductListings(productId),
           staleTime: 30 * 1000,
+          logError: false,
           meta: {
             source: 'products.mobile.integrations.prefetchListings',
             operation: 'list',
@@ -599,7 +608,18 @@ export const ProductListMobileCards = memo(function ProductListMobileCards() {
             tags: ['integrations', 'listings', 'prefetch'],
             description: 'Loads integrations listings.',
           },
-        })();
+        })().catch((error: unknown) => {
+          if (isMissingProductListingsError(error)) {
+            queryClient.removeQueries({ queryKey });
+            return;
+          }
+          logClientCatch(error, {
+            source: 'products.mobile.integrations',
+            action: 'prefetchListings',
+            productId,
+            level: 'warn',
+          });
+        });
       });
     },
     [queryClient]

@@ -90,7 +90,7 @@ vi.mock('@/features/products/hooks/editingProductHydration', () => ({
   markEditingProductHydrated: vi.fn((p) => ({ ...p, _isHydrated: true, description: 'full description' })),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -101,6 +101,9 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/FormModal', () => ({
   FormModal: (props: {
     children: ReactNode;
     isSaveDisabled?: boolean;
@@ -118,7 +121,13 @@ vi.mock('@/shared/ui', () => ({
       </div>
     );
   },
+}));
+
+vi.mock('@/shared/ui/skeleton', () => ({
   Skeleton: () => <div data-testid='skeleton' />,
+}));
+
+vi.mock('@/shared/ui/integration-selector', () => ({
   IntegrationSelector: () => <div data-testid='integration-selector' />,
 }));
 
@@ -129,16 +138,22 @@ vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () 
   },
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/components/listings/ProductListingsModal', () => ({
   ProductListingsModal: (props: any) => {
     productListingsModalPropsMock(props);
     return <div data-testid='product-listings-modal' />;
   },
-  ListProductModal: (props: any) => {
+}));
+
+vi.mock('@/features/integrations/components/listings/ListProductModal', () => ({
+  default: (props: any) => {
     listProductModalPropsMock(props);
     return <div data-testid='list-product-modal' />;
   },
-  MassListProductModal: (props: any) => <div data-testid='mass-list-product-modal' />,
+}));
+
+vi.mock('@/features/integrations/components/listings/MassListProductModal', () => ({
+  default: () => <div data-testid='mass-list-product-modal' />,
 }));
 
 vi.mock('@/shared/hooks/useIntegrationQueries', () => ({
@@ -369,7 +384,7 @@ describe('ProductModals', () => {
       });
     });
 
-    it('renders edit form when the editing product is hydrated', () => {
+  it('renders edit form when the editing product is hydrated', () => {
       const hydrated = markEditingProductHydrated(createProduct());
       useProductFormCoreMock.mockReturnValue({
         product: hydrated,
@@ -390,6 +405,31 @@ describe('ProductModals', () => {
       // The ProductForm component is dynamic, so it might show a skeleton initially
       // OR our mock of FormModal/ProductFormProvider might be rendering them.
       expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
+    });
+
+    it('suppresses the non-hydrated edit warning while edit hydration is in progress', () => {
+      const product = createProduct();
+      useProductListModalsContextMock.mockReturnValue(
+        buildContext({
+          editingProduct: product,
+          isEditHydrating: true,
+        })
+      );
+
+      render(<ProductModals />);
+
+      const lastProviderProps =
+        productFormProviderPropsMock.mock.calls[
+          productFormProviderPropsMock.mock.calls.length - 1
+        ]?.[0];
+
+      expect(lastProviderProps).toEqual(
+        expect.objectContaining({
+          product,
+          requireHydratedEditProduct: true,
+          suppressNonHydratedEditWarning: true,
+        })
+      );
     });
   });
 

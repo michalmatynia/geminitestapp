@@ -20,10 +20,10 @@ import {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-  isBaseIntegrationSlug,
-  useGenericExportToBaseMutation,
-} from '@/features/integrations/public';
-import { createBaseRecoveryContext } from '@/features/integrations/public';
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
+import { createBaseRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import {
   subscribeToTrackedAiPathRun,
@@ -37,7 +37,11 @@ import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { AppModal, Button, InsetPanel, useToast } from '@/shared/ui';
+import { AppModal } from '@/shared/ui/app-modal';
+import { Button } from '@/shared/ui/button';
+import { InsetPanel } from '@/shared/ui/InsetPanel';
+import { useToast } from '@/shared/ui/toast';
+
 import { cn } from '@/shared/utils';
 
 import {
@@ -46,7 +50,6 @@ import {
   normalizeMarketplaceStatus,
 } from '../product-column-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();

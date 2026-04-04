@@ -12,7 +12,6 @@ import {
 import { withRateLimit, rateLimiters } from './rate-limiting';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 type SecurityConfig = {
   enableRateLimit?: boolean | undefined;
   enableInputSanitization?: boolean | undefined;

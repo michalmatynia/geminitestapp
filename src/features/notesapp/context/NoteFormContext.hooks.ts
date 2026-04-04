@@ -1,34 +1,13 @@
 'use client';
 
-import {
-  useNoteContentContext,
-  type NoteContentData,
-} from './note-form/NoteContentContext';
-import {
-  useNoteEditorContext,
-  type NoteEditorData,
-} from './note-form/NoteEditorContext';
-import {
-  useNoteFilesContext,
-  type NoteFilesData,
-} from './note-form/NoteFilesContext';
-import {
-  useNoteFoldersContext,
-  type NoteFoldersData,
-} from './note-form/NoteFoldersContext';
+import { useNoteContentContext } from './note-form/NoteContentContext';
+import { useNoteEditorContext } from './note-form/NoteEditorContext';
+import { useNoteFilesContext } from './note-form/NoteFilesContext';
+import { useNoteFoldersContext } from './note-form/NoteFoldersContext';
 import { useNoteFormRuntime } from './note-form/NoteFormRuntimeContext';
-import {
-  useNoteMetadataContext,
-  type NoteMetadataData,
-} from './note-form/NoteMetadataContext';
-import {
-  useNoteRelationsContext,
-  type NoteRelationsData,
-} from './note-form/NoteRelationsContext';
-import {
-  useNoteTagsContext,
-  type NoteTagsData,
-} from './note-form/NoteTagsContext';
+import { useNoteMetadataContext } from './note-form/NoteMetadataContext';
+import { useNoteRelationsContext } from './note-form/NoteRelationsContext';
+import { useNoteTagsContext } from './note-form/NoteTagsContext';
 
 export { useNoteFormRuntime };
 

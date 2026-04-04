@@ -30,6 +30,15 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
   const baseListing = listings.find((listing) =>
     ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug))
   );
+  const normalizedBaseListingStatus = (baseListing?.status ?? '').trim().toLowerCase();
+  const isBaseListingExportBusy = [
+    'queued',
+    'queued_relist',
+    'running',
+    'processing',
+    'pending',
+    'in_progress',
+  ].includes(normalizedBaseListingStatus);
 
   const syncFields = [
     {
@@ -185,7 +194,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
           type='button'
           variant='secondary'
           size='sm'
-          disabled={!baseListing || syncingImages === baseListing.id}
+          disabled={!baseListing || syncingImages === baseListing.id || isBaseListingExportBusy}
           onClick={(): void => setIsSyncImagesConfirmOpen(true)}
           className='w-full'
           loading={syncingImages === baseListing?.id}

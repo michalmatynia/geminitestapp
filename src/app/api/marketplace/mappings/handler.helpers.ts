@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { SaveResultDto } from '@/shared/contracts/base';
 import type {
   CategoryMapping,
   CategoryMappingCreateInput,
@@ -26,7 +25,10 @@ export type CategoryMappingCreateFields = {
   catalogId: string;
 };
 
-export type CategoryMappingSaveResult = SaveResultDto<CategoryMapping>;
+export type CategoryMappingSaveResult = {
+  body: CategoryMapping;
+  status: 200 | 201;
+};
 
 type CategoryMappingSaveRepository = Pick<
   CategoryMappingRepository,

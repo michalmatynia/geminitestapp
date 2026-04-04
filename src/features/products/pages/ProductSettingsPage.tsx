@@ -27,8 +27,13 @@ import {
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/shared/contracts/products';
-import { AdminProductsPageLayout, Button, useToast, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/layout';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { settingSections } from './ProductSettingsConstants';

@@ -36,6 +36,7 @@ import {
   useKangurPrimaryNavigationContext,
   KANGUR_PRIMARY_NAV_DIALOG_IDS,
 } from './KangurPrimaryNavigation.context';
+import type { KangurPrimaryNavigationContextValue } from './KangurPrimaryNavigation.context';
 import type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
 export type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
 import { ICON_CLASSNAME, renderNavAction } from './KangurPrimaryNavigation.utils';
@@ -46,6 +47,9 @@ import {
 import {
   getKangurDefaultSubjectForAgeGroup,
 } from '@/features/kangur/lessons/lesson-catalog-metadata';
+import type { KangurChoiceDialogOption } from '@/features/kangur/ui/components/KangurChoiceDialog';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
+import type { KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
 
 const KangurChoiceDialog = dynamic(() =>
   import('@/features/kangur/ui/components/KangurChoiceDialog').then((m) => ({
@@ -105,7 +109,7 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
   setIsEditingGuestPlayerName,
 }: {
   commitGuestPlayerName: () => void;
-  fallbackCopy: any;
+  fallbackCopy: KangurPrimaryNavigationContextValue['fallbackCopy'];
   guestPlayerName?: string;
   guestPlayerNameValue: string;
   guestPlayerPlaceholderText: string;
@@ -124,6 +128,7 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
         }}
       >
         <input
+          aria-label={fallbackCopy.guestPlayerNameLabel}
           autoFocus
           className='h-9 w-32 rounded-lg border border-sky-200 bg-white/90 px-3 text-xs font-bold text-sky-900 placeholder:text-sky-300/70 focus:border-sky-400 focus:outline-none'
           onChange={(e) => handleGuestPlayerNameChange(e.target.value)}
@@ -144,6 +149,7 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
           value={guestPlayerNameValue}
         />
         <button
+          aria-label={fallbackCopy.guestPlayerNameLabel}
           className='flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm transition hover:bg-sky-600 active:scale-95'
           type='submit'
         >
@@ -155,14 +161,14 @@ function KangurPrimaryNavigationGuestPlayerNameAction({
 
   return (
     <button
-      aria-label={hasGuestPlayerName ? guestPlayerName : fallbackCopy.guestPlayerLabel}
+      aria-label={hasGuestPlayerName ? guestPlayerName : fallbackCopy.guestPlayerNameLabel}
       className='flex h-10 items-center gap-2 rounded-xl border border-sky-100 bg-white/80 px-3 py-2 transition hover:bg-white active:scale-95 sm:h-11'
       onClick={() => setIsEditingGuestPlayerName(true)}
       type='button'
     >
       <span aria-hidden='true' className='text-lg'>👤</span>
       <span className='text-xs font-black uppercase tracking-wider text-sky-800'>
-        {hasGuestPlayerName ? guestPlayerName : fallbackCopy.guestPlayerLabel}
+        {hasGuestPlayerName ? guestPlayerName : fallbackCopy.guestPlayerNameLabel}
       </span>
     </button>
   );
@@ -424,7 +430,7 @@ type KangurChoiceDialogConfig = {
   label: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  options: any;
+  options: KangurChoiceDialogOption[];
   title: React.ReactNode;
 };
 
@@ -509,15 +515,15 @@ function resolveKangurPrimaryNavigationDialogTitle({
 }
 
 function buildKangurPrimaryNavigationSubjectDialog(input: {
-  ageGroup: any;
+  ageGroup: KangurLessonAgeGroup;
   defaultSubjectLabel: string;
   isSixYearOld: boolean;
-  navTranslations: any;
+  navTranslations: KangurIntlTranslate;
   onOpenChange: (open: boolean) => void;
   open: boolean;
-  options: any;
+  options: KangurChoiceDialogOption[];
   subjectChoiceLabel: string;
-  subjectVisual: any;
+  subjectVisual: KangurPrimaryNavigationContextValue['derived']['subjectVisual'];
 }): KangurChoiceDialogConfig {
   const subjectLabel = input.navTranslations('subject.label');
   const defaultSubjectVisual = getKangurSixYearOldSubjectVisual(
@@ -567,11 +573,11 @@ function buildKangurPrimaryNavigationAgeGroupDialog(input: {
   ageGroupChoiceLabel: string;
   defaultAgeGroupLabel: string;
   isSixYearOld: boolean;
-  navTranslations: any;
+  navTranslations: KangurIntlTranslate;
   onOpenChange: (open: boolean) => void;
   open: boolean;
-  options: any;
-  ageGroupVisual: any;
+  options: KangurChoiceDialogOption[];
+  ageGroupVisual: KangurPrimaryNavigationContextValue['derived']['ageGroupVisual'];
 }): KangurChoiceDialogConfig {
   const ageGroupLabel = input.navTranslations('ageGroup.label');
   const defaultAgeGroupVisual = getKangurSixYearOldAgeGroupVisual('ten_year_old');

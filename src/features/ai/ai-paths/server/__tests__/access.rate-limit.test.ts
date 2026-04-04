@@ -101,6 +101,55 @@ describe('enforceAiPathsRunRateLimit', () => {
     expect(listRunsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         statuses: ['running'],
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
+      })
+    );
+  });
+
+  it('ignores non-AI-path run sources when probing active admission limits', async () => {
+    listRunsMock.mockImplementation(
+      async (options: {
+        statuses?: AiPathRunStatus[];
+        source?: string;
+        sourceMode?: 'include' | 'exclude';
+      }) => {
+        if (Array.isArray(options.statuses) && options.statuses.includes('running')) {
+          if (options.source === 'ai_paths_ui' && options.sourceMode === 'include') {
+            return { runs: [], total: 0 };
+          }
+          return {
+            runs: Array.from({ length: 5 }, (_, index) =>
+              buildRun(`run-ext-${index + 1}`, 'running', {
+                meta: { source: 'integration_base_export' },
+              })
+            ),
+            total: 5,
+          };
+        }
+        return { runs: [], total: 0 };
+      }
+    );
+
+    await expect(
+      enforceAiPathsRunRateLimit({
+        userId: 'user-1',
+        permissions: [],
+        isElevated: false,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(listRunsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statuses: ['running'],
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
+      })
+    );
+    expect(getQueueStatsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
       })
     );
   });

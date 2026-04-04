@@ -1,3 +1,10 @@
+import {
+  TRADERA_AUTH_ERROR_SELECTORS,
+  TRADERA_CAPTCHA_HINTS,
+  TRADERA_MANUAL_VERIFICATION_TEXT_HINTS,
+  TRADERA_MANUAL_VERIFICATION_URL_HINTS,
+} from './config';
+
 const LOGIN_FORM_SELECTORS = [
   '#sign-in-form',
   'form[data-sign-in-form="true"]',
@@ -69,6 +76,10 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
 }) {
   const LOGIN_FORM_SELECTORS = ${JSON.stringify(LOGIN_FORM_SELECTORS)};
   const COOKIE_ACCEPT_SELECTORS = ${JSON.stringify(COOKIE_ACCEPT_SELECTORS)};
+  const TRADERA_AUTH_ERROR_SELECTORS = ${JSON.stringify(TRADERA_AUTH_ERROR_SELECTORS)};
+  const TRADERA_CAPTCHA_HINTS = ${JSON.stringify(TRADERA_CAPTCHA_HINTS)};
+  const TRADERA_MANUAL_VERIFICATION_TEXT_HINTS = ${JSON.stringify(TRADERA_MANUAL_VERIFICATION_TEXT_HINTS)};
+  const TRADERA_MANUAL_VERIFICATION_URL_HINTS = ${JSON.stringify(TRADERA_MANUAL_VERIFICATION_URL_HINTS)};
   const CATEGORY_FIELD_LABELS = ${JSON.stringify(CATEGORY_FIELD_LABELS)};
   const CATEGORY_SECTION_READY_SELECTORS = ${JSON.stringify(CATEGORY_SECTION_READY_SELECTORS)};
   const CATEGORY_TRIGGER_DIRECT_SELECTORS = ${JSON.stringify(CATEGORY_TRIGGER_DIRECT_SELECTORS)};
@@ -165,6 +176,93 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       if (visible) return true;
     }
     return false;
+  };
+
+  const includesAnyHint = (value, hints) => {
+    const normalized = toTrimmedText(value).toLowerCase();
+    if (!normalized) return false;
+    return hints.some((hint) => normalized.includes(toTrimmedText(hint).toLowerCase()));
+  };
+
+  const readVisibleText = async (selectors) => {
+    for (const selector of selectors) {
+      const locator = page.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      if (!count) continue;
+
+      for (let index = 0; index < count; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+        const text = await candidate.innerText().catch(() => '');
+        if (toTrimmedText(text)) {
+          return toTrimmedText(text);
+        }
+      }
+    }
+    return '';
+  };
+
+  const readAuthText = async () => {
+    const authErrorText = await readVisibleText(TRADERA_AUTH_ERROR_SELECTORS);
+    if (authErrorText) {
+      return authErrorText;
+    }
+
+    const headingText = await readVisibleText(['h1', 'h2', '[role="heading"]']);
+    if (headingText) {
+      return headingText;
+    }
+
+    const main = page.locator('main').first();
+    const mainVisible = await main.isVisible().catch(() => false);
+    if (!mainVisible) {
+      return '';
+    }
+
+    return toTrimmedText(await main.innerText().catch(() => ''));
+  };
+
+  const readAuthDiagnostics = async () => {
+    const currentUrl = page.url();
+    const normalizedUrl = currentUrl.toLowerCase();
+    const loginPage = await isLoginPage().catch(() => false);
+    const errorText = await readAuthText();
+    const normalizedErrorText = errorText.toLowerCase();
+    const captchaDetected =
+      includesAnyHint(normalizedErrorText, TRADERA_CAPTCHA_HINTS) ||
+      includesAnyHint(
+        normalizedUrl,
+        TRADERA_MANUAL_VERIFICATION_URL_HINTS.filter((hint) =>
+          String(hint).toLowerCase().includes('captcha')
+        )
+      );
+    const manualVerificationDetected =
+      captchaDetected ||
+      includesAnyHint(normalizedErrorText, TRADERA_MANUAL_VERIFICATION_TEXT_HINTS) ||
+      includesAnyHint(normalizedUrl, TRADERA_MANUAL_VERIFICATION_URL_HINTS);
+
+    let recoveryMessage = '';
+    if (loginPage) {
+      recoveryMessage =
+        'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.';
+    } else if (captchaDetected) {
+      recoveryMessage =
+        'Stored Tradera session expired and Tradera requires manual verification (captcha). Refresh the saved browser session.';
+    } else if (manualVerificationDetected) {
+      recoveryMessage =
+        'Stored Tradera session expired and Tradera requires manual verification. Refresh the saved browser session.';
+    }
+
+    return {
+      currentUrl,
+      errorText,
+      loginPage,
+      captchaDetected,
+      manualVerificationDetected,
+      authRequired: loginPage || manualVerificationDetected,
+      recoveryMessage,
+    };
   };
 
   const findCategorySelect = async () => {
@@ -343,13 +441,16 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
   await acceptCookiesIfPresent().catch(() => undefined);
   await wait(400);
 
-  if (await isLoginPage()) {
+  const initialAuthDiagnostics = await readAuthDiagnostics();
+  if (initialAuthDiagnostics.authRequired) {
     await captureDebugArtifacts('tradera-category-auth-required', {
-      currentUrl: page.url(),
+      ...initialAuthDiagnostics,
       configuredListingUrl,
     });
     throw new Error(
-      'AUTH_REQUIRED: Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.'
+      'AUTH_REQUIRED: ' +
+        (initialAuthDiagnostics.recoveryMessage ||
+          'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.')
     );
   }
 
@@ -368,10 +469,26 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     selectCategories.length > 0 ? selectCategories : await scrapeMenuCategories();
 
   if (categories.length === 0) {
+    const emptyAuthDiagnostics = await readAuthDiagnostics();
+    if (emptyAuthDiagnostics.authRequired) {
+      log('tradera.category.scrape.auth-required', {
+        ...emptyAuthDiagnostics,
+        configuredListingUrl,
+      });
+      await captureDebugArtifacts('tradera-category-auth-required', {
+        ...emptyAuthDiagnostics,
+        configuredListingUrl,
+      });
+      throw new Error(
+        'AUTH_REQUIRED: ' +
+          (emptyAuthDiagnostics.recoveryMessage ||
+            'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.')
+      );
+    }
+
     const state = {
-      currentUrl: page.url(),
+      ...emptyAuthDiagnostics,
       configuredListingUrl,
-      loginPage: await isLoginPage().catch(() => false),
     };
     log('tradera.category.scrape.empty', state);
     await captureDebugArtifacts('tradera-category-empty', state);

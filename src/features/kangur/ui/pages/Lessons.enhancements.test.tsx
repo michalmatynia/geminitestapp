@@ -163,14 +163,8 @@ describe('Lessons page deferred enhancements', () => {
     expect(useKangurDocsTooltipsMock).toHaveBeenCalledWith('lessons');
   });
 
-  it('defers the lessons wordmark until after the first deferred render turn', () => {
+  it('renders the lessons wordmark immediately with the localized label', () => {
     render(<Lessons />);
-
-    expect(lessonsWordmarkPropsMock).not.toHaveBeenCalled();
-
-    act(() => {
-      vi.runAllTimers();
-    });
 
     expect(lessonsWordmarkPropsMock).toHaveBeenCalledWith(
       expect.objectContaining({

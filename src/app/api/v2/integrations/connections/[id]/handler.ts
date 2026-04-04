@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { auth, findAuthUserById } from '@/features/auth/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
+import { assertValidTraderaPlaywrightListingScript } from '@/features/integrations/services/tradera-listing/script-validation';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError } from '@/shared/errors/app-error';
@@ -87,6 +88,12 @@ export async function PUT_handler(
     : null;
   const normalizedUsername = data.username?.trim();
   const normalizedPassword = data.password?.trim();
+  const normalizedPlaywrightListingScript =
+    typeof data.playwrightListingScript === 'string'
+      ? data.playwrightListingScript.trim() || null
+      : data.playwrightListingScript ?? undefined;
+  const resolvedTraderaBrowserMode =
+    data.traderaBrowserMode ?? existingConnection?.traderaBrowserMode ?? 'builtin';
   const isBaseIntegration = Boolean(
     integration && BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
@@ -103,6 +110,12 @@ export async function PUT_handler(
       integrationSlug: integration.slug,
     });
   }
+
+  assertValidTraderaPlaywrightListingScript({
+    integrationSlug: integration?.slug,
+    traderaBrowserMode: resolvedTraderaBrowserMode,
+    playwrightListingScript: normalizedPlaywrightListingScript,
+  });
 
   const connection = await repo.updateConnection(id, {
     name: data.name,
@@ -184,8 +197,9 @@ export async function PUT_handler(
     ...(typeof data.traderaBrowserMode === 'string' || data.traderaBrowserMode === null
       ? { traderaBrowserMode: data.traderaBrowserMode ?? 'builtin' }
       : {}),
-    ...(typeof data.playwrightListingScript === 'string' || data.playwrightListingScript === null
-      ? { playwrightListingScript: data.playwrightListingScript ?? null }
+    ...(typeof normalizedPlaywrightListingScript === 'string' ||
+    normalizedPlaywrightListingScript === null
+      ? { playwrightListingScript: normalizedPlaywrightListingScript ?? null }
       : {}),
     ...(typeof data.allegroUseSandbox === 'boolean'
       ? { allegroUseSandbox: data.allegroUseSandbox }

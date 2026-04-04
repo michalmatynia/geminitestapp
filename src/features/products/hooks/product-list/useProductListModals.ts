@@ -2,12 +2,12 @@
 
 import { useCallback, useState } from 'react';
 
-import { useIntegrationModalOperations } from '@/features/integrations/public';
+import { useIntegrationModalOperations } from '@/features/integrations/hooks/useIntegrationOperations';
 import {
   isTraderaQuickExportRecoveryContext,
   resolveProductListingsIntegrationScope,
-} from '@/features/integrations/public';
-import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/public';
+} from '@/features/integrations/utils/product-listings-recovery';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import type { Toast } from '@/shared/contracts/ui';
@@ -28,6 +28,10 @@ const enrichRecoveryContext = (
   return {
     ...recoveryContext,
     runId: recoveryContext.runId ?? persistedFeedback.runId ?? null,
+    failureReason:
+      ('failureReason' in recoveryContext ? recoveryContext.failureReason : null) ??
+      persistedFeedback.failureReason ??
+      null,
     requestId: recoveryContext.requestId ?? persistedFeedback.requestId ?? null,
     integrationId: recoveryContext.integrationId ?? persistedFeedback.integrationId ?? null,
     connectionId: recoveryContext.connectionId ?? persistedFeedback.connectionId ?? null,

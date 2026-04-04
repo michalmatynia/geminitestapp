@@ -57,7 +57,8 @@ export async function getPriceGroups(): Promise<PriceGroup[]> {
 }
 
 export async function updatePriceGroup(group: PriceGroup): Promise<PriceGroup> {
-  return api.put<PriceGroup>(`${PRICE_GROUPS_ENDPOINT}/${group.groupId}`, group);
+  const routeId = group.id?.trim() || group.groupId.trim();
+  return api.put<PriceGroup>(`${PRICE_GROUPS_ENDPOINT}/${routeId}`, group);
 }
 
 export async function deletePriceGroup(id: string): Promise<void> {

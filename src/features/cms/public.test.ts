@@ -32,4 +32,11 @@ describe('cms public barrel', () => {
     expect(cmsPublic.PageBuilderProvider).toBeDefined();
     expect(cmsPublic.CmsDomainSelector).toBeDefined();
   });
+
+  it('continues exposing builder and runtime helpers through the root barrel', () => {
+    expect(cmsPublic.useCmsPages).toBeTypeOf('function');
+    expect(cmsPublic.resolveCmsStorefrontAppearance).toBeTypeOf('function');
+    expect(cmsPublic.CmsPageContext).toBeDefined();
+    expect(cmsPublic.MediaStylesProvider).toBeDefined();
+  });
 });

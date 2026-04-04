@@ -2,7 +2,7 @@ import { type Query } from '@tanstack/react-query';
 
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ListQuery } from '@/shared/contracts/ui';
-import { api } from '@/shared/lib/api-client';
+import { ApiError, api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys } from '@/shared/lib/query-key-exports';
 
@@ -13,6 +13,11 @@ export const productListingsQueryKey = (productId: string): readonly unknown[] =
 
 export const fetchProductListings = (productId: string): Promise<ProductListingWithDetails[]> =>
   api.get<ProductListingWithDetails[]>(`/api/v2/integrations/products/${productId}/listings`);
+
+export const isMissingProductListingsError = (error: unknown): error is ApiError =>
+  error instanceof ApiError &&
+  error.status === 404 &&
+  error.message.trim().toLowerCase() === 'product not found';
 
 export function useProductListings(productId: string): ListQuery<ProductListingWithDetails> {
   const queryKey = productListingsQueryKey(productId);

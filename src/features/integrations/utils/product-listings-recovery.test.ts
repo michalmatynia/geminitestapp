@@ -136,6 +136,19 @@ describe('product-listings-recovery', () => {
       'The last Tradera quick export stopped before a stable listing record was available. Open the Tradera login window if needed, then continue the Tradera listing flow from this modal.'
     );
 
+    expect(
+      resolveProductListingsEmptyDescription({
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        runId: null,
+        failureReason:
+          'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
+      })
+    ).toBe(
+      'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
+    );
+
     expect(resolveProductListingsEmptyDescription(null)).toBe(
       'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.'
     );
@@ -188,6 +201,7 @@ describe('product-listings-recovery', () => {
       integrationSlug: 'tradera',
       status: 'needs_login',
       runId: 'run-tradera-1',
+      failureReason: null,
       requestId: 'job-tradera-1',
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
@@ -202,6 +216,7 @@ describe('product-listings-recovery', () => {
           integrationSlug: 'tradera',
           status: 'failed',
           runId: null,
+          failureReason: undefined,
           requestId: undefined,
           integrationId: undefined,
           connectionId: undefined,
@@ -211,6 +226,7 @@ describe('product-listings-recovery', () => {
           integrationSlug: 'tradera',
           status: 'failed',
           runId: null,
+          failureReason: null,
           requestId: null,
           integrationId: null,
           connectionId: null,
@@ -227,12 +243,14 @@ describe('product-listings-recovery', () => {
           integrationSlug: 'tradera',
           status: 'failed',
           runId: null,
+          failureReason: null,
         },
         {
           source: 'tradera_quick_export_failed',
           integrationSlug: 'tradera',
           status: 'failed',
           runId: 'run-tradera-1',
+          failureReason: null,
           requestId: 'job-tradera-1',
           integrationId: 'integration-tradera-1',
           connectionId: 'conn-tradera-1',
@@ -243,6 +261,7 @@ describe('product-listings-recovery', () => {
       integrationSlug: 'tradera',
       status: 'failed',
       runId: 'run-tradera-1',
+      failureReason: null,
       requestId: 'job-tradera-1',
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',

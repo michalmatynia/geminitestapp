@@ -31,11 +31,12 @@ import { cn } from '@/features/kangur/shared/utils';
 import type { KangurMiniGameFinishProps } from '@/features/kangur/ui/types';
 import { useAddingSynthesisSession } from './adding-synthesis/AddingSynthesisGame.hooks';
 import { LANE_STYLES } from './adding-synthesis/AddingSynthesisGame.constants';
-import { 
+import {
   resolveAddingSynthesisHintPanel, 
   resolveAddingSynthesisLanePresentation, 
   resolveAddingSynthesisSummaryMessage 
 } from './adding-synthesis/AddingSynthesisGame.utils';
+import type { AddingSynthesisLocalizedStages } from './adding-synthesis/AddingSynthesisGame.types';
 
 // --- Context ---
 
@@ -70,11 +71,11 @@ function useAddingSynthesisContext() {
 function AddingSynthesisIntroStages({
   localizedStages,
 }: {
-  localizedStages: any;
+  localizedStages: AddingSynthesisLocalizedStages;
 }): React.JSX.Element {
   return (
     <div className='grid kangur-panel-gap md:grid-cols-2 xl:grid-cols-3'>
-      {localizedStages.map((stage: any) => (
+      {localizedStages.map((stage) => (
         <KangurInfoCard
           key={stage.id}
           accent={stage.accent}

@@ -7,7 +7,11 @@ import { useProductFormCore } from '@/features/products/context/ProductFormCoreC
 import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import type { FieldValidatorIssue } from '@/features/products/validation-engine/core';
 import { ProductFormData } from '@/shared/contracts/products';
-import { FormField, Input, Textarea, Hint } from '@/features/products/ui';
+import { FormField } from '@/shared/ui/form-section';
+import { Hint } from '@/shared/ui/Hint';
+import { Input } from '@/shared/ui/input';
+import { Textarea } from '@/shared/ui/textarea';
+
 import { cn } from '@/shared/utils';
 
 import { IssueHintRow } from './ValidatorIssueHint';

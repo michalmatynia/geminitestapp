@@ -1,5 +1,9 @@
 import type { ProductWithImages } from '@/shared/contracts/products';
 
+type MockWithReturnValue = {
+  mockReturnValue: (value: unknown) => unknown;
+};
+
 export const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
     id: 'product-1',
@@ -71,11 +75,11 @@ export const createRowRuntimeContext = (
 });
 
 export const setupProductListMocks = (
-  actionsMock: any,
-  rowActionsMock: any,
-  visualsMock: any,
+  actionsMock: MockWithReturnValue,
+  rowActionsMock: MockWithReturnValue,
+  visualsMock: MockWithReturnValue,
   visualsOverride: Record<string, unknown> = {}
-) => {
+): void => {
   actionsMock.mockReturnValue({
     productNameKey: 'name_en',
     queuedProductIds: new Set<string>(),

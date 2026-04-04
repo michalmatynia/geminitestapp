@@ -38,26 +38,32 @@ vi.mock('@/shared/ui', () => ({
     title,
     description,
     headerActions,
+    filters,
     alerts,
     data,
     expanded,
     getSubRows,
+    emptyState,
   }: {
     title: string;
     description?: string;
     headerActions?: React.ReactNode;
+    filters?: React.ReactNode;
     alerts?: React.ReactNode;
     data?: Array<{ id: string; name: string; subRows?: Array<{ id: string; name: string }> }>;
     expanded?: Record<string, boolean>;
     getSubRows?: (
       row: { id: string; name: string; subRows?: Array<{ id: string; name: string }> }
     ) => Array<{ id: string; name: string; subRows?: Array<{ id: string; name: string }> }> | undefined;
+    emptyState?: React.ReactNode;
   }) => (
     <section>
       <h2>{title}</h2>
       {description ? <p>{description}</p> : null}
       {headerActions}
+      {filters}
       {alerts}
+      {(data ?? []).length === 0 && emptyState ? <div data-testid='panel-empty-state'>{emptyState}</div> : null}
       <ul data-testid='category-tree'>
         {(data ?? []).map(function renderRow(row) {
           const subRows = getSubRows?.(row) ?? row.subRows ?? [];
@@ -350,5 +356,38 @@ describe('CategoryMapperTable', () => {
     expect(screen.getByTestId('mapper-alert')).toHaveTextContent(
       'Furniture > Office Chairs -> office chairs'
     );
+  });
+
+  it('rerenders cleanly when fetched external categories appear after an empty state', async () => {
+    mocks.externalCategories = [];
+
+    const view = render(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Tradera'>
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    expect(screen.getByText('No external categories found')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fetch Categories' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Marketplace Categories' })).toBeInTheDocument();
+
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'tradera-jewellery',
+        externalId: 'tradera-jewellery',
+        name: 'Jewellery',
+      }),
+    ];
+
+    view.rerender(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Tradera'>
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Marketplace Categories' })).toBeInTheDocument();
+      expect(screen.getByText('Jewellery')).toBeInTheDocument();
+    });
   });
 });

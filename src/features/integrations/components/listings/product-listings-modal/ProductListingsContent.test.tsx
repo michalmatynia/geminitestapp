@@ -468,4 +468,68 @@ describe('ProductListingsContent', () => {
       { autoSubmit: true }
     );
   });
+
+  it('shows the failure reason instead of login recovery actions for non-auth Tradera failures', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        runId: 'run-tradera-config',
+        requestId: 'job-tradera-config',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'failed',
+              failureReason:
+                'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'conn-tradera-1',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              marketplaceData: {
+                tradera: {
+                  lastExecution: {
+                    requestId: 'job-tradera-config',
+                    errorCategory: 'FORM',
+                    error:
+                      'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
+                    metadata: {
+                      runId: 'run-tradera-config',
+                    },
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera quick export needs attention')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
+      'href',
+      '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
+    );
+  });
 });

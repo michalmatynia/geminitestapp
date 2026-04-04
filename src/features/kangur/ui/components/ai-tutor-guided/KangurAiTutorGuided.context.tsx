@@ -20,18 +20,18 @@ import {
 export type GuidedCalloutContextValue = {
   calloutLabelId: string;
   calloutDescriptionId: string;
-  fallbackCopy: any;
-  selectionState: any;
-  selectionDisplayState: any;
-  layoutState: any;
-  sketchState: any;
+  fallbackCopy: ReturnType<typeof getGuidedCalloutFallbackCopy>;
+  selectionState: ReturnType<typeof useGuidedCalloutSelectionState>;
+  selectionDisplayState: ReturnType<typeof resolveGuidedSelectionDisplayState>;
+  layoutState: ReturnType<typeof resolveGuidedCalloutLayoutState>;
+  sketchState: ReturnType<typeof useGuidedCalloutSketchState>;
   sectionLabel: string | null;
   homeOnboardingCanGoBack: boolean;
   usesDirectionalEntry: boolean;
-  tutorContent: any;
-  panelBody: any;
-  widgetState: any;
-  guidedCallout: any;
+  tutorContent: ReturnType<typeof useKangurAiTutorContent>;
+  panelBody: ReturnType<typeof useKangurAiTutorPanelBodyContext>;
+  widgetState: ReturnType<typeof useKangurAiTutorWidgetStateContext>;
+  guidedCallout: ReturnType<typeof useKangurAiTutorPortalContext>['guidedCallout'];
 };
 
 const GuidedCalloutContext = createContext<GuidedCalloutContextValue | null>(null);

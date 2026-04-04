@@ -12,7 +12,12 @@ export * from './tradera-listing/utils';
 export * from './tradera-listing/settings';
 export * from './tradera-listing/browser';
 export * from './tradera-listing/api';
-export * from './tradera-listing/categories';
+// NOTE: categories.ts is NOT re-exported here because it directly imports `playwright`
+// (chromium, devices) at the module level. Including it in this barrel would pull the
+// heavyweight playwright external into the BullMQ worker chunk, causing
+// "Unexpected token 'export'" at runtime (Turbopack ESM-external resolution issue).
+// Import fetchTraderaCategoriesForConnection directly from
+// '@/features/integrations/services/tradera-listing/categories' instead.
 
 import { isTraderaApiIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
@@ -110,13 +115,20 @@ const resolveRequestedTraderaBrowserMode = ({
   requestedBrowserMode,
   source,
   browserMode,
+  playwrightHeadless,
 }: {
   requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
   source: 'manual' | 'scheduler' | 'api';
   browserMode: 'builtin' | 'scripted' | null | undefined;
-}): PlaywrightRelistBrowserMode =>
-  requestedBrowserMode ??
-  (browserMode === 'scripted' && source !== 'scheduler' ? 'headed' : 'connection_default');
+  playwrightHeadless: boolean | null | undefined;
+}): PlaywrightRelistBrowserMode => {
+  if (requestedBrowserMode) return requestedBrowserMode;
+  // Respect the connection's explicit headed/headless preference
+  if (playwrightHeadless === false) return 'headed';
+  if (playwrightHeadless === true) return 'headless';
+  // No explicit preference — legacy default
+  return browserMode === 'scripted' && source !== 'scheduler' ? 'headed' : 'connection_default';
+};
 
 const buildTraderaHistoryFields = (
   browserMode: string | null | undefined
@@ -191,6 +203,7 @@ export const runTraderaListing = async (
       requestedBrowserMode: input.browserMode,
       source,
       browserMode: connection.traderaBrowserMode,
+      playwrightHeadless: connection.playwrightHeadless,
     });
 
     if (useApi) {

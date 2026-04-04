@@ -20,7 +20,7 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
 
 import { ProductFormFooter } from './form/ProductFormFooter';
 import ProductFormGeneral from './form/ProductFormGeneral';

@@ -369,10 +369,12 @@ const mongoRepository: ProductListingRepository = {
 
   listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
     const collection = await getListingCollection();
+    const terminalStatuses = ['failed', 'auth_required', 'ended', 'expired', 'sold', 'removed', 'cancelled'];
     const count = await collection.countDocuments({
       $and: [
         buildLookupFilter('productId', productId),
         buildLookupFilter('connectionId', connectionId),
+        { status: { $nin: terminalStatuses } },
       ],
     } as Filter<ProductListingDocument>);
     return count > 0;

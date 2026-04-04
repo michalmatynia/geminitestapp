@@ -5,14 +5,14 @@ export type ProductTriggerButtonBarProps = ComponentProps<
 >;
 
 export type ProductIntegrationsAdapterModule =
-  typeof import('@/features/integrations/public');
+  typeof import('@/features/integrations/product-integrations-adapter');
 
 let productIntegrationsAdapterPromise: Promise<ProductIntegrationsAdapterModule> | null = null;
 
 export const loadProductIntegrationsAdapter =
   (): Promise<ProductIntegrationsAdapterModule> => {
     if (!productIntegrationsAdapterPromise) {
-      productIntegrationsAdapterPromise = import('@/features/integrations/public');
+      productIntegrationsAdapterPromise = import('@/features/integrations/product-integrations-adapter');
     }
     return productIntegrationsAdapterPromise;
   };

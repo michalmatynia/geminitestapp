@@ -34,7 +34,7 @@ vi.mock('@/shared/providers/AdminLayoutProvider', () => ({
   useAdminLayoutActions: () => useAdminLayoutActionsMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/admin-products-breadcrumbs', () => ({
   AdminProductsBreadcrumbs: ({
     className,
   }: {
@@ -44,6 +44,9 @@ vi.mock('@/shared/ui', () => ({
       Breadcrumbs
     </nav>
   ),
+}));
+
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -53,6 +56,30 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/FocusModeTogglePortal', () => ({
+  FocusModeTogglePortal: ({
+    isFocusMode,
+    onToggleFocusMode,
+  }: {
+    isFocusMode: boolean;
+    onToggleFocusMode: () => void;
+  }) => (
+    <button
+      type='button'
+      aria-label={isFocusMode ? 'Show side panels' : 'Hide side panels'}
+      aria-pressed={String(isFocusMode)}
+      onClick={onToggleFocusMode}
+    />
+  ),
+}));
+
+vi.mock('@/shared/ui/pagination', () => ({
+  Pagination: () => <div>Pagination</div>,
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
   SelectSimple: ({
     ariaLabel,
     value,
@@ -70,7 +97,6 @@ vi.mock('@/shared/ui', () => ({
       <option value={value}>{value}</option>
     </select>
   ),
-  Pagination: () => <div>Pagination</div>,
 }));
 
 import { ProductListHeader } from './ProductListHeader';

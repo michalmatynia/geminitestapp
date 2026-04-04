@@ -13,7 +13,8 @@ import {
   useDeleteShippingGroupMutation,
   useSaveShippingGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
+
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Catalog, ProductCategory, ProductShippingGroup } from '@/shared/contracts/products';
 import {
@@ -46,6 +47,12 @@ export type ShippingGroupFormData = {
   autoAssignCurrencyCodes: string[];
 };
 
+type ShippingGroupToast = ReturnType<typeof useToast>['toast'];
+type ShippingGroupSaveMutation = ReturnType<typeof useSaveShippingGroupMutation>;
+type ShippingGroupDeleteMutation = ReturnType<typeof useDeleteShippingGroupMutation>;
+type ShippingGroupRuleConflict = ReturnType<typeof buildShippingGroupRuleConflicts>[number];
+type ShippingGroupRuleCoverage = ReturnType<typeof summarizeRuleDescendantCoverage>;
+
 type ShippingGroupsStateValue = {
   loading: boolean;
   shippingGroups: ProductShippingGroup[];
@@ -53,7 +60,7 @@ type ShippingGroupsStateValue = {
   selectedCatalogId: string | null;
   onCatalogChange: (catalogId: string | null) => void;
   onRefresh: () => void;
-  toast: any;
+  toast: ShippingGroupToast;
   showModal: boolean;
   setShowModal: (show: boolean) => void;
   editingShippingGroup: ProductShippingGroup | null;
@@ -67,8 +74,8 @@ type ShippingGroupsStateValue = {
   loadingModalCatalogCategories: boolean;
   modalCatalogShippingGroups: ProductShippingGroup[];
   loadingModalCatalogShippingGroups: boolean;
-  saveShippingGroupMutation: any;
-  deleteShippingGroupMutation: any;
+  saveShippingGroupMutation: ShippingGroupSaveMutation;
+  deleteShippingGroupMutation: ShippingGroupDeleteMutation;
   normalizedModalRuleIds: string[];
   normalizedModalCurrencyCodes: string[];
   redundantModalRuleIds: string[];
@@ -89,8 +96,8 @@ type ShippingGroupsStateValue = {
   shippingGroupRedundantRuleSummaryById: Map<string, string | null>;
   shippingGroupMissingRuleSummaryById: Map<string, string | null>;
   shippingGroupsWithRepairAvailable: ProductShippingGroup[];
-  modalShippingGroupRuleConflicts: any[];
-  modalRuleCoverage: any;
+  modalShippingGroupRuleConflicts: ShippingGroupRuleConflict[];
+  modalRuleCoverage: ShippingGroupRuleCoverage;
   redundantModalRuleSummary: string | null;
   normalizedModalRuleSummary: string | null;
   normalizedModalCurrencySummary: string | null;
@@ -897,7 +904,7 @@ export function ShippingGroupsStateProvider({ children }: { children: React.Reac
   );
 }
 
-export function useShippingGroupsState() {
+export function useShippingGroupsState(): ShippingGroupsStateValue {
   const context = useContext(ShippingGroupsStateContext);
   if (!context) {
     throw new Error('useShippingGroupsState must be used within a ShippingGroupsStateProvider');

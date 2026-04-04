@@ -2,19 +2,23 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
-  isTraderaIntegrationSlug,
   useDefaultTraderaConnection,
   useIntegrationsWithConnections,
-  useLinkExistingTraderaListingMutation,
-} from '@/features/integrations/public';
+} from '@/features/integrations/hooks/useIntegrationQueries';
+import { useLinkExistingTraderaListingMutation } from '@/features/integrations/hooks/useProductListingMutations';
 import type {
   IntegrationWithConnections,
   TraderaProductLinkExistingCandidate,
 } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { ApiError } from '@/shared/lib/api-client';
-import { FormModal, Input, Label, SelectSimple, useToast } from '@/shared/ui';
+import { FormModal } from '@/shared/ui/FormModal';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { useToast } from '@/shared/ui/toast';
 
 type TraderaConnectionOption = {
   integrationId: string;

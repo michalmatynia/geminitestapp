@@ -25,7 +25,7 @@ vi.mock('@/features/integrations/server', () => ({
   }),
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/products/services/product-repository', () => ({
   getProductRepository: async () => ({
     getProductById: (...args: unknown[]) => getProductByIdMock(...args),
   }),

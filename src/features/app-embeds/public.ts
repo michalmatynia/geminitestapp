@@ -1,4 +1,4 @@
 // Auto-generated public API for feature. Edit with care.
-export * from './pages/AdminAppEmbedsPage';
-export * from './lib/constants';
-export * from './providers/AppEmbedsProvider';
+export * from './pages.public';
+export * from './constants.public';
+export * from './providers.public';

@@ -264,6 +264,53 @@ export type BaseProductLinkExistingResponse = z.infer<
   typeof baseProductLinkExistingResponseSchema
 >;
 
+export const traderaProductLinkExistingPayloadSchema = z.object({
+  listingUrl: z.string().trim().min(1),
+  connectionId: z.string().trim().min(1).optional(),
+});
+
+export type TraderaProductLinkExistingPayload = z.infer<
+  typeof traderaProductLinkExistingPayloadSchema
+>;
+
+export const traderaProductLinkExistingInferenceMethodSchema = z.enum([
+  'provided',
+  'seller_alias',
+  'preferred_default',
+  'sole_connection',
+]);
+
+export type TraderaProductLinkExistingInferenceMethod = z.infer<
+  typeof traderaProductLinkExistingInferenceMethodSchema
+>;
+
+export const traderaProductLinkExistingCandidateSchema = z.object({
+  integrationId: z.string().trim().min(1),
+  integrationName: z.string().trim().min(1),
+  integrationSlug: z.string().trim().min(1),
+  connectionId: z.string().trim().min(1),
+  connectionName: z.string().trim().min(1),
+  connectionUsername: z.string().trim().nullable(),
+});
+
+export type TraderaProductLinkExistingCandidate = z.infer<
+  typeof traderaProductLinkExistingCandidateSchema
+>;
+
+export const traderaProductLinkExistingResponseSchema = z.object({
+  linked: z.literal(true),
+  listingId: z.string().trim().min(1),
+  connectionId: z.string().trim().min(1),
+  integrationId: z.string().trim().min(1),
+  externalListingId: z.string().trim().min(1),
+  listingUrl: z.string().trim().min(1),
+  inferenceMethod: traderaProductLinkExistingInferenceMethodSchema,
+});
+
+export type TraderaProductLinkExistingResponse = z.infer<
+  typeof traderaProductLinkExistingResponseSchema
+>;
+
 /**
  * Product Listing Badges DTOs
  */
@@ -452,6 +499,7 @@ export type ProductListingsRecoveryContext =
     integrationSlug: 'tradera';
     status: string;
     runId: string | null;
+    failureReason?: string | null | undefined;
     requestId?: string | null | undefined;
     integrationId?: string | null | undefined;
     connectionId?: string | null | undefined;

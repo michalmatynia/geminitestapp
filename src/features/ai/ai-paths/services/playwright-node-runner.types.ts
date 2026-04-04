@@ -42,6 +42,8 @@ export type PlaywrightNodeRunRequest = {
         trace?: boolean | undefined;
       }
     | undefined;
+  /** When true, block scripts from opening additional browser pages/tabs. */
+  preventNewPages?: boolean | undefined;
 };
 
 export type PlaywrightNodeArtifactReadResult = {

@@ -2,8 +2,7 @@
 
 import Image from 'next/image';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import { MissingImagePlaceholder } from '@/shared/ui';
+import MissingImagePlaceholder from '@/shared/ui/missing-image-placeholder';
 
 interface ProductImageCellProps {
   imageUrl: string | null;

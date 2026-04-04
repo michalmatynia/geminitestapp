@@ -18,10 +18,12 @@ import {
 } from '@/features/integrations/services/tradera-listing/config';
 import { findVisibleLocator } from '@/features/integrations/services/tradera-listing/utils';
 import {
+  parsePersistedStorageState,
   resolveConnectionPlaywrightSettings,
-  type PersistedStorageState,
 } from '@/features/integrations/services/tradera-playwright-settings';
 import {
+  type IntegrationConnectionRecord,
+  type IntegrationRepository,
   type TestConnectionResponse,
   type TestLogEntry,
 } from '@/shared/contracts/integrations';
@@ -35,14 +37,18 @@ const TRADERA_LISTING_FORM_URL = normalizeTraderaListingFormUrl(
   DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl
 );
 
+type PushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void;
+type Fail = (step: string, detail: string, status?: number) => Promise<never>;
+type ConnectionUpdateRepository = Pick<IntegrationRepository, 'updateConnection'>;
+
 export async function handleTraderaBrowserTest(
-  connection: any,
-  repo: any,
+  connection: IntegrationConnectionRecord,
+  repo: ConnectionUpdateRepository,
   mode: 'manual' | 'manual_session_refresh' | 'quicklist_preflight' | 'auto',
   manualLoginTimeoutMs: number,
   steps: TestLogEntry[],
-  pushStep: (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => void,
-  fail: (step: string, detail: string, status?: number) => Promise<never>
+  pushStep: PushStep,
+  fail: Fail
 ): Promise<Response> {
   const manualMode = mode === 'manual';
   const manualSessionRefreshMode = mode === 'manual_session_refresh';
@@ -62,7 +68,8 @@ export async function handleTraderaBrowserTest(
   if (!manualMode && !manualSessionRefreshMode && !quicklistPreflightMode && !loginUsername) {
     return fail('Decrypting credentials', 'No username configured for this connection.');
   }
-  const decryptedPassword =
+  const resolvedLoginUsername: string = loginUsername ?? '';
+  const decryptedPassword: string =
     manualMode || manualSessionRefreshMode || quicklistPreflightMode
       ? ''
       : decryptSecret(encryptedPassword as string);
@@ -74,20 +81,11 @@ export async function handleTraderaBrowserTest(
       : 'Password decrypted successfully'
   );
 
-  let storedState: PersistedStorageState | null = null;
-
   if (connection.playwrightStorageState) {
     pushStep('Loading session', 'pending', 'Loading stored Playwright session');
     try {
-      const raw = decryptSecret(connection.playwrightStorageState);
-      const parsed = JSON.parse(raw) as unknown;
-
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        (Array.isArray((parsed as any).cookies) || Array.isArray((parsed as any).origins))
-      ) {
-        storedState = parsed as PersistedStorageState;
+      const storedState = parsePersistedStorageState(connection.playwrightStorageState);
+      if (storedState) {
         pushStep('Loading session', 'ok', 'Stored session loaded successfully');
       } else {
         pushStep('Loading session', 'ok', 'Stored session was empty or invalid (skipped)');
@@ -136,7 +134,11 @@ export async function handleTraderaBrowserTest(
 
     context = await browser.newContext({
       ...deviceContextOptions,
-      ...(storedState ? { storageState: storedState } : {}),
+      ...(connection.playwrightStorageState
+        ? {
+            storageState: parsePersistedStorageState(connection.playwrightStorageState) ?? undefined,
+          }
+        : {}),
     });
     context.setDefaultTimeout(playwrightSettings.timeout);
     context.setDefaultNavigationTimeout(playwrightSettings.navigationTimeout);
@@ -145,7 +147,8 @@ export async function handleTraderaBrowserTest(
     const humanizeMouse = quicklistPreflightMode
       ? false
       : (connection.playwrightHumanizeMouse ?? false);
-    const mouseJitter = quicklistPreflightMode ? 0 : Math.max(0, connection.playwrightMouseJitter ?? 0);
+    const mouseJitter =
+      quicklistPreflightMode ? 0 : Math.max(0, connection.playwrightMouseJitter ?? 0);
     const clickDelayMin = quicklistPreflightMode
       ? 0
       : Math.max(0, connection.playwrightClickDelayMin ?? 0);
@@ -165,7 +168,9 @@ export async function handleTraderaBrowserTest(
       : Math.max(0, connection.playwrightActionDelayMin ?? 0);
     const actionDelayMax = Math.max(
       actionDelayMin,
-      quicklistPreflightMode ? actionDelayMin : (connection.playwrightActionDelayMax ?? actionDelayMin)
+      quicklistPreflightMode
+        ? actionDelayMin
+        : (connection.playwrightActionDelayMax ?? actionDelayMin)
     );
     const activePage = page;
     const utils = createTraderaBrowserTestUtils({
@@ -266,7 +271,7 @@ export async function handleTraderaBrowserTest(
       }
       pushStep(manualSessionRefreshMode ? 'Session refresh' : 'Manual login', 'ok', 'Success');
     } else {
-      pushStep('Authentication', 'pending', `Attempting login as ${loginUsername}...`);
+      pushStep('Authentication', 'pending', `Attempting login as ${resolvedLoginUsername}...`);
       await page.goto('https://www.tradera.com/login', {
         waitUntil: 'domcontentloaded',
         timeout: 60_000,
@@ -277,7 +282,7 @@ export async function handleTraderaBrowserTest(
       if (isLoggedIn) {
         pushStep('Authentication', 'ok', 'Already logged in (session restored)');
       } else {
-        await performLogin(loginUsername as string, decryptedPassword);
+        await performLogin(resolvedLoginUsername, decryptedPassword);
         const postLoginOk = await isUserLoggedIn();
         if (!postLoginOk) {
           const authState = await readAuthState();
@@ -336,7 +341,7 @@ export async function handleTraderaBrowserTest(
       steps,
     };
     return NextResponse.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (manualMode || manualSessionRefreshMode) {
       await page?.waitForTimeout(2000).catch(() => undefined);
     }

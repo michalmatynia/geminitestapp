@@ -9,6 +9,6 @@ export {
   ProductImageManager,
   type ProductImageManagerController,
   ProductImageManagerControllerProvider,
-} from '@/shared/ui';
+} from '@/shared/ui/image-slot-manager';
 export { default as ProductCard } from '../components/ProductCard';
 export { ProductRouteLoadingFallback } from './ProductRouteLoadingFallback';

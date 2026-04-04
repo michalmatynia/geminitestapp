@@ -1,5 +1,4 @@
-/* eslint-disable no-useless-escape */
-export const PART_1 = `export default async function run({
+export const PART_1 = String.raw`export default async function run({
   page,
   input,
   emit,
@@ -7,10 +6,11 @@ export const PART_1 = `export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v76
+  // tradera-quicklist-default:v77
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
+  const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];
   const configuredSellUrl =
     typeof input?.traderaConfig?.listingFormUrl === 'string' &&
     input.traderaConfig.listingFormUrl.trim()
@@ -255,26 +255,43 @@ export const PART_1 = `export default async function run({
   ];
   const CREATE_LISTING_TRIGGER_SELECTORS = [
     'a[href*="/selling/new"]',
+    'a[href*="/selling"]',
     'a[href*="/sell"]',
     'button:has-text("Create a New Listing")',
     'button:has-text("Create new listing")',
+    'button:has-text("Start selling")',
+    'button:has-text("Sell")',
     'button:has-text("Skapa en ny annons")',
     'button:has-text("Skapa annons")',
     'button:has-text("Ny annons")',
+    'button:has-text("Börja sälja")',
+    'button:has-text("Sälj")',
     'a:has-text("Create a New Listing")',
     'a:has-text("Create new listing")',
+    'a:has-text("Start selling")',
+    'a:has-text("Sell")',
     'a:has-text("Skapa en ny annons")',
     'a:has-text("Skapa annons")',
     'a:has-text("Ny annons")',
-    '[data-testid*="create"]',
-    '[data-testid*="new-listing"]',
+    'a:has-text("Börja sälja")',
+    'a:has-text("Sälj")',
+    'button[data-testid*="create"]',
+    'button[data-testid*="new-listing"]',
+    'button[data-testid*="sell"]',
+    'a[data-testid*="create"]',
+    'a[data-testid*="new-listing"]',
+    'a[data-testid*="sell"]',
   ];
   const CREATE_LISTING_TRIGGER_LABELS = [
     'Create a New Listing',
     'Create new listing',
+    'Start selling',
+    'Sell',
     'Skapa en ny annons',
     'Skapa annons',
     'Ny annons',
+    'Börja sälja',
+    'Sälj',
   ];
   const CATEGORY_FIELD_LABELS = ['Category', 'Kategori'];
   const FALLBACK_CATEGORY_OPTION_LABELS = ['Other', 'Övrigt'];
@@ -412,50 +429,215 @@ export const PART_1 = `export default async function run({
         .filter((value) => typeof value === 'string')
         .slice(0, 12)
     : [];
+  let unexpectedTraderaNavigation = null;
 
-  const wait = async (ms) => {
-    if (helpers && typeof helpers.sleep === 'function') {
-      await helpers.sleep(ms);
+  const getUnexpectedTraderaNavigationPayload = (value) => {
+    const normalized = toText(value);
+    if (!normalized || normalized === 'about:blank') {
+      return null;
+    }
+
+    try {
+      const parsed = new URL(normalized, DIRECT_SELL_URL);
+      const protocol = parsed.protocol.toLowerCase();
+      const host = parsed.host.toLowerCase();
+      if (
+        (protocol === 'http:' || protocol === 'https:') &&
+        TRADERA_ALLOWED_PAGE_HOSTS.includes(host)
+      ) {
+        return null;
+      }
+
+      return {
+        currentUrl: parsed.toString(),
+        host,
+        protocol,
+      };
+    } catch {
+      return {
+        currentUrl: normalized,
+        host: null,
+        protocol: null,
+      };
+    }
+  };
+
+  const assertAllowedTraderaPage = async (context = 'operation') => {
+    const currentUrl = typeof page?.url === 'function' ? page.url() : null;
+    const navigationPayload = getUnexpectedTraderaNavigationPayload(currentUrl);
+    if (!navigationPayload) {
       return;
     }
-    await page.waitForTimeout(ms);
+
+    const failurePayload = {
+      context,
+      ...navigationPayload,
+    };
+    const failureMessage =
+      'FAIL_SELL_PAGE_INVALID: Unexpected navigation away from Tradera to ' +
+      failurePayload.currentUrl +
+      ' during ' +
+      context +
+      '.';
+
+    const shouldCapture =
+      !unexpectedTraderaNavigation ||
+      unexpectedTraderaNavigation.currentUrl !== failurePayload.currentUrl ||
+      unexpectedTraderaNavigation.context !== failurePayload.context;
+
+    unexpectedTraderaNavigation = failurePayload;
+    log?.('tradera.quicklist.navigation.unexpected', failurePayload);
+    if (shouldCapture) {
+      await captureFailureArtifacts('unexpected-navigation', failurePayload).catch(
+        () => undefined
+      );
+    }
+
+    throw new Error(failureMessage);
+  };
+
+  const readClickTargetMetadata = async (target) => {
+    if (!target || typeof target.evaluate !== 'function') {
+      return null;
+    }
+
+    return target
+      .evaluate((element) => {
+        const hrefAttribute = element.getAttribute('href') || '';
+        const resolvedHref =
+          element instanceof HTMLAnchorElement
+            ? element.href || hrefAttribute
+            : hrefAttribute;
+
+        return {
+          tagName: element.tagName.toLowerCase(),
+          role: element.getAttribute('role') || '',
+          href: resolvedHref,
+          hrefAttribute,
+          targetAttribute: element.getAttribute('target') || '',
+          ariaLabel: element.getAttribute('aria-label') || '',
+          text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
+        };
+      })
+      .catch(() => null);
+  };
+
+  const resolveExternalClickTargetUrl = (metadata) => {
+    if (!metadata || typeof metadata !== 'object') {
+      return null;
+    }
+
+    const hrefCandidate = normalizeWhitespace(metadata.href || metadata.hrefAttribute || '');
+    if (!hrefCandidate || hrefCandidate === '#' || hrefCandidate.startsWith('#')) {
+      return null;
+    }
+    if (/^(javascript|mailto|tel):/i.test(hrefCandidate)) {
+      return null;
+    }
+
+    try {
+      const parsed = new URL(hrefCandidate, typeof page?.url === 'function' ? page.url() : DIRECT_SELL_URL);
+      const protocol = parsed.protocol.toLowerCase();
+      if (protocol !== 'http:' && protocol !== 'https:') {
+        return null;
+      }
+      return TRADERA_ALLOWED_PAGE_HOSTS.includes(parsed.host.toLowerCase())
+        ? null
+        : parsed.toString();
+    } catch {
+      return null;
+    }
+  };
+
+  const logClickTarget = async (context, target) => {
+    const targetMetadata = await readClickTargetMetadata(target);
+    log?.('tradera.quicklist.click_target', {
+      context,
+      currentUrl: typeof page?.url === 'function' ? page.url() : null,
+      ...(targetMetadata || {}),
+    });
+  };
+
+  const wait = async (ms) => {
+    await assertAllowedTraderaPage('wait');
+    if (helpers && typeof helpers.sleep === 'function') {
+      await helpers.sleep(ms);
+    } else {
+      await page.waitForTimeout(ms);
+    }
+    await assertAllowedTraderaPage('wait');
   };
 
   const humanClick = async (target, options) => {
     if (!target) return;
+    await assertAllowedTraderaPage('before click');
+    const targetMetadata = await readClickTargetMetadata(target);
+    const externalClickTargetUrl = resolveExternalClickTargetUrl(targetMetadata);
+    if (externalClickTargetUrl) {
+      const failurePayload = {
+        currentUrl: typeof page?.url === 'function' ? page.url() : null,
+        externalClickTargetUrl,
+        ...targetMetadata,
+      };
+      log?.('tradera.quicklist.click_blocked', failurePayload);
+      await captureFailureArtifacts('blocked-external-click', failurePayload).catch(
+        () => undefined
+      );
+      throw new Error(
+        'FAIL_SELL_PAGE_INVALID: Refusing to click external link target "' +
+          externalClickTargetUrl +
+          '".'
+      );
+    }
     if (helpers && typeof helpers.click === 'function') {
       await helpers.click(target, options);
-      return;
+    } else {
+      if (options?.scroll !== false && typeof target.scrollIntoViewIfNeeded === 'function') {
+        await target.scrollIntoViewIfNeeded().catch(() => undefined);
+      }
+      await target.click(options?.clickOptions);
     }
-    if (options?.scroll !== false && typeof target.scrollIntoViewIfNeeded === 'function') {
-      await target.scrollIntoViewIfNeeded().catch(() => undefined);
+    await assertAllowedTraderaPage('after click');
+  };
+
+  const tryHumanClick = async (target, options) => {
+    try {
+      await humanClick(target, options);
+      return true;
+    } catch {
+      return false;
     }
-    await target.click(options?.clickOptions);
   };
 
   const humanFill = async (target, value, options) => {
     if (!target) return;
+    await assertAllowedTraderaPage('before fill');
     if (helpers && typeof helpers.fill === 'function') {
       await helpers.fill(target, value, options);
-      return;
+    } else {
+      await target.fill(value);
     }
-    await target.fill(value);
+    await assertAllowedTraderaPage('after fill');
   };
 
   const humanType = async (value, options) => {
+    await assertAllowedTraderaPage('before type');
     if (helpers && typeof helpers.type === 'function') {
       await helpers.type(value, options);
-      return;
+    } else {
+      await page.keyboard.type(value);
     }
-    await page.keyboard.type(value);
+    await assertAllowedTraderaPage('after type');
   };
 
   const humanPress = async (key, options) => {
+    await assertAllowedTraderaPage('before press');
     if (helpers && typeof helpers.press === 'function') {
       await helpers.press(key, options);
-      return;
+    } else {
+      await page.keyboard.press(key);
     }
-    await page.keyboard.press(key);
+    await assertAllowedTraderaPage('after press');
   };
 
   const emitStage = (stage, extra = {}) => {

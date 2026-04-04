@@ -42,7 +42,7 @@ vi.mock('./ValidatorDocsTooltips', () => ({
   ValidatorDocTooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/products/ui', () => ({
   FormModal: (props: {
     open: boolean;
     title: string;

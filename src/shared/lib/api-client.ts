@@ -337,6 +337,8 @@ export async function apiClient<T>(
     }
 
     if (logError) {
+      const responsePayload =
+        data && typeof data === 'object' ? (data as Record<string, unknown>) : null;
       logClientError(error, {
         context: {
           endpoint,
@@ -344,6 +346,19 @@ export async function apiClient<T>(
           status: response.status,
           traceId: getTraceId(),
           params,
+          ...(typeof responsePayload?.['code'] === 'string'
+            ? { responseCode: responsePayload['code'] }
+            : {}),
+          ...(typeof responsePayload?.['errorId'] === 'string'
+            ? { responseErrorId: responsePayload['errorId'] }
+            : {}),
+          ...(typeof responsePayload?.['fingerprint'] === 'string'
+            ? { responseFingerprint: responsePayload['fingerprint'] }
+            : {}),
+          ...(responsePayload && 'details' in responsePayload
+            ? { responseDetails: responsePayload['details'] }
+            : {}),
+          ...(responsePayload ? { responsePayload } : {}),
         },
       });
       if (isLoggableObject(error)) {

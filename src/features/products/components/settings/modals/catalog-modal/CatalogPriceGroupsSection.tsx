@@ -3,7 +3,11 @@
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, Label, SelectSimple, Badge } from '@/shared/ui';
+import { matchesPriceGroupIdentifier } from '@/shared/lib/products/utils/price-group-identifiers';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Label } from '@/shared/ui/label';
+import { SelectSimple } from '@/shared/ui/select-simple';
 
 import { useCatalogModalContext } from './context/CatalogModalContext';
 
@@ -17,13 +21,12 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
     loadingGroups,
   } = useCatalogModalContext();
   const catalogPriceGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(() => {
-    const byId = new Map<string, string>();
-    priceGroups.forEach((group) => {
-      byId.set(group.id, group.name);
-    });
+    const groupByIdentifier = (identifier: string) =>
+      priceGroups.find((group) => matchesPriceGroupIdentifier(group, identifier));
+
     return catalogPriceGroupIds.map((id) => ({
       value: id,
-      label: byId.get(id) ?? id,
+      label: groupByIdentifier(id)?.name ?? id,
     }));
   }, [catalogPriceGroupIds, priceGroups]);
 
@@ -36,7 +39,9 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
         <div className='space-y-4'>
           <div className='flex flex-wrap gap-2'>
             {catalogPriceGroupIds.map((id) => {
-              const group = priceGroups.find((g) => g.id === id);
+              const group = priceGroups.find((priceGroup) =>
+                matchesPriceGroupIdentifier(priceGroup, id)
+              );
               return (
                 <Badge
                   key={id}
@@ -51,19 +56,25 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
           </div>
 
           <div className='max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs'>
-            {priceGroups.map((group) => (
-              <Button
-                key={group.id}
-                variant='ghost'
-                className='w-full justify-between h-8 px-2'
-                onClick={() => togglePriceGroup(group.id)}
-              >
-                <span>
-                  {group.name} ({group.currencyCode})
-                </span>
-                <span>{catalogPriceGroupIds.includes(group.id) ? 'Remove' : 'Add'}</span>
-              </Button>
-            ))}
+            {priceGroups.map((group) => {
+              const selectedIdentifier = catalogPriceGroupIds.find((identifier) =>
+                matchesPriceGroupIdentifier(group, identifier)
+              );
+
+              return (
+                <Button
+                  key={group.id}
+                  variant='ghost'
+                  className='w-full justify-between h-8 px-2'
+                  onClick={() => togglePriceGroup(selectedIdentifier ?? group.id)}
+                >
+                  <span>
+                    {group.name} ({group.currencyCode})
+                  </span>
+                  <span>{selectedIdentifier ? 'Remove' : 'Add'}</span>
+                </Button>
+              );
+            })}
           </div>
 
           <div className='space-y-2'>

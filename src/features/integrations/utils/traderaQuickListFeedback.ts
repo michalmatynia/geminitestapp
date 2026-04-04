@@ -4,6 +4,7 @@ export type PersistedTraderaQuickListFeedback = {
   productId: string;
   status: TraderaQuickListFeedbackStatus;
   expiresAt: number;
+  failureReason?: string | null | undefined;
   runId?: string | null | undefined;
   requestId?: string | null | undefined;
   integrationId?: string | null | undefined;
@@ -56,6 +57,10 @@ const readPersistedFeedbackMap = (): Record<string, PersistedTraderaQuickListFee
       const integrationId =
         typeof record['integrationId'] === 'string' && record['integrationId'].trim().length > 0
           ? record['integrationId'].trim()
+          : null;
+      const failureReason =
+        typeof record['failureReason'] === 'string' && record['failureReason'].trim().length > 0
+          ? record['failureReason'].trim()
           : null;
       const requestId =
         typeof record['requestId'] === 'string' && record['requestId'].trim().length > 0
@@ -110,6 +115,7 @@ const readPersistedFeedbackMap = (): Record<string, PersistedTraderaQuickListFee
             requestId,
             integrationId,
             connectionId,
+            failureReason,
             listingId,
             listingUrl,
             externalListingId,
@@ -123,6 +129,7 @@ const readPersistedFeedbackMap = (): Record<string, PersistedTraderaQuickListFee
         productId,
         status,
         expiresAt,
+        failureReason,
         runId,
         requestId,
         integrationId,
@@ -176,6 +183,7 @@ export const persistTraderaQuickListFeedback = (
     requestId?: string | null | undefined;
     integrationId?: string | null | undefined;
     connectionId?: string | null | undefined;
+    failureReason?: string | null | undefined;
     listingId?: string | null | undefined;
     listingUrl?: string | null | undefined;
     externalListingId?: string | null | undefined;
@@ -193,6 +201,7 @@ export const persistTraderaQuickListFeedback = (
     requestId: options?.requestId ?? null,
     integrationId: options?.integrationId ?? null,
     connectionId: options?.connectionId ?? null,
+    failureReason: options?.failureReason ?? null,
     listingId: options?.listingId ?? null,
     listingUrl: options?.listingUrl ?? null,
     externalListingId: options?.externalListingId ?? null,

@@ -194,7 +194,20 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
                     aria-label='Playwright listing script'
                     title='Playwright listing script'
                   />
-                  <div className='mt-2 flex justify-end'>
+                  <div className='mt-2 flex justify-end gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='xs'
+                      onClick={(): void =>
+                        setForm((prev) => ({
+                          ...prev,
+                          playwrightListingScript: '',
+                        }))
+                      }
+                    >
+                      Reset to managed default
+                    </Button>
                     <Button
                       type='button'
                       variant='outline'

@@ -150,7 +150,7 @@ describe('ProjectsContext', () => {
     });
   });
 
-  it('seeds the active project from the initial project id before preferences finish resolving', () => {
+  it('prefers the resolved user preference over local project storage when seeding selection', () => {
     mocks.projects = [
       {
         id: 'project-seeded',
@@ -163,14 +163,14 @@ describe('ProjectsContext', () => {
         updatedAt: '2026-04-03T00:00:00.000Z',
       },
     ];
-    window.localStorage.setItem('image_studio_active_project_local', 'project-local');
+    window.localStorage.setItem('image_studio_active_project_local', 'project-seeded');
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ProjectsProvider initialProjectId='project-seeded'>{children}</ProjectsProvider>
+      <ProjectsProvider>{children}</ProjectsProvider>
     );
 
     const { result } = renderHook(() => useProjectsState(), { wrapper });
 
-    expect(result.current.projectId).toBe('project-seeded');
+    expect(result.current.projectId).toBe('project-a');
   });
 });

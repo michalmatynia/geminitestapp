@@ -78,7 +78,7 @@ describe('ProductListingsEmpty', () => {
     expect(screen.getByText('Previous Base.com export failed')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'The last Base.com one-click export failed before a listing record was created. Use the options above to retry or choose a different connection.'
+        'The one-click export did not create a saved marketplace listing. Review the last failure details below, then use the options above to retry with a connection.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('failed')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('ProductListingsEmpty', () => {
     expect(screen.getByText('Tradera quick export needs recovery')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'The last Tradera quick export stopped before a stable listing record was available. Open the Tradera login window if needed, then continue the Tradera listing flow from this modal.'
+        'The one-click Tradera export did not leave behind a usable listing record yet. Open the Tradera login window if needed, then continue directly into the Tradera listing flow from this modal.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('auth_required')).toBeInTheDocument();
@@ -158,5 +158,40 @@ describe('ProductListingsEmpty', () => {
       'conn-tradera-1'
     );
     expect(onStartListingMock).not.toHaveBeenCalled();
+  });
+
+  it('shows configuration failures without login recovery actions when no listing record exists yet', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        runId: null,
+        requestId: 'job-tradera-config',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        failureReason:
+          'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.',
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider value={baseViewContextValue}>
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera quick export needs recovery')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
+      'href',
+      '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
+    );
   });
 });

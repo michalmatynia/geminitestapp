@@ -424,10 +424,32 @@ const executePlaywrightNodeRun = async (
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
   let page: Page | null = null;
+  const runtimeLifecycle = {
+    browserDisconnected: false,
+    contextClosed: false,
+    pageClosed: false,
+    pageCrashed: false,
+  };
+  const logRuntimeLifecycle = (
+    key: keyof typeof runtimeLifecycle,
+    message: string
+  ): void => {
+    if (runtimeLifecycle[key]) {
+      return;
+    }
+    runtimeLifecycle[key] = true;
+    logs.push(message);
+  };
   try {
     logs.push(`[runtime] Launching ${browserEngine} browser.`);
     browser = await getBrowserType(playwright, browserEngine).launch(launchOptions);
+    browser.on('disconnected', () => {
+      logRuntimeLifecycle('browserDisconnected', '[runtime] Browser disconnected.');
+    });
     context = await browser.newContext(contextOptions);
+    context.on('close', () => {
+      logRuntimeLifecycle('contextClosed', '[runtime] Browser context closed.');
+    });
     context.setDefaultTimeout(effectiveSettings.timeout);
     context.setDefaultNavigationTimeout(effectiveSettings.navigationTimeout);
     await registerOutboundPolicyRoute(context, logs, policyAllowedHosts);
@@ -442,6 +464,23 @@ const executePlaywrightNodeRun = async (
     }
 
     page = await context.newPage();
+    page.on('close', () => {
+      logRuntimeLifecycle('pageClosed', '[runtime] Runner page closed.');
+    });
+    page.on('crash', () => {
+      logRuntimeLifecycle('pageCrashed', '[runtime] Runner page crashed.');
+    });
+
+    if (request.preventNewPages) {
+      const runnerPage = page;
+      context.on('page', async (newPage: Page) => {
+        if (newPage === runnerPage) {
+          return;
+        }
+        logs.push('[runtime] Blocked new page/tab — scripts must use the provided page.');
+        await newPage.close().catch(() => undefined);
+      });
+    }
 
     if (request.startUrl?.trim()) {
       const allowedByPolicyOverride = isPolicyAllowedHost(request.startUrl, policyAllowedHosts);
@@ -817,8 +856,12 @@ const executePlaywrightNodeRun = async (
     const message = error instanceof Error ? error.message : String(error);
     await captureFailureArtifacts({
       artifacts,
+      browserDisconnected: runtimeLifecycle.browserDisconnected,
+      contextClosed: runtimeLifecycle.contextClosed,
       errorMessage: message,
       page,
+      pageClosed: runtimeLifecycle.pageClosed,
+      pageCrashed: runtimeLifecycle.pageCrashed,
       runArtifactsDir,
     });
     logs.push(`[runtime][error] ${message}`);

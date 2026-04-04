@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import * as kangurAiTutorSettings from '@/features/kangur/settings-ai-tutor';
+import * as kangurAiTutorSettings from '@/features/kangur/ai-tutor/settings';
 import * as kangurAiTutorUsage from '@/features/kangur/server/ai-tutor-usage';
 import { quotaExceededError } from '@/shared/errors/app-error';
 

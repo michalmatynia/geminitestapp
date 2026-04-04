@@ -22,6 +22,25 @@ import { renderProductListingItem } from './ProductListingItem';
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
+const readString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('login') ||
+    normalized.includes('verification') ||
+    normalized.includes('captcha') ||
+    normalized.includes('auth') ||
+    normalized.includes('session expired')
+  );
+};
+
 export function ProductListingsContent(): React.JSX.Element {
   const { product } = useProductListingsData();
   const { filteredListings, statusTargetLabel, filterIntegrationSlug, isBaseFilter, showSync } =
@@ -46,8 +65,30 @@ export function ProductListingsContent(): React.JSX.Element {
     recoveryIntegrationIdFromContext ?? fallbackRecoveryListing?.integrationId ?? null;
   const recoveryConnectionId =
     recoveryConnectionIdFromContext ?? fallbackRecoveryListing?.connectionId ?? null;
+  const fallbackRecoveryTraderaData = toRecord(
+    toRecord(fallbackRecoveryListing?.marketplaceData)['tradera']
+  );
+  const fallbackRecoveryLastExecution = toRecord(fallbackRecoveryTraderaData['lastExecution']);
+  const fallbackRecoveryErrorCategory = (
+    readString(fallbackRecoveryLastExecution['errorCategory']) ??
+    readString(fallbackRecoveryTraderaData['lastErrorCategory']) ??
+    ''
+  )
+    .trim()
+    .toLowerCase();
+  const fallbackRecoveryError = readString(fallbackRecoveryLastExecution['error']);
+  const fallbackRecoveryFailureReason = fallbackRecoveryListing?.failureReason ?? null;
+  const recoveryNeedsManualLogin =
+    isTraderaQuickExportRecovery &&
+    ((recoveryContext?.status ?? '').trim().toLowerCase() === 'auth_required' ||
+      (recoveryContext?.status ?? '').trim().toLowerCase() === 'needs_login' ||
+      (fallbackRecoveryListing?.status ?? '').trim().toLowerCase() === 'auth_required' ||
+      (fallbackRecoveryListing?.status ?? '').trim().toLowerCase() === 'needs_login' ||
+      fallbackRecoveryErrorCategory === 'auth' ||
+      hasTraderaAuthSignal(fallbackRecoveryError) ||
+      hasTraderaAuthSignal(fallbackRecoveryFailureReason));
   const canOpenTraderaRecoveryLogin = Boolean(
-    isTraderaQuickExportRecovery && recoveryIntegrationId && recoveryConnectionId
+    recoveryNeedsManualLogin && recoveryIntegrationId && recoveryConnectionId
   );
 
   React.useEffect(() => {
@@ -107,8 +148,10 @@ export function ProductListingsContent(): React.JSX.Element {
           status={recoveryContext?.status}
           requestId={recoveryRequestId}
           runId={recoveryRunId}
-          integrationId={canOpenTraderaRecoveryLogin ? recoveryIntegrationId : null}
-          connectionId={canOpenTraderaRecoveryLogin ? recoveryConnectionId : null}
+          failureReason={fallbackRecoveryFailureReason}
+          canContinue={canOpenTraderaRecoveryLogin}
+          integrationId={recoveryIntegrationId}
+          connectionId={recoveryConnectionId}
         />
       )}
       {filterIntegrationSlug && (

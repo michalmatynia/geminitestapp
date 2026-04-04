@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { CatalogNamedDto } from '@/shared/contracts/base';
 import type {
   ProductShippingGroup,
   ProductShippingGroupUpdateInput,
@@ -23,7 +22,10 @@ type ProductShippingGroupSnapshot = Pick<
   | 'autoAssignCurrencyCodes'
 >;
 
-export type ShippingGroupNameLookupInput = CatalogNamedDto;
+export type ShippingGroupNameLookupInput = {
+  catalogId: string;
+  name: string;
+};
 
 export const parseShippingGroupId = (params: { id: string }): string => {
   const parsed = paramsSchema.safeParse(params);

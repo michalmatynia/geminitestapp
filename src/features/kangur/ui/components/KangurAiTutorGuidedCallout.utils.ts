@@ -1,12 +1,27 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { resolveKangurPageContentFragment } from '@/features/kangur/ai-tutor/page-content-fragments';
 import { KANGUR_PAGE_CONTENT_COLLECTION } from '@/features/kangur/shared/contracts/kangur-page-content';
 import { cn } from '@/features/kangur/shared/utils';
-import type { KangurAiTutorRuntimeMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type {
+  KangurAiTutorKnowledgeReference,
+  KangurAiTutorRuntimeMessage,
+} from '@/features/kangur/shared/contracts/kangur-ai-tutor';
+import type { KangurAiTutorContent } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import type {
+  KangurPageContentEntry,
+  KangurPageContentFragment,
+} from '@/features/kangur/shared/contracts/kangur-page-content';
 import type { GuidedTutorTarget } from './ai-tutor-widget/KangurAiTutorWidget.types';
-import { useEffect, useState } from 'react';
+import type {
+  ActiveTutorFocus,
+  TutorQuickAction,
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
+import type {
+  PendingSelectionResponse,
+  SelectionConversationContext,
+} from './ai-tutor-widget/KangurAiTutorWidget.types';
 
 const isSelectionGuidedTutorTarget = (
   value: GuidedTutorTarget | null | undefined
@@ -93,9 +108,9 @@ export const resolveSelectedText = ({
 }: {
   activeSelectedText: string | null;
   guidedTutorTarget: GuidedTutorTarget | null;
-  selectionConversationContext: any;
+  selectionConversationContext: SelectionConversationContext | null;
   selectionGuidanceHandoffText: string | null;
-  selectionResponsePending: any;
+  selectionResponsePending: PendingSelectionResponse | null;
 }): string | null =>
   selectionConversationContext?.selectedText ??
   selectionResponsePending?.selectedText ??
@@ -117,9 +132,9 @@ export const resolveSectionLabel = ({
   (isSectionGuidedTutorTarget(guidedTutorTarget) ? guidedTutorTarget.kind : sectionResponsePendingKind);
 
 export const resolveHintQuickAction = (
-  visibleQuickActions: any[],
-  tutorContent: any
-): any =>
+  visibleQuickActions: TutorQuickAction[],
+  tutorContent: KangurAiTutorContent
+): TutorQuickAction =>
   visibleQuickActions.find((candidate) => candidate.id === 'hint') ?? {
     id: 'hint',
     label: tutorContent.quickActions.hint.defaultLabel,
@@ -129,11 +144,21 @@ export const resolveHintQuickAction = (
   };
 
 const resolvePageContentEntryId = (
-  knowledgeReference: any
+  knowledgeReference: KangurAiTutorKnowledgeReference | null
 ): string | null =>
   knowledgeReference?.sourceCollection === KANGUR_PAGE_CONTENT_COLLECTION
     ? knowledgeReference.sourceRecordId
     : null;
+
+export type GuidedCalloutSelectionState = {
+  hintQuickAction: TutorQuickAction;
+  resolvedSelectedKnowledgeLabel: string | null;
+  resolvedSelectedKnowledgeReference: KangurAiTutorKnowledgeReference | null;
+  resolvedSelectedText: string | null;
+  resolvedSelectionAssistantMessage: KangurAiTutorRuntimeMessage | null;
+  selectedKnowledgeEntry: KangurPageContentEntry | null;
+  selectedKnowledgeFragment: KangurPageContentFragment | null;
+};
 
 export function useGuidedCalloutSelectionState({
   activeFocus,
@@ -148,18 +173,18 @@ export function useGuidedCalloutSelectionState({
   visibleQuickActions,
   useKangurPageContentEntry,
 }: {
-  activeFocus: any;
+  activeFocus: ActiveTutorFocus;
   activeSelectedText: string | null;
   guidedTutorTarget: GuidedTutorTarget | null;
-  messages: any[];
+  messages: KangurAiTutorRuntimeMessage[];
   mode: string | null;
-  selectionConversationContext: any;
+  selectionConversationContext: SelectionConversationContext | null;
   selectionGuidanceHandoffText: string | null;
-  selectionResponsePending: any;
-  tutorContent: any;
-  visibleQuickActions: any[];
-  useKangurPageContentEntry: any;
-}) {
+  selectionResponsePending: PendingSelectionResponse | null;
+  tutorContent: KangurAiTutorContent;
+  visibleQuickActions: TutorQuickAction[];
+  useKangurPageContentEntry: typeof import('@/features/kangur/ui/hooks/useKangurPageContent').useKangurPageContentEntry;
+}): GuidedCalloutSelectionState {
   const resolvedSelectedText = resolveSelectedText({
     activeSelectedText,
     guidedTutorTarget,
@@ -236,10 +261,10 @@ export const resolveGuidedSelectionDisplayState = ({
   lastPromptMode: string | null;
   mode: string | null;
   resolvedSelectedKnowledgeLabel: string | null;
-  resolvedSelectedKnowledgeReference: any;
+  resolvedSelectedKnowledgeReference: KangurAiTutorKnowledgeReference | null;
   resolvedSelectionAssistantMessage: KangurAiTutorRuntimeMessage | null;
-  selectedKnowledgeEntry: any;
-  selectedKnowledgeFragment: any;
+  selectedKnowledgeEntry: KangurPageContentEntry | null;
+  selectedKnowledgeFragment: KangurPageContentFragment | null;
   showSelectionGuidanceCallout: boolean;
 }) => {
   const isResolvedSelectionCallout =
@@ -311,7 +336,7 @@ export const resolveGuidedCalloutLayoutState = ({
   resolvedSelectionDetail: string | null | undefined;
   showSelectionGuidanceCallout: boolean;
   stepLabel: string | null;
-  style: any;
+  style: CSSProperties | null | undefined;
   title: string | null | undefined;
 }) => ({
   accessibleCalloutDescription: [stepLabel, resolvedSelectionDetail]

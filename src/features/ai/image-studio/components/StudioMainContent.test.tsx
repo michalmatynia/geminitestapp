@@ -41,6 +41,7 @@ vi.mock('../context/ProjectsContext', () => ({
 
 vi.mock('../context/SlotsContext', () => ({
   useSlotsState: () => ({
+    isLoading: mocks.slotsQuery.isLoading,
     slotsQuery: mocks.slotsQuery,
   }),
 }));

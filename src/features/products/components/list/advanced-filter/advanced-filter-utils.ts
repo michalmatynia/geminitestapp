@@ -11,7 +11,6 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 export type AdvancedFieldKind = 'string' | 'number' | 'date' | 'boolean';
 
 export type AdvancedFilterFieldConfig = {

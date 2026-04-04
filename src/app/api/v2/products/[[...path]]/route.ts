@@ -21,6 +21,8 @@ import * as productsParameters from '../parameters/route-handler';
 import * as productsParametersId from '../parameters/[id]/route-handler';
 import * as productsProducers from '../producers/route-handler';
 import * as productsProducersId from '../producers/[id]/route-handler';
+import * as productsShippingGroups from '../shipping-groups/route-handler';
+import * as productsShippingGroupsId from '../shipping-groups/[id]/route-handler';
 import * as productsTags from '../tags/route-handler';
 import * as productsTagsAll from '../tags/all/route-handler';
 import * as productsTagsId from '../tags/[id]/route-handler';
@@ -84,6 +86,8 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['parameters', param('id')], module: productsParametersId },
   { pattern: ['producers'], module: productsProducers },
   { pattern: ['producers', param('id')], module: productsProducersId },
+  { pattern: ['shipping-groups'], module: productsShippingGroups },
+  { pattern: ['shipping-groups', param('id')], module: productsShippingGroupsId },
   { pattern: ['tags'], module: productsTags },
   { pattern: ['tags', 'all'], module: productsTagsAll },
   { pattern: ['tags', param('id')], module: productsTagsId },

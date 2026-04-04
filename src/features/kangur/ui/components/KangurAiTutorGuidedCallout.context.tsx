@@ -10,6 +10,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import {
+  type GuidedCalloutFallbackCopy,
   getGuidedCalloutFallbackCopy,
   useGuidedCalloutSelectionState,
   resolveGuidedSelectionDisplayState,
@@ -21,11 +22,11 @@ import {
 type GuidedCalloutContextValue = {
   calloutLabelId: string;
   calloutDescriptionId: string;
-  fallbackCopy: any;
-  selectionState: any;
-  selectionDisplayState: any;
-  layoutState: any;
-  sketchState: any;
+  fallbackCopy: GuidedCalloutFallbackCopy;
+  selectionState: ReturnType<typeof useGuidedCalloutSelectionState>;
+  selectionDisplayState: ReturnType<typeof resolveGuidedSelectionDisplayState>;
+  layoutState: ReturnType<typeof resolveGuidedCalloutLayoutState>;
+  sketchState: ReturnType<typeof useGuidedCalloutSketchState>;
   sectionLabel: string | null;
   homeOnboardingCanGoBack: boolean;
   usesDirectionalEntry: boolean;

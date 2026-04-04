@@ -10,6 +10,11 @@ import {
   resolveAiPathsStaleRunningCleanupIntervalMs,
   resolveAiPathsStaleRunningMaxAgeMs,
 } from '@/features/ai/ai-paths/server';
+import { recoverStaleBaseExportRuns } from '@/features/integrations/services/base-export-run-recovery';
+import {
+  BASE_EXPORT_RUN_PATH_ID,
+  BASE_EXPORT_RUN_SOURCE,
+} from '@/features/integrations/services/base-export-segments/constants';
 import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/server';
 import type { AiPathRunListOptions, AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -163,6 +168,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const repoSelection = await resolvePathRunRepository();
   const repo = repoSelection.repo;
   scheduleStaleRunningCleanup(repo);
+  if (pathId === BASE_EXPORT_RUN_PATH_ID || source === BASE_EXPORT_RUN_SOURCE) {
+    await recoverStaleBaseExportRuns({
+      repo,
+      ...(visibility === 'scoped' ? { userId: access.userId } : {}),
+    });
+  }
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   if (visibility === 'global' && !hasGlobalRunAccess) {
     throw forbiddenError('Global run access denied.');

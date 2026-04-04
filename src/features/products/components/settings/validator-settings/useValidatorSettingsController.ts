@@ -32,7 +32,8 @@ import {
   getProductValidationSemanticState,
   getProductValidationSemanticTransition,
 } from '@/shared/lib/products/utils/validator-semantic-state';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
+
 import {
   logClientCatch,
   logClientError,

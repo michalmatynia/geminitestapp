@@ -53,12 +53,42 @@ describe('TraderaQuickExportRecoveryBanner', () => {
         status='failed'
         requestId='job-tradera-2'
         runId='run-tradera-2'
+        integrationId='integration-tradera-2'
+        connectionId='conn-tradera-2'
       />
     );
 
-    expect(screen.getByText(/Tradera quick export requires recovery\./i)).toBeInTheDocument();
+    expect(screen.getByText('Tradera quick export requires recovery')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Review the Tradera listing below and use/i)
+    ).toBeInTheDocument();
     expect(screen.getByText('Login and continue listing')).toBeInTheDocument();
     expect(screen.getByText('job-tradera-2')).toBeInTheDocument();
     expect(screen.getByText('run-tradera-2')).toBeInTheDocument();
+  });
+
+  it('renders failure details without continue action when recovery is not login-based', () => {
+    render(
+      <TraderaQuickExportRecoveryBanner
+        mode='content'
+        status='failed'
+        requestId='job-tradera-3'
+        connectionId='conn-tradera-1'
+        failureReason='Tradera export requires an active Tradera category mapping for this product category.'
+        canContinue={false}
+      />
+    );
+
+    expect(screen.getByText('Tradera quick export needs attention')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Tradera export requires an active Tradera category mapping for this product category.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Login and continue listing')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
+      'href',
+      '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
+    );
   });
 });

@@ -76,7 +76,7 @@ type PlaywrightSettingsFormViewProviderProps = {
   children: React.ReactNode;
 };
 
-function PlaywrightSettingsFormViewProvider({
+export function PlaywrightSettingsFormViewProvider({
   value,
   children,
 }: PlaywrightSettingsFormViewProviderProps): React.JSX.Element {

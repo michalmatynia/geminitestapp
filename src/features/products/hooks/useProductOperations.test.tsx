@@ -24,7 +24,7 @@ vi.mock('@/features/products/hooks/useProductsMutations', () => ({
   useDuplicateProduct: () => useDuplicateProductMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => useToastMock(),
 }));
 

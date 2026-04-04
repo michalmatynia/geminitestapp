@@ -4,7 +4,7 @@ import {
   countFolderStructure,
   countMultipleFolders,
   type FolderNode,
-} from '@/features/foldertree/utils/folderImporter';
+} from '@/shared/lib/foldertree/utils/folderImporter';
 
 describe('folderImporter utils', () => {
   const mockNode: FolderNode = {

@@ -105,6 +105,30 @@ vi.mock('@/features/kangur/appearance/server/theme-slot-assignments-source', () 
   ensureKangurThemeSlotAssignmentsSeeded: mocks.ensureKangurThemeSlotAssignmentsSeededMock,
 }));
 
+vi.mock('@/features/kangur/server', () => ({
+  invalidateKangurStorefrontInitialStateCache:
+    mocks.invalidateKangurStorefrontInitialStateCacheMock,
+  isKangurStorefrontInitialStateDependencyKey:
+    mocks.isKangurStorefrontInitialStateDependencyKeyMock,
+  primeKangurLaunchRouteRuntime: mocks.primeKangurLaunchRouteRuntimeMock,
+  KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS: [
+    'kangur_storefront_default_mode_v1',
+    'kangur_cms_theme_daily_v1',
+    'kangur_cms_theme_dawn_v1',
+    'kangur_cms_theme_sunset_v1',
+    'kangur_cms_theme_nightly_v1',
+  ],
+  ensureKangurStorefrontAppearanceSettingsSeeded:
+    mocks.ensureKangurStorefrontAppearanceSettingsSeededMock,
+  ensureKangurThemeCatalogSeeded: mocks.ensureKangurThemeCatalogSeededMock,
+  ensureKangurThemePresetManifestSeeded: mocks.ensureKangurThemePresetManifestSeededMock,
+  ensureKangurThemeSlotAssignmentsSeeded: mocks.ensureKangurThemeSlotAssignmentsSeededMock,
+  isKangurSettingKey: mocks.isKangurSettingKeyMock,
+  listKangurSettings: mocks.listKangurSettingsMock,
+  readKangurSettingValue: mocks.readKangurSettingValueMock,
+  upsertKangurSettingValue: mocks.upsertKangurSettingValueMock,
+}));
+
 vi.mock('@/shared/lib/db/app-db-provider', () => ({
   APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
   getAppDbProvider: mocks.getAppDbProviderMock,

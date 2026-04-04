@@ -25,18 +25,13 @@ import { ProductFormData } from '@/shared/contracts/products';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { isPatternReplacementEnabledForValidationScope } from '@/shared/lib/products/utils/validator-instance-behavior';
-import {
-  Input,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  SelectSimple,
-  FormSection,
-  FormField,
-  Alert,
-  Skeleton,
-} from '@/features/products/ui';
+import { Alert } from '@/shared/ui/alert';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
+
 import { cn } from '@/shared/utils';
 
 import { ValidatedField } from './ValidatedField';

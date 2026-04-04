@@ -12,7 +12,8 @@ import {
   getProductValidationSemanticAuditRecordKey,
   getProductValidationSemanticAuditHistory,
 } from '@/shared/lib/products/utils/validator-semantic-state';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
+
 import { cn } from '@/shared/utils';
 
 const SEMANTIC_AUDIT_SOURCE_LABELS = {

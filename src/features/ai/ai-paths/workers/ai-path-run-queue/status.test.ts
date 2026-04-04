@@ -41,6 +41,11 @@ vi.mock('./status-utils', () => ({
 import { clearAiPathRunQueueStatusCache, getAiPathRunQueueStatus } from './status';
 
 describe('getAiPathRunQueueStatus', () => {
+  let repo: {
+    getQueueStats: ReturnType<typeof vi.fn>;
+    listRuns: ReturnType<typeof vi.fn>;
+  };
+
   beforeEach(() => {
     clearAiPathRunQueueStatusCache();
     mocks.getPathRunRepositoryMock.mockReset();
@@ -53,7 +58,7 @@ describe('getAiPathRunQueueStatus', () => {
 
     mocks.aiPathRunQueueStateMock.workerStarted = true;
     mocks.getQueueStatusScopeKeyMock.mockReturnValue('global');
-    mocks.getPathRunRepositoryMock.mockResolvedValue({
+    repo = {
       getQueueStats: vi.fn().mockResolvedValue({
         queuedCount: 0,
         oldestQueuedAt: null,
@@ -62,7 +67,8 @@ describe('getAiPathRunQueueStatus', () => {
         runs: [{ id: 'run-1', status: 'running' }],
         total: 1,
       }),
-    });
+    };
+    mocks.getPathRunRepositoryMock.mockResolvedValue(repo);
     mocks.getHealthStatusMock.mockResolvedValue({
       running: false,
       healthy: true,
@@ -107,6 +113,17 @@ describe('getAiPathRunQueueStatus', () => {
       expect.objectContaining({
         activeRuns: 1,
         processing: true,
+      })
+    );
+    expect(repo.getQueueStats).toHaveBeenCalledWith({
+      source: 'ai_paths_ui',
+      sourceMode: 'include',
+    });
+    expect(repo.listRuns).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statuses: ['running', 'blocked_on_lease', 'handoff_ready', 'paused'],
+        source: 'ai_paths_ui',
+        sourceMode: 'include',
       })
     );
   });

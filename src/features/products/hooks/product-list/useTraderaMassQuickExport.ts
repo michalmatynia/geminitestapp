@@ -4,21 +4,20 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 
 import {
-  DEFAULT_TRADERA_QUICKLIST_SCRIPT,
   fetchIntegrationsWithConnections,
   fetchPreferredTraderaConnection,
   integrationSelectionQueryKeys,
-  isTraderaBrowserIntegrationSlug,
-} from '@/features/integrations/public';
-import {
-  persistTraderaQuickListFeedback,
-} from '@/features/integrations/public';
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
+import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type BasicTraderaConnection = IntegrationWithConnections['connections'][number];

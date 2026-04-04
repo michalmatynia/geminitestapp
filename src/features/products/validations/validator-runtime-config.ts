@@ -4,7 +4,6 @@ import type { ProductValidationRuntimeType } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 const runtimeOperatorSchema = z.enum([
   'truthy',
   'falsy',

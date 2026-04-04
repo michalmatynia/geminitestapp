@@ -4,12 +4,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import {
-  DEFAULT_TRADERA_QUICKLIST_SCRIPT,
   fetchIntegrationsWithConnections,
   fetchPreferredTraderaConnection,
   integrationSelectionQueryKeys,
-  isTraderaBrowserIntegrationSlug,
-} from '@/features/integrations/public';
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';

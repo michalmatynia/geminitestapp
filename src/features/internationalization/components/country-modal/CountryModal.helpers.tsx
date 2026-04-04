@@ -1,5 +1,3 @@
-import React from 'react';
-
 import type { CurrencyOption } from '@/shared/contracts/internationalization';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 import { LoadingState } from '@/shared/ui';
@@ -99,7 +97,7 @@ export const buildCountryModalFields = (params: {
               id: currency.id,
               label: `${currency.code} (${currency.name})`,
             })),
-            selectedIds: params.selectedCurrencyIds,
+            selectedIds: [...params.selectedCurrencyIds],
             onToggle: params.onToggleCurrency,
             emptyMessage: 'No currencies available.',
           })

@@ -44,7 +44,8 @@ const readOptionalDate = (value: unknown): number | null => {
 
 export const isBaseQuickExportRecoveryContext = (
   recoveryContext?: ProductListingsRecoveryContext | null | undefined
-): boolean => recoveryContext?.source === 'base_quick_export_failed';
+): recoveryContext is BaseRecoveryContext =>
+  recoveryContext?.source === 'base_quick_export_failed';
 
 export const createBaseRecoveryContext = ({
   status,
@@ -70,7 +71,7 @@ export const createBaseRecoveryContext = ({
 
 export const isTraderaQuickExportRecoveryContext = (
   recoveryContext?: ProductListingsRecoveryContext | null | undefined
-): boolean =>
+): recoveryContext is TraderaRecoveryContext =>
   recoveryContext?.source === 'tradera_quick_export_auth_required' ||
   recoveryContext?.source === 'tradera_quick_export_failed';
 
@@ -82,6 +83,20 @@ export const resolveProductListingsEmptyDescription = (
   }
 
   if (isTraderaQuickExportRecoveryContext(recoveryContext)) {
+    const normalizedStatus = (recoveryContext.status ?? '').trim().toLowerCase();
+    const failureReason =
+      'failureReason' in recoveryContext &&
+      typeof recoveryContext.failureReason === 'string' &&
+      recoveryContext.failureReason.trim().length > 0
+        ? recoveryContext.failureReason.trim()
+        : null;
+    if (
+      failureReason &&
+      normalizedStatus !== 'auth_required' &&
+      normalizedStatus !== 'needs_login'
+    ) {
+      return failureReason;
+    }
     return 'The last Tradera quick export stopped before a stable listing record was available. Open the Tradera login window if needed, then continue the Tradera listing flow from this modal.';
   }
 
@@ -102,6 +117,7 @@ export const resolveTraderaRecoverySource = (
 export const createTraderaRecoveryContext = ({
   status,
   runId,
+  failureReason,
   requestId,
   integrationId,
   connectionId,
@@ -109,6 +125,7 @@ export const createTraderaRecoveryContext = ({
 }: {
   status: string;
   runId: string | null;
+  failureReason?: string | null | undefined;
   requestId?: string | null | undefined;
   integrationId?: string | null | undefined;
   connectionId?: string | null | undefined;
@@ -118,6 +135,7 @@ export const createTraderaRecoveryContext = ({
   integrationSlug: 'tradera',
   status,
   runId,
+  failureReason: failureReason ?? null,
   requestId: requestId ?? null,
   integrationId: integrationId ?? null,
   connectionId: connectionId ?? null,
@@ -138,6 +156,12 @@ export const areProductListingsRecoveryContextsEqual = (
     left.integrationSlug === right.integrationSlug &&
     left.status === right.status &&
     left.runId === right.runId &&
+    normalizeRecoveryOptionalField(
+      'failureReason' in left ? left.failureReason : null
+    ) ===
+      normalizeRecoveryOptionalField(
+        'failureReason' in right ? right.failureReason : null
+      ) &&
     normalizeRecoveryOptionalField(left.requestId) ===
       normalizeRecoveryOptionalField(right.requestId) &&
     normalizeRecoveryOptionalField(left.integrationId) ===
@@ -162,6 +186,13 @@ export const mergeProductListingsRecoveryContext = (
     ...fallback,
     ...preferred,
     runId: preferred.runId ?? fallback.runId ?? null,
+    ...('failureReason' in preferred &&
+    normalizeRecoveryOptionalField(preferred.failureReason) !== null
+      ? { failureReason: normalizeRecoveryOptionalField(preferred.failureReason) }
+      : 'failureReason' in fallback &&
+          normalizeRecoveryOptionalField(fallback.failureReason) !== null
+        ? { failureReason: normalizeRecoveryOptionalField(fallback.failureReason) }
+        : {}),
     ...(normalizeRecoveryOptionalField(preferred.requestId) !== null
       ? { requestId: normalizeRecoveryOptionalField(preferred.requestId) }
       : normalizeRecoveryOptionalField(fallback.requestId) !== null

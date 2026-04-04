@@ -1,11 +1,16 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
+import { useWatch } from 'react-hook-form';
 import { describe, expect, it } from 'vitest';
 
 import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 
-import { ProductFormCoreProvider, useProductFormCoreState, resolveProductFormDefaultSku } from './ProductFormCoreContext';
+import {
+  ProductFormCoreProvider,
+  useProductFormCoreState,
+  resolveProductFormDefaultSku,
+} from './ProductFormCoreContext';
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
@@ -73,6 +78,46 @@ function ImportSourceProbe(): React.JSX.Element {
   );
 }
 
+function DescriptionProbe(): React.JSX.Element {
+  const { methods } = useProductFormCoreState();
+  const description = useWatch({
+    control: methods.control,
+    name: 'description_en',
+  });
+  return createElement(
+    'div',
+    { 'data-testid': 'description-en' },
+    description ?? 'missing'
+  );
+}
+
+function DirtyDescriptionProbe(): React.JSX.Element {
+  const { methods } = useProductFormCoreState();
+  const description = useWatch({
+    control: methods.control,
+    name: 'description_en',
+  });
+  return createElement(
+    'div',
+    null,
+    createElement(
+      'button',
+      {
+        type: 'button',
+        onClick: () => {
+          methods.setValue('description_en', 'Local draft', { shouldDirty: true });
+        },
+      },
+      'Dirty description'
+    ),
+    createElement(
+      'div',
+      { 'data-testid': 'description-en' },
+      description ?? 'missing'
+    )
+  );
+}
+
 describe('ProductFormCoreProvider', () => {
   it('hydrates importSource from the edited product into form defaults', () => {
     render(
@@ -96,5 +141,67 @@ describe('ProductFormCoreProvider', () => {
     );
 
     expect(screen.getByTestId('import-source')).toHaveTextContent('base');
+  });
+
+  it('refreshes non-dirty form fields when the same product receives newer content', async () => {
+    const { rerender } = render(
+      createElement(
+        ProductFormCoreProvider,
+        { product: createProduct({ description_en: 'Old description' }) },
+        createElement(DescriptionProbe)
+      )
+    );
+
+    expect(screen.getByTestId('description-en')).toHaveTextContent('Old description');
+
+    rerender(
+      createElement(
+        ProductFormCoreProvider,
+        {
+          product: createProduct({
+            description_en: 'Fresh AI description',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          }),
+        },
+        createElement(DescriptionProbe)
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('description-en')).toHaveTextContent('Fresh AI description');
+    });
+  });
+
+  it('keeps dirty form fields when synced product detail changes underneath the editor', async () => {
+    const { rerender } = render(
+      createElement(
+        ProductFormCoreProvider,
+        { product: createProduct({ description_en: 'Old description' }) },
+        createElement(DirtyDescriptionProbe)
+      )
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dirty description' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('description-en')).toHaveTextContent('Local draft');
+    });
+
+    rerender(
+      createElement(
+        ProductFormCoreProvider,
+        {
+          product: createProduct({
+            description_en: 'Fresh AI description',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          }),
+        },
+        createElement(DirtyDescriptionProbe)
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('description-en')).toHaveTextContent('Local draft');
+    });
   });
 });

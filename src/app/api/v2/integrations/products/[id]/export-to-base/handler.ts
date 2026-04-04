@@ -3,11 +3,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   LogCapture,
 } from '@/features/integrations/server';
+import { recoverStaleBaseExportRuns } from '@/features/integrations/services/base-export-run-recovery';
 import { enqueueBaseExportJob } from '@/features/integrations/workers/baseExportQueue';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  externalServiceError,
+  serviceUnavailableError,
+} from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
+import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
+import { initializeQueues } from '@/features/jobs/server';
 
 import {
   BASE_EXPORT_SOURCE,
@@ -19,7 +26,6 @@ import {
 import {
   loadExportResources,
   createExportRun,
-  updateRunStarted,
 } from './segments';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -81,6 +87,19 @@ export async function postExportToBaseHandler(
       );
     }
 
+    initializeQueues();
+
+    if (isRedisAvailable() && !(await isRedisReachable())) {
+      throw serviceUnavailableError(
+        'Base.com export queue is unavailable because Redis is unreachable. Start Redis and retry.',
+        5000,
+        {
+          queue: 'base-export',
+          source: BASE_EXPORT_SOURCE,
+        }
+      );
+    }
+
     // ── Idempotency dedup ──
     const normalizedRequestId = requestId?.trim() ?? '';
     if (normalizedRequestId) {
@@ -120,8 +139,14 @@ export async function postExportToBaseHandler(
 
     const userId = session?.user?.id ?? null;
 
+    await recoverStaleBaseExportRuns({
+      userId: userId ?? undefined,
+      productId,
+      connectionId: data.connectionId,
+    });
+
     // ── Create tracking run ──
-    const { run, runRepository } = await createExportRun({
+    const { run } = await createExportRun({
       userId,
       productId,
       connectionId: data.connectionId,
@@ -131,13 +156,6 @@ export async function postExportToBaseHandler(
       runMeta,
     });
     runId = run.id;
-
-    void updateRunStarted(runRepository, runId, {
-      productId,
-      connectionId: data.connectionId,
-      inventoryId: resolvedInventoryId,
-      imagesOnly,
-    });
 
     // ── Enqueue for background processing ──
     const jobId = await enqueueBaseExportJob({

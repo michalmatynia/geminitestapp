@@ -17,8 +17,11 @@ const {
 
 vi.mock('@/features/integrations/server', () => ({
   fetchBaseCategories: fetchBaseCategoriesMock,
-  fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
   resolveBaseConnectionToken: resolveBaseConnectionTokenMock,
+}));
+
+vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
+  fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
 }));
 
 import {
@@ -125,6 +128,17 @@ describe('marketplace categories fetch helpers', () => {
 
     await expect(resolveMarketplaceCategoryFetchContext(unsupportedRepo, 'conn-1')).rejects.toThrow(
       'Other is not yet supported for category fetch'
+    );
+
+    const traderaApiRepo: CategoryFetchIntegrationRepository = {
+      getConnectionById: vi.fn().mockResolvedValue(createConnection()),
+      getIntegrationById: vi.fn().mockResolvedValue(
+        createIntegration({ name: 'Tradera API', slug: 'tradera-api' })
+      ),
+    };
+
+    await expect(resolveMarketplaceCategoryFetchContext(traderaApiRepo, 'conn-1')).rejects.toThrow(
+      'Tradera API is not yet supported for category fetch'
     );
 
     expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera')).toEqual({

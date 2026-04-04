@@ -5,9 +5,13 @@ import { useEffect, useRef } from 'react';
 
 import {
   fetchProductListings,
+  isMissingProductListingsError,
   productListingsQueryKey,
-} from '@/features/integrations/public';
-import type { PersistedTraderaQuickListFeedback } from '@/features/integrations/public';
+} from '@/features/integrations/hooks/useListingQueries';
+import type {
+  PersistedTraderaQuickListFeedback,
+  TraderaQuickListFeedbackStatus,
+} from '@/features/integrations/utils/traderaQuickListFeedback';
 import { toRecord } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ListingBadgesPayload } from '@/shared/contracts/integrations';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -26,7 +30,6 @@ import {
   buildTrackedTraderaFeedbackOptions,
   findTrackedTraderaListing,
 } from './useTraderaQuickExportFeedback';
-import type { TraderaQuickListFeedbackStatus } from '@/features/integrations/public';
 
 const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 
@@ -92,6 +95,7 @@ export function useTraderaQuickExportPolling(
           queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
           queryFn: () => fetchProductListings(productId),
           staleTime: 0,
+          logError: false,
           meta: {
             source: 'products.components.TraderaQuickListButton.trackListing',
             operation: 'list',
@@ -152,6 +156,13 @@ export function useTraderaQuickExportPolling(
         scheduleNext();
       } catch (error: unknown) {
         if (!cancelled) {
+          if (isMissingProductListingsError(error)) {
+            queryClient.removeQueries({
+              queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
+            });
+            setFeedbackStatus(null);
+            return;
+          }
           logClientCatch(error, {
             source: 'TraderaQuickListButton',
             action: 'trackListing',

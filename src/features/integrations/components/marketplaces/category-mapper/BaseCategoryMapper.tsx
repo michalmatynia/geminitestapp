@@ -6,6 +6,7 @@ import { useCategoryMapperPageSelection } from '@/features/integrations/context/
 import { BaseProducerMapper } from './BaseProducerMapper';
 import { BaseTagMapper } from './BaseTagMapper';
 import { CategoryMapperTable } from './CategoryMapperTable';
+import { TraderaCategoryFetchRecoveryModal } from './TraderaCategoryFetchRecoveryModal';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 
@@ -23,9 +24,12 @@ export function BaseCategoryMapper(): React.JSX.Element {
     <CategoryMapperProvider
       connectionId={selectedConnection.id}
       connectionName={selectedConnection.name}
+      integrationId={selectedConnection.integration.id}
+      integrationSlug={selectedConnection.integration.slug}
     >
       <div className='space-y-6'>
         <CategoryMapperTable />
+        <TraderaCategoryFetchRecoveryModal />
         {isBaseConnection ? <BaseProducerMapper /> : null}
         {isBaseConnection ? <BaseTagMapper /> : null}
       </div>

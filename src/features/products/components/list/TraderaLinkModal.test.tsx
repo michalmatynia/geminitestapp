@@ -20,15 +20,21 @@ const {
   useLinkExistingTraderaListingMutationMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/constants/slugs', () => ({
   isTraderaIntegrationSlug: (value: string | null | undefined) =>
     ['tradera', 'tradera-api'].includes((value ?? '').trim().toLowerCase()),
+}));
+
+vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
   useDefaultTraderaConnection: () => useDefaultTraderaConnectionMock(),
   useIntegrationsWithConnections: () => useIntegrationsWithConnectionsMock(),
+}));
+
+vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
   useLinkExistingTraderaListingMutation: () => useLinkExistingTraderaListingMutationMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/FormModal', () => ({
   FormModal: ({
     open,
     title,
@@ -60,7 +66,13 @@ vi.mock('@/shared/ui', () => ({
         </button>
       </div>
     ) : null,
+}));
+
+vi.mock('@/shared/ui/input', () => ({
   Input: (props: InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+}));
+
+vi.mock('@/shared/ui/label', () => ({
   Label: ({
     children,
     htmlFor,
@@ -68,6 +80,9 @@ vi.mock('@/shared/ui', () => ({
     children?: ReactNode;
     htmlFor?: string;
   }) => <label htmlFor={htmlFor}>{children}</label>,
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
   SelectSimple: ({
     value,
     onValueChange,
@@ -90,6 +105,9 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
+}));
+
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({
     toast: toastMock,
   }),

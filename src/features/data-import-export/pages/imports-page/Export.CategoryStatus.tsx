@@ -87,7 +87,7 @@ export function ExportCategoryStatusSection(): React.JSX.Element {
           <span>
             No active mappings found for this connection. Add mappings in{' '}
             <Link
-              href='/admin/integrations/aggregators/base-com/category-mapping'
+              href='/admin/integrations/marketplaces/category-mapper'
               className='text-amber-300 underline'
             >
               Category Mapper

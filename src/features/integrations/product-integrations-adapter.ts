@@ -4,6 +4,7 @@ export { ProductListingsModal } from './components/listings/ProductListingsModal
 export {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
+  fetchPreferredTraderaConnection,
   integrationSelectionQueryKeys,
 } from './components/listings/hooks/useIntegrationSelection';
 export {

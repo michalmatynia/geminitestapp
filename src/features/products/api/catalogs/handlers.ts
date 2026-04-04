@@ -12,6 +12,7 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { normalizeCatalogLanguageSelection } from '@/shared/lib/products/services/catalog-language-normalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { normalizeCatalogPriceGroupSelection } from './price-group-normalization';
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -120,6 +121,10 @@ export async function postCatalogsHandler(
     languageIds: data.languageIds ?? [],
     defaultLanguageId: data.defaultLanguageId ?? null,
   });
+  const normalizedPriceGroups = await normalizeCatalogPriceGroupSelection(provider, {
+    priceGroupIds: data.priceGroupIds ?? [],
+    defaultPriceGroupId: data.defaultPriceGroupId ?? null,
+  });
 
   if (normalizedLanguages.languageIds.length === 0) {
     throw badRequestError('Select at least one language.', {
@@ -134,12 +139,15 @@ export async function postCatalogsHandler(
       field: 'defaultLanguageId',
     });
   }
-  if (!data.priceGroupIds || data.priceGroupIds.length === 0) {
+  if (normalizedPriceGroups.priceGroupIds.length === 0) {
     throw badRequestError('Select at least one price group.', {
       field: 'priceGroupIds',
     });
   }
-  if (!data.defaultPriceGroupId || !data.priceGroupIds.includes(data.defaultPriceGroupId)) {
+  if (
+    !normalizedPriceGroups.defaultPriceGroupId ||
+    !normalizedPriceGroups.priceGroupIds.includes(normalizedPriceGroups.defaultPriceGroupId)
+  ) {
     throw badRequestError('Default price group must be one of the selected price groups.', {
       field: 'defaultPriceGroupId',
     });
@@ -153,8 +161,8 @@ export async function postCatalogsHandler(
     isDefault: shouldBeDefault,
     languageIds: normalizedLanguages.languageIds,
     defaultLanguageId: normalizedLanguages.defaultLanguageId,
-    priceGroupIds: data.priceGroupIds ?? [],
-    defaultPriceGroupId: data.defaultPriceGroupId ?? null,
+    priceGroupIds: normalizedPriceGroups.priceGroupIds,
+    defaultPriceGroupId: normalizedPriceGroups.defaultPriceGroupId,
   });
   return NextResponse.json(catalog);
 }

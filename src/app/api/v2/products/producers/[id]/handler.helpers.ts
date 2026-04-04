@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { NameDto } from '@/shared/contracts/base';
 import type { Producer, ProducerUpdateInput } from '@/shared/contracts/products';
 import { conflictError, validationError } from '@/shared/errors/app-error';
 
@@ -10,7 +9,9 @@ const paramsSchema = z.object({
 
 type ProducerSnapshot = Pick<Producer, 'id'>;
 
-export interface ProducerNameLookupInput extends NameDto {}
+export type ProducerNameLookupInput = {
+  name: string;
+};
 
 const normalizeProducerName = (name: string | undefined): string | undefined =>
   typeof name === 'string' ? name.trim() : undefined;

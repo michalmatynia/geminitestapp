@@ -2,8 +2,13 @@ import {
   appendKangurUrlParams,
   getKangurPageHref as createPageUrl,
 } from '@/features/kangur/config/routing';
-import { getKangurSubjectLabel, KANGUR_LESSON_LIBRARY } from '@/features/kangur/lessons/lesson-catalog';
+import { getKangurSubjectLabel } from '@/features/kangur/lessons/lesson-catalog';
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
+import type {
+  KangurOperation,
+  KangurTrainingSelection,
+} from '@/features/kangur/ui/types';
+import type { KangurPracticeAssignment } from '@/features/kangur/ui/context/KangurGameRuntimeContext.shared';
 import type {
   KangurAssignmentListItem,
   KangurAssignmentsRuntimeLocalizer,
@@ -15,8 +20,8 @@ import {
   PRACTICE_OPERATION_DIFFICULTY,
 } from './delegated-assignments/delegated-assignments.constants';
 import {
-  buildKangurAssignmentCatalog,
   formatKangurAssignmentPriorityLabel,
+  resolveAssignmentCreatedAtTimestamp,
   resolveKangurAssignmentPriorityAccent,
   resolveKangurAssignmentSubject,
   resolveAssignmentProgressCount,
@@ -169,9 +174,52 @@ export const resolveKangurAssignmentCountdownLabel = (
   );
 };
 
-export const sortKangurAssignments = (
-  assignments: KangurAssignmentSnapshot[]
-): KangurAssignmentSnapshot[] => {
+const ACTIVE_ASSIGNMENT_STATUS_ORDER: Partial<
+  Record<KangurAssignmentSnapshot['progress']['status'], number>
+> = {
+  in_progress: 0,
+  not_started: 1,
+};
+
+const isActiveKangurAssignment = (
+  assignment: KangurAssignmentSnapshot
+): boolean => assignment.progress.status !== 'completed';
+
+const isKangurPracticeAssignment = (
+  assignment: KangurAssignmentSnapshot
+): assignment is KangurPracticeAssignment => assignment.target.type === 'practice';
+
+const compareKangurActiveAssignments = (
+  left: KangurAssignmentSnapshot,
+  right: KangurAssignmentSnapshot
+): number => {
+  const leftPriority = ASSIGNMENT_PRIORITY_ORDER[left.priority] ?? Number.MAX_SAFE_INTEGER;
+  const rightPriority = ASSIGNMENT_PRIORITY_ORDER[right.priority] ?? Number.MAX_SAFE_INTEGER;
+  if (leftPriority !== rightPriority) {
+    return leftPriority - rightPriority;
+  }
+
+  const leftStatus =
+    ACTIVE_ASSIGNMENT_STATUS_ORDER[left.progress.status] ?? Number.MAX_SAFE_INTEGER;
+  const rightStatus =
+    ACTIVE_ASSIGNMENT_STATUS_ORDER[right.progress.status] ?? Number.MAX_SAFE_INTEGER;
+  if (leftStatus !== rightStatus) {
+    return leftStatus - rightStatus;
+  }
+
+  return resolveAssignmentCreatedAtTimestamp(right) - resolveAssignmentCreatedAtTimestamp(left);
+};
+
+const selectBestActiveKangurAssignment = <TAssignment extends KangurAssignmentSnapshot>(
+  assignments: TAssignment[]
+): TAssignment | null =>
+  [...assignments]
+    .filter(isActiveKangurAssignment)
+    .sort(compareKangurActiveAssignments)[0] ?? null;
+
+export const sortKangurAssignments = <TAssignment extends KangurAssignmentSnapshot>(
+  assignments: TAssignment[]
+): TAssignment[] => {
   return [...assignments].sort((a, b) => {
     const statusOrder: Record<string, number> = { in_progress: 0, not_started: 1, completed: 2 };
     const aStatus = statusOrder[a.progress.status] ?? 3;
@@ -202,37 +250,34 @@ export const filterKangurAssignmentsBySubject = (
   assignments: KangurAssignmentSnapshot[],
   subject: string
 ): KangurAssignmentSnapshot[] => {
-  return assignments.filter((assignment) => {
-    if (assignment.target.type === 'lesson') {
-      const lesson = KANGUR_LESSON_LIBRARY.find(
-        (l) => l.componentId === assignment.target.lessonComponentId
-      );
-      return lesson?.subject === subject;
-    }
-    return false;
-  });
+  return assignments.filter(
+    (assignment) => resolveKangurAssignmentSubject(assignment) === subject
+  );
 };
 
 export const selectKangurPriorityAssignments = (
   assignments: KangurAssignmentSnapshot[],
   limit: number
 ): KangurAssignmentSnapshot[] => {
-  return sortKangurAssignments(assignments).slice(0, limit);
+  return assignments
+    .filter(isActiveKangurAssignment)
+    .sort(compareKangurActiveAssignments)
+    .slice(0, limit);
 };
 
 
 export const mapKangurPracticeAssignmentsByOperation = (
   assignments: KangurAssignmentSnapshot[]
-): Record<string, KangurAssignmentSnapshot[]> => {
-  const mapped: Record<string, KangurAssignmentSnapshot[]> = {};
+): Partial<Record<KangurOperation, KangurPracticeAssignment>> => {
+  const mapped: Partial<Record<KangurOperation, KangurPracticeAssignment>> = {};
 
-  for (const assignment of assignments) {
-    if (assignment.target.type === 'practice') {
-      const operation = assignment.target.operation;
-      if (!mapped[operation]) {
-        mapped[operation] = [];
-      }
-      mapped[operation].push(assignment);
+  for (const assignment of assignments
+    .filter(isKangurPracticeAssignment)
+    .filter(isActiveKangurAssignment)
+    .sort(compareKangurActiveAssignments)) {
+    const operation = assignment.target.operation;
+    if (!mapped[operation]) {
+      mapped[operation] = assignment;
     }
   }
 
@@ -242,50 +287,133 @@ export const mapKangurPracticeAssignmentsByOperation = (
 export const selectKangurPracticeAssignmentForScreen = (
   assignments: KangurAssignmentSnapshot[],
   screen: string | null,
-  operation: string | null
-): KangurAssignmentSnapshot | null => {
-  if (!operation || screen !== 'training') {
+  operation: KangurOperation | null
+): KangurPracticeAssignment | null => {
+  if (screen === 'training') {
+    return selectBestActiveKangurAssignment(
+      assignments
+        .filter(isKangurPracticeAssignment)
+        .filter((assignment) => assignment.target.operation === 'mixed')
+    );
+  }
+
+  if (screen === 'operation') {
+    return selectBestActiveKangurAssignment(
+      assignments
+        .filter(isKangurPracticeAssignment)
+        .filter((assignment) => assignment.target.operation !== 'mixed')
+    );
+  }
+
+  if (!operation || screen !== 'playing') {
     return null;
   }
 
-  const filtered = assignments.filter(
-    (a) =>
-      a.target.type === 'practice' &&
-      a.target.operation === operation &&
-      a.progress.status !== 'completed'
+  return selectBestActiveKangurAssignment(
+    assignments
+      .filter(isKangurPracticeAssignment)
+      .filter((assignment) => assignment.target.operation === operation)
   );
-
-  return filtered.length > 0 ? filtered[0] : null;
 };
 
 export const selectKangurResultPracticeAssignment = (
   assignments: KangurAssignmentSnapshot[],
-  operation: string
-): KangurAssignmentSnapshot | null => {
-  const filtered = assignments.filter(
-    (a) =>
-      a.target.type === 'practice' &&
-      a.target.operation === operation
-  );
+  operation: KangurOperation
+): KangurPracticeAssignment | null => {
+  const matchingAssignments = assignments
+    .filter(isKangurPracticeAssignment)
+    .filter((assignment) => assignment.target.operation === operation);
 
-  return filtered.length > 0 ? filtered[0] : null;
+  const activeAssignment = selectBestActiveKangurAssignment(matchingAssignments);
+  if (activeAssignment) {
+    return activeAssignment;
+  }
+
+  return (
+    matchingAssignments
+      .filter(
+        (assignment): assignment is KangurPracticeAssignment =>
+          assignment.progress.status === 'completed'
+      )
+      .sort((left, right) => {
+        const leftTime = resolveAssignmentCreatedAtTimestamp({
+          ...left,
+          updatedAt: left.progress.completedAt ?? left.updatedAt,
+        });
+        const rightTime = resolveAssignmentCreatedAtTimestamp({
+          ...right,
+          updatedAt: right.progress.completedAt ?? right.updatedAt,
+        });
+        return rightTime - leftTime;
+      })[0] ?? null
+  );
 };
 
 export const parseKangurMixedTrainingQuickStartParams = (
-  params: Record<string, string | string[] | undefined>,
-  _basePath: string
-): { operation: string; quickStart: string } | null => {
-  const quickStart = params['quickStart'] as string | undefined;
-  
-  if (quickStart === 'training') {
-    const categories = (params['categories'] as string | undefined)?.split(',');
-    if (categories && categories.length > 0) {
-      return {
-        operation: 'mixed',
-        quickStart: 'training',
-      };
+  params: URLSearchParams,
+  _basePath = ''
+): KangurTrainingSelection | null => {
+  const readParam = (key: string): string | null => {
+    const directValue = params.get(key);
+    if (directValue) {
+      return directValue;
     }
+
+    for (const [paramKey, value] of params.entries()) {
+      if (paramKey.endsWith(`-${key}`)) {
+        return value;
+      }
+    }
+
+    return null;
+  };
+
+  const categoriesParam = readParam('categories');
+  const countParam = readParam('count');
+  const difficultyParam = readParam('difficulty');
+
+  const categories = Array.from(
+    new Set(
+      (categoriesParam ?? '')
+        .split(',')
+        .map((category) => category.trim())
+        .filter((category): category is (typeof MIXED_TRAINING_CATEGORIES)[number] =>
+          MIXED_TRAINING_CATEGORIES.includes(
+            category as (typeof MIXED_TRAINING_CATEGORIES)[number]
+          )
+        )
+    )
+  );
+  const parsedCount = Number.parseInt(countParam ?? '', 10);
+  const normalizedDifficulty = (difficultyParam ?? '').trim();
+
+  if (!categoriesParam || categories.length === 0) {
+    return null;
   }
 
-  return null;
+  const requestedCategories = categoriesParam
+    .split(',')
+    .map((category) => category.trim())
+    .filter(Boolean);
+  if (requestedCategories.length !== categories.length) {
+    return null;
+  }
+
+  if (!Number.isInteger(parsedCount) || parsedCount <= 0) {
+    return null;
+  }
+
+  if (
+    normalizedDifficulty !== 'easy' &&
+    normalizedDifficulty !== 'medium' &&
+    normalizedDifficulty !== 'hard'
+  ) {
+    return null;
+  }
+
+  return {
+    categories,
+    count: parsedCount,
+    difficulty: normalizedDifficulty,
+  };
 };

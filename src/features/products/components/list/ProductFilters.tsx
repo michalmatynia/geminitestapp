@@ -39,8 +39,9 @@ const STOCK_OPERATOR_OPTIONS: Array<
   { value: 'lte', label: 'Less than or equal (<=)' },
   { value: 'eq', label: 'Equal (=)' },
 ];
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
+
 import type { FilterField } from '@/shared/contracts/ui';
 
 import {

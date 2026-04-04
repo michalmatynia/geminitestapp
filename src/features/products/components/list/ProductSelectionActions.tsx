@@ -27,22 +27,15 @@ import {
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import type { ProductAdvancedFilterPreset, ProductWithImages } from '@/shared/contracts/products';
-import {
-  ActionMenu,
-  AppModal,
-  Button,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  Input,
-  SelectionBar,
-  useToast,
-  JSONImportModal,
-  Chip,
-} from '@/shared/ui';
+import { ActionMenu } from '@/shared/ui/ActionMenu';
+import { AppModal } from '@/shared/ui/app-modal';
+import { Button } from '@/shared/ui/button';
+import { Chip } from '@/shared/ui/chip';
+import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/shared/ui/dropdown-menu';
+import { Input } from '@/shared/ui/input';
+import { SelectionBar } from '@/shared/ui/selection-bar';
+import { JSONImportModal } from '@/shared/ui/templates/modals/JSONImportModal';
+import { useToast } from '@/shared/ui/toast';
 
 import {
   buildPresetBundle,
@@ -56,7 +49,6 @@ import {
   writeToClipboard,
 } from './product-filters-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const {

@@ -1,5 +1,4 @@
-/* eslint-disable no-useless-escape */
-export const PART_4 = `          );
+export const PART_4 = String.raw`          );
         }
         break;
       }
@@ -23,6 +22,7 @@ export const PART_4 = `          );
       throw new Error('FAIL_CATEGORY_SET: Category selector trigger not found.');
     }
 
+    await logClickTarget('category-trigger:mapped', categoryTrigger);
     await humanClick(categoryTrigger).catch(() => undefined);
     await wait(400);
 

@@ -45,6 +45,15 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
+vi.mock('@/shared/hooks/useUserPreferences', () => ({
+  useUserPreferences: () => ({
+    isLoading: false,
+    data: {
+      imageStudioLastProjectId: '',
+    },
+  }),
+}));
+
 vi.mock('@/shared/ui', () => ({
   useToast: () => ({
     toast: mocks.toast,

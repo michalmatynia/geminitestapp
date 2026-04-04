@@ -32,15 +32,12 @@ import {
   buildCategoryPathLabelMap,
   formatCategoryRuleSummary,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
-import {
-  Button,
-  SelectSimple,
-  FormSection,
-  FormField,
-  StandardDataTablePanel,
-  StatusBadge,
-  Alert,
-} from '@/features/products/ui';
+import { Alert } from '@/shared/ui/alert';
+import { Button } from '@/shared/ui/button';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { StatusBadge } from '@/shared/ui/status-badge';
+import { StandardDataTablePanel } from '@/shared/ui/templates/StandardDataTablePanel';
 
 import { ValidatedField } from './ValidatedField';
 import { ValidatorIssueHint } from './ValidatorIssueHint';

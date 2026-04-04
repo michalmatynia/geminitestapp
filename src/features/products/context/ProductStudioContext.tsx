@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 
+import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
@@ -16,8 +17,8 @@ import {
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
-import { useStudioProjects } from '@/features/ai/public';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
+
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import { useProductFormCore } from './ProductFormCoreContext';
@@ -40,7 +41,6 @@ import type {
   ProductStudioVariantsResponse,
 } from './ProductStudioContext.types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 export type {
   ProductImageSlotPreview,

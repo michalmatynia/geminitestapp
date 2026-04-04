@@ -304,6 +304,13 @@ export const buildAdminNav = (handlers: {
             id: 'integrations/marketplaces/tradera',
             label: 'Tradera',
             href: '/admin/integrations/tradera',
+            children: [
+              {
+                id: 'integrations/marketplaces/tradera/category-mapping',
+                label: 'Category Mapping',
+                href: '/admin/integrations/marketplaces/category-mapper?marketplace=tradera',
+              },
+            ],
           },
           {
             id: 'integrations/marketplaces/playwright',

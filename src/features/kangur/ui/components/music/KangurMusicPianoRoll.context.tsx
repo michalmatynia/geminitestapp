@@ -13,6 +13,7 @@ import type { KangurMusicSynthEnvelope } from './useKangurMusicSynth';
 import type {
   ActiveKeyPressState,
   ActiveSynthGestureState,
+  KeyPulsePhase,
   KeyPulseState,
   ResolvedPianoRollStep,
   SynthPitchResolution,
@@ -22,18 +23,47 @@ import type {
   KangurMusicPointerType,
 } from './KangurMusicPianoRoll.types';
 
-export type KangurMusicPianoRollContextValue = {
-  activePressesRef: React.MutableRefObject<Map<string, ActiveKeyPressState>>;
+type KangurMusicTriggerPressOptions = {
+  interactionId?: string | null;
+  keepPressActive?: boolean;
+  pointerType?: KangurMusicPointerType;
+};
+
+type KangurMusicSynthGestureInput<NoteId extends string> = {
+  anchorSemitonePosition: number;
+  brightness: number;
+  frequencyHz: number;
+  interactionId: string;
+  nearestSemitonePosition: number;
+  normalizedHorizontalPosition: number;
+  normalizedVerticalPosition: number;
+  noteId: NoteId;
+  pitchSemitonePosition: number;
+  previousVibratoDepth?: number;
+  pointerType: KangurMusicPointerType;
+  velocity: number;
+};
+
+type KangurMusicSynthPitchAtPointInput<NoteId extends string> = {
+  clientX: number;
+  fallbackKey: KangurMusicPianoKeyDefinition<NoteId>;
+  fallbackRect: DOMRect;
+  pointerType?: KangurMusicPointerType;
+  preferredNoteId?: NoteId;
+};
+
+export type KangurMusicPianoRollContextValue<NoteId extends string = string> = {
+  activePressesRef: React.MutableRefObject<Map<NoteId, ActiveKeyPressState>>;
   activeOscTab: 'osc1' | 'osc2';
   activeStepIndex: number | null;
-  activeSynthGesture: ActiveSynthGestureState<string> | null;
+  activeSynthGesture: ActiveSynthGestureState<NoteId> | null;
   activeSynthGestureCount: number;
-  activeSynthGestures: ActiveSynthGestureState<string>[];
-  activeSynthGesturesRef: React.MutableRefObject<Map<number, ActiveSynthGestureState<string>>>;
-  activeTransportStep: ResolvedPianoRollStep<string> | null;
-  currentCursorStep: ResolvedPianoRollStep<string> | null;
+  activeSynthGestures: ActiveSynthGestureState<NoteId>[];
+  activeSynthGesturesRef: React.MutableRefObject<Map<number, ActiveSynthGestureState<NoteId>>>;
+  activeTransportStep: ResolvedPianoRollStep<NoteId> | null;
+  currentCursorStep: ResolvedPianoRollStep<NoteId> | null;
   expectedStepIndex: number | null;
-  expectedTransportStep: ResolvedPianoRollStep<string> | null;
+  expectedTransportStep: ResolvedPianoRollStep<NoteId> | null;
   isCompactMobile: boolean;
   isCoarsePointer: boolean;
   isFreePlayMode: boolean;
@@ -41,19 +71,19 @@ export type KangurMusicPianoRollContextValue = {
   isSixYearOldVisualMode: boolean;
   isSynthEnvelopeDialogOpen: boolean;
   isSynthOscPanelOpen: boolean;
-  keyButtonRefs: React.MutableRefObject<Map<string, HTMLButtonElement>>;
-  keyDefinitionById: Map<string, KangurMusicPianoKeyDefinition<string>>;
-  keys: readonly KangurMusicPianoKeyDefinition<string>[];
+  keyButtonRefs: React.MutableRefObject<Map<NoteId, HTMLButtonElement>>;
+  keyDefinitionById: Map<NoteId, KangurMusicPianoKeyDefinition<NoteId>>;
+  keys: readonly KangurMusicPianoKeyDefinition<NoteId>[];
   keyTestIdPrefix: string;
-  laneKeys: readonly KangurMusicPianoKeyDefinition<string>[];
+  laneKeys: readonly KangurMusicPianoKeyDefinition<NoteId>[];
   measureCount: number;
-  pressedNoteId: string | null;
+  pressedNoteId: NoteId | null;
   pressedVelocity: number | null;
-  recentKeyPulses: Map<string, KeyPulseState>;
+  recentKeyPulses: Map<NoteId, KeyPulseState>;
   resolvedCompletedCount: number;
   resolvedKeyboardMode: KangurMusicKeyboardMode;
   resolvedLaneHeightPx: number;
-  resolvedMelody: ResolvedPianoRollStep<string>[];
+  resolvedMelody: ResolvedPianoRollStep<NoteId>[];
   resolvedMinStepWidthPx: number;
   resolvedOsc1Config: KangurMusicSynthOsc1Config;
   resolvedOsc2Config: KangurMusicSynthOsc2Config;
@@ -72,22 +102,33 @@ export type KangurMusicPianoRollContextValue = {
   showSynthWaveformSwitch: boolean;
   stepElementRefs: React.MutableRefObject<Map<number, HTMLDivElement>>;
   stepTestIdPrefix: string;
-  synthAxisAnchors: { key: KangurMusicPianoKeyDefinition<string>; normalizedPosition: number }[];
+  synthAxisAnchors: { key: KangurMusicPianoKeyDefinition<NoteId>; normalizedPosition: number }[];
   onActiveOscTabChange: (tab: 'osc1' | 'osc2') => void;
-  onClearPress: (noteId: string) => void;
-  onEndSynthGesture: (gesture: ActiveSynthGestureState<string>, event: React.PointerEvent<HTMLButtonElement>) => void;
+  onClearPress: (noteId: NoteId) => void;
+  onEndSynthGesture: (
+    gesture: ActiveSynthGestureState<NoteId>,
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => void;
   onKeyboardModeChange: (mode: KangurMusicKeyboardMode) => void;
   onOpenSynthEnvelopeDialog: () => void;
   onCloseSynthEnvelopeDialog: () => void;
-  onResolveGestureDynamics: (activePress: any) => KangurMusicPressDynamics;
-  onResolveSynthGestureDetails: (input: any) => KangurMusicSynthGestureDetails<string>;
-  onResolveSynthPitchAtPoint: (input: any) => SynthPitchResolution<string>;
+  onResolveGestureDynamics: (activePress: ActiveKeyPressState) => KangurMusicPressDynamics;
+  onResolveSynthGestureDetails: (
+    input: KangurMusicSynthGestureInput<NoteId>
+  ) => KangurMusicSynthGestureDetails<NoteId>;
+  onResolveSynthPitchAtPoint: (
+    input: KangurMusicSynthPitchAtPointInput<NoteId>
+  ) => SynthPitchResolution<NoteId>;
   onResolveVerticalPosition: (clientY: number, rect: DOMRect) => number;
-  onStartPress: (noteId: string, pointerType: KangurMusicPointerType, event?: React.PointerEvent<HTMLButtonElement>) => void;
+  onStartPress: (
+    noteId: NoteId,
+    pointerType: KangurMusicPointerType,
+    event?: React.PointerEvent<HTMLButtonElement>
+  ) => void;
   onSynthEnvelopeReset: () => void;
   onSynthEnvelopeSliderChange: (controlId: string, nextValue: number) => void;
-  onSynthGestureChange: (details: KangurMusicSynthGestureDetails<string>) => void;
-  onSynthGestureStart: (details: KangurMusicSynthGestureDetails<string>) => void;
+  onSynthGestureChange?: (details: KangurMusicSynthGestureDetails<NoteId>) => void;
+  onSynthGestureStart?: (details: KangurMusicSynthGestureDetails<NoteId>) => void;
   onSynthGlideModeChange: (glideMode: KangurMusicSynthGlideMode) => void;
   onSynthOscPanelToggle: () => void;
   onSynthOscSettingsChange: (
@@ -95,44 +136,42 @@ export type KangurMusicPianoRollContextValue = {
     nextOsc2: KangurMusicSynthOsc2Config
   ) => void;
   onSynthWaveformChange: (waveform: KangurMusicSynthWaveform) => void;
-  onTriggerKeyPulse: (noteId: string, energy: number, phase: any) => void;
-  onTriggerPress: (noteId: string, options?: any) => KangurMusicPianoKeyPressDetails | null;
-  onUpdatePressFromPointerEvent: (noteId: string, event: React.PointerEvent<HTMLButtonElement>) => any;
+  onTriggerKeyPulse: (noteId: NoteId, energy: number, phase: KeyPulsePhase) => void;
+  onTriggerPress: (
+    noteId: NoteId,
+    options?: KangurMusicTriggerPressOptions
+  ) => KangurMusicPianoKeyPressDetails | null;
+  onUpdatePressFromPointerEvent: (
+    noteId: NoteId,
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => ActiveKeyPressState | null;
   syncActiveSynthGestures: () => void;
 };
 
-const KangurMusicPianoRollContext = createContext<KangurMusicPianoRollContextValue | null>(null);
+const KangurMusicPianoRollContext = createContext<KangurMusicPianoRollContextValue<string> | null>(
+  null
+);
 
-export function KangurMusicPianoRollProvider({
+export function KangurMusicPianoRollProvider<NoteId extends string>({
   children,
   value,
 }: {
   children: React.ReactNode;
-  value: KangurMusicPianoRollContextValue;
+  value: KangurMusicPianoRollContextValue<NoteId>;
 }) {
   return (
-    <KangurMusicPianoRollContext.Provider value={value}>
+    <KangurMusicPianoRollContext.Provider
+      value={value as unknown as KangurMusicPianoRollContextValue<string>}
+    >
       {children}
     </KangurMusicPianoRollContext.Provider>
   );
 }
 
-export function useKangurMusicPianoRollContext<NoteId extends string = string>(): KangurMusicPianoRollContextValue & {
-  activeSynthGesture: ActiveSynthGestureState<NoteId> | null;
-  activePressesRef: React.MutableRefObject<Map<NoteId, ActiveKeyPressState>>;
-  activeSynthGestures: ActiveSynthGestureState<NoteId>[];
-  activeTransportStep: ResolvedPianoRollStep<NoteId> | null;
-  currentCursorStep: ResolvedPianoRollStep<NoteId> | null;
-  expectedTransportStep: ResolvedPianoRollStep<NoteId> | null;
-  isCoarsePointer: boolean;
-  keyDefinitionById: Map<NoteId, KangurMusicPianoKeyDefinition<NoteId>>;
-  keys: readonly KangurMusicPianoKeyDefinition<NoteId>[];
-  laneKeys: readonly KangurMusicPianoKeyDefinition<NoteId>[];
-  resolvedMelody: ResolvedPianoRollStep<NoteId>[];
-} {
+export function useKangurMusicPianoRollContext<NoteId extends string = string>(): KangurMusicPianoRollContextValue<NoteId> {
   const context = useContext(KangurMusicPianoRollContext);
   if (!context) {
     throw new Error('useKangurMusicPianoRollContext must be used within a KangurMusicPianoRollProvider');
   }
-  return context as any;
+  return context as unknown as KangurMusicPianoRollContextValue<NoteId>;
 }

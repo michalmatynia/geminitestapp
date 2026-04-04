@@ -123,7 +123,7 @@ describe('useIntegrationsActionsImpl', () => {
     );
   });
 
-  it('blocks scripted Tradera mode when the Playwright listing script is missing', async () => {
+  it('allows scripted Tradera mode with an empty script (runtime falls back to managed default)', async () => {
     const activeIntegration = createIntegration('tradera');
     const args = createArgs(activeIntegration);
     const { result } = renderHook(() => useIntegrationsActionsImpl(args));
@@ -141,10 +141,13 @@ describe('useIntegrationsActionsImpl', () => {
       formData: form,
     });
 
-    expect(upsertConnectionMutateAsyncMock).not.toHaveBeenCalled();
-    expect(toastMock).toHaveBeenCalledWith(
-      'Playwright listing script is required for scripted Tradera mode.',
-      { variant: 'error' }
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          traderaBrowserMode: 'scripted',
+          playwrightListingScript: null,
+        }),
+      })
     );
   });
 });

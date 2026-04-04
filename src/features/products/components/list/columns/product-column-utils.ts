@@ -188,6 +188,28 @@ export const resolveProductCategoryLabel = (
   return OPAQUE_CATEGORY_ID_PATTERN.test(normalizedCategoryId) ? '—' : normalizedCategoryId;
 };
 
+export const resolveEffectiveDefaultPriceGroupId = (
+  product: ProductWithImages,
+  catalogDefaultPriceGroupIdByCatalogId: ReadonlyMap<string, string>
+): string | null => {
+  const directDefaultPriceGroupId = toTrimmedString(product.defaultPriceGroupId);
+  if (directDefaultPriceGroupId) {
+    return directDefaultPriceGroupId;
+  }
+
+  const productCatalogId =
+    toTrimmedString(product.catalogId) ||
+    toTrimmedString(product.catalogs?.[0]?.catalogId);
+  if (!productCatalogId) {
+    return null;
+  }
+
+  const catalogDefaultPriceGroupId = toTrimmedString(
+    catalogDefaultPriceGroupIdByCatalogId.get(productCatalogId)
+  );
+  return catalogDefaultPriceGroupId || null;
+};
+
 export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>
   typeof product.importSource === 'string' && product.importSource.trim().length > 0;
 

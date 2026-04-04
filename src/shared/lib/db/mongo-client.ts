@@ -22,10 +22,8 @@ const POOL_LOG_COOLDOWN_MS = 30_000; // suppress repeated events of the same typ
 const SLOW_COMMAND_THRESHOLD_MS = parsePositiveInt(process.env['MONGODB_SLOW_COMMAND_MS'], 3_000);
 const MONITOR_COMMANDS = process.env['MONGODB_MONITOR_COMMANDS'] === 'true';
 const DEBUG_MONGODB_POOL = process.env['DEBUG_MONGODB_POOL'] === 'true';
-const DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS =
-  process.env['NODE_ENV'] === 'development' ? 1_000 : 5_000;
-const DEFAULT_MONGO_CONNECT_TIMEOUT_MS =
-  process.env['NODE_ENV'] === 'development' ? 1_000 : 5_000;
+const DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS = 5_000;
+const DEFAULT_MONGO_CONNECT_TIMEOUT_MS = 5_000;
 
 const poolLoggedAt = new Map<string, number>();
 const shouldEmit = (key: string): boolean => {

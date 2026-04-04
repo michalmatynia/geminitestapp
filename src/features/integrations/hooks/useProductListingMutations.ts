@@ -23,6 +23,8 @@ import type {
   ProductJob,
   ExportToBaseVariables,
   ExportResponse,
+  TraderaProductLinkExistingPayload,
+  TraderaProductLinkExistingResponse,
 } from '@/shared/contracts/integrations';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { api, ApiError } from '@/shared/lib/api-client';
@@ -532,6 +534,36 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       if (queueName === 'playwright-programmable-listings') {
         setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued');
       }
+      await invalidateProductListingsAndBadges(queryClient, productId);
+    },
+  });
+}
+
+export function useLinkExistingTraderaListingMutation(productId: string): CreateMutation<
+  TraderaProductLinkExistingResponse,
+  TraderaProductLinkExistingPayload
+> {
+  return createCreateMutationV2({
+    mutationFn: ({ listingUrl, connectionId }: TraderaProductLinkExistingPayload) =>
+      api.post<TraderaProductLinkExistingResponse>(
+        `/api/v2/integrations/products/${productId}/tradera/link-existing`,
+        {
+          listingUrl,
+          ...(connectionId ? { connectionId } : {}),
+        }
+      ),
+    mutationKey: getProductListingsQueryKey(productId),
+    meta: {
+      source: 'integrations.hooks.useLinkExistingTraderaListingMutation',
+      operation: 'create',
+      resource: 'integrations.listings.tradera-link-existing',
+      domain: 'integrations',
+      mutationKey: getProductListingsQueryKey(productId),
+      tags: ['integrations', 'listings', 'tradera', 'link-existing'],
+      description: 'Links an existing Tradera listing to a product.',
+    },
+    invalidate: async (queryClient) => {
+      setListingBadgeStatus(queryClient, productId, 'tradera', 'active');
       await invalidateProductListingsAndBadges(queryClient, productId);
     },
   });

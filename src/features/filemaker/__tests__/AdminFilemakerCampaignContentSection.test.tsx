@@ -6,6 +6,8 @@ import type { FilemakerEmailCampaign } from '../types';
 import { createBlankCampaignDraft } from '../pages/AdminFilemakerCampaignEditPage.utils';
 import { ContentSection } from '../pages/AdminFilemakerCampaignEditPage.sections';
 
+const useCampaignEditContextMock = vi.fn();
+
 vi.mock('@/shared/lib/document-editor/components/DocumentWysiwygEditor', () => ({
   DocumentWysiwygEditor: ({
     value,
@@ -124,12 +126,20 @@ vi.mock('@/shared/ui', () => ({
   ),
 }));
 
+vi.mock('../pages/AdminFilemakerCampaignEditPage.context', () => ({
+  useCampaignEditContext: () => useCampaignEditContextMock(),
+}));
+
 function ContentSectionHarness(): React.JSX.Element {
   const [draft, setDraft] = useState<FilemakerEmailCampaign>(createBlankCampaignDraft());
+  useCampaignEditContextMock.mockReturnValue({
+    draft,
+    setDraft,
+  });
 
   return (
     <>
-      <ContentSection draft={draft} setDraft={setDraft} />
+      <ContentSection />
       <output data-testid='campaign-body-html'>{draft.bodyHtml ?? ''}</output>
       <output data-testid='campaign-body-text'>{draft.bodyText ?? ''}</output>
     </>

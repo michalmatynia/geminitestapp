@@ -63,13 +63,37 @@ describe('MarketplaceSelector', () => {
     });
   });
 
-  it('lets the user switch the marketplace family', () => {
-    const setSelectedMarketplaceMock = vi.fn();
+  it('passes grouped connection options into the picker dropdown', () => {
+    render(<MarketplaceSelector />);
+
+    expect(screen.getByRole('button', { name: 'Base.com' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tradera' })).toBeInTheDocument();
+    expect(mocks.genericPickerDropdown).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedKey: 'conn-base-1',
+        groups: [
+          expect.objectContaining({
+            label: 'Base.com',
+            options: [
+              expect.objectContaining({
+                key: 'conn-base-1',
+                label: 'Base Alpha',
+                description: 'From Base.com',
+              }),
+            ],
+          }),
+        ],
+      })
+    );
+  });
+
+  it('switches marketplace families through the selector buttons', () => {
+    const setSelectedMarketplace = vi.fn();
     mocks.useCategoryMapperPageSelection.mockReturnValue({
       selectedMarketplace: 'base',
       selectedMarketplaceLabel: 'Base.com',
       selectedConnectionId: 'conn-base-1',
-      setSelectedMarketplace: setSelectedMarketplaceMock,
+      setSelectedMarketplace,
       setSelectedConnectionId: vi.fn(),
     });
 
@@ -77,10 +101,10 @@ describe('MarketplaceSelector', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Tradera' }));
 
-    expect(setSelectedMarketplaceMock).toHaveBeenCalledWith('tradera');
+    expect(setSelectedMarketplace).toHaveBeenCalledWith('tradera');
   });
 
-  it('shows a marketplace-specific empty state for Tradera browser connections', () => {
+  it('shows the generic empty state when no connections are available', () => {
     mocks.useCategoryMapperPageData.mockReturnValue({
       loading: false,
       marketplaces: [
@@ -109,9 +133,7 @@ describe('MarketplaceSelector', () => {
 
     expect(screen.getByText('No Tradera connections found')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'Tradera categories are fetched live from the create-listing page through a logged-in browser Playwright session.'
-      )
+      screen.getByText('Configure a Tradera connection in Integrations first.')
     ).toBeInTheDocument();
   });
 });

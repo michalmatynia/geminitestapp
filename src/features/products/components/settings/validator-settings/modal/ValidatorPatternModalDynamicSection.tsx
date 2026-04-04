@@ -9,7 +9,9 @@ import type {
   DynamicReplacementLogicOperator,
   DynamicReplacementLogicAction,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import { Input, SelectSimple, FormField, FormSection } from '@/shared/ui';
+import { FormField, FormSection } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { SelectSimple } from '@/shared/ui/select-simple';
 
 import {
   LOGIC_ACTION_OPTIONS,

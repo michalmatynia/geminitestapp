@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { CatalogNamedDto } from '@/shared/contracts/base';
 import type { ProductTag, ProductTagUpdateInput } from '@/shared/contracts/products';
 import { conflictError, validationError } from '@/shared/errors/app-error';
 
@@ -10,7 +9,10 @@ const paramsSchema = z.object({
 
 type ProductTagSnapshot = Pick<ProductTag, 'id' | 'catalogId'>;
 
-export type ProductTagNameLookupInput = CatalogNamedDto;
+export type ProductTagNameLookupInput = {
+  catalogId: string;
+  name: string;
+};
 
 export const parseTagId = (params: { id: string }): string => {
   const parsed = paramsSchema.safeParse(params);

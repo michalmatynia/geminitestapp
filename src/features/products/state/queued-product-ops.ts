@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { logProductListDebug } from '@/features/products/lib/product-list-observability';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 const STORAGE_KEY = 'queued-product-ids';
 const DEFAULT_QUEUED_PRODUCT_TTL_MS = 30_000;
 const MIN_QUEUED_PRODUCT_TTL_MS = 1_000;

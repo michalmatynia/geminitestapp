@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import type { ConnectionIdDto, SaveResultDto } from '@/shared/contracts/base';
 import type {
   ProducerMapping,
   ProducerMappingCreateInput,
@@ -12,7 +11,9 @@ const marketplaceProducerMappingsQuerySchema = z.object({
   connectionId: optionalTrimmedQueryString(),
 });
 
-export type MarketplaceProducerMappingsListQuery = ConnectionIdDto;
+export type MarketplaceProducerMappingsListQuery = {
+  connectionId: string;
+};
 
 export type ProducerMappingCreateFields = {
   connectionId: string;
@@ -32,7 +33,10 @@ export type ProducerMappingSaveRepository = {
   create: (input: ProducerMappingCreateFields) => Promise<ProducerMapping>;
 };
 
-export type ProducerMappingSaveResult = SaveResultDto<ProducerMapping>;
+export type ProducerMappingSaveResult = {
+  body: ProducerMapping;
+  status: 200 | 201;
+};
 
 export const parseMarketplaceProducerMappingsQuery = (
   rawQuery: unknown

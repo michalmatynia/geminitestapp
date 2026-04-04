@@ -6,7 +6,6 @@ import {
 } from '@/features/integrations/services/tradera-playwright-settings';
 import type {
   IntegrationConnectionRecord,
-  PlaywrightRelistBrowserMode,
   ProductListing,
 } from '@/shared/contracts/integrations';
 import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
@@ -22,18 +21,26 @@ import {
   findVisibleLocator,
   extractExternalListingId,
   captureTraderaListingDebugArtifacts,
+  buildCanonicalTraderaListingUrl,
 } from './utils';
 import {
   ensureLoggedIn,
   readTraderaAuthState,
 } from './tradera-browser-auth';
 import type { TraderaBrowserListingResult } from './browser-types';
+import { resolveTraderaListingPriceForProduct } from './price';
+import { buildTraderaPricingMetadata } from './pricing-metadata';
+
+const STANDARD_REQUESTED_BROWSER_MODE = 'connection_default';
+
+const toTrimmedString = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
 
 export const runTraderaBrowserListingStandard = async ({
   listing,
   connection,
   systemSettings,
-  source,
+  source: _source,
   action,
 }: {
   listing: ProductListing;
@@ -81,13 +88,37 @@ export const runTraderaBrowserListingStandard = async ({
   context.setDefaultNavigationTimeout(playwrightSettings.navigationTimeout);
 
   const page = await context.newPage();
+  const effectiveBrowserMode = effectiveHeadless ? 'headless' : 'headed';
+  let pricingMetadata: Record<string, unknown> | null = null;
   try {
     await ensureLoggedIn(page, connection, listingFormUrl);
 
     const productRepository = await getProductRepository();
     const product = await productRepository.getProductById(listing.productId);
     if (!product) {
-      throw notFoundError('Product not found', { productId: listing.productId });
+        throw notFoundError('Product not found', { productId: listing.productId });
+    }
+
+    const priceResolution = await resolveTraderaListingPriceForProduct({
+      product,
+      targetCurrencyCode: 'EUR',
+    });
+    pricingMetadata = buildTraderaPricingMetadata(priceResolution);
+    if (
+      priceResolution.listingPrice === null ||
+      !priceResolution.resolvedToTargetCurrency ||
+      toTrimmedString(priceResolution.listingCurrencyCode).toUpperCase() !== 'EUR'
+    ) {
+      throw internalError(
+        'FAIL_PRICE_RESOLUTION: Tradera listing price could not be resolved to EUR.',
+        {
+          mode: 'standard',
+          browserMode: effectiveBrowserMode,
+          requestedBrowserMode: STANDARD_REQUESTED_BROWSER_MODE,
+          listingFormUrl,
+          ...pricingMetadata,
+        }
+      );
     }
 
     const title =
@@ -96,12 +127,16 @@ export const runTraderaBrowserListingStandard = async ({
       product.name_de ||
       product.sku ||
       `Listing ${listing.productId}`;
-    const description =
+    const descriptionBase =
       product.description_en || product.description_pl || product.description_de || title;
-    const priceValue =
-      typeof product.price === 'number' && Number.isFinite(product.price)
-        ? String(product.price)
-        : '1';
+    const descriptionLines = [
+      descriptionBase,
+      '',
+      `Item reference: ${product.id}`,
+      `SKU: ${product.sku || 'N/A'}`,
+    ];
+    const description = descriptionLines.join('\n');
+    const priceValue = String(priceResolution.listingPrice);
 
     const titleInput = await findVisibleLocator(page, TITLE_SELECTORS);
     const descriptionInput = await findVisibleLocator(page, DESCRIPTION_SELECTORS);
@@ -136,23 +171,38 @@ export const runTraderaBrowserListingStandard = async ({
 
     const nextStorageState = await context.storageState();
     const integrationRepository = await getIntegrationRepository();
-    await integrationRepository.updateConnectionPlaywrightStorageState(
-      connection.id,
-      JSON.stringify(nextStorageState)
-    );
+    const completedAt = new Date().toISOString();
+    await integrationRepository.updateConnection(connection.id, {
+      playwrightStorageState: JSON.stringify(nextStorageState),
+      playwrightStorageStateUpdatedAt: completedAt,
+    });
 
     return {
       externalListingId,
-      listingUrl: page.url(),
+      listingUrl: buildCanonicalTraderaListingUrl(externalListingId),
+      completedAt,
+      metadata: {
+        mode: 'standard',
+        browserMode: effectiveBrowserMode,
+        requestedBrowserMode: STANDARD_REQUESTED_BROWSER_MODE,
+        listingFormUrl,
+        completedAt,
+        ...pricingMetadata,
+      },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     const errorId = `tradera-browser-standard-${Date.now()}`;
     const debugArtifacts = await captureTraderaListingDebugArtifacts(page, errorId, action);
     const authState = await readTraderaAuthState(page).catch(() => null);
 
     if (isAppError(error)) {
-      error.context = {
-        ...error.context,
+      error.meta = {
+        ...error.meta,
+        mode: 'standard',
+        browserMode: effectiveBrowserMode,
+        requestedBrowserMode: STANDARD_REQUESTED_BROWSER_MODE,
+        listingFormUrl,
+        ...(pricingMetadata ?? {}),
         debugArtifacts,
         authState,
         errorId,
@@ -162,11 +212,17 @@ export const runTraderaBrowserListingStandard = async ({
 
     throw internalError(error instanceof Error ? error.message : 'Browser listing failed', {
       cause: error,
+      mode: 'standard',
+      browserMode: effectiveBrowserMode,
+      requestedBrowserMode: STANDARD_REQUESTED_BROWSER_MODE,
+      listingFormUrl,
+      ...(pricingMetadata ?? {}),
       debugArtifacts,
       authState,
       errorId,
     });
   } finally {
+    await context.close().catch(() => undefined);
     await browser.close();
   }
 };

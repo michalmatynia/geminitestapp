@@ -100,12 +100,15 @@ vi.mock(
   })
 );
 
-vi.mock('@/shared/ui/templates/modals', () => ({
+vi.mock('@/shared/ui/templates/modals/ConfirmModal', () => ({
   ConfirmModal: () => null,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/admin-products-page-layout', () => ({
   AdminProductsPageLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -115,8 +118,17 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/card', () => ({
   Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/layout', () => ({
   UI_GRID_ROOMY_CLASSNAME: 'grid',
+}));
+
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 

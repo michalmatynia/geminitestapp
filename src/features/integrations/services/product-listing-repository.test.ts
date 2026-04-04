@@ -160,6 +160,20 @@ describe('product-listing-repository mongodb indexes', () => {
 
     await expect(listingExistsAcrossProviders('product-1', 'connection-1')).resolves.toBe(true);
     expect(countDocumentsMock).toHaveBeenCalledTimes(1);
+
+    const filter = countDocumentsMock.mock.calls[0][0];
+    expect(filter.$and).toContainEqual({
+      status: { $nin: ['failed', 'auth_required', 'ended', 'expired', 'sold', 'removed', 'cancelled'] },
+    });
+  });
+
+  it('returns false when only terminal-status listings exist for the connection', async () => {
+    const { db, countDocumentsMock } = createMongoDbMock();
+    countDocumentsMock.mockResolvedValue(0);
+
+    getMongoDbMock.mockResolvedValue(db);
+
+    await expect(listingExistsAcrossProviders('product-1', 'connection-1')).resolves.toBe(false);
   });
 
   it('loads listing details by id through MongoDB only', async () => {

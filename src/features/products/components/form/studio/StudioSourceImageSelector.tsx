@@ -4,7 +4,10 @@ import Image from 'next/image';
 import React from 'react';
 
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
-import { FormSection, StatusBadge, Button } from '@/features/products/ui';
+import { Button } from '@/shared/ui/button';
+import { FormSection } from '@/shared/ui/form-section';
+import { StatusBadge } from '@/shared/ui/status-badge';
+
 import { cn } from '@/shared/utils';
 
 export function StudioSourceImageSelector(): React.JSX.Element {

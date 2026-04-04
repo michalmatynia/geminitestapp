@@ -1,20 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   useIntegrationsActions,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
 import { LoadingState } from '@/shared/ui';
-import { PlaywrightSettingsProvider } from '@/shared/ui/playwright/PlaywrightSettingsForm';
+import {
+  PlaywrightSettingsFormViewProvider,
+  PlaywrightSettingsProvider,
+} from '@/shared/ui/playwright/PlaywrightSettingsForm';
 
 export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
   const { playwrightSettings, setPlaywrightSettings } = useIntegrationsForm();
   const { handleSavePlaywrightSettings } = useIntegrationsActions();
-  const [Component, setComponent] = useState<React.ComponentType<{ onSave: () => void }> | null>(
-    null
-  );
+  const [Component, setComponent] = useState<React.ComponentType | null>(null);
 
   useEffect(() => {
     const loadComponent = async (): Promise<void> => {
@@ -24,17 +25,24 @@ export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
     void loadComponent();
   }, []);
 
+  const viewValue = useMemo(
+    () => ({
+      onSave: () => {
+        void handleSavePlaywrightSettings();
+      },
+    }),
+    [handleSavePlaywrightSettings]
+  );
+
   if (!Component) {
     return <LoadingState message='Loading settings editor...' />;
   }
 
   return (
     <PlaywrightSettingsProvider settings={playwrightSettings} setSettings={setPlaywrightSettings}>
-      <Component
-        onSave={() => {
-          void handleSavePlaywrightSettings();
-        }}
-      />
+      <PlaywrightSettingsFormViewProvider value={viewValue}>
+        <Component />
+      </PlaywrightSettingsFormViewProvider>
     </PlaywrightSettingsProvider>
   );
 }

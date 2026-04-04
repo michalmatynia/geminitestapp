@@ -2,21 +2,24 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { integrationSelectionQueryKeys } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { useCreateListingMutation } from '@/features/integrations/hooks/useProductListingMutations';
+import { createTraderaRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
 import {
-  createTraderaRecoveryContext,
-  integrationSelectionQueryKeys,
+  ensureTraderaBrowserSession,
   isTraderaBrowserAuthRequiredMessage,
   preflightTraderaQuickListSession,
-  useCreateListingMutation,
-} from '@/features/integrations/public';
+} from '@/features/integrations/utils/tradera-browser-session';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { Button, useToast } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
+import { useToast } from '@/shared/ui/toast';
+
 import { cn } from '@/shared/utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -63,6 +66,9 @@ export function TraderaQuickListButton(props: {
   } = useTraderaQuickExportFeedback(product.id, traderaStatus, showTraderaBadge);
   useTraderaQuickExportPolling(product.id, localFeedback, setFeedbackStatus);
 
+  const localFeedbackRef = useRef(localFeedback);
+  localFeedbackRef.current = localFeedback;
+
   // Flash checkmark for 3s when status transitions to completed
   useEffect(() => {
     if (localFeedbackStatus === 'completed') {
@@ -107,26 +113,34 @@ export function TraderaQuickListButton(props: {
       attemptedRecoveryTarget = recoveryTarget;
       setFeedbackStatus('processing', recoveryTarget);
 
-      const sessionResponse = await preflightTraderaQuickListSession({
+      const preflightResponse = await preflightTraderaQuickListSession({
         integrationId: resolvedConnection.integrationId,
         connectionId: resolvedConnection.connection.id,
       });
-      if (!sessionResponse.ready) {
-        setFeedbackStatus('failed', recoveryTarget);
-        toast(
-          'Tradera browser session is not ready. Open recovery options and refresh the session.',
-          { variant: 'error' }
-        );
-        onOpenIntegrations?.(
-          createTraderaRecoveryContext({
-            status: 'auth_required',
-            runId: localFeedback?.runId ?? null,
-            requestId: null,
-            integrationId: recoveryTarget.integrationId,
-            connectionId: recoveryTarget.connectionId,
-          })
-        );
-        return;
+      if (!preflightResponse.ready) {
+        // Preflight failed — fall back to full manual session establishment
+        const manualSessionResponse = await ensureTraderaBrowserSession({
+          integrationId: resolvedConnection.integrationId,
+          connectionId: resolvedConnection.connection.id,
+        });
+        if (!manualSessionResponse.savedSession) {
+          setFeedbackStatus('failed', recoveryTarget);
+          toast(
+            'Tradera login session could not be saved. Complete login verification and retry.',
+            { variant: 'error' }
+          );
+          onOpenIntegrations?.(
+            createTraderaRecoveryContext({
+              status: 'auth_required',
+              runId: localFeedbackRef.current?.runId ?? null,
+              requestId: null,
+              integrationId: recoveryTarget.integrationId,
+              connectionId: recoveryTarget.connectionId,
+            })
+          );
+          return;
+        }
+        toast('Tradera login session refreshed.', { variant: 'success' });
       }
 
       const response = await createListingMutation.mutateAsync({
@@ -192,7 +206,10 @@ export function TraderaQuickListButton(props: {
       const authRequired = isTraderaBrowserAuthRequiredMessage(errorMessage);
       setFeedbackStatus(
         authRequired ? 'auth_required' : 'failed',
-        attemptedRecoveryTarget
+        {
+          ...attemptedRecoveryTarget,
+          failureReason: authRequired ? null : errorMessage,
+        }
       );
       logClientCatch(error, {
         source: 'TraderaQuickListButton',
@@ -204,8 +221,8 @@ export function TraderaQuickListButton(props: {
         onOpenIntegrations(
           createTraderaRecoveryContext({
             status: 'auth_required',
-            runId: localFeedback?.runId ?? null,
-            requestId: localFeedback?.requestId ?? null,
+            runId: localFeedbackRef.current?.runId ?? null,
+            requestId: localFeedbackRef.current?.requestId ?? null,
             integrationId: attemptedRecoveryTarget.integrationId,
             connectionId: attemptedRecoveryTarget.connectionId,
           })
@@ -217,7 +234,6 @@ export function TraderaQuickListButton(props: {
   }, [
     createListingMutation,
     enableDefaultScriptedConnection,
-    localFeedback,
     localFeedbackStatus,
     onOpenIntegrations,
     prefetchListings,
@@ -250,6 +266,7 @@ export function TraderaQuickListButton(props: {
       ? createTraderaRecoveryContext({
           status: resolvedButtonStatus,
           runId: localFeedback?.runId ?? null,
+          failureReason: localFeedback?.failureReason ?? null,
           requestId: localFeedback?.requestId ?? null,
           integrationId: localFeedback?.integrationId ?? null,
           connectionId: localFeedback?.connectionId ?? null,

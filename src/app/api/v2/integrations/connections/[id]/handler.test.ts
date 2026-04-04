@@ -120,6 +120,34 @@ describe('integration connection by-id handler', () => {
     });
   });
 
+  it('rejects invalid scripted Tradera Playwright scripts during update', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Tradera browser',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: `
+          if (true) {
+            return { ok: true };
+        `,
+      },
+    });
+
+    await expect(
+      PUT_handler(
+        new Request('http://localhost/api/v2/integrations/connections/conn-tradera-1', {
+          method: 'PUT',
+        }) as never,
+        {} as never,
+        { id: 'conn-tradera-1' }
+      )
+    ).rejects.toThrow(
+      'Invalid Tradera Playwright listing script. Reset to the managed default or fix the syntax.'
+    );
+
+    expect(updateConnectionMock).not.toHaveBeenCalled();
+  });
+
   it('still exports the delete query schema', () => {
     expect(typeof deleteQuerySchema.safeParse).toBe('function');
   });

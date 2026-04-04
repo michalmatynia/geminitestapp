@@ -21,17 +21,15 @@ import type {
   ProductCategory,
 } from '@/shared/contracts/products';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  Button,
-  EmptyState,
-  CompactEmptyState,
-  FolderTreePanel,
-  Skeleton,
-  SelectSimple,
-  useToast,
-  Card,
-} from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
+import { EmptyState, CompactEmptyState } from '@/shared/ui/empty-state';
+import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { useToast } from '@/shared/ui/toast';
+
 import type { MasterTreeNode } from '@/shared/utils';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';

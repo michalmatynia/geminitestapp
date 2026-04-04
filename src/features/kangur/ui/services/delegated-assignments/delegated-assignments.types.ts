@@ -8,7 +8,13 @@ import type {
   KangurLessonSubject,
 } from '@/features/kangur/shared/contracts/kangur';
 
-export type KangurAssignmentCatalogGroup = 'time' | 'arithmetic' | 'geometry' | 'logic' | 'practice';
+export type KangurAssignmentCatalogGroup =
+  | 'time'
+  | 'arithmetic'
+  | 'geometry'
+  | 'logic'
+  | 'practice'
+  | 'recommended';
 
 export type KangurAssignmentsRuntimeLocalizer = {
   locale?: string;
@@ -40,7 +46,7 @@ export type KangurAssignmentListItem = {
   priorityLabel: string;
   priorityAccent: 'rose' | 'amber' | 'emerald';
   statusLabel: string;
-  statusAccent: 'slate' | 'indigo' | 'emerald';
+  statusAccent: 'slate' | 'indigo' | 'emerald' | 'amber' | 'sky';
   progressPercent: number;
   progressSummary: string;
   progressCountLabel: string;
@@ -50,5 +56,5 @@ export type KangurAssignmentListItem = {
   timeLimitLabel: string | null;
   actionHref: string;
   actionLabel: string;
-  actionVariant: 'primary' | 'surface';
+  actionVariant: 'primary' | 'surface' | 'ghost';
 };

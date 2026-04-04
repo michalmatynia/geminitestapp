@@ -5,7 +5,7 @@ export const safeStringify = (value: unknown): string => {
   if (value === null || value === undefined) return '';
   try {
     return JSON.stringify(value);
-  } catch (error) {
+  } catch (_error) {
     return '[unserializable]';
   }
 };
@@ -41,11 +41,56 @@ const buildSandbox = (logs: string[]): Record<string, unknown> => ({
   TextDecoder,
 });
 
+const toPlaywrightScriptParseError = (
+  error: unknown,
+  mode: 'direct' | 'wrapped'
+): Error => {
+  if (error instanceof SyntaxError) {
+    const prefix =
+      mode === 'wrapped'
+        ? 'Invalid Playwright script syntax after function-body recovery'
+        : 'Invalid Playwright script syntax';
+    const normalized = new SyntaxError(`${prefix}: ${error.message}`);
+    normalized.stack = error.stack;
+    return normalized;
+  }
+
+  if (error instanceof Error) {
+    return error;
+  }
+
+  return new Error(`Invalid Playwright script: ${safeStringify(error)}`);
+};
+
+export const validatePlaywrightNodeScript = (
+  source: string
+):
+  | { ok: true; logs: string[] }
+  | { ok: false; logs: string[]; error: Error } => {
+  const logs: string[] = [];
+
+  try {
+    parseUserScript(source, logs);
+    return {
+      ok: true,
+      logs,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      logs,
+      error: error instanceof Error ? error : new Error(safeStringify(error)),
+    };
+  }
+};
+
 export const parseUserScript = (
   source: string,
   logs: string[]
 ): ((context: Record<string, unknown>) => Promise<unknown>) => {
-  const normalizedSource = source.replace(/^\s*export\s+default\s+/m, 'const defaultExport = ');
+  const normalizedSource = source
+    .replace(/^\s*export\s+default\s+/m, 'const defaultExport = ')
+    .replace(/^\s*export\s+(?!default\b)/gm, '');
   const sandbox = buildSandbox(logs);
 
   // Try normal compilation first
@@ -64,22 +109,26 @@ export const parseUserScript = (
     // wrap it in an async function and retry.
     const isBareReturnError =
       error instanceof SyntaxError &&
-      /unexpected token 'return'/i.test(error.message);
+      /(unexpected token ['"]?return['"]?|illegal return statement)/i.test(error.message);
     if (!isBareReturnError) {
-      throw error;
+      throw toPlaywrightScriptParseError(error, 'direct');
     }
     logs.push('[parser] Script contains bare return — wrapping in async function.');
   }
 
   // Retry: wrap the source in an async function (handles bare function bodies)
-  const wrappedSource = `async function run(context) {\nconst { page, input, emit, artifacts, log, helpers } = context;\n${source}\n}`;
-  const wrappedScript = new vm.Script(buildBootstrap(wrappedSource), {
-    filename: 'ai-paths-playwright-node.user.js',
-  });
-  const resolved: unknown = wrappedScript.runInNewContext(buildSandbox(logs), { timeout: 250 });
+  const wrappedSource = `async function run(context) {\nconst { page, input, emit, artifacts, log, helpers } = context;\n${normalizedSource}\n}`;
+  let resolved: unknown;
+  try {
+    const wrappedScript = new vm.Script(buildBootstrap(wrappedSource), {
+      filename: 'ai-paths-playwright-node.user.js',
+    });
+    resolved = wrappedScript.runInNewContext(buildSandbox(logs), { timeout: 250 });
+  } catch (error) {
+    throw toPlaywrightScriptParseError(error, 'wrapped');
+  }
   if (typeof resolved !== 'function') {
     throw new Error('Playwright script must export a default async function or define `run`.');
   }
   return resolved as (context: Record<string, unknown>) => Promise<unknown>;
 };
-

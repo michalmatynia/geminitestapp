@@ -24,7 +24,6 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS } from '@/features/products/lib/validatorSemanticPresets';
 
-
 export const DEFAULT_SEQUENCE_STEP = 10;
 
 export const EMPTY_FORM: PatternFormData = {

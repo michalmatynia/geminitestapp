@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdvancedFilterBuilder } from './AdvancedFilterBuilder';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/products/ui', () => ({
   Button: ({
     children,
     onClick,

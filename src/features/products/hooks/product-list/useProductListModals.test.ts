@@ -4,7 +4,7 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { persistTraderaQuickListFeedback } from '@/features/products/components/list/columns/buttons/traderaQuickListFeedback';
+import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
@@ -28,7 +28,7 @@ const {
   setShowListProductModalMock: vi.fn(),
 }));
 
-vi.mock('@/features/integrations/public', () => ({
+vi.mock('@/features/integrations/hooks/useIntegrationOperations', () => ({
   useIntegrationModalOperations: () => ({
     integrationsProduct: integrationModalState.integrationsProduct,
     setIntegrationsProduct: (
@@ -192,6 +192,7 @@ describe('useProductListModals', () => {
 
     expect(result.current.integrationsRecoveryContext).toEqual({
       ...recoveryContext,
+      failureReason: null,
       runId: 'run-tradera-1',
       requestId: 'job-tradera-1',
       integrationId: 'integration-tradera-1',

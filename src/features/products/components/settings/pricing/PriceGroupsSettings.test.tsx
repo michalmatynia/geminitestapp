@@ -14,7 +14,7 @@ vi.mock('@/features/products/components/settings/ProductSettingsContext', () => 
   useProductSettingsPriceGroupsContext: () => mocks.useProductSettingsPriceGroupsContextMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/products/ui', () => ({
   Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   Button: ({
     children,

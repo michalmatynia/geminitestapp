@@ -76,7 +76,7 @@ vi.mock('next/dynamic', () => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/products/ui', () => ({
   ActionMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Badge: ({
     children,

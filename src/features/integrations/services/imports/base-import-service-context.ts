@@ -36,9 +36,15 @@ export const resolvePriceGroupContext = async (
 
   const mongo = await getMongoDb();
   const priceGroupCollection = mongo.collection<PriceGroupLookup>('price_groups');
-  const byId = preferredPriceGroupId?.trim()
+  const normalizedPreferredPriceGroupId = preferredPriceGroupId?.trim() ?? '';
+  const byId = normalizedPreferredPriceGroupId
     ? await priceGroupCollection.findOne(
-        { id: preferredPriceGroupId.trim() },
+        {
+          $or: [
+            { id: normalizedPreferredPriceGroupId },
+            { groupId: normalizedPreferredPriceGroupId },
+          ],
+        },
         { projection: projectedFields }
       )
     : null;

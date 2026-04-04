@@ -34,7 +34,7 @@ vi.mock('@/features/integrations/server', () => ({
     mocks.listingExistsAcrossProvidersMock(...args),
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/products/services/product-repository', () => ({
   getProductRepository: () => ({
     getProductById: (...args: unknown[]) => mocks.getProductByIdMock(...args),
     updateProduct: (...args: unknown[]) => mocks.updateProductMock(...args),

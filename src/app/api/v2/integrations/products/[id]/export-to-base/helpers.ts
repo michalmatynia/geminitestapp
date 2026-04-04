@@ -3,8 +3,8 @@ export { exportSchema, type BaseExportRequestData, type BaseFieldMapping } from 
 export {
   BASE_EXPORT_RUN_PATH_ID,
   BASE_EXPORT_RUN_PATH_NAME,
+  BASE_EXPORT_RUN_SOURCE as BASE_EXPORT_SOURCE,
 } from '@/features/integrations/services/base-export-segments/constants';
-export const BASE_EXPORT_SOURCE = 'integration_base_export';
 
 export const inFlightExportRequests = new Map<string, number>();
 

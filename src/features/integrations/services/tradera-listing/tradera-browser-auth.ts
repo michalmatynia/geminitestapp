@@ -2,7 +2,7 @@ import type { Page } from 'playwright';
 import { normalizeTraderaListingFormUrl } from '@/features/integrations/constants/tradera';
 import { decryptSecret } from '@/features/integrations/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
-import { internalError, isAppError } from '@/shared/errors/app-error';
+import { internalError } from '@/shared/errors/app-error';
 import {
   LOGIN_SUCCESS_SELECTOR,
   LOGIN_FORM_SELECTOR,

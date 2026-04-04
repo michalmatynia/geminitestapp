@@ -1,66 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  getTraderaCategoriesMock,
-  ensureLoggedInMock,
-  findVisibleLocatorMock,
-  loadTraderaSystemSettingsMock,
+  enqueuePlaywrightNodeRunMock,
+  parsePersistedStorageStateMock,
   resolveConnectionPlaywrightSettingsMock,
-  chromiumLaunchMock,
-  pageCloseMock,
-  contextCloseMock,
-  browserCloseMock,
+  loadTraderaSystemSettingsMock,
 } = vi.hoisted(() => ({
-  getTraderaCategoriesMock: vi.fn(),
-  ensureLoggedInMock: vi.fn(),
-  findVisibleLocatorMock: vi.fn(),
-  loadTraderaSystemSettingsMock: vi.fn(),
+  enqueuePlaywrightNodeRunMock: vi.fn(),
+  parsePersistedStorageStateMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
-  chromiumLaunchMock: vi.fn(),
-  pageCloseMock: vi.fn(),
-  contextCloseMock: vi.fn(),
-  browserCloseMock: vi.fn(),
+  loadTraderaSystemSettingsMock: vi.fn(),
 }));
 
-vi.mock('@/shared/utils/observability/client-error-logger', () => ({
-  logClientError: vi.fn(),
-}));
-
-vi.mock('@/features/integrations/services/tradera-api-client', () => ({
-  getTraderaCategories: (...args: unknown[]) => getTraderaCategoriesMock(...args),
-}));
-
-vi.mock('./api', () => ({
-  resolveTraderaPublicApiCredentials: () => ({
-    appId: 123,
-    appKey: 'secret',
-    sandbox: false,
-  }),
-}));
-
-vi.mock('./browser', () => ({
-  ensureLoggedIn: (...args: unknown[]) => ensureLoggedInMock(...args),
-}));
-
-vi.mock('./utils', () => ({
-  findVisibleLocator: (...args: unknown[]) => findVisibleLocatorMock(...args),
-}));
-
-vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
-  loadTraderaSystemSettings: (...args: unknown[]) => loadTraderaSystemSettingsMock(...args),
+vi.mock('@/features/ai/server', () => ({
+  enqueuePlaywrightNodeRun: (...args: unknown[]) => enqueuePlaywrightNodeRunMock(...args),
 }));
 
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
-  parsePersistedStorageState: () => null,
+  parsePersistedStorageState: (...args: unknown[]) => parsePersistedStorageStateMock(...args),
   resolveConnectionPlaywrightSettings: (...args: unknown[]) =>
     resolveConnectionPlaywrightSettingsMock(...args),
 }));
 
-vi.mock('playwright', () => ({
-  chromium: {
-    launch: (...args: unknown[]) => chromiumLaunchMock(...args),
-  },
-  devices: {},
+vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
+  loadTraderaSystemSettings: (...args: unknown[]) => loadTraderaSystemSettingsMock(...args),
 }));
 
 import { fetchTraderaCategoriesForConnection } from './categories';
@@ -68,76 +31,244 @@ import { fetchTraderaCategoriesForConnection } from './categories';
 describe('fetchTraderaCategoriesForConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    loadTraderaSystemSettingsMock.mockResolvedValue({
-      listingFormUrl: 'https://www.tradera.com/en/selling/new',
+    parsePersistedStorageStateMock.mockReturnValue({
+      cookies: [],
+      origins: [],
     });
     resolveConnectionPlaywrightSettingsMock.mockResolvedValue({
       headless: true,
       slowMo: 0,
       timeout: 30_000,
       navigationTimeout: 30_000,
-      emulateDevice: false,
-      deviceName: null,
+      humanizeMouse: false,
+      mouseJitter: 6,
+      clickDelayMin: 30,
+      clickDelayMax: 120,
+      inputDelayMin: 20,
+      inputDelayMax: 120,
+      actionDelayMin: 200,
+      actionDelayMax: 900,
       proxyEnabled: false,
-      proxyServer: null,
-      proxyUsername: null,
-      proxyPassword: null,
+      proxyServer: '',
+      proxyUsername: '',
+      proxyPassword: '',
+      emulateDevice: false,
+      deviceName: 'Desktop Chrome',
     });
-    pageCloseMock.mockResolvedValue(undefined);
-    contextCloseMock.mockResolvedValue(undefined);
-    browserCloseMock.mockResolvedValue(undefined);
+    loadTraderaSystemSettingsMock.mockResolvedValue({
+      listingFormUrl: 'https://www.tradera.com/en/selling/new',
+    });
   });
 
-  it('prefers categories from the official Tradera API when available', async () => {
-    getTraderaCategoriesMock.mockResolvedValue([
-      { id: '10', name: 'Collectibles', parentId: null },
-      { id: '11', name: 'Pins', parentId: '10' },
-    ]);
-
-    const result = await fetchTraderaCategoriesForConnection({ id: 'connection-1' } as never);
-
-    expect(result).toEqual([
-      { id: '10', name: 'Collectibles', parentId: '0' },
-      { id: '11', name: 'Pins', parentId: '10' },
-    ]);
-    expect(chromiumLaunchMock).not.toHaveBeenCalled();
-  });
-
-  it('falls back to the browser selector path when the API fetch fails', async () => {
-    getTraderaCategoriesMock.mockRejectedValue(new Error('api failed'));
-
-    const optionEvaluateAllMock = vi.fn().mockResolvedValue([
-      { id: '20', name: 'Fallback One' },
-      { id: '21', name: 'Fallback Two' },
-    ]);
-    findVisibleLocatorMock.mockResolvedValue({
-      locator: vi.fn().mockReturnValue({
-        evaluateAll: optionEvaluateAllMock,
-      }),
-    });
-
-    chromiumLaunchMock.mockResolvedValue({
-      newContext: vi.fn().mockResolvedValue({
-        setDefaultTimeout: vi.fn(),
-        setDefaultNavigationTimeout: vi.fn(),
-        newPage: vi.fn().mockResolvedValue({
-          close: pageCloseMock,
-        }),
-        close: contextCloseMock,
-      }),
-      close: browserCloseMock,
+  it('runs the Playwright Engine scrape and returns normalized categories', async () => {
+    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+      runId: 'run-123',
+      status: 'completed',
+      error: null,
+      artifacts: [],
+      logs: [],
+      result: {
+        outputs: {
+          result: {
+            categories: [
+              { id: '100', name: 'Collectibles', parentId: null },
+              { id: '101', name: 'Pins', parentId: '100' },
+              { id: '101', name: 'Pins duplicate', parentId: '100' },
+            ],
+            categorySource: 'menu',
+          },
+        },
+        finalUrl: 'https://www.tradera.com/en/selling/new',
+      },
     });
 
     const result = await fetchTraderaCategoriesForConnection({
       id: 'connection-1',
-      playwrightStorageState: null,
+      playwrightStorageState: 'encrypted-storage-state',
+      playwrightPersonaId: 'persona-1',
     } as never);
 
-    expect(chromiumLaunchMock).toHaveBeenCalled();
-    expect(ensureLoggedInMock).toHaveBeenCalled();
     expect(result).toEqual([
-      { id: '20', name: 'Fallback One', parentId: '0' },
-      { id: '21', name: 'Fallback Two', parentId: '0' },
+      { id: '100', name: 'Collectibles', parentId: '0' },
+      { id: '101', name: 'Pins', parentId: '100' },
     ]);
+    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+      request: expect.objectContaining({
+        browserEngine: 'chromium',
+        preventNewPages: true,
+        startUrl: 'https://www.tradera.com/en/selling/new',
+        timeoutMs: 120_000,
+        personaId: 'persona-1',
+        contextOptions: {
+          storageState: {
+            cookies: [],
+            origins: [],
+          },
+        },
+        input: {
+          connectionId: 'connection-1',
+          traderaConfig: {
+            listingFormUrl: 'https://www.tradera.com/en/selling/new',
+          },
+        },
+      }),
+      waitForResult: true,
+    });
+  });
+
+  it('fails early when the browser session is missing', async () => {
+    parsePersistedStorageStateMock.mockReturnValue(null);
+
+    await expect(
+      fetchTraderaCategoriesForConnection({
+        id: 'connection-1',
+        playwrightStorageState: null,
+      } as never)
+    ).rejects.toMatchObject({
+      message:
+        'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
+      httpStatus: 400,
+    });
+
+    expect(enqueuePlaywrightNodeRunMock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces auth failures from the scraper as actionable auth errors', async () => {
+    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+      runId: 'run-auth',
+      status: 'failed',
+      error:
+        'Error: AUTH_REQUIRED: Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
+      artifacts: [],
+      logs: ['[runtime] browser closed'],
+      result: {
+        outputs: {
+          result: {
+            currentUrl: 'https://www.tradera.com/en/login',
+          },
+        },
+        finalUrl: 'https://www.tradera.com/en/login',
+      },
+    });
+
+    await expect(
+      fetchTraderaCategoriesForConnection({
+        id: 'connection-1',
+        playwrightStorageState: 'encrypted-storage-state',
+      } as never)
+    ).rejects.toMatchObject({
+      message:
+        'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
+      httpStatus: 401,
+      meta: expect.objectContaining({
+        connectionId: 'connection-1',
+        recoveryAction: 'tradera_manual_login',
+        recoveryMessage:
+          'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
+      }),
+    });
+  });
+
+  it('detects auth failures from runner logs when the top-level error is empty', async () => {
+    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+      runId: 'run-auth-logs',
+      status: 'failed',
+      error: null,
+      artifacts: [],
+      logs: [
+        '[runtime] Launching chromium browser.',
+        '[runtime][error] Error: AUTH_REQUIRED: Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
+      ],
+      result: {
+        outputs: {
+          result: {
+            currentUrl: 'https://www.tradera.com/en/login',
+          },
+        },
+        finalUrl: 'https://www.tradera.com/en/login',
+      },
+    });
+
+    await expect(
+      fetchTraderaCategoriesForConnection({
+        id: 'connection-1',
+        playwrightStorageState: 'encrypted-storage-state',
+      } as never)
+    ).rejects.toMatchObject({
+      message:
+        'Tradera browser session is missing or expired. Reconnect the browser Tradera connection and retry category fetch.',
+      httpStatus: 401,
+      meta: expect.objectContaining({
+        recoveryAction: 'tradera_manual_login',
+      }),
+    });
+  });
+
+  it('fails when the scrape completes without categories', async () => {
+    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+      runId: 'run-empty',
+      status: 'completed',
+      error: null,
+      artifacts: [{ name: 'tradera-category-empty', path: 'run-empty/tradera-category-empty.png' }],
+      logs: ['[user] tradera.category.scrape.empty {}'],
+      result: {
+        outputs: {
+          result: {
+            categories: [],
+            categorySource: 'menu',
+            scrapedFrom: 'https://www.tradera.com/en/selling/new',
+          },
+        },
+        finalUrl: 'https://www.tradera.com/en/selling/new',
+      },
+    });
+
+    await expect(
+      fetchTraderaCategoriesForConnection({
+        id: 'connection-1',
+        playwrightStorageState: 'encrypted-storage-state',
+      } as never)
+    ).rejects.toMatchObject({
+      message:
+        'Tradera categories could not be fetched from the live listing page. No categories were detected on the Tradera listing form.',
+      httpStatus: 500,
+    });
+  });
+
+  it('treats empty completed runs on Tradera verification pages as auth recovery errors', async () => {
+    enqueuePlaywrightNodeRunMock.mockResolvedValue({
+      runId: 'run-empty-auth',
+      status: 'completed',
+      error: null,
+      artifacts: [{ name: 'tradera-category-auth-required', path: 'run-empty-auth/auth.png' }],
+      logs: ['[user] tradera.category.scrape.auth-required {}'],
+      result: {
+        outputs: {
+          result: {
+            categories: [],
+            categorySource: 'menu',
+            scrapedFrom: 'https://www.tradera.com/en/verification',
+            currentUrl: 'https://www.tradera.com/en/verification',
+            errorText: 'Security check required before you can continue.',
+          },
+        },
+        finalUrl: 'https://www.tradera.com/en/verification',
+      },
+    });
+
+    await expect(
+      fetchTraderaCategoriesForConnection({
+        id: 'connection-1',
+        playwrightStorageState: 'encrypted-storage-state',
+      } as never)
+    ).rejects.toMatchObject({
+      message:
+        'Stored Tradera session expired and Tradera requires manual verification. Refresh the saved browser session.',
+      httpStatus: 401,
+      meta: expect.objectContaining({
+        recoveryAction: 'tradera_manual_login',
+        currentUrl: 'https://www.tradera.com/en/verification',
+      }),
+    });
   });
 });

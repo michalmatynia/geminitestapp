@@ -15,6 +15,19 @@ import { useProductListingsViewContext } from './context/ProductListingsViewCont
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
 
+const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('login') ||
+    normalized.includes('verification') ||
+    normalized.includes('captcha') ||
+    normalized.includes('auth') ||
+    normalized.includes('session expired')
+  );
+};
+
 export function ProductListingsEmpty(): React.JSX.Element {
   const { filterIntegrationSlug, statusTargetLabel, isBaseFilter, showSync } =
     useProductListingsViewContext();
@@ -25,10 +38,19 @@ export function ProductListingsEmpty(): React.JSX.Element {
     requestId: recoveryRequestId,
     integrationId: recoveryIntegrationId,
     connectionId: recoveryConnectionId,
-    canContinue: canOpenTraderaRecoveryLogin,
   } = resolveTraderaRecoveryTarget({
     recoveryContext,
   });
+  const recoveryStatus = (recoveryContext?.status ?? '').trim().toLowerCase();
+  const recoveryFailureReason =
+    recoveryContext && 'failureReason' in recoveryContext
+      ? recoveryContext.failureReason ?? null
+      : null;
+  const canOpenTraderaRecoveryLogin =
+    Boolean(recoveryIntegrationId && recoveryConnectionId) &&
+    (recoveryStatus === 'auth_required' ||
+      recoveryStatus === 'needs_login' ||
+      hasTraderaAuthSignal(recoveryFailureReason));
 
   return (
     <div className='space-y-4'>
@@ -44,8 +66,10 @@ export function ProductListingsEmpty(): React.JSX.Element {
           variant='full'
           status={recoveryContext?.status}
           requestId={recoveryRequestId}
-          integrationId={canOpenTraderaRecoveryLogin ? recoveryIntegrationId : null}
-          connectionId={canOpenTraderaRecoveryLogin ? recoveryConnectionId : null}
+          failureReason={recoveryFailureReason}
+          canContinue={canOpenTraderaRecoveryLogin}
+          integrationId={recoveryIntegrationId}
+          connectionId={recoveryConnectionId}
         />
       )}
       {filterIntegrationSlug ? (
@@ -57,7 +81,11 @@ export function ProductListingsEmpty(): React.JSX.Element {
       ) : (
         <EmptyState
           title='No listings found'
-          description={resolveProductListingsEmptyDescription(recoveryContext)}
+          description={
+            isFailedBaseQuickExportRecovery || isTraderaQuickExportRecovery
+              ? undefined
+              : resolveProductListingsEmptyDescription(recoveryContext)
+          }
           className='py-12'
         />
       )}

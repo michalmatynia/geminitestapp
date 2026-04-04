@@ -55,7 +55,10 @@ import {
 import { KangurMusicPianoRollControls } from './KangurMusicPianoRollControls';
 import { KangurMusicPianoRollGrid } from './KangurMusicPianoRollGrid';
 import { KangurMusicPianoRollKeyboardRail } from './KangurMusicPianoRollKeyboardRail';
-import { KangurMusicPianoRollProvider } from './KangurMusicPianoRoll.context';
+import {
+  KangurMusicPianoRollProvider,
+  type KangurMusicPianoRollContextValue,
+} from './KangurMusicPianoRoll.context';
 
 export type {
   KangurMusicKeyboardMode,
@@ -714,18 +717,18 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     });
   };
 
-  const providerValue = {
-    activePressesRef: activePressesRef as any,
+  const providerValue: KangurMusicPianoRollContextValue<NoteId> = {
+    activePressesRef,
     activeOscTab,
     activeStepIndex,
-    activeSynthGesture: activeSynthGesture as any,
+    activeSynthGesture,
     activeSynthGestureCount,
-    activeSynthGestures: activeSynthGestures as any,
-    activeSynthGesturesRef: activeSynthGesturesRef as any,
-    activeTransportStep: activeTransportStep as any,
-    currentCursorStep: currentCursorStep as any,
+    activeSynthGestures,
+    activeSynthGesturesRef,
+    activeTransportStep,
+    currentCursorStep,
     expectedStepIndex,
-    expectedTransportStep: expectedTransportStep as any,
+    expectedTransportStep,
     isCompactMobile,
     isCoarsePointer,
     isFreePlayMode,
@@ -733,19 +736,19 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     isSixYearOldVisualMode,
     isSynthEnvelopeDialogOpen,
     isSynthOscPanelOpen,
-    keyButtonRefs: keyButtonRefs as any,
-    keyDefinitionById: keyDefinitionById as any,
-    keys: keys as any,
+    keyButtonRefs,
+    keyDefinitionById,
+    keys,
     keyTestIdPrefix,
-    laneKeys: laneKeys as any,
+    laneKeys,
     measureCount,
-    pressedNoteId: pressedNoteId as any,
+    pressedNoteId,
     pressedVelocity,
-    recentKeyPulses: recentKeyPulses as any,
+    recentKeyPulses,
     resolvedCompletedCount,
     resolvedKeyboardMode,
     resolvedLaneHeightPx,
-    resolvedMelody: resolvedMelody as any,
+    resolvedMelody,
     resolvedMinStepWidthPx,
     resolvedOsc1Config,
     resolvedOsc2Config,
@@ -762,31 +765,31 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     showSynthGlideModeSwitch,
     showSynthOscSettingsPanel,
     showSynthWaveformSwitch,
-    stepElementRefs: stepElementRefs as any,
+    stepElementRefs,
     stepTestIdPrefix,
-    synthAxisAnchors: synthAxisAnchors as any,
+    synthAxisAnchors,
     onActiveOscTabChange: setActiveOscTab,
-    onClearPress: clearPress as any,
-    onEndSynthGesture: endSynthGesture as any,
+    onClearPress: clearPress,
+    onEndSynthGesture: endSynthGesture,
     onKeyboardModeChange: handleKeyboardModeChange,
     onOpenSynthEnvelopeDialog: () => setSynthEnvelopeDialogOpen(true),
     onCloseSynthEnvelopeDialog: () => setSynthEnvelopeDialogOpen(false),
-    onResolveGestureDynamics: resolveGestureDynamics as any,
-    onResolveSynthGestureDetails: resolveSynthGestureDetails as any,
-    onResolveSynthPitchAtPoint: resolveSynthPitchAtPoint as any,
-    onResolveVerticalPosition: resolveVerticalPosition as any,
-    onStartPress: startPress as any,
+    onResolveGestureDynamics: resolveGestureDynamics,
+    onResolveSynthGestureDetails: resolveSynthGestureDetails,
+    onResolveSynthPitchAtPoint: resolveSynthPitchAtPoint,
+    onResolveVerticalPosition: resolveVerticalPosition,
+    onStartPress: startPress,
     onSynthEnvelopeReset: handleSynthEnvelopeReset,
     onSynthEnvelopeSliderChange: handleSynthEnvelopeSliderChange,
-    onSynthGestureChange: onSynthGestureChange as any,
-    onSynthGestureStart: onSynthGestureStart as any,
+    onSynthGestureChange,
+    onSynthGestureStart,
     onSynthGlideModeChange: handleSynthGlideModeChange,
     onSynthOscPanelToggle: () => setSynthOscPanelOpen((prev) => !prev),
     onSynthOscSettingsChange: handleSynthOscSettingsChange,
     onSynthWaveformChange: handleSynthWaveformChange,
-    onTriggerKeyPulse: triggerKeyPulse as any,
-    onTriggerPress: triggerPress as any,
-    onUpdatePressFromPointerEvent: updatePressFromPointerEvent as any,
+    onTriggerKeyPulse: triggerKeyPulse,
+    onTriggerPress: triggerPress,
+    onUpdatePressFromPointerEvent: updatePressFromPointerEvent,
     syncActiveSynthGestures,
   };
 
@@ -824,7 +827,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
           </div>
         ) : null}
 
-        <KangurMusicPianoRollProvider value={providerValue as any}>
+        <KangurMusicPianoRollProvider value={providerValue}>
           <KangurMusicPianoRollControls />
           <KangurMusicPianoRollGrid />
           <KangurMusicPianoRollKeyboardRail />

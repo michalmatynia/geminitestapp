@@ -78,6 +78,47 @@ export const isIncomingProductDetailNewer = (
   return incomingUpdatedAt > currentUpdatedAt;
 };
 
+export const isIncomingProductDetailSameRevision = (
+  incoming: ProductWithImages,
+  current: ProductWithImages
+): boolean => {
+  const incomingUpdatedAt = toMillis(incoming.updatedAt);
+  const currentUpdatedAt = toMillis(current.updatedAt);
+
+  if (incomingUpdatedAt == null || currentUpdatedAt == null) return false;
+  return incomingUpdatedAt === currentUpdatedAt;
+};
+
+const resolveComparableLocalizedText = (
+  product: ProductWithImages,
+  prefix: 'name' | 'description',
+  locale: 'en' | 'pl' | 'de'
+): string => {
+  const directValue = toTrimmedString(
+    (product as Record<string, unknown>)[`${prefix}_${locale}`]
+  );
+  if (directValue) return directValue;
+
+  const localizedRecord = toRecord((product as Record<string, unknown>)[prefix]);
+  return toTrimmedString(localizedRecord?.[locale]);
+};
+
+export const hasIncomingProductDetailGeneratedTextChanges = (
+  incoming: ProductWithImages,
+  current: ProductWithImages
+): boolean => {
+  const locales: Array<'en' | 'pl' | 'de'> = ['en', 'pl', 'de'];
+
+  return locales.some((locale) => {
+    return (
+      resolveComparableLocalizedText(incoming, 'name', locale) !==
+        resolveComparableLocalizedText(current, 'name', locale) ||
+      resolveComparableLocalizedText(incoming, 'description', locale) !==
+        resolveComparableLocalizedText(current, 'description', locale)
+    );
+  });
+};
+
 export const resolveCategoryLabelByLocale = (
   category: ProductCategory | Record<string, unknown>,
   locale: 'name_en' | 'name_pl' | 'name_de'

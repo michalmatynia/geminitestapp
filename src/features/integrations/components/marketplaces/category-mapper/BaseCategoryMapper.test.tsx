@@ -32,6 +32,12 @@ vi.mock('./BaseTagMapper', () => ({
   BaseTagMapper: () => <div data-testid='base-tag-mapper'>tags</div>,
 }));
 
+vi.mock('./TraderaCategoryFetchRecoveryModal', () => ({
+  TraderaCategoryFetchRecoveryModal: () => (
+    <div data-testid='tradera-category-recovery-modal'>recovery-modal</div>
+  ),
+}));
+
 import { BaseCategoryMapper } from './BaseCategoryMapper';
 
 describe('BaseCategoryMapper', () => {
@@ -41,6 +47,7 @@ describe('BaseCategoryMapper', () => {
         id: 'base-connection',
         name: 'Base connection',
         integration: {
+          id: 'integration-base',
           slug: 'base-com',
         },
       },
@@ -59,6 +66,7 @@ describe('BaseCategoryMapper', () => {
         id: 'tradera-connection',
         name: 'Tradera connection',
         integration: {
+          id: 'integration-tradera',
           slug: 'tradera',
         },
       },

@@ -1,6 +1,7 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductValidationInstanceScope } from '@/shared/contracts/products';
-import { FormSection, SelectSimple } from '@/shared/ui';
+import { FormSection } from '@/shared/ui/form-section';
+import { SelectSimple } from '@/shared/ui/select-simple';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';

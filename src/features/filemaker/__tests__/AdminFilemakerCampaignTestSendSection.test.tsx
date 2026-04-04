@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { FilemakerMailAccount } from '../types';
 import { CampaignTestSendSection } from '../pages/AdminFilemakerCampaignEditPage.sections';
 
+const useCampaignEditContextMock = vi.fn();
+
 vi.mock('@/shared/lib/document-editor/public', () => ({
   DocumentWysiwygEditor: () => null,
 }));
@@ -70,6 +72,10 @@ vi.mock('@/shared/ui', () => ({
   Textarea: () => <textarea />,
 }));
 
+vi.mock('../pages/AdminFilemakerCampaignEditPage.context', () => ({
+  useCampaignEditContext: () => useCampaignEditContextMock(),
+}));
+
 const createMailAccount = (): FilemakerMailAccount => ({
   id: 'mail-account-sales',
   createdAt: '2026-04-02T10:00:00.000Z',
@@ -107,16 +113,17 @@ function CampaignTestSendHarness({
   onSend?: () => Promise<void>;
 }): React.JSX.Element {
   const [value, setValue] = useState('');
+  useCampaignEditContextMock.mockReturnValue({
+    testRecipientEmailDraft: value,
+    setTestRecipientEmailDraft: setValue,
+    handleSendTestEmail: onSend,
+    isTestSendPending,
+    selectedMailAccount,
+  });
 
   return (
     <>
-      <CampaignTestSendSection
-        testRecipientEmailDraft={value}
-        setTestRecipientEmailDraft={setValue}
-        handleSendTestEmail={onSend}
-        isTestSendPending={isTestSendPending}
-        selectedMailAccount={selectedMailAccount}
-      />
+      <CampaignTestSendSection />
       <output data-testid='test-recipient-value'>{value}</output>
     </>
   );

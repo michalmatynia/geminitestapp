@@ -1,4 +1,4 @@
-export const PART_4B = `
+export const PART_4B = String.raw`
 
     log?.('tradera.quicklist.field.selected', {
       field: 'listing-confirmation',
@@ -170,23 +170,48 @@ export const PART_4B = `
     return count;
   };
 
+  const readListingEditorState = async () => {
+    const [
+      titleInput,
+      descriptionInput,
+      priceInput,
+      publishButton,
+      categoryTrigger,
+      listingFormatTrigger,
+      autofillPending,
+    ] = await Promise.all([
+      firstVisible(TITLE_SELECTORS),
+      firstVisible(DESCRIPTION_SELECTORS),
+      firstVisible(PRICE_SELECTORS),
+      firstVisible(PUBLISH_SELECTORS),
+      findFieldTriggerByLabels(CATEGORY_FIELD_LABELS),
+      findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS),
+      firstVisible(AUTOFILL_PENDING_SELECTORS).then(Boolean).catch(() => false),
+    ]);
+
+    return {
+      ready: Boolean(
+        titleInput &&
+          descriptionInput &&
+          (priceInput || publishButton || categoryTrigger || listingFormatTrigger) &&
+          !autofillPending
+      ),
+      hasTitleInput: Boolean(titleInput),
+      hasDescriptionInput: Boolean(descriptionInput),
+      hasPriceInput: Boolean(priceInput),
+      hasPublishButton: Boolean(publishButton),
+      hasCategoryTrigger: Boolean(categoryTrigger),
+      hasListingFormatTrigger: Boolean(listingFormatTrigger),
+      autofillPending: Boolean(autofillPending),
+    };
+  };
+
   const waitForImageUploadsToSettle = async (
     imageInput,
     expectedUploadCount = 1,
     baselinePreviewCount = 0,
     timeoutMs = 120_000
   ) => {
-    const isListingFormReady = async () => {
-      const readyLocators = await Promise.all([
-        firstVisible(TITLE_SELECTORS),
-        firstVisible(DESCRIPTION_SELECTORS),
-        firstVisible(PRICE_SELECTORS),
-        firstVisible(PUBLISH_SELECTORS),
-      ]);
-
-      return readyLocators.some(Boolean);
-    };
-
     const deadline = Date.now() + timeoutMs;
     let lastObservedState = null;
     while (Date.now() < deadline) {
@@ -275,7 +300,8 @@ export const PART_4B = `
         draftImageRemoveControls > 0 ||
         selectedImageFileCount >= Math.max(1, expectedUploadCount)
       ) {
-        const listingFormReady = await isListingFormReady();
+        const listingEditorState = await readListingEditorState();
+        const listingFormReady = listingEditorState.ready;
         if (listingFormReady && !imageUploadPromptVisible && !imageUploadPending) {
           log?.('tradera.quicklist.image.settle', {
             method: 'editor-with-upload-state',
@@ -283,6 +309,7 @@ export const PART_4B = `
             draftImageRemoveControls,
             imageUploadPromptVisible,
             imageUploadPending,
+            listingEditorState,
           });
           return true;
         }
@@ -311,24 +338,12 @@ export const PART_4B = `
     expectedUploadCount = 1,
     baselinePreviewCount = 0
   ) => {
-    const isAutofillPending = async () => {
-      const indicator = await firstVisible(AUTOFILL_PENDING_SELECTORS);
-      return Boolean(indicator);
-    };
-
     const waitForListingFormReady = async (timeoutMs = 20_000) => {
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
-        const [titleInput, descriptionInput, priceInput, publishButton, autofillPending] =
-          await Promise.all([
-          firstVisible(TITLE_SELECTORS),
-          firstVisible(DESCRIPTION_SELECTORS),
-          firstVisible(PRICE_SELECTORS),
-          firstVisible(PUBLISH_SELECTORS),
-          isAutofillPending(),
-        ]);
-
-        if (titleInput && descriptionInput && priceInput && publishButton && !autofillPending) {
+        const listingEditorState = await readListingEditorState();
+        if (listingEditorState.ready) {
+          log?.('tradera.quicklist.image.editor_ready', listingEditorState);
           return true;
         }
 
@@ -415,8 +430,11 @@ export const PART_4B = `
       }
     }
 
+    const finalEditorState = await readListingEditorState();
+
     throw new Error(
-      'FAIL_IMAGE_SET_INVALID: Continue completed the image step but the listing editor never became ready.'
+      'FAIL_IMAGE_SET_INVALID: Continue completed the image step but the listing editor never became ready. Editor state: ' +
+        JSON.stringify(finalEditorState)
     );
   };
 
@@ -504,7 +522,10 @@ export const PART_4B = `
         if (!visible) continue;
 
         await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
-        await humanClick(candidate).catch(() => undefined);
+        const clicked = await tryHumanClick(candidate);
+        if (!clicked) {
+          continue;
+        }
         await wait(800);
         log?.('tradera.quicklist.image.trigger_opened', { selector });
         return true;
@@ -516,6 +537,8 @@ export const PART_4B = `
 
   const ensureImageInputReady = async (attempts = 4) => {
     for (let attempt = 0; attempt < attempts; attempt += 1) {
+      await ensureCreateListingPageReady('image input resolution', true);
+      await assertAllowedTraderaPage('image input resolution');
       const imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
       if (imageInput) {
         return imageInput;
@@ -549,6 +572,7 @@ export const PART_4B = `
   };
 
   const clearDraftImagesIfPresent = async () => {
+    await ensureCreateListingPageReady('draft image cleanup', true);
     let removedCount = 0;
 
     for (let attempt = 0; attempt < 12; attempt += 1) {
@@ -564,7 +588,10 @@ export const PART_4B = `
           const visible = await candidate.isVisible().catch(() => false);
           if (!visible) continue;
           await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
-          await humanClick(candidate).catch(() => undefined);
+          const clicked = await tryHumanClick(candidate);
+          if (!clicked) {
+            continue;
+          }
           removedCount += 1;
           removedInAttempt = true;
           await wait(500);
@@ -585,6 +612,8 @@ export const PART_4B = `
       log?.('tradera.quicklist.draft.reset', { removedCount });
       await wait(800);
     }
+
+    await ensureCreateListingPageReady('draft image cleanup complete', true);
 
     return removedCount;
   };

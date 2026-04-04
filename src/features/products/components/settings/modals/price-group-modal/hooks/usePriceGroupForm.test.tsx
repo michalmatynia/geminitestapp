@@ -18,7 +18,7 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({
     toast: mocks.toast,
   }),

@@ -80,4 +80,69 @@ describe('apiClient timeout behavior', () => {
     await timeoutExpectation;
     expect(observedSignal?.aborted).toBe(true);
   });
+
+  it('logs failed API response payload details in client error context', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: 'An unexpected error occurred. Please try again later.',
+            code: 'INTERNAL_SERVER_ERROR',
+            fingerprint: 'fp-123',
+            details: {
+              recoveryAction: 'tradera_manual_login',
+              currentUrl: 'https://www.tradera.com/en/verification',
+            },
+          }),
+          {
+            status: 500,
+            statusText: 'Internal Server Error',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      )
+    );
+
+    await expect(
+      apiClient('/api/test-error', {
+        method: 'POST',
+      })
+    ).rejects.toMatchObject({
+      name: 'ApiError',
+      message: 'An unexpected error occurred. Please try again later.',
+      status: 500,
+    });
+
+    expect(logClientErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'ApiError',
+        message: 'An unexpected error occurred. Please try again later.',
+        status: 500,
+      }),
+      {
+        context: expect.objectContaining({
+          endpoint: '/api/test-error',
+          method: 'POST',
+          status: 500,
+          traceId: 'trace-test',
+          responseCode: 'INTERNAL_SERVER_ERROR',
+          responseFingerprint: 'fp-123',
+          responseDetails: {
+            recoveryAction: 'tradera_manual_login',
+            currentUrl: 'https://www.tradera.com/en/verification',
+          },
+          responsePayload: {
+            error: 'An unexpected error occurred. Please try again later.',
+            code: 'INTERNAL_SERVER_ERROR',
+            fingerprint: 'fp-123',
+            details: {
+              recoveryAction: 'tradera_manual_login',
+              currentUrl: 'https://www.tradera.com/en/verification',
+            },
+          },
+        }),
+      }
+    );
+  });
 });

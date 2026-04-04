@@ -8,16 +8,16 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-04T13:43:03.876Z
+Generated at: 2026-04-04T13:51:27.509Z
 
 ## Snapshot
 
 - Source files: 9654
-- Source lines: 1588187
+- Source lines: 1588328
 - use client files: 1718
-- Files >= 1000 LOC: 0
+- Files >= 1000 LOC: 1
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/filemaker/components/FilemakerMailSidebar.tsx` (986 LOC)
+- Largest file: `src/features/products/components/settings/ShippingGroupsSettings.tsx` (1002 LOC)
 - API routes: 30
 - API delegated server routes: 177
 - API routes without apiHandler/delegation: 0
@@ -59,6 +59,7 @@ Generated at: 2026-04-04T13:43:03.876Z
 | --- | ---: |
 | `src/features/integrations/services/tradera-listing/browser.test.ts` | 1412 |
 | `src/features/products/components/list/ProductColumns.test.tsx` | 1038 |
+| `src/features/products/components/settings/ShippingGroupsSettings.tsx` | 1002 |
 | `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
 | `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 998 |
 | `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
@@ -75,5 +76,4 @@ Generated at: 2026-04-04T13:43:03.876Z
 | `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx` | 968 |
-| `src/features/products/components/settings/ShippingGroupsSettings.tsx` | 967 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 967 |

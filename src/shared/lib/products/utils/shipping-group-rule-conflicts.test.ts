@@ -5,7 +5,9 @@ import {
   buildShippingGroupRuleConflicts,
   findRedundantShippingGroupRuleCategoryIds,
   formatCategoryRuleSummary,
+  formatCurrencyRuleSummary,
   normalizeShippingGroupRuleCategoryIds,
+  normalizeShippingGroupRuleCurrencyCodes,
 } from './shipping-group-rule-conflicts';
 
 describe('shipping-group-rule-conflicts', () => {
@@ -42,6 +44,9 @@ describe('shipping-group-rule-conflicts', () => {
         groupIds: ['shipping-group-1', 'shipping-group-2'],
         groupNames: ['Jewellery 7 EUR', 'Rings 5 EUR'],
         overlapCategoryIds: ['category-rings'],
+        overlapCurrencyCodes: [],
+        appliesToAllCategories: false,
+        appliesToAllCurrencies: true,
       },
     ]);
   });
@@ -98,5 +103,20 @@ describe('shipping-group-rule-conflicts', () => {
         categories,
       })
     ).toEqual([]);
+  });
+
+  it('normalizes currency rules and summarizes overlapping currencies', () => {
+    expect(
+      normalizeShippingGroupRuleCurrencyCodes({
+        currencyCodes: [' eur ', 'SEK', 'eur', ''],
+        availableCurrencyCodes: ['EUR', 'SEK', 'PLN'],
+      })
+    ).toEqual(['EUR', 'SEK']);
+
+    expect(
+      formatCurrencyRuleSummary({
+        currencyCodes: ['EUR', 'SEK'],
+      })
+    ).toBe('EUR, SEK');
   });
 });

@@ -10,12 +10,7 @@ export const safeStringify = (value: unknown): string => {
   }
 };
 
-export const parseUserScript = (
-  source: string,
-  logs: string[]
-): ((context: Record<string, unknown>) => Promise<unknown>) => {
-  const normalizedSource = source.replace(/^\s*export\s+default\s+/m, 'const defaultExport = ');
-  const bootstrap = `
+const buildBootstrap = (normalizedSource: string): string => `
     "use strict";
     let __playwrightNodeFn = null;
     const module = { exports: {} };
@@ -28,26 +23,60 @@ export const parseUserScript = (
     if (!__playwrightNodeFn && exports && typeof exports.default === 'function') __playwrightNodeFn = exports.default;
     __playwrightNodeFn;
   `;
-  const script = new vm.Script(bootstrap, {
+
+const buildSandbox = (logs: string[]): Record<string, unknown> => ({
+  console: {
+    log: (...args: unknown[]) => logs.push(`[console.log] ${args.map(safeStringify).join(' ')}`),
+    info: (...args: unknown[]) =>
+      logs.push(`[console.info] ${args.map(safeStringify).join(' ')}`),
+    warn: (...args: unknown[]) =>
+      logs.push(`[console.warn] ${args.map(safeStringify).join(' ')}`),
+    error: (...args: unknown[]) =>
+      logs.push(`[console.error] ${args.map(safeStringify).join(' ')}`),
+  },
+  setTimeout,
+  clearTimeout,
+  URL,
+  TextEncoder,
+  TextDecoder,
+});
+
+export const parseUserScript = (
+  source: string,
+  logs: string[]
+): ((context: Record<string, unknown>) => Promise<unknown>) => {
+  const normalizedSource = source.replace(/^\s*export\s+default\s+/m, 'const defaultExport = ');
+  const sandbox = buildSandbox(logs);
+
+  // Try normal compilation first
+  try {
+    const script = new vm.Script(buildBootstrap(normalizedSource), {
+      filename: 'ai-paths-playwright-node.user.js',
+    });
+    const resolved: unknown = script.runInNewContext(sandbox, { timeout: 250 });
+    if (typeof resolved === 'function') {
+      return resolved as (context: Record<string, unknown>) => Promise<unknown>;
+    }
+    // Script compiled and ran but didn't produce a function — not recoverable.
+    throw new Error('Playwright script must export a default async function or define `run`.');
+  } catch (error: unknown) {
+    // If the script has a bare `return` (function body without wrapping function),
+    // wrap it in an async function and retry.
+    const isBareReturnError =
+      error instanceof SyntaxError &&
+      /unexpected token 'return'/i.test(error.message);
+    if (!isBareReturnError) {
+      throw error;
+    }
+    logs.push('[parser] Script contains bare return — wrapping in async function.');
+  }
+
+  // Retry: wrap the source in an async function (handles bare function bodies)
+  const wrappedSource = `async function run(context) {\nconst { page, input, emit, artifacts, log, helpers } = context;\n${source}\n}`;
+  const wrappedScript = new vm.Script(buildBootstrap(wrappedSource), {
     filename: 'ai-paths-playwright-node.user.js',
   });
-  const sandbox = {
-    console: {
-      log: (...args: unknown[]) => logs.push(`[console.log] ${args.map(safeStringify).join(' ')}`),
-      info: (...args: unknown[]) =>
-        logs.push(`[console.info] ${args.map(safeStringify).join(' ')}`),
-      warn: (...args: unknown[]) =>
-        logs.push(`[console.warn] ${args.map(safeStringify).join(' ')}`),
-      error: (...args: unknown[]) =>
-        logs.push(`[console.error] ${args.map(safeStringify).join(' ')}`),
-    },
-    setTimeout,
-    clearTimeout,
-    URL,
-    TextEncoder,
-    TextDecoder,
-  };
-  const resolved: unknown = script.runInNewContext(sandbox, { timeout: 250 });
+  const resolved: unknown = wrappedScript.runInNewContext(buildSandbox(logs), { timeout: 250 });
   if (typeof resolved !== 'function') {
     throw new Error('Playwright script must export a default async function or define `run`.');
   }

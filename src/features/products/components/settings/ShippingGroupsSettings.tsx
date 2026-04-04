@@ -63,8 +63,8 @@ const readConflictMetaFromApiError = (error: unknown): ShippingGroupRuleConflict
     return [];
   }
 
-  const meta = isRecord(error.payload.meta) ? error.payload.meta : null;
-  const conflicts = meta && Array.isArray(meta.conflicts) ? meta.conflicts : null;
+  const meta = isRecord(error.payload['meta']) ? error.payload['meta'] : null;
+  const conflicts = meta && Array.isArray(meta['conflicts']) ? meta['conflicts'] : null;
   if (!conflicts) {
     return [];
   }
@@ -73,14 +73,14 @@ const readConflictMetaFromApiError = (error: unknown): ShippingGroupRuleConflict
     if (!isRecord(conflict)) {
       return [];
     }
-    const groupIds = Array.isArray(conflict.groupIds)
-      ? conflict.groupIds.map((value) => toTrimmedString(value)).filter(Boolean)
+    const groupIds = Array.isArray(conflict['groupIds'])
+      ? conflict['groupIds'].map((value) => toTrimmedString(value)).filter(Boolean)
       : [];
-    const groupNames = Array.isArray(conflict.groupNames)
-      ? conflict.groupNames.map((value) => toTrimmedString(value)).filter(Boolean)
+    const groupNames = Array.isArray(conflict['groupNames'])
+      ? conflict['groupNames'].map((value) => toTrimmedString(value)).filter(Boolean)
       : [];
-    const overlapCategoryIds = Array.isArray(conflict.overlapCategoryIds)
-      ? conflict.overlapCategoryIds.map((value) => toTrimmedString(value)).filter(Boolean)
+    const overlapCategoryIds = Array.isArray(conflict['overlapCategoryIds'])
+      ? conflict['overlapCategoryIds'].map((value) => toTrimmedString(value)).filter(Boolean)
       : [];
 
     if (groupIds.length < 2 || groupNames.length < 2 || overlapCategoryIds.length === 0) {
@@ -92,6 +92,9 @@ const readConflictMetaFromApiError = (error: unknown): ShippingGroupRuleConflict
         groupIds: [groupIds[0]!, groupIds[1]!],
         groupNames: [groupNames[0]!, groupNames[1]!],
         overlapCategoryIds,
+        overlapCurrencyCodes: [],
+        appliesToAllCategories: false,
+        appliesToAllCurrencies: true,
       },
     ];
   });
@@ -572,6 +575,7 @@ export function ShippingGroupsSettings(): React.JSX.Element {
         ? Number(formData.traderaShippingPriceEur)
         : null,
       autoAssignCategoryIds: draftRuleIds,
+      autoAssignCurrencyCodes: [],
     };
     const modalPeerShippingGroups = modalCatalogShippingGroups.filter(
       (shippingGroup) => shippingGroup.id !== draftShippingGroup.id
@@ -706,6 +710,13 @@ export function ShippingGroupsSettings(): React.JSX.Element {
                     [
                       Array.isArray(shippingGroup.autoAssignCategoryIds) &&
                       shippingGroup.autoAssignCategoryIds.length > 0
+                        ? `Categories (${shippingGroup.autoAssignCategoryIds.length}): ${
+                            shippingGroupNormalizedRuleSummaryById.get(shippingGroup.id) ??
+                            `${shippingGroup.autoAssignCategoryIds.length} categories`
+                          }`
+                        : null,
+                      Array.isArray(shippingGroup.autoAssignCategoryIds) &&
+                      shippingGroup.autoAssignCategoryIds.length > 0
                         ? `Auto: ${
                             shippingGroupNormalizedRuleSummaryById.get(shippingGroup.id) ??
                             `${shippingGroup.autoAssignCategoryIds.length} categories`
@@ -832,24 +843,52 @@ export function ShippingGroupsSettings(): React.JSX.Element {
               label='Auto-assign from Categories'
               description='Optional rule: products in these categories or their descendants use this shipping group automatically unless the product has a manual shipping group.'
             >
-              <MultiSelect
-                options={modalCategoryOptions}
-                selected={formData.autoAssignCategoryIds}
-                onChange={(values: string[]): void =>
-                  setFormData((prev: ShippingGroupFormData) => ({
-                    ...prev,
-                    autoAssignCategoryIds: normalizeShippingGroupRuleCategoryIds({
-                      categoryIds: values,
-                      categories: modalCatalogCategories,
-                    }),
-                  }))
-                }
-                placeholder='Select categories for automatic assignment'
-                searchPlaceholder='Search categories...'
-                disabled={!formData.catalogId}
-                loading={loadingModalCatalogCategories}
-                emptyMessage='No categories available for this catalog.'
-              />
+              <div className='space-y-3'>
+                <MultiSelect
+                  options={modalCategoryOptions}
+                  selected={formData.autoAssignCategoryIds}
+                  onChange={(values: string[]): void =>
+                    setFormData((prev: ShippingGroupFormData) => ({
+                      ...prev,
+                      autoAssignCategoryIds: normalizeShippingGroupRuleCategoryIds({
+                        categoryIds: values,
+                        categories: modalCatalogCategories,
+                      }),
+                    }))
+                  }
+                  placeholder='Select categories for automatic assignment'
+                  searchPlaceholder='Search categories...'
+                  disabled={!formData.catalogId}
+                  loading={loadingModalCatalogCategories}
+                  emptyMessage='No categories available for this catalog.'
+                />
+
+                {formData.catalogId && !loadingModalCatalogCategories ? (
+                  <p className='text-xs text-muted-foreground'>
+                    {modalCategoryOptions.length === 0
+                      ? 'No categories are available in this catalog yet.'
+                      : modalCategoryOptions.length === 1
+                        ? '1 category is available in this catalog. You can still attach multiple categories once more categories exist.'
+                        : `${modalCategoryOptions.length} categories are available in this catalog. You can attach more than one category to the same shipping group.`}
+                  </p>
+                ) : null}
+
+                {formData.autoAssignCategoryIds.length > 0 ? (
+                  <div className='space-y-2'>
+                    <p className='text-xs font-medium text-foreground'>
+                      Selected categories ({formData.autoAssignCategoryIds.length})
+                    </p>
+                    <p className='text-xs text-muted-foreground'>
+                      {formData.autoAssignCategoryIds
+                        .map(
+                          (categoryId) =>
+                            modalCategoryLabelById.get(categoryId) ?? categoryId
+                        )
+                        .join(', ')}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
             </FormField>
 
             {modalRuleCoverage.descendantSummary ? (

@@ -16,8 +16,27 @@ const normalizeCategoryIdList = (value: unknown): string[] => {
   return Array.from(unique);
 };
 
+const normalizeCurrencyCodeList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  const unique = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== 'string') continue;
+    const normalized = item.trim().toUpperCase();
+    if (!normalized) continue;
+    unique.add(normalized);
+  }
+
+  return Array.from(unique);
+};
+
 const shippingGroupCategoryIdsSchema = z.preprocess(
   normalizeCategoryIdList,
+  z.array(z.string().min(1)).default([])
+);
+
+const shippingGroupCurrencyCodesSchema = z.preprocess(
+  normalizeCurrencyCodeList,
   z.array(z.string().min(1)).default([])
 );
 
@@ -27,6 +46,7 @@ export const productShippingGroupSchema = namedDtoSchema.extend({
   traderaShippingCondition: z.string().nullable().optional(),
   traderaShippingPriceEur: z.number().finite().nonnegative().nullable().optional(),
   autoAssignCategoryIds: shippingGroupCategoryIdsSchema,
+  autoAssignCurrencyCodes: shippingGroupCurrencyCodesSchema,
 });
 
 export type ProductShippingGroup = z.infer<typeof productShippingGroupSchema>;
@@ -38,6 +58,7 @@ export const createProductShippingGroupSchema = z.object({
   traderaShippingCondition: z.string().nullable().optional(),
   traderaShippingPriceEur: z.number().finite().nonnegative().nullable().optional(),
   autoAssignCategoryIds: shippingGroupCategoryIdsSchema.optional(),
+  autoAssignCurrencyCodes: shippingGroupCurrencyCodesSchema.optional(),
 });
 
 export type ProductShippingGroupCreateInput = z.infer<typeof createProductShippingGroupSchema>;
@@ -49,6 +70,7 @@ export const updateProductShippingGroupSchema = z.object({
   traderaShippingCondition: z.string().nullable().optional(),
   traderaShippingPriceEur: z.number().finite().nonnegative().nullable().optional(),
   autoAssignCategoryIds: shippingGroupCategoryIdsSchema.optional(),
+  autoAssignCurrencyCodes: shippingGroupCurrencyCodesSchema.optional(),
 });
 
 export type ProductShippingGroupUpdateInput = z.infer<typeof updateProductShippingGroupSchema>;

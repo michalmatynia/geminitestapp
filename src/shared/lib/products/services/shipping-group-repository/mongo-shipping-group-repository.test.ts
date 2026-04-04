@@ -74,6 +74,7 @@ describe('mongo-shipping-group-repository', () => {
         traderaShippingCondition: 'Buyer pays shipping',
         traderaShippingPriceEur: 5,
         autoAssignCategoryIds: [],
+        autoAssignCurrencyCodes: [' eur ', 'SEK'],
         createdAt: now,
         updatedAt: now,
       },
@@ -101,6 +102,7 @@ describe('mongo-shipping-group-repository', () => {
         traderaShippingCondition: 'Buyer pays shipping',
         traderaShippingPriceEur: 5,
         autoAssignCategoryIds: [],
+        autoAssignCurrencyCodes: ['EUR', 'SEK'],
       }),
     ]);
   });
@@ -118,6 +120,7 @@ describe('mongo-shipping-group-repository', () => {
         traderaShippingCondition: 'Buyer pays shipping',
         traderaShippingPriceEur: 5,
         autoAssignCategoryIds: [],
+        autoAssignCurrencyCodes: [' eur '],
         createdAt: now,
         updatedAt: now,
       })
@@ -129,6 +132,7 @@ describe('mongo-shipping-group-repository', () => {
         traderaShippingCondition: 'Seller pays shipping',
         traderaShippingPriceEur: 20,
         autoAssignCategoryIds: [],
+        autoAssignCurrencyCodes: ['SEK'],
         createdAt: now,
         updatedAt: now,
       })
@@ -140,6 +144,7 @@ describe('mongo-shipping-group-repository', () => {
         traderaShippingCondition: 'Seller pays shipping',
         traderaShippingPriceEur: 20,
         autoAssignCategoryIds: [],
+        autoAssignCurrencyCodes: ['SEK'],
         createdAt: now,
         updatedAt: now,
       });
@@ -158,6 +163,7 @@ describe('mongo-shipping-group-repository', () => {
       traderaShippingCondition: 'Buyer pays shipping',
       traderaShippingPriceEur: 5,
       autoAssignCategoryIds: [],
+      autoAssignCurrencyCodes: [' eur ', 'SEK'],
     });
     const updated = await mongoShippingGroupRepository.updateShippingGroup(
       shippingGroupId.toString(),
@@ -166,6 +172,7 @@ describe('mongo-shipping-group-repository', () => {
         description: 'Bigger parcel products',
         traderaShippingCondition: 'Seller pays shipping',
         traderaShippingPriceEur: 20,
+        autoAssignCurrencyCodes: [' sek '],
       }
     );
     const byName = await mongoShippingGroupRepository.findByName('catalog-1', 'Large Items');
@@ -181,6 +188,7 @@ describe('mongo-shipping-group-repository', () => {
       traderaShippingCondition: 'Buyer pays shipping',
       traderaShippingPriceEur: 5,
       autoAssignCategoryIds: [],
+      autoAssignCurrencyCodes: ['EUR', 'SEK'],
       createdAt: now,
       updatedAt: now,
     });
@@ -193,11 +201,13 @@ describe('mongo-shipping-group-repository', () => {
           description: 'Bigger parcel products',
           traderaShippingCondition: 'Seller pays shipping',
           traderaShippingPriceEur: 20,
+          autoAssignCurrencyCodes: ['SEK'],
           updatedAt: now,
         },
       }
     );
     expect(updated.name).toBe('Large Items');
+    expect(updated.autoAssignCurrencyCodes).toEqual(['SEK']);
     expect(mocks.shippingGroupFindOne).toHaveBeenLastCalledWith({
       catalogId: 'catalog-1',
       name: 'Large Items',

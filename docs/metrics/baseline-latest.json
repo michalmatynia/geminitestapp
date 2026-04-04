@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-04T13:43:03.876Z",
+  "generatedAt": "2026-04-04T13:51:27.509Z",
   "source": {
     "totalFiles": 9654,
-    "totalLines": 1588187,
+    "totalLines": 1588328,
     "useClientFiles": 1718,
     "hooksWithoutUseClient": 1,
     "filesOver800": 90,
-    "filesOver1000": 0,
+    "filesOver1000": 1,
     "filesOver1500": 0,
     "largestFile": {
-      "path": "src/features/filemaker/components/FilemakerMailSidebar.tsx",
-      "lines": 986
+      "path": "src/features/products/components/settings/ShippingGroupsSettings.tsx",
+      "lines": 1002
     }
   },
   "api": {
@@ -131,7 +131,7 @@
       {
         "feature": "products",
         "files": 349,
-        "lines": 72227
+        "lines": 72062
       },
       {
         "feature": "case-resolver",
@@ -141,7 +141,7 @@
       {
         "feature": "integrations",
         "files": 360,
-        "lines": 58894
+        "lines": 58934
       },
       {
         "feature": "cms",
@@ -441,6 +441,10 @@
         "lines": 1038
       },
       {
+        "path": "src/features/products/components/settings/ShippingGroupsSettings.tsx",
+        "lines": 1002
+      },
+      {
         "path": "src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts",
         "lines": 999
       },
@@ -503,10 +507,6 @@
       {
         "path": "src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx",
         "lines": 968
-      },
-      {
-        "path": "src/features/products/components/settings/ShippingGroupsSettings.tsx",
-        "lines": 967
       },
       {
         "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",

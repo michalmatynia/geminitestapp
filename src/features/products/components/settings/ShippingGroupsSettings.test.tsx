@@ -222,6 +222,7 @@ describe('ShippingGroupsSettings', () => {
       data: [
         { id: 'category-jewellery', name: 'Jewellery', parentId: null },
         { id: 'category-rings', name: 'Rings', parentId: 'category-jewellery' },
+        { id: 'category-keychains', name: 'Keychains', parentId: 'category-jewellery' },
       ],
       isLoading: false,
     });
@@ -294,6 +295,57 @@ describe('ShippingGroupsSettings', () => {
         }),
       });
     });
+  });
+
+  it('shows multi-category guidance and selected category summaries in the modal', () => {
+    render(<ShippingGroupsSettings />);
+
+    fireEvent.click(screen.getByRole('button', { name: /add shipping group/i }));
+
+    expect(
+      screen.getByText(
+        /3 categories are available in this catalog\. You can attach more than one category to the same shipping group\./i
+      )
+    ).toBeInTheDocument();
+
+    const autoAssignSelect = screen.getByLabelText(/auto-assign from categories/i);
+    const ringsOption = screen.getByRole('option', { name: 'Jewellery / Rings' });
+    const keychainsOption = screen.getByRole('option', { name: 'Jewellery / Keychains' });
+    (ringsOption as HTMLOptionElement).selected = true;
+    (keychainsOption as HTMLOptionElement).selected = true;
+    fireEvent.change(autoAssignSelect);
+
+    expect(screen.getByText('Selected categories (2)')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Jewellery \/ Rings, Jewellery \/ Keychains/i)
+    ).toBeInTheDocument();
+  });
+
+  it('shows explicit category counts for saved multi-category rules', () => {
+    useProductSettingsShippingGroupsContextMock.mockReturnValue({
+      loadingShippingGroups: false,
+      shippingGroups: [
+        {
+          id: 'shipping-group-1',
+          name: 'Pins 7 EUR',
+          description: null,
+          catalogId: 'catalog-1',
+          traderaShippingCondition: 'Buyer pays shipping',
+          traderaShippingPriceEur: 7,
+          autoAssignCategoryIds: ['category-rings', 'category-keychains'],
+        },
+      ],
+      catalogs: [{ id: 'catalog-1', name: 'Main Catalog', isDefault: true }],
+      selectedShippingGroupCatalogId: 'catalog-1',
+      onShippingGroupCatalogChange: vi.fn(),
+      onRefreshShippingGroups: vi.fn(),
+    });
+
+    render(<ShippingGroupsSettings />);
+
+    expect(
+      screen.getByText(/Categories \(2\): Jewellery \/ Rings, Jewellery \/ Keychains/i)
+    ).toBeInTheDocument();
   });
 
   it('warns when shipping-group category rules overlap', () => {
@@ -415,7 +467,7 @@ describe('ShippingGroupsSettings', () => {
     render(<ShippingGroupsSettings />);
 
     expect(screen.getByText(/some auto-assign rules include descendant categories already covered by parent categories/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/jewellery 7 eur/i)).toHaveLength(2);
+    expect(screen.getAllByText(/jewellery 7 eur/i)).toHaveLength(3);
     expect(screen.getByText(/auto: jewellery \(\+ descendants\)/i)).toBeInTheDocument();
     expect(screen.getByText(/redundant: jewellery \/ rings|redundant: rings/i)).toBeInTheDocument();
   });

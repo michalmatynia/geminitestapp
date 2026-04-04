@@ -22,6 +22,7 @@ interface MultiSelectProps {
   options: ReadonlyArray<MultiSelectOption>;
   selected: string[];
   onChange: (values: string[]) => void;
+  ariaLabel?: string | undefined;
   placeholder?: string | undefined;
   searchPlaceholder?: string | undefined;
   label?: string | undefined;
@@ -96,6 +97,7 @@ export function MultiSelect(props: MultiSelectProps) {
     options,
     selected,
     onChange,
+    ariaLabel,
     placeholder = 'Select options...',
     searchPlaceholder = 'Search...',
     label,
@@ -148,6 +150,7 @@ export function MultiSelect(props: MultiSelectProps) {
             variant='outline'
             className='w-full justify-between text-left font-normal'
             disabled={disabled || loading}
+            aria-label={labelId ? undefined : ariaLabel}
             aria-labelledby={labelId}
           >
             <span className='truncate'>{loading ? 'Loading...' : displayValue}</span>

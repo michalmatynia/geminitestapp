@@ -22,6 +22,7 @@ interface ProductShippingGroupDoc extends Document {
   traderaShippingCondition: string | null;
   traderaShippingPriceEur: number | null;
   autoAssignCategoryIds: string[];
+  autoAssignCurrencyCodes: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +41,20 @@ const normalizeCategoryIdList = (value: unknown): string[] => {
   return Array.from(unique);
 };
 
+const normalizeCurrencyCodeList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+
+  const unique = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== 'string') continue;
+    const normalized = item.trim().toUpperCase();
+    if (!normalized) continue;
+    unique.add(normalized);
+  }
+
+  return Array.from(unique);
+};
+
 const toShippingGroupDomain = (doc: ProductShippingGroupDoc): ProductShippingGroup => ({
   id: doc._id.toString(),
   name: doc.name,
@@ -52,6 +67,7 @@ const toShippingGroupDomain = (doc: ProductShippingGroupDoc): ProductShippingGro
       ? doc.traderaShippingPriceEur
       : null,
   autoAssignCategoryIds: normalizeCategoryIdList(doc.autoAssignCategoryIds),
+  autoAssignCurrencyCodes: normalizeCurrencyCodeList(doc.autoAssignCurrencyCodes),
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
 });
@@ -94,6 +110,7 @@ export const mongoShippingGroupRepository: ShippingGroupRepository = {
       traderaShippingCondition: data.traderaShippingCondition ?? null,
       traderaShippingPriceEur: data.traderaShippingPriceEur ?? null,
       autoAssignCategoryIds: normalizeCategoryIdList(data.autoAssignCategoryIds),
+      autoAssignCurrencyCodes: normalizeCurrencyCodeList(data.autoAssignCurrencyCodes),
       createdAt: now,
       updatedAt: now,
     };
@@ -124,6 +141,9 @@ export const mongoShippingGroupRepository: ShippingGroupRepository = {
     }
     if (data.autoAssignCategoryIds !== undefined) {
       set.autoAssignCategoryIds = normalizeCategoryIdList(data.autoAssignCategoryIds);
+    }
+    if (data.autoAssignCurrencyCodes !== undefined) {
+      set.autoAssignCurrencyCodes = normalizeCurrencyCodeList(data.autoAssignCurrencyCodes);
     }
 
     await db

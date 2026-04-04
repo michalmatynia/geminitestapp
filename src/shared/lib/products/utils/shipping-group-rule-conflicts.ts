@@ -3,6 +3,14 @@ import type { ProductCategory, ProductShippingGroup } from '@/shared/contracts/p
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
+const normalizeCurrencyCode = (value: unknown): string =>
+  toTrimmedString(value).toUpperCase();
+
+type EffectiveRuleScope<TValue extends string> =
+  | { kind: 'none'; values: [] }
+  | { kind: 'all'; values: [] }
+  | { kind: 'some'; values: TValue[] };
+
 export const buildCategoryPathLabelMap = (
   categories: readonly ProductCategory[]
 ): Map<string, string> => {
@@ -121,6 +129,33 @@ export const normalizeShippingGroupRuleCategoryIds = ({
   });
 };
 
+export const normalizeShippingGroupRuleCurrencyCodes = ({
+  currencyCodes,
+  availableCurrencyCodes = [],
+}: {
+  currencyCodes: readonly string[];
+  availableCurrencyCodes?: readonly string[];
+}): string[] => {
+  const knownCurrencyCodes =
+    availableCurrencyCodes.length > 0
+      ? new Set(availableCurrencyCodes.map((currencyCode) => normalizeCurrencyCode(currencyCode)).filter(Boolean))
+      : null;
+
+  const normalizedCodes: string[] = [];
+  const seenCodes = new Set<string>();
+
+  for (const currencyCode of currencyCodes) {
+    const normalizedCode = normalizeCurrencyCode(currencyCode);
+    if (!normalizedCode) continue;
+    if (knownCurrencyCodes && !knownCurrencyCodes.has(normalizedCode)) continue;
+    if (seenCodes.has(normalizedCode)) continue;
+    seenCodes.add(normalizedCode);
+    normalizedCodes.push(normalizedCode);
+  }
+
+  return normalizedCodes;
+};
+
 export const findRedundantShippingGroupRuleCategoryIds = ({
   categoryIds,
   categories,
@@ -146,75 +181,247 @@ export const findRedundantShippingGroupRuleCategoryIds = ({
     );
 };
 
+const resolveCategoryScope = ({
+  categoryIds,
+  categories,
+}: {
+  categoryIds: readonly string[] | undefined;
+  categories: readonly ProductCategory[];
+}): EffectiveRuleScope<string> => {
+  const rawCategoryIds = (Array.isArray(categoryIds) ? categoryIds : [])
+    .map((categoryId) => toTrimmedString(categoryId))
+    .filter(Boolean);
+
+  if (rawCategoryIds.length === 0) {
+    return { kind: 'all', values: [] };
+  }
+
+  const normalizedCategoryIds = normalizeShippingGroupRuleCategoryIds({
+    categoryIds: rawCategoryIds,
+    categories,
+  });
+
+  if (normalizedCategoryIds.length === 0) {
+    return { kind: 'none', values: [] };
+  }
+
+  return { kind: 'some', values: normalizedCategoryIds };
+};
+
+const resolveCurrencyScope = ({
+  currencyCodes,
+  availableCurrencyCodes,
+}: {
+  currencyCodes: readonly string[] | undefined;
+  availableCurrencyCodes: readonly string[];
+}): EffectiveRuleScope<string> => {
+  const rawCurrencyCodes = (Array.isArray(currencyCodes) ? currencyCodes : [])
+    .map((currencyCode) => normalizeCurrencyCode(currencyCode))
+    .filter(Boolean);
+
+  if (rawCurrencyCodes.length === 0) {
+    return { kind: 'all', values: [] };
+  }
+
+  const normalizedCurrencyCodes = normalizeShippingGroupRuleCurrencyCodes({
+    currencyCodes: rawCurrencyCodes,
+    availableCurrencyCodes,
+  });
+
+  if (normalizedCurrencyCodes.length === 0) {
+    return { kind: 'none', values: [] };
+  }
+
+  return { kind: 'some', values: normalizedCurrencyCodes };
+};
+
+const resolveCategoryOverlap = ({
+  leftScope,
+  rightScope,
+  categoryParentMap,
+}: {
+  leftScope: EffectiveRuleScope<string>;
+  rightScope: EffectiveRuleScope<string>;
+  categoryParentMap: Map<string, string | null>;
+}): { appliesToAllCategories: boolean; overlapCategoryIds: string[] } | null => {
+  if (leftScope.kind === 'none' || rightScope.kind === 'none') {
+    return null;
+  }
+
+  if (leftScope.kind === 'all' && rightScope.kind === 'all') {
+    return {
+      appliesToAllCategories: true,
+      overlapCategoryIds: [],
+    };
+  }
+
+  if (leftScope.kind === 'all') {
+    return {
+      appliesToAllCategories: false,
+      overlapCategoryIds: [...rightScope.values],
+    };
+  }
+
+  if (rightScope.kind === 'all') {
+    return {
+      appliesToAllCategories: false,
+      overlapCategoryIds: [...leftScope.values],
+    };
+  }
+
+  const overlapCategoryIds = new Set<string>();
+  for (const leftRuleId of leftScope.values) {
+    for (const rightRuleId of rightScope.values) {
+      if (leftRuleId === rightRuleId) {
+        overlapCategoryIds.add(leftRuleId);
+        continue;
+      }
+      if (
+        isCategoryAncestorOrSelf({
+          ancestorCategoryId: leftRuleId,
+          categoryId: rightRuleId,
+          categoryParentMap,
+        })
+      ) {
+        overlapCategoryIds.add(rightRuleId);
+        continue;
+      }
+      if (
+        isCategoryAncestorOrSelf({
+          ancestorCategoryId: rightRuleId,
+          categoryId: leftRuleId,
+          categoryParentMap,
+        })
+      ) {
+        overlapCategoryIds.add(leftRuleId);
+      }
+    }
+  }
+
+  if (overlapCategoryIds.size === 0) {
+    return null;
+  }
+
+  return {
+    appliesToAllCategories: false,
+    overlapCategoryIds: Array.from(overlapCategoryIds),
+  };
+};
+
+const resolveCurrencyOverlap = ({
+  leftScope,
+  rightScope,
+}: {
+  leftScope: EffectiveRuleScope<string>;
+  rightScope: EffectiveRuleScope<string>;
+}): { appliesToAllCurrencies: boolean; overlapCurrencyCodes: string[] } | null => {
+  if (leftScope.kind === 'none' || rightScope.kind === 'none') {
+    return null;
+  }
+
+  if (leftScope.kind === 'all' && rightScope.kind === 'all') {
+    return {
+      appliesToAllCurrencies: true,
+      overlapCurrencyCodes: [],
+    };
+  }
+
+  if (leftScope.kind === 'all') {
+    return {
+      appliesToAllCurrencies: false,
+      overlapCurrencyCodes: [...rightScope.values],
+    };
+  }
+
+  if (rightScope.kind === 'all') {
+    return {
+      appliesToAllCurrencies: false,
+      overlapCurrencyCodes: [...leftScope.values],
+    };
+  }
+
+  const overlapCurrencyCodes = leftScope.values.filter((currencyCode) =>
+    rightScope.values.includes(currencyCode)
+  );
+
+  if (overlapCurrencyCodes.length === 0) {
+    return null;
+  }
+
+  return {
+    appliesToAllCurrencies: false,
+    overlapCurrencyCodes,
+  };
+};
+
 export type ShippingGroupRuleConflict = {
   groupIds: [string, string];
   groupNames: [string, string];
   overlapCategoryIds: string[];
+  overlapCurrencyCodes: string[];
+  appliesToAllCategories: boolean;
+  appliesToAllCurrencies: boolean;
 };
 
 export const buildShippingGroupRuleConflicts = ({
   shippingGroups,
   categories,
+  availableCurrencyCodes = [],
 }: {
   shippingGroups: readonly ProductShippingGroup[];
   categories: readonly ProductCategory[];
+  availableCurrencyCodes?: readonly string[];
 }): ShippingGroupRuleConflict[] => {
   const categoryParentMap = buildCategoryParentMap(categories);
   const conflicts: ShippingGroupRuleConflict[] = [];
 
   for (let leftIndex = 0; leftIndex < shippingGroups.length; leftIndex += 1) {
     const leftGroup = shippingGroups[leftIndex];
-    const leftRuleIds = Array.isArray(leftGroup.autoAssignCategoryIds)
-      ? leftGroup.autoAssignCategoryIds
-          .map((categoryId) => toTrimmedString(categoryId))
-          .filter(Boolean)
-      : [];
-    if (leftRuleIds.length === 0) continue;
+    if (!leftGroup) continue;
+
+    const leftCategoryScope = resolveCategoryScope({
+      categoryIds: leftGroup.autoAssignCategoryIds,
+      categories,
+    });
+    const leftCurrencyScope = resolveCurrencyScope({
+      currencyCodes: leftGroup.autoAssignCurrencyCodes,
+      availableCurrencyCodes,
+    });
 
     for (let rightIndex = leftIndex + 1; rightIndex < shippingGroups.length; rightIndex += 1) {
       const rightGroup = shippingGroups[rightIndex];
-      const rightRuleIds = Array.isArray(rightGroup.autoAssignCategoryIds)
-        ? rightGroup.autoAssignCategoryIds
-            .map((categoryId) => toTrimmedString(categoryId))
-            .filter(Boolean)
-        : [];
-      if (rightRuleIds.length === 0) continue;
+      if (!rightGroup) continue;
 
-      const overlapCategoryIds = new Set<string>();
-      for (const leftRuleId of leftRuleIds) {
-        for (const rightRuleId of rightRuleIds) {
-          if (leftRuleId === rightRuleId) {
-            overlapCategoryIds.add(leftRuleId);
-            continue;
-          }
-          if (
-            isCategoryAncestorOrSelf({
-              ancestorCategoryId: leftRuleId,
-              categoryId: rightRuleId,
-              categoryParentMap,
-            })
-          ) {
-            overlapCategoryIds.add(rightRuleId);
-            continue;
-          }
-          if (
-            isCategoryAncestorOrSelf({
-              ancestorCategoryId: rightRuleId,
-              categoryId: leftRuleId,
-              categoryParentMap,
-            })
-          ) {
-            overlapCategoryIds.add(leftRuleId);
-          }
-        }
+      const rightCategoryScope = resolveCategoryScope({
+        categoryIds: rightGroup.autoAssignCategoryIds,
+        categories,
+      });
+      const rightCurrencyScope = resolveCurrencyScope({
+        currencyCodes: rightGroup.autoAssignCurrencyCodes,
+        availableCurrencyCodes,
+      });
+
+      const categoryOverlap = resolveCategoryOverlap({
+        leftScope: leftCategoryScope,
+        rightScope: rightCategoryScope,
+        categoryParentMap,
+      });
+      const currencyOverlap = resolveCurrencyOverlap({
+        leftScope: leftCurrencyScope,
+        rightScope: rightCurrencyScope,
+      });
+
+      if (!categoryOverlap || !currencyOverlap) {
+        continue;
       }
-
-      if (overlapCategoryIds.size === 0) continue;
 
       conflicts.push({
         groupIds: [leftGroup.id, rightGroup.id],
         groupNames: [leftGroup.name, rightGroup.name],
-        overlapCategoryIds: Array.from(overlapCategoryIds),
+        overlapCategoryIds: categoryOverlap.overlapCategoryIds,
+        overlapCurrencyCodes: currencyOverlap.overlapCurrencyCodes,
+        appliesToAllCategories: categoryOverlap.appliesToAllCategories,
+        appliesToAllCurrencies: currencyOverlap.appliesToAllCurrencies,
       });
     }
   }
@@ -239,4 +446,18 @@ export const formatCategoryRuleSummary = ({
   if (labels.length === 0) return null;
   if (labels.length <= 2) return labels.join(', ');
   return `${labels.slice(0, 2).join(', ')} +${labels.length - 2}`;
+};
+
+export const formatCurrencyRuleSummary = ({
+  currencyCodes,
+}: {
+  currencyCodes: readonly string[];
+}): string | null => {
+  const labels = currencyCodes
+    .map((currencyCode) => normalizeCurrencyCode(currencyCode))
+    .filter(Boolean);
+
+  if (labels.length === 0) return null;
+  if (labels.length <= 3) return labels.join(', ');
+  return `${labels.slice(0, 3).join(', ')} +${labels.length - 3}`;
 };

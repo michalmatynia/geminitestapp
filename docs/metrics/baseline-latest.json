@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-03T17:35:06.608Z",
+  "generatedAt": "2026-04-04T13:43:03.876Z",
   "source": {
-    "totalFiles": 9421,
-    "totalLines": 1563080,
-    "useClientFiles": 1710,
+    "totalFiles": 9654,
+    "totalLines": 1588187,
+    "useClientFiles": 1718,
     "hooksWithoutUseClient": 1,
-    "filesOver800": 89,
+    "filesOver800": 90,
     "filesOver1000": 0,
     "filesOver1500": 0,
     "largestFile": {
@@ -16,13 +16,13 @@
   "api": {
     "totalRoutes": 30,
     "routesWithApiHandler": 126,
-    "delegatedServerRoutes": 176,
+    "delegatedServerRoutes": 177,
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 39,
     "revalidateRoutes": 12,
     "routesWithCacheHeader": 1,
     "routesWithCacheOption": 8,
-    "routesWithExplicitCachePolicy": 302,
+    "routesWithExplicitCachePolicy": 303,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
@@ -120,13 +120,18 @@
     "featureSizeByLines": [
       {
         "feature": "kangur",
-        "files": 2444,
-        "lines": 528064
+        "files": 2446,
+        "lines": 528097
       },
       {
         "feature": "ai",
-        "files": 1227,
-        "lines": 241608
+        "files": 1241,
+        "lines": 243668
+      },
+      {
+        "feature": "products",
+        "files": 349,
+        "lines": 72227
       },
       {
         "feature": "case-resolver",
@@ -134,19 +139,14 @@
         "lines": 67806
       },
       {
-        "feature": "products",
-        "files": 326,
-        "lines": 67036
-      },
-      {
         "feature": "integrations",
-        "files": 340,
-        "lines": 55820
+        "files": 360,
+        "lines": 58894
       },
       {
         "feature": "cms",
-        "files": 350,
-        "lines": 53162
+        "files": 353,
+        "lines": 53431
       },
       {
         "feature": "filemaker",
@@ -180,8 +180,8 @@
       },
       {
         "feature": "data-import-export",
-        "files": 35,
-        "lines": 6892
+        "files": 36,
+        "lines": 6973
       },
       {
         "feature": "observability",
@@ -210,8 +210,8 @@
       },
       {
         "feature": "files",
-        "files": 32,
-        "lines": 2683
+        "files": 33,
+        "lines": 2767
       },
       {
         "feature": "internationalization",
@@ -428,7 +428,7 @@
         "total": 15
       }
     ],
-    "highComplexityHooksCount": 166
+    "highComplexityHooksCount": 167
   },
   "hotspots": {
     "topFilesByLines": [
@@ -505,6 +505,10 @@
         "lines": 968
       },
       {
+        "path": "src/features/products/components/settings/ShippingGroupsSettings.tsx",
+        "lines": 967
+      },
+      {
         "path": "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts",
         "lines": 967
       },
@@ -547,10 +551,6 @@
       {
         "path": "src/features/kangur/ui/components/primary-navigation/__tests__/KangurPrimaryNavigation.navigation.test.tsx",
         "lines": 945
-      },
-      {
-        "path": "src/features/kangur/ui/KangurFeatureApp.test.tsx",
-        "lines": 944
       }
     ],
     "topPagesByLines": [

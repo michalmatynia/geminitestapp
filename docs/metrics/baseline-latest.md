@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-03'
+last_reviewed: '2026-04-04'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,20 +8,20 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-04-03T17:35:06.608Z
+Generated at: 2026-04-04T13:43:03.876Z
 
 ## Snapshot
 
-- Source files: 9421
-- Source lines: 1563080
-- use client files: 1710
+- Source files: 9654
+- Source lines: 1588187
+- use client files: 1718
 - Files >= 1000 LOC: 0
 - Files >= 1500 LOC: 0
 - Largest file: `src/features/filemaker/components/FilemakerMailSidebar.tsx` (986 LOC)
 - API routes: 30
-- API delegated server routes: 176
+- API delegated server routes: 177
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 302/30 (1006.7%)
+- API explicit cache policy coverage: 303/30 (1010.0%)
 - Cross-feature dependency pairs: 0
 - Shared -> features imports: 0
 - setInterval occurrences: 0
@@ -75,5 +75,5 @@ Generated at: 2026-04-03T17:35:06.608Z
 | `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx` | 968 |
 | `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx` | 968 |
+| `src/features/products/components/settings/ShippingGroupsSettings.tsx` | 967 |
 | `src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine.test.ts` | 967 |
-| `src/features/kangur/ui/components/GeometryBasicsWorkshopGame.tsx` | 964 |

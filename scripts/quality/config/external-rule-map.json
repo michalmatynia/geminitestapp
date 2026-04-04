@@ -1,0 +1,424 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-04",
+  "source": "External scanner issue names provided manually",
+  "statuses": [
+    "implemented",
+    "eslint",
+    "scanner",
+    "waived"
+  ],
+  "rules": [
+    {
+      "normalizedRuleId": "medium-cyclomatic-complexity",
+      "status": "eslint",
+      "severity": "warn",
+      "ownerScanner": "eslint",
+      "sourceScannerRuleId": "complexity",
+      "externalRuleNames": [
+        "Enforce Medium Cyclomatic Complexity Threshold"
+      ],
+      "rationale": "Maps cleanly to a stable lint threshold."
+    },
+    {
+      "normalizedRuleId": "medium-nloc-limit",
+      "status": "eslint",
+      "severity": "warn",
+      "ownerScanner": "eslint",
+      "sourceScannerRuleId": "max-lines-per-function",
+      "externalRuleNames": [
+        "Enforce Medium Number of Lines of Code (NLOC) Limit"
+      ],
+      "rationale": "Use lint-native function-size limits instead of a custom scanner."
+    },
+    {
+      "normalizedRuleId": "medium-file-length-limit",
+      "status": "eslint",
+      "severity": "warn",
+      "ownerScanner": "eslint",
+      "sourceScannerRuleId": "max-lines",
+      "externalRuleNames": [
+        "Enforce Medium File Length Limit Based on Number of Lines of Code"
+      ],
+      "rationale": "Use a standard file-length lint rule."
+    },
+    {
+      "normalizedRuleId": "medium-parameter-count-limit",
+      "status": "eslint",
+      "severity": "warn",
+      "ownerScanner": "eslint",
+      "sourceScannerRuleId": "max-params",
+      "externalRuleNames": [
+        "Enforce Medium Parameter Count Limit"
+      ],
+      "rationale": "Maps directly to lint-native parameter count enforcement."
+    },
+    {
+      "normalizedRuleId": "trailing-comma-ban",
+      "status": "eslint",
+      "severity": "warn",
+      "ownerScanner": "eslint",
+      "sourceScannerRuleId": "comma-dangle",
+      "externalRuleNames": [
+        "Disallow Trailing Commas in Array and Object Literals",
+        "Avoid Trailing Comma in Object or Array Literals"
+      ],
+      "rationale": "Both names normalize to the same trailing-comma policy."
+    },
+    {
+      "normalizedRuleId": "import-resolution",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "import-resolution",
+      "externalRuleNames": [
+        "Enforce Import Resolution",
+        "Disallow Import of Non-Existent Modules"
+      ],
+      "rationale": "TypeScript module-resolution parity is implemented locally because eslint-plugin-import is not wired in this repo."
+    },
+    {
+      "normalizedRuleId": "no-sync-methods",
+      "status": "eslint",
+      "severity": "warn",
+      "ownerScanner": "eslint",
+      "sourceScannerRuleId": "no-sync",
+      "externalRuleNames": [
+        "Disallow synchronous methods"
+      ],
+      "rationale": "Prefer a targeted lint rule over a custom scanner."
+    },
+    {
+      "normalizedRuleId": "no-top-level-await",
+      "status": "eslint",
+      "severity": "warn",
+      "ownerScanner": "eslint",
+      "sourceScannerRuleId": "no-top-level-await",
+      "externalRuleNames": [
+        "Disallow Top-Level Await"
+      ],
+      "rationale": "Lint-native syntax restriction."
+    },
+    {
+      "normalizedRuleId": "no-await-in-loops",
+      "status": "eslint",
+      "severity": "warn",
+      "ownerScanner": "eslint",
+      "sourceScannerRuleId": "no-await-in-loop",
+      "externalRuleNames": [
+        "Disallow await inside loops"
+      ],
+      "rationale": "Lint-native async control-flow rule."
+    },
+    {
+      "normalizedRuleId": "no-atomic-updates",
+      "status": "implemented",
+      "severity": "warn",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "no-atomic-updates",
+      "externalRuleNames": [
+        "Require atomic updates"
+      ],
+      "rationale": "Implemented locally because the current ESLint flat-config stack does not expose the core rule cleanly."
+    },
+    {
+      "normalizedRuleId": "filesystem-path-taint",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "filesystem-path-taint",
+      "externalRuleNames": [
+        "Avoid Using Non-Literal User Input for File System Paths",
+        "Detect Non-Literal Filename in fs Calls",
+        "Avoid Path Traversal via path.join or path.resolve with User Input",
+        "Avoid Using Untrusted Input in readFile and readFileSync"
+      ],
+      "rationale": "These are path-taint and file-system sink checks, not good ESLint-only rules."
+    },
+    {
+      "normalizedRuleId": "hardcoded-passwords",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "hardcoded-passwords",
+      "externalRuleNames": [
+        "Avoid Hardcoded Passwords"
+      ],
+      "rationale": "Credential-pattern detection belongs in a scanner, not core ESLint."
+    },
+    {
+      "normalizedRuleId": "weak-randomness",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "weak-rng",
+      "externalRuleNames": [
+        "Avoid Use of Cryptographically Weak Random Number Generators"
+      ],
+      "rationale": "Requires API-usage scanning with security context."
+    },
+    {
+      "normalizedRuleId": "regex-safety-and-dynamic-input",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "regex-safety-and-dynamic-input",
+      "externalRuleNames": [
+        "Avoid Using Non-Literal Values in RegExp Constructor",
+        "Detect Unsafe Regular Expressions",
+        "Detect Non-Literal Regular Expressions",
+        "Avoid Non-Literal Regular Expressions",
+        "Disallow Unused Capturing Group in RegExp"
+      ],
+      "rationale": "These overlap around dynamic regex construction and regex safety."
+    },
+    {
+      "normalizedRuleId": "nosql-findone-injection",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "nosql-findone-injection",
+      "externalRuleNames": [
+        "Avoid NoSQL Injection via Untrusted Input in findOne()"
+      ],
+      "rationale": "Query taint analysis is scanner territory."
+    },
+    {
+      "normalizedRuleId": "dangerouslysetinnerhtml-review",
+      "status": "implemented",
+      "severity": "warn",
+      "ownerScanner": "quality/security-static",
+      "sourceScannerRuleId": "dangerouslysetinnerhtml-review",
+      "externalRuleNames": [
+        "Avoid Using dangerouslySetInnerHTML in React",
+        "Detect usage of dangerouslySetInnerHTML with non-constant definitions"
+      ],
+      "rationale": "Already covered by the existing static security scanner."
+    },
+    {
+      "normalizedRuleId": "html-and-innerhtml-xss-sinks",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "html-and-innerhtml-xss-sinks",
+      "externalRuleNames": [
+        "Avoid assigning user-controlled data to innerHTML",
+        "Avoid User Controlled Data in HTML String Join",
+        "Disallow Mixed HTML and Unencoded Input to Prevent XSS",
+        "Avoid Using Insecure Document Methods with User-Controlled Data"
+      ],
+      "rationale": "These are sink-oriented XSS checks not currently covered by ESLint."
+    },
+    {
+      "normalizedRuleId": "ssrf-user-controlled-urls",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "ssrf-user-controlled-urls",
+      "externalRuleNames": [
+        "Avoid Server-Side Request Forgery (SSRF) by Validating User-Controlled URLs"
+      ],
+      "rationale": "Requires URL sink validation and taint awareness."
+    },
+    {
+      "normalizedRuleId": "timing-attack-comparisons",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "timing-attack-comparisons",
+      "externalRuleNames": [
+        "Avoid Timing Attack Vulnerabilities in String Comparisons",
+        "Detect Possible Timing Attacks",
+        "Detect Possible Timing Attacks"
+      ],
+      "rationale": "Normalize repeated timing-attack findings into one scanner rule family."
+    },
+    {
+      "normalizedRuleId": "unsafe-dynamic-object-access",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "unsafe-dynamic-object-access",
+      "externalRuleNames": [
+        "Avoid Using Unsafe Dynamic Method Calls",
+        "Detect Object Injection",
+        "Detect Prototype Pollution via Loop"
+      ],
+      "rationale": "These are all dynamic object/property access safety checks."
+    },
+    {
+      "normalizedRuleId": "open-redirects",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "open-redirects",
+      "externalRuleNames": [
+        "Avoid Open Redirect Vulnerabilities in Express Redirects"
+      ],
+      "rationale": "Redirect target validation is a dataflow check, even if Express-specific wording is legacy."
+    },
+    {
+      "normalizedRuleId": "duplicate-headings",
+      "status": "implemented",
+      "severity": "warn",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "duplicate-headings",
+      "externalRuleNames": [
+        "Avoid Multiple Headings with the Same Content"
+      ],
+      "rationale": "A structural content check fits better in a dedicated scanner."
+    },
+    {
+      "normalizedRuleId": "browser-global-ssr-access",
+      "status": "implemented",
+      "severity": "error",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "browser-global-ssr-access",
+      "externalRuleNames": [
+        "Disallow Access to Restricted Browser Globals During SSR"
+      ],
+      "rationale": "Server/client environment misuse needs targeted app-specific scanning."
+    },
+    {
+      "normalizedRuleId": "css-scss-compatibility-rules",
+      "status": "implemented",
+      "severity": "warn",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "css-scss-compatibility-rules",
+      "externalRuleNames": [
+        "Enforce Cross-Browser API Compatibility",
+        "Disallow Sass Variables Without Interpolation in CSS Custom Identifiers",
+        "Disallow Unknown CSS Properties",
+        "Enforce Numeric Values with Units Using Arithmetic in SCSS",
+        "Disallow Unknown At-Rules in SCSS",
+        "Disallow Unknown SCSS Functions",
+        "Disallow Unknown Values for CSS Property Declarations",
+        "Disallow Specified SCSS Functions",
+        "Disallow Global Function Names in Sass",
+        "Disallow Use of Obsolete HTML Attributes"
+      ],
+      "rationale": "Frontend compatibility and style dialect checks belong in a dedicated scanner lane."
+    },
+    {
+      "normalizedRuleId": "github-actions-full-sha",
+      "status": "implemented",
+      "severity": "warn",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "github-actions-full-sha",
+      "externalRuleNames": [
+        "Enforce Pinning of Third-Party GitHub Actions to Full Commit SHA"
+      ],
+      "rationale": "Workflow YAML policy checking is better handled outside ESLint."
+    },
+    {
+      "normalizedRuleId": "jsdoc-import-dependency-consistency",
+      "status": "implemented",
+      "severity": "warn",
+      "ownerScanner": "quality/external-rule-parity",
+      "sourceScannerRuleId": "jsdoc-import-dependency-consistency",
+      "externalRuleNames": [
+        "Enforce JSDoc imports correspond to listed dependencies"
+      ],
+      "rationale": "Dependency metadata checks belong in a documentation/package scanner."
+    },
+    {
+      "normalizedRuleId": "legacy-react-flow-module-rules",
+      "status": "waived",
+      "severity": "info",
+      "ownerScanner": "waiver",
+      "sourceScannerRuleId": null,
+      "externalRuleNames": [
+        "Disallow ES2015 Modules",
+        "Require Parameter Type Annotations in Flowtype",
+        "Disallow Missing React When Using JSX"
+      ],
+      "rationale": "These are obsolete for a modern TypeScript + React + ESM codebase."
+    },
+    {
+      "normalizedRuleId": "legacy-syntax-bans",
+      "status": "waived",
+      "severity": "info",
+      "ownerScanner": "waiver",
+      "sourceScannerRuleId": null,
+      "externalRuleNames": [
+        "Disallow Block-Scoped Variables",
+        "Disallow Template Literals",
+        "Detect Missing Template String Indicator in JavaScript",
+        "Disallow Arrow Function Expressions",
+        "Disallow Nullish Coalescing Operators",
+        "Disallow Async Function Declarations",
+        "Disallow async-await syntax",
+        "Disallow Spread Elements",
+        "Disallow Rest/Spread Properties",
+        "Disallow Destructuring",
+        "Disallow Property Shorthands",
+        "Disallow Optional Chaining",
+        "Disallow import.meta Meta Property",
+        "Disallow Logical Assignment Operators",
+        "Disallow Default Parameters",
+        "Disallow Hashbang Comments",
+        "Enforce Correct Usage of Hashbang",
+        "Disallow Reserved Words as Property Names"
+      ],
+      "rationale": "These bans conflict with the current TypeScript/Next.js style and would create large amounts of low-signal noise."
+    },
+    {
+      "normalizedRuleId": "modern-builtin-and-helper-bans",
+      "status": "waived",
+      "severity": "info",
+      "ownerScanner": "waiver",
+      "sourceScannerRuleId": null,
+      "externalRuleNames": [
+        "Avoid Using JSON.stringify for Object Keys",
+        "Enforce Usage of Valid ECMAScript Intrinsic APIs",
+        "Disallow the Set class",
+        "Avoid Using String.replaceAll",
+        "Disallow JSON Class Usage",
+        "Disallow Array.prototype.map Usage",
+        "Disallow Number.isFinite Method",
+        "Disallow Numeric Separators",
+        "Disallow Map Class",
+        "Disallow Number.parseInt Usage",
+        "Disallow Array.isArray Method",
+        "Disallow Array.prototype.find Method",
+        "Prefer for…of Over Array forEach",
+        "Disallow Array.from Method",
+        "Require Explicit Promise Constructor Usage",
+        "Disallow Promise Class Usage",
+        "Prefer JSON parse buffer",
+        "Disallow Object.entries Method",
+        "Disallow Array.prototype.filter Method",
+        "Disallow Object.keys Method",
+        "Disallow Array.prototype.includes",
+        "Prefer Set#has() over Array#includes()",
+        "Forbid Using Named Export as Property of Default Export"
+      ],
+      "rationale": "These are broad legacy or stylistic bans that do not align with the current codebase."
+    },
+    {
+      "normalizedRuleId": "node-and-nullability-bans",
+      "status": "waived",
+      "severity": "info",
+      "ownerScanner": "waiver",
+      "sourceScannerRuleId": null,
+      "externalRuleNames": [
+        "Forbid the use of null and undefined",
+        "Forbid Importing Node.js Builtin Modules",
+        "Disallow process.exit() usage"
+      ],
+      "rationale": "These are incompatible with the repo runtime model and existing script infrastructure."
+    },
+    {
+      "normalizedRuleId": "for-of-ban",
+      "status": "waived",
+      "severity": "info",
+      "ownerScanner": "waiver",
+      "sourceScannerRuleId": null,
+      "externalRuleNames": [
+        "Disallow for-of Loops",
+        "Disallow for-of Loops"
+      ],
+      "rationale": "This overlaps with a style preference from another ecosystem and is not appropriate as a repo-wide policy here."
+    }
+  ]
+}

@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/documentation/tooltips', () => ({
   getDocumentationTooltip: mocks.getDocumentationTooltipMock,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Alert: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Button: ({
     children,
@@ -51,7 +51,14 @@ vi.mock('@/shared/ui', () => ({
     </button>
   ),
   Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   Hint: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   MetadataItem: ({
     label,
     value,
@@ -64,6 +71,10 @@ vi.mock('@/shared/ui', () => ({
     </div>
   ),
   Pagination: () => <div>pagination</div>,
+  UI_GRID_ROOMY_CLASSNAME: 'grid gap-6',
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
   StandardDataTablePanel: ({
     columns,
     data,
@@ -90,9 +101,10 @@ vi.mock('@/shared/ui', () => ({
       {footer}
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
   StatusBadge: ({ status }: { status?: React.ReactNode }) => <div>{status}</div>,
-  Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
-  UI_GRID_ROOMY_CLASSNAME: 'grid gap-6',
 }));
 
 vi.mock('@/shared/ui/templates/modals', () => ({

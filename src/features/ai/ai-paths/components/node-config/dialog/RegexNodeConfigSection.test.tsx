@@ -152,26 +152,24 @@ vi.mock('@/shared/lib/query-keys', () => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
-  ...(() => {
-    const React = require('react') as typeof import('react');
-    return {
-      Tabs: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
-      TabsList: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
-        <div>{children}</div>
-      ),
-      TabsTrigger: ({
-        children,
-      }: {
-        value: string;
-        children: React.ReactNode;
-      }): React.JSX.Element => <button type='button'>{children}</button>,
-      TabsContent: ({ children }: { value: string; children: React.ReactNode }): React.JSX.Element => (
-        <div>{children}</div>
-      ),
-    };
-  })(),
-}));
+vi.mock('@/shared/ui/primitives.public', () => {
+  const React = require('react') as typeof import('react');
+  return {
+    Tabs: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+    TabsList: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
+      <div>{children}</div>
+    ),
+    TabsTrigger: ({
+      children,
+    }: {
+      value: string;
+      children: React.ReactNode;
+    }): React.JSX.Element => <button type='button'>{children}</button>,
+    TabsContent: ({ children }: { value: string; children: React.ReactNode }): React.JSX.Element => (
+      <div>{children}</div>
+    ),
+  };
+});
 
 vi.mock('@/shared/utils/settings-json', () => ({
   serializeSetting: (value: unknown) => JSON.stringify(value),

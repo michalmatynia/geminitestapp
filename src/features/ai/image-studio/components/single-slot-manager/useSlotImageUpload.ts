@@ -3,8 +3,8 @@
 import { useCallback } from 'react';
 
 import type { StudioAssetImportResult } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
-import type { ImageStudioAssetDto as ImageStudioUploadedAsset } from '@/shared/contracts/image-studio/image-studio/misc';
-import type { UpdateImageStudioSlotDto, CreateImageStudioSlotDto } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { ImageStudioAssetDto as ImageStudioUploadedAsset } from '@/shared/contracts/image-studio/misc';
+import type { UpdateImageStudioSlotDto, CreateImageStudioSlotDto } from '@/shared/contracts/image-studio/slot';
 import type { ImageStudioSlotDto as ImageStudioSlot } from '@/shared/contracts/image-studio';
 import type { IdDataDto } from '@/shared/contracts/base';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';

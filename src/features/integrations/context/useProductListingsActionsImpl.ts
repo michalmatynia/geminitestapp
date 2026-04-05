@@ -340,7 +340,7 @@ export const useProductListingsActionsImpl = ({
       }
     ) => {
       const listing = listings.find((item) => item.id === listingId);
-      if (!listing) return;
+      if (!listing) throw badRequestError('Base.com listing not found for this product.');
       const inventoryId = (inventoryOverrides[listingId] || listing.inventoryId || '').trim();
       if (!inventoryId) throw badRequestError('Inventory ID is required.');
 

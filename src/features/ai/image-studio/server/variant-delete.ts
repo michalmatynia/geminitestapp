@@ -2,7 +2,7 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import type { ImageStudioDeleteVariantMode, ImageStudioDeleteVariantResponse } from '@/shared/contracts/image-studio/image-studio/misc';
+import type { ImageStudioDeleteVariantMode, ImageStudioDeleteVariantResponse } from '@/shared/contracts/image-studio/misc';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

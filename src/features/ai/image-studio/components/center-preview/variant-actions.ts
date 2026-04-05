@@ -1,6 +1,6 @@
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import type { ImageStudioDeleteVariantResponse } from '@/shared/contracts/image-studio/image-studio/misc';
-import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { ImageStudioDeleteVariantResponse } from '@/shared/contracts/image-studio/misc';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { Toast } from '@/shared/contracts/ui/ui/base';
 import { api } from '@/shared/lib/api-client';

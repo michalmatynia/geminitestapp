@@ -1,6 +1,6 @@
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/image-studio/base';
-import type { RunStudioEnqueueResult, RunStudioPayload } from '@/shared/contracts/image-studio/image-studio/run';
+import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/base';
+import type { RunStudioEnqueueResult, RunStudioPayload } from '@/shared/contracts/image-studio/run';
 
 import type { UseMutationResult } from '@tanstack/react-query';
 

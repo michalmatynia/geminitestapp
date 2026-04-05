@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { resolveImageStudioContextRegistryEnvelope } from '@/features/ai/image-studio/context-registry/server';
 import { startImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
-import { imageStudioSequenceRunStartRequestSchema } from '@/shared/contracts/image-studio/image-studio/sequence';
+import { imageStudioSequenceRunStartRequestSchema } from '@/shared/contracts/image-studio/sequence';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 

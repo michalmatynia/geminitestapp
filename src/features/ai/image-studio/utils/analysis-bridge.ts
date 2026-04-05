@@ -1,5 +1,5 @@
 import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
-import { normalizeImageStudioAnalysisMode } from '@/shared/contracts/image-studio/image-studio/analysis';
+import { normalizeImageStudioAnalysisMode } from '@/shared/contracts/image-studio/analysis';
 import { type ImageStudioAnalysisMode, type ImageStudioCenterDetectionMode, type ImageStudioCenterShadowPolicy } from '@/shared/contracts/image-studio';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

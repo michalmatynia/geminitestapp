@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
-import { imageStudioSlotScreenshotResponseSchema } from '@/shared/contracts/image-studio/image-studio/slot';
+import { imageStudioSlotScreenshotResponseSchema } from '@/shared/contracts/image-studio/slot';
 import { type ImageStudioSlotRecord, type SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/shared/contracts/vector';
 import type { VectorCanvasRect } from '@/shared/contracts/ui/ui/canvas';

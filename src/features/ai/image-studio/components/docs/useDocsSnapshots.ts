@@ -9,7 +9,7 @@ import {
   IMAGE_STUDIO_UI_PRESETS_KEY,
   parseImageStudioUiPresets,
 } from '@/features/ai/image-studio/utils/ui-presets';
-import type { RunStudioEnqueueResult, RunStudioPayload } from '@/shared/contracts/image-studio/image-studio/run';
+import type { RunStudioEnqueueResult, RunStudioPayload } from '@/shared/contracts/image-studio/run';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,

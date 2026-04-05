@@ -12,7 +12,7 @@ import {
   type ImageStudioSequenceCropStep,
   type ImageStudioSequenceUpscaleStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import type { ImageStudioSequenceRunRecord } from '@/shared/contracts/image-studio/image-studio/sequence';
+import type { ImageStudioSequenceRunRecord } from '@/shared/contracts/image-studio/sequence';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   getDiskPathFromPublicPath,

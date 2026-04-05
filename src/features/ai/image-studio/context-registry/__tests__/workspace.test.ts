@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio/image-studio/project';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio/project';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { defaultImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 

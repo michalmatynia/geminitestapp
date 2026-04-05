@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 
 import sharp from 'sharp';
 
-import { IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_PIXELS, IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX, IMAGE_STUDIO_UPSCALE_MAX_SCALE, IMAGE_STUDIO_UPSCALE_MAX_SOURCE_PIXELS, IMAGE_STUDIO_UPSCALE_MAX_SOURCE_SIDE_PX, IMAGE_STUDIO_UPSCALE_MIN_SCALE } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
+import { IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_PIXELS, IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX, IMAGE_STUDIO_UPSCALE_MAX_SCALE, IMAGE_STUDIO_UPSCALE_MAX_SOURCE_PIXELS, IMAGE_STUDIO_UPSCALE_MAX_SOURCE_SIDE_PX, IMAGE_STUDIO_UPSCALE_MIN_SCALE } from '@/shared/contracts/image-studio-transform-contracts';
 import { type ImageStudioUpscaleMode, type ImageStudioUpscaleStrategy, type ImageStudioUpscaleSmoothingQuality } from '@/shared/contracts/image-studio';
 import type { ImageStudioSourceLimitValidation } from './types';
 

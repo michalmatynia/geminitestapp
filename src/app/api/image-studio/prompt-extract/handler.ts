@@ -6,7 +6,7 @@ import {
   runBrainChatCompletion,
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import { imageStudioPromptExtractModeSchema } from '@/shared/contracts/image-studio/image-studio/misc';
+import { imageStudioPromptExtractModeSchema } from '@/shared/contracts/image-studio/misc';
 import { type ImageStudioPromptExtractResponse, type ImageStudioPromptExtractSource } from '@/shared/contracts/image-studio';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio/image-studio/misc';
+import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio/misc';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 

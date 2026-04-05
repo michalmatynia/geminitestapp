@@ -7,9 +7,9 @@ import {
   normalizeImageStudioAnalysisLayoutConfig,
   type ImageStudioDetectionDetails,
 } from '@/features/ai/image-studio/analysis/shared';
-import { IMAGE_STUDIO_CENTER_MAX_OUTPUT_PIXELS, IMAGE_STUDIO_CENTER_MAX_SOURCE_PIXELS, IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
+import { IMAGE_STUDIO_CENTER_MAX_OUTPUT_PIXELS, IMAGE_STUDIO_CENTER_MAX_SOURCE_PIXELS, IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX } from '@/shared/contracts/image-studio-transform-contracts';
 import { type ImageStudioCenterDetectionMode, type ImageStudioCenterLayoutConfig, type ImageStudioCenterMode, type ImageStudioCenterObjectBounds, type ImageStudioCenterShadowPolicy } from '@/shared/contracts/image-studio';
-import { IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
+import { IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD } from '@/shared/contracts/image-studio-transform-contracts';
 import type { ImageStudioSourceLimitValidation } from './types';
 
 export const normalizeCenterBoundsForFingerprint = (

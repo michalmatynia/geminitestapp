@@ -2,7 +2,7 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import { imageStudioRunRequestSchema } from '@/shared/contracts/image-studio/image-studio/run';
+import { imageStudioRunRequestSchema } from '@/shared/contracts/image-studio/run';
 import { type ImageStudioRunRequest, type ImageStudioRunExecutionMeta, type ImageStudioRunExecutionResult } from '@/shared/contracts/image-studio';
 import { badRequestError } from '@/shared/errors/app-error';
 

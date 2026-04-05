@@ -4,7 +4,7 @@ import {} from 'lucide-react';
 import Image from 'next/image';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import type { ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio/image-studio/run';
+import type { ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio/run';
 import type { FilterField } from '@/shared/contracts/ui/ui/panels';
 import { IMAGE_STUDIO_RUN_STATUS_OPTIONS } from '@/features/ai/image-studio/utils/run-status-options';
 import { api } from '@/shared/lib/api-client';

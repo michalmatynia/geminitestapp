@@ -3,7 +3,7 @@ import { listImageStudioSlots } from '@/features/ai/image-studio/server';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import { type ImageStudioSequenceGenerateStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { enqueueImageStudioRunJob } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
-import type { ImageStudioSequenceRunRecord, ImageStudioSequenceMaskContext } from '@/shared/contracts/image-studio/image-studio/sequence';
+import type { ImageStudioSequenceRunRecord, ImageStudioSequenceMaskContext } from '@/shared/contracts/image-studio/sequence';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import { sleep } from './utils';

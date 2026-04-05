@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getImageStudioRunById } from '@/features/ai/server';
-import type { ImageStudioRunDetailResponse } from '@/shared/contracts/image-studio/image-studio/run';
+import type { ImageStudioRunDetailResponse } from '@/shared/contracts/image-studio/run';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 

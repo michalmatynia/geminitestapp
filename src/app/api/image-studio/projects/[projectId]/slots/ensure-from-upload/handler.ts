@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { ensureImageStudioSlotFromUploadedAsset } from '@/features/ai/image-studio/server/ensure-slot-from-upload';
-import { imageStudioEnsureSlotFromUploadResponseSchema } from '@/shared/contracts/image-studio/image-studio/slot';
+import { imageStudioEnsureSlotFromUploadResponseSchema } from '@/shared/contracts/image-studio/slot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 

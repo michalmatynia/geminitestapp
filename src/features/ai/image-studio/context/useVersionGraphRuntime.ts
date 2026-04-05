@@ -10,7 +10,7 @@ import {
   type LayoutMode,
 } from '@/features/ai/image-studio/utils/version-graph';
 import { resolveScopedVersionGraphSlots } from '@/features/ai/image-studio/utils/version-graph-scope';
-import type { CompositeLayerConfig } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio/slot';
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui/primitives.public';
 

@@ -1,7 +1,7 @@
 import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { ImageStudioCenterDetectionMode, ImageStudioCenterShadowPolicy } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
-import { IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_MAX_CHROMA_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_MAX_WHITE_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
+import type { ImageStudioCenterDetectionMode, ImageStudioCenterShadowPolicy } from '@/shared/contracts/image-studio-transform-contracts';
+import { IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_MAX_CHROMA_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_MAX_WHITE_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD, IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD } from '@/shared/contracts/image-studio-transform-contracts';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

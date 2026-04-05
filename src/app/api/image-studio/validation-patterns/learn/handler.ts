@@ -7,7 +7,7 @@ import {
   parsePersistedImageStudioSettings,
 } from '@/features/ai/server';
 import { auth } from '@/features/auth/server';
-import { imageStudioValidationPatternsLearnRequestSchema } from '@/shared/contracts/image-studio/image-studio/misc';
+import { imageStudioValidationPatternsLearnRequestSchema } from '@/shared/contracts/image-studio/misc';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { authError, internalError } from '@/shared/errors/app-error';

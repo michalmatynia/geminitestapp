@@ -359,7 +359,7 @@ export const fetchTraderaCategoriesForConnection = async (
     }
 
     throw new AppError(
-      'Tradera categories could not be fetched from the live listing page. No categories were detected on the Tradera listing form.',
+      'Tradera categories could not be scraped from the listing page — the page structure may have changed. Configure Tradera API credentials (App ID and App Key) on the connection to fetch categories via the Tradera SOAP API instead.',
       {
         code: AppErrorCodes.operationFailed,
         httpStatus: 422,
@@ -368,6 +368,9 @@ export const fetchTraderaCategoriesForConnection = async (
           finalUrl,
           categorySource: extractTrimmedString(resultValue['categorySource']),
           scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
+          recoveryAction: 'tradera_configure_api_credentials',
+          recoveryMessage:
+            'Add Tradera API App ID and App Key to this connection, then retry category fetch.',
         },
         expected: true,
       }

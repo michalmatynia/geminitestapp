@@ -1,4 +1,4 @@
-import type { RunsTotalResponseDto } from '@/shared/contracts/image-studio/image-studio/base';
+import type { RunsTotalResponseDto } from '@/shared/contracts/image-studio/base';
 
 export type InlinePreviewSourceViewModel = {
   src: string | null;

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listImageStudioRuns } from '@/features/ai/server';
-import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/image-studio/base';
-import type { ImageStudioRunsResponse } from '@/shared/contracts/image-studio/image-studio/run';
+import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/base';
+import type { ImageStudioRunsResponse } from '@/shared/contracts/image-studio/run';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import {
   normalizeOptionalQueryString,

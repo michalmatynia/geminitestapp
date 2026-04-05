@@ -1,7 +1,7 @@
 export * from '@/shared/contracts/image-studio';
 
-import type { ImageStudioCenterDetectionMode, ImageStudioCenterErrorCode, ImageStudioCenterLayoutConfig, ImageStudioCenterMode, ImageStudioCenterObjectBounds, ImageStudioCenterRequest, ImageStudioCenterShadowPolicy } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
-import type { ImageStudioCenterResponse } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { ImageStudioCenterDetectionMode, ImageStudioCenterErrorCode, ImageStudioCenterLayoutConfig, ImageStudioCenterMode, ImageStudioCenterObjectBounds, ImageStudioCenterRequest, ImageStudioCenterShadowPolicy } from '@/shared/contracts/image-studio-transform-contracts';
+import type { ImageStudioCenterResponse } from '@/shared/contracts/image-studio/slot';
 
 export type {
   ImageStudioCenterMode,

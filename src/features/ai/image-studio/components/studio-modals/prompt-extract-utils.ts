@@ -2,7 +2,7 @@ import {
   recommendParamUiControl,
   type ParamUiControl,
 } from '@/features/ai/image-studio/utils/param-ui';
-import type { ImageStudioPromptExtractMode, ImageStudioPromptExtractResponse, ImageStudioPromptExtractSource } from '@/shared/contracts/image-studio/image-studio/misc';
+import type { ImageStudioPromptExtractMode, ImageStudioPromptExtractResponse, ImageStudioPromptExtractSource } from '@/shared/contracts/image-studio/misc';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 import { flattenParams } from '@/shared/utils/prompt-params';
 

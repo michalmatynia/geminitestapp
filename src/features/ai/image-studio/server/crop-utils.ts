@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 
-import { IMAGE_STUDIO_CROP_MAX_OUTPUT_PIXELS, IMAGE_STUDIO_CROP_MAX_SOURCE_PIXELS, IMAGE_STUDIO_CROP_MAX_SOURCE_SIDE_PX } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
+import { IMAGE_STUDIO_CROP_MAX_OUTPUT_PIXELS, IMAGE_STUDIO_CROP_MAX_SOURCE_PIXELS, IMAGE_STUDIO_CROP_MAX_SOURCE_SIDE_PX } from '@/shared/contracts/image-studio-transform-contracts';
 import { type ImageStudioCropCanvasContext, type ImageStudioCropMode, type ImageStudioCropPoint, type ImageStudioCropRect } from '@/shared/contracts/image-studio';
 
 import type { Region } from 'sharp';

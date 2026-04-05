@@ -1,5 +1,5 @@
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/image-studio/base';
+import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/base';
 
 export type PlaywrightNodeRunArtifact = {
   name: string;

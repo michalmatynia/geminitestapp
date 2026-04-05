@@ -1,5 +1,5 @@
-import type { ImageStudioCenterDetectionMode } from '@/shared/contracts/image-studio/image-studio-transform-contracts';
-import type { ImageStudioDetectionCandidate, ImageStudioDetectionCandidateScoreSummary, ImageStudioDetectionPolicyDecision } from '@/shared/contracts/image-studio/image-studio/analysis';
+import type { ImageStudioCenterDetectionMode } from '@/shared/contracts/image-studio-transform-contracts';
+import type { ImageStudioDetectionCandidate, ImageStudioDetectionCandidateScoreSummary, ImageStudioDetectionPolicyDecision } from '@/shared/contracts/image-studio/analysis';
 
 export const IMAGE_STUDIO_LAYOUT_POLICY_VERSION = 'v2';
 

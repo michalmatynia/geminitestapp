@@ -8,7 +8,7 @@ import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
 
 import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import { imageStudioRunRequestSchema } from '@/shared/contracts/image-studio/image-studio/run';
+import { imageStudioRunRequestSchema } from '@/shared/contracts/image-studio/run';
 import { type ImageFileRecord } from '@/shared/contracts/image-studio';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';

@@ -230,7 +230,7 @@ describe('fetchTraderaCategoriesForConnection', () => {
       } as never)
     ).rejects.toMatchObject({
       message:
-        'Tradera categories could not be fetched from the live listing page. No categories were detected on the Tradera listing form.',
+        'Tradera categories could not be scraped from the listing page — the page structure may have changed. Configure Tradera API credentials (App ID and App Key) on the connection to fetch categories via the Tradera SOAP API instead.',
       httpStatus: 422,
     });
   });

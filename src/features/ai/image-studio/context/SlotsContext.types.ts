@@ -1,8 +1,8 @@
 
 import type { StudioAssetImportResult } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ImageStudioAssetDto as ImageStudioUploadedAsset } from '@/shared/contracts/image-studio/image-studio/misc';
-import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/image-studio/slot';
+import type { ImageStudioAssetDto as ImageStudioUploadedAsset } from '@/shared/contracts/image-studio/misc';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { IdDataDto, LabeledOptionDto } from '@/shared/contracts/base';
 import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/ui/queries';

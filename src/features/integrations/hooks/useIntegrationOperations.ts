@@ -15,6 +15,14 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 const EMPTY_LISTING_BADGES_PAYLOAD: ListingBadgesPayload = Object.freeze({});
+const LISTING_BADGE_IN_FLIGHT_REFETCH_MS = 10_000;
+const LISTING_BADGE_RECONCILIATION_REFETCH_MS = 30_000;
+const LISTING_BADGE_RECONCILIATION_STATUSES = new Set([
+  'failed',
+  'needs_login',
+  'auth_required',
+  'error',
+]);
 
 type IntegrationListingBadgeState = {
   integrationBadgeIds: Set<string>;
@@ -129,6 +137,54 @@ const buildIntegrationListingBadgeState = (
   };
 };
 
+const hasAnyMarketplaceStatus = (payload: ListingBadgesPayload): boolean =>
+  Object.values(payload).some((entry) =>
+    Object.values(toMarketplaceEntry(entry)).some(
+      (status) => typeof status === 'string' && status.trim().length > 0
+    )
+  );
+
+const hasReconciliationCandidateStatus = (payload: ListingBadgesPayload): boolean =>
+  Object.values(payload).some((entry) =>
+    Object.values(toMarketplaceEntry(entry)).some(
+      (status) =>
+        typeof status === 'string' &&
+        LISTING_BADGE_RECONCILIATION_STATUSES.has(status.trim().toLowerCase())
+    )
+  );
+
+export const resolveListingBadgeRefetchInterval = (
+  payload: ListingBadgesPayload | undefined
+): number | false => {
+  if (!payload) return 5000;
+  if (!hasAnyMarketplaceStatus(payload)) return false;
+
+  const activeStatuses = new Set([
+    'queued',
+    'queued_relist',
+    'pending',
+    'running',
+    'processing',
+    'in_progress',
+  ]);
+  const hasInFlight = Object.values(payload).some((entry) =>
+    Object.values(toMarketplaceEntry(entry)).some(
+      (status) => typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
+    )
+  );
+
+  if (hasInFlight) {
+    return LISTING_BADGE_IN_FLIGHT_REFETCH_MS;
+  }
+
+  // Keep a low-frequency reconciliation poll only for stale terminal failure states
+  // so the Products page can self-heal after background status changes such as
+  // auth_required -> active without continuously polling healthy success badges.
+  return hasReconciliationCandidateStatus(payload)
+    ? LISTING_BADGE_RECONCILIATION_REFETCH_MS
+    : false;
+};
+
 export function useIntegrationListingBadges(
   productIds: readonly string[] = [],
   { enabled = true }: { enabled?: boolean } = {}
@@ -158,24 +214,7 @@ export function useIntegrationListingBadges(
     },
     enabled: enabled && scopedProductIds.length > 0,
     retry: 1,
-    refetchInterval: (query) => {
-      const data = query.state.data;
-      if (!data) return 5000;
-      const activeStatuses = new Set([
-        'queued',
-        'queued_relist',
-        'pending',
-        'running',
-        'processing',
-        'in_progress',
-      ]);
-      const hasInFlight = Object.values(data).some((entry) =>
-        Object.values(toMarketplaceEntry(entry)).some(
-          (status) => typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
-        )
-      );
-      return hasInFlight ? 10_000 : false;
-    },
+    refetchInterval: (query) => resolveListingBadgeRefetchInterval(query.state.data),
     refetchIntervalInBackground: false,
     meta: {
       source: 'integrations.hooks.useIntegrationListingBadges',

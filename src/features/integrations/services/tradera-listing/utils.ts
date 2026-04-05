@@ -128,14 +128,15 @@ export const buildCanonicalTraderaListingUrl = (externalListingId: string): stri
   `https://www.tradera.com/item/${externalListingId}`;
 
 export const extractExternalListingId = (url: string): string | null => {
+  const listingIdPattern = /\/(?:item\/(?:\d+\/)?|listing\/)(\d{6,})(?:[/?#]|$)/i;
   try {
     const parsedUrl = new URL(url, 'https://www.tradera.com');
     const pathname = parsedUrl.pathname || '';
-    const match = pathname.match(/\/(?:item|listing)\/(\d{6,})(?:[/?#]|$)/i);
+    const match = pathname.match(listingIdPattern);
     if (!match?.[1]) return null;
     return match[1];
   } catch {
-    const match = url.match(/(?:^|\/)(?:item|listing)\/(\d{6,})(?:[/?#]|$)/i);
+    const match = url.match(listingIdPattern);
     if (!match?.[1]) return null;
     return match[1];
   }

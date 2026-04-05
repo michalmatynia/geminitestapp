@@ -68,13 +68,14 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
 
   const extractListingId = (value) => {
     if (typeof value !== 'string') return null;
+    const listingIdPattern = /\/(?:item\/(?:\d+\/)?|listing\/)(\d{6,})(?:[/?#]|$)/i;
     try {
       const url = new URL(value, 'https://www.tradera.com');
       const pathname = url.pathname || '';
-      const match = pathname.match(/\/(?:item|listing)\/(\d{6,})(?:[/?#]|$)/i);
+      const match = pathname.match(listingIdPattern);
       return match && match[1] ? match[1] : null;
     } catch {}
-    const match = value.match(/(?:^|\/)(?:item|listing)\/(\d{6,})(?:[/?#]|$)/i);
+    const match = value.match(listingIdPattern);
     return match && match[1] ? match[1] : null;
   };
 

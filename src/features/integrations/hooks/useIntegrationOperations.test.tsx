@@ -18,6 +18,7 @@ vi.mock('@/shared/lib/query-invalidation', () => ({
 }));
 
 import {
+  resolveListingBadgeRefetchInterval,
   useIntegrationListingBadges,
   useIntegrationModalOperations,
   useIntegrationOperations,
@@ -132,5 +133,39 @@ describe('useIntegrationOperations listing badges query', () => {
 
     expect(result.current.integrationBadgeStatuses.get('product-1')).toBe('active');
     expect(result.current.traderaBadgeStatuses.get('product-1')).toBe('queued');
+  });
+
+  it('does not keep polling when no marketplace badges are present', () => {
+    expect(resolveListingBadgeRefetchInterval({})).toBe(false);
+  });
+
+  it('does not keep polling for already-successful marketplace badges', () => {
+    expect(
+      resolveListingBadgeRefetchInterval({
+        'product-1': {
+          tradera: 'active',
+        },
+      })
+    ).toBe(false);
+  });
+
+  it('keeps a low-frequency reconciliation poll for terminal marketplace badges', () => {
+    expect(
+      resolveListingBadgeRefetchInterval({
+        'product-1': {
+          tradera: 'auth_required',
+        },
+      })
+    ).toBe(30_000);
+  });
+
+  it('keeps the faster poll for in-flight marketplace badges', () => {
+    expect(
+      resolveListingBadgeRefetchInterval({
+        'product-1': {
+          tradera: 'queued_relist',
+        },
+      })
+    ).toBe(10_000);
   });
 });

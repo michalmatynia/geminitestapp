@@ -30,7 +30,7 @@ import {
 import type { TraderaBrowserListingResult } from './browser-types';
 import { validateTraderaQuickListProductConfig } from './preflight';
 
-export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v85';
+export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v90';
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 30_000;
 export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
 export const TRADERA_IMAGE_SETTLE_TIMEOUT_MESSAGE_PREFIX =
@@ -116,6 +116,20 @@ const buildManagedQuicklistRuntimeSettingsOverrides = (
     emulateDevice: false,
     deviceName: MANAGED_TRADERA_QUICKLIST_DESKTOP_DEVICE_NAME,
   };
+};
+
+const resolveTraderaFailureHoldOpenMs = ({
+  action,
+  browserMode,
+}: {
+  action: 'list' | 'relist';
+  browserMode: PlaywrightRelistBrowserMode;
+}): number | undefined => {
+  if (browserMode !== 'headed') {
+    return undefined;
+  }
+
+  return action === 'relist' ? undefined : TRADERA_HEADED_FAILURE_HOLD_OPEN_MS;
 };
 
 const buildManagedQuicklistScriptMetadata = ({
@@ -481,6 +495,7 @@ export const runTraderaBrowserListingScripted = async ({
   listing,
   connection,
   systemSettings,
+  action,
   browserMode,
 }: {
   listing: ProductListing;
@@ -522,6 +537,7 @@ export const runTraderaBrowserListingScripted = async ({
     scriptValidationError?: string;
   }): Promise<TraderaBrowserListingResult> => {
     const runtimeSettingsOverrides = buildManagedQuicklistRuntimeSettingsOverrides(script);
+    const failureHoldOpenMs = resolveTraderaFailureHoldOpenMs({ action, browserMode });
     const result = await runPlaywrightListingScript({
       script,
       input: scriptInput,
@@ -529,7 +545,7 @@ export const runTraderaBrowserListingScripted = async ({
       timeoutMs: TRADERA_SCRIPTED_LISTING_TIMEOUT_MS,
       browserMode,
       disableStartUrlBootstrap: true,
-      failureHoldOpenMs: browserMode === 'headed' ? TRADERA_HEADED_FAILURE_HOLD_OPEN_MS : undefined,
+      ...(typeof failureHoldOpenMs === 'number' ? { failureHoldOpenMs } : {}),
       runtimeSettingsOverrides,
     });
 

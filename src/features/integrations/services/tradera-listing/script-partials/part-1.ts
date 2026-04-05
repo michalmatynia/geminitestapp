@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v85
+  // tradera-quicklist-default:v90
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -139,20 +139,32 @@ export const PART_1 = String.raw`export default async function run({
     'button[aria-label*="Delete photo" i]',
     'button[aria-label*="Ta bort" i]',
     'button[aria-label*="Radera" i]',
-    'a[aria-label*="Ta bort" i]',
-    'a[aria-label*="Radera" i]',
     '[data-testid*="remove-image"]',
     '[data-testid*="delete-image"]',
     '[data-testid*="remove-photo"]',
     '[data-testid*="delete-photo"]',
-    '[data-testid*="remove"]',
-    '[data-testid*="delete"]',
     'button:has-text("Remove image")',
     'button:has-text("Delete image")',
     'button:has-text("Ta bort")',
     'button:has-text("Radera")',
-    'a:has-text("Ta bort")',
-    'a:has-text("Radera")',
+  ];
+  const DRAFT_IMAGE_REMOVE_ACTION_HINTS = [
+    'remove image',
+    'delete image',
+    'remove photo',
+    'delete photo',
+    'ta bort',
+    'radera',
+  ];
+  const DRAFT_IMAGE_REMOVE_SCOPE_SELECTORS = [
+    '[data-testid*="image"]',
+    '[data-testid*="photo"]',
+    '[data-testid*="preview"]',
+    '[data-testid*="upload"]',
+    '[class*="image"]',
+    '[class*="Image"]',
+    '[class*="photo"]',
+    '[class*="Photo"]',
   ];
   const CONTINUE_SELECTORS = [
     'button[aria-label*="Continue" i]',
@@ -194,6 +206,9 @@ export const PART_1 = String.raw`export default async function run({
     '.field-error',
   ];
   const VALIDATION_MESSAGE_IGNORE_FIELDS = ['__next-route-announcer__', 'next-route-announcer'];
+  const TRANSIENT_VALIDATION_MESSAGE_PATTERNS = [
+    /^(loading|laddar)(?:\.{1,3})?$/i,
+  ];
   const ACTIVE_SEARCH_SELECTORS = [
     'main input[type="search"]',
     'main [role="searchbox"]',
@@ -852,7 +867,8 @@ export const PART_1 = String.raw`export default async function run({
         const normalized = normalizeWhitespace(message).toLowerCase();
         return (
           normalized.length > 0 &&
-          !VALIDATION_MESSAGE_IGNORE_FIELDS.some((ignoredField) => normalized.includes(ignoredField))
+          !VALIDATION_MESSAGE_IGNORE_FIELDS.some((ignoredField) => normalized.includes(ignoredField)) &&
+          !TRANSIENT_VALIDATION_MESSAGE_PATTERNS.some((pattern) => pattern.test(normalized))
         );
       });
     };

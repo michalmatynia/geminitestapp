@@ -118,7 +118,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v85');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v90');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('artifacts,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('helpers,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];");
@@ -167,9 +167,13 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Lägg till bilder")');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-testid*="image-picker"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button[aria-label*="Radera" i]');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('a[aria-label*="Ta bort" i]');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-testid*="remove"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Radera")');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DRAFT_IMAGE_REMOVE_ACTION_HINTS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DRAFT_IMAGE_REMOVE_SCOPE_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('a[aria-label*="Ta bort" i]');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('a:has-text("Ta bort")');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('[data-testid*="remove"]');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('[data-testid*="delete"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const CONTINUE_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button[aria-label*="Continue" i]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button[aria-label*="Fortsätt" i]');
@@ -180,6 +184,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const ACTIVE_TAB_LABELS = ['Active', 'Aktiva'];");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const ACTIVE_TAB_STATE_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const VALIDATION_MESSAGE_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const TRANSIENT_VALIDATION_MESSAGE_PATTERNS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Review and publish")');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button:has-text("Granska och publicera")');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('button[aria-label*="Publish" i]');
@@ -208,7 +213,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.auth.initial'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await page.goto('https://www.tradera.com/en/login'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const pathname = url.pathname || '';");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('(?:item|listing)');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('(?:item\\/(?:\\d+\\/)?|listing\\/)');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findVisibleListingLink = async () => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('async function captureFailureArtifacts');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await captureFailureArtifacts('auth-required'");
@@ -251,15 +256,44 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('if (!clicked) {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.image_input.retry'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clearDraftImagesIfPresent = async () => {');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let imageStepSellPageRecoveries = 0;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const ensureImageStepSellPageReady = async (context) => {');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.sell_page.image_step_recover'");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.sell_page.image_step_recover_result'");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const reopenedEntryPoint = await openCreateListingPage();");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
-      'const stabilizedRecoveryEntryPoint = await confirmStableSellPage(1_000, 6_000);'
+      'const stableEntryPoint = await confirmStableSellPage(1_000, 6_000);'
     );
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("stableEntryPoint === 'trigger'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "log?.('tradera.quicklist.sell_page.image_step_invalid'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_SELL_PAGE_INVALID: Tradera listing editor was lost during '
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("String(stableEntryPoint)");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await ensureCreateListingPageReady(context);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "context === 'draft image cleanup complete'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "log?.('tradera.quicklist.sell_page.image_step_recover'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "log?.('tradera.quicklist.sell_page.image_step_recover_result'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "await ensureCreateListingPageReady(context + ' recovery', true);"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "log?.('tradera.quicklist.draft.reset_state'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.draft_image_remove.skipped'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await logClickTarget('draft-image-remove', candidate);");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.draft_image_remove.clicked'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("reason: 'navigating-target'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("reason: 'outside-image-scope'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('metadata.tagName === \'a\'');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const insideImageScope = Array.isArray(scopeSelectors)');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("const closestLink = element.closest('a[href], a[role=\"link\"], [role=\"link\"][href]');");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'FAIL_SELL_PAGE_INVALID: Tradera draft image cleanup navigated away from the listing editor. Current URL: '
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await ensureImageStepSellPageReady('draft image cleanup complete');");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findFieldTriggerByLabels = async (labels) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const mainRoot = page.locator(\'main\').first();');
@@ -511,10 +545,15 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let publishReadiness = await waitForPublishReadiness(publishButton);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const listingConfirmationState = await acknowledgeListingConfirmationIfPresent();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForPostPublishNavigation = async (timeoutMs = 15_000) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const verifyPublishedListingViaActiveSearch = async (terms) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const waitForPublishInteractionEvidence = async (');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const summarizePostPublishState = async (reason) => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findPublishedListingMatchOnCurrentPage = async () => {');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const summarizePostPublishState = async (reason, resolvedListingMatch = null) => {');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.post_state', state);");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.click_result', publishInteraction);");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.verify_active_search'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.verify_active_search_result'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.publish.verify_active_search_failed'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const activeListingsVisible = currentUrl.toLowerCase().includes(\'/my/listings\');');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const validationMessages = stillOnSellFlow ? await collectValidationMessages() : [];');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const publishButtonDisabled = stillOnSellFlow');
@@ -527,6 +566,10 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       'FAIL_PUBLISH_CLICK: Publish button click did not trigger an observable Tradera publish interaction.'
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const postPublishDraftValidationMessages =');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const activeSearchVerification = await verifyPublishedListingViaActiveSearch([');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const visiblePublishedListing = await findPublishedListingMatchOnCurrentPage();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("return summarizePostPublishState(");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("'active-listings-visible-match'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'if (!externalListingId && postPublishNavigation.stillOnSellFlow) {'
     );
@@ -549,7 +592,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const baseProductDuplicate = await checkDuplicate(baseProductId);');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await captureFailureArtifacts('publish-not-confirmed', {");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("return summarizePostPublishState('active-listings-stable');");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("'active-listings-stable'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain(
       "await Promise.allSettled([\n      page.waitForLoadState('domcontentloaded', { timeout: 25_000 }),\n      humanClick(publishButton, { pauseAfter: false }),\n    ]);"
     );
@@ -558,6 +601,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('externalListingId: externalListingId || null,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('listingUrl: listingUrl || null,');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('currentUrl: listingUrl || page.url(),');
     expect(
       DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
         'const confirmedShippingPriceValue = normalizePriceValue('
@@ -867,6 +911,138 @@ describe('runTraderaBrowserListing scripted mode', () => {
         matchedCategoryRuleIds: [],
         matchingShippingGroupIds: ['shipping-group-1'],
       },
+    });
+  });
+
+  it('derives the external listing id from modern Tradera item urls when the runner omits it', async () => {
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-modern-url',
+      externalListingId: null,
+      listingUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      publishVerified: true,
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        listingUrl:
+          'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      },
+    });
+
+    const result = await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-modern-url',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    expect(result).toMatchObject({
+      externalListingId: '725447805',
+      listingUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      metadata: expect.objectContaining({
+        runId: 'run-modern-url',
+        publishVerified: true,
+      }),
+    });
+  });
+
+  it('keeps publish-verified modern Tradera item urls successful even when raw draft metadata still reports Loading', async () => {
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-modern-url-loading-draft',
+      externalListingId: null,
+      listingUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      publishVerified: true,
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        stage: 'publish_verified',
+        currentUrl: 'https://www.tradera.com/en/selling/draft/69d2a549aa5fcd00016e7a06',
+        validationMessages: ['Loading'],
+        listingUrl:
+          'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      },
+    });
+
+    const result = await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-modern-url-loading-draft',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    expect(result).toMatchObject({
+      externalListingId: '725447805',
+      listingUrl:
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars',
+      metadata: expect.objectContaining({
+        runId: 'run-modern-url-loading-draft',
+        publishVerified: true,
+        latestStage: 'publish_verified',
+        latestStageUrl: 'https://www.tradera.com/en/selling/draft/69d2a549aa5fcd00016e7a06',
+        rawResult: expect.objectContaining({
+          validationMessages: ['Loading'],
+        }),
+      }),
     });
   });
 
@@ -1417,7 +1593,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v85',
+        scriptMarker: 'tradera-quicklist-default:v90',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -1498,6 +1674,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
     });
 
     const staleManagedDefaultScript = `export default async function run({ page, input, emit, log }) {
+  // tradera-quicklist-default:v85
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   log?.('tradera.quicklist.start', { baseProductId: input?.baseProductId ?? null });
   throw new Error('FAIL_SELL_PAGE_INVALID: Tradera create listing page did not load.');
@@ -1544,7 +1721,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v85',
+        scriptMarker: 'tradera-quicklist-default:v90',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -2077,6 +2254,149 @@ describe('runTraderaBrowserListing scripted mode', () => {
     });
   });
 
+  it('preserves homepage fallback diagnostics when the image step loses the listing editor', async () => {
+    runPlaywrightListingScriptMock.mockRejectedValue(
+      Object.assign(
+        new Error(
+          'FAIL_SELL_PAGE_INVALID: Tradera listing editor was lost during image upload dispatch. Entry point: homepage. Current URL: https://www.tradera.com/en'
+        ),
+        {
+          meta: {
+            runId: 'run-image-homepage',
+            runStatus: 'failed',
+            latestStage: 'draft_cleared',
+            latestStageUrl: 'https://www.tradera.com/en',
+            logTail: ['[user] tradera.quicklist.sell_page.image_step_invalid'],
+            failureArtifacts: [
+              {
+                name: 'listing-page-missing',
+                path: 'run-image-homepage/listing-page-missing.png',
+              },
+            ],
+          },
+        }
+      )
+    );
+
+    await expect(
+      runTraderaBrowserListing({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+          integrationId: 'integration-1',
+          connectionId: 'connection-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+          traderaBrowserMode: 'scripted',
+          playwrightListingScript: 'export default async function run() {}',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
+        browserMode: 'headed',
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining(
+        'Tradera listing editor was lost during image upload dispatch. Entry point: homepage.'
+      ),
+      meta: expect.objectContaining({
+        scriptMode: 'scripted',
+        scriptSource: 'connection',
+        scriptKind: 'custom',
+        scriptMarker: null,
+        scriptStoredOnConnection: true,
+        requestedBrowserMode: 'headed',
+        runId: 'run-image-homepage',
+        latestStage: 'draft_cleared',
+        latestStageUrl: 'https://www.tradera.com/en',
+        failureArtifacts: [
+          expect.objectContaining({
+            name: 'listing-page-missing',
+          }),
+        ],
+      }),
+    });
+  });
+
+  it('preserves relist homepage cleanup diagnostics when a stale managed script is refreshed before failure', async () => {
+    runPlaywrightListingScriptMock.mockRejectedValue(
+      Object.assign(
+        new Error(
+          'FAIL_SELL_PAGE_INVALID: Tradera listing editor was lost during draft image cleanup complete. Entry point: homepage. Current URL: https://www.tradera.com/en'
+        ),
+        {
+          meta: {
+            runId: 'run-relist-homepage-cleanup',
+            runStatus: 'failed',
+            latestStage: 'draft_cleared',
+            latestStageUrl: 'https://www.tradera.com/en',
+            logTail: ['[user] tradera.quicklist.sell_page.image_step_invalid'],
+            failureArtifacts: [
+              {
+                name: 'listing-page-missing',
+                path: 'run-relist-homepage-cleanup/listing-page-missing.png',
+              },
+            ],
+          },
+        }
+      )
+    );
+
+    const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
+      'tradera-quicklist-default:v90',
+      'tradera-quicklist-default:v89'
+    );
+
+    await expect(
+      runTraderaBrowserListing({
+        listing: {
+          id: 'listing-relist-homepage-cleanup',
+          productId: 'product-1',
+          integrationId: 'integration-1',
+          connectionId: 'connection-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+          traderaBrowserMode: 'scripted',
+          playwrightListingScript: staleManagedDefaultScript,
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'relist',
+        browserMode: 'headed',
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringContaining(
+        'Tradera listing editor was lost during draft image cleanup complete. Entry point: homepage.'
+      ),
+      meta: expect.objectContaining({
+        scriptMode: 'scripted',
+        scriptSource: 'legacy-default-refresh',
+        scriptKind: 'managed',
+        scriptMarker: 'tradera-quicklist-default:v90',
+        scriptStoredOnConnection: false,
+        requestedBrowserMode: 'headed',
+        runId: 'run-relist-homepage-cleanup',
+        latestStage: 'draft_cleared',
+        latestStageUrl: 'https://www.tradera.com/en',
+        failureArtifacts: [
+          expect.objectContaining({
+            name: 'listing-page-missing',
+          }),
+        ],
+      }),
+    });
+
+    expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {
+      playwrightListingScript: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
+    });
+  });
+
   it('parses image settle state diagnostics from scripted upload timeout failures', async () => {
     runPlaywrightListingScriptMock.mockRejectedValue(
       Object.assign(
@@ -2193,8 +2513,10 @@ describe('runTraderaBrowserListing scripted mode', () => {
       expect.objectContaining({
         script: DEFAULT_TRADERA_QUICKLIST_SCRIPT,
         browserMode: 'headed',
-        failureHoldOpenMs: 30_000,
       })
+    );
+    expect(runPlaywrightListingScriptMock.mock.calls.at(-1)?.[0]).not.toHaveProperty(
+      'failureHoldOpenMs'
     );
     expect(result).toEqual({
       externalListingId: 'listing-headed-recovery',
@@ -2203,7 +2525,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v85',
+        scriptMarker: 'tradera-quicklist-default:v90',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',

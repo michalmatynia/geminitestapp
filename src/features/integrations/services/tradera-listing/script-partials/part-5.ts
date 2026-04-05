@@ -479,7 +479,21 @@ export const PART_5 = String.raw`        }
       const startedAt = Date.now();
       let nonSellFlowSince = null;
 
-      const summarizePostPublishState = async (reason) => {
+      const findPublishedListingMatchOnCurrentPage = async () => {
+        const candidateTerms = Array.from(
+          new Set([baseProductId, sku].map((value) => String(value || '').trim()).filter(Boolean))
+        );
+        for (const term of candidateTerms) {
+          const listingMatch = await findListingLinkForTerm(term).catch(() => null);
+          if (listingMatch?.listingId) {
+            return listingMatch;
+          }
+        }
+
+        return null;
+      };
+
+      const summarizePostPublishState = async (reason, resolvedListingMatch = null) => {
         const currentUrl = page.url();
         const activeListingsVisible = currentUrl.toLowerCase().includes('/my/listings');
         const onSellFlowRoute = isTraderaSellingRoute(currentUrl);
@@ -490,7 +504,10 @@ export const PART_5 = String.raw`        }
           ? await isControlDisabled(publishButton)
           : null;
         const visibleListingLink =
-          !stillOnSellFlow && !activeListingsVisible ? await findVisibleListingLink() : null;
+          !stillOnSellFlow
+            ? resolvedListingMatch ||
+              (activeListingsVisible ? null : await findVisibleListingLink())
+            : null;
         const externalListingId =
           extractListingId(currentUrl) || visibleListingLink?.listingId || null;
         const listingUrl = externalListingId
@@ -537,7 +554,13 @@ export const PART_5 = String.raw`        }
               return summarizePostPublishState('listing-link');
             }
           } else if (Date.now() - nonSellFlowSince >= 1_500) {
-            return summarizePostPublishState('active-listings-stable');
+            const visiblePublishedListing = await findPublishedListingMatchOnCurrentPage();
+            return summarizePostPublishState(
+              visiblePublishedListing?.listingId
+                ? 'active-listings-visible-match'
+                : 'active-listings-stable',
+              visiblePublishedListing
+            );
           }
         } else {
           nonSellFlowSince = null;
@@ -547,6 +570,87 @@ export const PART_5 = String.raw`        }
       }
 
       return summarizePostPublishState('timeout');
+    };
+
+    const verifyPublishedListingViaActiveSearch = async (terms) => {
+      const normalizedTerms = Array.from(
+        new Set(
+          (Array.isArray(terms) ? terms : [])
+            .map((value) => String(value || '').trim())
+            .filter(Boolean)
+        )
+      );
+      if (normalizedTerms.length === 0) {
+        return null;
+      }
+
+      log?.('tradera.quicklist.publish.verify_active_search', {
+        terms: normalizedTerms,
+      });
+
+      try {
+        await page.goto(ACTIVE_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+        await acceptCookiesIfPresent();
+      } catch (error) {
+        log?.('tradera.quicklist.publish.verify_active_search_failed', {
+          terms: normalizedTerms,
+          reason: 'goto_failed',
+          currentUrl: page.url(),
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      }
+
+      const activeContextReady = await ensureActiveListingsContext();
+      if (!activeContextReady) {
+        log?.('tradera.quicklist.publish.verify_active_search_failed', {
+          terms: normalizedTerms,
+          reason: 'active_context_missing',
+          currentUrl: page.url(),
+        });
+        return null;
+      }
+
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        for (const term of normalizedTerms) {
+          const duplicateMatch = await checkDuplicate(term).catch((error) => {
+            log?.('tradera.quicklist.publish.verify_active_search_failed', {
+              terms: normalizedTerms,
+              term,
+              attempt,
+              reason: 'search_failed',
+              currentUrl: page.url(),
+              error: error instanceof Error ? error.message : String(error),
+            });
+            return null;
+          });
+
+          if (duplicateMatch && duplicateMatch.duplicateFound && duplicateMatch.listingId) {
+            log?.('tradera.quicklist.publish.verify_active_search_result', {
+              term,
+              attempt,
+              listingId: duplicateMatch.listingId,
+              listingUrl: duplicateMatch.listingUrl || null,
+            });
+            return {
+              externalListingId: duplicateMatch.listingId,
+              listingUrl: duplicateMatch.listingUrl || null,
+              matchedTerm: term,
+            };
+          }
+        }
+
+        if (attempt + 1 < 3) {
+          await wait(1_500);
+        }
+      }
+
+      log?.('tradera.quicklist.publish.verify_active_search_result', {
+        terms: normalizedTerms,
+        listingId: null,
+        listingUrl: null,
+      });
+      return null;
     };
 
     const prePublishUrl = page.url();
@@ -592,12 +696,28 @@ export const PART_5 = String.raw`        }
 
     let listingUrl = postPublishNavigation.listingUrl || null;
     let externalListingId = postPublishNavigation.externalListingId;
+    const postPublishDraftValidationMessages = postPublishNavigation.stillOnSellFlow
+      ? postPublishNavigation.validationMessages.length > 0
+        ? postPublishNavigation.validationMessages
+        : await collectValidationMessages()
+      : postPublishNavigation.validationMessages;
+
+    if (
+      !externalListingId &&
+      !postPublishNavigation.activeListingsVisible &&
+      postPublishDraftValidationMessages.length === 0
+    ) {
+      const activeSearchVerification = await verifyPublishedListingViaActiveSearch([
+        baseProductId,
+        sku,
+      ]);
+      if (activeSearchVerification?.externalListingId) {
+        externalListingId = activeSearchVerification.externalListingId;
+        listingUrl = activeSearchVerification.listingUrl || listingUrl;
+      }
+    }
 
     if (!externalListingId && postPublishNavigation.stillOnSellFlow) {
-      const postPublishDraftValidationMessages =
-        postPublishNavigation.validationMessages.length > 0
-          ? postPublishNavigation.validationMessages
-          : await collectValidationMessages();
       if (postPublishDraftValidationMessages.length > 0) {
         throw new Error(
           (hasDeliveryValidationIssue(postPublishDraftValidationMessages)
@@ -629,7 +749,7 @@ export const PART_5 = String.raw`        }
 
     const result = {
       stage: 'publish_verified',
-      currentUrl: page.url(),
+      currentUrl: listingUrl || page.url(),
       externalListingId: externalListingId || null,
       listingUrl: listingUrl || null,
       publishVerified: true,

@@ -215,7 +215,105 @@ export const PART_4B = String.raw`
 
   const isSafeDraftImageRemoveControl = async (locator) => {
     const metadata = await readClickTargetMetadata(locator);
-    return !resolveExternalClickTargetUrl(metadata);
+    if (!metadata || typeof metadata !== 'object') {
+      return false;
+    }
+
+    const hrefCandidate = normalizeWhitespace(metadata.hrefAttribute || metadata.href || '');
+    const hasNavigationTarget =
+      metadata.tagName === 'a' ||
+      Boolean(hrefCandidate && hrefCandidate !== '#' && !hrefCandidate.startsWith('#')) ||
+      Boolean(normalizeWhitespace(metadata.targetAttribute));
+    if (hasNavigationTarget || resolveExternalClickTargetUrl(metadata)) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'navigating-target',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    const controlContext = await locator
+      .evaluate((element, scopeSelectors) => {
+        const closestButton = element.closest('button');
+        const closestLink = element.closest('a[href], a[role="link"], [role="link"][href]');
+        const insideImageScope = Array.isArray(scopeSelectors)
+          ? scopeSelectors.some((selector) => {
+              try {
+                return Boolean(element.closest(selector));
+              } catch {
+                return false;
+              }
+            })
+          : false;
+
+        return {
+          insideImageScope,
+          insideLink: Boolean(closestLink),
+          buttonAncestorTagName: closestButton ? closestButton.tagName.toLowerCase() : null,
+        };
+      }, DRAFT_IMAGE_REMOVE_SCOPE_SELECTORS)
+      .catch(() => ({
+        insideImageScope: false,
+        insideLink: false,
+        buttonAncestorTagName: null,
+      }));
+
+    if (controlContext.insideLink) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'inside-link',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    const isButtonLike =
+      metadata.tagName === 'button' ||
+      metadata.role === 'button' ||
+      metadata.type === 'button' ||
+      controlContext.buttonAncestorTagName === 'button';
+    if (!isButtonLike) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'not-button-like',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    const normalizedMetadataHaystack = [
+      metadata.ariaLabel,
+      metadata.text,
+      metadata.dataTestId,
+      metadata.id,
+      metadata.name,
+      metadata.title,
+      metadata.value,
+    ]
+      .map((value) =>
+        normalizeWhitespace(value)
+          .replace(/[^a-z0-9]+/gi, ' ')
+          .toLowerCase()
+      )
+      .join(' ');
+    const hasRemoveActionHint = DRAFT_IMAGE_REMOVE_ACTION_HINTS.some((hint) =>
+      normalizedMetadataHaystack.includes(hint)
+    );
+    if (!hasRemoveActionHint) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'missing-remove-hint',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    if (!controlContext.insideImageScope) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'outside-image-scope',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    return true;
   };
 
   const countDraftImageRemoveControls = async () => {
@@ -327,6 +425,24 @@ export const PART_4B = String.raw`
     }
 
     return count;
+  };
+
+  let draftImageCleanupCompleteRecoveryUsed = false;
+
+  const readDraftImageCleanupState = async () => {
+    const currentUrl = page.url();
+    const [draftImageRemoveControls, uploadedImagePreviewCount] = await Promise.all([
+      countDraftImageRemoveControls().catch(() => 0),
+      countUploadedImagePreviews().catch(() => 0),
+    ]);
+
+    return {
+      currentUrl,
+      draftImageRemoveControls,
+      uploadedImagePreviewCount,
+      onHomepage: isTraderaHomepage(currentUrl),
+      onSellingRoute: isTraderaSellingRoute(currentUrl),
+    };
   };
 
   const readListingEditorState = async () => {
@@ -680,10 +796,7 @@ export const PART_4B = String.raw`
     return readyLocators.some(Boolean);
   };
 
-  let imageStepSellPageRecoveries = 0;
-
   const ensureImageStepSellPageReady = async (context) => {
-    const currentUrl = page.url();
     if (await isCreateListingPage()) {
       return true;
     }
@@ -693,32 +806,73 @@ export const PART_4B = String.raw`
       return true;
     }
 
-    const requiresInPlaceRecovery =
-      stableEntryPoint === 'homepage' ||
-      stableEntryPoint === 'trigger' ||
-      !isTraderaSellingRoute(page.url());
-
-    if (requiresInPlaceRecovery && imageStepSellPageRecoveries < 2) {
-      imageStepSellPageRecoveries += 1;
+    const currentUrl = page.url();
+    if (
+      context === 'draft image cleanup complete' &&
+      !draftImageCleanupCompleteRecoveryUsed &&
+      (stableEntryPoint === 'homepage' || stableEntryPoint === 'trigger')
+    ) {
+      draftImageCleanupCompleteRecoveryUsed = true;
+      const beforeRecoveryState = await readDraftImageCleanupState();
       log?.('tradera.quicklist.sell_page.image_step_recover', {
         context,
+        stableEntryPoint,
         currentUrl,
-        stableEntryPoint,
-        recoveryCount: imageStepSellPageRecoveries,
+        ...beforeRecoveryState,
       });
-      const reopenedEntryPoint = await openCreateListingPage();
-      const stabilizedRecoveryEntryPoint = await confirmStableSellPage(1_000, 6_000);
-      log?.('tradera.quicklist.sell_page.image_step_recover_result', {
-        context,
-        currentUrl: page.url(),
-        stableEntryPoint,
-        reopenedEntryPoint,
-        stabilizedRecoveryEntryPoint,
-        recoveryCount: imageStepSellPageRecoveries,
-      });
-      if (reopenedEntryPoint === 'form' || stabilizedRecoveryEntryPoint === 'form') {
+
+      try {
+        await ensureCreateListingPageReady(context + ' recovery', true);
+      } catch (error) {
+        log?.('tradera.quicklist.sell_page.image_step_recover_result', {
+          context,
+          stableEntryPoint,
+          recovered: false,
+          currentUrl: page.url(),
+          error: error instanceof Error ? error.message : String(error),
+          ...(await readDraftImageCleanupState().catch(() => ({
+            currentUrl: page.url(),
+          }))),
+        });
+      }
+
+      if (await isCreateListingPage()) {
+        log?.('tradera.quicklist.sell_page.image_step_recover_result', {
+          context,
+          stableEntryPoint,
+          recovered: true,
+          currentUrl: page.url(),
+          ...(await readDraftImageCleanupState().catch(() => ({
+            currentUrl: page.url(),
+          }))),
+        });
         return true;
       }
+    }
+
+    if (
+      stableEntryPoint === 'homepage' ||
+      stableEntryPoint === 'trigger' ||
+      stableEntryPoint === null
+    ) {
+      log?.('tradera.quicklist.sell_page.image_step_invalid', {
+        context,
+        stableEntryPoint,
+        currentUrl,
+      });
+      await captureFailureArtifacts('listing-page-missing', {
+        context,
+        stableEntryPoint,
+        currentUrl,
+      }).catch(() => undefined);
+      throw new Error(
+        'FAIL_SELL_PAGE_INVALID: Tradera listing editor was lost during ' +
+          context +
+          '. Entry point: ' +
+          String(stableEntryPoint) +
+          '. Current URL: ' +
+          currentUrl
+      );
     }
 
     await ensureCreateListingPageReady(context);
@@ -804,10 +958,30 @@ export const PART_4B = String.raw`
           if (!visible) continue;
           const safeDraftRemoveControl = await isSafeDraftImageRemoveControl(candidate);
           if (!safeDraftRemoveControl) continue;
+          await logClickTarget('draft-image-remove', candidate);
           await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
           const clicked = await tryHumanClick(candidate);
           if (!clicked) {
             continue;
+          }
+          const postClickUrl = page.url();
+          log?.('tradera.quicklist.draft_image_remove.clicked', {
+            attempt,
+            selector,
+            index,
+            postClickUrl,
+          });
+          if (isTraderaHomepage(postClickUrl) || !isTraderaSellingRoute(postClickUrl)) {
+            await captureFailureArtifacts('draft-image-remove-navigation', {
+              attempt,
+              selector,
+              index,
+              postClickUrl,
+            }).catch(() => undefined);
+            throw new Error(
+              'FAIL_SELL_PAGE_INVALID: Tradera draft image cleanup navigated away from the listing editor. Current URL: ' +
+                postClickUrl
+            );
           }
           removedCount += 1;
           removedInAttempt = true;
@@ -828,6 +1002,12 @@ export const PART_4B = String.raw`
     if (removedCount > 0) {
       log?.('tradera.quicklist.draft.reset', { removedCount });
       await wait(800);
+      log?.('tradera.quicklist.draft.reset_state', {
+        removedCount,
+        ...(await readDraftImageCleanupState().catch(() => ({
+          currentUrl: page.url(),
+        }))),
+      });
     }
 
     await ensureImageStepSellPageReady('draft image cleanup complete');

@@ -20,6 +20,11 @@ describe('extractExternalListingId', () => {
       '123456789'
     );
     expect(
+      extractExternalListingId(
+        'https://www.tradera.com/en/item/2805/725447805/slave-i-5-cm-metal-movie-keychain-star-wars'
+      )
+    ).toBe('725447805');
+    expect(
       extractExternalListingId('https://www.tradera.com/en/listing/987654321?foo=bar')
     ).toBe('987654321');
   });

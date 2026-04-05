@@ -86,7 +86,7 @@ describe('ProductListingDetails', () => {
                     requestedBrowserMode: 'headed',
                     scriptSource: 'legacy-default-refresh',
                     scriptKind: 'managed',
-                    scriptMarker: 'tradera-quicklist-default:v85',
+                    scriptMarker: 'tradera-quicklist-default:v90',
                     listingFormUrl: 'https://www.tradera.com/en/selling/new',
                     runId: 'run-123',
                     playwrightPersonaId: 'persona-natural',
@@ -166,7 +166,7 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('Script type:')).toBeInTheDocument();
     expect(screen.getByText('managed')).toBeInTheDocument();
     expect(screen.getByText('Script marker:')).toBeInTheDocument();
-    expect(screen.getByText('tradera-quicklist-default:v85')).toBeInTheDocument();
+    expect(screen.getByText('tradera-quicklist-default:v90')).toBeInTheDocument();
     expect(screen.getByText('Start URL:')).toBeInTheDocument();
     expect(screen.getByText('https://www.tradera.com/en/selling/new')).toBeInTheDocument();
     expect(screen.getByText('Run ID:')).toBeInTheDocument();

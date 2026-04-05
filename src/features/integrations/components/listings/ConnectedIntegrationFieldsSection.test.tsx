@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
     description,
@@ -30,7 +30,6 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </section>
   ),
-  LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
   SelectSimple: ({
     placeholder,
     ariaLabel,
@@ -46,6 +45,10 @@ vi.mock('@/shared/ui', () => ({
       <span>{title}</span>
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  LoadingState: ({ message }: { message?: string }) => <div>{message}</div>,
 }));
 
 import { ConnectedIntegrationFieldsSection } from './ConnectedIntegrationFieldsSection';

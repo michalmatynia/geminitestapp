@@ -10,7 +10,7 @@ vi.mock('@/features/integrations/context/ListingSettingsContext', () => ({
   useListingSelection: () => useListingSelectionMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     label,
     description,

@@ -55,7 +55,7 @@ vi.mock('./list-product-modal/context/ListProductModalFormContext', () => ({
   ListProductModalFormProvider: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormModal: ({
     children,
     open,

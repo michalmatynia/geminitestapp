@@ -9,7 +9,8 @@ import {
 import { ActivityTypes } from '@/shared/constants/observability';
 import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { kangurLessonSubjectSchema } from '@kangur/contracts/kangur-lesson-constants';
-import { type KangurLessonSubject, type KangurProgressState } from '@kangur/contracts';
+import { type KangurLessonSubject } from '@kangur/contracts/kangur-lesson-constants';
+import { type KangurProgressState } from '@kangur/contracts/kangur';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';

@@ -21,7 +21,7 @@ import { AdminAiEyebrow } from '@/shared/ui/admin.public';
 import { FormField, FormActions, FormSection, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { Alert, Input, Button, useToast } from '@/shared/ui/primitives.public';
 import { SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
-import { DocsTooltipEnhancer } from '@/shared/ui';
+import { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/lib/documentation/DocumentationTooltipEnhancer';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

@@ -3,7 +3,7 @@ import 'server-only';
 import { ObjectId, type Filter, type SortDirection } from 'mongodb';
 
 import { resolveKangurScoreSubject } from '@kangur/contracts/kangur';
-import { type KangurScore, type KangurScoreRepositoryCreateInput } from '@kangur/contracts';
+import { type KangurScore, type KangurScoreRepositoryCreateInput } from '@kangur/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { normalizeSort } from './shared';

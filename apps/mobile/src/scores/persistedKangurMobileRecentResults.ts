@@ -1,4 +1,4 @@
-import { kangurScoreSchema, type KangurScore } from '@kangur/contracts';
+import { kangurScoreSchema, type KangurScore } from '@kangur/contracts/kangur';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
 
 const KANGUR_MOBILE_RECENT_RESULTS_STORAGE_KEY = 'kangur.mobile.scores.recent';

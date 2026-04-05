@@ -3,10 +3,8 @@
  */
 
 import React from 'react';
-import {
-  createDefaultKangurAiTutorLearnerMood,
-  createDefaultKangurProgressState,
-} from '@kangur/contracts';
+import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts/kangur-ai-tutor-mood';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import type { KangurClientStorageAdapter, KangurUser } from '@kangur/platform';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';

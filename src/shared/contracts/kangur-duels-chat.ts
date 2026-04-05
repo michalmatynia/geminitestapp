@@ -1,1 +1,1 @@
-export * from '@kangur/contracts';
+export * from '@kangur/contracts/kangur-duels-chat';

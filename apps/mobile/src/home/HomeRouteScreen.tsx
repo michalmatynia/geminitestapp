@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { HomeLoadingShell } from './HomeLoadingShell';
 import {
   KangurMobileHomeProgressSnapshotProvider,

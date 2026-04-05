@@ -4,7 +4,7 @@ import {
   type KangurLearnerRecommendationAction,
   type KangurLearnerProfileSnapshot,
 } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
 import { useMemo, useSyncExternalStore } from 'react';
 

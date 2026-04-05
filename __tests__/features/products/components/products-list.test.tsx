@@ -17,7 +17,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { server } from '@/mocks/server';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { DataTable } from '@/shared/ui';
+import { DataTable } from '@/shared/ui/data-display.public';
 import { ToastProvider } from '@/shared/ui/toast';
 import type { ProductWithImages } from '@/shared/contracts/products';
 

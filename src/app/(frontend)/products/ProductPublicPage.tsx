@@ -15,7 +15,7 @@ import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { normalizeSiteLocale, resolveLocalizedText } from '@/shared/lib/i18n/site-locale';
 import { productService } from '@/shared/lib/products/services/productService';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
-import { MissingImagePlaceholder } from '@/shared/ui';
+import { MissingImagePlaceholder } from '@/shared/ui/media.public';
 
 import type { JSX } from 'react';
 

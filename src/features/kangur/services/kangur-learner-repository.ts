@@ -7,7 +7,12 @@ import bcrypt from 'bcryptjs';
 
 
 import { kangurLearnerProfilesSchema } from '@kangur/contracts/kangur';
-import { type KangurLearnerCreateInput, type KangurLearnerProfile, type KangurLearnerStatus, type KangurLearnerUpdateInput } from '@kangur/contracts';
+import {
+  type KangurLearnerCreateInput,
+  type KangurLearnerProfile,
+  type KangurLearnerStatus,
+  type KangurLearnerUpdateInput,
+} from '@kangur/contracts/kangur';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,

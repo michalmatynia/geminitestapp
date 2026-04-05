@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts';
+import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts/kangur-ai-tutor-mood';
 import type { KangurAuthAdapter } from '@kangur/platform';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';

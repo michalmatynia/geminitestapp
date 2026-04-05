@@ -13,7 +13,7 @@ import {
   ADMIN_MENU_SECTION_COLORS_KEY,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),

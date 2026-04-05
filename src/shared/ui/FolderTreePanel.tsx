@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
-import { type FolderTreeInstance } from '@/shared/utils';
+import { type FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
 
 import { MasterTreeSettingsButton } from './MasterTreeSettingsButton';
 

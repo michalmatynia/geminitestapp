@@ -11,6 +11,8 @@ export type {
   KangurAssignmentListQuery,
   KangurAssignmentSnapshot,
   KangurAssignmentUpdateInput,
+} from '@kangur/contracts/kangur-assignments';
+export type {
   KangurLearnerActivitySnapshot,
   KangurLearnerActivityStatus,
   KangurLearnerActivityUpdateInput,
@@ -21,7 +23,7 @@ export type {
   KangurLearnerUpdateInput,
   KangurProgressState,
   KangurScoreCreateInput,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur';
 
 export type KangurUser = Omit<KangurAuthUser, 'ownerEmailVerified'> & {
   ownerEmailVerified?: boolean;

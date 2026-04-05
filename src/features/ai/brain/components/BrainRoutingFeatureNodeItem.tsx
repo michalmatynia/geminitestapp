@@ -6,7 +6,7 @@ import React from 'react';
 import { StatusToggle } from '@/shared/ui/forms-and-actions.public';
 import { TreeCaret, TreeRow } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
-import { type MasterTreeNode } from '@/shared/utils';
+import { type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import type { BrainRoutingCapabilityGroup } from './brain-routing-master-tree';
 import type { AiBrainFeature } from '../settings';

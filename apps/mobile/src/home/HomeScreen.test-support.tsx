@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { render } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 

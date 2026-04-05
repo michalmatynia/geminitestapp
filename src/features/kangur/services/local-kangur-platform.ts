@@ -30,7 +30,7 @@ import type {
 } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
 import { kangurLearnerActivitySnapshotSchema, kangurLearnerActivityStatusSchema, kangurProgressStateSchema } from '@kangur/contracts/kangur';
-import { type KangurProgressState } from '@kangur/contracts';
+import { type KangurProgressState } from '@kangur/contracts/kangur';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 

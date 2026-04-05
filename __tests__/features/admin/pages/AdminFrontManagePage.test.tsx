@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AdminFrontManagePage } from '@/features/admin/pages/AdminFrontManagePage';
 import { useSettingsMap, useUpdateSetting, useLiteSettingsMap } from '@/shared/hooks/use-settings';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 // Mock shared hooks
 vi.mock('@/shared/hooks/use-settings', () => ({

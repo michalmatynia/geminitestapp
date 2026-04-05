@@ -1,4 +1,4 @@
-import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts';
+import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts/kangur-ai-tutor-mood';
 import { describe, expect, it } from 'vitest';
 
 import { hasKangurMobileAuthQueryIdentityChanged } from './hasKangurMobileAuthQueryIdentityChanged';

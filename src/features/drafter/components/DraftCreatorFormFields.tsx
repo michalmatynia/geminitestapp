@@ -8,7 +8,7 @@ import {
   ProducerMultiSelectField,
   ProductMetadataFieldProvider,
   TagMultiSelectField,
-} from '@/features/products';
+} from '@/features/products/forms.public';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductParameterValue } from '@/shared/contracts/products/product';

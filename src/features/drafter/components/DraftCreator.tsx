@@ -19,7 +19,7 @@ import {
   useCatalogs,
   useProductImages,
   useProducers,
-} from '@/features/products';
+} from '@/features/products/forms.public';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductTag } from '@/shared/contracts/products/tags';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';

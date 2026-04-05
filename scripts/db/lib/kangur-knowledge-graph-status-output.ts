@@ -2,7 +2,7 @@ import {
   buildKangurKnowledgeGraphStatusSnapshot,
   resolveKangurKnowledgeGraphSemanticReadiness,
 } from '@/features/kangur/server/knowledge-graph/status';
-import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
 
 export type KangurKnowledgeGraphStatusOutput = Extract<
   KangurKnowledgeGraphStatusSnapshot,

@@ -1,4 +1,4 @@
-import { createDefaultKangurProgressState, type KangurScore } from '@kangur/contracts';
+import { createDefaultKangurProgressState, type KangurScore } from '@kangur/contracts/kangur';
 import type { KangurLeaderboardItem } from '@kangur/core';
 import { describe, expect, it } from 'vitest';
 

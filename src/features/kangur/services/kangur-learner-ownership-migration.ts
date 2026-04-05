@@ -1,5 +1,9 @@
 import { createDefaultKangurProgressState, normalizeKangurProgressState } from '@kangur/contracts/kangur';
-import { type KangurAssignment, type KangurLearnerProfile, type KangurProgressState } from '@kangur/contracts';
+import {
+  type KangurAssignment,
+  type KangurLearnerProfile,
+  type KangurProgressState,
+} from '@kangur/contracts/kangur';
 
 import { buildKangurAssignmentDedupeKey } from './kangur-assignments';
 

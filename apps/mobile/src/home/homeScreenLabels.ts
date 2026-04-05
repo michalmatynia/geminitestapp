@@ -1,4 +1,4 @@
-import type { KangurDuelSeries } from '@kangur/contracts';
+import type { KangurDuelSeries } from '@kangur/contracts/kangur-duels';
 
 export const getHomeDuelModeLabel = (
   value: 'challenge' | 'quick_match',

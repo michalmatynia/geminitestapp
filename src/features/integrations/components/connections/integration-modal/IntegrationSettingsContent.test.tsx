@@ -39,7 +39,7 @@ vi.mock('../manager/ConnectionEditModal', () => ({
     ) : null,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props} />,
 }));
 

@@ -8,7 +8,8 @@ import type {
   BaseInventory,
   IntegrationTemplate as Template,
 } from '@/shared/contracts/integrations';
-import { SelectSimple, FormField, Alert, ToggleRow } from '@/shared/ui';
+import { SelectSimple, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { Alert } from '@/shared/ui/primitives.public';
 
 const NO_TEMPLATE_OPTION: LabeledOptionDto<string> = {
   value: 'none',

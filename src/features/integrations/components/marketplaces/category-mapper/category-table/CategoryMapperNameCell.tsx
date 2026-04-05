@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import React from 'react';
 
 import { buttonVariants } from '@/shared/ui/button';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 export type CategoryMapperNameCellProps = {
   name: string;

@@ -4,16 +4,10 @@ import Link from 'next/link';
 import React from 'react';
 
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import {
-  FormField,
-  FormSection,
-  Hint,
-  Input,
-  SelectSimple,
-  Textarea,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { FormField, FormSection, Hint, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { Input, Textarea } from '@/shared/ui/primitives.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   useImageStudioSettingsActions,

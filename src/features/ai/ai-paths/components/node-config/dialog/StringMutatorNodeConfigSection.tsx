@@ -4,15 +4,9 @@ import React, { useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { StringMutatorOperation } from '@/shared/lib/ai-paths';
-import {
-  Button,
-  Input,
-  SelectSimple,
-  ToggleRow,
-  FormField,
-  CompactEmptyState,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { SelectSimple, ToggleRow, FormField } from '@/shared/ui/forms-and-actions.public';
+import { CompactEmptyState, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

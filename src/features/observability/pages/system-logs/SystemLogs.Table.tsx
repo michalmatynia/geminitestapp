@@ -5,23 +5,17 @@ import { AlertTriangle, Eye, Monitor, SearchIcon } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { useSystemLogsActions, useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
-import { DOCUMENTATION_MODULE_IDS, getDocumentationTooltip } from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import type { StatusVariant } from '@/shared/contracts/ui';
-import {
-  Alert,
-  Button,
-  Card,
-  Hint,
-  MetadataItem,
-  Pagination,
-  StandardDataTablePanel,
-  StatusBadge,
-  Tooltip,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Alert, Button, Card, Tooltip } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem, Pagination, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import type {
   ContextDocumentDisplay,

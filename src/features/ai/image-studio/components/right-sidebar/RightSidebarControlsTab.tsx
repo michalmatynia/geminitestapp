@@ -15,8 +15,9 @@ import {
   VectorDrawingToolbar,
 } from '@/shared/lib/vector-drawing';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, MultiSelect, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { MultiSelect, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 
 import { useMaskingActions, useMaskingState } from '../../context/MaskingContext';

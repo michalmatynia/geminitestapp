@@ -13,7 +13,7 @@ import type {
 import type { UserPreferencesUpdate } from '@/shared/contracts/auth';
 import { useUpdateUserPreferences, useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import type {
   AdminCaseResolverCasesActionsValue,

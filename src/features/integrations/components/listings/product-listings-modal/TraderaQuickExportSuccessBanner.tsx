@@ -6,7 +6,8 @@ import {
   resolveListingUrl,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
-import { Card, ExternalLink } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
+import { ExternalLink } from '@/shared/ui/forms-and-actions.public';
 
 type TraderaQuickExportSuccessBannerProps = {
   mode: 'empty' | 'content';

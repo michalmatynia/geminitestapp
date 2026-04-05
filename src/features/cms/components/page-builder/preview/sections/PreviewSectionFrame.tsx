@@ -4,7 +4,7 @@ import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageCon
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 import { getSelectableSurfaceProps } from '@/features/cms/components/page-builder/preview/preview-utils';
 import { getSectionStyles } from '@/features/cms/public';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface PreviewSectionFrameProps {
   dividerPosition?: 'before' | 'after';

@@ -10,7 +10,7 @@ import {
   useIntegrationsActions,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
-import { FormSection, FormActions } from '@/shared/ui';
+import { FormSection, FormActions } from '@/shared/ui/forms-and-actions.public';
 
 import { ConnectionFormFields } from './ConnectionFormFields';
 

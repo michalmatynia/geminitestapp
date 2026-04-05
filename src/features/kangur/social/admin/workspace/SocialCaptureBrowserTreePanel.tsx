@@ -8,7 +8,7 @@ import {
   FolderTreeViewportV2,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import {
   isSocialCaptureSlideNode,
   isSocialCaptureSectionNode,

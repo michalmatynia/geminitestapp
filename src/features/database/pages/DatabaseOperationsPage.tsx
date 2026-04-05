@@ -3,19 +3,10 @@ import Link from 'next/link';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
-import {
-  AdminDatabasePageLayout,
-  Button,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  FormSection,
-  SelectSimple,
-  EmptyState,
-  Card,
-  LoadingState,
-} from '@/shared/ui';
+import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, Card } from '@/shared/ui/primitives.public';
+import { FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { EmptyState, LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';

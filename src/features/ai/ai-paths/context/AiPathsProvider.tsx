@@ -1,13 +1,4 @@
-import type {
-  AiNode,
-  Edge,
-  PathMeta,
-  PathConfig,
-  ClusterPreset,
-  DbQueryPreset,
-  DbNodePreset,
-  RuntimeState,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PathMeta, PathConfig, ClusterPreset, DbQueryPreset, DbNodePreset, RuntimeState } from '@/shared/lib/ai-paths';
 
 import { CanvasProvider, type ViewState } from './CanvasContext';
 import { GraphProvider } from './GraphContext';

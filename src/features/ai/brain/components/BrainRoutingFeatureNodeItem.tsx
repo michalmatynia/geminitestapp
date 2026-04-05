@@ -3,8 +3,10 @@
 import { Brain, GripVertical } from 'lucide-react';
 import React from 'react';
 
-import { StatusToggle, TreeCaret, TreeRow } from '@/shared/ui';
-import { cn, type MasterTreeNode } from '@/shared/utils';
+import { StatusToggle } from '@/shared/ui/forms-and-actions.public';
+import { TreeCaret, TreeRow } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
+import { type MasterTreeNode } from '@/shared/utils';
 
 import type { BrainRoutingCapabilityGroup } from './brain-routing-master-tree';
 import type { AiBrainFeature } from '../settings';

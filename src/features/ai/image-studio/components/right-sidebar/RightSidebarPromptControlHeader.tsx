@@ -3,7 +3,8 @@
 import React from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export type RightSidebarPromptControlHeaderRuntimeValue = {
   onClose: () => void;

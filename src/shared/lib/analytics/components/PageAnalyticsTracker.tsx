@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
-import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
+import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts/analytics';
 import { useTrackEventMutation } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

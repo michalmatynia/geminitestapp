@@ -19,7 +19,8 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, SidePanel, Tooltip, useToast, CompactEmptyState } from '@/shared/ui';
+import { Button, Input, Tooltip, useToast } from '@/shared/ui/primitives.public';
+import { SidePanel, CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   ImageStudioSingleSlotManager,

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { PanelStat } from '@/shared/contracts/ui';
 import { Card } from '@/shared/ui/card';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface PanelStatsProps {
   stats: PanelStat[];

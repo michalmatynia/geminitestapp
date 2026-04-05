@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { TabsContent } from '@/shared/ui';
-import { Hint } from '@/shared/ui';
+import { TabsContent } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { formatBytes, formatDateTime } from './slot-inline-edit-utils';
 import { useStudioInlineEdit } from './StudioInlineEditContext';

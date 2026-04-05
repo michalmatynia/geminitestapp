@@ -415,7 +415,6 @@ const renderProductListMobileCard = ({
           onOpenIntegrations={(recoveryContext) =>
             onIntegrationsClick(product, recoveryContext, 'baselinker')
           }
-          onOpenExportSettings={() => onExportSettingsClick(product)}
         />
         <TraderaQuickListButton
           product={product}

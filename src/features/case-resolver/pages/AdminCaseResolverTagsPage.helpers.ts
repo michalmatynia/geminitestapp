@@ -3,7 +3,7 @@ import React from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
 import type { SimpleSettingsListItem } from '@/shared/contracts/ui';
-import { Tag as UiTag } from '@/shared/ui';
+import { Tag as UiTag } from '@/shared/ui/forms-and-actions.public';
 
 import type { CaseResolverTagFormData } from '../entity-form-data';
 

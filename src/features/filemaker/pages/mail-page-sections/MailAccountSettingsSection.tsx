@@ -1,7 +1,8 @@
 import { MailPlus, RefreshCcw } from 'lucide-react';
 import React from 'react';
 
-import { Button, Checkbox, FormField, FormSection, Input } from '@/shared/ui';
+import { Button, Checkbox, Input } from '@/shared/ui/primitives.public';
+import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import type { FilemakerMailAccount, FilemakerMailAccountDraft } from '../../types';
 

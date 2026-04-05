@@ -7,22 +7,10 @@ import { useBaselinkerSettingsState } from '@/features/integrations/hooks/useBas
 import { useQuickImportBaseOrdersMutation } from '@/shared/hooks/useBaseOrderQuickImport';
 import { buildBaseOrderQuickImportFeedback } from '@/shared/lib/base-order-quick-import-feedback';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import {
-  Button,
-  Input,
-  SelectSimple,
-  StatusBadge,
-  Alert,
-  FormSection,
-  FormField,
-  CompactEmptyState,
-  FormActions,
-  useToast,
-  MetadataItem,
-  Card,
-  Hint,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Input, Alert, useToast, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField, FormActions, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { CompactEmptyState, MetadataItem, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type QuickImportResultState =

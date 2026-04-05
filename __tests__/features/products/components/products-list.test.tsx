@@ -538,4 +538,40 @@ describe('Admin Products List UI', () => {
     );
     expect(exportCalls).toBe(0);
   });
+
+  it('opens the Base listings modal instead of re-exporting when the Base badge is green', async () => {
+    let exportCalls = 0;
+    const onIntegrationsClick = vi.fn();
+
+    server.use(
+      http.post('/api/v2/integrations/products/:id/export-to-base', () => {
+        exportCalls += 1;
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    renderProductTable({
+      onIntegrationsClick,
+      data: [
+        {
+          ...mockProducts[0],
+          baseProductId: 'base-123',
+        } as ProductWithImages,
+        mockProducts[1]!,
+      ],
+    });
+
+    const user = userEvent.setup();
+    const manageButton = await screen.findByRole('button', {
+      name: 'Manage Base.com listing (active).',
+    });
+    await user.click(manageButton);
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      undefined,
+      'baselinker'
+    );
+    expect(exportCalls).toBe(0);
+  });
 });

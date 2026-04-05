@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type { AnalyticsEventFilterBot, AnalyticsRange, AnalyticsScope } from '@/shared/contracts';
+import type { AnalyticsEventFilterBot, AnalyticsRange, AnalyticsScope } from '@/shared/contracts/analytics';
 import type { FilterField, SelectSimpleOption } from '@/shared/contracts/ui';
 import {
   Copy,
@@ -17,21 +17,10 @@ import {
 import type { ClearLogsTargetDto as ClearLogsTarget } from '@/shared/contracts/observability';
 import AnalyticsEventsTable from '@/shared/lib/analytics/components/AnalyticsEventsTable';
 import { useAnalyticsEvents } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
-import {
-  AdminSectionBreadcrumbs,
-  Button,
-  Card,
-  CopyButton,
-  ListPanel,
-  Pagination,
-  RefreshButton,
-  SearchInput,
-  SelectSimple,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/shared/ui';
+import { AdminSectionBreadcrumbs } from '@/shared/ui/admin.public';
+import { Button, Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+import { CopyButton, RefreshButton, SearchInput, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { ListPanel, Pagination } from '@/shared/ui/navigation-and-layout.public';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import {

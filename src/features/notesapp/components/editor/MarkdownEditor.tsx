@@ -9,8 +9,9 @@ import {
   useNoteEditorContext,
   useNoteFilesContext,
 } from '@/features/notesapp/context/NoteFormContext';
-import { TextEditorEngineBrandButton, useToast } from '@/shared/ui';
-import { sanitizeHtml } from '@/shared/utils';
+import { TextEditorEngineBrandButton } from '@/shared/ui/navigation-and-layout.public';
+import { useToast } from '@/shared/ui/primitives.public';
+import { sanitizeHtml } from '@/shared/utils/sanitization';
 
 import { renderMarkdownToHtml } from '../../utils';
 

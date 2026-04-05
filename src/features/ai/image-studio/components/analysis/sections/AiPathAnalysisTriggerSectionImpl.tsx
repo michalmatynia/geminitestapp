@@ -9,8 +9,9 @@ import {
 } from '@/features/ai/image-studio/hooks/useAiPathsObjectAnalysis';
 import type { AiPathsObjectAnalysisAutoApplyTarget } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button, Card, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 
 // ---------------------------------------------------------------------------

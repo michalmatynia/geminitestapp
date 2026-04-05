@@ -15,7 +15,7 @@ import type {
 } from '@/shared/contracts/image-studio';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { api } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { useMaskingActions, useMaskingState } from './MaskingContext';
 import { useProjectsState } from './ProjectsContext';

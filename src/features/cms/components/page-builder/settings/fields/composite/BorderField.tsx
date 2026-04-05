@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { Input, SelectSimple } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { BORDER_STYLE_OPTIONS } from '../settings-field-constants';

@@ -15,7 +15,8 @@ import {
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import { Button, ActionMenu, DropdownMenuItem, Label, Input } from '@/shared/ui';
+import { Button, DropdownMenuItem, Label, Input } from '@/shared/ui/primitives.public';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 import type { ProductListingWithDetailsProps } from './types';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>

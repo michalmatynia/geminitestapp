@@ -5,7 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type { ParseCustomBenchmarkCasesResult } from '@/shared/contracts/prompt-exploder';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES,

@@ -3,8 +3,8 @@
 import { MousePointer2 } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface PreviewNodeSelectionButtonProps {
   label: string;

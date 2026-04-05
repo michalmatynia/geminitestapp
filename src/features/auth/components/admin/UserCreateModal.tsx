@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 

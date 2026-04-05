@@ -6,7 +6,7 @@ import {
   useIntegrationsActions,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
-import { LoadingState } from '@/shared/ui';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import {
   PlaywrightSettingsFormViewProvider,
   PlaywrightSettingsProvider,

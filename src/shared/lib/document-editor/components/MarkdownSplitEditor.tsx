@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { Textarea, LoadingState } from '@/shared/ui';
+import { Textarea } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { useOptionalMarkdownSplitEditorContext } from '../context/MarkdownSplitEditorContext';
 import { useMarkdownPreviewDebounce } from '../hooks/useMarkdownPreviewDebounce';

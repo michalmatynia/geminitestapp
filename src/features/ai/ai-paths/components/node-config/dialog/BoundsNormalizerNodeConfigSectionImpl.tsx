@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { BoundsNormalizerConfig } from '@/shared/contracts/ai-paths-core';
-import { Input, Label, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Input, Label } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

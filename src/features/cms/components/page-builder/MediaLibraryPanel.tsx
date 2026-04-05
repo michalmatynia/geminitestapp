@@ -6,7 +6,9 @@ import React from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
-import { useToast, FileUploadButton, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
+import { FileUploadButton } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

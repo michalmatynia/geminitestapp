@@ -1,5 +1,6 @@
 import React from 'react';
-import { Hint, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import type { RunHistoryFilterView } from './run-history-panel';
 import { RunHistoryPillButton } from './RunHistoryPillButton';
 

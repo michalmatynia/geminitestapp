@@ -3,8 +3,8 @@
 import { ClockIcon, ChevronDownIcon, Trash2Icon } from 'lucide-react';
 import React from 'react';
 
-import { Button, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 export type SqlHistoryDropdownProps = {
   history: string[];

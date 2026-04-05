@@ -3,7 +3,8 @@
 import React from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG, TEXT_EFFECTS, type TextEffect } from '@/features/gsap/public';
-import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Input, Checkbox } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 

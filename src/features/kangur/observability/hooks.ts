@@ -1,14 +1,6 @@
-import type {
-  KangurKnowledgeGraphStatusResponse,
-  KangurKnowledgeGraphStatusSnapshot,
-  KangurObservabilityRange,
-  KangurObservabilitySummary,
-  KangurObservabilitySummaryResponse,
-} from '@/shared/contracts';
-import {
-  kangurKnowledgeGraphStatusResponseSchema,
-  kangurObservabilitySummaryResponseSchema,
-} from '@/shared/contracts';
+import type { KangurKnowledgeGraphStatusResponse, KangurObservabilityRange, KangurObservabilitySummary, KangurObservabilitySummaryResponse } from '@/shared/contracts/kangur-observability';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
+import { kangurKnowledgeGraphStatusResponseSchema, kangurObservabilitySummaryResponseSchema } from '@/shared/contracts/kangur-observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { api } from '@/shared/lib/api-client';

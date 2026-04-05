@@ -17,8 +17,8 @@ import {
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
-import { Badge, Button, Input, Label } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Input, Label } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   buildPromptExploderMasterNodes,

@@ -28,7 +28,7 @@ import { Integration, IntegrationConnection, TestLogEntry } from '@/shared/contr
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

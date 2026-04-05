@@ -7,7 +7,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AgentPersonaMood } from '@/shared/contracts/agents';
-import { ToastProvider } from '@/shared/ui';
+import { ToastProvider } from '@/shared/ui/primitives.public';
 
 import { buildAgentPersonaMood, buildDefaultAgentPersonaMoods } from '../utils/personas';
 import { AgentPersonaMoodEditor } from './AgentPersonaMoodEditor';

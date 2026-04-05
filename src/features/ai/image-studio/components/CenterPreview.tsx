@@ -19,7 +19,8 @@ import {
 } from '@/shared/lib/products/constants';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { FocusModeTogglePortal, useToast } from '@/shared/ui';
+import { FocusModeTogglePortal } from '@/shared/ui/navigation-and-layout.public';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   CenterPreviewProvider,

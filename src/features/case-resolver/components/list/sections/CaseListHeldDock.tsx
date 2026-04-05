@@ -1,7 +1,7 @@
 import { Pin, X } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import { useCaseListPanelControlsContext } from '../CaseListPanelControlsContext';
 

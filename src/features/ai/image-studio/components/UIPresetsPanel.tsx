@@ -8,7 +8,8 @@ import {
   type ImageStudioPromptEntry,
 } from '@/features/ai/image-studio/utils/prompt-library';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, SelectSimple, useToast } from '@/shared/ui';
+import { Button, Label, useToast } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { usePromptState, usePromptActions } from '../context/PromptContext';

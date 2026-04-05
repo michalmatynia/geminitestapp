@@ -7,8 +7,9 @@ import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderCon
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import { type VectorShape } from '@/shared/contracts/vector';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shared/ui';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { Button, Checkbox, Input, Tooltip } from '@/shared/ui/primitives.public';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 

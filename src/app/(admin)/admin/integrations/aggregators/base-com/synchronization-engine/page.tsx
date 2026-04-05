@@ -1,7 +1,7 @@
 import { JSX } from 'react';
 
 import { ProductSyncSettings } from '@/features/product-sync/public';
-import { SectionHeader } from '@/shared/ui';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 export default function BaseSynchronizationEnginePage(): JSX.Element {
   return (

@@ -9,21 +9,11 @@ import {
   useBackgroundSyncActions,
   useBackgroundSyncState,
 } from '@/shared/providers/BackgroundSyncProvider';
-import {
-  AdminSettingsPageLayout,
-  Button,
-  Card,
-  FormActions,
-  FormField,
-  FormSection,
-  Hint,
-  Input,
-  MetadataItem,
-  SimpleSettingsList,
-  ToggleRow,
-  UI_GRID_ROOMY_CLASSNAME,
-  useToast,
-} from '@/shared/ui';
+import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Card, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, FormSection, Hint, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 

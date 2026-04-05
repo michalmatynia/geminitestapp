@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurLessonRepository } from '@/features/kangur/services/kangur-lesson-repository';
-import type { KangurLesson } from '@kangur/contracts';
+import type { KangurLesson } from '@kangur/contracts/kangur';
 import {
   kangurLessonAgeGroupSchema,
   kangurLessonComponentIdSchema,

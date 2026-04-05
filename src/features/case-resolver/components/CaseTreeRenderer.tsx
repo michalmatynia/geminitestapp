@@ -17,19 +17,10 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
-import {
-  Button,
-  Badge,
-  Card,
-  FormField,
-  Input,
-  SelectSimple,
-  MetadataItem,
-  Tooltip,
-  useToast,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Badge, Card, Input, Tooltip, useToast } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { buildCaseResolverCaseHref } from './list/case-list-utils';
 import {

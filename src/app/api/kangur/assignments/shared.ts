@@ -12,12 +12,8 @@ import {
   buildStoredKangurAssignmentTarget,
   evaluateKangurAssignment,
 } from '@/features/kangur/services/kangur-assignments';
-import type {
-  KangurAssignmentCreateInput,
-  KangurAssignmentSnapshot,
-  KangurAssignmentTarget,
-  KangurScore,
-} from '@kangur/contracts';
+import type { KangurAssignmentCreateInput, KangurAssignmentSnapshot, KangurAssignmentTarget } from '@kangur/contracts/kangur-assignments';
+import type { KangurScore } from '@kangur/contracts/kangur';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

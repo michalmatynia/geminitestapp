@@ -2,7 +2,8 @@
 
 import { Brain } from 'lucide-react';
 
-import { Button, SectionHeader } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import { useBrain } from '../context/BrainContext';
 

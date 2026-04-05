@@ -10,7 +10,7 @@ import {
   getTextEditorInstanceSettingsHref,
 } from '@/shared/lib/text-editor-engine/settings';
 import type { TextEditorEngineInstance } from '@/shared/lib/text-editor-engine/types';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 export interface TextEditorEngineBrandButtonProps
   extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href' | 'onClick' | 'onMouseDown'> {

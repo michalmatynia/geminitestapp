@@ -4,7 +4,8 @@ import React, { useMemo, useState } from 'react';
 
 import { filemakerEmailCampaignUnsubscribeResponseSchema } from '@/shared/contracts/filemaker';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { Badge, Button, FormField, Input, useToast } from '@/shared/ui';
+import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
 
 import type { FilemakerEmailCampaignUnsubscribeResponse } from '../types';
 

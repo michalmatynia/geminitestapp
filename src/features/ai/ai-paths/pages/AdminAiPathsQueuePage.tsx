@@ -6,9 +6,12 @@ import { useEffect, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
-import { AdminAiPathsBreadcrumbs, Badge, Button, ListPanel, Hint } from '@/shared/ui';
+import { AdminAiPathsBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
-import { getMotionSafeScrollBehavior } from '@/shared/utils';
+import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';

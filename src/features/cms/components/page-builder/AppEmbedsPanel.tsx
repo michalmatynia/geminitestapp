@@ -5,16 +5,9 @@ import React from 'react';
 
 import { APP_EMBED_OPTIONS } from '@/shared/lib/app-embeds';
 import { AppEmbedsProvider, useAppEmbeds } from '@/shared/providers/AppEmbedsProvider';
-import {
-  Button,
-  Checkbox,
-  Label,
-  LoadingState,
-  SectionHeader,
-  SimpleSettingsList,
-  UI_CENTER_ROW_CLASSNAME,
-  UI_CENTER_ROW_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Checkbox, Label } from '@/shared/ui/primitives.public';
+import { LoadingState, SectionHeader, UI_CENTER_ROW_CLASSNAME, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 
 export function AppEmbedsPanel({
   showHeader = true,

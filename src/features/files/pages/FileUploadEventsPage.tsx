@@ -1,4 +1,4 @@
-import { SectionHeader } from '@/shared/ui';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import { FileUploadEventsPanel } from '../components/FileUploadEventsPanel';
 

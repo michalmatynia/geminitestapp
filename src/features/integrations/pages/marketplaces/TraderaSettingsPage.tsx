@@ -8,17 +8,9 @@ import {
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import {
-  Input,
-  FormSection,
-  FormField,
-  SectionHeader,
-  useToast,
-  ToggleRow,
-  FormActions,
-  UI_GRID_RELAXED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Input, useToast } from '@/shared/ui/primitives.public';
+import { FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader, UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

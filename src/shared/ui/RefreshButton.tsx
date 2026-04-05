@@ -3,7 +3,7 @@
 import { RefreshCcw } from 'lucide-react';
 import React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
 

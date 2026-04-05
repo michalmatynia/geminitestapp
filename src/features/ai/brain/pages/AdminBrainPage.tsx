@@ -21,7 +21,7 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 
 type BrainTab = 'operations' | 'routing' | 'providers' | 'reports' | 'metrics';
 

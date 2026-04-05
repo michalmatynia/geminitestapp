@@ -19,8 +19,10 @@ import {
 import { useChatbotSessions, useCreateChatbotSession } from '@/features/ai/public';
 import type { AdminMenuCustomNode, AdminMenuColorOption } from '@/shared/contracts/admin';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SearchInput, Tooltip, TreeHeader } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Tooltip } from '@/shared/ui/primitives.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { TreeHeader } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { buildAdminNav } from './admin-menu-nav';
 import {

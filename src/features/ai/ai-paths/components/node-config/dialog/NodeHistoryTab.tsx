@@ -3,7 +3,7 @@
 import { resolveRunHistoryEntryAction } from '@/features/ai/ai-paths/components/run-history-entry-actions';
 import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryEntries';
 import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import {
   useAiPathOrchestrator,

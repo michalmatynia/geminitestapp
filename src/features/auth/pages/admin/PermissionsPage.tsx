@@ -11,23 +11,9 @@ import {
   type AuthRole,
 } from '@/features/auth/utils/auth-management';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Checkbox,
-  Input,
-  Label,
-  useToast,
-  SectionHeader,
-  LoadingState,
-  FormField,
-  UI_GRID_ROOMY_CLASSNAME,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Input, Label, useToast } from '@/shared/ui/primitives.public';
+import { SectionHeader, LoadingState, UI_GRID_ROOMY_CLASSNAME, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

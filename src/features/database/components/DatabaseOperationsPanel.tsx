@@ -2,21 +2,12 @@ import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
-import {
-  AdminDatabaseBreadcrumbs,
-  Alert,
-  Badge,
-  EmptyState,
-  FormSection,
-  ListPanel,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  SimpleSettingsList,
-  LoadingState,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { AdminDatabaseBreadcrumbs } from '@/shared/ui/admin.public';
+import { Alert, Badge, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+import { EmptyState, ListPanel, LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';

@@ -1,10 +1,4 @@
-import type {
-  KangurScore,
-  KangurScoreFilters,
-  KangurScoreLimit,
-  KangurScoreRepositoryCreateInput,
-  KangurScoreSort,
-} from '@kangur/contracts';
+import type { KangurScore, KangurScoreFilters, KangurScoreLimit, KangurScoreRepositoryCreateInput, KangurScoreSort } from '@kangur/contracts/kangur';
 
 export type KangurScoreListInput = {
   sort?: KangurScoreSort;

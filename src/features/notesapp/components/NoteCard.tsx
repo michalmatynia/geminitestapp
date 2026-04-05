@@ -4,7 +4,8 @@ import React from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type { ThemeRecord, NoteWithRelations } from '@/shared/contracts/notes';
-import { cn, setNoteDragData } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { setNoteDragData } from '@/shared/utils/drag-drop';
 
 import { renderNoteCardContent } from './list/NoteCardContent';
 import { NoteCardFooter } from './list/NoteCardFooter';

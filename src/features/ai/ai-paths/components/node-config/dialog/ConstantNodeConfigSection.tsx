@@ -2,7 +2,8 @@
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ConstantConfig } from '@/shared/lib/ai-paths';
-import { Input, Label, SelectSimple, Textarea } from '@/shared/ui';
+import { Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

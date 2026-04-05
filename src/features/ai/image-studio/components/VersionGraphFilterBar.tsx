@@ -4,8 +4,8 @@ import { Shield, X } from 'lucide-react';
 import React from 'react';
 
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
-import { SearchInput } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
 import { useSettingsState } from '../context/SettingsContext';

@@ -6,7 +6,7 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   buildFilemakerPartyOptions,

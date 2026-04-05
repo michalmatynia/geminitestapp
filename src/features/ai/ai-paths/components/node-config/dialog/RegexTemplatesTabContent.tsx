@@ -1,16 +1,9 @@
 import React from 'react';
 
 import type { RegexConfig, RegexTemplate } from '@/shared/lib/ai-paths';
-import {
-  Button,
-  CompactEmptyState,
-  FormField,
-  Input,
-  Label,
-  SelectSimple,
-  ToggleRow,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Button, Input, Label } from '@/shared/ui/primitives.public';
+import { CompactEmptyState, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import { FormField, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import type { SelectSimpleOption } from '@/shared/contracts/ui';
 
 type RegexTemplatesTabContentProps = {

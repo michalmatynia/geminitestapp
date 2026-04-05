@@ -5,7 +5,7 @@ import {
   resolveKangurActiveLearner,
 } from '@/features/kangur/server';
 import { DEFAULT_KANGUR_SUBJECT } from '@/features/kangur/lessons/lesson-catalog';
-import { kangurSubjectFocusSchema } from '@kangur/contracts';
+import { kangurSubjectFocusSchema } from '@kangur/contracts/kangur-lesson-constants';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 

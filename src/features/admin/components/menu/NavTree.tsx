@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { memo, useCallback, useMemo, useRef } from 'react';
 
-import { Tooltip, TreeContextMenu, Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Tooltip, Button } from '@/shared/ui/primitives.public';
+import { TreeContextMenu } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { type NavItem, isActiveHref } from './admin-menu-utils';
 import { ADMIN_MENU_COLOR_MAP } from '../Menu';

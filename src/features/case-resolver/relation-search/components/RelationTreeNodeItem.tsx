@@ -14,8 +14,8 @@ import {
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { Button, Checkbox, Tooltip } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Checkbox, Tooltip } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useRelationTreeNodeRuntimeContext } from './RelationTreeNodeRuntimeContext';
 import { getCaseResolverDocTooltipWithFallback } from '../utils/docs';

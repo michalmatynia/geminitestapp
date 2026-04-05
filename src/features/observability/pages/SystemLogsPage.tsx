@@ -9,9 +9,7 @@ import {
 import {
   ContextRegistryPageProvider,
 } from '@/shared/lib/ai-context-registry/page-context';
-import {
-  LoadingState,
-} from '@/shared/ui';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { SystemLogsContent } from './system-logs/SystemLogsContent';
 

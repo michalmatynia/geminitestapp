@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
 
 import { AllegroSettings } from '../AllegroSettings';

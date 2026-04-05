@@ -3,16 +3,7 @@
 import React from 'react';
 
 import type { StateConfig } from '@/shared/lib/ai-paths';
-import {
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
-  Input,
-} from '@/shared/ui';
+import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Input } from '@/shared/ui/primitives.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

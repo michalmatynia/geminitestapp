@@ -18,7 +18,7 @@ import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/f
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 
 import { resolveCaptureMappingApplyGuardReason } from '../../capture-mapping-apply-guard';

@@ -1,10 +1,10 @@
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import * as React from 'react';
 
-import { buttonVariants } from '@/shared/ui';
+import { buttonVariants } from '@/shared/ui/primitives.public';
 import { RadixOverlayContentShell } from '@/shared/ui/radix-overlay-content-shell';
 import { dialogContentClasses, dialogOverlayClasses } from '@/shared/ui/dialog';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 const AlertDialog = AlertDialogPrimitive.Root;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Label, Textarea } from '@/shared/ui';
+import { Label, Textarea } from '@/shared/ui/primitives.public';
 
 const normalizeListFromTextarea = (value: string): string[] => {
   const seen = new Set<string>();

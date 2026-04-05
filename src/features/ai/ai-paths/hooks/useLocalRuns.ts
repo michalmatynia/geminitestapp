@@ -2,13 +2,14 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { AI_PATHS_LOCAL_RUNS_KEY, parseLocalRuns } from '@/shared/lib/ai-paths';
+import { parseLocalRuns } from '@/shared/lib/ai-paths/local-runs';
+import { AI_PATHS_LOCAL_RUNS_KEY } from '@/shared/lib/ai-paths';
 import type { AiPathLocalRunRecord } from '@/shared/lib/ai-paths';
 import {
   useAiPathsSettingsQuery,
   useUpdateAiPathsSettingMutation,
 } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { shouldIncludeLocalRun } from './local-run-filters';

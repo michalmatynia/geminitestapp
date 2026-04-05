@@ -1,3 +1,4 @@
+/** @deprecated Do not import from this barrel! Use @kangur/contracts/[domain] instead */
 export * from './api-envelope';
 export * from './base';
 export * from './kangur-learner-password';

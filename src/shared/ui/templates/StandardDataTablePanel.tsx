@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { PanelRuntimeSlots } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { DataTable } from '../data-table';
 import { ListPanel } from '../list-panel';

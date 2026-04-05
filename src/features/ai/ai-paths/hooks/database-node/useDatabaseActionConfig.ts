@@ -2,13 +2,7 @@
 
 import { useCallback } from 'react';
 
-import type {
-  DatabaseAction,
-  DatabaseActionCategory,
-  DatabaseConfig,
-  DbQueryConfig,
-  DatabaseOperation,
-} from '@/shared/lib/ai-paths';
+import type { DatabaseAction, DatabaseActionCategory, DatabaseConfig, DbQueryConfig, DatabaseOperation } from '@/shared/lib/ai-paths';
 import {
   resolveDbActionProvider,
   isProviderActionCategorySupported,

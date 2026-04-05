@@ -2,13 +2,10 @@
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import {
-  createParserMappings,
-  formatRuntimeValue,
-  getValueAtMappingPath,
-  parsePathList,
-} from '@/shared/lib/ai-paths';
-import { Input, SelectSimple, Textarea, FormField, insetPanelVariants } from '@/shared/ui';
+import { createParserMappings, formatRuntimeValue, getValueAtMappingPath, parsePathList } from '@/shared/lib/ai-paths';
+import { Input, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   useAiPathOrchestrator,

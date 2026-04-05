@@ -8,18 +8,11 @@ import type {
   DatabaseTableDetail,
   DatabaseType,
 } from '@/shared/contracts/database';
-import {
-  Input,
-  FormModal,
-  FormField,
-  StatusBadge,
-  Alert,
-  StandardDataTablePanel,
-  Card,
-  CompactEmptyState,
-  Pagination,
-  Button,
-} from '@/shared/ui';
+import { Input, Alert, Card, Button } from '@/shared/ui/primitives.public';
+import { FormModal, FormField } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { CompactEmptyState, Pagination } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import {

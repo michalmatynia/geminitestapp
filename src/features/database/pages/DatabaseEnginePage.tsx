@@ -9,27 +9,12 @@ import type {
   DatabaseEngineWorkspaceView,
 } from '@/shared/contracts/database';
 import type { DatabaseEngineProvider as DatabaseEngineProviderValue } from '@/shared/lib/db/database-engine-constants';
-import {
-  AdminDatabasePageLayout,
-  Badge,
-  Button,
-  Card,
-  DataTable,
-  DocumentationList,
-  FormSection,
-  LoadingState,
-  MetadataItem,
-  SelectSimple,
-  StandardDataTablePanel,
-  StatusBadge,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  ToggleRow,
-  UI_GRID_RELAXED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
+import { Badge, Button, Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+import { DataTable, DocumentationList, StatusBadge } from '@/shared/ui/data-display.public';
+import { FormSection, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState, MetadataItem, UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
 import { DatabaseOperationsPanel } from '../components/DatabaseOperationsPanel';

@@ -25,7 +25,9 @@ import {
   DEFAULT_AGENT_PERSONA_MOOD_ID,
   type AgentPersona,
 } from '@/shared/contracts/agents';
-import { AdminAgentCreatorBreadcrumbs, ItemLibrary, useToast } from '@/shared/ui';
+import { AdminAgentCreatorBreadcrumbs } from '@/shared/ui/admin.public';
+import { ItemLibrary } from '@/shared/ui/data-display.public';
+import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,
   logClientError,

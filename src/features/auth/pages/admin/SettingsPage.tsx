@@ -12,20 +12,10 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  Button,
-  Input,
-  Label,
-  useToast,
-  PanelHeader,
-  FormSection,
-  FormField,
-  Checkbox,
-  Alert,
-  SelectSimple,
-  UI_GRID_RELAXED_CLASSNAME,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Button, Input, Label, useToast, Checkbox, Alert } from '@/shared/ui/primitives.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
+import { FormSection, FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export default function AuthSettingsPage(): React.JSX.Element {

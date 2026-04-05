@@ -3,7 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { useCenterPreviewContext } from './CenterPreviewContext';
 import { formatBytes, formatUsd, type VariantThumbnailInfo } from './preview-utils';

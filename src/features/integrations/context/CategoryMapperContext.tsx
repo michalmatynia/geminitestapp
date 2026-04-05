@@ -34,7 +34,7 @@ import type {
 } from '@/shared/contracts/integrations';
 import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
 import { ApiError } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import {
   ensureTraderaBrowserSession,

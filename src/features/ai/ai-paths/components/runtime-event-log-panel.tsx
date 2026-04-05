@@ -4,7 +4,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRuntimeEvent, AiPathRunEventLevel } from '@/shared/lib/ai-paths';
-import { Button, StatusBadge, SelectSimple, Card } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useRuntimeState, useRuntimeActions } from '../context';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

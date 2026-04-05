@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 type InlineImagePreviewCanvasProps = {
   imageSrc: string | null;

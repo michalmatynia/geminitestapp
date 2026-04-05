@@ -4,7 +4,7 @@ import { JSX, useState } from 'react';
 
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { useSystemActivity } from '@/shared/hooks/useSystemActivity';
-import { PageLayout } from '@/shared/ui';
+import { PageLayout } from '@/shared/ui/navigation-and-layout.public';
 
 import { QuickAccessPanel, RecentActivityPanel, SystemHealthPanel } from './dashboard-panels';
 

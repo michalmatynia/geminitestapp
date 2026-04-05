@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { Alert, FormSection } from '@/shared/ui';
+import { Alert } from '@/shared/ui/primitives.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 type IntegrationSelectionEmptyStateProps =
   | {

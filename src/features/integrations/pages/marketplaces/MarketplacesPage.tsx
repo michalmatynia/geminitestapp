@@ -3,14 +3,9 @@
 import React, { useState } from 'react';
 
 import { useSyncAllBaseImagesMutation } from '@/features/integrations/hooks/useIntegrationMutations';
-import {
-  AdminIntegrationsPageLayout,
-  Button,
-  Card,
-  NavigationCard,
-  NavigationCardGrid,
-  useToast,
-} from '@/shared/ui';
+import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Card, useToast } from '@/shared/ui/primitives.public';
+import { NavigationCard, NavigationCardGrid } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

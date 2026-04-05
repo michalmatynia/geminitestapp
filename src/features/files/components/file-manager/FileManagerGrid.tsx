@@ -6,7 +6,7 @@ import React, { useCallback } from 'react';
 
 import { ImageFileSelection } from '@/shared/contracts/files';
 import type { ExpandedImageFile } from '@/shared/contracts/products';
-import { Button, Card, Badge } from '@/shared/ui';
+import { Button, Card, Badge } from '@/shared/ui/primitives.public';
 
 import {
   useFileManagerActions,

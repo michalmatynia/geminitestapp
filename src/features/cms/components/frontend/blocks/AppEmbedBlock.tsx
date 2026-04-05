@@ -24,7 +24,7 @@ import {
   KangurFeaturePage,
   resolveKangurPageKeyFromSlug,
 } from '@/shared/lib/kangur-cms-bridge';
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';
 

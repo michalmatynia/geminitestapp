@@ -15,19 +15,9 @@ import {
   parseValidatorPatternLists,
 } from '@/shared/contracts/validator';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import {
-  Button,
-  Checkbox,
-  FormField,
-  Input,
-  Label,
-  SelectSimple,
-  CompactEmptyState,
-  Textarea,
-  CopyButton,
-  InsetPanel,
-  ValidatorFormatterToggle,
-} from '@/shared/ui';
+import { Button, Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple, CopyButton, ValidatorFormatterToggle } from '@/shared/ui/forms-and-actions.public';
+import { CompactEmptyState, InsetPanel } from '@/shared/ui/navigation-and-layout.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';

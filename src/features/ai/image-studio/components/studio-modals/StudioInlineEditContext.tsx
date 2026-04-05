@@ -7,7 +7,7 @@ import type { ProductImageManagerController } from '@/shared/contracts/product-i
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   INLINE_CARD_IMAGE_SLOT_INDEX,

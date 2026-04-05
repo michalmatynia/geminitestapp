@@ -12,9 +12,10 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { DOCUMENTATION_MODULE_IDS, getDocumentationTooltip } from '@/shared/lib/documentation';
-import { Button, Tooltip, Badge } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { Button, Tooltip, Badge } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 

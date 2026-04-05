@@ -12,8 +12,9 @@ import {
   type AgentPersonaMoodId,
 } from '@/shared/contracts/agents';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
-import { Button, Input, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
-import { getMotionSafeScrollBehavior } from '@/shared/utils';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
 
 import { ChatMessageContent } from './ChatMessageContent';
 import {

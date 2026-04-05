@@ -16,7 +16,12 @@ import {
   IntegrationConnectionRecord,
   TraderaCategoryRecord,
 } from '@/shared/contracts/integrations';
-import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
+import {
+  AppError,
+  AppErrorCodes,
+  authError,
+  badRequestError,
+} from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const CATEGORY_SCRAPE_TIMEOUT_MS = 120_000;
@@ -266,9 +271,14 @@ const toCategoryFetchError = (
     });
   }
 
-  return internalError(
+  return new AppError(
     rawMessage ?? 'Tradera categories could not be fetched from the live listing page.',
-    failureMeta
+    {
+      code: AppErrorCodes.operationFailed,
+      httpStatus: 422,
+      meta: failureMeta,
+      expected: true,
+    }
   );
 };
 
@@ -350,13 +360,18 @@ export const fetchTraderaCategoriesForConnection = async (
       throw completedRunAuthError;
     }
 
-    throw internalError(
+    throw new AppError(
       'Tradera categories could not be fetched from the live listing page. No categories were detected on the Tradera listing form.',
       {
-        ...buildFailureMeta(run),
-        finalUrl,
-        categorySource: extractTrimmedString(resultValue['categorySource']),
-        scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
+        code: AppErrorCodes.operationFailed,
+        httpStatus: 422,
+        meta: {
+          ...buildFailureMeta(run),
+          finalUrl,
+          categorySource: extractTrimmedString(resultValue['categorySource']),
+          scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
+        },
+        expected: true,
       }
     );
   }

@@ -22,14 +22,9 @@ import {
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Button,
-  Card,
-  MasterTreeSettingsButton,
-  Skeleton,
-  StandardDataTablePanel,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Card, Skeleton } from '@/shared/ui/primitives.public';
+import { MasterTreeSettingsButton, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { CaseFilterPanel } from './CaseFilterPanel';

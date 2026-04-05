@@ -1,4 +1,4 @@
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 export const getRuntimeEventLevelVariant = (
   level: string | null | undefined

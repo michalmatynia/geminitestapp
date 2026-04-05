@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 
 import { useCmsSlugs } from '@/features/cms/hooks/useCmsQueries';
 import type { SelectOption } from '@/shared/contracts/ui';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui/primitives.public';
 import { SelectModal } from '@/shared/ui/templates/modals/SelectModal';
 
 export function LinkField(props: {

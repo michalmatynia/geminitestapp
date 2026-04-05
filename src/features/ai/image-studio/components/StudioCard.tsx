@@ -3,8 +3,8 @@
 import React from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Label, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Label, Card } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface StudioCardProps {
   label?: string | undefined;

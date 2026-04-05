@@ -4,18 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  AdminSettingsPageLayout,
-  Button,
-  Card,
-  FormActions,
-  FormField,
-  SectionHeader,
-  SelectSimple,
-  ToggleRow,
-  UI_GRID_ROOMY_CLASSNAME,
-  useToast,
-} from '@/shared/ui';
+import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Card, useToast } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   createDefaultTextEditorEngineProfiles,

@@ -29,7 +29,7 @@ import {
   useAdminLayoutState,
 } from '@/shared/providers/AdminLayoutProvider';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   fromCaseResolverCaseContentFileNodeId,

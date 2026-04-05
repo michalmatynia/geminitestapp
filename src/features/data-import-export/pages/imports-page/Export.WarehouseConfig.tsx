@@ -1,11 +1,8 @@
 'use client';
 
 import React from 'react';
-import {
-  Checkbox,
-  Label,
-  SelectSimple,
-} from '@/shared/ui';
+import { Checkbox, Label } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import {
   useImportExportData,
   useImportExportState,

@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultKangurProgressState, type KangurAssignment } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
+import { type KangurAssignment } from '@kangur/contracts';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

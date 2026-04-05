@@ -10,10 +10,12 @@ import { buildFilemakerMailComposeHref as buildComposeHref } from '../components
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailSelectionHref as buildSelectionHref } from '../mail-ui-helpers';
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
-import { sanitizeHtml } from '@/shared/utils';
+import { sanitizeHtml } from '@/shared/utils/sanitization';
 
 import type { FilemakerMailParticipant, FilemakerMailThreadDetail } from '../types';
-import { Badge, Button, FormField, FormSection, Input, PanelHeader, useToast } from '@/shared/ui';
+import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
 
 type ThreadResponse = {
   detail: FilemakerMailThreadDetail;

@@ -24,27 +24,10 @@ import {
 } from '@/features/filemaker/public';
 import type { DocumentWysiwygEditorProps } from '@/shared/lib/document-editor/public';
 import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
-import {
-  Badge,
-  Button,
-  Card,
-  FormField,
-  Input,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  MetadataItem,
-  Tooltip,
-  useToast,
-  SelectSimple,
-  CompactEmptyState,
-  FormSection,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-  UI_STACK_ROOMY_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Card, Input, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, useToast } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem, CompactEmptyState, UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME, UI_STACK_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 import {

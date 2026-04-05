@@ -10,7 +10,7 @@ import type {
   TextEditorEngineInstance,
 } from '@/shared/lib/text-editor-engine/types';
 import { TextEditorEngineBrandButton } from '@/shared/ui/TextEditorEngineBrandButton';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { RichTextEditor } from './RichTextEditor';
 

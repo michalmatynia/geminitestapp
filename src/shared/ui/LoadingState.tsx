@@ -1,7 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface LoadingStateProps {
   message?: string;

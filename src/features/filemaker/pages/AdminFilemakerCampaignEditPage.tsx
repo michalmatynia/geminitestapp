@@ -1,13 +1,10 @@
 'use client';
 
 import React from 'react';
-import {
-  AdminFilemakerBreadcrumbs,
-  Badge,
-  Button,
-  FormActions,
-  SectionHeader,
-} from '@/shared/ui';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { FormActions } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import { formatTimestamp } from './filemaker-page-utils';
 import {

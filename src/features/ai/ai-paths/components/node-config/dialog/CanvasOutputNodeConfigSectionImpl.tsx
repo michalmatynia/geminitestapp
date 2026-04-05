@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 import type { CanvasOutputConfig } from '@/shared/contracts/ai-paths-core';
-import { Input, Label } from '@/shared/ui';
+import { Input, Label } from '@/shared/ui/primitives.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

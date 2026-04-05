@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { AiPathRunVisibility } from '@/shared/lib/ai-paths';
-import { ConfirmModal } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates.public';
 
 import { JobQueueOverview } from './job-queue-overview';
 import { JobQueueProvider, useJobQueueActions, useJobQueueState } from './JobQueueContext';

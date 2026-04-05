@@ -9,19 +9,10 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  AdminSectionBreadcrumbs,
-  Badge,
-  Button,
-  ClientOnly,
-  EmptyState,
-  FormSection,
-  Input,
-  ListPanel,
-  SearchInput,
-  SelectSimple,
-  useToast,
-} from '@/shared/ui';
+import { AdminSectionBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button, ClientOnly, Input, useToast } from '@/shared/ui/primitives.public';
+import { EmptyState, ListPanel } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection, SearchInput, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';

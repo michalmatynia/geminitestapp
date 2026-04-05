@@ -1,8 +1,4 @@
-import type {
-  KangurAssignment,
-  KangurAssignmentRepositoryCreateInput,
-  KangurAssignmentUpdateInput,
-} from '@kangur/contracts';
+import type { KangurAssignment, KangurAssignmentRepositoryCreateInput, KangurAssignmentUpdateInput } from '@kangur/contracts/kangur-assignments';
 
 export type KangurAssignmentListInput = {
   learnerKey: string;

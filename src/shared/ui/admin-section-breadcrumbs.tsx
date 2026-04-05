@@ -6,7 +6,7 @@ import type {
   AdminSectionBreadcrumbsProps,
   AdminSectionBreadcrumbWrapperProps,
 } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { AdminFavoriteBreadcrumbRow } from './admin-favorite-breadcrumb-row';
 import { Breadcrumbs } from './Breadcrumbs';

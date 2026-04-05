@@ -15,18 +15,10 @@ import {
   useNoteSettingsState,
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { ThemeRecord } from '@/shared/contracts/notes';
-import {
-  AdminNotesPageLayout,
-  Button,
-  useToast,
-  Input,
-  FormSection,
-  FormField,
-  ListPanel,
-  FormActions,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminNotesPageLayout } from '@/shared/ui/admin.public';
+import { Button, useToast, Input } from '@/shared/ui/primitives.public';
+import { FormSection, FormField, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { ListPanel, UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

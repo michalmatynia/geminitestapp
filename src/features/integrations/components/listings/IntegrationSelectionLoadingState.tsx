@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { LoadingState } from '@/shared/ui';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { resolveIntegrationSelectionLoadingMessage } from './product-listings-copy';
 

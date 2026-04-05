@@ -13,7 +13,7 @@ import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { getSectionDefinition } from '../../section-registry';

@@ -3,17 +3,10 @@
 import { RefreshCcw } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  PanelHeader,
-  StatusBadge,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Card,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, Card } from '@/shared/ui/primitives.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   useImageStudioSettingsActions,

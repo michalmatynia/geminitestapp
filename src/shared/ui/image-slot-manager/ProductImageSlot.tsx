@@ -4,16 +4,9 @@ import { PlusIcon, XIcon, GripVertical, MoreVertical, Eye } from 'lucide-react';
 import NextImage from 'next/image';
 
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import {
-  Button,
-  ActionMenu,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  Input,
-  FileUploadTrigger,
-  Tooltip,
-} from '@/shared/ui';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { Button, DropdownMenuItem, DropdownMenuSeparator, Input, Tooltip } from '@/shared/ui/primitives.public';
+import { ActionMenu, FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import {

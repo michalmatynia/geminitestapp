@@ -7,7 +7,7 @@ import type {
   DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
 import { useFolderTreeProfile } from '@/shared/lib/foldertree/public';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import {

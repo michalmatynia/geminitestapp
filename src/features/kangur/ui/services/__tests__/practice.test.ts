@@ -11,7 +11,7 @@ import {
   resolvePreferredKangurPracticeOperation,
   resolveKangurPracticeOperation,
 } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 
 describe('shared practice helpers', () => {
   it('resolves unknown practice operations to mixed', () => {

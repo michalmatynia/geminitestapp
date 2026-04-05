@@ -6,8 +6,10 @@ import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
-import { Input, Textarea, Checkbox, FormField, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Input, Textarea, Checkbox } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 export type LearnerAgentLibraryItem = Omit<AgentTeachingAgentRecord, 'description'> & {
   description?: string | null;

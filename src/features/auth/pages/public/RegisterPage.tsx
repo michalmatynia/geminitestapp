@@ -8,21 +8,9 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
 import { Link } from '@/i18n/navigation';
-import {
-  Button,
-  Input,
-  PasswordInput,
-  Alert,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-  FormField,
-  Hint,
-  UI_STACK_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Input, Alert, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/shared/ui/primitives.public';
+import { PasswordInput, FormField, Hint } from '@/shared/ui/forms-and-actions.public';
+import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function RegisterPage(): React.JSX.Element {

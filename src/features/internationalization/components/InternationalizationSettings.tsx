@@ -9,16 +9,11 @@ import {
   useInternationalizationUi,
 } from '@/features/internationalization/context/InternationalizationContext';
 import { countryFlagMap } from '@/shared/constants/internationalization';
-import {
-  Button,
-  SearchInput,
-  FormSection,
-  StatusBadge,
-  SimpleSettingsList,
-  Badge,
-  Hint,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Badge } from '@/shared/ui/primitives.public';
+import { SearchInput, FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { CountryModal } from './country-modal/CountryModal';
 import { CurrencyModal } from './currency-modal/CurrencyModal';

@@ -23,7 +23,7 @@ import {
   validationError,
 } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import { removeUndefined } from '@/shared/utils';
+import { removeUndefined } from '@/shared/utils/object-utils';
 
 const mergeAppendValue = (current: unknown, next: unknown): unknown => {
   if (next === undefined) return undefined;

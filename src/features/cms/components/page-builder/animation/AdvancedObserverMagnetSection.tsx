@@ -6,15 +6,8 @@ import React, { useCallback } from 'react';
 import type { DragAxis } from '@/features/gsap/public';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, OBSERVER_TYPES } from '@/features/gsap/public';
-import {
-  Button,
-  Checkbox,
-  FormField,
-  FormSection,
-  Input,
-  SelectSimple,
-  Tooltip,
-} from '@/shared/ui';
+import { Button, Checkbox, Input, Tooltip } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 

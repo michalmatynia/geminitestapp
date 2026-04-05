@@ -3,15 +3,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 
-import {
-  Button,
-  FormSection,
-  Input,
-  Label,
-  SelectSimple,
-  StatusToggle,
-  Textarea,
-} from '@/shared/ui';
+import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { FormSection, SelectSimple, StatusToggle } from '@/shared/ui/forms-and-actions.public';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

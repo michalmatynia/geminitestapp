@@ -9,8 +9,9 @@ import {
   saveCustomTriggerButtons,
   type ImageStudioCustomTriggerButton,
 } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
-import { Button, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 

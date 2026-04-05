@@ -1,4 +1,4 @@
-import type { KangurLessonComponentId } from '@kangur/contracts';
+import type { KangurLessonComponentId } from '@kangur/contracts/kangur-lesson-constants';
 
 import type { KangurPortableLessonBody } from './lesson-content';
 import { GERMAN_PORTABLE_LESSON_BODIES_LOGIC } from './lessons-i18n.de.logic';

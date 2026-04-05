@@ -5,17 +5,11 @@ import { useMemo, useState, useCallback } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
-import {
-  AdminDatabasePageLayout,
-  Button,
-  StandardDataTablePanel,
-  useToast,
-  RefreshButton,
-  SelectSimple,
-  FormField,
-  LoadingState,
-  CollapsibleSection,
-} from '@/shared/ui';
+import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
+import { Button, useToast, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { RefreshButton, SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import {
   logClientCatch,
   logClientError,

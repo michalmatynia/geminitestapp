@@ -9,17 +9,8 @@ import {
   type ImageStudioPromptEntry,
 } from '@/features/ai/image-studio/utils/prompt-library';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  Button,
-  Card,
-  CompactEmptyState,
-  EmptyState,
-  Input,
-  Label,
-  Textarea,
-  UI_GRID_RELAXED_CLASSNAME,
-  useToast,
-} from '@/shared/ui';
+import { Button, Card, Input, Label, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { CompactEmptyState, EmptyState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-import { Button, Card } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
 
 import { TraderaRecoveryContinueButton } from './TraderaRecoveryContinueButton';
 

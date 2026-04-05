@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import { type AuthUserPageSettings } from '@/features/auth/utils/auth-user-pages';
-import { useToast, FormSection, ToggleRow, FormActions, LoadingState } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
+import { FormSection, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

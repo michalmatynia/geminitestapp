@@ -14,7 +14,7 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { useCaseResolverState } from './useCaseResolverState';
 import { hasCaseResolverDraftMeaningfulChanges } from './useCaseResolverState.helpers';

@@ -10,7 +10,7 @@ import type {
 import type { CaseResolverCaptureAction } from '@/features/case-resolver/capture/public';
 import { decodeFilemakerPartyReference } from '@/features/filemaker/public';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 

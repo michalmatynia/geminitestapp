@@ -9,10 +9,8 @@ import {
 import {
   kangurPageContentStoreSchema,
 } from '@/shared/contracts/kangur-page-content';
-import {
-  kangurKnowledgeGraphPreviewRequestSchema,
-  kangurKnowledgeGraphSyncRequestSchema,
-} from '@/shared/contracts';
+import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts/kangur-observability';
+import { kangurKnowledgeGraphSyncRequestSchema } from '@/shared/contracts/kangur-observability';
 import { postKangurAiTutorChatHandler } from '@/app/api/kangur/ai-tutor/chat/handler';
 import { GET_handler as getKangurAiTutorChatHistoryHandler } from '@/app/api/kangur/ai-tutor/chat/history-handler';
 import { GET_handler as getKangurAiTutorChatAdminHistoryHandler } from '@/app/api/kangur/ai-tutor/chat/admin-history/handler';

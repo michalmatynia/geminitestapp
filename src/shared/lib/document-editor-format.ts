@@ -1,4 +1,4 @@
-import { sanitizeHtml } from '@/shared/utils';
+import { sanitizeHtml } from '@/shared/utils/sanitization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { DocumentEditorMode } from '@/shared/contracts/document-editor';
 

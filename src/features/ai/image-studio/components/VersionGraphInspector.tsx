@@ -5,7 +5,8 @@ import React from 'react';
 
 import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
-import { Button, Hint } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { useVersionGraphInspectorContext } from './VersionGraphInspectorContext';
 import { useSettingsState } from '../context/SettingsContext';

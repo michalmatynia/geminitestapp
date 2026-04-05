@@ -28,7 +28,7 @@ import type {
 } from '@/shared/contracts/integrations';
 import type { ImageRetryPreset, ImageTransformOptions } from '@/shared/contracts/integrations';
 import { badRequestError } from '@/shared/errors/app-error';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ProductListingsActions } from './ProductListingsContext';

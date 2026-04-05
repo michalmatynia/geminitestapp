@@ -6,7 +6,7 @@ import { PanelAction } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button } from '@/shared/ui/button';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import {

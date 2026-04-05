@@ -12,18 +12,11 @@ import {
   AI_PATHS_NODE_DOCS,
   buildAiPathsNodeDocJsonSnippet,
 } from '@/shared/lib/ai-paths/core/docs/node-docs';
-import {
-  Button,
-  CollapsibleSection,
-  StandardDataTablePanel,
-  DocumentationSection,
-  DocumentationList,
-  SearchInput,
-  useToast,
-  Card,
-  Hint,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, CollapsibleSection, useToast, Card } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { DocumentationSection, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { DocumentationList } from '@/shared/ui/data-display.public';
+import { SearchInput, Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { buildFullDocumentationClipboardText } from './docs-utils';
 import { useAiPathsErrorState } from '../ai-paths-settings/hooks/useAiPathsErrorState';

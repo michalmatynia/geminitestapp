@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { FormSection } from '@/shared/ui';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import { IntegrationSelectionLoadingState } from './IntegrationSelectionLoadingState';
 import { IntegrationSelectorFields } from './IntegrationSelectorFields';

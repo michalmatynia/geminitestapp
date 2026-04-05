@@ -9,7 +9,7 @@ import {
   isProviderActionCategorySupported,
   resolveProviderAction,
 } from '@/shared/lib/ai-paths/core/utils/provider-actions';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 
 import { DatabaseConstructorContextProvider } from './database/DatabaseConstructorContext';
 import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';

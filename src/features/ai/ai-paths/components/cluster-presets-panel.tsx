@@ -3,7 +3,8 @@
 import React from 'react';
 
 import type { ClusterPreset } from '@/shared/lib/ai-paths';
-import { Button, Input, Label, Textarea, SimpleSettingsList, Card } from '@/shared/ui';
+import { Button, Input, Label, Textarea, Card } from '@/shared/ui/primitives.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 
 import { usePresetsState, usePresetsActions } from '../context';
 import { useClusterPresetsActions } from './hooks/useClusterPresetsActions';

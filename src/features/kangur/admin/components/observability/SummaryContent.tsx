@@ -17,7 +17,7 @@ import {
   KANGUR_GRID_ROOMY_CLASSNAME,
   KANGUR_STACK_RELAXED_CLASSNAME,
 } from '@/features/kangur/ui/design/tokens';
-import type { KangurRouteMetrics } from '@/shared/contracts';
+import type { KangurRouteMetrics } from '@/shared/contracts/kangur-observability';
 
 import {
   buildSystemLogsHref,

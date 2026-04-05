@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { IntegrationWithConnections } from '@/shared/contracts';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
 
 import { Label } from './label';
 import { SelectSimple } from './select-simple';

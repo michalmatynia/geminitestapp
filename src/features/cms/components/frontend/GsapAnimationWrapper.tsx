@@ -6,7 +6,7 @@ import type { GsapAnimationConfig, AnimationPreset, AnimationEasing } from '@/fe
 import { DEFAULT_ANIMATION_CONFIG, PARALLAX_DEFAULTS } from '@/features/gsap/public';
 import type { UnknownRecordDto } from '@/shared/contracts/base';
 import { getGsapFromVars } from '@/features/gsap/public';
-import { vectorShapesToPathWithBounds } from '@/shared/ui';
+import { vectorShapesToPathWithBounds } from '@/shared/ui/data-display.public';
 
 import { useBlockSettings } from './sections/FrontendBlockRenderer';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

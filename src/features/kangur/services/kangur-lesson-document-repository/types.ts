@@ -1,7 +1,4 @@
-import type {
-  KangurLessonDocument,
-  KangurLessonDocumentStore,
-} from '@kangur/contracts';
+import type { KangurLessonDocument, KangurLessonDocumentStore } from '@kangur/contracts/kangur';
 
 export type KangurLessonDocumentRepository = {
   getLessonDocument: (

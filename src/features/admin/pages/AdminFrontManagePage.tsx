@@ -12,16 +12,10 @@ import {
   type FrontPageOption,
   type FrontPageSelectableApp,
 } from '@/shared/lib/front-page-app';
-import {
-  Button,
-  useToast,
-  SectionHeader,
-  SectionHeaderBackLink,
-  FormSection,
-  Badge,
-  LoadingState,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, useToast, Badge } from '@/shared/ui/primitives.public';
+import { SectionHeader, SectionHeaderBackLink, LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type FrontAppOption = FrontPageSelectableApp;

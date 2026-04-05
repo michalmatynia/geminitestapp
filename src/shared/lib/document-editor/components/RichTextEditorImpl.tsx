@@ -39,8 +39,9 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
-import { InsetPanel, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { InsetPanel } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   fontFamilyMark,

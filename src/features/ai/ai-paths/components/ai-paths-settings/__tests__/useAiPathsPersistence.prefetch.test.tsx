@@ -1,12 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  createDefaultPathConfig,
-  PATH_INDEX_KEY,
-  type PathConfig,
-  type RuntimeState,
-} from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig, PATH_INDEX_KEY, type PathConfig, type RuntimeState } from '@/shared/lib/ai-paths';
 import { PATH_CONFIG_PREFIX } from '@/shared/lib/ai-paths';
 import {
   fetchAiPathsSettingsByKeysCached,

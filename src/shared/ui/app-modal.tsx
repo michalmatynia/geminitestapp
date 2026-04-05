@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './dialog';

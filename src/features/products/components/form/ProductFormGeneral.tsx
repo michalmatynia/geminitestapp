@@ -32,7 +32,7 @@ import { SelectSimple } from '@/shared/ui/select-simple';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ValidatedField } from './ValidatedField';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

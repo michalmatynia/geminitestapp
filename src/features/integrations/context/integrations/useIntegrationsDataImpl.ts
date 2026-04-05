@@ -9,7 +9,7 @@ import {
 } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 const EMPTY_INTEGRATIONS: Integration[] = [];
 const EMPTY_CONNECTIONS: IntegrationConnection[] = [];

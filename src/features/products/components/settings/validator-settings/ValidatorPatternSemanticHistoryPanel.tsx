@@ -14,7 +14,7 @@ import {
 } from '@/shared/lib/products/utils/validator-semantic-state';
 import { Button } from '@/shared/ui/button';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 const SEMANTIC_AUDIT_SOURCE_LABELS = {
   manual_save: 'Manual Save',

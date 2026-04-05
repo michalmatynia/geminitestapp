@@ -3,15 +3,11 @@
 import React from 'react';
 import NextImage from 'next/image';
 import type { ColumnDef } from '@tanstack/react-table';
-import {
-  Button,
-  Pagination,
-  PanelFilters,
-  StandardDataTablePanel,
-  StatusBadge,
-  Tooltip,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Tooltip } from '@/shared/ui/primitives.public';
+import { Pagination } from '@/shared/ui/navigation-and-layout.public';
+import { PanelFilters, StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 import {
   useImportExportActions,
   useImportExportData,
@@ -19,12 +15,13 @@ import {
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { ImportListItem } from '@/shared/contracts/integrations';
 import type { FilterField } from '@/shared/contracts/ui';
-import { DOCUMENTATION_MODULE_IDS, getDocumentationTooltip } from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   IMPORT_LIST_MODE_OPTIONS,
   IMPORT_LIST_PAGE_SIZE_OPTIONS,
 } from './ImportsPage.Constants';
-import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export function ImportListPreviewSection(): React.JSX.Element {
   const { loadingImportList, importListStats, importList } = useImportExportData();

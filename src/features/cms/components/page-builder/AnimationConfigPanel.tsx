@@ -6,16 +6,9 @@ import React from 'react';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import type { AnimationPreset, AnimationTrigger } from '@/shared/contracts/gsap';
 import { ANIMATION_PRESETS, ANIMATION_EASINGS } from '@/shared/contracts/gsap';
-import {
-  Input,
-  Label,
-  SelectSimple,
-  RadioGroup,
-  RadioGroupItem,
-  FormField,
-  SectionHeader,
-  ToggleRow,
-} from '@/shared/ui';
+import { Input, Label, RadioGroup, RadioGroupItem } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import { AdvancedSection } from './animation/AdvancedSection';
 import { AnimationConfigProvider } from './animation/AnimationConfigContext';

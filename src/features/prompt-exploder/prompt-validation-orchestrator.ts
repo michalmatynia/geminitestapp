@@ -1,8 +1,4 @@
-import {
-  type PromptValidationRuntimeSelection,
-  type PromptValidationRuntimeIdentity,
-  type PromptExploderValidationRuleStack,
-} from '@/shared/contracts';
+import { type PromptValidationRuntimeSelection, type PromptValidationRuntimeIdentity, type PromptExploderValidationRuleStack } from '@/shared/contracts';
 import type { PromptValidationRule, PromptEngineSettings } from '@/shared/contracts/prompt-engine';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/validator';
 import {

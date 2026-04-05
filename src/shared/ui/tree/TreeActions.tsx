@@ -9,7 +9,8 @@ import type {
   TreeActionSlotShow,
   TreeActionTone,
 } from '@/shared/contracts/ui';
-import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 
 export type {
   TreeActionButtonProps,

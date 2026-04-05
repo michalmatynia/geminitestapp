@@ -7,7 +7,7 @@ import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/u
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
 import { Button } from '@/shared/ui/button';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { FAILURE_STATUSES, getMarketplaceButtonClass, normalizeMarketplaceStatus } from '../product-column-utils';
 

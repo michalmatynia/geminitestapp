@@ -15,8 +15,9 @@ import React, { useCallback, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { VectorShape, VectorShapeRole } from '@/shared/contracts/vector';
-import { Button, Input, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 import { useMaskingState, useMaskingActions } from '../context/MaskingContext';

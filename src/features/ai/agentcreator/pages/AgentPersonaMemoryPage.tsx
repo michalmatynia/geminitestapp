@@ -9,18 +9,11 @@ import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPerso
 import { AGENT_PERSONA_MOOD_PRESETS } from '@/features/ai/agentcreator/utils/personas';
 import type { AgentPersona, AgentPersonaMoodId } from '@/shared/contracts/agents';
 import type { PersonaMemoryRecord, PersonaMemorySourceType } from '@/shared/contracts/persona-memory';
-import {
-  AdminAgentCreatorPageLayout,
-  Button,
-  Card,
-  FormField,
-  Hint,
-  Input,
-  SelectSimple,
-  StandardDataTablePanel,
-  Tag,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminAgentCreatorPageLayout } from '@/shared/ui/admin.public';
+import { Button, Card, Input } from '@/shared/ui/primitives.public';
+import { FormField, Hint, SelectSimple, Tag } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

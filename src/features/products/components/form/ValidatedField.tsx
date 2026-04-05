@@ -12,7 +12,7 @@ import { Hint } from '@/shared/ui/Hint';
 import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { IssueHintRow } from './ValidatorIssueHint';
 

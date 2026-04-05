@@ -1,6 +1,7 @@
 'use client';
 
-import { ActionMenu, Badge, DropdownMenuItem, useToast } from '@/shared/ui';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { Badge, DropdownMenuItem, useToast } from '@/shared/ui/primitives.public';
 import { Megaphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';

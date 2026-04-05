@@ -9,7 +9,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { createStrictContext } from './createStrictContext';
 
 const CATEGORY_MAPPING_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com', 'tradera']);

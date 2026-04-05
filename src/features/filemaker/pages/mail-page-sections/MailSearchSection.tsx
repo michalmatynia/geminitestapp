@@ -1,7 +1,7 @@
 import { FilterX, Search } from 'lucide-react';
 import React from 'react';
 
-import { Badge, Button, Input } from '@/shared/ui';
+import { Badge, Button, Input } from '@/shared/ui/primitives.public';
 
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../../components/FilemakerMailSidebar.helpers';
 

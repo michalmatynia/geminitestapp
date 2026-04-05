@@ -1,4 +1,4 @@
-import { NavigationCard, NavigationCardGrid, SectionHeader } from '@/shared/ui';
+import { NavigationCard, NavigationCardGrid, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 const cmsTools = [
   {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { SearchInput } from '@/shared/ui';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
 
 export type FolderTreeSearchBarProps = {
   value: string;

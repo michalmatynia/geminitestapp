@@ -3,7 +3,8 @@ import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import type { ActivityLog } from '@/shared/contracts/system';
-import { Button, LoadingState } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 export function QuickAccessPanel(): React.JSX.Element {
   return (

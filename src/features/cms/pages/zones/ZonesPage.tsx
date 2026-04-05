@@ -11,19 +11,12 @@ import {
 } from '@/features/cms/hooks/useCmsQueries';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CmsDomain } from '@/shared/contracts/cms';
-import {
-  AdminCmsPageLayout,
-  Button,
-  Input,
-  StandardDataTablePanel,
-  useToast,
-  SelectSimple,
-  StatusBadge,
-  FormField,
-  FormSection,
-  PanelFilters,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminCmsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel, PanelFilters } from '@/shared/ui/templates.public';
+import { SelectSimple, FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';

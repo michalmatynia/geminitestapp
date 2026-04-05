@@ -17,7 +17,7 @@ import {
   getAppEmbedOption,
 } from '@/shared/lib/app-embeds';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import {

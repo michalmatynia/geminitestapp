@@ -13,7 +13,7 @@ import { LoadingState } from '@/shared/ui/LoadingState';
 import { StatusBadge } from '@/shared/ui/status-badge';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPicker';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import type { GridPickerItem } from '@/shared/contracts/ui';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 

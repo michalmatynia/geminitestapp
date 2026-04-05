@@ -21,7 +21,7 @@ import {
   type ImageStudioAnalysisApplyTarget,
 } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { api } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { useUiActions, useUiCanvasState } from '../context/UiContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

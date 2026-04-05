@@ -4,7 +4,7 @@ import {
   type MasterTreeRootDropZone,
 } from '@/shared/lib/foldertree/public';
 import type { NotesExternalDropAction } from '@/shared/contracts/notes';
-import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
+import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import {
   fromFolderMasterNodeId,

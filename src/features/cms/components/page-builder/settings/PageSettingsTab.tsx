@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useCmsAllSlugs } from '@/features/cms/hooks/useCmsQueries';
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import type { Slug } from '@/features/cms/types';
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input } from '@/shared/ui';
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input } from '@/shared/ui/primitives.public';
 
 import { CmsDomainSelector } from '../../CmsDomainSelector';
 import { PageAiTabContent } from './page-settings/PageAiTabContent';

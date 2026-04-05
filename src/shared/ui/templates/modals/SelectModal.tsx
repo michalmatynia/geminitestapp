@@ -6,7 +6,7 @@ import type { SelectOption } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui/FormModal';
 import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 import { SearchInput } from '@/shared/ui/search-input';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 export type { SelectOption };
 

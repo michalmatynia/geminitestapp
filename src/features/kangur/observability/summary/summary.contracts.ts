@@ -1,6 +1,4 @@
-import type {
-  KangurAnalyticsEventType,
-} from '@/shared/contracts';
+import type { KangurAnalyticsEventType } from '@/shared/contracts/kangur-observability';
 
 export type AnalyticsEventMongoDoc = {
   _id?: { toString(): string } | string;

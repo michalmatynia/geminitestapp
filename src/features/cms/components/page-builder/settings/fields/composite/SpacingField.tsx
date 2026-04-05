@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Input } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
 
 import { useCompositeFieldContext } from '../CompositeFieldContext';
 

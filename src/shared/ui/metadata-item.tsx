@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { insetPanelVariants } from './InsetPanel';
 import { Label } from './label';

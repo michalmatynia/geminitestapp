@@ -1,7 +1,10 @@
 import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-paths';
-import { formatDurationMs, formatRuntimeValue } from '@/shared/lib/ai-paths';
+import { formatDurationMs } from '@/shared/lib/ai-paths/format-duration';
+import { formatRuntimeValue } from '@/shared/lib/ai-paths';
 import type { StatusVariant } from '@/shared/contracts/ui';
-import { StatusBadge, CompactEmptyState, Button, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { CompactEmptyState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { Button } from '@/shared/ui/primitives.public';
 
 import {
   resolveRunHistoryEntryAction,

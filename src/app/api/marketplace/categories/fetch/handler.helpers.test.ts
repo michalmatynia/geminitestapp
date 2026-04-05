@@ -9,10 +9,14 @@ const {
   fetchBaseCategoriesMock,
   fetchTraderaCategoriesForConnectionMock,
   resolveBaseConnectionTokenMock,
+  getTraderaCategoriesMock,
+  resolveTraderaPublicApiCredentialsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
   fetchTraderaCategoriesForConnectionMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
+  getTraderaCategoriesMock: vi.fn(),
+  resolveTraderaPublicApiCredentialsMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -22,6 +26,14 @@ vi.mock('@/features/integrations/server', () => ({
 
 vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
   fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
+}));
+
+vi.mock('@/features/integrations/services/tradera-api-client', () => ({
+  getTraderaCategories: getTraderaCategoriesMock,
+}));
+
+vi.mock('@/features/integrations/services/tradera-listing/api', () => ({
+  resolveTraderaPublicApiCredentials: resolveTraderaPublicApiCredentialsMock,
 }));
 
 import {
@@ -99,6 +111,11 @@ describe('marketplace categories fetch helpers', () => {
   });
 
   it('resolves tradera contexts, builds responses, and rejects unsupported integrations', async () => {
+    // Browser connection without API credentials falls back to Playwright scrape
+    resolveTraderaPublicApiCredentialsMock.mockImplementation(() => {
+      throw new Error('Tradera API App ID is missing.');
+    });
+
     const traderaRepo: CategoryFetchIntegrationRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(
@@ -130,6 +147,16 @@ describe('marketplace categories fetch helpers', () => {
       'Other is not yet supported for category fetch'
     );
 
+    // tradera-api slug uses the SOAP API when credentials are available
+    resolveTraderaPublicApiCredentialsMock.mockReturnValue({
+      appId: 123,
+      appKey: 'test-key',
+      sandbox: false,
+    });
+    getTraderaCategoriesMock.mockResolvedValue([
+      { id: 'api-cat-1', name: 'API Category 1', parentId: null },
+    ]);
+
     const traderaApiRepo: CategoryFetchIntegrationRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(
@@ -137,9 +164,15 @@ describe('marketplace categories fetch helpers', () => {
       ),
     };
 
-    await expect(resolveMarketplaceCategoryFetchContext(traderaApiRepo, 'conn-1')).rejects.toThrow(
-      'Tradera API is not yet supported for category fetch'
-    );
+    const traderaApiContext = await resolveMarketplaceCategoryFetchContext(traderaApiRepo, 'conn-1');
+    expect(traderaApiContext).toMatchObject({
+      connectionId: 'conn-1',
+      sourceName: 'Tradera',
+      mode: 'tradera-api',
+    });
+    await expect(fetchMarketplaceCategories(traderaApiContext)).resolves.toEqual([
+      { id: 'api-cat-1', name: 'API Category 1', parentId: null },
+    ]);
 
     expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera')).toEqual({
       fetched: 0,

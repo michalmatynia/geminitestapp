@@ -4,7 +4,9 @@ import React from 'react';
 
 import type { IteratorConfig } from '@/shared/lib/ai-paths';
 import { formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { Input, Textarea, ToggleRow, FormField, Card, Badge, StatusBadge } from '@/shared/ui';
+import { Input, Textarea, Card, Badge } from '@/shared/ui/primitives.public';
+import { ToggleRow, FormField } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import {
   useAiPathOrchestrator,

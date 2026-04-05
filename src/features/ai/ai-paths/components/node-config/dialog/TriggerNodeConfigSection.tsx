@@ -8,7 +8,8 @@ import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-button
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { SelectSimple, Card, FormField } from '@/shared/ui';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

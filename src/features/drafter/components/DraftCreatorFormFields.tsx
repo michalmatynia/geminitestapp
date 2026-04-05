@@ -16,18 +16,9 @@ import {
   type ProductDraftOpenFormTab,
 } from '@/shared/contracts/products';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import {
-  Button,
-  Input,
-  Textarea,
-  SelectSimple,
-  FormField,
-  FormSection,
-  Card,
-  CompactEmptyState,
-  ToggleRow,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Input, Textarea, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { CompactEmptyState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   useDraftCreatorBasicInfo,

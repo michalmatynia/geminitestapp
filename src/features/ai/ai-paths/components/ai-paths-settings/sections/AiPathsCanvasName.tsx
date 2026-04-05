@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { StatusBadge, SelectSimple } from '@/shared/ui';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 

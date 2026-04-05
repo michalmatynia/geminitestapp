@@ -4,15 +4,8 @@ import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type {
-  AiNode,
-  AiPathRuntimeNodeStatusMap,
-  DataContractNodeIssueSummary,
-  Edge,
-  PathFlowIntensity,
-  RuntimeState,
-  SvgDetailLevel,
-} from '@/shared/lib/ai-paths';
+import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
+import type { AiNode, AiPathRuntimeNodeStatusMap, Edge, PathFlowIntensity, RuntimeState, SvgDetailLevel } from '@/shared/lib/ai-paths';
 
 import type { ConnectorInfo } from './canvas-board-connectors';
 import type { RuntimeRunStatus, TriggerPreflightHint } from './CanvasBoard.types';

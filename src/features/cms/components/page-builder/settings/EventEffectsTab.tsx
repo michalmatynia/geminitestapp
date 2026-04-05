@@ -8,7 +8,8 @@ import {
   EVENT_HOVER_EFFECT_OPTIONS,
   EVENT_SCROLL_BEHAVIOR_OPTIONS,
 } from '@/features/cms/utils/event-effects';
-import { Input, Hint } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import {
   useComponentSettingsActions,

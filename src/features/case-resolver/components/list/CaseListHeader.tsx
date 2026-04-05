@@ -4,7 +4,9 @@ import { PlusIcon } from 'lucide-react';
 import { memo, useMemo, type ReactNode } from 'react';
 
 import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';
-import { AdminCaseResolverBreadcrumbs, Button, Pagination } from '@/shared/ui';
+import { AdminCaseResolverBreadcrumbs } from '@/shared/ui/admin.public';
+import { Button } from '@/shared/ui/primitives.public';
+import { Pagination } from '@/shared/ui/navigation-and-layout.public';
 
 import { useOptionalCaseListPanelControlsContext } from './CaseListPanelControlsContext';
 

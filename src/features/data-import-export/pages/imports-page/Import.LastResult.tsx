@@ -1,9 +1,6 @@
 import React from 'react';
-import {
-  FormSection,
-  Hint,
-  StatusBadge,
-} from '@/shared/ui';
+import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import {
   useImportExportData,
 } from '@/features/data-import-export/context/ImportExportContext';

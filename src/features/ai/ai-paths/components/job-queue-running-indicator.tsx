@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 type RunningIndicatorRuntimeValue = {
   label: string;

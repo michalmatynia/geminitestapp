@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useInternationalizationUi } from '@/features/internationalization/context/InternationalizationContext';
 import { useSaveLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

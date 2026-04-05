@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AiNode, DataContractNodeIssueSummary, RuntimeState } from '@/shared/lib/ai-paths';
+import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
+import type { AiNode, RuntimeState } from '@/shared/lib/ai-paths';
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
 import { renderNodeDiagnosticsTooltipContent } from '../CanvasBoard.utils';

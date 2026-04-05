@@ -1,5 +1,5 @@
 import { deriveDocumentContentSync, stripHtmlToPlainText } from '@/shared/lib/document-editor-format';
-import { sanitizeHtml } from '@/shared/utils';
+import { sanitizeHtml } from '@/shared/utils/sanitization';
 
 import type { FilemakerMailMessage, FilemakerMailParticipant } from './types';
 

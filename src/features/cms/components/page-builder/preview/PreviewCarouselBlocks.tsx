@@ -6,8 +6,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '@/shared/contracts/cms';
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { BlockContextProvider, useBlockContext } from './context/BlockContext';
 import { usePreviewEditorActions, usePreviewEditorState } from './context/PreviewEditorContext';

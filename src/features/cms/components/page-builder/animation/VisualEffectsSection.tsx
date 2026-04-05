@@ -3,7 +3,9 @@
 import React, { useCallback } from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
-import { FormSection, FormField, Card, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
+import { Card } from '@/shared/ui/primitives.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 import { RangeField, SelectField } from '../shared-fields';

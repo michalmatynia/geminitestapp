@@ -5,17 +5,10 @@ import React from 'react';
 
 import { JobsProvider, useJobsActions, useJobsState } from '@/shared/lib/jobs/context/JobsContext';
 import { useProductListingJobsProps } from '@/shared/lib/jobs/hooks/useProductListingJobsProps';
-import {
-  Button,
-  SectionHeader,
-  StatusBadge,
-  Pagination,
-  RefreshButton,
-  FormSection,
-  Alert,
-  MetadataItem,
-  Hint,
-} from '@/shared/ui';
+import { Button, Alert } from '@/shared/ui/primitives.public';
+import { SectionHeader, Pagination, MetadataItem } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { RefreshButton, FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/contracts/ui';
 

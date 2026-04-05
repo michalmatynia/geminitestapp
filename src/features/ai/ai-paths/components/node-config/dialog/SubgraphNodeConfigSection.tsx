@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { SubgraphConfig } from '@/shared/lib/ai-paths';
-import { Label, Input, Textarea } from '@/shared/ui';
+import { Label, Input, Textarea } from '@/shared/ui/primitives.public';
 
 import {
   useAiPathGraph,

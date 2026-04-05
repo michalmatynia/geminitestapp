@@ -8,18 +8,11 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks/useCmsQueries';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import type { CmsPageCreateRequestDto, Slug } from '@/shared/contracts/cms';
-import {
-  AdminCmsBreadcrumbs,
-  Alert,
-  FormActions,
-  FormField,
-  FormSection,
-  Input,
-  SectionHeader,
-  StatusBadge,
-  SearchableList,
-  ToggleRow,
-} from '@/shared/ui';
+import { AdminCmsBreadcrumbs } from '@/shared/ui/admin.public';
+import { Alert, Input } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge, SearchableList } from '@/shared/ui/data-display.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 

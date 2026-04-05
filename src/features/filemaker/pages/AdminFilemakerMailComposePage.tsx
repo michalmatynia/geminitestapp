@@ -12,7 +12,9 @@ import { buildFilemakerMailSelectionHref as buildSelectionHref } from '../mail-u
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
 
 import type { FilemakerMailAccount, FilemakerMailParticipant } from '../types';
-import { Button, FormField, FormSection, Input, PanelHeader, SelectSimple, useToast } from '@/shared/ui';
+import { Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
 
 type AccountsResponse = { accounts: FilemakerMailAccount[] };
 type ForwardDraftResponse = {

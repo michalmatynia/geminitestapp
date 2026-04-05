@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
 
 import { usePageBuilderState, usePageBuilderDispatch } from '@/features/cms/hooks/usePageBuilderContext';
 import type { InspectorSettings } from '@/shared/contracts/cms';
-import { ToggleRow } from '@/shared/ui';
+import { ToggleRow } from '@/shared/ui/forms-and-actions.public';
 
 export function InspectorOptions(): React.JSX.Element | null {
   const state = usePageBuilderState();

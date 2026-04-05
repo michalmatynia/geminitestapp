@@ -3,7 +3,10 @@
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, StandardDataTablePanel, SelectSimple, PanelStats, StatusBadge } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel, PanelStats } from '@/shared/ui/templates.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import {
   useImageStudioRuns,

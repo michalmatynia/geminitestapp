@@ -3,7 +3,8 @@ import React from 'react';
 
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
-import { StatusBadge, Button, Tooltip, Badge } from '@/shared/ui';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { Button, Tooltip, Badge } from '@/shared/ui/primitives.public';
 
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 

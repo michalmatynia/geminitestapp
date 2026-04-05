@@ -2,15 +2,9 @@
 
 import React from 'react';
 
-import {
-  Button,
-  FormField,
-  FormSection,
-  Input,
-  SectionHeader,
-  SelectSimple,
-  Textarea,
-} from '@/shared/ui';
+import { Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES,

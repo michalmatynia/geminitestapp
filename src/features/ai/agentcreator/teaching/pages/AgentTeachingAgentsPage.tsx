@@ -6,7 +6,9 @@ import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
-import { AdminAgentTeachingBreadcrumbs, ItemLibrary, useToast } from '@/shared/ui';
+import { AdminAgentTeachingBreadcrumbs } from '@/shared/ui/admin.public';
+import { ItemLibrary } from '@/shared/ui/data-display.public';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { LearnerAgentForm, type LearnerAgentLibraryItem } from '../components/LearnerAgentForm';
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';

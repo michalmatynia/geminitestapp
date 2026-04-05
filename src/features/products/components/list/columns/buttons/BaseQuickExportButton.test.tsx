@@ -137,7 +137,6 @@ const renderButton = (overrides?: Partial<React.ComponentProps<typeof BaseQuickE
     prefetchListings: vi.fn(),
     showMarketplaceBadge: false,
     onOpenIntegrations: undefined,
-    onOpenExportSettings: undefined,
     ...overrides,
   };
 
@@ -723,26 +722,20 @@ describe('BaseQuickExportButton', () => {
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
-  it('runs quick export without SKU check when the product is already exported', async () => {
-    const onOpenExportSettings = vi.fn();
+  it('opens the Base listings modal when the product is already exported', () => {
+    const onOpenIntegrations = vi.fn();
 
     renderButton({
       status: 'active',
       showMarketplaceBadge: true,
-      onOpenExportSettings,
+      onOpenIntegrations,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Manage Base.com listing (active).' }));
 
-    await waitFor(() => {
-      expect(mutateAsyncMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          productId: 'product-1',
-          connectionId: 'conn-base-1',
-        })
-      );
-    });
-    expect(onOpenExportSettings).not.toHaveBeenCalled();
+    expect(onOpenIntegrations).toHaveBeenCalledTimes(1);
+    expect(onOpenIntegrations).toHaveBeenCalledWith();
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
     expect(apiPostMock).not.toHaveBeenCalledWith(
       '/api/v2/integrations/products/product-1/base/sku-check',
       expect.anything()
@@ -823,12 +816,11 @@ describe('BaseQuickExportButton', () => {
     renderButton({
       status: 'active',
       showMarketplaceBadge: true,
-      onOpenExportSettings: vi.fn(),
     });
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'One-click export to Base.com' })
+        screen.getByRole('button', { name: 'Manage Base.com listing (active).' })
       ).toHaveClass('border-emerald-400/70');
     });
 
@@ -852,12 +844,11 @@ describe('BaseQuickExportButton', () => {
     const firstRender = renderButton({
       status: 'active',
       showMarketplaceBadge: true,
-      onOpenExportSettings: vi.fn(),
     });
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'One-click export to Base.com' })
+        screen.getByRole('button', { name: 'Manage Base.com listing (active).' })
       ).toHaveClass('border-emerald-400/70');
     });
 
@@ -866,21 +857,21 @@ describe('BaseQuickExportButton', () => {
     renderButton({
       status: 'active',
       showMarketplaceBadge: true,
-      onOpenExportSettings: vi.fn(),
     });
 
     expect(
-      screen.getByRole('button', { name: 'One-click export to Base.com' })
+      screen.getByRole('button', { name: 'Manage Base.com listing (active).' })
     ).toHaveClass('border-emerald-400/70');
     expect(screen.queryByRole('button', { name: 'Base.com export failed.' })).not.toBeInTheDocument();
   });
 
-  it('reflects queued, running, and completed export run states on the button', async () => {
+  it('reflects queued and running export feedback, then reverts completed runs to listing management', async () => {
     mutateAsyncMock.mockResolvedValue({
       success: true,
       status: 'queued',
       runId: 'run-export-1',
     });
+    const onOpenIntegrations = vi.fn();
     apiPostMock.mockImplementation((url: string) => {
       if (url === '/api/v2/integrations/imports/base') {
         return Promise.resolve({
@@ -897,7 +888,7 @@ describe('BaseQuickExportButton', () => {
       return Promise.reject(new Error(`Unexpected POST ${url}`));
     });
 
-    renderButton();
+    renderButton({ onOpenIntegrations });
 
     const button = screen.getByRole('button', { name: 'One-click export to Base.com' });
     fireEvent.click(button);
@@ -953,11 +944,19 @@ describe('BaseQuickExportButton', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Base.com export completed.' })).toHaveClass(
+      expect(screen.getByRole('button', { name: 'Manage Base.com listing (completed).' })).toHaveClass(
         'border-emerald-400/70'
       );
     });
-    expect(screen.getByRole('button', { name: 'Base.com export completed.' })).not.toBeDisabled();
+    const completedButton = screen.getByRole('button', {
+      name: 'Manage Base.com listing (completed).',
+    });
+    expect(completedButton).not.toBeDisabled();
+
+    fireEvent.click(completedButton);
+
+    expect(onOpenIntegrations).toHaveBeenCalledTimes(1);
+    expect(onOpenIntegrations).toHaveBeenCalledWith();
   });
 
   it('rehydrates the most recent export run after the button remounts', async () => {

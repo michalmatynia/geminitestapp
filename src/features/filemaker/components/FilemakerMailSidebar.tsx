@@ -7,9 +7,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { Badge, Button, Checkbox, Input, SelectSimple, useToast } from '@/shared/ui';
+import { Badge, Button, Checkbox, Input, useToast } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   buildFilemakerMailMasterNodes,

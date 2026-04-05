@@ -2,11 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  FolderTreeViewportV2,
-  useFolderTreeInstanceV2,
-  useFolderTreeShellRuntime,
-} from '@/shared/lib/foldertree/v2';
+import { useFolderTreeInstanceV2 } from '@/shared/lib/foldertree/v2/hooks/useFolderTreeInstanceV2';
+import { FolderTreeViewportV2, useFolderTreeShellRuntime } from '@/shared/lib/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2';
 import { useInterval } from '@/shared/hooks/use-interval';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';

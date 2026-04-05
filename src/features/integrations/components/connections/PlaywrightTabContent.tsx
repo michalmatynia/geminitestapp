@@ -10,7 +10,9 @@ import {
 } from '@/features/integrations/context/IntegrationsContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
-import { Button, SelectSimple, FormSection, FormField, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';
 

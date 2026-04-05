@@ -14,7 +14,7 @@ import {
 
 export type { AgentPersona, AgentPersonaMood, AgentPersonaMoodId, AgentPersonaSettings };
 import { validationError } from '@/shared/errors/app-error';
-import { sanitizeSvg } from '@/shared/utils';
+import { sanitizeSvg } from '@/shared/utils/sanitization';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 type AgentPersonaMoodPreset = {

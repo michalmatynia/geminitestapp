@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { AiNode, NodeConfig } from '@/shared/lib/ai-paths';
 import { stableStringify } from '@/shared/lib/ai-paths';
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger, ConfirmModal } from '@/shared/ui';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+import { ConfirmModal } from '@/shared/ui/templates.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {

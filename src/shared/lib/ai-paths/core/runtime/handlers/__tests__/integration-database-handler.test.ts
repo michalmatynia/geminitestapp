@@ -41,7 +41,7 @@ vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler'
 }));
 
 import { handleDatabase } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-handler';
-import type { AiNode, NodeHandlerContext } from '@/shared/contracts';
+import type { AiNode, NodeHandlerContext } from '@/shared/contracts/ai-paths-core';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

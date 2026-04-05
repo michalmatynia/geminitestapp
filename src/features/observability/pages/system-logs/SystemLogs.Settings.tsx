@@ -9,15 +9,9 @@ import {
 } from '@/shared/contracts/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { resolveObservabilityLoggingControls } from '@/shared/lib/observability/logging-controls';
-import {
-  Button,
-  FormField,
-  FormSection,
-  Textarea,
-  ToggleRow,
-  UI_GRID_ROOMY_CLASSNAME,
-  useToast,
-} from '@/shared/ui';
+import { Button, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 

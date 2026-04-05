@@ -7,7 +7,7 @@ import {
   type FilemakerEmailCampaignPreferenceStatus,
 } from '@/shared/contracts/filemaker';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { Badge, Button, useToast } from '@/shared/ui';
+import { Badge, Button, useToast } from '@/shared/ui/primitives.public';
 
 import type {
   FilemakerEmailCampaignPreferencesAction,

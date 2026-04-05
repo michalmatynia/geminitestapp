@@ -4,7 +4,8 @@ import React from 'react';
 
 import { ImagePickerField } from '@/features/cms/components/page-builder/shared-fields';
 import type { SettingsFieldOption } from '@/shared/contracts/cms';
-import { Input, SelectSimple } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { useCompositeFieldContext } from '../CompositeFieldContext';

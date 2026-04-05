@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { FormField, SelectSimple } from '@/shared/ui';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 type IntegrationSelectorFieldsProps = {
   marketplaceLabel: string;

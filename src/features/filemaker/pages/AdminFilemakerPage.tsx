@@ -3,7 +3,7 @@
 import { CalendarDays, Database, Mail, Megaphone, ShieldAlert } from 'lucide-react';
 import React from 'react';
 
-import { PanelHeader } from '@/shared/ui';
+import { PanelHeader } from '@/shared/ui/templates.public';
 
 import { FilemakerEmailsSection } from '../components/page/FilemakerEmailsSection';
 import { FilemakerEventsSection } from '../components/page/FilemakerEventsSection';

@@ -7,7 +7,7 @@ import type {
   DatabaseTemplateSnippet,
 } from '@/features/ai/ai-paths/config/query-presets';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, Label } from '@/shared/ui';
+import { Button, Label } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {

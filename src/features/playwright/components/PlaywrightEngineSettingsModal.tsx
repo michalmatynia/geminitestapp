@@ -4,7 +4,9 @@ import { ExternalLink } from 'lucide-react';
 import React from 'react';
 
 import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
-import { AppModal, Button, LoadingState } from '@/shared/ui';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { Button } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { PLAYWRIGHT_SETTINGS_HREF } from './PlaywrightEngineLogoButton';
 

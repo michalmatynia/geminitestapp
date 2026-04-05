@@ -5,21 +5,12 @@ import { DatabaseIcon, ServerIcon, UploadIcon, EyeIcon, PlusIcon } from 'lucide-
 import type { IdLabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseType } from '@/shared/contracts/database';
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
-import {
-  AdminDatabaseBreadcrumbs,
-  Badge,
-  Button,
-  FileUploadButton,
-  Alert,
-  SimpleSettingsList,
-  StandardDataTablePanel,
-  Card,
-  ToggleRow,
-  FormField,
-  Input,
-} from '@/shared/ui';
+import { AdminDatabaseBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button, Alert, Card, Input } from '@/shared/ui/primitives.public';
+import { FileUploadButton, ToggleRow, FormField } from '@/shared/ui/forms-and-actions.public';
+import { SimpleSettingsList, StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useDatabaseColumns } from './DatabaseColumns';
 import { LogModal } from './LogModal';

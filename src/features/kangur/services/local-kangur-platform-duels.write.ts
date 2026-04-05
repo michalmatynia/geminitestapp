@@ -23,12 +23,8 @@ import type {
   KangurDuelStateResponse,
 } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
-import {
-  kangurDuelLobbyChatSendResponseSchema,
-  kangurDuelLobbyPresenceResponseSchema,
-  kangurDuelReactionResponseSchema,
-  kangurDuelStateResponseSchema,
-} from '@kangur/contracts';
+import { kangurDuelLobbyChatSendResponseSchema } from '@kangur/contracts/kangur-duels-chat';
+import { kangurDuelLobbyPresenceResponseSchema, kangurDuelReactionResponseSchema, kangurDuelStateResponseSchema } from '@kangur/contracts/kangur-duels';
 import { withKangurClientError } from '@/features/kangur/observability/client';
 import { isAbortLikeError } from '@/features/kangur/shared/utils/observability/is-abort-like-error';
 import {

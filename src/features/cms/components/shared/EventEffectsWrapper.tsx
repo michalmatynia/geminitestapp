@@ -10,7 +10,8 @@ import {
   isEventClickEnabled,
 } from '@/features/cms/utils/event-effects';
 import type { CmsEventEffectsConfig } from '@/shared/contracts/cms';
-import { cn, getMotionSafeScrollBehavior } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
 
 import { BlockRenderContext, BlockSettingsContext } from '../frontend/blocks/BlockContext';
 

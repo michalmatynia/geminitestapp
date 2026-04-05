@@ -16,7 +16,7 @@ import {
   ListPanel,
   SelectSimple,
 } from '@/features/kangur/shared/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import {
   hasKangurSocialLinkedInPublication,
   hasKangurSocialLinkedInPublicationTarget,

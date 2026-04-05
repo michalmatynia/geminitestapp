@@ -8,7 +8,7 @@ import {
   resolveProductListingsEmptyDescription,
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
-import { EmptyState } from '@/shared/ui';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import { BaseQuickExportFailureBanner } from './BaseQuickExportFailureBanner';
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';

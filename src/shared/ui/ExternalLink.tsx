@@ -2,7 +2,8 @@ import { ExternalLink as ExternalLinkIcon } from 'lucide-react';
 import Link from 'next/link';
 import React, { type ReactNode } from 'react';
 
-import { cn, getTextContent } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { getTextContent } from '@/shared/utils/a11y';
 
 interface ExternalLinkProps {
   href: string;

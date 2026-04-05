@@ -11,7 +11,8 @@ import {
   DEFAULT_CSS_ANIMATION_CONFIG,
   type CssAnimationConfig,
 } from '@/shared/contracts/cms';
-import { Checkbox, FormSection } from '@/shared/ui';
+import { Checkbox } from '@/shared/ui/primitives.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 

@@ -1,7 +1,8 @@
 import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import React from 'react';
 
-import { Badge, resolveStatusBadgeVariant } from '@/shared/ui';
+import { Badge } from '@/shared/ui/primitives.public';
+import { resolveStatusBadgeVariant } from '@/shared/ui/data-display.public';
 
 export const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {

@@ -6,13 +6,8 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 
 
-import {
-  type KangurLearnerCreateInput,
-  type KangurLearnerProfile,
-  kangurLearnerProfilesSchema,
-  type KangurLearnerStatus,
-  type KangurLearnerUpdateInput,
-} from '@kangur/contracts';
+import { kangurLearnerProfilesSchema } from '@kangur/contracts/kangur';
+import { type KangurLearnerCreateInput, type KangurLearnerProfile, type KangurLearnerStatus, type KangurLearnerUpdateInput } from '@kangur/contracts';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,

@@ -10,7 +10,8 @@ import {
   useCreateSlug,
   useUpdateSlugDomains,
 } from '@/features/cms/hooks/useCmsQueries';
-import { AdminCmsPageLayout, Alert, useToast } from '@/shared/ui';
+import { AdminCmsPageLayout } from '@/shared/ui/admin.public';
+import { Alert, useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export default function CreateSlugPage(): React.JSX.Element {

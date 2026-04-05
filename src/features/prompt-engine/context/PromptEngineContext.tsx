@@ -11,7 +11,7 @@ import {
   type PromptValidationScope,
   type PromptValidationSeverity,
 } from '@/shared/lib/prompt-engine/settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { RuleDraft, RulePatch } from './prompt-engine-context-utils';

@@ -6,7 +6,7 @@ import type {
   AgentTeachingAgentRecord,
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import {

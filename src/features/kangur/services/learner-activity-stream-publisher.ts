@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { KangurLearnerActivityStatus } from '@kangur/contracts';
+import type { KangurLearnerActivityStatus } from '@kangur/contracts/kangur';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
 
 export const publishKangurLearnerActivityUpdate = (

@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 
 import { useCsvImportMutation } from '@/features/data-import-export/hooks/useImportMutations';
-import { Button, useToast, FileUploadButton, PanelHeader } from '@/shared/ui';
+import { Button, useToast } from '@/shared/ui/primitives.public';
+import { FileUploadButton } from '@/shared/ui/forms-and-actions.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

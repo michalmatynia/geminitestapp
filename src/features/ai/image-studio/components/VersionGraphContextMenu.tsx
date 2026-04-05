@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp, Columns2, Copy, GitBranchPlus, Focus, Layers } 
 import React from 'react';
 
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { useVersionGraphContextMenuContext } from './VersionGraphContextMenuContext';
 import { useSettingsState } from '../context/SettingsContext';

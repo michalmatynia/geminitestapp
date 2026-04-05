@@ -2,7 +2,8 @@ import Image from 'next/image';
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { InsetPanel, SelectSimple } from '@/shared/ui';
+import { InsetPanel } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useRightSidebarContext } from '../RightSidebarContext';
 

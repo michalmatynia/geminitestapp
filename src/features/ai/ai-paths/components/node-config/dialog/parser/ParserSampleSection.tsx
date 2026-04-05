@@ -4,7 +4,8 @@ import React from 'react';
 
 import type { IdLabelOptionDto, LabeledOptionDto } from '@/shared/contracts/base';
 import type { ParserSampleState } from '@/shared/lib/ai-paths';
-import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
+import { Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 export interface ParserSampleSectionProps {
   selectedNodeId: string;

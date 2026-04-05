@@ -21,7 +21,7 @@ import {
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
 } from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { useCoreSettingsState } from './hooks/state/useCoreSettingsState';

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
-import { Alert } from '@/shared/ui';
+import { Alert } from '@/shared/ui/primitives.public';
 
 import { ConnectedIntegrationFieldsSection } from '../ConnectedIntegrationFieldsSection';
 import { useConnectedIntegrationSelectorOptions } from '../hooks/useConnectedIntegrationSelectorOptions';

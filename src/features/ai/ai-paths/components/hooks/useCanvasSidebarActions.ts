@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { DRAG_KEYS, setDragData } from '@/shared/utils/drag-drop';
 
 import {

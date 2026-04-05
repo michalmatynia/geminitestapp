@@ -17,15 +17,9 @@ import {
   findPlaywrightTemplateByScript,
   PLAYWRIGHT_SCRIPT_TEMPLATES,
 } from '@/shared/lib/ai-paths/core/playwright/script-templates';
-import {
-  Button,
-  Input,
-  LoadingState,
-  SelectSimple,
-  Textarea,
-  FormField,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { LoadingState, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { PlaywrightCaptureRoutesEditor } from '@/shared/ui/playwright/PlaywrightCaptureRoutesEditor';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';

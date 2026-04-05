@@ -1,13 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  GraphExecutionCancelled,
-  GraphExecutionError,
-  type AiNode,
-  type AiPathRuntimeNodeStatus,
-  type RuntimeState,
-} from '@/shared/lib/ai-paths';
+import { GraphExecutionCancelled, GraphExecutionError, type AiNode, type AiPathRuntimeNodeStatus, type RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,

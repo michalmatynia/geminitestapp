@@ -6,16 +6,8 @@ import {
   ImportExportProvider,
   useImportExportData,
 } from '@/features/data-import-export/context/ImportExportContext';
-import {
-  Card,
-  DocumentationSection,
-  LoadingState,
-  SectionHeader,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/shared/ui';
+import { Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+import { DocumentationSection, LoadingState, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import { TemplatesTabContent } from './imports/TemplatesTabContent';
 import { ImportBaseConnectionSection } from './imports-page/Import.BaseConnection';

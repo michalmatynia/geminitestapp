@@ -20,8 +20,8 @@ import {
 } from '@/shared/lib/foldertree/public';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Badge, Button, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Card } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useDocumentActions, useDocumentState, useSegmentEditorActions } from '../../context';
 import {

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { LogListEntry } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { StatusBadge } from './status-badge';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';

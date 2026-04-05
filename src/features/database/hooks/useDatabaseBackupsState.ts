@@ -3,12 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type {
-  DatabaseBackupResponse,
-  DatabaseInfo,
-  DatabaseRestoreResponse,
-  DatabaseType,
-} from '@/shared/contracts';
+import type { DatabaseBackupResponse, DatabaseInfo, DatabaseRestoreResponse, DatabaseType } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { isValidDatabaseEngineBackupTimeUtc } from '@/shared/lib/db/database-engine-backup-schedule';
 import {
@@ -20,7 +15,7 @@ import {
 } from '@/shared/lib/db/database-engine-constants';
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,
   logClientError,

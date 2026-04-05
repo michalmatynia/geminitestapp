@@ -4,7 +4,8 @@ import { ArrowLeft, ChevronDown } from 'lucide-react';
 import React, { useCallback } from 'react';
 
 import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
-import { Button, Badge, Card, Hint } from '@/shared/ui';
+import { Button, Badge, Card } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { useThemeColorsActions, useThemeColorsState } from './ThemeColorsContext';
 import { ColorField, TextField } from '../shared-fields';

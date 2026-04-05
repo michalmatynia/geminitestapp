@@ -12,7 +12,7 @@ import {
 } from '@/shared/lib/products/constants';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { toSlotName } from '../components/studio-modals/prompt-extract-utils';
 import { mapLinkedGeneratedVariants } from '../components/studio-modals/slot-inline-edit-utils';

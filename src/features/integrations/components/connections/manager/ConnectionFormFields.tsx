@@ -10,16 +10,9 @@ import {
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import {
-  Button,
-  Checkbox,
-  FormField,
-  Input,
-  Label,
-  SelectSimple,
-  Textarea,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 const TRADERA_BROWSER_MODE_OPTIONS = [
   { value: 'builtin', label: 'Built-in form automation' },

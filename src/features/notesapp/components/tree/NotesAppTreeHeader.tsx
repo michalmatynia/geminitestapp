@@ -6,7 +6,8 @@ import React from 'react';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
-import { Button, TreeHeader } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { TreeHeader } from '@/shared/ui/data-display.public';
 
 type NotesTreeHeaderOperations = {
   handleCreateFolder: (parentId?: string | null) => Promise<void>;

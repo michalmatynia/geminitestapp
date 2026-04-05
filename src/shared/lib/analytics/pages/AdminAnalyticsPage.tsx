@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import type { AnalyticsScope, AiInsightRecord } from '@/shared/contracts';
+import type { AnalyticsScope } from '@/shared/contracts/analytics';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import {
@@ -13,20 +14,10 @@ import {
   buildAnalyticsWorkspaceContextBundle,
   ANALYTICS_CONTEXT_ROOT_IDS,
 } from '@/shared/lib/analytics/context-registry/workspace';
-import {
-  Button,
-  Card,
-  DataTable,
-  FormSection,
-  Hint,
-  MetadataItem,
-  Pagination,
-  SectionHeader,
-  SelectSimple,
-  StatusBadge,
-  UI_GRID_RELAXED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { DataTable, StatusBadge } from '@/shared/ui/data-display.public';
+import { FormSection, Hint, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem, Pagination, SectionHeader, UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { type AnalyticsRange } from '../api';
 import AnalyticsEventsTable from '../components/AnalyticsEventsTable';

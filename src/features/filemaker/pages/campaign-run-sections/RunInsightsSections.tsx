@@ -1,4 +1,4 @@
-import { FormSection } from '@/shared/ui';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { formatTimestamp } from '../filemaker-page-utils';
 import type {
   FilemakerEmailCampaignDelivery,

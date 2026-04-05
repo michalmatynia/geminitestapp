@@ -1,5 +1,5 @@
 import { useRuntimeState } from '@/features/ai/ai-paths/context';
-import { JsonViewer } from '@/shared/ui';
+import { JsonViewer } from '@/shared/ui/data-display.public';
 
 
 export function GraphModelDebugPanel(): React.JSX.Element {

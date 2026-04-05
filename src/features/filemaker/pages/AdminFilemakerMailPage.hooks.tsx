@@ -6,7 +6,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { MailPlus, RefreshCcw, FilterX, Search, Mail } from 'lucide-react';
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 
-import { useToast, Button } from '@/shared/ui';
+import { useToast, Button } from '@/shared/ui/primitives.public';
 import {
   buildFilemakerMailComposeHref as buildComposeHref,
   buildFilemakerMailThreadHref as buildThreadHref,

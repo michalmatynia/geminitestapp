@@ -5,7 +5,9 @@ import React, { useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { Button, Input, Label, SectionHeader, Textarea, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

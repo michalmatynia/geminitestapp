@@ -5,8 +5,9 @@ import React from 'react';
 
 import type { DatabasePresetOption } from '@/shared/contracts/database';
 import type { DbQueryPreset } from '@/shared/lib/ai-paths';
-import { Button, Input, Label, Textarea, insetPanelVariants } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {

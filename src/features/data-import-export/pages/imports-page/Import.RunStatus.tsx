@@ -1,12 +1,9 @@
 'use client';
 
 import React from 'react';
-import {
-  Button,
-  FormSection,
-  Hint,
-  StatusBadge,
-} from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import {
   useImportExportActions,
   useImportExportData,

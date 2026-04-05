@@ -1,7 +1,8 @@
 import { Layers } from 'lucide-react';
 import React from 'react';
 
-import { MetadataItem, StatusBadge, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
+import { MetadataItem, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { useViewer3DState } from '../context/Viewer3DContext';
 

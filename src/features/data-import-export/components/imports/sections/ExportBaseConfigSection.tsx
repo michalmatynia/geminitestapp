@@ -10,7 +10,8 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations';
 import type { InventoryOption, Template } from '@/shared/contracts/integrations';
-import { Label, SelectSimple } from '@/shared/ui';
+import { Label } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 const BASE_CONNECTION_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
   value: '__none__',

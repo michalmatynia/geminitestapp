@@ -4,7 +4,8 @@ import { type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import type { ChipProps } from '@/shared/contracts/ui';
-import { cn, getTextContent } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { getTextContent } from '@/shared/utils/a11y';
 
 import { Badge, badgeVariants } from './badge';
 

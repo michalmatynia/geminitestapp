@@ -9,24 +9,8 @@ import {
 
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import type {
-  AiNode,
-  AiPathsValidationConfig,
-  Edge,
-  NodeConfig,
-  PathBlockedRunPolicy,
-  PathConfig,
-  PathExecutionMode,
-  PathFlowIntensity,
-  PathMeta,
-  PathRunMode,
-} from '@/shared/lib/ai-paths';
-import {
-  initialNodes,
-  initialEdges,
-  normalizeNodes,
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathsValidationConfig, Edge, NodeConfig, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, PathMeta, PathRunMode } from '@/shared/lib/ai-paths';
+import { initialNodes, initialEdges, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {

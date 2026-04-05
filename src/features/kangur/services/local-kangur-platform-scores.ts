@@ -13,7 +13,8 @@ import {
 import { sortScores } from '@/features/kangur/services/kangur-score-repository/shared';
 import type { KangurScoreCreateInput, KangurScoreRecord } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
-import { kangurScoreSchema, type KangurLessonSubject } from '@kangur/contracts';
+import { kangurScoreSchema } from '@kangur/contracts/kangur';
+import { type KangurLessonSubject } from '@kangur/contracts';
 import {
   isRecoverableKangurClientFetchError,
   reportKangurClientError,

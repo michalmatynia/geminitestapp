@@ -20,7 +20,7 @@ import {
   type ProductTriggerButtonBarProps,
 } from '@/features/products/lib/product-integrations-adapter-loader';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   calculatePriceForCurrency,
@@ -35,7 +35,7 @@ import { Checkbox } from '@/shared/ui/checkbox';
 import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
 import { Tooltip } from '@/shared/ui/tooltip';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -477,10 +477,7 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
   row,
 }) {
   const product: ProductWithImages = row.original;
-  const {
-    onIntegrationsClick: handleClick,
-    onExportSettingsClick,
-  } = useProductListRowActionsContext();
+  const { onIntegrationsClick: handleClick } = useProductListRowActionsContext();
   const { showTriggerRunFeedback, triggerButtonsReady = true } = useProductListRowVisualsContext();
   const {
     showMarketplaceBadge,
@@ -549,7 +546,6 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         onOpenIntegrations={(recoveryContext): void =>
           handleClick(product, recoveryContext, 'baselinker')
         }
-        onOpenExportSettings={(): void => onExportSettingsClick(product)}
       />
       <TraderaQuickListButton
         product={product}

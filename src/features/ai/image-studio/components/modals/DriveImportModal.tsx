@@ -4,7 +4,8 @@ import { Upload } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import { Button, FileUploadTrigger } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
 import FileManager, { FileManagerRuntimeContext } from '@/features/files/public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 

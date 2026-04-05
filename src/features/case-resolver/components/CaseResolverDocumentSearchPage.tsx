@@ -13,16 +13,10 @@ import type {
   CaseSortKey,
   CaseSortOrder,
 } from '@/shared/contracts/case-resolver';
-import {
-  Button,
-  EmptyState,
-  Pagination,
-  SearchInput,
-  SelectSimple,
-  Card,
-  Badge,
-  DocumentSearchPage,
-} from '@/shared/ui';
+import { Button, Card, Badge } from '@/shared/ui/primitives.public';
+import { EmptyState, Pagination } from '@/shared/ui/navigation-and-layout.public';
+import { SearchInput, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { DocumentSearchPage } from '@/shared/ui/templates.public';
 
 import {
   useCaseResolverPageActions,

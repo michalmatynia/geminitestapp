@@ -9,7 +9,7 @@ import {
   NOTE_SORT_BY_OPTIONS,
 } from '@/features/notesapp/constants/note-settings-options';
 import type { TagRecord } from '@/shared/contracts/notes';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/contracts/ui';
 

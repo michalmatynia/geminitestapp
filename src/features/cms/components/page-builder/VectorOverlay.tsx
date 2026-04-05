@@ -13,8 +13,8 @@ import {
   type VectorShape,
   type VectorToolMode,
 } from '@/shared/lib/vector-drawing';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import type { VectorOverlayRequest } from '../../hooks/usePageBuilderContext';
 

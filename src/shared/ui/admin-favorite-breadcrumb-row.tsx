@@ -8,7 +8,7 @@ import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';
 import { useAdminFavorites } from '@/shared/providers/AdminFavoritesProvider';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
 import { useOptionalToast } from './toast';

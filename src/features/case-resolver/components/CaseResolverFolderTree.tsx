@@ -14,7 +14,7 @@ import { useMasterFolderTreeSearch } from '@/shared/lib/foldertree/public';
 import type { MasterTreeDropInput } from '@/shared/lib/foldertree/public';
 import type { CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { FolderTreePanel } from '@/shared/ui';
+import { FolderTreePanel } from '@/shared/ui/navigation-and-layout.public';
 import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

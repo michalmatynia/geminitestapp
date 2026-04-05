@@ -7,8 +7,9 @@ import { usePageBuilderDispatch } from '@/features/cms/hooks/page-builder/PageDi
 import { usePageBuilderState } from '@/features/cms/hooks/page-builder/PageStateContext';
 import type { InspectorSettings } from '@/shared/contracts/cms';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import { Button, SectionHeader, Tooltip } from '@/shared/ui';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { Button, Tooltip } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   useComponentSettingsActions,

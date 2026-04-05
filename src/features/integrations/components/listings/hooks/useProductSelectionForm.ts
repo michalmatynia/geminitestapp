@@ -17,7 +17,7 @@ import {
   preflightTraderaQuickListSession,
 } from '@/features/integrations/utils/tradera-browser-session';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 

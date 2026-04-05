@@ -6,7 +6,7 @@ import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { Hint } from '@/shared/ui';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { useOptionalVersionNodeDetailsModalRuntime } from './VersionNodeDetailsModalRuntimeContext';

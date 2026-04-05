@@ -13,7 +13,8 @@ import type {
   IntegrationConnectionBasic,
 } from '@/shared/contracts/integrations';
 import type { PickerOption, PickerGroup } from '@/shared/contracts/ui';
-import { Button, EmptyState, Skeleton } from '@/shared/ui';
+import { Button, Skeleton } from '@/shared/ui/primitives.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 
 export function MarketplaceSelector(): React.JSX.Element {

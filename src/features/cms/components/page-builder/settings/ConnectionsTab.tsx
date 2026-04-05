@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Input, Label, Checkbox } from '@/shared/ui';
+import { Input, Label, Checkbox } from '@/shared/ui/primitives.public';
 
 import {
   useComponentSettingsActions,

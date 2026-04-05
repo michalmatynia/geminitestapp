@@ -5,7 +5,7 @@ import React from 'react';
 import { useIntegrationSelection } from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import { useProductListingsModals } from '@/features/integrations/context/ProductListingsContext';
 import { useProductListingsViewContext } from '@/features/integrations/components/listings/product-listings-modal/context/ProductListingsViewContext';
-import { Button, Card } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
 
 import { ConnectedIntegrationSelector } from '../ConnectedIntegrationSelector';
 import { resolveIntegrationSelectionEmptyStateCopy } from '../product-listings-copy';

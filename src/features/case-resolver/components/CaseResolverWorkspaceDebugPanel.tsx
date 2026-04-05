@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useInterval } from '@/shared/hooks/use-interval';
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { getRecentCaseResolverWorkspaceDebugEvents } from './CaseResolverWorkspaceDebugPanel.helpers';
 import {

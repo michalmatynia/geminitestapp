@@ -11,7 +11,7 @@ import type {
 } from '@kangur/platform';
 
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
-import { kangurAssignmentSnapshotSchema } from '@kangur/contracts';
+import { kangurAssignmentSnapshotSchema } from '@kangur/contracts/kangur-assignments';
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { AdminCaseResolverPageLayout } from '@/shared/ui';
+import { AdminCaseResolverPageLayout } from '@/shared/ui/admin.public';
 
 import { useAdminCaseResolverTagsPageRuntime } from './AdminCaseResolverTagsPage.hooks';
 import {

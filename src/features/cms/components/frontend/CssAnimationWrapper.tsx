@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import { DEFAULT_CSS_ANIMATION_CONFIG } from '@/shared/contracts/cms';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useBlockSettings } from './sections/FrontendBlockRenderer';
 

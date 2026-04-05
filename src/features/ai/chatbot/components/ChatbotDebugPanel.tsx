@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { LogList, JsonViewer } from '@/shared/ui';
+import { LogList, JsonViewer } from '@/shared/ui/data-display.public';
 
 import { useChatbotUI } from '../context/ChatbotContext';
 

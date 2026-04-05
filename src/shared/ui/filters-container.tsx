@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { ReactNode } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
 import { insetPanelVariants } from './InsetPanel';

@@ -13,13 +13,16 @@ import {
 } from '@/features/admin/pages/validator-scope';
 import { AdminPromptEngineValidationPatternsPage } from '@/features/admin/components/AdminPromptEngineValidationPatternsPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import { formatAdminAiEyebrow } from '@/shared/ui';
+import { formatAdminAiEyebrow } from '@/shared/ui/admin.public';
 import {
   ValidatorDocsTooltipsPanel,
   ValidatorDocsTooltipsProvider,
   ValidatorSettings,
 } from '@/features/admin/components/AdminValidatorSettings';
-import { AdminSectionBreadcrumbs, Badge, Button, ClientOnly, FormSection, ListPanel } from '@/shared/ui';
+import { AdminSectionBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button, ClientOnly } from '@/shared/ui/primitives.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
 
 const LIST_TABS_ID_PREFIX = 'global-validator-lists';

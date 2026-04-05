@@ -11,17 +11,9 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 import { playwrightDeviceOptions } from '@/shared/lib/playwright/settings';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import {
-  CollapsibleSection,
-  FormActions,
-  FormField,
-  FormSection,
-  Hint,
-  Input,
-  SelectSimple,
-  ToggleRow,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { CollapsibleSection, Input } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export type {
   PlaywrightSettingsContextType,

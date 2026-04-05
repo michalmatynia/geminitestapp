@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import { Card, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Card, Textarea } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { RuleItemAutofixSettings } from './RuleItemAutofixSettings';
 import { RuleItemBasicSettings } from './RuleItemBasicSettings';

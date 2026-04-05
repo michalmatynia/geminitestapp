@@ -42,10 +42,11 @@ import { Button } from '@/shared/ui/button';
 import { InsetPanel } from '@/shared/ui/InsetPanel';
 import { useToast } from '@/shared/ui/toast';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   FAILURE_STATUSES,
+  SUCCESS_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
 } from '../product-column-utils';
@@ -274,7 +275,6 @@ export function BaseQuickExportButton(props: {
   prefetchListings: () => void;
   showMarketplaceBadge: boolean;
   onOpenIntegrations?: ((recoveryContext?: ProductListingsRecoveryContext) => void) | undefined;
-  onOpenExportSettings?: (() => void) | undefined;
 }): React.JSX.Element {
   const {
     product,
@@ -725,10 +725,16 @@ export function BaseQuickExportButton(props: {
     trackedExportRunStatus !== null && !TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus);
   const quickExportPending = quickExportMutation.isPending || quickExportLocked || trackedExportInFlight;
   const resolvedButtonStatus = trackedExportRunStatus ?? status;
-  const isFailureState = FAILURE_STATUSES.has(normalizeMarketplaceStatus(resolvedButtonStatus));
+  const normalizedResolvedButtonStatus = normalizeMarketplaceStatus(resolvedButtonStatus);
+  const isFailureState = FAILURE_STATUSES.has(normalizedResolvedButtonStatus);
+  const shouldManageExistingListing =
+    !isFailureState &&
+    (showMarketplaceBadge || SUCCESS_STATUSES.has(normalizedResolvedButtonStatus));
   const shouldUseFilledMarketplaceTone = showMarketplaceBadge || trackedExportRunStatus !== null;
   const resolvedLabel = isFailureState
     ? `Open Base.com recovery options (${resolvedButtonStatus}).`
+    : shouldManageExistingListing
+      ? `Manage Base.com listing (${resolvedButtonStatus}).`
     : trackedExportPresentation
       ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
       : label;
@@ -747,6 +753,10 @@ export function BaseQuickExportButton(props: {
         onClick={(): void => {
           if (isFailureState) {
             onOpenIntegrations?.(recoveryContext);
+            return;
+          }
+          if (shouldManageExistingListing) {
+            onOpenIntegrations?.();
             return;
           }
           void runQuickExport();

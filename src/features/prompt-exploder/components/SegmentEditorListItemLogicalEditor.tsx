@@ -4,7 +4,8 @@ import { Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, Input, Label, SelectSimple, Card } from '@/shared/ui';
+import { Button, Input, Label, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useDocumentState } from '../context';
 import { promptExploderSafeJsonStringify } from '../helpers/formatting';

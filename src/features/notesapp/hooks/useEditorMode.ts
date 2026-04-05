@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 import type { NoteEditorType } from '@/shared/contracts/notes';
 import { ApiError } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 // Why: Editor mode (markdown/wysiwyg) has complex migration logic:

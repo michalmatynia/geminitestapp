@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Alert } from '@/shared/ui';
+import { Button, Alert } from '@/shared/ui/primitives.public';
 
 import {
   PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED,

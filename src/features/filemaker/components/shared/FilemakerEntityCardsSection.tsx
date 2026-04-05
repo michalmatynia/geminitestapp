@@ -1,7 +1,9 @@
 import { Edit2, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, Card, CompactEmptyState, FormSection } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 export interface FilemakerEntityCardsSectionProps<TItem extends { id: string }> {
   title: string;

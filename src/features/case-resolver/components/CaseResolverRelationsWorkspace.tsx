@@ -21,7 +21,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import { EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
-import { EmptyState } from '@/shared/ui';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   CaseResolverRelationsWorkspaceProvider,

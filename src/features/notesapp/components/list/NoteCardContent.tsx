@@ -3,8 +3,8 @@ import React from 'react';
 
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
-import { Tag } from '@/shared/ui';
-import { sanitizeHtml } from '@/shared/utils';
+import { Tag } from '@/shared/ui/forms-and-actions.public';
+import { sanitizeHtml } from '@/shared/utils/sanitization';
 
 import { renderMarkdownToHtml } from '../../utils';
 

@@ -1,23 +1,6 @@
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { Toast } from '@/shared/contracts/ui';
-import type {
-  AiNode,
-  AiPathRuntimeEvent,
-  AiPathRuntimeNodeStatus,
-  AiPathRuntimeNodeStatusMap,
-  AiPathsValidationConfig,
-  Edge,
-  PathBlockedRunPolicy,
-  PathExecutionMode,
-  PathRunMode,
-  ParserSampleState,
-  QueuedRun,
-  RuntimeEventInput,
-  RuntimeState,
-  RunStatus,
-  SetNodeStatusInput,
-  UpdaterSampleState,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRuntimeEvent, AiPathRuntimeNodeStatus, AiPathRuntimeNodeStatusMap, AiPathsValidationConfig, Edge, PathBlockedRunPolicy, PathExecutionMode, PathRunMode, ParserSampleState, QueuedRun, RuntimeEventInput, RuntimeState, RunStatus, SetNodeStatusInput, UpdaterSampleState } from '@/shared/lib/ai-paths';
 export type { QueuedRun } from '@/shared/lib/ai-paths';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';

@@ -8,7 +8,7 @@ import { Button } from '@/shared/ui/button';
 import { FormSection } from '@/shared/ui/form-section';
 import { StatusBadge } from '@/shared/ui/status-badge';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 export function StudioSourceImageSelector(): React.JSX.Element {
   const { imageSlotPreviews, selectedImageIndex, setSelectedImageIndex } =

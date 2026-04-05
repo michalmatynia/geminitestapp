@@ -4,7 +4,8 @@ import { Building2, User, X } from 'lucide-react';
 import React from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import { SelectSimple, SegmentedControl, Button } from '@/shared/ui';
+import { SelectSimple, SegmentedControl } from '@/shared/ui/forms-and-actions.public';
+import { Button } from '@/shared/ui/primitives.public';
 
 import { useOptionalCaseResolverPartyFieldRuntime } from './CaseResolverPartyFieldRuntimeContext';
 

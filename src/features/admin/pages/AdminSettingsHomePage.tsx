@@ -13,13 +13,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import {
-  Button,
-  NavigationCard,
-  NavigationCardGrid,
-  SectionHeader,
-  FormSection,
-} from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { NavigationCard, NavigationCardGrid, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 type SettingsOption = {
   id: string;

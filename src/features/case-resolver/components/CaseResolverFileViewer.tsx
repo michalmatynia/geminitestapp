@@ -9,17 +9,10 @@ import {
 import React from 'react';
 
 import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver';
-import {
-  Button,
-  ExternalLink,
-  Label,
-  Textarea,
-  useToast,
-  FileUploadTrigger,
-  EmptyState,
-  Card,
-  PanelHeader,
-} from '@/shared/ui';
+import { Button, Label, Textarea, useToast, Card } from '@/shared/ui/primitives.public';
+import { ExternalLink, FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
 
 import {
   useCaseResolverPageActions,

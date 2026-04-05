@@ -10,7 +10,7 @@ import type {
   NoteRelationWithTarget,
   RelatedNote,
 } from '@/shared/contracts/notes';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 export function NoteDetailRelatedNotes(): React.JSX.Element | null {
   const { selectedNote, selectedNoteTheme } = useNotesAppState();

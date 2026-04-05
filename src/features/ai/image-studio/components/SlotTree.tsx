@@ -25,14 +25,10 @@ import {
 } from '@/shared/lib/foldertree/public';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { IdDataDto } from '@/shared/contracts/base';
-import { MasterTreeSettingsButton } from '@/shared/ui';
-import {
-  getFolderTreeInstanceSettingsHref,
-  getMotionSafeScrollBehavior,
-  type MasterTreeDropPosition,
-  type MasterTreeId,
-  type MasterTreeNode,
-} from '@/shared/utils';
+import { MasterTreeSettingsButton } from '@/shared/ui/navigation-and-layout.public';
+import { getFolderTreeInstanceSettingsHref } from '@/shared/utils/folder-tree-profiles-v2';
+import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
+import { type MasterTreeDropPosition, type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
 import {
   DRAG_KEYS,
   getFirstDragValue,

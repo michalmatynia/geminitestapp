@@ -6,18 +6,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  AdminFilemakerBreadcrumbs,
-  Badge,
-  Checkbox,
-  FormActions,
-  FormField,
-  FormSection,
-  Input,
-  SectionHeader,
-  SelectSimple,
-  useToast,
-} from '@/shared/ui';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Checkbox, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   createFilemakerEmail,

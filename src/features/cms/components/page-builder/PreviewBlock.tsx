@@ -17,7 +17,7 @@ import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import { DEFAULT_APP_EMBED_ID, getAppEmbedOption } from '@/shared/lib/app-embeds';
 import { getKangurWidgetLabel } from '@/shared/contracts/kangur-cms';
-import { Button, Card, Input } from '@/shared/ui';
+import { Button, Card, Input } from '@/shared/ui/primitives.public';
 
 import { useCmsPageContext } from '../frontend/CmsPageContext';
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';

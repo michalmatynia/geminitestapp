@@ -2,7 +2,8 @@
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CompareConfig } from '@/shared/lib/ai-paths';
-import { Button, Input, SelectSimple, FormField } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

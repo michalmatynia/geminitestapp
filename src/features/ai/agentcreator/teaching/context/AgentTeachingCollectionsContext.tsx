@@ -5,7 +5,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { useAgentTeachingQueriesContext } from './AgentTeachingContext';
 import {

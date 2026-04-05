@@ -4,7 +4,8 @@ import { Download, Save, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import React, { useMemo } from 'react';
 
-import { Button, GenericGridPicker } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { GenericGridPicker } from '@/shared/ui/templates.public';
 import type { GridPickerItem } from '@/shared/contracts/ui';
 
 export interface OutputImage {

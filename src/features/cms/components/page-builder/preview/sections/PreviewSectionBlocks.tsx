@@ -2,8 +2,8 @@ import React from 'react';
 
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import type { BlockInstance } from '@/shared/contracts/cms';
-import { CompactEmptyState } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 const CONTAINED_BLOCK_CONTEXT_VALUE = { contained: true };
 

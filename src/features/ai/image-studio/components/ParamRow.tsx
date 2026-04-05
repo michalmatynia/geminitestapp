@@ -10,8 +10,9 @@ import {
   type ParamUiControl,
 } from '@/features/ai/image-studio/utils/param-ui';
 import { type ParamLeaf, type ParamSpec } from '@/shared/contracts/prompt-engine';
-import { Button, Checkbox, Input, Textarea, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Checkbox, Input, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { usePromptState, usePromptActions } from '../context/PromptContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

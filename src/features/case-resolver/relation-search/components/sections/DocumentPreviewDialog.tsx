@@ -3,16 +3,7 @@
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Button,
-  Badge,
-} from '@/shared/ui';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Button, Badge } from '@/shared/ui/primitives.public';
 
 import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
 import {

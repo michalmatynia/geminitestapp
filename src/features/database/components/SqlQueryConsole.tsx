@@ -4,7 +4,8 @@ import { PlayIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
-import { Button, Textarea, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
+import { Button, Textarea, Alert, Card } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import {
   logClientCatch,
   logClientError,

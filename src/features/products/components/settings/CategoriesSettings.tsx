@@ -30,7 +30,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { useToast } from '@/shared/ui/toast';
 
-import type { MasterTreeNode } from '@/shared/utils';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

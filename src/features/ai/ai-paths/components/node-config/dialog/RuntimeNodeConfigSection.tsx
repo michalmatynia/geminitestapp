@@ -1,15 +1,9 @@
 'use client';
 
 import type { NodeCacheMode, NodeCacheScope, NodeSideEffectPolicy } from '@/shared/lib/ai-paths';
-import {
-  Button,
-  Input,
-  MultiSelect,
-  SelectSimple,
-  ToggleRow,
-  FormField,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui/forms-and-actions.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   useAiPathOrchestrator,

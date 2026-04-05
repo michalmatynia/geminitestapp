@@ -2,17 +2,7 @@ import 'server-only';
 
 import { createHash } from 'crypto';
 
-import type {
-  AnalyticsConnectionInfo,
-  AnalyticsEventCreateInput,
-  AnalyticsEvent,
-  AnalyticsEventType,
-  AnalyticsScope,
-  AnalyticsScreen,
-  AnalyticsSummary,
-  AnalyticsUtm,
-  AnalyticsViewport,
-} from '@/shared/contracts';
+import type { AnalyticsConnectionInfo, AnalyticsEventCreateInput, AnalyticsEvent, AnalyticsEventType, AnalyticsScope, AnalyticsScreen, AnalyticsSummary, AnalyticsUtm, AnalyticsViewport } from '@/shared/contracts/analytics';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getRedisConnection } from '@/shared/lib/queue';
 

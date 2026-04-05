@@ -7,7 +7,9 @@ import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/
 import type { NoteWithRelations, ThemeRecord } from '@/shared/contracts/notes';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { Button, EmptyState, Pagination, DocumentSearchPage } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { EmptyState, Pagination } from '@/shared/ui/navigation-and-layout.public';
+import { DocumentSearchPage } from '@/shared/ui/templates.public';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 
 import { NoteCard } from './NoteCard';

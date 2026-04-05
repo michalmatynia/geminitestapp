@@ -9,7 +9,8 @@ import {
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import { ImageRetryDropdown, Alert } from '@/shared/ui';
+import { ImageRetryDropdown } from '@/shared/ui/forms-and-actions.public';
+import { Alert } from '@/shared/ui/primitives.public';
 
 export function ProductListingsError(): React.JSX.Element {
   const { error } = useProductListingsData();

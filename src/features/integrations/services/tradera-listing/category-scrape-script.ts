@@ -328,9 +328,15 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       }
     }
 
+    const escaped = label.replace(/"/g, '\\"');
     const escapedPattern = label.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
-    for (const role of ['button', 'menu', 'combobox']) {
-      const matches = page.getByRole(role, {
+    const mainRoot = page.locator('main').first();
+    const mainRootVisible = await mainRoot.isVisible().catch(() => false);
+    const root = mainRootVisible ? mainRoot : page;
+
+    // Exact-match role searches
+    for (const role of ['button', 'menu', 'link', 'combobox']) {
+      const matches = root.getByRole(role, {
         name: new RegExp('^' + escapedPattern + '\$', 'i'),
       });
       const count = await matches.count().catch(() => 0);
@@ -341,11 +347,36 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       }
     }
 
-    const labeledControlTrigger = page
+    // Contains-match role searches (less strict)
+    for (const role of ['button', 'menu', 'link', 'combobox']) {
+      const matches = root.getByRole(role, {
+        name: new RegExp(escapedPattern, 'i'),
+      });
+      const count = await matches.count().catch(() => 0);
+      for (let index = 0; index < count; index += 1) {
+        const candidate = matches.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (visible) return candidate;
+      }
+    }
+
+    // Exact text in an ancestor button/link/div/label
+    const exactTextTrigger = root
       .locator(
         'xpath=//*[normalize-space(text())="' +
-          label.replace(/"/g, '\\"') +
-          '"]/following::*[(self::button or @role="button" or @role="menu" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu" or @aria-controls or @aria-expanded)][1]'
+          escaped +
+          '"]/ancestor-or-self::*[self::button or self::a or @role="button" or @role="link" or @role="menu" or self::div or self::label][1]'
+      )
+      .first();
+    const exactTextVisible = await exactTextTrigger.isVisible().catch(() => false);
+    if (exactTextVisible) return exactTextTrigger;
+
+    // Exact text followed by a sibling interactive element
+    const labeledControlTrigger = root
+      .locator(
+        'xpath=//*[normalize-space(text())="' +
+          escaped +
+          '"]/following::*[(self::button or self::a or @role="button" or @role="link" or @role="menu" or @role="combobox" or @aria-haspopup="listbox" or @aria-haspopup="menu" or @aria-controls or @aria-expanded)][1]'
       )
       .first();
     const labeledVisible = await labeledControlTrigger.isVisible().catch(() => false);
@@ -454,19 +485,41 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     );
   }
 
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     const hasSelect = Boolean(await findCategorySelect());
     const hasCategorySection = Boolean(await firstVisible(CATEGORY_SECTION_READY_SELECTORS));
     if (hasSelect || hasCategorySection) {
       break;
     }
+    // Also check if any category-labelled trigger is already visible
+    let hasTrigger = false;
+    for (const label of CATEGORY_FIELD_LABELS) {
+      const trigger = await findFieldTriggerByLabel(label);
+      if (trigger) {
+        hasTrigger = true;
+        break;
+      }
+    }
+    if (hasTrigger) {
+      break;
+    }
     await wait(400);
   }
 
   const selectCategories = await scrapeSelectCategories();
-  const categories =
-    selectCategories.length > 0 ? selectCategories : await scrapeMenuCategories();
+  log('tradera.category.scrape.select', {
+    count: selectCategories.length,
+    currentUrl: page.url(),
+  });
+  const menuCategories = selectCategories.length > 0 ? [] : await scrapeMenuCategories();
+  if (selectCategories.length === 0) {
+    log('tradera.category.scrape.menu', {
+      count: menuCategories.length,
+      currentUrl: page.url(),
+    });
+  }
+  const categories = selectCategories.length > 0 ? selectCategories : menuCategories;
 
   if (categories.length === 0) {
     const emptyAuthDiagnostics = await readAuthDiagnostics();

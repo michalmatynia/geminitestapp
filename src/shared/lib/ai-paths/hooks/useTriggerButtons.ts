@@ -17,7 +17,7 @@ import {
   readTriggerButtonRunFeedback,
   type TriggerButtonRunFeedbackSnapshot,
 } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';

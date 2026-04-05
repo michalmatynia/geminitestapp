@@ -19,7 +19,7 @@ import {
 } from '@/shared/lib/products/constants';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ToastOptions } from '@/shared/contracts/ui';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 import {

@@ -2,10 +2,8 @@
 
 import { createContext, useContext, type ReactNode } from 'react';
 
-import type {
-  KangurKnowledgeGraphPreviewResponse,
-  KangurKnowledgeGraphStatusSnapshot,
-} from '@/shared/contracts';
+import type { KangurKnowledgeGraphPreviewResponse } from '@/shared/contracts/kangur-observability';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 
 export type KnowledgeGraphPreviewDraft = {

@@ -2,14 +2,7 @@ import React from 'react';
 
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { AiNode, Edge, PortDataType } from '@/shared/lib/ai-paths';
-import {
-  arePortTypesCompatible,
-  formatPortDataTypes,
-  formatRuntimeValue,
-  getPortDataTypes,
-  getValueTypeLabel,
-  isValueCompatibleWithTypes,
-} from '@/shared/lib/ai-paths';
+import { arePortTypesCompatible, formatPortDataTypes, formatRuntimeValue, getPortDataTypes, getValueTypeLabel, isValueCompatibleWithTypes } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

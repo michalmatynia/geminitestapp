@@ -1,3 +1,4 @@
+/** @deprecated Do not import from this barrel! Use specific sub-barrel instead */
 export * from './ui-utils';
 export * from './object-utils';
 export * from './time-utils';

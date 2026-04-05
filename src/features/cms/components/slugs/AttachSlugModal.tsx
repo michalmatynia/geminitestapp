@@ -4,14 +4,10 @@ import React, { useMemo, useState } from 'react';
 
 import type { Slug } from '@/shared/contracts/cms';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import {
-  FormModal,
-  FormField,
-  LoadingState,
-  SearchableList,
-  Button,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { FormModal, FormField } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { SearchableList } from '@/shared/ui/data-display.public';
+import { Button } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

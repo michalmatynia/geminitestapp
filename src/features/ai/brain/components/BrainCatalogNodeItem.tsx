@@ -6,8 +6,10 @@ import React from 'react';
 import { BRAIN_CATALOG_POOL_LABELS } from '@/shared/lib/ai-brain/catalog-entries';
 import type { AiBrainCatalogEntry } from '@/shared/lib/ai-brain/settings';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Badge, TreeContextMenu, TreeRow } from '@/shared/ui';
-import { cn, type MasterTreeNode } from '@/shared/utils';
+import { Badge } from '@/shared/ui/primitives.public';
+import { TreeContextMenu, TreeRow } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
+import { type MasterTreeNode } from '@/shared/utils';
 
 export interface BrainCatalogNodeItemProps {
   node: MasterTreeNode;

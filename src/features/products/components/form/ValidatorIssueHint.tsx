@@ -14,7 +14,7 @@ import { ProductFormData } from '@/shared/contracts/products';
 import { Button } from '@/shared/ui/button';
 import { Hint } from '@/shared/ui/Hint';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 const buildIssueSnippet = (
   value: string,

@@ -4,7 +4,7 @@ import React from 'react';
 import { HelpCircle } from 'lucide-react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button, Tooltip } from '@/shared/ui';
+import { Button, Tooltip } from '@/shared/ui/primitives.public';
 
 export type PromptExploderDocsTooltipSwitchRuntimeContextValue = {
   docsTooltipsEnabled: boolean;

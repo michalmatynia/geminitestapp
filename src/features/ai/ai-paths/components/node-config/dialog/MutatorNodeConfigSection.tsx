@@ -1,6 +1,6 @@
 'use client';
 
-import { Input, Label, Textarea } from '@/shared/ui';
+import { Input, Label, Textarea } from '@/shared/ui/primitives.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

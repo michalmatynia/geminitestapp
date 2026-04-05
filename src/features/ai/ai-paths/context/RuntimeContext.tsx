@@ -2,16 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 
-import type {
-  AiNode,
-  RuntimePortValues,
-  ParserSampleState,
-  UpdaterSampleState,
-  PathDebugSnapshot,
-  RuntimeHistoryEntry,
-  AiPathRuntimeNodeStatusMap,
-  AiPathRuntimeEvent,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, RuntimePortValues, ParserSampleState, UpdaterSampleState, PathDebugSnapshot, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {

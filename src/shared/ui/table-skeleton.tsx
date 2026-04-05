@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Skeleton, TableRow, TableCell } from '@/shared/ui';
+import { Skeleton, TableRow, TableCell } from '@/shared/ui/primitives.public';
 
 interface TableSkeletonProps {
   rows?: number;

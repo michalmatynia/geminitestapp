@@ -2,11 +2,8 @@
 
 import React from 'react';
 
-import {
-  FormSection,
-  Hint,
-  Input,
-} from '@/shared/ui';
+import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
+import { Input } from '@/shared/ui/primitives.public';
 
 import { PROMPT_EXPLODER_DOC_CATALOG } from '../../docs/catalog';
 import { normalizeDocQuery as normalize } from './PromptExploder.Utils';

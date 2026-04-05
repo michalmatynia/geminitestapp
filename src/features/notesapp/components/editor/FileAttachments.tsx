@@ -10,13 +10,9 @@ import {
 } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 import type { FileUploadHelpers } from '@/shared/contracts/ui';
-import {
-  Button,
-  Label,
-  FileUploadTrigger,
-  Card,
-  LoadingState,
-} from '@/shared/ui';
+import { Button, Label, Card } from '@/shared/ui/primitives.public';
+import { FileUploadTrigger } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 export function FileAttachments(): React.JSX.Element {
   const { note } = useNoteFormRuntime();

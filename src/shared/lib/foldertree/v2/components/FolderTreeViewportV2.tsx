@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { MasterTreeDropPositionDto } from '@/shared/contracts/master-folder-tree';
-import { EmptyState } from '@/shared/ui';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 import type { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';

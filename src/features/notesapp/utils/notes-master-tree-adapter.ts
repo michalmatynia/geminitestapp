@@ -1,6 +1,6 @@
 import { createMasterFolderTreeAdapterV3 } from '@/shared/lib/foldertree/public';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
-import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
+import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { decodeNotesMasterNodeId, fromFolderMasterNodeId } from './master-folder-tree';
 

@@ -21,7 +21,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/shared/lib/prompt-exploder/bridge';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,

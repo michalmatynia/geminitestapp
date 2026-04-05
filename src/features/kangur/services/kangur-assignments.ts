@@ -1,13 +1,5 @@
-import type {
-  KangurAssignment,
-  KangurAssignmentCreateInput,
-  KangurAssignmentCreateTarget,
-  KangurAssignmentProgress,
-  KangurAssignmentSnapshot,
-  KangurProgressState,
-  KangurScore,
-  KangurAssignmentTarget,
-} from '@kangur/contracts';
+import type { KangurAssignment, KangurAssignmentCreateInput, KangurAssignmentCreateTarget, KangurAssignmentProgress, KangurAssignmentSnapshot, KangurAssignmentTarget } from '@kangur/contracts/kangur-assignments';
+import type { KangurProgressState, KangurScore } from '@kangur/contracts/kangur';
 
 type BuildStoredAssignmentTargetInput = {
   target: KangurAssignmentCreateTarget;

@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import * as React from 'react';
 
 import type { LabeledOptionWithDisabledDto } from '@/shared/contracts/base';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 type NativeOption = LabeledOptionWithDisabledDto<string>;
 

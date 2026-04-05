@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import type { CmsDomain } from '@/shared/contracts/cms';
-import { SelectSimple } from '@/shared/ui';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 type CmsDomainSelectorProps = {
   label?: string;

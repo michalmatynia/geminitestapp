@@ -1,7 +1,9 @@
 import React from 'react';
 
 import { ImageStudioAnalysisSummaryChip } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
-import { Button, InsetPanel, SelectSimple, Tooltip } from '@/shared/ui';
+import { Button, Tooltip } from '@/shared/ui/primitives.public';
+import { InsetPanel } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useGenerationToolbarContext } from './GenerationToolbarContext';
 import { useGenerationToolbarAutoScalerSectionRuntime } from './GenerationToolbarSectionContexts';

@@ -1,3 +1,4 @@
+/** @deprecated Do not import from this barrel! Use @/shared/ui/[domain].public instead */
 export * from './admin.public';
 export * from './primitives.public';
 export * from './forms-and-actions.public';

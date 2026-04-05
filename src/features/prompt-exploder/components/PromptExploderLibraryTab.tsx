@@ -4,23 +4,10 @@ import { Download, FolderOpen, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
 import type { PromptExploderSegmentationRecord } from '@/shared/contracts/prompt-exploder';
-import {
-  Badge,
-  Button,
-  CopyButton,
-  EmptyState,
-  FormSection,
-  Label,
-  SimpleSettingsList,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Textarea,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Badge, Button, Label, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea } from '@/shared/ui/primitives.public';
+import { CopyButton, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { EmptyState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 
 import { useLibraryActions, useLibraryState } from '../context';
 import { promptExploderFormatTimestamp } from '../helpers/formatting';

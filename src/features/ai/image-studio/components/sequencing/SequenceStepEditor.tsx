@@ -12,7 +12,8 @@ import type {
   ImageStudioSequenceStepRuntime,
   ImageStudioSequenceUpscaleStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import { SelectSimple, Tooltip } from '@/shared/ui';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { Tooltip } from '@/shared/ui/primitives.public';
 
 import { useSequenceStepEditorRuntime } from './SequenceStepEditorRuntimeContext';
 import {

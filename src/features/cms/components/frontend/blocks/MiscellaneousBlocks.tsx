@@ -4,7 +4,7 @@ import React from 'react';
 import { getBlockTypographyStyles } from '../theme-styles';
 import { useRequiredBlockSettings } from './BlockContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
+import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 
 export function AnnouncementBlock(): React.ReactNode {

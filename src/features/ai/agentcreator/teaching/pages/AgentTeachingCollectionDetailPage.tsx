@@ -4,15 +4,10 @@ import { Trash2, BookOpen } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
-import {
-  AdminAgentTeachingBreadcrumbs,
-  Button,
-  StandardDataTablePanel,
-  Badge,
-  ConfirmModal,
-  PanelHeader,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { AdminAgentTeachingBreadcrumbs } from '@/shared/ui/admin.public';
+import { Button, Badge } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel, ConfirmModal, PanelHeader } from '@/shared/ui/templates.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { DocumentAddForm } from '../components/DocumentAddForm';
 import { SearchSimulator } from '../components/SearchSimulator';

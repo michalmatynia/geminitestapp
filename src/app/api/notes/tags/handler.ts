@@ -7,7 +7,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { TagCreateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
-import { removeUndefined } from '@/shared/utils';
+import { removeUndefined } from '@/shared/utils/object-utils';
 
 export const querySchema = z.object({
   notebookId: optionalTrimmedQueryString(),

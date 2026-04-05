@@ -14,7 +14,7 @@ import {
 } from '@/features/files/hooks/useFileUploadEvents';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 export const statusOptions = [
   { value: 'all', label: 'All statuses' },

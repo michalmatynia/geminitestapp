@@ -3,7 +3,9 @@
 import { ScanLine, FileText, ExternalLink } from 'lucide-react';
 import React from 'react';
 
-import { Card, PanelHeader, Hint, Button } from '@/shared/ui';
+import { Card, Button } from '@/shared/ui/primitives.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { resolveContentPreview } from './CaseResolverNodeFileUtils';
 import {

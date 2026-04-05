@@ -7,7 +7,7 @@ import { ERROR_CATEGORY } from '@/shared/contracts/observability';
 import { classifyError } from '@/shared/errors/error-classifier';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,
   logClientError,

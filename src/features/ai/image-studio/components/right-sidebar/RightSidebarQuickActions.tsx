@@ -1,7 +1,7 @@
 import { Eye, Play, SlidersHorizontal, Sparkles, Workflow } from 'lucide-react';
 import React from 'react';
 
-import { Button, Input } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui/primitives.public';
 
 import { useRightSidebarContext } from '../RightSidebarContext';
 

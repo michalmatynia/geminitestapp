@@ -5,8 +5,9 @@ import { useState } from 'react';
 
 import type { PlaywrightConfigCaptureRoute } from '@/shared/contracts/ai-paths-core/nodes';
 import { buildCaptureRouteUrl } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
-import { Button, FormField, Input, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 const createRouteId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {

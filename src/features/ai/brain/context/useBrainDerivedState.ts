@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 
-import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummary } from '@/shared/contracts';
+import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths-analytics';
+import type { AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';

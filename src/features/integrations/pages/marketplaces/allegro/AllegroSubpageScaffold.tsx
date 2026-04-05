@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { AdminIntegrationsPageLayout, CompactEmptyState } from '@/shared/ui';
+import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 type AllegroSubpageScaffoldProps = {
   title: string;

@@ -231,7 +231,7 @@ describe('fetchTraderaCategoriesForConnection', () => {
     ).rejects.toMatchObject({
       message:
         'Tradera categories could not be fetched from the live listing page. No categories were detected on the Tradera listing form.',
-      httpStatus: 500,
+      httpStatus: 422,
     });
   });
 

@@ -5,8 +5,11 @@ import React, { useMemo, useState } from 'react';
 import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/shared/lib/foldertree/public';
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FolderTreePanel, TreeHeader, CompactEmptyState } from '@/shared/ui';
-import { canNestTreeNodeV2, type MasterTreeNode } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { FolderTreePanel, CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { TreeHeader } from '@/shared/ui/data-display.public';
+import { canNestTreeNodeV2 } from '@/shared/utils/folder-tree-profiles-v2';
+import { type MasterTreeNode } from '@/shared/utils';
 
 import {
   PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,

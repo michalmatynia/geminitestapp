@@ -3,23 +3,18 @@
 import React from 'react';
 
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import {
-  AI_PATHS_REGEX_TEMPLATES_KEY,
-  buildRegexTemplatesStore,
-  createRegexTemplateId,
-  parseRegexTemplatesStore,
-  renderTemplate,
-} from '@/shared/lib/ai-paths';
+import { AI_PATHS_REGEX_TEMPLATES_KEY, buildRegexTemplatesStore, createRegexTemplateId, parseRegexTemplatesStore } from '@/shared/lib/ai-paths/regex-templates';
+import { renderTemplate } from '@/shared/lib/ai-paths';
 import type { RegexConfig, RegexTemplate } from '@/shared/lib/ai-paths';
 import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { RegexAiPromptSection } from './regex/RegexAiPromptSection';

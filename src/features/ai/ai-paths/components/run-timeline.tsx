@@ -2,15 +2,12 @@
 
 import React from 'react';
 
-import type {
-  AiPathRunEventRecord,
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from '@/shared/lib/ai-paths';
-import { formatDurationMs } from '@/shared/lib/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/lib/ai-paths';
+import { formatDurationMs } from '@/shared/lib/ai-paths/format-duration';
 import type { StatusVariant } from '@/shared/contracts/ui';
-import { Button, Tooltip, StatusBadge, Alert } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Tooltip, Alert } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {

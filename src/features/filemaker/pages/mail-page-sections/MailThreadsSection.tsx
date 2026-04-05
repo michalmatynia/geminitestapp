@@ -4,7 +4,8 @@ import React from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 
-import { Badge, Checkbox, SelectSimple } from '@/shared/ui';
+import { Badge, Checkbox } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { FilemakerEntityTablePage } from '../../components/shared/FilemakerEntityTablePage';
 import { useMailPageContext } from '../FilemakerMail.context';

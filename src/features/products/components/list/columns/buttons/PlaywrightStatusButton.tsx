@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/shared/ui/button';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { getMarketplaceButtonClass } from '../product-column-utils';
 

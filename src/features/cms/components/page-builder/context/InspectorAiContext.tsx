@@ -5,7 +5,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { internalError } from '@/shared/errors/app-error';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 
 import { useInspectorAiContextPreview } from './useInspectorAiContextPreview';

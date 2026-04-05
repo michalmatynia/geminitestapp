@@ -3,8 +3,8 @@
 import { RefreshCcwIcon } from 'lucide-react';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Badge, Button, Card, Skeleton } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Card, Skeleton } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type TrendSnapshot = {

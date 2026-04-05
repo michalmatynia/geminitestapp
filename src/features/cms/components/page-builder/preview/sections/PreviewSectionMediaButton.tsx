@@ -3,8 +3,8 @@
 import React from 'react';
 
 import type { MediaReplaceTarget } from '@/features/cms/components/page-builder/preview/preview-utils';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface PreviewSectionMediaButtonProps {
   show: boolean;

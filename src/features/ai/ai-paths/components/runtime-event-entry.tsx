@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { StatusBadge } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   getRuntimeEventDotVariant,

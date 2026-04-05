@@ -1,6 +1,6 @@
 import type { CurrencyOption } from '@/shared/contracts/internationalization';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
-import { LoadingState } from '@/shared/ui';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';
 

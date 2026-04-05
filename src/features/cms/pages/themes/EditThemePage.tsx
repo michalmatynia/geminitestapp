@@ -7,7 +7,9 @@ import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/T
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import type { CmsTheme, CmsThemeUpdateRequestDto } from '@/shared/contracts/cms';
-import { AdminCmsPageLayout, Alert, LoadingState } from '@/shared/ui';
+import { AdminCmsPageLayout } from '@/shared/ui/admin.public';
+import { Alert } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 

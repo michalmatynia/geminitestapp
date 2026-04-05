@@ -20,7 +20,7 @@ import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {

@@ -8,7 +8,8 @@ import React, { useEffect, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
-import { Button, SelectSimple, Card, Hint } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple, Hint } from '@/shared/ui/forms-and-actions.public';
 
 const FORMAT_OPTIONS: Array<LabeledOptionDto<string>> = [
   { value: 'paragraph', label: 'Paragraph' },

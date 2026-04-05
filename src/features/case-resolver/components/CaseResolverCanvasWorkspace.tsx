@@ -24,8 +24,9 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { Badge, Button, Card, EmptyState } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Card } from '@/shared/ui/primitives.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';

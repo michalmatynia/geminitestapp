@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import type { AiPathLocalRunRecord } from '@/shared/lib/ai-paths';
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

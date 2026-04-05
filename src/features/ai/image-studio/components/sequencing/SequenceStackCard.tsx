@@ -9,7 +9,7 @@ import {
   type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { StudioCard } from '../StudioCard';
 import { SequenceStepEditor } from './SequenceStepEditor';

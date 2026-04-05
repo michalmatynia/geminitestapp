@@ -9,7 +9,9 @@ import {
   type AiNode,
   type CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
-import { Button, EmptyState, Card, Chip, Tooltip, useToast, Badge } from '@/shared/ui';
+import { Button, Card, Tooltip, useToast, Badge } from '@/shared/ui/primitives.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { Chip } from '@/shared/ui/forms-and-actions.public';
 
 import {
   useCaseResolverPageActions,

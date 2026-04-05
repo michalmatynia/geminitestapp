@@ -6,7 +6,8 @@ import { useSelectionActions, useSelectionState, useRuntimeActions } from '@/fea
 import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { AiNode } from '@/shared/lib/ai-paths';
-import { Button, Input, Alert, FormField } from '@/shared/ui';
+import { Button, Input, Alert } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 export interface SimulationDialogProps extends EntityModalProps<AiNode> {

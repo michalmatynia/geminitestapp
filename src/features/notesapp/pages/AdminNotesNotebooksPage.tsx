@@ -9,20 +9,12 @@ import {
   useNoteSettingsState,
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NotebookRecord } from '@/shared/contracts/notes';
-import {
-  AdminNotesPageLayout,
-  Button,
-  useToast,
-  Input,
-  FormSection,
-  FormField,
-  LoadingState,
-  StatusBadge,
-  StandardDataTablePanel,
-  FormActions,
-  FilterPanel,
-  UI_STACK_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminNotesPageLayout } from '@/shared/ui/admin.public';
+import { Button, useToast, Input } from '@/shared/ui/primitives.public';
+import { FormSection, FormField, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { StandardDataTablePanel, FilterPanel } from '@/shared/ui/templates.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

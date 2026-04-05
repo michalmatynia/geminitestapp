@@ -3,7 +3,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import { Checkbox, FormModal, Label } from '@/shared/ui';
+import { Checkbox, Label } from '@/shared/ui/primitives.public';
+import { FormModal } from '@/shared/ui/forms-and-actions.public';
 
 import { useBrain } from '../context/BrainContext';
 import {

@@ -2,10 +2,7 @@ import 'server-only';
 
 import { createHash } from 'node:crypto';
 
-import type {
-  KangurLesson,
-  KangurLessonDocumentStore,
-} from '@kangur/contracts';
+import type { KangurLesson, KangurLessonDocumentStore } from '@kangur/contracts/kangur';
 import type {
   KangurLessonDocument,
   KangurLessonRootBlock,

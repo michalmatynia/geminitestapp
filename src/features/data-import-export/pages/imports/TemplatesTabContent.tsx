@@ -22,19 +22,9 @@ import {
 } from '@/features/data-import-export/hooks/useImportQueries';
 import type { ImportTemplateParameterImport, TemplateMapping } from '@/shared/contracts/integrations';
 import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
-import {
-  Button,
-  Checkbox,
-  ConfirmModal,
-  Input,
-  SelectSimple,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  Label,
-  Card,
-  Hint,
-} from '@/shared/ui';
+import { Button, Checkbox, Input, Tabs, TabsList, TabsTrigger, Label, Card } from '@/shared/ui/primitives.public';
+import { ConfirmModal } from '@/shared/ui/templates.public';
+import { SelectSimple, Hint } from '@/shared/ui/forms-and-actions.public';
 
 import {
   parseParameterTarget,

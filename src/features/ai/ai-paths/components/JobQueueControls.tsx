@@ -4,7 +4,8 @@ import { Trash2 } from 'lucide-react';
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Hint, Label, SelectSimple } from '@/shared/ui';
+import { Hint, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { Label } from '@/shared/ui/primitives.public';
 
 import { JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS } from './job-queue-auto-refresh';
 import { AiPathsPillButton } from './AiPathsPillButton';

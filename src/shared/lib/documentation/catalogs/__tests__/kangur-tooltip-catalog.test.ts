@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  DOCUMENTATION_MODULE_IDS,
-  getDocumentationEntry,
-  getDocumentationEntriesByModule,
-} from '@/shared/lib/documentation';
+import { getDocumentationEntry, getDocumentationEntriesByModule } from '@/shared/lib/documentation/registry';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 
 import { KANGUR_DOC_CATALOG, KANGUR_DOCUMENTATION_LIBRARY } from '../kangur';
 

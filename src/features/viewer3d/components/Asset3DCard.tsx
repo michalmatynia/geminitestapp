@@ -4,8 +4,9 @@ import { Box, Eye, Edit2, Trash2, Globe, Lock } from 'lucide-react';
 import { useCallback, type JSX, type KeyboardEvent, type MouseEvent } from 'react';
 
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Button, Card, Tag } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { Tag } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 

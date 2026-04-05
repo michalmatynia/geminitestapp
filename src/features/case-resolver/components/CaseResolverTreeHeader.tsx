@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 
 import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button, Switch } from '@/shared/ui';
+import { Button, Switch } from '@/shared/ui/primitives.public';
 
 import {
   useCaseResolverFolderTreeDataContext,

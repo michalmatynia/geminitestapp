@@ -3,7 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
-import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { AiPathsLiveLog } from './AiPathsLiveLog';
 import { AiPathsCanvasToolbar } from './AiPathsCanvasToolbar';

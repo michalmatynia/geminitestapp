@@ -59,4 +59,4 @@ export default function RichTextBlock(props: RichTextBlockProps): React.JSX.Elem
     </div>
   );
 }
-import { Input, Textarea, Label } from '@/shared/ui';
+import { Input, Textarea, Label } from '@/shared/ui/primitives.public';

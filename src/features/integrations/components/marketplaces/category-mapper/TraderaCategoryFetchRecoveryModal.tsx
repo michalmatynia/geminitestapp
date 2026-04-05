@@ -5,7 +5,8 @@ import {
   useCategoryMapperConfig,
   useCategoryMapperUIState,
 } from '@/features/integrations/context/CategoryMapperContext';
-import { AppModal, Button } from '@/shared/ui';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { Button } from '@/shared/ui/primitives.public';
 
 export function TraderaCategoryFetchRecoveryModal(): React.JSX.Element | null {
   const { connectionName } = useCategoryMapperConfig();

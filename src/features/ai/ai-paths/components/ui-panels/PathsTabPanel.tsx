@@ -4,23 +4,14 @@ import { Lock, Edit, Copy, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
-import {
-  PATH_TEMPLATES,
-  buildPortablePathPackage,
-  createDefaultPathConfig,
-  createPathId,
-  resolvePortablePathInput,
-} from '@/shared/lib/ai-paths';
-import {
-  ActionMenu,
-  AppModal,
-  Button,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  StandardDataTablePanel,
-  Textarea,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { PATH_TEMPLATES } from '@/shared/lib/ai-paths/core/utils/path-templates';
+import { buildPortablePathPackage, resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
+import { createDefaultPathConfig, createPathId } from '@/shared/lib/ai-paths';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { Button, DropdownMenuItem, DropdownMenuSeparator, Textarea } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useGraphActions, useGraphState } from '../../context';
 import { sanitizePathConfig } from '../AiPathsSettingsUtils';

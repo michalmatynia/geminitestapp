@@ -8,7 +8,7 @@ import {
   useIntegrationsSession,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
-import { Tabs, TabsContent } from '@/shared/ui';
+import { Tabs, TabsContent } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { AllegroApiConsole } from './AllegroApiConsole';

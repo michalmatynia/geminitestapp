@@ -5,16 +5,10 @@ import {
   useIntegrationsData,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
-import {
-  Button,
-  StatusBadge,
-  FormSection,
-  CompactEmptyState,
-  FormActions,
-  ToggleRow,
-  MetadataItem,
-  Card,
-} from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { FormSection, FormActions, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { CompactEmptyState, MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 
 export function AllegroSettings(): React.JSX.Element {
   const { connections } = useIntegrationsData();

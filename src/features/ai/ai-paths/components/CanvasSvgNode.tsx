@@ -4,7 +4,8 @@ import React from 'react';
 
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { NODE_MIN_HEIGHT, NODE_WIDTH, PORT_SIZE } from '@/shared/lib/ai-paths/core/constants';
-import type { DataContractNodeIssueSummary, RuntimeState } from '@/shared/lib/ai-paths';
+import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
+import type { RuntimeState } from '@/shared/lib/ai-paths';
 
 import {
   resolveNodePalette,

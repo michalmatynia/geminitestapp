@@ -5,15 +5,10 @@ import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Badge,
-  Button,
-  InsetPanel,
-  PanelHeader,
-  SearchInput,
-  SectionHeader,
-  StandardDataTablePanel,
-} from '@/shared/ui';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { InsetPanel, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import {

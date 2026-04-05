@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import type { ToggleRowProps } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Card } from './card';
 import { Checkbox } from './checkbox';

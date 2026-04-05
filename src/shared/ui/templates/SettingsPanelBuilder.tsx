@@ -5,7 +5,7 @@ import type {
   SettingsFieldsRendererProps,
   SettingsPanelField,
 } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Checkbox } from '../checkbox';
 import { FormField } from '../form-section';

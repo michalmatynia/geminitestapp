@@ -4,7 +4,7 @@ import {
   resolveKnowledgeGraphBadgeStatus,
   resolveKnowledgeGraphPreviewCoveragePresetId,
 } from './utils';
-import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
 
 const makeStatus = (
   overrides: Partial<Extract<KangurKnowledgeGraphStatusSnapshot, { mode: 'status' }>> = {}

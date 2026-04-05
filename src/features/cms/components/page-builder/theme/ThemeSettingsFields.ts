@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { ThemeSettings, ColorScheme } from '@/shared/contracts/cms-theme';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { SelectSimple } from '@/shared/ui';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 const THEME_ANIMATION_EASING_OPTIONS = [

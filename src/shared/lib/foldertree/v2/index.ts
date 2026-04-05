@@ -1,3 +1,4 @@
+/** @deprecated Do not import from this barrel! Use specific sub-barrel instead */
 export * from './adapter/createMasterFolderTreeAdapterV3';
 export * from './adapter/createMasterFolderTreeTransactionAdapter';
 export * from './components/FolderTreeContextMenu';

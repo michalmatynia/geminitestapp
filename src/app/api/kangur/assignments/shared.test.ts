@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { KangurAssignment, KangurAssignmentSnapshot } from '@kangur/contracts';
+import type { KangurAssignment, KangurAssignmentSnapshot } from '@kangur/contracts/kangur-assignments';
 
 const {
   getKangurAssignmentRepositoryMock,

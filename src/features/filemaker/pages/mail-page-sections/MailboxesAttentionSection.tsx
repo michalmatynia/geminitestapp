@@ -1,7 +1,7 @@
 import { Settings2, ShieldAlert } from 'lucide-react';
 import React from 'react';
 
-import { Badge, Button } from '@/shared/ui';
+import { Badge, Button } from '@/shared/ui/primitives.public';
 
 import { formatFilemakerMailboxAllowlist } from '../../mail-utils';
 

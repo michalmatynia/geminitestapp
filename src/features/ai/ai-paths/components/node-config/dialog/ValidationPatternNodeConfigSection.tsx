@@ -17,16 +17,9 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
-import {
-  Badge,
-  Button,
-  Input,
-  SelectSimple,
-  Textarea,
-  ToggleRow,
-  FormField,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Badge, Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple, ToggleRow, FormField } from '@/shared/ui/forms-and-actions.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

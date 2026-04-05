@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { AdminCaseResolverPageLayout } from '@/shared/ui';
+import { AdminCaseResolverPageLayout } from '@/shared/ui/admin.public';
 
 import { CaseListPanel } from '../components/CaseListPanel';
 import { AdminCaseResolverCasesProvider } from '../context/AdminCaseResolverCasesContext';

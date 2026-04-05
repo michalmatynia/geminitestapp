@@ -7,7 +7,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { CategoryUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
-import { removeUndefined } from '@/shared/utils';
+import { removeUndefined } from '@/shared/utils/object-utils';
 
 export const querySchema = z.object({
   recursive: optionalBooleanQuerySchema().default(false),

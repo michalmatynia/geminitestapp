@@ -3,9 +3,9 @@
 import React, { useMemo } from 'react';
 
 import type { GridPickerItem } from '@/shared/contracts/ui';
-import { Tooltip } from '@/shared/ui';
+import { Tooltip } from '@/shared/ui/primitives.public';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ICON_LIBRARY, type IconLibraryItem } from '../lib/icon-library';
 

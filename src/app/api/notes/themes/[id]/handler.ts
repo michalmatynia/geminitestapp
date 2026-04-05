@@ -6,7 +6,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ThemeUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
-import { removeUndefined } from '@/shared/utils';
+import { removeUndefined } from '@/shared/utils/object-utils';
 
 /**
  * GET /api/notes/themes/[id]

@@ -7,7 +7,8 @@ import {
   CategoryMapperPageProvider,
   useCategoryMapperPageSelection,
 } from '@/features/integrations/context/CategoryMapperPageContext';
-import { SectionHeader, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
+import { SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { Card } from '@/shared/ui/primitives.public';
 
 function CategoryMapperPageContent(): React.JSX.Element {
   const { selectedConnectionId, selectedMarketplaceLabel, isSupportedConnection } =

@@ -1,13 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { apiHandler, apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import {
-  kangurLearnerCreateInputSchema,
-  kangurLearnerUpdateInputSchema,
-  kangurLearnerActivityUpdateInputSchema,
-  kangurProgressStateSchema,
-  kangurScoreCreateInputSchema,
-  kangurSubjectFocusSchema,
-} from '@kangur/contracts';
+import { kangurLearnerCreateInputSchema, kangurLearnerUpdateInputSchema, kangurLearnerActivityUpdateInputSchema, kangurProgressStateSchema, kangurScoreCreateInputSchema } from '@kangur/contracts/kangur';
+import { kangurSubjectFocusSchema } from '@kangur/contracts/kangur-lesson-constants';
 import {
   getKangurLearnerActivityHandler,
   postKangurLearnerActivityHandler,

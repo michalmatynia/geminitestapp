@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { LoadingState, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
+import { LoadingState, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { CentralDocsSyncPanel } from '../components/validation/CentralDocsSyncPanel';
 import { DocsConnectionsPanel } from '../components/validation/DocsConnectionsPanel';

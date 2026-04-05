@@ -13,20 +13,9 @@ import {
 } from '@/features/notesapp/constants/note-settings-options';
 import type { NoteSettings } from '@/shared/contracts/notes';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import {
-  AdminNotesPageLayout,
-  Button,
-  SelectSimple,
-  useToast,
-  Label,
-  RadioGroup,
-  RadioGroupItem,
-  FormSection,
-  FormField,
-  ToggleRow,
-  Card,
-  FormActions,
-} from '@/shared/ui';
+import { AdminNotesPageLayout } from '@/shared/ui/admin.public';
+import { Button, useToast, Label, RadioGroup, RadioGroupItem, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
 
 const editorModeOptions = [
   {

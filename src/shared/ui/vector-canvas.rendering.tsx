@@ -15,7 +15,7 @@ import {
 import { type JSX } from 'react';
 
 import { type VectorPoint, type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
 import { Tooltip } from './tooltip';

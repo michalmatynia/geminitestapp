@@ -3,7 +3,7 @@
 import { ArrowLeftRight, Eye, EyeOff, Undo2 } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import { useCenterPreviewContext } from './CenterPreviewContext';
 import { useCenterPreviewCanvasContext } from './sections/CenterPreviewCanvasContext';

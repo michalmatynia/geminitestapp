@@ -4,15 +4,10 @@ import {
   useIntegrationsActions,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
-import {
-  Button,
-  StatusBadge,
-  FormSection,
-  CompactEmptyState,
-  FormActions,
-  MetadataItem,
-  Card,
-} from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { FormSection, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { CompactEmptyState, MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 
 export function LinkedInSettings(): React.JSX.Element {
   const { connections } = useIntegrationsData();

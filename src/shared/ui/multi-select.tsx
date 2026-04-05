@@ -4,7 +4,7 @@ import { ChevronsUpDown } from 'lucide-react';
 import * as React from 'react';
 
 import type { MultiSelectOption } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
 import {

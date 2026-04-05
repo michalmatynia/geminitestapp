@@ -4,16 +4,10 @@ import { CopyIcon } from 'lucide-react';
 import { useId, type JSX } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import {
-  Badge,
-  Button,
-  Checkbox,
-  Label,
-  SelectSimple,
-  Textarea,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Checkbox, Label, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { insetPanelVariants } from './InsetPanel';
 

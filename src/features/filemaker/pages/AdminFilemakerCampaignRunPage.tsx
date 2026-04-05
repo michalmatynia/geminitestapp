@@ -4,12 +4,9 @@ import React, { useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  AdminFilemakerBreadcrumbs,
-  Badge,
-  Button,
-  SectionHeader,
-} from '@/shared/ui';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,

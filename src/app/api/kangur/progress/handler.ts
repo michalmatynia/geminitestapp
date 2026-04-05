@@ -7,12 +7,9 @@ import {
   resolveKangurActor,
 } from '@/features/kangur/server';
 import { ActivityTypes } from '@/shared/constants/observability';
-import {
-  createDefaultKangurProgressState,
-  kangurLessonSubjectSchema,
-  type KangurLessonSubject,
-  type KangurProgressState,
-} from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
+import { kangurLessonSubjectSchema } from '@kangur/contracts/kangur-lesson-constants';
+import { type KangurLessonSubject, type KangurProgressState } from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';

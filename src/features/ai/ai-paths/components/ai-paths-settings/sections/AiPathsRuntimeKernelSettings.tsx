@@ -1,10 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
-  AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
-} from '@/shared/lib/ai-paths';
+import { AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY } from '@/shared/lib/ai-paths';
 import {
   normalizeRuntimeKernelConfigRecord,
   parseRuntimeKernelCodeObjectResolverIds,
@@ -15,7 +12,8 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { Button, StatusBadge } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 import { useGraphActions } from '@/features/ai/ai-paths/context';

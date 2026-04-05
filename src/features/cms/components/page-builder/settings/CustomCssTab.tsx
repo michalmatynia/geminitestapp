@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Textarea } from '@/shared/ui';
+import { Textarea } from '@/shared/ui/primitives.public';
 
 import { CssAiSection } from './CssAiSection';
 import {

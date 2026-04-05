@@ -10,13 +10,8 @@ import {
   type AiTriggerButtonCreatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
-import {
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-  resolvePortablePathInput,
-  type PathConfig,
-  triggerButtonsApi,
-} from '@/shared/lib/ai-paths';
+import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, type PathConfig, triggerButtonsApi } from '@/shared/lib/ai-paths';
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { persistLegacyTriggerContextModeRepair } from '@/shared/lib/ai-paths/legacy-trigger-context-mode-persistence';
 import { api } from '@/shared/lib/api-client';
@@ -28,21 +23,14 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  AppModal,
-  Badge,
-  Button,
-  Checkbox,
-  useToast,
-  PanelHeader,
-  ConfirmModal,
-  Card,
-  Hint,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { Badge, Button, Checkbox, useToast, Card } from '@/shared/ui/primitives.public';
+import { PanelHeader, ConfirmModal } from '@/shared/ui/templates.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 

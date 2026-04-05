@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Card } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
 
 import {
   type AnalysisResultSectionRuntime,

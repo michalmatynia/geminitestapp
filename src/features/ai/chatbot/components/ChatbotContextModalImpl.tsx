@@ -4,7 +4,8 @@ import React, { useCallback, useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { Button, Input, Tag } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { Tag } from '@/shared/ui/forms-and-actions.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { SettingsPanelField } from '@/shared/contracts/ui';
 

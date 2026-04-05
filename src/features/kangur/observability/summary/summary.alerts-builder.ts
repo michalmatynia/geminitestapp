@@ -1,13 +1,6 @@
-import type {
-  KangurAnalyticsSnapshot,
-  KangurKnowledgeGraphStatusSnapshot,
-  KangurObservabilityAlert,
-  KangurObservabilityRange,
-  KangurObservabilityStatus,
-  KangurPerformanceBaseline,
-  KangurRouteMetrics,
-  SystemLogMetricsDto as SystemLogMetrics,
-} from '@/shared/contracts';
+import type { KangurAnalyticsSnapshot, KangurObservabilityAlert, KangurObservabilityRange, KangurObservabilityStatus, KangurPerformanceBaseline, KangurRouteMetrics } from '@/shared/contracts/kangur-observability';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
+import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
 import { SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS } from '@/shared/lib/observability/workers/system-log-alerts/config';
 import {
   KANGUR_ROUTE_DEFINITIONS,

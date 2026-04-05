@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {

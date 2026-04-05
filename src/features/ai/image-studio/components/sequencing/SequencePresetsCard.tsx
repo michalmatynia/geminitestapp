@@ -6,7 +6,8 @@ import {
   normalizeImageStudioSequenceSteps,
   type ImageStudioSequencePreset,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import { SelectSimple, Button, useToast } from '@/shared/ui';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { Button, useToast } from '@/shared/ui/primitives.public';
 
 import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
 import { StudioCard } from '../StudioCard';

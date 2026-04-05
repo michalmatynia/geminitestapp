@@ -3,7 +3,7 @@
 import { useMemo, type ReactNode } from 'react';
 
 import type { SectionHeaderRefreshConfig } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { RefreshButton } from './RefreshButton';
 import { UI_CENTER_ROW_SPACED_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from './layout';

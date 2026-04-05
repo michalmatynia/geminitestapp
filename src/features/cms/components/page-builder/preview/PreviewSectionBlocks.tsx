@@ -12,8 +12,9 @@ import {
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
-import { Card, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Card } from '@/shared/ui/primitives.public';
+import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useBlockContext, BlockContextProvider } from './context/BlockContext';
 import { usePreviewEditorState } from './context/PreviewEditorContext';

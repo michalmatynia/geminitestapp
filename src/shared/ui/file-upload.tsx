@@ -3,7 +3,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import * as React from 'react';
 
-import { getTextContent } from '@/shared/utils';
+import { getTextContent } from '@/shared/utils/a11y';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type {

@@ -8,7 +8,8 @@ import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/features/ai/ai-context-registry/context/page-context';
-import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingState, Card } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger, Card } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { ChatbotDebugPanel } from '../components/ChatbotDebugPanel';
 import { ChatInterface } from '../components/ChatInterface';

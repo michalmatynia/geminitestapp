@@ -9,7 +9,7 @@ import type {
 } from '@/shared/contracts/master-folder-tree';
 import type { IdDataDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
-import type { MasterTreeId } from '@/shared/utils';
+import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
 
 export interface SlotTreeContextValue {

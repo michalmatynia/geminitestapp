@@ -24,17 +24,10 @@ import { api } from '@/shared/lib/api-client';
 import { createEmptyPlaywrightCaptureRoute } from '@/shared/lib/ai-paths/core/playwright/capture-defaults';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { PlaywrightCaptureRoutesEditor } from '@/shared/ui/playwright/PlaywrightCaptureRoutesEditor';
-import {
-  AdminIntegrationsPageLayout,
-  Button,
-  Card,
-  FormField,
-  Input,
-  LoadingState,
-  SelectSimple,
-  Textarea,
-  useToast,
-} from '@/shared/ui';
+import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Card, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type PlaywrightIntegrationPageProps = {

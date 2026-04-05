@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { CopyButton } from './copy-button';

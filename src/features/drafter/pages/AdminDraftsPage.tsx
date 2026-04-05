@@ -8,17 +8,11 @@ import { useDeleteDraftMutation, useDraftQueries } from '@/features/drafter/hook
 import type { ProductDraft } from '@/shared/contracts/products';
 import type { SimpleSettingsListItem } from '@/shared/contracts/ui';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import {
-  Badge,
-  Button,
-  FormModal,
-  ListPanel,
-  SectionHeader,
-  SimpleSettingsList,
-  StatusBadge,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-  useToast,
-} from '@/shared/ui';
+import { Badge, Button, useToast } from '@/shared/ui/primitives.public';
+import { FormModal } from '@/shared/ui/forms-and-actions.public';
+import { ListPanel, SectionHeader, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { CmsSettingsField } from '@/features/cms/types/page-builder';
-import { Input, Label } from '@/shared/ui';
+import { Input, Label } from '@/shared/ui/primitives.public';
 
 import { SettingsFieldRenderer } from '../SettingsFieldRenderer';
 

@@ -9,21 +9,10 @@ import type {
 } from '@/shared/contracts/ai-trigger-buttons';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import {
-  ActionMenu,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DropdownMenuItem,
-  StatusBadge,
-  ToggleRow,
-  Tooltip,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { ActionMenu, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DropdownMenuItem, Tooltip } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { type TriggerButtonLastRun, useTriggerButtons } from '../../hooks/useTriggerButtons';
 import { resolveTriggerButtonRunFeedbackPresentation } from '../../trigger-button-run-feedback';

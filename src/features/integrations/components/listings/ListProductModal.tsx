@@ -8,7 +8,7 @@ import {
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal } from '@/shared/ui';
+import { FormModal } from '@/shared/ui/forms-and-actions.public';
 
 import { ExportLogsPanel } from './ExportLogsPanel';
 import { useListProductForm } from './hooks/useListProductForm';

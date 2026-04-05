@@ -7,13 +7,9 @@ import {
   requireActiveLearner,
   resolveKangurActor,
 } from '@/features/kangur/server';
-import {
-  kangurLessonSubjectSchema,
-  kangurScoreLimitSchema,
-  kangurScoreSortSchema,
-  resolveKangurScoreSubject,
-  type KangurLessonSubject,
-} from '@kangur/contracts';
+import { kangurLessonSubjectSchema } from '@kangur/contracts/kangur-lesson-constants';
+import { kangurScoreLimitSchema, kangurScoreSortSchema, resolveKangurScoreSubject } from '@kangur/contracts/kangur';
+import { type KangurLessonSubject } from '@kangur/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import {

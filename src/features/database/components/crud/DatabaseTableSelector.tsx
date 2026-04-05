@@ -4,7 +4,8 @@ import { PlusIcon } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, SearchableSelect } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SearchableSelect } from '@/shared/ui/forms-and-actions.public';
 
 import {
   useCrudPanelActionsContext,

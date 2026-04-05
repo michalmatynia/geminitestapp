@@ -1,8 +1,10 @@
 import React from 'react';
 
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { FormSection, SearchInput, LoadingState, Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { FormSection, SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { resolveProductListingsProductName } from '../product-listings-labels';
 import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';

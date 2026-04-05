@@ -3,7 +3,7 @@
 import { Play, Square } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import { StudioCard } from '../StudioCard';
 import { useSequencingPanelContext } from './SequencingPanelContext';

@@ -17,7 +17,7 @@ import type {
   ImageRetryPreset,
   ImportResponse,
 } from '@/shared/contracts/integrations';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { createImportExportRuntimeActions } from './import-export-runtime-actions';
 import { useImportExportRuntimeResources } from './useImportExportRuntimeResources';

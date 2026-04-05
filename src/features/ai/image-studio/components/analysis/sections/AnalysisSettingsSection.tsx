@@ -3,7 +3,8 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, Card, SelectSimple, FormActions } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormActions } from '@/shared/ui/forms-and-actions.public';
 
 import { type AnalysisMode, type ShadowPolicy, type DetectionMode } from '../analysis-types';
 import {

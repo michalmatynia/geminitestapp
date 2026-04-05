@@ -14,7 +14,7 @@ import {
   getProductValidationSemanticAuditRecordKey,
   getProductValidationSemanticAuditHistory,
 } from '@/shared/lib/products/utils/validator-semantic-state';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { fromPatternMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';

@@ -1,6 +1,7 @@
 'use client';
 
-import { FormField, FormSection, Input, SelectSimple } from '@/shared/ui';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { Input } from '@/shared/ui/primitives.public';
 import {
   PARTY_KIND_OPTIONS as FILEMAKER_PARTY_KIND_OPTIONS,
   formatCommaSeparatedValues as filemakerFormatCommaSeparatedValues,

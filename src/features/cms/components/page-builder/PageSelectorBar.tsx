@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PageSummary } from '@/shared/contracts/cms';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
-import { SelectSimple } from '@/shared/ui';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsPage } from '../../hooks/useCmsQueries';

@@ -1,8 +1,9 @@
 import React from 'react';
 
 import { formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { Card, Hint } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Card } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 type CanvasRunControlNoticeProps = {
   variant: 'warning' | 'info';

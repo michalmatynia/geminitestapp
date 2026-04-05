@@ -13,7 +13,7 @@ import {
   KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
   resolveKangurSocialProgrammableCaptureRoutePreview,
 } from '@/features/kangur/social/shared/social-playwright-capture';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import type {
   KangurSocialImageAddonsBatchJob,
 } from '@/shared/contracts/kangur-social-image-addons';

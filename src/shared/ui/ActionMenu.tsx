@@ -3,7 +3,7 @@ import React, { type ReactNode } from 'react';
 
 import { Button } from '@/shared/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/shared/ui/dropdown-menu';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface ActionMenuProps {
   children: ReactNode;

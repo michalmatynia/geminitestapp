@@ -22,14 +22,9 @@ import {
 } from '@/features/ai/agentcreator/utils/personas';
 import type { AgentPersonaMood, AgentPersonaMoodId } from '@/shared/contracts/agents';
 import { DEFAULT_AGENT_PERSONA_MOOD_ID } from '@/shared/contracts/agents';
-import {
-  Button,
-  FileUploadButton,
-  FormField,
-  Textarea,
-  useToast,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { FileUploadButton, FormField } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import {
   logClientCatch,
   logClientError,

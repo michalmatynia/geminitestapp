@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { formatFilemakerMailFolderLabel } from '../mail-master-tree';
 import type {

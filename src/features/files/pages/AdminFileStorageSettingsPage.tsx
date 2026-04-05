@@ -9,20 +9,10 @@ import {
   fileStorageSourceValues,
 } from '@/shared/lib/files/constants';
 import type { FastCometStorageConfig, FileStorageSource } from '@/shared/lib/files/constants';
-import {
-  AdminSettingsPageLayout,
-  Alert,
-  Card,
-  FormActions,
-  FormField,
-  FormSection,
-  Hint,
-  Input,
-  SelectSimple,
-  ToggleRow,
-  UI_GRID_ROOMY_CLASSNAME,
-  useToast,
-} from '@/shared/ui';
+import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
+import { Alert, Card, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 

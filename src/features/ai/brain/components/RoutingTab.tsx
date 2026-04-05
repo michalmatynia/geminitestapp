@@ -2,7 +2,9 @@
 
 import React from 'react';
 
-import { Card, CollapsibleSection, StatusBadge, StatusToggle } from '@/shared/ui';
+import { Card, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { StatusToggle } from '@/shared/ui/forms-and-actions.public';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainAssignment } from '../settings';

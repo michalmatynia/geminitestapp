@@ -1,6 +1,7 @@
 'use client';
 
-import { Badge, Button, FormSection } from '@/shared/ui';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import {
   getFilemakerOrganizationById,

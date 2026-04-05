@@ -7,7 +7,7 @@ import type {
   NoteWithRelations,
   RelatedNote,
 } from '@/shared/contracts/notes';
-import { Breadcrumbs } from '@/shared/ui';
+import { Breadcrumbs } from '@/shared/ui/navigation-and-layout.public';
 
 import { buildBreadcrumbPath, darkenColor } from '../../utils';
 import {

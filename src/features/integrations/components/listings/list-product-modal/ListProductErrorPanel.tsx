@@ -2,7 +2,8 @@ import React from 'react';
 
 import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import { ActionMenu, DropdownMenuItem, Alert } from '@/shared/ui';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { DropdownMenuItem, Alert } from '@/shared/ui/primitives.public';
 
 import { useImageRetryPresets } from '../useImageRetryPresets';
 import { useListProductModalFormContext } from './context/ListProductModalFormContext';

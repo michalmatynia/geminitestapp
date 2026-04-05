@@ -9,7 +9,7 @@ import {
   parseKangurLessons,
 } from '@/features/kangur/settings';
 import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
-import type { KangurLesson } from '@kangur/contracts';
+import type { KangurLesson } from '@kangur/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { KangurLessonListInput, KangurLessonRepository } from './types';

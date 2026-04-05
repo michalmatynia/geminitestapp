@@ -32,16 +32,9 @@ import { IconSelector } from '@/shared/lib/icons';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  AppModal,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  useToast,
-  LoadingState,
-  Card,
-} from '@/shared/ui';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { Tabs, TabsContent, TabsList, TabsTrigger, useToast, Card } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 

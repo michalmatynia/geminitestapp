@@ -4,8 +4,8 @@ import { ChevronDown, ChevronRight, Lock, Unlock, Trash2, GitBranch } from 'luci
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput as CaseResolverTreeNodeProps } from '@/shared/lib/foldertree/public';
-import { Button, Badge, Input } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Badge, Input } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 import {

@@ -7,20 +7,8 @@ import { useState } from 'react';
 import { useAdminLayoutActions } from '@/features/admin/context/AdminLayoutContext';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  ToggleRow,
-  ThemeToggle as ThemeToggleComponent,
-} from '@/shared/ui';
+import { Avatar, AvatarFallback, AvatarImage, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/shared/ui/primitives.public';
+import { ToggleRow, ThemeToggle as ThemeToggleComponent } from '@/shared/ui/forms-and-actions.public';
 
 export function UserNav(): React.ReactNode {
   const { data: session } = useSession();

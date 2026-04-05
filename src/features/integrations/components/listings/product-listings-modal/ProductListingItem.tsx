@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { ProductListingActions } from './listing-item/ProductListingActions';
 import { ProductListingDetails } from './listing-item/ProductListingDetails';

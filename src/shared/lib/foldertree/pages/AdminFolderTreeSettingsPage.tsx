@@ -8,7 +8,9 @@ import {
 } from '@/shared/lib/foldertree/v2/settings';
 import { useFolderTreeProfiles } from '@/shared/lib/foldertree/public';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, SectionHeader, useToast, FormActions } from '@/shared/ui';
+import { Button, useToast } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { FormActions } from '@/shared/ui/forms-and-actions.public';
 import {
   createDefaultFolderTreeProfilesV2,
   type FolderTreeInstance,

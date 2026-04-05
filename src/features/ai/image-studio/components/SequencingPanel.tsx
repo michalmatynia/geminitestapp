@@ -19,7 +19,7 @@ import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignme
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   normalizeShapeToPolygons,

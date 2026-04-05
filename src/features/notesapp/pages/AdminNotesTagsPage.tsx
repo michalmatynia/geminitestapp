@@ -15,20 +15,11 @@ import {
   useNoteSettingsState,
 } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { TagRecord } from '@/shared/contracts/notes';
-import {
-  AdminNotesPageLayout,
-  Button,
-  useToast,
-  Input,
-  FormSection,
-  FormField,
-  StandardDataTablePanel,
-  Tag,
-  CompactEmptyState,
-  FilterPanel,
-  FormActions,
-  UI_STACK_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminNotesPageLayout } from '@/shared/ui/admin.public';
+import { Button, useToast, Input } from '@/shared/ui/primitives.public';
+import { FormSection, FormField, Tag, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel, FilterPanel } from '@/shared/ui/templates.public';
+import { CompactEmptyState, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

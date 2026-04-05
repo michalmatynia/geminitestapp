@@ -14,7 +14,7 @@ import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewe
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type {

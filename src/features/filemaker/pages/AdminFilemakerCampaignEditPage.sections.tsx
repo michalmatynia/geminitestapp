@@ -6,7 +6,8 @@ import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import type {
   FilemakerEmailCampaign,
 } from '@/shared/contracts/filemaker';
-import { Badge, Button, FormField, FormSection, Input, SelectSimple, Textarea } from '@/shared/ui';
+import { Badge, Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { AudienceSourceSection } from './campaign-edit-sections/AudienceSourceSection';
 export { DeliveryGovernanceSection } from './campaign-edit-sections/DeliveryGovernanceSection';

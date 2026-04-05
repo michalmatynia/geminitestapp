@@ -3,25 +3,9 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  DEFAULT_CONTEXT_ROLE,
-  applyContextPreset,
-  formatRuntimeValue,
-  getContextPresetSet,
-  parsePathList,
-  safeStringify,
-  toggleContextTarget,
-} from '@/shared/lib/ai-paths';
-import {
-  Button,
-  Input,
-  Textarea,
-  SelectSimple,
-  CopyButton,
-  Label,
-  Card,
-  FormField,
-} from '@/shared/ui';
+import { DEFAULT_CONTEXT_ROLE, applyContextPreset, formatRuntimeValue, getContextPresetSet, parsePathList, safeStringify, toggleContextTarget } from '@/shared/lib/ai-paths';
+import { Button, Input, Textarea, Label, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple, CopyButton, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import {
   useAiPathOrchestrator,

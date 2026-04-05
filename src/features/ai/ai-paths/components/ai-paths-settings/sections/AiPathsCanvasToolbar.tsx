@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, StatusBadge } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import { useSelectionState, useSelectionActions } from '@/features/ai/ai-paths/context';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 

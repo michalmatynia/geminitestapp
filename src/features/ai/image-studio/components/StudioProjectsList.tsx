@@ -22,16 +22,10 @@ import {
 } from '@/features/ai/image-studio/utils/studio-settings';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  Badge,
-  Button,
-  Card,
-  Input,
-  SearchInput,
-  useToast,
-  StandardDataTablePanel,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Card, Input, useToast } from '@/shared/ui/primitives.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

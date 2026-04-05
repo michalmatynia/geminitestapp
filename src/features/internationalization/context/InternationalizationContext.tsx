@@ -15,7 +15,7 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 import { useCountries, useCurrencies, useLanguages } from '@/shared/hooks/use-i18n-queries';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { resolveCaseResolverHistoryEntryPreview } from '@/features/case-resolver/utils/caseResolverUtils';
 import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import {
   type CaseResolverHistoryEntriesRuntimeValue,

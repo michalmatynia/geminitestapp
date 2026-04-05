@@ -9,7 +9,7 @@ import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignme
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';
 import { parseColorSchemeFromText } from './theme-utils';

@@ -4,17 +4,9 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { IconSelector } from '@/shared/lib/icons';
-import {
-  Checkbox,
-  Input,
-  SectionHeader,
-  Textarea,
-  SelectSimple,
-  FormField,
-  Card,
-  UI_GRID_RELAXED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Checkbox, Input, Textarea, Card } from '@/shared/ui/primitives.public';
+import { SectionHeader, UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import {
   type FolderTreeInstance,
   folderTreePlaceholderEmphasisValues,

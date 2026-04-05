@@ -1,5 +1,5 @@
 import type { BlockInstance } from '@/features/cms/types/page-builder';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';

@@ -2,10 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {
-  Badge,
-  Hint,
-} from '@/shared/ui';
+import { Badge } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 import {
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';

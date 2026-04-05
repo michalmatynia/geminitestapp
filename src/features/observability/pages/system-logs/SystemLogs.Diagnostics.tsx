@@ -7,12 +7,10 @@ import {
   type MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
   type MongoIndexInfoDto as MongoIndexInfo,
 } from '@/shared/contracts/observability';
-import {
-  Button,
-  Hint,
-  StandardDataTablePanel,
-  StatusBadge,
-} from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import { formatTimestamp } from '../../utils/formatTimestamp';
 
 export function LogDiagnostics(): React.JSX.Element {

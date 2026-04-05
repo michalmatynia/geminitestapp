@@ -5,17 +5,10 @@ import {
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from '@/shared/contracts/ai-insights';
-import {
-  Input,
-  Textarea,
-  FormSection,
-  FormField,
-  SimpleSettingsList,
-  ToggleRow,
-  CollapsibleSection,
-  StatusToggle,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Input, Textarea, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { FormSection, FormField, ToggleRow, StatusToggle } from '@/shared/ui/forms-and-actions.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainFeature, type AiBrainAssignment } from '../settings';

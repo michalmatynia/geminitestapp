@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMasterFolderTreeShell } from '@/shared/lib/foldertree/v2/shell/useMasterFolderTreeShell';
 import { getFolderTreeUiStateV2Key } from '@/shared/lib/foldertree/v2/settings';
 import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
-import type { MasterTreeNode } from '@/shared/utils';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { createDefaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 
 const {

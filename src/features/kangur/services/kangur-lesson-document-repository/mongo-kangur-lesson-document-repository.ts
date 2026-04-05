@@ -2,10 +2,7 @@ import 'server-only';
 
 import type { Collection, Db, Document, Filter } from 'mongodb';
 
-import type {
-  KangurLessonDocument,
-  KangurLessonDocumentStore,
-} from '@kangur/contracts';
+import type { KangurLessonDocument, KangurLessonDocumentStore } from '@kangur/contracts/kangur';
 import {
   KANGUR_LESSON_DOCUMENTS_SETTING_KEY,
   createStarterKangurLessonDocument,

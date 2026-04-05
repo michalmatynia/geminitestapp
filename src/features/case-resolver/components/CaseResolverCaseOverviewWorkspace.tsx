@@ -4,16 +4,9 @@ import { Network } from 'lucide-react';
 import React from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import {
-  Badge,
-  Button,
-  Card,
-  CompactEmptyState,
-  FormField,
-  Input,
-  MultiSelect,
-  SelectSimple,
-} from '@/shared/ui';
+import { Badge, Button, Card, Input } from '@/shared/ui/primitives.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { FormField, MultiSelect, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
 import {

@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useSaveCountryMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import type { CountryOption, CurrencyOption } from '@/shared/contracts/internationalization';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 interface CountryFormState {

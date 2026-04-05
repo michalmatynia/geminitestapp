@@ -1,9 +1,4 @@
-import type {
-  KangurRouteHealth,
-  KangurRouteLatencyStats,
-  KangurRouteMetrics,
-  KangurObservabilityRange,
-} from '@/shared/contracts';
+import type { KangurRouteHealth, KangurRouteLatencyStats, KangurRouteMetrics, KangurObservabilityRange } from '@/shared/contracts/kangur-observability';
 import { SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS } from '@/shared/lib/observability/workers/system-log-alerts/config';
 import { KANGUR_ROUTE_DEFINITIONS } from './summary.constants';
 import { toPercent } from './summary.analytics';

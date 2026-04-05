@@ -2,7 +2,8 @@ import React from 'react';
 
 import { useIntegrationProductsWithCount } from '@/features/integrations/hooks/useIntegrationProductQueries';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
+import { FormModal } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';
 import { ListingSettingsModalProvider } from './ListingSettingsModalProvider';

@@ -1,5 +1,5 @@
 import FileManager from '@/features/files/components/FileManager';
-import { PageLayout } from '@/shared/ui';
+import { PageLayout } from '@/shared/ui/navigation-and-layout.public';
 
 export function AdminFilesPage(): React.JSX.Element {
   return (

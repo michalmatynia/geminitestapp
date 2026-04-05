@@ -2,7 +2,7 @@
 
 import { cloneElement, isValidElement, useId, useMemo } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Card } from './card';
 import { Label } from './label';

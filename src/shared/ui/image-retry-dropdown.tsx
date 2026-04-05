@@ -1,4 +1,4 @@
-import type { ImageRetryPreset } from '@/shared/contracts';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 
 import { Button } from './button';
 import {

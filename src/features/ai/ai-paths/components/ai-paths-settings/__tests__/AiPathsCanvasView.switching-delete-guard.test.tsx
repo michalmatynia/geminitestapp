@@ -1,9 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
-  AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
-} from '@/shared/lib/ai-paths';
+import { AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY } from '@/shared/lib/ai-paths';
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
   DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,

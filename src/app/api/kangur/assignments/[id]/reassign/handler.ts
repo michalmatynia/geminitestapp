@@ -16,10 +16,7 @@ import {
   loadKangurScoresForLearner,
   resolveAssignmentActor,
 } from '../../shared';
-import type {
-  KangurAssignmentCreateTarget,
-  KangurAssignmentTarget,
-} from '@kangur/contracts';
+import type { KangurAssignmentCreateTarget, KangurAssignmentTarget } from '@kangur/contracts/kangur-assignments';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

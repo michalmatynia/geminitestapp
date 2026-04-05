@@ -15,18 +15,11 @@ import {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PageStatus, PageSummary, Slug } from '@/shared/contracts/cms';
 import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
-import {
-  AdminCmsPageLayout,
-  Button,
-  StatusBadge,
-  SelectSimple,
-  Badge,
-  ActionMenu,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  StandardDataTablePanel,
-  FilterPanel,
-} from '@/shared/ui';
+import { AdminCmsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Badge, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { SelectSimple, ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel, FilterPanel } from '@/shared/ui/templates.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import type { FilterField } from '@/shared/contracts/ui';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';

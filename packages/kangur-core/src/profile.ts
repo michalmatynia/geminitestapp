@@ -1,4 +1,4 @@
-import type { KangurProgressState, KangurScore } from '@kangur/contracts';
+import type { KangurProgressState, KangurScore } from '@kangur/contracts/kangur';
 
 import { KANGUR_LESSON_CATALOG } from './lesson-catalog';
 import {

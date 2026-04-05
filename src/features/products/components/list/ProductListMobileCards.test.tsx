@@ -227,7 +227,6 @@ describe('ProductListMobileCards', () => {
         status: 'completed',
         showMarketplaceBadge: true,
         onOpenIntegrations: expect.any(Function),
-        onOpenExportSettings: expect.any(Function),
         prefetchListings: expect.any(Function),
       })
     );

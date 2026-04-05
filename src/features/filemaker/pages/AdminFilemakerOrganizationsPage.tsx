@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, ActionMenu, DropdownMenuItem } from '@/shared/ui';
+import { Badge, DropdownMenuItem } from '@/shared/ui/primitives.public';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
 
 import {
   FILEMAKER_DATABASE_KEY,

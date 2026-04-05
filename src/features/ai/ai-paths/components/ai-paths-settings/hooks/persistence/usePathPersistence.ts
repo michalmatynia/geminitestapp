@@ -11,16 +11,7 @@ import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
 import type { AiNode, Edge, PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
-import {
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-  STORAGE_VERSION,
-  compileGraph,
-  normalizeNodes,
-  safeParseJson,
-  stableStringify,
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, compileGraph, normalizeNodes, safeParseJson, stableStringify, sanitizeEdges } from '@/shared/lib/ai-paths';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
 

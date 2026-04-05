@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 
 import type { SearchableListProps } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Badge } from './badge';
 import { Card } from './card';

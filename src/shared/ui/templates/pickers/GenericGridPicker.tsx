@@ -3,7 +3,7 @@
 import { memo, useState, useCallback } from 'react';
 
 import type { GenericGridPickerProps, GridPickerItem } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { usePickerSearch } from './usePickerSearch';
 

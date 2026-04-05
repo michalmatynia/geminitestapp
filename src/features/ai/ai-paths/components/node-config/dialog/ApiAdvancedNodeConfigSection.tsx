@@ -1,7 +1,9 @@
 'use client';
 
 import type { AdvancedApiConfig } from '@/shared/lib/ai-paths';
-import { Input, SelectSimple, Textarea, ToggleRow, FormField, insetPanelVariants } from '@/shared/ui';
+import { Input, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple, ToggleRow, FormField } from '@/shared/ui/forms-and-actions.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

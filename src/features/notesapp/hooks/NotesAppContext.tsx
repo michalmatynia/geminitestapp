@@ -20,7 +20,7 @@ import type { UndoAction } from '@/shared/contracts/notes';
 import type {
   NoteWithRelations,
 } from '@/shared/contracts/notes';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

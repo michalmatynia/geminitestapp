@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal } from '@/shared/ui';
+import { FormModal } from '@/shared/ui/forms-and-actions.public';
 
 import type { CaseResolverFileEditDraft } from '../../types';
 

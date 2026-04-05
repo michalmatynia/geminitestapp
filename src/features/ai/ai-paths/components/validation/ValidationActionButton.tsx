@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { buttonVariants } from '@/shared/ui/button';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 type ValidationActionButtonProps = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,

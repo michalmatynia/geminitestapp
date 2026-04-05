@@ -11,15 +11,10 @@ import {
   AI_INSIGHTS_CONTEXT_ROOT_IDS,
   buildAiInsightsWorkspaceContextBundle,
 } from '@/features/ai/insights/context-registry/workspace';
-import type { AiInsightRecord } from '@/shared/contracts';
-import {
-  Button,
-  CompactEmptyState,
-  FormSection,
-  LoadingState,
-  SectionHeader,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
+import { Button } from '@/shared/ui/primitives.public';
+import { CompactEmptyState, LoadingState, SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import { InsightCard } from '../components/InsightCard';
 import {

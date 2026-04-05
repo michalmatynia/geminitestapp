@@ -12,7 +12,8 @@ import {
   type CaseResolverFile,
 } from '@/shared/contracts/case-resolver';
 import { useFolderTreeProfile } from '@/shared/lib/foldertree/public';
-import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SelectSimple, SegmentedControl } from '@/shared/ui/forms-and-actions.public';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';

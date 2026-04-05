@@ -12,7 +12,10 @@ import {
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations';
-import { StatusBadge, Card, MetadataItem, Hint, Button, ExternalLink, JsonViewer } from '@/shared/ui';
+import { StatusBadge, JsonViewer } from '@/shared/ui/data-display.public';
+import { Card, Button } from '@/shared/ui/primitives.public';
+import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
+import { Hint, ExternalLink } from '@/shared/ui/forms-and-actions.public';
 import type { ProductListingWithDetailsProps } from './types';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {

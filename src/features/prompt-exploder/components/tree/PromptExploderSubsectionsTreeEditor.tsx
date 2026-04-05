@@ -18,8 +18,10 @@ import {
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/public';
-import { Badge, Button, Card, FormField, Input, SectionHeader, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Card, Input, Textarea } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
 import {

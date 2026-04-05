@@ -8,7 +8,7 @@ import {
   PROMPT_VALIDATION_SCOPE_LABELS,
   PROMPT_VALIDATION_SCOPE_VALUES,
 } from '@/shared/lib/prompt-engine/settings';
-import { SegmentedControl } from '@/shared/ui';
+import { SegmentedControl } from '@/shared/ui/forms-and-actions.public';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 
 import {

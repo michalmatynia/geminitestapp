@@ -6,16 +6,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  AdminAiEyebrow,
-  Button,
-  FormSection,
-  SectionHeader,
-  SelectSimple,
-  useToast,
-  FormActions,
-  FormField,
-} from '@/shared/ui';
+import { AdminAiEyebrow } from '@/shared/ui/admin.public';
+import { Button, useToast } from '@/shared/ui/primitives.public';
+import { FormSection, SelectSimple, FormActions, FormField } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {

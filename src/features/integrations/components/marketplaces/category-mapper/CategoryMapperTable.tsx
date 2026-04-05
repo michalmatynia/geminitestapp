@@ -9,7 +9,9 @@ import {
   useCategoryMapperData,
   useCategoryMapperUIState,
 } from '@/features/integrations/context/CategoryMapperContext';
-import { StandardDataTablePanel, CompactEmptyState, GenericMapperStats, Alert } from '@/shared/ui';
+import { StandardDataTablePanel, GenericMapperStats } from '@/shared/ui/templates.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { Alert } from '@/shared/ui/primitives.public';
 
 import { CategoryMapperNameCell } from './category-table/CategoryMapperNameCell';
 import { CategoryMapperSelectCell } from './category-table/CategoryMapperSelectCell';

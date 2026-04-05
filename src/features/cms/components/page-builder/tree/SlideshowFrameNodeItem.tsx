@@ -13,13 +13,7 @@ import {
   setBlockDragData,
 } from '@/features/cms/utils/page-builder-dnd';
 import type { TreeContextMenuItem } from '@/shared/contracts/ui';
-import {
-  TreeRow,
-  TreeCaret,
-  TreeActionButton,
-  TreeActionSlot,
-  TreeContextMenu,
-} from '@/shared/ui';
+import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu } from '@/shared/ui/data-display.public';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 

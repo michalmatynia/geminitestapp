@@ -2,8 +2,9 @@ import { Eye, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
-import { Button, Input, Card, Badge, Alert, LoadingState } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Input, Card, Badge, Alert } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useVariantPanelContext } from './VariantPanelContext';
 

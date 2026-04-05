@@ -5,8 +5,11 @@ import React from 'react';
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import type { AiNode, Edge, PromptConfig } from '@/shared/lib/ai-paths';
-import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { Button, Textarea, Alert, FormField, insetPanelVariants } from '@/shared/ui';
+import { buildPromptOutput } from '@/shared/lib/ai-paths/core/runtime/utils';
+import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
+import { Button, Textarea, Alert } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   useAiPathGraph,

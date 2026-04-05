@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import { Hint } from '@/shared/ui';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useThemeSettingsActions, useThemeSettingsValue } from '../ThemeSettingsContext';

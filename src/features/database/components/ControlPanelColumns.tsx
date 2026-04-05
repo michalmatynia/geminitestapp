@@ -2,7 +2,8 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { UnifiedCollection } from '@/shared/contracts/database';
-import { StatusBadge, DataTableSortableHeader, SelectSimple } from '@/shared/ui';
+import { StatusBadge, DataTableSortableHeader } from '@/shared/ui/data-display.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

@@ -4,7 +4,8 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PromptExploderParamEntry } from '@/shared/contracts/prompt-exploder';
-import { Button, Card, FormField, Input, Label, SelectSimple, StatusToggle, Textarea } from '@/shared/ui';
+import { Button, Card, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple, StatusToggle } from '@/shared/ui/forms-and-actions.public';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
 import {

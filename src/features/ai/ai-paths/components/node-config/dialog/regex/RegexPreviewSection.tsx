@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { Label, Textarea, insetPanelVariants } from '@/shared/ui';
+import { Label, Textarea } from '@/shared/ui/primitives.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 export type RegexPreviewSectionProps = {
   sampleLines: string[];

@@ -12,8 +12,8 @@ import { type ImageStudioSettings } from '@/features/ai/image-studio/utils/studi
 import type { ParamSpec } from '@/shared/contracts/prompt-engine';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { flattenParams } from '@/shared/lib/prompt-engine';
-import { Button, useToast } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, useToast } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ImageStudioAnalysisTab } from './ImageStudioAnalysisTab';
 import { CanvasResizeModal } from './right-sidebar/CanvasResizeModalImpl';

@@ -2,10 +2,8 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import { getLatestKangurAiTutorNativeGuideUpdateAt } from '@/features/kangur/server/ai-tutor-native-guide-repository';
 import { getLatestKangurPageContentUpdateAt } from '@/features/kangur/server/page-content-repository';
-import type {
-  KangurKnowledgeGraphStatusSnapshot,
-  KangurPerformanceBaseline,
-} from '@/shared/contracts';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
+import type { KangurPerformanceBaseline } from '@/shared/contracts/kangur-observability';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { KangurKnowledgeGraphFreshnessSnapshot, KangurKnowledgeGraphFreshnessSource } from './summary.contracts';
 

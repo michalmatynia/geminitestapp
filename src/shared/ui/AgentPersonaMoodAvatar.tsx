@@ -1,7 +1,8 @@
 import { BrainCircuit } from 'lucide-react';
 import NextImage from 'next/image';
 
-import { cn, sanitizeSvg } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { sanitizeSvg } from '@/shared/utils/sanitization';
 
 type AgentPersonaMoodAvatarProps = {
   svgContent?: string | null;

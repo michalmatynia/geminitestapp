@@ -10,7 +10,8 @@ import {
   orderKangurLessonsByAssignmentPriority,
   resolveFocusedKangurLessonId,
 } from '@kangur/core';
-import type { KangurAssignmentSnapshot, KangurProgressState } from '@kangur/contracts';
+import type { KangurAssignmentSnapshot } from '@kangur/contracts/kangur-assignments';
+import type { KangurProgressState } from '@kangur/contracts/kangur';
 
 const progress: KangurProgressState = {
   totalXp: 320,

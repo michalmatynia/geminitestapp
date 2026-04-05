@@ -20,18 +20,11 @@ import {
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Badge,
-  Card,
-  FormSection,
-  SearchInput,
-  PanelHeader,
-  ListPanel,
-  EmptyState,
-  Hint,
-  UI_STACK_RELAXED_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Card } from '@/shared/ui/primitives.public';
+import { FormSection, SearchInput, Hint } from '@/shared/ui/forms-and-actions.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
+import { ListPanel, EmptyState, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 type RouteMapEntry = FlattenedNavItem & {
   description: string;

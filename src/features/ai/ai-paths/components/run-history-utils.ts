@@ -1,4 +1,4 @@
-import type { IdLabelOption } from '@/shared/contracts';
+import type { IdLabelOption } from '@/shared/contracts/base';
 import type { AiNode, AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 
 export type HistoryNodeOption = IdLabelOption;

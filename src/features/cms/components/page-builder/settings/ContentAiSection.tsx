@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { Button, Textarea, Input, FormSection, FormField } from '@/shared/ui';
+import { Button, Textarea, Input } from '@/shared/ui/primitives.public';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useComponentSettingsState } from '../context/ComponentSettingsContext';
 import { useInspectorAiActions, useInspectorAiState } from '../context/InspectorAiContext';

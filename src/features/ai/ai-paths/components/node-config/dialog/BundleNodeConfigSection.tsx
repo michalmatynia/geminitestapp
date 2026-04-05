@@ -1,7 +1,8 @@
 'use client';
 
 import { parsePathList } from '@/shared/lib/ai-paths';
-import { Button, Textarea, FormField } from '@/shared/ui';
+import { Button, Textarea } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

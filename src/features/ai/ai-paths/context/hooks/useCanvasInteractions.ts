@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { Edge, RuntimeState } from '@/shared/lib/ai-paths';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   useCanvasEventHandlers,

@@ -15,7 +15,7 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { delay } from '@/shared/utils';
+import { delay } from '@/shared/utils/time-utils';
 
 import {
   invalidateProductsAndCounts,

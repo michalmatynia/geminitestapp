@@ -4,12 +4,9 @@ import { Plus } from 'lucide-react';
 import React from 'react';
 
 import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
-import {
-  Button,
-  FormSection,
-  Skeleton,
-  SimpleSettingsList,
-} from '@/shared/ui';
+import { Button, Skeleton } from '@/shared/ui/primitives.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import type { CaseResolverTagFormData } from '../entity-form-data';

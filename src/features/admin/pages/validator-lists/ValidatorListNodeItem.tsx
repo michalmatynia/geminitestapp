@@ -5,8 +5,9 @@ import Link from 'next/link';
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput as ValidatorListNodeItemProps } from '@/shared/lib/foldertree/public';
-import { Badge, TreeContextMenu, TreeRow } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge } from '@/shared/ui/primitives.public';
+import { TreeContextMenu, TreeRow } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { VALIDATOR_SCOPE_LABELS } from '../validator-scope';
 import { fromValidatorListNodeId } from './validator-list-master-tree';

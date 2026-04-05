@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 
 import { SlotInlineEditCardTab } from './SlotInlineEditCardTab';
 import { SlotInlineEditCompositesTab } from './SlotInlineEditCompositesTab';

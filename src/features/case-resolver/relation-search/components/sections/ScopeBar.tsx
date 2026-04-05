@@ -9,7 +9,8 @@ import {
   type DocumentRelationFileTypeFilter,
   type DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
-import { SelectSimple, Tooltip, SegmentedControl, Chip } from '@/shared/ui';
+import { SelectSimple, SegmentedControl, Chip } from '@/shared/ui/forms-and-actions.public';
+import { Tooltip } from '@/shared/ui/primitives.public';
 
 import {
   useDocumentRelationSearchActionsContext,

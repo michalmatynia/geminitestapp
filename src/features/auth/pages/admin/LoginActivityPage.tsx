@@ -7,16 +7,11 @@ import React, { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type { ActivityLog } from '@/shared/contracts/system';
 import { useSystemActivity } from '@/shared/hooks/useSystemActivity';
-import {
-  EmptyState,
-  PageLayout,
-  Pagination,
-  SearchInput,
-  StandardDataTablePanel,
-  StatusBadge,
-  UI_CENTER_ROW_RELAXED_CLASSNAME,
-} from '@/shared/ui';
-import { formatDateTime } from '@/shared/utils';
+import { EmptyState, PageLayout, Pagination, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { formatDateTime } from '@/shared/utils/formatting';
 
 const PAGE_SIZE = 25;
 const LOGIN_DESCRIPTION_PREFIX = 'User logged in:';

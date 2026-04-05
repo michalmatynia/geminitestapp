@@ -2,6 +2,11 @@ import {
   fetchBaseCategories,
   resolveBaseConnectionToken,
 } from '@/features/integrations/server';
+import {
+  getTraderaCategories,
+  type TraderaPublicApiCredentials,
+} from '@/features/integrations/services/tradera-api-client';
+import { resolveTraderaPublicApiCredentials } from '@/features/integrations/services/tradera-listing/api';
 import { fetchTraderaCategoriesForConnection } from '@/features/integrations/services/tradera-listing/categories';
 import type {
   BaseCategory,
@@ -13,7 +18,7 @@ import type {
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
-const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera']);
+const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera', 'tradera-api']);
 
 export type CategoryFetchIntegrationRepository = {
   getConnectionById: (id: string) => Promise<IntegrationConnectionRecord | null>;
@@ -34,6 +39,13 @@ export type MarketplaceCategoryFetchContext =
       connection: IntegrationConnectionRecord;
       sourceName: 'Tradera';
       mode: 'tradera';
+    }
+  | {
+      connectionId: string;
+      connection: IntegrationConnectionRecord;
+      sourceName: 'Tradera';
+      apiCredentials: TraderaPublicApiCredentials;
+      mode: 'tradera-api';
     };
 
 export const requireMarketplaceConnectionId = (
@@ -85,12 +97,26 @@ export const resolveMarketplaceCategoryFetchContext = async (
   }
 
   if (TRADERA_MARKETPLACE_SLUGS.has(integrationSlug)) {
-    return {
-      connectionId,
-      connection,
-      sourceName: 'Tradera',
-      mode: 'tradera',
-    };
+    // Prefer the SOAP API when the connection has API credentials (appId + appKey).
+    // The API is faster and not subject to UI changes on the Tradera listing form.
+    try {
+      const apiCredentials = resolveTraderaPublicApiCredentials(connection);
+      return {
+        connectionId,
+        connection,
+        sourceName: 'Tradera',
+        apiCredentials,
+        mode: 'tradera-api',
+      };
+    } catch {
+      // No API credentials — fall back to Playwright browser scrape.
+      return {
+        connectionId,
+        connection,
+        sourceName: 'Tradera',
+        mode: 'tradera',
+      };
+    }
   }
 
   throw badRequestError(`${integration.name} is not yet supported for category fetch`);
@@ -103,6 +129,10 @@ export const fetchMarketplaceCategories = async (
     return fetchBaseCategories(context.token, {
       inventoryId: context.inventoryId,
     });
+  }
+
+  if (context.mode === 'tradera-api') {
+    return getTraderaCategories(context.apiCredentials);
   }
 
   return fetchTraderaCategoriesForConnection(context.connection);

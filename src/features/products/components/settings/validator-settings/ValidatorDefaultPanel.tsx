@@ -5,7 +5,7 @@ import {
 import { FormSection } from '@/shared/ui/form-section';
 import { ValidatorFormatterToggle } from '@/shared/ui/validator-formatter-toggle';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';

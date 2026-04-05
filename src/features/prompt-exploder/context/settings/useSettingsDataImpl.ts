@@ -19,7 +19,7 @@ import {
   parsePromptEngineSettings,
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { LearningDraft } from '../SettingsContext';

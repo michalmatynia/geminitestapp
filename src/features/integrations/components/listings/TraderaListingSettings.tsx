@@ -3,7 +3,8 @@
 import React from 'react';
 
 import { useListingTraderaSettings } from '@/features/integrations/context/ListingSettingsContext';
-import { Input, FormField, ToggleRow } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
+import { FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 
 export function TraderaListingSettings(): React.JSX.Element {
   const {

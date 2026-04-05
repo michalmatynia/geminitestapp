@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { sanitizeHtml } from '@/shared/utils';
+import { sanitizeHtml } from '@/shared/utils/sanitization';
 
 export type UseMarkdownPreviewDebounceProps = {
   value: string;

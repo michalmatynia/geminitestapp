@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import { collectCaseScopeIds } from './useCaseResolverState.helpers';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';

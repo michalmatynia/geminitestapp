@@ -4,7 +4,7 @@ import type {
   ChatbotSessionListItem,
   ChatbotSettingsResponse,
 } from '@/shared/contracts/chatbot';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys, chatbotKeys } from '@/shared/lib/query-key-exports';
 

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCategoryRepository, getParameterRepository } from '@/features/products/server';
 import { toProductCategorySummaryDto } from '@/shared/contracts/products/categories';
 import { type ProductCategorySummaryDto, type ProductParameter } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import type { DescriptionContextQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 type DescriptionContextPayload = {

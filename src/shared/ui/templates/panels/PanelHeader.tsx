@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { PanelAction } from '@/shared/contracts/ui/ui/panels';
+import { PanelAction } from '@/shared/contracts/ui/panels';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button } from '@/shared/ui/button';
 import { RefreshButton } from '@/shared/ui/RefreshButton';

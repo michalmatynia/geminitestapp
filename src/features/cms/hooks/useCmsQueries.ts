@@ -38,7 +38,7 @@ import type {
 } from '@/shared/contracts/cms';
 import type { IdInputDto } from '@/shared/contracts/base';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ListQuery, SingleQuery, CreateMutation, UpdateMutation } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, SingleQuery, CreateMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
 import {
   createDeleteMutationV2,
   createListQueryV2,

@@ -3,7 +3,7 @@ import type { BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPrefe
 import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys, marketplaceKeys } from '@/shared/lib/query-key-exports';

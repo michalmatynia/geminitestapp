@@ -4,7 +4,7 @@ import { resolveKangurActor } from '@/features/kangur/server';
 import { resolveKangurTtsContextRegistryEnvelope } from '@/features/kangur/tts/context-registry/server';
 import { kangurLessonTtsStatusRequestSchema } from '@/features/kangur/tts/contracts';
 import { inspectKangurLessonNarrationAudio } from '@/features/kangur/tts/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

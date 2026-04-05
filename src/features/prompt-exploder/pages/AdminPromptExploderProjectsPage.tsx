@@ -19,7 +19,7 @@ import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { DocsTooltipEnhancer } from '@/shared/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { promptExploderFormatTimestamp } from '../helpers/formatting';

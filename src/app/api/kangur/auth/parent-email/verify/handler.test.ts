@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/shared/contracts/kangur-ai-tutor-content';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const { verifyKangurParentEmailMock, getKangurAiTutorContentMock } = vi.hoisted(() => ({
   verifyKangurParentEmailMock: vi.fn(),

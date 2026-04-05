@@ -1,6 +1,6 @@
 import type { IdDataDto } from '@/shared/contracts/base';
 import type { CreateProductDraftInput, ProductDraft, UpdateProductDraftInput } from '@/shared/contracts/products/drafts';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,

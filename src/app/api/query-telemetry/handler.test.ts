@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const createRequestContext = (): ApiHandlerContext => ({
   requestId: 'request-1',

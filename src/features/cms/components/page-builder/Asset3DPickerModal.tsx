@@ -8,14 +8,14 @@ import {
   useAsset3DCategories,
   useAsset3DTags,
 } from '@/features/viewer3d/public';
-import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { FilterPanel } from '@/shared/ui/templates.public';
 import { Button } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
-import type { FilterField } from '@/shared/contracts/ui/ui/panels';
+import type { FilterField } from '@/shared/contracts/ui/panels';
 
 type Asset3DPickerModalProps = EntityModalProps<Asset3DRecord, Asset3DRecord> & {
   onSelectAsset: (assetId: string) => void;

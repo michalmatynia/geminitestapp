@@ -11,7 +11,7 @@ import {
 import { getCmsRepository } from '@/features/cms/server';
 import { cmsSlugCreateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import {

@@ -65,7 +65,7 @@ export function SlugForm(props: SlugFormProps): React.JSX.Element {
                 ref={slugInputRef}
                 id='slug'
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlug(e.target.value)}
                 placeholder='e.g. my-awesome-page'
                 className='h-9'
                aria-label='e.g. my-awesome-page' title='e.g. my-awesome-page'/>

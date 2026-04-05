@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Badge } from '@/shared/ui/primitives.public';
 import { MetadataItem, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';

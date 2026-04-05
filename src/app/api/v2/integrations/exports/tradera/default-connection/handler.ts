@@ -7,7 +7,7 @@ import {
 import { parseJsonBody } from '@/features/products/server';
 import { traderaDefaultConnectionPreferencePayloadSchema } from '@/shared/contracts/integrations/preferences';
 import { type TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const normalizeOptionalId = (value: string | null | undefined): string | null => {

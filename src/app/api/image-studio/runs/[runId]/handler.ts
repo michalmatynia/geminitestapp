@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getImageStudioRunById } from '@/features/ai/server';
 import type { ImageStudioRunDetailResponse } from '@/shared/contracts/image-studio/run';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

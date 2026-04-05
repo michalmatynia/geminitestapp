@@ -47,7 +47,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                 max={2}
                 step={0.01}
                 value={textStaggerValue}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = parseFloat(e.target.value);
                   if (!isNaN(val))
                     onChange({ ...config, textStagger: Math.max(0.01, Math.min(2, val)) });
@@ -61,7 +61,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
             <FormField label='Scramble chars'>
               <Input
                 value={textScrambleCharsValue}
-                onChange={(e) => onChange({ ...config, textScrambleChars: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...config, textScrambleChars: e.target.value })}
                 className='h-9'
                aria-label='Scramble chars' title='Scramble chars'/>
             </FormField>
@@ -76,7 +76,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                   max={120}
                   step={1}
                   value={textTypingSpeedValue}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val))
                       onChange({ ...config, textTypingSpeed: Math.max(4, Math.min(120, val)) });
@@ -87,7 +87,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
               <div className='flex items-center gap-2'>
                 <Checkbox
                   checked={textCursorValue}
-                  onCheckedChange={(v) => onChange({ ...config, textCursor: v === true })}
+                  onCheckedChange={(v: boolean) => onChange({ ...config, textCursor: v === true })}
                 />
                 <span className='text-xs text-gray-300'>Show cursor</span>
               </div>
@@ -100,7 +100,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                 <Input
                   type='number'
                   value={textCountFromValue}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val)) onChange({ ...config, textCountFrom: val });
                   }}
@@ -111,7 +111,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                 <Input
                   type='number'
                   value={textCountToValue}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val)) onChange({ ...config, textCountTo: val });
                   }}
@@ -125,7 +125,7 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                   max={6}
                   step={1}
                   value={textCountDecimalsValue}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val))
                       onChange({ ...config, textCountDecimals: Math.max(0, Math.min(6, val)) });

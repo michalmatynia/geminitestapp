@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { DocumentSearchPageProps } from '@/shared/contracts/ui/ui/menus';
+import type { DocumentSearchPageProps } from '@/shared/contracts/ui/menus';
 import { ListPanel, LoadingState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { cn } from '@/shared/utils/ui-utils';
 

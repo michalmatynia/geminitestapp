@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import type { SearchableSelectProps } from '@/shared/contracts/ui/ui/controls';
+import type { SearchableSelectProps } from '@/shared/contracts/ui/controls';
 
 import { MultiSelect } from './multi-select';
 

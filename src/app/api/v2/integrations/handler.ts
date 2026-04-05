@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { integrationService } from '@/features/integrations/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const integrationSchema = z.object({
   name: z.string().trim().min(1),

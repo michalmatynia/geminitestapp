@@ -4,7 +4,7 @@ import { syncBaseImagesForListing } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { productListingSyncBaseImagesPayloadSchema } from '@/shared/contracts/integrations/listings';
 import { type ProductListingSyncBaseImagesResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_handler(

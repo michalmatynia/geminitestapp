@@ -10,7 +10,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { notifyAiPathsSloBreach } from '@/shared/lib/observability/ai-paths-slo-notifier';

@@ -7,7 +7,7 @@ import type {
 import {
   kangurLessonsCatalogSchema,
 } from '@/shared/contracts/kangur';
-import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,

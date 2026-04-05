@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { PaginationContextValue, PaginationProps } from '@/shared/contracts/ui/ui/controls';
+import type { PaginationContextValue, PaginationProps } from '@/shared/contracts/ui/controls';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -80,7 +80,7 @@ function PaginationPageSize(): React.JSX.Element | null {
       <SelectSimple
         size='sm'
         value={String(pageSize)}
-        onValueChange={(value) => {
+        onValueChange={(value: string) => {
           onPageSizeChange(Number(value));
           onPageChange(1);
         }}

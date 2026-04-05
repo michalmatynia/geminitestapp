@@ -10,7 +10,7 @@ import {
 import { kangurLessonSubjectSchema } from '@kangur/contracts/kangur-lesson-constants';
 import { kangurScoreLimitSchema, kangurScoreSortSchema, resolveKangurScoreSubject } from '@kangur/contracts/kangur';
 import { type KangurLessonSubject } from '@kangur/contracts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import {
   normalizeOptionalQueryString,

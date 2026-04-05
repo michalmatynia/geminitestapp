@@ -15,7 +15,7 @@ import {
   upsertKangurSocialPost,
 } from '@/features/kangur/social/server/social-posts-repository';
 import { kangurSocialPostSchema } from '@/shared/contracts/kangur-social-posts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 import {
   optionalIntegerQuerySchema,

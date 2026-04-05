@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { JsonParseResult, ParseJsonOptions } from '@/shared/contracts/ui/ui/api';
+import type { JsonParseResult, ParseJsonOptions } from '@/shared/contracts/ui/api';
 import { badRequestError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 

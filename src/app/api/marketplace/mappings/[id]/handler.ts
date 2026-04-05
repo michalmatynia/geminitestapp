@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import { categoryMappingUpdateInputSchema } from '@/shared/contracts/integrations/listings';
 import type { IdDto as Params } from '@/shared/contracts/base';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

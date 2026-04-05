@@ -12,7 +12,7 @@ import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,
 } from '@/features/kangur/observability/client';
-import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

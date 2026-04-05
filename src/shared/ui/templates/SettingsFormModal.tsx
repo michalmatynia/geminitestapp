@@ -1,6 +1,6 @@
 import type { JSX, ReactNode, RefObject } from 'react';
 
-import type { ModalStateProps } from '@/shared/contracts/ui/ui/base';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
 
 import { FormModal } from '../FormModal';
 

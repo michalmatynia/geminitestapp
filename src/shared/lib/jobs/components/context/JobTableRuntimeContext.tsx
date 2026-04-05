@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { PanelRuntimeSlots } from '@/shared/contracts/ui/ui/controls';
+import type { PanelRuntimeSlots } from '@/shared/contracts/ui/controls';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

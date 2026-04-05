@@ -7,7 +7,7 @@ import {
   mongoBackupsDir,
   assertValidMongoBackupName,
 } from '@/features/database/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';

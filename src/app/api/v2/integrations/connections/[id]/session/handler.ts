@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret } from '@/features/integrations/server';
 import { playwrightStorageStateSchema } from '@/shared/contracts/integrations/session-testing';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 /**

@@ -6,7 +6,7 @@ import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { bulkAiJobRequestSchema as bulkJobSchema } from '@/shared/contracts/jobs';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, bulkJobSchema, {

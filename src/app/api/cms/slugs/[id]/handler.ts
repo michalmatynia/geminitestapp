@@ -17,7 +17,7 @@ import { cmsSlugUpdateSchema } from '@/features/cms/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import type { IdDto as Params } from '@/shared/contracts/base';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
 export const querySchema = z.object({

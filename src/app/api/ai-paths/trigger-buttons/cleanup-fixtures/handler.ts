@@ -11,7 +11,7 @@ import {
   AI_PATHS_INDEX_KEY,
   AI_PATHS_TRIGGER_BUTTONS_KEY,
 } from '@/features/ai/ai-paths/server/settings-store.constants';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export async function POST_handler(
   _req: NextRequest,

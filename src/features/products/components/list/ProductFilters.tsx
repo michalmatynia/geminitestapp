@@ -39,7 +39,7 @@ const STOCK_OPERATOR_OPTIONS: Array<
 import { Button } from '@/shared/ui/button';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 
-import type { FilterField } from '@/shared/contracts/ui/ui/panels';
+import type { FilterField } from '@/shared/contracts/ui/panels';
 
 import {
   createAdvancedPreset,

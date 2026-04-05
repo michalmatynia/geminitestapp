@@ -13,7 +13,7 @@ import {
 import { getAuthSecurityProfile } from '@/features/auth/server';
 import { getAuthUserPageSettings } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

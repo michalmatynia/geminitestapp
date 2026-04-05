@@ -32,7 +32,7 @@ import {
   upsertSettingSchema as settingSchema,
 } from '@/shared/contracts/settings';
 import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {

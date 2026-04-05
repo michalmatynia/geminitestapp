@@ -16,7 +16,7 @@ import {
 } from '@/features/jobs/server';
 import { productListingRelistPayloadSchema } from '@/shared/contracts/integrations/listings';
 import { type ProductListingRelistResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const toRecord = (value: unknown): Record<string, unknown> =>

@@ -7,7 +7,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { DataContractPreflightReport } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
 import type { AiPathsValidationConfig } from '@/shared/lib/ai-paths';
-import type { StatusVariant } from '@/shared/contracts/ui/ui/base';
+import type { StatusVariant } from '@/shared/contracts/ui/base';
 
 import type { UseAiPathsSettingsStateReturn } from './types';
 

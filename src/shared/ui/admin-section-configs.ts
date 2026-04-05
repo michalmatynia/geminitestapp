@@ -1,4 +1,4 @@
-import type { AdminBreadcrumbNode } from '@/shared/contracts/ui/ui/base';
+import type { AdminBreadcrumbNode } from '@/shared/contracts/ui/base';
 
 export const ADMIN_AGENT_CREATOR_SECTION: AdminBreadcrumbNode = {
   label: 'Agent Creator',

@@ -9,7 +9,7 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   cmsCssAiRequestSchema,
 } from '@/shared/contracts/cms';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';

@@ -25,7 +25,7 @@ import type {
   PromptValidationIssue,
   PromptValidationSettings,
 } from '@/shared/contracts/prompt-engine';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

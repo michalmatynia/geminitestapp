@@ -1,7 +1,7 @@
 import { type Edge as AiEdge, type AiNode, type NodeDefinition } from '@/shared/contracts/ai-paths';
 import { DEFAULT_CASE_RESOLVER_EDGE_META, DEFAULT_CASE_RESOLVER_NODE_META, resolveCaseResolverPdfExtractionTemplate } from '@/shared/contracts/case-resolver/constants';
 import { type CaseResolverPdfExtractRequest, type CaseResolverPdfExtractResponse, type CaseResolverEdgeMeta, type CaseResolverFile, type CaseResolverGraph, type CaseResolverNodeMeta, type CaseResolverPdfExtractionPresetId, type CaseResolverDroppedAsset, type CaseResolverDroppedDocument } from '@/shared/contracts/case-resolver';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 
 import {

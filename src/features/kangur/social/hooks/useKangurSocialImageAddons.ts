@@ -1,4 +1,4 @@
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import {
   kangurSocialImageAddonsBatchJobSchema,
   kangurSocialImageAddonsBatchJobsSchema,

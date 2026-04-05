@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getProducerRepository } from '@/features/products/server';
 import { createProducerSchema } from '@/shared/contracts/products/producers';
 export { createProducerSchema as producerCreateSchema };
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError } from '@/shared/errors/app-error';
 
 /**

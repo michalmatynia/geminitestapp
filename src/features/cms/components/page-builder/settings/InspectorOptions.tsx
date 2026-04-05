@@ -28,38 +28,38 @@ export function InspectorOptions(): React.JSX.Element | null {
         <ToggleRow
           label='Enable tooltip'
           checked={inspectorSettings.showTooltip}
-          onCheckedChange={(v) => updateInspectorSetting({ showTooltip: v })}
+          onCheckedChange={(v: boolean) => updateInspectorSetting({ showTooltip: v })}
           className='p-2'
         />
         <div className='rounded border border-border/40 bg-gray-800/30 p-2 space-y-1'>
           <ToggleRow
             label='Style settings'
             checked={inspectorSettings.showStyleSettings}
-            onCheckedChange={(v) => updateInspectorSetting({ showStyleSettings: v })}
+            onCheckedChange={(v: boolean) => updateInspectorSetting({ showStyleSettings: v })}
             className='border-none bg-transparent p-1'
           />
           <ToggleRow
             label='Structure info'
             checked={inspectorSettings.showStructureInfo}
-            onCheckedChange={(v) => updateInspectorSetting({ showStructureInfo: v })}
+            onCheckedChange={(v: boolean) => updateInspectorSetting({ showStructureInfo: v })}
             className='border-none bg-transparent p-1'
           />
           <ToggleRow
             label='Identifiers'
             checked={inspectorSettings.showIdentifiers}
-            onCheckedChange={(v) => updateInspectorSetting({ showIdentifiers: v })}
+            onCheckedChange={(v: boolean) => updateInspectorSetting({ showIdentifiers: v })}
             className='border-none bg-transparent p-1'
           />
           <ToggleRow
             label='Visibility info'
             checked={inspectorSettings.showVisibilityInfo}
-            onCheckedChange={(v) => updateInspectorSetting({ showVisibilityInfo: v })}
+            onCheckedChange={(v: boolean) => updateInspectorSetting({ showVisibilityInfo: v })}
             className='border-none bg-transparent p-1'
           />
           <ToggleRow
             label='Connection info'
             checked={inspectorSettings.showConnectionInfo}
-            onCheckedChange={(v) => updateInspectorSetting({ showConnectionInfo: v })}
+            onCheckedChange={(v: boolean) => updateInspectorSetting({ showConnectionInfo: v })}
             className='border-none bg-transparent p-1'
           />
         </div>

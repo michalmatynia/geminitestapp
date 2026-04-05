@@ -1,6 +1,6 @@
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import { useImportExportData as useImportExportDataSource } from './import-export/useImportExportData';
 import { useImportExportBootstrapResources } from './useImportExportBootstrapResources';

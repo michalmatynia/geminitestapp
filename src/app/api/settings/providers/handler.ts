@@ -8,7 +8,7 @@ import type {
   AppProviderSource as ProviderSource,
   AppProviderValue as ProviderValue,
 } from '@/shared/contracts/system';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
 import {

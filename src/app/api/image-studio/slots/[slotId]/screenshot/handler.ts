@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { getImageStudioSlotById, updateImageStudioSlot } from '@/features/ai/server';
 import { getImageFileRepository } from '@/features/files/server';
 import { imageStudioSlotScreenshotResponseSchema } from '@/shared/contracts/image-studio/slot';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { studioRoot } from '@/shared/lib/files/server-constants';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

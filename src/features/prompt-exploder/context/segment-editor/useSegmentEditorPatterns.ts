@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { LabelValueOptionDto } from '@/shared/contracts/ui/ui/base';
+import type { LabelValueOptionDto } from '@/shared/contracts/ui/base';
 
 import { promptExploderClampNumber } from '../../helpers/formatting';
 import {

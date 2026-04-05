@@ -14,7 +14,7 @@ import {
   type DatabaseEngineBackupType,
 } from '@/shared/lib/db/database-engine-constants';
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
-import type { FileUploadHelpers } from '@/shared/contracts/ui/ui/base';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/base';
 import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,

@@ -7,7 +7,7 @@ import type {
   DatabaseEngineOperationJob,
   DatabaseEngineOperationsJobs,
 } from '@/shared/contracts/database';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError } from '@/shared/errors/app-error';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 

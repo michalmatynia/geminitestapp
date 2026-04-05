@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { KangurLessonGameSection } from '@/shared/contracts/kangur-lesson-game-sections';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   getKangurLessonGameSectionRepositoryMock,

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getParameterRepository } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 
 const SELECTOR_TYPES = [

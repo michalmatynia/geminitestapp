@@ -6,7 +6,7 @@ import {
 import { recoverStaleBaseExportRuns } from '@/features/integrations/services/base-export-run-recovery';
 import { enqueueBaseExportJob } from '@/features/integrations/workers/baseExportQueue';
 import { parseJsonBody } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   badRequestError,
   externalServiceError,

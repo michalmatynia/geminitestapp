@@ -8,7 +8,7 @@ import type {
 } from '@/shared/contracts/agent-teaching';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
 import type { ChatMessageDto as ChatMessage, SimpleChatMessage } from '@/shared/contracts/chatbot';
-import type { ListQuery, SingleQuery, MutationResult } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, SingleQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import {
   createDeleteMutationV2,
   createListQueryV2,

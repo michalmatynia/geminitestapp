@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { noteService } from '@/features/notesapp/server';
 import type { RelatedNote } from '@/shared/contracts/notes';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 

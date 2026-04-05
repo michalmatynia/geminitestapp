@@ -1,7 +1,7 @@
 import { Download, Save } from 'lucide-react';
 import React from 'react';
 
-import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/ui/api';
+import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/api';
 import { Button } from '../../button';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '../../layout';
 

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { AiNode, DbNodePreset, DbQueryPreset, Edge, NodeConfig, ParserSampleState, PathDebugSnapshot, RuntimeState, UpdaterSampleState } from '@/shared/lib/ai-paths';

@@ -2,8 +2,8 @@ import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths-
 import type { AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
-import type { SelectSimpleOption } from '@/shared/contracts/ui/ui/controls';
-import type { SingleQuery } from '@/shared/contracts/ui/ui/queries';
+import type { SelectSimpleOption } from '@/shared/contracts/ui/controls';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import type { BrainTab } from '@/shared/lib/ai-brain/context/BrainContext.types';
 import type {
   BrainModelsResponse,

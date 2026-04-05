@@ -11,7 +11,7 @@ import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverFileEditDraft
 import type { CaseResolverAssetKind } from '@/shared/contracts/case-resolver/base';
 import type { CaseResolverScanSlot } from '@/shared/contracts/case-resolver/ocr';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import {
   createCaseResolverAssetFile,

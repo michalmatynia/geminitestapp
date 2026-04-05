@@ -6,7 +6,7 @@ import type {
   ProductSyncRelinkResponse,
 } from '@/shared/contracts/product-sync';
 import { productSyncRelinkPayloadSchema } from '@/shared/contracts/product-sync';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export const relinkSchema = productSyncRelinkPayloadSchema;
 

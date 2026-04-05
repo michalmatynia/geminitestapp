@@ -8,7 +8,7 @@ import {
   deleteImageStudioSlotCascade,
   listImageStudioSlots,
 } from '@/features/ai/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { studioRoot } from '@/shared/lib/files/server-constants';

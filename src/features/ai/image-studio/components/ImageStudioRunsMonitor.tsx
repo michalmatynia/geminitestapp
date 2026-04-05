@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import { useImageStudioRuns } from '@/features/ai/ai-paths/hooks/useImageStudioRuns';
 import { IMAGE_STUDIO_RUN_STATUS_OPTIONS } from '@/features/ai/image-studio/utils/run-status-options';
-import type { FilterField } from '@/shared/contracts/ui/ui/panels';
+import type { FilterField } from '@/shared/contracts/ui/panels';
 import { Card, Badge, Checkbox } from '@/shared/ui/primitives.public';
 import { LoadingState, insetPanelVariants, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { StandardDataTablePanel, PanelFilters } from '@/shared/ui/templates.public';

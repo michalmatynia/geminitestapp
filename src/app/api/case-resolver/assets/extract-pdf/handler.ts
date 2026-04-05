@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDiskPathFromPublicPath } from '@/features/files/server';
 import { caseResolverPdfExtractRequestSchema } from '@/shared/contracts/case-resolver/file';
 import { type CaseResolverPdfExtractResponse } from '@/shared/contracts/case-resolver';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

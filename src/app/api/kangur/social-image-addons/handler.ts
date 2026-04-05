@@ -10,7 +10,7 @@ import {
 import { createKangurSocialImageAddonFromPlaywright } from '@/features/kangur/social/server/social-image-addons-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { kangurSocialCaptureAppearanceModeSchema } from '@/shared/contracts/kangur-social-image-addons';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import {
   optionalCsvQueryStringArray,

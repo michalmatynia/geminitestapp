@@ -1,5 +1,5 @@
 import type { BaseOrderImportQuickImportPayload, BaseOrderImportQuickImportResponse } from '@/shared/contracts/products/orders-import';
-import type { MutationResult } from '@/shared/contracts/ui/ui/queries';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { productKeys } from '@/shared/lib/query-key-exports';

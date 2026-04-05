@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/contracts/ui/ui/base';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
 import { Button } from '@/shared/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/dialog';
 import { SectionHeader } from '@/shared/ui/section-header';

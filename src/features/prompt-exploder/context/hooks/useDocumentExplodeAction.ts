@@ -2,7 +2,7 @@
 
 import { useCallback, type MutableRefObject } from 'react';
 
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

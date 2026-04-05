@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import type { NoteFileRecord } from '@/shared/contracts/notes';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { autoformatMarkdown } from '../utils';

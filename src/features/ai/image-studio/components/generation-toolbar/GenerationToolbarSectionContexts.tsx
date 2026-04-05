@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
-import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui/ui/base';
+import type { LabelValueOptionDto as SelectOption } from '@/shared/contracts/ui/base';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 

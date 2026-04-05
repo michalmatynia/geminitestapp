@@ -1,7 +1,7 @@
 import { type Query } from '@tanstack/react-query';
 
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
-import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys } from '@/shared/lib/query-key-exports';

@@ -6,7 +6,7 @@ import {
   listAiInsightNotifications,
 } from '@/features/ai/insights/server';
 import { startAiInsightsQueue } from '@/features/jobs/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const listSchema = z.object({
   limit: z.coerce.number().int().positive().max(50).optional(),

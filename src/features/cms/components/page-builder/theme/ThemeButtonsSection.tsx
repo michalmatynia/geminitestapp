@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 import { WEIGHT_OPTIONS } from './theme-constants';
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';

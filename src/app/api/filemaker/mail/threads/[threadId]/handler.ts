@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { requireFilemakerMailAdminSession } from '@/features/filemaker/server';
 import {
   buildFilemakerMailForwardDraft,

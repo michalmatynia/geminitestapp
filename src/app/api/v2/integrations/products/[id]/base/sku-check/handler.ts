@@ -6,7 +6,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getProductRepository } from '@/features/products/server';
 import { baseProductSkuCheckPayloadSchema } from '@/shared/contracts/integrations/listings';
 import { type BaseProductSkuCheckResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const requestSchema = baseProductSkuCheckPayloadSchema;

@@ -14,7 +14,7 @@ import {
 } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { type ProducerMapping, type ExternalProducer } from '@/shared/contracts/integrations';
 import { type Producer } from '@/shared/contracts/products';
-import type { GenericItemMapperConfig } from '@/shared/contracts/ui/ui/api';
+import type { GenericItemMapperConfig } from '@/shared/contracts/ui/api';
 import { GenericMapper } from '@/shared/ui/templates.public';
 
 export function BaseProducerMapper(): React.JSX.Element {

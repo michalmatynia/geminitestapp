@@ -1,6 +1,6 @@
 import { KangurGlassPanel } from '@/features/kangur/ui/design/primitives';
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
-import type { DataAttributesDto } from '@/shared/contracts/ui/ui/base';
+import type { DataAttributesDto } from '@/shared/contracts/ui/base';
 
 import { KangurPanelCloseButton } from './KangurPanelCloseButton';
 

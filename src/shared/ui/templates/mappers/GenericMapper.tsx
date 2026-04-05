@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { GenericItemMapperConfig, PendingExternalMappingsState } from '@/shared/contracts/ui/ui/api';
+import type { GenericItemMapperConfig, PendingExternalMappingsState } from '@/shared/contracts/ui/api';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { GenericMapperExternalCell } from './GenericMapperExternalCell';

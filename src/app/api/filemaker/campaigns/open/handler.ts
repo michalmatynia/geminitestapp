@@ -14,7 +14,7 @@ import {
   upsertFilemakerCampaignSettingValue,
 } from '@/features/filemaker/server';
 import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const TRANSPARENT_GIF = Buffer.from(
   'R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==',

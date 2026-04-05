@@ -7,7 +7,7 @@ import {
 import { parseJsonBody } from '@/features/products/server';
 import type { BaseStockFallbackPreferenceResponse } from '@/shared/contracts/integrations/preferences';
 import { baseStockFallbackPreferencePayloadSchema } from '@/shared/contracts/integrations/preferences';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const enabled = await getExportStockFallbackEnabled();

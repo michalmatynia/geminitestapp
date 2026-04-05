@@ -7,7 +7,7 @@ import {
   deleteKangurSocialPost,
   getKangurSocialPostById,
 } from '@/features/kangur/social/server/social-posts-repository';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 
 const bodySchema = z.object({

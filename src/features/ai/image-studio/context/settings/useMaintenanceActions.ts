@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { api } from '@/shared/lib/api-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

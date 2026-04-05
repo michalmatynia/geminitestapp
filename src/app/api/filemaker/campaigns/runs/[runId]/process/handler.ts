@@ -7,7 +7,7 @@ import {
 import {
   filemakerEmailCampaignProcessRunRequestSchema,
 } from '@/shared/contracts/filemaker';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

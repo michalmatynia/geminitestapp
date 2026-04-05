@@ -12,7 +12,7 @@ import {
   type KangurAiTutorContent,
 } from '@/shared/contracts/kangur-ai-tutor-content';
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { VALIDATOR_PATTERN_LISTS_KEY, parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';

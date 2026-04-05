@@ -22,7 +22,7 @@ import type { ImportParameterCacheResponse } from '@/shared/contracts/integratio
 import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
 import type { Template } from '@/shared/contracts/integrations/import-export';
 import { defaultBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import { useImportExportPreferences } from './import-export/useImportExportPreferences';
 import { useImportExportTemplates } from './import-export/useImportExportTemplates';

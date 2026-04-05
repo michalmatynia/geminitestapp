@@ -4,7 +4,7 @@ import { listBaseImportRuns } from '@/features/integrations/services/imports/bas
 import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
 import type { BaseImportRunsListQuery, BaseImportRunsResponse, BaseImportRunStartPayload, BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
 import { baseImportRunsListQuerySchema, baseImportRunStartPayloadSchema } from '@/shared/contracts/integrations/base-com';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export const startRunSchema = baseImportRunStartPayloadSchema;

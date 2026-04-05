@@ -6,7 +6,7 @@ import { buildKangurKnowledgeGraphPreviewResult } from '@/features/kangur/server
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts/kangur-observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 
 export async function postKangurAiTutorKnowledgeGraphPreviewHandler(

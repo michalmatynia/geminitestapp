@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { AgentRunRecord } from '@/shared/contracts/agent-runtime';
-import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/primitives.public';
 import { StatusBadge, LogList } from '@/shared/ui/data-display.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';

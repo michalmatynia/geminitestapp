@@ -7,7 +7,7 @@ import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/ima
 import { imageStudioSlotScreenshotResponseSchema } from '@/shared/contracts/image-studio/slot';
 import { type ImageStudioSlotRecord, type SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/shared/contracts/vector';
-import type { VectorCanvasRect } from '@/shared/contracts/ui/ui/canvas';
+import type { VectorCanvasRect } from '@/shared/contracts/ui/canvas';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import {

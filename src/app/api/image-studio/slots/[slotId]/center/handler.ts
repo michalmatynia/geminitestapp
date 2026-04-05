@@ -35,7 +35,7 @@ import {
 } from '@/features/ai/server';
 import { createImageStudioSlots, getImageStudioSlotById } from '@/features/ai/server';
 import { getImageFileRepository } from '@/features/files/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { studioRoot } from '@/shared/lib/files/server-constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

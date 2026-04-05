@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useIntegrationsTesting } from '@/features/integrations/context/integrations/IntegrationsTestingContext';
-import type { ModalStateProps } from '@/shared/contracts/ui/ui/base';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { Hint, FormField } from '@/shared/ui/forms-and-actions.public';

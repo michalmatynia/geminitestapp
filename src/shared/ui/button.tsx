@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 
-import type { DataAttributes } from '@/shared/contracts/ui/ui/base';
+import type { DataAttributes } from '@/shared/contracts/ui/base';
 import { cn } from '@/shared/utils/ui-utils';
 import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 

@@ -5,7 +5,7 @@ import type { ImageStudioAssetDto as ImageStudioUploadedAsset } from '@/shared/c
 import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { IdDataDto, LabeledOptionDto } from '@/shared/contracts/base';
-import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/ui/queries';
+import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
 
 import type { StudioUploadMode } from '../components/studio-modals/StudioImportContext';
 import type { UseQueryResult } from '@tanstack/react-query';

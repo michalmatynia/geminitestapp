@@ -4,7 +4,7 @@ import { getExportWarehouseId, setExportWarehouseId } from '@/features/integrati
 import { baseExportWarehousePreferencePayloadSchema, baseExportWarehousePreferenceQuerySchema } from '@/shared/contracts/integrations/preferences';
 import { type BaseExportWarehousePreferenceResponse } from '@/shared/contracts/integrations';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export { baseExportWarehousePreferencePayloadSchema as requestSchema };
 export { baseExportWarehousePreferenceQuerySchema as querySchema };

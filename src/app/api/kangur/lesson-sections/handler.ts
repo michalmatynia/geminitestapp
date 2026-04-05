@@ -6,7 +6,7 @@ import { getKangurLessonSectionRepository } from '@/features/kangur/services/kan
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import { kangurLessonAgeGroupSchema, kangurLessonSubjectSchema } from '@kangur/contracts/kangur-lesson-constants';
 import { kangurLessonSectionsSchema } from '@/shared/contracts/kangur-lesson-sections';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema, optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { clearKangurLessonsCatalogCache } from '../lessons-catalog/handler';

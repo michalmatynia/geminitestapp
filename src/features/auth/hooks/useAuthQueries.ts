@@ -15,7 +15,7 @@ import type {
   AuthUser as AuthUserSummary,
   AuthUserRoleMap,
 } from '@/shared/contracts/auth';
-import type { SingleQuery, UpdateMutation, CreateMutation, MutationResult } from '@/shared/contracts/ui/ui/queries';
+import type { SingleQuery, UpdateMutation, CreateMutation, MutationResult } from '@/shared/contracts/ui/queries';
 import { ApiError } from '@/shared/lib/api-client';
 import {
   createDeleteMutationV2,

@@ -14,7 +14,7 @@ import {
   kangurLessonsSchema,
   kangurLessonDocumentStoreSchema,
 } from '@/shared/contracts/kangur';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

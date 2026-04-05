@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import type { LinkedInProfileResponseDto, OAuthTokenResponseDto } from '@/shared/contracts/integrations/oauth';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';

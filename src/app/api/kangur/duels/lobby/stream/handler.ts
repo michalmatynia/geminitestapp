@@ -1,7 +1,7 @@
 import { Redis } from 'ioredis';
 import { NextRequest } from 'next/server';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { clientErrorPayloadSchema, type ErrorContext } from '@/shared/contracts/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   isSensitiveKey,
   REDACTED_VALUE,

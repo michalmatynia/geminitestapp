@@ -12,7 +12,7 @@ import {
   runPlaywrightListingScript,
 } from '@/features/integrations/services/playwright-listing/runner';
 import { buildPlaywrightImportInput } from '@/features/integrations/services/playwright-import-service';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

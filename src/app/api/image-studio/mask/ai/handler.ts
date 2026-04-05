@@ -12,7 +12,7 @@ import {
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { auth } from '@/features/auth/server';
 import { imageStudioMaskAiRequestSchema } from '@/shared/contracts/image-studio/misc';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';

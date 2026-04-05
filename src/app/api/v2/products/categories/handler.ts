@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import { createProductCategorySchema } from '@/shared/contracts/products/categories';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import {

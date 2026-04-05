@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { AdminBreadcrumbNode } from '@/shared/contracts/ui/ui/base';
+import type { AdminBreadcrumbNode } from '@/shared/contracts/ui/base';
 import { createAdminSectionBreadcrumbs } from './admin-section-breadcrumbs';
 import { PageLayout } from './PageLayout';
 

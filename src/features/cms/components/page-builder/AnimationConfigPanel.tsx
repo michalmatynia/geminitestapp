@@ -43,7 +43,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
         label='Enable Animations'
         description='Master switch for all animation effects on this component'
         checked={isEnabled}
-        onCheckedChange={(checked) => {
+        onCheckedChange={(checked: boolean) => {
           if (!checked) {
             onChange({ ...DEFAULT_ANIMATION_CONFIG, preset: 'none' });
           } else {
@@ -70,7 +70,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
                 max={10}
                 step={0.1}
                 value={config.duration}
-                onChange={(e) => onChange({ duration: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ duration: Number(e.target.value) })}
                aria-label='Duration (s)' title='Duration (s)'/>
             </FormField>
             <FormField label='Delay (s)'>
@@ -80,7 +80,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
                 max={10}
                 step={0.1}
                 value={config.delay}
-                onChange={(e) => onChange({ delay: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ delay: Number(e.target.value) })}
                aria-label='Delay (s)' title='Delay (s)'/>
             </FormField>
           </div>

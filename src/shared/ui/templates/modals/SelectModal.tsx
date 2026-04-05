@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import type { SelectOption } from '@/shared/contracts/ui/ui/pickers';
+import type { SelectOption } from '@/shared/contracts/ui/pickers';
 import { FormModal } from '@/shared/ui/FormModal';
 import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/layout';
 import { SearchInput } from '@/shared/ui/search-input';

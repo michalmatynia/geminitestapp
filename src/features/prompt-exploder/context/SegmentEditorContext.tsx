@@ -11,7 +11,7 @@ import {
   type SetStateAction,
 } from 'react';
 
-import type { LabelValueOptionDto } from '@/shared/contracts/ui/ui/base';
+import type { LabelValueOptionDto } from '@/shared/contracts/ui/base';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useToast } from '@/shared/ui/primitives.public';

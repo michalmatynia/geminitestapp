@@ -8,7 +8,7 @@ import {
   useInternationalizationUi,
 } from '@/features/internationalization/context/InternationalizationContext';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 import { useLanguageForm } from './hooks/useLanguageForm';
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';

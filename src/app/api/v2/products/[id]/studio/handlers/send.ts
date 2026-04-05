@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { productStudioSendRequestSchema as sendSchema, productStudioSendResponseSchema } from '@/shared/contracts/products/studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 import type { NextRequest } from 'next/server';

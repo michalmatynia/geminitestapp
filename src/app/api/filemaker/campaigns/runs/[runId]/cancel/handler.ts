@@ -5,7 +5,7 @@ import {
   cancelFilemakerEmailCampaignRun,
   type FilemakerEmailCampaignCancelRunResponse,
 } from '@/features/filemaker/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export async function POST_handler(
   _req: NextRequest,

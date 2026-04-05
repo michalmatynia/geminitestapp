@@ -5,7 +5,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { getProductOrdersImportRepository } from '@/features/products/server';
 import { baseOrderImportPersistPayloadSchema } from '@/shared/contracts/products/orders-import';
 import { type BaseOrderImportPersistResponse } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export { baseOrderImportPersistPayloadSchema as importOrdersImportSchema };

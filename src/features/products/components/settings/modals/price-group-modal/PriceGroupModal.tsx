@@ -4,10 +4,10 @@ import React, { useMemo } from 'react';
 
 import { useInternationalizationData } from '@/features/internationalization/public';
 import type { PriceGroup } from '@/shared/contracts/products/catalogs';
-import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 import { useProductSettingsPriceGroupsContext } from '../../ProductSettingsContext';
 import { usePriceGroupForm } from './hooks/usePriceGroupForm';

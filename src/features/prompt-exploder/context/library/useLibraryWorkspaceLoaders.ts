@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import type { PromptExploderSegmentationRecord } from '@/shared/contracts/prompt-exploder';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import {
   getManualBindingsFromDocument,

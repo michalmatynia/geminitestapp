@@ -11,7 +11,7 @@ import {
   kangurGameInstancesReplacePayloadSchema,
 } from '@/shared/contracts/kangur-game-instances';
 import { kangurGameIdSchema } from '@/shared/contracts/kangur-games';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import {
   optionalBooleanQuerySchema,

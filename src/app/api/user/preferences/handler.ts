@@ -12,7 +12,7 @@ import type {
   UpdateUserPreferencesInput as UserPreferencesData,
   UserPreferencesResponse,
 } from '@/shared/contracts/auth';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';

@@ -16,7 +16,7 @@ import {
   chatbotJobsDeleteQuerySchema,
   enqueueChatbotJobRequestSchema,
 } from '@/shared/contracts/chatbot';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

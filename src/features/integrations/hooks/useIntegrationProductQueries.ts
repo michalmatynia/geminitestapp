@@ -7,7 +7,7 @@ import type {
   ProductWithImages,
   ProductsPagedResult,
 } from '@/shared/contracts/products/product';
-import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

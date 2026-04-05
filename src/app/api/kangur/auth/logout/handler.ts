@@ -6,7 +6,7 @@ import {
   readKangurLearnerSession,
 } from '@/features/kangur/services/kangur-learner-session';
 import { ActivityTypes } from '@/shared/constants/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { readTolerantServerAuthSession } from '@/features/auth/server';

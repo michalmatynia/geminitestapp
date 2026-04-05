@@ -11,7 +11,7 @@ import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/u
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 const enrichRecoveryContext = (
   productId: string,

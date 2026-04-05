@@ -6,7 +6,7 @@ import {
   listKangurLearnerInteractions,
   resolveKangurActor,
 } from '@/features/kangur/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError, validationError } from '@/shared/errors/app-error';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 

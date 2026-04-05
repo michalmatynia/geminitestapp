@@ -9,7 +9,7 @@ import { assertAiPathRunQueueReady } from '@/features/ai/ai-paths/workers/aiPath
 import { resumePathRun } from '@/features/ai/ai-paths/server';
 import { aiPathRunDeadLetterRequeueRequestSchema } from '@/shared/contracts/ai-paths';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

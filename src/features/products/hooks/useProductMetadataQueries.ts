@@ -9,7 +9,7 @@ import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/cont
 import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
 import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import type { ProductTag } from '@/shared/contracts/products/tags';
-import type { ListQuery, SaveMutation, DeleteMutation } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, SaveMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

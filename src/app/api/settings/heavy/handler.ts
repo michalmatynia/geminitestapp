@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 
 import { GET_handler } from '../handler';

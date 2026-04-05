@@ -1,4 +1,4 @@
-import type { LabelValueOptionDto as RichTextEditorFontOption } from '@/shared/contracts/ui/ui/base';
+import type { LabelValueOptionDto as RichTextEditorFontOption } from '@/shared/contracts/ui/base';
 
 import type { RichTextEditorVariant } from '../types';
 

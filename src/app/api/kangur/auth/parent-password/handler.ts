@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/server';
 import { setKangurParentPassword } from '@/features/kangur/server/parent-email-auth';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { getSiteTranslator } from '@/shared/lib/i18n/server-translator';
 

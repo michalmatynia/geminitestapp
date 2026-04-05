@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getProducerRepository } from '@/features/products/server';
 import { updateProducerSchema } from '@/shared/contracts/products/producers';
 export { updateProducerSchema as producerUpdateSchema };
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError, notFoundError, validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

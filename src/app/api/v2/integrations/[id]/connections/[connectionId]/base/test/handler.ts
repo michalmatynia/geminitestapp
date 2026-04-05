@@ -4,7 +4,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { fetchBaseInventories } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import type { TestConnectionResponse, TestLogEntry } from '@/shared/contracts/integrations/session-testing';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

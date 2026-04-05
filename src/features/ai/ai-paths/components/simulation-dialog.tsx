@@ -4,7 +4,7 @@ import React, { useMemo, useCallback } from 'react';
 
 import { useSelectionActions, useSelectionState, useRuntimeActions } from '@/features/ai/ai-paths/context';
 import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
-import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import type { AiNode } from '@/shared/lib/ai-paths';
 import { Button, Input, Alert } from '@/shared/ui/primitives.public';
 import { FormField } from '@/shared/ui/forms-and-actions.public';

@@ -23,7 +23,7 @@ import { isProductListDebugSearch, logProductListDebug } from '@/features/produc
 import * as queuedProductOps from '@/features/products/state/queued-product-ops';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
-import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { useDraftQueries } from '@/shared/hooks/useDraftQueries';
 import {
   type BackgroundSyncEvent,

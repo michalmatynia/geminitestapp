@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import type { Queue } from 'bullmq';
 
 import { getKangurSocialPipelineQueue } from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export async function POST_handler(
   _req: NextRequest,

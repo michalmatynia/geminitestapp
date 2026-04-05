@@ -139,7 +139,7 @@ export function SocialPostList(): React.JSX.Element {
             />
             <SelectSimple
               value={statusFilter}
-              onValueChange={(value) =>
+              onValueChange={(value: string) =>
                 setStatusFilter(
                   STATUS_FILTER_OPTIONS.some((option) => option.value === value)
                     ? (value as KangurSocialPostListStatus)

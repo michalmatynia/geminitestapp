@@ -6,7 +6,7 @@ import { cmsPageUpdateSchema } from '@/features/cms/server';
 import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { parseJsonBody } from '@/features/products/server';
 import type { IdDto as Params } from '@/shared/contracts/base';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 

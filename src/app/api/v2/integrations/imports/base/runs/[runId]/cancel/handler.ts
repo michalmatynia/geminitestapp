@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { cancelBaseImportRun, toStartResponse } from '@/features/integrations/server';
 import type { BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

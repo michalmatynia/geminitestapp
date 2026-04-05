@@ -16,7 +16,7 @@ import {
 } from '@/shared/lib/document-editor/public';
 import type { CaseResolverEditorNodeContext, CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import { createCaseResolverFile } from '../settings';
 import { type CaseResolverFileEditDraft } from '../types';

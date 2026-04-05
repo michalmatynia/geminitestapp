@@ -8,7 +8,7 @@ import {
 import { parseJsonBody } from '@/features/products/server';
 import { baseImageRetryPresetsPayloadSchema } from '@/shared/contracts/integrations/preferences';
 import { type BaseImageRetryPresetsResponse, type ImageRetryPreset } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const presets = await getExportImageRetryPresets();

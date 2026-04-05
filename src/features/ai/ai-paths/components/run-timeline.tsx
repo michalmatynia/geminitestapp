@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/lib/ai-paths';
 import { formatDurationMs } from '@/shared/lib/ai-paths/format-duration';
-import type { StatusVariant } from '@/shared/contracts/ui/ui/base';
+import type { StatusVariant } from '@/shared/contracts/ui/base';
 import { Button, Tooltip, Alert } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';

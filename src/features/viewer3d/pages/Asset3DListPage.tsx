@@ -4,7 +4,7 @@ import { Box, Grid, List } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { GridPickerItem } from '@/shared/contracts/ui/ui/pickers';
+import type { GridPickerItem } from '@/shared/contracts/ui/pickers';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button, Alert, Card } from '@/shared/ui/primitives.public';
 import { StandardDataTablePanel, PanelHeader, FilterPanel, GenericGridPicker } from '@/shared/ui/templates.public';

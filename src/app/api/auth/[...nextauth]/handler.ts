@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { handlers } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

@@ -14,7 +14,7 @@ import {
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { ImportListItem } from '@/shared/contracts/integrations/import-export';
-import type { FilterField } from '@/shared/contracts/ui/ui/panels';
+import type { FilterField } from '@/shared/contracts/ui/panels';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {

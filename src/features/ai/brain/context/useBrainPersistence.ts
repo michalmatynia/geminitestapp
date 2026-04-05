@@ -3,8 +3,8 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 
 import type { SystemSetting } from '@/shared/contracts/settings';
-import type { MutationResult } from '@/shared/contracts/ui/ui/queries';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { MutationResult } from '@/shared/contracts/ui/queries';
+import type { Toast } from '@/shared/contracts/ui/base';
 import {
   appendCatalogPoolValues,
   catalogToEntries,

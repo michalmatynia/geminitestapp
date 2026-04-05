@@ -12,7 +12,7 @@ import {
   readPlaywrightNodeArtifact,
   readPlaywrightNodeRun,
 } from '@/features/ai/ai-paths/services/playwright-node-runner';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 
 

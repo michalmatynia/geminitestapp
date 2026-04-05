@@ -12,7 +12,7 @@ import {
   parseKangurParentVerificationEmailSettings,
 } from '@/features/kangur/settings';
 import type { KangurParentAccountCreate } from '@/shared/contracts/kangur-auth';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 import { readTolerantServerAuthSession } from '@/features/auth/server';

@@ -2,7 +2,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 
-import type { SectionHeaderRefreshConfig } from '@/shared/contracts/ui/ui/menus';
+import type { SectionHeaderRefreshConfig } from '@/shared/contracts/ui/menus';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { RefreshButton } from './RefreshButton';

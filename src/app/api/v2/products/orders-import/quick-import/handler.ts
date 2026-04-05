@@ -8,7 +8,7 @@ import {
 } from '@/features/products/server/product-orders-import-preview';
 import { baseOrderImportQuickImportPayloadSchema } from '@/shared/contracts/products/orders-import';
 import { type BaseOrderImportQuickImportResponse } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export { baseOrderImportQuickImportPayloadSchema as quickImportOrdersImportSchema };
 

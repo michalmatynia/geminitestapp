@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { listImageStudioSequenceRuns } from '@/features/ai/image-studio/server/sequence-run-repository';
 import { type ImageStudioSequenceRunStatus } from '@/shared/contracts/image-studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   normalizeOptionalQueryString,
   optionalIntegerQuerySchema,

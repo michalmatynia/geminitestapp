@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import { FilterPanel, StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { Pagination, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { RefreshButton } from '@/shared/ui/forms-and-actions.public';
-import type { FilterField } from '@/shared/contracts/ui/ui/panels';
+import type { FilterField } from '@/shared/contracts/ui/panels';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import { useFileUploadEventsPanelContext } from './context/FileUploadEventsPanelContext';

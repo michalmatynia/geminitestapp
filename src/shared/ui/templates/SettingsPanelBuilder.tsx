@@ -1,7 +1,7 @@
 'use client';
 
 import type { LabeledOptionDto, UnknownRecordDto } from '@/shared/contracts/base';
-import type { SettingsFieldsRendererProps, SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsFieldsRendererProps, SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { Checkbox } from '../checkbox';
@@ -17,7 +17,7 @@ import { Textarea } from '../textarea';
 const normalizeSelectOptions = (
   options?: ReadonlyArray<LabeledOptionDto<string | number>>
 ): Array<LabeledOptionDto<string>> =>
-  (options ?? []).map((option) => ({ label: option.label, value: String(option.value) }));
+  (options ?? []).map((option: any) => ({ label: option.label, value: String(option.value) }));
 
 export type {
   SettingsFieldsRendererProps,
@@ -164,7 +164,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
 
   return (
     <div className={cn('space-y-6', className)}>
-      {fields.map((field, index) => {
+      {fields.map((field: any, index: number) => {
         const fieldKey = `${String(field.key)}-${index}`;
         const fieldId = `settings-field-${fieldKey}`;
         const fieldError = resolvedErrors[field.key];
@@ -226,7 +226,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
               >
                 <SelectSimple
                   value={String(values[field.key] || '')}
-                  onValueChange={(val) => handleFieldChange(field.key, val)}
+                  onValueChange={(val: boolean) => handleFieldChange(field.key, val)}
                   disabled={field.disabled || disabled}
                   options={normalizeSelectOptions(field.options)}
                   placeholder={field.placeholder || 'Select an option'}
@@ -242,7 +242,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 <Checkbox
                   id={fieldId}
                   checked={(values[field.key] as boolean) || false}
-                  onCheckedChange={(checked) => handleFieldChange(field.key, !!checked)}
+                  onCheckedChange={(checked: boolean) => handleFieldChange(field.key, !!checked)}
                   disabled={field.disabled || disabled}
                   aria-describedby={describedBy}
                   aria-invalid={isInvalid || undefined}
@@ -282,7 +282,7 @@ export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRe
                 <Switch
                   id={fieldId}
                   checked={(values[field.key] as boolean) || false}
-                  onCheckedChange={(checked) => handleFieldChange(field.key, !!checked)}
+                  onCheckedChange={(checked: boolean) => handleFieldChange(field.key, !!checked)}
                   disabled={field.disabled || disabled}
                   aria-describedby={describedBy}
                   aria-invalid={isInvalid || undefined}

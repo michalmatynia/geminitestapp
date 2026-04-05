@@ -4,7 +4,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { CachedProductService } from '@/features/products/server';
 import { productDuplicateRequestSchema } from '@/shared/contracts/products/io';
 import { type ProductWithImages } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { productService } from '@/shared/lib/products/services/productService'; // Direct import
 

@@ -1,7 +1,7 @@
 import type { BaseImportMode, BaseImportRunResumePayload, BaseImportRunStartPayload, BaseImportPreflightIssue } from '@/shared/contracts/integrations/base-com';
 import type { ImportResponse } from '@/shared/contracts/integrations/import-export';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

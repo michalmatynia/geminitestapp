@@ -8,7 +8,7 @@ import type {
   AnalyticsSummary,
 } from '@/shared/contracts/analytics';
 import type { AiInsightResponse, AiInsightsResponse } from '@/shared/contracts/ai-insights';
-import type { SingleQuery, MutationResult } from '@/shared/contracts/ui/ui/queries';
+import type { SingleQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import {
   fetchAnalyticsEvents,

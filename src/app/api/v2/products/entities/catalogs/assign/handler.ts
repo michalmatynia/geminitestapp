@@ -5,7 +5,7 @@ import { CachedProductService } from '@/features/products/server';
 import { getCatalogRepository } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const assignSchema = z.object({

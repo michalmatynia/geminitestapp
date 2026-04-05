@@ -6,7 +6,7 @@ import { resolveBaseConnectionToken } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { integrationBaseApiPayloadSchema } from '@/shared/contracts/integrations/api';
 import { type IntegrationBaseApiResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

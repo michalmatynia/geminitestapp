@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { ApiPreset, GenericApiConsoleConfig, GenericApiConsoleState, GenericApiConsoleProps } from '@/shared/contracts/ui/ui/api';
+import type { ApiPreset, GenericApiConsoleConfig, GenericApiConsoleState, GenericApiConsoleProps } from '@/shared/contracts/ui/api';
 import { Button, Input, Textarea, Alert, Badge, Card } from '@/shared/ui/primitives.public';
 import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';

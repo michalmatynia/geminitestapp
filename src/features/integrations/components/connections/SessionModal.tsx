@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useIntegrationsSession } from '@/features/integrations/context/integrations/IntegrationsSessionContext';
 import type { SessionCookie, SessionOrigin } from '@/shared/contracts/integrations/session-testing';
-import type { ModalStateProps } from '@/shared/contracts/ui/ui/base';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
 import { Badge, Card, Alert } from '@/shared/ui/primitives.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';

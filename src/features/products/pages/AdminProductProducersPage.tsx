@@ -18,7 +18,7 @@ import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder
 import { StandardDataTablePanel } from '@/shared/ui/templates/StandardDataTablePanel';
 import { useToast } from '@/shared/ui/toast';
 
-import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';

@@ -14,7 +14,7 @@ import type {
   ProductSyncProfileUpdatePayload,
 } from '@/shared/contracts/product-sync';
 import { productSyncProfileUpdatePayloadSchema } from '@/shared/contracts/product-sync';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 export const updateProfileSchema = productSyncProfileUpdatePayloadSchema;
 

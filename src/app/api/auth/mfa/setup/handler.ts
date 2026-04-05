@@ -5,7 +5,7 @@ import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/au
 import { buildOtpAuthUrl, generateTotpSecret } from '@/features/auth/server';
 import { encryptAuthSecret } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError, authError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

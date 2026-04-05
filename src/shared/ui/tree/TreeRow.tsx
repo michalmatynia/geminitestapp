@@ -1,7 +1,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import React from 'react';
 
-import type { TreeRowProps, TreeRowTone } from '@/shared/contracts/ui/ui/menus';
+import type { TreeRowProps, TreeRowTone } from '@/shared/contracts/ui/menus';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { useTreeNodeState } from './TreeContext';

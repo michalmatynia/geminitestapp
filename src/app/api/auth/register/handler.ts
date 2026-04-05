@@ -11,7 +11,7 @@ import {
   registerPayloadSchema,
   type RegisterPayload,
 } from '@/shared/contracts/auth';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   conflictError,
   validationError,

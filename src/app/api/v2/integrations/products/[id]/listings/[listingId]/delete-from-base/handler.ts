@@ -8,7 +8,7 @@ import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import { productListingDeleteFromBasePayloadSchema } from '@/shared/contracts/integrations/listings';
 import { type ProductListingDeleteFromBaseResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';

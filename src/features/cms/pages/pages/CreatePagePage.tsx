@@ -100,7 +100,7 @@ export default function CreatePagePage(): React.JSX.Element {
                 ref={nameInputRef}
                 id='name'
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 placeholder='e.g. Summer Collection 2026'
                 className='h-9'
                aria-label='e.g. Summer Collection 2026' title='e.g. Summer Collection 2026'/>

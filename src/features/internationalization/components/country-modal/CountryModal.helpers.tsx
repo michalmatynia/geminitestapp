@@ -1,5 +1,5 @@
 import type { CurrencyOption } from '@/shared/contracts/internationalization';
-import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { GenericMapperStatsProps } from '@/shared/contracts/ui/ui/api';
+import type { GenericMapperStatsProps } from '@/shared/contracts/ui/api';
 import { MetadataItem } from '../../metadata-item';
 
 export type { GenericMapperStatsProps };

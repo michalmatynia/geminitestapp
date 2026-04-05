@@ -8,7 +8,7 @@ import {
   type VectorShapeType,
   type VectorToolMode,
 } from '@/shared/contracts/vector';
-import type { VectorCanvasProps } from '@/shared/contracts/ui/ui/canvas';
+import type { VectorCanvasProps } from '@/shared/contracts/ui/canvas';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { type VectorCanvasRect } from '../vector-canvas.geometry';

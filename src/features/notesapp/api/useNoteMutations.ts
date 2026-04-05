@@ -15,8 +15,8 @@ import type {
   ThemeCreateInput,
   ThemeUpdateInput,
 } from '@/shared/contracts/notes';
-import type { DeleteResponse } from '@/shared/contracts/ui/ui/api';
-import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/ui/queries';
+import type { DeleteResponse } from '@/shared/contracts/ui/api';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,

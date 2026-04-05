@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import type { Slug } from '@/shared/contracts/cms';
-import type { EntityModalProps } from '@/shared/contracts/ui/ui/modals';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { FormModal, FormField } from '@/shared/ui/forms-and-actions.public';
 import { LoadingState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { SearchableList } from '@/shared/ui/data-display.public';

@@ -10,7 +10,7 @@ import {
   type AiInsightResponse,
   type AiInsightsResponse,
 } from '@/shared/contracts/ai-insights';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 export { aiInsightsListQuerySchema as listSchema };

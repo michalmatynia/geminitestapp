@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { noteService } from '@/features/notesapp/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 
 export const querySchema = z.object({

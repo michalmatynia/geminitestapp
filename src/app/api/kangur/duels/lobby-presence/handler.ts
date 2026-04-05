@@ -10,7 +10,7 @@ import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/serv
 import {
   KANGUR_DUELS_LOBBY_PRESENCE_MAX_LIMIT,
 } from '@/shared/contracts/kangur-duels';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 

@@ -10,7 +10,7 @@ import {
 import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
 import type { CaseResolverScanSlot } from '@/shared/contracts/case-resolver/ocr';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 import {

@@ -3,7 +3,7 @@
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle, type LucideIcon } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui/ui/base';
+import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui/base';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';

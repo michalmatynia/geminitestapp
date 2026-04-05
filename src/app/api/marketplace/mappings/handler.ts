@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import { categoryMappingCreateInputSchema } from '@/shared/contracts/integrations/listings';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';

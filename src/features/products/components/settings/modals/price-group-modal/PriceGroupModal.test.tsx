@@ -5,7 +5,7 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { PriceGroup } from '@/shared/contracts/products/catalogs';
-import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 const mocks = vi.hoisted(() => ({
   fields: [] as SettingsPanelField<Record<string, unknown>>[],

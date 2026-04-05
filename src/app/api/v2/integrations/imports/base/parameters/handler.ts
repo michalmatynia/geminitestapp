@@ -7,7 +7,7 @@ import { getImportParameterCache, setImportParameterCache } from '@/features/int
 import { parseJsonBody } from '@/features/products/server';
 import { baseImportParametersPayloadSchema } from '@/shared/contracts/integrations/import-export';
 import { type BaseImportParametersClearResponse, type BaseImportParametersResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseJsonBody } from '@/features/products/server';
 import { productBulkImagesBase64RequestSchema as bulkSchema } from '@/shared/contracts/products/product';
 import { type ProductBulkImagesBase64Response } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

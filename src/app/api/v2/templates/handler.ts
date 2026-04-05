@@ -13,7 +13,7 @@ import {
 import { parseJsonBody } from '@/features/products/server';
 import { createImportExportTemplateSchema } from '@/shared/contracts/integrations/import-export';
 import { type ImportExportTemplateCreateInput } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 export async function GET_templates_handler(

@@ -7,7 +7,7 @@ import {
   type FilemakerEmailCampaignTestSendResponse,
 } from '@/features/filemaker/server';
 import { filemakerEmailCampaignTestSendRequestSchema } from '@/shared/contracts/filemaker';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

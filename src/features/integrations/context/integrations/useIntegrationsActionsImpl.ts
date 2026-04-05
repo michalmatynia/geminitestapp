@@ -24,7 +24,7 @@ import { Integration } from '@/shared/contracts/integrations/base';
 import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
-import type { ListQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
 import { useToast } from '@/shared/ui/primitives.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';

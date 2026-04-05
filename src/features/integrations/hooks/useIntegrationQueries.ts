@@ -18,7 +18,7 @@ import type { IntegrationConnection } from '@/shared/contracts/integrations/conn
 import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { normalizePlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import {

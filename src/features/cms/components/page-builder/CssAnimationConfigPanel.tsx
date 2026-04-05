@@ -14,7 +14,7 @@ import {
 import { Checkbox } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui/ui/settings';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 import {
   useComponentSettingsActions,
@@ -82,7 +82,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
         key: 'easing',
         label: 'Easing',
         type: 'custom',
-        render: ({ value, onChange: fieldChange }) => (
+        render: ({ value, onChange: fieldChange }: { value: any; onChange: any }) => (
           <div className='space-y-2'>
             <SettingsFieldsRenderer
               fields={[
@@ -198,7 +198,7 @@ export function CssAnimationConfigPanel(): React.ReactNode {
         actions={
           <Checkbox
             checked={config.enabled ?? false}
-            onCheckedChange={(checked) => onChange({ ...config, enabled: checked === true })}
+            onCheckedChange={(checked: boolean) => onChange({ ...config, enabled: checked === true })}
           />
         }
         className='space-y-2 p-3'

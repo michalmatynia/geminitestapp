@@ -1,6 +1,6 @@
 export const runtime = 'nodejs';
 
-import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 

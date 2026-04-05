@@ -8,7 +8,7 @@ import {
 import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
 import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type { ExportToBaseVariables, ExportResponse } from '@/shared/contracts/integrations/base-com';
-import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/ui/queries';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,

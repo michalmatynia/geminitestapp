@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { SelectSimpleOption } from '@/shared/contracts/ui/ui/controls';
+import type { SelectSimpleOption } from '@/shared/contracts/ui/controls';
 import { cn } from '@/shared/utils/ui-utils';
 import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 

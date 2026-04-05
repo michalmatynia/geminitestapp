@@ -5,7 +5,7 @@ import { categoryCreateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { CategoryCreateInput } from '@/shared/contracts/notes';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { removeUndefined } from '@/shared/utils/object-utils';
 

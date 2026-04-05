@@ -21,7 +21,7 @@ import { getProductRepository } from '@/features/products/server';
 import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/contracts/integrations/repositories';
 import type { TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { traderaProductLinkExistingPayloadSchema } from '@/shared/contracts/integrations/listings';
 
 const requestSchema = traderaProductLinkExistingPayloadSchema;

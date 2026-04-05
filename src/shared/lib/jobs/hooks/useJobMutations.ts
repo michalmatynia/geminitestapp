@@ -1,5 +1,5 @@
 import type { ChatbotJobActionResponse } from '@/shared/contracts/chatbot';
-import type { UpdateMutation, VoidMutation } from '@/shared/contracts/ui/ui/queries';
+import type { UpdateMutation, VoidMutation } from '@/shared/contracts/ui/queries';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import { updateChatbotJob, clearChatbotJobs, cancelListing } from '../api';

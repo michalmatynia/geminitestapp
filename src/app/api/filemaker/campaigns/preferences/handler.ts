@@ -24,7 +24,7 @@ import {
   type FilemakerEmailCampaignPreferencesResponse,
 } from '@/features/filemaker/server';
 import { filemakerEmailCampaignPreferencesRequestSchema } from '@/shared/contracts/filemaker';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const buildPreferenceNotes = (source: string | null | undefined, action: 'unsubscribe'): string =>

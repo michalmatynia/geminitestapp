@@ -3,7 +3,7 @@ import {
   useIntegrationsApiConsole,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
-import type { ApiPreset } from '@/shared/contracts/ui/ui/api';
+import type { ApiPreset } from '@/shared/contracts/ui/api';
 import type { IntegrationAllegroApiMethod } from '@/shared/contracts/integrations/api';
 import { GenericApiConsole } from '@/shared/ui/templates.public';
 

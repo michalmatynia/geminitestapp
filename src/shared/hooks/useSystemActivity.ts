@@ -1,5 +1,5 @@
 import type { SystemActivityResponseDto as SystemActivityResponse } from '@/shared/contracts/observability';
-import type { SingleQuery } from '@/shared/contracts/ui/ui/queries';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { activityKeys } from '@/shared/lib/query-key-exports';

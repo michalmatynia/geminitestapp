@@ -3,7 +3,7 @@
 import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 
-import { FilterField } from '@/shared/contracts/ui/ui/panels';
+import { FilterField } from '@/shared/contracts/ui/panels';
 import { Button, Label } from '@/shared/ui/primitives.public';
 import { SelectSimple, SearchInput } from '@/shared/ui/forms-and-actions.public';
 import { Checkbox } from '@/shared/ui/checkbox';
@@ -295,7 +295,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
   switch (field.type) {
     case 'multi-select':
     case 'select': {
-      const options = (field.options ?? []).map((option) => ({
+      const options = (field.options ?? []).map((option: any) => ({
         value: String(option.value),
         label: option.label,
       }));
@@ -331,7 +331,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
           <SelectSimple
             size='sm'
             value={getSingleSelectValue(value)}
-            onValueChange={(val) => onChange(val)}
+            onValueChange={(val: boolean) => onChange(val)}
             options={options}
             placeholder={field.placeholder}
             triggerClassName='h-8 w-full min-w-[9rem]'

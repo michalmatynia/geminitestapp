@@ -1,7 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 
-import { PanelStat } from '@/shared/contracts/ui/ui/panels';
+import { PanelStat } from '@/shared/contracts/ui/panels';
 import { Card } from '@/shared/ui/card';
 import { cn } from '@/shared/utils/ui-utils';
 

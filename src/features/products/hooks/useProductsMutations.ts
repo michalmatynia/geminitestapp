@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductBulkImagesBase64Response, ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductPatchInput } from '@/shared/contracts/products/io';
-import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/ui/queries';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { AppError, operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import {

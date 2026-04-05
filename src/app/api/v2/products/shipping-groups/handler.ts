@@ -5,7 +5,7 @@ import { getShippingGroupRepository } from '@/features/products/server';
 import { createProductShippingGroupSchema } from '@/shared/contracts/products/shipping-groups';
 import { type ProductShippingGroup } from '@/shared/contracts/products';
 export { createProductShippingGroupSchema as productShippingGroupCreateSchema };
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';
 

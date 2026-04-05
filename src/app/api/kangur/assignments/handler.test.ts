@@ -5,7 +5,7 @@ import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { type KangurAssignment } from '@kangur/contracts';
 import { authError } from '@/shared/errors/app-error';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   getKangurAssignmentRepositoryMock,

@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context-registry/context/page-context';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
-import type { Toast } from '@/shared/contracts/ui/ui/base';
+import type { Toast } from '@/shared/contracts/ui/base';
 import type { ImageStudioSequenceRunStartResponse } from '@/shared/contracts/image-studio/sequence';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';

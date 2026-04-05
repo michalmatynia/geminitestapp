@@ -6,7 +6,7 @@ import * as React from 'react';
 import { getTextContent } from '@/shared/utils/a11y';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
-import type { FileUploadButtonProps as FileUploadButtonBaseProps, FileUploadHelpers, FileUploadTriggerProps } from '@/shared/contracts/ui/ui/base';
+import type { FileUploadButtonProps as FileUploadButtonBaseProps, FileUploadHelpers, FileUploadTriggerProps } from '@/shared/contracts/ui/base';
 import { Button, type ButtonProps } from './button';
 import { Input } from './input';
 

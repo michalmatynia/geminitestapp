@@ -9,7 +9,7 @@ import {
   type CrudResult,
   type CrudRequest,
 } from '@/shared/contracts/database';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui/ui/queries';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

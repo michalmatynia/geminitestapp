@@ -5,8 +5,8 @@ import type { IntegrationWithConnections } from '@/shared/contracts/integrations
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import type { IntegrationTemplate as Template } from '@/shared/contracts/integrations';
 import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
-import type { DeleteResponse } from '@/shared/contracts/ui/ui/api';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/ui/queries';
+import type { DeleteResponse } from '@/shared/contracts/ui/api';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,

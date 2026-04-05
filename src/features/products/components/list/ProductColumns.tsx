@@ -21,7 +21,7 @@ import {
 } from '@/features/products/lib/product-integrations-adapter-loader';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,

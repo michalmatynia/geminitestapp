@@ -1,5 +1,5 @@
 import { getDocumentationEntry, resolveDocumentationEntryFromElement } from '@/shared/lib/documentation/registry';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { formatDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 
 import { type PromptExploderDocEntry } from './catalog';

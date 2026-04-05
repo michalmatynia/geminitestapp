@@ -16,7 +16,7 @@ import {
 } from '@/shared/contracts/validator';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { AdminAiEyebrow } from '@/shared/ui/admin.public';
 import { FormField, FormActions, FormSection, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { Alert, Input, Button, useToast } from '@/shared/ui/primitives.public';

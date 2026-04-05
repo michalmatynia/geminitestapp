@@ -10,7 +10,7 @@ import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

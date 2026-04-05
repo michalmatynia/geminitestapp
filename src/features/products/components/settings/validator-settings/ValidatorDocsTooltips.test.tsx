@@ -15,10 +15,13 @@ const mocks = vi.hoisted(() => ({
   useDocsTooltipsSetting: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/documentation', () => ({
+vi.mock('@/shared/contracts/documentation', () => ({
   DOCUMENTATION_MODULE_IDS: {
     validator: 'validator',
   },
+}));
+
+vi.mock('@/shared/lib/documentation/DocumentationTooltip', () => ({
   DocumentationTooltip: ({
     children,
     enabled,
@@ -26,8 +29,14 @@ vi.mock('@/shared/lib/documentation', () => ({
     children: React.ReactNode;
     enabled: boolean;
   }) => <div data-enabled={String(enabled)}>{children}</div>,
+}));
+
+vi.mock('@/shared/lib/documentation/registry', () => ({
   getDocumentationEntry: (moduleId: string, id: string) =>
     mocks.getDocumentationEntry(moduleId, id),
+}));
+
+vi.mock('@/shared/lib/documentation/docs-tooltip-settings', () => ({
   useDocsTooltipsSetting: (storageKey: string, fallback: boolean) =>
     mocks.useDocsTooltipsSetting(storageKey, fallback),
 }));

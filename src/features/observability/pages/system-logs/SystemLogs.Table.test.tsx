@@ -15,10 +15,13 @@ vi.mock('@/features/observability/context/SystemLogsContext', () => ({
   useSystemLogsActions: mocks.useSystemLogsActionsMock,
 }));
 
-vi.mock('@/shared/lib/documentation', () => ({
+vi.mock('@/shared/contracts/documentation', () => ({
   DOCUMENTATION_MODULE_IDS: {
     observability: 'observability',
   },
+}));
+
+vi.mock('@/shared/lib/documentation/tooltips', () => ({
   getDocumentationTooltip: mocks.getDocumentationTooltipMock,
 }));
 

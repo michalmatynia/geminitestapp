@@ -7,4 +7,4 @@ export {
   VALIDATOR_UI_DOCS,
   type ValidatorFunctionDoc,
   type ValidatorUiDoc,
-} from '@/shared/lib/documentation';
+} from '@/shared/lib/documentation/catalogs/validator-docs';

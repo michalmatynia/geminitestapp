@@ -6,7 +6,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import { useSystemLogsActions, useSystemLogsState } from '@/features/observability/context/SystemLogsContext';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import type { StatusVariant } from '@/shared/contracts/ui/ui/base';
 import { Alert, Button, Card, Tooltip } from '@/shared/ui/primitives.public';

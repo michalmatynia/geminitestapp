@@ -4,7 +4,8 @@ import React from 'react';
 
 import { getDocumentationEntry } from '@/shared/lib/documentation/registry';
 import { useDocsTooltipsSetting } from '@/shared/lib/documentation/docs-tooltip-settings';
-import { DOCUMENTATION_MODULE_IDS, DocumentationTooltip } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import { DocumentationTooltip } from '@/shared/lib/documentation/DocumentationTooltip';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { ValidatorUiDoc } from './validator-docs-catalog';

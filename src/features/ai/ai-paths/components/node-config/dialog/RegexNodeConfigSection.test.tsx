@@ -121,10 +121,13 @@ vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
   updateAiPathsSetting: (...args: unknown[]) => mockState.updateAiPathsSetting(...args),
 }));
 
-vi.mock('@/shared/lib/documentation', () => ({
+vi.mock('@/shared/contracts/documentation', () => ({
   DOCUMENTATION_MODULE_IDS: {
     aiPaths: 'aiPaths',
   },
+}));
+
+vi.mock('@/shared/lib/documentation/tooltips', () => ({
   getDocumentationTooltip: (_moduleId: string, key: string) => `tooltip:${key}`,
 }));
 

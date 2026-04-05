@@ -6,7 +6,7 @@ import React, { useMemo, useCallback } from 'react';
 import { usePageBuilderDispatch } from '@/features/cms/hooks/page-builder/PageDispatchContext';
 import { usePageBuilderState } from '@/features/cms/hooks/page-builder/PageStateContext';
 import type { InspectorSettings } from '@/shared/contracts/cms';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 import { Button, Tooltip } from '@/shared/ui/primitives.public';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';

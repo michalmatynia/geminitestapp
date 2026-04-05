@@ -16,7 +16,7 @@ import {
 import type { ImportListItem } from '@/shared/contracts/integrations/import-export';
 import type { FilterField } from '@/shared/contracts/ui/ui/panels';
 import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import {
   IMPORT_LIST_MODE_OPTIONS,
   IMPORT_LIST_PAGE_SIZE_OPTIONS,

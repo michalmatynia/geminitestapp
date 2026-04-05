@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-05'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Trigger: Image Studio Analysis Migration Sheet (`trigger`)
 
-Generated at: 2026-03-28T14:11:54.225Z
+Generated at: 2026-04-05T14:57:58.017Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-28T14:11:54.225Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/trigger.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/trigger.scaffold.json`
 - v3 object id: `node_obj_trigger_portable_v3`
-- v3 object hash: `0497f40e632924cf26e1f30e233362b18470bc206978cb9310904d8701356948`
+- v3 object hash: `32cc8751bee3ab4b02c71d595e9f61ad001f65834924eff197856be3cea02976`
 
 ## Ports
 

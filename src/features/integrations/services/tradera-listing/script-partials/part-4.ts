@@ -28,7 +28,7 @@ export const PART_4 = String.raw`          );
     }
 
     await logClickTarget('category-trigger:mapped', categoryTrigger);
-    await humanClick(categoryTrigger).catch(() => undefined);
+    await humanClick(categoryTrigger);
     await wait(400);
 
     for (const segment of segments) {
@@ -58,6 +58,14 @@ export const PART_4 = String.raw`          );
       if (mappedCategoryApplied) {
         return;
       }
+
+      throw new Error(
+        'FAIL_CATEGORY_SET: Tradera mapped category "' +
+          mappedCategorySegments.join(' > ') +
+          '" could not be selected in the listing form. Refresh Tradera categories in Category Mapper or remove the mapping to allow fallback to "' +
+          FALLBACK_CATEGORY_PATH +
+          '".'
+      );
     }
 
     await chooseFallbackCategory();
@@ -132,16 +140,35 @@ export const PART_4 = String.raw`          );
 
   const isCheckboxChecked = async (locator) => {
     if (!locator) return false;
-    return locator.isChecked().catch(async () => {
-      return locator
-        .evaluate((element) => {
-          const input = element instanceof HTMLInputElement ? element : null;
-          return Boolean(
-            input?.checked || element.getAttribute('aria-checked') === 'true'
-          );
-        })
-        .catch(() => false);
-    });
+    return locator
+      .evaluate((element) => {
+        const readCheckedState = (candidate) => {
+          if (!(candidate instanceof Element)) {
+            return null;
+          }
+
+          if (candidate instanceof HTMLInputElement) {
+            return candidate.checked;
+          }
+
+          const ariaChecked = (candidate.getAttribute('aria-checked') || '').toLowerCase();
+          if (ariaChecked === 'true') return true;
+          if (ariaChecked === 'false') return false;
+
+          return null;
+        };
+
+        const directState = readCheckedState(element);
+        if (typeof directState === 'boolean') {
+          return directState;
+        }
+
+        const nestedCheckbox =
+          element.querySelector('input[type="checkbox"], [role="checkbox"]');
+        const nestedState = readCheckedState(nestedCheckbox);
+        return typeof nestedState === 'boolean' ? nestedState : false;
+      })
+      .catch(() => false);
   };
 
   const clickCheckboxLabelByText = async (root, labels) => {
@@ -152,12 +179,18 @@ export const PART_4 = String.raw`          );
           'xpath=//*[normalize-space(text())="' +
             escapedText +
             '"]/ancestor-or-self::*[self::label or self::button or @role="button" or self::div][1]'
-        )
+      )
         .first();
       const clickableLabelVisible = await clickableLabel.isVisible().catch(() => false);
       if (!clickableLabelVisible) continue;
 
-      await humanClick(clickableLabel).catch(() => undefined);
+      await clickableLabel
+        .evaluate((element) => {
+          if (element instanceof HTMLElement) {
+            element.click();
+          }
+        })
+        .catch(() => undefined);
       await wait(350);
       return true;
     }
@@ -165,55 +198,91 @@ export const PART_4 = String.raw`          );
     return false;
   };
 
-  const setCheckboxChecked = async (locator, labels, desiredChecked, root = page) => {
+  const setCheckboxChecked = async (locator, labels, desiredChecked, root = page, options = {}) => {
     if (!locator) return false;
 
     const attemptStrategies = [
-      async () => {
-        await humanClick(locator).catch(() => undefined);
+      {
+        name: 'dom-click',
+        run: async () => {
+          await locator.evaluate((element) => {
+            if (element instanceof HTMLElement) {
+              element.click();
+            }
+          }).catch(() => undefined);
+        },
       },
-      async () => {
-        const id = await locator.getAttribute('id').catch(() => null);
-        if (!id) return;
-        const associatedLabel = root.locator('label[for="' + id.replace(/"/g, '\\"') + '"]').first();
-        const associatedLabelVisible = await associatedLabel.isVisible().catch(() => false);
-        if (!associatedLabelVisible) return;
-        await humanClick(associatedLabel).catch(() => undefined);
+      {
+        name: 'focus-space',
+        run: async () => {
+          await locator.focus().catch(() => undefined);
+          await humanPress('Space', { pauseBefore: false, pauseAfter: false }).catch(
+            () => undefined
+          );
+        },
       },
-      async () => {
-        await clickCheckboxLabelByText(root, labels).catch(() => undefined);
+      {
+        name: 'associated-label',
+        run: async () => {
+          const id = await locator.getAttribute('id').catch(() => null);
+          if (!id) return;
+          const associatedLabel = root.locator('label[for="' + id.replace(/"/g, '\\"') + '"]').first();
+          const associatedLabelVisible = await associatedLabel.isVisible().catch(() => false);
+          if (!associatedLabelVisible) return;
+          await associatedLabel
+            .evaluate((element) => {
+              if (element instanceof HTMLElement) {
+                element.click();
+              }
+            })
+            .catch(() => undefined);
+        },
       },
-      async () => {
-        await locator.evaluate((element) => {
-          if (element instanceof HTMLElement) {
-            element.click();
-          }
-        }).catch(() => undefined);
-      },
-      async () => {
-        await locator.focus().catch(() => undefined);
-        await humanPress('Space', { pauseBefore: false, pauseAfter: false }).catch(
-          () => undefined
-        );
+      {
+        name: 'text-label',
+        run: async () => {
+          await clickCheckboxLabelByText(root, labels).catch(() => undefined);
+        },
       },
     ];
 
-    for (const attempt of attemptStrategies) {
-      const currentState = await isCheckboxChecked(locator);
-      if (currentState === desiredChecked) {
+    const checkboxStateSatisfied = async () => {
+      const checked = await isCheckboxChecked(locator);
+      if (checked === desiredChecked) {
         return true;
       }
 
-      await attempt();
+      if (typeof options.successWhen === 'function') {
+        return Boolean(await options.successWhen().catch(() => false));
+      }
+
+      return false;
+    };
+
+    for (const attempt of attemptStrategies) {
+      if (await checkboxStateSatisfied()) {
+        return true;
+      }
+
+      log?.('tradera.quicklist.checkbox.attempt', {
+        label: labels[0] || null,
+        desiredChecked,
+        strategy: attempt.name,
+      });
+      await attempt.run();
       await wait(350);
 
-      const nextState = await isCheckboxChecked(locator);
-      if (nextState === desiredChecked) {
+      if (await checkboxStateSatisfied()) {
+        log?.('tradera.quicklist.checkbox.applied', {
+          label: labels[0] || null,
+          desiredChecked,
+          strategy: attempt.name,
+        });
         return true;
       }
     }
 
-    return (await isCheckboxChecked(locator)) === desiredChecked;
+    return checkboxStateSatisfied();
   };
 
   const findCheckboxByLabelsWithin = async (root, labels, options = {}) => {
@@ -319,6 +388,81 @@ export const PART_4 = String.raw`          );
     return !(await dialog.isVisible().catch(() => false));
   };
 
+  const confirmShippingDialogPriceValue = async (
+    shippingPriceInput,
+    expectedNormalizedPriceValue
+  ) => {
+    const confirmedShippingPriceValue = normalizePriceValue(
+      await readFieldValue(shippingPriceInput)
+    );
+    if (confirmedShippingPriceValue !== expectedNormalizedPriceValue) {
+      log?.('tradera.quicklist.delivery.save.blocked', {
+        reason: 'price-mismatch',
+        expectedPrice: expectedNormalizedPriceValue,
+        currentPrice: confirmedShippingPriceValue,
+      });
+      throw new Error(
+        'FAIL_SHIPPING_SET: Tradera shipping price was not preserved before saving.'
+      );
+    }
+
+    log?.('tradera.quicklist.delivery.price_confirmed', {
+      price: confirmedShippingPriceValue,
+    });
+  };
+
+  const submitShippingDialogSave = async (shippingDialog, saveButton) => {
+    const saveAttemptStrategies = [
+      {
+        name: 'human-click',
+        run: async () => {
+          await humanClick(saveButton, {
+            pauseAfter: false,
+            clickOptions: { timeout: 5_000 },
+          });
+        },
+      },
+      {
+        name: 'dom-click',
+        run: async () => {
+          await saveButton
+            .evaluate((element) => {
+              if (element instanceof HTMLElement) {
+                element.click();
+              }
+            })
+            .catch(() => undefined);
+        },
+      },
+      {
+        name: 'focus-enter',
+        run: async () => {
+          await saveButton.focus().catch(() => undefined);
+          await humanPress('Enter', { pauseBefore: false, pauseAfter: false }).catch(
+            () => undefined
+          );
+        },
+      },
+    ];
+
+    for (const attempt of saveAttemptStrategies) {
+      log?.('tradera.quicklist.delivery.save.attempt', {
+        strategy: attempt.name,
+      });
+
+      await attempt.run();
+      const dialogClosed = await waitForDialogToClose(shippingDialog, 3_500);
+      if (dialogClosed) {
+        log?.('tradera.quicklist.delivery.save.applied', {
+          strategy: attempt.name,
+        });
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   const waitForDraftSaveSettled = async (timeoutMs = 12_000, minimumQuietMs = 2_000) => {
     const deadline = Date.now() + timeoutMs;
     const startedAt = Date.now();
@@ -394,7 +538,7 @@ export const PART_4 = String.raw`          );
       );
     }
 
-    await humanClick(closeButton, { pauseAfter: false }).catch(() => undefined);
+    await humanClick(closeButton, { pauseAfter: false });
     const dialogClosed = await waitForDialogToClose(shippingDialog);
     if (!dialogClosed) {
       throw new Error(
@@ -454,36 +598,79 @@ export const PART_4 = String.raw`          );
   };
 
   const applyDeliveryCheckboxSelection = async () => {
-    const shippingToggle = await findCheckboxByLabelsWithin(page, OFFER_SHIPPING_LABELS);
-    if (!shippingToggle) {
-      log?.('tradera.quicklist.field.skipped', { field: 'delivery', reason: 'shipping-toggle-missing' });
-      if (requiresConfiguredDeliveryOption || configuredDeliveryPriceEur !== null) {
+    let shippingDialog = await findVisibleShippingDialog();
+    let shippingToggle = null;
+    let shippingAlreadyEnabled = false;
+    const requiresShippingDialogConfiguration =
+      requiresConfiguredDeliveryOption || configuredDeliveryPriceEur !== null;
+
+    if (shippingDialog) {
+      log?.('tradera.quicklist.delivery.dialog_reused', {
+        requiresConfiguredDeliveryOption,
+        configuredDeliveryPriceEur,
+      });
+    } else {
+      shippingToggle = await findCheckboxByLabelsWithin(page, OFFER_SHIPPING_LABELS);
+      if (!shippingToggle) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: 'delivery',
+          reason: 'shipping-toggle-missing',
+        });
+        if (requiresShippingDialogConfiguration || configuredDeliveryPriceEur !== null) {
+          throw new Error(
+            'FAIL_SHIPPING_SET: Required Tradera delivery controls were not available.'
+          );
+        }
+        return false;
+      }
+
+      shippingAlreadyEnabled = await isCheckboxChecked(shippingToggle);
+      if (!shippingAlreadyEnabled) {
+        await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
+          successWhen: async () => Boolean(await findVisibleShippingDialog()),
+        });
+        await wait(700);
+      }
+
+      shippingDialog = await findVisibleShippingDialog();
+    }
+
+    if (!shippingDialog && requiresShippingDialogConfiguration) {
+      shippingToggle ||= await findCheckboxByLabelsWithin(page, OFFER_SHIPPING_LABELS);
+      if (!shippingToggle) {
         throw new Error(
           'FAIL_SHIPPING_SET: Required Tradera delivery controls were not available.'
         );
       }
-      return false;
-    }
 
-    const shippingAlreadyEnabled = await isCheckboxChecked(shippingToggle);
-    if (!shippingAlreadyEnabled) {
-      await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page);
-      await wait(700);
-    }
+      const shippingStillEnabled = await isCheckboxChecked(shippingToggle);
+      if (shippingStillEnabled) {
+        const toggledOff = await setCheckboxChecked(
+          shippingToggle,
+          OFFER_SHIPPING_LABELS,
+          false,
+          page
+        );
+        if (!toggledOff) {
+          throw new Error(
+            'FAIL_SHIPPING_SET: Tradera shipping toggle could not be reset before opening delivery configuration.'
+          );
+        }
+        await wait(400);
+      }
 
-    let shippingDialog = await findVisibleShippingDialog();
-    const requiresShippingDialogConfiguration =
-      requiresConfiguredDeliveryOption || configuredDeliveryPriceEur !== null;
-
-    if (!shippingDialog && requiresShippingDialogConfiguration) {
-      await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page);
+      await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
+        successWhen: async () => Boolean(await findVisibleShippingDialog()),
+      });
       await wait(700);
       shippingDialog = await findVisibleShippingDialog();
 
       if (!shippingDialog) {
-        const shippingStillEnabled = await isCheckboxChecked(shippingToggle);
-        if (!shippingStillEnabled) {
-          await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page);
+        const shippingReenableNeeded = !(await isCheckboxChecked(shippingToggle));
+        if (shippingReenableNeeded) {
+          await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
+            successWhen: async () => Boolean(await findVisibleShippingDialog()),
+          });
           await wait(700);
           shippingDialog = await findVisibleShippingDialog();
         }
@@ -550,21 +737,29 @@ export const PART_4 = String.raw`          );
       throw new Error('FAIL_SHIPPING_SET: Tradera shipping price input was not found.');
     }
 
+    const expectedDeliveryPriceValue = configuredDeliveryPriceEur.toFixed(2);
+    const normalizedConfiguredDeliveryPrice = normalizePriceValue(
+      expectedDeliveryPriceValue
+    );
+
     await setAndVerifyFieldValue({
       locator: shippingPriceInput,
-      value: configuredDeliveryPriceEur.toFixed(2),
+      value: expectedDeliveryPriceValue,
       fieldKey: 'delivery-price',
       errorPrefix: 'FAIL_SHIPPING_SET',
       normalize: normalizePriceValue,
     });
+    await confirmShippingDialogPriceValue(
+      shippingPriceInput,
+      normalizedConfiguredDeliveryPrice
+    );
 
     const saveButton = await findButtonByLabelsWithin(shippingDialog, SHIPPING_DIALOG_SAVE_LABELS);
     if (!saveButton) {
       throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog save button was not found.');
     }
 
-    await humanClick(saveButton, { pauseAfter: false }).catch(() => undefined);
-    const dialogClosed = await waitForDialogToClose(shippingDialog);
+    const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);
     if (!dialogClosed) {
       throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog did not close after saving.');
     }
@@ -636,7 +831,7 @@ export const PART_4 = String.raw`          );
         field: 'listing-confirmation',
         reason: 'confirmation-checkbox-missing',
       });
-      return false;
+      return 'missing';
     }
 
     const alreadyChecked = await isCheckboxChecked(confirmationCheckbox);
@@ -645,7 +840,7 @@ export const PART_4 = String.raw`          );
         field: 'listing-confirmation',
         option: 'already-checked',
       });
-      return true;
+      return 'already-checked';
     }
 
     const checkedAfterClick = await setCheckboxChecked(
@@ -659,4 +854,6 @@ export const PART_4 = String.raw`          );
         'FAIL_PUBLISH_VALIDATION: Tradera listing confirmation checkbox could not be acknowledged.'
       );
     }
+
+    return 'checked';
 `;

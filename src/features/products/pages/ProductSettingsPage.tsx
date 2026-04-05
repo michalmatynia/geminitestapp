@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
@@ -45,14 +46,31 @@ export type ProductSettingsPageProps = {
   productSyncSettingsSlot?: React.ReactNode;
 };
 
+const toSettingSectionSlug = (section: (typeof settingSections)[number]): string =>
+  section
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const resolveSettingSectionFromParam = (
+  value: string | null | undefined
+): (typeof settingSections)[number] | null => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+  return settingSections.find((section) => toSettingSectionSlug(section) === normalized) ?? null;
+};
+
 export function ProductSettingsPage({
   internationalizationSettingsSlot,
   internationalizationProvider: InternationalizationProvider = ({ children }) => <>{children}</>,
   internationalizationModalsSlot,
   productSyncSettingsSlot,
 }: ProductSettingsPageProps): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const requestedSection = resolveSettingSectionFromParam(searchParams?.get('section'));
   const [activeSection, setActiveSection] =
-    useState<(typeof settingSections)[number]>('Categories');
+    useState<(typeof settingSections)[number]>(requestedSection ?? 'Categories');
 
   // Modal State
   const [showCatalogModal, setShowCatalogModal] = useState(false);
@@ -129,6 +147,11 @@ export function ProductSettingsPage({
   const defaultGroupId =
     priceGroups.find((g: import('@/shared/contracts/products').PriceGroup) => g.isDefault)?.id ??
     '';
+
+  useEffect(() => {
+    if (!requestedSection || requestedSection === activeSection) return;
+    setActiveSection(requestedSection);
+  }, [activeSection, requestedSection]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;

@@ -14,6 +14,7 @@ import {
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
+import { validateTraderaQuickListProductConfig } from '@/features/integrations/services/tradera-listing/preflight';
 import {
   resolveConnectionPlaywrightSettings,
   type PersistedStorageState,
@@ -21,9 +22,10 @@ import {
 import { integrationConnectionTestRequestSchema } from '@/shared/contracts/integrations/session-testing';
 import { type IntegrationConnectionTestRequest, type TestConnectionResponse, type TestLogEntry } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { internalError } from '@/shared/errors/app-error';
+import { internalError, isAppError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -72,6 +74,10 @@ export async function postTestConnectionHandler(
     typeof rawManualTimeout === 'number' && Number.isFinite(rawManualTimeout)
       ? Math.max(30_000, Math.min(MAX_MANUAL_LOGIN_TIMEOUT_MS, Math.floor(rawManualTimeout)))
       : DEFAULT_MANUAL_LOGIN_TIMEOUT_MS;
+  const requestedProductId =
+    typeof requestBody.productId === 'string' && requestBody.productId.trim().length > 0
+      ? requestBody.productId.trim()
+      : null;
 
   const pushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => {
     steps.push({
@@ -210,6 +216,30 @@ export async function postTestConnectionHandler(
     return fail('Loading Playwright settings', `Failed to resolve Playwright settings: ${message}`);
   }
   pushStep('Loading Playwright settings', 'ok', 'Resolved browser runtime settings');
+
+  if (quicklistPreflightMode && requestedProductId) {
+    pushStep('Quicklist product config', 'pending', 'Validating Tradera product configuration');
+    try {
+      const productRepository = await getProductRepository();
+      const product = await productRepository.getProductById(requestedProductId);
+      if (!product) {
+        return fail('Quicklist product config', `Product not found: ${requestedProductId}`, 404);
+      }
+
+      await validateTraderaQuickListProductConfig({
+        product,
+        connection,
+      });
+      pushStep('Quicklist product config', 'ok', 'Product Tradera configuration is ready.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return fail(
+        'Quicklist product config',
+        message,
+        isAppError(error) ? error.httpStatus : 400
+      );
+    }
+  }
 
   const headless = manualMode
     ? false

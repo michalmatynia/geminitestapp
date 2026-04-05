@@ -94,6 +94,7 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
           await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
+            productId: selectedProductId,
           });
         }
         await createListingMutation.mutateAsync({

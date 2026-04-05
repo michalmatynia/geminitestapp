@@ -1,6 +1,8 @@
 import React from 'react';
 
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
+  useProductListingsData,
   useProductListingsModals,
 } from '@/features/integrations/context/ProductListingsContext';
 import {
@@ -8,12 +10,14 @@ import {
   resolveProductListingsEmptyDescription,
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import { BaseQuickExportFailureBanner } from './BaseQuickExportFailureBanner';
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
+import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
 
 const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
   const normalized = (value ?? '').trim().toLowerCase();
@@ -29,6 +33,7 @@ const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
 };
 
 export function ProductListingsEmpty(): React.JSX.Element {
+  const { product } = useProductListingsData();
   const { filterIntegrationSlug, statusTargetLabel, isBaseFilter, showSync } =
     useProductListingsViewContext();
   const { recoveryContext } = useProductListingsModals();
@@ -51,9 +56,22 @@ export function ProductListingsEmpty(): React.JSX.Element {
     (recoveryStatus === 'auth_required' ||
       recoveryStatus === 'needs_login' ||
       hasTraderaAuthSignal(recoveryFailureReason));
+  const persistedQuickListFeedback = readPersistedTraderaQuickListFeedback(product.id);
+  const shouldShowQuickListSuccessBanner = Boolean(
+    !isTraderaQuickExportRecovery &&
+      persistedQuickListFeedback?.status === 'completed' &&
+      isTraderaIntegrationSlug(filterIntegrationSlug)
+  );
 
   return (
     <div className='space-y-4'>
+      {shouldShowQuickListSuccessBanner && persistedQuickListFeedback ? (
+        <TraderaQuickExportSuccessBanner
+          mode='empty'
+          variant='full'
+          feedback={persistedQuickListFeedback}
+        />
+      ) : null}
       {isFailedBaseQuickExportRecovery && (
         <BaseQuickExportFailureBanner
           status={recoveryContext?.status}
@@ -72,7 +90,7 @@ export function ProductListingsEmpty(): React.JSX.Element {
           connectionId={recoveryConnectionId}
         />
       )}
-      {filterIntegrationSlug ? (
+      {shouldShowQuickListSuccessBanner ? null : filterIntegrationSlug ? (
         <ProductListingsScopedStatusPanel
           statusTargetLabel={statusTargetLabel}
           isBaseFilter={isBaseFilter}

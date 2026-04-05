@@ -108,6 +108,22 @@ const buildTraderaMarketplaceData = ({
   };
 };
 
+const resolvePersistedExternalListingId = ({
+  existingExternalListingId,
+  resultExternalListingId,
+}: {
+  existingExternalListingId: unknown;
+  resultExternalListingId: string | null;
+}): string | null => {
+  if (typeof resultExternalListingId === 'string' && resultExternalListingId.trim()) {
+    return resultExternalListingId;
+  }
+
+  return typeof existingExternalListingId === 'string' && existingExternalListingId.trim()
+    ? existingExternalListingId
+    : null;
+};
+
 const resolveFailureListingStatus = (errorCategory: string | null): string =>
   errorCategory === 'AUTH' ? 'auth_required' : 'failed';
 
@@ -316,12 +332,16 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
         ? result.metadata['requestedBrowserMode']
         : null;
   const historyFields = buildTraderaHistoryFields(historyBrowserMode);
+  const persistedExternalListingId = resolvePersistedExternalListingId({
+    existingExternalListingId: resolved.listing.externalListingId,
+    resultExternalListingId: result.externalListingId,
+  });
 
   if (result.ok) {
     await resolved.repository.updateListingStatus(input.listingId, 'active');
     await resolved.repository.updateListing(input.listingId, {
       status: 'active',
-      externalListingId: result.externalListingId ?? null,
+      externalListingId: persistedExternalListingId,
       listedAt: now,
       expiresAt: result.expiresAt ?? null,
       nextRelistAt: result.nextRelistAt ?? null,
@@ -333,7 +353,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
     await resolved.repository.appendExportHistory(input.listingId, {
       exportedAt: now,
       status: 'active',
-      externalListingId: result.externalListingId ?? null,
+      externalListingId: persistedExternalListingId,
       expiresAt: result.expiresAt ?? null,
       failureReason: null,
       relist: input.action === 'relist',

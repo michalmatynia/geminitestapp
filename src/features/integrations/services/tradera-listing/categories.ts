@@ -22,7 +22,7 @@ import {
 } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
-const CATEGORY_SCRAPE_TIMEOUT_MS = 120_000;
+const CATEGORY_SCRAPE_TIMEOUT_MS = 300_000;
 
 const extractTrimmedString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
@@ -346,6 +346,21 @@ export const fetchTraderaCategoriesForConnection = async (
 
   const { resultValue, finalUrl } = resolveRunnerOutputs(run.result);
   const categories = normalizeCategories(resultValue['categories']);
+  const categorySource = extractTrimmedString(resultValue['categorySource']);
+  const withParent = categories.filter((c) => c.parentId && c.parentId !== '0');
+
+  // eslint-disable-next-line no-console
+  console.log('[tradera-category-fetch]', JSON.stringify({
+    categorySource,
+    total: categories.length,
+    withParentCount: withParent.length,
+    rootCount: categories.length - withParent.length,
+    scrapedFrom: extractTrimmedString(resultValue['scrapedFrom']),
+    sampleCategories: categories.slice(0, 5).map((c) => ({ id: c.id, name: c.name, parentId: c.parentId })),
+    runLogs: (Array.isArray(run.logs) ? run.logs : []).filter(
+      (l) => typeof l === 'string' && l.includes('tradera.category')
+    ).slice(-20),
+  }, null, 2));
 
   if (categories.length === 0) {
     const completedRunAuthError = toCompletedRunAuthError({

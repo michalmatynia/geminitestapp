@@ -96,6 +96,7 @@ describe('useProductSelectionForm', () => {
     expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
       integrationId: 'integration-tradera-1',
       connectionId: 'conn-tradera-1',
+      productId: 'product-1',
     });
     expect(createListingMutateAsyncMock).toHaveBeenCalledWith({
       integrationId: 'integration-tradera-1',
@@ -130,6 +131,31 @@ describe('useProductSelectionForm', () => {
       'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.'
     );
     expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('surfaces Tradera product configuration failures from quick preflight before creating a listing', async () => {
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
+      new Error(
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+      )
+    );
+
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useProductSelectionForm());
+
+    await act(async () => {
+      result.current.setSelectedProductId('product-1');
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit(onSuccess);
+    });
+
+    expect(createListingMutateAsyncMock).not.toHaveBeenCalled();
+    expect(result.current.error).toBe(
+      'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+    );
     expect(onSuccess).not.toHaveBeenCalled();
   });
 });

@@ -232,8 +232,13 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
   const isCreateListingPage = async () => {
     const currentUrl = page.url().toLowerCase();
 
-    // /selling/new or /selling/draft/<id> — Tradera redirects /selling/new to a draft URL
-    if (currentUrl.includes('/selling/new') || currentUrl.includes('/selling/draft/')) {
+    // /selling/new, /selling/draft/<id>, or /sell/new — Tradera may use multiple
+    // in-flow routes before the listing editor fully stabilizes.
+    if (
+      currentUrl.includes('/selling/new') ||
+      currentUrl.includes('/selling/draft/') ||
+      /\/sell\/new(?:[?#/]|$)/.test(currentUrl)
+    ) {
       log?.('tradera.quicklist.page_detection', { method: 'url_selling_new_or_draft', currentUrl });
       return true;
     }
@@ -270,6 +275,26 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       return true;
     }
     return false;
+  };
+
+  const isTraderaHomepage = (url) => {
+    const normalizedUrl = typeof url === 'string' ? url.trim().toLowerCase() : '';
+    return (
+      normalizedUrl.endsWith('/en') ||
+      normalizedUrl.endsWith('/en/') ||
+      /\/en(?:[?#]|$)/.test(normalizedUrl)
+    );
+  };
+
+  const isTraderaSellingRoute = (url) => {
+    const normalizedUrl = typeof url === 'string' ? url.trim().toLowerCase() : '';
+    return (
+      normalizedUrl.includes('/selling/new') ||
+      normalizedUrl.includes('/selling/draft/') ||
+      /\/sell(?:\/new)?(?:[?#/]|$)/.test(normalizedUrl) ||
+      normalizedUrl.includes('/selling?') ||
+      /\/selling(?:[?#/]|$)/.test(normalizedUrl)
+    );
   };
 
   const findCreateListingTrigger = async () => {
@@ -330,6 +355,7 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
 
   const waitForSellEntryPoint = async (timeoutMs = 12_000) => {
     const deadline = Date.now() + timeoutMs;
+    let homepageSince = null;
     while (Date.now() < deadline) {
       if (await isCreateListingPage()) {
         return 'form';
@@ -338,20 +364,39 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
       if (trigger) {
         return 'trigger';
       }
-      await wait(400);
+
+      const onHomepage = isTraderaHomepage(page.url());
+      if (onHomepage) {
+        homepageSince ??= Date.now();
+      } else {
+        homepageSince = null;
+      }
+      if (homepageSince && Date.now() - homepageSince >= 1_200) {
+        log?.('tradera.quicklist.sell_page.homepage_detected', {
+          url: page.url(),
+          homepageStableMs: Date.now() - homepageSince,
+        });
+        return 'homepage';
+      }
+
+      await wait(onHomepage ? 250 : 400);
     }
 
     if (await isCreateListingPage()) {
       return 'form';
     }
 
-    return (await findCreateListingTrigger()) ? 'trigger' : null;
+    if (await findCreateListingTrigger()) {
+      return 'trigger';
+    }
+
+    return isTraderaHomepage(page.url()) ? 'homepage' : null;
   };
 
   const openCreateListingPage = async () => {
     const trigger = await findCreateListingTrigger();
     if (!trigger) {
-      return false;
+      return null;
     }
 
     await trigger.scrollIntoViewIfNeeded().catch(() => undefined);
@@ -367,18 +412,58 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     ]);
     await acceptCookiesIfPresent();
 
-    const afterClick = await waitForSellEntryPoint(8_000);
-    if (afterClick === 'form') {
-      return true;
+    return waitForSellEntryPoint(8_000);
+  };
+
+  const confirmStableSellPage = async (minimumStableMs = 1_500, timeoutMs = 6_000) => {
+    const deadline = Date.now() + timeoutMs;
+    let stableSince = null;
+    let homepageSince = null;
+
+    while (Date.now() < deadline) {
+      const currentUrl = page.url();
+      if (isTraderaHomepage(currentUrl)) {
+        homepageSince ??= Date.now();
+        if (Date.now() - homepageSince >= minimumStableMs) {
+          return 'homepage';
+        }
+        await wait(250);
+        continue;
+      }
+      homepageSince = null;
+
+      if (await isCreateListingPage()) {
+        stableSince ??= Date.now();
+        if (Date.now() - stableSince >= minimumStableMs) {
+          return 'form';
+        }
+      } else {
+        stableSince = null;
+        if (await findCreateListingTrigger()) {
+          return 'trigger';
+        }
+
+        if (!isTraderaSellingRoute(currentUrl)) {
+          return null;
+        }
+      }
+
+      await wait(250);
     }
 
-    await page.goto(DIRECT_SELL_URL, {
-      waitUntil: 'domcontentloaded',
-      timeout: 30_000,
-    });
-    await acceptCookiesIfPresent();
+    if (isTraderaHomepage(page.url())) {
+      return 'homepage';
+    }
 
-    return (await waitForSellEntryPoint(8_000)) === 'form';
+    if (await isCreateListingPage()) {
+      return 'form';
+    }
+
+    if (await findCreateListingTrigger()) {
+      return 'trigger';
+    }
+
+    return isTraderaSellingRoute(page.url()) ? 'selling-route' : null;
   };
 
   const gotoSellPage = async () => {
@@ -386,18 +471,44 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     // Do NOT call ensureLoggedIn here — on /selling/new the auth detection is unreliable
     // (LOGIN_FORM_SELECTORS like form[action*="login"] can false-positive on listing pages).
     for (const candidate of SELL_URL_CANDIDATES) {
-      log?.('tradera.quicklist.sell_page.trying', { candidate });
-      await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-      await acceptCookiesIfPresent();
+      const maxAttempts = candidate === DIRECT_SELL_URL ? 3 : 1;
 
-      const entryPoint = await waitForSellEntryPoint();
-      log?.('tradera.quicklist.sell_page.entry_point', { candidate, entryPoint, url: page.url() });
-      if (entryPoint === 'form') {
-        return candidate;
-      }
-      const opened = entryPoint === 'trigger' ? await openCreateListingPage() : false;
-      if (opened) {
-        return candidate;
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        log?.('tradera.quicklist.sell_page.trying', { candidate, attempt });
+        await page.goto(candidate, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+        await acceptCookiesIfPresent();
+
+        let entryPoint = await waitForSellEntryPoint();
+        if (entryPoint === 'trigger') {
+          entryPoint = await openCreateListingPage();
+        }
+
+        if (entryPoint === 'form') {
+          entryPoint = await confirmStableSellPage();
+        }
+
+        log?.('tradera.quicklist.sell_page.entry_point', {
+          candidate,
+          attempt,
+          entryPoint,
+          url: page.url(),
+        });
+        if (entryPoint === 'form') {
+          return candidate;
+        }
+
+        if ((entryPoint === 'homepage' || entryPoint === 'trigger') && attempt + 1 < maxAttempts) {
+          log?.('tradera.quicklist.sell_page.homepage_retry', {
+            candidate,
+            attempt,
+            entryPoint,
+            url: page.url(),
+          });
+          await wait(1000);
+          continue;
+        }
+
+        break;
       }
     }
 
@@ -410,6 +521,13 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     }
 
     const initialUrl = page.url();
+    if (isTraderaSellingRoute(initialUrl) && !isTraderaHomepage(initialUrl)) {
+      const stableEntryPoint = await confirmStableSellPage(1_000, 8_000);
+      if (stableEntryPoint === 'form') {
+        return true;
+      }
+    }
+
     if (recover) {
       log?.('tradera.quicklist.sell_page.recover', {
         context,
@@ -456,9 +574,84 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     );
   };
 
-  const setTextField = async (locator, value) => {
+  const setTextFieldDirectly = async (locator, value) => {
+    await locator
+      .evaluate((element, rawValue) => {
+        const normalizedValue = String(rawValue ?? '');
+        const dispatch = (type, init = {}) => {
+          try {
+            if (type === 'input' || type === 'beforeinput') {
+              element.dispatchEvent(
+                new InputEvent(type, {
+                  bubbles: true,
+                  cancelable: true,
+                  data: normalizedValue,
+                  inputType: 'insertFromPaste',
+                  ...init,
+                })
+              );
+              return;
+            }
+          } catch {}
+
+          element.dispatchEvent(
+            new Event(type, {
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        };
+
+        if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+          element.focus();
+          element.value = normalizedValue;
+          dispatch('input');
+          dispatch('change');
+          return;
+        }
+
+        if (element instanceof HTMLElement && element.isContentEditable) {
+          element.focus();
+          element.innerHTML = '';
+          const lines = normalizedValue.split(/\r?\n/);
+          lines.forEach((line) => {
+            const paragraph = document.createElement('p');
+            if (line.length > 0) {
+              paragraph.textContent = line;
+            } else {
+              paragraph.append(document.createElement('br'));
+            }
+            element.append(paragraph);
+          });
+          if (lines.length === 0) {
+            element.textContent = '';
+          }
+          dispatch('beforeinput');
+          dispatch('input');
+          dispatch('change');
+          return;
+        }
+
+        if (element instanceof HTMLElement) {
+          element.focus();
+          element.textContent = normalizedValue;
+          dispatch('input');
+          dispatch('change');
+        }
+      }, value)
+      .catch(() => undefined);
+  };
+
+  const setTextField = async (locator, value, options = {}) => {
+    const inputMethod = options?.inputMethod === 'paste' ? 'paste' : 'default';
     const tagName = await locator.evaluate((element) => element.tagName.toLowerCase()).catch(() => '');
     const isContentEditable = await locator.evaluate((element) => element.isContentEditable).catch(() => false);
+
+    if (inputMethod === 'paste') {
+      await humanClick(locator, { pauseAfter: false }).catch(() => undefined);
+      await setTextFieldDirectly(locator, value);
+      return;
+    }
 
     if (tagName === 'input' || tagName === 'textarea') {
       await humanFill(locator, value);
@@ -498,11 +691,12 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
     fieldKey,
     errorPrefix,
     normalize = normalizeWhitespace,
+    inputMethod = 'default',
   }) => {
     const expectedValue = normalize(value);
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      await setTextField(locator, value);
+      await setTextField(locator, value, { inputMethod });
       await wait(250);
 
       const currentValue = normalize(await readFieldValue(locator));

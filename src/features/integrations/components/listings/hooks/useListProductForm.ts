@@ -138,6 +138,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
           await preflightTraderaQuickListSession({
             integrationId: selectedIntegrationId,
             connectionId: selectedConnectionId,
+            productId,
           });
         }
 

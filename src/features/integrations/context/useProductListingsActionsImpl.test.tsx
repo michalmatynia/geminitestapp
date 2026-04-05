@@ -108,6 +108,7 @@ describe('useProductListingsActionsImpl', () => {
           listings: [
             {
               id: 'listing-1',
+              productId: 'product-1',
               integrationId: 'integration-tradera-1',
               connectionId: 'connection-tradera-1',
               integration: { slug: 'tradera' },
@@ -125,6 +126,7 @@ describe('useProductListingsActionsImpl', () => {
     expect(preflightTraderaQuickListSessionMock).toHaveBeenCalledWith({
       integrationId: 'integration-tradera-1',
       connectionId: 'connection-tradera-1',
+      productId: 'product-1',
     });
     expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
     expect(toastMock).toHaveBeenCalledWith('Tradera relist queued (job job-tradera-relist-1).', {
@@ -139,6 +141,7 @@ describe('useProductListingsActionsImpl', () => {
           listings: [
             {
               id: 'listing-1',
+              productId: 'product-1',
               integrationId: 'integration-tradera-api-1',
               connectionId: 'connection-tradera-api-1',
               integration: { slug: 'tradera-api' },
@@ -163,6 +166,7 @@ describe('useProductListingsActionsImpl', () => {
           listings: [
             {
               id: 'listing-1',
+              productId: 'product-1',
               integrationId: 'integration-tradera-1',
               connectionId: 'connection-tradera-1',
               integration: { slug: 'tradera' },
@@ -189,12 +193,13 @@ describe('useProductListingsActionsImpl', () => {
         {
           ...buildBaseParams({
             listings: [
-              {
-                id: 'listing-1',
-                integrationId: 'integration-playwright-1',
-                connectionId: 'connection-playwright-1',
-                integration: { slug: 'playwright-programmable' },
-              },
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-playwright-1',
+              connectionId: 'connection-playwright-1',
+              integration: { slug: 'playwright-programmable' },
+            },
             ],
           }),
           setRelistingBrowserMode,
@@ -261,6 +266,7 @@ describe('useProductListingsActionsImpl', () => {
             listings: [
               {
                 id: 'listing-1',
+                productId: 'product-1',
                 integrationId: 'integration-tradera-1',
                 connectionId: 'connection-tradera-1',
                 integration: { slug: 'tradera' },
@@ -295,6 +301,56 @@ describe('useProductListingsActionsImpl', () => {
         failureReason:
           'Tradera login requires manual verification. Solve the captcha in the opened browser window and retry.',
       })
+    );
+    expect(relistTraderaMutateAsyncMock).not.toHaveBeenCalled();
+  });
+
+  it('stores Tradera recovery context for non-auth quick preflight failures before relist queueing', async () => {
+    const setError = vi.fn();
+    const setRecoveryContext = vi.fn();
+    preflightTraderaQuickListSessionMock.mockRejectedValue(
+      new Error(
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+      )
+    );
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        {
+          ...buildBaseParams({
+            listings: [
+              {
+                id: 'listing-1',
+                productId: 'product-1',
+                integrationId: 'integration-tradera-1',
+                connectionId: 'connection-tradera-1',
+                integration: { slug: 'tradera' },
+              },
+            ],
+          }),
+          setError,
+          setRecoveryContext,
+        }
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleRelistTradera('listing-1');
+    });
+
+    expect(setRecoveryContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'connection-tradera-1',
+        failureReason:
+          'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+      })
+    );
+    expect(setError).toHaveBeenCalledWith(
+      'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
     );
     expect(relistTraderaMutateAsyncMock).not.toHaveBeenCalled();
   });

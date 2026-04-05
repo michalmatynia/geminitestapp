@@ -106,12 +106,14 @@ export const ensureTraderaBrowserSession = async (params: {
 export const preflightTraderaQuickListSession = async (params: {
   integrationId: string;
   connectionId: string;
+  productId?: string;
 }): Promise<{ response: TestConnectionResponse; ready: boolean }> => {
   try {
     const response = await api.post<TestConnectionResponse>(
       `/api/v2/integrations/${params.integrationId}/connections/${params.connectionId}/test`,
       {
         mode: 'quicklist_preflight',
+        ...(params.productId ? { productId: params.productId } : {}),
       },
       {
         timeout: TRADERA_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS,

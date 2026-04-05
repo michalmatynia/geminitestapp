@@ -19,7 +19,7 @@ export function useFetchExternalCategoriesMutation() {
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-categories'),
     mutationFn: (payload: MarketplaceConnectionRequest) =>
       api.post<MarketplaceFetchResponse>('/api/marketplace/categories/fetch', payload, {
-        timeout: 150_000,
+        timeout: 360_000,
       }),
     meta: {
       source: 'integrations.hooks.marketplace.fetch-categories',

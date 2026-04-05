@@ -97,7 +97,7 @@ describe('fetchTraderaCategoriesForConnection', () => {
         browserEngine: 'chromium',
         preventNewPages: true,
         startUrl: 'https://www.tradera.com/en/selling/new',
-        timeoutMs: 120_000,
+        timeoutMs: 300_000,
         personaId: 'persona-1',
         contextOptions: {
           storageState: {

@@ -136,6 +136,7 @@ export const runPlaywrightListingScript = async ({
   browserMode = 'connection_default',
   disableStartUrlBootstrap = false,
   failureHoldOpenMs,
+  runtimeSettingsOverrides,
 }: {
   script: string;
   input: Record<string, unknown>;
@@ -145,12 +146,21 @@ export const runPlaywrightListingScript = async ({
   browserMode?: PlaywrightRelistBrowserMode;
   disableStartUrlBootstrap?: boolean;
   failureHoldOpenMs?: number;
+  runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
 }): Promise<PlaywrightListingResult> => {
   const settings = await resolveConnectionPlaywrightSettings(connection);
   const personaId = connection.playwrightPersonaId?.trim() || undefined;
   const storageState = parsePersistedStorageState(connection.playwrightStorageState);
+  const runtimeSettings = {
+    ...settings,
+    ...(runtimeSettingsOverrides ?? {}),
+  };
   const effectiveHeadless =
-    browserMode === 'headless' ? true : browserMode === 'headed' ? false : settings.headless;
+    browserMode === 'headless' ? true : browserMode === 'headed' ? false : runtimeSettings.headless;
+  const effectiveSettings: PlaywrightSettings = {
+    ...runtimeSettings,
+    headless: effectiveHeadless,
+  };
   const startUrl = disableStartUrlBootstrap ? undefined : resolveListingRunStartUrl(input);
 
   const run = await enqueuePlaywrightNodeRun({
@@ -166,24 +176,24 @@ export const runPlaywrightListingScript = async ({
       ...(personaId ? { personaId } : {}),
       ...(storageState ? { contextOptions: { storageState } } : {}),
       settingsOverrides: {
-        headless: effectiveHeadless,
-        slowMo: settings.slowMo,
-        timeout: settings.timeout,
-        navigationTimeout: settings.navigationTimeout,
-        humanizeMouse: settings.humanizeMouse,
-        mouseJitter: settings.mouseJitter,
-        clickDelayMin: settings.clickDelayMin,
-        clickDelayMax: settings.clickDelayMax,
-        inputDelayMin: settings.inputDelayMin,
-        inputDelayMax: settings.inputDelayMax,
-        actionDelayMin: settings.actionDelayMin,
-        actionDelayMax: settings.actionDelayMax,
-        proxyEnabled: settings.proxyEnabled,
-        proxyServer: settings.proxyServer,
-        proxyUsername: settings.proxyUsername,
-        proxyPassword: settings.proxyPassword,
-        emulateDevice: settings.emulateDevice,
-        deviceName: settings.deviceName,
+        headless: effectiveSettings.headless,
+        slowMo: effectiveSettings.slowMo,
+        timeout: effectiveSettings.timeout,
+        navigationTimeout: effectiveSettings.navigationTimeout,
+        humanizeMouse: effectiveSettings.humanizeMouse,
+        mouseJitter: effectiveSettings.mouseJitter,
+        clickDelayMin: effectiveSettings.clickDelayMin,
+        clickDelayMax: effectiveSettings.clickDelayMax,
+        inputDelayMin: effectiveSettings.inputDelayMin,
+        inputDelayMax: effectiveSettings.inputDelayMax,
+        actionDelayMin: effectiveSettings.actionDelayMin,
+        actionDelayMax: effectiveSettings.actionDelayMax,
+        proxyEnabled: effectiveSettings.proxyEnabled,
+        proxyServer: effectiveSettings.proxyServer,
+        proxyUsername: effectiveSettings.proxyUsername,
+        proxyPassword: effectiveSettings.proxyPassword,
+        emulateDevice: effectiveSettings.emulateDevice,
+        deviceName: effectiveSettings.deviceName,
       },
     },
     waitForResult: true,
@@ -217,10 +227,7 @@ export const runPlaywrightListingScript = async ({
     publishVerified: extractBooleanField(resultValue, 'publishVerified'),
     effectiveBrowserMode: effectiveHeadless ? 'headless' : 'headed',
     personaId: personaId ?? null,
-    executionSettings: buildExecutionSettingsSummary({
-      ...settings,
-      headless: effectiveHeadless,
-    }),
+    executionSettings: buildExecutionSettingsSummary(effectiveSettings),
     rawResult: resultValue,
   };
 };

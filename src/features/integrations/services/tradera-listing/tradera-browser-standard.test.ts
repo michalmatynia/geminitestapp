@@ -184,7 +184,7 @@ describe('runTraderaBrowserListingStandard', () => {
       targetCurrencyCode: 'EUR',
     });
     expect(descriptionFillMock).toHaveBeenCalledWith(
-      'Example description\n\nItem reference: product-1\nSKU: KEYCHA1266'
+      'Example description | Product ID: product-1 | SKU: KEYCHA1266'
     );
     expect(priceFillMock).toHaveBeenCalledWith('55');
     expect(updateConnectionMock).toHaveBeenCalledWith('connection-1', {

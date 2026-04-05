@@ -7,6 +7,7 @@ import {
   isTraderaQuickExportRecoveryContext,
   resolveProductListingsIntegrationScope,
 } from '@/features/integrations/utils/product-listings-recovery';
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -88,8 +89,14 @@ export function useProductListModals({
         filterIntegrationSlug,
         recoveryContext,
       });
+      const shouldRefreshListings =
+        isTraderaIntegrationSlug(resolvedFilterIntegrationSlug) ||
+        isTraderaQuickExportRecoveryContext(recoveryContext);
       prefetchIntegrationSelectionData();
       prefetchProductListingsData(product.id);
+      if (shouldRefreshListings) {
+        refreshProductListingsData(product.id);
+      }
       setIntegrationsRecoveryContext(enrichRecoveryContext(product.id, recoveryContext));
       setIntegrationsFilterIntegrationSlug(resolvedFilterIntegrationSlug);
       setIntegrationsProduct(product);
@@ -97,6 +104,7 @@ export function useProductListModals({
     [
       prefetchIntegrationSelectionData,
       prefetchProductListingsData,
+      refreshProductListingsData,
       setIntegrationsFilterIntegrationSlug,
       setIntegrationsProduct,
       setIntegrationsRecoveryContext,

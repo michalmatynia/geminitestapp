@@ -65,6 +65,8 @@ const resolveTraderaExecutionSummary = (
   browserMode: string | null;
   requestedBrowserMode: string | null;
   scriptSource: string | null;
+  scriptKind: string | null;
+  scriptMarker: string | null;
   listingFormUrl: string | null;
   pendingBrowserMode: string | null;
   pendingRequestId: string | null;
@@ -117,6 +119,8 @@ const resolveTraderaExecutionSummary = (
     browserMode: readString(metadata['browserMode']),
     requestedBrowserMode: readString(metadata['requestedBrowserMode']),
     scriptSource: readString(metadata['scriptSource']),
+    scriptKind: readString(metadata['scriptKind']),
+    scriptMarker: readString(metadata['scriptMarker']),
     listingFormUrl: readString(metadata['listingFormUrl']) ?? readString(metadata['startUrl']),
     pendingBrowserMode: readString(pendingExecution['requestedBrowserMode']),
     pendingRequestId: readString(pendingExecution['requestId']),
@@ -217,6 +221,10 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
     normalizeIntegrationSlug(listing.integration.slug) === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG;
   const traderaExecution = resolveTraderaExecutionSummary(listing.marketplaceData);
   const playwrightExecution = resolvePlaywrightExecutionSummary(listing.marketplaceData);
+  const traderaUsesCustomConnectionScript =
+    isTraderaListing &&
+    traderaExecution.scriptSource === 'connection' &&
+    traderaExecution.scriptKind === 'custom';
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
@@ -341,6 +349,27 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
               value={traderaExecution.scriptSource}
               variant='minimal'
             />
+          ) : null}
+          {isTraderaListing && traderaExecution.scriptKind ? (
+            <MetadataItem
+              label='Script type'
+              value={traderaExecution.scriptKind}
+              variant='minimal'
+            />
+          ) : null}
+          {isTraderaListing && traderaExecution.scriptMarker ? (
+            <MetadataItem
+              label='Script marker'
+              value={traderaExecution.scriptMarker}
+              mono
+              variant='minimal'
+            />
+          ) : null}
+          {traderaUsesCustomConnectionScript ? (
+            <Hint className='text-amber-300'>
+              This run used a custom saved connection script. Managed Tradera fixes will not apply
+              until the connection listing script is reset to the managed default.
+            </Hint>
           ) : null}
           {isTraderaListing && traderaExecution.listingFormUrl ? (
             <MetadataItem

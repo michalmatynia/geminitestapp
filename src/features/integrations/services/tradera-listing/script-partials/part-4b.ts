@@ -164,7 +164,7 @@ export const PART_4B = String.raw`
         continue;
       }
 
-      await humanClick(listingFormatTrigger).catch(() => undefined);
+      await humanClick(listingFormatTrigger);
       await wait(400);
 
       for (const optionLabel of BUY_NOW_OPTION_LABELS) {
@@ -514,7 +514,16 @@ export const PART_4B = String.raw`
 
     const clickContinueButton = async (button) => {
       await button.scrollIntoViewIfNeeded().catch(() => undefined);
-      await humanClick(button).catch(() => undefined);
+      let primaryClickFailed = false;
+      try {
+        await humanClick(button);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error || '');
+        if (message.includes('FAIL_SELL_PAGE_INVALID:')) {
+          throw error;
+        }
+        primaryClickFailed = true;
+      }
       await wait(400);
 
       const stillVisible = await button.isVisible().catch(() => false);
@@ -522,6 +531,8 @@ export const PART_4B = String.raw`
         await button.evaluate((element) => {
           element.click();
         }).catch(() => undefined);
+      } else if (primaryClickFailed) {
+        return;
       }
     };
 
@@ -669,6 +680,51 @@ export const PART_4B = String.raw`
     return readyLocators.some(Boolean);
   };
 
+  let imageStepSellPageRecoveries = 0;
+
+  const ensureImageStepSellPageReady = async (context) => {
+    const currentUrl = page.url();
+    if (await isCreateListingPage()) {
+      return true;
+    }
+
+    const stableEntryPoint = await confirmStableSellPage(1_000, 6_000);
+    if (stableEntryPoint === 'form') {
+      return true;
+    }
+
+    const requiresInPlaceRecovery =
+      stableEntryPoint === 'homepage' ||
+      stableEntryPoint === 'trigger' ||
+      !isTraderaSellingRoute(page.url());
+
+    if (requiresInPlaceRecovery && imageStepSellPageRecoveries < 2) {
+      imageStepSellPageRecoveries += 1;
+      log?.('tradera.quicklist.sell_page.image_step_recover', {
+        context,
+        currentUrl,
+        stableEntryPoint,
+        recoveryCount: imageStepSellPageRecoveries,
+      });
+      const reopenedEntryPoint = await openCreateListingPage();
+      const stabilizedRecoveryEntryPoint = await confirmStableSellPage(1_000, 6_000);
+      log?.('tradera.quicklist.sell_page.image_step_recover_result', {
+        context,
+        currentUrl: page.url(),
+        stableEntryPoint,
+        reopenedEntryPoint,
+        stabilizedRecoveryEntryPoint,
+        recoveryCount: imageStepSellPageRecoveries,
+      });
+      if (reopenedEntryPoint === 'form' || stabilizedRecoveryEntryPoint === 'form') {
+        return true;
+      }
+    }
+
+    await ensureCreateListingPageReady(context);
+    return true;
+  };
+
   const openImageUploadControlsIfPresent = async () => {
     for (const selector of IMAGE_UPLOAD_TRIGGER_SELECTORS) {
       const locator = page.locator(selector);
@@ -696,7 +752,7 @@ export const PART_4B = String.raw`
 
   const ensureImageInputReady = async (attempts = 4) => {
     for (let attempt = 0; attempt < attempts; attempt += 1) {
-      await ensureCreateListingPageReady('image input resolution', true);
+      await ensureImageStepSellPageReady('image input resolution');
       await assertAllowedTraderaPage('image input resolution');
       const imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
       if (imageInput) {
@@ -731,7 +787,7 @@ export const PART_4B = String.raw`
   };
 
   const clearDraftImagesIfPresent = async () => {
-    await ensureCreateListingPageReady('draft image cleanup', true);
+    await ensureImageStepSellPageReady('draft image cleanup');
     let removedCount = 0;
 
     for (let attempt = 0; attempt < 12; attempt += 1) {
@@ -774,7 +830,7 @@ export const PART_4B = String.raw`
       await wait(800);
     }
 
-    await ensureCreateListingPageReady('draft image cleanup complete', true);
+    await ensureImageStepSellPageReady('draft image cleanup complete');
 
     return removedCount;
   };

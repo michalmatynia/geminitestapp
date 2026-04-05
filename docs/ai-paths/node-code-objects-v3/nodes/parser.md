@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-05'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # JSON Parser Migration Sheet (`parser`)
 
-Generated at: 2026-03-28T14:11:54.225Z
+Generated at: 2026-04-05T14:57:58.017Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-28T14:11:54.225Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/parser.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/parser.scaffold.json`
 - v3 object id: `node_obj_parser_portable_v3`
-- v3 object hash: `9f6aa95ec5f941dc35f5fbac928d9ae37f535eac2bd3c6bd7333c630a8df3a78`
+- v3 object hash: `bc9807ef13bfc51a2b75bf9ec9c0b9dc5854dc6687630d2925009f6a0b3273bc`
 
 ## Ports
 

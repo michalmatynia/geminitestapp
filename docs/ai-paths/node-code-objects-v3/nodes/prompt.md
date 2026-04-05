@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-05'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Prompt Migration Sheet (`prompt`)
 
-Generated at: 2026-03-28T14:11:54.225Z
+Generated at: 2026-04-05T14:57:58.017Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-28T14:11:54.225Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/prompt.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/prompt.scaffold.json`
 - v3 object id: `node_obj_prompt_portable_v3`
-- v3 object hash: `7ce092d1b2d637e389c18854952b0609c3ea708445719548b18dc29009b5ce2a`
+- v3 object hash: `f4661d199bf1af0b2a63816c6c059a32875287aeb5b31e5c77032102ecf61148`
 
 ## Ports
 

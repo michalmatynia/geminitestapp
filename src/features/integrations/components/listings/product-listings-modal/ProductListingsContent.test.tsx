@@ -2,6 +2,8 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+
 const {
   handleOpenTraderaLoginMock,
   onStartListingMock,
@@ -530,6 +532,113 @@ describe('ProductListingsContent', () => {
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
       '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
+    );
+  });
+
+  it('shows a shipping-groups action for Tradera shipping configuration failures', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        runId: 'run-tradera-shipping-config',
+        requestId: 'job-tradera-shipping-config',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'failed',
+              failureReason:
+                'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'conn-tradera-1',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              marketplaceData: {
+                tradera: {
+                  lastExecution: {
+                    requestId: 'job-tradera-shipping-config',
+                    errorCategory: 'FORM',
+                    error:
+                      'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+                    metadata: {
+                      runId: 'run-tradera-shipping-config',
+                    },
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(
+      screen.getByText(
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Open Shipping Groups' })).toHaveAttribute(
+      'href',
+      '/admin/products/settings?section=shipping-groups'
+    );
+  });
+
+  it('renders a Tradera quick-export success banner with the published listing link', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingId: 'listing-1',
+      listingUrl: 'https://www.tradera.com/item/123',
+      externalListingId: '123',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-1',
+              status: 'active',
+              externalListingId: '123',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              connection: {
+                id: 'conn-tradera-1',
+                name: 'Tradera Browser',
+              },
+              marketplaceData: {
+                listingUrl: 'https://www.tradera.com/item/123',
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera quick export completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/123'
     );
   });
 });

@@ -1,5 +1,5 @@
 export type TraderaBrowserListingResult = {
-  externalListingId: string;
+  externalListingId: string | null;
   listingUrl?: string;
   completedAt?: string;
   simulated?: boolean;

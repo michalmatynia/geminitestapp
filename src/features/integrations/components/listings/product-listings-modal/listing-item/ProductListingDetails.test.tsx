@@ -85,6 +85,8 @@ describe('ProductListingDetails', () => {
                     browserMode: 'headed',
                     requestedBrowserMode: 'headed',
                     scriptSource: 'legacy-default-refresh',
+                    scriptKind: 'managed',
+                    scriptMarker: 'tradera-quicklist-default:v85',
                     listingFormUrl: 'https://www.tradera.com/en/selling/new',
                     runId: 'run-123',
                     playwrightPersonaId: 'persona-natural',
@@ -161,6 +163,10 @@ describe('ProductListingDetails', () => {
     expect(screen.getAllByText('headed').length).toBeGreaterThan(1);
     expect(screen.getByText('Script source:')).toBeInTheDocument();
     expect(screen.getByText('legacy-default-refresh')).toBeInTheDocument();
+    expect(screen.getByText('Script type:')).toBeInTheDocument();
+    expect(screen.getByText('managed')).toBeInTheDocument();
+    expect(screen.getByText('Script marker:')).toBeInTheDocument();
+    expect(screen.getByText('tradera-quicklist-default:v85')).toBeInTheDocument();
     expect(screen.getByText('Start URL:')).toBeInTheDocument();
     expect(screen.getByText('https://www.tradera.com/en/selling/new')).toBeInTheDocument();
     expect(screen.getByText('Run ID:')).toBeInTheDocument();
@@ -273,6 +279,55 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('builtin')).toBeInTheDocument();
     expect(screen.getByText('Error category:')).toBeInTheDocument();
     expect(screen.getByText('NAVIGATION')).toBeInTheDocument();
+  });
+
+  it('shows a warning when a Tradera run used a custom saved connection script', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-1',
+            status: 'failed',
+            externalListingId: null,
+            inventoryId: null,
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: 'Custom script failed.',
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  executedAt: '2026-04-02T11:15:00.000Z',
+                  metadata: {
+                    scriptMode: 'scripted',
+                    scriptSource: 'connection',
+                    scriptKind: 'custom',
+                    runId: 'run-custom-1',
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(
+      screen.getByText(
+        'This run used a custom saved connection script. Managed Tradera fixes will not apply until the connection listing script is reset to the managed default.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows Tradera category mapper fallback diagnostics when no mapped category was applied', () => {

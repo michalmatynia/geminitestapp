@@ -98,6 +98,31 @@ describe('tradera-browser-session', () => {
     expect(result.ready).toBe(true);
   });
 
+  it('includes the product id when quicklist preflight validates a specific product', async () => {
+    apiPostMock.mockResolvedValue({
+      ok: true,
+      sessionReady: true,
+      steps: [{ step: 'Quicklist preflight', status: 'ok' }],
+    });
+
+    await preflightTraderaQuickListSession({
+      integrationId: 'integration-tradera-1',
+      connectionId: 'conn-tradera-1',
+      productId: 'product-123',
+    });
+
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/integration-tradera-1/connections/conn-tradera-1/test',
+      {
+        mode: 'quicklist_preflight',
+        productId: 'product-123',
+      },
+      {
+        timeout: TRADERA_BROWSER_QUICKLIST_PREFLIGHT_TIMEOUT_MS,
+      }
+    );
+  });
+
   it('derives savedSession from the Saving session step only', () => {
     expect(
       hasSavedTraderaBrowserSession({

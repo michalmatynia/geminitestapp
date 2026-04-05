@@ -15,7 +15,10 @@ import type {
 import { toRecord } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ListingBadgesPayload } from '@/shared/contracts/integrations/listings';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
+import {
+  invalidateProductListingsAndBadges,
+  invalidateProducts,
+} from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
@@ -130,6 +133,7 @@ export function useTraderaQuickExportPolling(
           setFeedbackStatus('completed', feedbackOptions);
           setTraderaBadgeStatus(queryClient, productId, 'active');
           void invalidateProductListingsAndBadges(queryClient, productId);
+          void invalidateProducts(queryClient);
           return;
         }
 
@@ -139,6 +143,7 @@ export function useTraderaQuickExportPolling(
         ) {
           setFeedbackStatus('auth_required', feedbackOptions);
           setTraderaBadgeStatus(queryClient, productId, 'auth_required');
+          void invalidateProducts(queryClient);
           return;
         }
 
@@ -149,6 +154,7 @@ export function useTraderaQuickExportPolling(
             productId,
             normalizedListingStatus
           );
+          void invalidateProducts(queryClient);
           return;
         }
 

@@ -120,6 +120,7 @@ export type IntegrationConnectionTestMode = z.infer<typeof integrationConnection
 export const integrationConnectionTestRequestSchema = z.object({
   mode: integrationConnectionTestModeSchema.optional().catch(undefined),
   manualTimeoutMs: z.number().int().positive().optional().catch(undefined),
+  productId: z.string().trim().min(1).optional().catch(undefined),
 });
 
 export type IntegrationConnectionTestRequest = z.infer<typeof integrationConnectionTestRequestSchema>;

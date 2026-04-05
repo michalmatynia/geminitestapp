@@ -5,10 +5,12 @@ const {
   parseJsonBodyMock,
   getConnectionByIdAndIntegrationMock,
   getIntegrationByIdMock,
+  getProductByIdMock,
   updateConnectionMock,
   decryptSecretMock,
   encryptSecretMock,
   resolveConnectionPlaywrightSettingsMock,
+  validateTraderaQuickListProductConfigMock,
   chromiumLaunchMock,
   browserNewContextMock,
   contextSetDefaultTimeoutMock,
@@ -27,10 +29,12 @@ const {
   parseJsonBodyMock: vi.fn(),
   getConnectionByIdAndIntegrationMock: vi.fn(),
   getIntegrationByIdMock: vi.fn(),
+  getProductByIdMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   decryptSecretMock: vi.fn(),
   encryptSecretMock: vi.fn(),
   resolveConnectionPlaywrightSettingsMock: vi.fn(),
+  validateTraderaQuickListProductConfigMock: vi.fn(),
   chromiumLaunchMock: vi.fn(),
   browserNewContextMock: vi.fn(),
   contextSetDefaultTimeoutMock: vi.fn(),
@@ -78,8 +82,19 @@ vi.mock('@/features/integrations/server', () => ({
   }),
 }));
 
+vi.mock('@/shared/lib/products/services/product-repository', () => ({
+  getProductRepository: async () => ({
+    getProductById: (...args: unknown[]) => getProductByIdMock(...args),
+  }),
+}));
+
 vi.mock('@/features/integrations/services/tradera-api-client', () => ({
   getTraderaUserInfo: vi.fn(),
+}));
+
+vi.mock('@/features/integrations/services/tradera-listing/preflight', () => ({
+  validateTraderaQuickListProductConfig: (...args: unknown[]) =>
+    validateTraderaQuickListProductConfigMock(...args),
 }));
 
 vi.mock('@/features/integrations/services/tradera-playwright-settings', () => ({
@@ -146,6 +161,13 @@ describe('integration connection test handler', () => {
     });
 
     updateConnectionMock.mockResolvedValue(undefined);
+    getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+    });
+    validateTraderaQuickListProductConfigMock.mockResolvedValue({
+      categoryMapping: { reason: 'mapped', mapping: {} },
+      shippingGroupResolution: { reason: 'mapped', shippingPriceEur: 5 },
+    });
 
     decryptSecretMock.mockImplementation((value: string) => {
       if (value === 'state-secret') {
@@ -324,5 +346,63 @@ describe('integration connection test handler', () => {
     );
     expect(updateConnectionMock).not.toHaveBeenCalled();
     expect(pageWaitForURLMock).not.toHaveBeenCalled();
+  });
+
+  it('validates product configuration during quicklist preflight when a product id is supplied', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        mode: 'quicklist_preflight',
+        productId: 'product-1',
+      },
+    });
+
+    const response = await postTestConnectionHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/integration-1/connections/connection-1/test',
+        { method: 'POST' }
+      ),
+      {} as never,
+      { id: 'integration-1', connectionId: 'connection-1' }
+    );
+
+    const payload = (await response.json()) as { ok: boolean; sessionReady?: boolean };
+
+    expect(payload.ok).toBe(true);
+    expect(payload.sessionReady).toBe(true);
+    expect(getProductByIdMock).toHaveBeenCalledWith('product-1');
+    expect(validateTraderaQuickListProductConfigMock).toHaveBeenCalledWith({
+      product: expect.objectContaining({ id: 'product-1' }),
+      connection: expect.objectContaining({ id: 'connection-1' }),
+    });
+  });
+
+  it('fails quicklist preflight before browser launch when product configuration is invalid', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        mode: 'quicklist_preflight',
+        productId: 'product-1',
+      },
+    });
+    validateTraderaQuickListProductConfigMock.mockRejectedValue(
+      new Error(
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+      )
+    );
+
+    await expect(
+      postTestConnectionHandler(
+        new NextRequest(
+          'http://localhost:3000/api/v2/integrations/integration-1/connections/connection-1/test',
+          { method: 'POST' }
+        ),
+        {} as never,
+        { id: 'integration-1', connectionId: 'connection-1' }
+      )
+    ).rejects.toThrow(
+      'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+    );
+    expect(chromiumLaunchMock).not.toHaveBeenCalled();
   });
 });

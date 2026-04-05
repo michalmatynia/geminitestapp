@@ -178,6 +178,37 @@ describe('runPlaywrightListingScript', () => {
     });
   });
 
+  it('applies runtime settings overrides on top of the resolved connection settings', async () => {
+    const connection = {
+      playwrightPersonaId: 'persona-1',
+      playwrightStorageState: 'encrypted-state',
+    };
+
+    const result = await runPlaywrightListingScript({
+      script: 'export default async function run() {}',
+      input: { title: 'Example' },
+      connection: connection as never,
+      runtimeSettingsOverrides: {
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+    });
+
+    expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
+      request: expect.objectContaining({
+        settingsOverrides: expect.objectContaining({
+          emulateDevice: false,
+          deviceName: 'Desktop Chrome',
+        }),
+      }),
+      waitForResult: true,
+    });
+    expect(result.executionSettings).toMatchObject({
+      emulateDevice: false,
+      deviceName: 'Desktop Chrome',
+    });
+  });
+
   it('can skip startUrl bootstrap so Tradera scripts control sell-page navigation', async () => {
     const connection = {
       playwrightPersonaId: 'persona-1',

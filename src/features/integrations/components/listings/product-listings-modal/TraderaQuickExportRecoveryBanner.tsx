@@ -27,6 +27,16 @@ const isTraderaCategoryMapperFailure = (failureReason: string | null | undefined
   );
 };
 
+const isTraderaShippingGroupFailure = (failureReason: string | null | undefined): boolean => {
+  const normalized = (failureReason ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('shipping group') ||
+    normalized.includes('shipping price in eur') ||
+    normalized.includes('tradera shipping price')
+  );
+};
+
 export function TraderaQuickExportRecoveryBanner({
   mode,
   status,
@@ -41,8 +51,12 @@ export function TraderaQuickExportRecoveryBanner({
   const categoryMapperHref = connectionId
     ? `/admin/integrations/marketplaces/category-mapper?connectionId=${encodeURIComponent(connectionId)}`
     : null;
+  const shippingGroupsHref = '/admin/products/settings?section=shipping-groups';
   const canOpenCategoryMapper = Boolean(
     !canContinue && categoryMapperHref && isTraderaCategoryMapperFailure(failureReason)
+  );
+  const canOpenShippingGroups = Boolean(
+    !canContinue && isTraderaShippingGroupFailure(failureReason)
   );
   const title =
     mode === 'empty'
@@ -88,11 +102,16 @@ export function TraderaQuickExportRecoveryBanner({
             <div className='font-mono text-white'>{requestId ?? 'Unavailable'}</div>
           </div>
         </div>
-        {(canContinue || canOpenCategoryMapper) && (
+        {(canContinue || canOpenCategoryMapper || canOpenShippingGroups) && (
           <div className='flex flex-wrap justify-center gap-2'>
             {canOpenCategoryMapper && categoryMapperHref && (
               <Button asChild type='button' variant='outline' size='default'>
                 <Link href={categoryMapperHref}>Open Category Mapper</Link>
+              </Button>
+            )}
+            {canOpenShippingGroups && (
+              <Button asChild type='button' variant='outline' size='default'>
+                <Link href={shippingGroupsHref}>Open Shipping Groups</Link>
               </Button>
             )}
             {canContinue && (
@@ -129,11 +148,16 @@ export function TraderaQuickExportRecoveryBanner({
             </div>
           )}
         </div>
-        {(canContinue || canOpenCategoryMapper) && (
+        {(canContinue || canOpenCategoryMapper || canOpenShippingGroups) && (
           <div className='flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0'>
             {canOpenCategoryMapper && categoryMapperHref && (
               <Button asChild type='button' variant='outline' size='sm'>
                 <Link href={categoryMapperHref}>Open Category Mapper</Link>
+              </Button>
+            )}
+            {canOpenShippingGroups && (
+              <Button asChild type='button' variant='outline' size='sm'>
+                <Link href={shippingGroupsHref}>Open Shipping Groups</Link>
               </Button>
             )}
             {canContinue && (

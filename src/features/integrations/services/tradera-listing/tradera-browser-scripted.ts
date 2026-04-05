@@ -2,8 +2,9 @@ import { normalizeTraderaListingFormUrl, type TraderaSystemSettings } from '@/fe
 import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/playwright-node-runner.parser';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { PlaywrightRelistBrowserMode, ProductListing } from '@/shared/contracts/integrations/listings';
+import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { badRequestError, internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
+import { internalError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import { getIntegrationRepository } from '../integration-repository';
@@ -12,28 +13,29 @@ import {
 } from '../playwright-listing/runner';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
 import {
-  resolveTraderaCategoryMappingResolutionForProduct,
-  type TraderaCategoryMappingResolution,
-} from './category-mapping';
-import { resolveTraderaShippingGroupResolutionForProduct } from './shipping-group';
-import {
   resolveAppBaseUrl,
   toAbsoluteUrl,
 } from '@/shared/lib/files/services/storage/file-storage-service';
 import {
   extractExternalListingId,
 } from './utils';
+import { resolveTraderaListingPriceForProduct } from './price';
+import { buildTraderaPricingMetadata } from './pricing-metadata';
+import { buildTraderaListingDescription } from './description';
 import {
   resolveProductImageUrls,
   resolveLocalProductImagePaths,
   resolveScriptInputImageDiagnostics,
 } from './tradera-browser-images';
 import type { TraderaBrowserListingResult } from './browser-types';
+import { validateTraderaQuickListProductConfig } from './preflight';
 
-export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v80';
+export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v85';
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 30_000;
+export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
 export const TRADERA_IMAGE_SETTLE_TIMEOUT_MESSAGE_PREFIX =
   'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish. Last state: ';
+const MANAGED_TRADERA_QUICKLIST_DESKTOP_DEVICE_NAME = 'Desktop Chrome';
 const MANAGED_TRADERA_QUICKLIST_MARKER_PATTERN = /tradera-quicklist-default:v\d+/;
 const COMPATIBLE_LEGACY_MANAGED_TRADERA_QUICKLIST_MARKERS = new Set([
   'tradera-quicklist-default:v76',
@@ -103,6 +105,45 @@ const usesStaleManagedDefaultTraderaQuickListScript = (
   return script !== DEFAULT_TRADERA_QUICKLIST_SCRIPT;
 };
 
+const buildManagedQuicklistRuntimeSettingsOverrides = (
+  script: string
+): Partial<PlaywrightSettings> | undefined => {
+  if (!isManagedTraderaQuickListScript(script)) {
+    return undefined;
+  }
+
+  return {
+    emulateDevice: false,
+    deviceName: MANAGED_TRADERA_QUICKLIST_DESKTOP_DEVICE_NAME,
+  };
+};
+
+const buildManagedQuicklistScriptMetadata = ({
+  script,
+  scriptSource,
+}: {
+  script: string;
+  scriptSource:
+    | 'connection'
+    | 'default-fallback'
+    | 'legacy-default-refresh'
+    | 'invalid-connection-fallback'
+    | 'runtime-default-refresh';
+}): {
+  scriptKind: 'managed' | 'custom';
+  scriptMarker: string | null;
+  scriptStoredOnConnection: boolean;
+} => {
+  const scriptMarker = extractManagedTraderaQuickListMarker(script);
+  const scriptKind = isManagedTraderaQuickListScript(script) ? 'managed' : 'custom';
+
+  return {
+    scriptKind,
+    scriptMarker,
+    scriptStoredOnConnection: scriptSource === 'connection',
+  };
+};
+
 const shouldRetryWithManagedDefaultScript = ({
   scriptSource,
   error,
@@ -116,58 +157,6 @@ const shouldRetryWithManagedDefaultScript = ({
 
   const message = error instanceof Error ? error.message : String(error);
   return message.includes('currentImageUploadSource is not defined');
-};
-
-const buildMissingTraderaCategoryMappingMessage = ({
-  categoryMapping,
-}: {
-  categoryMapping: TraderaCategoryMappingResolution;
-}): string => {
-  switch (categoryMapping.reason) {
-    case 'missing_internal_category':
-      return 'Tradera export requires a product category before listing. Assign an internal product category, then map it in Tradera Category Mapper and retry.';
-    case 'ambiguous_external_category':
-      return 'Multiple active Tradera category mappings matched this product category. Keep only one active Tradera category mapping and retry.';
-    case 'stale_external_category':
-      return 'The mapped Tradera category is stale or missing from fetched Tradera categories. Fetch Tradera categories again, update the mapping, and retry.';
-    case 'invalid_external_category':
-      return 'The mapped Tradera category is invalid. Fetch Tradera categories again, update the Tradera category mapping, and retry.';
-    case 'no_active_mapping':
-    default:
-      return 'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.';
-  }
-};
-
-const canUseFallbackTraderaCategory = ({
-  categoryMapping,
-}: {
-  categoryMapping: TraderaCategoryMappingResolution;
-}): boolean => categoryMapping.reason === 'no_active_mapping';
-
-const assertTraderaCategoryMappingReady = ({
-  categoryMapping,
-  product,
-  connection,
-}: {
-  categoryMapping: TraderaCategoryMappingResolution;
-  product: ProductWithImages;
-  connection: IntegrationConnectionRecord;
-}): void => {
-  if (categoryMapping.mapping || canUseFallbackTraderaCategory({ categoryMapping })) {
-    return;
-  }
-
-  throw badRequestError(buildMissingTraderaCategoryMappingMessage({ categoryMapping }), {
-    productId: product.id,
-    productCategoryId: toTrimmedString(product.categoryId) || null,
-    connectionId: connection.id,
-    categoryMappingReason: categoryMapping.reason,
-    categoryMatchScope: categoryMapping.matchScope,
-    productCatalogIds: categoryMapping.productCatalogIds,
-    matchingMappingCount: categoryMapping.matchingMappingCount,
-    validMappingCount: categoryMapping.validMappingCount,
-    catalogMatchedMappingCount: categoryMapping.catalogMatchedMappingCount,
-  });
 };
 
 const resolveManagedTraderaScript = async ({
@@ -238,23 +227,38 @@ export const buildTraderaScriptInput = async ({
 }): Promise<Record<string, unknown>> => {
   const title =
     product.name_en || product.name_pl || product.name_de || product.sku || `Listing ${listing.productId}`;
-  const description =
-    product.description_en || product.description_pl || product.description_de || title;
+  const description = buildTraderaListingDescription({
+    rawDescription: product.description_en || product.description_pl || product.description_de,
+    fallbackTitle: title,
+    baseProductId: product.baseProductId ?? product.id,
+    sku: product.sku,
+  });
   const appBaseUrl = resolveAppBaseUrl();
   const imageUrls = resolveProductImageUrls(product).map((url) => toAbsoluteUrl(url, appBaseUrl));
   const localImagePaths = await resolveLocalProductImagePaths(product);
-  const categoryMapping = await resolveTraderaCategoryMappingResolutionForProduct({
-    connectionId: connection.id,
+  const priceResolution = await resolveTraderaListingPriceForProduct({
     product,
+    targetCurrencyCode: 'EUR',
   });
-  assertTraderaCategoryMappingReady({
-    categoryMapping,
-    product,
-    connection,
-  });
-  const shippingGroupResolution = await resolveTraderaShippingGroupResolutionForProduct({
-    product,
-  });
+  const pricingMetadata = buildTraderaPricingMetadata(priceResolution);
+  if (
+    priceResolution.listingPrice === null ||
+    !priceResolution.resolvedToTargetCurrency ||
+    toTrimmedString(priceResolution.listingCurrencyCode).toUpperCase() !== 'EUR'
+  ) {
+    throw internalError('FAIL_PRICE_RESOLUTION: Tradera listing price could not be resolved to EUR.', {
+      mode: 'scripted',
+      productId: product.id,
+      listingId: listing.id,
+      connectionId: listing.connectionId,
+      ...pricingMetadata,
+    });
+  }
+  const { categoryMapping, shippingGroupResolution } =
+    await validateTraderaQuickListProductConfig({
+      product,
+      connection,
+    });
   const shippingGroup = shippingGroupResolution.shippingGroup;
   const mappedCategory = categoryMapping.mapping;
 
@@ -267,12 +271,12 @@ export const buildTraderaScriptInput = async ({
     sku: product.sku ?? null,
     title,
     description,
-    price:
-      typeof product.price === 'number' && Number.isFinite(product.price) ? product.price : null,
+    price: priceResolution.listingPrice,
     imageUrls,
     images: imageUrls,
     localImagePaths,
     appBaseUrl,
+    traderaPricing: pricingMetadata,
     traderaConfig: {
       listingFormUrl: normalizeTraderaListingFormUrl(systemSettings.listingFormUrl),
     },
@@ -313,13 +317,16 @@ export const buildTraderaScriptInput = async ({
 
 const buildSuccessMetadata = ({
   result,
+  script,
   scriptInput,
   browserMode,
   systemSettings,
   scriptSource,
   scriptValidationError,
+  runtimeSettingsOverrides,
 }: {
   result: Awaited<ReturnType<typeof runPlaywrightListingScript>>;
+  script: string;
   scriptInput: Record<string, unknown>;
   browserMode: PlaywrightRelistBrowserMode;
   systemSettings: TraderaSystemSettings;
@@ -330,10 +337,15 @@ const buildSuccessMetadata = ({
     | 'invalid-connection-fallback'
     | 'runtime-default-refresh';
   scriptValidationError?: string;
+  runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
 }): Record<string, unknown> => {
   const traderaCategory = scriptInput['traderaCategory'];
   const traderaCategoryMapping = scriptInput['traderaCategoryMapping'];
   const traderaShipping = scriptInput['traderaShipping'];
+  const traderaPricing =
+    scriptInput['traderaPricing'] && typeof scriptInput['traderaPricing'] === 'object'
+      ? (scriptInput['traderaPricing'] as Record<string, unknown>)
+      : null;
   const imageDiagnostics = resolveScriptInputImageDiagnostics(scriptInput);
   const rawCategoryPath =
     typeof result.rawResult['categoryPath'] === 'string' ? result.rawResult['categoryPath'] : null;
@@ -364,16 +376,33 @@ const buildSuccessMetadata = ({
       : result.executionSettings.headless
         ? 'headless'
         : 'headed';
+  const scriptMarker = extractManagedTraderaQuickListMarker(script);
+  const scriptKind: 'managed' | 'custom' = isManagedTraderaQuickListScript(script)
+    ? 'managed'
+    : 'custom';
+  const scriptStoredOnConnection = scriptSource === 'connection';
 
   return {
     scriptMode: 'scripted',
     scriptSource,
+    scriptKind,
+    scriptMarker,
+    scriptStoredOnConnection,
     runId: result.runId,
     requestedBrowserMode: browserMode,
     listingFormUrl: normalizeTraderaListingFormUrl(systemSettings.listingFormUrl),
     browserMode: effectiveBrowserMode,
     playwrightPersonaId: result.personaId,
     playwrightSettings: result.executionSettings,
+    ...(traderaPricing ?? {}),
+    ...(
+      runtimeSettingsOverrides?.emulateDevice === false &&
+      runtimeSettingsOverrides?.deviceName === MANAGED_TRADERA_QUICKLIST_DESKTOP_DEVICE_NAME
+        ? {
+            managedQuicklistDesktopMode: true,
+          }
+        : {}
+    ),
     ...(scriptValidationError
       ? {
           scriptValidationError,
@@ -492,13 +521,16 @@ export const runTraderaBrowserListingScripted = async ({
       | 'runtime-default-refresh';
     scriptValidationError?: string;
   }): Promise<TraderaBrowserListingResult> => {
+    const runtimeSettingsOverrides = buildManagedQuicklistRuntimeSettingsOverrides(script);
     const result = await runPlaywrightListingScript({
       script,
       input: scriptInput,
       connection,
+      timeoutMs: TRADERA_SCRIPTED_LISTING_TIMEOUT_MS,
       browserMode,
       disableStartUrlBootstrap: true,
       failureHoldOpenMs: browserMode === 'headed' ? TRADERA_HEADED_FAILURE_HOLD_OPEN_MS : undefined,
+      runtimeSettingsOverrides,
     });
 
     const externalListingId =
@@ -506,12 +538,13 @@ export const runTraderaBrowserListingScripted = async ({
       (typeof result.listingUrl === 'string'
         ? extractExternalListingId(result.listingUrl)
         : null);
-    if (!externalListingId) {
+    if (!externalListingId && result.publishVerified !== true) {
       throw internalError(
         `Tradera scripted listing run ${result.runId} finished without an external listing ID.`,
         {
           scriptMode: 'scripted',
           scriptSource,
+          ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
           requestedBrowserMode: browserMode,
           listingFormUrl: normalizedListingFormUrl,
           runId: result.runId,
@@ -526,11 +559,13 @@ export const runTraderaBrowserListingScripted = async ({
       listingUrl: result.listingUrl ?? undefined,
       metadata: buildSuccessMetadata({
         result,
+        script,
         scriptInput,
         browserMode,
         systemSettings,
         scriptSource,
         scriptValidationError,
+        runtimeSettingsOverrides,
       }),
     };
   };
@@ -561,6 +596,7 @@ export const runTraderaBrowserListingScripted = async ({
         ...error.meta,
         scriptMode: 'scripted',
         scriptSource,
+        ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
         requestedBrowserMode: browserMode,
         listingFormUrl: normalizedListingFormUrl,
         imageSettleState,
@@ -579,6 +615,7 @@ export const runTraderaBrowserListingScripted = async ({
         ...(metadataCarrier.meta ?? {}),
         scriptMode: 'scripted',
         scriptSource,
+        ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
         requestedBrowserMode: browserMode,
         listingFormUrl: normalizedListingFormUrl,
         imageSettleState,
@@ -595,6 +632,7 @@ export const runTraderaBrowserListingScripted = async ({
       cause: error,
       scriptMode: 'scripted',
       scriptSource,
+      ...buildManagedQuicklistScriptMetadata({ script, scriptSource }),
       requestedBrowserMode: browserMode,
       listingFormUrl: normalizedListingFormUrl,
       imageSettleState,

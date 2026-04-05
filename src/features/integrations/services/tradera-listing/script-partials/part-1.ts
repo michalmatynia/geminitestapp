@@ -6,7 +6,7 @@ export const PART_1 = String.raw`export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v80
+  // tradera-quicklist-default:v85
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const LEGACY_SELL_URL = 'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
@@ -165,17 +165,24 @@ export const PART_1 = String.raw`export default async function run({
     '[data-testid*="next"]',
   ];
   const PUBLISH_SELECTORS = [
-    'button[type="submit"]',
-    'button[aria-label*="Publish" i]',
     'button[aria-label*="Review and publish" i]',
-    'button[aria-label*="Publicera" i]',
+    'button[aria-label*="Publish" i]',
     'button[aria-label*="Granska och publicera" i]',
-    'button:has-text("Publish")',
+    'button[aria-label*="Publicera" i]',
     'button:has-text("Review and publish")',
-    'button:has-text("Publicera")',
+    'button:has-text("Publish")',
     'button:has-text("Granska och publicera")',
+    'button:has-text("Publicera")',
     'button:has-text("Lägg upp")',
     '[data-testid*="publish"]',
+    'button[type="submit"]',
+  ];
+  const PUBLISH_ACTION_LABEL_HINTS = [
+    'review and publish',
+    'publish',
+    'granska och publicera',
+    'publicera',
+    'lägg upp',
   ];
   const VALIDATION_MESSAGE_SELECTORS = [
     '[role="alert"]',
@@ -186,6 +193,7 @@ export const PART_1 = String.raw`export default async function run({
     '.error-message',
     '.field-error',
   ];
+  const VALIDATION_MESSAGE_IGNORE_FIELDS = ['__next-route-announcer__', 'next-route-announcer'];
   const ACTIVE_SEARCH_SELECTORS = [
     'main input[type="search"]',
     'main [role="searchbox"]',
@@ -376,6 +384,14 @@ export const PART_1 = String.raw`export default async function run({
     String(value || '')
       .replace(/\s+/g, ' ')
       .trim();
+  const hasPublishActionHint = (value) => {
+    const normalized = normalizeWhitespace(value).toLowerCase();
+    if (!normalized) {
+      return false;
+    }
+
+    return PUBLISH_ACTION_LABEL_HINTS.some((hint) => normalized.includes(hint));
+  };
   const normalizePriceValue = (value) => {
     const normalized = String(value || '')
       .replace(/\s+/g, '')
@@ -390,10 +406,15 @@ export const PART_1 = String.raw`export default async function run({
   const username = toText(input?.username);
   const password = toText(input?.password);
   const title = toText(input?.title) || 'Listing ' + baseProductId;
-  const rawDescription = toText(input?.description) || title;
-  const description = rawDescription.includes('Item reference:')
-    ? rawDescription
-    : rawDescription + '\\n\\nItem reference: ' + baseProductId;
+  const PRODUCT_ID_PATTERN = /(item reference|product id)\s*:/i;
+  const SKU_REFERENCE_PATTERN = /\bsku\s*:/i;
+  const rawDescription = (toText(input?.description) || title).replace(/\s+$/g, '');
+  const referenceLines = [
+    !PRODUCT_ID_PATTERN.test(rawDescription) ? 'Product ID: ' + baseProductId : null,
+    sku && !SKU_REFERENCE_PATTERN.test(rawDescription) ? 'SKU: ' + sku : null,
+  ].filter(Boolean);
+  const description =
+    referenceLines.length > 0 ? rawDescription + ' | ' + referenceLines.join(' | ') : rawDescription;
   const price = toNumber(input?.price) ?? 1;
   const mappedCategorySegments = Array.isArray(input?.traderaCategory?.segments)
     ? input.traderaCategory.segments
@@ -514,11 +535,20 @@ export const PART_1 = String.raw`export default async function run({
 
         return {
           tagName: element.tagName.toLowerCase(),
+          id: element.getAttribute('id') || '',
+          name: element.getAttribute('name') || '',
+          type: element.getAttribute('type') || '',
           role: element.getAttribute('role') || '',
           href: resolvedHref,
           hrefAttribute,
           targetAttribute: element.getAttribute('target') || '',
           ariaLabel: element.getAttribute('aria-label') || '',
+          title: element.getAttribute('title') || '',
+          dataTestId: element.getAttribute('data-testid') || '',
+          value:
+            'value' in element && typeof element.value === 'string'
+              ? element.value
+              : '',
           text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
         };
       })
@@ -559,6 +589,53 @@ export const PART_1 = String.raw`export default async function run({
       currentUrl: typeof page?.url === 'function' ? page.url() : null,
       ...(targetMetadata || {}),
     });
+  };
+
+  const isPublishClickTarget = (metadata) => {
+    if (!metadata || typeof metadata !== 'object') {
+      return false;
+    }
+
+    return [
+      metadata.text,
+      metadata.ariaLabel,
+      metadata.dataTestId,
+      metadata.id,
+      metadata.name,
+      metadata.title,
+      metadata.value,
+    ].some((value) => hasPublishActionHint(value));
+  };
+
+  const findPublishButton = async (options = {}) => {
+    const allowAmbiguousSubmit = options?.allowAmbiguousSubmit === true;
+    let ambiguousSubmitCandidate = null;
+
+    for (const selector of PUBLISH_SELECTORS) {
+      const locator = page.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      if (!count) continue;
+
+      for (let index = 0; index < Math.min(count, 8); index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+
+        const metadata = await readClickTargetMetadata(candidate);
+        if (resolveExternalClickTargetUrl(metadata)) {
+          continue;
+        }
+
+        const isAmbiguousSubmitSelector = selector === 'button[type="submit"]';
+        if (!isAmbiguousSubmitSelector || isPublishClickTarget(metadata)) {
+          return candidate;
+        }
+
+        ambiguousSubmitCandidate ??= candidate;
+      }
+    }
+
+    return allowAmbiguousSubmit ? ambiguousSubmitCandidate : null;
   };
 
   const wait = async (ms) => {
@@ -607,7 +684,11 @@ export const PART_1 = String.raw`export default async function run({
     try {
       await humanClick(target, options);
       return true;
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error || '');
+      if (message.includes('FAIL_SELL_PAGE_INVALID:')) {
+        throw error;
+      }
       return false;
     }
   };
@@ -658,6 +739,36 @@ export const PART_1 = String.raw`export default async function run({
     });
   };
 
+  const readRuntimeEnvironment = async () => {
+    return page
+      .evaluate(() => {
+        const coarsePointer =
+          typeof window.matchMedia === 'function'
+            ? window.matchMedia('(pointer: coarse)').matches
+            : null;
+        const finePointer =
+          typeof window.matchMedia === 'function'
+            ? window.matchMedia('(pointer: fine)').matches
+            : null;
+
+        return {
+          href: window.location.href,
+          viewportWidth: window.innerWidth || null,
+          viewportHeight: window.innerHeight || null,
+          outerWidth: window.outerWidth || null,
+          outerHeight: window.outerHeight || null,
+          screenWidth: window.screen?.width ?? null,
+          screenHeight: window.screen?.height ?? null,
+          devicePixelRatio: window.devicePixelRatio ?? null,
+          userAgent: navigator.userAgent,
+          maxTouchPoints: navigator.maxTouchPoints ?? 0,
+          coarsePointer,
+          finePointer,
+        };
+      })
+      .catch(() => null);
+  };
+
   const toSafeArtifactName = (value) =>
     String(value || 'artifact')
       .toLowerCase()
@@ -700,6 +811,52 @@ export const PART_1 = String.raw`export default async function run({
   };
 
   const collectValidationMessages = async () => {
+    const isIgnorableValidationCandidate = async (locator) => {
+      return locator
+        .evaluate((element, ignoredFields) => {
+          const normalizedFields = Array.isArray(ignoredFields)
+            ? ignoredFields
+                .map((value) => String(value || '').trim().toLowerCase())
+                .filter(Boolean)
+            : [];
+          if (normalizedFields.length === 0) {
+            return false;
+          }
+
+          const identifiers = [
+            element.getAttribute('id') || '',
+            element.getAttribute('name') || '',
+            element.getAttribute('aria-label') || '',
+            element.parentElement?.getAttribute('id') || '',
+            element.parentElement?.tagName || '',
+            element.tagName || '',
+          ]
+            .map((value) => String(value || '').trim().toLowerCase())
+            .filter(Boolean);
+
+          if (identifiers.some((value) => normalizedFields.includes(value))) {
+            return true;
+          }
+
+          return Boolean(element.closest('next-route-announcer'));
+        }, VALIDATION_MESSAGE_IGNORE_FIELDS)
+        .catch(() => false);
+    };
+
+    const sanitizeValidationMessages = (messages) => {
+      if (!Array.isArray(messages)) {
+        return [];
+      }
+
+      return messages.filter((message) => {
+        const normalized = normalizeWhitespace(message).toLowerCase();
+        return (
+          normalized.length > 0 &&
+          !VALIDATION_MESSAGE_IGNORE_FIELDS.some((ignoredField) => normalized.includes(ignoredField))
+        );
+      });
+    };
+
     const messages = new Set();
 
     for (const selector of VALIDATION_MESSAGE_SELECTORS) {
@@ -711,6 +868,7 @@ export const PART_1 = String.raw`export default async function run({
         const candidate = locator.nth(index);
         const visible = await candidate.isVisible().catch(() => false);
         if (!visible) continue;
+        if (await isIgnorableValidationCandidate(candidate)) continue;
 
         const text = await candidate.innerText().catch(() => '');
         const normalized = text.trim().replace(/\s+/g, ' ');
@@ -736,7 +894,7 @@ export const PART_1 = String.raw`export default async function run({
       }
     }
 
-    return Array.from(messages).slice(0, 6);
+    return sanitizeValidationMessages(Array.from(messages)).slice(0, 6);
   };
 
   const hasDeliveryValidationIssue = (messages) => {

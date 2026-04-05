@@ -462,7 +462,7 @@ export const PART_3 = String.raw`        expectedValue,
     }
 
     await logClickTarget('category-trigger:fallback', categoryTrigger);
-    await humanClick(categoryTrigger).catch(() => undefined);
+    await humanClick(categoryTrigger);
     await wait(400);
 
     let selectedDepth = 0;

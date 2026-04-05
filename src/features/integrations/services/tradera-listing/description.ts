@@ -3,8 +3,8 @@ const readString = (value: string | null | undefined): string | null => {
   return normalized ? normalized : null;
 };
 
-const ITEM_REFERENCE_PATTERN = /item reference\s*:/i;
-const SKU_REFERENCE_PATTERN = /(^|\n)\s*sku\s*:/i;
+const PRODUCT_ID_PATTERN = /(item reference|product id)\s*:/i;
+const SKU_REFERENCE_PATTERN = /\bsku\s*:/i;
 
 export const buildTraderaListingDescription = ({
   rawDescription,
@@ -22,8 +22,8 @@ export const buildTraderaListingDescription = ({
   const normalizedSku = readString(sku);
 
   const metadataLines: string[] = [];
-  if (normalizedBaseProductId && !ITEM_REFERENCE_PATTERN.test(description)) {
-    metadataLines.push(`Item reference: ${normalizedBaseProductId}`);
+  if (normalizedBaseProductId && !PRODUCT_ID_PATTERN.test(description)) {
+    metadataLines.push(`Product ID: ${normalizedBaseProductId}`);
   }
   if (normalizedSku && !SKU_REFERENCE_PATTERN.test(description)) {
     metadataLines.push(`SKU: ${normalizedSku}`);
@@ -33,5 +33,5 @@ export const buildTraderaListingDescription = ({
     return description;
   }
 
-  return `${description}\n\n${metadataLines.join('\n')}`;
+  return `${description} | ${metadataLines.join(' | ')}`;
 };

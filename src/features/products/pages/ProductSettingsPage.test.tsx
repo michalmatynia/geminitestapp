@@ -12,6 +12,7 @@ const {
   useDeletePriceGroupMutationMock,
   useParametersMock,
   usePriceGroupsMock,
+  useSearchParamsMock,
   useShippingGroupsMock,
   useTagsMock,
   useUpdatePriceGroupMutationMock,
@@ -23,9 +24,14 @@ const {
   useDeletePriceGroupMutationMock: vi.fn(),
   useParametersMock: vi.fn(),
   usePriceGroupsMock: vi.fn(),
+  useSearchParamsMock: vi.fn(),
   useShippingGroupsMock: vi.fn(),
   useTagsMock: vi.fn(),
   useUpdatePriceGroupMutationMock: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => useSearchParamsMock(),
 }));
 
 vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
@@ -144,6 +150,9 @@ const buildQueryResult = (overrides: Record<string, unknown> = {}) => ({
 describe('ProductSettingsPage metadata gating', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useSearchParamsMock.mockReturnValue({
+      get: () => null,
+    });
 
     usePriceGroupsMock.mockReturnValue(buildQueryResult());
     useCatalogsMock.mockReturnValue(
@@ -234,5 +243,22 @@ describe('ProductSettingsPage metadata gating', () => {
     expect(useTagsMock).toHaveBeenLastCalledWith('catalog-default', { enabled: false });
     expect(useParametersMock).toHaveBeenLastCalledWith(null, { enabled: false });
     expect(screen.getByTestId('price-groups-settings')).toBeInTheDocument();
+  });
+
+  it('opens the requested settings section from the url search params', async () => {
+    useSearchParamsMock.mockReturnValue({
+      get: (key: string) => (key === 'section' ? 'shipping-groups' : null),
+    });
+
+    render(<ProductSettingsPage />);
+
+    await waitFor(() => {
+      expect(useShippingGroupsMock).toHaveBeenLastCalledWith('catalog-default', {
+        enabled: true,
+      });
+    });
+
+    expect(useCategoriesMock).toHaveBeenLastCalledWith(null, { enabled: false });
+    expect(screen.getByTestId('shipping-groups-settings')).toBeInTheDocument();
   });
 });

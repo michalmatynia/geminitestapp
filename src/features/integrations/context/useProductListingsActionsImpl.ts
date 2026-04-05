@@ -248,6 +248,10 @@ export const useProductListingsActionsImpl = ({
           await preflightTraderaQuickListSession({
             integrationId: listing.integrationId,
             connectionId: listing.connectionId,
+            productId:
+              typeof listing.productId === 'string' && listing.productId.trim()
+                ? listing.productId.trim()
+                : undefined,
           });
         }
         const response = await relistTraderaMutation.mutateAsync({
@@ -299,6 +303,22 @@ export const useProductListingsActionsImpl = ({
           }
           toast(errorMessage, { variant: 'error' });
           return;
+        }
+        if (
+          listing &&
+          isTraderaBrowserIntegrationSlug(listing.integration.slug) &&
+          listing.integrationId &&
+          listing.connectionId
+        ) {
+          setRecoveryContext(
+            createTraderaRecoveryContext({
+              status: 'failed',
+              runId: null,
+              failureReason: errorMessage,
+              integrationId: listing.integrationId,
+              connectionId: listing.connectionId,
+            })
+          );
         }
         setError(errorMessage);
       } finally {

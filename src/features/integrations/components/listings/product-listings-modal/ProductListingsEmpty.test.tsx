@@ -2,21 +2,26 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+
 const {
   handleOpenTraderaLoginMock,
   onStartListingMock,
+  useProductListingsDataMock,
   useProductListingsModalsMock,
   useProductListingsActionsMock,
   useProductListingsUIStateMock,
 } = vi.hoisted(() => ({
   handleOpenTraderaLoginMock: vi.fn(),
   onStartListingMock: vi.fn(),
+  useProductListingsDataMock: vi.fn(),
   useProductListingsModalsMock: vi.fn(),
   useProductListingsActionsMock: vi.fn(),
   useProductListingsUIStateMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/ProductListingsContext', () => ({
+  useProductListingsData: () => useProductListingsDataMock(),
   useProductListingsModals: () => useProductListingsModalsMock(),
   useProductListingsActions: () => useProductListingsActionsMock(),
   useProductListingsUIState: () => useProductListingsUIStateMock(),
@@ -46,6 +51,9 @@ describe('ProductListingsEmpty', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     handleOpenTraderaLoginMock.mockResolvedValue(true);
+    useProductListingsDataMock.mockReturnValue({
+      product: { id: 'product-1' },
+    });
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: onStartListingMock,
       recoveryContext: null,
@@ -193,5 +201,69 @@ describe('ProductListingsEmpty', () => {
       'href',
       '/admin/integrations/marketplaces/category-mapper?connectionId=conn-tradera-1'
     );
+  });
+
+  it('shows shipping configuration failures with a shipping-groups action when no listing record exists yet', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        runId: null,
+        requestId: 'job-tradera-shipping-config',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        failureReason:
+          'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+      },
+    });
+
+    render(
+      <ProductListingsViewProvider value={baseViewContextValue}>
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(
+      screen.getByText(
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Login and continue listing' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Open Shipping Groups' })).toHaveAttribute(
+      'href',
+      '/admin/products/settings?section=shipping-groups'
+    );
+  });
+
+  it('renders a Tradera quick-export success banner when the row has not synced yet', () => {
+    persistTraderaQuickListFeedback('product-1', 'completed', {
+      listingUrl: 'https://www.tradera.com/item/123',
+      externalListingId: '123',
+      completedAt: Date.parse('2026-04-02T11:20:00.000Z'),
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filterIntegrationSlug: 'tradera',
+          integrationScopeLabel: 'Tradera',
+          statusTargetLabel: 'Tradera',
+          isScopedMarketplaceFlow: true,
+        }}
+      >
+        <ProductListingsEmpty />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera quick export completed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open listing' })).toHaveAttribute(
+      'href',
+      'https://www.tradera.com/item/123'
+    );
+    expect(screen.queryByText('No listings found')).toBeNull();
+    expect(screen.queryByText('Not connected.')).toBeNull();
   });
 });

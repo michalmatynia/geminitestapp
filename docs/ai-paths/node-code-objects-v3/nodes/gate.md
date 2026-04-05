@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-05'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Gate Migration Sheet (`gate`)
 
-Generated at: 2026-03-28T14:11:54.225Z
+Generated at: 2026-04-05T14:57:58.017Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-28T14:11:54.225Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/gate.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/gate.scaffold.json`
 - v3 object id: `node_obj_gate_portable_v3`
-- v3 object hash: `9c589771875ec6747edea48a0f5a418d998abdf44daf526a38f58abf31958f01`
+- v3 object hash: `2e0a122c81e4937b0d0b39d5223967b58aed3f236d6f9820de0af4785079e310`
 
 ## Ports
 

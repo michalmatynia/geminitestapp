@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-05'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Audio Oscillator Migration Sheet (`audio_oscillator`)
 
-Generated at: 2026-03-28T14:11:54.225Z
+Generated at: 2026-04-05T14:57:58.017Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-28T14:11:54.225Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/audio_oscillator.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/audio_oscillator.scaffold.json`
 - v3 object id: `node_obj_audio_oscillator_portable_v3`
-- v3 object hash: `ae6cabc90cb38aaebe0c4fb65da5d5ba10047212853e5a5af52cec795affc1dc`
+- v3 object hash: `1838c122b7579f16b837e6ad6461d6b2d22a134064cb716746820fa363948c8c`
 
 ## Ports
 

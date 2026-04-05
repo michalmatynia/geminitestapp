@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   useProductListingsData,
   useProductListingsModals,
@@ -14,13 +15,20 @@ import {
   resolveTraderaRecoveryMetadata,
   resolveTraderaRecoveryTarget,
 } from '@/features/integrations/utils/product-listings-recovery';
-import { persistTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import {
+  persistTraderaQuickListFeedback,
+  readPersistedTraderaQuickListFeedback,
+  type PersistedTraderaQuickListFeedback,
+} from '@/features/integrations/utils/traderaQuickListFeedback';
+import { resolveTraderaRequestId } from '@/features/integrations/utils/tradera-listing-client-utils';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
 import { renderProductListingItem } from './ProductListingItem';
 import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
 import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
+import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -39,6 +47,32 @@ const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
     normalized.includes('auth') ||
     normalized.includes('session expired')
   );
+};
+
+const findTrackedTraderaListing = (
+  listings: ProductListingWithDetails[],
+  feedback: PersistedTraderaQuickListFeedback
+): ProductListingWithDetails | null => {
+  if (feedback.listingId) {
+    const listingById = listings.find((listing) => listing.id === feedback.listingId);
+    if (listingById) return listingById;
+  }
+
+  if (feedback.requestId) {
+    const listingByRequestId = listings.find(
+      (listing) => resolveTraderaRequestId(listing) === feedback.requestId
+    );
+    if (listingByRequestId) return listingByRequestId;
+  }
+
+  if (feedback.externalListingId) {
+    const listingByExternalId = listings.find(
+      (listing) => listing.externalListingId === feedback.externalListingId
+    );
+    if (listingByExternalId) return listingByExternalId;
+  }
+
+  return null;
 };
 
 export function ProductListingsContent(): React.JSX.Element {
@@ -78,6 +112,16 @@ export function ProductListingsContent(): React.JSX.Element {
     .toLowerCase();
   const fallbackRecoveryError = readString(fallbackRecoveryLastExecution['error']);
   const fallbackRecoveryFailureReason = fallbackRecoveryListing?.failureReason ?? null;
+  const persistedQuickListFeedback = readPersistedTraderaQuickListFeedback(product.id);
+  const trackedSuccessListing =
+    persistedQuickListFeedback?.status === 'completed'
+      ? findTrackedTraderaListing(filteredListings, persistedQuickListFeedback)
+      : null;
+  const shouldShowQuickListSuccessBanner = Boolean(
+    !isTraderaQuickExportRecovery &&
+      persistedQuickListFeedback?.status === 'completed' &&
+      (isTraderaIntegrationSlug(filterIntegrationSlug) || trackedSuccessListing)
+  );
   const recoveryNeedsManualLogin =
     isTraderaQuickExportRecovery &&
     ((recoveryContext?.status ?? '').trim().toLowerCase() === 'auth_required' ||
@@ -142,6 +186,13 @@ export function ProductListingsContent(): React.JSX.Element {
 
   return (
     <div className='space-y-3'>
+      {shouldShowQuickListSuccessBanner && persistedQuickListFeedback ? (
+        <TraderaQuickExportSuccessBanner
+          mode='content'
+          feedback={persistedQuickListFeedback}
+          listing={trackedSuccessListing}
+        />
+      ) : null}
       {isTraderaQuickExportRecovery && (
         <TraderaQuickExportRecoveryBanner
           mode='content'

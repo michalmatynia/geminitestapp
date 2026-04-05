@@ -28,6 +28,7 @@ import {
 import type { TraderaBrowserListingResult } from './browser-types';
 import { resolveTraderaListingPriceForProduct } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
+import { buildTraderaListingDescription } from './description';
 
 const STANDARD_REQUESTED_BROWSER_MODE = 'connection_default';
 
@@ -125,15 +126,12 @@ export const runTraderaBrowserListingStandard = async ({
       product.name_de ||
       product.sku ||
       `Listing ${listing.productId}`;
-    const descriptionBase =
-      product.description_en || product.description_pl || product.description_de || title;
-    const descriptionLines = [
-      descriptionBase,
-      '',
-      `Item reference: ${product.id}`,
-      `SKU: ${product.sku || 'N/A'}`,
-    ];
-    const description = descriptionLines.join('\n');
+    const description = buildTraderaListingDescription({
+      rawDescription: product.description_en || product.description_pl || product.description_de,
+      fallbackTitle: title,
+      baseProductId: product.baseProductId ?? product.id,
+      sku: product.sku,
+    });
     const priceValue = String(priceResolution.listingPrice);
 
     const titleInput = await findVisibleLocator(page, TITLE_SELECTORS);

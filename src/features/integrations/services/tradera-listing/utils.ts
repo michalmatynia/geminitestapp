@@ -23,9 +23,23 @@ export const classifyTraderaFailure = (message: string): TraderaFailureCategory 
     return 'AUTH';
   }
   if (
+    normalized.includes('fail_sell_page_invalid') ||
+    normalized.includes('unexpected navigation away from tradera') ||
+    normalized.includes('external link target')
+  ) {
+    return 'NAVIGATION';
+  }
+  if (
     normalized.includes('category mapping') ||
     normalized.includes('fetch tradera categories') ||
-    normalized.includes('map the category')
+    normalized.includes('map the category') ||
+    normalized.includes('shipping group') ||
+    normalized.includes('shipping price in eur') ||
+    normalized.includes('tradera shipping price') ||
+    normalized.includes('fail_category_set') ||
+    normalized.includes('fail_shipping_set') ||
+    normalized.includes('fail_publish_validation') ||
+    normalized.includes('fail_price_set')
   ) {
     return 'FORM';
   }

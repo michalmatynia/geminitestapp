@@ -617,6 +617,366 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     return dedupeCategories(rawCategories);
   };
 
+  const scrapeMenuCategoriesRecursive = async () => {
+    const MAX_DEPTH = 2;
+    const SCRAPE_DEADLINE = Date.now() + 240_000;
+    const allCategories = [];
+
+    const hasTimeLeft = () => Date.now() < SCRAPE_DEADLINE;
+
+    const findTrigger = async () => {
+      for (const label of CATEGORY_FIELD_LABELS) {
+        const t = await findFieldTriggerByLabel(label);
+        if (t) return t;
+      }
+      return null;
+    };
+
+    const openPicker = async () => {
+      const t = await findTrigger();
+      if (!t) return false;
+      await helpers.click(t, { pauseBefore: false });
+      await wait(800);
+      return true;
+    };
+
+    const closePicker = async () => {
+      await page.keyboard.press('Escape');
+      await wait(300);
+      await page.locator('body').click({ position: { x: 5, y: 5 }, force: true }).catch(() => undefined);
+      await wait(200);
+    };
+
+    // Broad DOM search for any interactive elements that look like category items
+    const scrapeVisibleItemsBroad = async () => {
+      return page.evaluate(() => {
+        const items = [];
+        const seenText = new Set();
+        // Very broad selector — any clickable/interactive element
+        const selectors = [
+          '[role="menuitem"]', '[role="menuitemradio"]', '[role="option"]',
+          '[role="treeitem"]', '[role="radio"]', '[role="link"]',
+          'li a', 'li button', 'li [role="button"]',
+          '[data-category-id]', '[data-id]',
+          'a[href*="/category/"]',
+        ];
+        for (const selector of selectors) {
+          const elements = document.querySelectorAll(selector);
+          for (const el of elements) {
+            if (!el.checkVisibility || !el.checkVisibility()) {
+              // Fallback visibility check
+              const rect = el.getBoundingClientRect();
+              if (rect.width === 0 || rect.height === 0) continue;
+              const style = window.getComputedStyle(el);
+              if (style.display === 'none' || style.visibility === 'hidden') continue;
+            }
+            const name = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (!name || name.length > 100 || seenText.has(name)) continue;
+            seenText.add(name);
+            const href = el.getAttribute('href') || '';
+            const hrefMatch = href.match(/\/category\/(\d+)/);
+            const id =
+              el.getAttribute('data-category-id') ||
+              el.getAttribute('data-id') ||
+              el.getAttribute('data-value') ||
+              el.getAttribute('value') ||
+              (hrefMatch ? hrefMatch[1] : '') ||
+              el.id ||
+              '';
+            items.push({ id, name });
+          }
+        }
+        return items;
+      }).catch(() => []);
+    };
+
+    // Click an element containing the exact text on the page
+    const clickByExactText = async (name) => {
+      const mainRoot = page.locator('main').first();
+      const mainRootVisible = await mainRoot.isVisible().catch(() => false);
+      const root = mainRootVisible ? mainRoot : page;
+
+      // Try getByText with exact match (catches any element type)
+      const byText = root.getByText(name, { exact: true }).first();
+      const byTextVisible = await byText.isVisible().catch(() => false);
+      if (byTextVisible) {
+        await helpers.click(byText, { pauseBefore: false });
+        await wait(500);
+        return true;
+      }
+
+      // Try role-based
+      for (const role of ['menuitem', 'menuitemradio', 'option', 'link', 'button', 'treeitem']) {
+        const escaped = name.replace(/[.*+?^\$()|[\]{}\\]/g, '\\\$&');
+        const matches = root.getByRole(role, { name: new RegExp('^' + escaped + '\$', 'i') });
+        const count = await matches.count().catch(() => 0);
+        for (let i = 0; i < count; i++) {
+          const el = matches.nth(i);
+          if (await el.isVisible().catch(() => false)) {
+            await helpers.click(el, { pauseBefore: false });
+            await wait(500);
+            return true;
+          }
+        }
+      }
+
+      return false;
+    };
+
+    // Use __NEXT_DATA__ top-level categories as known starting point
+    const knownTopLevel = nextDataCategories.length > 0
+      ? nextDataCategories.map((c) => ({ id: normalizeCategoryId(c.id), name: c.name }))
+      : [];
+
+    if (knownTopLevel.length === 0) {
+      log('tradera.category.recursive.skip', { reason: 'no known top-level categories' });
+      return [];
+    }
+
+    // Record top-level
+    for (const item of knownTopLevel) {
+      if (item.id) {
+        allCategories.push({ id: item.id, name: item.name, parentId: '0' });
+      }
+    }
+
+    // Diagnostic: capture what the picker looks like after opening
+    if (!(await openPicker())) {
+      log('tradera.category.recursive.no-trigger', {});
+      return dedupeCategories(allCategories);
+    }
+
+    const pickerDiag = await page.evaluate(() => {
+      const menus = document.querySelectorAll('[role="menu"]');
+      const listboxes = document.querySelectorAll('[role="listbox"]');
+      const dialogs = document.querySelectorAll('[role="dialog"]');
+      const trees = document.querySelectorAll('[role="tree"]');
+      const visibleInteractive = [];
+      const all = document.querySelectorAll('button, a, [role="menuitem"], [role="option"], [role="treeitem"], [role="button"], [role="link"], li');
+      for (const el of all) {
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) continue;
+        const style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden') continue;
+        const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+        if (text && text.length < 50) {
+          visibleInteractive.push({ tag: el.tagName, role: el.getAttribute('role') || '', text: text.substring(0, 40) });
+        }
+      }
+      return {
+        menuCount: menus.length,
+        listboxCount: listboxes.length,
+        dialogCount: dialogs.length,
+        treeCount: trees.length,
+        visibleInteractive: visibleInteractive.slice(0, 15),
+      };
+    }).catch(() => ({ error: 'diag failed' }));
+
+    log('tradera.category.recursive.picker-state', pickerDiag);
+    await closePicker();
+
+    // For each top-level category, open picker, click by name, scrape children
+    for (const topItem of knownTopLevel) {
+      if (!topItem.id || !hasTimeLeft()) continue;
+
+      if (!(await openPicker())) break;
+
+      const clicked = await clickByExactText(topItem.name);
+      if (!clicked) {
+        log('tradera.category.recursive.click-failed', { name: topItem.name, id: topItem.id });
+        await closePicker();
+        continue;
+      }
+
+      // Scrape whatever appeared after clicking
+      const childItems = await scrapeVisibleItemsBroad();
+      // Filter: remove items matching top-level category names
+      const topNames = new Set(knownTopLevel.map((t) => t.name));
+      const children = childItems.filter((c) => !topNames.has(c.name) && c.name !== topItem.name);
+
+      if (children.length > 0) {
+        log('tradera.category.recursive.children', {
+          parent: topItem.name,
+          parentId: topItem.id,
+          count: children.length,
+          sample: children.slice(0, 5).map((c) => c.name),
+        });
+      }
+
+      for (const child of children) {
+        const childId = normalizeCategoryId(child.id) || child.name;
+        if (!allCategories.some((c) => c.id === childId)) {
+          allCategories.push({
+            id: childId,
+            name: child.name,
+            parentId: topItem.id,
+          });
+        }
+      }
+
+      await closePicker();
+
+      // Recurse into children (depth 2) for up to 5 children per parent
+      if (MAX_DEPTH > 1 && hasTimeLeft()) {
+        const childrenToRecurse = children.slice(0, 5);
+        for (const child of childrenToRecurse) {
+          if (!hasTimeLeft()) break;
+          const childId = normalizeCategoryId(child.id) || child.name;
+          if (!(await openPicker())) break;
+
+          // Click top-level first
+          const clickedTop = await clickByExactText(topItem.name);
+          if (!clickedTop) { await closePicker(); continue; }
+
+          // Then click child
+          const clickedChild = await clickByExactText(child.name);
+          if (!clickedChild) { await closePicker(); continue; }
+
+          const grandchildren = await scrapeVisibleItemsBroad();
+          const parentNames = new Set([...topNames, ...children.map((c) => c.name)]);
+          const newGrandchildren = grandchildren.filter((g) => !parentNames.has(g.name) && g.name !== child.name);
+
+          for (const gc of newGrandchildren) {
+            const gcId = normalizeCategoryId(gc.id) || gc.name;
+            if (!allCategories.some((c) => c.id === gcId)) {
+              allCategories.push({
+                id: gcId,
+                name: gc.name,
+                parentId: childId,
+              });
+            }
+          }
+
+          await closePicker();
+        }
+      }
+    }
+
+    return dedupeCategories(allCategories);
+  };
+
+  const scrapeEmbeddedScriptCategories = async () => {
+    const rawCategories = await page.evaluate((childKeys) => {
+      const getId = (item) =>
+        String(item.id ?? item.categoryId ?? item.Id ?? item.CategoryId ?? item.value ?? '');
+      const getName = (item) =>
+        String(item.name ?? item.label ?? item.title ?? item.Name ?? item.Label ?? item.Title ?? '');
+      const getParent = (item) =>
+        String(item.parentId ?? item.parent ?? item.parentCategoryId ?? item.ParentId ?? item.ParentCategoryId ?? '');
+      const flatten = (items, pId, out) => {
+        if (!Array.isArray(items)) return;
+        for (const item of items) {
+          if (!item || typeof item !== 'object') continue;
+          const id = getId(item);
+          const name = getName(item);
+          if (!id && !name) continue;
+          out.push({ id, name, parentId: getParent(item) || pId || '' });
+          for (const key of childKeys) {
+            if (Array.isArray(item[key]) && item[key].length > 0) {
+              flatten(item[key], id, out);
+            }
+          }
+        }
+      };
+
+      const found = [];
+
+      // Search inline script tags for JSON containing category arrays
+      const scripts = document.querySelectorAll('script:not([src])');
+      for (const script of scripts) {
+        const text = script.textContent || '';
+        if (text.length < 50 || text.length > 5000000) continue;
+        // Look for keys that might contain category arrays
+        const patterns = [
+          /"(?:categories|categoryTree|allCategories|categoryList|subCategories|menuItems|navigationItems)":\s*\[/gi,
+        ];
+        for (const pattern of patterns) {
+          let match;
+          while ((match = pattern.exec(text)) !== null) {
+            const arrStart = text.indexOf('[', match.index);
+            if (arrStart === -1) continue;
+            // Find matching bracket
+            let depth = 0;
+            let arrEnd = arrStart;
+            for (let i = arrStart; i < text.length && i < arrStart + 2000000; i++) {
+              if (text[i] === '[') depth++;
+              if (text[i] === ']') {
+                depth--;
+                if (depth === 0) { arrEnd = i + 1; break; }
+              }
+            }
+            if (depth !== 0) continue;
+            try {
+              const arr = JSON.parse(text.substring(arrStart, arrEnd));
+              if (Array.isArray(arr) && arr.length > 2) {
+                flatten(arr, '', found);
+              }
+            } catch { /* not valid JSON */ }
+          }
+        }
+      }
+
+      return found;
+    }, CHILDREN_KEYS).catch(() => []);
+    return dedupeCategories(rawCategories);
+  };
+
+  const scrapeReactStateCategories = async () => {
+    const rawCategories = await page.evaluate((childKeys) => {
+      const getId = (item) =>
+        String(item.id ?? item.categoryId ?? item.Id ?? item.CategoryId ?? item.value ?? '');
+      const getName = (item) =>
+        String(item.name ?? item.label ?? item.title ?? item.Name ?? item.Label ?? item.Title ?? '');
+      const getParent = (item) =>
+        String(item.parentId ?? item.parent ?? item.parentCategoryId ?? item.ParentId ?? item.ParentCategoryId ?? '');
+      const flatten = (items, pId, out) => {
+        if (!Array.isArray(items)) return;
+        for (const item of items) {
+          if (!item || typeof item !== 'object') continue;
+          const id = getId(item);
+          const name = getName(item);
+          if (!id && !name) continue;
+          out.push({ id, name, parentId: getParent(item) || pId || '' });
+          for (const key of childKeys) {
+            if (Array.isArray(item[key]) && item[key].length > 0) {
+              flatten(item[key], id, out);
+            }
+          }
+        }
+      };
+
+      const found = [];
+      try {
+        const root = document.getElementById('__next');
+        if (!root) return found;
+        const fiberKey = Object.keys(root).find((k) => k.startsWith('__reactFiber$'));
+        if (!fiberKey) return found;
+        const visited = new WeakSet();
+        const walkFiber = (fiber, depth) => {
+          if (!fiber || depth > 40 || visited.has(fiber)) return;
+          visited.add(fiber);
+          // Check memoizedProps for category-like arrays
+          const props = fiber.memoizedProps;
+          if (props && typeof props === 'object') {
+            for (const val of Object.values(props)) {
+              if (Array.isArray(val) && val.length > 5) {
+                const sample = val[0];
+                if (sample && typeof sample === 'object' && (getId(sample) || getName(sample))) {
+                  flatten(val, '', found);
+                }
+              }
+            }
+          }
+          walkFiber(fiber.child, depth + 1);
+          walkFiber(fiber.sibling, depth + 1);
+        };
+        walkFiber(root[fiberKey], 0);
+      } catch { /* fiber access failed */ }
+      return found;
+    }, CHILDREN_KEYS).catch(() => []);
+    return dedupeCategories(rawCategories);
+  };
+
   const runPageDiagnostics = async () => {
     return page.evaluate(() => {
       const selectCount = document.querySelectorAll('select').length;
@@ -695,11 +1055,14 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
 
   // Strategy 1: Try __NEXT_DATA__ extraction (instant, no interaction needed)
   const nextDataCategories = await scrapeNextDataCategories();
+  const nextDataHasHierarchy = nextDataCategories.some((c) => c.parentId && c.parentId !== '0');
   log('tradera.category.scrape.nextdata', {
     count: nextDataCategories.length,
+    hasHierarchy: nextDataHasHierarchy,
     currentUrl: page.url(),
   });
-  if (nextDataCategories.length > 0) {
+  if (nextDataCategories.length > 0 && nextDataHasHierarchy) {
+    // __NEXT_DATA__ has full hierarchy — return immediately
     const result = {
       categories: nextDataCategories,
       categorySource: 'nextdata',
@@ -708,32 +1071,73 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     emit('result', result);
     return result;
   }
+  // If __NEXT_DATA__ has flat categories, skip to recursive picker (strategies 2-7 return 0)
+  if (nextDataCategories.length > 0 && !nextDataHasHierarchy) {
+    log('tradera.category.scrape.flat-shortcut', {
+      reason: '__NEXT_DATA__ has flat categories, skipping to recursive picker',
+      count: nextDataCategories.length,
+    });
 
-  // Wait for form readiness
-  const deadline = Date.now() + 30_000;
-  while (Date.now() < deadline) {
-    const hasSelect = Boolean(await findCategorySelect());
-    const hasCategorySection = Boolean(await firstVisible(CATEGORY_SECTION_READY_SELECTORS));
-    if (hasSelect || hasCategorySection) {
-      break;
+    let categories = nextDataCategories;
+    let categorySource = 'nextdata';
+
+    // Strategy 8: Recursive picker (the only strategy that can discover hierarchy interactively)
+    const recursiveCategories = await scrapeMenuCategoriesRecursive().catch((err) => {
+      log('tradera.category.scrape.recursive.error', { error: String(err) });
+      return [];
+    });
+    log('tradera.category.scrape.recursive.done', {
+      count: recursiveCategories.length,
+      withParent: recursiveCategories.filter((c) => c.parentId && c.parentId !== '0').length,
+    });
+    if (recursiveCategories.length > 0 && recursiveCategories.some((c) => c.parentId && c.parentId !== '0')) {
+      categories = recursiveCategories;
+      categorySource = 'recursive';
     }
-    let hasTrigger = false;
-    for (const label of CATEGORY_FIELD_LABELS) {
-      const trigger = await findFieldTriggerByLabel(label);
-      if (trigger) {
-        hasTrigger = true;
+
+    const withParent = categories.filter((c) => c.parentId && c.parentId !== '0');
+    const roots = categories.filter((c) => !c.parentId || c.parentId === '0');
+    log('tradera.category.scrape.result', {
+      source: categorySource,
+      total: categories.length,
+      withParentCount: withParent.length,
+      rootCount: roots.length,
+      sampleRoots: roots.slice(0, 3),
+      sampleChildren: withParent.slice(0, 3),
+    });
+
+    const result = { categories, categorySource, scrapedFrom: page.url() };
+    emit('result', result);
+    return result;
+  }
+
+  // Full strategy chain for non-__NEXT_DATA__ scenarios
+  // Wait for form readiness (skip if __NEXT_DATA__ already gave us categories)
+  if (nextDataCategories.length === 0) {
+    const deadline = Date.now() + 30_000;
+    while (Date.now() < deadline) {
+      const hasSelect = Boolean(await findCategorySelect());
+      const hasCategorySection = Boolean(await firstVisible(CATEGORY_SECTION_READY_SELECTORS));
+      if (hasSelect || hasCategorySection) {
         break;
       }
+      let hasTrigger = false;
+      for (const label of CATEGORY_FIELD_LABELS) {
+        const trigger = await findFieldTriggerByLabel(label);
+        if (trigger) {
+          hasTrigger = true;
+          break;
+        }
+      }
+      if (hasTrigger) {
+        break;
+      }
+      const linkCount = await page.locator('a[href*="/category/"]').count().catch(() => 0);
+      if (linkCount > 3) {
+        break;
+      }
+      await wait(400);
     }
-    if (hasTrigger) {
-      break;
-    }
-    // Also break if any category links are on the page already
-    const linkCount = await page.locator('a[href*="/category/"]').count().catch(() => 0);
-    if (linkCount > 3) {
-      break;
-    }
-    await wait(400);
   }
 
   // Re-check auth after readiness wait (page may have redirected)
@@ -766,8 +1170,14 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     });
   }
 
-  let categories = selectCategories.length > 0 ? selectCategories : menuCategories;
-  let categorySource = selectCategories.length > 0 ? 'select' : 'menu';
+  let categories =
+    selectCategories.length > 0 ? selectCategories :
+    menuCategories.length > 0 ? menuCategories :
+    nextDataCategories;
+  let categorySource =
+    selectCategories.length > 0 ? 'select' :
+    menuCategories.length > 0 ? 'menu' :
+    nextDataCategories.length > 0 ? 'nextdata' : 'none';
 
   // Strategy 4: Check network-intercepted API responses (from page load + trigger click)
   if (categories.length === 0 && networkCategoryResponses.length > 0) {
@@ -792,6 +1202,52 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
       count: categories.length,
       currentUrl: page.url(),
     });
+  }
+
+  // Strategy 6: Search inline <script> tags for embedded category JSON
+  if (categories.length === 0 || categories.every((c) => !c.parentId || c.parentId === '0')) {
+    const scriptCategories = await scrapeEmbeddedScriptCategories();
+    log('tradera.category.scrape.scripts', {
+      count: scriptCategories.length,
+      withParent: scriptCategories.filter((c) => c.parentId && c.parentId !== '0').length,
+    });
+    if (scriptCategories.length > 0 && scriptCategories.some((c) => c.parentId && c.parentId !== '0')) {
+      categories = scriptCategories;
+      categorySource = 'scripts';
+    }
+  }
+
+  // Strategy 7: Walk React fiber tree for category state/props
+  if (categories.length === 0 || categories.every((c) => !c.parentId || c.parentId === '0')) {
+    const reactCategories = await scrapeReactStateCategories();
+    log('tradera.category.scrape.react', {
+      count: reactCategories.length,
+      withParent: reactCategories.filter((c) => c.parentId && c.parentId !== '0').length,
+    });
+    if (reactCategories.length > 0 && reactCategories.some((c) => c.parentId && c.parentId !== '0')) {
+      categories = reactCategories;
+      categorySource = 'react';
+    }
+  }
+
+  // Strategy 8: Recursive picker interaction — click through each level to discover children
+  if (categories.every((c) => !c.parentId || c.parentId === '0')) {
+    log('tradera.category.scrape.recursive.start', {
+      flatCategoryCount: categories.length,
+      reason: 'all categories are root-level, attempting interactive drill-down',
+    });
+    const recursiveCategories = await scrapeMenuCategoriesRecursive().catch((err) => {
+      log('tradera.category.scrape.recursive.error', { error: String(err) });
+      return [];
+    });
+    log('tradera.category.scrape.recursive.done', {
+      count: recursiveCategories.length,
+      withParent: recursiveCategories.filter((c) => c.parentId && c.parentId !== '0').length,
+    });
+    if (recursiveCategories.length > 0 && recursiveCategories.some((c) => c.parentId && c.parentId !== '0')) {
+      categories = recursiveCategories;
+      categorySource = 'recursive';
+    }
   }
 
   // If still empty, capture full diagnostics
@@ -823,6 +1279,18 @@ export const DEFAULT_TRADERA_CATEGORY_SCRAPE_SCRIPT = String.raw`export default 
     log('tradera.category.scrape.empty', state);
     await captureDebugArtifacts('tradera-category-empty', state);
   }
+
+  // Log result summary for diagnostics
+  const withParent = categories.filter((c) => c.parentId && c.parentId !== '0');
+  const roots = categories.filter((c) => !c.parentId || c.parentId === '0');
+  log('tradera.category.scrape.result', {
+    source: categorySource,
+    total: categories.length,
+    withParentCount: withParent.length,
+    rootCount: roots.length,
+    sampleRoots: roots.slice(0, 3),
+    sampleChildren: withParent.slice(0, 3),
+  });
 
   const result = {
     categories,

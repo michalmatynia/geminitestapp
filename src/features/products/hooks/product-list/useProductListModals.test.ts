@@ -199,4 +199,26 @@ describe('useProductListModals', () => {
       connectionId: 'conn-tradera-1',
     });
   });
+
+  it('forces a fresh listings refresh when opening the Tradera modal', () => {
+    const prefetchProductListingsData = vi.fn();
+    const refreshProductListingsData = vi.fn();
+    const { result } = renderHook(() =>
+      useProductListModals({
+        handleOpenCreateModal: vi.fn(),
+        prefetchIntegrationSelectionData: vi.fn(),
+        prefetchProductListingsData,
+        refreshProductListingsData,
+        rowSelection: {},
+        toast: vi.fn(),
+      })
+    );
+
+    act(() => {
+      result.current.handleOpenIntegrationsModal(createProduct(), undefined, 'tradera');
+    });
+
+    expect(prefetchProductListingsData).toHaveBeenCalledWith('product-1');
+    expect(refreshProductListingsData).toHaveBeenCalledWith('product-1');
+  });
 });

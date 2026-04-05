@@ -14,9 +14,11 @@ export const PART_5 = String.raw`        }
       sku,
       imageCount: imageUrls.length,
       mappedCategoryPath,
+      categoryFallbackAllowed: mappedCategorySegments.length === 0,
       configuredDeliveryOptionLabel,
       requiresConfiguredDeliveryOption,
     });
+    log?.('tradera.quicklist.runtime', await readRuntimeEnvironment());
     emitStage('started');
 
     await page.goto(ACTIVE_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
@@ -39,55 +41,91 @@ export const PART_5 = String.raw`        }
     // Wait for SPA to fully render the listing form
     await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
     await wait(1500);
-    await ensureCreateListingPageReady('listing-editor bootstrap', true);
+    await ensureCreateListingPageReady('listing-editor bootstrap');
     emitStage('sell_page_ready');
     await dismissVisibleShippingDialogIfPresent();
-    await resetDeliveryTogglesIfPresent();
     await clearDraftImagesIfPresent();
     emitStage('draft_cleared');
 
     const performImageUpload = async (uploadFiles, uploadSource) => {
       currentImageUploadSource = uploadSource;
-      const imageInput = await ensureImageInputReady();
-      if (!imageInput) {
-        const editorReady = await isListingEditorReady();
-        await captureFailureArtifacts('image-input-missing', {
-          url: page.url(),
-          editorReady,
-          uploadSource,
-          html: await page.content().catch(() => '').then((h) => h.slice(0, 2000)),
-        });
-        throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload input not found.');
-      }
-
-      const baselinePreviewCount = await countUploadedImagePreviews();
-      await imageInput.setInputFiles(uploadFiles);
       const expectedUploadCount = Array.isArray(uploadFiles) ? uploadFiles.length : 1;
-      const selectedImageFileCount = await waitForSelectedImageFileCount(
-        imageInput,
-        expectedUploadCount
-      );
-      if (selectedImageFileCount < Math.max(1, expectedUploadCount)) {
-        log?.('tradera.quicklist.image.selection_pending', {
-          url: page.url(),
+
+      for (let uploadAttempt = 0; uploadAttempt < 2; uploadAttempt += 1) {
+        log?.('tradera.quicklist.image.upload_prepare', {
           uploadSource,
-          expectedUploadCount,
-          selectedImageFileCount,
+          uploadAttempt,
+          currentUrl: page.url(),
         });
-      }
+        const imageInput = await ensureImageInputReady();
+        if (!imageInput) {
+          const editorReady = await isListingEditorReady();
+          await captureFailureArtifacts('image-input-missing', {
+            url: page.url(),
+            editorReady,
+            uploadSource,
+            uploadAttempt,
+            html: await page.content().catch(() => '').then((h) => h.slice(0, 2000)),
+          });
+          throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload input not found.');
+        }
 
-      await advancePastImagesStep(imageInput, expectedUploadCount, baselinePreviewCount);
-      const imageDraftState = await waitForDraftSaveSettled();
-      if (!imageDraftState?.settled) {
-        throw new Error(
-          'FAIL_IMAGE_SET_INVALID: Tradera draft save did not settle after image upload.'
+        await ensureImageStepSellPageReady('image upload dispatch');
+        await assertAllowedTraderaPage('image upload dispatch');
+
+        const baselinePreviewCount = await countUploadedImagePreviews();
+        log?.('tradera.quicklist.image.upload_start', {
+          uploadSource,
+          uploadAttempt,
+          currentUrl: page.url(),
+          baselinePreviewCount,
+        });
+
+        try {
+          await imageInput.setInputFiles(uploadFiles);
+        } catch (error) {
+          log?.('tradera.quicklist.image.upload_dispatch_error', {
+            uploadSource,
+            uploadAttempt,
+            currentUrl: page.url(),
+            error: error instanceof Error ? error.message : String(error),
+          });
+          if (uploadAttempt + 1 < 2) {
+            await ensureImageStepSellPageReady('image upload dispatch retry');
+            await wait(1000);
+            continue;
+          }
+          throw error;
+        }
+
+        const selectedImageFileCount = await waitForSelectedImageFileCount(
+          imageInput,
+          expectedUploadCount
         );
+        if (selectedImageFileCount < Math.max(1, expectedUploadCount)) {
+          log?.('tradera.quicklist.image.selection_pending', {
+            url: page.url(),
+            uploadSource,
+            expectedUploadCount,
+            selectedImageFileCount,
+          });
+        }
+
+        await advancePastImagesStep(imageInput, expectedUploadCount, baselinePreviewCount);
+        const imageDraftState = await waitForDraftSaveSettled();
+        if (!imageDraftState?.settled) {
+          throw new Error(
+            'FAIL_IMAGE_SET_INVALID: Tradera draft save did not settle after image upload.'
+          );
+        }
+
+        return {
+          imageCount: Array.isArray(uploadFiles) ? uploadFiles.length : null,
+          uploadSource,
+        };
       }
 
-      return {
-        imageCount: Array.isArray(uploadFiles) ? uploadFiles.length : null,
-        uploadSource,
-      };
+      throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload could not be dispatched.');
     };
 
     const initialUploadFiles = await resolveUploadFiles();
@@ -124,13 +162,100 @@ export const PART_5 = String.raw`        }
       uploadSource: imageUploadResult?.uploadSource ?? null,
     });
 
-    await applyCategorySelection();
-    emitStage('category_selected', {
+    const fillTitleAndDescription = async () => {
+      const titleInput = await firstVisible(TITLE_SELECTORS);
+      const descriptionInput = await firstVisible(DESCRIPTION_SELECTORS);
+
+      if (!titleInput || !descriptionInput) {
+        throw new Error(
+          'FAIL_PUBLISH_VALIDATION: Tradera listing form selectors were not found (title/description).'
+        );
+      }
+
+      await setAndVerifyFieldValue({
+        locator: titleInput,
+        value: title,
+        fieldKey: 'title',
+        errorPrefix: 'FAIL_PUBLISH_VALIDATION',
+      });
+      await setAndVerifyFieldValue({
+        locator: descriptionInput,
+        value: description,
+        fieldKey: 'description',
+        errorPrefix: 'FAIL_PUBLISH_VALIDATION',
+        inputMethod: 'paste',
+      });
+    };
+
+    const fillPriceField = async ({ required = true, context = 'unknown' } = {}) => {
+      const priceInput = await firstVisible(PRICE_SELECTORS);
+      if (!priceInput) {
+        if (!required) {
+          log?.('tradera.quicklist.field.skipped', {
+            field: 'price',
+            reason: 'selector-missing',
+            context,
+          });
+          return false;
+        }
+
+        throw new Error(
+          'FAIL_PRICE_SET: Tradera price input was not found (' + context + ').'
+        );
+      }
+
+      const expectedPriceValue = normalizePriceValue(String(price));
+      const currentPriceValue = normalizePriceValue(await readFieldValue(priceInput));
+      if (currentPriceValue === expectedPriceValue) {
+        log?.('tradera.quicklist.field.skipped', {
+          field: 'price',
+          reason: 'already-matched',
+          context,
+        });
+        return false;
+      }
+
+      await setAndVerifyFieldValue({
+        locator: priceInput,
+        value: String(price),
+        fieldKey: 'price',
+        errorPrefix: 'FAIL_PRICE_SET',
+        normalize: normalizePriceValue,
+      });
+      return true;
+    };
+
+    const waitForDraftSaveWithRecovery = async ({
+      timeoutMs = 6_000,
+      minimumQuietMs = 1_200,
+      context = 'unknown',
+    } = {}) => {
+      const draftState = await waitForDraftSaveSettled(timeoutMs, minimumQuietMs);
+      if (draftState?.settled) {
+        return draftState;
+      }
+
+      log?.('tradera.quicklist.draft.unsettled_continue', {
+        context,
+        ...draftState,
+      });
+      return draftState;
+    };
+
+    // Overwrite Tradera autofill immediately after images. Resolve Buy now before
+    // setting price so the fixed-price field is mounted before we type into it.
+    await fillTitleAndDescription();
+    emitStage('fields_filled');
+
+    await chooseBuyNowListingFormat();
+    await fillPriceField({ required: true, context: 'post-listing-format' });
+    emitStage('listing_format_selected', {
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
     });
-    await chooseBuyNowListingFormat();
-    emitStage('listing_format_selected', {
+
+    await applyCategorySelection();
+    emitStage('category_selected', {
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
     });
@@ -148,19 +273,35 @@ export const PART_5 = String.raw`        }
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
     });
-    const selectionDraftState = await waitForDraftSaveSettled();
+    const selectionDraftState = await waitForDraftSaveWithRecovery({
+      timeoutMs: 8_000,
+      minimumQuietMs: 1_200,
+      context: 'category-and-details',
+    });
     if (!selectionDraftState?.settled) {
-      throw new Error(
-        'FAIL_PUBLISH_VALIDATION: Tradera draft save did not settle after category and listing detail selections.'
-      );
+      const selectionValidationMessages = await collectValidationMessages();
+      if (selectionValidationMessages.length > 0) {
+        throw new Error(
+          (hasDeliveryValidationIssue(selectionValidationMessages)
+            ? 'FAIL_SHIPPING_SET: '
+            : 'FAIL_PUBLISH_VALIDATION: ') +
+            selectionValidationMessages.join(' | ')
+        );
+      }
+
+      const listingEditorState = await readListingEditorState();
+      if (!listingEditorState.ready) {
+        throw new Error(
+          'FAIL_PUBLISH_VALIDATION: Tradera listing editor was not ready after category and listing detail selections.'
+        );
+      }
     }
     await applyDeliverySelection();
-    const deliveryDraftState = await waitForDraftSaveSettled();
-    if (!deliveryDraftState?.settled) {
-      throw new Error(
-        'FAIL_SHIPPING_SET: Tradera draft save did not settle after delivery configuration.'
-      );
-    }
+    await waitForDraftSaveWithRecovery({
+      timeoutMs: 6_000,
+      minimumQuietMs: 1_200,
+      context: 'delivery-configuration',
+    });
     emitStage('delivery_configured', {
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,
@@ -169,46 +310,60 @@ export const PART_5 = String.raw`        }
     });
     await wait(500);
 
-    const titleInput = await firstVisible(TITLE_SELECTORS);
-    const descriptionInput = await firstVisible(DESCRIPTION_SELECTORS);
-    const priceInput = await firstVisible(PRICE_SELECTORS);
-    const publishButton = await firstVisible(PUBLISH_SELECTORS);
-
-    if (!titleInput || !descriptionInput || !priceInput || !publishButton) {
-      throw new Error('FAIL_PUBLISH_VALIDATION: Tradera listing form selectors were not found.');
+    const finalPriceApplied = await fillPriceField({
+      required: true,
+      context: 'pre-publish-finalize',
+    });
+    if (finalPriceApplied) {
+      await waitForDraftSaveWithRecovery({
+        timeoutMs: 4_000,
+        minimumQuietMs: 1_000,
+        context: 'pre-publish-finalize',
+      });
     }
 
-    await setAndVerifyFieldValue({
-      locator: titleInput,
-      value: title,
-      fieldKey: 'title',
-      errorPrefix: 'FAIL_PUBLISH_VALIDATION',
-    });
-    await setAndVerifyFieldValue({
-      locator: descriptionInput,
-      value: description,
-      fieldKey: 'description',
-      errorPrefix: 'FAIL_PUBLISH_VALIDATION',
-    });
-    await setAndVerifyFieldValue({
-      locator: priceInput,
-      value: String(price),
-      fieldKey: 'price',
-      errorPrefix: 'FAIL_PRICE_SET',
-      normalize: normalizePriceValue,
-    });
-    await acknowledgeListingConfirmationIfPresent();
-    const fieldsDraftState = await waitForDraftSaveSettled();
-    if (!fieldsDraftState?.settled) {
+    const listingConfirmationState = await acknowledgeListingConfirmationIfPresent();
+    if (listingConfirmationState === 'checked') {
+      const confirmationDraftState = await waitForDraftSaveSettled(6_000, 1_200);
+      if (!confirmationDraftState?.settled) {
+        throw new Error(
+          'FAIL_PUBLISH_VALIDATION: Tradera draft save did not settle after acknowledging the listing confirmation checkbox.'
+        );
+      }
+    }
+
+    const publishButton = await findPublishButton();
+    if (!publishButton) {
+      const ambiguousPublishButton = await findPublishButton({ allowAmbiguousSubmit: true });
+      if (ambiguousPublishButton) {
+        await logClickTarget('publish:ambiguous-submit', ambiguousPublishButton).catch(
+          () => undefined
+        );
+      }
       throw new Error(
-        'FAIL_PUBLISH_VALIDATION: Tradera draft save did not settle after filling listing details.'
+        'FAIL_PUBLISH_VALIDATION: Tradera publish button was not found.'
       );
     }
-    emitStage('fields_filled');
 
-    const publishReadiness = await waitForPublishReadiness(publishButton);
-    const prePublishValidationMessages = publishReadiness.messages;
-    const publishDisabled = publishReadiness.publishDisabled;
+    let publishReadiness = await waitForPublishReadiness(publishButton);
+    let prePublishValidationMessages = publishReadiness.messages;
+    let publishDisabled = publishReadiness.publishDisabled;
+    if (publishDisabled || prePublishValidationMessages.length > 0) {
+      const priceRecoveryApplied = await fillPriceField({
+        required: false,
+        context: 'publish-readiness-recovery',
+      });
+      if (priceRecoveryApplied) {
+        await waitForDraftSaveWithRecovery({
+          timeoutMs: 4_000,
+          minimumQuietMs: 1_000,
+          context: 'publish-readiness-recovery',
+        });
+        publishReadiness = await waitForPublishReadiness(publishButton, 4_000);
+        prePublishValidationMessages = publishReadiness.messages;
+        publishDisabled = publishReadiness.publishDisabled;
+      }
+    }
     if (publishDisabled || prePublishValidationMessages.length > 0) {
       log?.('tradera.quicklist.publish.validation', {
         publishDisabled,
@@ -224,150 +379,259 @@ export const PART_5 = String.raw`        }
       );
     }
 
+    const waitForPublishInteractionEvidence = async (
+      initialPublishUrl,
+      timeoutMs = 6_000
+    ) => {
+      const deadline = Date.now() + timeoutMs;
+      const normalizedInitialPublishUrl =
+        typeof initialPublishUrl === 'string' && initialPublishUrl.trim()
+          ? initialPublishUrl
+          : page.url();
+      let lastObservation = {
+        currentUrl: normalizedInitialPublishUrl,
+        stillOnSellFlow: isTraderaSellingRoute(normalizedInitialPublishUrl),
+        activeListingsVisible: normalizedInitialPublishUrl.toLowerCase().includes('/my/listings'),
+        publishButtonVisible: true,
+        publishButtonDisabled: false,
+        externalListingId: extractListingId(normalizedInitialPublishUrl),
+        listingUrl: null,
+      };
+
+      while (Date.now() < deadline) {
+        const currentUrl = page.url();
+        const stillOnSellFlow = isTraderaSellingRoute(currentUrl);
+        const activeListingsVisible = currentUrl.toLowerCase().includes('/my/listings');
+        const publishButtonVisible = stillOnSellFlow
+          ? await publishButton.isVisible().catch(() => false)
+          : false;
+        const publishButtonDisabled =
+          stillOnSellFlow && publishButtonVisible ? await isControlDisabled(publishButton) : null;
+        const externalListingId = extractListingId(currentUrl);
+        const visibleListingLink =
+          !stillOnSellFlow && !externalListingId ? await findVisibleListingLink() : null;
+        const listingUrl =
+          visibleListingLink?.listingUrl ||
+          (externalListingId ? currentUrl : null);
+
+        lastObservation = {
+          currentUrl,
+          stillOnSellFlow,
+          activeListingsVisible,
+          publishButtonVisible,
+          publishButtonDisabled,
+          externalListingId: externalListingId || visibleListingLink?.listingId || null,
+          listingUrl,
+        };
+
+        if (externalListingId) {
+          return {
+            confirmed: true,
+            reason: 'listing-url',
+            ...lastObservation,
+          };
+        }
+
+        if (visibleListingLink?.listingId) {
+          return {
+            confirmed: true,
+            reason: 'listing-link',
+            ...lastObservation,
+          };
+        }
+
+        if (currentUrl !== normalizedInitialPublishUrl && !stillOnSellFlow) {
+          return {
+            confirmed: true,
+            reason: activeListingsVisible ? 'active-listings' : 'url-change',
+            ...lastObservation,
+          };
+        }
+
+        if (publishButtonVisible === false) {
+          return {
+            confirmed: true,
+            reason: 'publish-button-hidden',
+            ...lastObservation,
+          };
+        }
+
+        if (publishButtonDisabled === true) {
+          return {
+            confirmed: true,
+            reason: 'publish-button-disabled',
+            ...lastObservation,
+          };
+        }
+
+        await wait(250);
+      }
+
+      return {
+        confirmed: false,
+        reason: 'timeout',
+        ...lastObservation,
+      };
+    };
+
     const waitForPostPublishNavigation = async (timeoutMs = 15_000) => {
       const deadline = Date.now() + timeoutMs;
+      const startedAt = Date.now();
+      let nonSellFlowSince = null;
+
+      const summarizePostPublishState = async (reason) => {
+        const currentUrl = page.url();
+        const activeListingsVisible = currentUrl.toLowerCase().includes('/my/listings');
+        const onSellFlowRoute = isTraderaSellingRoute(currentUrl);
+        const listingFormVisible = onSellFlowRoute ? await isCreateListingPage() : false;
+        const stillOnSellFlow = onSellFlowRoute || listingFormVisible;
+        const validationMessages = stillOnSellFlow ? await collectValidationMessages() : [];
+        const publishButtonDisabled = stillOnSellFlow
+          ? await isControlDisabled(publishButton)
+          : null;
+        const visibleListingLink =
+          !stillOnSellFlow && !activeListingsVisible ? await findVisibleListingLink() : null;
+        const externalListingId =
+          extractListingId(currentUrl) || visibleListingLink?.listingId || null;
+        const listingUrl = externalListingId
+          ? visibleListingLink?.listingUrl || currentUrl
+          : null;
+        const state = {
+          reason,
+          currentUrl,
+          currentTitle: await page.title().catch(() => null),
+          externalListingId,
+          listingUrl,
+          stillOnSellFlow,
+          activeListingsVisible,
+          validationMessages,
+          publishButtonDisabled,
+          elapsedMs: Date.now() - startedAt,
+        };
+        log?.('tradera.quicklist.publish.post_state', state);
+        return state;
+      };
+
       while (Date.now() < deadline) {
         const currentUrl = page.url();
         const extractedListingId = extractListingId(currentUrl);
-        const stillOnDraftPage = /\/selling\/draft(?:\/|$)|\/selling\/new(?:[/?#]|$)/i.test(
-          currentUrl
-        );
-        const validationMessages = stillOnDraftPage ? await collectValidationMessages() : [];
-        const publishButtonDisabled = await isControlDisabled(publishButton);
-
         if (extractedListingId) {
-          return {
-            currentUrl,
-            externalListingId: extractedListingId,
-            stillOnDraftPage,
-            validationMessages,
-            publishButtonDisabled,
-          };
+          return summarizePostPublishState('listing-url');
         }
 
-        if (stillOnDraftPage && validationMessages.length > 0) {
-          return {
-            currentUrl,
-            externalListingId: null,
-            stillOnDraftPage,
-            validationMessages,
-            publishButtonDisabled,
-          };
+        const activeListingsVisible = currentUrl.toLowerCase().includes('/my/listings');
+        const onSellFlowRoute = isTraderaSellingRoute(currentUrl);
+        const listingFormVisible = onSellFlowRoute ? await isCreateListingPage() : false;
+        const stillOnSellFlow = onSellFlowRoute || listingFormVisible;
+        const validationMessages = stillOnSellFlow ? await collectValidationMessages() : [];
+
+        if (stillOnSellFlow && validationMessages.length > 0) {
+          return summarizePostPublishState('validation');
         }
 
-        if (!stillOnDraftPage) {
-          const visibleListingLink = await findVisibleListingLink();
-          return {
-            currentUrl: visibleListingLink?.listingUrl || currentUrl,
-            externalListingId: visibleListingLink?.listingId || null,
-            stillOnDraftPage: false,
-            validationMessages: [],
-            publishButtonDisabled,
-          };
+        if (!stillOnSellFlow) {
+          nonSellFlowSince ??= Date.now();
+          if (!activeListingsVisible) {
+            const visibleListingLink = await findVisibleListingLink();
+            if (visibleListingLink?.listingId) {
+              return summarizePostPublishState('listing-link');
+            }
+          } else if (Date.now() - nonSellFlowSince >= 1_500) {
+            return summarizePostPublishState('active-listings-stable');
+          }
+        } else {
+          nonSellFlowSince = null;
         }
 
         await wait(500);
       }
 
-      const currentUrl = page.url();
-      const visibleListingLink = !/\/selling\/draft(?:\/|$)|\/selling\/new(?:[/?#]|$)/i.test(
-        currentUrl
-      )
-        ? await findVisibleListingLink()
-        : null;
-      return {
-        currentUrl: visibleListingLink?.listingUrl || currentUrl,
-        externalListingId: visibleListingLink?.listingId || extractListingId(currentUrl),
-        stillOnDraftPage: /\/selling\/draft(?:\/|$)|\/selling\/new(?:[/?#]|$)/i.test(
-          currentUrl
-        ),
-        validationMessages: await collectValidationMessages(),
-        publishButtonDisabled: await isControlDisabled(publishButton),
-      };
+      return summarizePostPublishState('timeout');
     };
 
-    const previousUrl = page.url();
-    emitStage('publish_clicked');
-    await Promise.allSettled([
-      page.waitForLoadState('domcontentloaded', { timeout: 25_000 }),
-      humanClick(publishButton, { pauseAfter: false }),
-    ]);
-    const postPublishNavigation = await waitForPostPublishNavigation();
+    const prePublishUrl = page.url();
+    const publishTargetMetadata = await readClickTargetMetadata(publishButton);
+    await logClickTarget('publish', publishButton);
+    try {
+      await humanClick(publishButton, { pauseAfter: false });
+    } catch (error) {
+      const publishClickError = error instanceof Error ? error.message : String(error);
+      await captureFailureArtifacts('publish-click', {
+        currentUrl: page.url(),
+        prePublishUrl,
+        publishTarget: publishTargetMetadata,
+        publishClickError,
+      }).catch(() => undefined);
+      throw new Error('FAIL_PUBLISH_CLICK: Tradera publish button click failed. ' + publishClickError);
+    }
 
-    let listingUrl = postPublishNavigation.currentUrl;
-    let externalListingId = postPublishNavigation.externalListingId;
-
-    if (
-      !externalListingId &&
-      postPublishNavigation.stillOnDraftPage &&
-      postPublishNavigation.validationMessages.length > 0
-    ) {
+    const publishInteraction = await waitForPublishInteractionEvidence(prePublishUrl);
+    log?.('tradera.quicklist.publish.click_result', publishInteraction);
+    if (!publishInteraction.confirmed) {
+      await captureFailureArtifacts('publish-click-not-confirmed', {
+        currentUrl: publishInteraction.currentUrl,
+        prePublishUrl,
+        publishTarget: publishTargetMetadata,
+        publishInteractionReason: publishInteraction.reason,
+        stillOnSellFlow: publishInteraction.stillOnSellFlow,
+        activeListingsVisible: publishInteraction.activeListingsVisible,
+        publishButtonVisible: publishInteraction.publishButtonVisible,
+        publishButtonDisabled: publishInteraction.publishButtonDisabled,
+        externalListingId: publishInteraction.externalListingId,
+        listingUrl: publishInteraction.listingUrl,
+      }).catch(() => undefined);
       throw new Error(
-        (hasDeliveryValidationIssue(postPublishNavigation.validationMessages)
-          ? 'FAIL_SHIPPING_SET: '
-          : 'FAIL_PUBLISH_VALIDATION: ') +
-          postPublishNavigation.validationMessages.join(' | ')
+        'FAIL_PUBLISH_CLICK: Publish button click did not trigger an observable Tradera publish interaction.'
       );
     }
 
-    if (!externalListingId) {
-      await page.goto(ACTIVE_URL, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-      await ensureLoggedIn();
-      const verificationTerms = [baseProductId, sku].filter((value) => Boolean(value));
-      for (let attempt = 0; attempt < 4 && !externalListingId; attempt += 1) {
-        for (const verificationTerm of verificationTerms) {
-          const duplicateResult = await checkDuplicate(verificationTerm);
-          log?.('tradera.quicklist.publish.verify', {
-            attempt,
-            term: verificationTerm,
-            duplicateFound: duplicateResult.duplicateFound,
-            listingUrl: duplicateResult.listingUrl || null,
-            listingId: duplicateResult.listingId || null,
-          });
-          if (!duplicateResult.duplicateFound) {
-            continue;
-          }
-          listingUrl = duplicateResult.listingUrl || listingUrl;
-          externalListingId = duplicateResult.listingId || extractListingId(listingUrl);
-          if (externalListingId) {
-            break;
-          }
-        }
+    emitStage('publish_clicked', {
+      publishInteractionReason: publishInteraction.reason,
+    });
+    const postPublishNavigation = await waitForPostPublishNavigation();
 
-        if (!externalListingId && attempt < 3) {
-          await wait(2000);
-        }
-      }
-    }
+    let listingUrl = postPublishNavigation.listingUrl || null;
+    let externalListingId = postPublishNavigation.externalListingId;
 
-    if (!externalListingId) {
-      const postPublishValidationMessages = await collectValidationMessages();
-      if (postPublishValidationMessages.length > 0) {
-        log?.('tradera.quicklist.publish.validation', {
-          publishDisabled: false,
-          messages: postPublishValidationMessages,
-          phase: 'post-publish',
-        });
+    if (!externalListingId && postPublishNavigation.stillOnSellFlow) {
+      const postPublishDraftValidationMessages =
+        postPublishNavigation.validationMessages.length > 0
+          ? postPublishNavigation.validationMessages
+          : await collectValidationMessages();
+      if (postPublishDraftValidationMessages.length > 0) {
         throw new Error(
-          (hasDeliveryValidationIssue(postPublishValidationMessages)
+          (hasDeliveryValidationIssue(postPublishDraftValidationMessages)
             ? 'FAIL_SHIPPING_SET: '
             : 'FAIL_PUBLISH_VALIDATION: ') +
-            postPublishValidationMessages.join(' | ')
+            postPublishDraftValidationMessages.join(' | ')
         );
       }
 
       throw new Error(
-        previousUrl !== listingUrl || postPublishNavigation.stillOnDraftPage === false
-          ? 'FAIL_PUBLISH_NOT_CONFIRMED: Publish changed the page but listing id could not be verified.'
-          : 'FAIL_PUBLISH_STUCK: Publish did not produce a verifiable Tradera listing.'
+        'FAIL_PUBLISH_STUCK: Publish remained in the Tradera selling flow without producing a listing.'
+      );
+    }
+
+    if (!externalListingId && !postPublishNavigation.activeListingsVisible) {
+      await captureFailureArtifacts('publish-not-confirmed', {
+        currentUrl: postPublishNavigation.currentUrl,
+        currentTitle: postPublishNavigation.currentTitle || null,
+        stillOnSellFlow: postPublishNavigation.stillOnSellFlow,
+        activeListingsVisible: postPublishNavigation.activeListingsVisible,
+        validationMessages: postPublishNavigation.validationMessages,
+        publishButtonDisabled: postPublishNavigation.publishButtonDisabled,
+      }).catch(() => undefined);
+      throw new Error(
+        'FAIL_PUBLISH_NOT_CONFIRMED: Publish left the Tradera selling flow but listing id could not be verified. Current URL: ' +
+          postPublishNavigation.currentUrl
       );
     }
 
     const result = {
       stage: 'publish_verified',
       currentUrl: page.url(),
-      externalListingId,
-      listingUrl,
+      externalListingId: externalListingId || null,
+      listingUrl: listingUrl || null,
       publishVerified: true,
       categoryPath: selectedCategoryPath,
       categorySource: selectedCategorySource,

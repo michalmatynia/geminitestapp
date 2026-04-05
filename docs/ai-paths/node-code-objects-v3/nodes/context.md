@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-05'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Context Filter Migration Sheet (`context`)
 
-Generated at: 2026-03-28T14:11:54.225Z
+Generated at: 2026-04-05T14:57:58.017Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-28T14:11:54.225Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/context.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/context.scaffold.json`
 - v3 object id: `node_obj_context_portable_v3`
-- v3 object hash: `096d1c50638d8c86087999490d5ed8e1811312af081676fb56b3f6096db63ad2`
+- v3 object hash: `7ead38ff035ccf97c57707343800e1ddb0784c2b60c5d7c3dd19fd918f3760de`
 
 ## Ports
 

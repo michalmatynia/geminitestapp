@@ -15,7 +15,10 @@ import {
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
+import {
+  invalidateProductListingsAndBadges,
+  invalidateProducts,
+} from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
@@ -148,18 +151,20 @@ export function TraderaQuickListButton(props: {
         connectionId: resolvedConnection.connection.id,
       });
 
-      setFeedbackStatus('queued', recoveryTarget);
+      const listingId =
+        typeof response.id === 'string' && response.id.trim().length > 0
+          ? response.id.trim()
+          : null;
       const queueJobId =
         typeof response.queue?.jobId === 'string' &&
         response.queue.jobId.trim().length > 0
           ? response.queue.jobId.trim()
           : null;
-      if (queueJobId) {
-        setFeedbackStatus('queued', {
-          ...recoveryTarget,
-          requestId: queueJobId,
-        });
-      }
+      setFeedbackStatus('queued', {
+        ...recoveryTarget,
+        listingId,
+        requestId: queueJobId,
+      });
       try {
         await api.post(
           '/api/v2/integrations/exports/tradera/default-connection',
@@ -188,6 +193,7 @@ export function TraderaQuickListButton(props: {
       );
       prefetchListings();
       await invalidateProductListingsAndBadges(queryClient, product.id);
+      await invalidateProducts(queryClient);
     } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 409) {
         setFeedbackStatus(null);

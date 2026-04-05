@@ -96,4 +96,28 @@ describe('TraderaQuickExportRecoveryBanner', () => {
       )
     ).toHaveClass('break-words', 'whitespace-normal');
   });
+
+  it('renders a shipping-groups action for Tradera shipping configuration failures', () => {
+    render(
+      <TraderaQuickExportRecoveryBanner
+        mode='content'
+        status='failed'
+        requestId='job-tradera-4'
+        connectionId='conn-tradera-1'
+        failureReason='Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+        canContinue={false}
+      />
+    );
+
+    expect(
+      screen.getByText(
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Login and continue listing')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Open Shipping Groups' })).toHaveAttribute(
+      'href',
+      '/admin/products/settings?section=shipping-groups'
+    );
+  });
 });

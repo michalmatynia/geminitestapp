@@ -439,6 +439,59 @@ describe('processTraderaListingJob', () => {
     );
   });
 
+  it('classifies missing Tradera shipping configuration as a form failure', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockRejectedValue(
+      badRequestError(
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+      )
+    );
+
+    await expect(
+      processTraderaListingJob({
+        listingId: 'listing-1',
+        action: 'list',
+        source: 'manual',
+        jobId: 'job-tradera-shipping-config',
+      })
+    ).rejects.toThrow(
+      'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+    );
+
+    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'failed');
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        failureReason:
+          'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastErrorCategory: 'FORM',
+            lastExecution: expect.objectContaining({
+              errorCategory: 'FORM',
+            }),
+          }),
+        }),
+      })
+    );
+  });
+
   it('keeps scheduler-driven scripted Tradera runs on the connection default browser mode', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();
@@ -482,6 +535,82 @@ describe('processTraderaListingJob', () => {
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         browserMode: 'connection_default',
+      })
+    );
+  });
+
+  it('keeps the existing Tradera external listing id when a verified relist completes without a fresh id', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        externalListingId: 'external-existing',
+        marketplaceData: {
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+          externalListingId: 'external-existing',
+          tradera: {},
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockResolvedValue({
+      externalListingId: null,
+      listingUrl: null,
+      metadata: {
+        scriptMode: 'scripted',
+        runId: 'run-no-id-success',
+        publishVerified: true,
+        latestStage: 'publish_verified',
+        latestStageUrl: 'https://www.tradera.com/en/my/listings?tab=active',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-1',
+      action: 'relist',
+      source: 'manual',
+      jobId: 'job-tradera-no-id-success',
+    });
+
+    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-1', 'active');
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: 'external-existing',
+        marketplaceData: expect.objectContaining({
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+          externalListingId: 'external-existing',
+          tradera: expect.objectContaining({
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-no-id-success',
+              ok: true,
+              metadata: expect.objectContaining({
+                publishVerified: true,
+                latestStage: 'publish_verified',
+                latestStageUrl: 'https://www.tradera.com/en/my/listings?tab=active',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-1',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: 'external-existing',
+        requestId: 'job-tradera-no-id-success',
       })
     );
   });

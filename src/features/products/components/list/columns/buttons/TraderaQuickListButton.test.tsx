@@ -22,6 +22,7 @@ const {
   fetchIntegrationsWithConnectionsMock,
   fetchPreferredTraderaConnectionMock,
   invalidateProductListingsAndBadgesMock,
+  invalidateProductsMock,
   logClientCatchMock,
 } = vi.hoisted(() => ({
   toastMock: vi.fn(),
@@ -34,6 +35,7 @@ const {
   fetchIntegrationsWithConnectionsMock: vi.fn(),
   fetchPreferredTraderaConnectionMock: vi.fn(),
   invalidateProductListingsAndBadgesMock: vi.fn(),
+  invalidateProductsMock: vi.fn(),
   logClientCatchMock: vi.fn(),
 }));
 
@@ -131,6 +133,8 @@ vi.mock('@/features/integrations/utils/product-listings-recovery', () => ({
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateProductListingsAndBadges: (...args: unknown[]) =>
     invalidateProductListingsAndBadgesMock(...args) as Promise<void>,
+  invalidateProducts: (...args: unknown[]) =>
+    invalidateProductsMock(...args) as Promise<void>,
 }));
 
 import { TraderaQuickListButton } from './TraderaQuickListButton';
@@ -208,12 +212,14 @@ describe('TraderaQuickListButton', () => {
       return Promise.reject(new Error(`Unexpected PUT ${url}`));
     });
     mutateAsyncMock.mockResolvedValue({
+      id: 'listing-tradera-1',
       queue: {
         name: 'tradera-listings',
         jobId: 'job-tradera-1',
       },
     });
     invalidateProductListingsAndBadgesMock.mockResolvedValue(undefined);
+    invalidateProductsMock.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -255,6 +261,73 @@ describe('TraderaQuickListButton', () => {
     expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
       '"requestId":"job-tradera-1"'
     );
+    expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+      '"listingId":"listing-tradera-1"'
+    );
+    expect(invalidateProductsMock).toHaveBeenCalled();
+  });
+
+  it('promotes queued feedback to completed from the created listing id and refreshes products', async () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'queued',
+          listingId: 'listing-tradera-1',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+    apiGetMock.mockResolvedValue([
+      {
+        id: 'listing-tradera-1',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        externalListingId: null,
+        inventoryId: null,
+        status: 'active',
+        listedAt: '2026-04-05T18:13:15.000Z',
+        expiresAt: null,
+        nextRelistAt: null,
+        relistPolicy: null,
+        relistAttempts: 0,
+        lastRelistedAt: null,
+        lastStatusCheckAt: null,
+        marketplaceData: {
+          tradera: {
+            lastExecution: {
+              metadata: {
+                completedAt: '2026-04-05T18:13:15.000Z',
+              },
+            },
+          },
+        },
+        failureReason: null,
+        exportHistory: [],
+        createdAt: '2026-04-05T17:21:43.000Z',
+        updatedAt: '2026-04-05T18:13:15.000Z',
+        integration: {
+          id: 'integration-tradera-1',
+          name: 'Tradera',
+          slug: 'tradera',
+        },
+        connection: {
+          id: 'conn-tradera-1',
+          name: 'Tradera browser',
+        },
+      },
+    ]);
+
+    renderButton();
+
+    await waitFor(() => {
+      expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toContain(
+        '"status":"completed"'
+      );
+    });
+    expect(invalidateProductsMock).toHaveBeenCalled();
   });
 
   it('persists auth_required feedback when the session preflight requires manual verification', async () => {

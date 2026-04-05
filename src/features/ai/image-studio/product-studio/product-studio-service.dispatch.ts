@@ -27,14 +27,8 @@ import {
   type ImageStudioRunDispatchMode,
 } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import {
-  normalizeProductStudioSequenceGenerationMode,
-  type ProductStudioLinkResponse,
-  type ProductStudioSendResponse,
-  type ProductStudioSequenceGenerationMode,
-  type ProductStudioConfig,
-  type ProductWithImages,
-} from '@/shared/contracts/products';
+import { normalizeProductStudioSequenceGenerationMode } from '@/shared/contracts/products/studio';
+import { type ProductStudioLinkResponse, type ProductStudioSendResponse, type ProductStudioSequenceGenerationMode, type ProductStudioConfig, type ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import { setProductStudioSourceSlot } from '@/shared/lib/products/services/product-studio-config';
 

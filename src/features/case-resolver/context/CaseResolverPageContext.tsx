@@ -3,19 +3,11 @@
 import React from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverAssetKind,
-  CaseResolverCategory,
-  CaseResolverEditorNodeContext,
-  CaseResolverFile,
-  CaseResolverGraph,
-  CaseResolverIdentifier,
-  CaseResolverRelationGraph,
-  CaseResolverTag,
-  CaseResolverWorkspace,
-  CaseMetadataDraft,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverAssetKind, CaseMetadataDraft } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverRelationGraph, CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverEditorNodeContext, CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverGraph } from '@/shared/contracts/case-resolver/graph';
 import { internalError } from '@/shared/errors/app-error';
 
 type CaseResolverAssetPatch = Partial<

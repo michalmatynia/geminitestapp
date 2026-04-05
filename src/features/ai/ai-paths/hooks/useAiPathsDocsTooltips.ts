@@ -1,4 +1,4 @@
-import { createDocsTooltipsState } from '@/shared/lib/documentation';
+import { createDocsTooltipsState } from '@/shared/lib/documentation/docs-tooltip-settings';
 
 export const AI_PATHS_DOCS_TOOLTIP_KEY = 'ai_paths:docs_tooltips_enabled';
 

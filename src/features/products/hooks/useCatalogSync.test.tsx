@@ -33,31 +33,39 @@ describe('useCatalogSync', () => {
     vi.clearAllMocks();
     apiGetMock.mockImplementation((url: string) => {
       if (url === '/api/v2/products/entities/catalogs') {
-        return Promise.resolve([{ id: 'catalog-1', name: 'Catalog 1' }]);
+        return Promise.resolve([
+          {
+            id: 'catalog-1',
+            name: 'Catalog 1',
+            languageIds: ['EN'],
+            defaultLanguageId: 'EN',
+          },
+        ]);
       }
       if (url === '/api/v2/products/metadata/price-groups') {
-        return Promise.resolve([{ id: 'group-1', name: 'Retail' }]);
-      }
-      if (url === '/api/v2/metadata/languages') {
-        return Promise.resolve([{ code: 'EN', name: 'English' }]);
-      }
-      if (url === '/api/v2/metadata/currencies') {
-        return Promise.resolve([{ code: 'PLN', symbol: 'zl' }]);
+        return Promise.resolve([
+          {
+            id: 'group-1',
+            name: 'Retail',
+            isDefault: true,
+            currency: { code: 'PLN' },
+          },
+        ]);
       }
       return Promise.reject(new Error(`Unexpected URL ${url}`));
     });
   });
 
-  it('loads admin products metadata queries with abort signals', async () => {
+  it('loads admin products metadata queries with abort signals and derives selector options locally', async () => {
     const queryClient = createQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    const { result } = renderHook(() => useCatalogSync('all'), { wrapper });
+    const { result } = renderHook(() => useCatalogSync('catalog-1'), { wrapper });
 
     await waitFor(() => {
-      expect(apiGetMock).toHaveBeenCalledTimes(4);
+      expect(apiGetMock).toHaveBeenCalledTimes(2);
     });
 
     await waitFor(() => {
@@ -65,13 +73,19 @@ describe('useCatalogSync', () => {
         {
           id: 'catalog-1',
           name: 'Catalog 1',
+          languageIds: ['EN'],
+          defaultLanguageId: 'EN',
           priceGroupIds: [],
           defaultPriceGroupId: null,
         },
       ]);
     });
 
-    expect(apiGetMock).toHaveBeenCalledTimes(4);
+    expect(apiGetMock).toHaveBeenCalledTimes(2);
+    expect(result.current.languageOptions).toEqual([{ value: 'name_en', label: 'English' }]);
+    expect(result.current.fallbackNameLocale).toBe('name_en');
+    expect(result.current.currencyOptions).toEqual(['PLN']);
+    expect(result.current.currencyCode).toBe('PLN');
     expect(apiGetMock).toHaveBeenCalledWith(
       '/api/v2/products/entities/catalogs',
       expect.objectContaining({
@@ -80,18 +94,6 @@ describe('useCatalogSync', () => {
     );
     expect(apiGetMock).toHaveBeenCalledWith(
       '/api/v2/products/metadata/price-groups',
-      expect.objectContaining({
-        signal: expect.any(AbortSignal),
-      })
-    );
-    expect(apiGetMock).toHaveBeenCalledWith(
-      '/api/v2/metadata/languages',
-      expect.objectContaining({
-        signal: expect.any(AbortSignal),
-      })
-    );
-    expect(apiGetMock).toHaveBeenCalledWith(
-      '/api/v2/metadata/currencies',
       expect.objectContaining({
         signal: expect.any(AbortSignal),
       })

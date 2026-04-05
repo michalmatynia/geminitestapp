@@ -4,7 +4,7 @@ import { ArrowLeft, SendHorizonal } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { DocumentWysiwygEditor } from '@/features/document-editor/public';
+import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
@@ -12,7 +12,9 @@ import { buildFilemakerMailSelectionHref as buildSelectionHref } from '../mail-u
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
 
 import type { FilemakerMailAccount, FilemakerMailParticipant } from '../types';
-import { Button, FormField, FormSection, Input, PanelHeader, SelectSimple, useToast } from '@/shared/ui';
+import { Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
 
 type AccountsResponse = { accounts: FilemakerMailAccount[] };
 type ForwardDraftResponse = {
@@ -343,12 +345,11 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
           </div>
 
           <DocumentWysiwygEditor
+            engineInstance='filemaker_email'
+            showBrand
             value={bodyHtml}
             onChange={setBodyHtml}
             placeholder='Write your email...'
-            enableAdvancedTools
-            allowFontFamily
-            allowTextAlign
           />
 
           {accountId ? (

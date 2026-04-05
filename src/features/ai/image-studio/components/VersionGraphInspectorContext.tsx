@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
@@ -23,9 +24,16 @@ type VersionGraphInspectorContextValue = {
   onAnnotationBlur: () => void;
 };
 
-const VersionGraphInspectorContext = React.createContext<VersionGraphInspectorContextValue | null>(
-  null
-);
+const { Context: VersionGraphInspectorContext, useStrictContext: useVersionGraphInspectorContext } =
+  createStrictContext<VersionGraphInspectorContextValue>({
+    hookName: 'useVersionGraphInspectorContext',
+    providerName: 'VersionGraphInspectorProvider',
+    displayName: 'VersionGraphInspectorContext',
+    errorFactory: () =>
+      internalError(
+        'useVersionGraphInspectorContext must be used inside VersionGraphInspectorProvider'
+      ),
+  });
 
 export function VersionGraphInspectorProvider({
   value,
@@ -40,13 +48,4 @@ export function VersionGraphInspectorProvider({
     </VersionGraphInspectorContext.Provider>
   );
 }
-
-export function useVersionGraphInspectorContext(): VersionGraphInspectorContextValue {
-  const context = React.useContext(VersionGraphInspectorContext);
-  if (!context) {
-    throw internalError(
-      'useVersionGraphInspectorContext must be used inside VersionGraphInspectorProvider'
-    );
-  }
-  return context;
-}
+export { useVersionGraphInspectorContext };

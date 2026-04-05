@@ -1,5 +1,3 @@
-'use client';
-
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 
 import { HUB_SECTIONS, SLIDES } from './WebDevelopmentReactPerformanceTracksLesson.data';

@@ -1,7 +1,9 @@
 import { Play } from 'lucide-react';
 import React from 'react';
 
-import { Button, InsetPanel, SelectSimple, ToggleRow } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { InsetPanel } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 
 import { useGenerationToolbarContext, type MaskAttachMode } from './GenerationToolbarContext';
 import { useGenerationToolbarMaskSectionRuntime } from './GenerationToolbarSectionContexts';

@@ -5,7 +5,7 @@ import {
   getExportWarehouseId,
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { badRequestError, externalServiceError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -52,6 +52,40 @@ export async function processBaseExportJob(
   };
 
   try {
+    const startedAt = new Date().toISOString();
+    const startedRun = await runRepository
+      .updateRunIfStatus(runId, ['queued'], {
+        status: 'running',
+        startedAt,
+        meta: {
+          ...runMeta,
+          productId,
+          connectionId,
+          inventoryId,
+          requestId,
+          startedAt,
+        },
+      })
+      .catch(() => null);
+
+    if (startedRun) {
+      await runRepository
+        .createRunEvent({
+          runId,
+          level: 'info',
+          message: 'Export to Base.com started.',
+          metadata: {
+            productId,
+            connectionId,
+            inventoryId,
+            imagesOnly,
+            requestId,
+            jobId,
+          },
+        })
+        .catch(() => undefined);
+    }
+
     const segments = await loadSegments();
     const requestImageTransform = imageTransform
       ? {
@@ -61,7 +95,7 @@ export async function processBaseExportJob(
         }
       : undefined;
 
-    const { product, connection, integrations, primaryListingRepo } =
+    const { product, connection, integrations, primaryListingRepo, productRepo } =
       await segments.loadExportResources(productId, connectionId);
 
     if (!product) throw externalServiceError('Product not found', { productId });
@@ -290,6 +324,16 @@ export async function processBaseExportJob(
         fields: exportFields,
         requestId,
       });
+    }
+
+    const normalizedExternalProductId = result.productId?.trim() || '';
+    const normalizedProductBaseId = product.baseProductId?.trim() || '';
+    if (normalizedExternalProductId && normalizedProductBaseId !== normalizedExternalProductId) {
+      await productRepo
+        .updateProduct(productId, { baseProductId: normalizedExternalProductId })
+        .catch((error) => {
+          void ErrorSystem.captureException(error);
+        });
     }
 
     await runRepository

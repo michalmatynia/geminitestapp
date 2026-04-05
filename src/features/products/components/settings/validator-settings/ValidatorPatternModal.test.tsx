@@ -4,7 +4,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ValidatorSettingsController } from '@/shared/contracts/products';
+import type { ValidatorSettingsController } from '@/shared/contracts/products/drafts';
 
 const { useValidatorSettingsContextMock } = vi.hoisted(() => ({
   useValidatorSettingsContextMock: vi.fn(),
@@ -42,7 +42,7 @@ vi.mock('./ValidatorDocsTooltips', () => ({
   ValidatorDocTooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/products/ui', () => ({
   FormModal: (props: {
     open: boolean;
     title: string;

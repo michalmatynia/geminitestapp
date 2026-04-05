@@ -34,6 +34,7 @@ export type FilemakerCampaignRuntimeDeps = {
     campaignId: string;
     runId: string;
     deliveryId: string;
+    mailAccountId?: string | null;
     replyToEmail?: string | null;
     fromName?: string | null;
   }) => Promise<FilemakerCampaignEmailSendResult>;
@@ -55,4 +56,10 @@ export type FilemakerCampaignRunProcessResult = {
   retryableDeliveryCount: number;
   retryExhaustedCount: number;
   suggestedRetryDelayMs: number | null;
+};
+
+export type FilemakerCampaignRunCancelResult = {
+  campaign: FilemakerEmailCampaign;
+  run: FilemakerEmailCampaignRun;
+  deliveries: FilemakerEmailCampaignDelivery[];
 };

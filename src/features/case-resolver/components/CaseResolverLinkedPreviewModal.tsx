@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CompactEmptyState } from '@/shared/ui';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {

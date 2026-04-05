@@ -27,7 +27,7 @@ import {
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,
   logClientError,

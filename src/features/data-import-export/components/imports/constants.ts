@@ -1,5 +1,5 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { ExportParameterDoc } from '@/shared/contracts/integrations';
+import type { ExportParameterDoc } from '@/shared/contracts/integrations/import-export';
 
 export const PRODUCT_FIELDS = [
   { value: 'sku', label: 'SKU' },

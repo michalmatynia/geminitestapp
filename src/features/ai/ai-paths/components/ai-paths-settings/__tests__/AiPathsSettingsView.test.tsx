@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockState = vi.hoisted(() => ({
   pageContext: {
+    activeTab: 'canvas' as 'canvas' | 'paths' | 'docs',
     isFocusMode: false,
   },
   persistenceState: {
@@ -16,7 +17,7 @@ vi.mock('../AiPathsSettingsPageContext', () => ({
   useAiPathsSettingsPageContext: () => mockState.pageContext,
 }));
 
-vi.mock('../../../context', () => ({
+vi.mock('@/features/ai/ai-paths/context', () => ({
   usePersistenceState: () => mockState.persistenceState,
 }));
 
@@ -24,14 +25,14 @@ vi.mock('@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips', () => ({
   useAiPathsDocsTooltips: () => ({ docsTooltipsEnabled: mockState.docsTooltipsEnabled }),
 }));
 
-vi.mock('@/shared/lib/documentation', () => ({
+vi.mock('@/shared/contracts/documentation', () => ({
   DOCUMENTATION_MODULE_IDS: {
     aiPaths: 'ai-paths-docs-module',
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
-  DocsTooltipEnhancer: ({
+vi.mock('@/shared/lib/documentation/DocumentationTooltipEnhancer', () => ({
+  DocumentationTooltipEnhancer: ({
     rootId,
     enabled,
     moduleId,
@@ -46,6 +47,9 @@ vi.mock('@/shared/ui', () => ({
       {`${rootId}|${String(enabled)}|${moduleId}|${fallbackDocId}`}
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
   LoadingState: ({
     message,
     className,
@@ -76,6 +80,7 @@ import { AiPathsSettingsView } from '../AiPathsSettingsView';
 describe('AiPathsSettingsView', () => {
   beforeEach(() => {
     mockState.pageContext = {
+      activeTab: 'canvas',
       isFocusMode: false,
     };
     mockState.persistenceState = {
@@ -96,8 +101,9 @@ describe('AiPathsSettingsView', () => {
     expect(screen.queryByTestId('canvas-view')).not.toBeInTheDocument();
   });
 
-  it('renders the docs enhancer and all settings sections with focus mode styling', () => {
+  it('renders the docs enhancer and only the active section with focus mode styling', () => {
     mockState.pageContext = {
+      activeTab: 'canvas',
       isFocusMode: true,
     };
     mockState.docsTooltipsEnabled = false;
@@ -113,8 +119,8 @@ describe('AiPathsSettingsView', () => {
       'ai-paths-docs-root|false|ai-paths-docs-module|workflow_overview'
     );
     expect(screen.getByTestId('canvas-view')).toBeInTheDocument();
-    expect(screen.getByTestId('list-view')).toBeInTheDocument();
-    expect(screen.getByTestId('docs-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('list-view')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('docs-view')).not.toBeInTheDocument();
     expect(screen.getByTestId('dialogs-view')).toBeInTheDocument();
   });
 
@@ -125,5 +131,29 @@ describe('AiPathsSettingsView', () => {
     expect(root).toBeTruthy();
     expect(root).toHaveClass('space-y-6');
     expect(root).not.toHaveClass('h-full', 'space-y-0');
+  });
+
+  it('mounts the matching section for non-canvas tabs only', () => {
+    mockState.pageContext = {
+      activeTab: 'docs',
+      isFocusMode: false,
+    };
+
+    const { rerender } = render(<AiPathsSettingsView />);
+
+    expect(screen.getByTestId('docs-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('canvas-view')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('list-view')).not.toBeInTheDocument();
+
+    mockState.pageContext = {
+      activeTab: 'paths',
+      isFocusMode: false,
+    };
+
+    rerender(<AiPathsSettingsView />);
+
+    expect(screen.getByTestId('list-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('canvas-view')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('docs-view')).not.toBeInTheDocument();
   });
 });

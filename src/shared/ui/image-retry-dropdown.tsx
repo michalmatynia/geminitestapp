@@ -1,6 +1,4 @@
-'use client';
-
-import type { ImageRetryPreset } from '@/shared/contracts';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 
 import { Button } from './button';
 import {

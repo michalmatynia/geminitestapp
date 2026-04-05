@@ -1,9 +1,7 @@
-'use client';
-
 import React from 'react';
 
 import { useIntegrationsData } from '@/features/integrations/context/IntegrationsContext';
-import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { ConnectionForm } from './manager/ConnectionForm';
 import { ConnectionList } from './manager/ConnectionList';

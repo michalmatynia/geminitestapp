@@ -6,10 +6,10 @@ import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/public';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/public';
+} from '@/shared/lib/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
-import { FolderTreePanel } from '@/shared/ui';
+import { FolderTreePanel } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   buildValidatorListMasterNodes,

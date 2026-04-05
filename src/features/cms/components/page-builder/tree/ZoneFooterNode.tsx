@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 
 import { useDragState } from '@/features/cms/hooks/useDragStateContext';
 import type { PageZone } from '@/shared/contracts/cms';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   useComponentTreePanelActions,

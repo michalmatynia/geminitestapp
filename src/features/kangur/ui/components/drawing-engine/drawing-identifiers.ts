@@ -1,5 +1,3 @@
-'use client';
-
 const normalizeKangurDrawingFileSegment = (segment: string): string =>
   segment
     .replace(/[^A-Za-z0-9_-]+/g, '-')

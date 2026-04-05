@@ -12,15 +12,9 @@ import {
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,
 } from '@/features/filemaker/public';
-import type {
-  CaseResolverCategory,
-  CaseResolverEditorNodeContext,
-  CaseResolverFile,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-  CaseResolverWorkspace,
-  CaseResolverSettings,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverEditorNodeContext, CaseResolverWorkspace, CaseResolverSettings } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
@@ -29,7 +23,7 @@ import {
   useAdminLayoutState,
 } from '@/shared/providers/AdminLayoutProvider';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   fromCaseResolverCaseContentFileNodeId,

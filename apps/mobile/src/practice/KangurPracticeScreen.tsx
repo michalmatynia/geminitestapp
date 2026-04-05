@@ -10,7 +10,7 @@ import {
   type KangurPracticeQuestion,
 } from '@kangur/core';
 import type { KangurOperation } from '@kangur/core';
-import type { KangurQuestionChoice } from '@kangur/contracts';
+import type { KangurQuestionChoice } from '@kangur/contracts/kangur';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';

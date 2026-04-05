@@ -1,4 +1,5 @@
 'use client';
+
 import { useQueryClient, QueryClient } from '@tanstack/react-query';
 import {
   ColumnDef,
@@ -21,7 +22,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Loader2 } from 'lucide-react';
 import React, { JSX, memo, useEffect, useMemo, useState, useRef } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
 import { EmptyState } from './empty-state';

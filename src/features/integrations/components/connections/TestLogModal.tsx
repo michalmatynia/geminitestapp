@@ -1,10 +1,11 @@
-'use client';
-
 import React from 'react';
 
 import { useIntegrationsTesting } from '@/features/integrations/context/integrations/IntegrationsTestingContext';
-import type { ModalStateProps } from '@/shared/contracts/ui';
-import { StatusBadge, MetadataItem, Hint, FormField, Card } from '@/shared/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
+import { Hint, FormField } from '@/shared/ui/forms-and-actions.public';
+import { Card } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface TestLogModalProps extends Omit<ModalStateProps, 'onSuccess'> {

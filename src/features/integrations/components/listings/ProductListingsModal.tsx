@@ -2,21 +2,18 @@
 
 import React, { useMemo } from 'react';
 
-import { ExportLogViewer } from '@/features/integrations/components/listings/ExportLogViewer';
-import {
-  BASE_INTEGRATION_SLUGS,
-  TRADERA_INTEGRATION_SLUGS,
-} from '@/features/integrations/constants/slugs';
 import {
   ProductListingsProvider,
   useProductListingsData,
   useProductListingsLogs,
   useProductListingsModals,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import {
+  resolveProductListingsIntegrationScope,
+} from '@/features/integrations/utils/product-listings-recovery';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import {
@@ -25,8 +22,12 @@ import {
 } from './product-listings-modal/context/ProductListingsModalViewContext';
 import {
   ProductListingsViewProvider,
+  createProductListingsViewContextValue,
   type ProductListingsViewContextValue,
 } from './product-listings-modal/context/ProductListingsViewContext';
+import { ExportLogsPanel } from './ExportLogsPanel';
+import { resolveProductListingsModalTitle } from './product-listings-copy';
+import { resolveProductListingsProductName } from './product-listings-labels';
 import { ProductListingsConfirmDialogs } from './product-listings-modal/ProductListingsConfirmDialogs';
 import { ProductListingsContent } from './product-listings-modal/ProductListingsContent';
 import { ProductListingsEmpty } from './product-listings-modal/ProductListingsEmpty';
@@ -35,65 +36,42 @@ import { ProductListingsLoading } from './product-listings-modal/ProductListings
 import { ProductListingsStartPanel } from './product-listings-modal/ProductListingsStartPanel';
 
 interface ProductListingsModalProps extends EntityModalProps<ProductWithImages> {
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  onStartListing?:
+    | ((
+        integrationId: string,
+        connectionId: string,
+        options?: { autoSubmit?: boolean }
+      ) => void)
+    | undefined;
   filterIntegrationSlug?: string | null | undefined;
   onListingsUpdated?: (() => void) | undefined;
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 }
-
-const normalizeSlug = (value: string | null | undefined): string =>
-  (value ?? '').trim().toLowerCase();
-
-const matchesIntegrationSlug = (
-  listingSlug: string,
-  filterIntegrationSlug: string | null | undefined
-): boolean => {
-  const filter = normalizeSlug(filterIntegrationSlug);
-  if (!filter) return true;
-  const listing = normalizeSlug(listingSlug);
-  if (BASE_INTEGRATION_SLUGS.has(filter)) {
-    return BASE_INTEGRATION_SLUGS.has(listing);
-  }
-  if (TRADERA_INTEGRATION_SLUGS.has(filter)) {
-    return TRADERA_INTEGRATION_SLUGS.has(listing);
-  }
-  return listing === filter;
-};
 
 function ProductListingsModalContent(): React.JSX.Element {
   const { product, listings, isLoading, error } = useProductListingsData();
   const { exportLogs } = useProductListingsLogs();
   const { onClose, onStartListing, filterIntegrationSlug } = useProductListingsModals();
 
-  const productName: string =
-    product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
-
-  const filteredListings: ProductListingWithDetails[] = useMemo(() => {
-    return filterIntegrationSlug
-      ? listings.filter((listing: ProductListingWithDetails): boolean =>
-        matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
-      )
-      : listings;
-  }, [listings, filterIntegrationSlug]);
-
-  const isBaseFilter = BASE_INTEGRATION_SLUGS.has(normalizeSlug(filterIntegrationSlug));
-  const statusTargetLabel: string = isBaseFilter
-    ? 'Base.com'
-    : (filterIntegrationSlug ?? 'integration');
-  const canStartListing: boolean = Boolean(onStartListing) && !filterIntegrationSlug;
+  const productName = resolveProductListingsProductName(product);
+  const effectiveFilterIntegrationSlug = filterIntegrationSlug ?? null;
   const productListingsViewContextValue: ProductListingsViewContextValue = useMemo(
-    () => ({
-      filteredListings,
-      statusTargetLabel,
-      filterIntegrationSlug,
-      isBaseFilter,
-      showSync: Boolean(filterIntegrationSlug),
-    }),
-    [filterIntegrationSlug, filteredListings, isBaseFilter, statusTargetLabel]
+    () =>
+      createProductListingsViewContextValue({
+        listings,
+        filterIntegrationSlug: effectiveFilterIntegrationSlug,
+      }),
+    [effectiveFilterIntegrationSlug, listings]
   );
+  const { filteredListings, integrationScopeLabel } = productListingsViewContextValue;
+  const canStartListing: boolean = Boolean(onStartListing);
+  const modalTitle = resolveProductListingsModalTitle({
+    productName,
+    integrationScopeLabel,
+  });
 
   return (
-    <DetailModal isOpen={true} onClose={onClose} title={`Integrations - ${productName}`} size='xl'>
+    <DetailModal isOpen={true} onClose={onClose} title={modalTitle} size='xl'>
       <ProductListingsConfirmDialogs />
 
       <div className='space-y-4'>
@@ -115,11 +93,7 @@ function ProductListingsModalContent(): React.JSX.Element {
           </ProductListingsViewProvider>
         )}
 
-        {exportLogs.length > 0 && (
-          <div className='mt-4 border-t border pt-4'>
-            <ExportLogViewer />
-          </div>
-        )}
+        <ExportLogsPanel logs={exportLogs} />
       </div>
     </DetailModal>
   );
@@ -152,16 +126,29 @@ export function ProductListingsModal({
   onListingsUpdated,
   recoveryContext,
 }: ProductListingsModalProps): React.JSX.Element | null {
+  const effectiveFilterIntegrationSlug = resolveProductListingsIntegrationScope({
+    filterIntegrationSlug,
+    recoveryContext,
+  });
   const viewContextValue = React.useMemo(
     () => ({
       product: product!,
       onClose,
       ...(onStartListing !== undefined && { onStartListing }),
-      ...(filterIntegrationSlug !== undefined && { filterIntegrationSlug }),
+      ...(effectiveFilterIntegrationSlug !== null && {
+        filterIntegrationSlug: effectiveFilterIntegrationSlug,
+      }),
       ...(onListingsUpdated !== undefined && { onListingsUpdated }),
       ...(recoveryContext !== undefined && { recoveryContext }),
     }),
-    [filterIntegrationSlug, onClose, onListingsUpdated, onStartListing, product, recoveryContext]
+    [
+      effectiveFilterIntegrationSlug,
+      onClose,
+      onListingsUpdated,
+      onStartListing,
+      product,
+      recoveryContext,
+    ]
   );
 
   if (!product || !isOpen) return null;

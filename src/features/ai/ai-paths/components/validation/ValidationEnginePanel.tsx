@@ -3,7 +3,9 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Input, Label, SelectSimple, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { Input, Label } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { ValidationActionButton } from './ValidationActionButton';

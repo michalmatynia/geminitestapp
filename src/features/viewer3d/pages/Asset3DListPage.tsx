@@ -4,21 +4,12 @@ import { Box, Grid, List } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { GridPickerItem } from '@/shared/contracts/ui';
+import type { GridPickerItem } from '@/shared/contracts/ui/pickers';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import {
-  Button,
-  StandardDataTablePanel,
-  Alert,
-  EmptyState,
-  StatusBadge,
-  PanelHeader,
-  Card,
-  FilterPanel,
-  LoadingState,
-  GenericGridPicker,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Alert, Card } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel, PanelHeader, FilterPanel, GenericGridPicker } from '@/shared/ui/templates.public';
+import { EmptyState, LoadingState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModalImpl';
 import { useAsset3DListState } from '../hooks/useAsset3DListState';

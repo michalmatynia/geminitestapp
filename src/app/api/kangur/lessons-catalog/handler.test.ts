@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   getKangurLessonRepositoryMock,

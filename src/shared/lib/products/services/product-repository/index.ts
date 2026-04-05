@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { ProductRepository } from '@/shared/contracts/products';
+import type { ProductRepository } from '@/shared/contracts/products/drafts';
 import {
   getProductDataProvider,
   type ProductDbProvider,

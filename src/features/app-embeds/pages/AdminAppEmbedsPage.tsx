@@ -4,7 +4,9 @@ import React from 'react';
 
 import { AppEmbedList } from '@/features/app-embeds/components/AppEmbedList';
 import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { Button, SectionHeader, FormSection, LoadingState } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SectionHeader, LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 export function AdminAppEmbedsPage(): React.ReactNode {
   return (

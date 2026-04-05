@@ -1,5 +1,3 @@
-'use client';
-
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 
 import { ProductImageManagerHeader } from './ProductImageManagerHeader';

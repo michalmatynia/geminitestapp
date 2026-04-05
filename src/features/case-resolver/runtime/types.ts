@@ -1,7 +1,5 @@
-import type {
-  CaseResolverWorkspace,
-  CaseResolverRequestedContextStatus,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverRequestedContextStatus } from '@/shared/contracts/case-resolver/base';
 
 export type { CaseResolverRequestedContextStatus };
 

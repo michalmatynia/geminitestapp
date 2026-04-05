@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listImageStudioRuns } from '@/features/ai/server';
-import type { ImageStudioRunStatus, ImageStudioRunsResponse } from '@/shared/contracts/image-studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio/base';
+import type { ImageStudioRunsResponse } from '@/shared/contracts/image-studio/run';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   normalizeOptionalQueryString,
   optionalIntegerQuerySchema,

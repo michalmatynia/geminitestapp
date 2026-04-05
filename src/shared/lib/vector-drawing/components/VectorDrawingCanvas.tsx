@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { VectorCanvasProps } from '@/shared/contracts/ui';
-import { VectorCanvas } from '@/shared/ui';
+import type { VectorCanvasProps } from '@/shared/contracts/ui/canvas';
+import { VectorCanvas } from '@/shared/ui/data-display.public';
 import {
   VectorCanvasProvider,
   type VectorCanvasContextValue,

@@ -1,5 +1,3 @@
-'use client';
-
 import { z } from 'zod';
 
 import {
@@ -8,7 +6,7 @@ import {
   type NotebookCreateInput,
   type NotebookUpdateInput,
 } from '@/shared/contracts/notes';
-import type { DeleteResponse } from '@/shared/contracts/ui';
+import type { DeleteResponse } from '@/shared/contracts/ui/api';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,

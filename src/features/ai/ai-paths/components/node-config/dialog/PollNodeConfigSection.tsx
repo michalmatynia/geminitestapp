@@ -3,7 +3,8 @@
 import type { DbQueryConfig, Edge, PollConfig } from '@/shared/lib/ai-paths';
 import { DB_COLLECTION_OPTIONS, renderTemplate, toNumber } from '@/shared/lib/ai-paths';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Button, Input, Textarea, SelectSimple, FormField } from '@/shared/ui';
+import { Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import {
   useAiPathGraph,

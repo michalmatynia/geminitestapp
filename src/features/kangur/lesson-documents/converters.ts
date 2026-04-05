@@ -18,103 +18,103 @@ import {
 } from './creators';
 import { escapeHtmlText, normalizeText, stripHtmlToText } from './utils';
 
-export const convertKangurLessonInlineBlockType = (
+const trimInlineTextCandidate = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed || null;
+};
+
+const resolveInlineBlockTitleSource = (block: KangurLessonInlineBlock): string =>
+  block.type === 'text' ? stripHtmlToText(block.html) : block.title;
+
+const resolveInlineBlockNarrationSource = (block: KangurLessonInlineBlock): string => {
+  if (block.type === 'text') {
+    return block.ttsText ?? stripHtmlToText(block.html);
+  }
+  if (block.type === 'image') {
+    return block.ttsDescription ?? block.caption ?? block.altText ?? block.title;
+  }
+  return block.ttsDescription ?? block.title;
+};
+
+const resolveInlineImageAltSource = (block: KangurLessonInlineBlock): string =>
+  block.type === 'text'
+    ? stripHtmlToText(block.html)
+    : block.type === 'svg'
+      ? block.title
+      : block.altText ?? block.title;
+
+const resolveInlineTextHtmlSource = (block: KangurLessonInlineBlock): string | null => {
+  if (block.type === 'text') {
+    return null;
+  }
+  return trimInlineTextCandidate(block.title) ??
+    (block.type === 'image' ? trimInlineTextCandidate(block.caption) : null);
+};
+
+const deriveInlineBlockTitle = (
   block: KangurLessonInlineBlock,
-  nextType: KangurLessonInlineBlock['type']
-): KangurLessonInlineBlock => {
-  if (block.type === nextType) {
-    return block;
-  }
+  fallback: string
+): string => normalizeText(resolveInlineBlockTitleSource(block), fallback, 120);
 
-  if (nextType === 'svg') {
-    const nextBlock = createKangurLessonSvgBlock();
-    const derivedTitle =
-      block.type === 'text'
-        ? normalizeText(stripHtmlToText(block.html), nextBlock.title, 120)
-        : normalizeText(block.title, nextBlock.title, 120);
-    const derivedDescription =
-      block.type === 'text'
-        ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), '', 2_000)
-        : normalizeText(
-          block.ttsDescription ??
-              (block.type === 'image'
-                ? (block.caption ?? block.altText ?? block.title)
-                : block.title),
-          '',
-          2_000
-        );
+const deriveInlineBlockDescription = (
+  block: KangurLessonInlineBlock,
+  fallback: string,
+  maxLength: number
+): string => normalizeText(resolveInlineBlockNarrationSource(block), fallback, maxLength);
 
-    return {
-      ...nextBlock,
-      id: block.id,
-      align: block.align,
-      title: derivedTitle,
-      ttsDescription: derivedDescription,
-    };
-  }
-
-  if (nextType === 'image') {
-    const nextBlock = createKangurLessonImageBlock();
-    const derivedTitle =
-      block.type === 'text'
-        ? normalizeText(stripHtmlToText(block.html), nextBlock.title, 120)
-        : normalizeText(block.title, nextBlock.title, 120);
-    const derivedAltText =
-      block.type === 'text'
-        ? normalizeText(stripHtmlToText(block.html), '', 300)
-        : normalizeText(
-          block.type === 'svg' ? block.title : (block.altText ?? block.title),
-          '',
-          300
-        );
-    const derivedDescription =
-      block.type === 'text'
-        ? normalizeText(block.ttsText ?? stripHtmlToText(block.html), '', 2_000)
-        : normalizeText(
-          block.ttsDescription ??
-              (block.type === 'image'
-                ? (block.caption ?? block.altText ?? block.title)
-                : block.title),
-          '',
-          2_000
-        );
-
-    return {
-      ...nextBlock,
-      id: block.id,
-      align: block.align,
-      title: derivedTitle,
-      altText: derivedAltText,
-      ttsDescription: derivedDescription,
-    };
-  }
-
-  const nextBlock = createKangurLessonTextBlock();
-  const derivedHtml =
-    block.type !== 'text' && block.title.trim().length > 0
-      ? `<p>${escapeHtmlText(block.title.trim())}</p>`
-      : block.type === 'image' && block.caption?.trim()
-        ? `<p>${escapeHtmlText(block.caption.trim())}</p>`
-        : nextBlock.html;
-  const derivedTtsText =
-    block.type === 'svg'
-      ? normalizeText(block.ttsDescription ?? block.title, '', 10_000)
-      : block.type === 'image'
-        ? normalizeText(
-          block.ttsDescription ?? block.caption ?? block.altText ?? block.title,
-          '',
-          10_000
-        )
-        : nextBlock.ttsText;
-
+const buildConvertedSvgBlock = (block: KangurLessonInlineBlock): KangurLessonInlineBlock => {
+  const nextBlock = createKangurLessonSvgBlock();
   return {
     ...nextBlock,
     id: block.id,
     align: block.align,
-    html: derivedHtml,
-    ttsText: derivedTtsText,
+    title: deriveInlineBlockTitle(block, nextBlock.title),
+    ttsDescription: deriveInlineBlockDescription(block, '', 2_000),
   };
 };
+
+const buildConvertedImageBlock = (block: KangurLessonInlineBlock): KangurLessonInlineBlock => {
+  const nextBlock = createKangurLessonImageBlock();
+  return {
+    ...nextBlock,
+    id: block.id,
+    align: block.align,
+    title: deriveInlineBlockTitle(block, nextBlock.title),
+    altText: normalizeText(resolveInlineImageAltSource(block), '', 300),
+    ttsDescription: deriveInlineBlockDescription(block, '', 2_000),
+  };
+};
+
+const buildConvertedTextBlock = (block: KangurLessonInlineBlock): KangurLessonInlineBlock => {
+  const nextBlock = createKangurLessonTextBlock();
+  const htmlSource = resolveInlineTextHtmlSource(block);
+  return {
+    ...nextBlock,
+    id: block.id,
+    align: block.align,
+    html: htmlSource ? `<p>${escapeHtmlText(htmlSource)}</p>` : nextBlock.html,
+    ttsText:
+      block.type === 'text' ? nextBlock.ttsText : deriveInlineBlockDescription(block, '', 10_000),
+  };
+};
+
+const INLINE_BLOCK_TYPE_CONVERTERS: Record<
+  KangurLessonInlineBlock['type'],
+  (block: KangurLessonInlineBlock) => KangurLessonInlineBlock
+> = {
+  svg: buildConvertedSvgBlock,
+  image: buildConvertedImageBlock,
+  text: buildConvertedTextBlock,
+};
+
+export const convertKangurLessonInlineBlockType = (
+  block: KangurLessonInlineBlock,
+  nextType: KangurLessonInlineBlock['type']
+): KangurLessonInlineBlock =>
+  block.type === nextType ? block : INLINE_BLOCK_TYPE_CONVERTERS[nextType](block);
 
 export const convertKangurLessonRootBlockType = (
   block: Exclude<KangurLessonRootBlock, KangurLessonGridBlock | KangurLessonCalloutBlock | KangurLessonQuizBlock>,

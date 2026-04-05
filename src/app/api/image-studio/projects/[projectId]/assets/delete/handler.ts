@@ -8,7 +8,7 @@ import {
   listImageStudioSlots,
 } from '@/features/ai/server';
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

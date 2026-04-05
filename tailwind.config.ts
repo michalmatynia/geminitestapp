@@ -91,10 +91,42 @@ const config = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        'skeleton-fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'skeleton-fade-out': {
+          from: { opacity: '1' },
+          to: { opacity: '0' },
+        },
+        'skeleton-slide-up-fade-in': {
+          from: {
+            opacity: '0',
+            transform: 'translateY(8px)',
+          },
+          to: {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
+        'skeleton-stagger': {
+          from: {
+            opacity: '0',
+            transform: 'translateY(4px)',
+          },
+          to: {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'skeleton-fade-in': 'skeleton-fade-in var(--skeleton-fade-in-duration, 300ms) var(--skeleton-fade-in-easing, cubic-bezier(0.4, 0, 0.2, 1)) forwards',
+        'skeleton-fade-out': 'skeleton-fade-out var(--skeleton-fade-out-duration, 200ms) var(--skeleton-fade-out-easing, cubic-bezier(0.4, 0, 0.2, 1)) forwards',
+        'skeleton-slide-up-fade-in': 'skeleton-slide-up-fade-in var(--skeleton-fade-in-duration, 300ms) var(--skeleton-fade-in-easing, cubic-bezier(0.4, 0, 0.2, 1)) forwards',
+        'skeleton-stagger': 'skeleton-stagger var(--skeleton-fade-in-duration, 300ms) var(--skeleton-fade-in-easing, cubic-bezier(0.4, 0, 0.2, 1)) calc(var(--element-stagger-delay, 0ms) + var(--skeleton-fade-in-delay, 0ms)) both',
       },
     },
   },

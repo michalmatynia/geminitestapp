@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import { evaluateRunPreflight, type AiNode, type PathFlowIntensity } from '@/shared/lib/ai-paths';

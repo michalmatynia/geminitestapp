@@ -41,7 +41,7 @@ vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler'
 }));
 
 import { handleDatabase } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-handler';
-import type { AiNode, NodeHandlerContext } from '@/shared/contracts';
+import type { AiNode, NodeHandlerContext } from '@/shared/contracts/ai-paths-core';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -175,6 +175,46 @@ describe('handleDatabase', () => {
         }),
       })
     );
+  });
+
+  it('throws when a write operation returns a nested result error payload', async () => {
+    const mongoResult = {
+      result: { error: 'Nested write failure' },
+      bundle: null,
+    };
+    handleDatabaseMongoActionMock.mockResolvedValue(mongoResult);
+
+    let caughtError: unknown = null;
+    try {
+      await handleDatabase({
+        ...baseContext,
+        node: {
+          id: 'node-db-result-error',
+          type: 'database',
+          title: 'Database Update',
+          inputs: [],
+          outputs: [],
+          description: '',
+          position: { x: 0, y: 0 },
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+            },
+          },
+        } as AiNode,
+      } as NodeHandlerContext);
+    } catch (error) {
+      logClientError(error);
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(Error);
+    expect((caughtError as Error).message).toContain('Nested write failure');
+    expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(mongoResult);
+    expect(reportAiPathsError).toHaveBeenCalled();
   });
 
   it('throws when a write operation returns a fatal guardrail-flagged error', async () => {

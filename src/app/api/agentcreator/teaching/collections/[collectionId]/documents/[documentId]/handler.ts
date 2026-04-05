@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { deleteEmbeddingDocument } from '@/features/ai/agentcreator/server';
 import type { AgentTeachingDocumentDeleteResponse } from '@/shared/contracts/agent-teaching';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

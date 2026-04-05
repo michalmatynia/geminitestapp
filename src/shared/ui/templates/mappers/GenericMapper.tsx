@@ -3,10 +3,7 @@
 import { useEffect, useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  GenericItemMapperConfig,
-  PendingExternalMappingsState,
-} from '@/shared/contracts/ui';
+import type { GenericItemMapperConfig, PendingExternalMappingsState } from '@/shared/contracts/ui/api';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { GenericMapperExternalCell } from './GenericMapperExternalCell';
@@ -208,6 +205,7 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
           <GenericMapperStats
             total={stats.total}
             mapped={stats.mapped}
+            unmapped={stats.unmapped}
             pending={stats.pending}
             itemLabel={title}
           />

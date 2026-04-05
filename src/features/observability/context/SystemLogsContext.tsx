@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   useClearLogsMutation,
@@ -23,7 +23,8 @@ import type {
 } from '@/shared/contracts/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { useToast } from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -39,8 +40,25 @@ import type {
   SystemLogsStateContextValue,
 } from './SystemLogsContext.shared';
 
-const SystemLogsStateContext = createContext<SystemLogsStateContextValue | null>(null);
-const SystemLogsActionsContext = createContext<SystemLogsActionsContextValue | null>(null);
+const {
+  Context: SystemLogsStateContext,
+  useStrictContext: useSystemLogsStateContext,
+} = createStrictContext<SystemLogsStateContextValue>({
+  hookName: 'useSystemLogsState',
+  providerName: 'SystemLogsProvider',
+  errorFactory: internalError,
+});
+export const useSystemLogsState = useSystemLogsStateContext;
+
+const {
+  Context: SystemLogsActionsContext,
+  useStrictContext: useSystemLogsActionsContext,
+} = createStrictContext<SystemLogsActionsContextValue>({
+  hookName: 'useSystemLogsActions',
+  providerName: 'SystemLogsProvider',
+  errorFactory: internalError,
+});
+export const useSystemLogsActions = useSystemLogsActionsContext;
 
 const CLEAR_LOG_TARGET_LABELS: Record<ClearLogsTarget, string> = {
   error_logs: 'Error logs',
@@ -48,22 +66,6 @@ const CLEAR_LOG_TARGET_LABELS: Record<ClearLogsTarget, string> = {
   activity_logs: 'Activity logs',
   page_access_logs: 'Page Access logs',
   all_logs: 'All logs',
-};
-
-export const useSystemLogsState = (): SystemLogsStateContextValue => {
-  const context = useContext(SystemLogsStateContext);
-  if (!context) {
-    throw internalError('useSystemLogsState must be used within SystemLogsProvider');
-  }
-  return context;
-};
-
-export const useSystemLogsActions = (): SystemLogsActionsContextValue => {
-  const context = useContext(SystemLogsActionsContext);
-  if (!context) {
-    throw internalError('useSystemLogsActions must be used within SystemLogsProvider');
-  }
-  return context;
 };
 
 export function SystemLogsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {

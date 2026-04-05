@@ -3,7 +3,6 @@ import { type ProductWithImages, type ProductsPagedResult } from '@/shared/contr
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
-
 const PRODUCT_READ_TIMEOUT_MS = 60_000;
 const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
 

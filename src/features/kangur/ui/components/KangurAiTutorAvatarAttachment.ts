@@ -5,7 +5,7 @@ import {
   GUIDED_AVATAR_SURFACE_GAP,
   type TutorHorizontalSide,
   type TutorMotionPosition,
-} from './KangurAiTutorWidget.shared';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
 
 export type TutorAvatarAttachmentPlacement = TutorHorizontalSide | 'top' | 'bottom';
 

@@ -27,31 +27,15 @@ import type {
   DatabaseType,
   DatabasePreviewMode,
 } from '@/shared/contracts/database';
-import {
-  AdminDatabasePageLayout,
-  Badge,
-  Button,
-  Pagination,
-  FormSection,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  StandardDataTablePanel,
-  StatusBadge,
-  Alert,
-  SearchInput,
-  CollapsibleSection,
-  MetadataItem,
-  LoadingState,
-  CompactEmptyState,
-  Hint,
-  UI_CENTER_ROW_RELAXED_CLASSNAME,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
+import { Badge, Button, Tabs, TabsContent, TabsList, TabsTrigger, Alert, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { Pagination, MetadataItem, LoadingState, CompactEmptyState, UI_CENTER_ROW_RELAXED_CLASSNAME, UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection, SearchInput, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { CrudPanel } from '../components/CrudPanel';
+import { formatDatabaseCellValue } from '../components/format-cell-value';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
 import { DatabaseProvider } from '../context/DatabaseContext';
 import { useDatabasePreviewState } from '../hooks/useDatabasePreviewState';
@@ -421,9 +405,9 @@ function useDataTabContent(
           cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
             <span
               className='max-w-[200px] truncate font-mono block'
-              title={formatCellValue(row.original[col])}
+              title={formatDatabaseCellValue(row.original[col])}
             >
-              {formatCellValue(row.original[col])}
+              {formatDatabaseCellValue(row.original[col])}
             </span>
           ),
         }) as ColumnDef<Record<string, unknown>>
@@ -457,12 +441,6 @@ function useDataTabContent(
       />
     </div>
   );
-}
-
-function formatCellValue(value: unknown): string {
-  if (value === null || value === undefined) return '∅';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
 }
 
 /* ─── Main Page Content ─── */

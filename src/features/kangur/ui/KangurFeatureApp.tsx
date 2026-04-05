@@ -17,9 +17,9 @@ import { KANGUR_MAIN_PAGE, kangurPages, preloadKangurPage } from '@/features/kan
 import { getKangurHomeHref, resolveKangurPageKey } from '@/features/kangur/config/routing';
 import { KangurAppLoader } from '@/features/kangur/ui/components/KangurAppLoader';
 import { KangurPageTransitionSkeleton } from '@/features/kangur/ui/components/KangurPageTransitionSkeleton';
-import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/KangurTopNavigationSkeleton';
+import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationSkeleton';
 
-const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
+const KangurAiTutorWidget = dynamic(() => import('@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget').then(m => ({ default: m.KangurAiTutorWidget })), { ssr: false });
 const KangurLoginModal = dynamic(() => import('@/features/kangur/ui/components/KangurLoginModal').then(m => ({ default: m.KangurLoginModal })), { ssr: false });
 const KangurCmsRuntimeScreen = dynamic(
   () =>

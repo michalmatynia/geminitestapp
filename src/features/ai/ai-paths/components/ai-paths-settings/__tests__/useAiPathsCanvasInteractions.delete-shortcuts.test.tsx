@@ -393,4 +393,49 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
 
     input.remove();
   });
+
+  it('keeps delete shortcuts disabled when the hook is not enabled for the active tab', () => {
+    const confirmMock = vi.fn();
+
+    selectionStateMock = {
+      selectedEdgeId: null,
+      selectedNodeId: 'node-a',
+      selectedNodeIds: ['node-a'],
+    };
+    graphStateMock.nodes = [
+      {
+        id: 'node-a',
+        type: 'prompt',
+        title: 'A',
+        description: '',
+        inputs: [],
+        outputs: [],
+        position: { x: 100, y: 100 },
+        config: {},
+      },
+    ];
+    graphStateMock.edges = [];
+
+    renderHook(() =>
+      useAiPathsCanvasInteractions({
+        enabled: false,
+        isPathLocked: false,
+        confirmNodeSwitch: undefined,
+        confirm: confirmMock,
+        clearRuntimeInputsForEdges: vi.fn(),
+        toast: vi.fn(),
+      })
+    );
+
+    const graphNodeCallCountBeforeDelete = setGraphNodesMock.mock.calls.length;
+    const graphEdgeCallCountBeforeDelete = setGraphEdgesMock.mock.calls.length;
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete' }));
+    });
+
+    expect(confirmMock).not.toHaveBeenCalled();
+    expect(setGraphNodesMock).toHaveBeenCalledTimes(graphNodeCallCountBeforeDelete);
+    expect(setGraphEdgesMock).toHaveBeenCalledTimes(graphEdgeCallCountBeforeDelete);
+  });
 });

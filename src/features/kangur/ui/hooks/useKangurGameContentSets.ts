@@ -1,5 +1,3 @@
-'use client';
-
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,
@@ -11,7 +9,7 @@ import type {
 import {
   kangurGameContentSetsSchema,
 } from '@/shared/contracts/kangur-game-instances';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';

@@ -169,7 +169,7 @@ export const SHARED_TOOLTIP_DOCUMENTATION_CATALOG: DocumentationEntry[] = [
     id: 'product_imported_badge',
     moduleId: DOCUMENTATION_MODULE_IDS.products,
     title: 'Imported Product Badge',
-    content: 'Marks products that originated from external import flows.',
+    content: 'Marks products that were created by an external import flow, not just linked to a marketplace id.',
     keywords: ['imported product'],
   },
   {

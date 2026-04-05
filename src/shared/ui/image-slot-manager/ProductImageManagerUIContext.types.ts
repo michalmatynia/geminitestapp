@@ -1,9 +1,4 @@
-import type {
-  ProductImageManagerUIActionsContextValue,
-  ProductImageManagerUIContextValue,
-  ProductImageManagerUIStateContextValue,
-  SlotViewMode,
-} from '@/shared/contracts/ui';
+import type { ProductImageManagerUIActionsContextValue, ProductImageManagerUIContextValue, ProductImageManagerUIStateContextValue, SlotViewMode } from '@/shared/contracts/ui/image-manager';
 
 export type {
   ProductImageManagerUIActionsContextValue,

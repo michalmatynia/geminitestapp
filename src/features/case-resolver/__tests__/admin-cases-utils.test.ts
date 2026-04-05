@@ -9,7 +9,7 @@ import {
   createEmptyCaseResolverRelationGraph,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 describe('admin case resolver cases workspace adoption', () => {
   it('adopts equal-revision incoming workspace when current state is a placeholder', () => {

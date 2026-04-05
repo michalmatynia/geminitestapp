@@ -1,10 +1,4 @@
-import {
-  type CaseResolverWorkspace,
-  type CaseResolverWorkspaceMetadata,
-  type CaseResolverWorkspaceFetchAttemptProfile,
-  type CaseResolverWorkspaceRecordFetchResult,
-  type CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspace, type CaseResolverWorkspaceMetadata, type CaseResolverWorkspaceFetchAttemptProfile, type CaseResolverWorkspaceRecordFetchResult, type CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult } from '@/shared/contracts/case-resolver';
 
 import { fetchSettingsPayloadWithTimeout } from './node-file-persistence';
 import { getCaseResolverWorkspaceRevision } from './utils/workspace-persistence-utils';

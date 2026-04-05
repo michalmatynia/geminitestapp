@@ -97,6 +97,14 @@ export const productListingActionSchema = z.object({
 
 export type ProductListingAction = z.infer<typeof productListingActionSchema>;
 
+export const playwrightRelistBrowserModeSchema = z.enum([
+  'connection_default',
+  'headless',
+  'headed',
+]);
+
+export type PlaywrightRelistBrowserMode = z.infer<typeof playwrightRelistBrowserModeSchema>;
+
 export const productListingCreatePayloadSchema = z.object({
   integrationId: z.string().trim().min(1),
   connectionId: z.string().trim().min(1),
@@ -203,7 +211,15 @@ export type ProductListingSyncBaseImagesResponse = z.infer<
   typeof productListingSyncBaseImagesResponseSchema
 >;
 
-export const productListingRelistVariablesSchema = productListingActionSchema;
+export const productListingRelistPayloadSchema = z.object({
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
+});
+
+export type ProductListingRelistPayload = z.infer<typeof productListingRelistPayloadSchema>;
+
+export const productListingRelistVariablesSchema = productListingActionSchema.extend({
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
+});
 
 export type ProductListingRelistVariables = z.infer<typeof productListingRelistVariablesSchema>;
 
@@ -248,6 +264,53 @@ export type BaseProductLinkExistingResponse = z.infer<
   typeof baseProductLinkExistingResponseSchema
 >;
 
+export const traderaProductLinkExistingPayloadSchema = z.object({
+  listingUrl: z.string().trim().min(1),
+  connectionId: z.string().trim().min(1).optional(),
+});
+
+export type TraderaProductLinkExistingPayload = z.infer<
+  typeof traderaProductLinkExistingPayloadSchema
+>;
+
+export const traderaProductLinkExistingInferenceMethodSchema = z.enum([
+  'provided',
+  'seller_alias',
+  'preferred_default',
+  'sole_connection',
+]);
+
+export type TraderaProductLinkExistingInferenceMethod = z.infer<
+  typeof traderaProductLinkExistingInferenceMethodSchema
+>;
+
+export const traderaProductLinkExistingCandidateSchema = z.object({
+  integrationId: z.string().trim().min(1),
+  integrationName: z.string().trim().min(1),
+  integrationSlug: z.string().trim().min(1),
+  connectionId: z.string().trim().min(1),
+  connectionName: z.string().trim().min(1),
+  connectionUsername: z.string().trim().nullable(),
+});
+
+export type TraderaProductLinkExistingCandidate = z.infer<
+  typeof traderaProductLinkExistingCandidateSchema
+>;
+
+export const traderaProductLinkExistingResponseSchema = z.object({
+  linked: z.literal(true),
+  listingId: z.string().trim().min(1),
+  connectionId: z.string().trim().min(1),
+  integrationId: z.string().trim().min(1),
+  externalListingId: z.string().trim().min(1),
+  listingUrl: z.string().trim().min(1),
+  inferenceMethod: traderaProductLinkExistingInferenceMethodSchema,
+});
+
+export type TraderaProductLinkExistingResponse = z.infer<
+  typeof traderaProductLinkExistingResponseSchema
+>;
+
 /**
  * Product Listing Badges DTOs
  */
@@ -255,6 +318,7 @@ export type BaseProductLinkExistingResponse = z.infer<
 export type MarketplaceBadgeEntry = {
   base?: string;
   tradera?: string;
+  playwrightProgrammable?: string;
 };
 
 export type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;
@@ -420,10 +484,23 @@ export type BulkTagMappingRequest = z.infer<typeof bulkTagMappingRequestSchema>;
  * Product Listings Recovery DTOs
  */
 
-export type ProductListingsRecoveryContext = {
-  source: 'base_quick_export_failed';
-  integrationSlug: 'baselinker';
-  status: string;
-  runId: string | null;
-};
-
+export type ProductListingsRecoveryContext =
+  | {
+    source: 'base_quick_export_failed';
+    integrationSlug: 'baselinker';
+    status: string;
+    runId: string | null;
+    requestId?: string | null | undefined;
+    integrationId?: string | null | undefined;
+    connectionId?: string | null | undefined;
+  }
+  | {
+    source: 'tradera_quick_export_failed' | 'tradera_quick_export_auth_required';
+    integrationSlug: 'tradera';
+    status: string;
+    runId: string | null;
+    failureReason?: string | null | undefined;
+    requestId?: string | null | undefined;
+    integrationId?: string | null | undefined;
+    connectionId?: string | null | undefined;
+  };

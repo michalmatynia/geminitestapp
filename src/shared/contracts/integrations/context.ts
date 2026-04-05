@@ -1,17 +1,17 @@
-import type {
-  BulkCategoryMappingRequest,
-  Integration,
-  IntegrationConnection,
-  CategoryMappingWithDetails,
-  ExternalCategory,
-  MarketplaceBulkUpsertResponse,
-  MarketplaceConnectionRequest,
-  MarketplaceFetchResponse,
-} from './index';
 import type { PlaywrightPersona } from '../playwright';
 import type { CatalogRecord, ProductCategory } from '../products';
 import type { LabelValueOptionDto as InternalCategoryOption } from '../ui';
 import type { UseMutationResult } from '@tanstack/react-query';
+
+import type { BulkCategoryMappingRequest } from './base-com';
+import type { Integration } from './base';
+import type { IntegrationConnection } from './connections';
+import type { CategoryMappingWithDetails, ExternalCategory } from './listings';
+import type {
+  MarketplaceBulkUpsertResponse,
+  MarketplaceConnectionRequest,
+  MarketplaceFetchResponse,
+} from './marketplace';
 
 export interface IntegrationsData {
   integrations: Integration[];
@@ -47,7 +47,9 @@ export interface CategoryMapperData {
 }
 
 export interface CategoryMapperActions {
-  handleFetchFromBase: () => Promise<void>;
+  handleFetchExternalCategories: () => Promise<void>;
+  handleOpenTraderaLoginRecovery: () => Promise<void>;
+  closeTraderaLoginRecoveryModal: () => void;
   handleAutoMatchByName: () => void;
   handleMappingChange: (externalCategoryId: string, internalCategoryId: string | null) => void;
   handleSave: () => Promise<void>;

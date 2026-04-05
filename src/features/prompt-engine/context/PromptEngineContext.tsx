@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
@@ -10,7 +11,7 @@ import {
   type PromptValidationScope,
   type PromptValidationSeverity,
 } from '@/shared/lib/prompt-engine/settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { RuleDraft, RulePatch } from './prompt-engine-context-utils';
@@ -88,34 +89,45 @@ export interface PromptEngineFilters {
   setIncludeDisabled: (include: boolean) => void;
 }
 
-const ActionsContext = React.createContext<PromptEngineActions | null>(null);
-const ConfigContext = React.createContext<PromptEngineConfig | null>(null);
-const DataContext = React.createContext<PromptEngineData | null>(null);
-const FiltersContext = React.createContext<PromptEngineFilters | null>(null);
+const createPromptEngineStrictContext = <T,>(hookName: string, displayName: string) =>
+  createStrictContext<T>({
+    hookName,
+    providerName: 'a PromptEngineProvider',
+    displayName,
+    errorFactory: internalError,
+  });
 
-export const usePromptEngineActions = () => {
-  const context = React.useContext(ActionsContext);
-  if (!context) throw internalError('usePromptEngineActions must be used within PromptEngineProvider');
-  return context;
-};
+export const {
+  Context: ActionsContext,
+  useStrictContext: usePromptEngineActions,
+} = createPromptEngineStrictContext<PromptEngineActions>(
+  'usePromptEngineActions',
+  'PromptEngineActionsContext'
+);
 
-export const usePromptEngineConfig = () => {
-  const context = React.useContext(ConfigContext);
-  if (!context) throw internalError('usePromptEngineConfig must be used within PromptEngineProvider');
-  return context;
-};
+export const {
+  Context: ConfigContext,
+  useStrictContext: usePromptEngineConfig,
+} = createPromptEngineStrictContext<PromptEngineConfig>(
+  'usePromptEngineConfig',
+  'PromptEngineConfigContext'
+);
 
-export const usePromptEngineData = () => {
-  const context = React.useContext(DataContext);
-  if (!context) throw internalError('usePromptEngineData must be used within PromptEngineProvider');
-  return context;
-};
+export const {
+  Context: DataContext,
+  useStrictContext: usePromptEngineData,
+} = createPromptEngineStrictContext<PromptEngineData>(
+  'usePromptEngineData',
+  'PromptEngineDataContext'
+);
 
-export const usePromptEngineFilters = () => {
-  const context = React.useContext(FiltersContext);
-  if (!context) throw internalError('usePromptEngineFilters must be used within PromptEngineProvider');
-  return context;
-};
+export const {
+  Context: FiltersContext,
+  useStrictContext: usePromptEngineFilters,
+} = createPromptEngineStrictContext<PromptEngineFilters>(
+  'usePromptEngineFilters',
+  'PromptEngineFiltersContext'
+);
 
 type PromptEngineProviderProps = {
   children: React.ReactNode;

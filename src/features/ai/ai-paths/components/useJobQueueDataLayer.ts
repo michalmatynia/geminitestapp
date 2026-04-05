@@ -2,16 +2,11 @@
 
 import { useCallback, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-import type { Toast, ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/base';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { internalError } from '@/shared/errors/app-error';
 import type { AiPathRunListResult, AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
-import {
-  cancelAiPathRun,
-  clearAiPathRuns,
-  getAiPathQueueStatus,
-  listAiPathRuns,
-  removeAiPathRun,
-} from '@/shared/lib/ai-paths';
+import { cancelAiPathRun, clearAiPathRuns, getAiPathQueueStatus, listAiPathRuns, removeAiPathRun } from '@/shared/lib/ai-paths';
 import {
   mergeAiPathQueuePayloadWithOptimisticRuns,
   patchQueuedCountWithOptimisticRuns,

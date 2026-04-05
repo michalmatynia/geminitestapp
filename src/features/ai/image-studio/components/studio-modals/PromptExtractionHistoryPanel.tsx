@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { Button } from '@/shared/ui/primitives.public';
 
 import {
   formatHistoryTime,
@@ -13,17 +14,14 @@ import {
 } from './prompt-extract-utils';
 import { useStudioInlineEdit } from './StudioInlineEditContext';
 
-const PromptExtractionHistoryResetContext = React.createContext<(() => void) | null>(null);
-
-function usePromptExtractionHistoryReset(): () => void {
-  const onClearHistory = React.useContext(PromptExtractionHistoryResetContext);
-  if (!onClearHistory) {
-    throw new Error(
-      'usePromptExtractionHistoryReset must be used within PromptExtractionHistoryResetContext.Provider'
-    );
-  }
-  return onClearHistory;
-}
+const {
+  Context: PromptExtractionHistoryResetContext,
+  useStrictContext: usePromptExtractionHistoryReset,
+} = createStrictContext<() => void>({
+  hookName: 'usePromptExtractionHistoryReset',
+  providerName: 'PromptExtractionHistoryResetContext.Provider',
+  displayName: 'PromptExtractionHistoryResetContext',
+});
 
 function PromptExtractionClearHistoryButton(): React.JSX.Element {
   const onClearHistory = usePromptExtractionHistoryReset();

@@ -4,14 +4,10 @@ import {
   enqueueFilemakerEmailCampaignRunJob,
   startFilemakerEmailCampaignQueue,
 } from '@/features/jobs/server';
-import type {
-  FilemakerEmailCampaignProcessRunRequest,
-  FilemakerEmailCampaignProcessRunResponse,
-} from '@/features/filemaker/types';
 import {
   filemakerEmailCampaignProcessRunRequestSchema,
 } from '@/shared/contracts/filemaker';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -25,8 +21,10 @@ import {
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   resolveFilemakerEmailCampaignRetryableDeliveries,
-} from '@/features/filemaker/settings';
-import { readFilemakerCampaignSettingValue } from '@/features/filemaker/server/campaign-settings-store';
+  readFilemakerCampaignSettingValue,
+  type FilemakerEmailCampaignProcessRunRequest,
+  type FilemakerEmailCampaignProcessRunResponse,
+} from '@/features/filemaker/server';
 
 export async function POST_handler(
   req: NextRequest,

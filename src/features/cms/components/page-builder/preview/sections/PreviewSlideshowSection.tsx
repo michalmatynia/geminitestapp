@@ -18,8 +18,9 @@ import { PreviewNodeSelectionButton } from '@/features/cms/components/page-build
 import { getSectionContainerClass, getSectionStyles } from '@/features/cms/public';
 import type { BlockInstance } from '@/shared/contracts/cms';
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
-import { CompactEmptyState, Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 export function PreviewSlideshowSection() {
   const { colorSchemes } = useCmsPageContext();

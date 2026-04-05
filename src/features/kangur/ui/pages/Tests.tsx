@@ -15,8 +15,8 @@ import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
 import { KangurPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurPageIntroCard';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import { KangurTestSuitePlayer } from '@/features/kangur/ui/components/KangurTestSuitePlayer';
-import { KangurTestsWordmark } from '@/features/kangur/ui/components/KangurTestsWordmark';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
+import { KangurTestsWordmark } from '@/features/kangur/ui/components/wordmarks/KangurTestsWordmark';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurGuestPlayer } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';
@@ -105,8 +105,8 @@ const resolveVisibleTestSuites = ({
 }): KangurTestSuite[] =>
   isDeferredContentReady && !isAdultFocus
     ? parseKangurTestSuites(rawSuites)
-      .filter((suite) => isLiveKangurTestSuite(suite))
-      .sort((left, right) => left.sortOrder - right.sortOrder)
+        .filter((suite) => isLiveKangurTestSuite(suite))
+        .sort((left, right) => left.sortOrder - right.sortOrder)
     : [];
 
 const resolveVisibleQuestionStore = ({

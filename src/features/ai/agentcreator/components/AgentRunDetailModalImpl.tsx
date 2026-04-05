@@ -1,20 +1,12 @@
-'use client';
-
 import React from 'react';
 
 import type { AgentRunRecord } from '@/shared/contracts/agent-runtime';
-import type { EntityModalProps } from '@/shared/contracts/ui';
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  StatusBadge,
-  LogList,
-  MetadataItem,
-} from '@/shared/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/primitives.public';
+import { StatusBadge, LogList } from '@/shared/ui/data-display.public';
+import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { DetailModal, DetailModalSection } from '@/shared/ui/templates/modals';
-import { formatDateTime } from '@/shared/utils';
+import { formatDateTime } from '@/shared/utils/formatting';
 
 import { useAgentRunsContext } from '../context/AgentRunsContext';
 

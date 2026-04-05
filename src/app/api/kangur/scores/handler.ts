@@ -7,26 +7,22 @@ import {
   requireActiveLearner,
   resolveKangurActor,
 } from '@/features/kangur/server';
+import { kangurLessonSubjectSchema } from '@kangur/contracts/kangur-lesson-constants';
 import {
-  kangurLessonSubjectSchema,
   kangurScoreLimitSchema,
   kangurScoreSortSchema,
   resolveKangurScoreSubject,
-  type KangurLessonSubject,
-} from '@kangur/contracts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+} from '@kangur/contracts/kangur';
+import { type KangurLessonSubject } from '@kangur/contracts';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import {
   normalizeOptionalQueryString,
   parseOptionalIntegerQueryValue,
   optionalTrimmedQueryString,
 } from '@/shared/lib/api/query-schema';
-import {
-  normalizeKangurSort,
-  parseKangurScoreCreatePayload,
-} from '@/shared/validations/kangur';
+import { normalizeKangurSort, parseKangurScoreCreatePayload } from '@/shared/validations/kangur';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 
 const KANGUR_SCORES_CACHE_TTL_MS = 30_000;
 
@@ -134,10 +130,7 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   }
 };
 
-const resolveBodyJson = async (
-  request: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<unknown> => {
+const resolveBodyJson = async (request: NextRequest, ctx: ApiHandlerContext): Promise<unknown> => {
   if (ctx.body !== undefined) {
     return ctx.body;
   }

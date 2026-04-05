@@ -12,7 +12,12 @@ export * from './tradera-listing/utils';
 export * from './tradera-listing/settings';
 export * from './tradera-listing/browser';
 export * from './tradera-listing/api';
-export * from './tradera-listing/categories';
+// NOTE: categories.ts is NOT re-exported here because it directly imports `playwright`
+// (chromium, devices) at the module level. Including it in this barrel would pull the
+// heavyweight playwright external into the BullMQ worker chunk, causing
+// "Unexpected token 'export'" at runtime (Turbopack ESM-external resolution issue).
+// Import fetchTraderaCategoriesForConnection directly from
+// '@/features/integrations/services/tradera-listing/categories' instead.
 
 import { isTraderaApiIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
@@ -23,7 +28,8 @@ import {
   loadTraderaSystemSettings,
   toTruthyBoolean,
 } from '@/features/integrations/services/tradera-system-settings';
-import type { TraderaListingJobInput } from '@/shared/contracts/integrations';
+import type { TraderaListingJobInput } from '@/shared/contracts/integrations/tradera';
+import { isAppError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -37,7 +43,117 @@ import {
   toUserFacingTraderaFailure,
   resolveExpiry,
   resolveNextRelistAt,
+  toRecord,
 } from './tradera-listing/utils';
+import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/integrations/listings';
+
+const extractErrorMetadata = (error: unknown): Record<string, unknown> | undefined => {
+  if (!isAppError(error)) return undefined;
+  const metadata = toRecord(error.meta);
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
+};
+
+const buildTraderaMarketplaceData = ({
+  existingMarketplaceData,
+  result,
+  executedAt,
+  action,
+  source,
+  requestId,
+}: {
+  existingMarketplaceData: Record<string, unknown> | null | undefined;
+  result: Pick<
+    Awaited<ReturnType<typeof runTraderaListing>>,
+    'ok' | 'externalListingId' | 'listingUrl' | 'error' | 'errorCategory' | 'metadata'
+  >;
+  executedAt: Date;
+  action: 'list' | 'relist';
+  source: 'manual' | 'scheduler' | 'api';
+  requestId: string | null;
+}): Record<string, unknown> => {
+  const marketplaceData = toRecord(existingMarketplaceData);
+  const traderaData = toRecord(marketplaceData['tradera']);
+  const nextListingUrl =
+    result.listingUrl ??
+    (typeof marketplaceData['listingUrl'] === 'string' && marketplaceData['listingUrl'].trim()
+      ? marketplaceData['listingUrl']
+      : null);
+  const nextExternalListingId =
+    result.externalListingId ??
+    (typeof marketplaceData['externalListingId'] === 'string' &&
+    marketplaceData['externalListingId'].trim()
+      ? marketplaceData['externalListingId']
+      : null);
+
+  return {
+    ...marketplaceData,
+    marketplace: 'tradera',
+    ...(nextListingUrl ? { listingUrl: nextListingUrl } : {}),
+    ...(nextExternalListingId ? { externalListingId: nextExternalListingId } : {}),
+    tradera: {
+      ...traderaData,
+      lastErrorCategory: result.ok ? null : result.errorCategory,
+      pendingExecution: null,
+      lastExecution: {
+        executedAt: executedAt.toISOString(),
+        action,
+        source,
+        requestId,
+        ok: result.ok,
+        error: result.error,
+        errorCategory: result.errorCategory,
+        metadata: result.metadata ?? null,
+      },
+    },
+  };
+};
+
+const resolvePersistedExternalListingId = ({
+  existingExternalListingId,
+  resultExternalListingId,
+}: {
+  existingExternalListingId: unknown;
+  resultExternalListingId: string | null;
+}): string | null => {
+  if (typeof resultExternalListingId === 'string' && resultExternalListingId.trim()) {
+    return resultExternalListingId;
+  }
+
+  return typeof existingExternalListingId === 'string' && existingExternalListingId.trim()
+    ? existingExternalListingId
+    : null;
+};
+
+const resolveFailureListingStatus = (errorCategory: string | null): string =>
+  errorCategory === 'AUTH' ? 'auth_required' : 'failed';
+
+const resolveRequestedTraderaBrowserMode = ({
+  requestedBrowserMode,
+  source,
+  browserMode,
+  playwrightHeadless,
+}: {
+  requestedBrowserMode: PlaywrightRelistBrowserMode | undefined;
+  source: 'manual' | 'scheduler' | 'api';
+  browserMode: 'builtin' | 'scripted' | null | undefined;
+  playwrightHeadless: boolean | null | undefined;
+}): PlaywrightRelistBrowserMode => {
+  if (requestedBrowserMode) return requestedBrowserMode;
+  // Respect the connection's explicit headed/headless preference
+  if (playwrightHeadless === false) return 'headed';
+  if (playwrightHeadless === true) return 'headless';
+  // No explicit preference — legacy default
+  return browserMode === 'scripted' && source !== 'scheduler' ? 'headed' : 'connection_default';
+};
+
+const buildTraderaHistoryFields = (
+  browserMode: string | null | undefined
+): string[] | null => {
+  const normalizedBrowserMode =
+    typeof browserMode === 'string' && browserMode.trim().length > 0 ? browserMode.trim() : null;
+  if (!normalizedBrowserMode) return null;
+  return [`browser_mode:${normalizedBrowserMode}`];
+};
 
 export const runTraderaListing = async (
   input: TraderaListingJobInput
@@ -99,6 +215,12 @@ export const runTraderaListing = async (
     const systemSettings = await loadTraderaSystemSettings();
     const integrationSlug = integration.slug;
     const useApi = isTraderaApiIntegrationSlug(integrationSlug);
+    const requestedBrowserMode = resolveRequestedTraderaBrowserMode({
+      requestedBrowserMode: input.browserMode,
+      source,
+      browserMode: connection.traderaBrowserMode,
+      playwrightHeadless: connection.playwrightHeadless,
+    });
 
     if (useApi) {
       const result = await runTraderaApiListing({ listing, connection });
@@ -131,6 +253,7 @@ export const runTraderaListing = async (
       systemSettings,
       source,
       action,
+      browserMode: requestedBrowserMode,
     });
 
     const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
@@ -150,6 +273,7 @@ export const runTraderaListing = async (
       error: null,
       errorCategory: null,
       metadata: {
+        ...result.metadata,
         simulated: result.simulated ?? false,
         relistPolicy: buildRelistPolicy(settings),
       },
@@ -177,6 +301,7 @@ export const runTraderaListing = async (
       nextRelistAt: null,
       error: userMessage,
       errorCategory: category,
+      metadata: extractErrorMetadata(error),
     };
   }
 };
@@ -192,42 +317,69 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
   }
 
   const now = new Date();
+  const marketplaceData = buildTraderaMarketplaceData({
+    existingMarketplaceData: resolved.listing.marketplaceData,
+    result,
+    executedAt: now,
+    action: input.action ?? 'list',
+    source: input.source ?? 'manual',
+    requestId: input.jobId ?? null,
+  });
+  const historyBrowserMode =
+    typeof result.metadata?.['browserMode'] === 'string'
+      ? result.metadata['browserMode']
+      : typeof result.metadata?.['requestedBrowserMode'] === 'string'
+        ? result.metadata['requestedBrowserMode']
+        : null;
+  const historyFields = buildTraderaHistoryFields(historyBrowserMode);
+  const persistedExternalListingId = resolvePersistedExternalListingId({
+    existingExternalListingId: resolved.listing.externalListingId,
+    resultExternalListingId: result.externalListingId,
+  });
+
   if (result.ok) {
     await resolved.repository.updateListingStatus(input.listingId, 'active');
     await resolved.repository.updateListing(input.listingId, {
-      externalListingId: result.externalListingId ?? null,
+      status: 'active',
+      externalListingId: persistedExternalListingId,
       listedAt: now,
       expiresAt: result.expiresAt ?? null,
       nextRelistAt: result.nextRelistAt ?? null,
       lastRelistedAt: input.action === 'relist' ? now : null,
       lastStatusCheckAt: now,
       failureReason: null,
+      marketplaceData,
     });
     await resolved.repository.appendExportHistory(input.listingId, {
       exportedAt: now,
       status: 'active',
-      externalListingId: result.externalListingId ?? null,
+      externalListingId: persistedExternalListingId,
       expiresAt: result.expiresAt ?? null,
       failureReason: null,
       relist: input.action === 'relist',
+      fields: historyFields,
       requestId: input.jobId ?? null,
     });
     return;
   }
 
-  await resolved.repository.updateListingStatus(input.listingId, 'failed');
+  const failureStatus = resolveFailureListingStatus(result.errorCategory);
+  await resolved.repository.updateListingStatus(input.listingId, failureStatus);
   await resolved.repository.updateListing(input.listingId, {
+    status: failureStatus,
     lastStatusCheckAt: now,
     nextRelistAt: null,
     failureReason: result.error ?? 'Tradera listing failed.',
+    marketplaceData,
   });
   await resolved.repository.appendExportHistory(input.listingId, {
     exportedAt: now,
-    status: 'failed',
+    status: failureStatus,
     externalListingId: null,
     expiresAt: null,
     failureReason: result.error ?? 'Tradera listing failed.',
     relist: input.action === 'relist',
+    fields: historyFields,
     requestId: input.jobId ?? null,
   });
   throw new Error(result.error ?? 'Tradera listing failed.');

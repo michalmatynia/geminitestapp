@@ -1,4 +1,3 @@
-'use client';
 import React from 'react';
 
 import { CreateNoteModal } from '@/features/notesapp/components/CreateNoteModal';
@@ -11,7 +10,7 @@ import {
   useNotesAppState,
 } from '@/features/notesapp/hooks/NotesAppContext';
 import { useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 function AdminNotesPageContent(): React.JSX.Element {
   const { isMenuCollapsed } = useAdminLayoutState();

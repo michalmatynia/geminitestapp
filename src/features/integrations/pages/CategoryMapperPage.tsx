@@ -3,19 +3,22 @@
 import { BaseCategoryMapper } from '@/features/integrations/components/marketplaces/category-mapper/BaseCategoryMapper';
 import { MarketplaceSelector } from '@/features/integrations/components/marketplaces/category-mapper/MarketplaceSelector';
 import {
+  type CategoryMapperMarketplace,
   CategoryMapperPageProvider,
   useCategoryMapperPageSelection,
 } from '@/features/integrations/context/CategoryMapperPageContext';
-import { SectionHeader, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
+import { SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { Card } from '@/shared/ui/primitives.public';
 
 function CategoryMapperPageContent(): React.JSX.Element {
-  const { selectedConnectionId, isSupportedConnection } = useCategoryMapperPageSelection();
+  const { selectedConnectionId, selectedMarketplaceLabel, isSupportedConnection } =
+    useCategoryMapperPageSelection();
 
   return (
     <div className='page-section'>
       <SectionHeader
-        title='Category, Producer & Tag Mapper'
-        description='Map external marketplace categories, producers, and tags to internal records for reliable import and export.'
+        title='Category Mapper'
+        description='Choose Base.com or Tradera, then select a connection to map external marketplace categories to your internal product categories.'
         className='mb-6'
       />
 
@@ -29,7 +32,7 @@ function CategoryMapperPageContent(): React.JSX.Element {
         <Card variant='subtle' padding='lg' className='bg-card/40'>
           {!selectedConnectionId ? (
             <div className='flex h-64 items-center justify-center text-gray-500'>
-              <p>Select a marketplace connection to start mapping categories.</p>
+              <p>Select a {selectedMarketplaceLabel} connection to start mapping categories.</p>
             </div>
           ) : isSupportedConnection ? (
             <BaseCategoryMapper />
@@ -44,9 +47,15 @@ function CategoryMapperPageContent(): React.JSX.Element {
   );
 }
 
-export default function CategoryMapperPage(): React.JSX.Element {
+type CategoryMapperPageProps = {
+  initialMarketplace?: CategoryMapperMarketplace;
+};
+
+export default function CategoryMapperPage({
+  initialMarketplace,
+}: CategoryMapperPageProps): React.JSX.Element {
   return (
-    <CategoryMapperPageProvider>
+    <CategoryMapperPageProvider initialMarketplace={initialMarketplace}>
       <CategoryMapperPageContent />
     </CategoryMapperPageProvider>
   );

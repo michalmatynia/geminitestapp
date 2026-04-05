@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @vitest-environment jsdom
  */
@@ -476,7 +478,7 @@ export const openLanguageMenu = async (trigger?: HTMLElement): Promise<void> => 
 };
 
 import { KANGUR_DAILY_THEME_SETTINGS_KEY } from '@/features/kangur/appearance/theme-settings';
-export let CmsStorefrontAppearanceProvider: typeof import('@/features/cms/public').CmsStorefrontAppearanceProvider;
+export let CmsStorefrontAppearanceProvider: typeof import('@/shared/ui/cms-appearance/CmsStorefrontAppearance').CmsStorefrontAppearanceProvider;
 export let KangurPrimaryNavigation: typeof import('@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation').KangurPrimaryNavigation;
 export let persistTutorVisibilityHidden: typeof import('@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage').persistTutorVisibilityHidden;
 export let KangurTutorAnchorProvider: typeof import('@/features/kangur/ui/context/KangurTutorAnchorContext').KangurTutorAnchorProvider;
@@ -489,7 +491,7 @@ const loadKangurPrimaryNavigationTestImports = async (): Promise<void> => {
   }
 
   sharedKangurPrimaryNavigationTestImportsPromise = (async () => {
-    ({ CmsStorefrontAppearanceProvider } = await import('@/features/cms/public'));
+    ({ CmsStorefrontAppearanceProvider } = await import('@/shared/ui/cms-appearance/CmsStorefrontAppearance'));
     ({ KangurPrimaryNavigation } = await import('@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation'));
     ({ persistTutorVisibilityHidden } = await import('@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage'));
     ({ KangurTutorAnchorProvider } = await import('@/features/kangur/ui/context/KangurTutorAnchorContext'));

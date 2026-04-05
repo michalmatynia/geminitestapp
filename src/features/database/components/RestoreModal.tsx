@@ -2,9 +2,9 @@
 
 import React, { useMemo, useState } from 'react';
 
-import type { ModalStateProps } from '@/shared/contracts/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 interface RestoreModalProps extends ModalStateProps {
   backupName: string;

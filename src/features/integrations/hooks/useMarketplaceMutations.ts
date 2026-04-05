@@ -1,13 +1,7 @@
-'use client';
-
-import type {
-  BulkCategoryMappingRequest,
-  BulkProducerMappingRequest,
-  BulkTagMappingRequest,
-  MarketplaceBulkUpsertResponse,
-  MarketplaceConnectionRequest,
-  MarketplaceFetchResponse,
-} from '@/shared/contracts/integrations';
+import type { BulkCategoryMappingRequest } from '@/shared/contracts/integrations/base-com';
+import type { BulkProducerMappingRequest } from '@/shared/contracts/integrations/producers';
+import type { BulkTagMappingRequest } from '@/shared/contracts/integrations/listings';
+import type { MarketplaceBulkUpsertResponse, MarketplaceConnectionRequest, MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import { api } from '@/shared/lib/api-client';
 import { createMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
@@ -24,7 +18,9 @@ export function useFetchExternalCategoriesMutation() {
   return createMutationV2<MarketplaceFetchResponse, MarketplaceConnectionRequest>({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-categories'),
     mutationFn: (payload: MarketplaceConnectionRequest) =>
-      api.post<MarketplaceFetchResponse>('/api/marketplace/categories/fetch', payload),
+      api.post<MarketplaceFetchResponse>('/api/marketplace/categories/fetch', payload, {
+        timeout: 360_000,
+      }),
     meta: {
       source: 'integrations.hooks.marketplace.fetch-categories',
       operation: 'action',

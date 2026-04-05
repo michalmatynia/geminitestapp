@@ -3,11 +3,8 @@ import {
   isLikelyImageStudioErrorText,
 } from '@/features/ai/image-studio/image-src';
 import { estimateGenerationCost } from '@/features/ai/image-studio/utils/generation-cost';
-import type {
-  ImageStudioSlotRecord,
-  LandingSlotLike,
-  SlotGenerationMetadata,
-} from '@/shared/contracts/image-studio';
+import type { LandingSlotLike, SlotGenerationMetadata } from '@/shared/contracts/image-studio/slot';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import {
   asFiniteNumber,

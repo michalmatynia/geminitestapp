@@ -3,20 +3,10 @@
 import React, { useMemo, useState } from 'react';
 
 import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import {
-  AdminSettingsPageLayout,
-  Button,
-  FormActions,
-  FormField,
-  FormSection,
-  Hint,
-  MetadataItem,
-  SelectSimple,
-  Tooltip,
-  UI_GRID_ROOMY_CLASSNAME,
-  useToast,
-  useToastSettings,
-} from '@/shared/ui';
+import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Tooltip, useToast, useToastSettings } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, FormSection, Hint, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 const positionOptions = [
   { value: 'top-right', label: 'Top Right', description: 'Corner top right' },

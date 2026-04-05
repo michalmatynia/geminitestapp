@@ -1,8 +1,8 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
-import { AppModal } from '@/shared/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
+import { AppModal } from '@/shared/ui/feedback.public';
 
 interface LogModalProps extends EntityModalProps<string> {
   title?: string;

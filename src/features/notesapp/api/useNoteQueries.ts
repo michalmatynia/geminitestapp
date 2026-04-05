@@ -1,5 +1,3 @@
-'use client';
-
 import { z } from 'zod';
 
 import {
@@ -18,7 +16,7 @@ import type {
   FetchNotesParams,
 } from '@/shared/contracts/notes';
 export type { FetchNotesParams };
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { noteKeys } from '@/shared/lib/query-key-exports';

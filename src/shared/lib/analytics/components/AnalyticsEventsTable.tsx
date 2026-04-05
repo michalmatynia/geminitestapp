@@ -3,14 +3,11 @@
 import React from 'react';
 
 import type { AnalyticsEvent } from '@/shared/contracts/analytics';
-import {
-  AppModal,
-  Button,
-  CompactEmptyState,
-  StandardDataTablePanel,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { Button } from '@/shared/ui/primitives.public';
+import { CompactEmptyState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';

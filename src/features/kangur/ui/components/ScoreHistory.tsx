@@ -10,7 +10,7 @@ import {
   KangurMetricCard,
   KangurProgressBar,
 } from '@/features/kangur/ui/design/primitives';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import {
   KANGUR_PANEL_GAP_CLASSNAME,
   KANGUR_STACK_COMPACT_CLASSNAME,

@@ -7,10 +7,8 @@ import type {
   CaseResolverViewContextValue,
   CaseResolverViewStateValue,
 } from '@/features/case-resolver/components/CaseResolverViewContext';
-import type {
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverFileEditDraft,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
 import { CaseResolverDocumentEditor } from '@/features/case-resolver/components/page/CaseResolverDocumentEditor';
 import { CaseResolverScanFileEditor } from '@/features/case-resolver/components/page/CaseResolverScanFileEditor';
 
@@ -18,7 +16,7 @@ vi.mock('next/image', () => ({
   default: () => <div data-testid='mock-next-image' />,
 }));
 
-vi.mock('@/features/document-editor/public', () => ({
+vi.mock('@/shared/lib/document-editor/public', () => ({
   DocumentWysiwygEditor: () => <div data-testid='mock-wysiwyg-editor' />,
 }));
 

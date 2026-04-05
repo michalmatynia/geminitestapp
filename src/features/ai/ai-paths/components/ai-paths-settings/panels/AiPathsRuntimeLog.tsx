@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { useRuntimeState } from '@/features/ai/ai-paths/context';

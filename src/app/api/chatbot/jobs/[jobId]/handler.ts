@@ -5,7 +5,7 @@ import {
   chatbotJobActionRequestSchema,
   chatbotJobDeleteQuerySchema,
 } from '@/shared/contracts/chatbot';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';

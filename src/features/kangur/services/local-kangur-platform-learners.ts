@@ -12,11 +12,7 @@ import type {
   KangurUser,
 } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
-import {
-  kangurLearnerProfileSchema,
-  kangurLearnerSessionHistorySchema,
-  kangurLearnerInteractionHistorySchema,
-} from '@kangur/contracts';
+import { kangurLearnerProfileSchema, kangurLearnerSessionHistorySchema, kangurLearnerInteractionHistorySchema } from '@kangur/contracts/kangur';
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,

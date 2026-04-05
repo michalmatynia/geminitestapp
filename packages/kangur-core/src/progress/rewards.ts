@@ -1,7 +1,4 @@
-import type {
-  KangurActivityStatsEntry,
-  KangurProgressState,
-} from '@kangur/contracts';
+import type { KangurActivityStatsEntry, KangurProgressState } from '@kangur/contracts/kangur';
 
 import { getLocalizedKangurRewardBreakdownLabel } from '../progress-i18n';
 

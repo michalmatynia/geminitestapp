@@ -2,8 +2,10 @@
 
 import React from 'react';
 
-import type { LabeledOptionDto } from '@/shared/contracts/ui';
-import { Button, SelectSimple, CompactEmptyState } from '@/shared/ui';
+import type { LabeledOptionDto } from '@/shared/contracts/ui/base';
+import { Button } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 export type PlaceholderTarget = 'query' | 'aiPrompt' | 'prompt' | 'template';

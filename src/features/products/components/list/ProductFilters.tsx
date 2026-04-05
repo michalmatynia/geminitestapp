@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AdvancedFilterModal } from '@/features/products/components/list/advanced-filter';
 import { useProductListFiltersContext } from '@/features/products/context/ProductListContext';
@@ -11,13 +11,9 @@ import {
   useProducers,
   useTags,
 } from '@/features/products/hooks/useProductMetadataQueries';
-import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  ProductAdvancedFilterField,
-  ProductAdvancedFilterGroup,
-  ProductCategory,
-} from '@/shared/contracts/products';
+import type { ProductAdvancedFilterField, ProductAdvancedFilterGroup } from '@/shared/contracts/products/filters';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 const ID_MATCH_MODE_OPTIONS: Array<LabeledOptionDto<'exact' | 'partial'>> = [
   { value: 'exact', label: 'Exact' },
@@ -40,9 +36,10 @@ const STOCK_OPERATOR_OPTIONS: Array<
   { value: 'lte', label: 'Less than or equal (<=)' },
   { value: 'eq', label: 'Equal (=)' },
 ];
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
-import type { FilterField } from '@/shared/contracts/ui';
+
+import type { FilterField } from '@/shared/contracts/ui/panels';
 
 import {
   createAdvancedPreset,
@@ -87,27 +84,39 @@ export const ProductFilters = memo(function ProductFilters({
     endDate,
     setEndDate,
     advancedFilter,
+    advancedFilterPresets,
+    setAdvancedFilterPresets,
     setAdvancedFilterState,
     baseExported,
     setBaseExported,
     filtersCollapsedByDefault,
   } = useProductListFiltersContext();
-  const { preferences, setAdvancedFilterPresets } = useUserPreferences();
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
-  const advancedFilterPresets = preferences.advancedFilterPresets;
+  const [isFilterPanelExpanded, setIsFilterPanelExpanded] = useState(!filtersCollapsedByDefault);
   const hasAdvancedFilter = advancedFilter.trim().length > 0;
+  const filterMetadataEnabled = isFilterPanelExpanded || isAdvancedFilterOpen;
+
+  useEffect(() => {
+    setIsFilterPanelExpanded(!filtersCollapsedByDefault);
+  }, [filtersCollapsedByDefault]);
 
   const selectedCatalogId =
     catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : undefined;
-  const { data: categories = [] } = useProductCategories(selectedCatalogId);
-  const { data: catalogs = [] } = useCatalogs();
-  const { data: tags = [] } = useTags(selectedCatalogId);
+  const { data: categories = [] } = useProductCategories(selectedCatalogId, {
+    enabled: isFilterPanelExpanded,
+  });
+  const { data: catalogs = [] } = useCatalogs({ enabled: filterMetadataEnabled });
+  const { data: tags = [] } = useTags(selectedCatalogId, {
+    enabled: filterMetadataEnabled,
+  });
   const catalogIds = useMemo(
     () => catalogs.map((catalog) => catalog.id).filter((id) => id.trim().length > 0),
     [catalogs]
   );
-  const multiTagQueries = useMultiTags(selectedCatalogId ? [] : catalogIds);
-  const { data: producers = [] } = useProducers();
+  const multiTagQueries = useMultiTags(selectedCatalogId ? [] : catalogIds, {
+    enabled: filterMetadataEnabled,
+  });
+  const { data: producers = [] } = useProducers({ enabled: filterMetadataEnabled });
 
   const categoryOptions = useMemo(() => {
     const options = [{ value: '__all__', label: 'All categories' }];
@@ -383,6 +392,7 @@ export const ProductFilters = memo(function ProductFilters({
         }
         collapsible
         defaultExpanded={!filtersCollapsedByDefault}
+        onExpandedChange={setIsFilterPanelExpanded}
         toggleButtonAlignment='start'
         showHeader={false}
       />

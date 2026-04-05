@@ -1,12 +1,13 @@
+import { AdminRouteLoading } from '@/features/admin/public';
 import { JSX, Suspense } from 'react';
 
-import { AdminChatbotPage } from '@/features/ai/chatbot/public';
+import { AdminChatbotPage } from '@/features/ai/public';
 
 export const dynamic = 'force-dynamic';
 
 export default function Page(): JSX.Element {
   return (
-    <Suspense fallback={<></>}>
+    <Suspense fallback={<AdminRouteLoading />}>
       <AdminChatbotPage />
     </Suspense>
   );

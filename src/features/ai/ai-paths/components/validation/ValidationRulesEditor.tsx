@@ -4,8 +4,9 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { AiPathsValidationRule, AiPathsValidationStage } from '@/shared/lib/ai-paths';
-import { Badge, Checkbox, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { ValidationActionButton } from './ValidationActionButton';

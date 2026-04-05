@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 import { RunComparisonTool } from './RunComparisonTool';
 import { RunHistoryFilterControls } from './RunHistoryFilterControls';
 import { RunHistoryList } from './RunHistoryList';

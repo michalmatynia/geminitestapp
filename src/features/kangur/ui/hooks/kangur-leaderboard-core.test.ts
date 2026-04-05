@@ -4,7 +4,7 @@ import {
   buildKangurLeaderboardItems,
   filterKangurLeaderboardScores,
 } from '@kangur/core';
-import type { KangurScore } from '@kangur/contracts';
+import type { KangurScore } from '@kangur/contracts/kangur';
 
 const createScore = (overrides: Partial<KangurScore> = {}): KangurScore => ({
   id: 'score-1',

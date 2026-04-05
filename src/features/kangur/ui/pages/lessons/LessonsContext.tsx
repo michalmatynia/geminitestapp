@@ -1,12 +1,23 @@
 'use client';
 
-import { createContext, useContext, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+
 import { useLessonsLogic } from './Lessons.hooks';
 
 type LessonsContextValue = ReturnType<typeof useLessonsLogic>;
 
-const LessonsContext = createContext<LessonsContextValue | null>(null);
+const { Context: LessonsContext, useStrictContext: useLessons } =
+  createStrictContext<LessonsContextValue>({
+    hookName: 'useLessons',
+    providerName: 'LessonsProvider',
+    displayName: 'LessonsContext',
+    errorFactory: internalError,
+  });
+
+export { useLessons };
 
 export function LessonsProvider({ children }: { children: ReactNode }) {
   const value = useLessonsLogic();
@@ -15,12 +26,4 @@ export function LessonsProvider({ children }: { children: ReactNode }) {
       {children}
     </LessonsContext.Provider>
   );
-}
-
-export function useLessons() {
-  const context = useContext(LessonsContext);
-  if (!context) {
-    throw internalError('useLessons must be used within a LessonsProvider');
-  }
-  return context;
 }

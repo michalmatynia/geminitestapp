@@ -18,7 +18,6 @@ import { handleCreateLatestPriceStockSequence } from './sequence-actions/price-s
 import { handleCreateSkuAutoIncrementSequence } from './sequence-actions/sku-actions';
 import { SequenceActionInput, SequenceActionResult } from './sequence-actions/types';
 
-
 /**
  * Validator docs: see docs/validator/function-reference.md#controller.createsequenceactions
  */

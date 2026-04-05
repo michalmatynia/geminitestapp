@@ -2,10 +2,11 @@
 
 import React from 'react';
 
-import { PanelAction } from '@/shared/contracts/ui';
+import { PanelAction } from '@/shared/contracts/ui/panels';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button } from '@/shared/ui/button';
 import { RefreshButton } from '@/shared/ui/RefreshButton';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import {
@@ -35,15 +36,14 @@ type PanelHeaderRuntimeValue = {
   onRefresh?: () => void | Promise<void>;
 };
 
-const PanelHeaderRuntimeContext = React.createContext<PanelHeaderRuntimeValue | null>(null);
-
-function usePanelHeaderRuntime(): PanelHeaderRuntimeValue {
-  const runtime = React.useContext(PanelHeaderRuntimeContext);
-  if (!runtime) {
-    throw new Error('usePanelHeaderRuntime must be used within PanelHeaderRuntimeContext.Provider');
-  }
-  return runtime;
-}
+const {
+  Context: PanelHeaderRuntimeContext,
+  useStrictContext: usePanelHeaderRuntime,
+} = createStrictContext<PanelHeaderRuntimeValue>({
+  hookName: 'usePanelHeaderRuntime',
+  providerName: 'PanelHeaderRuntimeContext.Provider',
+  displayName: 'PanelHeaderRuntimeContext',
+});
 
 function PanelHeaderStandardActions(): React.JSX.Element | null {
   const { actions, isRefreshing } = usePanelHeaderRuntime();

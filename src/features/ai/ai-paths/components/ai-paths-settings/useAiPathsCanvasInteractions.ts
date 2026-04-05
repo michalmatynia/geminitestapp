@@ -24,6 +24,7 @@ import { sanitizeEdges } from '@/shared/lib/ai-paths';
 import { isEditableElement } from './utils/canvas-interaction-utils';
 
 type UseAiPathsCanvasInteractionsArgs = {
+  enabled?: boolean;
   isPathLocked: boolean;
   isPathSwitching?: boolean;
   confirmNodeSwitch?: (nextNodeId: string) => boolean | Promise<boolean>;
@@ -103,6 +104,7 @@ export function useAiPathsCanvasInteractions(
   args: UseAiPathsCanvasInteractionsArgs
 ): AiPathsCanvasInteractions {
   const {
+    enabled = true,
     isPathLocked,
     isPathSwitching = false,
     confirmNodeSwitch,
@@ -213,6 +215,7 @@ export function useAiPathsCanvasInteractions(
   const setConnectingPos = setConnectingPosCtx;
 
   useEffect((): void | (() => void) => {
+    if (!enabled) return;
     const handleWindowPointerDown = (event: PointerEvent): void => {
       const target = event.target as HTMLElement | null;
       if (target?.closest('[data-port]')) return;
@@ -224,16 +227,17 @@ export function useAiPathsCanvasInteractions(
     };
     window.addEventListener('pointerdown', handleWindowPointerDown);
     return (): void => window.removeEventListener('pointerdown', handleWindowPointerDown);
-  }, [selectEdge, setConnecting, setConnectingPos]);
+  }, [enabled, selectEdge, setConnecting, setConnectingPos]);
 
   useEffect((): void | (() => void) => {
+    if (!enabled) return;
     const handleWindowPointerUp = (): void => {
       setConnecting(null);
       setConnectingPos(null);
     };
     window.addEventListener('pointerup', handleWindowPointerUp);
     return (): void => window.removeEventListener('pointerup', handleWindowPointerUp);
-  }, [setConnecting, setConnectingPos]);
+  }, [enabled, setConnecting, setConnectingPos]);
 
   const handleDeleteSelectedNode = useCallback((): void => {
     if (isPathSwitching) return;
@@ -309,6 +313,11 @@ export function useAiPathsCanvasInteractions(
   ]);
 
   useEffect((): (() => void) => {
+    if (!enabled) {
+      return (): void => {
+        // no-op
+      };
+    }
     const handleWindowKeyDown = (event: KeyboardEvent): void => {
       if (event.defaultPrevented || event.repeat) return;
       if (event.key !== 'Delete' && event.key !== 'Backspace') return;
@@ -322,7 +331,7 @@ export function useAiPathsCanvasInteractions(
 
     window.addEventListener('keydown', handleWindowKeyDown);
     return (): void => window.removeEventListener('keydown', handleWindowKeyDown);
-  }, [handleDeleteSelectedNode, selectedEdgeId, selectedNodeIdsCtx]);
+  }, [enabled, handleDeleteSelectedNode, selectedEdgeId, selectedNodeIdsCtx]);
 
   useEffect((): void => {
     setGraphEdges((prev: Edge[]): Edge[] => sanitizeEdges(graphNodes, prev), {

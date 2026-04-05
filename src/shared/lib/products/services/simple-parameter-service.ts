@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type { ProductSimpleParameter } from '@/shared/contracts/products';
+import type { ProductSimpleParameter } from '@/shared/contracts/products/parameters';
 import type { MongoTimestampedStringSettingDocument } from '@/shared/contracts/settings';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

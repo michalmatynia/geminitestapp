@@ -1,11 +1,5 @@
-import type {
-  ProductValidationInstanceScope,
-  ProductValidationPattern,
-  ProductValidationPostAcceptBehavior,
-  ProductValidationTarget,
-  ProductCategory,
-  FieldValidatorIssue,
-} from '@/shared/contracts/products';
+import type { ProductValidationInstanceScope, ProductValidationPattern, ProductValidationPostAcceptBehavior, ProductValidationTarget, FieldValidatorIssue } from '@/shared/contracts/products/validation';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 import {
   isPatternEnabledForValidationScope,
@@ -222,6 +216,31 @@ export const isReplacementAllowedForField = (
   return replacementFields.includes(fieldName);
 };
 
+const hasPatternFormatterAutoApplyBaseConfig = (
+  pattern: ProductValidationPattern,
+  validationScope: ProductValidationInstanceScope
+): boolean => {
+  if (!pattern.enabled) return false;
+  if (pattern.replacementAutoApply !== true) return false;
+  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
+  if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope)) return false;
+  return isPatternReplacementEnabledForValidationScope(
+    pattern.replacementAppliesToScopes,
+    validationScope
+  );
+};
+
+const doesPatternFormatterAutoApplyMatchField = (
+  pattern: ProductValidationPattern,
+  fieldName: string
+): boolean => {
+  const { target, locale } = resolveFieldTargetAndLocale(fieldName);
+  if (!target) return false;
+  if (pattern.target !== target) return false;
+  if (!isPatternLocaleMatch(pattern.locale, locale)) return false;
+  return isReplacementAllowedForField(pattern, fieldName);
+};
+
 /**
  * Validator docs: see docs/validator/function-reference.md#core.ispatternconfiguredforformatterautoapply
  */
@@ -233,25 +252,9 @@ export const isPatternConfiguredForFormatterAutoApply = ({
   pattern: ProductValidationPattern;
   fieldName: string;
   validationScope: ProductValidationInstanceScope;
-}): boolean => {
-  if (!pattern.enabled) return false;
-  if (pattern.replacementAutoApply !== true) return false;
-  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
-  if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope)) return false;
-  if (
-    !isPatternReplacementEnabledForValidationScope(
-      pattern.replacementAppliesToScopes,
-      validationScope
-    )
-  ) {
-    return false;
-  }
-  const { target, locale } = resolveFieldTargetAndLocale(fieldName);
-  if (!target) return false;
-  if (pattern.target !== target) return false;
-  if (!isPatternLocaleMatch(pattern.locale, locale)) return false;
-  return isReplacementAllowedForField(pattern, fieldName);
-};
+}): boolean =>
+  hasPatternFormatterAutoApplyBaseConfig(pattern, validationScope) &&
+  doesPatternFormatterAutoApplyMatchField(pattern, fieldName);
 
 /**
  * Validator docs: see docs/validator/function-reference.md#core.allowspatternexecutionwithoutregexmatch
@@ -283,10 +286,34 @@ export const isLatestPriceStockMirrorPattern = (pattern: ProductValidationPatter
 export const isRuntimePatternEnabled = (pattern: ProductValidationPattern): boolean =>
   Boolean(pattern.runtimeEnabled && pattern.runtimeType !== 'none');
 
+type ResolvePatternLaunchSourceValueArgs = {
+  pattern: ProductValidationPattern;
+  fieldValue: string;
+  values: Record<string, unknown>;
+  latestProductValues: Record<string, unknown> | null;
+};
+
 const toStringValue = (value: unknown): string | null => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   return null;
+};
+
+const readPatternLaunchSourceRawValue = (
+  args: ResolvePatternLaunchSourceValueArgs
+): unknown => {
+  if (!args.pattern.launchEnabled) {
+    return args.fieldValue;
+  }
+
+  const sourceField = args.pattern.launchSourceField ?? '';
+  const sourceReaders = {
+    current_field: (): unknown => args.fieldValue,
+    form_field: (): unknown => args.values[sourceField],
+    latest_product_field: (): unknown => args.latestProductValues?.[sourceField],
+  } as const;
+
+  return sourceReaders[args.pattern.launchSourceMode]();
 };
 
 /**
@@ -297,20 +324,15 @@ export const resolvePatternLaunchSourceValue = ({
   fieldValue,
   values,
   latestProductValues,
-}: {
-  pattern: ProductValidationPattern;
-  fieldValue: string;
-  values: Record<string, unknown>;
-  latestProductValues: Record<string, unknown> | null;
-}): string => {
-  if (!pattern.launchEnabled || pattern.launchSourceMode === 'current_field') {
-    return fieldValue;
-  }
-  if (pattern.launchSourceMode === 'form_field') {
-    return toStringValue(values[pattern.launchSourceField ?? '']) ?? '';
-  }
-  return toStringValue(latestProductValues?.[pattern.launchSourceField ?? '']) ?? '';
-};
+}: ResolvePatternLaunchSourceValueArgs): string =>
+  toStringValue(
+    readPatternLaunchSourceRawValue({
+      pattern,
+      fieldValue,
+      values,
+      latestProductValues,
+    })
+  ) ?? '';
 
 /**
  * Validator docs: see docs/validator/function-reference.md#core.shouldlaunchpattern

@@ -2,9 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -19,7 +17,8 @@ import type {
   PromptExploderSegmentationRecord,
 } from '@/shared/contracts/prompt-exploder';
 import { internalError } from '@/shared/errors/app-error';
-import { useToast } from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -76,8 +75,22 @@ export interface LibraryActions {
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
-const LibraryStateContext = createContext<LibraryState | null>(null);
-const LibraryActionsContext = createContext<LibraryActions | null>(null);
+const libraryStateContextResult = createStrictContext<LibraryState>({
+  hookName: 'useLibraryState',
+  providerName: 'LibraryProvider',
+  displayName: 'LibraryStateContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const libraryActionsContextResult = createStrictContext<LibraryActions>({
+  hookName: 'useLibraryActions',
+  providerName: 'LibraryProvider',
+  displayName: 'LibraryActionsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const LibraryStateContext = libraryStateContextResult.Context;
+const LibraryActionsContext = libraryActionsContextResult.Context;
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -409,16 +422,8 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 
 // ── Hook exports ─────────────────────────────────────────────────────────────
 
-export const useLibraryState = (): LibraryState => {
-  const ctx = useContext(LibraryStateContext);
-  if (!ctx) throw internalError('useLibraryState must be used within LibraryProvider');
-  return ctx;
-};
+export const useLibraryState = libraryStateContextResult.useStrictContext;
 
-export const useLibraryActions = (): LibraryActions => {
-  const ctx = useContext(LibraryActionsContext);
-  if (!ctx) throw internalError('useLibraryActions must be used within LibraryProvider');
-  return ctx;
-};
+export const useLibraryActions = libraryActionsContextResult.useStrictContext;
 
 export { LibraryStateContext, LibraryActionsContext };

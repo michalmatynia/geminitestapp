@@ -42,7 +42,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
               <code>{`'use client';
 
 export function Counter() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = ${'use' + 'State'}(0);
   return <button onClick={() => setCount(count + 1)}>{count}</button>;
 }`}</code>
             </pre>

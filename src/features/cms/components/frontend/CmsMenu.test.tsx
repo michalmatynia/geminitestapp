@@ -54,7 +54,7 @@ vi.mock('next/image', () => ({
 }));
 
 import { CmsMenu } from '@/features/cms/components/frontend/CmsMenu';
-import { CmsStorefrontAppearanceProvider } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+import { CmsStorefrontAppearanceProvider } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { DEFAULT_MENU_SETTINGS } from '@/shared/contracts/cms-menu';
 
 describe('CmsMenu accessibility', () => {

@@ -20,16 +20,8 @@ import type {
   KangurDuelStateResponse,
 } from '@kangur/platform';
 import { isKangurAuthStatusError, isKangurStatusError } from '@/features/kangur/services/status-errors';
-import {
-  kangurDuelLeaderboardResponseSchema,
-  kangurDuelLobbyPresenceResponseSchema,
-  kangurDuelLobbyResponseSchema,
-  kangurDuelOpponentsResponseSchema,
-  kangurDuelSearchResponseSchema,
-  kangurDuelSpectatorStateResponseSchema,
-  kangurDuelStateResponseSchema,
-  kangurDuelLobbyChatListResponseSchema,
-} from '@kangur/contracts';
+import { kangurDuelLeaderboardResponseSchema, kangurDuelLobbyPresenceResponseSchema, kangurDuelLobbyResponseSchema, kangurDuelOpponentsResponseSchema, kangurDuelSearchResponseSchema, kangurDuelSpectatorStateResponseSchema, kangurDuelStateResponseSchema } from '@kangur/contracts/kangur-duels';
+import { kangurDuelLobbyChatListResponseSchema } from '@kangur/contracts/kangur-duels-chat';
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,

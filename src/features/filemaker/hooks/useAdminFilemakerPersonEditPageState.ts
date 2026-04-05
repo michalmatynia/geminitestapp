@@ -7,7 +7,7 @@ import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { decodeRouteParam } from '../pages/filemaker-page-utils';
 import {

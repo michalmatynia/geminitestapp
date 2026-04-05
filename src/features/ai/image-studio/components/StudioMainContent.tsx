@@ -1,6 +1,4 @@
-'use client';
-
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { CenterPreview } from './CenterPreview';
 import { ImageStudioPageSkeleton } from './ImageStudioPageSkeleton';
@@ -17,17 +15,19 @@ export function StudioMainContent(): React.JSX.Element {
   const normalizedProjectId = projectId.trim();
   const hasProjects = (projectsQuery.data?.length ?? 0) > 0;
   const isProjectSelectionPending = !normalizedProjectId && hasProjects;
-  const isStudioBootstrapping =
-    projectsQuery.isLoading ||
-    isProjectSelectionPending ||
-    (Boolean(normalizedProjectId) && slotsLoading);
+  const isStudioBootstrapping = projectsQuery.isLoading || isProjectSelectionPending;
+  const isStudioShellLoading = Boolean(normalizedProjectId) && slotsLoading;
 
   if (isStudioBootstrapping) {
     return <ImageStudioPageSkeleton />;
   }
 
   return (
-    <div className='relative flex h-full min-h-0 min-w-0 flex-1 overflow-hidden'>
+    <div
+      className='relative flex h-full min-h-0 min-w-0 flex-1 overflow-hidden'
+      data-studio-shell-loading={isStudioShellLoading ? 'true' : undefined}
+      aria-busy={isStudioShellLoading}
+    >
       <div
         className={cn(
           'grid h-full min-h-0 min-w-0 flex-1 items-stretch overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out',

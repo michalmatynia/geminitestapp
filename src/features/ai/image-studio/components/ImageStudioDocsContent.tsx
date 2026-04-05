@@ -13,7 +13,9 @@ import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '@/features/ai/image-studio/utils/s
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useBrainProviderStatus } from '@/shared/lib/ai-brain/hooks/useBrainProviderStatus';
-import { CopyButton, Input, FormSection, DocumentationList, Card, Hint } from '@/shared/ui';
+import { CopyButton, FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
+import { Input, Card } from '@/shared/ui/primitives.public';
+import { DocumentationList } from '@/shared/ui/data-display.public';
 
 import { useGenerationState } from '../context/GenerationContext';
 import { useMaskingState } from '../context/MaskingContext';

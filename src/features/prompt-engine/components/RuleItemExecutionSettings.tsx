@@ -6,8 +6,9 @@ import type {
   PromptValidationLaunchScopeBehavior,
   PromptValidationScope,
 } from '@/shared/lib/prompt-engine/settings';
-import { Card, FormField, Input, MultiSelect, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Card, Input } from '@/shared/ui/primitives.public';
+import { FormField, MultiSelect, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { CHAIN_MODE_OPTIONS, LAUNCH_SCOPE_BEHAVIOR_OPTIONS } from './RuleItem.constants';
 import { useRuleItemContext } from './context/RuleItemContext';

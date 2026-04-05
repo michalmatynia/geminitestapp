@@ -24,7 +24,7 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
-import XpToast from '@/features/kangur/ui/components/XpToast';
+import XpToast from '@/features/kangur/ui/components/game-runtime/XpToast';
 
 describe('XpToast', () => {
   it('uses shared status chips for xp and badge rewards', () => {

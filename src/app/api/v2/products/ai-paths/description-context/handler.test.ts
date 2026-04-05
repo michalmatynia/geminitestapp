@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductCategory, ProductParameter } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
 
 const {
   getParameterRepositoryMock,

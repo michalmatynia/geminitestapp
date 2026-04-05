@@ -7,21 +7,15 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import {
-  Input,
-  SelectSimple,
-  Checkbox,
-  Button,
-  useToast,
-  FormField,
-  ProductImageManager,
-} from '@/shared/ui';
+import { Input, Checkbox, Button, useToast } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
+import { ProductImageManager } from '@/shared/ui/media.public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
 } from '@/shared/lib/products/constants';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Asset3DPickerModal } from './Asset3DPickerModal';
 import { MediaLibraryPanel } from './MediaLibraryPanel';

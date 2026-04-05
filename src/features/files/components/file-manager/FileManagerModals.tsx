@@ -1,9 +1,7 @@
-'use client';
-
 import Link from 'next/link';
 import React from 'react';
 
-import { FilePreviewModal } from '@/shared/ui';
+import { FilePreviewModal } from '@/shared/ui/media.public';
 
 import { AssetPreviewModal } from './AssetPreviewModalImpl';
 import { useFileManagerActions, useFileManagerUIState } from '../../contexts/FileManagerContext';

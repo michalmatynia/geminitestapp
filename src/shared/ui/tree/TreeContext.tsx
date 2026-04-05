@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import type { TreeContextValue } from '@/shared/contracts/ui';
+import type { TreeContextValue } from '@/shared/contracts/ui/menus';
 
 export type { TreeContextValue };
 

@@ -7,6 +7,8 @@ export const FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY =
 export const FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY = 'filemaker_email_campaign_events_v1';
 export const FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY =
   'filemaker_email_campaign_suppressions_v1';
+export const FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY =
+  'filemaker_email_campaign_scheduler_status_v1';
 export const FILEMAKER_REFERENCE_NONE = 'none';
 export const FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY = 'prompt_engine_settings';
 export const FILEMAKER_EMAIL_PARSER_RULE_PREFIX = 'segment.filemaker.email_parser.';

@@ -5,18 +5,10 @@ import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Badge,
-  Button,
-  StandardDataTablePanel,
-  PanelHeader,
-  SearchInput,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  EmptyState,
-} from '@/shared/ui';
+import { Badge, Button, Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel, PanelHeader } from '@/shared/ui/templates.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   FILEMAKER_DATABASE_KEY,

@@ -7,7 +7,7 @@ import {
   type ProductTagUpdateInput,
   type ProductParameterUpdateInput,
 } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -17,8 +17,18 @@ import type {
   MongoCatalogDoc,
 } from '@/shared/lib/db/services/database-sync-types';
 import { deleteSimpleParameter } from '@/shared/lib/products/services/simple-parameter-service';
-
-import type { UpdateFilter } from 'mongodb';
+import { assertNoPriceGroupDependencyCycle } from '../../handler.helpers';
+import {
+  buildMongoPriceGroupCatalogPullUpdate,
+  buildMongoPriceGroupCurrencyByIdMap,
+  buildMongoPriceGroupCurrencyLookupFilter,
+  buildMongoPriceGroupDefaultUnsetUpdate,
+  buildMongoPriceGroupFieldLookupFilter,
+  buildMongoPriceGroupIdentifierList,
+  buildMongoPriceGroupLookupFilter,
+  buildMongoPriceGroupSourceUnsetUpdate,
+  buildMongoPriceGroupUpdateDocument,
+} from './handler.helpers';
 
 const parseObjectPayload = async (req: NextRequest) =>
   await parseObjectJsonBody(req, {
@@ -30,22 +40,6 @@ const readString = (record: Record<string, unknown>, key: string): string | null
   if (typeof raw !== 'string') return null;
   const trimmed = raw.trim();
   return trimmed.length > 0 ? trimmed : null;
-};
-
-const readNumber = (record: Record<string, unknown>, key: string): number | null => {
-  const raw = record[key];
-  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-  if (typeof raw === 'string' && raw.trim().length > 0) {
-    const parsed = Number(raw);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return null;
-};
-
-const readBoolean = (record: Record<string, unknown>, key: string): boolean | null => {
-  const raw = record[key];
-  if (typeof raw === 'boolean') return raw;
-  return null;
 };
 
 const toIso = (value: unknown): string | undefined => {
@@ -119,9 +113,19 @@ const mapMongoPriceGroupResponse = (
 
 const resolveMongoPriceGroup = async (idOrGroupId: string): Promise<MongoPriceGroupDoc | null> => {
   const mongo = await getMongoDb();
-  return (await mongo.collection<MongoPriceGroupDoc>('price_groups').findOne({
-    $or: [{ id: idOrGroupId }, { groupId: idOrGroupId }],
-  })) as MongoPriceGroupDoc | null;
+  return (await mongo
+    .collection<MongoPriceGroupDoc>('price_groups')
+    .findOne(buildMongoPriceGroupLookupFilter(idOrGroupId))) as MongoPriceGroupDoc | null;
+};
+
+const resolveCanonicalMongoPriceGroupSourceId = async (
+  sourceGroupId: string | null | undefined
+): Promise<string | null> => {
+  const normalizedSourceGroupId = typeof sourceGroupId === 'string' ? sourceGroupId.trim() : '';
+  if (!normalizedSourceGroupId) return null;
+
+  const resolvedSourceGroup = await resolveMongoPriceGroup(normalizedSourceGroupId);
+  return String(resolvedSourceGroup?.id ?? normalizedSourceGroupId);
 };
 
 export async function GET_products_metadata_id_handler(
@@ -156,11 +160,18 @@ export async function GET_products_metadata_id_handler(
     const currencyDoc = (await mongo.collection<MongoCurrencyDoc>('currencies').findOne({
       $or: [{ id: group.currencyId }, { code: group.currencyId }],
     })) as MongoCurrencyDoc | null;
-    const currencyById = new Map<string, MongoCurrencyDoc>();
-    if (currencyDoc) {
-      currencyById.set(String(currencyDoc.id ?? currencyDoc.code ?? ''), currencyDoc);
-    }
-    return NextResponse.json(mapMongoPriceGroupResponse(group, currencyById));
+    const canonicalSourceGroupId = await resolveCanonicalMongoPriceGroupSourceId(
+      group.sourceGroupId ?? null
+    );
+    return NextResponse.json(
+      mapMongoPriceGroupResponse(
+        {
+          ...group,
+          sourceGroupId: canonicalSourceGroupId,
+        },
+        buildMongoPriceGroupCurrencyByIdMap(currencyDoc)
+      )
+    );
   }
 
   throw badRequestError(`Invalid products metadata type for GET: ${type}`);
@@ -198,64 +209,87 @@ export async function PUT_products_metadata_id_handler(
     const existing = await resolveMongoPriceGroup(id);
     if (!existing) throw notFoundError(`Price group not found: ${id}`);
     const resolvedId = String(existing.id ?? id);
-    const now = new Date();
-    const update: Record<string, unknown> = { updatedAt: now };
-
     const currencyId = readString(data, 'currencyId');
     const currencyCode = readString(data, 'currencyCode')?.toUpperCase();
+    let currencyDoc: MongoCurrencyDoc | null = null;
     if (currencyId || currencyCode) {
-      const currencyDoc = (await mongo.collection<MongoCurrencyDoc>('currencies').findOne({
-        $or: [
-          ...(currencyId ? [{ id: currencyId }, { code: currencyId }] : []),
-          ...(currencyCode ? [{ code: currencyCode }] : []),
-        ],
-      })) as MongoCurrencyDoc | null;
+      currencyDoc = (await mongo
+        .collection<MongoCurrencyDoc>('currencies')
+        .findOne(
+          buildMongoPriceGroupCurrencyLookupFilter({
+            currencyId,
+            currencyCode,
+          })
+        )) as MongoCurrencyDoc | null;
       if (!currencyDoc) {
         throw notFoundError(`Currency not found: ${(currencyId ?? currencyCode ?? '').toString()}`);
       }
-      update['currencyId'] = String(currencyDoc.id ?? currencyDoc.code ?? '');
     }
 
-    const groupId = readString(data, 'groupId');
-    if (groupId) update['groupId'] = groupId;
-    const name = readString(data, 'name');
-    if (name) update['name'] = name;
-    if ('description' in data) {
-      update['description'] = data['description'] === null ? null : readString(data, 'description');
-    }
-    const isDefault = readBoolean(data, 'isDefault');
-    if (isDefault !== null) update['isDefault'] = isDefault;
+    let resolvedSourceGroupId: string | null | undefined;
     if ('sourceGroupId' in data) {
-      update['sourceGroupId'] =
+      const submittedSourceGroupId =
         data['sourceGroupId'] === null ? null : readString(data, 'sourceGroupId');
+      resolvedSourceGroupId =
+        submittedSourceGroupId === null
+          ? null
+          : await resolveCanonicalMongoPriceGroupSourceId(submittedSourceGroupId);
     }
-    if ('type' in data || 'sourceGroupId' in data) {
-      update['type'] = resolveGroupType(
-        data['type'],
-        (update['sourceGroupId'] as string | null | undefined) ?? existing.sourceGroupId ?? null
-      );
-    }
-    const basePriceField = readString(data, 'basePriceField');
-    if (basePriceField) update['basePriceField'] = basePriceField;
-    const priceMultiplier = readNumber(data, 'priceMultiplier');
-    if (priceMultiplier !== null) update['priceMultiplier'] = priceMultiplier;
-    const addToPrice = readNumber(data, 'addToPrice');
-    if (addToPrice !== null) update['addToPrice'] = Math.trunc(addToPrice);
+
+    const nextGroupId = readString(data, 'groupId') ?? String(existing.groupId ?? resolvedId);
+    const nextSourceGroupId =
+      'sourceGroupId' in data
+        ? (resolvedSourceGroupId ?? null)
+        : (existing.sourceGroupId ?? null);
+    const nextType = resolveGroupType(data['type'], nextSourceGroupId);
+
+    await assertNoPriceGroupDependencyCycle({
+      priceGroupId: resolvedId,
+      priceGroupKey: nextGroupId,
+      sourceGroupId: nextType === 'dependent' ? nextSourceGroupId : null,
+      findPriceGroupById: async (idOrGroupId: string) => {
+        const linkedGroup = await resolveMongoPriceGroup(idOrGroupId);
+        return linkedGroup
+          ? {
+              sourceGroupId: linkedGroup.sourceGroupId ?? null,
+            }
+          : null;
+      },
+    });
+
+    const now = new Date();
+    const update = buildMongoPriceGroupUpdateDocument({
+      data,
+      existing,
+      resolvedSourceGroupId,
+      currencyDoc,
+      now,
+    });
 
     await mongo
       .collection<MongoPriceGroupDoc>('price_groups')
-      .updateOne({ $or: [{ id: resolvedId }, { groupId: resolvedId }] }, { $set: update });
+      .updateOne(buildMongoPriceGroupLookupFilter(resolvedId), { $set: update });
 
     const updated = await resolveMongoPriceGroup(resolvedId);
     if (!updated) throw notFoundError(`Price group not found after update: ${resolvedId}`);
-    const currencyDoc = (await mongo.collection<MongoCurrencyDoc>('currencies').findOne({
-      $or: [{ id: updated.currencyId }, { code: updated.currencyId }],
-    })) as MongoCurrencyDoc | null;
-    const currencyById = new Map<string, MongoCurrencyDoc>();
-    if (currencyDoc) {
-      currencyById.set(String(currencyDoc.id ?? currencyDoc.code ?? ''), currencyDoc);
-    }
-    return NextResponse.json(mapMongoPriceGroupResponse(updated, currencyById));
+    const updatedCurrencyDoc = (await mongo
+      .collection<MongoCurrencyDoc>('currencies')
+      .findOne(
+        buildMongoPriceGroupCurrencyLookupFilter({
+          currencyId: String(updated.currencyId ?? ''),
+          currencyCode: null,
+        })
+      )) as MongoCurrencyDoc | null;
+    return NextResponse.json(
+      mapMongoPriceGroupResponse(
+        {
+          ...updated,
+          sourceGroupId:
+            'sourceGroupId' in data ? (resolvedSourceGroupId ?? null) : (updated.sourceGroupId ?? null),
+        },
+        buildMongoPriceGroupCurrencyByIdMap(updatedCurrencyDoc)
+      )
+    );
   }
 
   throw badRequestError(`Invalid products metadata type for PUT: ${type}`);
@@ -289,28 +323,43 @@ export async function DELETE_products_metadata_id_handler(
     if (!existing) throw notFoundError(`Price group not found: ${id}`);
     const resolvedId = String(existing.id ?? id);
     const now = new Date();
+    const identifiers = buildMongoPriceGroupIdentifierList({
+      resolvedId,
+      groupId: existing.groupId ?? null,
+    });
 
     await mongo.collection<MongoPriceGroupDoc>('price_groups').deleteOne({
       $or: [{ id: resolvedId }, { groupId: resolvedId }],
     });
-    const catalogPriceGroupPullUpdate: UpdateFilter<MongoCatalogDoc> = {
-      $pull: { priceGroupIds: resolvedId },
-      $set: { updatedAt: now },
-    };
+    await mongo
+      .collection('price_groups')
+      .updateMany(
+        buildMongoPriceGroupFieldLookupFilter({ field: 'sourceGroupId', identifiers }),
+        buildMongoPriceGroupSourceUnsetUpdate(now)
+      );
     await mongo
       .collection<MongoCatalogDoc>('catalogs')
-      .updateMany({ priceGroupIds: resolvedId }, catalogPriceGroupPullUpdate);
+      .updateMany(
+        buildMongoPriceGroupFieldLookupFilter({ field: 'priceGroupIds', identifiers }),
+        buildMongoPriceGroupCatalogPullUpdate({ identifiers, now })
+      );
     await mongo
       .collection('catalogs')
       .updateMany(
-        { defaultPriceGroupId: resolvedId },
-        { $set: { defaultPriceGroupId: null, updatedAt: now } }
+        buildMongoPriceGroupFieldLookupFilter({ field: 'defaultPriceGroupId', identifiers }),
+        buildMongoPriceGroupDefaultUnsetUpdate(now)
       );
     await mongo
       .collection('products')
       .updateMany(
-        { defaultPriceGroupId: resolvedId },
-        { $set: { defaultPriceGroupId: null, updatedAt: now } }
+        buildMongoPriceGroupFieldLookupFilter({ field: 'defaultPriceGroupId', identifiers }),
+        buildMongoPriceGroupDefaultUnsetUpdate(now)
+      );
+    await mongo
+      .collection('product_drafts')
+      .updateMany(
+        buildMongoPriceGroupFieldLookupFilter({ field: 'defaultPriceGroupId', identifiers }),
+        buildMongoPriceGroupDefaultUnsetUpdate(now)
       );
     return new Response(null, { status: 204 });
   }

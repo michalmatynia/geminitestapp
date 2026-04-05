@@ -9,7 +9,7 @@ import {
 } from '@/features/cms/hooks/usePageBuilderContext';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, useToast } from '@/shared/ui';
+import { Button, Input, useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 

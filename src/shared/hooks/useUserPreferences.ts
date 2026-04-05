@@ -1,5 +1,3 @@
-'use client';
-
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -8,7 +6,7 @@ import {
   type UserPreferencesUpdate,
   userPreferencesUpdateSchema,
 } from '@/shared/contracts/auth';
-import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
+import type { MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -19,6 +17,10 @@ import {
 } from '@/shared/validations/user-preferences';
 
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
+
+type UserPreferencesQueryOptions = {
+  enabled?: boolean;
+};
 
 const hasPreferenceChanged = (
   current: UserPreferences | undefined,
@@ -47,9 +49,12 @@ const hasPreferenceChanged = (
   return currentValue !== nextValue;
 };
 
-export function useUserPreferences(): SingleQuery<UserPreferences> {
+export function useUserPreferences(
+  options?: UserPreferencesQueryOptions
+): SingleQuery<UserPreferences> {
   return createSingleQueryV2<UserPreferences>({
     id: 'current-user-preferences',
+    enabled: options?.enabled ?? true,
     queryKey: userPreferencesQueryKey,
     queryFn: ({ signal }) =>
       api

@@ -1,4 +1,4 @@
-import type { VectorCanvasRect, VectorViewTransform } from '@/shared/contracts/ui';
+import type { VectorCanvasRect, VectorViewTransform } from '@/shared/contracts/ui/canvas';
 import { type VectorPoint, type VectorShape } from '@/shared/contracts/vector';
 
 export type { VectorCanvasRect, VectorViewTransform };

@@ -4,20 +4,13 @@ import React, { useEffect, useState } from 'react';
 
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
+  normalizeTraderaListingFormUrl,
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import {
-  Input,
-  FormSection,
-  FormField,
-  SectionHeader,
-  useToast,
-  ToggleRow,
-  FormActions,
-  UI_GRID_RELAXED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Input, useToast } from '@/shared/ui/primitives.public';
+import { FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader, UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -122,8 +115,10 @@ export default function TraderaSettingsPage(): React.JSX.Element {
       )
     );
     setListingFormUrl(
-      map.get(TRADERA_SETTINGS_KEYS.listingFormUrl)?.trim() ||
-        DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl
+      normalizeTraderaListingFormUrl(
+        map.get(TRADERA_SETTINGS_KEYS.listingFormUrl) ??
+          DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl
+      )
     );
     setSelectorProfile(
       map.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() ||
@@ -160,7 +155,9 @@ export default function TraderaSettingsPage(): React.JSX.Element {
         },
         {
           key: TRADERA_SETTINGS_KEYS.listingFormUrl,
-          value: listingFormUrl.trim() || DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl,
+          value: normalizeTraderaListingFormUrl(
+            listingFormUrl || DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl
+          ),
         },
         {
           key: TRADERA_SETTINGS_KEYS.selectorProfile,

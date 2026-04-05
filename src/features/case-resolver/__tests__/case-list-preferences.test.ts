@@ -32,4 +32,34 @@ describe('case list preferences', () => {
 
     expect(normalized.caseResolverCaseListShowNestedContent).toBe(false);
   });
+
+  it('normalizes trimmed strings, arrays, page size, and color casing in preference updates', () => {
+    const normalized = normalizeUserPreferencesUpdatePayload({
+      productListCatalogFilter: '  summer  ',
+      productListAppliedAdvancedFilter: '   ',
+      productListAppliedAdvancedFilterPresetId: ' preset-1 ',
+      productListPageSize: 999,
+      productListDraftIconColor: '#ABCDEF',
+      productListAdvancedFilterPresets: null,
+      adminMenuFavorites: [' cases ', 'cases', ''],
+      adminMenuSectionColors: null,
+      adminMenuCustomNav: null,
+      cmsThemeOpenSections: [' hero ', 'hero', ''],
+      cmsThemeLogoUrl: '   ',
+    });
+
+    expect(normalized).toMatchObject({
+      productListCatalogFilter: 'summer',
+      productListAppliedAdvancedFilter: null,
+      productListAppliedAdvancedFilterPresetId: 'preset-1',
+      productListPageSize: 48,
+      productListDraftIconColor: '#abcdef',
+      productListAdvancedFilterPresets: [],
+      adminMenuFavorites: ['cases'],
+      adminMenuSectionColors: {},
+      adminMenuCustomNav: [],
+      cmsThemeOpenSections: ['hero'],
+      cmsThemeLogoUrl: null,
+    });
+  });
 });

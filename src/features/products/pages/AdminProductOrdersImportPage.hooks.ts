@@ -13,9 +13,7 @@ import {
   useDefaultExportConnection,
   useIntegrationsWithConnections,
 } from '@/shared/hooks/useIntegrationQueries';
-import type {
-  BaseOrderImportPreviewResponse,
-} from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewResponse } from '@/shared/contracts/products/orders-import';
 import {
   BASE_INTEGRATION_SLUGS,
   formatPreviewScopeConnection,

@@ -7,7 +7,7 @@ import type {
   VectorShape,
   VectorToolMode,
 } from '@/shared/contracts/vector';
-import { vectorShapesToPath } from '@/shared/ui';
+import { vectorShapesToPath } from '@/shared/ui/data-display.public';
 
 import { smoothShape, simplifyShape } from '../geometry';
 import { useShapeHistory } from '../useShapeHistory';

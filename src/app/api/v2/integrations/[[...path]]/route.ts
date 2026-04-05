@@ -35,6 +35,7 @@ import * as baseRequest from '../[id]/connections/[connectionId]/base/request/ro
 import * as baseTest from '../[id]/connections/[connectionId]/base/test/route-handler';
 import * as connectionTest from '../[id]/connections/[connectionId]/test/route-handler';
 import * as exportsBaseSetting from '../exports/base/[setting]/route-handler';
+import * as exportsTraderaSetting from '../exports/tradera/[setting]/route-handler';
 import * as imagesSyncBaseAll from '../images/sync-base/all/route-handler';
 import * as importsBase from '../imports/base/route-handler';
 import * as importsBaseParameters from '../imports/base/parameters/route-handler';
@@ -46,6 +47,7 @@ import * as importsBaseRunReport from '../imports/base/runs/[runId]/report/route
 import * as importsBaseRunResume from '../imports/base/runs/[runId]/resume/route-handler';
 import * as importsBaseSample from '../imports/base/sample-product/route-handler';
 import * as integrationsJobs from '../jobs/route-handler';
+import * as playwrightTest from '../playwright/test/route-handler';
 import * as productListings from '../product-listings/route-handler';
 import * as integrationProductsListings from '../products/[id]/listings/route-handler';
 import * as integrationProductListing from '../products/[id]/listings/[listingId]/route-handler';
@@ -140,6 +142,7 @@ const ROUTES: RouteDefinition[] = [
   { pattern: ['connections', param('id')], module: connectionsById },
   { pattern: ['connections', param('id'), 'session'], module: connectionSession },
   { pattern: ['exports', 'base', param('setting')], module: exportsBaseSetting },
+  { pattern: ['exports', 'tradera', param('setting')], module: exportsTraderaSetting },
   { pattern: ['images', 'sync-base', 'all'], module: imagesSyncBaseAll },
   { pattern: ['imports', 'base'], module: importsBase },
   { pattern: ['imports', 'base', 'parameters'], module: importsBaseParameters },
@@ -151,6 +154,7 @@ const ROUTES: RouteDefinition[] = [
   { pattern: ['imports', 'base', 'sample-product'], module: importsBaseSample },
   { pattern: ['imports', 'base', param('setting')], module: importsBaseSetting },
   { pattern: ['jobs'], module: integrationsJobs },
+  { pattern: ['playwright', 'test'], module: playwrightTest },
   { pattern: ['product-listings'], module: productListings },
   { pattern: ['products', param('id'), 'base', 'link-existing'], module: integrationProductLinkExisting },
   { pattern: ['products', param('id'), 'base', 'sku-check'], module: integrationProductSkuCheck },

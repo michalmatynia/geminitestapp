@@ -3,7 +3,8 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import React, { useRef } from 'react';
 
-import { Pagination, Alert } from '@/shared/ui';
+import { Pagination } from '@/shared/ui/navigation-and-layout.public';
+import { Alert } from '@/shared/ui/primitives.public';
 
 import { JobQueueRunCard } from './job-queue-run-card';
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';

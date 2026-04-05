@@ -17,7 +17,7 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
 }));
 
-import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/game-quiz/KangurGameQuizShell';
 
 function TestQuizShell({
   maxWidthClassName,

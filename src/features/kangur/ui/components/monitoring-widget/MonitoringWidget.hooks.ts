@@ -17,7 +17,7 @@ import {
   parseTimestampStrict,
   readNumber,
   readString,
-} from '../KangurParentDashboardAssignmentsMonitoringWidget.utils';
+} from '../parent-dashboard/KangurParentDashboardAssignmentsMonitoringWidget.utils';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system-client';
 
@@ -90,7 +90,6 @@ export function useMonitoringWidgetState() {
           );
         }
       } catch (err) {
-        console.error(err);
         void ErrorSystem.captureException(err);
         if (reset) {
           setInteractionsError(translationsRef.current('widgets.monitoring.errors.load'));

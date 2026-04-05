@@ -10,8 +10,6 @@ import type {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-
 export type { ImageFormat, ImageSize, ImageSizeConfig, OptimizationOptions, OptimizedImageResult };
 
 const DEFAULT_IMAGE_SIZES: Record<ImageSize, ImageSizeConfig> = {

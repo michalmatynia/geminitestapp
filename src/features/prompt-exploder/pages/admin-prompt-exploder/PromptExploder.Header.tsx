@@ -4,12 +4,9 @@ import React from 'react';
 import { RefreshCcw, Settings2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import {
-  AdminAiEyebrow,
-  Alert,
-  Button,
-  SectionHeader,
-} from '@/shared/ui';
+import { AdminAiEyebrow } from '@/shared/ui/admin.public';
+import { Alert, Button } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   PromptExploderDocsTooltipSwitchFromRuntime,

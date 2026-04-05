@@ -1,7 +1,5 @@
-import type {
-  CaseResolverOcrJobDispatchMode,
-  CaseResolverOcrProvider,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverOcrJobDispatchMode } from '@/shared/contracts/case-resolver/ocr';
+import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver/base';
 
 export type CaseResolverOcrQueueJobData = {
   jobId: string;

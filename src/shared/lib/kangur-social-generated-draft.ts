@@ -17,7 +17,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const tryParseJsonObject = (text: string): Record<string, unknown> | null => {
   try {
-    const parsed = JSON.parse(text);
+    const parsed = JSON.parse(text) as unknown;
     return isRecord(parsed) ? parsed : null;
   } catch {
     return null;

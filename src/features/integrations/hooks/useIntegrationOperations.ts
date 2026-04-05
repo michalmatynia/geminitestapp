@@ -1,13 +1,11 @@
 'use client';
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { Dispatch, SetStateAction } from 'react';
 
-import {
-  type MarketplaceBadgeEntry,
-  type ListingBadgesPayload,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import { type MarketplaceBadgeEntry, type ListingBadgesPayload } from '@/shared/contracts/integrations';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
@@ -17,12 +15,22 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 const listingBadgesQueryKey = QUERY_KEYS.integrations.productListingsBadges();
 const EMPTY_LISTING_BADGES_PAYLOAD: ListingBadgesPayload = Object.freeze({});
+const LISTING_BADGE_IN_FLIGHT_REFETCH_MS = 10_000;
+const LISTING_BADGE_RECONCILIATION_REFETCH_MS = 30_000;
+const LISTING_BADGE_RECONCILIATION_STATUSES = new Set([
+  'failed',
+  'needs_login',
+  'auth_required',
+  'error',
+]);
 
 type IntegrationListingBadgeState = {
   integrationBadgeIds: Set<string>;
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeIds: Set<string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
 };
 
 const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
@@ -30,6 +38,8 @@ const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
   integrationBadgeStatuses: new Map<string, string>(),
   traderaBadgeIds: new Set<string>(),
   traderaBadgeStatuses: new Map<string, string>(),
+  playwrightProgrammableBadgeIds: new Set<string>(),
+  playwrightProgrammableBadgeStatuses: new Map<string, string>(),
 };
 
 const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
@@ -71,7 +81,15 @@ const areIntegrationListingBadgeStatesEqual = (
   areStringSetsEqual(previous.integrationBadgeIds, next.integrationBadgeIds) &&
   areStringMapsEqual(previous.integrationBadgeStatuses, next.integrationBadgeStatuses) &&
   areStringSetsEqual(previous.traderaBadgeIds, next.traderaBadgeIds) &&
-  areStringMapsEqual(previous.traderaBadgeStatuses, next.traderaBadgeStatuses);
+  areStringMapsEqual(previous.traderaBadgeStatuses, next.traderaBadgeStatuses) &&
+  areStringSetsEqual(
+    previous.playwrightProgrammableBadgeIds,
+    next.playwrightProgrammableBadgeIds
+  ) &&
+  areStringMapsEqual(
+    previous.playwrightProgrammableBadgeStatuses,
+    next.playwrightProgrammableBadgeStatuses
+  );
 
 const buildIntegrationListingBadgeState = (
   payload: ListingBadgesPayload
@@ -80,6 +98,8 @@ const buildIntegrationListingBadgeState = (
   const nextIntegrationBadgeIds = new Set<string>();
   const nextTraderaBadgeStatuses = new Map<string, string>();
   const nextTraderaBadgeIds = new Set<string>();
+  const nextPlaywrightProgrammableBadgeStatuses = new Map<string, string>();
+  const nextPlaywrightProgrammableBadgeIds = new Set<string>();
 
   for (const [productId, rawMarketplaces] of Object.entries(payload)) {
     const marketplaces = toMarketplaceEntry(rawMarketplaces);
@@ -96,6 +116,15 @@ const buildIntegrationListingBadgeState = (
       nextTraderaBadgeIds.add(productId);
       nextTraderaBadgeStatuses.set(productId, traderaStatus);
     }
+
+    const playwrightProgrammableStatus =
+      typeof marketplaces?.playwrightProgrammable === 'string'
+        ? marketplaces.playwrightProgrammable.trim().toLowerCase()
+        : '';
+    if (playwrightProgrammableStatus) {
+      nextPlaywrightProgrammableBadgeIds.add(productId);
+      nextPlaywrightProgrammableBadgeStatuses.set(productId, playwrightProgrammableStatus);
+    }
   }
 
   return {
@@ -103,11 +132,62 @@ const buildIntegrationListingBadgeState = (
     integrationBadgeStatuses: nextIntegrationBadgeStatuses,
     traderaBadgeIds: nextTraderaBadgeIds,
     traderaBadgeStatuses: nextTraderaBadgeStatuses,
+    playwrightProgrammableBadgeIds: nextPlaywrightProgrammableBadgeIds,
+    playwrightProgrammableBadgeStatuses: nextPlaywrightProgrammableBadgeStatuses,
   };
 };
 
+const hasAnyMarketplaceStatus = (payload: ListingBadgesPayload): boolean =>
+  Object.values(payload).some((entry) =>
+    Object.values(toMarketplaceEntry(entry)).some(
+      (status) => typeof status === 'string' && status.trim().length > 0
+    )
+  );
+
+const hasReconciliationCandidateStatus = (payload: ListingBadgesPayload): boolean =>
+  Object.values(payload).some((entry) =>
+    Object.values(toMarketplaceEntry(entry)).some(
+      (status) =>
+        typeof status === 'string' &&
+        LISTING_BADGE_RECONCILIATION_STATUSES.has(status.trim().toLowerCase())
+    )
+  );
+
+export const resolveListingBadgeRefetchInterval = (
+  payload: ListingBadgesPayload | undefined
+): number | false => {
+  if (!payload) return 5000;
+  if (!hasAnyMarketplaceStatus(payload)) return false;
+
+  const activeStatuses = new Set([
+    'queued',
+    'queued_relist',
+    'pending',
+    'running',
+    'processing',
+    'in_progress',
+  ]);
+  const hasInFlight = Object.values(payload).some((entry) =>
+    Object.values(toMarketplaceEntry(entry)).some(
+      (status) => typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
+    )
+  );
+
+  if (hasInFlight) {
+    return LISTING_BADGE_IN_FLIGHT_REFETCH_MS;
+  }
+
+  // Keep a low-frequency reconciliation poll only for stale terminal failure states
+  // so the Products page can self-heal after background status changes such as
+  // auth_required -> active without continuously polling healthy success badges.
+  return hasReconciliationCandidateStatus(payload)
+    ? LISTING_BADGE_RECONCILIATION_REFETCH_MS
+    : false;
+};
+
 export function useIntegrationListingBadges(
-  productIds: readonly string[] = []
+  productIds: readonly string[] = [],
+  { enabled = true }: { enabled?: boolean } = {}
 ): IntegrationListingBadgeState {
   const scopedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
   const scopedListingBadgesQueryKey = useMemo(
@@ -132,26 +212,9 @@ export function useIntegrationListingBadges(
         return {};
       }
     },
-    enabled: scopedProductIds.length > 0,
+    enabled: enabled && scopedProductIds.length > 0,
     retry: 1,
-    refetchInterval: (query) => {
-      const data = query.state.data;
-      if (!data) return 5000;
-      const activeStatuses = new Set([
-        'queued',
-        'queued_relist',
-        'pending',
-        'running',
-        'processing',
-        'in_progress',
-      ]);
-      const hasInFlight = Object.values(data).some((entry) =>
-        Object.values(toMarketplaceEntry(entry)).some(
-          (status) => typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
-        )
-      );
-      return hasInFlight ? 10_000 : false;
-    },
+    refetchInterval: (query) => resolveListingBadgeRefetchInterval(query.state.data),
     refetchIntervalInBackground: false,
     meta: {
       source: 'integrations.hooks.useIntegrationListingBadges',
@@ -181,9 +244,13 @@ export function useIntegrationModalOperations(): {
   setIntegrationsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   showListProductModal: boolean;
   setShowListProductModal: Dispatch<SetStateAction<boolean>>;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
+  listProductPreset:
+    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
+    | null;
   setListProductPreset: Dispatch<
-    SetStateAction<{ integrationId: string; connectionId: string } | null>
+    SetStateAction<
+      { integrationId: string; connectionId: string; autoSubmit?: boolean } | null
+    >
   >;
   exportSettingsProduct: ProductWithImages | null;
   setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
@@ -197,6 +264,7 @@ export function useIntegrationModalOperations(): {
   const [listProductPreset, setListProductPreset] = useState<{
     integrationId: string;
     connectionId: string;
+    autoSubmit?: boolean;
   } | null>(null);
   const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(
     null
@@ -230,7 +298,9 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
   setIntegrationsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   showListProductModal: boolean;
   setShowListProductModal: Dispatch<SetStateAction<boolean>>;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
+  listProductPreset:
+    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
+    | null;
   setListProductPreset: Dispatch<
     SetStateAction<{ integrationId: string; connectionId: string } | null>
   >;
@@ -238,6 +308,8 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeIds: Set<string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
   exportSettingsProduct: ProductWithImages | null;
   setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   refreshListingBadges: () => Promise<void>;

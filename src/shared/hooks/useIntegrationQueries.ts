@@ -1,13 +1,9 @@
-import type {
-  BaseImportInventoriesPayload,
-  BaseImportInventoriesResponse,
-  BaseDefaultConnectionPreferenceResponse,
-  BaseDefaultInventoryPreferenceResponse,
-  BaseInventory,
-  CategoryMappingWithDetails,
-  IntegrationWithConnections,
-} from '@/shared/contracts/integrations';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from '@/shared/contracts/integrations/import-export';
+import type { BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse, TraderaDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
+import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys, marketplaceKeys } from '@/shared/lib/query-key-exports';
@@ -100,6 +96,29 @@ export function useDefaultExportConnection(): SingleQuery<BaseDefaultConnectionP
       queryKey,
       tags: ['integrations', 'connection'],
       description: 'Loads integrations default export connection.',
+    },
+  });
+}
+
+export function useDefaultTraderaConnection(): SingleQuery<TraderaDefaultConnectionPreferenceResponse> {
+  const queryKey = integrationKeys.selection.traderaDefaultConnection();
+  const queryFn = async (): Promise<TraderaDefaultConnectionPreferenceResponse> =>
+    api.get<TraderaDefaultConnectionPreferenceResponse>(
+      '/api/v2/integrations/exports/tradera/default-connection'
+    );
+
+  return createSingleQueryV2({
+    id: 'default-tradera-connection',
+    queryKey,
+    queryFn,
+    meta: {
+      source: 'shared.hooks.useDefaultTraderaConnection',
+      operation: 'detail',
+      resource: 'integrations.default-tradera-connection',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'tradera', 'connection'],
+      description: 'Loads integrations default Tradera connection.',
     },
   });
 }

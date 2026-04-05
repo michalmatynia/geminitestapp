@@ -1,14 +1,13 @@
 'use client';
 
-import {
-  AdminDatabasePageLayout,
-  Button,
-  FileUploadButton,
-  Alert,
-  StandardDataTablePanel,
-  DataTable,
-} from '@/shared/ui';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import { useRouter } from 'next/navigation';
+
+import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
+import { Button, Alert } from '@/shared/ui/primitives.public';
+import { FileUploadButton } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { DataTable } from '@/shared/ui/data-display.public';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/base';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useDatabaseColumns } from '../components/DatabaseColumns';
@@ -23,6 +22,7 @@ import {
 import { DatabaseProvider } from '../context/DatabaseContext';
 
 function DatabasesContentInner(): React.JSX.Element {
+  const router = useRouter();
   const {
     isLogModalOpen,
     logModalContent,
@@ -78,7 +78,7 @@ function DatabasesContentInner(): React.JSX.Element {
           <Button
             variant='outline'
             onClick={(): void => {
-              window.location.assign('/admin/databases/engine?view=operations');
+              router.push('/admin/databases/engine?view=operations');
             }}
           >
             Database Operations
@@ -86,7 +86,7 @@ function DatabasesContentInner(): React.JSX.Element {
           <Button
             variant='outline'
             onClick={(): void => {
-              window.location.assign('/admin/databases/engine');
+              router.push('/admin/databases/engine');
             }}
           >
             Database Engine

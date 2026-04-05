@@ -3,12 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type {
-  AiNode,
-  AiPathRuntimeNodeStatus,
-  RuntimePortValues,
-  RuntimeState,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRuntimeNodeStatus, RuntimePortValues, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeAiPathRuntimeNodeStatus } from '@/shared/contracts/ai-paths-runtime';
 import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,

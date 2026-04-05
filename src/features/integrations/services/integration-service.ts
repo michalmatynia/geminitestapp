@@ -6,11 +6,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { getIntegrationRepository } from './integration-repository';
 
-import type {
-  IntegrationRecord,
-  IntegrationConnectionRecord,
-  IntegrationRepository,
-} from '@/shared/contracts/integrations';
+import type { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository } from '@/shared/contracts/integrations/repositories';
 
 /**
  * Helper to call the Integration repository with error handling and logging.

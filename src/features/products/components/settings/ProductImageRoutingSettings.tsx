@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type ProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useStudioProjects } from '@/features/ai/public';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
@@ -15,19 +15,16 @@ import {
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
 } from '@/shared/lib/products/constants';
-import {
-  Button,
-  FormField,
-  FormSection,
-  Input,
-  RadioGroup,
-  RadioGroupItem,
-  SelectSimple,
-  SimpleSettingsList,
-  useToast,
-  Separator,
-  FormActions,
-} from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
+import { FormField, FormSection } from '@/shared/ui/form-section';
+import { FormActions } from '@/shared/ui/FormActions';
+import { Input } from '@/shared/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { Separator } from '@/shared/ui/separator';
+import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
+import { useToast } from '@/shared/ui/toast';
+
 import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

@@ -2,7 +2,7 @@
 
 import { Component, ErrorInfo, ReactNode } from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface Props {

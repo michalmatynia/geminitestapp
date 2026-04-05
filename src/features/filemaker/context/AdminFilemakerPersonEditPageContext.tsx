@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import {
   useAdminFilemakerPersonEditPageState,
@@ -32,10 +33,22 @@ export type AdminFilemakerPersonEditPageActionsContextValue = Pick<
   AdminFilemakerPersonEditPageFunctionKeys
 >;
 
-const AdminFilemakerPersonEditPageStateContext =
-  createContext<AdminFilemakerPersonEditPageStateContextValue | null>(null);
-const AdminFilemakerPersonEditPageActionsContext =
-  createContext<AdminFilemakerPersonEditPageActionsContextValue | null>(null);
+const {
+  Context: AdminFilemakerPersonEditPageStateContext,
+  useStrictContext: useAdminFilemakerPersonEditPageStateContextValue,
+} = createStrictContext<AdminFilemakerPersonEditPageStateContextValue>({
+  hookName: 'useAdminFilemakerPersonEditPageStateContext',
+  providerName: 'AdminFilemakerPersonEditPageProvider',
+  errorFactory: internalError,
+});
+const {
+  Context: AdminFilemakerPersonEditPageActionsContext,
+  useStrictContext: useAdminFilemakerPersonEditPageActionsContextValue,
+} = createStrictContext<AdminFilemakerPersonEditPageActionsContextValue>({
+  hookName: 'useAdminFilemakerPersonEditPageActionsContext',
+  providerName: 'AdminFilemakerPersonEditPageProvider',
+  errorFactory: internalError,
+});
 
 export function AdminFilemakerPersonEditPageProvider({
   children,
@@ -71,22 +84,7 @@ export function AdminFilemakerPersonEditPageProvider({
   );
 }
 
-export function useAdminFilemakerPersonEditPageStateContext(): AdminFilemakerPersonEditPageStateContextValue {
-  const context = useContext(AdminFilemakerPersonEditPageStateContext);
-  if (!context) {
-    throw internalError(
-      'useAdminFilemakerPersonEditPageStateContext must be used within AdminFilemakerPersonEditPageProvider'
-    );
-  }
-  return context;
-}
-
-export function useAdminFilemakerPersonEditPageActionsContext(): AdminFilemakerPersonEditPageActionsContextValue {
-  const context = useContext(AdminFilemakerPersonEditPageActionsContext);
-  if (!context) {
-    throw internalError(
-      'useAdminFilemakerPersonEditPageActionsContext must be used within AdminFilemakerPersonEditPageProvider'
-    );
-  }
-  return context;
-}
+export const useAdminFilemakerPersonEditPageStateContext =
+  useAdminFilemakerPersonEditPageStateContextValue;
+export const useAdminFilemakerPersonEditPageActionsContext =
+  useAdminFilemakerPersonEditPageActionsContextValue;

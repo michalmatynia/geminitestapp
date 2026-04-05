@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/contracts/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
 import { Button } from '@/shared/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/dialog';
 import { SectionHeader } from '@/shared/ui/section-header';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 export interface DetailModalProps extends ModalStateProps {
   title: React.ReactNode;

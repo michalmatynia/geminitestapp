@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  createContext,
-  useContext,
   useState,
   useMemo,
   useCallback,
@@ -11,6 +9,7 @@ import {
 } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -91,8 +90,25 @@ export interface PersistenceActions {
 // Contexts (split for re-render optimization)
 // ---------------------------------------------------------------------------
 
-const PersistenceStateContext = createContext<PersistenceState | null>(null);
-const PersistenceActionsContext = createContext<PersistenceActions | null>(null);
+const {
+  Context: PersistenceStateContext,
+  useStrictContext: usePersistenceState,
+} = createStrictContext<PersistenceState>({
+  hookName: 'usePersistenceState',
+  providerName: 'a PersistenceProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: PersistenceActionsContext,
+  useStrictContext: usePersistenceActions,
+} = createStrictContext<PersistenceActions>({
+  hookName: 'usePersistenceActions',
+  providerName: 'a PersistenceProvider',
+  errorFactory: internalError,
+});
+
+export { usePersistenceState, usePersistenceActions };
 const MISSING_SAVE_HANDLER_MESSAGE =
   'AI Paths save handler is not initialized. Reload the page and try again.';
 
@@ -294,27 +310,3 @@ export function PersistenceProvider({
 // ---------------------------------------------------------------------------
 // Consumer Hooks
 // ---------------------------------------------------------------------------
-
-/**
- * Get the current persistence state.
- * Components using this will re-render when persistence state changes.
- */
-export function usePersistenceState(): PersistenceState {
-  const context = useContext(PersistenceStateContext);
-  if (!context) {
-    throw internalError('usePersistenceState must be used within a PersistenceProvider');
-  }
-  return context;
-}
-
-/**
- * Get persistence actions.
- * Components using this will NOT re-render when state changes.
- */
-export function usePersistenceActions(): PersistenceActions {
-  const context = useContext(PersistenceActionsContext);
-  if (!context) {
-    throw internalError('usePersistenceActions must be used within a PersistenceProvider');
-  }
-  return context;
-}

@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { type SettingsPanelField } from '@/shared/contracts/ui';
 
 import {

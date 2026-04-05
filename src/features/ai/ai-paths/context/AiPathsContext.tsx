@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  createContext,
-  useContext,
   useState,
   useEffect,
   useMemo,
@@ -12,6 +10,7 @@ import {
   useCallback,
 } from 'react';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
 
 export type AdminAiPathsWorkspaceTab = 'canvas' | 'paths' | 'docs';
@@ -28,8 +27,25 @@ type AiPathsActionsContextValue = {
   onToggleFocusMode: () => void;
 };
 
-const AiPathsStateContext = createContext<AiPathsStateContextValue | null>(null);
-const AiPathsActionsContext = createContext<AiPathsActionsContextValue | null>(null);
+const {
+  Context: AiPathsStateContext,
+  useStrictContext: useAiPathsState,
+} = createStrictContext<AiPathsStateContextValue>({
+  hookName: 'useAiPathsState',
+  providerName: 'an AiPathsProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: AiPathsActionsContext,
+  useStrictContext: useAiPathsActions,
+} = createStrictContext<AiPathsActionsContextValue>({
+  hookName: 'useAiPathsActions',
+  providerName: 'an AiPathsProvider',
+  errorFactory: internalError,
+});
+
+export { useAiPathsState, useAiPathsActions };
 
 export function AiPathsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<AdminAiPathsWorkspaceTab>('canvas');
@@ -79,22 +95,6 @@ export function AiPathsProvider({ children }: { children: ReactNode }): React.JS
       </AiPathsStateContext.Provider>
     </AiPathsActionsContext.Provider>
   );
-}
-
-export function useAiPathsState() {
-  const context = useContext(AiPathsStateContext);
-  if (!context) {
-    throw internalError('useAiPathsState must be used within an AiPathsProvider');
-  }
-  return context;
-}
-
-export function useAiPathsActions() {
-  const context = useContext(AiPathsActionsContext);
-  if (!context) {
-    throw internalError('useAiPathsActions must be used within an AiPathsProvider');
-  }
-  return context;
 }
 
 export function useAiPaths(): AiPathsStateContextValue & AiPathsActionsContextValue {

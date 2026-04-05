@@ -5,27 +5,16 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import type {
-  CaseResolverOcrModelsResponse,
-  CaseResolverSettings,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverOcrModelsResponse } from '@/shared/contracts/case-resolver/ocr';
+import type { CaseResolverSettings } from '@/shared/contracts/case-resolver/workspace';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  AdminAiEyebrow,
-  AdminCaseResolverBreadcrumbs,
-  Badge,
-  Button,
-  FormField,
-  FormSection,
-  Input,
-  SectionHeader,
-  SelectSimple,
-  Textarea,
-  useToast,
-} from '@/shared/ui';
+import { AdminAiEyebrow, AdminCaseResolverBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { isLikelyCaseResolverOcrCapableModelId } from '../ocr-models';

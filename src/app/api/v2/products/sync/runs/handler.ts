@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listProductSyncRuns } from '@/features/product-sync/services/product-sync-repository';
 import type { ProductSyncRunListQuery, ProductSyncRunsResponse } from '@/shared/contracts/product-sync';
 import { productSyncRunListQuerySchema } from '@/shared/contracts/product-sync';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export const querySchema = productSyncRunListQuerySchema;
 

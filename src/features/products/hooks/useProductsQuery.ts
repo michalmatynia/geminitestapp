@@ -12,7 +12,7 @@ import {
   productSchema,
   productWithImagesSchema,
 } from '@/shared/contracts/products/product';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import {
   createListQueryV2,
   createPaginatedListQueryV2,
@@ -28,6 +28,7 @@ export type { UseProductsFilters };
 
 export interface UseProductsOptions {
   enabled?: boolean;
+  prefetchNextPage?: boolean;
 }
 
 // Trade-off between API load and freshness for product list queries.
@@ -159,8 +160,8 @@ export function useProducts(
   options?: UseProductsOptions
 ): ListQuery<ProductWithImages> {
   const queryKey = QUERY_KEYS.products.list(filters);
-  const queryFn = async (): Promise<ProductWithImages[]> => {
-    const data = await getProducts(filters);
+  const queryFn = async (context: { signal: AbortSignal }): Promise<ProductWithImages[]> => {
+    const data = await getProducts(filters, context.signal);
     return z.array(productSchema).parse(data) as ProductWithImages[];
   };
 
@@ -192,7 +193,8 @@ export function useProductsCount(
 ): SingleQuery<number> {
   const id = JSON.stringify(filters);
   const queryKey = QUERY_KEYS.products.count(filters);
-  const queryFn = async (): Promise<number> => countProducts(filters);
+  const queryFn = async (context: { signal: AbortSignal }): Promise<number> =>
+    countProducts(filters, context.signal);
 
   return createSingleQueryV2({
     id,
@@ -230,6 +232,7 @@ export function useProductsWithCount(
 } {
   const queryClient = useQueryClient();
   const enabled = options?.enabled ?? true;
+  const shouldPrefetchNextPage = options?.prefetchNextPage ?? true;
   const prefetchKeyRef = useRef<string>('');
 
   // Single request replaces the previous two parallel queries (getProducts + countProducts).
@@ -239,9 +242,11 @@ export function useProductsWithCount(
   const query = createPaginatedListQueryV2<ProductWithImages>({
     id: JSON.stringify(filters) + ':paged',
     queryKey,
-    queryFn: async () => {
+    queryFn: async (context) => {
       try {
-        const { products, total } = parseProductsPagedResult(await getProductsWithCount(filters));
+        const { products, total } = parseProductsPagedResult(
+          await getProductsWithCount(filters, context.signal)
+        );
         return { items: products, total };
       } catch (error) {
         logClientCatch(error, {
@@ -272,6 +277,7 @@ export function useProductsWithCount(
 
   useEffect(() => {
     if (!enabled) return;
+    if (!shouldPrefetchNextPage) return;
     if (!query.data) return;
 
     const currentPage = typeof filters.page === 'number' && filters.page > 0 ? filters.page : 1;
@@ -294,10 +300,10 @@ export function useProductsWithCount(
 
     void prefetchQueryV2(queryClient, {
       queryKey: nextQueryKey,
-      queryFn: async () => {
+      queryFn: async (context) => {
         try {
           const { products, total } = parseProductsPagedResult(
-            await getProductsWithCount(nextFilters)
+            await getProductsWithCount(nextFilters, context.signal)
           );
           return { items: products, total };
         } catch (error) {
@@ -320,7 +326,7 @@ export function useProductsWithCount(
         description: 'Prefetches the next product page and count.',
       },
     })();
-  }, [enabled, filters, query.data, queryClient]);
+  }, [enabled, filters, query.data, queryClient, shouldPrefetchNextPage]);
 
   const previousDebugSnapshotRef = useRef<ProductsPagedDebugSnapshot | null>(null);
   const debugSnapshot = useMemo(

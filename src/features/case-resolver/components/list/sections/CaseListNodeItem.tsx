@@ -8,8 +8,9 @@ import {
   decodeCaseResolverCaseContentFolderNodeId,
   fromCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
-import { Button, StatusBadge, Badge, Input, Tooltip } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Badge, Input, Tooltip } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 

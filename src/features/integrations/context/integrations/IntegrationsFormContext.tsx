@@ -1,10 +1,8 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-
-import type { IntegrationConnection } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
-import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '../createStrictContext';
 
 export interface IntegrationsForm {
   isModalOpen: boolean;
@@ -19,10 +17,8 @@ export interface IntegrationsForm {
   savingAllegroSandbox: boolean;
 }
 
-export const IntegrationsFormContext = createContext<IntegrationsForm | null>(null);
-
-export const useIntegrationsForm = () => {
-  const context = useContext(IntegrationsFormContext);
-  if (!context) throw internalError('useIntegrationsForm must be used within IntegrationsProvider');
-  return context;
-};
+export const { Context: IntegrationsFormContext, useValue: useIntegrationsForm } =
+  createStrictContext<IntegrationsForm>({
+    displayName: 'IntegrationsFormContext',
+    errorMessage: 'useIntegrationsForm must be used within IntegrationsProvider',
+  });

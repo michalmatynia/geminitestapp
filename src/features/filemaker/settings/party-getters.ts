@@ -1,6 +1,12 @@
 import { normalizeString } from '../filemaker-settings.helpers';
 import { FILEMAKER_REFERENCE_NONE } from '../settings-constants';
 import {
+  buildFilemakerOrganizationReference,
+  buildFilemakerPersonReference,
+  resolveFilemakerOrganizationLabel,
+  resolveFilemakerPersonLabel,
+} from './party-getters.helpers';
+import {
   FilemakerDatabase,
   FilemakerPerson,
   FilemakerOrganization,
@@ -43,21 +49,12 @@ export const getFilemakerPartyReference = (
   if (kind === 'person') {
     const person = getFilemakerPersonById(database, normalizedId);
     if (!person) return null;
-    const label = [person.firstName, person.lastName].filter(Boolean).join(' ').trim();
-    return {
-      kind: 'person',
-      id: person.id,
-      name: label || person.id,
-    };
+    return buildFilemakerPersonReference(person);
   }
   if (kind === 'organization') {
     const organization = getFilemakerOrganizationById(database, normalizedId);
     if (!organization) return null;
-    return {
-      kind: 'organization',
-      id: organization.id,
-      name: organization.name || organization.id,
-    };
+    return buildFilemakerOrganizationReference(organization);
   }
   return null;
 };
@@ -107,10 +104,9 @@ export const listFilemakerPartyOptions = (database: FilemakerDatabase): Filemake
   const options: FilemakerPartyOption[] = [];
 
   database.persons.forEach((person: FilemakerPerson) => {
-    const name = [person.firstName, person.lastName].filter(Boolean).join(' ').trim();
     options.push({
       value: encodeFilemakerPartyReference('person', person.id),
-      label: name || person.id,
+      label: resolveFilemakerPersonLabel(person),
       kind: 'person',
     });
   });
@@ -118,7 +114,7 @@ export const listFilemakerPartyOptions = (database: FilemakerDatabase): Filemake
   database.organizations.forEach((organization: FilemakerOrganization) => {
     options.push({
       value: encodeFilemakerPartyReference('organization', organization.id),
-      label: organization.name || organization.id,
+      label: resolveFilemakerOrganizationLabel(organization),
       kind: 'organization',
     });
   });
@@ -136,10 +132,9 @@ export const resolveFilemakerPartyLabel = (
   if (reference.kind === 'person') {
     const person = getFilemakerPersonById(database, reference.id);
     if (!person) return reference.id;
-    const label = [person.firstName, person.lastName].filter(Boolean).join(' ').trim();
-    return label || person.id;
+    return resolveFilemakerPersonLabel(person);
   }
   const organization = getFilemakerOrganizationById(database, reference.id);
   if (!organization) return reference.id;
-  return organization.name || organization.id;
+  return resolveFilemakerOrganizationLabel(organization);
 };

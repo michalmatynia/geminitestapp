@@ -1,10 +1,14 @@
 'use client';
 
-import { ActionMenu, Badge, DropdownMenuItem } from '@/shared/ui';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { Badge, DropdownMenuItem, useToast } from '@/shared/ui/primitives.public';
 import { Megaphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
@@ -14,21 +18,36 @@ import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   getFilemakerEmailCampaignDeliveriesForRun,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
+  parseFilemakerEmailCampaignSchedulerStatus,
   parseFilemakerEmailCampaignSuppressionRegistry,
+  resolveFilemakerEmailCampaignNextAutomationAt,
   resolveFilemakerEmailCampaignAudiencePreview,
   summarizeFilemakerEmailCampaignAnalytics,
   summarizeFilemakerEmailCampaignRunDeliveries,
+  toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry,
+  toPersistedFilemakerEmailCampaignDeliveryRegistry,
+  toPersistedFilemakerEmailCampaignEventRegistry,
+  toPersistedFilemakerEmailCampaignRegistry,
+  toPersistedFilemakerEmailCampaignRunRegistry,
+  toPersistedFilemakerEmailCampaignSchedulerStatus,
 } from '../settings';
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
+import {
+  createDuplicatedCampaignDraft,
+  removeCampaignArtifacts,
+} from './AdminFilemakerCampaignEditPage.utils';
 
 import type { FilemakerEmailCampaign, FilemakerEmailCampaignRun } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -39,11 +58,16 @@ type CampaignRow = {
   isLaunchReady: boolean;
   latestRun: FilemakerEmailCampaignRun | null;
   analytics: ReturnType<typeof summarizeFilemakerEmailCampaignAnalytics>;
+  nextAutomationAt: string | null;
+  schedulerFailureMessage: string | null;
 };
 
 export function AdminFilemakerCampaignsPage(): React.JSX.Element {
   const router = useRouter();
   const settingsStore = useSettingsStore();
+  const updateSetting = useUpdateSetting();
+  const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query.trim());
 
@@ -51,7 +75,9 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawRuns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
+  const rawAttempts = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY);
   const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
+  const rawSchedulerStatus = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY);
   const rawSuppressions = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY);
 
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
@@ -67,6 +93,10 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
     () => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries),
     [rawDeliveries]
   );
+  const attemptRegistry = useMemo(
+    () => parseFilemakerEmailCampaignDeliveryAttemptRegistry(rawAttempts),
+    [rawAttempts]
+  );
   const eventRegistry = useMemo(
     () => parseFilemakerEmailCampaignEventRegistry(rawEvents),
     [rawEvents]
@@ -75,6 +105,19 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
     () => parseFilemakerEmailCampaignSuppressionRegistry(rawSuppressions),
     [rawSuppressions]
   );
+  const schedulerStatus = useMemo(
+    () => parseFilemakerEmailCampaignSchedulerStatus(rawSchedulerStatus),
+    [rawSchedulerStatus]
+  );
+  const latestSchedulerFailureByCampaignId = useMemo(() => {
+    const map = new Map<string, string>();
+    schedulerStatus.launchFailures.forEach((failure) => {
+      if (!map.has(failure.campaignId)) {
+        map.set(failure.campaignId, failure.message);
+      }
+    });
+    return map;
+  }, [schedulerStatus.launchFailures]);
 
   const latestRunByCampaignId = useMemo(() => {
     const map = new Map<string, FilemakerEmailCampaignRun>();
@@ -92,6 +135,143 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
     });
     return map;
   }, [runRegistry.runs]);
+
+  const persistCampaignRegistry = async (
+    nextCampaigns: FilemakerEmailCampaign[]
+  ): Promise<void> => {
+    await updateSetting.mutateAsync({
+      key: FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+      value: JSON.stringify(
+        toPersistedFilemakerEmailCampaignRegistry({
+          version: 1,
+          campaigns: nextCampaigns,
+        })
+      ),
+    });
+  };
+
+  const persistCampaignDeletion = async (campaignId: string, nextCampaigns: FilemakerEmailCampaign[]) => {
+    const cleaned = removeCampaignArtifacts({
+      campaignId,
+      runRegistry,
+      deliveryRegistry,
+      attemptRegistry,
+      eventRegistry,
+      schedulerStatus,
+    });
+
+    await updateSetting.mutateAsync({
+      key: FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+      value: JSON.stringify(
+        toPersistedFilemakerEmailCampaignRegistry({
+          version: 1,
+          campaigns: nextCampaigns,
+        })
+      ),
+    });
+    await updateSetting.mutateAsync({
+      key: FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
+      value: JSON.stringify(toPersistedFilemakerEmailCampaignRunRegistry(cleaned.runRegistry)),
+    });
+    await updateSetting.mutateAsync({
+      key: FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+      value: JSON.stringify(
+        toPersistedFilemakerEmailCampaignDeliveryRegistry(cleaned.deliveryRegistry)
+      ),
+    });
+    await updateSetting.mutateAsync({
+      key: FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
+      value: JSON.stringify(
+        toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry(cleaned.attemptRegistry)
+      ),
+    });
+    await updateSetting.mutateAsync({
+      key: FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
+      value: JSON.stringify(toPersistedFilemakerEmailCampaignEventRegistry(cleaned.eventRegistry)),
+    });
+    await updateSetting.mutateAsync({
+      key: FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
+      value: JSON.stringify(
+        toPersistedFilemakerEmailCampaignSchedulerStatus(cleaned.schedulerStatus)
+      ),
+    });
+  };
+
+  const handleDuplicateCampaign = async (campaign: FilemakerEmailCampaign): Promise<void> => {
+    const duplicatedCampaign = createDuplicatedCampaignDraft({
+      campaign,
+      existingCampaigns: campaignRegistry.campaigns,
+    });
+
+    try {
+      await persistCampaignRegistry(
+        campaignRegistry.campaigns
+          .concat(duplicatedCampaign)
+          .sort((left, right) => left.name.localeCompare(right.name))
+      );
+      toast(`Campaign duplicated as ${duplicatedCampaign.name}.`, { variant: 'success' });
+      router.push(`/admin/filemaker/campaigns/${encodeURIComponent(duplicatedCampaign.id)}`);
+      settingsStore.refetch();
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to duplicate campaign.', {
+        variant: 'error',
+      });
+    }
+  };
+
+  const handleToggleArchiveCampaign = async (campaign: FilemakerEmailCampaign): Promise<void> => {
+    const nextCampaign = {
+      ...campaign,
+      status: campaign.status === 'archived' ? 'draft' : 'archived',
+      approvalGrantedAt: campaign.status === 'archived' ? campaign.approvalGrantedAt : null,
+      approvedBy: campaign.status === 'archived' ? campaign.approvedBy : null,
+      updatedAt: new Date().toISOString(),
+    } as FilemakerEmailCampaign;
+
+    try {
+      await persistCampaignRegistry(
+        campaignRegistry.campaigns
+          .filter((entry) => entry.id !== campaign.id)
+          .concat(nextCampaign)
+          .sort((left, right) => left.name.localeCompare(right.name))
+      );
+      toast(campaign.status === 'archived' ? 'Campaign restored to draft.' : 'Campaign archived.', {
+        variant: 'success',
+      });
+      settingsStore.refetch();
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to update campaign status.', {
+        variant: 'error',
+      });
+    }
+  };
+
+  const handleDeleteCampaign = (campaign: FilemakerEmailCampaign): void => {
+    confirm({
+      title: 'Delete campaign?',
+      message:
+        'This will remove the campaign and its run history, delivery records, attempt history, events, and scheduler traces.',
+      confirmText: 'Delete campaign',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await persistCampaignDeletion(
+            campaign.id,
+            campaignRegistry.campaigns.filter((entry) => entry.id !== campaign.id)
+          );
+          toast('Campaign deleted.', { variant: 'success' });
+          settingsStore.refetch();
+        } catch (error: unknown) {
+          logClientError(error);
+          toast(error instanceof Error ? error.message : 'Failed to delete campaign.', {
+            variant: 'error',
+          });
+        }
+      },
+    });
+  };
 
   const rows = useMemo<CampaignRow[]>(
     () =>
@@ -116,6 +296,8 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
               eventRegistry,
               suppressionRegistry,
             }),
+            nextAutomationAt: resolveFilemakerEmailCampaignNextAutomationAt(campaign),
+            schedulerFailureMessage: latestSchedulerFailureByCampaignId.get(campaign.id) ?? null,
           };
         })
         .filter((row: CampaignRow): boolean =>
@@ -125,6 +307,9 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
               row.campaign.subject,
               row.campaign.status,
               row.latestRun?.status ?? '',
+              row.campaign.launch.mode,
+              row.nextAutomationAt ?? '',
+              row.schedulerFailureMessage ?? '',
             ],
             deferredQuery
           )
@@ -138,6 +323,7 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
       deferredQuery,
       deliveryRegistry,
       eventRegistry,
+      latestSchedulerFailureByCampaignId,
       latestRunByCampaignId,
       runRegistry,
       suppressionRegistry,
@@ -167,6 +353,23 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
             <div className='text-[11px] text-gray-500'>
               {row.original.isLaunchReady ? 'Ready to launch' : 'Blocked by launch conditions'}
             </div>
+            <div className='text-[11px] text-gray-500 capitalize'>
+              Automation: {row.original.campaign.launch.mode}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Next due:{' '}
+              {row.original.nextAutomationAt
+                ? formatTimestamp(row.original.nextAutomationAt)
+                : 'Manual only'}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Last checked: {formatTimestamp(row.original.campaign.lastEvaluatedAt)}
+            </div>
+            {row.original.schedulerFailureMessage ? (
+              <div className='text-[11px] text-rose-400'>
+                Scheduler failure: {row.original.schedulerFailureMessage}
+              </div>
+            ) : null}
           </div>
         ),
       },
@@ -297,57 +500,90 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
               >
                 Edit Campaign
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  void handleDuplicateCampaign(row.original.campaign);
+                }}
+              >
+                Duplicate Campaign
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  void handleToggleArchiveCampaign(row.original.campaign);
+                }}
+              >
+                {row.original.campaign.status === 'archived' ? 'Restore Draft' : 'Archive Campaign'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  handleDeleteCampaign(row.original.campaign);
+                }}
+              >
+                Delete Campaign
+              </DropdownMenuItem>
             </ActionMenu>
           </div>
         ),
       },
     ],
-    [deliveryRegistry, router]
+    [
+      deliveryRegistry,
+      handleDeleteCampaign,
+      handleDuplicateCampaign,
+      handleToggleArchiveCampaign,
+      router,
+    ]
   );
 
   const launchReadyCount = rows.filter((row: CampaignRow): boolean => row.isLaunchReady).length;
 
   return (
-    <FilemakerEntityTablePage
-      title='Filemaker Campaigns'
-      description='Build campaign content, configure launch conditions, preview the audience, and monitor delivery runs.'
-      icon={<Megaphone className='size-4' />}
-      actions={[
-        {
-          key: 'create',
-          label: 'New Campaign',
-          icon: <Megaphone className='size-4' />,
-          onClick: (): void => {
-            router.push('/admin/filemaker/campaigns/new');
+    <>
+      <FilemakerEntityTablePage
+        title='Filemaker Campaigns'
+        description='Build campaign content, configure launch conditions, preview the audience, and monitor delivery runs.'
+        icon={<Megaphone className='size-4' />}
+        actions={[
+          {
+            key: 'create',
+            label: 'New Campaign',
+            icon: <Megaphone className='size-4' />,
+            onClick: (): void => {
+              router.push('/admin/filemaker/campaigns/new');
+            },
           },
-        },
-        ...buildFilemakerNavActions(router, 'campaigns'),
-      ]}
-      badges={
-        <>
-          <Badge variant='outline' className='text-[10px]'>
-            Campaigns: {rows.length}
-          </Badge>
-          <Badge variant='outline' className='text-[10px]'>
-            Runs: {runRegistry.runs.length}
-          </Badge>
-          <Badge variant='outline' className='text-[10px]'>
-            Ready: {launchReadyCount}
-          </Badge>
-        </>
-      }
-      query={query}
-      onQueryChange={setQuery}
-      queryPlaceholder='Search campaign name, subject, or status...'
-      columns={columns}
-      data={rows}
-      isLoading={settingsStore.isLoading}
-      emptyTitle={query ? 'No campaigns found' : 'No campaigns yet'}
-      emptyDescription={
-        query
-          ? 'Try adjusting your search terms.'
-          : 'Create your first Filemaker email campaign to start previewing audiences and monitoring runs.'
-      }
-    />
+          ...buildFilemakerNavActions(router, 'campaigns'),
+        ]}
+        badges={
+          <>
+            <Badge variant='outline' className='text-[10px]'>
+              Campaigns: {rows.length}
+            </Badge>
+            <Badge variant='outline' className='text-[10px]'>
+              Runs: {runRegistry.runs.length}
+            </Badge>
+            <Badge variant='outline' className='text-[10px]'>
+              Ready: {launchReadyCount}
+            </Badge>
+          </>
+        }
+        query={query}
+        onQueryChange={setQuery}
+        queryPlaceholder='Search campaign name, subject, or status...'
+        columns={columns}
+        data={rows}
+        isLoading={settingsStore.isLoading}
+        emptyTitle={query ? 'No campaigns found' : 'No campaigns yet'}
+        emptyDescription={
+          query
+            ? 'Try adjusting your search terms.'
+            : 'Create your first Filemaker email campaign to start previewing audiences and monitoring runs.'
+        }
+      />
+      <ConfirmationModal />
+    </>
   );
 }

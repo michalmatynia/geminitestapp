@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type {
   VectorOverlayResult,
@@ -11,12 +11,12 @@ import { internalError } from '@/shared/errors/app-error';
 
 export type { VectorOverlayResult, VectorOverlayRequest, VectorOverlayValue };
 
-export const VectorOverlayContext = createContext<VectorOverlayValue | undefined>(undefined);
+const { Context: VectorOverlayContext, useStrictContext: useVectorOverlay } =
+  createStrictContext<VectorOverlayValue>({
+    hookName: 'useVectorOverlay',
+    providerName: 'PageBuilderProvider',
+    displayName: 'VectorOverlayContext',
+    errorFactory: internalError,
+  });
 
-export function useVectorOverlay(): VectorOverlayValue {
-  const context = useContext(VectorOverlayContext);
-  if (!context) {
-    throw internalError('useVectorOverlay must be used within PageBuilderProvider');
-  }
-  return context;
-}
+export { VectorOverlayContext, useVectorOverlay };

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
 import { CaseResolverHistoryEntries } from '@/features/case-resolver/components/page/CaseResolverHistoryEntries';
 import { CaseResolverHistoryEntriesRuntimeProvider } from '@/features/case-resolver/components/page/CaseResolverHistoryEntriesRuntimeContext';
 

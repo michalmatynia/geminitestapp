@@ -1,17 +1,13 @@
-import type {
-  Catalog,
-  PriceGroupWithDetails,
-  ProductDraft,
-  ProductWithImages,
-} from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
+import type { PriceGroupWithDetails, ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ProductAiRunFeedback } from '@/features/products/lib/product-ai-run-feedback';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 
 import type { ColumnDef, OnChangeFn, Row, RowSelectionState } from '@tanstack/react-table';
 import type { ReactNode, ProfilerOnRenderCallback } from 'react';
-
-
 
 export interface ProductListContextType {
   onCreateProduct: () => void;
@@ -58,6 +54,8 @@ export interface ProductListContextType {
   setEndDate: (value: string) => void;
   advancedFilter: string;
   activeAdvancedFilterPresetId: string | null;
+  advancedFilterPresets: ProductAdvancedFilterPreset[];
+  setAdvancedFilterPresets: (presets: ProductAdvancedFilterPreset[]) => Promise<void>;
   setAdvancedFilter: (value: string) => void;
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
@@ -90,13 +88,16 @@ export interface ProductListContextType {
   onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (
     row: ProductWithImages,
-    recoveryContext?: ProductListingsRecoveryContext
+    recoveryContext?: ProductListingsRecoveryContext,
+    filterIntegrationSlug?: string | null
   ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeIds: Set<string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
   productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
   categoryNameById: ReadonlyMap<string, string>;
@@ -120,12 +121,19 @@ export interface ProductListContextType {
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
   integrationsRecoveryContext: ProductListingsRecoveryContext | null;
+  integrationsFilterIntegrationSlug: string | null;
   onCloseIntegrations: () => void;
-  onStartListing: (integrationId: string, connectionId: string) => void;
+  onStartListing: (
+    integrationId: string,
+    connectionId: string,
+    options?: { autoSubmit?: boolean }
+  ) => void;
   showListProductModal: boolean;
   onCloseListProduct: () => void;
   onListProductSuccess: () => void;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
+  listProductPreset:
+    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
+    | null;
   exportSettingsProduct: ProductWithImages | null;
   onCloseExportSettings: () => void;
   onListingsUpdated: () => void;
@@ -180,6 +188,8 @@ export interface ProductListFiltersContextType {
   setEndDate: (value: string) => void;
   advancedFilter: string;
   activeAdvancedFilterPresetId: string | null;
+  advancedFilterPresets: ProductAdvancedFilterPreset[];
+  setAdvancedFilterPresets: (presets: ProductAdvancedFilterPreset[]) => Promise<void>;
   setAdvancedFilter: (value: string) => void;
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
@@ -231,7 +241,8 @@ export interface ProductListActionsContextType {
   onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (
     row: ProductWithImages,
-    recoveryContext?: ProductListingsRecoveryContext
+    recoveryContext?: ProductListingsRecoveryContext,
+    filterIntegrationSlug?: string | null
   ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   categoryNameById: ReadonlyMap<string, string>;
@@ -245,6 +256,7 @@ export interface ProductListHeaderActionsContextType {
   activeDrafts: ProductDraft[];
   showTriggerRunFeedback: boolean;
   setShowTriggerRunFeedback: (show: boolean) => void;
+  triggerButtonsReady: boolean;
 }
 
 export interface ProductListRowActionsContextType {
@@ -255,7 +267,8 @@ export interface ProductListRowActionsContextType {
   onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (
     row: ProductWithImages,
-    recoveryContext?: ProductListingsRecoveryContext
+    recoveryContext?: ProductListingsRecoveryContext,
+    filterIntegrationSlug?: string | null
   ) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
 }
@@ -267,6 +280,7 @@ export interface ProductListRowVisualsContextType {
   categoryNameById: ReadonlyMap<string, string>;
   thumbnailSource: 'file' | 'link' | 'base64';
   showTriggerRunFeedback: boolean;
+  triggerButtonsReady: boolean;
   imageExternalBaseUrl: string | null;
 }
 
@@ -275,6 +289,8 @@ export interface ProductListRowRuntimeContextType {
   integrationStatus: string;
   showTraderaBadge: boolean;
   traderaStatus: string;
+  showPlaywrightProgrammableBadge: boolean;
+  playwrightProgrammableStatus: string;
   productAiRunFeedback: ProductAiRunFeedback | null;
 }
 
@@ -295,12 +311,19 @@ export interface ProductListModalsContextType {
   onEditSave: (saved: ProductWithImages) => void;
   integrationsProduct: ProductWithImages | null;
   integrationsRecoveryContext: ProductListingsRecoveryContext | null;
+  integrationsFilterIntegrationSlug: string | null;
   onCloseIntegrations: () => void;
-  onStartListing: (integrationId: string, connectionId: string) => void;
+  onStartListing: (
+    integrationId: string,
+    connectionId: string,
+    options?: { autoSubmit?: boolean }
+  ) => void;
   showListProductModal: boolean;
   onCloseListProduct: () => void;
   onListProductSuccess: () => void;
-  listProductPreset: { integrationId: string; connectionId: string } | null;
+  listProductPreset:
+    | { integrationId: string; connectionId: string; autoSubmit?: boolean }
+    | null;
   exportSettingsProduct: ProductWithImages | null;
   onCloseExportSettings: () => void;
   onListingsUpdated: () => void;

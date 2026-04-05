@@ -167,7 +167,7 @@ const getSubtractingGardenFallbackCopy = (
     moveToCloud: 'Do chmury',
     remainingLabel: (value) => `Zostało: ${value}`,
     removedLabel: (value, target) => `Zabrane: ${value}/${target}`,
-    takeAwayInstruction: (count) => `Zabierz ${count} swiecacych punktów`,
+    takeAwayInstruction: (count) => `Zabierz ${count} świecących punktów`,
     targetLabel: (value) => `Cel: zabierz ${value}`,
   };
 };

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
-import type { IntegrationDisconnectResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { IntegrationDisconnectResponse } from '@/shared/contracts/integrations/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

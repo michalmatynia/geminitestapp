@@ -24,7 +24,7 @@ import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
-import type { UploadedImageBinaryDto as UploadedClientAutoScaleImage } from '@/shared/contracts/image-studio';
+import type { UploadedImageBinaryDto as UploadedClientAutoScaleImage } from '@/shared/contracts/image-studio/base';
 
 import {
   autoScaleBadRequest,

@@ -1,7 +1,9 @@
 import React from 'react';
 
 import type { PromptAutofixOperation } from '@/shared/lib/prompt-engine/settings';
-import { Button, Card, FormField, Hint, Input, StatusBadge } from '@/shared/ui';
+import { Button, Card, Input } from '@/shared/ui/primitives.public';
+import { FormField, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { useRuleItemContext } from './context/RuleItemContext';
 import { formatAutofixOperation } from './rule-item-utils';

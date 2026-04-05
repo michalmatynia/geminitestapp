@@ -1,9 +1,5 @@
-import type {
-  BaseImportErrorClass,
-  BaseImportErrorCode,
-  BaseImportRunRecord,
-} from '@/shared/contracts/integrations';
-import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
+import type { BaseImportErrorClass, BaseImportErrorCode, BaseImportRunRecord } from '@/shared/contracts/integrations/base-com';
+import { AppErrorCodes, isAppError, type AppError } from '@/shared/errors/app-error';
 
 import {
   BASE_IMPORT_RETRY_BASE_DELAY_MS,
@@ -29,6 +25,178 @@ const withRetryAfter = (
   };
 };
 
+const buildClassifiedBaseImportError = (input: {
+  code: BaseImportErrorCode;
+  errorClass: BaseImportErrorClass;
+  retryable: boolean;
+  message: string;
+  retryAfterMs?: number;
+}): ClassifiedBaseImportError =>
+  withRetryAfter(
+    {
+      code: input.code,
+      errorClass: input.errorClass,
+      retryable: input.retryable,
+      message: input.message,
+    },
+    input.retryAfterMs
+  );
+
+const matchesAll = (value: string, parts: string[]): boolean =>
+  parts.every((part) => value.includes(part));
+
+const buildUnexpectedImportError = (message: string): ClassifiedBaseImportError =>
+  buildClassifiedBaseImportError({
+    code: 'UNEXPECTED_ERROR',
+    errorClass: 'transient',
+    retryable: true,
+    message,
+  });
+
+const classifyKnownAppImportError = (error: AppError): ClassifiedBaseImportError | null => {
+  const message = error.message || 'Import error';
+
+  switch (error.code) {
+    case AppErrorCodes.timeout:
+      return buildClassifiedBaseImportError({
+        code: 'TIMEOUT',
+        errorClass: 'transient',
+        retryable: true,
+        message,
+        retryAfterMs: error.retryAfterMs,
+      });
+    case AppErrorCodes.rateLimited:
+      return buildClassifiedBaseImportError({
+        code: 'RATE_LIMITED',
+        errorClass: 'transient',
+        retryable: true,
+        message,
+        retryAfterMs: error.retryAfterMs,
+      });
+    case AppErrorCodes.externalService:
+      return buildClassifiedBaseImportError({
+        code: 'BASE_FETCH_ERROR',
+        errorClass: error.retryable ? 'transient' : 'permanent',
+        retryable: error.retryable,
+        message,
+        retryAfterMs: error.retryAfterMs,
+      });
+    case AppErrorCodes.configurationError:
+      return buildClassifiedBaseImportError({
+        code: 'PRECHECK_FAILED',
+        errorClass: 'configuration',
+        retryable: false,
+        message,
+      });
+    case AppErrorCodes.validation:
+      return buildClassifiedBaseImportError({
+        code: 'VALIDATION_ERROR',
+        errorClass: 'permanent',
+        retryable: false,
+        message,
+      });
+    default:
+      return null;
+  }
+};
+
+const ERROR_MESSAGE_CLASSIFIERS: Array<{
+  code: BaseImportErrorCode;
+  errorClass: BaseImportErrorClass;
+  retryable: boolean;
+  matches: (normalized: string) => boolean;
+}> = [
+  {
+    code: 'TIMEOUT',
+    errorClass: 'transient',
+    retryable: true,
+    matches: (normalized) => normalized.includes('timed out') || normalized.includes('timeout'),
+  },
+  {
+    code: 'NETWORK_ERROR',
+    errorClass: 'transient',
+    retryable: true,
+    matches: (normalized) =>
+      ['econnreset', 'econnrefused', 'network', 'fetch failed'].some((part) =>
+        normalized.includes(part)
+      ),
+  },
+  {
+    code: 'VALIDATION_ERROR',
+    errorClass: 'permanent',
+    retryable: false,
+    matches: (normalized) => normalized.includes('validation'),
+  },
+  {
+    code: 'DUPLICATE_SKU',
+    errorClass: 'permanent',
+    retryable: false,
+    matches: (normalized) =>
+      matchesAll(normalized, ['duplicate', 'sku']) || matchesAll(normalized, ['sku', 'unique']),
+  },
+  {
+    code: 'BASE_FETCH_ERROR',
+    errorClass: 'transient',
+    retryable: true,
+    matches: (normalized) => matchesAll(normalized, ['base', 'fetch']),
+  },
+  {
+    code: 'MISSING_BASE_ID',
+    errorClass: 'permanent',
+    retryable: false,
+    matches: (normalized) => matchesAll(normalized, ['missing', 'base']),
+  },
+  {
+    code: 'MISSING_SKU',
+    errorClass: 'permanent',
+    retryable: false,
+    matches: (normalized) => matchesAll(normalized, ['missing', 'sku']),
+  },
+  {
+    code: 'MISSING_CATALOG',
+    errorClass: 'configuration',
+    retryable: false,
+    matches: (normalized) => normalized.includes('catalog'),
+  },
+  {
+    code: 'MISSING_PRICE_GROUP',
+    errorClass: 'configuration',
+    retryable: false,
+    matches: (normalized) => normalized.includes('price group'),
+  },
+  {
+    code: 'LINKING_ERROR',
+    errorClass: 'transient',
+    retryable: true,
+    matches: (normalized) => normalized.includes('link'),
+  },
+  {
+    code: 'CONFLICT',
+    errorClass: 'permanent',
+    retryable: false,
+    matches: (normalized) => normalized.includes('conflict'),
+  },
+];
+
+const classifyErrorMessage = (message: string): ClassifiedBaseImportError => {
+  const normalized = message.toLowerCase();
+  const matchedClassifier = ERROR_MESSAGE_CLASSIFIERS.find(({ matches }) => matches(normalized));
+  return matchedClassifier
+    ? buildClassifiedBaseImportError({
+      code: matchedClassifier.code,
+      errorClass: matchedClassifier.errorClass,
+      retryable: matchedClassifier.retryable,
+      message,
+    })
+    : buildUnexpectedImportError(message);
+};
+
+const hasBaseImportSuccess = (stats: BaseImportRunRecord['stats']): boolean =>
+  (stats?.imported ?? 0) > 0 || (stats?.updated ?? 0) > 0 || (stats?.skipped ?? 0) > 0;
+
+const hasBaseImportFailures = (stats: BaseImportRunRecord['stats']): boolean =>
+  (stats?.failed ?? 0) > 0;
+
 export const buildSummaryMessage = (
   stats: BaseImportRunRecord['stats'],
   dryRun: boolean
@@ -39,194 +207,26 @@ export const buildSummaryMessage = (
 
 export const classifyBaseImportError = (error: unknown): ClassifiedBaseImportError => {
   if (!error) {
-    return {
-      code: 'UNEXPECTED_ERROR',
-      errorClass: 'transient',
-      retryable: true,
-      message: 'Unexpected empty error payload.',
-    };
+    return buildUnexpectedImportError('Unexpected empty error payload.');
   }
 
   if (isAppError(error)) {
-    const message = error.message || 'Import error';
-    if (error.code === AppErrorCodes.timeout) {
-      return withRetryAfter(
-        {
-          code: 'TIMEOUT',
-          errorClass: 'transient',
-          retryable: true,
-          message,
-        },
-        error.retryAfterMs
-      );
-    }
-    if (error.code === AppErrorCodes.rateLimited) {
-      return withRetryAfter(
-        {
-          code: 'RATE_LIMITED',
-          errorClass: 'transient',
-          retryable: true,
-          message,
-        },
-        error.retryAfterMs
-      );
-    }
-    if (error.code === AppErrorCodes.externalService) {
-      return withRetryAfter(
-        {
-          code: 'BASE_FETCH_ERROR',
-          errorClass: error.retryable ? 'transient' : 'permanent',
-          retryable: error.retryable,
-          message,
-        },
-        error.retryAfterMs
-      );
-    }
-    if (error.code === AppErrorCodes.configurationError) {
-      return {
-        code: 'PRECHECK_FAILED',
-        errorClass: 'configuration',
-        retryable: false,
-        message,
-      };
-    }
-    if (error.code === AppErrorCodes.validation) {
-      return {
-        code: 'VALIDATION_ERROR',
-        errorClass: 'permanent',
-        retryable: false,
-        message,
-      };
-    }
+    return classifyKnownAppImportError(error) ?? buildUnexpectedImportError(error.message || 'Import error');
   }
 
   if (error instanceof Error) {
-    const message = error.message;
-    const normalized = message.toLowerCase();
-    if (normalized.includes('timed out') || normalized.includes('timeout')) {
-      return {
-        code: 'TIMEOUT',
-        errorClass: 'transient',
-        retryable: true,
-        message,
-      };
-    }
-    if (
-      normalized.includes('econnreset') ||
-      normalized.includes('econnrefused') ||
-      normalized.includes('network') ||
-      normalized.includes('fetch failed')
-    ) {
-      return {
-        code: 'NETWORK_ERROR',
-        errorClass: 'transient',
-        retryable: true,
-        message,
-      };
-    }
-    if (normalized.includes('validation')) {
-      return {
-        code: 'VALIDATION_ERROR',
-        errorClass: 'permanent',
-        retryable: false,
-        message,
-      };
-    }
-    if (normalized.includes('duplicate') && normalized.includes('sku')) {
-      return {
-        code: 'DUPLICATE_SKU',
-        errorClass: 'permanent',
-        retryable: false,
-        message,
-      };
-    }
-    if (normalized.includes('sku') && normalized.includes('unique')) {
-      return {
-        code: 'DUPLICATE_SKU',
-        errorClass: 'permanent',
-        retryable: false,
-        message,
-      };
-    }
-    if (normalized.includes('base') && normalized.includes('fetch')) {
-      return {
-        code: 'BASE_FETCH_ERROR',
-        errorClass: 'transient',
-        retryable: true,
-        message,
-      };
-    }
-    if (normalized.includes('missing') && normalized.includes('base')) {
-      return {
-        code: 'MISSING_BASE_ID',
-        errorClass: 'permanent',
-        retryable: false,
-        message,
-      };
-    }
-    if (normalized.includes('missing') && normalized.includes('sku')) {
-      return {
-        code: 'MISSING_SKU',
-        errorClass: 'permanent',
-        retryable: false,
-        message,
-      };
-    }
-    if (normalized.includes('catalog')) {
-      return {
-        code: 'MISSING_CATALOG',
-        errorClass: 'configuration',
-        retryable: false,
-        message,
-      };
-    }
-    if (normalized.includes('price group')) {
-      return {
-        code: 'MISSING_PRICE_GROUP',
-        errorClass: 'configuration',
-        retryable: false,
-        message,
-      };
-    }
-    if (normalized.includes('link')) {
-      return {
-        code: 'LINKING_ERROR',
-        errorClass: 'transient',
-        retryable: true,
-        message,
-      };
-    }
-    if (normalized.includes('conflict')) {
-      return {
-        code: 'CONFLICT',
-        errorClass: 'permanent',
-        retryable: false,
-        message,
-      };
-    }
-    return {
-      code: 'UNEXPECTED_ERROR',
-      errorClass: 'transient',
-      retryable: true,
-      message,
-    };
+    return classifyErrorMessage(error.message);
   }
 
-  return {
-    code: 'UNEXPECTED_ERROR',
-    errorClass: 'transient',
-    retryable: true,
-    message: 'Unexpected import error.',
-  };
+  return buildUnexpectedImportError('Unexpected import error.');
 };
 
 export const determineBaseImportTerminalStatus = (
   stats: BaseImportRunRecord['stats'],
   options?: { hasPendingItems?: boolean }
 ): BaseImportRunRecord['status'] => {
-  const hadFailures = (stats?.failed ?? 0) > 0;
-  const hadSuccess =
-    (stats?.imported ?? 0) > 0 || (stats?.updated ?? 0) > 0 || (stats?.skipped ?? 0) > 0;
+  const hadFailures = hasBaseImportFailures(stats);
+  const hadSuccess = hasBaseImportSuccess(stats);
   if (options?.hasPendingItems) {
     return hadSuccess ? 'partial_success' : 'failed';
   }

@@ -13,15 +13,15 @@ import {
   ADMIN_MENU_SECTION_COLORS_KEY,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
   useUpdateSettingsBulk: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),

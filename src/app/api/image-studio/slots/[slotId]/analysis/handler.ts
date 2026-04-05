@@ -15,7 +15,7 @@ import {
 } from '@/features/ai/image-studio/server/source-image-utils';
 import { getImageStudioSlotById, type StudioSlotRecord } from '@/features/ai/server';
 import type { UploadedClientAnalysisImage } from '@/shared/contracts/image-studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

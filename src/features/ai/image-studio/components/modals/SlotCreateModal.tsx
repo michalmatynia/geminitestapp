@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { useStudioImportContext } from '../studio-modals/StudioImportContext';

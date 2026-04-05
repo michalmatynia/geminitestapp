@@ -58,16 +58,16 @@ export const DEFAULT_CALENDAR_CONTENT_SET_SECTION: KangurCalendarInteractiveSect
 export const DEFAULT_LOGICAL_PATTERN_SET_ID: KangurLogicalPatternSetId = 'logical_patterns_workshop';
 
 export const GAMES_LIBRARY_MODAL_SECTION_SURFACE_CLASSNAME =
-  'rounded-[1.5rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))] shadow-[0_18px_48px_-42px_rgba(15,23,42,0.42)]';
+  'overflow-hidden rounded-[1.35rem] border border-[color:var(--kangur-page-border)] bg-[var(--kangur-soft-card-background,#ffffff)] shadow-[0_20px_48px_-36px_rgba(15,23,42,0.18)]';
 
 export const GAMES_LIBRARY_MODAL_FIELD_SURFACE_CLASSNAME =
-  'rounded-2xl border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_97%,white)]';
+  'rounded-[1rem] border border-[color:var(--kangur-page-border)] bg-[var(--kangur-page-background,#f8fafc)]';
 
 export const GAMES_LIBRARY_MODAL_EMPTY_STATE_CLASSNAME =
-  'rounded-[1.5rem] border border-dashed border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_82%,var(--kangur-page-background))] px-4 py-8 text-center text-sm [color:var(--kangur-page-muted-text)]';
+  'rounded-[1.25rem] border border-dashed border-[color:var(--kangur-page-border)] bg-[var(--kangur-page-background,#f8fafc)] px-4 py-8 text-center text-sm [color:var(--kangur-page-muted-text)]';
 
 export const GAMES_LIBRARY_MODAL_STAT_CARD_CLASSNAME =
-  'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,white)] px-3 py-3';
+  'rounded-[1rem] border border-[color:var(--kangur-page-border)] bg-[var(--kangur-soft-card-background,#ffffff)] px-3 py-3 shadow-[0_14px_32px_-30px_rgba(15,23,42,0.16)]';
 
 export const resolveModalAgeGroupAccent = (
   ageGroup: KangurGameDefinition['ageGroup']
@@ -197,7 +197,7 @@ const resolveEditorStateAttachedLessonId = (
   section: KangurLessonGameSection | null,
   nextGame: KangurGameDefinition
 ): KangurLessonComponentId | null =>
-  (section?.lessonComponentId ?? nextGame.lessonComponentIds[0] ?? null) as KangurLessonComponentId | null;
+  (section?.lessonComponentId ?? nextGame.lessonComponentIds[0] ?? null);
 
 const resolveEditorStateIcon = (
   section: KangurLessonGameSection | null,

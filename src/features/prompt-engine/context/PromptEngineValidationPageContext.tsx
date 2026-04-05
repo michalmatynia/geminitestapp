@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
 
 import type { ExploderPatternSubTab, PatternCollectionTab } from './PromptEngineContext';
@@ -22,8 +23,14 @@ export type PromptEngineValidationPageContextValue = {
   lockedScope?: PromptEngineScopeFilter;
 };
 
-const PromptEngineValidationPageContext =
-  React.createContext<PromptEngineValidationPageContextValue | null>(null);
+export const {
+  Context: PromptEngineValidationPageContext,
+  useOptionalContext: useOptionalPromptEngineValidationPageContext,
+} = createStrictContext<PromptEngineValidationPageContextValue>({
+  hookName: 'usePromptEngineValidationPageContext',
+  providerName: 'a PromptEngineValidationPageProvider',
+  displayName: 'PromptEngineValidationPageContext',
+});
 
 type PromptEngineValidationPageProviderProps = {
   value: PromptEngineValidationPageContextValue;
@@ -39,8 +46,4 @@ export function PromptEngineValidationPageProvider({
       {children}
     </PromptEngineValidationPageContext.Provider>
   );
-}
-
-export function useOptionalPromptEngineValidationPageContext(): PromptEngineValidationPageContextValue | null {
-  return React.useContext(PromptEngineValidationPageContext);
 }

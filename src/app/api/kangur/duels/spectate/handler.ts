@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getKangurDuelSpectatorState } from '@/features/kangur/duels/server';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

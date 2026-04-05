@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { portablePathJsonSchemaKindQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
   PORTABLE_PATH_JSON_SCHEMA_KINDS,

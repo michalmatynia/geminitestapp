@@ -5,3 +5,4 @@ export {
   startFilemakerEmailCampaignQueue,
   stopFilemakerEmailCampaignQueue,
 } from '@/features/filemaker/workers/filemakerEmailCampaignQueue';
+export { startFilemakerEmailCampaignSchedulerQueue } from '@/features/filemaker/workers/filemakerEmailCampaignSchedulerQueue';

@@ -7,10 +7,7 @@ import {
   updateImageStudioSlot,
   type ImageStudioSlotRecord,
 } from '@/features/ai/image-studio/server';
-import {
-  type ProductStudioSequencingConfig,
-  type ProductWithImages,
-} from '@/shared/contracts/products';
+import { type ProductStudioSequencingConfig, type ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { uploadFile } from '@/shared/lib/files/file-uploader';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';

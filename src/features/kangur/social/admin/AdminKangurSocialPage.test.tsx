@@ -14,6 +14,10 @@ const { usePlaywrightPersonasMock } = vi.hoisted(() => ({
   usePlaywrightPersonasMock: vi.fn(),
 }));
 
+const { useKangurSocialImageAddonsBatchJobsMock } = vi.hoisted(() => ({
+  useKangurSocialImageAddonsBatchJobsMock: vi.fn(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -167,6 +171,9 @@ vi.mock('@/features/kangur/shared/ui', () => ({
   }: {
     children: React.ReactNode;
   }) => <div>{children}</div>,
+  useToast: () => ({
+    toast: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/kangur/shared/ui/templates/modals', () => ({
@@ -205,6 +212,11 @@ vi.mock('./workspace/AdminKangurSocialPage.hooks', () => ({
 
 vi.mock('@/shared/hooks/usePlaywrightPersonas', () => ({
   usePlaywrightPersonas: (...args: unknown[]) => usePlaywrightPersonasMock(...args),
+}));
+
+vi.mock('@/features/kangur/social/hooks/useKangurSocialImageAddons', () => ({
+  useKangurSocialImageAddonsBatchJobs: (...args: unknown[]) =>
+    useKangurSocialImageAddonsBatchJobsMock(...args),
 }));
 
 vi.mock('./workspace/SocialPost.List', async () => {
@@ -305,6 +317,10 @@ vi.mock('./workspace/KangurSocialPipelineQueuePanel', () => ({
   ),
 }));
 
+vi.mock('./workspace/social-settings-modal/SocialSettingsContentBrowserTab', () => ({
+  SocialSettingsContentBrowserTab: () => <div>Content browser</div>,
+}));
+
 import { AdminKangurSocialPage } from './AdminKangurSocialPage';
 
 const buildPost = () => ({
@@ -391,6 +407,8 @@ const buildHookState = () => ({
   effectiveBatchCapturePresetCount: 0,
   batchCaptureResult: null,
   batchCaptureJob: null,
+  batchCaptureRecentJobs: [],
+  batchCaptureRecentJobsLoading: false,
   hasSavedProgrammableCaptureDefaults: false,
   persistedProgrammableCaptureBaseUrl: null,
   persistedProgrammableCapturePersonaId: null,
@@ -478,6 +496,8 @@ const buildHookState = () => ({
   programmableCaptureMessage: null,
   programmableCaptureErrorMessage: null,
   handleCaptureImagesOnly: vi.fn(),
+  isVisualAnalysisModalOpen: false,
+  isProgrammablePlaywrightModalOpen: false,
   publishingPostId: null,
   unpublishingPostId: null,
   contextSummary: null,
@@ -496,6 +516,10 @@ describe('AdminKangurSocialPage', () => {
       isLoading: false,
       error: null,
     });
+    useKangurSocialImageAddonsBatchJobsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
     useAdminKangurSocialPageMock.mockReturnValue(buildHookState());
   });
 
@@ -512,13 +536,44 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByTestId('social-post-list')).toBeInTheDocument();
     expect(screen.getByTestId('social-post-pipeline')).toBeInTheDocument();
     expect(screen.getByTestId('kangur-social-pipeline-queue')).toBeInTheDocument();
-    expect(screen.getByTestId('social-post-editor-modal')).toHaveAttribute('data-open', 'false');
+    expect(screen.queryByTestId('social-post-editor-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('social-post-visual-analysis-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('social-post-playwright-capture-modal')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New draft' })).toBeInTheDocument();
 
     expect(screen.queryByRole('dialog', { name: 'Social Settings' })).not.toBeInTheDocument();
   });
 
-  it('renders the shared page loader while the social workspace is loading', () => {
+  it('keeps batch capture history disabled until settings are opened', () => {
+    render(<AdminKangurSocialPage />);
+
+    expect(useKangurSocialImageAddonsBatchJobsMock).toHaveBeenLastCalledWith({
+      limit: 5,
+      enabled: false,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+
+    expect(useKangurSocialImageAddonsBatchJobsMock).toHaveBeenLastCalledWith({
+      limit: 5,
+      enabled: true,
+    });
+  });
+
+  it('loads batch capture history when programmable capture is already open', () => {
+    const hookState = buildHookState();
+    hookState.isProgrammablePlaywrightModalOpen = true;
+    useAdminKangurSocialPageMock.mockReturnValue(hookState);
+
+    render(<AdminKangurSocialPage />);
+
+    expect(useKangurSocialImageAddonsBatchJobsMock).toHaveBeenLastCalledWith({
+      limit: 5,
+      enabled: true,
+    });
+  });
+
+  it('keeps the list visible while the active social workspace detail is still loading', () => {
     useAdminKangurSocialPageMock.mockReturnValue({
       ...buildHookState(),
       posts: [],
@@ -531,8 +586,10 @@ describe('AdminKangurSocialPage', () => {
 
     render(<AdminKangurSocialPage />);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading StudiQ Social...');
-    expect(screen.queryByTestId('social-post-list')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Select a social post to open its pipeline workspace.'
+    );
+    expect(screen.getByTestId('social-post-list')).toBeInTheDocument();
     expect(screen.queryByTestId('social-post-pipeline')).not.toBeInTheDocument();
   });
 
@@ -567,7 +624,7 @@ describe('AdminKangurSocialPage', () => {
     expect(screen.getByText('Batch capture preview')).toBeInTheDocument();
 
     expect(screen.getByTestId('social-post-list')).toBeInTheDocument();
-    expect(screen.getByTestId('social-post-editor-modal')).toHaveAttribute('data-open', 'false');
+    expect(screen.queryByTestId('social-post-editor-modal')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New draft' })).toBeInTheDocument();
   });
 
@@ -631,7 +688,7 @@ describe('AdminKangurSocialPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open other post row' }));
 
     expect(setActivePostId).not.toHaveBeenCalled();
-    expect(screen.getByTestId('social-post-editor-modal')).toHaveAttribute('data-open', 'false');
+    expect(screen.queryByTestId('social-post-editor-modal')).not.toBeInTheDocument();
   });
 
   it('does not render the old header-level runtime job strip for the active Social draft', () => {

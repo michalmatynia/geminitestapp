@@ -19,22 +19,23 @@ import {
 } from '@/features/products/validation-engine/core';
 import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
 import { resolveValidatorFieldReplacement } from '@/features/products/lib/resolveValidatorFieldReplacement';
-import {
-  ProductFormData,
-  CatalogRecord,
-  PriceGroupWithDetails,
-  ProductCategory,
-} from '@/shared/contracts/products';
+import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import { PriceGroupWithDetails } from '@/shared/contracts/products/product';
+import { ProductCategory } from '@/shared/contracts/products/categories';
+import { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
+import { resolveEffectiveShippingGroup } from '@/shared/lib/products/utils/effective-shipping-group';
 import {
-  Button,
-  SelectSimple,
-  FormSection,
-  FormField,
-  StandardDataTablePanel,
-  StatusBadge,
-  Alert,
-} from '@/features/products/ui';
+  buildCategoryPathLabelMap,
+  formatCategoryRuleSummary,
+} from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
+import { Alert } from '@/shared/ui/alert';
+import { Button } from '@/shared/ui/button';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { StatusBadge } from '@/shared/ui/status-badge';
+import { StandardDataTablePanel } from '@/shared/ui/templates/StandardDataTablePanel';
 
 import { ValidatedField } from './ValidatedField';
 import { ValidatorIssueHint } from './ValidatorIssueHint';
@@ -126,6 +127,8 @@ export default function ProductFormOther(): React.JSX.Element {
     categories,
     selectedCategoryId,
     setCategoryId,
+    shippingGroups,
+    shippingGroupsLoading,
     filteredPriceGroups,
   } = useProductFormMetadata();
 
@@ -138,6 +141,7 @@ export default function ProductFormOther(): React.JSX.Element {
   const { setValue, watch } = useFormContext<ProductFormData>();
   const basePrice = watch('price') || 0;
   const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
+  const selectedShippingGroupId = watch('shippingGroupId') || '';
 
   const selectedCategoryName = useMemo((): string => {
     if (!selectedCategoryId) return '';
@@ -165,6 +169,10 @@ export default function ProductFormOther(): React.JSX.Element {
     }
     return map;
   }, [categories]);
+  const categoryPathLabelById = useMemo(
+    () => buildCategoryPathLabelMap(categories),
+    [categories]
+  );
 
   // Check if price group is auto-assigned from catalog (for new products only)
   const isNewProduct = !product;
@@ -212,6 +220,111 @@ export default function ProductFormOther(): React.JSX.Element {
       })),
     [filteredPriceGroups]
   );
+  const shippingGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(
+    () => [
+      { value: '', label: 'No shipping group' },
+      ...shippingGroups.map((shippingGroup: ProductShippingGroup) => ({
+        value: shippingGroup.id,
+        label: shippingGroup.name,
+      })),
+    ],
+    [shippingGroups]
+  );
+  const selectedShippingGroup = useMemo(
+    () =>
+      shippingGroups.find(
+        (shippingGroup: ProductShippingGroup) => shippingGroup.id === selectedShippingGroupId
+      ) ?? null,
+    [selectedShippingGroupId, shippingGroups]
+  );
+  const effectiveShippingGroupResolution = useMemo(
+    () =>
+      resolveEffectiveShippingGroup({
+        product: {
+          shippingGroupId: selectedShippingGroupId || null,
+          categoryId: selectedCategoryId,
+          catalogId: selectedCatalogIds[0] || null,
+        },
+        shippingGroups,
+        categories,
+        manualShippingGroup: selectedShippingGroup,
+      }),
+    [categories, selectedCategoryId, selectedCatalogIds, selectedShippingGroup, selectedShippingGroupId, shippingGroups]
+  );
+  const automaticShippingGroupResolution = useMemo(
+    () =>
+      resolveEffectiveShippingGroup({
+        product: {
+          shippingGroupId: null,
+          categoryId: selectedCategoryId,
+          catalogId: selectedCatalogIds[0] || null,
+        },
+        shippingGroups,
+        categories,
+        manualShippingGroup: null,
+      }),
+    [categories, selectedCategoryId, selectedCatalogIds, shippingGroups]
+  );
+  const autoAssignedShippingGroup = useMemo(
+    () =>
+      !selectedShippingGroupId && effectiveShippingGroupResolution.source === 'category_rule'
+        ? effectiveShippingGroupResolution.shippingGroup
+        : null,
+    [effectiveShippingGroupResolution, selectedShippingGroupId]
+  );
+  const automaticCategoryRuleShippingGroup = useMemo(
+    () =>
+      automaticShippingGroupResolution.source === 'category_rule'
+        ? automaticShippingGroupResolution.shippingGroup
+        : null,
+    [automaticShippingGroupResolution]
+  );
+  const matchingAutoAssignedShippingGroups = useMemo(
+    () =>
+      effectiveShippingGroupResolution.reason === 'multiple_category_rules'
+        ? shippingGroups.filter((shippingGroup: ProductShippingGroup) =>
+            effectiveShippingGroupResolution.matchingShippingGroupIds.includes(shippingGroup.id)
+          )
+        : [],
+    [effectiveShippingGroupResolution, shippingGroups]
+  );
+  const matchingAutomaticCategoryRuleShippingGroups = useMemo(
+    () =>
+      automaticShippingGroupResolution.reason === 'multiple_category_rules'
+        ? shippingGroups.filter((shippingGroup: ProductShippingGroup) =>
+            automaticShippingGroupResolution.matchingShippingGroupIds.includes(shippingGroup.id)
+          )
+        : [],
+    [automaticShippingGroupResolution, shippingGroups]
+  );
+  const effectiveCategoryRuleSummary = useMemo(
+    () =>
+      formatCategoryRuleSummary({
+        categoryIds: effectiveShippingGroupResolution.matchedCategoryRuleIds,
+        categoryLabelById: categoryPathLabelById,
+      }),
+    [categoryPathLabelById, effectiveShippingGroupResolution.matchedCategoryRuleIds]
+  );
+  const automaticCategoryRuleSummary = useMemo(
+    () =>
+      formatCategoryRuleSummary({
+        categoryIds: automaticShippingGroupResolution.matchedCategoryRuleIds,
+        categoryLabelById: categoryPathLabelById,
+      }),
+    [automaticShippingGroupResolution.matchedCategoryRuleIds, categoryPathLabelById]
+  );
+  const isManualShippingGroupOverridingAutomaticCategoryRule =
+    Boolean(selectedShippingGroupId) &&
+    Boolean(selectedShippingGroup) &&
+    Boolean(automaticCategoryRuleShippingGroup) &&
+    automaticCategoryRuleShippingGroup?.id !== selectedShippingGroup?.id;
+  const isManualShippingGroupMissing =
+    Boolean(selectedShippingGroupId) && effectiveShippingGroupResolution.reason === 'manual_missing';
+  const isManualShippingGroupResolvingAutomaticRuleConflict =
+    Boolean(selectedShippingGroupId) &&
+    Boolean(selectedShippingGroup) &&
+    automaticShippingGroupResolution.reason === 'multiple_category_rules' &&
+    matchingAutomaticCategoryRuleShippingGroups.length > 0;
 
   return (
     <div className='space-y-6'>
@@ -383,6 +496,110 @@ export default function ProductFormOther(): React.JSX.Element {
                 Clear category
               </Button>
             </div>
+          ) : null}
+
+          <FormField
+            label='Shipping Group'
+            description={
+              autoAssignedShippingGroup
+                ? `Auto-assigned from category rule: ${autoAssignedShippingGroup.name}${
+                    effectiveCategoryRuleSummary ? ` via ${effectiveCategoryRuleSummary}` : ''
+                  }. Select a shipping group manually to override it.`
+                : 'Assign an internal shipping group to control marketplace delivery behavior later.'
+            }
+          >
+            <SelectSimple
+              size='sm'
+              value={selectedShippingGroupId}
+              onValueChange={(value: string): void =>
+                setValue('shippingGroupId', value, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                })
+              }
+              options={shippingGroupOptions}
+              placeholder={hasCatalogs ? 'Select shipping group' : 'Select a catalog first'}
+              disabled={!hasCatalogs || shippingGroupsLoading}
+              ariaLabel='Shipping group'
+              title='Shipping group'
+            />
+          </FormField>
+
+          {isManualShippingGroupMissing ? (
+            <Alert variant='warning' className='-mt-2'>
+              <p className='text-sm'>
+                The manually assigned shipping group no longer exists. Clear it or select a valid
+                shipping group.
+              </p>
+            </Alert>
+          ) : null}
+
+          {!selectedShippingGroupId && autoAssignedShippingGroup ? (
+            <Alert variant='info' className='-mt-2'>
+              <p className='text-sm'>
+                Products in this category currently resolve to{' '}
+                <strong>{autoAssignedShippingGroup.name}</strong> automatically
+                {effectiveCategoryRuleSummary ? (
+                  <>
+                    {' '}
+                    via <strong>{effectiveCategoryRuleSummary}</strong>
+                  </>
+                ) : null}
+                .
+              </p>
+            </Alert>
+          ) : null}
+
+          {!selectedShippingGroupId &&
+          effectiveShippingGroupResolution.reason === 'multiple_category_rules' &&
+          matchingAutoAssignedShippingGroups.length > 0 ? (
+            <Alert variant='warning' className='-mt-2'>
+              <p className='text-sm'>
+                Multiple shipping-group category rules match this product:{' '}
+                <strong>
+                  {matchingAutoAssignedShippingGroups
+                    .map((shippingGroup: ProductShippingGroup) => shippingGroup.name)
+                    .join(', ')}
+                </strong>
+                . Select a manual shipping group to break the tie.
+              </p>
+            </Alert>
+          ) : null}
+
+          {selectedShippingGroupId &&
+          selectedShippingGroup &&
+          isManualShippingGroupOverridingAutomaticCategoryRule &&
+          automaticCategoryRuleShippingGroup ? (
+            <Alert variant='info' className='-mt-2'>
+              <p className='text-sm'>
+                Manual shipping group <strong>{selectedShippingGroup.name}</strong> overrides the
+                category-based default <strong>{automaticCategoryRuleShippingGroup.name}</strong>
+                {automaticCategoryRuleSummary ? (
+                  <>
+                    {' '}
+                    from <strong>{automaticCategoryRuleSummary}</strong>
+                  </>
+                ) : null}
+                .
+              </p>
+            </Alert>
+          ) : null}
+
+          {selectedShippingGroupId &&
+          selectedShippingGroup &&
+          isManualShippingGroupResolvingAutomaticRuleConflict ? (
+            <Alert variant='info' className='-mt-2'>
+              <p className='text-sm'>
+                Manual shipping group <strong>{selectedShippingGroup.name}</strong> resolves
+                multiple matching category rules:{' '}
+                <strong>
+                  {matchingAutomaticCategoryRuleShippingGroups
+                    .map((shippingGroup: ProductShippingGroup) => shippingGroup.name)
+                    .join(', ')}
+                </strong>
+                .
+              </p>
+            </Alert>
           ) : null}
 
           <TagMultiSelectField

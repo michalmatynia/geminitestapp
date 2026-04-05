@@ -7,18 +7,10 @@ import {
   validate3DFileAsync,
   SUPPORTED_3D_FORMATS,
 } from '@/features/viewer3d/utils/validateAsset3d';
-import {
-  Button,
-  Input,
-  FileUploadTrigger,
-  Textarea,
-  Checkbox,
-  Tag,
-  FormField,
-  FormActions,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Input, Textarea, Checkbox } from '@/shared/ui/primitives.public';
+import { FileUploadTrigger, Tag, FormField, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { uploadAsset3DFile } from '../api';

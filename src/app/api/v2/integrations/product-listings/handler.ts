@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
+import {
+  PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
+  TRADERA_INTEGRATION_SLUGS,
+} from '@/features/integrations/constants/slugs';
 import {
   getProductListingRepository,
   getIntegrationRepository,
 } from '@/features/integrations/server';
-import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import {
+  applyCanonicalBaseBadgeFallback,
+  isCanonicalBaseIntegrationSlug,
+} from '@/features/integrations/services/base-listing-canonicalization';
+import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations/listings';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalCsvQueryStringArray } from '@/shared/lib/api/query-schema';
 import { env } from '@/shared/lib/env';
@@ -15,7 +22,6 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 type MarketplaceBadgeKey = keyof MarketplaceBadgeEntry;
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
 
@@ -39,10 +45,13 @@ const attachTimingHeaders = (
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
+const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
+
 const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadgeKey | null => {
   const normalized = (slug ?? '').trim().toLowerCase();
-  if (BASE_INTEGRATION_SLUGS.has(normalized)) return 'base';
+  if (isCanonicalBaseIntegrationSlug(normalized)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(normalized)) return 'tradera';
+  if (normalized === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
   return null;
 };
 
@@ -51,18 +60,23 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
   const data = value as Record<string, unknown>;
   const marketplace =
     typeof data['marketplace'] === 'string' ? data['marketplace'].trim().toLowerCase() : '';
-  if (BASE_INTEGRATION_SLUGS.has(marketplace)) return 'base';
+  if (isCanonicalBaseIntegrationSlug(marketplace)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(marketplace)) return 'tradera';
+  if (marketplace === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
 
   const source = typeof data['source'] === 'string' ? data['source'].trim().toLowerCase() : '';
   if (source.includes('base')) return 'base';
   if (source.includes('tradera')) return 'tradera';
+  if (source.includes('playwright')) return 'playwrightProgrammable';
 
   const traderaData = data['tradera'];
   if (traderaData && typeof traderaData === 'object') return 'tradera';
 
   const baseData = data['base'];
   if (baseData && typeof baseData === 'object') return 'base';
+
+  const playwrightData = data['playwright'];
+  if (playwrightData && typeof playwrightData === 'object') return 'playwrightProgrammable';
 
   return null;
 };
@@ -141,6 +155,15 @@ const buildPayload = async (
   };
 
   const byProduct = new Map<string, MarketplaceBadgeEntry>();
+  const candidateMetaByKey = new Map<
+    string,
+    {
+      status: string;
+      updatedAtMs: number;
+      rank: number;
+      success: boolean;
+    }
+  >();
   const assembleStart = performance.now();
   for (const listing of listings) {
     const marketplace =
@@ -151,29 +174,63 @@ const buildPayload = async (
     if (!marketplace) continue;
 
     const normalizedStatus = normalizeStatus(listing.status);
+    const candidateKey = `${listing.productId}:${marketplace}`;
     const current = byProduct.get(listing.productId) ?? {};
-    const currentStatus = current[marketplace];
-    if (!currentStatus) {
+    const currentMeta = candidateMetaByKey.get(candidateKey);
+    const nextMeta = {
+      status: normalizedStatus || 'unknown',
+      updatedAtMs: Date.parse(listing.updatedAt ?? '') || 0,
+      rank: statusRank[normalizedStatus] ?? -1,
+      success: SUCCESS_STATUSES.has(normalizedStatus),
+    };
+
+    if (!currentMeta) {
       byProduct.set(listing.productId, {
         ...current,
-        [marketplace]: normalizedStatus || 'unknown',
+        [marketplace]: nextMeta.status,
       });
+      candidateMetaByKey.set(candidateKey, nextMeta);
       continue;
     }
-    const currentRank = statusRank[currentStatus] ?? -1;
-    const nextRank = statusRank[normalizedStatus] ?? -1;
-    if (nextRank > currentRank) {
+
+    const shouldReplace = (() => {
+      if (currentMeta.success !== nextMeta.success) {
+        return nextMeta.success;
+      }
+
+      if (!currentMeta.success && !nextMeta.success) {
+        if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+          return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+        }
+        return nextMeta.rank > currentMeta.rank;
+      }
+
+      if (nextMeta.rank !== currentMeta.rank) {
+        return nextMeta.rank > currentMeta.rank;
+      }
+
+      return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+    })();
+
+    if (shouldReplace) {
       byProduct.set(listing.productId, {
         ...current,
-        [marketplace]: normalizedStatus || 'unknown',
+        [marketplace]: nextMeta.status,
       });
+      candidateMetaByKey.set(candidateKey, nextMeta);
     }
   }
   if (timings) {
     timings['assemble'] = performance.now() - assembleStart;
   }
 
-  return NextResponse.json(Object.fromEntries(byProduct.entries()) as ListingBadgesPayload);
+  const payload = Object.fromEntries(byProduct.entries()) as ListingBadgesPayload;
+  const canonicalPayload = await applyCanonicalBaseBadgeFallback(
+    payload,
+    normalizedRequestedProductIds
+  );
+
+  return NextResponse.json(canonicalPayload);
 };
 
 /**

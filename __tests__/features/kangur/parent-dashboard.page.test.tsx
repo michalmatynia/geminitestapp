@@ -155,7 +155,7 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurAssignmentManager', () => ({
+vi.mock('@/features/kangur/ui/components/assignment-manager/KangurAssignmentManager', () => ({
   __esModule: true,
   default: () => <div data-testid='kangur-assignment-manager'>Assignment manager</div>,
 }));

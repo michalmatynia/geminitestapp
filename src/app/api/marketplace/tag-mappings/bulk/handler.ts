@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getTagMappingRepository } from '@/features/integrations/server';
-import {
-  bulkTagMappingRequestSchema,
-  type MarketplaceBulkUpsertResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { bulkTagMappingRequestSchema } from '@/shared/contracts/integrations/listings';
+import { type MarketplaceBulkUpsertResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 /**

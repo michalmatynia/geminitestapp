@@ -29,7 +29,7 @@ vi.mock('@/features/kangur/shared/providers/SettingsStoreProvider', async (impor
   };
 });
 
-import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
+import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import {
   KANGUR_STOREFRONT_APPEARANCE_STORAGE_KEY,
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,

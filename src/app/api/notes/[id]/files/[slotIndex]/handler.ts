@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deleteNoteFile } from '@/features/notesapp/server';
 import { noteService } from '@/features/notesapp/server';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 
 const MAX_SLOT_INDEX = 9;

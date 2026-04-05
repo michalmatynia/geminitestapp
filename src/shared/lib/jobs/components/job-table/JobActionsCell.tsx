@@ -2,7 +2,7 @@
 
 import { Eye, XCircle, Trash2 } from 'lucide-react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import { useJobTableActionsRuntime } from '../context/JobTableRuntimeContext';
 

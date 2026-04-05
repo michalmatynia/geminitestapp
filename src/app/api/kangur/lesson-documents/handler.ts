@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurLessonDocumentRepository } from '@/features/kangur/services/kangur-lesson-document-repository';
-import { kangurLessonDocumentStoreSchema } from '@kangur/contracts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { kangurLessonDocumentStoreSchema } from '@kangur/contracts/kangur';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 

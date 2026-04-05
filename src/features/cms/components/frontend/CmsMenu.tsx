@@ -11,7 +11,7 @@ import {
   CmsStorefrontAppearanceButtons,
   resolveStorefrontAppearanceTone,
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';

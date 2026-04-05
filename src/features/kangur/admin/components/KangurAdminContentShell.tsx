@@ -3,7 +3,8 @@
 import { createContext, type ReactNode, useContext } from 'react';
 
 import { KangurAdminMenuToggle } from '@/features/kangur/admin/KangurAdminMenuToggle';
-import type { BreadcrumbItem, SectionHeaderRefreshConfigDto } from '@/shared/contracts/ui';
+import type { BreadcrumbItem } from '@/shared/contracts/ui/base';
+import type { SectionHeaderRefreshConfigDto } from '@/shared/contracts/ui/menus';
 import { Breadcrumbs, ListPanel, SectionHeader } from '@/features/kangur/shared/ui';
 import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';
 import { cn } from '@/features/kangur/shared/utils';

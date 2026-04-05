@@ -11,12 +11,10 @@ import {
   type LogTriagePresetDefinition,
   type SystemLogFilterFormValues,
 } from '@/shared/lib/observability/log-triage-presets';
-import {
-  Button,
-  FormSection,
-  StatusBadge,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { TRIAGE_PRESET_ICONS } from './SystemLogs.constants';
 
 export function LogTriagePresets(): React.JSX.Element {

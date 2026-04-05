@@ -1,4 +1,4 @@
-import { AgentRunProvider, AgentRunsPage } from '@/features/ai/agentcreator/public';
+import { AgentRunProvider, AgentRunsPage } from '@/features/ai/public';
 
 export default function AgentRunsRoute(): React.JSX.Element {
   return (

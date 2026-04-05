@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { getValidatorTemplatePresetByType } from '@/features/products/lib/validatorSemanticPresets';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_validator_template_handler(

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
+import React, { useState, ReactNode, useMemo, useEffect } from 'react';
 
 import type {
   AgentAuditLogRecordDto as AgentAuditLogRecord,
@@ -9,6 +9,7 @@ import type {
   AgentRunRecord,
 } from '@/shared/contracts/agent-runtime';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -26,24 +27,28 @@ export interface AgentRunListData {
   refetchRuns: () => Promise<unknown>;
   error: Error | null;
 }
-const RunListContext = createContext<AgentRunListData | null>(null);
-export const useAgentRunList = () => {
-  const context = useContext(RunListContext);
-  if (!context) throw internalError('useAgentRunList must be used within AgentRunProvider');
-  return context;
-};
+const { Context: RunListContext, useStrictContext: useAgentRunList } =
+  createStrictContext<AgentRunListData>({
+    hookName: 'useAgentRunList',
+    providerName: 'AgentRunProvider',
+    displayName: 'AgentRunListContext',
+    errorFactory: internalError,
+  });
+export { useAgentRunList };
 
 export interface AgentRunSelectionData {
   selectedAgentRunId: string | null;
   setSelectedAgentRunId: (id: string | null) => void;
   selectedAgentRun: AgentRunRecord | null;
 }
-const RunSelectionContext = createContext<AgentRunSelectionData | null>(null);
-export const useAgentRunSelection = () => {
-  const context = useContext(RunSelectionContext);
-  if (!context) throw internalError('useAgentRunSelection must be used within AgentRunProvider');
-  return context;
-};
+const { Context: RunSelectionContext, useStrictContext: useAgentRunSelection } =
+  createStrictContext<AgentRunSelectionData>({
+    hookName: 'useAgentRunSelection',
+    providerName: 'AgentRunProvider',
+    displayName: 'AgentRunSelectionContext',
+    errorFactory: internalError,
+  });
+export { useAgentRunSelection };
 
 export interface AgentRunDetailData {
   agentSnapshots: AgentBrowserSnapshotRecord[];
@@ -52,12 +57,14 @@ export interface AgentRunDetailData {
   agentStreamStatus: 'idle' | 'connecting' | 'live' | 'error';
   setAgentStreamStatus: (status: 'idle' | 'connecting' | 'live' | 'error') => void;
 }
-const RunDetailContext = createContext<AgentRunDetailData | null>(null);
-export const useAgentRunDetail = () => {
-  const context = useContext(RunDetailContext);
-  if (!context) throw internalError('useAgentRunDetail must be used within AgentRunProvider');
-  return context;
-};
+const { Context: RunDetailContext, useStrictContext: useAgentRunDetail } =
+  createStrictContext<AgentRunDetailData>({
+    hookName: 'useAgentRunDetail',
+    providerName: 'AgentRunProvider',
+    displayName: 'AgentRunDetailContext',
+    errorFactory: internalError,
+  });
+export { useAgentRunDetail };
 
 export function AgentRunProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);

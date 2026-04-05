@@ -5,7 +5,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { KangurTestsWordmark } from '@/features/kangur/ui/components/KangurTestsWordmark';
+import { KangurTestsWordmark } from '@/features/kangur/ui/components/wordmarks/KangurTestsWordmark';
 
 describe('KangurTestsWordmark', () => {
   it('renders the Polish tests wordmark as SVG text', () => {

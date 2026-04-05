@@ -1,10 +1,4 @@
-import {
-  type CaseResolverAssetFile,
-  type CaseResolverAssetKind,
-  type CaseResolverFile,
-  type CaseResolverFolderTimestamp,
-  type CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverAssetFile, type CaseResolverAssetKind, type CaseResolverFile, type CaseResolverFolderTimestamp, type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 const normalizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();

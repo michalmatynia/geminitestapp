@@ -76,4 +76,28 @@ describe('evaluateKangurKnowledgeGraphSmokeCase', () => {
     expect(result.passed).toBe(false);
     expect(result.reason).toBe('missing_route');
   });
+
+  it('normalizes whitespace around expected and actual route metadata', () => {
+    const result = evaluateKangurKnowledgeGraphSmokeCase({
+      smokeCase: {
+        id: 'trimmed',
+        message: 'Gdzie jest logowanie?',
+        expectedRoute: ' / ',
+        expectedAnchorId: ' kangur-primary-nav-login ',
+      },
+      websiteHelpTarget: {
+        route: ' / ',
+        anchorId: ' kangur-primary-nav-login ',
+      },
+    });
+
+    expect(result).toMatchObject({
+      expectedRoute: '/',
+      expectedAnchorId: 'kangur-primary-nav-login',
+      actualRoute: '/',
+      actualAnchorId: 'kangur-primary-nav-login',
+      passed: true,
+      reason: null,
+    });
+  });
 });

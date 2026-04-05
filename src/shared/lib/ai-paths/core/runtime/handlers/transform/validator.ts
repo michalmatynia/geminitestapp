@@ -74,23 +74,37 @@ const VALIDATION_PATTERN_DEFAULTS = {
   learnedRules: [] as ValidationPatternRule[],
 } as const;
 
-const coerceValidationPatternText = (value: unknown): string => {
-  if (value === undefined || value === null) return '';
+const VALIDATION_PATTERN_TEXT_KEYS = [
+  'text',
+  'prompt',
+  'value',
+  'result',
+  'content',
+  'content_en',
+] as const;
+
+const coerceValidationPatternScalar = (value: unknown): string | null => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return null;
+};
+
+const coerceValidationPatternText = (value: unknown): string => {
+  if (value === undefined || value === null) return '';
+
+  const scalar = coerceValidationPatternScalar(value);
+  if (scalar !== null) return scalar;
   if (typeof value !== 'object') return safeStringify(value);
+
   const record = value as Record<string, unknown>;
-  const preferredText =
-    record['text'] ??
-    record['prompt'] ??
-    record['value'] ??
-    record['result'] ??
-    record['content'] ??
-    record['content_en'];
-  if (typeof preferredText === 'string') return preferredText;
-  if (typeof preferredText === 'number' || typeof preferredText === 'boolean') {
-    return String(preferredText);
+
+  for (const key of VALIDATION_PATTERN_TEXT_KEYS) {
+    const preferredText = coerceValidationPatternScalar(record[key]);
+    if (preferredText !== null) {
+      return preferredText;
+    }
   }
+
   return safeStringify(value);
 };
 

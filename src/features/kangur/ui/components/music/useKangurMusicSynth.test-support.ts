@@ -392,9 +392,7 @@ export const findPannerNodeByRampTarget = (
 export const findSustainedFilterNode = (
   context: MockAudioContext | undefined
 ): MockBiquadFilterNode | undefined =>
-  context?.createBiquadFilter.mock.results.find((result) => result.type === 'return')?.value as
-    | MockBiquadFilterNode
-    | undefined;
+  context?.createBiquadFilter.mock.results.find((result) => result.type === 'return')?.value;
 
 export const findTransientGainNodeByInitialValue = (
   context: MockAudioContext | undefined
@@ -457,6 +455,10 @@ export class MockAudioContext {
 
   resume = vi.fn(async () => {
     this.state = 'running';
+  });
+
+  suspend = vi.fn(async () => {
+    this.state = 'suspended';
   });
 }
 

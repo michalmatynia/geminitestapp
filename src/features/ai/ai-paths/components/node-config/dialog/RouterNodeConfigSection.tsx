@@ -2,7 +2,8 @@
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { RouterConfig } from '@/shared/lib/ai-paths';
-import { Input, Label, SelectSimple } from '@/shared/ui';
+import { Input, Label } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

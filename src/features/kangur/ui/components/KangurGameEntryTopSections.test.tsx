@@ -46,11 +46,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/OperationSelector', () => ({
   default: () => <div data-testid='mock-operation-selector'>Mock operation selector</div>,
 }));
 
-vi.mock('@/features/kangur/ui/components/TrainingSetup', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/TrainingSetup', () => ({
   default: (props: {
     onStart: (selection: {
       categories: ('addition' | 'subtraction')[];
@@ -97,7 +97,7 @@ vi.mock('@/features/kangur/ui/components/KangurSetup', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameSetupMomentumCard', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurGameSetupMomentumCard', () => ({
   __esModule: true,
   default: ({ mode }: { mode: string }) => (
     <div data-testid={`mock-game-setup-momentum-${mode}`}>Mock setup momentum {mode}</div>
@@ -109,8 +109,8 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBan
   default: () => <div data-testid='mock-practice-assignment-banner'>Mock assignment banner</div>,
 }));
 
-import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
-import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
+import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/game-setup/KangurGameKangurSetupWidget';
+import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget';
 
 describe('Kangur game entry top sections', () => {
   beforeEach(() => {
@@ -297,7 +297,7 @@ describe('Kangur game entry top sections', () => {
     );
     expect(screen.getByTestId('kangur-kangur-heading-art')).toBeInTheDocument();
     expect(
-      screen.getByText('Przygotuj sesje StudiQ Matematycznego.')
+      screen.getByText('Przygotuj sesję StudiQ Matematycznego.')
     ).toBeInTheDocument();
     expect(screen.getByTestId('mock-game-setup-momentum-kangur')).toBeInTheDocument();
     expect(screen.getByTestId('mock-kangur-setup')).toBeInTheDocument();

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 
 import type { Asset3DRecord, Asset3DUpdateInput } from '@/shared/contracts/viewer3d';

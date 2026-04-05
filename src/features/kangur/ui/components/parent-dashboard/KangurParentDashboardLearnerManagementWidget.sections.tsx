@@ -23,17 +23,14 @@ import {
 } from '@/features/kangur/ui/design/tokens';
 
 import type { useLearnerManagementState } from './KangurParentDashboardLearnerManagementWidget.hooks';
-import type { ProfileModalTabId } from './KangurParentDashboardLearnerManagementWidget.types';
 import { PROFILE_MODAL_TABS } from './KangurParentDashboardLearnerManagementWidget.utils';
+import { useLearnerManagementContext } from './KangurParentDashboardLearnerManagement.context';
 
 type LearnerManagementWidgetState = ReturnType<typeof useLearnerManagementState>;
 type LearnerManagementOverview = LearnerManagementWidgetState['overview'];
 type LearnerRecord = LearnerManagementOverview['learners'][number];
-type ActiveLearnerRecord = LearnerManagementOverview['activeLearner'];
-type ActiveProfileRecord = LearnerManagementWidgetState['activeProfile'];
 type SessionHistory = LearnerManagementWidgetState['sessions'];
 type SessionRecord = NonNullable<SessionHistory>['sessions'][number];
-type CreateFormState = LearnerManagementOverview['createForm'];
 type EditFormState = LearnerManagementOverview['editForm'];
 
 const resolveShortcutButtonClassName = (isCoarsePointer: boolean): string =>
@@ -80,11 +77,13 @@ const resolveSessionStatusLabel = (
 
 function LearnerCardStatusChip(props: {
   learner: LearnerRecord;
-  copy: LearnerManagementWidgetState['copy'];
 }): React.JSX.Element {
+  const { state } = useLearnerManagementContext();
+  const { copy } = state;
+
   return (
     <KangurStatusChip accent={resolveLearnerCardAccent(props.learner)} size='sm'>
-      {resolveLearnerCardStatusLabel(props.learner, props.copy)}
+      {resolveLearnerCardStatusLabel(props.learner, copy)}
     </KangurStatusChip>
   );
 }
@@ -97,22 +96,21 @@ function LearnerCardAvatar(props: { learner: LearnerRecord }): React.JSX.Element
   );
 }
 
-export function LearnerManagementSettingsShortcut(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  isCoarsePointer: boolean;
-  activeLearner: ActiveLearnerRecord;
-  onOpenActiveLearnerSettings: () => void;
-}): React.JSX.Element {
+export function LearnerManagementSettingsShortcut(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy, isCoarsePointer, overview } = state;
+  const { handleOpenActiveLearnerSettings } = runtime;
+
   return (
     <div className='flex justify-end'>
       <KangurButton
-        aria-label={props.copy.learnerProfileSettings}
-        title={props.copy.learnerProfileSettings}
+        aria-label={copy.learnerProfileSettings}
+        title={copy.learnerProfileSettings}
         variant='surface'
         size='sm'
-        onClick={props.onOpenActiveLearnerSettings}
-        disabled={!props.activeLearner}
-        className={resolveShortcutButtonClassName(props.isCoarsePointer)}
+        onClick={handleOpenActiveLearnerSettings}
+        disabled={!overview.activeLearner}
+        className={resolveShortcutButtonClassName(isCoarsePointer)}
       >
         <span aria-hidden='true' className='text-lg'>
           ⚙️
@@ -122,18 +120,19 @@ export function LearnerManagementSettingsShortcut(props: {
   );
 }
 
-export function LearnerManagementCardsGrid(props: {
-  learners: LearnerRecord[];
-  selectedLearnerId: string | null;
-  copy: LearnerManagementWidgetState['copy'];
-  isCoarsePointer: boolean;
-  onOpenLearner: (learner: LearnerRecord) => Promise<void>;
-  onCreateNew: () => void;
-}): React.JSX.Element {
+export function LearnerManagementCardsGrid(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy, isCoarsePointer, overview } = state;
+  const {
+    selectedLearnerId,
+    handleOpenLearner,
+    handleCreateNew,
+  } = runtime;
+
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-      {props.learners.map((learner) => {
-        const isSelectedProfile = props.selectedLearnerId === learner.id;
+      {overview.learners.map((learner: LearnerRecord): React.JSX.Element => {
+        const isSelectedProfile = selectedLearnerId === learner.id;
 
         return (
           <KangurIconSummaryOptionCard
@@ -141,20 +140,20 @@ export function LearnerManagementCardsGrid(props: {
             accent={resolveLearnerCardAccent(learner)}
             emphasis={isSelectedProfile ? 'accent' : 'neutral'}
             onClick={() => {
-              void props.onOpenLearner(learner);
+              void handleOpenLearner(learner);
             }}
-            aria-label={props.copy.learnerCardAriaLabel(
+            aria-label={copy.learnerCardAriaLabel(
               learner.displayName,
-              resolveLearnerCardStatusLabel(learner, props.copy)
+              resolveLearnerCardStatusLabel(learner, copy)
             )}
             buttonClassName='h-full'
             data-testid={`parent-dashboard-learner-card-${learner.id}`}
           >
             <KangurIconSummaryCardContent
-              aside={<LearnerCardStatusChip learner={learner} copy={props.copy} />}
+              aside={<LearnerCardStatusChip learner={learner} />}
               className='w-full flex-col items-start sm:flex-row sm:items-center'
-              description={props.copy.learnerLoginDescription(learner.loginName)}
-              footer={resolveLearnerCardFooter(isSelectedProfile, props.copy)}
+              description={copy.learnerLoginDescription(learner.loginName)}
+              footer={resolveLearnerCardFooter(isSelectedProfile, copy)}
               footerClassName='break-words text-xs font-semibold [color:var(--kangur-page-muted-text)]'
               icon={<LearnerCardAvatar learner={learner} />}
               title={learner.displayName}
@@ -163,60 +162,59 @@ export function LearnerManagementCardsGrid(props: {
         );
       })}
       <button
-        onClick={props.onCreateNew}
+        onClick={handleCreateNew}
         className={cn(
           'flex min-h-[100px] items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 transition hover:border-indigo-300 hover:bg-indigo-50/30 active:scale-[0.98]',
-          props.isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none'
+          isCoarsePointer && 'min-h-11 px-4 touch-manipulation select-none'
         )}
       >
-        <span className='text-sm font-bold text-slate-500'>{props.copy.addLearner}</span>
+        <span className='text-sm font-bold text-slate-500'>{copy.addLearner}</span>
       </button>
     </div>
   );
 }
 
-function LearnerManagementModalHeader(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  isCreateModalVisible: boolean;
-  onClose: () => void;
-}): React.JSX.Element {
+function LearnerManagementModalHeader(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy } = state;
+  const { isCreateModalVisible, handleCloseWidgetModal } = runtime;
+
   return (
     <div className='sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/80 px-6 py-4 backdrop-blur-md'>
       <div>
         <h2 className='text-lg font-black tracking-tight text-slate-900'>
-          {props.isCreateModalVisible ? props.copy.createModalTitle : props.copy.profileSettingsTitle}
+          {isCreateModalVisible ? copy.createModalTitle : copy.profileSettingsTitle}
         </h2>
         <p className='text-xs font-semibold text-slate-500'>
-          {props.isCreateModalVisible
-            ? props.copy.createModalDescription
-            : props.copy.profileSettingsDescription}
+          {isCreateModalVisible
+            ? copy.createModalDescription
+            : copy.profileSettingsDescription}
         </p>
       </div>
-      <KangurDialogCloseButton onClick={props.onClose} />
+      <KangurDialogCloseButton onClick={handleCloseWidgetModal} />
     </div>
   );
 }
 
-function LearnerManagementModalTabs(props: {
-  activeTab: ProfileModalTabId;
-  copy: LearnerManagementWidgetState['copy'];
-  isCoarsePointer: boolean;
-  onSelectTab: (tabId: ProfileModalTabId) => void;
-}): React.JSX.Element {
+function LearnerManagementModalTabs(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy, isCoarsePointer } = state;
+  const { activeTab, setActiveTab } = runtime;
+
   return (
     <div className='bg-slate-50/50 px-6 pt-4'>
       <div className={KANGUR_SEGMENTED_CONTROL_CLASSNAME} role='tablist'>
         {PROFILE_MODAL_TABS.map((tab) => (
           <KangurButton
             key={tab.id}
-            onClick={() => props.onSelectTab(tab.id)}
-            variant={props.activeTab === tab.id ? 'segmentActive' : 'segment'}
+            onClick={() => setActiveTab(tab.id)}
+            variant={activeTab === tab.id ? 'segmentActive' : 'segment'}
             size='sm'
             role='tab'
-            aria-selected={props.activeTab === tab.id}
-            className={props.isCoarsePointer ? 'min-h-11 flex-1' : 'flex-1'}
+            aria-selected={activeTab === tab.id}
+            className={isCoarsePointer ? 'min-h-11 flex-1' : 'flex-1'}
           >
-            {tab.id === 'settings' ? props.copy.settingsTab : props.copy.metricsTab}
+            {tab.id === 'settings' ? copy.settingsTab : copy.metricsTab}
           </KangurButton>
         ))}
       </div>
@@ -225,74 +223,74 @@ function LearnerManagementModalTabs(props: {
 }
 
 function LearnerPasswordField(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  isCoarsePointer: boolean;
-  isCreateModalVisible: boolean;
-  showPassword: boolean;
   value: string;
   onChange: (nextValue: string) => void;
-  onTogglePassword: () => void;
 }): React.JSX.Element {
-  const passwordFieldLabel = resolvePasswordFieldLabel(props.isCreateModalVisible, props.copy);
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy, isCoarsePointer } = state;
+  const { isCreateModalVisible, showPassword, handleTogglePassword } = runtime;
+  const passwordFieldLabel = resolvePasswordFieldLabel(isCreateModalVisible, copy);
 
   return (
     <div className='relative'>
       <KangurTextField
         aria-label={passwordFieldLabel}
         title={passwordFieldLabel}
-        type={props.showPassword ? 'text' : 'password'}
+        type={showPassword ? 'text' : 'password'}
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
       />
       <button
         type='button'
-        aria-label={props.showPassword ? props.copy.hidePassword : props.copy.showPassword}
-        onClick={props.onTogglePassword}
+        aria-label={showPassword ? copy.hidePassword : copy.showPassword}
+        onClick={handleTogglePassword}
         className={cn(
           'absolute bottom-2 right-3 flex items-center justify-center text-slate-400 hover:text-slate-600 touch-manipulation select-none',
-          props.isCoarsePointer ? 'h-11 w-11 p-0' : 'h-8 w-8'
+          isCoarsePointer ? 'h-11 w-11 p-0' : 'h-8 w-8'
         )}
       >
-        {props.showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
       </button>
     </div>
   );
 }
 
 function LearnerStatusField(props: {
-  copy: LearnerManagementWidgetState['copy'];
   value: EditFormState['status'];
   onChange: (nextValue: EditFormState['status']) => void;
 }): React.JSX.Element {
+  const { state } = useLearnerManagementContext();
+  const { copy } = state;
+
   return (
     <KangurSelectField
-      aria-label={props.copy.statusLabel}
-      title={props.copy.statusLabel}
+      aria-label={copy.statusLabel}
+      title={copy.statusLabel}
       value={props.value}
       onChange={(event) => props.onChange(event.target.value === 'active' ? 'active' : 'disabled')}
     >
-      <option value='active'>{props.copy.activeStatus}</option>
-      <option value='disabled'>{props.copy.disabledStatus}</option>
+      <option value='active'>{copy.activeStatus}</option>
+      <option value='disabled'>{copy.disabledStatus}</option>
     </KangurSelectField>
   );
 }
 
-function LearnerFeedbackText(props: {
-  feedback: string | null | undefined;
-}): React.JSX.Element | null {
-  if (!props.feedback) return null;
+function LearnerFeedbackText(): React.JSX.Element | null {
+  const { state } = useLearnerManagementContext();
+  const { overview } = state;
+  const { feedback } = overview;
 
-  return <p className='text-sm [color:var(--kangur-page-muted-text)]'>{props.feedback}</p>;
+  if (!feedback) return null;
+
+  return <p className='text-sm [color:var(--kangur-page-muted-text)]'>{feedback}</p>;
 }
 
-function LearnerRemovalConfirmation(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  isCoarsePointer: boolean;
-  show: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}): React.JSX.Element | null {
-  if (!props.show) return null;
+function LearnerRemovalConfirmation(): React.JSX.Element | null {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy, isCoarsePointer } = state;
+  const { isConfirmingRemove, isCreateModalVisible, handleCancelRemove, handleConfirmRemove } = runtime;
+
+  if (!isConfirmingRemove || isCreateModalVisible) return null;
 
   return (
     <div
@@ -300,179 +298,152 @@ function LearnerRemovalConfirmation(props: {
       role='alert'
       aria-live='assertive'
     >
-      <p className='text-sm font-semibold text-rose-700'>{props.copy.removalWarning}</p>
+      <p className='text-sm font-semibold text-rose-700'>{copy.removalWarning}</p>
       <div className='mt-4 flex flex-col gap-3 sm:flex-row'>
         <KangurButton
-          onClick={props.onCancel}
+          onClick={handleCancelRemove}
           variant='surface'
           size='sm'
-          className={props.isCoarsePointer ? 'min-h-11 px-4 touch-manipulation' : undefined}
+          className={isCoarsePointer ? 'min-h-11 px-4 touch-manipulation' : undefined}
         >
-          {props.copy.cancel}
+          {copy.cancel}
         </KangurButton>
         <KangurButton
-          onClick={props.onConfirm}
+          onClick={handleConfirmRemove}
           variant='warning'
           size='sm'
-          className={props.isCoarsePointer ? 'min-h-11 px-4 touch-manipulation' : undefined}
+          className={isCoarsePointer ? 'min-h-11 px-4 touch-manipulation' : undefined}
         >
-          {props.copy.confirmRemoval}
+          {copy.confirmRemoval}
         </KangurButton>
       </div>
     </div>
   );
 }
 
-function LearnerSettingsActions(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  isCoarsePointer: boolean;
-  isCreateModalVisible: boolean;
-  isSubmitting: boolean;
-  onSave: () => void;
-  onStartRemove: () => void;
-}): React.JSX.Element {
+function LearnerSettingsActions(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy, isCoarsePointer, overview } = state;
+  const { isCreateModalVisible, handleSaveAction, handleStartRemove } = runtime;
+  const { isSubmitting } = overview;
+
   return (
     <div className='mt-6 flex flex-col gap-3'>
       <KangurButton
-        onClick={props.onSave}
-        disabled={props.isSubmitting}
+        onClick={handleSaveAction}
+        disabled={isSubmitting}
         variant='primary'
         size='lg'
-        className={cn('w-full', props.isCoarsePointer && 'min-h-11 px-4 touch-manipulation')}
+        className={cn('w-full', isCoarsePointer && 'min-h-11 px-4 touch-manipulation')}
       >
         {resolveSubmitButtonLabel({
-          isSubmitting: props.isSubmitting,
-          isCreateModalVisible: props.isCreateModalVisible,
-          copy: props.copy,
+          isSubmitting,
+          isCreateModalVisible,
+          copy,
         })}
       </KangurButton>
-      {props.isCreateModalVisible ? null : (
+      {isCreateModalVisible ? null : (
         <KangurButton
-          onClick={props.onStartRemove}
-          disabled={props.isSubmitting}
+          onClick={handleStartRemove}
+          disabled={isSubmitting}
           variant='ghost'
           size='sm'
           className={cn(
             'text-rose-600 hover:bg-rose-50',
-            props.isCoarsePointer && 'min-h-11 px-4 touch-manipulation'
+            isCoarsePointer && 'min-h-11 px-4 touch-manipulation'
           )}
         >
-          {props.copy.removeLearnerProfile}
+          {copy.removeLearnerProfile}
         </KangurButton>
       )}
     </div>
   );
 }
 
-function LearnerSettingsPanel(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  isCoarsePointer: boolean;
-  isCreateModalVisible: boolean;
-  showPassword: boolean;
-  isConfirmingRemove: boolean;
-  isSubmitting: boolean;
-  createForm: CreateFormState;
-  editForm: EditFormState;
-  feedback: string | null | undefined;
-  onDisplayNameChange: (nextValue: string) => void;
-  onLoginNameChange: (nextValue: string) => void;
-  onAgeChange: (nextValue: string) => void;
-  onPasswordChange: (nextValue: string) => void;
-  onStatusChange: (nextValue: EditFormState['status']) => void;
-  onTogglePassword: () => void;
-  onCancelRemove: () => void;
-  onConfirmRemove: () => void;
-  onSave: () => void;
-  onStartRemove: () => void;
-}): React.JSX.Element {
+function LearnerSettingsPanel(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy, overview } = state;
+  const {
+    isCreateModalVisible,
+    handleDisplayNameChange,
+    handleLoginNameChange,
+    handleAgeChange,
+    handlePasswordChange,
+    handleStatusChange,
+  } = runtime;
+
+  const { createForm, editForm } = overview;
+
   return (
     <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
       <KangurTextField
-        aria-label={props.copy.learnerNameLabel}
-        title={props.copy.learnerNameLabel}
-        value={props.isCreateModalVisible ? props.createForm.displayName : props.editForm.displayName}
-        onChange={(event) => props.onDisplayNameChange(event.target.value)}
-        placeholder={props.copy.learnerNamePlaceholder}
+        aria-label={copy.learnerNameLabel}
+        title={copy.learnerNameLabel}
+        value={isCreateModalVisible ? createForm.displayName : editForm.displayName}
+        onChange={(event) => handleDisplayNameChange(event.target.value)}
+        placeholder={copy.learnerNamePlaceholder}
       />
       <KangurTextField
-        aria-label={props.copy.loginLabel}
-        title={props.copy.loginLabel}
-        value={props.isCreateModalVisible ? props.createForm.loginName : props.editForm.loginName}
-        onChange={(event) => props.onLoginNameChange(event.target.value)}
-        placeholder={props.copy.learnerNicknamePlaceholder}
+        aria-label={copy.loginLabel}
+        title={copy.loginLabel}
+        value={isCreateModalVisible ? createForm.loginName : editForm.loginName}
+        onChange={(event) => handleLoginNameChange(event.target.value)}
+        placeholder={copy.learnerNicknamePlaceholder}
       />
-      {props.isCreateModalVisible ? (
+      {isCreateModalVisible ? (
         <KangurTextField
-          aria-label={props.copy.ageLabel}
-          title={props.copy.ageLabel}
+          aria-label={copy.ageLabel}
+          title={copy.ageLabel}
           inputMode='numeric'
-          value={props.createForm.age}
-          onChange={(event) => props.onAgeChange(event.target.value)}
-          placeholder={props.copy.agePlaceholder}
+          value={createForm.age}
+          onChange={(event) => handleAgeChange(event.target.value)}
+          placeholder={copy.agePlaceholder}
         />
       ) : null}
       <LearnerPasswordField
-        copy={props.copy}
-        isCoarsePointer={props.isCoarsePointer}
-        isCreateModalVisible={props.isCreateModalVisible}
-        showPassword={props.showPassword}
-        value={props.isCreateModalVisible ? props.createForm.password : props.editForm.password}
-        onChange={props.onPasswordChange}
-        onTogglePassword={props.onTogglePassword}
+        value={isCreateModalVisible ? createForm.password : editForm.password}
+        onChange={handlePasswordChange}
       />
-      {props.isCreateModalVisible ? null : (
+      {isCreateModalVisible ? null : (
         <LearnerStatusField
-          copy={props.copy}
-          value={props.editForm.status}
-          onChange={props.onStatusChange}
+          value={editForm.status}
+          onChange={handleStatusChange}
         />
       )}
-      <LearnerFeedbackText feedback={props.feedback} />
-      <LearnerRemovalConfirmation
-        copy={props.copy}
-        isCoarsePointer={props.isCoarsePointer}
-        show={props.isConfirmingRemove && !props.isCreateModalVisible}
-        onCancel={props.onCancelRemove}
-        onConfirm={props.onConfirmRemove}
-      />
-      <LearnerSettingsActions
-        copy={props.copy}
-        isCoarsePointer={props.isCoarsePointer}
-        isCreateModalVisible={props.isCreateModalVisible}
-        isSubmitting={props.isSubmitting}
-        onSave={props.onSave}
-        onStartRemove={props.onStartRemove}
-      />
+      <LearnerFeedbackText />
+      <LearnerRemovalConfirmation />
+      <LearnerSettingsActions />
     </div>
   );
 }
 
-function LearnerProfileDetailsCard(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  activeProfile: ActiveProfileRecord;
-}): React.JSX.Element {
+function LearnerProfileDetailsCard(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy } = state;
+  const { activeProfile } = runtime;
+
   return (
     <section className='rounded-2xl border border-slate-100 bg-slate-50/50 p-4'>
       <p className='text-xs font-black uppercase tracking-[0.16em] text-slate-500'>
-        {props.copy.profileDetailsLabel}
+        {copy.profileDetailsLabel}
       </p>
-      <p className='mt-1 text-sm text-slate-500'>{props.copy.profileDetailsDescription}</p>
-      {props.activeProfile ? (
+      <p className='mt-1 text-sm text-slate-500'>{copy.profileDetailsDescription}</p>
+      {activeProfile ? (
         <div className='mt-4 grid gap-3 sm:grid-cols-2'>
           <div>
             <p className='text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400'>
-              {props.copy.currentProfileLabel}
+              {copy.currentProfileLabel}
             </p>
             <p className='mt-1 text-sm font-semibold text-slate-700'>
-              {props.activeProfile.displayName}
+              {activeProfile.displayName}
             </p>
           </div>
           <div>
             <p className='text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400'>
-              {props.copy.loginLabel}
+              {copy.loginLabel}
             </p>
             <p className='mt-1 text-sm font-semibold text-slate-700'>
-              {props.activeProfile.loginName}
+              {activeProfile.loginName}
             </p>
           </div>
         </div>
@@ -482,10 +453,12 @@ function LearnerProfileDetailsCard(props: {
 }
 
 function LearnerSessionItem(props: {
-  copy: LearnerManagementWidgetState['copy'];
   index: number;
   session: SessionRecord;
 }): React.JSX.Element {
+  const { state } = useLearnerManagementContext();
+  const { copy } = state;
+
   return (
     <div
       className='rounded-2xl border border-slate-100 bg-slate-50/50 p-4'
@@ -493,22 +466,22 @@ function LearnerSessionItem(props: {
     >
       <div className='flex items-center justify-between'>
         <span className='text-xs font-black uppercase tracking-wider text-slate-400'>
-          {props.copy.sessionLabel(props.index + 1)}
+          {copy.sessionLabel(props.index + 1)}
         </span>
         <KangurStatusChip accent={resolveSessionStatusAccent(props.session)} size='sm'>
-          {resolveSessionStatusLabel(props.session, props.copy)}
+          {resolveSessionStatusLabel(props.session, copy)}
         </KangurStatusChip>
       </div>
       <div className='mt-2 grid grid-cols-2 gap-4'>
         <div>
-          <p className='text-[10px] font-bold text-slate-400'>{props.copy.startLabel}</p>
+          <p className='text-[10px] font-bold text-slate-400'>{copy.startLabel}</p>
           <p className='text-xs font-semibold text-slate-700'>
             {new Date(props.session.startedAt).toLocaleString()}
           </p>
         </div>
         {props.session.endedAt ? (
           <div>
-            <p className='text-[10px] font-bold text-slate-400'>{props.copy.endLabel}</p>
+            <p className='text-[10px] font-bold text-slate-400'>{copy.endLabel}</p>
             <p className='text-xs font-semibold text-slate-700'>
               {new Date(props.session.endedAt).toLocaleString()}
             </p>
@@ -519,87 +492,72 @@ function LearnerSessionItem(props: {
   );
 }
 
-function LearnerSessionsList(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  sessions: SessionHistory;
-  hasMoreSessions: boolean;
-  isLoadingMoreSessions: boolean;
-  isCoarsePointer: boolean;
-  activeProfileId: string | null;
-  onLoadMore: () => void;
-}): React.JSX.Element {
+function LearnerSessionsList(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const { copy, isCoarsePointer, isLoadingMoreSessions } = state;
+  const { sessions, hasMoreSessions, selectedLearnerId, handleLoadMoreSessions } = runtime;
+
   return (
     <div className='space-y-4'>
-      {props.sessions?.sessions.map((session, index) => (
+      {sessions?.sessions.map((session: SessionRecord, index: number) => (
         <LearnerSessionItem
           key={session.id}
-          copy={props.copy}
           index={index}
           session={session}
         />
       ))}
-      {props.hasMoreSessions && props.activeProfileId ? (
+      {hasMoreSessions && selectedLearnerId ? (
         <KangurButton
-          onClick={props.onLoadMore}
-          disabled={props.isLoadingMoreSessions}
+          onClick={handleLoadMoreSessions}
+          disabled={isLoadingMoreSessions}
           variant='surface'
           size='sm'
-          className={cn('w-full', props.isCoarsePointer && 'min-h-11 px-4 touch-manipulation')}
+          className={cn('w-full', isCoarsePointer && 'min-h-11 px-4 touch-manipulation')}
         >
-          {props.isLoadingMoreSessions ? props.copy.loading : props.copy.loadMoreSessions}
+          {isLoadingMoreSessions ? copy.loading : copy.loadMoreSessions}
         </KangurButton>
       ) : null}
     </div>
   );
 }
 
-function LearnerSessionsContent(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  sessions: SessionHistory;
-  sessionsError: string | null;
-  sessionsLoadMoreError: string | null;
-  isLoadingSessions: boolean;
-  hasMoreSessions: boolean;
-  isLoadingMoreSessions: boolean;
-  isCoarsePointer: boolean;
-  activeProfileId: string | null;
-  onLoadMore: () => void;
-}): React.JSX.Element {
+function LearnerSessionsContent(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const {
+    copy,
+    isLoadingSessions,
+    sessionsError,
+    sessionsLoadMoreError,
+  } = state;
+  const { sessions } = runtime;
+
   return (
     <div className='mt-4'>
-      {props.isLoadingSessions ? (
+      {isLoadingSessions ? (
         <KangurEmptyState
           accent='indigo'
-          title={props.copy.sessionsLoadingTitle}
-          description={props.copy.sessionsLoadingDescription}
+          title={copy.sessionsLoadingTitle}
+          description={copy.sessionsLoadingDescription}
         />
-      ) : props.sessionsError ? (
+      ) : sessionsError ? (
         <KangurEmptyState
           accent='rose'
-          title={props.copy.noSessionsError}
-          description={props.copy.sessionErrorDescription}
+          title={copy.noSessionsError}
+          description={copy.sessionErrorDescription}
         />
-      ) : props.sessions?.sessions.length === 0 ? (
+      ) : sessions?.sessions.length === 0 ? (
         <KangurEmptyState
           accent='slate'
-          title={props.copy.loginSessionsEmptyTitle}
-          description={props.copy.loginSessionsEmptyDescription}
+          title={copy.loginSessionsEmptyTitle}
+          description={copy.loginSessionsEmptyDescription}
         />
-      ) : props.sessions ? (
-        <LearnerSessionsList
-          copy={props.copy}
-          sessions={props.sessions}
-          hasMoreSessions={props.hasMoreSessions}
-          isLoadingMoreSessions={props.isLoadingMoreSessions}
-          isCoarsePointer={props.isCoarsePointer}
-          activeProfileId={props.activeProfileId}
-          onLoadMore={props.onLoadMore}
-        />
+      ) : sessions ? (
+        <LearnerSessionsList />
       ) : null}
-      {props.sessionsLoadMoreError ? (
+      {sessionsLoadMoreError ? (
         <KangurSummaryPanel
           accent='rose'
-          description={props.sessionsLoadMoreError}
+          description={sessionsLoadMoreError}
           padding='sm'
           tone='accent'
           className='mt-4'
@@ -611,173 +569,68 @@ function LearnerSessionsContent(props: {
   );
 }
 
-function LearnerSessionsCard(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  sessions: SessionHistory;
-  sessionsError: string | null;
-  sessionsLoadMoreError: string | null;
-  isLoadingSessions: boolean;
-  hasMoreSessions: boolean;
-  isLoadingMoreSessions: boolean;
-  isCoarsePointer: boolean;
-  activeProfileId: string | null;
-  onLoadMore: () => void;
-}): React.JSX.Element {
+function LearnerSessionsCard(): React.JSX.Element {
+  const { state } = useLearnerManagementContext();
+  const { copy } = state;
+
   return (
     <section className='rounded-2xl border border-slate-100 bg-slate-50/50 p-4'>
       <p className='text-xs font-black uppercase tracking-[0.16em] text-slate-500'>
-        {props.copy.loginSessionsLabel}
+        {copy.loginSessionsLabel}
       </p>
-      <p className='mt-1 text-sm text-slate-500'>{props.copy.loginSessionsDescription}</p>
-      <LearnerSessionsContent
-        copy={props.copy}
-        sessions={props.sessions}
-        sessionsError={props.sessionsError}
-        sessionsLoadMoreError={props.sessionsLoadMoreError}
-        isLoadingSessions={props.isLoadingSessions}
-        hasMoreSessions={props.hasMoreSessions}
-        isLoadingMoreSessions={props.isLoadingMoreSessions}
-        isCoarsePointer={props.isCoarsePointer}
-        activeProfileId={props.activeProfileId}
-        onLoadMore={props.onLoadMore}
-      />
+      <p className='mt-1 text-sm text-slate-500'>{copy.loginSessionsDescription}</p>
+      <LearnerSessionsContent />
     </section>
   );
 }
 
-function LearnerMetricsPanel(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  activeProfile: ActiveProfileRecord;
-  sessions: SessionHistory;
-  sessionsError: string | null;
-  sessionsLoadMoreError: string | null;
-  isLoadingSessions: boolean;
-  hasMoreSessions: boolean;
-  isLoadingMoreSessions: boolean;
-  isCoarsePointer: boolean;
-  activeProfileId: string | null;
-  onLoadMore: () => void;
-}): React.JSX.Element {
+function LearnerMetricsPanel(): React.JSX.Element {
   return (
     <div className={KANGUR_STACK_TIGHT_CLASSNAME}>
-      <LearnerProfileDetailsCard copy={props.copy} activeProfile={props.activeProfile} />
-      <LearnerSessionsCard
-        copy={props.copy}
-        sessions={props.sessions}
-        sessionsError={props.sessionsError}
-        sessionsLoadMoreError={props.sessionsLoadMoreError}
-        isLoadingSessions={props.isLoadingSessions}
-        hasMoreSessions={props.hasMoreSessions}
-        isLoadingMoreSessions={props.isLoadingMoreSessions}
-        isCoarsePointer={props.isCoarsePointer}
-        activeProfileId={props.activeProfileId}
-        onLoadMore={props.onLoadMore}
-      />
+      <LearnerProfileDetailsCard />
+      <LearnerSessionsCard />
     </div>
   );
 }
 
-export function LearnerManagementModal(props: {
-  copy: LearnerManagementWidgetState['copy'];
-  open: boolean;
-  isCreateModalVisible: boolean;
-  activeTab: ProfileModalTabId;
-  isCoarsePointer: boolean;
-  showPassword: boolean;
-  isConfirmingRemove: boolean;
-  createForm: CreateFormState;
-  editForm: EditFormState;
-  feedback: string | null | undefined;
-  isSubmitting: boolean;
-  activeProfileId: string | null;
-  activeProfile: ActiveProfileRecord;
-  sessions: SessionHistory;
-  sessionsError: string | null;
-  sessionsLoadMoreError: string | null;
-  isLoadingSessions: boolean;
-  isLoadingMoreSessions: boolean;
-  hasMoreSessions: boolean;
-  onClose: () => void;
-  onSelectTab: (tabId: ProfileModalTabId) => void;
-  onDisplayNameChange: (nextValue: string) => void;
-  onLoginNameChange: (nextValue: string) => void;
-  onAgeChange: (nextValue: string) => void;
-  onPasswordChange: (nextValue: string) => void;
-  onStatusChange: (nextValue: EditFormState['status']) => void;
-  onTogglePassword: () => void;
-  onCancelRemove: () => void;
-  onConfirmRemove: () => void;
-  onSave: () => void;
-  onStartRemove: () => void;
-  onLoadMoreSessions: () => void;
-}): React.JSX.Element {
-  const showSettingsPanel = props.activeTab === 'settings' || props.isCreateModalVisible;
-  const dialogTitle = props.isCreateModalVisible
-    ? props.copy.createModalTitle
-    : props.copy.profileSettingsTitle;
-  const dialogDescription = props.isCreateModalVisible
-    ? props.copy.createModalDescription
-    : props.copy.profileSettingsDescription;
+export function LearnerManagementModal(): React.JSX.Element {
+  const { state, runtime } = useLearnerManagementContext();
+  const {
+    copy,
+  } = state;
+  const {
+    isCreateModalVisible,
+    modalOpen,
+    activeTab,
+    handleCloseWidgetModal,
+  } = runtime;
+
+  const showSettingsPanel = activeTab === 'settings' || isCreateModalVisible;
+  const dialogTitle = isCreateModalVisible
+    ? copy.createModalTitle
+    : copy.profileSettingsTitle;
+  const dialogDescription = isCreateModalVisible
+    ? copy.createModalDescription
+    : copy.profileSettingsDescription;
 
   return (
-    <KangurDialog open={props.open} onOpenChange={(open) => !open && props.onClose()}>
+    <KangurDialog open={modalOpen} onOpenChange={(open) => !open && handleCloseWidgetModal()}>
       <KangurDialogMeta title={dialogTitle} description={dialogDescription} />
       <div
         className='relative flex h-full flex-col max-sm:bg-white'
-        data-testid={props.isCreateModalVisible ? 'parent-create-learner-modal' : undefined}
+        data-testid={isCreateModalVisible ? 'parent-create-learner-modal' : undefined}
       >
-        <LearnerManagementModalHeader
-          copy={props.copy}
-          isCreateModalVisible={props.isCreateModalVisible}
-          onClose={props.onClose}
-        />
+        <LearnerManagementModalHeader />
 
-        {props.isCreateModalVisible ? null : (
-          <LearnerManagementModalTabs
-            activeTab={props.activeTab}
-            copy={props.copy}
-            isCoarsePointer={props.isCoarsePointer}
-            onSelectTab={props.onSelectTab}
-          />
+        {isCreateModalVisible ? null : (
+          <LearnerManagementModalTabs />
         )}
 
         <div className='flex-1 overflow-y-auto p-6'>
           {showSettingsPanel ? (
-            <LearnerSettingsPanel
-              copy={props.copy}
-              isCoarsePointer={props.isCoarsePointer}
-              isCreateModalVisible={props.isCreateModalVisible}
-              showPassword={props.showPassword}
-              isConfirmingRemove={props.isConfirmingRemove}
-              isSubmitting={props.isSubmitting}
-              createForm={props.createForm}
-              editForm={props.editForm}
-              feedback={props.feedback}
-              onDisplayNameChange={props.onDisplayNameChange}
-              onLoginNameChange={props.onLoginNameChange}
-              onAgeChange={props.onAgeChange}
-              onPasswordChange={props.onPasswordChange}
-              onStatusChange={props.onStatusChange}
-              onTogglePassword={props.onTogglePassword}
-              onCancelRemove={props.onCancelRemove}
-              onConfirmRemove={props.onConfirmRemove}
-              onSave={props.onSave}
-              onStartRemove={props.onStartRemove}
-            />
+            <LearnerSettingsPanel />
           ) : (
-            <LearnerMetricsPanel
-              copy={props.copy}
-              activeProfile={props.activeProfile}
-              sessions={props.sessions}
-              sessionsError={props.sessionsError}
-              sessionsLoadMoreError={props.sessionsLoadMoreError}
-              isLoadingSessions={props.isLoadingSessions}
-              hasMoreSessions={props.hasMoreSessions}
-              isLoadingMoreSessions={props.isLoadingMoreSessions}
-              isCoarsePointer={props.isCoarsePointer}
-              activeProfileId={props.activeProfileId}
-              onLoadMore={props.onLoadMoreSessions}
-            />
+            <LearnerMetricsPanel />
           )}
         </div>
       </div>

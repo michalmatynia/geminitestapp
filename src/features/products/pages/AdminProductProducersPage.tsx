@@ -8,18 +8,17 @@ import {
   useProducers,
   useSaveProducerMutation,
 } from '@/features/products/hooks/useProductMetadataQueries';
-import type { Producer } from '@/shared/contracts/products';
+import type { Producer } from '@/shared/contracts/products/producers';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import {
-  AdminProductsPageLayout,
-  Button,
-  EmptyState,
-  useToast,
-  StandardDataTablePanel,
-  SearchInput,
-} from '@/shared/ui';
+import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
+import { Button } from '@/shared/ui/button';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { SearchInput } from '@/shared/ui/search-input';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import { StandardDataTablePanel } from '@/shared/ui/templates/StandardDataTablePanel';
+import { useToast } from '@/shared/ui/toast';
+
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';

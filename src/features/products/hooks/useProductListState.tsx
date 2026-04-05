@@ -2,6 +2,7 @@
 
 import {
   ProfilerOnRenderCallback,
+  startTransition,
   useCallback,
   useEffect,
   useMemo,
@@ -10,8 +11,8 @@ import {
   useSyncExternalStore,
 } from 'react';
 
-import { getProductColumns } from '@/features/products/components/list/ProductColumns';
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
+import { loadProductColumns } from '@/features/products/components/list/product-columns-loader';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import { useProductData } from '@/features/products/hooks/useProductData';
 import { useProductSync } from '@/features/products/hooks/useProductEnhancements';
@@ -20,14 +21,16 @@ import { useProductSettings } from '@/features/products/hooks/useProductSettings
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { isProductListDebugSearch, logProductListDebug } from '@/features/products/lib/product-list-observability';
 import * as queuedProductOps from '@/features/products/state/queued-product-ops';
-import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { useDraftQueries } from '@/shared/hooks/useDraftQueries';
 import {
   type BackgroundSyncEvent,
   useProductListSync,
 } from '@/shared/hooks/sync/useBackgroundSync';
-import { useToast } from '@/shared/ui';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
+import { useToast } from '@/shared/ui/toast';
 
 import { useProductEditHydration } from './product-list/useProductEditHydration';
 import { useProductListCategories } from './product-list/useProductListCategories';
@@ -42,7 +45,7 @@ import { useCreateFromDraft } from './useCreateFromDraft';
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
 
 import type { ProductListContextType } from '../context/ProductListContext';
-import type { Row } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 
 export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
 
@@ -82,10 +85,20 @@ type ProductListDebugSnapshot = {
   isEditHydrating: boolean;
 };
 
+type DeferredDraftBootstrapTarget = {
+  requestIdleCallback?: (callback: () => void) => number;
+  cancelIdleCallback?: (handle: number) => void;
+  setTimeout: (handler: () => void, timeout?: number) => number;
+  clearTimeout: (handle: number) => void;
+};
+
 const EMPTY_INTEGRATION_BADGE_IDS = new Set<string>();
 const EMPTY_INTEGRATION_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_TRADERA_BADGE_IDS = new Set<string>();
 const EMPTY_TRADERA_BADGE_STATUSES = new Map<string, string>();
+const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS = new Set<string>();
+const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES = new Map<string, string>();
+const EMPTY_PRODUCT_TABLE_COLUMNS: ColumnDef<ProductWithImages>[] = [];
 
 const buildProductListDebugSnapshot = (args: ProductListDebugSnapshot): ProductListDebugSnapshot => args;
 
@@ -128,9 +141,45 @@ export function shouldEnableProductListBackgroundSync(args: {
   return args.queuedProductIdsCount > 0 || args.activeTrackedProductAiRunsCount > 0;
 }
 
+export function shouldEnableProductListBackgroundSyncRuntime(args: {
+  rowRuntimeReady: boolean;
+  isLoading: boolean;
+  queuedProductIdsCount: number;
+  activeTrackedProductAiRunsCount: number;
+}): boolean {
+  if (!args.rowRuntimeReady) return false;
+  if (args.isLoading) return false;
+  return shouldEnableProductListBackgroundSync({
+    queuedProductIdsCount: args.queuedProductIdsCount,
+    activeTrackedProductAiRunsCount: args.activeTrackedProductAiRunsCount,
+  });
+}
+
+export function scheduleDeferredProductListDraftBootstrap(
+  target: DeferredDraftBootstrapTarget,
+  onReady: () => void
+): () => void {
+  if (typeof target.requestIdleCallback === 'function') {
+    const idleHandle = target.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      target.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = target.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    target.clearTimeout(timeoutHandle);
+  };
+}
+
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
   isMounted: boolean;
+  rowRuntimeReady: boolean;
   triggerListingStatusHighlight: (productId: string) => void;
   productToDelete: ProductWithImages | null;
   setProductToDelete: (product: ProductWithImages | null) => void;
@@ -144,6 +193,12 @@ export function useProductListState(): ProductListContextType & {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [draftsReady, setDraftsReady] = useState(false);
+  const [rowRuntimeReady, setRowRuntimeReady] = useState(false);
+  const [tableColumns, setTableColumns] = useState<ColumnDef<ProductWithImages>[]>(
+    EMPTY_PRODUCT_TABLE_COLUMNS
+  );
+  const [tableColumnsReady, setTableColumnsReady] = useState(false);
   const { toast } = useToast();
   const { imageExternalBaseUrl } = useProductSettings();
 
@@ -154,8 +209,10 @@ export function useProductListState(): ProductListContextType & {
     ? useQueuedAiRunProductIdsHook()
     : new Set<string>();
 
-  useProductSync();
-  const productAiRunStatusByProductId = useProductAiPathsRunSync();
+  useProductSync({ enabled: rowRuntimeReady });
+  const productAiRunStatusByProductId = useProductAiPathsRunSync({
+    enabled: rowRuntimeReady,
+  });
 
   const {
     preferences,
@@ -165,6 +222,7 @@ export function useProductListState(): ProductListContextType & {
     setCurrencyCode: updateCurrencyCode,
     setPageSize: updatePageSize,
     setShowTriggerRunFeedback: updateShowTriggerRunFeedback,
+    setAdvancedFilterPresets,
     setAppliedAdvancedFilterState: persistAppliedAdvancedFilterState,
   } = useUserPreferences();
 
@@ -174,7 +232,9 @@ export function useProductListState(): ProductListContextType & {
 
   const { catalogs, currencyCode, setCurrencyCode, currencyOptions, priceGroups, languageOptions } =
     useCatalogSync(preferences.catalogFilter || 'all', {
-      enabled: !preferencesLoading,
+      // The products table can render a usable first paint with default language/currency state
+      // and then hydrate catalog metadata after the deferred row-runtime bootstrap.
+      enabled: rowRuntimeReady,
     });
 
   const filters = useProductListFilters({
@@ -243,9 +303,12 @@ export function useProductListState(): ProductListContextType & {
   const { categoryNameById } = useProductListCategories({
     data: visibleData,
     nameLocale: preferences.nameLocale,
+    enabled: rowRuntimeReady,
   });
 
-  const shouldEnableListBackgroundSync = shouldEnableProductListBackgroundSync({
+  const shouldEnableListBackgroundSync = shouldEnableProductListBackgroundSyncRuntime({
+    rowRuntimeReady,
+    isLoading,
     queuedProductIdsCount: queuedProductIds.size,
     activeTrackedProductAiRunsCount: productAiRunStatusByProductId.size,
   });
@@ -268,7 +331,7 @@ export function useProductListState(): ProductListContextType & {
       page,
       pageSize,
     },
-    !isLoading && shouldEnableListBackgroundSync,
+    shouldEnableListBackgroundSync,
     {
       onSyncEvent: (event: BackgroundSyncEvent): void => {
         logProductListDebug(
@@ -372,6 +435,7 @@ export function useProductListState(): ProductListContextType & {
     handleAddToMarketplace,
     integrationsProduct,
     integrationsRecoveryContext,
+    integrationsFilterIntegrationSlug,
     showListProductModal,
     listProductPreset,
     exportSettingsProduct,
@@ -430,6 +494,44 @@ export function useProductListState(): ProductListContextType & {
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    return scheduleDeferredProductListDraftBootstrap(window, () => {
+      setDraftsReady(true);
+      setRowRuntimeReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    void loadProductColumns()
+      .then((nextColumns) => {
+        if (!isActive) return;
+
+        startTransition(() => {
+          setTableColumns((currentColumns) =>
+            currentColumns === nextColumns ? currentColumns : nextColumns
+          );
+          setTableColumnsReady(true);
+        });
+      })
+      .catch((error) => {
+        logClientCatch(error, {
+          source: 'useProductListState',
+          action: 'loadProductColumns',
+        });
+
+        if (!isActive) return;
+        startTransition(() => {
+          setTableColumnsReady(true);
+        });
+      });
+
+    return (): void => {
+      isActive = false;
+    };
   }, []);
 
   const getRowClassName = useCallback(
@@ -522,7 +624,7 @@ export function useProductListState(): ProductListContextType & {
         loadErrorMessage: loadError?.message ?? null,
         queuedProductIdsCount: queuedProductIds.size,
         trackedAiRunsCount: productAiRunStatusByProductId.size,
-        backgroundSyncEnabled: !isLoading && shouldEnableListBackgroundSync,
+        backgroundSyncEnabled: shouldEnableListBackgroundSync,
         catalogFilter,
         hasSearch: search.length > 0,
         hasSku: sku.length > 0,
@@ -584,10 +686,11 @@ export function useProductListState(): ProductListContextType & {
     previousDebugSnapshotRef.current = debugSnapshot;
   }, [debugSnapshot, isProductListDebugOpen]);
 
-  const columns = useMemo(() => getProductColumns(), []);
-
-  const draftQueries = useDraftQueries as () => ListQuery<ProductDraft>;
-  const { data: allDrafts = [] } = draftQueries();
+  const draftQueries = useDraftQueries as (
+    notebookId?: string,
+    options?: { enabled?: boolean }
+  ) => ListQuery<ProductDraft>;
+  const { data: allDrafts = [] } = draftQueries(undefined, { enabled: draftsReady });
   const activeDrafts = useMemo(
     () => allDrafts.filter((d: ProductDraft) => d.active !== false),
     [allDrafts]
@@ -761,6 +864,8 @@ export function useProductListState(): ProductListContextType & {
     setEndDate,
     advancedFilter,
     activeAdvancedFilterPresetId,
+    advancedFilterPresets: preferences.advancedFilterPresets,
+    setAdvancedFilterPresets,
     setAdvancedFilter: handleSetAdvancedFilter,
     setAdvancedFilterState: handleSetAdvancedFilterState,
     data: visibleData,
@@ -771,7 +876,7 @@ export function useProductListState(): ProductListContextType & {
     onDeleteSelected: handleDeleteSelectedOpen,
     onAddToMarketplace: handleAddToMarketplace,
     handleProductsTableRender,
-    tableColumns: columns,
+    tableColumns,
     getRowClassName,
     setRefreshTrigger,
     productNameKey: preferences.nameLocale,
@@ -787,6 +892,8 @@ export function useProductListState(): ProductListContextType & {
     integrationBadgeStatuses: EMPTY_INTEGRATION_BADGE_STATUSES,
     traderaBadgeIds: EMPTY_TRADERA_BADGE_IDS,
     traderaBadgeStatuses: EMPTY_TRADERA_BADGE_STATUSES,
+    playwrightProgrammableBadgeIds: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS,
+    playwrightProgrammableBadgeStatuses: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES,
     queuedProductIds,
     productAiRunStatusByProductId,
     categoryNameById,
@@ -795,7 +902,7 @@ export function useProductListState(): ProductListContextType & {
     setShowTriggerRunFeedback: handleSetShowTriggerRunFeedback,
     imageExternalBaseUrl,
     getRowId: getProductRowId,
-    isLoading: !isMounted || isLoading,
+    isLoading: !isMounted || !tableColumnsReady || isLoading,
     skeletonRows: tableSkeleton,
     maxHeight: 'calc(100vh - 200px)',
     stickyHeader: true,
@@ -816,6 +923,7 @@ export function useProductListState(): ProductListContextType & {
     onEditSave: handleEditSave,
     integrationsProduct,
     integrationsRecoveryContext,
+    integrationsFilterIntegrationSlug,
     onCloseIntegrations: handleCloseIntegrations,
     onStartListing: handleStartListing,
     showListProductModal,
@@ -834,6 +942,7 @@ export function useProductListState(): ProductListContextType & {
     onSelectIntegrationFromModal: handleSelectIntegrationFromModal,
     isDebugOpen,
     isMounted,
+    rowRuntimeReady,
     triggerListingStatusHighlight: triggerJobCompletionHighlight,
     productToDelete,
     setProductToDelete,

@@ -1,13 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
-  NODE_MIN_HEIGHT,
-  NODE_WIDTH,
-  type AiNode,
-} from '@/shared/lib/ai-paths';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, type AiNode } from '@/shared/lib/ai-paths';
 
 import { useCanvasInteractionsNodes } from '../hooks/useCanvasInteractions.nodes';
 

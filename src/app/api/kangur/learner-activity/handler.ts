@@ -6,8 +6,8 @@ import {
   resolveKangurActor,
 } from '@/features/kangur/server';
 import { publishKangurLearnerActivityUpdate } from '@/features/kangur/services/learner-activity-stream-publisher';
-import { kangurLearnerActivityUpdateInputSchema } from '@kangur/contracts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { kangurLearnerActivityUpdateInputSchema } from '@kangur/contracts/kangur';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, forbiddenError, validationError } from '@/shared/errors/app-error';
 
 const ONLINE_WINDOW_MS = 2 * 60 * 1000;

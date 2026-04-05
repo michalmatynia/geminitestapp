@@ -1,14 +1,9 @@
-'use client';
-
 import { useQueryClient } from '@tanstack/react-query';
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
-import type {
-  ProductBulkImagesBase64Response,
-  ProductPatchInput,
-  ProductWithImages,
-} from '@/shared/contracts/products';
-import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
+import type { ProductBulkImagesBase64Response, ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductPatchInput } from '@/shared/contracts/products/io';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { AppError, operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -17,7 +12,7 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { delay } from '@/shared/utils';
+import { delay } from '@/shared/utils/time-utils';
 
 import {
   invalidateProductsAndCounts,

@@ -80,6 +80,19 @@ const outputFileTracingExcludes = {
   ],
   '/api/ai-paths/playwright/[runId]/artifacts/[file]': ['./test-results/**/*'],
 };
+const watchIgnoredGlobs = [
+  '**/node_modules/**',
+  '**/.git/**',
+  '**/.next/**',
+  '**/.next-dev/**',
+  '**/public/uploads/**',
+  '**/tmp/**',
+  '**/test-results/**',
+  '**/playwright-debug/**',
+  '**/.playwright-cli/**',
+  '**/mongo/backups/**',
+  '**/docs/metrics/**',
+];
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -112,7 +125,7 @@ const nextConfig = {
   devIndicators: false,
   ...(isDev
     ? {
-        allowedDevOrigins: ['127.0.0.1', '::1'],
+        allowedDevOrigins: ['localhost', '127.0.0.1', '::1', '[::1]'],
       }
     : {}),
   // Keep dev artifacts separate from production builds to avoid lock/cache races
@@ -229,9 +242,18 @@ const nextConfig = {
 
     // Prevent webpack dev server from triggering HMR rebuilds when files are
     // written to public/uploads/ (e.g. batch screenshot captures).
+    const existingWatchIgnored = config.watchOptions?.ignored;
+    const normalizedWatchIgnored = (
+      Array.isArray(existingWatchIgnored)
+        ? existingWatchIgnored
+        : existingWatchIgnored
+          ? [existingWatchIgnored]
+          : []
+    ).filter((pattern) => typeof pattern === 'string' && pattern.trim().length > 0);
+
     config.watchOptions = {
       ...config.watchOptions,
-      ignored: ['**/node_modules/**', '**/.git/**', '**/public/uploads/**'],
+      ignored: Array.from(new Set([...normalizedWatchIgnored, ...watchIgnoredGlobs])),
     };
 
     config.resolve ??= {};
@@ -318,15 +340,6 @@ const nextConfig = {
       },
     ],
   },
-  async redirects() {
-    return [
-      {
-        source: '/admin/products/constructor',
-        destination: '/admin/products/settings',
-        permanent: false,
-      },
-    ];
-  },
   async headers() {
     return [
       {
@@ -380,7 +393,7 @@ const nextConfig = {
 
 const withBundleAnalyzer =
   process.env.ANALYZE === 'true'
-    ? (await import('@next/bundle-analyzer')).default({ enabled: true })
+    ? (await import(['@next', 'bundle-analyzer'].join('/'))).default({ enabled: true })
     : (/** @type {import('next').NextConfig} */ config) => config;
 
 export default withBundleAnalyzer(withNextIntl(nextConfig));

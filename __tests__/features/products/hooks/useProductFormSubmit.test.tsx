@@ -29,7 +29,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => mocks.queryClient,
 }));
 
-vi.mock('@/features/products/hooks/useProductData', () => ({
+vi.mock('@/features/products/hooks/useProductDataMutations', () => ({
   useCreateProductMutation: () => ({
     mutateAsync: mocks.createMutateAsync,
     isPending: false,
@@ -47,7 +47,7 @@ vi.mock('@/shared/hooks/ui/useConfirm', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: mocks.toast }),
 }));
 

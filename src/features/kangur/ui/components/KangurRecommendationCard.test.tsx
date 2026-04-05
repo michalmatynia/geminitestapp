@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import KangurRecommendationCard from '@/features/kangur/ui/components/KangurRecommendationCard';
+import KangurRecommendationCard from '@/features/kangur/ui/components/summary-cards/KangurRecommendationCard';
 
 describe('KangurRecommendationCard', () => {
   it('renders the shared recommendation card layout and optional description', () => {

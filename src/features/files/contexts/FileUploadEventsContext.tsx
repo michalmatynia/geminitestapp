@@ -1,8 +1,6 @@
 'use client';
 
 import React, {
-  createContext,
-  useContext,
   useState,
   useMemo,
   useEffect,
@@ -15,7 +13,8 @@ import {
   type FileUploadEventRecord,
 } from '@/features/files/hooks/useFileUploadEvents';
 import { internalError } from '@/shared/errors/app-error';
-import { useToast } from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useToast } from '@/shared/ui/primitives.public';
 
 export const statusOptions = [
   { value: 'all', label: 'All statuses' },
@@ -55,10 +54,23 @@ interface FileUploadEventsContextActions {
 
 type FileUploadEventsContextValue = FileUploadEventsContextState & FileUploadEventsContextActions;
 
-const FileUploadEventsStateContext = createContext<FileUploadEventsContextState | undefined>(undefined);
-const FileUploadEventsActionsContext = createContext<FileUploadEventsContextActions | undefined>(
-  undefined
-);
+const {
+  Context: FileUploadEventsStateContext,
+  useStrictContext: useFileUploadEventsStateContext,
+} = createStrictContext<FileUploadEventsContextState>({
+  hookName: 'useFileUploadEventsState',
+  providerName: 'a FileUploadEventsProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: FileUploadEventsActionsContext,
+  useStrictContext: useFileUploadEventsActionsContext,
+} = createStrictContext<FileUploadEventsContextActions>({
+  hookName: 'useFileUploadEventsActions',
+  providerName: 'a FileUploadEventsProvider',
+  errorFactory: internalError,
+});
 
 export function FileUploadEventsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { toast } = useToast();
@@ -162,23 +174,8 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
   );
 }
 
-export function useFileUploadEventsState(): FileUploadEventsContextState {
-  const context = useContext(FileUploadEventsStateContext);
-  if (context === undefined) {
-    throw internalError('useFileUploadEventsState must be used within a FileUploadEventsProvider');
-  }
-  return context;
-}
-
-export function useFileUploadEventsActions(): FileUploadEventsContextActions {
-  const context = useContext(FileUploadEventsActionsContext);
-  if (context === undefined) {
-    throw internalError(
-      'useFileUploadEventsActions must be used within a FileUploadEventsProvider'
-    );
-  }
-  return context;
-}
+export const useFileUploadEventsState = useFileUploadEventsStateContext;
+export const useFileUploadEventsActions = useFileUploadEventsActionsContext;
 
 export function useFileUploadEventsContext(): FileUploadEventsContextValue {
   const state = useFileUploadEventsState();

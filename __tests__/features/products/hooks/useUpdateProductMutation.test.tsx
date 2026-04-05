@@ -89,7 +89,7 @@ describe('useUpdateProductMutation', () => {
       );
       await vi.runAllTimersAsync();
 
-      expect(setQueriesData).toHaveBeenCalledTimes(1);
+      expect(setQueriesData).toHaveBeenCalledTimes(2);
       const patchedListCache = setQueriesData.mock.results[0]?.value as {
         items: Array<{ id: string; categoryId: string | null }>;
         total: number;

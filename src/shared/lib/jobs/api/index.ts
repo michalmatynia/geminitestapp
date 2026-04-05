@@ -3,7 +3,7 @@ import type {
   ChatbotJobsClearResponse,
   ChatbotJobsResponse,
 } from '@/shared/contracts/chatbot';
-import type { ProductJob } from '@/shared/contracts/integrations';
+import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type {
   ProductAiJob,
   ProductAiJobActionResponse,
@@ -20,8 +20,8 @@ export type { TraderaQueueHealthResponse };
 /**
  * Fetch integration jobs
  */
-export async function getIntegrationJobs(): Promise<ProductJob[]> {
-  return api.get<ProductJob[]>('/api/v2/integrations/jobs');
+export async function getIntegrationJobs(signal?: AbortSignal): Promise<ProductJob[]> {
+  return api.get<ProductJob[]>('/api/v2/integrations/jobs', signal ? { signal } : undefined);
 }
 
 /**

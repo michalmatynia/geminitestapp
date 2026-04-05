@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { FileManagerProvider } from '../contexts/FileManagerContext';
 import { FileManagerBulkActions } from './file-manager/FileManagerBulkActions';

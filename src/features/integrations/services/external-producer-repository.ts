@@ -2,11 +2,8 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId, type Filter } from 'mongodb';
 
-import type {
-  BaseProducer,
-  ExternalProducer,
-  ExternalProducerSyncInput,
-} from '@/shared/contracts/integrations';
+import type { ExternalProducer, ExternalProducerSyncInput } from '@/shared/contracts/integrations/producers';
+import type { BaseProducer } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 type ExternalProducerRepository = {

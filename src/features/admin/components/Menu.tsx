@@ -19,8 +19,10 @@ import {
 import { useChatbotSessions, useCreateChatbotSession } from '@/features/ai/public';
 import type { AdminMenuCustomNode, AdminMenuColorOption } from '@/shared/contracts/admin';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SearchInput, Tooltip, TreeHeader } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Tooltip } from '@/shared/ui/primitives.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { TreeHeader } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { buildAdminNav } from './admin-menu-nav';
 import {
@@ -36,6 +38,7 @@ import {
   applySectionColors,
   adminNavToCustomNav,
   getAdminMenuSections,
+  isActiveHref,
 } from './menu/admin-menu-utils';
 import { NavTree } from './menu/NavTree';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -115,6 +118,41 @@ export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object
 );
 
 const OPEN_KEY = 'adminMenuOpenIds.v2';
+const POPULAR_ADMIN_PREFETCH_HREFS = [
+  '/admin/products',
+  '/admin/integrations',
+  '/admin/kangur/social',
+  '/admin/settings',
+  '/admin/ai-paths',
+] as const;
+
+type DeferredAdminMenuSettingsTarget = {
+  requestIdleCallback?: (callback: () => void) => number;
+  cancelIdleCallback?: (handle: number) => void;
+  setTimeout: (handler: () => void, timeout?: number) => number;
+  clearTimeout: (handle: number) => void;
+};
+
+const scheduleDeferredAdminMenuSettingsHydration = (
+  target: DeferredAdminMenuSettingsTarget,
+  onReady: () => void
+): (() => void) => {
+  if (typeof target.requestIdleCallback === 'function') {
+    const idleHandle = target.requestIdleCallback(() => {
+      onReady();
+    });
+    return (): void => {
+      target.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = target.setTimeout(() => {
+    onReady();
+  }, 1);
+  return (): void => {
+    target.clearTimeout(timeoutHandle);
+  };
+};
 
 export default function Menu(): React.ReactNode {
   const { isMenuCollapsed } = useAdminLayoutState();
@@ -127,7 +165,10 @@ export default function Menu(): React.ReactNode {
   const [openIdsLoaded, setOpenIdsLoaded] = useState(false);
   const [closedAutoIds, setClosedAutoIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [menuSettingsReady, setMenuSettingsReady] = useState(false);
   const deferredQuery = useDeferredValue(query);
+  const hasPrefetchedPopularRoutesRef = useRef(false);
 
   const { data: chatbotSessions = [], refetch: refetchChatbotSessions } = useChatbotSessions({
     enabled: shouldPrefetchChatbotSessions,
@@ -166,17 +207,63 @@ export default function Menu(): React.ReactNode {
     }
   }, [openIdsLoaded, userOpenIds]);
 
+  useEffect(() => {
+    if (!pendingHref) return;
+    if (isActiveHref(pathname, pendingHref, false)) setPendingHref(null);
+  }, [pathname, pendingHref]);
+
+  useEffect(() => {
+    if (menuSettingsReady) return;
+    if (typeof window === 'undefined') {
+      setMenuSettingsReady(true);
+      return;
+    }
+
+    return scheduleDeferredAdminMenuSettingsHydration(window, () => {
+      setMenuSettingsReady(true);
+    });
+  }, [menuSettingsReady]);
+
+  useEffect(() => {
+    if (hasPrefetchedPopularRoutesRef.current) return;
+    if (typeof window === 'undefined') return;
+
+    hasPrefetchedPopularRoutesRef.current = true;
+    return scheduleDeferredAdminMenuSettingsHydration(window, () => {
+      POPULAR_ADMIN_PREFETCH_HREFS.forEach((href: string) => {
+        if (isActiveHref(pathname, href, false)) return;
+        router.prefetch(href);
+      });
+    });
+  }, [pathname, router]);
+
+  useEffect(() => {
+    if (hasPrefetchedPopularRoutesRef.current) return;
+    if (typeof window === 'undefined') return;
+
+    hasPrefetchedPopularRoutesRef.current = true;
+    return scheduleDeferredAdminMenuSettingsHydration(window, () => {
+      POPULAR_ADMIN_PREFETCH_HREFS.forEach((href: string) => {
+        if (isActiveHref(pathname, href, false)) return;
+        router.prefetch(href);
+      });
+    });
+  }, [pathname, router]);
+
   const handleOpenChat = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>): void => {
       if (typeof window === 'undefined') return;
-      event.preventDefault();
-
-      const openChat = async (): Promise<void> => {
-        const storedSession = window.localStorage.getItem('chatbotSessionId');
-        if (storedSession) {
-          router.push(`/admin/chatbot?session=${storedSession}`);
-          return;
-        }
+      const storedSession = window.localStorage.getItem('chatbotSessionId');
+      if (storedSession) {
+        // Synchronous fast path — redirect immediately to the stored session.
+        event.preventDefault();
+        setPendingHref('/admin/chatbot');
+        router.push(`/admin/chatbot?session=${storedSession}`);
+        return;
+      }
+      // No stored session — let the Link navigate to /admin/chatbot immediately,
+      // then resolve the session asynchronously in the background.
+      void (async () => {
         try {
           let latestId: string | undefined = chatbotSessions[0]?.id;
           if (!latestId) {
@@ -185,24 +272,18 @@ export default function Menu(): React.ReactNode {
           }
           if (latestId) {
             window.localStorage.setItem('chatbotSessionId', latestId);
-            router.push(`/admin/chatbot?session=${latestId}`);
+            router.replace(`/admin/chatbot?session=${latestId}`);
             return;
           }
-
           const created = await createChatbotSession({});
           if (created.sessionId) {
             window.localStorage.setItem('chatbotSessionId', created.sessionId);
-            router.push(`/admin/chatbot?session=${created.sessionId}`);
-          } else {
-            router.push('/admin/chatbot');
+            router.replace(`/admin/chatbot?session=${created.sessionId}`);
           }
         } catch (error) {
           logClientError(error);
-          router.push('/admin/chatbot');
         }
-      };
-
-      void openChat();
+      })();
     },
     [router, chatbotSessions, createChatbotSession, refetchChatbotSessions]
   );
@@ -218,25 +299,31 @@ export default function Menu(): React.ReactNode {
   settingsStoreRef.current = settingsStore;
   const settingsMap = settingsStore.map;
   const favoriteIds = useMemo<string[]>(() => {
+    if (!menuSettingsReady) return [];
     const raw = settingsStoreRef.current.get(ADMIN_MENU_FAVORITES_KEY);
     const parsed = parseAdminMenuJson<string[]>(raw, []);
     return parsed.filter((id: string): id is string => typeof id === 'string' && id.length > 0);
-  }, [settingsMap]);
+  }, [menuSettingsReady, settingsMap]);
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const sectionColors = useMemo<Record<string, string>>(() => {
+    if (!menuSettingsReady) return {};
     const raw = settingsStoreRef.current.get(ADMIN_MENU_SECTION_COLORS_KEY);
     const parsed = parseAdminMenuJson<Record<string, string> | null>(raw, null);
     return parsed && typeof parsed === 'object' ? parsed : {};
-  }, [settingsMap]);
+  }, [menuSettingsReady, settingsMap]);
   const customEnabled = useMemo(
-    () => parseAdminMenuBoolean(settingsStoreRef.current.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false),
-    [settingsMap]
+    () =>
+      menuSettingsReady
+        ? parseAdminMenuBoolean(settingsStoreRef.current.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false)
+        : false,
+    [menuSettingsReady, settingsMap]
   );
   const customNav = useMemo<AdminMenuCustomNode[]>(() => {
+    if (!menuSettingsReady) return [];
     const raw = settingsStoreRef.current.get(ADMIN_MENU_CUSTOM_NAV_KEY);
     const parsed = parseAdminMenuJson<AdminMenuCustomNode[]>(raw, []);
     return normalizeAdminMenuCustomNav(parsed);
-  }, [settingsMap]);
+  }, [menuSettingsReady, settingsMap]);
 
   const baseNav = useMemo(
     () => buildAdminNav({ onOpenChat: handleOpenChat, onCreatePageClick: handleCreatePageClick }),
@@ -298,19 +385,21 @@ export default function Menu(): React.ReactNode {
   );
   const allGroupIds = useMemo(() => collectGroupIds(navWithFavorites), [navWithFavorites]);
 
-  const [lastPathnameForClosed, setLastPathnameForClosed] = useState(pathname);
-  if (pathname !== lastPathnameForClosed) {
-    setLastPathnameForClosed(pathname);
-    if (!normalizedQuery) {
-      setClosedAutoIds((prev: Set<string>) => {
-        const next = new Set<string>();
-        prev.forEach((id: string) => {
-          if (autoOpenIds.has(id)) next.add(id);
-        });
-        return next;
+  const lastPathnameForClosedRef = useRef(pathname);
+  useEffect(() => {
+    if (pathname === lastPathnameForClosedRef.current) return;
+
+    lastPathnameForClosedRef.current = pathname;
+    if (normalizedQuery) return;
+
+    setClosedAutoIds((prev: Set<string>) => {
+      const next = new Set<string>();
+      prev.forEach((id: string) => {
+        if (autoOpenIds.has(id)) next.add(id);
       });
-    }
-  }
+      return next;
+    });
+  }, [autoOpenIds, normalizedQuery, pathname]);
 
   const effectiveOpenIds = useMemo(() => {
     if (normalizedQuery) {
@@ -446,6 +535,8 @@ export default function Menu(): React.ReactNode {
         pathname={pathname}
         openIds={effectiveOpenIds}
         onToggleOpen={handleToggleOpen}
+        pendingHref={pendingHref}
+        onSetPendingHref={setPendingHref}
       />
     </nav>
   );

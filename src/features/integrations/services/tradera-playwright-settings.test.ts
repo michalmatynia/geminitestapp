@@ -22,6 +22,7 @@ describe('tradera-playwright-settings', () => {
           {
             name: 'session',
             value: 'abc',
+            sameSite: 'Lax',
           },
         ],
         origins: [
@@ -54,6 +55,31 @@ describe('tradera-playwright-settings', () => {
           value: 'secret',
         },
       ],
+    });
+  });
+
+  it('accepts Playwright-native uppercase sameSite values from stored sessions', () => {
+    decryptSecretMock.mockReturnValue(
+      JSON.stringify({
+        cookies: [
+          {
+            name: 'session',
+            value: 'abc',
+            domain: '.example.com',
+            sameSite: 'Strict',
+          },
+        ],
+        origins: [],
+      })
+    );
+
+    const parsed = parsePersistedStorageState('encrypted-state');
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.cookies[0]).toMatchObject({
+      name: 'session',
+      value: 'abc',
+      sameSite: 'Strict',
     });
   });
 

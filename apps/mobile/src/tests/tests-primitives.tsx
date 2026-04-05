@@ -1,4 +1,4 @@
-import type { KangurTestChoice } from '@kangur/contracts';
+import type { KangurTestChoice } from '@kangur/contracts/kangur-tests';
 import { Text } from 'react-native';
 
 import { createKangurLessonsCatalogHref } from '../lessons/lessonHref';

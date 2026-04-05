@@ -12,10 +12,7 @@ import {
 } from 'react';
 
 import { isLikelyImageStudioErrorText } from '@/features/ai/image-studio/utils/image-src';
-import {
-  ProductImageManager,
-  ProductImageManagerControllerProvider,
-} from '@/shared/ui';
+import { ProductImageManager, ProductImageManagerControllerProvider } from '@/shared/ui/media.public';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {

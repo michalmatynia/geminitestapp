@@ -28,7 +28,7 @@ import {
 
 type NumberBalanceTranslations = (key: string, values?: TranslationValues) => string;
 
-type NumberBalanceLeaderboardEntry = NumberBalancePlayerScore & {
+export type NumberBalanceLeaderboardEntry = NumberBalancePlayerScore & {
   isLeader: boolean;
   isSelf: boolean;
   label: string;

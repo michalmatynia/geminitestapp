@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { diffAgenticHistorySnapshots } from './diff-history';
+import { diffAgenticHistorySnapshots, parseDiffHistoryArguments } from './diff-history';
 
 describe('agentic history diff', () => {
   it('detects bundle, recommendation, execution, and validation changes', () => {
@@ -262,5 +262,91 @@ describe('agentic history diff', () => {
         currentState: 'selected',
       },
     ]);
+  });
+
+  it('only flags newly high-risk added bundles and attempted suppressions', () => {
+    const diff = diffAgenticHistorySnapshots(
+      {
+        kind: 'agentic-history-snapshot',
+        generatedAt: '2026-03-11T02:00:00.000Z',
+        workOrder: {
+          generatedAt: '2026-03-11T01:00:00.000Z',
+          changedFiles: [],
+          impactedDomainIds: ['products'],
+          highestRiskLevel: 'high',
+          requiredImpactBundles: ['high_bundle', 'low_bundle'],
+          recommendedBundleOrder: ['high_bundle', 'low_bundle'],
+          recommendedValidationByBundle: {
+            high_bundle: ['//:high'],
+            low_bundle: ['//:low'],
+          },
+        },
+        executionReport: null,
+        bundleSelection: {
+          selectedBundles: ['high_bundle', 'low_bundle'],
+          attemptedSuppressions: [
+            { bundle: 'high_bundle', reason: 'kept' },
+            { bundle: 'low_bundle', reason: 'kept' },
+          ],
+          skippedBundles: [],
+        },
+        bundlePlan: [
+          { bundle: 'high_bundle', priority: 'high', targets: ['//:high'] },
+          { bundle: 'low_bundle', priority: 'low', targets: ['//:low'] },
+        ],
+        bundleReports: [],
+      },
+      {
+        kind: 'agentic-history-snapshot',
+        generatedAt: '2026-03-10T02:00:00.000Z',
+        workOrder: {
+          generatedAt: '2026-03-10T01:00:00.000Z',
+          changedFiles: [],
+          impactedDomainIds: ['products'],
+          highestRiskLevel: 'low',
+          requiredImpactBundles: [],
+          recommendedBundleOrder: [],
+          recommendedValidationByBundle: {},
+        },
+        executionReport: null,
+        bundleSelection: {
+          selectedBundles: [],
+          attemptedSuppressions: [],
+          skippedBundles: [],
+        },
+        bundlePlan: [],
+        bundleReports: [],
+      },
+      {
+        currentPath: 'current.json',
+        previousPath: 'previous.json',
+      },
+    );
+
+    expect(diff.newlyHighRiskBundles).toEqual(['high_bundle']);
+    expect(diff.newlyAttemptedHighRiskSuppressions).toEqual(['high_bundle']);
+  });
+
+  it('parses diff-history CLI arguments with defaults and provided values', () => {
+    expect(parseDiffHistoryArguments([])).toEqual({
+      currentPath: 'artifacts/agent-history/latest.json',
+      previousPath: 'artifacts/agent-history/previous.json',
+      outputPath: 'artifacts/agent-history/diff.json',
+    });
+
+    expect(
+      parseDiffHistoryArguments([
+        '--current',
+        'current.json',
+        '--previous',
+        'previous.json',
+        '--output',
+        'custom/diff.json',
+      ]),
+    ).toEqual({
+      currentPath: 'current.json',
+      previousPath: 'previous.json',
+      outputPath: 'custom/diff.json',
+    });
   });
 });

@@ -19,7 +19,8 @@ import {
 } from '@/shared/lib/prompt-engine/settings';
 import { savePromptExploderDraftPrompt } from '@/shared/lib/prompt-exploder/bridge';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { ValidatorFormatterToggle, useToast } from '@/shared/ui';
+import { ValidatorFormatterToggle } from '@/shared/ui/forms-and-actions.public';
+import { useToast } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import {
   logClientCatch,

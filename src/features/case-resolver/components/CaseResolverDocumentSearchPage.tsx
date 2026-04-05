@@ -4,25 +4,13 @@ import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucid
 import React, { useEffect, useMemo, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  CaseFileTypeFilter,
-  CaseResolverFile,
-  CaseResolverTag,
-  CaseResolverIdentifier,
-  CaseResolverCategory,
-  CaseSortKey,
-  CaseSortOrder,
-} from '@/shared/contracts/case-resolver';
-import {
-  Button,
-  EmptyState,
-  Pagination,
-  SearchInput,
-  SelectSimple,
-  Card,
-  Badge,
-  DocumentSearchPage,
-} from '@/shared/ui';
+import type { CaseFileTypeFilter, CaseSortKey, CaseSortOrder } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverTag, CaseResolverIdentifier, CaseResolverCategory } from '@/shared/contracts/case-resolver/relations';
+import { Button, Card, Badge } from '@/shared/ui/primitives.public';
+import { EmptyState, Pagination } from '@/shared/ui/navigation-and-layout.public';
+import { SearchInput, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { DocumentSearchPage } from '@/shared/ui/templates.public';
 
 import {
   useCaseResolverPageActions,

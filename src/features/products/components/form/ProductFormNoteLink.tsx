@@ -10,7 +10,11 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, Input, FormSection, CompactEmptyState, LoadingState } from '@/features/products/ui';
+import { Button } from '@/shared/ui/button';
+import { CompactEmptyState } from '@/shared/ui/empty-state';
+import { FormSection } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { LoadingState } from '@/shared/ui/LoadingState';
 
 type NotesLookupResult = RelatedNote[];
 

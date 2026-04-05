@@ -1,21 +1,4 @@
-import {
-  type ImageStudioCenterDetectionMode,
-  type ImageStudioCenterLayoutConfig,
-  type ImageStudioCenterObjectBounds,
-  type ImageStudioCenterShadowPolicy,
-  type PixelData,
-  type WhiteBackgroundModel,
-  type WhiteForegroundMaskSource,
-  type ConnectedComponent,
-  type ImageStudioWhitespaceMetrics as ImageStudioObjectWhitespaceMetrics,
-  type ImageStudioAnalysisResult,
-  type ImageStudioAutoScalePlan,
-  type ImageStudioAutoScaleAnalysis,
-  type ImageStudioDetectionDetails,
-  type ImageStudioNormalizedCenterLayout as NormalizedImageStudioAnalysisLayoutConfig,
-  type ImageStudioDetectionCandidateSummary,
-  type ImageStudioDetectionPolicyDecision,
-} from '@/shared/contracts/image-studio';
+import { type ImageStudioCenterDetectionMode, type ImageStudioCenterLayoutConfig, type ImageStudioCenterObjectBounds, type ImageStudioCenterShadowPolicy, type PixelData, type WhiteBackgroundModel, type WhiteForegroundMaskSource, type ConnectedComponent, type ImageStudioWhitespaceMetrics as ImageStudioObjectWhitespaceMetrics, type ImageStudioAnalysisResult, type ImageStudioAutoScalePlan, type ImageStudioAutoScaleAnalysis, type ImageStudioDetectionDetails, type ImageStudioNormalizedCenterLayout as NormalizedImageStudioAnalysisLayoutConfig, type ImageStudioDetectionCandidateSummary, type ImageStudioDetectionPolicyDecision } from '@/shared/contracts/image-studio';
 
 export type {
   ImageStudioDetectionCandidateSummary,

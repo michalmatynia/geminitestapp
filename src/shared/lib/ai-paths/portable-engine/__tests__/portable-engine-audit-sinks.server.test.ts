@@ -473,6 +473,12 @@ describe('portable-engine envelope verification sink factories', () => {
       'degrade_to_log_only'
     );
     expect(
+      resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('  DISABLED  ')
+    ).toBe('none');
+    expect(
+      resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('Degrade-To-Log-Only')
+    ).toBe('degrade_to_log_only');
+    expect(
       resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment('invalid')
     ).toBeNull();
     expect(resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment('120')).toBe(

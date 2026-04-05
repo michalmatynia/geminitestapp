@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import { FolderTreeSearchBar } from '@/features/foldertree/public';
-import { useFolderTreeProfile } from '@/features/foldertree/public';
+import { FolderTreeSearchBar } from '@/shared/lib/foldertree/public';
+import { useFolderTreeProfile } from '@/shared/lib/foldertree/public';
 import { resolveFolderTreeSearchConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import {

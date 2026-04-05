@@ -86,6 +86,83 @@ type TutorVisibilityChangeDetail = {
   hidden: boolean;
 };
 
+const PENDING_FOLLOW_UP_REQUIRED_STRING_FIELDS = [
+  'href',
+  'pathname',
+  'search',
+  'actionId',
+  'actionLabel',
+  'actionPage',
+  'sourcePathname',
+  'sourceSearch',
+  'createdAt',
+] as const;
+
+const PENDING_FOLLOW_UP_NULLABLE_STRING_FIELDS = [
+  'actionReason',
+  'sourceSurface',
+  'sourceContentId',
+  'sourceTitle',
+] as const;
+
+const PENDING_NAVIGATION_REQUIRED_STRING_FIELDS = [
+  'href',
+  'pathname',
+  'hash',
+  'nodeId',
+  'label',
+  'sourcePathname',
+  'sourceSearch',
+  'createdAt',
+] as const;
+
+const PENDING_NAVIGATION_NULLABLE_STRING_FIELDS = ['route', 'anchorId'] as const;
+const TUTOR_PANEL_POSITION_MODES = ['manual', 'contextual'] as const;
+const TUTOR_PANEL_SNAP_STATES = [
+  'free',
+  'left',
+  'right',
+  'top',
+  'bottom',
+  'top-left',
+  'top-right',
+  'bottom-left',
+  'bottom-right',
+] as const;
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const hasRequiredStringFields = (
+  value: Record<string, unknown>,
+  fields: readonly string[]
+): boolean => fields.every((field) => typeof value[field] === 'string');
+
+const hasNullableStringFields = (
+  value: Record<string, unknown>,
+  fields: readonly string[]
+): boolean =>
+  fields.every((field) => typeof value[field] === 'string' || value[field] === null);
+
+const hasNumberFields = (value: Record<string, unknown>, fields: readonly string[]): boolean =>
+  fields.every((field) => typeof value[field] === 'number');
+
+const hasBooleanFields = (value: Record<string, unknown>, fields: readonly string[]): boolean =>
+  fields.every((field) => typeof value[field] === 'boolean');
+
+const hasFiniteNumberFields = (
+  value: Record<string, unknown>,
+  fields: readonly string[]
+): boolean =>
+  fields.every((field) => typeof value[field] === 'number' && Number.isFinite(value[field]));
+
+const hasOptionalAllowedField = <TValue extends string>(
+  value: unknown,
+  allowedValues: readonly TValue[]
+): value is TValue | undefined =>
+  value === undefined ||
+  (typeof value === 'string' && allowedValues.includes(value as TValue));
+
 const isTutorVisibilityChangeDetail = (
   detail: unknown
 ): detail is TutorVisibilityChangeDetail => {
@@ -187,99 +264,61 @@ const persistTutorWidgetState = (state: KangurAiTutorWidgetStorageState): void =
 const isValidPendingFollowUpRecord = (
   value: unknown
 ): value is KangurAiTutorPendingFollowUpRecord => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isObjectRecord(value)) {
     return false;
   }
 
-  const input = value as Partial<KangurAiTutorPendingFollowUpRecord>;
   return (
-    input.version === 1 &&
-    typeof input.href === 'string' &&
-    typeof input.pathname === 'string' &&
-    typeof input.search === 'string' &&
-    typeof input.actionId === 'string' &&
-    typeof input.actionLabel === 'string' &&
-    (typeof input.actionReason === 'string' || input.actionReason === null) &&
-    typeof input.actionPage === 'string' &&
-    typeof input.messageIndex === 'number' &&
-    typeof input.hasQuery === 'boolean' &&
-    (typeof input.sourceSurface === 'string' || input.sourceSurface === null) &&
-    (typeof input.sourceContentId === 'string' || input.sourceContentId === null) &&
-    (typeof input.sourceTitle === 'string' || input.sourceTitle === null) &&
-    typeof input.sourcePathname === 'string' &&
-    typeof input.sourceSearch === 'string' &&
-    typeof input.createdAt === 'string'
+    value['version'] === 1 &&
+    hasRequiredStringFields(value, PENDING_FOLLOW_UP_REQUIRED_STRING_FIELDS) &&
+    hasNullableStringFields(value, PENDING_FOLLOW_UP_NULLABLE_STRING_FIELDS) &&
+    hasNumberFields(value, ['messageIndex']) &&
+    hasBooleanFields(value, ['hasQuery'])
   );
 };
 
 const isValidPendingNavigationTargetRecord = (
   value: unknown
 ): value is KangurAiTutorPendingNavigationTarget => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isObjectRecord(value)) {
     return false;
   }
 
-  const input = value as Partial<KangurAiTutorPendingNavigationTarget>;
   return (
-    input.version === 1 &&
-    typeof input.href === 'string' &&
-    typeof input.pathname === 'string' &&
-    typeof input.hash === 'string' &&
-    typeof input.nodeId === 'string' &&
-    typeof input.label === 'string' &&
-    (typeof input.route === 'string' || input.route === null) &&
-    (typeof input.anchorId === 'string' || input.anchorId === null) &&
-    typeof input.messageIndex === 'number' &&
-    typeof input.sourcePathname === 'string' &&
-    typeof input.sourceSearch === 'string' &&
-    typeof input.createdAt === 'string'
+    value['version'] === 1 &&
+    hasRequiredStringFields(value, PENDING_NAVIGATION_REQUIRED_STRING_FIELDS) &&
+    hasNullableStringFields(value, PENDING_NAVIGATION_NULLABLE_STRING_FIELDS) &&
+    hasNumberFields(value, ['messageIndex'])
   );
 };
 
 const isValidAvatarPositionRecord = (
   value: unknown
 ): value is KangurAiTutorAvatarPositionRecord => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isObjectRecord(value)) {
     return false;
   }
 
-  const input = value as Partial<KangurAiTutorAvatarPositionRecord>;
   return (
-    input.version === 1 &&
-    typeof input.left === 'number' &&
-    Number.isFinite(input.left) &&
-    typeof input.top === 'number' &&
-    Number.isFinite(input.top) &&
-    typeof input.updatedAt === 'string'
+    value['version'] === 1 &&
+    hasFiniteNumberFields(value, ['left', 'top']) &&
+    hasRequiredStringFields(value, ['updatedAt'])
   );
 };
 
 const isValidPanelPositionRecord = (
   value: unknown
 ): value is KangurAiTutorPanelPositionRecord => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isObjectRecord(value)) {
     return false;
   }
 
-  const input = value as Partial<KangurAiTutorPanelPositionRecord>;
   return (
-    input.version === 1 &&
-    typeof input.left === 'number' &&
-    Number.isFinite(input.left) &&
-    (input.mode === undefined || input.mode === 'manual' || input.mode === 'contextual') &&
-    (input.snap === undefined ||
-      input.snap === 'free' ||
-      input.snap === 'left' ||
-      input.snap === 'right' ||
-      input.snap === 'top' ||
-      input.snap === 'bottom' ||
-      input.snap === 'top-left' ||
-      input.snap === 'top-right' ||
-      input.snap === 'bottom-left' ||
-      input.snap === 'bottom-right') &&
-    typeof input.top === 'number' &&
-    Number.isFinite(input.top) &&
-    typeof input.updatedAt === 'string'
+    value['version'] === 1 &&
+    hasFiniteNumberFields(value, ['left', 'top']) &&
+    hasOptionalAllowedField(value['mode'], TUTOR_PANEL_POSITION_MODES) &&
+    hasOptionalAllowedField(value['snap'], TUTOR_PANEL_SNAP_STATES) &&
+    hasRequiredStringFields(value, ['updatedAt'])
   );
 };
 

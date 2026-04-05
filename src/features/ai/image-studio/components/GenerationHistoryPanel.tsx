@@ -4,8 +4,8 @@ import { RotateCcw, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState } from 'react';
 
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
 

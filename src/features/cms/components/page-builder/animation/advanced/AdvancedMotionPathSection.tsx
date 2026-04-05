@@ -6,9 +6,10 @@ import React from 'react';
 import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderContext';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import { type VectorShape } from '@/shared/contracts/vector';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shared/ui';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { Button, Checkbox, Input, Tooltip } from '@/shared/ui/primitives.public';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 
@@ -127,7 +128,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                 max={1}
                 step={0.01}
                 value={motionPathStartValue}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = parseFloat(e.target.value);
                   if (!isNaN(val))
                     onChange({ ...config, motionPathStart: Math.max(0, Math.min(1, val)) });
@@ -142,7 +143,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                 max={1}
                 step={0.01}
                 value={motionPathEndValue}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = parseFloat(e.target.value);
                   if (!isNaN(val))
                     onChange({ ...config, motionPathEnd: Math.max(0, Math.min(1, val)) });
@@ -156,7 +157,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
             <div className='flex items-center gap-2'>
               <Checkbox
                 checked={motionPathAlignValue}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked: boolean) =>
                   onChange({ ...config, motionPathAlign: checked === true })
                 }
               />
@@ -165,7 +166,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
             <div className='flex items-center gap-2'>
               <Checkbox
                 checked={motionPathAutoRotateValue}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked: boolean) =>
                   onChange({ ...config, motionPathAutoRotate: checked === true })
                 }
               />
@@ -181,7 +182,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                 max={360}
                 step={1}
                 value={motionPathRotateOffsetValue}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = parseFloat(e.target.value);
                   if (!isNaN(val))
                     onChange({
@@ -198,7 +199,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
             <div className='flex items-center gap-2 mb-2'>
               <Checkbox
                 checked={motionPathFollowValue}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked: boolean) =>
                   onChange({ ...config, motionPathFollow: checked === true })
                 }
               />
@@ -212,7 +213,7 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                   max={1}
                   step={0.01}
                   value={motionPathSpacingValue}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val))
                       onChange({ ...config, motionPathSpacing: Math.max(0, Math.min(1, val)) });

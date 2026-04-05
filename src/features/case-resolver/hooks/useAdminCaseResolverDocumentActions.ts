@@ -1,3 +1,5 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { useCallback, useRef } from 'react';
 
@@ -11,15 +13,13 @@ import {
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
   type DocumentContentCanonical,
-} from '@/features/document-editor/public';
-import type {
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverPartyReference,
-  CaseResolverPdfExportRequest,
-} from '@/shared/contracts/case-resolver';
+} from '@/shared/lib/document-editor/public';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
+import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverPdfExportRequest } from '@/shared/contracts/case-resolver/file';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/shared/lib/prompt-exploder/bridge';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,

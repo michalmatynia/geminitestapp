@@ -10,7 +10,7 @@ const kangurButtonPath = path.join(
 );
 const kangurAiTutorWidgetDisplayPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurAiTutorWidget.coordinator-display.ts'
+  'src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.coordinator-display.ts'
 );
 const kangurAiTutorPanelChromePath = path.join(
   process.cwd(),
@@ -38,11 +38,11 @@ const kangurAiTutorComposerPath = path.join(
 );
 const kangurParentDashboardAiTutorWidgetPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurParentDashboardAiTutorWidget.tsx'
+  'src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget.sections.tsx'
 );
 const kangurHomeActionsWidgetPath = path.join(
   process.cwd(),
-  'src/features/kangur/ui/components/KangurGameHomeActionsWidget.tsx'
+  'src/features/kangur/ui/components/game-home/KangurGameHomeActionsWidget.tsx'
 );
 const kangurSourceRoots = [
   path.join(process.cwd(), 'src/features/kangur'),

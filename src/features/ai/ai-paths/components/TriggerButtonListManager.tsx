@@ -5,7 +5,9 @@ import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 
 import type { AiTriggerButtonRecord as StoredAiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import { Button, StatusBadge, Switch, StandardDataTablePanel } from '@/shared/ui';
+import { Button, Switch } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
 

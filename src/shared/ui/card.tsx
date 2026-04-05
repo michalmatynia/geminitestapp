@@ -1,8 +1,8 @@
 import { cva } from 'class-variance-authority';
 import * as React from 'react';
 
-import type { CardPadding, CardVariant } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import type { CardPadding, CardVariant } from '@/shared/contracts/ui/base';
+import { cn } from '@/shared/utils/ui-utils';
 
 const cardVariants = cva('rounded-lg border text-card-foreground shadow-sm transition-colors', {
   variants: {

@@ -17,7 +17,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { server } from '@/mocks/server';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { DataTable } from '@/shared/ui';
+import { DataTable } from '@/shared/ui/data-display.public';
 import { ToastProvider } from '@/shared/ui/toast';
 import type { ProductWithImages } from '@/shared/contracts/products';
 
@@ -191,7 +191,10 @@ const buildContextValue = (
   integrationBadgeStatuses: new Map(),
   traderaBadgeIds: new Set(),
   traderaBadgeStatuses: new Map(),
+  playwrightProgrammableBadgeIds: new Set(),
+  playwrightProgrammableBadgeStatuses: new Map(),
   queuedProductIds: new Set(),
+  productAiRunStatusByProductId: new Map(),
   categoryNameById: new Map(),
   thumbnailSource: 'file',
   imageExternalBaseUrl: '',
@@ -530,7 +533,44 @@ describe('Admin Products List UI', () => {
         integrationSlug: 'baselinker',
         status: 'failed',
         runId: 'run-failed-recovery',
-      }
+      },
+      'baselinker'
+    );
+    expect(exportCalls).toBe(0);
+  });
+
+  it('opens the Base listings modal instead of re-exporting when the Base badge is green', async () => {
+    let exportCalls = 0;
+    const onIntegrationsClick = vi.fn();
+
+    server.use(
+      http.post('/api/v2/integrations/products/:id/export-to-base', () => {
+        exportCalls += 1;
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    renderProductTable({
+      onIntegrationsClick,
+      data: [
+        {
+          ...mockProducts[0],
+          baseProductId: 'base-123',
+        } as ProductWithImages,
+        mockProducts[1]!,
+      ],
+    });
+
+    const user = userEvent.setup();
+    const manageButton = await screen.findByRole('button', {
+      name: 'Manage Base.com listing (active).',
+    });
+    await user.click(manageButton);
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      undefined,
+      'baselinker'
     );
     expect(exportCalls).toBe(0);
   });

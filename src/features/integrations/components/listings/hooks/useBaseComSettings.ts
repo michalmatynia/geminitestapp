@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
 import {
@@ -10,10 +12,8 @@ import {
   useDefaultExportInventory,
   useBaseInventories,
 } from '@/features/integrations/hooks/useIntegrationQueries';
-import type {
-  IntegrationTemplate as Template,
-  BaseInventory,
-} from '@/shared/contracts/integrations';
+import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
+import type { IntegrationTemplate as Template } from '@/shared/contracts/integrations';
 
 // Why: Base.com has complex, interconnected setup:
 // - Templates define field mapping

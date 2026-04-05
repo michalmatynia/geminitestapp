@@ -1,61 +1,108 @@
-'use client';
-
 import React from 'react';
 
-import { EmptyState, Card } from '@/shared/ui';
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  useProductListingsData,
+  useProductListingsModals,
+} from '@/features/integrations/context/ProductListingsContext';
+import {
+  isBaseQuickExportRecoveryContext,
+  resolveProductListingsEmptyDescription,
+  resolveTraderaRecoveryTarget,
+} from '@/features/integrations/utils/product-listings-recovery';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
+import { BaseQuickExportFailureBanner } from './BaseQuickExportFailureBanner';
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
-import { useProductListingsModals } from '@/features/integrations/context/ProductListingsContext';
-import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
+import { ProductListingsScopedStatusPanel } from './ProductListingsScopedStatusPanel';
+import { TraderaQuickExportRecoveryBanner } from './TraderaQuickExportRecoveryBanner';
+import { TraderaQuickExportSuccessBanner } from './TraderaQuickExportSuccessBanner';
+
+const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('login') ||
+    normalized.includes('verification') ||
+    normalized.includes('captcha') ||
+    normalized.includes('auth') ||
+    normalized.includes('session expired')
+  );
+};
 
 export function ProductListingsEmpty(): React.JSX.Element {
+  const { product } = useProductListingsData();
   const { filterIntegrationSlug, statusTargetLabel, isBaseFilter, showSync } =
     useProductListingsViewContext();
   const { recoveryContext } = useProductListingsModals();
-  const isFailedBaseQuickExportRecovery = recoveryContext?.source === 'base_quick_export_failed';
+  const isFailedBaseQuickExportRecovery = isBaseQuickExportRecoveryContext(recoveryContext);
+  const {
+    isRecovery: isTraderaQuickExportRecovery,
+    requestId: recoveryRequestId,
+    integrationId: recoveryIntegrationId,
+    connectionId: recoveryConnectionId,
+  } = resolveTraderaRecoveryTarget({
+    recoveryContext,
+  });
+  const recoveryStatus = (recoveryContext?.status ?? '').trim().toLowerCase();
+  const recoveryFailureReason =
+    recoveryContext && 'failureReason' in recoveryContext
+      ? recoveryContext.failureReason ?? null
+      : null;
+  const canOpenTraderaRecoveryLogin =
+    Boolean(recoveryIntegrationId && recoveryConnectionId) &&
+    (recoveryStatus === 'auth_required' ||
+      recoveryStatus === 'needs_login' ||
+      hasTraderaAuthSignal(recoveryFailureReason));
+  const persistedQuickListFeedback = readPersistedTraderaQuickListFeedback(product.id);
+  const shouldShowQuickListSuccessBanner = Boolean(
+    !isTraderaQuickExportRecovery &&
+      persistedQuickListFeedback?.status === 'completed' &&
+      isTraderaIntegrationSlug(filterIntegrationSlug)
+  );
 
   return (
     <div className='space-y-4'>
+      {shouldShowQuickListSuccessBanner && persistedQuickListFeedback ? (
+        <TraderaQuickExportSuccessBanner
+          mode='empty'
+          variant='full'
+          feedback={persistedQuickListFeedback}
+        />
+      ) : null}
       {isFailedBaseQuickExportRecovery && (
-        <Card variant='subtle' padding='lg' className='bg-card/50 space-y-3'>
-          <div className='space-y-1 text-center'>
-            <div className='text-sm font-semibold text-white'>Previous Base.com export failed</div>
-            <p className='text-xs text-gray-300'>
-              The one-click export did not create a saved marketplace listing. Review the last
-              failure details below, then use the options above to retry with a connection.
-            </p>
-          </div>
-          <div className='grid gap-2 text-xs text-gray-300 sm:grid-cols-2'>
-            <div className='rounded-md border border-white/10 bg-card/60 px-3 py-2'>
-              <div className='text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
-                Status
-              </div>
-              <div className='font-mono text-white'>{recoveryContext.status}</div>
-            </div>
-            <div className='rounded-md border border-white/10 bg-card/60 px-3 py-2'>
-              <div className='text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
-                Run ID
-              </div>
-              <div className='font-mono text-white'>{recoveryContext.runId ?? 'Unavailable'}</div>
-            </div>
-          </div>
-        </Card>
+        <BaseQuickExportFailureBanner
+          status={recoveryContext?.status}
+          runId={recoveryContext?.runId}
+        />
       )}
-      {filterIntegrationSlug ? (
-        <Card variant='subtle' padding='lg' className='bg-card/50 text-center space-y-3'>
-          <div className='text-sm text-gray-300'>{statusTargetLabel} status</div>
-          <Card variant='subtle-compact' padding='sm' className='bg-card/60 text-xs text-gray-400'>
-            Not connected.
-          </Card>
-          {showSync && isBaseFilter && <ProductListingsSyncPanel />}
-        </Card>
+      {isTraderaQuickExportRecovery && (
+        <TraderaQuickExportRecoveryBanner
+          mode='empty'
+          variant='full'
+          status={recoveryContext?.status}
+          requestId={recoveryRequestId}
+          failureReason={recoveryFailureReason}
+          canContinue={canOpenTraderaRecoveryLogin}
+          integrationId={recoveryIntegrationId}
+          connectionId={recoveryConnectionId}
+        />
+      )}
+      {shouldShowQuickListSuccessBanner ? null : filterIntegrationSlug ? (
+        <ProductListingsScopedStatusPanel
+          statusTargetLabel={statusTargetLabel}
+          isBaseFilter={isBaseFilter}
+          showSync={showSync}
+        />
       ) : (
         <EmptyState
           title='No listings found'
           description={
-            isFailedBaseQuickExportRecovery
-              ? 'The last Base.com one-click export failed before a listing record was created. Use the options above to retry or choose a different connection.'
-              : 'This product is not listed on any marketplace yet. Use the + button in the header to list products on a marketplace.'
+            isFailedBaseQuickExportRecovery || isTraderaQuickExportRecovery
+              ? undefined
+              : resolveProductListingsEmptyDescription(recoveryContext)
           }
           className='py-12'
         />

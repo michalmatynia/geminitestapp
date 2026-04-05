@@ -9,26 +9,12 @@ import {
   type PromptValidationScope,
   type PromptValidationSeverity,
 } from '@/shared/lib/prompt-engine/settings';
-import {
-  Alert,
-  Button,
-  Card,
-  ClientOnly,
-  CompactEmptyState,
-  CopyButton,
-  FileUploadButton,
-  FormSection,
-  Hint,
-  Input,
-  JSONImportModal,
-  Label,
-  MetadataItem,
-  SectionHeader,
-  StatusBadge,
-  Textarea,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Alert, Button, Card, ClientOnly, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { CompactEmptyState, MetadataItem, SectionHeader, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { CopyButton, FileUploadButton, FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
+import { JSONImportModal } from '@/shared/ui/templates.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { PromptEngineFilters } from '../components/PromptEngineFilters';
 import { RuleListDragProvider } from '../components/context/RuleListDragContext';

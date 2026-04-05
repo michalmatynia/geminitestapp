@@ -1,12 +1,12 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
-import type {
-  CaseResolverAssetFile,
-  CaseResolverGraph,
-  CaseResolverRelationGraph,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverGraph } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverRelationGraph } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 
 import {

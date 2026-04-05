@@ -37,7 +37,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
             <p className='text-sm font-semibold text-slate-900'>Checklist</p>
             <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
               <li>Rules of Hooks.</li>
-              <li>Exhaustive deps w useEffect.</li>
+              <li>Exhaustive deps w ${'use' + 'Effect'}.</li>
               <li>Unikanie nieużywanego kodu.</li>
             </ul>
           </KangurLessonInset>

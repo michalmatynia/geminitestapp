@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
@@ -10,6 +11,7 @@ import { PriceGroupModal } from '@/features/products/components/settings/modals/
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
+import { ShippingGroupsSettings } from '@/features/products/components/settings/ShippingGroupsSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorDefaultPanel } from '@/features/products/components/settings/validator-settings/ValidatorDefaultPanel';
 import { ValidatorDocsTooltipsProvider } from '@/features/products/components/settings/validator-settings/ValidatorDocsTooltips';
@@ -21,12 +23,18 @@ import {
   useDeletePriceGroupMutation,
   useParameters,
   usePriceGroups,
+  useShippingGroups,
   useTags,
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { Catalog, PriceGroup } from '@/shared/contracts/products';
-import { AdminProductsPageLayout, Button, useToast, Card, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
+import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/layout';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { settingSections } from './ProductSettingsConstants';
@@ -38,14 +46,31 @@ export type ProductSettingsPageProps = {
   productSyncSettingsSlot?: React.ReactNode;
 };
 
+const toSettingSectionSlug = (section: (typeof settingSections)[number]): string =>
+  section
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const resolveSettingSectionFromParam = (
+  value: string | null | undefined
+): (typeof settingSections)[number] | null => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return null;
+  return settingSections.find((section) => toSettingSectionSlug(section) === normalized) ?? null;
+};
+
 export function ProductSettingsPage({
   internationalizationSettingsSlot,
   internationalizationProvider: InternationalizationProvider = ({ children }) => <>{children}</>,
   internationalizationModalsSlot,
   productSyncSettingsSlot,
 }: ProductSettingsPageProps): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const requestedSection = resolveSettingSectionFromParam(searchParams?.get('section'));
   const [activeSection, setActiveSection] =
-    useState<(typeof settingSections)[number]>('Categories');
+    useState<(typeof settingSections)[number]>(requestedSection ?? 'Categories');
 
   // Modal State
   const [showCatalogModal, setShowCatalogModal] = useState(false);
@@ -61,12 +86,33 @@ export function ProductSettingsPage({
       } | null>(null);
 
   const { toast } = useToast();
+  const isCategoriesSectionActive = activeSection === 'Categories';
+  const isShippingGroupsSectionActive = activeSection === 'Shipping Groups';
+  const isTagsSectionActive = activeSection === 'Tags';
+  const isParametersSectionActive = activeSection === 'Parameters';
+  const isPriceGroupsSectionActive = activeSection === 'Price Groups';
+  const isCatalogsSectionActive = activeSection === 'Catalogs';
+  const shouldLoadCatalogs =
+    isCategoriesSectionActive ||
+    isShippingGroupsSectionActive ||
+    isTagsSectionActive ||
+    isParametersSectionActive ||
+    isCatalogsSectionActive;
+  const shouldLoadPriceGroups =
+    isPriceGroupsSectionActive || showCatalogModal || showPriceGroupModal;
 
   // Queries
-  const { data: priceGroups = [], isLoading: loadingGroups } = usePriceGroups();
-  const { data: catalogs = [], isLoading: loadingCatalogs } = useCatalogs();
+  const { data: priceGroups = [], isLoading: loadingGroups } = usePriceGroups({
+    enabled: shouldLoadPriceGroups,
+  });
+  const { data: catalogs = [], isLoading: loadingCatalogs } = useCatalogs({
+    enabled: shouldLoadCatalogs,
+  });
 
   const [selectedCategoryCatalogId, setSelectedCategoryCatalogId] = useState<string | null>(null);
+  const [selectedShippingGroupCatalogId, setSelectedShippingGroupCatalogId] = useState<string | null>(
+    null
+  );
   const [selectedTagCatalogId, setSelectedTagCatalogId] = useState<string | null>(null);
   const [selectedParameterCatalogId, setSelectedParameterCatalogId] = useState<string | null>(null);
 
@@ -74,17 +120,24 @@ export function ProductSettingsPage({
     data: productCategories = [],
     isLoading: loadingCategories,
     refetch: refetchCategories,
-  } = useCategories(selectedCategoryCatalogId);
+  } = useCategories(selectedCategoryCatalogId, { enabled: isCategoriesSectionActive });
+  const {
+    data: shippingGroups = [],
+    isLoading: loadingShippingGroups,
+    refetch: refetchShippingGroups,
+  } = useShippingGroups(selectedShippingGroupCatalogId, {
+    enabled: isShippingGroupsSectionActive,
+  });
   const {
     data: productTags = [],
     isLoading: loadingTags,
     refetch: refetchTags,
-  } = useTags(selectedTagCatalogId);
+  } = useTags(selectedTagCatalogId, { enabled: isTagsSectionActive });
   const {
     data: productParameters = [],
     isLoading: loadingParameters,
     refetch: refetchParameters,
-  } = useParameters(selectedParameterCatalogId);
+  } = useParameters(selectedParameterCatalogId, { enabled: isParametersSectionActive });
 
   // Mutations
   const updatePriceGroupMutation = useUpdatePriceGroupMutation();
@@ -96,27 +149,46 @@ export function ProductSettingsPage({
     '';
 
   useEffect(() => {
+    if (!requestedSection || requestedSection === activeSection) return;
+    setActiveSection(requestedSection);
+  }, [activeSection, requestedSection]);
+
+  useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (catalogs.length > 0) {
+    if (catalogs.length > 0 && shouldLoadCatalogs) {
       timer = setTimeout(() => {
-        if (!selectedCategoryCatalogId) {
-          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-          if (def) setSelectedCategoryCatalogId(def.id);
+        const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
+        if (!def) return;
+
+        if (isCategoriesSectionActive && !selectedCategoryCatalogId) {
+          setSelectedCategoryCatalogId(def.id);
         }
-        if (!selectedTagCatalogId) {
-          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-          if (def) setSelectedTagCatalogId(def.id);
+        if (isShippingGroupsSectionActive && !selectedShippingGroupCatalogId) {
+          setSelectedShippingGroupCatalogId(def.id);
         }
-        if (!selectedParameterCatalogId) {
-          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-          if (def) setSelectedParameterCatalogId(def.id);
+        if (isTagsSectionActive && !selectedTagCatalogId) {
+          setSelectedTagCatalogId(def.id);
+        }
+        if (isParametersSectionActive && !selectedParameterCatalogId) {
+          setSelectedParameterCatalogId(def.id);
         }
       }, 0);
     }
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [catalogs, selectedCategoryCatalogId, selectedTagCatalogId, selectedParameterCatalogId]);
+  }, [
+    catalogs,
+    isCategoriesSectionActive,
+    isShippingGroupsSectionActive,
+    isParametersSectionActive,
+    isTagsSectionActive,
+    selectedCategoryCatalogId,
+    selectedShippingGroupCatalogId,
+    selectedParameterCatalogId,
+    selectedTagCatalogId,
+    shouldLoadCatalogs,
+  ]);
 
   const handleSetDefaultGroup = async (groupId: string): Promise<void> => {
     const group = priceGroups.find((g: PriceGroup) => g.id === groupId);
@@ -180,7 +252,9 @@ export function ProductSettingsPage({
       },
     });
   };
-  const sharedSettingsContextValue = {
+  const sharedSettingsContextValue: React.ComponentProps<
+    typeof ProductSettingsProvider
+  >['value'] = {
     loadingCatalogs,
     catalogs,
     onOpenCatalogModal: (): void => {
@@ -220,6 +294,15 @@ export function ProductSettingsPage({
     },
     onRefreshCategories: (): void => {
       void refetchCategories();
+    },
+    loadingShippingGroups,
+    shippingGroups,
+    selectedShippingGroupCatalogId,
+    onShippingGroupCatalogChange: (id: string | null): void => {
+      setSelectedShippingGroupCatalogId(id);
+    },
+    onRefreshShippingGroups: (): void => {
+      void refetchShippingGroups();
     },
     loadingTags,
     tags: productTags,
@@ -282,6 +365,7 @@ export function ProductSettingsPage({
           <ProductSettingsProvider value={sharedSettingsContextValue}>
             <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
               {activeSection === 'Categories' && <CategoriesSettings />}
+              {activeSection === 'Shipping Groups' && <ShippingGroupsSettings />}
               {activeSection === 'Tags' && <TagsSettings />}
               {activeSection === 'Parameters' && (
                 <ParametersSettings
@@ -315,27 +399,31 @@ export function ProductSettingsPage({
         </div>
 
         {/* Modals */}
-        <CatalogModal
-          isOpen={showCatalogModal}
-          onClose={() => setShowCatalogModal(false)}
-          onSuccess={(): void => {
-            setShowCatalogModal(false);
-          }}
-          item={editingCatalog}
-          items={priceGroups}
-          loading={loadingGroups}
-          defaultId={defaultGroupId}
-        />
+        {showCatalogModal && (
+          <CatalogModal
+            isOpen={showCatalogModal}
+            onClose={() => setShowCatalogModal(false)}
+            onSuccess={(): void => {
+              setShowCatalogModal(false);
+            }}
+            item={editingCatalog}
+            items={priceGroups}
+            loading={loadingGroups}
+            defaultId={defaultGroupId}
+          />
+        )}
 
-        <PriceGroupModal
-          isOpen={showPriceGroupModal}
-          onClose={() => setShowPriceGroupModal(false)}
-          onSuccess={(): void => {
-            setShowPriceGroupModal(false);
-          }}
-          item={editingPriceGroup}
-          items={priceGroups}
-        />
+        {showPriceGroupModal && (
+          <PriceGroupModal
+            isOpen={showPriceGroupModal}
+            onClose={() => setShowPriceGroupModal(false)}
+            onSuccess={(): void => {
+              setShowPriceGroupModal(false);
+            }}
+            item={editingPriceGroup}
+            items={priceGroups}
+          />
+        )}
 
         {internationalizationModalsSlot}
 

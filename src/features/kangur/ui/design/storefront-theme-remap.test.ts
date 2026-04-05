@@ -6,11 +6,11 @@ import { describe, expect, it } from 'vitest';
 const kangurStylesheetPath = path.join(process.cwd(), 'src/app/(frontend)/kangur/kangur.css');
 const storefrontAppearanceLogicPath = path.join(
   process.cwd(),
-  'src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts'
+  'src/shared/ui/cms-appearance/CmsStorefrontAppearance.logic.ts'
 );
 const storefrontAccentVarsPath = path.join(
   process.cwd(),
-  'src/features/cms/components/frontend/appearance-logic/CmsStorefrontAppearance.accent-vars.ts'
+  'src/shared/ui/cms-appearance/appearance-logic/CmsStorefrontAppearance.accent-vars.ts'
 );
 
 describe('Kangur storefront theme remap', () => {

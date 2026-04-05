@@ -2,7 +2,9 @@
 
 import React, { useMemo } from 'react';
 
-import { Checkbox, FormField, Input, Label, Textarea, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui';
+import { Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

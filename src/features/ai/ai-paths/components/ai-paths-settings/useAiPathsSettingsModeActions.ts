@@ -1,29 +1,11 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
-import type { Toast } from '@/shared/contracts/ui';
-import type {
-  AiNode,
-  Edge,
-  ParserSampleState,
-  PathBlockedRunPolicy,
-  PathConfig,
-  PathExecutionMode,
-  PathFlowIntensity,
-  AiPathsValidationConfig,
-  PathMeta,
-  PathRunMode,
-  RuntimeState,
-  UpdaterSampleState,
-} from '@/shared/lib/ai-paths';
-import {
-  AI_PATHS_HISTORY_RETENTION_DEFAULT,
-  AI_PATHS_HISTORY_RETENTION_KEY,
-  AI_PATHS_HISTORY_RETENTION_MAX,
-  AI_PATHS_HISTORY_RETENTION_MIN,
-  STORAGE_VERSION,
-  createDefaultPathConfig,
-} from '@/shared/lib/ai-paths';
+import type { Toast } from '@/shared/contracts/ui/base';
+import type { AiNode, Edge, ParserSampleState, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, AiPathsValidationConfig, PathMeta, PathRunMode, RuntimeState, UpdaterSampleState } from '@/shared/lib/ai-paths';
+import { AI_PATHS_HISTORY_RETENTION_DEFAULT, AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_HISTORY_RETENTION_MAX, AI_PATHS_HISTORY_RETENTION_MIN, STORAGE_VERSION, createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type UseAiPathsSettingsModeActionsInput = {

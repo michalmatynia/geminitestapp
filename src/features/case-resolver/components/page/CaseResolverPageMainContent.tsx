@@ -1,9 +1,8 @@
-'use client';
-
 import { FileText } from 'lucide-react';
 import React from 'react';
 
-import { Card, CompactEmptyState } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import { useCaseResolverViewStateContext } from '../CaseResolverViewContext';
 import { CaseResolverDocumentEditor } from './CaseResolverDocumentEditor';

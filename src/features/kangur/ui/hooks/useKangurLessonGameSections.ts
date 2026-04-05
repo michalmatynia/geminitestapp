@@ -1,10 +1,8 @@
-'use client';
-
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,
 } from '@/features/kangur/observability/client';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import {
   kangurLessonGameSectionsSchema,

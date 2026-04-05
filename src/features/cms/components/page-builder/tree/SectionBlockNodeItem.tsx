@@ -8,14 +8,8 @@ import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import type { BlockInstance } from '@/features/cms/types/page-builder';
 import { readBlockDragData, setBlockDragData } from '@/features/cms/utils/page-builder-dnd';
-import type { TreeContextMenuItem } from '@/shared/contracts/ui';
-import {
-  TreeRow,
-  TreeCaret,
-  TreeActionButton,
-  TreeActionSlot,
-  TreeContextMenu,
-} from '@/shared/ui';
+import type { TreeContextMenuItem } from '@/shared/contracts/ui/menus';
+import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu } from '@/shared/ui/data-display.public';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { BLOCK_ICONS, CONVERTIBLE_SECTION_TYPES, resolveBlockLabel } from './tree-constants';

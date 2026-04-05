@@ -2,12 +2,9 @@
 
 import { useDeferredValue, useEffect, useMemo, useRef } from 'react';
 
-import type {
-  CaseResolverAssetFile,
-  CaseSearchScope,
-  CaseResolverFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseSearchScope } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import {
   getCachedCaseResolverRuntimeIndexes,

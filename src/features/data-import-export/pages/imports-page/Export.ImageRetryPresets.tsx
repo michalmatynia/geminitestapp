@@ -1,15 +1,9 @@
 'use client';
 
 import React from 'react';
-import {
-  Button,
-  Card,
-  FormField,
-  Hint,
-  Input,
-  SectionHeader,
-  ToggleRow,
-} from '@/shared/ui';
+import { Button, Card, Input } from '@/shared/ui/primitives.public';
+import { FormField, Hint, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import {
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
@@ -17,7 +11,7 @@ import {
   getDefaultImageRetryPresets,
   withImageRetryPresetLabels,
 } from '@/features/data-import-export/utils/image-retry-presets';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 
 export function ExportImageRetryPresetsSection(): React.JSX.Element {
   const { imageRetryPresets, setImageRetryPresets } = useImportExportState();

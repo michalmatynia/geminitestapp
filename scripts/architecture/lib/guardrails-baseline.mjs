@@ -9,6 +9,9 @@ export const DEFAULT_GUARDRAIL_BASELINE_RELATIVE_PATH = path.join(
 export const DEFAULT_GUARDRAIL_HARD_LIMITS = Object.freeze({
   sourceLargestFileLines: 4000,
   'imports.featuresToAppApiTotalImports': 0,
+  // Files that use React/Next hooks but lack 'use client' will always break the build.
+  // This hard limit of 0 ensures agents can never remove 'use client' from hook-using files.
+  'source.hooksWithoutUseClient': 0,
 });
 export const DEFAULT_INFORMATIONAL_GUARDRAIL_KEYS = Object.freeze(['api.delegatedServerRoutes']);
 export const UI_CONSOLIDATION_GUARDRAIL_RULES = Object.freeze([
@@ -49,6 +52,7 @@ export const buildArchitectureGuardrailSnapshot = (metrics, propDrilling, uiCons
   'source.filesOver1000': metrics.source.filesOver1000,
   'source.filesOver1500': metrics.source.filesOver1500,
   'source.useClientFiles': metrics.source.useClientFiles,
+  'source.hooksWithoutUseClient': metrics.source.hooksWithoutUseClient,
   'source.largestFileLines': metrics.source.largestFile?.lines ?? 0,
   'api.totalRoutes': metrics.api.totalRoutes,
   'api.delegatedServerRoutes': metrics.api.delegatedServerRoutes,
@@ -61,7 +65,10 @@ export const buildArchitectureGuardrailSnapshot = (metrics, propDrilling, uiCons
   'imports.sharedToFeaturesTotalImports': metrics.imports.sharedToFeaturesTotalImports,
   'architecture.crossFeatureEdgePairs': metrics.architecture.crossFeatureEdgePairs,
   'runtime.setIntervalOccurrences': metrics.runtime.setIntervalOccurrences,
+  'codeHealth.highHookComplexity': metrics.codeHealth?.highComplexityHooksCount ?? 0,
   'propDrilling.depthGte4Chains': propDrilling.depthGte4Chains,
+  'propDrilling.highPropCount': propDrilling.highPropCountComponentCount ?? 0,
+  'propDrilling.passThroughHotspots': propDrilling.passThroughHotspotCount ?? 0,
   'propDrilling.componentsWithForwarding': propDrilling.componentsWithForwarding,
   'uiConsolidation.totalOpportunities': uiConsolidation.totalOpportunities,
   'uiConsolidation.highPriorityOpportunities': uiConsolidation.highPriorityOpportunities,
@@ -85,15 +92,24 @@ export const createGuardrailBaseline = (
   {
     generatedAt = new Date().toISOString(),
     hardLimits = DEFAULT_GUARDRAIL_HARD_LIMITS,
+    min = undefined,
   } = {}
-) => ({
-  generatedAt,
-  hardLimits: {
-    ...DEFAULT_GUARDRAIL_HARD_LIMITS,
-    ...(hardLimits ?? {}),
-  },
-  max: snapshot,
-});
+) => {
+  const baseline = {
+    generatedAt,
+    hardLimits: {
+      ...DEFAULT_GUARDRAIL_HARD_LIMITS,
+      ...(hardLimits ?? {}),
+    },
+    max: snapshot,
+  };
+  // Preserve min constraints if provided — these are floor guards that should
+  // never be silently dropped by --update-baseline runs.
+  if (min && Object.keys(min).length > 0) {
+    baseline.min = min;
+  }
+  return baseline;
+};
 
 export const readGuardrailBaseline = async ({
   root = process.cwd(),
@@ -110,22 +126,24 @@ export const writeGuardrailBaseline = async (
     baselinePath = resolveGuardrailBaselinePath(root),
     generatedAt,
     hardLimits,
+    min,
   } = {}
 ) => {
   const payload = createGuardrailBaseline(snapshot, {
     generatedAt,
     hardLimits,
+    min,
   });
   await fs.mkdir(path.dirname(baselinePath), { recursive: true });
   await fs.writeFile(baselinePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
   return payload;
 };
 
-export const formatGuardrailRow = (label, current, max, status) => {
+export const formatGuardrailRow = (label, current, limit, status, direction = 'max') => {
   const paddedLabel = label.padEnd(44, ' ');
   const currentText = String(current).padStart(8, ' ');
-  const maxText = String(max).padStart(8, ' ');
-  return `${status.padEnd(6, ' ')} ${paddedLabel} current=${currentText} max=${maxText}`;
+  const limitText = String(limit).padStart(8, ' ');
+  return `${status.padEnd(6, ' ')} ${paddedLabel} current=${currentText} ${direction}=${limitText}`;
 };
 
 export const compareGuardrailSnapshotAgainstBaseline = (
@@ -136,6 +154,7 @@ export const compareGuardrailSnapshotAgainstBaseline = (
   } = {}
 ) => {
   const maxByKey = baseline.max ?? {};
+  const minByKey = baseline.min ?? {};
   const informationalKeySet = new Set(informationalKeys);
   const rows = [];
   let failed = false;
@@ -161,6 +180,29 @@ export const compareGuardrailSnapshotAgainstBaseline = (
     }
 
     rows.push({ label: key, current, max, status: 'OK' });
+  }
+
+  // Min checks: prevent over-removal of metrics that have a safe floor.
+  // If current < min the codebase has been changed in a way that is likely broken
+  // (e.g. 'use client' directives stripped below the level where the build still works).
+  // Rows use the same `max` field (holding the floor value) so the render loop in
+  // check-guardrails.mjs works without modification; the `(min)` label suffix distinguishes them.
+  for (const key of Object.keys(minByKey).sort()) {
+    const current = snapshot[key] ?? 0;
+    const min = minByKey[key];
+
+    if (typeof min !== 'number') {
+      rows.push({ label: `${key} (min)`, current, max: 'n/a', status: 'WARN' });
+      continue;
+    }
+
+    if (current < min) {
+      failed = true;
+      rows.push({ label: `${key} (min)`, current, max: min, status: 'FAIL' });
+      continue;
+    }
+
+    rows.push({ label: `${key} (min)`, current, max: min, status: 'OK' });
   }
 
   const hardLimits = {

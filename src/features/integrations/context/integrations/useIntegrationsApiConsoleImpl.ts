@@ -2,11 +2,7 @@
 
 import { useState } from 'react';
 
-import type {
-  IntegrationAllegroApiMethod,
-  IntegrationAllegroApiResponse,
-  IntegrationBaseApiResponse,
-} from '@/shared/contracts/integrations';
+import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
 
 export function useIntegrationsApiConsoleImpl() {
   // API Console State (Base)

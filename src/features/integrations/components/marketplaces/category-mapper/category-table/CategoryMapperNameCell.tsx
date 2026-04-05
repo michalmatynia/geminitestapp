@@ -4,10 +4,11 @@ import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import React from 'react';
 
 import { buttonVariants } from '@/shared/ui/button';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 export type CategoryMapperNameCellProps = {
   name: string;
+  path?: string | null;
   depth: number;
   canExpand: boolean;
   isExpanded: boolean;
@@ -18,6 +19,7 @@ export type CategoryMapperNameCellProps = {
 
 export function CategoryMapperNameCell({
   name,
+  path = null,
   depth,
   canExpand,
   isExpanded,
@@ -25,6 +27,9 @@ export function CategoryMapperNameCell({
   isMapped,
   hasPendingChange,
 }: CategoryMapperNameCellProps): React.JSX.Element {
+  const normalizedPath = typeof path === 'string' ? path.trim() : '';
+  const shouldShowPath = normalizedPath.length > 0 && normalizedPath !== name.trim();
+
   return (
     <div
       className={cn(
@@ -53,8 +58,17 @@ export function CategoryMapperNameCell({
         ) : (
           <span className='mr-2 w-6 inline-block' />
         )}
-        <span className='text-sm text-gray-200'>{name}</span>
-        {isMapped && <Check className='ml-2 h-3 w-3 text-emerald-400' />}
+        <div className='min-w-0'>
+          <div className='flex items-center'>
+            <span className='text-sm text-gray-200'>{name}</span>
+            {isMapped && <Check className='ml-2 h-3 w-3 text-emerald-400' />}
+          </div>
+          {shouldShowPath ? (
+            <div className='text-[11px] text-gray-500 truncate' title={normalizedPath}>
+              {normalizedPath}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

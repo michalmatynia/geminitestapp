@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import type {
   ImageStudioAnalysisPlanSnapshot,
@@ -8,6 +8,7 @@ import type {
 } from '@/features/ai/image-studio/utils/analysis-bridge';
 import type { ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { UpscaleSmoothingQuality, AutoScalerMode, CenterMode } from './GenerationToolbarImageUtils';
 import type {
@@ -123,7 +124,13 @@ export interface GenerationToolbarContextValue {
   setAnalysisStatus: (val: AnalysisStatus) => void;
 }
 
-const GenerationToolbarContext = createContext<GenerationToolbarContextValue | null>(null);
+const { Context: GenerationToolbarContext, useStrictContext: useGenerationToolbarContext } =
+  createStrictContext<GenerationToolbarContextValue>({
+    hookName: 'useGenerationToolbarContext',
+    providerName: 'a GenerationToolbarProvider',
+    displayName: 'GenerationToolbarContext',
+    errorFactory: internalError,
+  });
 
 export function GenerationToolbarProvider({
   children,
@@ -318,10 +325,4 @@ export function GenerationToolbarProvider({
   );
 }
 
-export function useGenerationToolbarContext(): GenerationToolbarContextValue {
-  const context = useContext(GenerationToolbarContext);
-  if (!context) {
-    throw internalError('useGenerationToolbarContext must be used within a GenerationToolbarProvider');
-  }
-  return context;
-}
+export { useGenerationToolbarContext };

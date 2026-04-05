@@ -1,8 +1,6 @@
-import { ensureHtmlForPreview } from '@/features/document-editor/public';
-import type {
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverFileEditDraft,
-} from '@/shared/contracts/case-resolver';
+import { ensureHtmlForPreview } from '@/shared/lib/document-editor/public';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

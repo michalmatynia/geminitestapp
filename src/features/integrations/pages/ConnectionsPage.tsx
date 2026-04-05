@@ -10,7 +10,7 @@ import {
   useIntegrationsData,
   useIntegrationsForm,
 } from '@/features/integrations/context/IntegrationsContext';
-import { LoadingState } from '@/shared/ui';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 function IntegrationsContent(): React.JSX.Element {

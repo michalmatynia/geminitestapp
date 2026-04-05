@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
@@ -10,8 +8,9 @@ import {
   useProductListingsLogs,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import { ImageRetryDropdown, Alert } from '@/shared/ui';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import { ImageRetryDropdown } from '@/shared/ui/forms-and-actions.public';
+import { Alert } from '@/shared/ui/primitives.public';
 
 export function ProductListingsError(): React.JSX.Element {
   const { error } = useProductListingsData();

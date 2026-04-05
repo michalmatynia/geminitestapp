@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProductParameterValue } from '@/shared/contracts/products';
-import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
+import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products/base';
 
 import { normalizeProductParametersForSubmission } from './useProductFormSubmit';
 

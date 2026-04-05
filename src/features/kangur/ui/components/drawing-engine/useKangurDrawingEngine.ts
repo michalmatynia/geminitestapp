@@ -252,10 +252,14 @@ export const useKangurDrawingEngine = <
         return;
       }
 
-      const nextStroke = createStroke({ event, point });
-      if (!nextStroke) {
+      const createdStroke = createStroke({ event, point });
+      if (!createdStroke) {
         return;
       }
+      const nextStroke = {
+        ...createdStroke,
+        points: [...createdStroke.points],
+      };
 
       event.preventDefault();
       surface.setPointerCapture?.(event.pointerId);
@@ -305,10 +309,8 @@ export const useKangurDrawingEngine = <
         return;
       }
 
-      activeStrokeRef.current = {
-        ...currentStroke,
-        points: [...currentStroke.points, point],
-      };
+      currentStroke.points.push(point);
+      activeStrokeRef.current = currentStroke;
       scheduleRedraw();
     },
     [minPointDistance, resolvePoint, scheduleRedraw, shouldAddPoint]
@@ -396,7 +398,10 @@ type UseKangurPointDrawingEngineOptions<
     point: Point2d;
     strokes: Point2d[][];
   }) => void;
-  redraw: (strokes: Point2d[][]) => void;
+  redraw: (payload: {
+    activeStroke: Point2d[] | null;
+    strokes: Point2d[][];
+  }) => void;
   shouldAddPoint?: (payload: {
     event: ReactPointerEvent<TElement>;
     point: Point2d;
@@ -477,10 +482,10 @@ export const useKangurPointDrawingEngine = <
       });
     },
     redraw: ({ activeStroke, strokes }) => {
-      const pointStrokes = activeStroke
-        ? [...mapKangurDrawingStrokesToPoints(strokes), activeStroke.points]
-        : mapKangurDrawingStrokesToPoints(strokes);
-      redraw(pointStrokes);
+      redraw({
+        activeStroke: activeStroke?.points ?? null,
+        strokes: mapKangurDrawingStrokesToPoints(strokes),
+      });
     },
     shouldAddPoint: shouldAddPoint
       ? (payload) =>

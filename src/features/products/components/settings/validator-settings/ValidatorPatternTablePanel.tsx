@@ -2,15 +2,17 @@
 
 import { Plus } from 'lucide-react';
 import React from 'react';
-
-import { Button, EmptyState, FormSection, LoadingState, useToast } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { FormSection } from '@/shared/ui/form-section';
+import { LoadingState } from '@/shared/ui/LoadingState';
+import { useToast } from '@/shared/ui/toast';
 
 import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
 import { ValidatorPatternImportModal } from './ValidatorPatternImportModal';
 import { ValidatorPatternTree } from './ValidatorPatternTree';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatterntablepanel

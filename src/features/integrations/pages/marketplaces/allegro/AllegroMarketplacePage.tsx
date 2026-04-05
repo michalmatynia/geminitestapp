@@ -1,10 +1,7 @@
 import React from 'react';
 
-import {
-  AdminIntegrationsPageLayout,
-  NavigationCard,
-  NavigationCardGrid,
-} from '@/shared/ui';
+import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
+import { NavigationCard, NavigationCardGrid } from '@/shared/ui/navigation-and-layout.public';
 
 const sections = [
   {

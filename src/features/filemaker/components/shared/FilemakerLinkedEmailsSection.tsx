@@ -2,7 +2,8 @@ import { Mail, Plus } from 'lucide-react';
 import React from 'react';
 
 import type { FilemakerEmail } from '@/features/filemaker/types';
-import { Badge, Button, Card, FormField, FormSection, Textarea } from '@/shared/ui';
+import { Badge, Button, Card, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 
 
 export interface FilemakerLinkedEmailsSectionProps {

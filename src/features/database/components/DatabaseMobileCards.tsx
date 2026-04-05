@@ -2,15 +2,9 @@
 
 import React from 'react';
 import { Database, Calendar, HardDrive, History, MoreVertical } from 'lucide-react';
-import {
-  Card,
-  Badge,
-  ActionMenu,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  UI_STACK_TIGHT_CLASSNAME,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Card, Badge, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { UI_STACK_TIGHT_CLASSNAME, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import {
   useDatabaseBackupsActionsContext,
   useDatabaseBackupsStateContext,

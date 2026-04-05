@@ -1,11 +1,7 @@
 import React from 'react';
 
-import type {
-  AiNode,
-  DataContractNodeIssueSummary,
-  DataContractPreflightIssue,
-  SvgDetailLevel,
-} from '@/shared/lib/ai-paths';
+import type { DataContractNodeIssueSummary, DataContractPreflightIssue } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
+import type { AiNode, SvgDetailLevel } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { type ConnectorInfo } from './canvas-board-connectors';

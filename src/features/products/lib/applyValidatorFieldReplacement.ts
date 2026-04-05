@@ -1,4 +1,5 @@
-import type { ProductCategory, ProductFormData } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
 
 import {
   resolveValidatorFieldReplacement,

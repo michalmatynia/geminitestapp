@@ -1,3 +1,5 @@
+'use client';
+
 import { Plus } from 'lucide-react';
 import { useState, useCallback, useMemo } from 'react';
 
@@ -6,21 +8,20 @@ import {
   useDeleteTagMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Catalog, ProductTag } from '@/shared/contracts/products';
-import {
-  useToast,
-  Button,
-  SelectSimple,
-  Input,
-  FormModal,
-  EmptyState,
-  Tag as UiTag,
-  FormSection,
-  FormField,
-  SimpleSettingsList,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductTag } from '@/shared/contracts/products/tags';
+import { Button } from '@/shared/ui/button';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { FormModal } from '@/shared/ui/FormModal';
+import { Input } from '@/shared/ui/input';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/layout';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { Tag as UiTag } from '@/shared/ui/tag';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { SimpleSettingsList } from '@/shared/ui/templates/SimpleSettingsList';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useProductSettingsTagsContext } from './ProductSettingsContext';

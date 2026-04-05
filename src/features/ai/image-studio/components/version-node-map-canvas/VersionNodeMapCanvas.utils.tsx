@@ -1,5 +1,3 @@
-'use client';
-
 import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import {
   NODE_HEIGHT,

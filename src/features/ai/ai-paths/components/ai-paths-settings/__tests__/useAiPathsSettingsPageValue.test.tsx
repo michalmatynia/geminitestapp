@@ -6,6 +6,7 @@ import type { AiPathsSettingsProps } from '../../AiPathsSettings';
 import type { UseAiPathsSettingsStateReturn } from '../types';
 
 const mockState = vi.hoisted(() => ({
+  routerPush: vi.fn(),
   setRunHistoryNodeId: vi.fn(),
   setRunFilter: vi.fn(),
   openRunDetail: vi.fn(),
@@ -16,6 +17,12 @@ const mockState = vi.hoisted(() => ({
   normalizeAiPathsValidationConfig: vi.fn(),
   buildSwitchPathOptions: vi.fn(),
   sortPathMetas: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockState.routerPush,
+  }),
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
@@ -237,6 +244,8 @@ const createState = (
 
 describe('useAiPathsSettingsPageValue', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    mockState.routerPush.mockReset();
     mockState.setRunHistoryNodeId.mockReset();
     mockState.setRunFilter.mockReset();
     mockState.openRunDetail.mockReset();
@@ -256,6 +265,8 @@ describe('useAiPathsSettingsPageValue', () => {
   });
 
   afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -263,8 +274,17 @@ describe('useAiPathsSettingsPageValue', () => {
     const state = createState();
     const { result } = renderHook(() => useAiPathsSettingsPageValue(props, state));
 
+    expect(result.current.diagnosticsReady).toBe(false);
     expect(result.current.normalizedAiPathsValidation).toEqual({ enabled: true });
     expect(result.current.nodeValidationEnabled).toBe(true);
+    expect(mockState.evaluateAiPathsValidationPreflight).not.toHaveBeenCalled();
+    expect(mockState.evaluateDataContractPreflight).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(result.current.diagnosticsReady).toBe(true);
     expect(mockState.evaluateAiPathsValidationPreflight).toHaveBeenCalledWith({
       nodes: state.nodes,
       edges: state.edges,
@@ -349,6 +369,10 @@ describe('useAiPathsSettingsPageValue', () => {
       }
     );
 
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
     expect(result.current.normalizedAiPathsValidation).toEqual({ enabled: false, normalized: 'fallback' });
     expect(result.current.nodeValidationEnabled).toBe(false);
     expect(mockState.evaluateDataContractPreflight).toHaveBeenCalledWith({
@@ -372,9 +396,11 @@ describe('useAiPathsSettingsPageValue', () => {
 
     rerender({ activeTab: 'paths', nextState: createState({ autoSaveStatus: 'saving' }) });
     expect(result.current.autoSaveVariant).toBe('processing');
+    expect(result.current.diagnosticsReady).toBe(false);
 
     rerender({ activeTab: 'docs', nextState: createState({ autoSaveStatus: 'error' }) });
     expect(result.current.autoSaveVariant).toBe('error');
+    expect(result.current.diagnosticsReady).toBe(false);
   });
 
   it('reports blocked, warning, and successful validation checks', async () => {
@@ -392,6 +418,10 @@ describe('useAiPathsSettingsPageValue', () => {
         },
       }
     );
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
 
     await act(async () => {
       result.current.handleRunNodeValidationCheck();
@@ -420,6 +450,21 @@ describe('useAiPathsSettingsPageValue', () => {
     expect(toast).toHaveBeenCalledWith('Node validation passed.', { variant: 'success' });
   });
 
+  it('opens the node validator via router navigation', async () => {
+    const state = createState();
+    const { result } = renderHook(() => useAiPathsSettingsPageValue(props, state));
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    await act(async () => {
+      result.current.handleOpenNodeValidator();
+    });
+
+    expect(mockState.routerPush).toHaveBeenCalledWith('/admin/ai-paths/validation');
+  });
+
   it('inspects node traces, preferring failed runs and falling back to general history', async () => {
     const state = createState({ activePathId: 'path-77' });
     mockState.listAiPathRuns
@@ -429,6 +474,10 @@ describe('useAiPathsSettingsPageValue', () => {
       .mockResolvedValueOnce({ ok: false });
 
     const { result } = renderHook(() => useAiPathsSettingsPageValue(props, state));
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
 
     await act(async () => {
       await result.current.handleInspectTraceNode('  node-42  ', 'failed');

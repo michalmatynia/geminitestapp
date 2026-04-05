@@ -4,7 +4,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 
 const { useValidatorPatternTreeContextMock } = vi.hoisted(() => ({
   useValidatorPatternTreeContextMock: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock('../ValidatorPatternTreeContext', () => ({
   useValidatorPatternTreeContext: () => useValidatorPatternTreeContextMock(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/features/products/ui', () => ({
   TreeContextMenu: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   TreeRow: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   TreeCaret: () => <span data-testid='tree-caret' />,

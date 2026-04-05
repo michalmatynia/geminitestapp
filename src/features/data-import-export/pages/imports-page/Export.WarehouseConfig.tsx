@@ -1,17 +1,14 @@
 'use client';
 
 import React from 'react';
-import {
-  Checkbox,
-  Label,
-  SelectSimple,
-} from '@/shared/ui';
+import { Checkbox, Label } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import {
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { WarehouseOption } from '@/shared/contracts/integrations';
+import type { WarehouseOption } from '@/shared/contracts/integrations/import-export';
 import { EXPORT_WAREHOUSE_PLACEHOLDER_OPTION } from './ImportsPage.Constants';
 
 export function ExportWarehouseConfigSection(): React.JSX.Element {

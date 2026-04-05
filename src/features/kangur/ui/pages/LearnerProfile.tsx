@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { IdLabelOptionDto } from '@/shared/contracts/base';
 import { KangurDocsTooltipEnhancer, useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurLearnerProfileAiTutorMoodWidget } from '@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget';
+import { KangurLearnerProfileAiTutorMoodWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget';
 import { KangurLearnerProfileAssignmentsWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileAssignmentsWidget';
 import { KangurLearnerProfileHeroWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileHeroWidget';
 import { KangurLearnerProfileLevelProgressWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileLevelProgressWidget';
@@ -16,8 +16,8 @@ import { KangurLearnerProfileQuestSummaryWidget } from '@/features/kangur/ui/com
 import { KangurLearnerProfileRecommendationsWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileRecommendationsWidget';
 import { KangurLearnerProfileResultsWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileResultsWidget';
 import { KangurLearnerProfileSessionsWidget } from '@/features/kangur/ui/components/learner-profile/KangurLearnerProfileSessionsWidget';
-import { KangurTopNavigationController } from '@/features/kangur/ui/components/KangurTopNavigationController';
-import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/KangurPrimaryNavigation.types';
+import { KangurTopNavigationController } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController';
+import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
 import { useKangurAiTutorSessionSync } from '@/features/kangur/ui/context/KangurAiTutorContext';
 import { useKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurLoginModal } from '@/features/kangur/ui/context/KangurLoginModalContext';

@@ -3,8 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
-import type { ProductImageSlot } from '@/shared/contracts/products';
+import type { ProductWithImages, ProductImageRecord } from '@/shared/contracts/products/product';
+import type { ProductImageSlot } from '@/shared/contracts/products/drafts';
 import { api } from '@/shared/lib/api-client';
 import {
   DEFAULT_IMAGE_SLOT_COUNT,

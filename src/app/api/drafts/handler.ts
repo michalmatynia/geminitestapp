@@ -7,7 +7,7 @@ import {
 } from '@/features/drafter/validations/draft-payload';
 import type { CreateProductDraftInput } from '@/features/products/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 /**
  * GET /api/drafts

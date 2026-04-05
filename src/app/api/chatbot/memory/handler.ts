@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAgentLongTermMemoryDelegate } from '@/features/ai/agent-runtime/store-delegates';
+import { getAgentLongTermMemoryDelegate } from '@/features/ai/server';
 import { chatbotMemoryQuerySchema } from '@/shared/contracts/chatbot';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { internalError } from '@/shared/errors/app-error';
 import { logger } from '@/shared/utils/logger';
 

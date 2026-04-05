@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import {

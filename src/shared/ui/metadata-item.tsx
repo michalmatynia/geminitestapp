@@ -1,6 +1,6 @@
 import React, { type ReactNode } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { insetPanelVariants } from './InsetPanel';
 import { Label } from './label';
@@ -16,6 +16,7 @@ interface MetadataItemProps {
   valueClassName?: string | undefined;
   mono?: boolean | undefined;
   variant?: 'card' | 'minimal' | 'subtle' | undefined;
+  wrap?: boolean | undefined;
 }
 
 function MetadataItemLabel(props: {
@@ -50,6 +51,7 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
   const valueClassName = props.valueClassName;
   const mono = props.mono ?? false;
   const variant = props.variant ?? 'card';
+  const wrap = props.wrap ?? false;
 
   const content = children ?? value ?? '—';
   const isStringLabel = typeof label === 'string';
@@ -59,13 +61,14 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
     return (
       <dl
         className={cn(
-          'flex items-center gap-2 text-[11px]',
+          'flex min-w-0 gap-2 text-[11px]',
+          wrap ? 'items-start' : 'items-center',
           isSubtle ? 'opacity-80' : '',
           className
         )}
       >
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
-        <dt>
+        <dt className='shrink-0'>
           <MetadataItemLabel
             label={label}
             labelClassName={labelClassName}
@@ -79,7 +82,9 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
         </dt>
         <dd
           className={cn(
-            'text-gray-300 truncate',
+            wrap
+              ? 'min-w-0 flex-1 break-words whitespace-normal leading-relaxed text-gray-300'
+              : 'min-w-0 flex-1 truncate text-gray-300',
             mono && 'font-mono text-gray-200',
             valueClassName
           )}
@@ -105,7 +110,9 @@ export function MetadataItem(props: MetadataItemProps): React.JSX.Element {
       </div>
       <dd
         className={cn(
-          'text-gray-200 text-sm truncate',
+          wrap
+            ? 'min-w-0 break-words whitespace-normal text-sm leading-relaxed text-gray-200'
+            : 'text-gray-200 text-sm truncate',
           mono && 'font-mono text-gray-300',
           valueClassName
         )}

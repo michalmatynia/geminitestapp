@@ -1,8 +1,5 @@
-import {
-  normalizeKangurProgressState,
-  type KangurLessonComponentId,
-  type KangurProgressState,
-} from '@kangur/contracts';
+import { normalizeKangurProgressState } from '@kangur/contracts/kangur';
+import { type KangurLessonComponentId, type KangurProgressState } from '@kangur/contracts/kangur';
 
 import { KANGUR_XP_REWARDS, checkKangurNewBadges } from './progress-metadata';
 import {

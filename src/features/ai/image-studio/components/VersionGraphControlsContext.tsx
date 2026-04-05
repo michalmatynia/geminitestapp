@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { LayoutMode } from '@/features/ai/image-studio/utils/version-graph';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
@@ -50,9 +51,16 @@ type VersionGraphControlsContextValue = {
   onClearFilters: () => void;
 };
 
-const VersionGraphControlsContext = React.createContext<VersionGraphControlsContextValue | null>(
-  null
-);
+const { Context: VersionGraphControlsContext, useStrictContext: useVersionGraphControlsContext } =
+  createStrictContext<VersionGraphControlsContextValue>({
+    hookName: 'useVersionGraphControlsContext',
+    providerName: 'VersionGraphControlsProvider',
+    displayName: 'VersionGraphControlsContext',
+    errorFactory: () =>
+      internalError(
+        'useVersionGraphControlsContext must be used inside VersionGraphControlsProvider'
+      ),
+  });
 
 export function VersionGraphControlsProvider({
   value,
@@ -67,13 +75,4 @@ export function VersionGraphControlsProvider({
     </VersionGraphControlsContext.Provider>
   );
 }
-
-export function useVersionGraphControlsContext(): VersionGraphControlsContextValue {
-  const context = React.useContext(VersionGraphControlsContext);
-  if (!context) {
-    throw internalError(
-      'useVersionGraphControlsContext must be used inside VersionGraphControlsProvider'
-    );
-  }
-  return context;
-}
+export { useVersionGraphControlsContext };

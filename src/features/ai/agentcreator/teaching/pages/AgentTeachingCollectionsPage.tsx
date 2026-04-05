@@ -5,12 +5,10 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
-import {
-  AdminAgentTeachingBreadcrumbs,
-  Button,
-  PageLayout,
-  StandardDataTablePanel,
-} from '@/shared/ui';
+import { AdminAgentTeachingBreadcrumbs } from '@/shared/ui/admin.public';
+import { Button } from '@/shared/ui/primitives.public';
+import { PageLayout } from '@/shared/ui/navigation-and-layout.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { AgentTeachingCollectionModal } from '../components/AgentTeachingCollectionModal';

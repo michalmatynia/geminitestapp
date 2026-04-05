@@ -1,12 +1,6 @@
-'use client';
-
 import type { IdDataDto } from '@/shared/contracts/base';
-import type {
-  CreateProductDraftInput,
-  ProductDraft,
-  UpdateProductDraftInput,
-} from '@/shared/contracts/products';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
+import type { CreateProductDraftInput, ProductDraft, UpdateProductDraftInput } from '@/shared/contracts/products/drafts';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -22,15 +16,24 @@ const draftListKey = (notebookId?: string) =>
 
 export { draftKeys };
 
-export function useDraftQueries(notebookId?: string): ListQuery<ProductDraft> {
+type DraftQueriesOptions = {
+  enabled?: boolean;
+};
+
+export function useDraftQueries(
+  notebookId?: string,
+  options?: DraftQueriesOptions
+): ListQuery<ProductDraft> {
   const queryKey = draftListKey(notebookId);
 
   return createListQueryV2<ProductDraft>({
     queryKey,
-    queryFn: () =>
+    queryFn: (context) =>
       api.get<ProductDraft[]>('/api/drafts', {
         params: notebookId ? { notebookId } : undefined,
+        signal: context.signal,
       }),
+    enabled: options?.enabled ?? true,
     meta: {
       source: 'shared.hooks.useDraftQueries',
       operation: 'list',

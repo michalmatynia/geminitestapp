@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
@@ -7,7 +9,8 @@ import type {
 } from '@/features/case-resolver/capture/public';
 import { type CaseResolverCaptureAction } from '@/features/case-resolver/capture/public';
 import { encodeFilemakerPartyReference } from '@/features/filemaker/public';
-import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 

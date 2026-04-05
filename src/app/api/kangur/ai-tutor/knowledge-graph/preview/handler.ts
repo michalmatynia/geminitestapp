@@ -5,8 +5,8 @@ import { buildKangurAiTutorContextRegistryRefs } from '@/features/kangur/context
 import { buildKangurKnowledgeGraphPreviewResult } from '@/features/kangur/server/knowledge-graph/preview';
 import { resolveKangurAiTutorRuntimeDocuments } from '@/features/kangur/server/context-registry';
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/services/kangur-actor';
-import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts/kangur-observability';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 
 export async function postKangurAiTutorKnowledgeGraphPreviewHandler(

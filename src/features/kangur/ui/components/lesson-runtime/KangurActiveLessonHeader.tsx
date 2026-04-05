@@ -164,7 +164,7 @@ function KangurActiveLessonHeaderBody(): React.JSX.Element {
         {displayDescription}
       </p>
       {assignmentStateChip ? (
-        <div ref={assignmentRef} className='mt-3 flex max-w-xl flex-col items-start gap-1.5'>
+        <div ref={assignmentRef} data-testid='active-lesson-assignment-container' className='mt-3 flex max-w-xl flex-col items-start gap-1.5'>
           {assignmentSectionTitle ? (
             <div className='break-words text-[11px] font-bold uppercase tracking-[0.14em] [color:var(--kangur-page-muted-text)]'>
               {assignmentSectionTitle}

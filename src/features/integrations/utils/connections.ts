@@ -1,4 +1,4 @@
-import { TestLogEntry, TestStatus } from '@/shared/contracts/integrations';
+import { TestLogEntry, TestStatus } from '@/shared/contracts/integrations/session-testing';
 
 export const coerceStatus = (value: unknown): TestStatus => {
   if (value === 'pending' || value === 'ok' || value === 'failed') {

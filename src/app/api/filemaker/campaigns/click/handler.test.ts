@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
+import { createFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
 
 const {
   readFilemakerCampaignSettingValueMock,

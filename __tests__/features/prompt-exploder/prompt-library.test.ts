@@ -96,6 +96,49 @@ describe('prompt exploder prompt library', () => {
     expect(hydrated).not.toBe(item.document);
   });
 
+  it('prefers trimmed draft names and preserves existing ids/createdAt on update', () => {
+    const item = buildPromptExploderLibraryItem({
+      prompt: 'fresh prompt',
+      libraryNameDraft: '  Chosen name  ',
+      existingItem: {
+        id: 'existing-id',
+        name: 'Old name',
+        prompt: 'old prompt',
+        document: null,
+        createdAt: '2026-02-10T00:00:00.000Z',
+        updatedAt: '2026-02-11T00:00:00.000Z',
+      },
+      documentState: null,
+      now: '2026-02-13T12:00:00.000Z',
+    });
+
+    expect(item).toMatchObject({
+      id: 'existing-id',
+      name: 'Chosen name',
+      createdAt: '2026-02-10T00:00:00.000Z',
+      updatedAt: '2026-02-13T12:00:00.000Z',
+    });
+  });
+
+  it('falls back to the existing item name when the draft name is blank', () => {
+    const item = buildPromptExploderLibraryItem({
+      prompt: 'fresh prompt',
+      libraryNameDraft: '   ',
+      existingItem: {
+        id: 'existing-id',
+        name: 'Existing name',
+        prompt: 'old prompt',
+        document: null,
+        createdAt: '2026-02-10T00:00:00.000Z',
+        updatedAt: '2026-02-11T00:00:00.000Z',
+      },
+      documentState: null,
+      now: '2026-02-13T12:00:00.000Z',
+    });
+
+    expect(item.name).toBe('Existing name');
+  });
+
   it('upserts, sorts, caps, and removes library items', () => {
     const items: PromptExploderLibraryItem[] = [
       {

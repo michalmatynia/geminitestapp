@@ -7,7 +7,9 @@ import { useCmsThemes } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/shared/contracts/cms';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
-import { Button, SectionHeader, FormSection } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { THEME_SECTIONS, toSectionId, SAVED_THEME_PREFIX } from './theme/theme-constants';

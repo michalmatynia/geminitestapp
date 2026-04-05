@@ -62,17 +62,24 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   })),
 }));
 
-// Mock UI components
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal();
+// Mock UI components (match SystemLogsContent barrels)
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),
-    ListPanel: MockListPanel,
     Tabs: ({ children }) => <div data-testid='mock-tabs'>{children}</div>,
     TabsList: ({ children }) => <div data-testid='mock-tabs-list'>{children}</div>,
     TabsTrigger: ({ children, value }) => <button role='tab' data-value={value}>{children}</button>,
     TabsContent: ({ children, value }) => <div data-testid={'mock-tabs-content-' + value}>{children}</div>,
+  };
+});
+
+vi.mock('@/shared/ui/navigation-and-layout.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/navigation-and-layout.public')>();
+  return {
+    ...actual,
+    ListPanel: MockListPanel,
   };
 });
 

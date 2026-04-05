@@ -1,6 +1,8 @@
 import React from 'react';
 
-import { InsetPanel, Input, SelectSimple } from '@/shared/ui';
+import { InsetPanel } from '@/shared/ui/navigation-and-layout.public';
+import { Input } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useGenerationToolbarDefaultsSectionRuntime } from './GenerationToolbarSectionContexts';
 

@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 
-import { ToggleRow, Hint } from '@/shared/ui';
+import { ToggleRow, Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
 import { StudioCard } from '../StudioCard';

@@ -5,12 +5,9 @@ import {
   setExportActiveTemplateId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import {
-  baseScopedPreferenceQuerySchema,
-  baseScopedTemplatePreferencePayloadSchema,
-  type BaseActiveTemplatePreferenceResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { baseScopedPreferenceQuerySchema, baseScopedTemplatePreferencePayloadSchema } from '@/shared/contracts/integrations/preferences';
+import { type BaseActiveTemplatePreferenceResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export { baseScopedPreferenceQuerySchema as querySchema };
 

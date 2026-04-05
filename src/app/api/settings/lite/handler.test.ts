@@ -7,7 +7,7 @@ import {
   KANGUR_STOREFRONT_DEFAULT_MODE_SETTING_KEY,
 } from '@/shared/contracts/kangur';
 import { OBSERVABILITY_LOGGING_KEYS } from '@/shared/contracts/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 vi.mock('server-only', () => ({}));
 
@@ -15,10 +15,17 @@ const { getMongoDbMock, getMongoClientMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
   getMongoClientMock: vi.fn(),
 }));
+const captureExceptionMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: getMongoDbMock,
   getMongoClient: getMongoClientMock,
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: captureExceptionMock,
+  },
 }));
 
 vi.mock('next/headers', () => ({
@@ -214,5 +221,31 @@ describe('settings lite handler', () => {
         },
       ])
     );
+  });
+
+  it('returns a degraded empty response for transient mongo connectivity failures', async () => {
+    const error = new Error("Socket 'secureConnect' timed out after 11640ms (connectTimeoutMS: 1000)");
+    error.name = 'MongoServerSelectionError';
+    getMongoDbMock.mockRejectedValue(error);
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/settings/lite'),
+      createRequestContext()
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-Cache')).toBe('degraded');
+    expect(response.headers.get('X-Settings-Degraded')).toBe('transient-mongo-error');
+    await expect(response.json()).resolves.toEqual([]);
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+  });
+
+  it('suppresses transient mongo connectivity failures during SSR prewarm', async () => {
+    const error = new Error("Socket 'secureConnect' timed out after 11640ms (connectTimeoutMS: 1000)");
+    error.name = 'MongoServerSelectionError';
+    getMongoDbMock.mockRejectedValue(error);
+
+    await expect(prewarmLiteSettingsServerCache()).resolves.toBeUndefined();
+    expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 });

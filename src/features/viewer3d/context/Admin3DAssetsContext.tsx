@@ -1,24 +1,25 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useAdmin3DAssetsState } from '../hooks/useAdmin3DAssetsState';
 
 type Admin3DAssetsContextValue = ReturnType<typeof useAdmin3DAssetsState>;
 
-const Admin3DAssetsContext = createContext<Admin3DAssetsContextValue | null>(null);
+export const {
+  Context: Admin3DAssetsContext,
+  useStrictContext: useAdmin3DAssetsContext,
+} = createStrictContext<Admin3DAssetsContextValue>({
+  hookName: 'useAdmin3DAssetsContext',
+  providerName: 'an Admin3DAssetsProvider',
+  displayName: 'Admin3DAssetsContext',
+  errorFactory: internalError,
+});
 
 export function Admin3DAssetsProvider({ children }: { children: React.ReactNode }) {
   const value = useAdmin3DAssetsState();
   return <Admin3DAssetsContext.Provider value={value}>{children}</Admin3DAssetsContext.Provider>;
-}
-
-export function useAdmin3DAssetsContext() {
-  const context = useContext(Admin3DAssetsContext);
-  if (!context) {
-    throw internalError('useAdmin3DAssetsContext must be used within Admin3DAssetsProvider');
-  }
-  return context;
 }

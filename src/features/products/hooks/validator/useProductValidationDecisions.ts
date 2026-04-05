@@ -1,11 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type {
-  ProductValidationDenyBehavior,
-  ProductValidationInstanceScope,
-  ProductValidationPattern,
-} from '@/shared/contracts/products';
+import type { ProductValidationDenyBehavior, ProductValidationInstanceScope, ProductValidationPattern } from '@/shared/contracts/products/validation';
 import {
   normalizeProductValidationDenyBehavior,
   normalizeProductValidationInstanceDenyBehaviorMap,

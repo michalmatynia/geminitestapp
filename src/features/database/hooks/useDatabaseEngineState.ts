@@ -27,7 +27,7 @@ import {
   type DatabaseEngineOperationControls,
   type DatabaseEnginePolicy,
 } from '@/shared/lib/db/database-engine-constants';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {

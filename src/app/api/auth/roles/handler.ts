@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
 import { z } from 'zod';
 
-import { auth } from '@/features/auth/server';
 import {
+  auth,
   getAuthDefaultRoleId,
   getAuthPermissions,
   getAuthRoles,
   getAuthUserRoles,
   invalidateAuthAccessCache,
-} from '@/features/auth/services/auth-access';
-import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
+  AUTH_SETTINGS_KEYS,
+} from '@/features/auth/server';
 import type { AuthRoleSettings } from '@/shared/contracts/auth';
 import { authUserRoleMapSchema } from '@/shared/contracts/auth';
 import type { MongoSettingRecord } from '@/shared/contracts/base';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { serializeSetting } from '@/shared/utils/settings-json';

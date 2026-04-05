@@ -1,17 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
-import type {
-  AiNode,
-  CaseResolverNodeMeta,
-  CaseResolverFile,
-  CaseResolverEdge,
-  CaseResolverEdgeMeta,
-  CaseResolverCompileResult,
-  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
-} from '@/shared/contracts/case-resolver';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverNodeMeta, CaseResolverEdge, CaseResolverEdgeMeta, CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import {
@@ -130,8 +126,27 @@ export type NodeFileWorkspaceStateValue = Omit<
   NodeFileWorkspaceActionKey
 >;
 
-const NodeFileWorkspaceStateContext = createContext<NodeFileWorkspaceStateValue | null>(null);
-const NodeFileWorkspaceActionsContext = createContext<NodeFileWorkspaceActionsValue | null>(null);
+const {
+  Context: NodeFileWorkspaceStateContext,
+  useStrictContext: useNodeFileWorkspaceStateContext,
+} = createStrictContext<NodeFileWorkspaceStateValue>({
+  hookName: 'useNodeFileWorkspaceStateContext',
+  providerName: 'NodeFileWorkspaceProvider',
+  displayName: 'NodeFileWorkspaceStateContext',
+  errorFactory: internalError,
+});
+
+const {
+  Context: NodeFileWorkspaceActionsContext,
+  useStrictContext: useNodeFileWorkspaceActionsContext,
+} = createStrictContext<NodeFileWorkspaceActionsValue>({
+  hookName: 'useNodeFileWorkspaceActionsContext',
+  providerName: 'NodeFileWorkspaceProvider',
+  displayName: 'NodeFileWorkspaceActionsContext',
+  errorFactory: internalError,
+});
+
+export { useNodeFileWorkspaceActionsContext, useNodeFileWorkspaceStateContext };
 
 export function NodeFileWorkspaceProvider({
   value,
@@ -149,24 +164,4 @@ export function NodeFileWorkspaceProvider({
       </NodeFileWorkspaceActionsContext.Provider>
     </NodeFileWorkspaceStateContext.Provider>
   );
-}
-
-export function useNodeFileWorkspaceStateContext(): NodeFileWorkspaceStateValue {
-  const context = useContext(NodeFileWorkspaceStateContext);
-  if (!context) {
-    throw internalError(
-      'useNodeFileWorkspaceStateContext must be used within NodeFileWorkspaceProvider'
-    );
-  }
-  return context;
-}
-
-export function useNodeFileWorkspaceActionsContext(): NodeFileWorkspaceActionsValue {
-  const context = useContext(NodeFileWorkspaceActionsContext);
-  if (!context) {
-    throw internalError(
-      'useNodeFileWorkspaceActionsContext must be used within NodeFileWorkspaceProvider'
-    );
-  }
-  return context;
 }

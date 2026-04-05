@@ -20,7 +20,7 @@ import {
   type ChatbotSessionsResponse,
   type UpdateChatSessionDto as UpdateSessionInput,
 } from '@/shared/contracts/chatbot';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

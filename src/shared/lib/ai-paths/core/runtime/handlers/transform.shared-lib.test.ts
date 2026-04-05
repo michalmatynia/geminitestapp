@@ -5,6 +5,7 @@ import {
   handleParser,
   handleMapper,
   handleMutator,
+  handleStringMutator,
   handleValidator,
   handleRegex,
   handleIterator,
@@ -184,6 +185,51 @@ describe('Transform Handlers', () => {
       });
       const result = await handleMutator(ctx);
       expect((result['context'] as any).user.score).toBe('100');
+    });
+  });
+
+  describe('handleStringMutator', () => {
+    it('applies ordered trim, case, and append operations', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'stringMutator',
+          config: {
+            stringMutator: {
+              operations: [
+                { type: 'trim', mode: 'both' },
+                { type: 'case', mode: 'title' },
+                { type: 'append', position: 'suffix', value: '!' },
+              ],
+            },
+          },
+        } as any,
+        nodeInputs: { value: '  hello world  ' },
+      });
+
+      const result = await handleStringMutator(ctx);
+      expect(result['value']).toBe('Hello World!');
+    });
+
+    it('supports regex removal and slicing', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'stringMutator',
+          config: {
+            stringMutator: {
+              operations: [
+                { type: 'remove', search: '\\d+', useRegex: true, matchMode: 'all' },
+                { type: 'slice', start: 0, end: 5 },
+              ],
+            },
+          },
+        } as any,
+        nodeInputs: { value: 'abc123def456' },
+      });
+
+      const result = await handleStringMutator(ctx);
+      expect(result['value']).toBe('abcde');
     });
   });
 

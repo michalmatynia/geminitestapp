@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
 import { internalError } from '@/shared/errors/app-error';
-import { useToast } from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { useAgentTeachingQueriesContext } from './AgentTeachingContext';
 import {
@@ -12,7 +13,6 @@ import {
   useUpsertEmbeddingCollectionMutation,
 } from '../hooks/useAgentTeachingQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 interface AgentTeachingCollectionsContextValue {
   collections: AgentTeachingEmbeddingCollectionRecord[];
@@ -40,19 +40,16 @@ interface AgentTeachingCollectionsContextValue {
   getUsedByCount: (collectionId: string) => number;
 }
 
-const AgentTeachingCollectionsContext = createContext<AgentTeachingCollectionsContextValue | null>(
-  null
-);
-
-export function useAgentTeachingCollectionsContext(): AgentTeachingCollectionsContextValue {
-  const context = useContext(AgentTeachingCollectionsContext);
-  if (!context) {
-    throw internalError(
-      'useAgentTeachingCollectionsContext must be used within AgentTeachingCollectionsProvider'
-    );
-  }
-  return context;
-}
+const {
+  Context: AgentTeachingCollectionsContext,
+  useStrictContext: useAgentTeachingCollectionsContext,
+} = createStrictContext<AgentTeachingCollectionsContextValue>({
+  hookName: 'useAgentTeachingCollectionsContext',
+  providerName: 'AgentTeachingCollectionsProvider',
+  displayName: 'AgentTeachingCollectionsContext',
+  errorFactory: internalError,
+});
+export { useAgentTeachingCollectionsContext };
 
 export function AgentTeachingCollectionsProvider({
   children,

@@ -81,19 +81,53 @@ const findSubsectionById = (
   );
 };
 
-export const buildManualBindingFromDraft = (args: {
-  segments: PromptExploderSegment[];
+const resolveManualBindingSegments = ({
+  draft,
+  segments,
+}: {
   draft: PromptExploderManualBindingDraft;
-  createManualBindingId: () => string;
-  formatSubsectionLabel: (subsection: PromptExploderSubsection) => string;
-}): ManualBindingBuildResult => {
-  const fromSegment = args.segments.find(
-    (segment: PromptExploderSegment) => segment.id === args.draft.fromSegmentId
-  );
-  const toSegment = args.segments.find(
-    (segment: PromptExploderSegment) => segment.id === args.draft.toSegmentId
-  );
+  segments: PromptExploderSegment[];
+}): {
+  fromSegment: PromptExploderSegment | null;
+  toSegment: PromptExploderSegment | null;
+} => ({
+  fromSegment:
+    segments.find((segment: PromptExploderSegment) => segment.id === draft.fromSegmentId) ?? null,
+  toSegment:
+    segments.find((segment: PromptExploderSegment) => segment.id === draft.toSegmentId) ?? null,
+});
 
+const resolveManualBindingSubsections = ({
+  draft,
+  fromSegment,
+  toSegment,
+}: {
+  draft: PromptExploderManualBindingDraft;
+  fromSegment: PromptExploderSegment;
+  toSegment: PromptExploderSegment;
+}): {
+  fromSubsection: PromptExploderSubsection | null;
+  toSubsection: PromptExploderSubsection | null;
+} => ({
+  fromSubsection: draft.fromSubsectionId
+    ? findSubsectionById(fromSegment, draft.fromSubsectionId)
+    : null,
+  toSubsection: draft.toSubsectionId ? findSubsectionById(toSegment, draft.toSubsectionId) : null,
+});
+
+const validateManualBindingDraft = ({
+  draft,
+  fromSegment,
+  fromSubsection,
+  toSegment,
+  toSubsection,
+}: {
+  draft: PromptExploderManualBindingDraft;
+  fromSegment: PromptExploderSegment | null;
+  fromSubsection: PromptExploderSubsection | null;
+  toSegment: PromptExploderSegment | null;
+  toSubsection: PromptExploderSubsection | null;
+}): ManualBindingBuildResult | null => {
   if (!fromSegment || !toSegment) {
     return {
       ok: false,
@@ -101,31 +135,22 @@ export const buildManualBindingFromDraft = (args: {
       details: { variant: 'error' },
     };
   }
-
-  const fromSubsection = args.draft.fromSubsectionId
-    ? findSubsectionById(fromSegment, args.draft.fromSubsectionId)
-    : null;
-  const toSubsection = args.draft.toSubsectionId
-    ? findSubsectionById(toSegment, args.draft.toSubsectionId)
-    : null;
-
-  if (args.draft.fromSubsectionId && !fromSubsection) {
+  if (draft.fromSubsectionId && !fromSubsection) {
     return {
       ok: false,
       error: 'Selected source subsection no longer exists.',
       details: { variant: 'error' },
     };
   }
-  if (args.draft.toSubsectionId && !toSubsection) {
+  if (draft.toSubsectionId && !toSubsection) {
     return {
       ok: false,
       error: 'Selected target subsection no longer exists.',
       details: { variant: 'error' },
     };
   }
-
   if (
-    args.draft.type === 'depends_on' &&
+    draft.type === 'depends_on' &&
     fromSegment.id === toSegment.id &&
     (fromSubsection?.id ?? null) === (toSubsection?.id ?? null)
   ) {
@@ -135,11 +160,79 @@ export const buildManualBindingFromDraft = (args: {
       details: { variant: 'info' },
     };
   }
+  return null;
+};
 
+const resolveManualBindingLabels = ({
+  draft,
+  formatSubsectionLabel,
+  fromSegment,
+  fromSubsection,
+  toSegment,
+  toSubsection,
+}: {
+  draft: PromptExploderManualBindingDraft;
+  formatSubsectionLabel: (subsection: PromptExploderSubsection) => string;
+  fromSegment: PromptExploderSegment;
+  fromSubsection: PromptExploderSubsection | null;
+  toSegment: PromptExploderSegment;
+  toSubsection: PromptExploderSubsection | null;
+}): { sourceLabel: string; targetLabel: string } => {
   const defaultSourceLabel =
-    (fromSubsection ? args.formatSubsectionLabel(fromSubsection) : fromSegment.title) || '';
+    (fromSubsection ? formatSubsectionLabel(fromSubsection) : fromSegment.title) || '';
   const defaultTargetLabel =
-    (toSubsection ? args.formatSubsectionLabel(toSubsection) : toSegment.title) || '';
+    (toSubsection ? formatSubsectionLabel(toSubsection) : toSegment.title) || '';
+
+  return {
+    sourceLabel: (draft.sourceLabel || '').trim() || defaultSourceLabel || 'Source',
+    targetLabel: (draft.targetLabel || '').trim() || defaultTargetLabel || 'Target',
+  };
+};
+
+export const buildManualBindingFromDraft = (args: {
+  segments: PromptExploderSegment[];
+  draft: PromptExploderManualBindingDraft;
+  createManualBindingId: () => string;
+  formatSubsectionLabel: (subsection: PromptExploderSubsection) => string;
+}): ManualBindingBuildResult => {
+  const { fromSegment, toSegment } = resolveManualBindingSegments({
+    draft: args.draft,
+    segments: args.segments,
+  });
+  const { fromSubsection, toSubsection } =
+    fromSegment && toSegment
+      ? resolveManualBindingSubsections({
+          draft: args.draft,
+          fromSegment,
+          toSegment,
+        })
+      : { fromSubsection: null, toSubsection: null };
+  const validationError = validateManualBindingDraft({
+    draft: args.draft,
+    fromSegment,
+    fromSubsection,
+    toSegment,
+    toSubsection,
+  });
+  if (validationError) {
+    return validationError;
+  }
+  if (!fromSegment || !toSegment) {
+    return {
+      ok: false,
+      error: 'Select valid source and target segments.',
+      details: { variant: 'error' },
+    };
+  }
+
+  const { sourceLabel, targetLabel } = resolveManualBindingLabels({
+    draft: args.draft,
+    formatSubsectionLabel: args.formatSubsectionLabel,
+    fromSegment,
+    fromSubsection,
+    toSegment,
+    toSubsection,
+  });
 
   return {
     ok: true,
@@ -151,8 +244,8 @@ export const buildManualBindingFromDraft = (args: {
         toSegmentId: toSegment.id,
         fromSubsectionId: fromSubsection?.id ?? null,
         toSubsectionId: toSubsection?.id ?? null,
-        sourceLabel: (args.draft.sourceLabel || '').trim() || defaultSourceLabel || 'Source',
-        targetLabel: (args.draft.targetLabel || '').trim() || defaultTargetLabel || 'Target',
+        sourceLabel,
+        targetLabel,
         origin: 'manual',
       },
     ],

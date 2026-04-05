@@ -6,6 +6,34 @@ type InstrumentationGlobal = typeof globalThis & {
 
 const IGNORABLE_PROCESS_ERROR_CODES = new Set(['ECONNRESET', 'ECONNABORTED', 'EPIPE']);
 
+const parseEnvBoolean = (value: string | undefined): boolean | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+
+  if (['0', 'false', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+
+  return null;
+};
+
+export const shouldRunNodeStartupBootstrap = (
+  env: NodeJS.ProcessEnv = process.env
+): boolean => {
+  const explicitBootstrap = parseEnvBoolean(env['ENABLE_DEV_STARTUP_BOOTSTRAP']);
+  if (explicitBootstrap !== null) {
+    return explicitBootstrap;
+  }
+
+  return env['NODE_ENV'] !== 'development';
+};
+
 const hasIgnorableAbortMessage = (value: string): boolean => {
   const normalized = value.toLowerCase();
   return (
@@ -116,32 +144,34 @@ export async function registerNodeInstrumentation() {
     })();
   });
 
-  void import('@/app/api/settings/lite/handler')
-    .then(({ prewarmLiteSettingsServerCache }) => prewarmLiteSettingsServerCache())
-    .catch((error) => {
-      logClientError(error);
-    });
+  if (shouldRunNodeStartupBootstrap()) {
+    void import('@/app/api/settings/lite/handler')
+      .then(({ prewarmLiteSettingsServerCache }) => prewarmLiteSettingsServerCache())
+      .catch((error) => {
+        logClientError(error);
+      });
 
-  void import('@/features/kangur/appearance/server/storefront-appearance')
-    .then(({ getKangurStorefrontInitialState }) => getKangurStorefrontInitialState())
-    .catch((error) => {
-      logClientError(error);
-    });
+    void import('@/features/kangur/appearance/server/storefront-appearance')
+      .then(({ getKangurStorefrontInitialState }) => getKangurStorefrontInitialState())
+      .catch((error) => {
+        logClientError(error);
+      });
 
-  const { initializeQueues } = await import('@/features/jobs/queue-init');
-  initializeQueues();
+    const { initializeQueues } = await import('@/features/jobs/queue-init');
+    initializeQueues();
 
-  const skipPortablePathBootstrap = process.env['SKIP_PORTABLE_PATH_BOOTSTRAP'] === '1';
-  if (!skipPortablePathBootstrap) {
-    const {
-      bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment,
-      bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment,
-    } = await import('@/shared/lib/ai-paths/portable-engine/server');
-    const sinkBootstrapResult =
-      await bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment();
-    await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
-      startupHealthSummary: sinkBootstrapResult.startupHealthSummary,
-    });
+    const skipPortablePathBootstrap = process.env['SKIP_PORTABLE_PATH_BOOTSTRAP'] === '1';
+    if (!skipPortablePathBootstrap) {
+      const {
+        bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment,
+        bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment,
+      } = await import('@/shared/lib/ai-paths/portable-engine/server');
+      const sinkBootstrapResult =
+        await bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment();
+      await bootstrapPortablePathSigningPolicyTrendReporterFromEnvironment({
+        startupHealthSummary: sinkBootstrapResult.startupHealthSummary,
+      });
+    }
   }
 
   if (globalScope.__cmsProcessHandlersRegistered) {

@@ -17,18 +17,17 @@ import {
   useBaseApiRequest,
   useAllegroApiRequest,
 } from '@/features/integrations/hooks/useIntegrationMutations';
+import { toPlaywrightConnectionPayload } from '@/features/integrations/utils/playwright-connection-payload';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
-import type {
-  IntegrationAllegroApiMethod,
-  IntegrationAllegroApiResponse,
-  IntegrationBaseApiResponse,
-  IntegrationConnectionTestType,
-} from '@/shared/contracts/integrations';
-import { Integration, IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations';
+import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
+import type { IntegrationConnectionTestType } from '@/shared/contracts/integrations/session-testing';
+import { Integration } from '@/shared/contracts/integrations/base';
+import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { buildPlaywrightSettings } from '@/shared/lib/playwright/personas';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -146,6 +145,8 @@ export function useIntegrationsActionsImpl(args: {
     const formData = options.formData;
     const isTraderaIntegration = isTraderaIntegrationSlug(args.activeIntegration.slug);
     const isTraderaApiIntegration = isTraderaApiIntegrationSlug(args.activeIntegration.slug);
+    const isTraderaBrowserIntegration =
+      isTraderaIntegration && !isTraderaApiIntegration;
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -177,6 +178,12 @@ export function useIntegrationsActionsImpl(args: {
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
       ...(isTraderaIntegration
         ? {
+          ...(isTraderaBrowserIntegration
+            ? {
+              traderaBrowserMode: formData.traderaBrowserMode,
+              playwrightListingScript: formData.playwrightListingScript.trim() || null,
+            }
+            : {}),
           traderaDefaultTemplateId: formData.traderaDefaultTemplateId.trim() || null,
           traderaDefaultDurationHours: Math.max(
             1,
@@ -413,8 +420,7 @@ export function useIntegrationsActionsImpl(args: {
           name: connection.name,
           username: connection.username,
           playwrightPersonaId: args.playwrightPersonaId,
-          ...args.playwrightSettings,
-          proxyPassword: args.playwrightSettings.proxyPassword,
+          ...toPlaywrightConnectionPayload(args.playwrightSettings),
         },
       });
       toast('Playwright settings saved.', { variant: 'success' });
@@ -635,6 +641,28 @@ export function useIntegrationsActionsImpl(args: {
     }
   };
 
+  const handleResetListingScript = useCallback(async (): Promise<void> => {
+    if (!activeConnection || !args.activeIntegration) return;
+    try {
+      await upsertConnectionMutation.mutateAsync({
+        integrationId: args.activeIntegration.id,
+        connectionId: activeConnection.id,
+        payload: {
+          name: activeConnection.name,
+          playwrightListingScript: null,
+        },
+      });
+      toast('Listing script reset to managed default.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientCatch(error, {
+        source: 'IntegrationsContext',
+        action: 'handleResetListingScript',
+        connectionId: activeConnection?.id,
+      });
+      toast('Failed to reset listing script.', { variant: 'error' });
+    }
+  }, [activeConnection, args.activeIntegration, toast, upsertConnectionMutation]);
+
   const onCloseModal = () => args.setIsModalOpen(false);
   const onOpenSessionModal = () => args.setShowSessionModal(true);
 
@@ -659,6 +687,7 @@ export function useIntegrationsActionsImpl(args: {
     handleAllegroApiRequest,
     onCloseModal,
     onOpenSessionModal,
+    handleResetListingScript,
     savingAllegroSandbox,
   };
 }

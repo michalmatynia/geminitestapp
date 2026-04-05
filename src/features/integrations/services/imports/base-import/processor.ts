@@ -4,12 +4,7 @@ import {
   listBaseImportRunItems,
   putBaseImportRunItems,
 } from '@/features/integrations/services/imports/base-import-run-repository';
-import {
-  BaseImportErrorCode,
-  BaseImportErrorClass,
-  BaseImportItemRecord,
-  BaseImportItemStatus,
-} from '@/shared/contracts/integrations';
+import { BaseImportErrorCode, BaseImportErrorClass, BaseImportItemRecord, BaseImportItemStatus } from '@/shared/contracts/integrations/base-com';
 
 import { nowIso } from '../base-import-service-shared';
 

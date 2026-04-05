@@ -20,7 +20,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { validateImageStudioParams } from '@/shared/lib/prompt-engine';
 import { consumePromptExploderApplyPrompt } from '@/shared/lib/prompt-exploder/bridge';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import {
   extractParamsFromPrompt,
   inferParamSpecs,

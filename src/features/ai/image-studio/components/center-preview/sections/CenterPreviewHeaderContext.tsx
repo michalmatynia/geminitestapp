@@ -1,14 +1,21 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export interface CenterPreviewHeaderContextValue {
   onSaveScreenshot: () => void;
 }
 
-const CenterPreviewHeaderContext = createContext<CenterPreviewHeaderContextValue | null>(null);
+const { Context: CenterPreviewHeaderContext, useStrictContext: useCenterPreviewHeaderContext } =
+  createStrictContext<CenterPreviewHeaderContextValue>({
+    hookName: 'useCenterPreviewHeaderContext',
+    providerName: 'CenterPreviewHeaderSectionProvider',
+    displayName: 'CenterPreviewHeaderContext',
+    errorFactory: internalError,
+  });
 
 export function CenterPreviewHeaderSectionProvider({
   children,
@@ -23,13 +30,4 @@ export function CenterPreviewHeaderSectionProvider({
     </CenterPreviewHeaderContext.Provider>
   );
 }
-
-export function useCenterPreviewHeaderContext(): CenterPreviewHeaderContextValue {
-  const context = useContext(CenterPreviewHeaderContext);
-  if (!context) {
-    throw internalError(
-      'useCenterPreviewHeaderContext must be used within CenterPreviewHeaderSectionProvider'
-    );
-  }
-  return context;
-}
+export { useCenterPreviewHeaderContext };

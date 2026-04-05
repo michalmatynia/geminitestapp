@@ -3,24 +3,11 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  ApiPreset,
-  GenericApiConsoleConfig,
-  GenericApiConsoleState,
-  GenericApiConsoleProps,
-} from '@/shared/contracts/ui';
-import {
-  Button,
-  Input,
-  Textarea,
-  Alert,
-  SelectSimple,
-  StatusBadge,
-  Badge,
-  Card,
-  FormField,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import type { ApiPreset, GenericApiConsoleConfig, GenericApiConsoleState, GenericApiConsoleProps } from '@/shared/contracts/ui/api';
+import { Button, Input, Textarea, Alert, Badge, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export type {
   ApiPreset,

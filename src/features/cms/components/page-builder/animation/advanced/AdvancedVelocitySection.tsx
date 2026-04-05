@@ -3,7 +3,8 @@
 import React from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG, VELOCITY_EFFECTS, type VelocityEffect } from '@/features/gsap/public';
-import { Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 

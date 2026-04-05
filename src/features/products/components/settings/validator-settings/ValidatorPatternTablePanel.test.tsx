@@ -35,7 +35,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: vi.fn(), logClientCatch: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -59,11 +59,17 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/empty-state', () => ({
   EmptyState: ({
     title,
   }: {
     title?: string;
   }) => <div>{title}</div>,
+}));
+
+vi.mock('@/shared/ui/form-section', () => ({
   FormSection: ({
     title,
     description,
@@ -79,11 +85,17 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </section>
   ),
+}));
+
+vi.mock('@/shared/ui/LoadingState', () => ({
   LoadingState: ({
     message,
   }: {
     message?: string;
   }) => <div>{message}</div>,
+}));
+
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({
     toast: mocks.toastMock,
   }),

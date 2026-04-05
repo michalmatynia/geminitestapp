@@ -126,7 +126,7 @@ describe('KangurAssignmentsList', () => {
       '40'
     );
     expect(screen.getByText('Czas na wykonanie: 45 min')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Trenuj teraz' })).toHaveClass(
+    expect(screen.getByRole('link', { name: 'Uruchom trening' })).toHaveClass(
       'kangur-cta-pill',
       'surface-cta',
       'min-h-11',
@@ -195,7 +195,7 @@ describe('KangurAssignmentsList', () => {
     );
     expect(screen.getByRole('link', { name: 'Otwórz lekcję' })).toHaveClass(
       'kangur-cta-pill',
-      'primary-cta',
+      'surface-cta',
       'min-h-11',
       'px-4',
       'touch-manipulation'

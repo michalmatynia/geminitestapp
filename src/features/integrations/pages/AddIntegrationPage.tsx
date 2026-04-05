@@ -5,14 +5,11 @@ import { useEffect, useMemo } from 'react';
 
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { Integration } from '@/shared/contracts/integrations';
-import {
-  AdminIntegrationsPageLayout,
-  Button,
-  StatusBadge,
-  SimpleSettingsList,
-  useToast,
-} from '@/shared/ui';
+import type { Integration } from '@/shared/contracts/integrations/base';
+import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
+import { Button, useToast } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const AVAILABLE_INTEGRATIONS = [
@@ -58,6 +55,10 @@ export default function AddIntegrationPage(): React.JSX.Element {
   const integrationsQuery = useIntegrations();
   const createIntegrationMutation = useCreateIntegration();
   const { toast } = useToast();
+
+  useEffect(() => {
+    router.prefetch('/admin/integrations');
+  }, [router]);
 
   useEffect(() => {
     if (!integrationsQuery.isError) return;

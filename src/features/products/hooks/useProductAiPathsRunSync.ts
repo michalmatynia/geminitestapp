@@ -34,7 +34,6 @@ import {
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 // Keep the badge visible longer than the last scheduled product refresh (9 s).
 const AI_PATH_RUN_BADGE_TTL_MS = 30_000;
 const AI_PATH_RUN_BADGE_REFRESH_INTERVAL_MS = 10_000;
@@ -136,7 +135,11 @@ const mergeProductAiRunFeedbackMaps = (args: {
  * The event is dispatched by useAiPathTriggerEvent (shared lib) via a CustomEvent
  * so the shared layer never imports from the products feature.
  */
-export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeedback> {
+export function useProductAiPathsRunSync({
+  enabled = true,
+}: {
+  enabled?: boolean;
+} = {}): ReadonlyMap<string, ProductAiRunFeedback> {
   const queryClient = useQueryClient();
   const trackedRunsRef = useRef<Map<string, TrackedProductRun>>(new Map());
   const terminalProductAiRunStatusByProductIdRef = useRef<Map<string, ProductAiRunFeedback>>(
@@ -150,6 +153,14 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
   >(() => EMPTY_PRODUCT_AI_RUN_STATUS_BY_PRODUCT_ID);
 
   useEffect(() => {
+    if (!enabled) {
+      disposedRef.current = true;
+      setProductAiRunStatusByProductId((prev) =>
+        prev.size === 0 ? prev : EMPTY_PRODUCT_AI_RUN_STATUS_BY_PRODUCT_ID
+      );
+      return;
+    }
+
     disposedRef.current = false;
 
     const clearTerminalBadgeTimer = (productId: string): void => {
@@ -523,7 +534,7 @@ export function useProductAiPathsRunSync(): ReadonlyMap<string, ProductAiRunFeed
       window.removeEventListener(AI_PATH_RUN_ENQUEUED_EVENT_NAME, handler);
       channel?.close();
     };
-  }, [queryClient]);
+  }, [enabled, queryClient]);
 
   return productAiRunStatusByProductId;
 }

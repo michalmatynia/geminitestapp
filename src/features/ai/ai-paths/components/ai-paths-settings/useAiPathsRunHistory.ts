@@ -7,21 +7,10 @@ import {
   useRunHistoryActions,
   useRunHistoryState,
 } from '@/features/ai/ai-paths/context/RunHistoryContext';
-import {
-  cancelAiPathRun,
-  getAiPathRun,
-  listAiPathRuns,
-  aiPathRunRecordSchema,
-  handoffAiPathRun,
-  resumeAiPathRun,
-  retryAiPathRunNode,
-  type AiPathRunEventRecord,
-  type AiPathRunRecord,
-  type RuntimeHistoryEntry,
-} from '@/shared/lib/ai-paths';
+import { cancelAiPathRun, getAiPathRun, listAiPathRuns, aiPathRunRecordSchema, handoffAiPathRun, resumeAiPathRun, retryAiPathRunNode, type AiPathRunEventRecord, type AiPathRunRecord, type RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import {
   normalizeRunDetail,
@@ -34,6 +23,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 type UseAiPathsRunHistoryArgs = {
   activePathId: string | null;
   toast: Toast;
+  enabled?: boolean;
 };
 
 const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
@@ -173,7 +163,11 @@ function normalizeRunListResponse(response: Awaited<ReturnType<typeof listAiPath
   };
 }
 
-export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHistoryArgs): void {
+export function useAiPathsRunHistory({
+  activePathId,
+  toast,
+  enabled = true,
+}: UseAiPathsRunHistoryArgs): void {
   const runHistoryState = useRunHistoryState();
   const runHistoryActions = useRunHistoryActions();
 
@@ -183,6 +177,10 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
   const runStreamPaused = runHistoryState.runStreamPaused;
 
   useEffect(() => {
+    if (!enabled) {
+      runHistoryActions.setRunStreamStatus('stopped');
+      return;
+    }
     if (!runDetailOpen || !runDetail?.run?.id) {
       runHistoryActions.setRunStreamStatus('stopped');
       return;
@@ -296,7 +294,7 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
     return (): void => {
       stopStream();
     };
-  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runHistoryActions]);
+  }, [enabled, runDetailOpen, runDetail?.run?.id, runStreamPaused, runHistoryActions]);
 
   useEffect(() => {
     runHistoryActions.setRunEventsOverflow(false);
@@ -350,7 +348,7 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
       });
       return normalizeRunListResponse(res);
     },
-    enabled: Boolean(activePathId),
+    enabled: enabled && Boolean(activePathId),
     retry: 0,
     refetchInterval: (
       query: Query<

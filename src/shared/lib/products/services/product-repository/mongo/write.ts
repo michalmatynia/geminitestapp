@@ -2,12 +2,8 @@ import { randomUUID } from 'crypto';
 
 import { Collection, UpdateFilter, WithId } from 'mongodb';
 
-import {
-  ProductCreateInput,
-  ProductUpdateInput,
-  ProductRecord,
-  ProductWithImages,
-} from '@/shared/contracts/products';
+import { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
+import { ProductRecord, ProductWithImages } from '@/shared/contracts/products/product';
 
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import {
@@ -30,6 +26,7 @@ export const mongoProductWriteImpl = {
       id,
       sku: data.sku,
       baseProductId: data.baseProductId || null,
+      importSource: data.importSource ?? null,
       defaultPriceGroupId: data.defaultPriceGroupId || null,
       ean: data.ean || null,
       gtin: data.gtin || null,
@@ -51,6 +48,7 @@ export const mongoProductWriteImpl = {
       length: data.length ?? null,
       published: true,
       categoryId: data.categoryId || null,
+      shippingGroupId: data.shippingGroupId || null,
       catalogId: storageInput.catalogId || 'default',
       createdAt: now,
       updatedAt: now,
@@ -87,6 +85,7 @@ export const mongoProductWriteImpl = {
 
     if (data.sku !== undefined) set['sku'] = data.sku;
     if (data.baseProductId !== undefined) set['baseProductId'] = data.baseProductId;
+    if (data.importSource !== undefined) set['importSource'] = data.importSource;
     if (data.defaultPriceGroupId !== undefined)
       set['defaultPriceGroupId'] = data.defaultPriceGroupId;
     if (data.ean !== undefined) set['ean'] = data.ean;
@@ -124,6 +123,9 @@ export const mongoProductWriteImpl = {
     if (data.length !== undefined) set['length'] = data.length;
     if (data.categoryId !== undefined) {
       set['categoryId'] = data.categoryId;
+    }
+    if (data.shippingGroupId !== undefined) {
+      set['shippingGroupId'] = data.shippingGroupId;
     }
     if (data.parameters !== undefined)
       set['parameters'] = normalizeProductParameterValues(data.parameters);
@@ -179,6 +181,8 @@ export const mongoProductWriteImpl = {
       createdAt: _c,
       updatedAt: _u,
       sku: _s,
+      baseProductId: _baseProductId,
+      importSource: _importSource,
       images: _i,
       catalogs: _cat,
       tags: _t,
@@ -188,6 +192,8 @@ export const mongoProductWriteImpl = {
     const duplicateInput = {
       ...rest,
       sku: newSku,
+      baseProductId: null,
+      importSource: null,
     } as ProductCreateInput;
     return await createProduct(duplicateInput);
   },

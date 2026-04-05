@@ -15,11 +15,33 @@ import {
   getLearnerManagementCopy,
   SESSION_PAGE_LIMIT,
 } from './KangurParentDashboardLearnerManagementWidget.utils';
-import type { ProfileModalTabId } from './KangurParentDashboardLearnerManagementWidget.types';
+import type { ProfileModalTabId, LearnerManagementCopy } from './KangurParentDashboardLearnerManagementWidget.types';
 
 const kangurPlatform = getKangurPlatform();
 
-export function useLearnerManagementState() {
+export type LearnerManagementState = {
+  copy: LearnerManagementCopy;
+  isCoarsePointer: boolean;
+  overview: ReturnType<typeof useKangurParentDashboardRuntimeOverviewState>;
+  actions: ReturnType<typeof useKangurParentDashboardRuntimeActions>;
+  activeProfileId: string | null;
+  setActiveProfileId: React.Dispatch<React.SetStateAction<string | null>>;
+  activeTab: ProfileModalTabId;
+  setActiveTab: React.Dispatch<React.SetStateAction<ProfileModalTabId>>;
+  isCreating: boolean;
+  setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
+  sessions: KangurLearnerSessionHistory | null;
+  isLoadingSessions: boolean;
+  isLoadingMoreSessions: boolean;
+  sessionsError: string | null;
+  sessionsLoadMoreError: string | null;
+  activeProfile: ReturnType<typeof useKangurParentDashboardRuntimeOverviewState>['learners'][number] | null;
+  fetchSessions: (learnerId: string, offset?: number) => Promise<void>;
+  handleOpenSettings: (learnerId: string) => void;
+  handleCloseModal: () => void;
+};
+
+export function useLearnerManagementState(): LearnerManagementState {
   const locale = useLocale();
   const siteLocale = normalizeSiteLocale(locale);
   const copy = useMemo(() => getLearnerManagementCopy(siteLocale), [siteLocale]);

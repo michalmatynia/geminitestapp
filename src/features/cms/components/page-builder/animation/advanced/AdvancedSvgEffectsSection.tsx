@@ -6,9 +6,10 @@ import React from 'react';
 import type { VectorOverlayResult } from '@/features/cms/hooks/usePageBuilderContext';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import { type VectorShape } from '@/shared/contracts/vector';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shared/ui';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { Button, Checkbox, Input, Tooltip } from '@/shared/ui/primitives.public';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 
@@ -71,7 +72,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
         <div className='flex items-center gap-2'>
           <Checkbox
             checked={svgDrawEnabledValue}
-            onCheckedChange={(v) => onChange({ ...config, svgDrawEnabled: v === true })}
+            onCheckedChange={(v: boolean) => onChange({ ...config, svgDrawEnabled: v === true })}
           />
           <span className='text-xs text-gray-300'>Draw SVG strokes</span>
         </div>
@@ -80,7 +81,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
             <FormField label='Target selector'>
               <Input
                 value={svgDrawSelectorValue}
-                onChange={(e) => onChange({ ...config, svgDrawSelector: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...config, svgDrawSelector: e.target.value })}
                 placeholder='path, line, circle'
                 className='h-9'
                aria-label='path, line, circle' title='path, line, circle'/>
@@ -89,7 +90,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
               <div className='flex items-center gap-2'>
                 <Input
                   value={svgDrawPathValue}
-                  onChange={(e) => onChange({ ...config, svgDrawPath: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...config, svgDrawPath: e.target.value })}
                   placeholder='Draw or paste SVG path'
                   className='flex-1 text-xs font-mono h-9'
                  aria-label='Draw or paste SVG path' title='Draw or paste SVG path'/>
@@ -128,7 +129,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                   max={100}
                   step={1}
                   value={svgDrawFromValue}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val))
                       onChange({ ...config, svgDrawFrom: Math.max(0, Math.min(100, val)) });
@@ -143,7 +144,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                   max={100}
                   step={1}
                   value={svgDrawToValue}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val))
                       onChange({ ...config, svgDrawTo: Math.max(0, Math.min(100, val)) });
@@ -158,7 +159,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
         <div className='flex items-center gap-2'>
           <Checkbox
             checked={svgMorphEnabledValue}
-            onCheckedChange={(v) => onChange({ ...config, svgMorphEnabled: v === true })}
+            onCheckedChange={(v: boolean) => onChange({ ...config, svgMorphEnabled: v === true })}
           />
           <span className='text-xs text-gray-300'>Morph SVG path (basic)</span>
         </div>
@@ -167,7 +168,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
             <FormField label='Target selector'>
               <Input
                 value={svgMorphSelectorValue}
-                onChange={(e) => onChange({ ...config, svgMorphSelector: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...config, svgMorphSelector: e.target.value })}
                 placeholder='path'
                 className='h-9'
                aria-label='path' title='path'/>
@@ -176,7 +177,7 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
               <div className='flex items-center gap-2'>
                 <Input
                   value={svgMorphToValue}
-                  onChange={(e) => onChange({ ...config, svgMorphTo: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...config, svgMorphTo: e.target.value })}
                   placeholder='Target path data or selector (#path)'
                   className='flex-1 text-xs font-mono h-9'
                  aria-label='Target path data or selector (#path)' title='Target path data or selector (#path)'/>

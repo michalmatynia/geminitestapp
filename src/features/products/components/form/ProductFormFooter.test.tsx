@@ -7,10 +7,13 @@ const { toastMock, writeTextMock } = vi.hoisted(() => ({
   writeTextMock: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
+}));
+
+vi.mock('@/shared/ui/toast', () => ({
   useToast: () => ({ toast: toastMock }),
 }));
 

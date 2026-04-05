@@ -4,7 +4,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 
 const { useValidatorSettingsContextMock, useMasterFolderTreeShellMock } = vi.hoisted(() => ({
   useValidatorSettingsContextMock: vi.fn(),
@@ -18,13 +18,13 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   }),
 }));
 
-vi.mock('@/features/foldertree/public', () => ({
+vi.mock('@/shared/lib/foldertree/public', () => ({
   createMasterFolderTreeTransactionAdapter: () => ({}),
   FolderTreeViewportV2: () => <div data-testid='tree-viewport' />,
   useMasterFolderTreeShell: (...args: unknown[]) => useMasterFolderTreeShellMock(...args),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/FolderTreePanel', () => ({
   FolderTreePanel: ({
     children,
     className,
@@ -36,6 +36,9 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -47,12 +50,18 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/form-section', () => ({
   FormField: ({ children, label }: { children?: React.ReactNode; label?: string }) => (
     <label>
       <span>{label}</span>
       {children}
     </label>
   ),
+}));
+
+vi.mock('@/shared/ui/input', () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
 }));
 

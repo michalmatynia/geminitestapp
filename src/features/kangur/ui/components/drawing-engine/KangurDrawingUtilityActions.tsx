@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurButtonProps } from '@/features/kangur/ui/design/primitives';
 import { KangurDrawingHistoryActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingHistoryActions';
 import { KangurDrawingSnapshotActions } from '@/features/kangur/ui/components/drawing-engine/KangurDrawingSnapshotActions';

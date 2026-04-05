@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { ensureCsrfCookieMock } = vi.hoisted(() => ({
+import { resetEdgeTrafficGuardState } from '@/shared/lib/security/edge-traffic-guard';
+
+const { authInvokeMock, ensureCsrfCookieMock } = vi.hoisted(() => ({
+  authInvokeMock: vi.fn(),
   ensureCsrfCookieMock: vi.fn(),
 }));
 
@@ -78,7 +81,10 @@ vi.mock('next/server', async (importOriginal) => {
 });
 
 vi.mock('@/features/auth/edge', () => ({
-  auth: undefined,
+  auth:
+    (handler: (request: unknown, context: unknown) => Response | Promise<Response>) =>
+    (request: unknown, context: unknown) =>
+      authInvokeMock(handler, request, context),
 }));
 
 vi.mock('@/shared/lib/security/csrf', () => ({
@@ -174,6 +180,8 @@ const createRequest = (
     localeCookie?: string;
     acceptLanguage?: string;
     method?: string;
+    userAgent?: string;
+    cookie?: string;
   }
 ): {
   url: string;
@@ -186,6 +194,12 @@ const createRequest = (
   const headers = new Headers();
   if (options?.acceptLanguage) {
     headers.set('accept-language', options.acceptLanguage);
+  }
+  if (options?.userAgent) {
+    headers.set('user-agent', options.userAgent);
+  }
+  if (options?.cookie) {
+    headers.set('cookie', options.cookie);
   }
   return {
     url: parsed.toString(),
@@ -213,6 +227,15 @@ const createRequest = (
 
 describe('proxy api routing', () => {
   beforeEach(() => {
+    resetEdgeTrafficGuardState();
+    authInvokeMock.mockReset();
+    authInvokeMock.mockImplementation(
+      (
+        handler: (request: unknown, context: unknown) => Response | Promise<Response>,
+        request: unknown,
+        context: unknown
+      ) => handler(request, context)
+    );
     ensureCsrfCookieMock.mockReset();
   });
 
@@ -235,6 +258,61 @@ describe('proxy api routing', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('canonicalizes admin redirect-only routes inside the auth-protected proxy path', async () => {
+    const request = createRequest('http://localhost/admin/settings/ai');
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe('http://localhost/admin/brain?tab=routing');
+    expect(authInvokeMock).toHaveBeenCalledTimes(1);
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('canonicalizes legacy admin aliases inside the auth-protected proxy path', async () => {
+    const request = createRequest('http://localhost/admin/products/constructor');
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe('http://localhost/admin/products/settings');
+    expect(authInvokeMock).toHaveBeenCalledTimes(1);
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves auth short-circuits ahead of canonical admin redirects', async () => {
+    authInvokeMock.mockImplementation((_handler: unknown, request: { url: string }) => {
+      return new Response(null, {
+        status: 307,
+        headers: {
+          Location: new URL('/admin?denied=1', request.url).toString(),
+        },
+      });
+    });
+
+    const request = createRequest('http://localhost/admin/settings/ai');
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe('http://localhost/admin?denied=1');
+    expect(ensureCsrfCookieMock).not.toHaveBeenCalled();
+  });
+
+  it('skips canonical admin redirects for non-safe methods', async () => {
+    const request = createRequest('http://localhost/admin/settings/ai', {
+      method: 'POST',
+    });
+
+    const response = await Promise.resolve(proxy(request as never, { params: {} }));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(response.headers.get('location')).toBeNull();
+    expect(authInvokeMock).toHaveBeenCalledTimes(1);
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });
 
@@ -325,5 +403,20 @@ describe('proxy api routing', () => {
     expect(response.headers.get('x-middleware-next')).toBe('1');
     expect(response.headers.get('set-cookie')).toBeNull();
     expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rate-limits repeated anonymous scraper traffic on public pages before rendering work fan-outs', async () => {
+    let response: Response | undefined;
+
+    for (let attempt = 0; attempt < 9; attempt += 1) {
+      const request = createRequest('http://localhost/', {
+        userAgent: 'curl/8.7.1',
+      });
+      response = await Promise.resolve(proxy(request as never, { params: {} }));
+    }
+
+    expect(response?.status).toBe(429);
+    expect(response?.headers.get('x-traffic-guard')).toBe('public-page-burst');
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(8);
   });
 });

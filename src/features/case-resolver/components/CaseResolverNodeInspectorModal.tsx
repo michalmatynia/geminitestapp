@@ -1,31 +1,19 @@
+'use client';
+
 import { Split } from 'lucide-react';
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  CASE_RESOLVER_JOIN_MODE_OPTIONS,
-  CASE_RESOLVER_NODE_ROLE_OPTIONS,
-  CASE_RESOLVER_QUOTE_MODE_OPTIONS,
-  type CaseResolverEditorNodeContext,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_JOIN_MODE_OPTIONS, CASE_RESOLVER_NODE_ROLE_OPTIONS, CASE_RESOLVER_QUOTE_MODE_OPTIONS } from '@/shared/contracts/case-resolver/constants';
+import { type CaseResolverEditorNodeContext } from '@/shared/contracts/case-resolver';
 import {
   VALIDATOR_PATTERN_LISTS_KEY,
   parseValidatorPatternLists,
 } from '@/shared/contracts/validator';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import {
-  Button,
-  Checkbox,
-  FormField,
-  Input,
-  Label,
-  SelectSimple,
-  CompactEmptyState,
-  Textarea,
-  CopyButton,
-  InsetPanel,
-  ValidatorFormatterToggle,
-} from '@/shared/ui';
+import { Button, Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple, CopyButton, ValidatorFormatterToggle } from '@/shared/ui/forms-and-actions.public';
+import { CompactEmptyState, InsetPanel } from '@/shared/ui/navigation-and-layout.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';

@@ -1,4 +1,4 @@
-import type { KangurProgressState } from '@kangur/contracts';
+import type { KangurProgressState } from '@kangur/contracts/kangur';
 
 import { getLocalizedKangurAllGoalsCompletedLabel } from '../progress-i18n';
 import {

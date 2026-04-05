@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import {
   useAdminFilemakerOrganizationEditPageState,
@@ -32,10 +33,22 @@ export type AdminFilemakerOrganizationEditPageActionsContextValue = Pick<
   AdminFilemakerOrganizationEditPageFunctionKeys
 >;
 
-const AdminFilemakerOrganizationEditPageStateContext =
-  createContext<AdminFilemakerOrganizationEditPageStateContextValue | null>(null);
-const AdminFilemakerOrganizationEditPageActionsContext =
-  createContext<AdminFilemakerOrganizationEditPageActionsContextValue | null>(null);
+const {
+  Context: AdminFilemakerOrganizationEditPageStateContext,
+  useStrictContext: useAdminFilemakerOrganizationEditPageStateContextValue,
+} = createStrictContext<AdminFilemakerOrganizationEditPageStateContextValue>({
+  hookName: 'useAdminFilemakerOrganizationEditPageStateContext',
+  providerName: 'AdminFilemakerOrganizationEditPageProvider',
+  errorFactory: internalError,
+});
+const {
+  Context: AdminFilemakerOrganizationEditPageActionsContext,
+  useStrictContext: useAdminFilemakerOrganizationEditPageActionsContextValue,
+} = createStrictContext<AdminFilemakerOrganizationEditPageActionsContextValue>({
+  hookName: 'useAdminFilemakerOrganizationEditPageActionsContext',
+  providerName: 'AdminFilemakerOrganizationEditPageProvider',
+  errorFactory: internalError,
+});
 
 export function AdminFilemakerOrganizationEditPageProvider({
   children,
@@ -73,22 +86,7 @@ export function AdminFilemakerOrganizationEditPageProvider({
   );
 }
 
-export function useAdminFilemakerOrganizationEditPageStateContext(): AdminFilemakerOrganizationEditPageStateContextValue {
-  const context = useContext(AdminFilemakerOrganizationEditPageStateContext);
-  if (!context) {
-    throw internalError(
-      'useAdminFilemakerOrganizationEditPageStateContext must be used within AdminFilemakerOrganizationEditPageProvider'
-    );
-  }
-  return context;
-}
-
-export function useAdminFilemakerOrganizationEditPageActionsContext(): AdminFilemakerOrganizationEditPageActionsContextValue {
-  const context = useContext(AdminFilemakerOrganizationEditPageActionsContext);
-  if (!context) {
-    throw internalError(
-      'useAdminFilemakerOrganizationEditPageActionsContext must be used within AdminFilemakerOrganizationEditPageProvider'
-    );
-  }
-  return context;
-}
+export const useAdminFilemakerOrganizationEditPageStateContext =
+  useAdminFilemakerOrganizationEditPageStateContextValue;
+export const useAdminFilemakerOrganizationEditPageActionsContext =
+  useAdminFilemakerOrganizationEditPageActionsContextValue;

@@ -1,5 +1,3 @@
-'use client';
-
 import type { QueryClient } from '@tanstack/react-query';
 
 import type {
@@ -9,7 +7,7 @@ import type {
 import {
   kangurLessonsCatalogSchema,
 } from '@/shared/contracts/kangur';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import {
   isRecoverableKangurClientFetchError,
   withKangurClientError,

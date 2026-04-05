@@ -2,7 +2,8 @@ import {
   findProductListingByIdAcrossProviders,
   findProductListingByProductAndConnectionAcrossProviders,
 } from '@/features/integrations/server';
-import type { ProductListing, ProductListingRepository } from '@/shared/contracts/integrations';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function resolveListingForExport(args: {

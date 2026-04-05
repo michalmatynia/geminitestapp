@@ -5,7 +5,7 @@ import type {
   DatabaseTableDetail,
   DatabaseTablePreviewData,
 } from '@/shared/contracts/database';
-import { getMotionSafeScrollBehavior } from '@/shared/utils';
+import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
 
 const DATABASE_PREVIEW_SCROLL_DELAY_MS = 50;
 

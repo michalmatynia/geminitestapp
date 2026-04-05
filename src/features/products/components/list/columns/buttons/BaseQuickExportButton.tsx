@@ -3,27 +3,20 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import type {
-  BaseActiveTemplatePreferenceResponse,
-  BaseDefaultConnectionPreferenceResponse,
-  BaseDefaultInventoryPreferenceResponse,
-  BaseImportInventoriesPayload,
-  BaseImportInventoriesResponse,
-  BaseProductLinkExistingPayload,
-  BaseProductLinkExistingResponse,
-  BaseProductSkuCheckPayload,
-  BaseProductSkuCheckResponse,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse } from '@/shared/contracts/integrations/import-export';
+import type { BaseProductLinkExistingPayload, BaseProductLinkExistingResponse, BaseProductSkuCheckPayload, BaseProductSkuCheckResponse } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-  isBaseIntegrationSlug,
-  useGenericExportToBaseMutation,
-} from '@/features/integrations/public';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
+import { createBaseRecoveryContext } from '@/features/integrations/utils/product-listings-recovery';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import {
   subscribeToTrackedAiPathRun,
   type TrackedAiPathRunSnapshot,
@@ -36,16 +29,20 @@ import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { AppModal, Button, InsetPanel, useToast } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { AppModal } from '@/shared/ui/app-modal';
+import { Button } from '@/shared/ui/button';
+import { InsetPanel } from '@/shared/ui/InsetPanel';
+import { useToast } from '@/shared/ui/toast';
+
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   FAILURE_STATUSES,
+  SUCCESS_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
 } from '../product-column-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();
@@ -270,7 +267,6 @@ export function BaseQuickExportButton(props: {
   prefetchListings: () => void;
   showMarketplaceBadge: boolean;
   onOpenIntegrations?: ((recoveryContext?: ProductListingsRecoveryContext) => void) | undefined;
-  onOpenExportSettings?: (() => void) | undefined;
 }): React.JSX.Element {
   const {
     product,
@@ -278,7 +274,6 @@ export function BaseQuickExportButton(props: {
     prefetchListings,
     showMarketplaceBadge,
     onOpenIntegrations,
-    onOpenExportSettings,
   } = props;
 
   const { toast } = useToast();
@@ -713,9 +708,7 @@ export function BaseQuickExportButton(props: {
     }
   };
 
-  const label = showMarketplaceBadge
-    ? `Open Base.com listing actions (${status}).`
-    : 'One-click export to Base.com';
+  const label = 'One-click export to Base.com';
 
   const trackedExportPresentation = trackedExportRunStatus
     ? resolveTriggerButtonRunFeedbackPresentation(trackedExportRunStatus)
@@ -724,22 +717,24 @@ export function BaseQuickExportButton(props: {
     trackedExportRunStatus !== null && !TERMINAL_EXPORT_RUN_STATUSES.has(trackedExportRunStatus);
   const quickExportPending = quickExportMutation.isPending || quickExportLocked || trackedExportInFlight;
   const resolvedButtonStatus = trackedExportRunStatus ?? status;
-  const isFailureState = FAILURE_STATUSES.has(normalizeMarketplaceStatus(resolvedButtonStatus));
+  const normalizedResolvedButtonStatus = normalizeMarketplaceStatus(resolvedButtonStatus);
+  const isFailureState = FAILURE_STATUSES.has(normalizedResolvedButtonStatus);
+  const shouldManageExistingListing =
+    !isFailureState &&
+    (showMarketplaceBadge || SUCCESS_STATUSES.has(normalizedResolvedButtonStatus));
   const shouldUseFilledMarketplaceTone = showMarketplaceBadge || trackedExportRunStatus !== null;
-  const resolvedLabel = showMarketplaceBadge
-    ? `Open Base.com listing actions (${resolvedButtonStatus}).`
-    : isFailureState
-      ? `Open Base.com recovery options (${resolvedButtonStatus}).`
-      : trackedExportPresentation
-        ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
-        : label;
+  const resolvedLabel = isFailureState
+    ? `Open Base.com recovery options (${resolvedButtonStatus}).`
+    : shouldManageExistingListing
+      ? `Manage Base.com listing (${resolvedButtonStatus}).`
+    : trackedExportPresentation
+      ? `Base.com export ${trackedExportPresentation.label.toLowerCase()}.`
+      : label;
   const recoveryContext: ProductListingsRecoveryContext | undefined = isFailureState
-    ? {
-      source: 'base_quick_export_failed',
-      integrationSlug: 'baselinker',
+    ? createBaseRecoveryContext({
       status: resolvedButtonStatus,
       runId: trackedExportRunIdRef.current,
-    }
+    })
     : undefined;
 
   return (
@@ -748,12 +743,12 @@ export function BaseQuickExportButton(props: {
         type='button'
         disabled={quickExportPending}
         onClick={(): void => {
-          if (showMarketplaceBadge) {
-            onOpenExportSettings?.();
-            return;
-          }
           if (isFailureState) {
             onOpenIntegrations?.(recoveryContext);
+            return;
+          }
+          if (shouldManageExistingListing) {
+            onOpenIntegrations?.();
             return;
           }
           void runQuickExport();

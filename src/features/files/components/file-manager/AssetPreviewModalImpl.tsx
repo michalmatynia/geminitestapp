@@ -1,12 +1,12 @@
-'use client';
-
 import React from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Badge, MetadataItem, StatusBadge, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { Badge } from '@/shared/ui/primitives.public';
+import { MetadataItem, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import { DetailModal, DetailModalSection } from '@/shared/ui/templates/modals';
-import { formatDateTime, formatFileSize } from '@/shared/utils';
+import { formatDateTime, formatFileSize } from '@/shared/utils/formatting';
 
 interface AssetPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 

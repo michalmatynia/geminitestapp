@@ -1,12 +1,9 @@
 import {
   getKangurStorefrontInitialState,
-} from '@/features/kangur/appearance/server/storefront-appearance';
-import {
   getKangurSurfaceBootstrapStyle,
   KANGUR_SURFACE_HINT_SCRIPT,
-} from '@/features/kangur/appearance/server/storefront-appearance-bootstrap';
-import { KangurStorefrontAppearanceProvider } from '@/features/kangur/ui/KangurStorefrontAppearanceProvider';
-import { KangurSurfaceClassSync } from '@/features/kangur/ui/KangurSurfaceClassSync';
+} from '@/features/kangur/server';
+import { KangurStorefrontAppearanceProvider, KangurSurfaceClassSync } from '@/features/kangur/public';
 import { shouldRenderVercelAnalytics } from '@/shared/lib/analytics/vercel-analytics';
 import { safeHtml } from '@/shared/lib/security/safe-html';
 import { Analytics } from '@vercel/analytics/next';

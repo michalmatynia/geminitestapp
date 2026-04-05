@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type DatabaseSaveQueryPresetDialogContextValue = {
   open: boolean;
@@ -29,10 +30,22 @@ export type DatabaseSaveQueryPresetDialogActionsContextValue = Pick<
   DatabaseSaveQueryPresetDialogActionKey
 >;
 
-const DatabaseSaveQueryPresetDialogStateContext =
-  React.createContext<DatabaseSaveQueryPresetDialogStateContextValue | null>(null);
-const DatabaseSaveQueryPresetDialogActionsContext =
-  React.createContext<DatabaseSaveQueryPresetDialogActionsContextValue | null>(null);
+const {
+  Context: DatabaseSaveQueryPresetDialogStateContext,
+  useStrictContext: useDatabaseSaveQueryPresetDialogStateContextValue,
+} = createStrictContext<DatabaseSaveQueryPresetDialogStateContextValue>({
+  hookName: 'useDatabaseSaveQueryPresetDialogStateContext',
+  providerName: 'DatabaseSaveQueryPresetDialogContextProvider',
+  errorFactory: internalError,
+});
+const {
+  Context: DatabaseSaveQueryPresetDialogActionsContext,
+  useStrictContext: useDatabaseSaveQueryPresetDialogActionsContextValue,
+} = createStrictContext<DatabaseSaveQueryPresetDialogActionsContextValue>({
+  hookName: 'useDatabaseSaveQueryPresetDialogActionsContext',
+  providerName: 'DatabaseSaveQueryPresetDialogContextProvider',
+  errorFactory: internalError,
+});
 
 export function DatabaseSaveQueryPresetDialogContextProvider({
   value,
@@ -77,22 +90,7 @@ export function DatabaseSaveQueryPresetDialogContextProvider({
   );
 }
 
-export function useDatabaseSaveQueryPresetDialogStateContext(): DatabaseSaveQueryPresetDialogStateContextValue {
-  const context = React.useContext(DatabaseSaveQueryPresetDialogStateContext);
-  if (!context) {
-    throw internalError(
-      'useDatabaseSaveQueryPresetDialogStateContext must be used within DatabaseSaveQueryPresetDialogContextProvider'
-    );
-  }
-  return context;
-}
-
-export function useDatabaseSaveQueryPresetDialogActionsContext(): DatabaseSaveQueryPresetDialogActionsContextValue {
-  const context = React.useContext(DatabaseSaveQueryPresetDialogActionsContext);
-  if (!context) {
-    throw internalError(
-      'useDatabaseSaveQueryPresetDialogActionsContext must be used within DatabaseSaveQueryPresetDialogContextProvider'
-    );
-  }
-  return context;
-}
+export const useDatabaseSaveQueryPresetDialogStateContext =
+  useDatabaseSaveQueryPresetDialogStateContextValue;
+export const useDatabaseSaveQueryPresetDialogActionsContext =
+  useDatabaseSaveQueryPresetDialogActionsContextValue;

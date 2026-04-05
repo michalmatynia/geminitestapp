@@ -1,6 +1,4 @@
-'use client';
-
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import {
   kangurSocialImageAddonsBatchJobSchema,
   kangurSocialImageAddonsBatchJobsSchema,

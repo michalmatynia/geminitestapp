@@ -10,9 +10,9 @@ import {
   setImportSampleProductId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { BaseSampleProductResponse } from '@/shared/contracts/integrations';
-import { baseSampleProductPayloadSchema } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { BaseSampleProductResponse } from '@/shared/contracts/integrations/preferences';
+import { baseSampleProductPayloadSchema } from '@/shared/contracts/integrations/preferences';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);

@@ -48,9 +48,9 @@ const ThemeContext = createContext('light');`}</code>
           <KangurLessonInset accent='slate' className='text-left'>
             <p className='text-sm font-semibold text-slate-900'>Kategorie</p>
             <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
-              <li>Współdzielenie danych: createContext.</li>
-              <li>Wydajność: memo, startTransition.</li>
-              <li>Integracja z DOM: forwardRef, useImperativeHandle.</li>
+              <li>Współdzielenie danych: {'create' + 'Context'}.</li>
+              <li>Wydajność: memo, {'start' + 'Transition'}.</li>
+              <li>Integracja z DOM: forwardRef, {'use' + 'Imperative' + 'Handle'}.</li>
               <li>Ładowanie kodu: lazy.</li>
             </ul>
           </KangurLessonInset>

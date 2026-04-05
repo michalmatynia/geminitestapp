@@ -13,21 +13,11 @@ import type {
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
-import {
-  AdminAgentTeachingBreadcrumbs,
-  Button,
-  Textarea,
-  useToast,
-  FormSection,
-  FormField,
-  LoadingState,
-  CompactEmptyState,
-  Card,
-  PageLayout,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { AdminAgentTeachingBreadcrumbs } from '@/shared/ui/admin.public';
+import { Button, Textarea, useToast, Card } from '@/shared/ui/primitives.public';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState, CompactEmptyState, PageLayout, UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import {

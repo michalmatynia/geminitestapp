@@ -1,9 +1,5 @@
-import type {
-  KangurLesson,
-  KangurLessonAgeGroup,
-  KangurLessonComponentId,
-  KangurLessonSubject,
-} from '@kangur/contracts';
+import type { KangurLesson } from '@kangur/contracts/kangur';
+import type { KangurLessonAgeGroup, KangurLessonComponentId, KangurLessonSubject } from '@kangur/contracts/kangur-lesson-constants';
 
 export type KangurLessonListInput = {
   subject?: KangurLessonSubject;

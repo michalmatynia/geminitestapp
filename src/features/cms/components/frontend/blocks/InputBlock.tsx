@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Input } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
 
 import {
   resolveCmsRuntimeAction,
@@ -24,48 +24,39 @@ const resolveInputValue = (value: unknown): string => {
 
 const resolveBoolean = (value: unknown): boolean => value === true || value === 'true';
 
-export function InputBlock(): React.ReactNode {
-  const settings = useRequiredBlockSettings();
-  const runtime = useOptionalCmsRuntime();
-  const controlledValue = resolveInputValue(settings['inputValue']);
-  const placeholder =
-    typeof settings['inputPlaceholder'] === 'string' ? settings['inputPlaceholder'] : '';
-  const inputAriaLabel =
-    typeof settings['inputAriaLabel'] === 'string' ? settings['inputAriaLabel'].trim() : '';
-  const inputType = typeof settings['inputType'] === 'string' ? settings['inputType'] : 'text';
-  const autoComplete =
+type InputBlockResolvedSettings = {
+  autoComplete: string;
+  controlledValue: string;
+  disabled: boolean;
+  inputAriaLabel: string;
+  inputType: string;
+  maxLength: number | undefined;
+  placeholder: string;
+};
+
+const resolveInputMaxLength = (value: unknown): number | undefined =>
+  typeof value === 'number' && value > 0 ? Math.round(value) : undefined;
+
+const resolveInputBlockSettings = (
+  settings: Record<string, unknown>
+): InputBlockResolvedSettings => ({
+  controlledValue: resolveInputValue(settings['inputValue']),
+  placeholder:
+    typeof settings['inputPlaceholder'] === 'string' ? settings['inputPlaceholder'] : '',
+  inputAriaLabel:
+    typeof settings['inputAriaLabel'] === 'string' ? settings['inputAriaLabel'].trim() : '',
+  inputType: typeof settings['inputType'] === 'string' ? settings['inputType'] : 'text',
+  autoComplete:
     typeof settings['inputAutoComplete'] === 'string'
       ? settings['inputAutoComplete'].trim()
-      : '';
-  const maxLength =
-    typeof settings['inputMaxLength'] === 'number' && settings['inputMaxLength'] > 0
-      ? Math.round(settings['inputMaxLength'])
-      : undefined;
-  const disabled = resolveBoolean(settings['inputDisabled']);
-  const changeAction = React.useMemo(
-    () =>
-      resolveCmsRuntimeAction(
-        runtime,
-        settings['inputChangeActionSource'],
-        settings['inputChangeActionPath']
-      ),
-    [runtime, settings]
-  );
-  const submitAction = React.useMemo(
-    () =>
-      resolveCmsRuntimeAction(
-        runtime,
-        settings['inputSubmitActionSource'],
-        settings['inputSubmitActionPath']
-      ),
-    [runtime, settings]
-  );
-  const [value, setValue] = React.useState(controlledValue);
+      : '',
+  maxLength: resolveInputMaxLength(settings['inputMaxLength']),
+  disabled: resolveBoolean(settings['inputDisabled']),
+});
 
-  React.useEffect(() => {
-    setValue(controlledValue);
-  }, [controlledValue]);
-
+const buildInputBlockCustomStyles = (
+  settings: Record<string, unknown>
+): React.CSSProperties => {
   const customStyles: React.CSSProperties = {};
   const fontFamily = settings['fontFamily'] as string | undefined;
   const fontSize = settings['fontSize'] as number | undefined;
@@ -90,6 +81,61 @@ export function InputBlock(): React.ReactNode {
   }
   if (height && height > 0) customStyles.height = `${height}px`;
 
+  return customStyles;
+};
+
+export function InputBlock(): React.ReactNode {
+  const settings = useRequiredBlockSettings();
+  const runtime = useOptionalCmsRuntime();
+  const { autoComplete, controlledValue, disabled, inputAriaLabel, inputType, maxLength, placeholder } =
+    React.useMemo(() => resolveInputBlockSettings(settings), [settings]);
+  const changeAction = React.useMemo(
+    () =>
+      resolveCmsRuntimeAction(
+        runtime,
+        settings['inputChangeActionSource'],
+        settings['inputChangeActionPath']
+      ),
+    [runtime, settings]
+  );
+  const submitAction = React.useMemo(
+    () =>
+      resolveCmsRuntimeAction(
+        runtime,
+        settings['inputSubmitActionSource'],
+        settings['inputSubmitActionPath']
+      ),
+    [runtime, settings]
+  );
+  const [value, setValue] = React.useState(controlledValue);
+
+  React.useEffect(() => {
+    setValue(controlledValue);
+  }, [controlledValue]);
+
+  const customStyles = React.useMemo(() => buildInputBlockCustomStyles(settings), [settings]);
+
+  const handleChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const nextValue = event.target.value;
+      setValue(nextValue);
+      changeAction?.(nextValue);
+    },
+    [changeAction]
+  );
+
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>): void => {
+      if (event.key !== 'Enter' || !submitAction) {
+        return;
+      }
+
+      event.preventDefault();
+      submitAction(value);
+    },
+    [submitAction, value]
+  );
+
   return (
     <Input
       type={inputType}
@@ -101,19 +147,9 @@ export function InputBlock(): React.ReactNode {
       aria-label={inputAriaLabel || placeholder || 'Input field'}
       className='cms-appearance-input w-full'
       style={customStyles}
-      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-        const nextValue = event.target.value;
-        setValue(nextValue);
-        changeAction?.(nextValue);
-      }}
-      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-        if (event.key !== 'Enter' || !submitAction) {
-          return;
-        }
-
-        event.preventDefault();
-        submitAction(value);
-      }}
-     title={placeholder}/>
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      title={placeholder}
+    />
   );
 }

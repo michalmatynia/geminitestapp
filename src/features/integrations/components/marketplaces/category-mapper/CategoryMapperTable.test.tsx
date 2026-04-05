@@ -5,8 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CategoryMapperProvider } from '@/features/integrations/context/CategoryMapperContext';
 import { CategoryMapperTable } from './CategoryMapperTable';
-import type { ExternalCategory } from '@/shared/contracts/integrations';
-import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
+import type { ExternalCategory } from '@/shared/contracts/integrations/listings';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 const mocks = vi.hoisted(() => ({
   catalogs: [] as unknown[],
@@ -18,7 +19,7 @@ const mocks = vi.hoisted(() => ({
   saveMutateAsync: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -34,77 +35,18 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  StandardDataTablePanel: ({
-    title,
-    description,
-    headerActions,
-    alerts,
-    data,
-    expanded,
-    getSubRows,
+  Alert: ({
+    children,
   }: {
-    title: string;
-    description?: string;
-    headerActions?: React.ReactNode;
-    alerts?: React.ReactNode;
-    data?: Array<{ id: string; name: string; subRows?: Array<{ id: string; name: string }> }>;
-    expanded?: Record<string, boolean>;
-    getSubRows?: (
-      row: { id: string; name: string; subRows?: Array<{ id: string; name: string }> }
-    ) => Array<{ id: string; name: string; subRows?: Array<{ id: string; name: string }> }> | undefined;
-  }) => (
-    <section>
-      <h2>{title}</h2>
-      {description ? <p>{description}</p> : null}
-      {headerActions}
-      {alerts}
-      <ul data-testid='category-tree'>
-        {(data ?? []).map(function renderRow(row) {
-          const subRows = getSubRows?.(row) ?? row.subRows ?? [];
-          const isExpanded = expanded?.[row.id] ?? false;
-
-          return (
-            <li key={row.id}>
-              <span>{row.name}</span>
-              {isExpanded && subRows.length > 0 ? (
-                <ul>
-                  {subRows.map((child) => renderRow(child))}
-                </ul>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  ),
-  CompactEmptyState: ({
-    title,
-    description,
-  }: {
-    title: string;
-    description?: string;
-  }) => (
-    <div>
-      <h2>{title}</h2>
-      {description ? <p>{description}</p> : null}
-    </div>
-  ),
-  GenericMapperStats: ({
-    total,
-    mapped,
-    pending,
-    itemLabel,
-  }: {
-    total: number;
-    mapped: number;
-    pending: number;
-    itemLabel?: string;
-  }) => (
-    <div data-testid='mapper-stats'>
-      {itemLabel}:{total}:{mapped}:{pending}
-    </div>
-  ),
+    children: React.ReactNode;
+  }) => <div data-testid='mapper-alert'>{children}</div>,
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
+  useToast: () => ({
+    toast: mocks.toast,
+  }),
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     value,
     onValueChange,
@@ -137,9 +79,90 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
-  useToast: () => ({
-    toast: mocks.toast,
-  }),
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  CompactEmptyState: ({
+    title,
+    description,
+  }: {
+    title: string;
+    description?: string;
+  }) => (
+    <div>
+      <h2>{title}</h2>
+      {description ? <p>{description}</p> : null}
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
+  StandardDataTablePanel: ({
+    title,
+    description,
+    headerActions,
+    filters,
+    alerts,
+    data,
+    expanded,
+    getSubRows,
+    emptyState,
+  }: {
+    title: string;
+    description?: string;
+    headerActions?: React.ReactNode;
+    filters?: React.ReactNode;
+    alerts?: React.ReactNode;
+    data?: Array<{ id: string; name: string; subRows?: Array<{ id: string; name: string }> }>;
+    expanded?: Record<string, boolean>;
+    getSubRows?: (
+      row: { id: string; name: string; subRows?: Array<{ id: string; name: string }> }
+    ) => Array<{ id: string; name: string; subRows?: Array<{ id: string; name: string }> }> | undefined;
+    emptyState?: React.ReactNode;
+  }) => (
+    <section>
+      <h2>{title}</h2>
+      {description ? <p>{description}</p> : null}
+      {headerActions}
+      {filters}
+      {alerts}
+      {(data ?? []).length === 0 && emptyState ? <div data-testid='panel-empty-state'>{emptyState}</div> : null}
+      <ul data-testid='category-tree'>
+        {(data ?? []).map(function renderRow(row) {
+          const subRows = getSubRows?.(row) ?? row.subRows ?? [];
+          const isExpanded = expanded?.[row.id] ?? false;
+
+          return (
+            <li key={row.id}>
+              <span>{row.name}</span>
+              {isExpanded && subRows.length > 0 ? (
+                <ul>
+                  {subRows.map((child) => renderRow(child))}
+                </ul>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  ),
+  GenericMapperStats: ({
+    total,
+    mapped,
+    unmapped,
+    pending,
+    itemLabel,
+  }: {
+    total: number;
+    mapped: number;
+    unmapped?: number;
+    pending: number;
+    itemLabel?: string;
+  }) => (
+    <div data-testid='mapper-stats'>
+      {itemLabel}:{total}:{mapped}:{unmapped ?? 'na'}:{pending}
+    </div>
+  ),
 }));
 
 vi.mock('@/features/integrations/hooks/useIntegrationProductQueries', () => ({
@@ -247,10 +270,11 @@ describe('CategoryMapperTable', () => {
       </CategoryMapperProvider>
     );
 
-    const autoMatchButton = await screen.findByRole('button', { name: 'Auto-match Names' });
+    const autoMatchButton = await screen.findByRole('button', { name: 'Auto-match Paths & Names' });
 
     await waitFor(() => expect(autoMatchButton).toBeEnabled());
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.getByTestId('mapper-stats')).toHaveTextContent('Categories:1:0:1:0');
 
     await user.click(autoMatchButton);
 
@@ -306,6 +330,74 @@ describe('CategoryMapperTable', () => {
       expect(screen.getByText('Anime Pins')).toBeInTheDocument();
       expect(screen.getByText('Gaming Pins')).toBeInTheDocument();
       expect(screen.getByText('Movie Pins')).toBeInTheDocument();
+    });
+  });
+
+  it('shows a warning when saved mappings point to missing marketplace categories', async () => {
+    mocks.mappings = [
+      {
+        id: 'mapping-stale',
+        connectionId: 'conn-1',
+        externalCategoryId: 'market-missing',
+        internalCategoryId: 'int-1',
+        catalogId: 'catalog-1',
+        isActive: true,
+        createdAt: '2026-03-22T00:00:00.000Z',
+        updatedAt: '2026-03-22T00:00:00.000Z',
+        externalCategory: createExternalCategory({
+          id: 'ext-missing',
+          externalId: 'market-missing',
+          name: '[Missing external category: Office Chairs]',
+          path: 'Furniture > Office Chairs',
+        }),
+        internalCategory: createInternalCategory({ id: 'int-1', name: 'office chairs' }),
+      },
+    ];
+
+    render(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Tradera'>
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    expect(await screen.findByTestId('mapper-alert')).toHaveTextContent(
+      '1 saved mapping points to a missing marketplace category. Fetch categories and remap it before listing.'
+    );
+    expect(screen.getByTestId('mapper-alert')).toHaveTextContent(
+      'Furniture > Office Chairs -> office chairs'
+    );
+  });
+
+  it('rerenders cleanly when fetched external categories appear after an empty state', async () => {
+    mocks.externalCategories = [];
+
+    const view = render(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Tradera'>
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    expect(screen.getByText('No external categories found')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fetch Categories' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Marketplace Categories' })).toBeInTheDocument();
+
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'tradera-jewellery',
+        externalId: 'tradera-jewellery',
+        name: 'Jewellery',
+      }),
+    ];
+
+    view.rerender(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Tradera'>
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Marketplace Categories' })).toBeInTheDocument();
+      expect(screen.getByText('Jewellery')).toBeInTheDocument();
     });
   });
 });

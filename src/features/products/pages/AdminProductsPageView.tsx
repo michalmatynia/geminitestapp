@@ -22,8 +22,8 @@ const ProductModals = dynamic(
 
 const ConfirmModal = dynamic(
   () =>
-    import('@/shared/ui/templates/modals').then(
-      (mod: typeof import('@/shared/ui/templates/modals')) => mod.ConfirmModal
+    import('@/shared/ui/templates/modals/ConfirmModal').then(
+      (mod: typeof import('@/shared/ui/templates/modals/ConfirmModal')) => mod.ConfirmModal
     ),
   { ssr: false }
 );

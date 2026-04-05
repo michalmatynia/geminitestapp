@@ -8,12 +8,7 @@ import {
   useImportList,
   useImportRun,
 } from '@/features/data-import-export/hooks/useImportQueries';
-import type {
-  InventoryOption,
-  ImportListItem,
-  ImportRunDetail,
-  WarehouseOption,
-} from '@/shared/contracts/integrations';
+import type { InventoryOption, ImportListItem, ImportRunDetail, WarehouseOption } from '@/shared/contracts/integrations/import-export';
 
 export function useImportExportData({
   selectedBaseConnectionId,

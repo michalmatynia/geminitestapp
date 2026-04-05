@@ -1,5 +1,3 @@
-'use client';
-
 import { getKangurBuiltInGameInstanceId } from '@/features/kangur/games';
 import { KangurUnifiedLesson } from '../lessons/lesson-components';
 

@@ -19,6 +19,7 @@ vi.mock('@/shared/lib/settings-lite-server-cache', () => ({
 
 describe('lite-settings-ssr', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     prewarmLiteSettingsServerCacheMock.mockReset();
     cloneLiteSettingsMock.mockReset();
     getLiteSettingsCacheMock.mockReset();
@@ -54,5 +55,20 @@ describe('lite-settings-ssr', () => {
     prewarmLiteSettingsServerCacheMock.mockRejectedValue(new Error('cache failed'));
 
     await expect(getLiteSettingsForHydration()).resolves.toEqual([]);
+  });
+
+  it('does not block hydration indefinitely when prewarm is slow', async () => {
+    vi.useFakeTimers();
+    prewarmLiteSettingsServerCacheMock.mockImplementation(
+      () => new Promise<void>(() => undefined)
+    );
+    getLiteSettingsCacheMock.mockReturnValue(null);
+
+    const hydrationPromise = getLiteSettingsForHydration();
+
+    await vi.advanceTimersByTimeAsync(250);
+
+    await expect(hydrationPromise).resolves.toEqual([]);
+    expect(prewarmLiteSettingsServerCacheMock).toHaveBeenCalledTimes(1);
   });
 });

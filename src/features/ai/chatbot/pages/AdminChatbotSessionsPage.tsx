@@ -5,16 +5,11 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
-import {
-  AdminChatbotPageLayout,
-  Button,
-  Input,
-  Checkbox,
-  StandardDataTablePanel,
-  EmptyState,
-  SearchInput,
-  FormActions,
-} from '@/shared/ui';
+import { AdminChatbotPageLayout } from '@/shared/ui/admin.public';
+import { Button, Input, Checkbox } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { SearchInput, FormActions } from '@/shared/ui/forms-and-actions.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useChatbotSessionsState } from '../hooks/useChatbotSessionsState';

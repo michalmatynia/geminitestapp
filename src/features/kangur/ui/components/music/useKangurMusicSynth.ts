@@ -23,6 +23,7 @@ export function useKangurMusicSynth<NoteId extends string>() {
     reverbChainRef,
     isAudioBlocked,
     isAudioSupported,
+    scheduleAudioContextIdleSuspend,
     ensureAudioContext,
     closeAudioContext,
   } = audioContext;
@@ -30,10 +31,12 @@ export function useKangurMusicSynth<NoteId extends string>() {
   const playback = useKangurMusicSynthPlayback();
   const {
     activeNodesRef,
+    isPlayingSequenceRef,
     playbackTokenRef,
     isPlayingSequence,
     setIsPlayingSequence,
     clearActivePlayback,
+    schedulePlaybackTimeout,
     waitForPlaybackWindow,
   } = playback;
 
@@ -55,26 +58,47 @@ export function useKangurMusicSynth<NoteId extends string>() {
     clearActivePlayback
   );
   const {
-    stopSustainedNote,
-    stopAllSustainedNotes,
-    startSustainedNote,
-    updateSustainedNote,
+    sustainedNodesRef,
+    stopSustainedNote: stopSustainedNoteInternal,
+    stopAllSustainedNotes: stopAllSustainedNotesInternal,
+    startSustainedNote: startSustainedNoteInternal,
+    updateSustainedNote: updateSustainedNoteInternal,
   } = sustained;
+
+  const refreshAudioContextIdleSuspend = useCallback((): void => {
+    scheduleAudioContextIdleSuspend(
+      () =>
+        activeNodesRef.current.length > 0 ||
+        sustainedNodesRef.current.size > 0 ||
+        isPlayingSequenceRef.current
+    );
+  }, [activeNodesRef, isPlayingSequenceRef, scheduleAudioContextIdleSuspend, sustainedNodesRef]);
 
   const stop = useCallback((): void => {
     playbackTokenRef.current += 1;
     clearActivePlayback();
-    stopAllSustainedNotes({ immediate: true });
+    stopAllSustainedNotesInternal({ immediate: true });
     setIsPlayingSequence(false);
-  }, [clearActivePlayback, stopAllSustainedNotes, setIsPlayingSequence, playbackTokenRef]);
+    refreshAudioContextIdleSuspend();
+  }, [
+    clearActivePlayback,
+    stopAllSustainedNotesInternal,
+    setIsPlayingSequence,
+    playbackTokenRef,
+    refreshAudioContextIdleSuspend,
+  ]);
 
   const playNote = useCallback(
     async (note: KangurMusicPlayableNote<NoteId>): Promise<boolean> => {
       playbackTokenRef.current += 1;
       setIsPlayingSequence(false);
-      return playTone(note, { stopPrevious: false });
+      const started = await playTone(note, { stopPrevious: false });
+      if (started) {
+        refreshAudioContextIdleSuspend();
+      }
+      return started;
     },
-    [playTone, setIsPlayingSequence, playbackTokenRef]
+    [playTone, setIsPlayingSequence, playbackTokenRef, refreshAudioContextIdleSuspend]
   );
 
   const playSequence = useCallback(
@@ -82,16 +106,27 @@ export function useKangurMusicSynth<NoteId extends string>() {
       notes: readonly KangurMusicPlayableNote<NoteId>[],
       callbacks: KangurMusicSequenceCallbacks<NoteId> = {}
     ): Promise<boolean> => {
+      setIsPlayingSequence(true);
+      const context = await ensureAudioContext();
+      if (!context) {
+        setIsPlayingSequence(false);
+        callbacks.onComplete?.(false);
+        return false;
+      }
+
       const nextToken = playbackTokenRef.current + 1;
       playbackTokenRef.current = nextToken;
       clearActivePlayback();
 
       if (notes.length === 0) {
+        setIsPlayingSequence(false);
         callbacks.onComplete?.(true);
         return true;
       }
 
-      setIsPlayingSequence(true);
+      const gapMs = Math.max(0, Math.round(callbacks.gapMs ?? DEFAULT_GAP_MS));
+      const sequenceStartTimeSeconds = context.currentTime;
+      let elapsedSequenceMs = 0;
 
       for (let index = 0; index < notes.length; index += 1) {
         if (playbackTokenRef.current !== nextToken) {
@@ -105,31 +140,93 @@ export function useKangurMusicSynth<NoteId extends string>() {
           continue;
         }
 
-        callbacks.onStepStart?.(note, index);
-        const started = await playTone(note);
+        schedulePlaybackTimeout(() => {
+          if (playbackTokenRef.current !== nextToken) {
+            return;
+          }
+          callbacks.onStepStart?.(note, index);
+        }, elapsedSequenceMs);
+        const started = await playTone(note, {
+          polyphonyLimit: Math.max(notes.length, 1),
+          startAtTimeSeconds: sequenceStartTimeSeconds + elapsedSequenceMs / 1000,
+          stopPrevious: false,
+        });
         if (!started) {
           setIsPlayingSequence(false);
           callbacks.onComplete?.(false);
           return false;
         }
+        refreshAudioContextIdleSuspend();
 
-        const keepGoing = await waitForPlaybackWindow(
-          nextToken,
-          Math.max(120, Math.round(note.durationMs ?? DEFAULT_DURATION_MS)) +
-            Math.max(0, Math.round(callbacks.gapMs ?? DEFAULT_GAP_MS))
-        );
-        if (!keepGoing) {
-          setIsPlayingSequence(false);
-          callbacks.onComplete?.(false);
-          return false;
-        }
+        elapsedSequenceMs += Math.max(120, Math.round(note.durationMs ?? DEFAULT_DURATION_MS)) + gapMs;
+      }
+
+      const keepGoing = await waitForPlaybackWindow(
+        nextToken,
+        elapsedSequenceMs
+      );
+      if (!keepGoing) {
+        setIsPlayingSequence(false);
+        callbacks.onComplete?.(false);
+        return false;
       }
 
       setIsPlayingSequence(false);
+      refreshAudioContextIdleSuspend();
       callbacks.onComplete?.(true);
       return true;
     },
-    [clearActivePlayback, playTone, waitForPlaybackWindow, setIsPlayingSequence, playbackTokenRef]
+    [
+      clearActivePlayback,
+      playTone,
+      ensureAudioContext,
+      schedulePlaybackTimeout,
+      waitForPlaybackWindow,
+      setIsPlayingSequence,
+      playbackTokenRef,
+      refreshAudioContextIdleSuspend,
+    ]
+  );
+
+  const startSustainedNote = useCallback(
+    async (
+      note: KangurMusicPlayableNote<NoteId>,
+      options: Parameters<typeof startSustainedNoteInternal>[1]
+    ): Promise<boolean> => {
+      const started = await startSustainedNoteInternal(note, options);
+      if (started) {
+        refreshAudioContextIdleSuspend();
+      }
+      return started;
+    },
+    [refreshAudioContextIdleSuspend, startSustainedNoteInternal]
+  );
+
+  const stopSustainedNote = useCallback(
+    (...args: Parameters<typeof stopSustainedNoteInternal>): void => {
+      stopSustainedNoteInternal(...args);
+      refreshAudioContextIdleSuspend();
+    },
+    [refreshAudioContextIdleSuspend, stopSustainedNoteInternal]
+  );
+
+  const stopAllSustainedNotes = useCallback(
+    (...args: Parameters<typeof stopAllSustainedNotesInternal>): void => {
+      stopAllSustainedNotesInternal(...args);
+      refreshAudioContextIdleSuspend();
+    },
+    [refreshAudioContextIdleSuspend, stopAllSustainedNotesInternal]
+  );
+
+  const updateSustainedNote = useCallback(
+    (...args: Parameters<typeof updateSustainedNoteInternal>): boolean => {
+      const updated = updateSustainedNoteInternal(...args);
+      if (updated) {
+        refreshAudioContextIdleSuspend();
+      }
+      return updated;
+    },
+    [refreshAudioContextIdleSuspend, updateSustainedNoteInternal]
   );
 
   useEffect(() => {

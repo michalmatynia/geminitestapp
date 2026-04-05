@@ -2,10 +2,7 @@ import {
   KANGUR_CONTEXT_ROOT_IDS,
   KANGUR_RUNTIME_PROVIDER_ID,
 } from '@/features/kangur/context-registry/refs';
-import {
-  getKangurHomeHref,
-  getKangurPageSlug,
-} from '@/features/kangur/config/routing';
+import { getKangurHomeHref, getKangurPageSlug } from '@/features/kangur/config/routing';
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,
   type KangurAiTutorContent,
@@ -99,10 +96,15 @@ const toRelativeKangurPageRoute = (pageName: string): string => {
   return slug.length > 0 ? `/${slug}` : KANGUR_HOME_ROUTE;
 };
 
-const FLOW_TARGETS: Partial<Record<string, {
-  route: string;
-  anchorId?: string;
-}>> = {
+const FLOW_TARGETS: Partial<
+  Record<
+    string,
+    {
+      route: string;
+      anchorId?: string;
+    }
+  >
+> = {
   'flow:kangur:sign-in': {
     route: KANGUR_HOME_ROUTE,
     anchorId: 'kangur-primary-nav-login',
@@ -315,15 +317,30 @@ const inferReferenceKind = (refId: string): KangurKnowledgeNodeKind => {
   return 'policy';
 };
 
-const resolveLocalizedValue = <T>(value: LocalizedValue<T> | undefined, locale: string): T | undefined => {
+const isLocalizedRecord = <T>(
+  value: LocalizedValue<T> | undefined
+): value is Partial<Record<string, T>> =>
+  !Array.isArray(value) && typeof value === 'object' && value !== null;
+
+const resolveLocalizedRecordValue = <T>(
+  localizedRecord: Partial<Record<string, T>>,
+  locale: string
+): T | undefined =>
+  localizedRecord[locale] ??
+  localizedRecord['pl'] ??
+  Object.values(localizedRecord).find((entry): entry is T => entry !== undefined);
+
+const resolveLocalizedValue = <T>(
+  value: LocalizedValue<T> | undefined,
+  locale: string
+): T | undefined => {
   if (value === undefined) {
     return undefined;
   }
-  if (Array.isArray(value) || typeof value !== 'object' || value === null) {
+  if (!isLocalizedRecord(value)) {
     return value as T;
   }
-  const localizedRecord = value as Partial<Record<string, T>>;
-  return localizedRecord[locale] ?? localizedRecord['pl'] ?? Object.values(localizedRecord)[0];
+  return resolveLocalizedRecordValue(value, locale);
 };
 
 const inferReferenceTitle = (refId: string, locale: string): string => {
@@ -387,11 +404,7 @@ const buildReferenceNode = (
     route: detail?.route,
     triggerPhrases: resolveLocalizedValue(detail?.triggerPhrases, locale),
     semanticText: resolveLocalizedValue(detail?.semanticText, locale),
-    tags: [
-      'kangur',
-      kind,
-      ...(resolveLocalizedValue(detail?.tags, locale) ?? []),
-    ],
+    tags: ['kangur', kind, ...(resolveLocalizedValue(detail?.tags, locale) ?? [])],
   };
 };
 
@@ -806,7 +819,6 @@ export const buildKangurKnowledgeGraph = (
     }
   }
 
-  // Source 6: CMS pages
   const cmsPages = options.cmsPages ?? [];
   for (const page of cmsPages) {
     if (page.status !== 'published') {

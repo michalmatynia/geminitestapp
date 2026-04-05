@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { CaseResolverTreeIconComponent as CaseResolverTreeNodeIconComponent } from './tree-node-icon';
 
@@ -25,8 +26,15 @@ export interface CaseResolverTreeNodeRuntimeContextValue {
   DragHandleIcon: CaseResolverTreeNodeIconComponent;
 }
 
-const CaseResolverTreeNodeRuntimeContext =
-  createContext<CaseResolverTreeNodeRuntimeContextValue | null>(null);
+const {
+  Context: CaseResolverTreeNodeRuntimeContext,
+  useStrictContext: useCaseResolverTreeNodeRuntimeContext,
+} = createStrictContext<CaseResolverTreeNodeRuntimeContextValue>({
+  hookName: 'useCaseResolverTreeNodeRuntimeContext',
+  providerName: 'a CaseResolverTreeNodeRuntimeProvider',
+  displayName: 'CaseResolverTreeNodeRuntimeContext',
+  errorFactory: internalError,
+});
 
 export function CaseResolverTreeNodeRuntimeProvider({
   value,
@@ -42,12 +50,4 @@ export function CaseResolverTreeNodeRuntimeProvider({
   );
 }
 
-export function useCaseResolverTreeNodeRuntimeContext(): CaseResolverTreeNodeRuntimeContextValue {
-  const context = useContext(CaseResolverTreeNodeRuntimeContext);
-  if (!context) {
-    throw internalError(
-      'useCaseResolverTreeNodeRuntimeContext must be used within a CaseResolverTreeNodeRuntimeProvider'
-    );
-  }
-  return context;
-}
+export { useCaseResolverTreeNodeRuntimeContext };

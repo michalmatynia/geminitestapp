@@ -50,6 +50,7 @@ type PlaywrightRuntime = {
   browser: {
     newContext: ReturnType<typeof vi.fn>;
     close: ReturnType<typeof vi.fn>;
+    on: ReturnType<typeof vi.fn>;
   };
   context: {
     setDefaultTimeout: ReturnType<typeof vi.fn>;
@@ -57,6 +58,7 @@ type PlaywrightRuntime = {
     route: ReturnType<typeof vi.fn>;
     newPage: ReturnType<typeof vi.fn>;
     close: ReturnType<typeof vi.fn>;
+    on: ReturnType<typeof vi.fn>;
     tracing: {
       start: ReturnType<typeof vi.fn>;
       stop: ReturnType<typeof vi.fn>;
@@ -68,10 +70,23 @@ type PlaywrightRuntime = {
     content: ReturnType<typeof vi.fn>;
     url: ReturnType<typeof vi.fn>;
     title: ReturnType<typeof vi.fn>;
+    close: ReturnType<typeof vi.fn>;
+    isClosed: ReturnType<typeof vi.fn>;
+    on: ReturnType<typeof vi.fn>;
     video: ReturnType<typeof vi.fn>;
+    keyboard: {
+      type: ReturnType<typeof vi.fn>;
+      press: ReturnType<typeof vi.fn>;
+    };
+    mouse: {
+      move: ReturnType<typeof vi.fn>;
+    };
   };
   routes: RouteProbe[];
   videoSourcePath: string | null;
+  emitBrowserEvent: (event: string, ...args: unknown[]) => Promise<void>;
+  emitContextEvent: (event: string, ...args: unknown[]) => Promise<void>;
+  emitPageEvent: (event: string, ...args: unknown[]) => Promise<void>;
 };
 
 const createRouteProbe = (url: string): RouteProbe => ({
@@ -92,6 +107,26 @@ const createPlaywrightRuntime = async (options?: {
   const videoSourcePath = options?.video
     ? path.join(os.tmpdir(), `playwright-node-video-${Date.now()}-${Math.random()}.webm`)
     : null;
+  let pageClosed = false;
+  const browserEventListeners = new Map<string, Array<(...args: unknown[]) => unknown>>();
+  const contextEventListeners = new Map<string, Array<(...args: unknown[]) => unknown>>();
+  const pageEventListeners = new Map<string, Array<(...args: unknown[]) => unknown>>();
+  const registerListener = (
+    listeners: Map<string, Array<(...args: unknown[]) => unknown>>,
+    event: string,
+    handler: (...args: unknown[]) => unknown
+  ) => {
+    listeners.set(event, [...(listeners.get(event) ?? []), handler]);
+  };
+  const emitEvent = async (
+    listeners: Map<string, Array<(...args: unknown[]) => unknown>>,
+    event: string,
+    ...args: unknown[]
+  ): Promise<void> => {
+    for (const handler of listeners.get(event) ?? []) {
+      await handler(...args);
+    }
+  };
 
   if (videoSourcePath) {
     await fs.writeFile(videoSourcePath, 'video-bytes');
@@ -103,6 +138,21 @@ const createPlaywrightRuntime = async (options?: {
     content: vi.fn(async () => options?.html ?? '<html><body>snapshot</body></html>'),
     url: vi.fn(() => options?.pageUrl ?? 'https://allowed.example.com/final'),
     title: vi.fn(async () => options?.pageTitle ?? 'Final Title'),
+    close: vi.fn(async () => {
+      pageClosed = true;
+      await emitEvent(pageEventListeners, 'close');
+    }),
+    isClosed: vi.fn(() => pageClosed),
+    on: vi.fn((event: string, handler: (...args: unknown[]) => unknown) => {
+      registerListener(pageEventListeners, event, handler);
+    }),
+    keyboard: {
+      type: vi.fn(async () => undefined),
+      press: vi.fn(async () => undefined),
+    },
+    mouse: {
+      move: vi.fn(async () => undefined),
+    },
     video: vi.fn(() =>
       videoSourcePath
         ? {
@@ -134,11 +184,17 @@ const createPlaywrightRuntime = async (options?: {
     },
     newPage: vi.fn(async () => page),
     close: vi.fn(async () => undefined),
+    on: vi.fn((event: string, handler: (...args: unknown[]) => unknown) => {
+      registerListener(contextEventListeners, event, handler);
+    }),
   };
 
   const browser = {
     newContext: vi.fn(async () => context),
     close: vi.fn(async () => undefined),
+    on: vi.fn((event: string, handler: (...args: unknown[]) => unknown) => {
+      registerListener(browserEventListeners, event, handler);
+    }),
   };
 
   return {
@@ -147,6 +203,16 @@ const createPlaywrightRuntime = async (options?: {
     page,
     routes,
     videoSourcePath,
+    emitBrowserEvent: (event: string, ...args: unknown[]) =>
+      emitEvent(browserEventListeners, event, ...args),
+    emitContextEvent: (event: string, ...args: unknown[]) =>
+      emitEvent(contextEventListeners, event, ...args),
+    emitPageEvent: async (event: string, ...args: unknown[]) => {
+      if (event === 'close') {
+        pageClosed = true;
+      }
+      await emitEvent(pageEventListeners, event, ...args);
+    },
   };
 };
 
@@ -564,6 +630,120 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
 
+  it('captures failure screenshot, html, and state artifacts when a run throws after page creation', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeArtifact } = await loadRunner();
+    const runtime = await createPlaywrightRuntime({
+      pageUrl: 'https://www.tradera.com/en/login',
+      pageTitle: 'Tradera Login',
+      html: '<html><body>login form</body></html>',
+      screenshotBytes: 'failure-png',
+    });
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: `
+          export default async function run() {
+            throw new Error('AUTH_REQUIRED: Tradera login requires manual verification.');
+          };
+        `,
+        failureHoldOpenMs: 5,
+        settingsOverrides: {
+          headless: false,
+        },
+      },
+    });
+
+    expect(run.status).toBe('failed');
+    expect(run.error).toContain('AUTH_REQUIRED: Tradera login requires manual verification.');
+    expect(run.artifacts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'failure', kind: 'screenshot', mimeType: 'image/png' }),
+        expect.objectContaining({ name: 'failure', kind: 'html', mimeType: 'text/html' }),
+        expect.objectContaining({
+          name: 'failure-state',
+          kind: 'json',
+          mimeType: 'application/json',
+        }),
+      ])
+    );
+
+    const failureStateArtifact = run.artifacts.find((artifact) => artifact.name === 'failure-state');
+    expect(failureStateArtifact).toBeDefined();
+    const failureState = JSON.parse(
+      (
+        await readPlaywrightNodeArtifact({
+          runId: run.runId,
+          fileName: path.basename(failureStateArtifact?.path ?? ''),
+        })
+      )?.content.toString('utf8') ?? '{}'
+    );
+    expect(failureState).toMatchObject({
+      finalUrl: 'https://www.tradera.com/en/login',
+      title: 'Tradera Login',
+      browserDisconnected: false,
+      contextClosed: false,
+      pageClosed: false,
+      pageCrashed: false,
+    });
+  });
+
+  it('records lifecycle close diagnostics in logs and failure-state artifacts', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeArtifact } = await loadRunner();
+    const runtime = await createPlaywrightRuntime({
+      pageUrl: 'https://www.tradera.com/en/selling/new',
+      pageTitle: 'Create listing',
+    });
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: `
+          export default async function run({ input }) {
+            await input.emitPageClose();
+            await input.emitContextClose();
+            await input.emitBrowserDisconnect();
+            throw new Error('page.goto: Target page, context or browser has been closed');
+          };
+        `,
+        input: {
+          emitPageClose: () => runtime.emitPageEvent('close'),
+          emitContextClose: () => runtime.emitContextEvent('close'),
+          emitBrowserDisconnect: () => runtime.emitBrowserEvent('disconnected'),
+        },
+      },
+    });
+
+    expect(run.status).toBe('failed');
+    expect(run.logs).toEqual(
+      expect.arrayContaining([
+        '[runtime] Runner page closed.',
+        '[runtime] Browser context closed.',
+        '[runtime] Browser disconnected.',
+        expect.stringContaining('page.goto: Target page, context or browser has been closed'),
+      ])
+    );
+
+    const failureStateArtifact = run.artifacts.find((artifact) => artifact.name === 'failure-state');
+    expect(failureStateArtifact).toBeDefined();
+    const failureState = JSON.parse(
+      (
+        await readPlaywrightNodeArtifact({
+          runId: run.runId,
+          fileName: path.basename(failureStateArtifact?.path ?? ''),
+        })
+      )?.content.toString('utf8') ?? '{}'
+    );
+    expect(failureState).toMatchObject({
+      browserDisconnected: true,
+      contextClosed: true,
+      pageClosed: true,
+      pageCrashed: false,
+    });
+  });
+
   it('persists emitted outputs while a background run is still running', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
     const runtime = await createPlaywrightRuntime();
@@ -616,5 +796,144 @@ describe('enqueuePlaywrightNodeRun', () => {
         return current?.status ?? null;
       })
       .toBe('completed');
+  });
+
+  it('exposes persona-aware interaction helpers for clicks and typing', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const target = {
+      scrollIntoViewIfNeeded: vi.fn(async () => undefined),
+      boundingBox: vi.fn(async () => ({
+        x: 10,
+        y: 20,
+        width: 120,
+        height: 40,
+      })),
+      click: vi.fn(async () => undefined),
+    };
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: `
+          export default async ({ helpers, input }) => {
+            await helpers.click(input.target, { pauseBefore: false, pauseAfter: false });
+            await helpers.fill(input.target, 'hello world', { pauseBefore: false, pauseAfter: false });
+            await helpers.press('Escape', { pauseBefore: false, pauseAfter: false });
+            await helpers.type('typed text', { pauseBefore: false, pauseAfter: false });
+            return { ok: true };
+          };
+        `,
+        input: { target },
+        settingsOverrides: {
+          humanizeMouse: true,
+          mouseJitter: 8,
+          clickDelayMin: 11,
+          clickDelayMax: 11,
+          inputDelayMin: 7,
+          inputDelayMax: 7,
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+        },
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(target.scrollIntoViewIfNeeded).toHaveBeenCalled();
+    expect(target.boundingBox).toHaveBeenCalled();
+    expect(runtime.page.mouse.move).toHaveBeenCalled();
+    expect(target.click).toHaveBeenCalledWith(expect.objectContaining({ delay: 11 }));
+    expect(runtime.page.keyboard.press).toHaveBeenCalledWith('ControlOrMeta+A', {});
+    expect(runtime.page.keyboard.type).toHaveBeenCalledWith(
+      'hello world',
+      expect.objectContaining({ delay: 7 })
+    );
+    expect(runtime.page.keyboard.press).toHaveBeenCalledWith(
+      'Escape',
+      expect.objectContaining({ delay: 7 })
+    );
+    expect(runtime.page.keyboard.type).toHaveBeenCalledWith(
+      'typed text',
+      expect.objectContaining({ delay: 7 })
+    );
+  });
+
+  it('registers a page listener that closes new pages when preventNewPages is true', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+
+    let capturedPageListener: ((newPage: unknown) => Promise<void>) | null = null;
+    const onMock = vi.fn((event: string, handler: (newPage: unknown) => Promise<void>) => {
+      if (event === 'page') capturedPageListener = handler;
+    });
+    runtime.context.on = onMock;
+
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+        preventNewPages: true,
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(onMock).toHaveBeenCalledWith('page', expect.any(Function));
+    expect(capturedPageListener).not.toBeNull();
+
+    const closeMock = vi.fn(async () => undefined);
+    await capturedPageListener!({ close: closeMock });
+    expect(closeMock).toHaveBeenCalled();
+  });
+
+  it('does not close the runner page when preventNewPages is true', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+
+    let capturedPageListener: ((newPage: unknown) => Promise<void>) | null = null;
+    const onMock = vi.fn((event: string, handler: (newPage: unknown) => Promise<void>) => {
+      if (event === 'page') capturedPageListener = handler;
+    });
+    runtime.context.on = onMock;
+
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+        preventNewPages: true,
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(capturedPageListener).not.toBeNull();
+
+    const closeMock = runtime.page.close;
+    await capturedPageListener!(runtime.page);
+    expect(closeMock).not.toHaveBeenCalled();
+  });
+
+  it('does not register a page listener when preventNewPages is not set', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+
+    const onMock = vi.fn();
+    runtime.context.on = onMock;
+
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(onMock).not.toHaveBeenCalledWith('page', expect.any(Function));
   });
 });

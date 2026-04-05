@@ -1,8 +1,10 @@
 'use client';
+
 import * as React from 'react';
 import { JSX } from 'react';
 
-import { cn, getTextContent } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { getTextContent } from '@/shared/utils/a11y';
 
 type TooltipProps = {
   content: React.ReactNode;

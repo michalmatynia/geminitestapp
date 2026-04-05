@@ -1,8 +1,9 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
-import type { DataAttributes } from '@/shared/contracts/ui';
-import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
+import type { DataAttributes } from '@/shared/contracts/ui/base';
+import { cn } from '@/shared/utils/ui-utils';
+import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 
 const textareaVariants = cva(
   'flex min-h-[80px] w-full rounded-md border border-foreground/10 px-3 py-2 text-sm transition-colors ring-offset-background placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:border-foreground/30 hover:border-foreground/20 disabled:cursor-not-allowed disabled:opacity-50',

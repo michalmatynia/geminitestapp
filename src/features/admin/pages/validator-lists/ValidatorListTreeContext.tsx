@@ -2,10 +2,11 @@
 
 import React from 'react';
 
-import type { FolderTreeViewportV2Props } from '@/features/foldertree/public';
+import type { FolderTreeViewportV2Props } from '@/shared/lib/foldertree/public';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export interface ValidatorListTreeContextValue {
   controller: MasterFolderTreeController;
@@ -19,16 +20,15 @@ export interface ValidatorListTreeContextValue {
   isPending: boolean;
 }
 
-export const ValidatorListTreeContext = React.createContext<ValidatorListTreeContextValue | null>(
-  null
-);
+export const {
+  Context: ValidatorListTreeContextInternal,
+  useStrictContext: useValidatorListTreeContext,
+} = createStrictContext<ValidatorListTreeContextValue>({
+  hookName: 'useValidatorListTreeContext',
+  providerName: 'ValidatorListTreeContext.Provider',
+  displayName: 'ValidatorListTreeContext',
+  errorFactory: internalError,
+});
 
-export function useValidatorListTreeContext(): ValidatorListTreeContextValue {
-  const ctx = React.useContext(ValidatorListTreeContext);
-  if (!ctx) {
-    throw internalError(
-      'useValidatorListTreeContext must be used within ValidatorListTreeContext.Provider'
-    );
-  }
-  return ctx;
-}
+export const ValidatorListTreeContext =
+  ValidatorListTreeContextInternal as React.Context<ValidatorListTreeContextValue | null>;

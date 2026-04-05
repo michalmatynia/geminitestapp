@@ -1,15 +1,10 @@
-'use client';
-
 import React from 'react';
-import {
-  FormSection,
-  Hint,
-  StatusBadge,
-} from '@/shared/ui';
+import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import {
   useImportExportData,
 } from '@/features/data-import-export/context/ImportExportContext';
-import type { BaseImportPreflightIssue } from '@/shared/contracts/integrations';
+import type { BaseImportPreflightIssue } from '@/shared/contracts/integrations/base-com';
 
 export function ImportLastResultSection(): React.JSX.Element | null {
   const { lastResult, activeImportRunId } = useImportExportData();

@@ -4,7 +4,8 @@ import { PlayIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
-import { Button, Textarea, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
+import { Button, Textarea, Alert, Card } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 import {
   logClientCatch,
   logClientError,
@@ -12,6 +13,7 @@ import {
 
 import { useDatabaseConfig } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
+import { formatDatabaseCellValue } from './format-cell-value';
 import { SqlHistoryDropdown } from './sql/SqlHistoryDropdown';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -60,12 +62,6 @@ function saveHistory(history: string[]): void {
   } catch (error) {
     logClientCatch(error, { source: 'SqlQueryConsole', action: 'saveHistory' });
   }
-}
-
-function formatCellValue(value: unknown): string {
-  if (value === null || value === undefined) return '∅';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -319,9 +315,9 @@ export function SqlQueryConsole({
                       cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
                         <span
                           className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]'
-                          title={formatCellValue(row.original[f.name])}
+                          title={formatDatabaseCellValue(row.original[f.name])}
                         >
-                          {formatCellValue(row.original[f.name])}
+                          {formatDatabaseCellValue(row.original[f.name])}
                         </span>
                       ),
                     }))
@@ -331,9 +327,9 @@ export function SqlQueryConsole({
                       cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
                         <span
                           className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]'
-                          title={formatCellValue(row.original[key])}
+                          title={formatDatabaseCellValue(row.original[key])}
                         >
-                          {formatCellValue(row.original[key])}
+                          {formatDatabaseCellValue(row.original[key])}
                         </span>
                       ),
                     }))),

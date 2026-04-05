@@ -5,10 +5,8 @@ import type {
   ContextRuntimeDocument,
   ContextRuntimeDocumentSection,
 } from '@/shared/contracts/ai-context-registry';
-import type {
-  ImageStudioProjectRecord,
-  ImageStudioSlotRecord,
-} from '@/shared/contracts/image-studio';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio/project';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export const IMAGE_STUDIO_CONTEXT_ROOT_IDS = [
   'page:admin-image-studio',
@@ -89,6 +87,23 @@ type ProjectLike = {
   canvasHeightPx?: number | null;
 };
 
+type WorkspacePromptSummary = {
+  paramKeys: string[];
+  promptPreview: string;
+  outputCount: number;
+  quality: string | null;
+  size: string | null;
+  background: string | null;
+};
+
+type WorkspaceDocumentBuildContext = {
+  activeProject: ImageStudioProjectRecord | null;
+  eligibleMaskShapeCount: number;
+  input: BuildImageStudioWorkspaceContextBundleInput;
+  landingSummary: Record<string, number>;
+  promptSummary: WorkspacePromptSummary;
+};
+
 const countEligibleMaskShapes = (shapes: readonly MaskShapeLike[]): number =>
   shapes.filter(
     (shape) =>
@@ -127,101 +142,110 @@ const summarizeSlot = (
     !input.selectedFolder || (slot.folderPath ?? '').trim() === input.selectedFolder.trim(),
 });
 
-export const buildImageStudioWorkspaceRuntimeDocument = (
+const buildWorkspacePromptSummary = (
   input: BuildImageStudioWorkspaceContextBundleInput
-): ContextRuntimeDocument => {
-  const activeProject =
-    input.projects.find((project) => project.id === input.projectId) ?? null;
-  const eligibleMaskShapeCount = countEligibleMaskShapes(input.maskShapes);
-  const paramKeys = Object.keys(input.paramsState ?? {}).sort();
-  const landingSummary = input.landingSlots.reduce<Record<string, number>>((summary, slot) => {
-    summary[slot.status] = (summary[slot.status] ?? 0) + 1;
-    return summary;
-  }, {});
+): WorkspacePromptSummary => ({
+  paramKeys: Object.keys(input.paramsState ?? {}).sort(),
+  promptPreview: trimText(input.promptText, 500),
+  outputCount: Number(input.studioSettings.targetAi.openai.image.n ?? 1) || 1,
+  quality: input.studioSettings.targetAi.openai.image.quality ?? null,
+  size: input.studioSettings.targetAi.openai.image.size ?? null,
+  background: input.studioSettings.targetAi.openai.image.background ?? null,
+});
 
-  const sections: ContextRuntimeDocumentSection[] = [
+const buildWorkspaceSnapshotSection = (
+  context: WorkspaceDocumentBuildContext
+): ContextRuntimeDocumentSection => ({
+  kind: 'facts',
+  title: 'Workspace snapshot',
+  items: [
     {
-      kind: 'facts',
-      title: 'Workspace snapshot',
-      items: [
-        {
-          activeTab: input.activeTab,
-          projectId: input.projectId || null,
-          projectName: activeProject?.id ?? null,
-          projectCount: input.projects.length,
-          slotCount: input.slots.length,
-          selectedFolder: input.selectedFolder || null,
-          previewMode: input.previewMode,
-          previewCanvasSize: input.previewCanvasSize,
-          isFocusMode: input.isFocusMode,
-          selectedSlotId: input.selectedSlot?.id ?? null,
-          workingSlotId: input.workingSlot?.id ?? null,
-          assignedModelId: input.assignedModelId,
-        },
-      ],
+      activeTab: context.input.activeTab,
+      projectId: context.input.projectId || null,
+      projectName: context.activeProject?.id ?? null,
+      projectCount: context.input.projects.length,
+      slotCount: context.input.slots.length,
+      selectedFolder: context.input.selectedFolder || null,
+      previewMode: context.input.previewMode,
+      previewCanvasSize: context.input.previewCanvasSize,
+      isFocusMode: context.input.isFocusMode,
+      selectedSlotId: context.input.selectedSlot?.id ?? null,
+      workingSlotId: context.input.workingSlot?.id ?? null,
+      assignedModelId: context.input.assignedModelId,
     },
-    {
-      kind: 'facts',
-      title: 'Prompt and generation state',
-      items: [
-        {
-          promptPreview: trimText(input.promptText, 500),
-          paramKeys,
-          activeRunId: input.activeRunId,
-          activeRunStatus: input.activeRunStatus,
-          activeRunError: input.activeRunError,
-          generationHistoryCount: input.generationHistoryCount,
-          landingSummary,
-          outputCount: Number(input.studioSettings.targetAi.openai.image.n ?? 1) || 1,
-          quality: input.studioSettings.targetAi.openai.image.quality ?? null,
-          size: input.studioSettings.targetAi.openai.image.size ?? null,
-          background: input.studioSettings.targetAi.openai.image.background ?? null,
-        },
-      ],
-    },
-    {
-      kind: 'facts',
-      title: 'Mask and selection state',
-      items: [
-        {
-          selectedSlotName: input.selectedSlot?.name ?? null,
-          selectedSlotId: input.selectedSlot?.id ?? null,
-          workingSlotName: input.workingSlot?.name ?? null,
-          workingSlotId: input.workingSlot?.id ?? null,
-          selectedFolder: input.selectedFolder || null,
-          maskShapeCount: input.maskShapes.length,
-          eligibleMaskShapeCount,
-          maskInvert: input.maskInvert,
-          maskFeather: input.maskFeather,
-        },
-      ],
-    },
-  ];
+  ],
+});
 
-  if (input.projects.length > 0) {
+const buildPromptAndGenerationSection = (
+  context: WorkspaceDocumentBuildContext
+): ContextRuntimeDocumentSection => ({
+  kind: 'facts',
+  title: 'Prompt and generation state',
+  items: [
+    {
+      promptPreview: context.promptSummary.promptPreview,
+      paramKeys: context.promptSummary.paramKeys,
+      activeRunId: context.input.activeRunId,
+      activeRunStatus: context.input.activeRunStatus,
+      activeRunError: context.input.activeRunError,
+      generationHistoryCount: context.input.generationHistoryCount,
+      landingSummary: context.landingSummary,
+      outputCount: context.promptSummary.outputCount,
+      quality: context.promptSummary.quality,
+      size: context.promptSummary.size,
+      background: context.promptSummary.background,
+    },
+  ],
+});
+
+const buildMaskAndSelectionSection = (
+  context: WorkspaceDocumentBuildContext
+): ContextRuntimeDocumentSection => ({
+  kind: 'facts',
+  title: 'Mask and selection state',
+  items: [
+    {
+      selectedSlotName: context.input.selectedSlot?.name ?? null,
+      selectedSlotId: context.input.selectedSlot?.id ?? null,
+      workingSlotName: context.input.workingSlot?.name ?? null,
+      workingSlotId: context.input.workingSlot?.id ?? null,
+      selectedFolder: context.input.selectedFolder || null,
+      maskShapeCount: context.input.maskShapes.length,
+      eligibleMaskShapeCount: context.eligibleMaskShapeCount,
+      maskInvert: context.input.maskInvert,
+      maskFeather: context.input.maskFeather,
+    },
+  ],
+});
+
+const buildWorkspaceItemSections = (
+  context: WorkspaceDocumentBuildContext
+): ContextRuntimeDocumentSection[] => {
+  const sections: ContextRuntimeDocumentSection[] = [];
+  if (context.input.projects.length > 0) {
     sections.push({
       kind: 'items',
       title: 'Projects',
       summary: 'Image Studio projects visible to the operator.',
-      items: input.projects.slice(0, 8).map((project) => summarizeProject(project, input.projectId)),
+      items: context.input.projects
+        .slice(0, 8)
+        .map((project) => summarizeProject(project, context.input.projectId)),
     });
   }
-
-  if (input.slots.length > 0) {
+  if (context.input.slots.length > 0) {
     sections.push({
       kind: 'items',
       title: 'Visible slots',
       summary: 'Representative slot state from the current workspace.',
-      items: input.slots.slice(0, 16).map((slot) => summarizeSlot(slot, input)),
+      items: context.input.slots.slice(0, 16).map((slot) => summarizeSlot(slot, context.input)),
     });
   }
-
-  if (input.landingSlots.length > 0) {
+  if (context.input.landingSlots.length > 0) {
     sections.push({
       kind: 'items',
       title: 'Landing slots',
       summary: 'Current output landing slots for the active generation run.',
-      items: input.landingSlots.slice(0, 8).map((slot) => ({
+      items: context.input.landingSlots.slice(0, 8).map((slot) => ({
         index: slot.index,
         status: slot.status,
         outputId: slot.output?.id ?? null,
@@ -229,6 +253,60 @@ export const buildImageStudioWorkspaceRuntimeDocument = (
       })),
     });
   }
+  return sections;
+};
+
+const buildWorkspaceFacts = (context: WorkspaceDocumentBuildContext) => ({
+  activeTab: context.input.activeTab,
+  projectId: context.input.projectId || null,
+  projectName: context.activeProject?.id ?? null,
+  slotCount: context.input.slots.length,
+  selectedFolder: context.input.selectedFolder || null,
+  selectedSlotId: context.input.selectedSlot?.id ?? null,
+  workingSlotId: context.input.workingSlot?.id ?? null,
+  promptPreview: trimText(context.input.promptText, 280),
+  paramKeys: context.promptSummary.paramKeys,
+  previewMode: context.input.previewMode,
+  previewCanvasSize: context.input.previewCanvasSize,
+  isFocusMode: context.input.isFocusMode,
+  assignedModelId: context.input.assignedModelId,
+  maskShapeCount: context.input.maskShapes.length,
+  eligibleMaskShapeCount: context.eligibleMaskShapeCount,
+  maskInvert: context.input.maskInvert,
+  maskFeather: context.input.maskFeather,
+  activeRunId: context.input.activeRunId,
+  activeRunStatus: context.input.activeRunStatus,
+  generationHistoryCount: context.input.generationHistoryCount,
+  requestedOutputCount: context.promptSummary.outputCount,
+  requestedSize: context.promptSummary.size,
+  requestedQuality: context.promptSummary.quality,
+  requestedBackground: context.promptSummary.background,
+});
+
+export const buildImageStudioWorkspaceRuntimeDocument = (
+  input: BuildImageStudioWorkspaceContextBundleInput
+): ContextRuntimeDocument => {
+  const activeProject =
+    input.projects.find((project) => project.id === input.projectId) ?? null;
+  const eligibleMaskShapeCount = countEligibleMaskShapes(input.maskShapes);
+  const landingSummary = input.landingSlots.reduce<Record<string, number>>((summary, slot) => {
+    summary[slot.status] = (summary[slot.status] ?? 0) + 1;
+    return summary;
+  }, {});
+  const promptSummary = buildWorkspacePromptSummary(input);
+  const buildContext: WorkspaceDocumentBuildContext = {
+    activeProject,
+    eligibleMaskShapeCount,
+    input,
+    landingSummary,
+    promptSummary,
+  };
+  const sections: ContextRuntimeDocumentSection[] = [
+    buildWorkspaceSnapshotSection(buildContext),
+    buildPromptAndGenerationSection(buildContext),
+    buildMaskAndSelectionSection(buildContext),
+    ...buildWorkspaceItemSections(buildContext),
+  ];
 
   return {
     id: IMAGE_STUDIO_CONTEXT_RUNTIME_REF.id,
@@ -243,32 +321,7 @@ export const buildImageStudioWorkspaceRuntimeDocument = (
     status: input.activeRunStatus,
     tags: ['image-studio', 'admin', 'generation', 'editor', 'live-state'],
     relatedNodeIds: [...IMAGE_STUDIO_CONTEXT_ROOT_IDS],
-    facts: {
-      activeTab: input.activeTab,
-      projectId: input.projectId || null,
-      projectName: activeProject?.id ?? null,
-      slotCount: input.slots.length,
-      selectedFolder: input.selectedFolder || null,
-      selectedSlotId: input.selectedSlot?.id ?? null,
-      workingSlotId: input.workingSlot?.id ?? null,
-      promptPreview: trimText(input.promptText, 280),
-      paramKeys,
-      previewMode: input.previewMode,
-      previewCanvasSize: input.previewCanvasSize,
-      isFocusMode: input.isFocusMode,
-      assignedModelId: input.assignedModelId,
-      maskShapeCount: input.maskShapes.length,
-      eligibleMaskShapeCount,
-      maskInvert: input.maskInvert,
-      maskFeather: input.maskFeather,
-      activeRunId: input.activeRunId,
-      activeRunStatus: input.activeRunStatus,
-      generationHistoryCount: input.generationHistoryCount,
-      requestedOutputCount: Number(input.studioSettings.targetAi.openai.image.n ?? 1) || 1,
-      requestedSize: input.studioSettings.targetAi.openai.image.size ?? null,
-      requestedQuality: input.studioSettings.targetAi.openai.image.quality ?? null,
-      requestedBackground: input.studioSettings.targetAi.openai.image.background ?? null,
-    },
+    facts: buildWorkspaceFacts(buildContext),
     sections,
     provenance: {
       source: 'image-studio.admin.client-state',

@@ -9,7 +9,7 @@ import { KangurAiTutorPanelContextSummary } from './KangurAiTutorPanelContextSum
 import {
   KangurAiTutorWidgetStateProvider,
   useKangurAiTutorWidgetState,
-} from './KangurAiTutorWidget.state';
+} from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 

@@ -52,7 +52,7 @@ import type {
   NoteFileRecord,
   CategoryWithChildren,
 } from '@/shared/contracts/notes';
-import type { DeleteResponse } from '@/shared/contracts/ui';
+import type { DeleteResponse } from '@/shared/contracts/ui/api';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {

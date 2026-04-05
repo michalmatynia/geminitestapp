@@ -8,10 +8,10 @@ import type { RefObject } from 'react';
 import { getKangurPageHref as createPageUrl } from '@/features/kangur/config/routing';
 import { KangurPriorityAssignments } from '@/features/kangur/ui/components/assignments/KangurPriorityAssignments';
 import { KangurAssignmentSpotlight } from '@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight';
-import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/KangurGameHomeActionsWidget';
-import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget';
-import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/KangurGameHomeHeroWidget';
-import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
+import { KangurGameHomeActionsWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeActionsWidget';
+import { KangurGameHomeDuelsInvitesWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget';
+import { KangurGameHomeHeroWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget';
+import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';
 import {
   KangurButton,
@@ -65,7 +65,7 @@ const PlayerProgressCard = dynamic(() => import('@/features/kangur/ui/components
 
 const KangurGameKangurSessionWidget = dynamic(
   () =>
-    import('@/features/kangur/ui/components/KangurGameKangurSessionWidget').then((m) => ({
+    import('@/features/kangur/ui/components/game-runtime/KangurGameKangurSessionWidget').then((m) => ({
       default: m.KangurGameKangurSessionWidget,
     })),
   { ssr: false }
@@ -73,7 +73,7 @@ const KangurGameKangurSessionWidget = dynamic(
 
 const KangurGameKangurSetupWidget = dynamic(
   () =>
-    import('@/features/kangur/ui/components/KangurGameKangurSetupWidget').then((m) => ({
+    import('@/features/kangur/ui/components/game-setup/KangurGameKangurSetupWidget').then((m) => ({
       default: m.KangurGameKangurSetupWidget,
     })),
   { ssr: false }
@@ -81,7 +81,7 @@ const KangurGameKangurSetupWidget = dynamic(
 
 const KangurGameOperationSelectorWidget = dynamic(
   () =>
-    import('@/features/kangur/ui/components/KangurGameOperationSelectorWidget').then((m) => ({
+    import('@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget').then((m) => ({
       default: m.KangurGameOperationSelectorWidget,
     })),
   { ssr: false }
@@ -89,7 +89,7 @@ const KangurGameOperationSelectorWidget = dynamic(
 
 const KangurGameQuestionWidget = dynamic(
   () =>
-    import('@/features/kangur/ui/components/KangurGameQuestionWidget').then((m) => ({
+    import('@/features/kangur/ui/components/game-runtime/KangurGameQuestionWidget').then((m) => ({
       default: m.KangurGameQuestionWidget,
     })),
   { ssr: false }
@@ -97,7 +97,7 @@ const KangurGameQuestionWidget = dynamic(
 
 const KangurGameResultWidget = dynamic(
   () =>
-    import('@/features/kangur/ui/components/KangurGameResultWidget').then((m) => ({
+    import('@/features/kangur/ui/components/game-runtime/KangurGameResultWidget').then((m) => ({
       default: m.KangurGameResultWidget,
     })),
   { ssr: false }

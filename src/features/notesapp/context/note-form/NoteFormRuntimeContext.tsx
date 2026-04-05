@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
@@ -11,12 +11,12 @@ export interface NoteFormRuntimeData {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
-export const NoteFormRuntimeContext = createContext<NoteFormRuntimeData | null>(null);
+const { Context: NoteFormRuntimeContext, useStrictContext: useNoteFormRuntime } =
+  createStrictContext<NoteFormRuntimeData>({
+    hookName: 'useNoteFormRuntime',
+    providerName: 'NoteFormProvider',
+    displayName: 'NoteFormRuntimeContext',
+    errorFactory: internalError,
+  });
 
-export function useNoteFormRuntime(): NoteFormRuntimeData {
-  const context = useContext(NoteFormRuntimeContext);
-  if (!context) {
-    throw internalError('useNoteFormRuntime must be used within NoteFormProvider');
-  }
-  return context;
-}
+export { NoteFormRuntimeContext, useNoteFormRuntime };

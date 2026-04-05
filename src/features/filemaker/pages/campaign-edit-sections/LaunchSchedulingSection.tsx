@@ -1,6 +1,7 @@
 'use client';
 
-import { Checkbox, FormField, FormSection, Input, SelectSimple } from '@/shared/ui';
+import { Checkbox, Input } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import {
   LAUNCH_MODE_OPTIONS as FILEMAKER_LAUNCH_MODE_OPTIONS,
   RECURRING_FREQUENCY_OPTIONS as FILEMAKER_RECURRING_FREQUENCY_OPTIONS,

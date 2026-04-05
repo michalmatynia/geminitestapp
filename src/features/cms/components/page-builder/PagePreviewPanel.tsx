@@ -8,7 +8,8 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
-import { Button, SelectSimple, useToast, Badge } from '@/shared/ui';
+import { Button, useToast, Badge } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import {
   logClientCatch,
   logClientError,

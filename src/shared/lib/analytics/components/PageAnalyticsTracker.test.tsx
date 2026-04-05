@@ -406,6 +406,18 @@ describe('PageAnalyticsTracker', () => {
       expect.objectContaining({
         visitorId: '9ix-4fzyo82mvyq',
         sessionId: '9ix-4fzyo82mvyq',
+        meta: expect.objectContaining({
+          client: expect.objectContaining({
+            webdriver: false,
+          }),
+          preferences: {
+            colorScheme: null,
+            reducedMotion: null,
+            contrast: null,
+            pointer: null,
+          },
+          performance: null,
+        }),
       }),
       expect.any(Object)
     );

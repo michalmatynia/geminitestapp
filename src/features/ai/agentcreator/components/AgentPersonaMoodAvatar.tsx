@@ -1,1 +1,1 @@
-export { AgentPersonaMoodAvatar } from '@/shared/ui';
+export { AgentPersonaMoodAvatar } from '@/shared/ui/data-display.public';

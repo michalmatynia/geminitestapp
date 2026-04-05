@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type StudioUploadMode =
   | 'create'
@@ -34,7 +35,13 @@ export interface StudioImportContextValue {
   uploadPending: boolean;
 }
 
-const StudioImportContext = createContext<StudioImportContextValue | null>(null);
+const { Context: StudioImportContext, useStrictContext: useStudioImportContext } =
+  createStrictContext<StudioImportContextValue>({
+    hookName: 'useStudioImportContext',
+    providerName: 'StudioImportProvider',
+    displayName: 'StudioImportContext',
+    errorFactory: internalError,
+  });
 
 export function StudioImportProvider({
   value,
@@ -45,11 +52,4 @@ export function StudioImportProvider({
 }): React.JSX.Element {
   return <StudioImportContext.Provider value={value}>{children}</StudioImportContext.Provider>;
 }
-
-export function useStudioImportContext(): StudioImportContextValue {
-  const context = useContext(StudioImportContext);
-  if (!context) {
-    throw internalError('useStudioImportContext must be used within StudioImportProvider');
-  }
-  return context;
-}
+export { useStudioImportContext };

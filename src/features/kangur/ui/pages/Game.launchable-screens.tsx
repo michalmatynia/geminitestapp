@@ -1,5 +1,3 @@
-'use client';
-
 import type { ComponentType } from 'react';
 
 import type {
@@ -9,7 +7,7 @@ import type {
 import { getKangurLaunchableGameRuntimeSpec } from '@/features/kangur/games/launchable-runtime-specs';
 import { mergeKangurLaunchableGameRuntimeSpec } from '@/features/kangur/games/launchable-runtime-resolution';
 import KangurLaunchableGameRuntime from '@/features/kangur/ui/components/KangurLaunchableGameRuntime';
-import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/KangurGameQuizShell';
+import { renderKangurGameQuizShell } from '@/features/kangur/ui/components/game-quiz/KangurGameQuizShell';
 import { KANGUR_LAUNCHABLE_GAME_SCREENS } from '@/features/kangur/ui/services/game-launch';
 import type { KangurGameScreen } from '@/features/kangur/ui/types';
 

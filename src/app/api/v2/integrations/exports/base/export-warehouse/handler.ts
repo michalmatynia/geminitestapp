@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getExportWarehouseId, setExportWarehouseId } from '@/features/integrations/server';
-import {
-  baseExportWarehousePreferencePayloadSchema,
-  baseExportWarehousePreferenceQuerySchema,
-  type BaseExportWarehousePreferenceResponse,
-} from '@/shared/contracts/integrations';
+import { baseExportWarehousePreferencePayloadSchema, baseExportWarehousePreferenceQuerySchema } from '@/shared/contracts/integrations/preferences';
+import { type BaseExportWarehousePreferenceResponse } from '@/shared/contracts/integrations';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export { baseExportWarehousePreferencePayloadSchema as requestSchema };
 export { baseExportWarehousePreferenceQuerySchema as querySchema };

@@ -116,6 +116,18 @@ export const playwrightCaptureConfigSchema = z.object({
 export type PlaywrightCaptureConfigDto = z.infer<typeof playwrightCaptureConfigSchema>;
 export type PlaywrightCaptureConfig = PlaywrightCaptureConfigDto;
 
+/** Inline capture route stored in node config (used by playwright-capture-batch nodes). */
+export const playwrightConfigCaptureRouteSchema = z.object({
+  id: z.string(),
+  title: z.string().default(''),
+  path: z.string().default('/'),
+  description: z.string().default(''),
+  selector: z.string().nullable().default(null),
+  waitForMs: z.number().nullable().default(null),
+  waitForSelectorMs: z.number().nullable().default(15_000),
+});
+export type PlaywrightConfigCaptureRoute = z.infer<typeof playwrightConfigCaptureRouteSchema>;
+
 export const playwrightConfigSchema = z.object({
   personaId: z.string().optional(),
   script: z.string(),
@@ -127,6 +139,12 @@ export const playwrightConfigSchema = z.object({
   contextOptionsJson: z.string().optional(),
   settingsOverrides: playwrightSettingsSchema.partial().optional(),
   capture: playwrightCaptureConfigSchema.optional(),
+  /** Inline capture routes for playwright-capture-batch nodes (used when the captures port is unpopulated). */
+  captureRoutes: z.array(playwrightConfigCaptureRouteSchema).optional(),
+  /** Base URL for resolving relative route paths. */
+  captureBaseUrl: z.string().optional(),
+  /** Appearance mode injected into the capture script (e.g. "dark", "light"). */
+  captureAppearanceMode: z.string().optional(),
 });
 export type PlaywrightConfigDto = z.infer<typeof playwrightConfigSchema>;
 export type PlaywrightConfig = PlaywrightConfigDto;

@@ -1,12 +1,5 @@
-import type {
-  CaseResolverWorkspaceDebugEvent,
-  CaseResolverWorkspaceObservabilitySnapshot,
-  PercentileSnapshot,
-  WorkspaceHydrationSelectionSnapshot,
-  RequestedContextSnapshot,
-  RuntimeCounterSnapshot,
-  RuntimeDurationSnapshot,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverWorkspaceObservabilitySnapshot, PercentileSnapshot, WorkspaceHydrationSelectionSnapshot, RequestedContextSnapshot, RuntimeCounterSnapshot, RuntimeDurationSnapshot } from '@/shared/contracts/case-resolver/base';
 
 import { createCaseResolverWorkspaceMutationId } from './utils/workspace-persistence-utils';
 

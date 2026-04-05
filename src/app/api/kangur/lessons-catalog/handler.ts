@@ -10,7 +10,7 @@ import {
   kangurLessonSubjectSchema,
   type KangurLessonsCatalog,
 } from '@/shared/contracts/kangur';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export { kangurLessonsQuerySchema as querySchema };
 

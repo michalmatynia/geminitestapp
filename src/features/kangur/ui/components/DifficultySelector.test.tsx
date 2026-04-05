@@ -31,7 +31,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-import DifficultySelector from '@/features/kangur/ui/components/DifficultySelector';
+import DifficultySelector from '@/features/kangur/ui/components/game-setup/DifficultySelector';
 
 describe('DifficultySelector', () => {
   it('renders shared option cards and accent chips for difficulty choices', () => {

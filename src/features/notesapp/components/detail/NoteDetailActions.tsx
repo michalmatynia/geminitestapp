@@ -5,7 +5,8 @@ import React from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { Button, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export function NoteDetailActions(): React.JSX.Element | null {
   const { selectedNote, isEditing } = useNotesAppState();

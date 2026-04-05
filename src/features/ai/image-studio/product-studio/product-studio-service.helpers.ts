@@ -5,10 +5,7 @@ import {
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/server';
 import { sanitizeImageStudioProjectId } from '@/features/ai/image-studio/server/run-executor';
-import {
-  type ProductStudioSequencingDiagnostics,
-  type ProductWithImages,
-} from '@/shared/contracts/products';
+import { type ProductStudioSequencingDiagnostics, type ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 

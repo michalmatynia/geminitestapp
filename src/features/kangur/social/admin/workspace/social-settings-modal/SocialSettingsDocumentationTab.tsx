@@ -1,9 +1,8 @@
-'use client';
-
 import { Badge, Button, Input, Textarea } from '@/features/kangur/shared/ui';
 import { KangurAdminCard } from '@/features/kangur/admin/components/KangurAdminCard';
-import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 import { SocialJobStatusPill } from '../SocialJobStatusPill';
+import { useSocialPostContext } from '../SocialPostContext';
+import { useSocialSettingsModalContext } from './SocialSettingsModalContext';
 
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
@@ -11,55 +10,29 @@ const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean 
   return normalized !== 'completed' && normalized !== 'failed';
 };
 
-export function SocialSettingsDocumentationTab({
-  activePost,
-  canGenerateSocialDraft,
-  contextLoading,
-  currentGenerationJob,
-  currentPipelineJob,
-  docReferenceInput,
-  docsUsed,
-  generationNotes,
-  handleGenerate,
-  handleLoadContext,
-  contextSummary,
-  selectedPostTitle,
-  setDocReferenceInput,
-  setGenerationNotes,
-  socialDraftBlockedReason,
-  socialVisionWarning,
-}: {
-  activePost: KangurSocialPost | null;
-  canGenerateSocialDraft: boolean;
-  contextLoading: boolean;
-  currentGenerationJob: {
-    id: string;
-    status: string;
-    progress: {
-      message: string | null;
-    } | null;
-    failedReason: string | null;
-  } | null;
-  currentPipelineJob: {
-    id: string;
-    status: string;
-    progress: {
-      message: string | null;
-    } | null;
-    failedReason: string | null;
-  } | null;
-  docReferenceInput: string;
-  docsUsed: string[];
-  generationNotes: string;
-  handleGenerate: () => void;
-  handleLoadContext: () => void;
-  contextSummary: string | null;
-  selectedPostTitle: string;
-  setDocReferenceInput: (val: string) => void;
-  setGenerationNotes: (val: string) => void;
-  socialDraftBlockedReason: string | null;
-  socialVisionWarning: string | null;
-}) {
+export function SocialSettingsDocumentationTab() {
+  const context = useSocialPostContext();
+  const state = useSocialSettingsModalContext();
+
+  const {
+    activePost,
+    canGenerateSocialDraft,
+    contextLoading,
+    currentGenerationJob,
+    currentPipelineJob,
+    docReferenceInput,
+    generationNotes,
+    handleGenerate,
+    handleLoadContext,
+    contextSummary,
+    setDocReferenceInput,
+    setGenerationNotes,
+    socialDraftBlockedReason,
+    socialVisionWarning,
+  } = context;
+
+  const { docsUsed, selectedPostTitle } = state;
+
   const currentGenerationJobTitle = [
     currentGenerationJob?.progress?.message ?? null,
     currentGenerationJob?.failedReason ?? null,
@@ -109,7 +82,7 @@ export function SocialSettingsDocumentationTab({
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => handleLoadContext()}
+              onClick={() => { void handleLoadContext(); }}
               disabled={!activePost || contextLoading || hasBlockingDocumentationRuntimeJob}
               title={documentationActionTitle}
             >
@@ -119,7 +92,7 @@ export function SocialSettingsDocumentationTab({
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => handleGenerate()}
+              onClick={() => { void handleGenerate(); }}
               disabled={!activePost || !canGenerateSocialDraft || hasBlockingDocumentationRuntimeJob}
               title={documentationActionTitle}
             >

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
 import { z } from 'zod';
 
-import type { CreateProductInput, ProductCsvImportResponse } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { CreateProductInput, ProductCsvImportResponse } from '@/shared/contracts/products/io';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
@@ -48,17 +48,18 @@ export async function postProductsImportCsvHandler(
 
   const flushBatch = async (): Promise<void> => {
     if (pendingBatch.length === 0) return;
+    const batch = [...pendingBatch];
 
     try {
       const { productService } = await import('@/features/products/server');
-      const createdCount = await productService.bulkCreateProducts(pendingBatch);
+      const createdCount = await productService.bulkCreateProducts(batch);
       successful += createdCount;
-      failed += pendingBatch.length - createdCount;
+      failed += batch.length - createdCount;
     } catch (error) {
       void ErrorSystem.captureException(error);
-      failed += pendingBatch.length;
+      failed += batch.length;
       const message = error instanceof Error ? error.message : 'Batch creation failed';
-      void ErrorSystem.logWarning(`Failed to import batch of ${pendingBatch.length} products`, {
+      void ErrorSystem.logWarning(`Failed to import batch of ${batch.length} products`, {
         service: 'csv-import-v2',
         error: message,
       });

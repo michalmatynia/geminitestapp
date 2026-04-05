@@ -2,10 +2,11 @@
 
 import { useMemo } from 'react';
 
-import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummary } from '@/shared/contracts';
+import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths-analytics';
+import type { AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
-import type { SingleQuery } from '@/shared/contracts/ui';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import {
   catalogToEntries,
   entriesToCatalogArrays,
@@ -21,7 +22,7 @@ import {
   type BrainOperationsOverviewResponse,
   type InsightsSnapshot,
 } from '../hooks/useBrainQueries';
-import type { SelectSimpleOption } from '@/shared/contracts/ui';
+import type { SelectSimpleOption } from '@/shared/contracts/ui/controls';
 
 import {
   ALL_BRAIN_FEATURE_KEYS,

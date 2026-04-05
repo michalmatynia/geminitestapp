@@ -1,6 +1,8 @@
 import 'server-only';
 
 export {
+  startPlaywrightListingQueue,
+  enqueuePlaywrightListingJob,
   startTraderaListingQueue,
   enqueueTraderaListingJob,
   startTraderaRelistSchedulerQueue,

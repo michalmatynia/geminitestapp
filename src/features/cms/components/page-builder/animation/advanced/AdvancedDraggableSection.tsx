@@ -3,7 +3,8 @@
 import React from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, type DragAxis } from '@/features/gsap/public';
-import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Input, Checkbox } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from '../AnimationConfigContext';
 
@@ -36,7 +37,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
       actions={
         <Checkbox
           checked={draggableEnabledValue}
-          onCheckedChange={(v) => onChange({ ...config, draggableEnabled: v === true })}
+          onCheckedChange={(v: boolean) => onChange({ ...config, draggableEnabled: v === true })}
         />
       }
       className='p-3 space-y-4'
@@ -55,7 +56,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
           <FormField label='Bounds selector'>
             <Input
               value={draggableBoundsValue}
-              onChange={(e) => onChange({ ...config, draggableBounds: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ ...config, draggableBounds: e.target.value })}
               placeholder='e.g. .container'
               className='h-9'
              aria-label='e.g. .container' title='e.g. .container'/>
@@ -69,7 +70,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
                 max={200}
                 step={1}
                 value={draggableSnapValue}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = parseFloat(e.target.value);
                   if (!isNaN(val))
                     onChange({ ...config, draggableSnap: Math.max(0, Math.min(200, val)) });
@@ -84,7 +85,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
                 max={2}
                 step={0.05}
                 value={draggableMomentumFactorValue}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = parseFloat(e.target.value);
                   if (!isNaN(val))
                     onChange({
@@ -101,14 +102,14 @@ export function AdvancedDraggableSection(): React.JSX.Element {
             <div className='flex items-center gap-2'>
               <Checkbox
                 checked={draggableMomentumValue}
-                onCheckedChange={(v) => onChange({ ...config, draggableMomentum: v === true })}
+                onCheckedChange={(v: boolean) => onChange({ ...config, draggableMomentum: v === true })}
               />
               <span className='text-xs text-gray-300'>Enable momentum</span>
             </div>
             <div className='flex items-center gap-2'>
               <Checkbox
                 checked={draggableCarouselValue}
-                onCheckedChange={(v) => onChange({ ...config, draggableCarousel: v === true })}
+                onCheckedChange={(v: boolean) => onChange({ ...config, draggableCarousel: v === true })}
               />
               <span className='text-xs text-gray-300'>Carousel mode</span>
             </div>
@@ -119,7 +120,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
               <FormField label='Track selector'>
                 <Input
                   value={draggableCarouselSelectorValue}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     onChange({ ...config, draggableCarouselSelector: e.target.value })
                   }
                   placeholder='e.g. .track'
@@ -129,7 +130,7 @@ export function AdvancedDraggableSection(): React.JSX.Element {
               <div className='flex items-center gap-2'>
                 <Checkbox
                   checked={draggableCarouselSnapValue}
-                  onCheckedChange={(v) =>
+                  onCheckedChange={(v: boolean) =>
                     onChange({ ...config, draggableCarouselSnap: v === true })
                   }
                 />

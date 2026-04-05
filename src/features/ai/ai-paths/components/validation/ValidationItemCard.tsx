@@ -1,9 +1,7 @@
-'use client';
-
 import React from 'react';
 
-import { Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Card } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 type ValidationItemCardProps = {
   children: React.ReactNode;

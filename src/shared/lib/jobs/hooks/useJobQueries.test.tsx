@@ -43,10 +43,10 @@ describe('useJobQueries', () => {
   it('configures the integration jobs query and active-listing polling policy', async () => {
     const { result } = renderHook(() => useIntegrationJobs());
     const config = createListQueryV2Mock.mock.calls[0]?.[0];
+    const signal = new AbortController().signal;
 
     expect(result.current).toEqual({ kind: 'list-query' });
     expect(config.queryKey).toEqual(jobKeys.integrations());
-    expect(config.queryFn).toBe(getIntegrationJobsMock);
     expect(config.meta).toEqual(
       expect.objectContaining({
         source: 'jobs.hooks.useIntegrationJobs',
@@ -56,7 +56,8 @@ describe('useJobQueries', () => {
       })
     );
 
-    await expect(config.queryFn()).resolves.toEqual([{ id: 'listing-job-1' }]);
+    await expect(config.queryFn({ signal })).resolves.toEqual([{ id: 'listing-job-1' }]);
+    expect(getIntegrationJobsMock).toHaveBeenCalledWith(signal);
     expect(config.refetchInterval({ state: { data: undefined } })).toBe(5000);
     expect(
       config.refetchInterval({

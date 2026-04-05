@@ -5,6 +5,8 @@ import {
   AGENT_OUTPUT_PORTS,
   PLAYWRIGHT_INPUT_PORTS,
   PLAYWRIGHT_OUTPUT_PORTS,
+  PLAYWRIGHT_CAPTURE_INPUT_PORTS,
+  PLAYWRIGHT_CAPTURE_OUTPUT_PORTS,
   AUDIO_OSCILLATOR_INPUT_PORTS,
   AUDIO_OSCILLATOR_OUTPUT_PORTS,
   AUDIO_SPEAKER_INPUT_PORTS,
@@ -46,6 +48,10 @@ import {
   VIEWER_INPUT_PORTS,
 } from '../constants';
 import { createDefaultPlaywrightConfig } from '../playwright/default-config';
+import {
+  PLAYWRIGHT_DEFAULT_CAPTURE_SCRIPT,
+  PLAYWRIGHT_CAPTURE_TIMEOUT_MS,
+} from '../playwright/capture-defaults';
 import { derivePaletteNodeTypeId } from '../utils/node-identity';
 
 const buildOptionalInputContracts = (inputs: string[]): Record<string, { required: boolean }> =>
@@ -498,6 +504,23 @@ const basePalette: NodeDefinition[] = [
     },
     config: {
       playwright: createDefaultPlaywrightConfig(),
+    },
+  },
+  {
+    type: 'playwright',
+    nodeTypeId: 'playwright-capture-batch',
+    title: 'Playwright: Batch Capture',
+    description:
+      'Capture screenshots from multiple URLs using the engine capture script. Connect a captures array (id, title, url, selector) to the captures input port.',
+    inputs: PLAYWRIGHT_CAPTURE_INPUT_PORTS,
+    outputs: PLAYWRIGHT_CAPTURE_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(PLAYWRIGHT_CAPTURE_INPUT_PORTS),
+    config: {
+      playwright: {
+        ...createDefaultPlaywrightConfig(),
+        script: PLAYWRIGHT_DEFAULT_CAPTURE_SCRIPT,
+        timeoutMs: PLAYWRIGHT_CAPTURE_TIMEOUT_MS,
+      },
     },
   },
   // ---------------------------------------------------------------------------

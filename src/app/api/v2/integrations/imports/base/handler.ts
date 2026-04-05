@@ -22,19 +22,9 @@ import {
   getProductRepository,
 } from '@/features/products/server';
 import type { ProductCreateInput, ProductWithImages } from '@/features/products/server';
-import {
-  baseImportInventoriesPayloadSchema,
-  baseImportListPayloadSchema,
-  baseImportWarehousesPayloadSchema,
-  baseImportWarehousesDebugPayloadSchema,
-  type BaseImportInventoriesResponse,
-  type BaseImportListResponse,
-  type BaseImportWarehousesResponse,
-  type BaseImportWarehousesDebugResponse,
-  type BaseWarehouse,
-  type ImportListItem,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { baseImportInventoriesPayloadSchema, baseImportListPayloadSchema, baseImportWarehousesPayloadSchema, baseImportWarehousesDebugPayloadSchema } from '@/shared/contracts/integrations/import-export';
+import { type BaseImportInventoriesResponse, type BaseImportListResponse, type BaseImportWarehousesResponse, type BaseImportWarehousesDebugResponse, type BaseWarehouse, type ImportListItem } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

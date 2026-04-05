@@ -3,15 +3,13 @@
 import { createContext, useContext, useMemo } from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';
-import type {
-  CatalogRecord,
-  ProductCategory,
-  ProductTag,
-  Producer,
-  PriceGroupWithDetails,
-  ProductWithImages,
-  ProductDraft,
-} from '@/shared/contracts/products';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
+import type { ProductTag } from '@/shared/contracts/products/tags';
+import type { Producer } from '@/shared/contracts/products/producers';
+import type { PriceGroupWithDetails, ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 
 import { useProductMetadata } from '../hooks/useProductMetadata';
@@ -26,6 +24,8 @@ export interface ProductFormMetadataContextType {
   categoriesLoading: boolean;
   selectedCategoryId: string | null;
   setCategoryId: (categoryId: string | null) => void;
+  shippingGroups: ProductShippingGroup[];
+  shippingGroupsLoading: boolean;
   tags: ProductTag[];
   tagsLoading: boolean;
   selectedTagIds: string[];
@@ -47,6 +47,8 @@ export type ProductFormMetadataStateContextType = Pick<
   | 'categories'
   | 'categoriesLoading'
   | 'selectedCategoryId'
+  | 'shippingGroups'
+  | 'shippingGroupsLoading'
   | 'tags'
   | 'tagsLoading'
   | 'selectedTagIds'
@@ -140,6 +142,8 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
     categories,
     categoriesLoading,
     selectedCategoryId,
+    shippingGroups,
+    shippingGroupsLoading,
     tags,
     tagsLoading,
     selectedTagIds,
@@ -157,6 +161,8 @@ export const useProductFormMetadataState = (): ProductFormMetadataStateContextTy
     categories,
     categoriesLoading,
     selectedCategoryId,
+    shippingGroups,
+    shippingGroupsLoading,
     tags,
     tagsLoading,
     selectedTagIds,

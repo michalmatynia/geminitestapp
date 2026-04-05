@@ -16,17 +16,14 @@ vi.mock('@vercel/analytics/next', () => ({
   Analytics: () => <div data-testid='kangur-vercel-analytics' />,
 }));
 
-vi.mock('@/features/kangur/ui/KangurStorefrontAppearanceProvider', () => ({
+vi.mock('@/features/kangur/public', () => ({
   KangurStorefrontAppearanceProvider: kangurStorefrontAppearanceProviderMock,
-}));
-
-vi.mock('@/features/kangur/ui/KangurSurfaceClassSync', () => ({
   KangurSurfaceClassSync: ({ children }: { children: ReactNode }) => (
     <div data-testid='kangur-surface-class-sync'>{children}</div>
   ),
 }));
 
-vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
+vi.mock('@/features/kangur/server', () => ({
   getKangurStorefrontInitialState: vi.fn(async () => ({
     initialMode: 'dark',
     initialThemeSettings: {
@@ -39,6 +36,11 @@ vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
       }),
     },
   })),
+  getKangurSurfaceBootstrapStyle: vi.fn(
+    () => ':root{--kangur-soft-card-border:rgba(51,65,85,0.4);}'
+  ),
+  KANGUR_SURFACE_HINT_SCRIPT:
+    "document.documentElement.classList.add('kangur-surface-active')",
 }));
 
 vi.mock('@/shared/lib/security/safe-html', () => ({

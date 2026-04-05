@@ -5,7 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
-import type { ProductParameter, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   ProductFormMetadataContext,
   type ProductFormMetadataContextType,
@@ -24,162 +25,198 @@ vi.mock('lucide-react', () => ({
   X: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid='remove-parameter' />,
 }));
 
-vi.mock('@/shared/ui', async () => {
-  const ReactModule = await import('react');
-  const TabsContext = ReactModule.createContext<{
+const TabsContext = React.createContext<{
+  value: string;
+  onValueChange?: (value: string) => void;
+}>({ value: '' });
+
+vi.mock('@/shared/ui/alert', () => ({
+  Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/button', () => ({
+  Button: ({
+    children,
+    type = 'button',
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button type={type} {...props}>
+      {children}
+    </button>
+  ),
+}));
+
+vi.mock('@/shared/ui/empty-state', () => ({
+  EmptyState: ({ title, description }: { title: string; description: string }) => (
+    <div>
+      <div>{title}</div>
+      <div>{description}</div>
+    </div>
+  ),
+  CompactEmptyState: ({ title, description }: { title: string; description: string }) => (
+    <div>
+      <div>{title}</div>
+      <div>{description}</div>
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/form-section', () => ({
+  FormSection: ({
+    title,
+    description,
+    children,
+  }: {
+    title: string;
+    description?: string;
+    children: React.ReactNode;
+  }) => (
+    <section>
+      <h2>{title}</h2>
+      {description ? <p>{description}</p> : null}
+      {children}
+    </section>
+  ),
+}));
+
+vi.mock('@/shared/ui/input', () => ({
+  Input: React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+    function Input(props, ref) {
+      return <input ref={ref} {...props} />;
+    }
+  ),
+}));
+
+vi.mock('@/shared/ui/InsetPanel', () => ({
+  insetPanelVariants: () => 'rounded border border-border/60 bg-card/40 p-3',
+}));
+
+vi.mock('@/shared/ui/label', () => ({
+  Label: ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+    <label {...props}>{children}</label>
+  ),
+}));
+
+vi.mock('@/shared/ui/LoadingState', () => ({
+  LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
+}));
+
+vi.mock('@/shared/ui/radio-group', () => ({
+  RadioGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  RadioGroupItem: React.forwardRef<
+    HTMLInputElement,
+    React.InputHTMLAttributes<HTMLInputElement>
+  >(function RadioGroupItem(props, ref) {
+    return <input ref={ref} type='radio' {...props} />;
+  }),
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
+  SelectSimple: ({
+    value,
+    onChange,
+    onValueChange,
+    options,
+    placeholder,
+    disabled,
+  }: {
+    value: string;
+    onChange?: (value: string) => void;
+    onValueChange?: (value: string) => void;
+    options: Array<LabeledOptionDto<string>>;
+    placeholder?: string;
+    disabled?: boolean;
+  }) => (
+    <select
+      aria-label={placeholder ?? 'select'}
+      value={value}
+      disabled={disabled}
+      onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
+        onChange?.(event.target.value);
+        onValueChange?.(event.target.value);
+      }}
+    >
+      <option value=''>{placeholder ?? 'Select'}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
+vi.mock('@/shared/ui/tabs', () => ({
+  Tabs: ({
+    value,
+    onValueChange,
+    children,
+  }: {
     value: string;
     onValueChange?: (value: string) => void;
-  }>({ value: '' });
-
-  return {
-    Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    Button: ({
-      children,
-      type = 'button',
-      ...props
-    }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-      <button type={type} {...props}>
+    children: React.ReactNode;
+  }) => (
+    <TabsContext.Provider value={{ value, onValueChange }}>
+      <div>{children}</div>
+    </TabsContext.Provider>
+  ),
+  TabsList: ({ children }: { children: React.ReactNode }) => <div role='tablist'>{children}</div>,
+  TabsTrigger: ({
+    value,
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { value: string }) => {
+    const tabs = React.useContext(TabsContext);
+    const isActive = tabs.value === value;
+    return (
+      <button
+        type='button'
+        role='tab'
+        aria-selected={isActive}
+        data-state={isActive ? 'active' : 'inactive'}
+        onClick={() => tabs.onValueChange?.(value)}
+        {...props}
+      >
         {children}
       </button>
-    ),
-    EmptyState: ({ title, description }: { title: string; description: string }) => (
-      <div>
-        <div>{title}</div>
-        <div>{description}</div>
-      </div>
-    ),
-    insetPanelVariants: () => 'rounded border border-border/60 bg-card/40 p-3',
-    CompactEmptyState: ({ title, description }: { title: string; description: string }) => (
-      <div>
-        <div>{title}</div>
-        <div>{description}</div>
-      </div>
-    ),
-    FormSection: ({
-      title,
-      description,
-      children,
-    }: {
-      title: string;
-      description?: string;
-      children: React.ReactNode;
-    }) => (
-      <section>
-        <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
-        {children}
-      </section>
-    ),
-    Input: ReactModule.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-      function Input(props, ref) {
-        return <input ref={ref} {...props} />;
-      }
-    ),
-    Label: ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
-      <label {...props}>{children}</label>
-    ),
-    LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
-    RadioGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    RadioGroupItem: ReactModule.forwardRef<
-      HTMLInputElement,
-      React.InputHTMLAttributes<HTMLInputElement>
-    >(function RadioGroupItem(props, ref) {
-      return <input ref={ref} type='radio' {...props} />;
-    }),
-    SelectSimple: ({
-      value,
-      onValueChange,
-      options,
-      placeholder,
-      disabled,
-    }: {
-      value: string;
-      onValueChange?: (value: string) => void;
-      options: Array<LabeledOptionDto<string>>;
-      placeholder?: string;
-      disabled?: boolean;
-    }) => (
-      <select
-        aria-label={placeholder ?? 'select'}
-        value={value}
+    );
+  },
+}));
+
+vi.mock('@/shared/ui/textarea', () => ({
+  Textarea: React.forwardRef<
+    HTMLTextAreaElement,
+    React.TextareaHTMLAttributes<HTMLTextAreaElement>
+  >(function Textarea(props, ref) {
+    return <textarea ref={ref} {...props} />;
+  }),
+}));
+
+vi.mock('@/shared/ui/toggle-row', () => ({
+  ToggleRow: ({
+    label,
+    checked,
+    onCheckedChange,
+    disabled,
+  }: {
+    label: string;
+    checked: boolean;
+    onCheckedChange?: (checked: boolean) => void;
+    disabled?: boolean;
+  }) => (
+    <label>
+      <input
+        type='checkbox'
+        checked={checked}
         disabled={disabled}
-        onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-          onValueChange?.(event.target.value)
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+          onCheckedChange?.(event.target.checked)
         }
-      >
-        <option value=''>{placeholder ?? 'Select'}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    ),
-    Tabs: ({
-      value,
-      onValueChange,
-      children,
-    }: {
-      value: string;
-      onValueChange?: (value: string) => void;
-      children: React.ReactNode;
-    }) => (
-      <TabsContext.Provider value={{ value, onValueChange }}>
-        <div>{children}</div>
-      </TabsContext.Provider>
-    ),
-    TabsList: ({ children }: { children: React.ReactNode }) => <div role='tablist'>{children}</div>,
-    TabsTrigger: ({
-      value,
-      children,
-      ...props
-    }: React.ButtonHTMLAttributes<HTMLButtonElement> & { value: string }) => {
-      const tabs = ReactModule.useContext(TabsContext);
-      const isActive = tabs.value === value;
-      return (
-        <button
-          type='button'
-          role='tab'
-          aria-selected={isActive}
-          data-state={isActive ? 'active' : 'inactive'}
-          onClick={() => tabs.onValueChange?.(value)}
-          {...props}
-        >
-          {children}
-        </button>
-      );
-    },
-    Textarea: ReactModule.forwardRef<
-      HTMLTextAreaElement,
-      React.TextareaHTMLAttributes<HTMLTextAreaElement>
-    >(function Textarea(props, ref) {
-      return <textarea ref={ref} {...props} />;
-    }),
-    ToggleRow: ({
-      label,
-      checked,
-      onCheckedChange,
-      disabled,
-    }: {
-      label: string;
-      checked: boolean;
-      onCheckedChange?: (checked: boolean) => void;
-      disabled?: boolean;
-    }) => (
-      <label>
-        <input
-          type='checkbox'
-          checked={checked}
-          disabled={disabled}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            onCheckedChange?.(event.target.checked)
-          }
-        />
-        {label}
-      </label>
-    ),
-  };
-});
+      />
+      {label}
+    </label>
+  ),
+}));
 
 import ProductFormParameters from './ProductFormParameters';
 

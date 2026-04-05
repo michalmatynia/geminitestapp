@@ -24,7 +24,7 @@ type MockMultiSelectProps = {
 
 let latestMultiSelectProps: MockMultiSelectProps | null = null;
 
-vi.mock('@/features/products/ui', () => ({
+vi.mock('@/shared/ui/multi-select', () => ({
   MultiSelect: (props: MockMultiSelectProps) => {
     latestMultiSelectProps = props;
 

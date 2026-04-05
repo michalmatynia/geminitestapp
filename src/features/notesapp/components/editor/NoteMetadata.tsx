@@ -13,16 +13,8 @@ import {
 } from '@/features/notesapp/context/NoteFormContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { TagRecord, NoteWithRelations } from '@/shared/contracts/notes';
-import {
-  Button,
-  Input,
-  Label,
-  Checkbox,
-  FormField,
-  Card,
-  Chip,
-  SearchableSelect,
-} from '@/shared/ui';
+import { Button, Input, Label, Checkbox, Card } from '@/shared/ui/primitives.public';
+import { FormField, Chip, SearchableSelect } from '@/shared/ui/forms-and-actions.public';
 
 interface NoteMetadataProps {
   showTitle?: boolean;

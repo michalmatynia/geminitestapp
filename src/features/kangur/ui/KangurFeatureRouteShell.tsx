@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegments } from 'next/navigation';
 import { startTransition, useEffect, useMemo, useState } from 'react';
 
-import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
+import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import {
   KANGUR_BASE_PATH,
   getKangurDedicatedAppHref,
@@ -27,6 +27,24 @@ import type { CSSProperties, JSX } from 'react';
 
 const KANGUR_CLIENT_SHELL_ACTIVE_CLASSNAME = 'kangur-client-shell-active';
 const KANGUR_DEDICATED_APP_LAUNCH_DELAY_MS = 160;
+
+type RouterSearchParamsLike = {
+  toString(): string;
+} | null;
+
+type KangurFeatureRouteShellNavigation = {
+  replace: (href: string, options: { scroll: boolean }) => void;
+};
+
+type KangurFeatureRouteShellPathState = {
+  normalizedBasePath: string;
+  pageKey: ReturnType<typeof resolveKangurPageKeyFromSlug>;
+  requestedPath: string;
+  requestedHref: string;
+  launchIntent: ReturnType<typeof readKangurLaunchIntent>;
+  sanitizedRequestedHref: string;
+  dedicatedAppHref: string | null;
+};
 
 const normalizeSelectedKangurSegments = (segments: readonly string[]): string[] =>
   segments
@@ -123,6 +141,208 @@ const resolveKangurFeatureRequestedHref = ({
   );
 };
 
+const useActiveSearchParams = ({
+  browserSearch,
+  searchParams,
+}: {
+  browserSearch: string;
+  searchParams: RouterSearchParamsLike;
+}): URLSearchParams =>
+  useMemo(() => {
+    return new URLSearchParams(searchParams?.toString() || browserSearch.replace(/^\?/, ''));
+  }, [browserSearch, searchParams]);
+
+const useResolvedRequestedHrefs = ({
+  activeSearchParams,
+  requestedPath,
+  resolvedPathname,
+}: {
+  activeSearchParams: URLSearchParams;
+  requestedPath: string;
+  resolvedPathname: string;
+}): {
+  requestedHref: string;
+  sanitizedRequestedHref: string;
+  sanitizedSearchParams: URLSearchParams;
+} => {
+  const sanitizedSearchParams = useMemo(() => {
+    return stripKangurLaunchIntent(activeSearchParams);
+  }, [activeSearchParams]);
+
+  const resolvedRequestedHref = useMemo(() => {
+    return resolveKangurFeatureRequestedHref({
+      requestedPath,
+      resolvedPathname,
+      searchParams: activeSearchParams,
+    });
+  }, [activeSearchParams, requestedPath, resolvedPathname]);
+
+  const sanitizedRequestedHref = useMemo(() => {
+    return resolveKangurFeatureRequestedHref({
+      requestedPath,
+      resolvedPathname,
+      searchParams: sanitizedSearchParams,
+    });
+  }, [requestedPath, resolvedPathname, sanitizedSearchParams]);
+
+  return {
+    requestedHref: readKangurLaunchIntent(activeSearchParams) === 'dedicated_app'
+      ? sanitizedRequestedHref
+      : resolvedRequestedHref,
+    sanitizedRequestedHref,
+    sanitizedSearchParams,
+  };
+};
+
+const useKangurFeatureRouteShellPathState = ({
+  basePath,
+  pathname,
+  searchParams,
+  selectedLayoutSegments,
+}: {
+  basePath: string;
+  pathname: string | null;
+  searchParams: RouterSearchParamsLike;
+  selectedLayoutSegments: readonly string[];
+}): KangurFeatureRouteShellPathState => {
+  const normalizedBasePath = normalizeKangurBasePath(basePath);
+  const browserPathname = resolveKangurFeatureRouteShellBrowserPathname();
+  const browserSearch = resolveKangurFeatureRouteShellBrowserSearch();
+  const activeSearchParams = useActiveSearchParams({
+    browserSearch,
+    searchParams,
+  });
+  const resolvedPathname = resolveKangurFeatureRouteShellPathname({
+    browserPathname,
+    normalizedBasePath,
+    pathname,
+  });
+  const slug = useMemo(() => {
+    return resolveKangurFeatureRouteShellSlug({
+      normalizedBasePath,
+      resolvedPathname,
+      selectedLayoutSegments,
+    });
+  }, [normalizedBasePath, resolvedPathname, selectedLayoutSegments]);
+  const activeSlug = slug[0] ?? null;
+  const effectiveSlug = resolveKangurFeatureRouteShellEffectiveSlug(slug);
+  const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
+  const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
+  const launchIntent = readKangurLaunchIntent(activeSearchParams);
+  const { requestedHref, sanitizedRequestedHref, sanitizedSearchParams } =
+    useResolvedRequestedHrefs({
+      activeSearchParams,
+      requestedPath,
+      resolvedPathname,
+    });
+  const dedicatedAppHref = useMemo(() => {
+    return getKangurDedicatedAppHref(effectiveSlug, sanitizedSearchParams);
+  }, [effectiveSlug, sanitizedSearchParams]);
+
+  return {
+    normalizedBasePath,
+    pageKey,
+    requestedPath,
+    requestedHref,
+    launchIntent,
+    sanitizedRequestedHref,
+    dedicatedAppHref,
+  };
+};
+
+const useKangurDedicatedAppLaunchPrompt = ({
+  dedicatedAppHref,
+  launchIntent,
+  router,
+  sanitizedRequestedHref,
+}: {
+  dedicatedAppHref: string | null;
+  launchIntent: ReturnType<typeof readKangurLaunchIntent>;
+  router: KangurFeatureRouteShellNavigation;
+  sanitizedRequestedHref: string;
+}): {
+  pendingDedicatedAppHref: string | null;
+  dismissDedicatedAppPrompt: () => void;
+  openDedicatedApp: () => void;
+} => {
+  const [pendingDedicatedAppHref, setPendingDedicatedAppHref] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (launchIntent !== 'dedicated_app') {
+      return;
+    }
+
+    startTransition(() => {
+      router.replace(sanitizedRequestedHref, { scroll: false });
+    });
+
+    if (!dedicatedAppHref || !isKangurDedicatedAppLaunchCapable()) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setPendingDedicatedAppHref(dedicatedAppHref);
+    }, KANGUR_DEDICATED_APP_LAUNCH_DELAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [dedicatedAppHref, launchIntent, router, sanitizedRequestedHref]);
+
+  const openDedicatedApp = (): void => {
+    if (!pendingDedicatedAppHref) {
+      return;
+    }
+
+    window.location.assign(pendingDedicatedAppHref);
+  };
+
+  return {
+    pendingDedicatedAppHref,
+    dismissDedicatedAppPrompt: () => setPendingDedicatedAppHref(null),
+    openDedicatedApp,
+  };
+};
+
+function KangurDedicatedAppLaunchPrompt({
+  pendingDedicatedAppHref,
+  onDismiss,
+  onOpen,
+}: {
+  pendingDedicatedAppHref: string | null;
+  onDismiss: () => void;
+  onOpen: () => void;
+}): JSX.Element | null {
+  if (!pendingDedicatedAppHref) {
+    return null;
+  }
+
+  return (
+    <div className='pointer-events-none fixed inset-x-3 bottom-4 z-[70] flex justify-center sm:bottom-6'>
+      <div className='pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-[24px] border border-white/15 bg-slate-950/92 px-4 py-3 text-white shadow-[0_20px_50px_rgba(15,23,42,0.45)] backdrop-blur'>
+        <div className='min-w-0 flex-1'>
+          <p className='text-sm font-semibold leading-tight'>Open the Kangur app?</p>
+          <p className='mt-1 text-xs leading-relaxed text-slate-300'>
+            Continue in the installed app or stay on the web version.
+          </p>
+        </div>
+        <button
+          type='button'
+          className='rounded-full border border-white/15 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-white/30 hover:text-white'
+          onClick={onDismiss}
+        >
+          Stay on web
+        </button>
+        <button
+          type='button'
+          className='rounded-full bg-amber-300 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-amber-200'
+          onClick={onOpen}
+        >
+          Open app
+        </button>
+      </div>
+    </div>
+  );
+};
+
 function useSyncKangurFeatureRouteShellActiveClass(): void {
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -153,83 +373,30 @@ export function KangurFeatureRouteShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedLayoutSegments = useSelectedLayoutSegments();
-  const normalizedBasePath = normalizeKangurBasePath(basePath);
   const appearanceMode = appearance?.mode ?? 'default';
   const kangurAppearance = useKangurStorefrontAppearance();
-  const browserPathname = resolveKangurFeatureRouteShellBrowserPathname();
-  const browserSearch = resolveKangurFeatureRouteShellBrowserSearch();
-  const activeSearchParams = useMemo(() => {
-    return new URLSearchParams(searchParams?.toString() || browserSearch.replace(/^\?/, ''));
-  }, [browserSearch, searchParams]);
-  const resolvedPathname = resolveKangurFeatureRouteShellPathname({
-    browserPathname,
+  const {
     normalizedBasePath,
+    pageKey,
+    requestedPath,
+    requestedHref,
+    launchIntent,
+    sanitizedRequestedHref,
+    dedicatedAppHref,
+  } = useKangurFeatureRouteShellPathState({
+    basePath,
     pathname,
+    searchParams,
+    selectedLayoutSegments,
   });
-  const slug = useMemo(() => {
-    return resolveKangurFeatureRouteShellSlug({
-      normalizedBasePath,
-      resolvedPathname,
-      selectedLayoutSegments,
+  const { pendingDedicatedAppHref, dismissDedicatedAppPrompt, openDedicatedApp } =
+    useKangurDedicatedAppLaunchPrompt({
+      dedicatedAppHref,
+      launchIntent,
+      router,
+      sanitizedRequestedHref,
     });
-  }, [normalizedBasePath, resolvedPathname, selectedLayoutSegments]);
-  const activeSlug = slug[0] ?? null;
-  const effectiveSlug = resolveKangurFeatureRouteShellEffectiveSlug(slug);
-  const pageKey = resolveKangurPageKeyFromSlug(activeSlug);
-  const requestedPath = normalizeKangurRequestedPath(effectiveSlug, normalizedBasePath);
-  const launchIntent = readKangurLaunchIntent(activeSearchParams);
-  const sanitizedSearchParams = useMemo(() => {
-    return stripKangurLaunchIntent(activeSearchParams);
-  }, [activeSearchParams]);
-  const resolvedRequestedHref = useMemo(() => {
-    return resolveKangurFeatureRequestedHref({
-      requestedPath,
-      resolvedPathname,
-      searchParams: activeSearchParams,
-    });
-  }, [activeSearchParams, requestedPath, resolvedPathname]);
-  const sanitizedRequestedHref = useMemo(() => {
-    return resolveKangurFeatureRequestedHref({
-      requestedPath,
-      resolvedPathname,
-      searchParams: sanitizedSearchParams,
-    });
-  }, [requestedPath, resolvedPathname, sanitizedSearchParams]);
-  const requestedHref =
-    launchIntent === 'dedicated_app' ? sanitizedRequestedHref : resolvedRequestedHref;
-  const dedicatedAppHref = useMemo(() => {
-    return getKangurDedicatedAppHref(effectiveSlug, sanitizedSearchParams);
-  }, [effectiveSlug, sanitizedSearchParams]);
-  const [pendingDedicatedAppHref, setPendingDedicatedAppHref] = useState<string | null>(null);
   useSyncKangurFeatureRouteShellActiveClass();
-
-  useEffect(() => {
-    if (launchIntent !== 'dedicated_app') {
-      return;
-    }
-
-    startTransition(() => {
-      router.replace(sanitizedRequestedHref, { scroll: false });
-    });
-
-    if (!dedicatedAppHref || !isKangurDedicatedAppLaunchCapable()) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setPendingDedicatedAppHref(dedicatedAppHref);
-    }, KANGUR_DEDICATED_APP_LAUNCH_DELAY_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [dedicatedAppHref, launchIntent, router, sanitizedRequestedHref]);
-
-  const handleDedicatedAppOpen = (): void => {
-    if (!pendingDedicatedAppHref) {
-      return;
-    }
-
-    window.location.assign(pendingDedicatedAppHref);
-  };
 
   const isEmbedded = embedded;
   const shellStyle: CSSProperties & Record<string, string> = {
@@ -246,32 +413,11 @@ export function KangurFeatureRouteShell({
       data-testid='kangur-route-shell'
       style={shellStyle}
     >
-      {pendingDedicatedAppHref ? (
-        <div className='pointer-events-none fixed inset-x-3 bottom-4 z-[70] flex justify-center sm:bottom-6'>
-          <div className='pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-[24px] border border-white/15 bg-slate-950/92 px-4 py-3 text-white shadow-[0_20px_50px_rgba(15,23,42,0.45)] backdrop-blur'>
-            <div className='min-w-0 flex-1'>
-              <p className='text-sm font-semibold leading-tight'>Open the Kangur app?</p>
-              <p className='mt-1 text-xs leading-relaxed text-slate-300'>
-                Continue in the installed app or stay on the web version.
-              </p>
-            </div>
-            <button
-              type='button'
-              className='rounded-full border border-white/15 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-white/30 hover:text-white'
-              onClick={() => setPendingDedicatedAppHref(null)}
-            >
-              Stay on web
-            </button>
-            <button
-              type='button'
-              className='rounded-full bg-amber-300 px-3 py-2 text-xs font-semibold text-slate-950 transition hover:bg-amber-200'
-              onClick={handleDedicatedAppOpen}
-            >
-              Open app
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <KangurDedicatedAppLaunchPrompt
+        pendingDedicatedAppHref={pendingDedicatedAppHref}
+        onDismiss={dismissDedicatedAppPrompt}
+        onOpen={openDedicatedApp}
+      />
       <KangurRoutingProvider
         pageKey={pageKey}
         requestedPath={requestedPath}

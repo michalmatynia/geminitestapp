@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { KangurAiTutorWidgetState } from '../KangurAiTutorWidget.state';
+import type { KangurAiTutorWidgetState } from '../ai-tutor-widget/KangurAiTutorWidget.state';
 
 export function useTutorNavigationLifecycle({
   mounted,

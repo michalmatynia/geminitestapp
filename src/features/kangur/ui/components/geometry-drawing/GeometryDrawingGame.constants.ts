@@ -1,5 +1,3 @@
-'use client';
-
 import type { ShapeRound } from './GeometryDrawingGame.types';
 
 export const SHAPE_ROUND_LIBRARY = {

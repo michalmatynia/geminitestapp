@@ -1,7 +1,9 @@
 import React from 'react';
 
-import { Alert, InsetPanel, StatusBadge } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Alert } from '@/shared/ui/primitives.public';
+import { InsetPanel } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   formatDurationMs,

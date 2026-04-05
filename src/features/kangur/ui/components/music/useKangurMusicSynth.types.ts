@@ -1,5 +1,3 @@
-'use client';
-
 export type KangurMusicSynthEnvelope = {
   attackMs: number;
   decayMs: number;

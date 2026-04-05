@@ -1,8 +1,6 @@
-import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
-import type {
-  ProductParameterValue,
-  ProductSimpleParameterValue,
-} from '@/shared/contracts/products';
+import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products/base';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductSimpleParameterValue } from '@/shared/contracts/products/parameters';
 import {
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,

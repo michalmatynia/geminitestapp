@@ -2,13 +2,10 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import type {
-  CaseResolverFile,
-  CaseResolverIdentifier,
-  CaseResolverWorkspace,
-  DocumentRelationFileTypeFilter,
-  DocumentRelationSortMode,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverIdentifier } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { DocumentRelationFileTypeFilter, DocumentRelationSortMode } from '@/shared/contracts/case-resolver/base';
 
 export type { DocumentRelationFileTypeFilter, DocumentRelationSortMode };
 import {

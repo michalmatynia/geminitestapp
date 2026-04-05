@@ -1,3 +1,5 @@
+'use client';
+
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
@@ -15,7 +17,7 @@ import {
   type KangurLessonLibraryCardCopy,
 } from '@/features/kangur/ui/components/lesson-library/KangurResolvedLessonLibraryCard';
 import { KangurResolvedLessonGroupAccordion } from '@/features/kangur/ui/components/lesson-library/KangurResolvedLessonGroupAccordion';
-import { LazyKangurLessonsWordmark } from '@/features/kangur/ui/components/LazyKangurLessonsWordmark';
+import { LazyKangurLessonsWordmark } from '@/features/kangur/ui/components/wordmarks/LazyKangurLessonsWordmark';
 import { KangurResolvedPageIntroCard } from '@/features/kangur/ui/components/lesson-library/KangurResolvedPageIntroCard';
 import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
 import {
@@ -33,6 +35,7 @@ import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurP
 import type { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import { LESSONS_LIBRARY_LAYOUT_CLASSNAME, LESSONS_LIBRARY_LIST_CLASSNAME } from './Lessons.constants';
+import { prefetchActiveLessonView } from './LazyActiveLessonView';
 import { useLessons } from './LessonsContext';
 import { getLessonMasteryPresentation } from './Lessons.utils';
 
@@ -484,8 +487,9 @@ function LessonsCatalogResolvedContent({
           const shouldShowDeferredGroupLoading =
             isExpanded &&
             entry.group.componentIds.length > 0 &&
-            entry.group.lessons.length < entry.group.componentIds.length &&
-            isLessonsCatalogLoading;
+            (entry.group.lessons.length === 0 ||
+              (entry.group.lessons.length < entry.group.componentIds.length &&
+                isLessonsCatalogLoading));
           let groupLessonIndex = 0;
 
           return (
@@ -526,15 +530,17 @@ function LessonsCatalogResolvedContent({
                 )
               }
               onToggle={() => {
-                if (!isExpanded) {
-                  if (entry.group.componentIds.length > 0) {
-                    ensureLessonsCatalogLoaded(entry.group.componentIds);
-                  }
-                } else {
+                if (isExpanded) {
                   setExpandedLessonSubsectionIdsByGroup((current) => ({
                     ...current,
                     [entry.group.id]: [],
                   }));
+                } else if (entry.group.componentIds.length > 0) {
+                  prefetchActiveLessonView();
+                  const ids = entry.group.componentIds;
+                  requestAnimationFrame(() => {
+                    ensureLessonsCatalogLoaded(ids);
+                  });
                 }
                 setExpandedLessonGroupId(isExpanded ? null : entry.group.id);
               }}
@@ -573,8 +579,9 @@ function LessonsCatalogResolvedContent({
                         expandedLessonSubsectionIds.includes(subsection.id);
                       const shouldShowDeferredSubsectionLoading =
                         isSubsectionExpanded &&
-                        subsection.lessons.length < subsection.expectedLessonCount &&
-                        isLessonsCatalogLoading;
+                        (subsection.lessons.length === 0 ||
+                          (subsection.lessons.length < subsection.expectedLessonCount &&
+                            isLessonsCatalogLoading));
 
                       return (
                         <KangurResolvedLessonGroupAccordion
@@ -593,7 +600,11 @@ function LessonsCatalogResolvedContent({
                           }
                           onToggle={() => {
                             if (!isSubsectionExpanded && subsection.componentIds.length > 0) {
-                              ensureLessonsCatalogLoaded(subsection.componentIds);
+                              prefetchActiveLessonView();
+                              const ids = subsection.componentIds;
+                              requestAnimationFrame(() => {
+                                ensureLessonsCatalogLoaded(ids);
+                              });
                             }
                             setExpandedLessonSubsectionIdsByGroup((current) => {
                               const currentExpandedIds = current[entry.group.id] ?? [];
@@ -655,13 +666,11 @@ export function LessonsCatalog() {
     isLessonSectionsLoading,
     shouldShowLessonsCatalogSkeleton,
   } = useLessons();
-  const [isPageContentReady, setIsPageContentReady] = useState(false);
+  const [isPageContentReady, setIsPageContentReady] = useState(true);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      setIsPageContentReady(true);
-      return;
-    }
+    // Keep effect for potential side effects but don't gate rendering
+    if (typeof window === 'undefined') return;
 
     let timeoutId: number | null = null;
     const frameId =

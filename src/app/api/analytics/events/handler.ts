@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth, extractClientIp } from '@/features/auth/server';
@@ -7,7 +9,7 @@ import {
   type AnalyticsEventCreateInput,
   type AnalyticsEventType,
 } from '@/shared/contracts/analytics';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError } from '@/shared/errors/app-error';
 import { resolveAnalyticsRangeWindow } from '@/shared/lib/analytics/range';
 import { insertAnalyticsEvent, listAnalyticsEvents } from '@/shared/lib/analytics/server';
@@ -23,9 +25,82 @@ import { logger } from '@/shared/utils/logger';
 
 const BLOCKING_ANALYTICS_EVENTS_INGESTION =
   process.env['ANALYTICS_EVENTS_BLOCKING_INGESTION'] === 'true';
+const ANALYTICS_EVENT_DEDUPE_WINDOW_MS = 30_000;
+const ANALYTICS_EVENT_FALLBACK_DEDUPE_WINDOW_MS = 5_000;
+const ANALYTICS_EVENT_DEDUPE_CLEANUP_INTERVAL_MS = 60_000;
+
+type AnalyticsEventDedupeEntry = {
+  expiresAtMs: number;
+};
+
+const analyticsEventDedupe = new Map<string, AnalyticsEventDedupeEntry>();
+let lastAnalyticsEventDedupeCleanupAt = 0;
 
 export { analyticsEventCreateRequestSchema as createEventSchema };
 export { analyticsEventsQuerySchema as querySchema };
+
+const cleanupAnalyticsEventDedupe = (nowMs: number): void => {
+  if (nowMs - lastAnalyticsEventDedupeCleanupAt < ANALYTICS_EVENT_DEDUPE_CLEANUP_INTERVAL_MS) {
+    return;
+  }
+
+  lastAnalyticsEventDedupeCleanupAt = nowMs;
+
+  for (const [key, entry] of analyticsEventDedupe.entries()) {
+    if (entry.expiresAtMs <= nowMs) {
+      analyticsEventDedupe.delete(key);
+    }
+  }
+};
+
+const buildAnalyticsEventDedupeKey = (input: AnalyticsEventCreateInput): string => {
+  const signaturePayload = JSON.stringify({
+    type: input.type,
+    scope: input.scope,
+    path: input.path,
+    search: input.search ?? null,
+    url: input.url ?? null,
+    title: input.title ?? null,
+    referrer: input.referrer ?? null,
+    visitorId: input.visitorId,
+    sessionId: input.sessionId,
+    utm: input.utm ?? null,
+    language: input.language ?? null,
+    languages: input.languages ?? null,
+    timeZone: input.timeZone ?? null,
+    viewport: input.viewport ?? null,
+    screen: input.screen ?? null,
+    connection: input.connection ?? null,
+    meta: input.meta ?? null,
+    clientTs: input.clientTs ?? null,
+  });
+
+  return createHash('sha1').update(signaturePayload).digest('base64url');
+};
+
+const markAnalyticsEventSeen = (input: AnalyticsEventCreateInput): boolean => {
+  const nowMs = Date.now();
+  cleanupAnalyticsEventDedupe(nowMs);
+
+  const dedupeKey = buildAnalyticsEventDedupeKey(input);
+  const existing = analyticsEventDedupe.get(dedupeKey);
+  if (existing && existing.expiresAtMs > nowMs) {
+    return true;
+  }
+
+  const windowMs = input.clientTs
+    ? ANALYTICS_EVENT_DEDUPE_WINDOW_MS
+    : ANALYTICS_EVENT_FALLBACK_DEDUPE_WINDOW_MS;
+  analyticsEventDedupe.set(dedupeKey, {
+    expiresAtMs: nowMs + windowMs,
+  });
+  return false;
+};
+
+export const resetAnalyticsEventsIngestionGuardState = (): void => {
+  analyticsEventDedupe.clear();
+  lastAnalyticsEventDedupeCleanupAt = 0;
+};
 
 const resolveSessionUserId = async (): Promise<string | null> => {
   const session = await readOptionalServerAuthSession();
@@ -56,6 +131,24 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     logPrefix: 'analytics.events.POST',
   });
   if (!parsed.ok) return parsed.response;
+
+  if (markAnalyticsEventSeen(parsed.data)) {
+    return NextResponse.json(
+      {
+        ok: true,
+        queued: false,
+        deduplicated: true,
+        requestId: _ctx.requestId,
+      },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store',
+          'X-Analytics-Event-Guard': 'deduplicated',
+        },
+      }
+    );
+  }
 
   const ip = extractClientIp(req);
   const userAgent = req.headers.get('user-agent');

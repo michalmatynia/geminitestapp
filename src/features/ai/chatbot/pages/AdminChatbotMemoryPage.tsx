@@ -3,17 +3,11 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useMemo } from 'react';
 
-import {
-  AdminChatbotPageLayout,
-  Button,
-  Input,
-  FormField,
-  StandardDataTablePanel,
-  Tag,
-  Card,
-  Hint,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminChatbotPageLayout } from '@/shared/ui/admin.public';
+import { Button, Input, Card } from '@/shared/ui/primitives.public';
+import { FormField, Tag, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { useChatbotMemoryState, type ExtendedMemoryItem } from '../hooks/useChatbotMemoryState';
 

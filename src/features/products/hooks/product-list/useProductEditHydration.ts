@@ -3,17 +3,19 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-import { preloadProductFormChunk } from '@/features/products/components/ProductModals';
+import { preloadProductFormChunk } from '@/features/products/components/product-form-preload';
 import {
   isEditingProductHydrated,
   markEditingProductHydrated,
 } from '@/features/products/hooks/editingProductHydration';
 import {
   EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
+  hasIncomingProductDetailGeneratedTextChanges,
   isIncomingProductDetailNewer,
+  isIncomingProductDetailSameRevision,
 } from '@/features/products/hooks/product-list-state-utils';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
   createSingleQueryV2,
@@ -22,7 +24,7 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
 
 const subscribeToSearchParams = (callback: () => void): (() => void) => {
   window.addEventListener('popstate', callback);
@@ -38,6 +40,60 @@ const PRODUCT_DETAIL_PREFETCH_STALE_MS = 20_000;
 // If cached data is younger than this, use it instantly and background-refetch instead of blocking.
 const PRODUCT_DETAIL_CACHE_FRESH_MS = 10_000;
 
+type ProductListCacheEntry =
+  | ProductWithImages[]
+  | { items?: ProductWithImages[] | null; products?: ProductWithImages[] | null }
+  | null
+  | undefined;
+
+const normalizeSku = (value: unknown): string =>
+  typeof value === 'string' ? value.trim().toUpperCase() : '';
+
+export const resolveExactProductIdBySku = (
+  products: ProductWithImages[],
+  sku: string | null | undefined
+): string | null => {
+  const normalizedSku = normalizeSku(sku);
+  if (!normalizedSku) return null;
+
+  const matches = products.filter(
+    (product: ProductWithImages): boolean => normalizeSku(product.sku) === normalizedSku
+  );
+
+  return matches.length === 1 ? matches[0]?.id ?? null : null;
+};
+
+export const findCachedProductSnapshotById = (
+  cacheEntries: ProductListCacheEntry[],
+  productId: string | null | undefined
+): ProductWithImages | null => {
+  const normalizedProductId = typeof productId === 'string' ? productId.trim() : '';
+  if (!normalizedProductId) return null;
+
+  for (const entry of cacheEntries) {
+    const candidates = Array.isArray(entry)
+      ? entry
+      : Array.isArray(entry?.items)
+        ? entry.items
+        : Array.isArray(entry?.products)
+          ? entry.products
+          : [];
+    const match =
+      candidates.find((product: ProductWithImages) => product.id === normalizedProductId) ?? null;
+    if (match) return match;
+  }
+
+  return null;
+};
+
+export const shouldEnableLiveEditProductDetailQuery = ({
+  editingProduct,
+  isEditHydrating,
+}: {
+  editingProduct: ProductWithImages | null;
+  isEditHydrating: boolean;
+}): boolean => Boolean(editingProduct?.id && !isEditHydrating && isEditingProductHydrated(editingProduct));
+
 export const shouldAdoptIncomingEditProductDetail = (input: {
   currentProduct: ProductWithImages;
   incomingProduct: ProductWithImages;
@@ -47,7 +103,16 @@ export const shouldAdoptIncomingEditProductDetail = (input: {
   if (incomingProduct.id !== currentProduct.id) return false;
   const hydrated = isEditingProductHydrated(currentProduct);
   if (!hydrated && !isEditHydrating) return false;
-  if (hydrated && !isIncomingProductDetailNewer(incomingProduct, currentProduct)) return false;
+  if (
+    hydrated &&
+    !isIncomingProductDetailNewer(incomingProduct, currentProduct) &&
+    !(
+      isIncomingProductDetailSameRevision(incomingProduct, currentProduct) &&
+      hasIncomingProductDetailGeneratedTextChanges(incomingProduct, currentProduct)
+    )
+  ) {
+    return false;
+  }
   return true;
 };
 
@@ -136,6 +201,7 @@ export function useProductEditHydration({
               timeout: PRODUCT_DETAIL_TIMEOUT_MS,
             }),
           staleTime: PRODUCT_DETAIL_PREFETCH_STALE_MS,
+          logError: false,
           meta: {
             source: 'products.hooks.useProductEditHydration.prefetchProductDetail',
             operation: 'detail',
@@ -197,6 +263,7 @@ export function useProductEditHydration({
             timeout: PRODUCT_DETAIL_TIMEOUT_MS,
           }),
         staleTime: 0,
+        logError: false,
         meta: {
           source: 'products.hooks.useProductEditHydration.handleOpenEditModal',
           operation: 'detail',
@@ -289,6 +356,7 @@ export function useProductEditHydration({
           }
         ),
       staleTime: 0,
+      logError: false,
       meta: {
         source: 'products.hooks.useProductEditHydration.openingProductFromQuery',
         operation: 'detail',

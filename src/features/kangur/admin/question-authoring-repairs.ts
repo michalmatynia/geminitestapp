@@ -1,4 +1,4 @@
-import type { IdLabelOption } from '@/shared/contracts';
+import type { IdLabelOption } from '@/shared/contracts/base';
 
 import type { QuestionFormData } from '../test-suites/questions';
 import { resolveKangurAdminLocale } from './kangur-admin-locale';

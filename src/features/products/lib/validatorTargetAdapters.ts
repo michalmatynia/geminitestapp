@@ -1,4 +1,4 @@
-import type { ProductValidationTarget } from '@/shared/contracts/products';
+import type { ProductValidationTarget } from '@/shared/contracts/products/validation';
 
 export type ProductValidationValueKind = 'text' | 'number' | 'category';
 export type ProductValidationNumberMode = 'integer' | 'decimal';

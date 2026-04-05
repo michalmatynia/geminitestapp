@@ -2,12 +2,8 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import {
-  imageStudioRunRequestSchema,
-  type ImageStudioRunRequest,
-  type ImageStudioRunExecutionMeta,
-  type ImageStudioRunExecutionResult,
-} from '@/shared/contracts/image-studio';
+import { imageStudioRunRequestSchema } from '@/shared/contracts/image-studio/run';
+import { type ImageStudioRunRequest, type ImageStudioRunExecutionMeta, type ImageStudioRunExecutionResult } from '@/shared/contracts/image-studio';
 import { badRequestError } from '@/shared/errors/app-error';
 
 import { executeCenterOperation } from './handlers/center-handler';

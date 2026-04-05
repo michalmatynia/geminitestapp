@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 interface UseProductDataWithQueryProps {
   initialCatalogFilter?: string;
@@ -111,6 +111,7 @@ export function useProductDataWithQuery({
     },
     {
       enabled: preferencesLoaded,
+      prefetchNextPage: page > 1,
     }
   );
 

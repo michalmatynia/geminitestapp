@@ -22,11 +22,7 @@ import {
   type GenerationCostEstimate,
 } from '@/features/ai/image-studio/utils/generation-cost';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import {
-  type ImageStudioRunExecutionMeta,
-  type ImageStudioRunDispatchMode,
-  type ImageStudioCenterExecutionMeta,
-} from '@/shared/contracts/image-studio';
+import { type ImageStudioRunExecutionMeta, type ImageStudioRunDispatchMode, type ImageStudioCenterExecutionMeta } from '@/shared/contracts/image-studio';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';

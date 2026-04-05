@@ -1,6 +1,9 @@
 import React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+import { NextIntlClientProvider } from 'next-intl';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import plMessages from '@/i18n/messages/pl.json';
 
 import { DEFAULT_KANGUR_AGE_GROUP } from '@/features/kangur/lessons/lesson-catalog';
 import { KANGUR_HELP_SETTINGS_KEY } from '@/features/kangur/settings';
@@ -8,37 +11,58 @@ import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGu
 import Lessons from '@/features/kangur/ui/pages/Lessons';
 import { createDefaultKangurProgressState } from '@/shared/contracts/kangur';
 
-const lessonsTestHoisted = vi.hoisted(() => ({
-  settingsStoreMock: {
-    get: vi.fn<(key: string) => string | undefined>(),
-  },
-  lessonsState: {
-    value: [] as Array<Record<string, unknown>>,
-  },
-  lessonDocumentsState: {
-    value: {} as Record<string, unknown>,
-  },
-  authState: {
-    value: {
-      user: null,
-      navigateToLogin: vi.fn(),
-      logout: vi.fn(),
-    },
-  },
-  assignmentsState: {
-    value: [] as Array<Record<string, unknown>>,
-  },
-  progressState: {
-    value: {
-      lessonMastery: {},
-    },
-  },
-  routerPushMock: vi.fn(),
-  useKangurPageContentEntryMock: vi.fn(),
-}));
+const lessonsTestHoisted = vi.hoisted(() => {
+  if (!(globalThis as any).__KANGUR_LESSONS_TEST_STATE__) {
+    (globalThis as any).__KANGUR_LESSONS_TEST_STATE__ = {
+      settingsStoreMock: {
+        get: vi.fn<(key: string) => string | undefined>(),
+      },
+      lessonsState: {
+        value: [] as Array<Record<string, unknown>>,
+      },
+      lessonDocumentsState: {
+        value: {} as Record<string, unknown>,
+      },
+      authState: {
+        value: {
+          user: null,
+          canAccessParentAssignments: false,
+          navigateToLogin: vi.fn(),
+          logout: vi.fn(),
+        },
+      },
+      assignmentsState: {
+        value: [] as Array<Record<string, unknown>>,
+      },
+      progressState: {
+        value: {
+          lessonMastery: {},
+        },
+      },
+      routerPushMock: vi.fn(),
+      useKangurPageContentEntryMock: vi.fn(),
+      lessonSectionsState: {
+        value: [] as Array<Record<string, unknown>>,
+      },
+      useKangurRoutingMock: vi.fn(),
+      useKangurAuthMock: vi.fn(),
+      useKangurProgressStateMock: vi.fn(),
+      useKangurAgeGroupFocusMock: vi.fn(),
+      useKangurSubjectFocusMock: vi.fn(),
+      useKangurAssignmentsMock: vi.fn(),
+    };
+  }
+  return (globalThis as any).__KANGUR_LESSONS_TEST_STATE__;
+});
 
 export const settingsStoreMock = lessonsTestHoisted.settingsStoreMock;
 export const lessonsState = lessonsTestHoisted.lessonsState;
+export const useKangurRoutingMock = lessonsTestHoisted.useKangurRoutingMock;
+export const useKangurAuthMock = lessonsTestHoisted.useKangurAuthMock;
+export const useKangurProgressStateMock = lessonsTestHoisted.useKangurProgressStateMock;
+export const useKangurAgeGroupFocusMock = lessonsTestHoisted.useKangurAgeGroupFocusMock;
+export const useKangurSubjectFocusMock = lessonsTestHoisted.useKangurSubjectFocusMock;
+export const useKangurAssignmentsMock = lessonsTestHoisted.useKangurAssignmentsMock;
 export const lessonDocumentsState = lessonsTestHoisted.lessonDocumentsState;
 export const authState = lessonsTestHoisted.authState;
 export const assignmentsState = lessonsTestHoisted.assignmentsState;
@@ -46,17 +70,7 @@ export const progressState = lessonsTestHoisted.progressState;
 export const routerPushMock = lessonsTestHoisted.routerPushMock;
 export const useKangurPageContentEntryMock =
   lessonsTestHoisted.useKangurPageContentEntryMock;
-
-const lessonsFocusHoisted = vi.hoisted(() => ({
-  useKangurSubjectFocusMock: vi.fn(),
-}));
-export const useKangurSubjectFocusMock = lessonsFocusHoisted.useKangurSubjectFocusMock;
-
-const lessonsAgeGroupHoisted = vi.hoisted(() => ({
-  useKangurAgeGroupFocusMock: vi.fn(),
-}));
-export const useKangurAgeGroupFocusMock =
-  lessonsAgeGroupHoisted.useKangurAgeGroupFocusMock;
+export const lessonSectionsState = lessonsTestHoisted.lessonSectionsState;
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -73,6 +87,40 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
   notFound: vi.fn(),
   permanentRedirect: vi.fn(),
+}));
+
+const KangurLessonNavigationContext = React.createContext<any>(null);
+
+vi.mock('@/features/kangur/ui/context/KangurLessonNavigationContext', () => ({
+  KangurLessonNavigationProvider: ({ children, onBack, secretLessonPill }: any) => (
+    <KangurLessonNavigationContext.Provider value={{ onBack, secretLessonPill }}>
+      {children}
+    </KangurLessonNavigationContext.Provider>
+  ),
+  KangurLessonNavigationBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useKangurLessonBackAction: () => {
+    const ctx = React.useContext(KangurLessonNavigationContext);
+    return ctx?.onBack ?? vi.fn();
+  },
+  useKangurLessonSubsectionNavigationActive: () => false,
+  useKangurLessonSubsectionSummary: () => null,
+  useKangurLessonSecretPill: () => {
+    const ctx = React.useContext(KangurLessonNavigationContext);
+    // During tests, if not in context, default to unlocked
+    return ctx?.secretLessonPill ?? { isUnlocked: true, onOpen: vi.fn() };
+  },
+  useKangurLessonNavigationState: () => ({
+    isSubsectionNavigationActive: false,
+    subsectionSummary: null,
+    secretLessonPill: null,
+  }),
+  useKangurLessonNavigationActions: () => ({
+    registerSubsectionNavigation: () => () => undefined,
+    setSubsectionSummary: vi.fn(),
+  }),
+  useKangurRegisterLessonSubsectionNavigation: () => () => () => undefined,
+  useKangurSyncLessonSubsectionSummary: vi.fn(),
+  KangurLessonSubsectionSummarySync: () => null,
 }));
 
 vi.mock('@/features/kangur/lessons/lesson-ui-registry', async () => {
@@ -135,8 +183,10 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', async () => {
   const actual = await import('@/features/kangur/ui/pages/lessons/Lessons.ActiveLesson');
+  const { prefetchActiveLessonView } = await import('@/features/kangur/ui/pages/lessons/LazyActiveLessonView');
   return {
     LazyActiveLessonView: actual.ActiveLessonView,
+    prefetchActiveLessonView,
   };
 });
 
@@ -145,7 +195,9 @@ vi.mock('@/features/kangur/ui/pages/lessons/LazyLessonsDeferredEnhancements', ()
 }));
 
 vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
-  LazyKangurLessonsWordmark: () => <div data-testid='kangur-lessons-heading-art' />,
+  LazyKangurLessonsWordmark: (props: any) => (
+    <div data-testid={props['data-testid'] || 'kangur-lessons-heading-art'} />
+  ),
 }));
 
 vi.mock('framer-motion', () => {
@@ -199,38 +251,75 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAuthContext', () => ({
-  useKangurAuth: () => lessonsTestHoisted.authState.value,
-  useOptionalKangurAuth: () => lessonsTestHoisted.authState.value,
+  useKangurAuth: () => lessonsTestHoisted.useKangurAuthMock(),
+  useOptionalKangurAuth: () => lessonsTestHoisted.useKangurAuthMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
-  useKangurSubjectFocus: () => lessonsFocusHoisted.useKangurSubjectFocusMock(),
+  useKangurSubjectFocus: () => lessonsTestHoisted.useKangurSubjectFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAgeGroupFocusContext', () => ({
-  useKangurAgeGroupFocus: () => lessonsAgeGroupHoisted.useKangurAgeGroupFocusMock(),
+  useKangurAgeGroupFocus: () => lessonsTestHoisted.useKangurAgeGroupFocusMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurRoutingContext', () => ({
-  useKangurRouting: () => ({ basePath: '/kangur' }),
+  useKangurRouting: () => lessonsTestHoisted.useKangurRoutingMock(),
   useOptionalKangurRouting: () => null,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurAssignments', () => ({
-  useKangurAssignments: ({ enabled = true }: { enabled?: boolean } = {}) => ({
-    assignments: enabled ? lessonsTestHoisted.assignmentsState.value : [],
-    isLoading: false,
-    error: null,
-    refresh: vi.fn(),
-    createAssignment: vi.fn(),
-    updateAssignment: vi.fn(),
-  }),
+  useKangurAssignments: (options: { enabled?: boolean } = {}) => lessonsTestHoisted.useKangurAssignmentsMock(options),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
+  useKangurLessons: (options: {
+    enabledOnly?: boolean;
+    subject?: string;
+    ageGroup?: string;
+    enabled?: boolean;
+  } = {}) => {
+    let lessons = lessonsTestHoisted.lessonsState.value;
+    if (options.enabledOnly) {
+      lessons = lessons.filter((lesson) => lesson.enabled !== false);
+    }
+    
+    const filteredBySubject = options.subject 
+      ? lessons.filter((lesson) => (lesson.subject ?? 'maths') === options.subject)
+      : lessons;
+      
+    const finalLessons = options.ageGroup
+      ? filteredBySubject.filter((lesson) => lesson.ageGroup === options.ageGroup)
+      : filteredBySubject;
+
+    const resultLessons = finalLessons;
+
+    const deduped = new Map<string, Record<string, unknown>>();
+    resultLessons.forEach((lesson) => {
+      const componentId = String(lesson.componentId ?? lesson.id ?? '');
+      if (!deduped.has(componentId)) {
+        deduped.set(componentId, lesson);
+      }
+    });
+
+    return {
+      data: Array.from(deduped.values()),
+      isLoading: false,
+      isPending: false,
+      isFetching: false,
+      isRefetching: false,
+      isPlaceholderData: false,
+      error: null,
+      refresh: vi.fn(),
+      refetch: vi.fn(),
+    };
+  },
   useKangurLessonDocuments: () => ({
     data: lessonsTestHoisted.lessonDocumentsState.value,
     isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
     error: null,
     refresh: vi.fn(),
     refetch: vi.fn(),
@@ -241,6 +330,9 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
         ? (lessonsTestHoisted.lessonDocumentsState.value[lessonId] ?? null)
         : null,
     isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
     error: null,
     refresh: vi.fn(),
     refetch: vi.fn(),
@@ -277,7 +369,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
     return {
       data: {
         lessons: Array.from(deduped.values()),
-        sections: [],
+        sections: lessonsTestHoisted.lessonSectionsState.value,
       },
       isLoading: false,
       isPending: false,
@@ -311,21 +403,23 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessonTemplates', () => ({
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({
   useKangurLessonSections: () => ({
-    data: [],
+    data: lessonsTestHoisted.lessonSectionsState.value,
     isLoading: false,
     isPending: false,
     isFetching: false,
+    isRefetching: false,
     error: null,
   }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurProgressState', () => ({
-  useKangurProgressState: () => lessonsTestHoisted.progressState.value,
+  useKangurProgressState: () => lessonsTestHoisted.useKangurProgressStateMock(),
 }));
 
 vi.mock('@/features/kangur/ui/context/KangurAiTutorContext', () => ({
   KangurAiTutorSessionSync: () => null,
   useOptionalKangurAiTutor: () => null,
+  KangurAiTutorProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
@@ -340,7 +434,7 @@ vi.mock('@/features/kangur/ui/components/KangurProfileMenu', () => ({
   KangurProfileMenu: () => <div data-testid='kangur-profile-menu' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurLessonDocumentRenderer', () => ({
+vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonDocumentRenderer', () => ({
   KangurLessonDocumentRenderer: ({ document }: { document: { blocks: Array<unknown> } }) => (
     <div data-testid='lesson-document-renderer'>Document blocks: {document.blocks.length}</div>
   ),
@@ -350,17 +444,50 @@ vi.mock('@/features/kangur/ui/components/KangurLessonNarrator', () => ({
   KangurLessonNarrator: () => <div data-testid='kangur-lesson-narrator' />,
 }));
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
+});
+
+beforeEach(() => {
+  // Use real timers to allow async effects to work properly
+  vi.useRealTimers();
 });
 
 export const renderLessonsPage = async () => {
   const result = render(
-    <KangurGuestPlayerProvider>
-      <Lessons />
-    </KangurGuestPlayerProvider>
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider locale='pl' messages={plMessages}>
+        <KangurGuestPlayerProvider>
+          <Lessons />
+        </KangurGuestPlayerProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>
   );
+  
   await screen.findByTestId('lessons-list-transition');
+  await screen.findByTestId('kangur-lessons-heading-art');
+  
+  // Wait for microtasks and effects to complete
+  // Effects may schedule updates via RAF which we need to wait for
+  await act(async () => {
+    // Flush multiple promise microtasks to ensure all effects run
+    for (let i = 0; i < 20; i++) {
+      await Promise.resolve();
+    }
+  });
+  
+  // Also wait one macrotask to be safe
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
   return result;
 };
 
@@ -398,13 +525,16 @@ export const setLessonState = ({
   lessons,
   documents,
   helpSettings,
+  sections,
 }: {
   lessons: Array<Record<string, unknown>>;
   documents?: Record<string, unknown>;
   helpSettings?: Record<string, unknown>;
+  sections?: Array<Record<string, unknown>>;
 }): void => {
   lessonsState.value = lessons;
   lessonDocumentsState.value = documents ?? {};
+  lessonSectionsState.value = sections ?? [];
   settingsStoreMock.get.mockImplementation((key: string) => {
     if (key === KANGUR_HELP_SETTINGS_KEY) {
       return helpSettings ? JSON.stringify(helpSettings) : undefined;
@@ -416,14 +546,10 @@ export const setLessonState = ({
 
 export const resetLessonsTestState = (): void => {
   vi.clearAllMocks();
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
-    callback(0);
-    return 1;
-  });
-  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
   assignmentsState.value = [];
   progressState.value = createProgressState();
   lessonsState.value = [];
+  lessonSectionsState.value = [];
   lessonDocumentsState.value = {};
   authState.value = {
     user: null,
@@ -431,19 +557,41 @@ export const resetLessonsTestState = (): void => {
     navigateToLogin: vi.fn(),
     logout: vi.fn(),
   };
-  useKangurSubjectFocusMock.mockReturnValue({
+  useKangurRoutingMock.mockReturnValue({ basePath: '/kangur' });
+  useKangurAuthMock.mockImplementation(() => authState.value);
+  useKangurProgressStateMock.mockImplementation(() => progressState.value);
+  useKangurSubjectFocusMock.mockImplementation(() => ({
     subject: 'maths',
     setSubject: vi.fn(),
     subjectKey: 'learner-1',
-  });
-  useKangurAgeGroupFocusMock.mockReturnValue({
+  }));
+  useKangurAgeGroupFocusMock.mockImplementation(() => ({
     ageGroup: DEFAULT_KANGUR_AGE_GROUP,
     setAgeGroup: vi.fn(),
+  }));
+  useKangurAssignmentsMock.mockImplementation((options: { enabled?: boolean } = {}) => {
+    const enabled = options.enabled ?? true;
+    const assignments = enabled ? [...assignmentsState.value] : [];
+    return {
+      assignments,
+      data: assignments,
+      isLoading: false,
+      isPending: false,
+      isFetching: false,
+      isRefetching: false,
+      error: null,
+      refresh: vi.fn(),
+      createAssignment: vi.fn(),
+      updateAssignment: vi.fn(),
+    };
   });
   useKangurPageContentEntryMock.mockImplementation(() => ({
     entry: null,
     data: undefined,
     isLoading: false,
+    isPending: false,
+    isFetching: false,
+    isRefetching: false,
     isError: false,
     error: null,
   }));

@@ -21,11 +21,83 @@ const buildTriggerNode = (): AiNode =>
     updatedAt: null,
   }) as AiNode;
 
+const buildSanitizeTestTriggerNode = (patch: Partial<AiNode> = {}): AiNode =>
+  ({
+    id: 'node-trigger-sanitize',
+    type: 'trigger',
+    title: 'Trigger',
+    description: '',
+    position: { x: 0, y: 0 },
+    data: {},
+    inputs: [],
+    outputs: ['trigger'],
+    config: {
+      trigger: { event: 'manual' },
+    },
+    createdAt: '2026-03-02T05:57:46.562Z',
+    updatedAt: null,
+    ...patch,
+  }) as AiNode;
+
+const buildSanitizeTestDatabaseNode = (patch: Partial<AiNode> = {}): AiNode =>
+  ({
+    id: 'node-database-sanitize',
+    type: 'database',
+    title: 'Database Query',
+    description: '',
+    position: { x: 320, y: 0 },
+    data: {},
+    inputs: ['entityId', 'entityType', 'value', 'result', 'bundle'],
+    outputs: ['result', 'bundle'],
+    createdAt: '2026-03-02T05:57:46.562Z',
+    updatedAt: null,
+    ...patch,
+  }) as AiNode;
+
+const buildSanitizePathConfig = ({
+  edges,
+  nodes,
+  pathId,
+}: {
+  edges: NonNullable<ReturnType<typeof createDefaultPathConfig>['edges']>;
+  nodes: AiNode[];
+  pathId: string;
+}) => {
+  const config = createDefaultPathConfig(pathId);
+  config.nodes = nodes;
+  config.edges = edges;
+  return config;
+};
+
+const buildTriggerDatabasePathConfig = ({
+  databaseNode,
+  edgeId,
+  pathId,
+  triggerNode,
+}: {
+  databaseNode: AiNode;
+  edgeId: string;
+  pathId: string;
+  triggerNode: AiNode;
+}) =>
+  buildSanitizePathConfig({
+    pathId,
+    nodes: [triggerNode, databaseNode],
+    edges: [
+      {
+        id: edgeId,
+        from: triggerNode.id,
+        to: databaseNode.id,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+    ],
+  });
+
 describe('sanitizeTriggerPathConfig', () => {
   it('rejects unsupported database snapshot and provider payloads', () => {
-    const baseConfig = createDefaultPathConfig('path_legacy_trigger');
-    const legacyConfig = {
-      ...baseConfig,
+    const legacyConfig = buildSanitizePathConfig({
+      pathId: 'path_legacy_trigger',
       nodes: [
         {
           id: 'node-regex-legacy',
@@ -38,16 +110,9 @@ describe('sanitizeTriggerPathConfig', () => {
           outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
           createdAt: '2026-03-02T05:57:46.562Z',
           updatedAt: null,
-        },
-        {
+        } as AiNode,
+        buildSanitizeTestDatabaseNode({
           id: 'node-database-legacy',
-          type: 'database',
-          title: 'Database Query',
-          description: '',
-          position: { x: 320, y: 0 },
-          data: {},
-          inputs: ['entityId', 'entityType', 'value', 'result', 'bundle'],
-          outputs: ['result', 'bundle'],
           config: {
             database: {
               operation: 'query',
@@ -70,10 +135,8 @@ describe('sanitizeTriggerPathConfig', () => {
               },
             },
           },
-          createdAt: '2026-03-02T05:57:46.562Z',
-          updatedAt: null,
-        },
-      ] as unknown as AiNode[],
+        }),
+      ],
       edges: [
         {
           id: 'edge-legacy-regex-db',
@@ -83,7 +146,7 @@ describe('sanitizeTriggerPathConfig', () => {
           toPort: 'value',
         },
       ],
-    };
+    });
 
     expect(() => sanitizeTriggerPathConfig(legacyConfig)).toThrowError(
       /(?:unsupported|deprecated) database/i
@@ -130,32 +193,19 @@ describe('sanitizeTriggerPathConfig', () => {
   );
 
   it('rejects unsupported parameter inference target path aliases in trigger payloads', () => {
-    const config = createDefaultPathConfig('path_trigger_param_guard');
-    config.nodes = [
-      {
+    const config = buildTriggerDatabasePathConfig({
+      pathId: 'path_trigger_param_guard',
+      edgeId: 'edge-trigger-param-guard',
+      triggerNode: buildSanitizeTestTriggerNode({
         id: 'node-trigger-param-guard',
-        type: 'trigger',
-        title: 'Trigger',
-        description: '',
-        position: { x: 0, y: 0 },
-        data: {},
-        inputs: [],
-        outputs: ['trigger'],
         config: {
           trigger: { event: 'trigger-param-guard' },
         },
-        createdAt: '2026-03-02T05:57:46.562Z',
-        updatedAt: null,
-      } as AiNode,
-      {
+      }),
+      databaseNode: buildSanitizeTestDatabaseNode({
         id: 'node-db-param-guard',
-        type: 'database',
         title: 'Database Update',
-        description: '',
-        position: { x: 320, y: 0 },
-        data: {},
         inputs: ['trigger', 'entityId', 'value'],
-        outputs: ['result', 'bundle'],
         config: {
           database: {
             operation: 'update',
@@ -179,19 +229,8 @@ describe('sanitizeTriggerPathConfig', () => {
             },
           },
         },
-        createdAt: '2026-03-02T05:57:46.562Z',
-        updatedAt: null,
-      } as AiNode,
-    ];
-    config.edges = [
-      {
-        id: 'edge-trigger-param-guard',
-        from: 'node-trigger-param-guard',
-        to: 'node-db-param-guard',
-        fromPort: 'trigger',
-        toPort: 'trigger',
-      },
-    ];
+      }),
+    });
 
     expect(() => sanitizeTriggerPathConfig(config)).toThrowError(
       /unsupported parameter inference target path/i

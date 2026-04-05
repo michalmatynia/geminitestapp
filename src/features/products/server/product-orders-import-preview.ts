@@ -7,12 +7,7 @@ import {
   normalizeBaseOrderStatuses,
   normalizeBaseOrders,
 } from '@/features/products/services/product-orders-import-normalization';
-import type {
-  BaseOrderImportPreviewItem,
-  BaseOrderImportPreviousSnapshot,
-  BaseOrderImportPreviewPayload,
-  BaseOrderImportPreviewResponse,
-} from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewItem, BaseOrderImportPreviousSnapshot, BaseOrderImportPreviewPayload, BaseOrderImportPreviewResponse } from '@/shared/contracts/products/orders-import';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);

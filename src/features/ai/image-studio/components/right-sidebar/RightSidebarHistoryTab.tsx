@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ProjectGenerationHistoryTab } from '../ProjectGenerationHistoryTab';
 import { useRightSidebarContext } from '../RightSidebarContext';

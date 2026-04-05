@@ -6,8 +6,10 @@ import {
   useContext,
   BaseSyntheticEvent,
   useCallback,
+  useEffect,
   useState,
   useMemo,
+  useRef,
 } from 'react';
 import {
   UseFormRegister,
@@ -20,13 +22,56 @@ import {
   UseFormReturn,
 } from 'react-hook-form';
 
-import { ProductFormData, ProductWithImages, ProductDraft } from '@/shared/contracts/products';
+import { ProductFormData, ProductDraft } from '@/shared/contracts/products/drafts';
+import { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
 import {
   productCreateSchema,
   productUpdateSchema,
 } from '@/shared/lib/products/validations/schemas';
+
+const normalizeOptionalString = (value: string | null | undefined): string => value || '';
+
+export const resolveProductFormDefaultValues = ({
+  product,
+  draft,
+  initialSku,
+}: {
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  initialSku?: string;
+}): ProductFormData => ({
+  name_en: product?.name_en || draft?.name_en || '',
+  name_pl: product?.name_pl || draft?.name_pl || '',
+  name_de: product?.name_de || draft?.name_de || '',
+  price: product?.price ?? draft?.price ?? 0,
+  sku: resolveProductFormDefaultSku({ product, draft, initialSku }),
+  defaultPriceGroupId: product?.defaultPriceGroupId ?? draft?.defaultPriceGroupId ?? undefined,
+  baseProductId: product?.baseProductId ?? draft?.baseProductId ?? undefined,
+  importSource: product?.importSource ?? draft?.importSource ?? undefined,
+  ean: normalizeOptionalString(product?.ean) || normalizeOptionalString(draft?.ean),
+  gtin: normalizeOptionalString(product?.gtin) || normalizeOptionalString(draft?.gtin),
+  asin: normalizeOptionalString(product?.asin) || normalizeOptionalString(draft?.asin),
+  description_en:
+    normalizeOptionalString(product?.description_en) || normalizeOptionalString(draft?.description_en),
+  description_pl:
+    normalizeOptionalString(product?.description_pl) || normalizeOptionalString(draft?.description_pl),
+  description_de:
+    normalizeOptionalString(product?.description_de) || normalizeOptionalString(draft?.description_de),
+  supplierName:
+    normalizeOptionalString(product?.supplierName) || normalizeOptionalString(draft?.supplierName),
+  supplierLink:
+    normalizeOptionalString(product?.supplierLink) || normalizeOptionalString(draft?.supplierLink),
+  priceComment:
+    normalizeOptionalString(product?.priceComment) || normalizeOptionalString(draft?.priceComment),
+  stock: product?.stock ?? draft?.stock ?? 0,
+  sizeLength: product?.sizeLength ?? draft?.sizeLength ?? 0,
+  sizeWidth: product?.sizeWidth ?? draft?.sizeWidth ?? 0,
+  weight: product?.weight ?? draft?.weight ?? 0,
+  length: product?.length ?? draft?.length ?? 0,
+  shippingGroupId: product?.shippingGroupId ?? draft?.shippingGroupId ?? '',
+});
 
 export interface ProductFormCoreContextType {
   register: UseFormRegister<ProductFormData>;
@@ -42,6 +87,7 @@ export interface ProductFormCoreContextType {
   uploading: boolean;
   uploadError: string | null;
   uploadSuccess: boolean;
+  validatorSessionKey?: string;
 }
 
 export interface ProductFormCoreActionsContextType {
@@ -86,39 +132,32 @@ export function ProductFormCoreProvider({
   draft,
   requireSku = true,
   initialSku,
+  validatorSessionKey,
 }: {
   children: React.ReactNode;
   product?: ProductWithImages;
   draft?: ProductDraft | null;
   requireSku?: boolean;
   initialSku?: string;
+  validatorSessionKey?: string;
 }) {
   const formSchema = product || !requireSku ? productUpdateSchema : productCreateSchema;
+  const defaultValues = useMemo(
+    () => resolveProductFormDefaultValues({ product, draft, initialSku }),
+    [draft, initialSku, product]
+  );
+  const defaultValuesSignature = useMemo(
+    () =>
+      JSON.stringify({
+        productId: product?.id ?? null,
+        draftId: draft?.id ?? null,
+        values: defaultValues,
+      }),
+    [defaultValues, draft?.id, product?.id]
+  );
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(formSchema) as Resolver<ProductFormData>,
-    defaultValues: {
-      name_en: product?.name_en || draft?.name_en || '',
-      name_pl: product?.name_pl || draft?.name_pl || '',
-      name_de: product?.name_de || draft?.name_de || '',
-      price: product?.price ?? draft?.price ?? 0,
-      sku: resolveProductFormDefaultSku({ product, draft, initialSku }),
-      defaultPriceGroupId: product?.defaultPriceGroupId ?? draft?.defaultPriceGroupId ?? undefined,
-      baseProductId: product?.baseProductId ?? draft?.baseProductId ?? undefined,
-      ean: product?.ean || draft?.ean || '',
-      gtin: product?.gtin || draft?.gtin || '',
-      asin: product?.asin || draft?.asin || '',
-      description_en: product?.description_en || draft?.description_en || '',
-      description_pl: product?.description_pl || draft?.description_pl || '',
-      description_de: product?.description_de || draft?.description_de || '',
-      supplierName: product?.supplierName || draft?.supplierName || '',
-      supplierLink: product?.supplierLink || draft?.supplierLink || '',
-      priceComment: product?.priceComment || draft?.priceComment || '',
-      stock: product?.stock ?? draft?.stock ?? 0,
-      sizeLength: product?.sizeLength ?? draft?.sizeLength ?? 0,
-      sizeWidth: product?.sizeWidth ?? draft?.sizeWidth ?? 0,
-      weight: product?.weight ?? draft?.weight ?? 0,
-      length: product?.length ?? draft?.length ?? 0,
-    },
+    defaultValues,
   });
 
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>(() =>
@@ -133,6 +172,18 @@ export function ProductFormCoreProvider({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const hasAppliedInitialDefaultsRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasAppliedInitialDefaultsRef.current) {
+      hasAppliedInitialDefaultsRef.current = true;
+      return;
+    }
+
+    methods.reset(defaultValues, {
+      keepDirtyValues: true,
+    });
+  }, [defaultValues, defaultValuesSignature, methods]);
 
   const updateHandleSubmit = useCallback((fn: (e?: BaseSyntheticEvent) => Promise<void>): void => {
     setHandleSubmitFn(() => fn);
@@ -171,6 +222,7 @@ export function ProductFormCoreProvider({
       uploading,
       uploadError,
       uploadSuccess,
+      validatorSessionKey,
     }),
     [
       methods,
@@ -183,6 +235,7 @@ export function ProductFormCoreProvider({
       uploading,
       uploadError,
       uploadSuccess,
+      validatorSessionKey,
     ]
   );
   const actionsValue = useMemo(

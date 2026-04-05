@@ -15,7 +15,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

@@ -15,6 +15,17 @@ interface RealtimeConfig {
   domain?: TanstackFactoryDomain;
 }
 
+export const resolveRealtimeWebSocketUrl = (
+  queryKey: readonly unknown[],
+  locationLike:
+    | Pick<Location, 'protocol' | 'host'>
+    | { protocol?: string | null; host?: string | null }
+): string => {
+  const protocol = locationLike.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = locationLike.host?.trim() || 'localhost:3000';
+  return `${protocol}//${host}/ws/${encodeURIComponent(JSON.stringify(queryKey))}`;
+};
+
 // Hook for real-time data updates with WebSocket fallback to polling
 export function useRealtimeQuery<TData>(
   queryKey: readonly unknown[],
@@ -31,7 +42,7 @@ export function useRealtimeQuery<TData>(
     queryFn,
     enabled: config?.enabled !== false,
     refetchInterval: config?.interval || 30000, // Fallback polling
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     meta: {
       source: 'shared.hooks.query.useRealtimeQuery',
       operation: 'polling',
@@ -45,7 +56,11 @@ export function useRealtimeQuery<TData>(
     if (config?.enabled === false) return (): void => {};
 
     // Try WebSocket connection first
-    const wsUrl = `ws://localhost:3000/ws/${JSON.stringify(queryKey)}`;
+    if (typeof window === 'undefined' || typeof window.WebSocket !== 'function') {
+      return (): void => {};
+    }
+
+    const wsUrl = resolveRealtimeWebSocketUrl(queryKey, window.location);
 
     try {
       wsRef.current = new WebSocket(wsUrl);

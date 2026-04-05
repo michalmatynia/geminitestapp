@@ -78,24 +78,28 @@ const normalizeTemplateRoot = (token: string): string => {
 const isSystemTemplateRoot = (root: string): boolean =>
   TEMPLATE_SYSTEM_ROOT_PREFIXES.some((prefix: string): boolean => root.startsWith(prefix));
 
+const readTemplateTokenMatch = (match: RegExpExecArray): string =>
+  normalizeText(match[1] ?? match[2]);
+
+const shouldIncludeTemplateToken = (token: string): boolean => {
+  const root = normalizeTemplateRoot(token);
+  return Boolean(root) && !isSystemTemplateRoot(root);
+};
+
 const extractTemplateTokens = (template: string): string[] => {
   const tokens = new Set<string>();
   TEMPLATE_TOKEN_REGEX.lastIndex = 0;
+
   let match = TEMPLATE_TOKEN_REGEX.exec(template);
   while (match) {
-    const token = (match[1] ?? match[2] ?? '').trim();
-    if (token.length === 0) {
-      match = TEMPLATE_TOKEN_REGEX.exec(template);
-      continue;
+    const token = readTemplateTokenMatch(match);
+    if (shouldIncludeTemplateToken(token)) {
+      tokens.add(token);
     }
-    const root = normalizeTemplateRoot(token);
-    if (!root || isSystemTemplateRoot(root)) {
-      match = TEMPLATE_TOKEN_REGEX.exec(template);
-      continue;
-    }
-    tokens.add(token);
+
     match = TEMPLATE_TOKEN_REGEX.exec(template);
   }
+
   return Array.from(tokens);
 };
 

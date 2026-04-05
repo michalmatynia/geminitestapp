@@ -210,7 +210,7 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
 }
 
 // Cleanup task (run periodically)
-if (typeof setInterval !== 'undefined') {
+if (typeof globalThis !== 'undefined' && 'setInterval' in globalThis) {
   safeSetInterval(
     (): void => {
       Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());

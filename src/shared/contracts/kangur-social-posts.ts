@@ -186,3 +186,13 @@ export const parseKangurSocialPostStore = (value: unknown): KangurSocialPostStor
     posts: parsed.posts.map((post) => normalizeKangurSocialPost(post)),
   };
 };
+
+export type KangurSocialPostListStatus = 'all' | 'draft' | 'scheduled' | 'published' | 'failed';
+
+export type KangurSocialPostsPageResult = {
+  posts: KangurSocialPost[];
+  total: number;
+  page: number;
+  pageSize: number;
+  statusCounts: Record<Exclude<KangurSocialPostListStatus, 'all'>, number>;
+};

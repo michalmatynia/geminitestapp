@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Label, Textarea } from '@/shared/ui';
+import { Label, Textarea } from '@/shared/ui/primitives.public';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { ValidationActionButton } from './ValidationActionButton';

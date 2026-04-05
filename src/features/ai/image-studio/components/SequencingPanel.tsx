@@ -14,12 +14,13 @@ import {
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   normalizeShapeToPolygons,

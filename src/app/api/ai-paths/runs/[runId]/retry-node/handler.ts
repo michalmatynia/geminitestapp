@@ -5,11 +5,11 @@ import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
+import { assertAiPathRunQueueReady } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { retryPathRunNode } from '@/features/ai/ai-paths/server';
-import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { aiPathRunRetryNodeRequestSchema } from '@/shared/contracts/ai-paths';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 

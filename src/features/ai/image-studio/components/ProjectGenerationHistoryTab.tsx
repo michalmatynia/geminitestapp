@@ -4,23 +4,15 @@ import {} from 'lucide-react';
 import Image from 'next/image';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import type { ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio';
-import type { FilterField } from '@/shared/contracts/ui';
+import type { ImageStudioRunRecord, ImageStudioRunsResponse } from '@/shared/contracts/image-studio/run';
+import type { FilterField } from '@/shared/contracts/ui/panels';
 import { IMAGE_STUDIO_RUN_STATUS_OPTIONS } from '@/features/ai/image-studio/utils/run-status-options';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import {
-  Pagination,
-  Card,
-  Badge,
-  Alert,
-  LoadingState,
-  Button,
-  PanelFilters,
-  SearchInput,
-  Checkbox,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Pagination, LoadingState, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import { Card, Badge, Alert, Button, Checkbox } from '@/shared/ui/primitives.public';
+import { PanelFilters } from '@/shared/ui/templates.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { useProjectsState } from '../context/ProjectsContext';

@@ -1,10 +1,9 @@
+'use client';
+
 import { useCallback, useMemo } from 'react';
 
-import {
-  studioSlotsResponseSchema,
-  type ImageStudioSlotRecord,
-  type StudioSlotsResponse,
-} from '@/shared/contracts/image-studio';
+import { studioSlotsResponseSchema } from '@/shared/contracts/image-studio/slot';
+import { type ImageStudioSlotRecord, type StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

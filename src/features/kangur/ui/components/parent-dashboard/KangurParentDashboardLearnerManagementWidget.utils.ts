@@ -1,5 +1,3 @@
-'use client';
-
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 import type { LearnerManagementCopy, ProfileModalTabId } from './KangurParentDashboardLearnerManagementWidget.types';
 

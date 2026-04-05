@@ -8,7 +8,8 @@ import { IntegrationsActionsContext } from '@/features/integrations/context/inte
 import { IntegrationsDataContext } from '@/features/integrations/context/integrations/IntegrationsDataContext';
 import { IntegrationsFormContext } from '@/features/integrations/context/integrations/IntegrationsFormContext';
 import { IntegrationsTestingContext } from '@/features/integrations/context/integrations/IntegrationsTestingContext';
-import type { IntegrationConnection, Integration } from '@/shared/contracts/integrations';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type { Integration } from '@/shared/contracts/integrations/base';
 import type { IntegrationsData } from '@/shared/contracts/integrations/context';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
@@ -36,7 +37,7 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
   useUpdateDefaultExportConnection: () => useUpdateDefaultExportConnection(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Button: ({
     children,
     onClick,
@@ -52,6 +53,23 @@ vi.mock('@/shared/ui', () => ({
     </button>
   ),
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  Alert: ({
+    children,
+    title,
+  }: {
+    children?: React.ReactNode;
+    title?: React.ReactNode;
+  }) => (
+    <div>
+      <span>{title}</span>
+      {children}
+    </div>
+  ),
+  useToast: () => ({ toast: toastMock }),
+  Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     value,
     onValueChange,
@@ -75,7 +93,6 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
-  StatusBadge: ({ status }: { status: string }) => <span>{status}</span>,
   FormSection: ({
     children,
     title,
@@ -106,18 +123,6 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </label>
   ),
-  CompactEmptyState: ({
-    title,
-    description,
-  }: {
-    title?: React.ReactNode;
-    description?: React.ReactNode;
-  }) => (
-    <div>
-      <span>{title}</span>
-      <span>{description}</span>
-    </div>
-  ),
   FormActions: ({
     onSave,
     saveText,
@@ -131,19 +136,26 @@ vi.mock('@/shared/ui', () => ({
       {saveText}
     </button>
   ),
-  Alert: ({
-    children,
+  Hint: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/data-display.public', () => ({
+  StatusBadge: ({ status }: { status: string }) => <span>{status}</span>,
+}));
+
+vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
+  CompactEmptyState: ({
     title,
+    description,
   }: {
-    children?: React.ReactNode;
     title?: React.ReactNode;
+    description?: React.ReactNode;
   }) => (
     <div>
       <span>{title}</span>
-      {children}
+      <span>{description}</span>
     </div>
   ),
-  useToast: () => ({ toast: toastMock }),
   MetadataItem: ({
     label,
     value,
@@ -156,8 +168,6 @@ vi.mock('@/shared/ui', () => ({
       <span>{value}</span>
     </div>
   ),
-  Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  Hint: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   UI_GRID_ROOMY_CLASSNAME: 'grid gap-4',
 }));
 

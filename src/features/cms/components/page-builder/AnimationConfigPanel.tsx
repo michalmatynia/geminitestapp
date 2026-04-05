@@ -6,16 +6,9 @@ import React from 'react';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/public';
 import type { AnimationPreset, AnimationTrigger } from '@/shared/contracts/gsap';
 import { ANIMATION_PRESETS, ANIMATION_EASINGS } from '@/shared/contracts/gsap';
-import {
-  Input,
-  Label,
-  SelectSimple,
-  RadioGroup,
-  RadioGroupItem,
-  FormField,
-  SectionHeader,
-  ToggleRow,
-} from '@/shared/ui';
+import { Input, Label, RadioGroup, RadioGroupItem } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import { AdvancedSection } from './animation/AdvancedSection';
 import { AnimationConfigProvider } from './animation/AnimationConfigContext';
@@ -50,7 +43,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
         label='Enable Animations'
         description='Master switch for all animation effects on this component'
         checked={isEnabled}
-        onCheckedChange={(checked) => {
+        onCheckedChange={(checked: boolean) => {
           if (!checked) {
             onChange({ ...DEFAULT_ANIMATION_CONFIG, preset: 'none' });
           } else {
@@ -77,7 +70,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
                 max={10}
                 step={0.1}
                 value={config.duration}
-                onChange={(e) => onChange({ duration: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ duration: Number(e.target.value) })}
                aria-label='Duration (s)' title='Duration (s)'/>
             </FormField>
             <FormField label='Delay (s)'>
@@ -87,7 +80,7 @@ export function AnimationConfigPanel(): React.JSX.Element {
                 max={10}
                 step={0.1}
                 value={config.delay}
-                onChange={(e) => onChange({ delay: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ delay: Number(e.target.value) })}
                aria-label='Delay (s)' title='Delay (s)'/>
             </FormField>
           </div>

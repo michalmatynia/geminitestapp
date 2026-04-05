@@ -4,7 +4,7 @@ import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 import { ChevronDown } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { SectionHeader } from './section-header';
 

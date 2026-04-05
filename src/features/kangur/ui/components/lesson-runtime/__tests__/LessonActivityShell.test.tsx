@@ -131,7 +131,7 @@ describe('LessonActivityShell', () => {
         onBack={vi.fn()}
         shellTestId='lesson-activity-plain-shell'
         shellVariant='plain'
-        title='Powtorz melodie'
+        title='Powtórz melodię'
       >
         <div>Gra muzyczna</div>
       </LessonActivityShell>

@@ -1,4 +1,4 @@
-import { TabsList, TabsTrigger } from '@/shared/ui';
+import { TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 
 import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 

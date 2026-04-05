@@ -7,8 +7,8 @@ import {
   stripHtmlToPlainText,
   toStorageDocumentValue,
   type DocumentContentCanonical,
-} from '@/features/document-editor/public';
-import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
+} from '@/shared/lib/document-editor/public';
+import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
 import { stableStringify } from '@/shared/lib/ai-paths';
 
 export type CaseResolverDraftCanonicalState = {

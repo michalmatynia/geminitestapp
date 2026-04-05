@@ -3,8 +3,9 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import type { LabelValueOptionDto as InspectorEntry } from '@/shared/contracts/ui';
-import { Card, Hint } from '@/shared/ui';
+import type { LabelValueOptionDto as InspectorEntry } from '@/shared/contracts/ui/base';
+import { Card } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import {
   useOptionalPreviewEditorActions,

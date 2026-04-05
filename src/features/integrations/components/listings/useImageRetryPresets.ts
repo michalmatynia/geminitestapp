@@ -1,9 +1,5 @@
-'use client';
-
-import type {
-  BaseImageRetryPresetsResponse,
-  ImageRetryPreset,
-} from '@/shared/contracts/integrations';
+import type { BaseImageRetryPresetsResponse } from '@/shared/contracts/integrations/preferences';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,

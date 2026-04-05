@@ -1,8 +1,6 @@
-'use client';
-
 import React from 'react';
 
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 import {
   renderNodeDiagnosticsTooltipContent,

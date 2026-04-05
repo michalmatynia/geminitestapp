@@ -8,21 +8,11 @@ import type {
   AiTriggerButtonRecord,
 } from '@/shared/contracts/ai-trigger-buttons';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import {
-  ActionMenu,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DropdownMenuItem,
-  StatusBadge,
-  ToggleRow,
-  Tooltip,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { ActionMenu, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DropdownMenuItem, Tooltip } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { type TriggerButtonLastRun, useTriggerButtons } from '../../hooks/useTriggerButtons';
 import { resolveTriggerButtonRunFeedbackPresentation } from '../../trigger-button-run-feedback';
@@ -54,8 +44,14 @@ type TriggerButtonToggleRuntimeValue = {
   onCheckedChange: (nextChecked: boolean) => void;
 };
 
-const TriggerButtonToggleRuntimeContext =
-  React.createContext<TriggerButtonToggleRuntimeValue | null>(null);
+const {
+  Context: TriggerButtonToggleRuntimeContext,
+  useStrictContext: useTriggerButtonToggleRuntime,
+} = createStrictContext<TriggerButtonToggleRuntimeValue>({
+  hookName: 'useTriggerButtonToggleRuntime',
+  providerName: 'TriggerButtonToggleRuntimeContext.Provider',
+  displayName: 'TriggerButtonToggleRuntimeContext',
+});
 const PRODUCT_RUN_FEEDBACK_LOCATIONS = new Set<AiTriggerButtonLocation>([
   'product_row',
   'product_modal',
@@ -216,16 +212,6 @@ function TriggerRunFeedback(props: {
       ) : null}
     </div>
   );
-}
-
-function useTriggerButtonToggleRuntime(): TriggerButtonToggleRuntimeValue {
-  const runtime = React.useContext(TriggerButtonToggleRuntimeContext);
-  if (!runtime) {
-    throw new Error(
-      'useTriggerButtonToggleRuntime must be used within TriggerButtonToggleRuntimeContext.Provider'
-    );
-  }
-  return runtime;
 }
 
 function TriggerButtonToggleControl(): React.JSX.Element {

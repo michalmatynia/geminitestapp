@@ -1,8 +1,6 @@
-'use client';
-
 import React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { StatusToggle } from './status-toggle';
 

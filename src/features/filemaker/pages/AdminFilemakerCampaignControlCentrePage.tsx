@@ -5,15 +5,10 @@ import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Badge,
-  Button,
-  InsetPanel,
-  PanelHeader,
-  SearchInput,
-  SectionHeader,
-  StandardDataTablePanel,
-} from '@/shared/ui';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { InsetPanel, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import {
@@ -23,6 +18,7 @@ import {
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   parseFilemakerDatabase,
   parseFilemakerEmailCampaignDeliveryAttemptRegistry,
@@ -30,7 +26,9 @@ import {
   parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
+  parseFilemakerEmailCampaignSchedulerStatus,
   parseFilemakerEmailCampaignSuppressionRegistry,
+  resolveFilemakerEmailCampaignNextAutomationAt,
   summarizeFilemakerEmailCampaignDeliverabilityOverview,
   type FilemakerEmailCampaignDomainDeliverability,
 } from '../settings';
@@ -49,6 +47,7 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
   const rawAttempts = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY);
   const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
+  const rawSchedulerStatus = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY);
   const rawSuppressions = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY);
 
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
@@ -75,6 +74,10 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const suppressionRegistry = useMemo(
     () => parseFilemakerEmailCampaignSuppressionRegistry(rawSuppressions),
     [rawSuppressions]
+  );
+  const schedulerStatus = useMemo(
+    () => parseFilemakerEmailCampaignSchedulerStatus(rawSchedulerStatus),
+    [rawSchedulerStatus]
   );
 
   const overview = useMemo(
@@ -215,6 +218,39 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
       overview.campaignHealth.filter((campaign) => campaign.alertLevel !== 'healthy').length,
     [overview.campaignHealth]
   );
+  const automationSchedule = useMemo(
+    () =>
+      campaignRegistry.campaigns
+        .map((campaign) => ({
+          campaignId: campaign.id,
+          campaignName: campaign.name,
+          nextAutomationAt: resolveFilemakerEmailCampaignNextAutomationAt(campaign),
+        }))
+        .filter(
+          (entry): entry is { campaignId: string; campaignName: string; nextAutomationAt: string } =>
+            entry.nextAutomationAt != null
+        )
+        .sort(
+          (left, right) =>
+            Date.parse(left.nextAutomationAt) - Date.parse(right.nextAutomationAt)
+        ),
+    [campaignRegistry.campaigns]
+  );
+  const nextAutomation = automationSchedule[0] ?? null;
+  const filteredSchedulerFailures = useMemo(
+    () =>
+      schedulerStatus.launchFailures.filter((failure) =>
+        includeQuery(
+          [
+            campaignRegistry.campaigns.find((campaign) => campaign.id === failure.campaignId)?.name ?? '',
+            failure.campaignId,
+            failure.message,
+          ],
+          deferredQuery
+        )
+      ),
+    [campaignRegistry.campaigns, deferredQuery, schedulerStatus.launchFailures]
+  );
 
   const domainColumns = useMemo<ColumnDef<FilemakerEmailCampaignDomainDeliverability>[]>(
     () => [
@@ -323,7 +359,7 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
+      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-6'>
         <InsetPanel padding='md' className='space-y-2'>
           <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>
             Accepted delivery
@@ -393,7 +429,94 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
             {overview.suppressionCount} suppressed addresses. At-risk campaigns: {atRiskCampaignCount}.
           </div>
         </InsetPanel>
+
+        <InsetPanel padding='md' className='space-y-2'>
+          <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>
+            Automation tick
+          </div>
+          <div className='text-2xl font-semibold text-white'>
+            {schedulerStatus.lastCompletedAt ? formatTimestamp(schedulerStatus.lastCompletedAt) : 'Pending'}
+          </div>
+          <div className='text-sm text-gray-400'>
+            {schedulerStatus.lastCompletedAt
+              ? `${schedulerStatus.launchedRuns.length} launches after evaluating ${schedulerStatus.evaluatedCampaignCount} campaigns.`
+              : 'The scheduler has not completed a tick yet.'}
+            {' '}
+            {nextAutomation
+              ? `Next automation: ${nextAutomation.campaignName} at ${formatTimestamp(nextAutomation.nextAutomationAt)}.`
+              : 'No future automation windows are currently scheduled.'}
+          </div>
+        </InsetPanel>
       </div>
+
+      <InsetPanel padding='md' className='space-y-4'>
+        <SectionHeader
+          title='Automation Scheduler'
+          description='Monitor the campaign scheduler, upcoming automated launches, and launch failures caught on the last tick.'
+          size='sm'
+        />
+        <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-4'>
+          <InsetPanel padding='md' className='space-y-2'>
+            <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>Last success</div>
+            <div className='text-lg font-semibold text-white'>
+              {formatTimestamp(schedulerStatus.lastSuccessfulAt)}
+            </div>
+          </InsetPanel>
+          <InsetPanel padding='md' className='space-y-2'>
+            <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>Due campaigns</div>
+            <div className='text-lg font-semibold text-white'>{schedulerStatus.dueCampaignCount}</div>
+          </InsetPanel>
+          <InsetPanel padding='md' className='space-y-2'>
+            <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>Queued dispatches</div>
+            <div className='text-lg font-semibold text-white'>{schedulerStatus.queuedDispatchCount}</div>
+          </InsetPanel>
+          <InsetPanel padding='md' className='space-y-2'>
+            <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>Inline dispatches</div>
+            <div className='text-lg font-semibold text-white'>{schedulerStatus.inlineDispatchCount}</div>
+          </InsetPanel>
+        </div>
+        {filteredSchedulerFailures.length === 0 ? (
+          <div className='rounded-xl border border-dashed border-border/40 p-4 text-sm text-gray-500'>
+            No scheduler launch failures match the current filter.
+          </div>
+        ) : (
+          <div className='grid gap-3 lg:grid-cols-2'>
+            {filteredSchedulerFailures.map((failure) => {
+              const campaignName =
+                campaignRegistry.campaigns.find((campaign) => campaign.id === failure.campaignId)?.name ??
+                failure.campaignId;
+              return (
+                <div
+                  key={`${failure.campaignId}-${failure.message}`}
+                  className='rounded-xl border border-border/50 bg-background/30 p-4 space-y-3'
+                >
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <Badge variant='outline' className='text-[10px] uppercase'>
+                      launch failure
+                    </Badge>
+                  </div>
+                  <div className='space-y-1'>
+                    <div className='text-sm font-medium text-white'>{campaignName}</div>
+                    <div className='text-sm leading-6 text-gray-300'>{failure.message}</div>
+                  </div>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='outline'
+                    onClick={(): void => {
+                      router.push(
+                        `/admin/filemaker/campaigns/${encodeURIComponent(failure.campaignId)}`
+                      );
+                    }}
+                  >
+                    Open Campaign
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </InsetPanel>
 
       <InsetPanel padding='md' className='space-y-4'>
         <SectionHeader

@@ -1,4 +1,4 @@
-import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
+import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver/relations';
 import type {
   FilemakerAddressDto as FilemakerAddress,
   FilemakerAddressFields,

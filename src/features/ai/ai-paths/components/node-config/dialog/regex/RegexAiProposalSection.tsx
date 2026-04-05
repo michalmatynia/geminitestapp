@@ -4,7 +4,8 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { RegexConfig } from '@/shared/lib/ai-paths';
-import { Button, SelectSimple } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 export type RegexAiProposalSectionProps = {
   regexConfig: RegexConfig;

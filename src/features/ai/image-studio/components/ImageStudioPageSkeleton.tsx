@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Skeleton } from '@/shared/ui';
+import { Skeleton } from '@/shared/ui/primitives.public';
 
 export function ImageStudioPageSkeleton(): React.JSX.Element {
   return (

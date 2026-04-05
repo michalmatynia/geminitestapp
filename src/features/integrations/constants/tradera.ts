@@ -1,4 +1,4 @@
-import type { TraderaSystemSettings } from '@/shared/contracts/integrations';
+import type { TraderaSystemSettings } from '@/shared/contracts/integrations/tradera';
 
 export type { TraderaSystemSettings };
 
@@ -13,6 +13,47 @@ export const TRADERA_SETTINGS_KEYS = {
   selectorProfile: 'tradera_selector_profile',
 } as const;
 
+export const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selling/new';
+export const TRADERA_LEGACY_LISTING_FORM_URL =
+  'https://www.tradera.com/en/selling?redirectToNewIfNoDrafts';
+
+const TRADERA_ALLOWED_HOSTS = new Set(['www.tradera.com', 'tradera.com']);
+const TRADERA_NEW_LISTING_PATH_PATTERN =
+  /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/new\/?$/i;
+const TRADERA_LEGACY_LISTING_PATH_PATTERN =
+  /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?selling\/?$/i;
+
+const isAllowedTraderaListingFormUrl = (value: URL): boolean => {
+  if (!TRADERA_ALLOWED_HOSTS.has(value.host.toLowerCase())) {
+    return false;
+  }
+
+  if (TRADERA_NEW_LISTING_PATH_PATTERN.test(value.pathname)) {
+    return true;
+  }
+
+  return (
+    TRADERA_LEGACY_LISTING_PATH_PATTERN.test(value.pathname) &&
+    value.searchParams.has('redirectToNewIfNoDrafts')
+  );
+};
+
+export const normalizeTraderaListingFormUrl = (value: string | null | undefined): string => {
+  const trimmed = value?.trim();
+  if (!trimmed) return TRADERA_DIRECT_LISTING_FORM_URL;
+
+  try {
+    const parsed = new URL(trimmed, TRADERA_DIRECT_LISTING_FORM_URL);
+    if (!isAllowedTraderaListingFormUrl(parsed)) {
+      return TRADERA_DIRECT_LISTING_FORM_URL;
+    }
+  } catch {
+    return TRADERA_DIRECT_LISTING_FORM_URL;
+  }
+
+  return TRADERA_DIRECT_LISTING_FORM_URL;
+};
+
 export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   defaultDurationHours: 72,
   autoRelistEnabled: true,
@@ -20,7 +61,7 @@ export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   schedulerEnabled: false,
   schedulerIntervalMs: 5 * 60 * 1000,
   allowSimulatedSuccess: false,
-  listingFormUrl: 'https://www.tradera.com/sell/item/new',
+  listingFormUrl: TRADERA_DIRECT_LISTING_FORM_URL,
   selectorProfile: 'default',
 };
 
@@ -37,6 +78,9 @@ const toInt = (
   fallback: number,
   options?: { min?: number; max?: number }
 ): number => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return fallback;
+  }
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   const rounded = Math.floor(parsed);
@@ -78,8 +122,9 @@ export const resolveTraderaSystemSettings = (lookup: SettingLookup): TraderaSyst
       lookup.get(TRADERA_SETTINGS_KEYS.allowSimulatedSuccess),
       defaults.allowSimulatedSuccess
     ),
-    listingFormUrl:
-      lookup.get(TRADERA_SETTINGS_KEYS.listingFormUrl)?.trim() || defaults.listingFormUrl,
+    listingFormUrl: normalizeTraderaListingFormUrl(
+      lookup.get(TRADERA_SETTINGS_KEYS.listingFormUrl) ?? defaults.listingFormUrl
+    ),
     selectorProfile:
       lookup.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() || defaults.selectorProfile,
   };

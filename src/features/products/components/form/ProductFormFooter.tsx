@@ -2,10 +2,10 @@
 
 import { Copy } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Button } from '@/shared/ui/button';
+import { useToast } from '@/shared/ui/toast';
 
-import { Button, useToast } from '@/features/products/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 export interface ProductFormFooterProps {
   entityId: string | null;

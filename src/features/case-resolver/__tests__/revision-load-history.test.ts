@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type {
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverFileEditDraft,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
 import {
   createCaseResolverHistorySnapshotEntry,
   prependDraftHistorySnapshotForRevisionLoad,

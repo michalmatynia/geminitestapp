@@ -7,6 +7,8 @@ import {
   type KangurLaunchTarget,
 } from '@/features/kangur/config/routing';
 import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
+import { getLiteSettingsForHydration } from '@/shared/lib/lite-settings-ssr';
+import { readKangurLaunchRouteDevSnapshot } from '@/features/kangur/server/launch-route-dev-snapshot';
 import {
   KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   parseKangurLaunchRouteSettings,
@@ -27,8 +29,54 @@ let cachedKangurLaunchRoute: {
   route: KangurLaunchRoute;
 } | null = null;
 
+const isDevelopmentEnvironment = (): boolean => process.env['NODE_ENV'] === 'development';
+
+const commitKangurLaunchRouteSnapshot = (route: KangurLaunchRoute): KangurLaunchRoute => {
+  cachedKangurLaunchRoute = {
+    readAt: Date.now(),
+    route,
+  };
+  return route;
+};
+
+const readBootstrappedKangurLaunchRoute = async (): Promise<KangurLaunchRoute | null> => {
+  try {
+    const liteSettings = await getLiteSettingsForHydration();
+    const setting = liteSettings.find((entry) => entry.key === KANGUR_LAUNCH_ROUTE_SETTINGS_KEY);
+    if (!setting) {
+      return null;
+    }
+    return commitKangurLaunchRouteSnapshot(parseKangurLaunchRouteSettings(setting.value).route);
+  } catch {
+    return null;
+  }
+};
+
+const readDevelopmentKangurLaunchRouteSnapshot = async (): Promise<KangurLaunchRoute | null> => {
+  if (!isDevelopmentEnvironment()) {
+    return null;
+  }
+
+  const snapshot = await readKangurLaunchRouteDevSnapshot();
+  if (!snapshot) {
+    return null;
+  }
+
+  return commitKangurLaunchRouteSnapshot(snapshot);
+};
+
+export const primeKangurLaunchRouteRuntime = (
+  value: string | null | undefined
+): KangurLaunchRoute => {
+  return commitKangurLaunchRouteSnapshot(parseKangurLaunchRouteSettings(value).route);
+};
+
 export const getKangurConfiguredLaunchRoute = cache(async (): Promise<KangurLaunchRoute> => {
   const now = Date.now();
+  if (cachedKangurLaunchRoute && isDevelopmentEnvironment()) {
+    return cachedKangurLaunchRoute.route;
+  }
+
   if (
     cachedKangurLaunchRoute &&
     now - cachedKangurLaunchRoute.readAt < KANGUR_LAUNCH_ROUTE_CACHE_TTL_MS
@@ -36,13 +84,18 @@ export const getKangurConfiguredLaunchRoute = cache(async (): Promise<KangurLaun
     return cachedKangurLaunchRoute.route;
   }
 
+  const developmentSnapshot = await readDevelopmentKangurLaunchRouteSnapshot();
+  if (developmentSnapshot) {
+    return developmentSnapshot;
+  }
+
+  const bootstrappedRoute = await readBootstrappedKangurLaunchRoute();
+  if (bootstrappedRoute) {
+    return bootstrappedRoute;
+  }
+
   const rawSetting = await readKangurSettingValue(KANGUR_LAUNCH_ROUTE_SETTINGS_KEY);
-  const route = parseKangurLaunchRouteSettings(rawSetting).route;
-  cachedKangurLaunchRoute = {
-    readAt: now,
-    route,
-  };
-  return route;
+  return commitKangurLaunchRouteSnapshot(parseKangurLaunchRouteSettings(rawSetting).route);
 });
 
 export const getKangurConfiguredLaunchTarget = async (

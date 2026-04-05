@@ -161,6 +161,121 @@ function MockKangurAiTutorMoodAvatar(props: MoodAvatarMockProps): React.JSX.Elem
   );
 }
 
+const buildTutorSettings = (
+  overrides: Partial<{
+    enabled: boolean;
+    agentPersonaId: string | null;
+    motionPresetId: string | null;
+    uiMode: string;
+    allowCrossPagePersistence: boolean;
+    allowLessons: boolean;
+    testAccessMode: string;
+    showSources: boolean;
+    allowSelectedTextSupport: boolean;
+    proactiveNudges: string;
+    dailyMessageLimit: number | null;
+  }> = {}
+) => ({
+  enabled: true,
+  agentPersonaId: null,
+  motionPresetId: null,
+  uiMode: 'anchored',
+  allowCrossPagePersistence: true,
+  allowLessons: true,
+  testAccessMode: 'guided',
+  showSources: true,
+  allowSelectedTextSupport: true,
+  proactiveNudges: 'gentle',
+  dailyMessageLimit: null,
+  ...overrides,
+});
+
+const buildTutorSessionContext = (
+  overrides: Partial<{
+    surface: string;
+    contentId: string;
+    title: string;
+    currentQuestion: string;
+    answerRevealed: boolean;
+    questionProgressLabel: string;
+  }> = {}
+) => ({
+  surface: 'lesson',
+  contentId: 'lesson-1',
+  title: 'Dodawanie',
+  ...overrides,
+});
+
+const buildTutorRuntimeValue = (
+  overrides: Partial<{
+    enabled: boolean;
+    tutorSettings: ReturnType<typeof buildTutorSettings>;
+    tutorName: string;
+    tutorMoodId: string;
+    tutorBehaviorMoodId: string;
+    tutorBehaviorMoodLabel: string;
+    tutorBehaviorMoodDescription: string;
+    sessionContext: ReturnType<typeof buildTutorSessionContext>;
+    isOpen: boolean;
+    messages: Array<Record<string, unknown>>;
+    isLoading: boolean;
+    isUsageLoading: boolean;
+    highlightedText: string | null;
+    usageSummary: Record<string, unknown> | null;
+    openChat: typeof openChatMock;
+    closeChat: typeof closeChatMock;
+    sendMessage: typeof sendMessageMock;
+    setHighlightedText: typeof setHighlightedTextMock;
+  }> = {}
+) => {
+  const { sessionContext, tutorSettings, ...rest } = overrides;
+
+  return {
+    enabled: true,
+    tutorName: 'Pomocnik',
+    tutorMoodId: 'neutral',
+    tutorBehaviorMoodId: 'neutral',
+    tutorBehaviorMoodLabel: 'Neutralny',
+    tutorBehaviorMoodDescription: 'Tutor czeka na kolejne pytanie.',
+    isOpen: true,
+    messages: [],
+    isLoading: false,
+    isUsageLoading: false,
+    highlightedText: null,
+    usageSummary: null,
+    openChat: openChatMock,
+    closeChat: closeChatMock,
+    sendMessage: sendMessageMock,
+    setHighlightedText: setHighlightedTextMock,
+    ...rest,
+    tutorSettings: buildTutorSettings(tutorSettings),
+    sessionContext: buildTutorSessionContext(sessionContext),
+  };
+};
+
+const mockTutorRuntime = (
+  overrides: Parameters<typeof buildTutorRuntimeValue>[0] = {}
+): void => {
+  useKangurAiTutorMock.mockReturnValue(buildTutorRuntimeValue(overrides));
+};
+
+const mockTutorTextHighlight = (
+  overrides: Partial<{
+    selectedText: string | null;
+    selectionRect: DOMRect | null;
+    selectionContainerRect: DOMRect | null;
+    clearSelection: typeof clearSelectionMock;
+  }> = {}
+): void => {
+  useKangurTextHighlightMock.mockReturnValue({
+    selectedText: null,
+    selectionRect: null,
+    selectionContainerRect: null,
+    clearSelection: clearSelectionMock,
+    ...overrides,
+  });
+};
+
 vi.mock('../KangurAiTutorMoodAvatar', () => ({
   KangurAiTutorMoodAvatar: MockKangurAiTutorMoodAvatar,
 }));
@@ -446,26 +561,7 @@ describe('KangurAiTutorWidget - Actions', () => {
   });
 
   it('switches to review-oriented actions after revealing a test answer', async () => {
-    useKangurAiTutorMock.mockReturnValue({
-      enabled: true,
-      tutorSettings: {
-        enabled: true,
-        agentPersonaId: null,
-        motionPresetId: null,
-        uiMode: 'anchored',
-        allowCrossPagePersistence: true,
-        allowLessons: true,
-        testAccessMode: 'guided',
-        showSources: true,
-        allowSelectedTextSupport: true,
-        proactiveNudges: 'gentle',
-        dailyMessageLimit: null,
-      },
-      tutorName: 'Pomocnik',
-      tutorMoodId: 'neutral',
-      tutorBehaviorMoodId: 'neutral',
-      tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Tutor czeka na kolejne pytanie.',
+    mockTutorRuntime({
       sessionContext: {
         surface: 'test',
         contentId: 'suite-1',
@@ -473,22 +569,8 @@ describe('KangurAiTutorWidget - Actions', () => {
         currentQuestion: 'Ile to 2 + 2?',
         answerRevealed: true,
       },
-      isOpen: true,
-      messages: [],
-      isLoading: false,
-      isUsageLoading: false,
-      highlightedText: null,
-      usageSummary: null,
-      openChat: openChatMock,
-      closeChat: closeChatMock,
-      sendMessage: sendMessageMock,
-      setHighlightedText: setHighlightedTextMock,
     });
-    useKangurTextHighlightMock.mockReturnValue({
-      selectedText: null,
-      selectionRect: null,
-      clearSelection: clearSelectionMock,
-    });
+    mockTutorTextHighlight();
     render(<KangurAiTutorWidget />);
     expect(screen.getByRole('button', { name: 'Omów odpowiedź' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Co poprawić?' })).toBeInTheDocument();
@@ -712,31 +794,12 @@ describe('KangurAiTutorWidget - Actions', () => {
   });
 
   it('hides sources and selected-text affordances when parent guardrails disable them', () => {
-    useKangurAiTutorMock.mockReturnValue({
-      enabled: true,
+    mockTutorRuntime({
       tutorSettings: {
-        enabled: true,
-        agentPersonaId: null,
-        motionPresetId: null,
-        uiMode: 'anchored',
-        allowCrossPagePersistence: true,
-        allowLessons: true,
-        testAccessMode: 'guided',
         showSources: false,
         allowSelectedTextSupport: false,
         dailyMessageLimit: 5,
       },
-      tutorName: 'Pomocnik',
-      tutorMoodId: 'neutral',
-      tutorBehaviorMoodId: 'neutral',
-      tutorBehaviorMoodLabel: 'Neutralny',
-      tutorBehaviorMoodDescription: 'Tutor czeka na kolejne pytanie.',
-      sessionContext: {
-        surface: 'lesson',
-        contentId: 'lesson-1',
-        title: 'Dodawanie',
-      },
-      isOpen: true,
       messages: [
         {
           role: 'assistant',
@@ -754,8 +817,6 @@ describe('KangurAiTutorWidget - Actions', () => {
           ],
         },
       ],
-      isLoading: false,
-      isUsageLoading: false,
       highlightedText: '2 + 2',
       usageSummary: {
         dateKey: '2026-03-07',
@@ -765,13 +826,10 @@ describe('KangurAiTutorWidget - Actions', () => {
       },
       openChat: vi.fn(),
       closeChat: vi.fn(),
-      sendMessage: sendMessageMock,
-      setHighlightedText: setHighlightedTextMock,
     });
-    useKangurTextHighlightMock.mockReturnValue({
+    mockTutorTextHighlight({
       selectedText: '2 + 2',
       selectionRect: new DOMRect(120, 180, 140, 26),
-      clearSelection: clearSelectionMock,
     });
     render(<KangurAiTutorWidget />);
     expect(screen.queryByRole('button', { name: 'Zapytaj o to' })).not.toBeInTheDocument();

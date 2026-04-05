@@ -7,44 +7,18 @@ import {
   hasCaseResolverWorkspaceFilesArray,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
+import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
+import { type CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
-  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
-  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  type AiNode,
-  type CaseResolverFile,
-} from '@/shared/contracts/case-resolver';
-
-const createPromptNode = (id: string): AiNode => ({
-  id,
-  type: 'prompt',
-  title: id,
-  description: '',
-  inputs: ['input'],
-  outputs: ['output'],
-  position: { x: 0, y: 0 },
-  config: { prompt: { template: '' } },
-  data: {},
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-01T00:00:00.000Z',
-});
-
-const createCanonicalTextPromptNode = (
-  id: string,
-  role: 'text_note' | 'explanatory' = 'text_note'
-): AiNode => ({
-  ...createPromptNode(id),
-  inputs:
-    role === 'explanatory'
-      ? [...CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS]
-      : [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS],
-  outputs:
-    role === 'explanatory'
-      ? [...CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS]
-      : [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS],
-});
+  createCanonicalTextPromptNode,
+  createCaseFilePayload,
+  createDocumentFilePayload,
+  createEmptyGraphPayload,
+  createScanFilePayload,
+  createWorkspaceAssetPayload,
+  createWorkspaceFilePayload,
+  createWorkspaceJson,
+} from './workspace.test-helpers';
 
 describe('case-resolver workspace', () => {
   it('starts with an empty workspace and no placeholder files', () => {
@@ -88,33 +62,12 @@ describe('case-resolver workspace', () => {
 
   it('keeps detached non-case files even when ownership is unresolved', () => {
     const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
+      createWorkspaceJson({
         workspaceRevision: 2,
-        lastMutationId: null,
-        lastMutationAt: null,
-        folders: [],
         files: [
-          {
-            id: 'case-a',
-            fileType: 'case',
-            name: 'Case A',
-            folder: '',
-            parentCaseId: null,
-            referenceCaseIds: [],
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
-          {
-            id: 'detached-doc-root',
-            fileType: 'document',
-            name: 'Detached Root Doc',
-            folder: '',
-            parentCaseId: null,
-            referenceCaseIds: [],
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
+          createCaseFilePayload({ id: 'case-a', name: 'Case A' }),
+          createDocumentFilePayload({ id: 'detached-doc-root', name: 'Detached Root Doc' }),
         ],
-        assets: [],
         activeFileId: 'detached-doc-root',
       })
     );
@@ -132,37 +85,21 @@ describe('case-resolver workspace', () => {
 
   it('does not infer missing document ownership from folder records', () => {
     const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
+      createWorkspaceJson({
         workspaceRevision: 3,
-        lastMutationId: null,
-        lastMutationAt: null,
         folders: ['Case_A/Incoming'],
         folderRecords: [
           { path: 'Case_A', ownerCaseId: 'case-a' },
           { path: 'Case_A/Incoming', ownerCaseId: 'case-a' },
         ],
         files: [
-          {
-            id: 'case-a',
-            fileType: 'case',
-            name: 'Case A',
-            folder: '',
-            parentCaseId: null,
-            referenceCaseIds: [],
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
-          {
+          createCaseFilePayload({ id: 'case-a', name: 'Case A' }),
+          createDocumentFilePayload({
             id: 'doc-a',
-            fileType: 'document',
             name: 'Doc A',
             folder: 'Case_A/Incoming',
-            parentCaseId: null,
-            referenceCaseIds: [],
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
+          }),
         ],
-        assets: [],
         activeFileId: 'doc-a',
       })
     );
@@ -173,35 +110,21 @@ describe('case-resolver workspace', () => {
 
   it('keeps case-owned documents when unrelated case metadata changes', () => {
     const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
+      createWorkspaceJson({
         workspaceRevision: 4,
-        lastMutationId: null,
-        lastMutationAt: null,
-        folders: [],
         files: [
-          {
+          createCaseFilePayload({
             id: 'case-a',
-            fileType: 'case',
             name: 'Case A',
             caseStatus: 'completed',
             caseTreeOrder: 10,
-            folder: '',
-            parentCaseId: null,
-            referenceCaseIds: [],
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
-          {
+          }),
+          createDocumentFilePayload({
             id: 'doc-owned',
-            fileType: 'document',
             name: 'Owned Doc',
-            folder: '',
             parentCaseId: 'case-a',
-            referenceCaseIds: [],
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
+          }),
         ],
-        assets: [],
         activeFileId: 'case-a',
       })
     );
@@ -218,23 +141,15 @@ describe('case-resolver workspace', () => {
 
   it('normalizes and preserves happening date for case files', () => {
     const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
+      createWorkspaceJson({
         workspaceRevision: 1,
-        lastMutationId: null,
-        lastMutationAt: null,
-        folders: [],
         files: [
-          {
+          createCaseFilePayload({
             id: 'case-happening-date',
-            fileType: 'case',
             name: 'Case Date',
-            folder: '',
             happeningDate: ' 2026-03-11T16:20:00.000Z ',
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
+          }),
         ],
-        assets: [],
         activeFileId: 'case-happening-date',
       })
     );
@@ -253,31 +168,22 @@ describe('case-resolver workspace', () => {
 
   it('returns the newest timestamp across workspace files and assets', () => {
     const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
-        workspaceRevision: 0,
-        lastMutationId: null,
-        lastMutationAt: null,
-        folders: [],
+      createWorkspaceJson({
         files: [
-          {
+          createWorkspaceFilePayload({
             id: 'case-a',
             name: 'Case A',
-            folder: '',
             createdAt: '2026-01-01T10:00:00.000Z',
             updatedAt: '2026-01-02T10:00:00.000Z',
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
+          }),
         ],
         assets: [
-          {
+          createWorkspaceAssetPayload({
             id: 'asset-a',
             name: 'Asset A',
-            folder: '',
-            kind: 'file',
             createdAt: '2026-01-03T10:00:00.000Z',
             updatedAt: '2026-01-04T10:00:00.000Z',
-          },
+          }),
         ],
         activeFileId: 'case-a',
       })
@@ -289,11 +195,11 @@ describe('case-resolver workspace', () => {
   });
 
   it('normalizes folders, deduplicates files, and sanitizes node metadata', () => {
-    const raw = JSON.stringify({
+    const raw = createWorkspaceJson({
       version: 1,
       folders: ['Root A/Sub *', 'Root A'],
       files: [
-        {
+        createWorkspaceFilePayload({
           id: 'dup-file',
           name: 'Case One',
           folder: 'Root A/Sub *',
@@ -303,9 +209,8 @@ describe('case-resolver workspace', () => {
           addresser: { kind: 'person', id: 'p-1' },
           addressee: { kind: 'invalid', id: 'x-1' },
           caseIdentifierId: '  identifier-1  ',
-          graph: {
+          graph: createEmptyGraphPayload({
             nodes: [createCanonicalTextPromptNode('n1'), createCanonicalTextPromptNode('n2')],
-            edges: [],
             nodeMeta: {
               n1: {
                 role: 'text_note',
@@ -322,20 +227,12 @@ describe('case-resolver workspace', () => {
                 surroundSuffix: null,
               },
             },
-            edgeMeta: {},
-          },
-        },
-        {
+          }),
+        }),
+        createWorkspaceFilePayload({
           id: 'dup-file',
           name: 'Case Duplicate',
-          folder: '',
-          graph: {
-            nodes: [],
-            edges: [],
-            nodeMeta: {},
-            edgeMeta: {},
-          },
-        },
+        }),
       ],
       activeFileId: 'missing-id',
     });
@@ -399,11 +296,8 @@ describe('case-resolver workspace', () => {
 
   it('retains owner-scoped folder records for case-isolated empty folders', () => {
     const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
+      createWorkspaceJson({
         workspaceRevision: 1,
-        lastMutationId: null,
-        lastMutationAt: null,
         folders: ['Shared'],
         folderRecords: [
           { path: 'Shared', ownerCaseId: 'case-a' },
@@ -411,22 +305,9 @@ describe('case-resolver workspace', () => {
           { path: 'Shared', ownerCaseId: 'missing-case' },
         ],
         files: [
-          {
-            id: 'case-a',
-            fileType: 'case',
-            name: 'Case A',
-            folder: '',
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
-          {
-            id: 'case-b',
-            fileType: 'case',
-            name: 'Case B',
-            folder: '',
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
+          createCaseFilePayload({ id: 'case-a', name: 'Case A' }),
+          createCaseFilePayload({ id: 'case-b', name: 'Case B' }),
         ],
-        assets: [],
         activeFileId: 'case-a',
       })
     );
@@ -440,22 +321,12 @@ describe('case-resolver workspace', () => {
 
   it('ignores folder list without explicit folder records', () => {
     const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
+      createWorkspaceJson({
         workspaceRevision: 1,
-        lastMutationId: null,
-        lastMutationAt: null,
         folders: ['Legacy Folder'],
         files: [
-          {
-            id: 'case-only',
-            fileType: 'case',
-            name: 'Case Only',
-            folder: '',
-            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-          },
+          createCaseFilePayload({ id: 'case-only', name: 'Case Only' }),
         ],
-        assets: [],
         activeFileId: 'case-only',
       })
     );
@@ -465,28 +336,19 @@ describe('case-resolver workspace', () => {
   });
 
   it('normalizes uploaded assets and infers asset kind', () => {
-    const raw = JSON.stringify({
-      version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
+    const raw = createWorkspaceJson({
       folders: ['Assets'],
       files: [
-        {
+        createWorkspaceFilePayload({
           id: 'case-1',
           name: 'Case One',
-          folder: '',
-          graph: {
-            nodes: [],
-            edges: [],
-            nodeMeta: {},
-            edgeMeta: {},
+          graph: createEmptyGraphPayload({
             pdfExtractionPresetId: 'unknown_preset',
-          },
-        },
+          }),
+        }),
       ],
       assets: [
-        {
+        createWorkspaceAssetPayload({
           id: 'asset-1',
           name: ' Render 01.png ',
           folder: 'Assets',
@@ -496,13 +358,8 @@ describe('case-resolver workspace', () => {
           size: 120.2,
           textContent: null,
           description: null,
-        },
-        {
-          id: 'asset-1',
-          name: 'Duplicate',
-          folder: '',
-          kind: 'file',
-        },
+        }),
+        createWorkspaceAssetPayload({ id: 'asset-1', name: 'Duplicate' }),
       ],
       activeFileId: 'case-1',
     });
@@ -515,30 +372,17 @@ describe('case-resolver workspace', () => {
     expect(workspace.files[0]!.graph!.pdfExtractionPresetId).toBe('plain_text');
   });
   it('preserves editor metadata and sanitizes html content payloads', () => {
-    const raw = JSON.stringify({
-      version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
-      folders: [],
+    const raw = createWorkspaceJson({
       files: [
-        {
+        createWorkspaceFilePayload({
           id: 'case-editor',
           name: 'Editor Case',
-          folder: '',
           editorType: 'wysiwyg',
           documentContentVersion: 5,
           documentContentFormatVersion: 1,
           documentContent: '<h1>Hello</h1><script>alert(1)</script><p>World</p>',
-          graph: {
-            nodes: [],
-            edges: [],
-            nodeMeta: {},
-            edgeMeta: {},
-          },
-        },
+        }),
       ],
-      assets: [],
       activeFileId: 'case-editor',
     });
 
@@ -554,32 +398,18 @@ describe('case-resolver workspace', () => {
   });
 
   it('keeps scan markdown authoritative when both markdown and html are present', () => {
-    const raw = JSON.stringify({
-      version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
-      folders: [],
+    const raw = createWorkspaceJson({
       files: [
-        {
+        createScanFilePayload({
           id: 'scan-markdown',
-          fileType: 'scanfile',
           name: 'Scan Markdown',
-          folder: '',
           documentContentMarkdown: `## Heading
 
 - one
 - two`,
           documentContentHtml: '<p>Legacy HTML should not override markdown.</p>',
-          graph: {
-            nodes: [],
-            edges: [],
-            nodeMeta: {},
-            edgeMeta: {},
-          },
-        },
+        }),
       ],
-      assets: [],
       activeFileId: 'scan-markdown',
     });
 
@@ -593,29 +423,15 @@ describe('case-resolver workspace', () => {
   });
 
   it('strips legacy scan html-only content into plain markdown text', () => {
-    const raw = JSON.stringify({
-      version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
-      folders: [],
+    const raw = createWorkspaceJson({
       files: [
-        {
+        createScanFilePayload({
           id: 'scan-legacy-html',
-          fileType: 'scanfile',
           name: 'Legacy Scan',
-          folder: '',
           documentContent: '<p>Hello <strong>world</strong></p><p>Second line</p>',
           documentContentHtml: '<p>Hello <strong>world</strong></p><p>Second line</p>',
-          graph: {
-            nodes: [],
-            edges: [],
-            nodeMeta: {},
-            edgeMeta: {},
-          },
-        },
+        }),
       ],
-      assets: [],
       activeFileId: 'scan-legacy-html',
     });
 
@@ -630,17 +446,11 @@ describe('case-resolver workspace', () => {
   });
 
   it('normalizes and preserves document history snapshots', () => {
-    const raw = JSON.stringify({
-      version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
-      folders: [],
+    const raw = createWorkspaceJson({
       files: [
-        {
+        createWorkspaceFilePayload({
           id: 'case-history',
           name: 'History Case',
-          folder: '',
           documentContentVersion: 3,
           documentHistory: [
             {
@@ -660,15 +470,8 @@ describe('case-resolver workspace', () => {
               documentContentHtml: '<p>Second version</p>',
             },
           ],
-          graph: {
-            nodes: [],
-            edges: [],
-            nodeMeta: {},
-            edgeMeta: {},
-          },
-        },
+        }),
       ],
-      assets: [],
       activeFileId: 'case-history',
     });
 
@@ -686,55 +489,32 @@ describe('case-resolver workspace', () => {
   });
 
   it('normalizes related file links and enforces bidirectional relations', () => {
-    const raw = JSON.stringify({
-      version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
-      folders: [],
+    const raw = createWorkspaceJson({
       files: [
-        {
+        createCaseFilePayload({
           id: 'case-a',
-          fileType: 'case',
           name: 'Case A',
-          folder: '',
-          parentCaseId: null,
-          referenceCaseIds: [],
           relatedFileIds: ['doc-a'],
-          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-        },
-        {
+        }),
+        createDocumentFilePayload({
           id: 'doc-a',
-          fileType: 'document',
           name: 'Doc A',
-          folder: '',
           parentCaseId: 'case-a',
-          referenceCaseIds: [],
           relatedFileIds: ['doc-b', 'doc-b', 'missing-doc', 'doc-a', 'case-a'],
-          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-        },
-        {
+        }),
+        createScanFilePayload({
           id: 'doc-b',
-          fileType: 'scanfile',
           name: 'Doc B',
-          folder: '',
           parentCaseId: 'case-a',
-          referenceCaseIds: [],
           relatedFileIds: [],
-          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-        },
-        {
+        }),
+        createDocumentFilePayload({
           id: 'doc-c',
-          fileType: 'document',
           name: 'Doc C',
-          folder: '',
           parentCaseId: 'case-a',
-          referenceCaseIds: [],
           relatedFileIds: ['doc-b'],
-          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-        },
+        }),
       ],
-      assets: [],
       activeFileId: 'doc-a',
     });
 
@@ -753,43 +533,23 @@ describe('case-resolver workspace', () => {
   });
 
   it('removes stale related links while keeping unresolved documents', () => {
-    const raw = JSON.stringify({
-      version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
-      folders: [],
+    const raw = createWorkspaceJson({
       files: [
-        {
+        createCaseFilePayload({
           id: 'case-a',
-          fileType: 'case',
           name: 'Case A',
-          folder: '',
-          parentCaseId: null,
-          referenceCaseIds: [],
-          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-        },
-        {
+        }),
+        createDocumentFilePayload({
           id: 'doc-kept',
-          fileType: 'document',
           name: 'Doc Kept',
-          folder: '',
           parentCaseId: 'case-a',
-          referenceCaseIds: [],
           relatedFileIds: ['doc-missing'],
-          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-        },
-        {
+        }),
+        createDocumentFilePayload({
           id: 'doc-orphan',
-          fileType: 'document',
           name: 'Doc Orphan',
-          folder: '',
-          parentCaseId: null,
-          referenceCaseIds: [],
-          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-        },
+        }),
       ],
-      assets: [],
       activeFileId: 'doc-kept',
     });
 
@@ -806,32 +566,22 @@ describe('case-resolver workspace', () => {
 
   it('defaults scanfile OCR fields and preserves custom overrides', () => {
     const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
+      createWorkspaceJson({
         version: 2,
         files: [
-          {
+          createScanFilePayload({
             id: 'scan-default',
-            fileType: 'scanfile',
             name: 'Scan Default',
-            folder: '',
             parentCaseId: 'case-a',
-          },
-          {
+          }),
+          createScanFilePayload({
             id: 'scan-custom',
-            fileType: 'scanfile',
             name: 'Scan Custom',
-            folder: '',
             parentCaseId: 'case-a',
             scanOcrModel: 'llama3.2-vision',
             scanOcrPrompt: 'Use this custom OCR prompt.',
-          },
-          {
-            id: 'case-a',
-            fileType: 'case',
-            name: 'Case A',
-            folder: '',
-            parentCaseId: null,
-          },
+          }),
+          createCaseFilePayload({ id: 'case-a', name: 'Case A' }),
         ],
       })
     );

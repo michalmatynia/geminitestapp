@@ -1,4 +1,4 @@
-import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
+import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 export { BLOCKER_PROCESSING_STATUSES, formatRuntimeStatusLabel } from '../signal-flow-visual-state';
 

@@ -1,4 +1,4 @@
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 export type ProductNameKey = 'name_en' | 'name_pl' | 'name_de';
 
@@ -188,6 +188,31 @@ export const resolveProductCategoryLabel = (
   return OPAQUE_CATEGORY_ID_PATTERN.test(normalizedCategoryId) ? '—' : normalizedCategoryId;
 };
 
+export const resolveEffectiveDefaultPriceGroupId = (
+  product: ProductWithImages,
+  catalogDefaultPriceGroupIdByCatalogId: ReadonlyMap<string, string>
+): string | null => {
+  const directDefaultPriceGroupId = toTrimmedString(product.defaultPriceGroupId);
+  if (directDefaultPriceGroupId) {
+    return directDefaultPriceGroupId;
+  }
+
+  const productCatalogId =
+    toTrimmedString(product.catalogId) ||
+    toTrimmedString(product.catalogs?.[0]?.catalogId);
+  if (!productCatalogId) {
+    return null;
+  }
+
+  const catalogDefaultPriceGroupId = toTrimmedString(
+    catalogDefaultPriceGroupIdByCatalogId.get(productCatalogId)
+  );
+  return catalogDefaultPriceGroupId || null;
+};
+
+export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>
+  typeof product.importSource === 'string' && product.importSource.trim().length > 0;
+
 export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();
 
 export const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
@@ -230,7 +255,7 @@ export const getStatusToneClass = (value: string): string => {
 export const getMarketplaceButtonClass = (
   value: string,
   manageMode: boolean,
-  marketplace: 'base' | 'tradera'
+  marketplace: 'base' | 'tradera' | 'playwright'
 ): string => {
   if (!manageMode) {
     return getStatusToneClass(value);
@@ -248,8 +273,8 @@ export const getMarketplaceButtonClass = (
   if (FAILURE_STATUSES.has(normalized)) {
     return 'border-rose-400/70 bg-rose-500/15 text-rose-100 hover:border-rose-300/80 hover:bg-rose-500/25';
   }
-  if (marketplace === 'tradera') {
-    return 'border-cyan-400/70 bg-cyan-500/15 text-cyan-100 hover:border-cyan-300/80 hover:bg-cyan-500/25';
+  if (marketplace === 'playwright') {
+    return 'border-fuchsia-400/70 bg-fuchsia-500/15 text-fuchsia-100 hover:border-fuchsia-300/80 hover:bg-fuchsia-500/25';
   }
   return 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
 };

@@ -4,14 +4,13 @@ import { redirect } from 'next/navigation';
 import { JSX } from 'react';
 
 import { getCmsRepository, getSlugsForDomain, isDomainZoningEnabled, resolveCmsDomainFromHeaders } from '@/features/cms/server';
-import { getKangurPublicLaunchHref } from '@/features/kangur/config/routing';
+import { getKangurPublicLaunchHref } from '@/features/kangur/public';
 import { getKangurConfiguredLaunchRoute } from '@/features/kangur/server';
 import { buildLocalizedPathname, normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
-import { getFrontPagePublicOwner, getFrontPageRedirectPath } from '@/shared/lib/front-page-app';
 import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 
 import { HomeContent } from '../home/HomeContent';
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '../home/home-helpers';
+import { resolveFrontPageSelection } from '../home/home-helpers';
 import { createHomeTimingRecorder } from '../home/home-timing';
 
 type RenderHomeRouteOptions = {
@@ -35,44 +34,41 @@ export const renderHomeRoute = async ({
   const resolvedLocale = resolveHomeLocale(locale);
   const { withTiming, flush } = createHomeTimingRecorder();
 
-  const shouldApplyFrontPageSelection = shouldApplyFrontPageAppSelection();
-  const frontPageSetting = shouldApplyFrontPageSelection
-    ? await withTiming('frontPageSetting', getFrontPageSetting)
-    : null;
-  const publicOwner = getFrontPagePublicOwner(frontPageSetting);
-  const redirectPath = getFrontPageRedirectPath(frontPageSetting);
+  const frontPageSelection = await withTiming('frontPageSelection', resolveFrontPageSelection);
+  const publicOwner = frontPageSelection.publicOwner;
+  const redirectPath = frontPageSelection.redirectPath;
   const kangurLaunchRoute =
-    shouldApplyFrontPageSelection && publicOwner === 'kangur'
+    frontPageSelection.enabled && publicOwner === 'kangur'
       ? await withTiming('kangurLaunchRoute', () => getKangurConfiguredLaunchRoute())
       : null;
 
-  if (shouldApplyFrontPageSelection && redirectPath) {
+  if (frontPageSelection.enabled && redirectPath) {
     await flush();
     redirect(localizePublicPath(redirectPath, resolvedLocale));
   }
 
-  if (shouldApplyFrontPageSelection && publicOwner === 'kangur') {
+  if (frontPageSelection.enabled && publicOwner === 'kangur') {
     await flush();
     redirect(localizePublicPath(getKangurPublicLaunchHref(kangurLaunchRoute ?? undefined), resolvedLocale));
   }
 
-  const [cmsRepository, hdrs] = await Promise.all([
+  const [cmsRepository, zoningEnabled] = await Promise.all([
     withTiming('cmsRepository', getCmsRepository),
-    withTiming('headers', readOptionalRequestHeaders),
     isDomainZoningEnabled(),
   ]);
+  const hdrs = zoningEnabled ? await withTiming('headers', readOptionalRequestHeaders) : null;
   const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));
   const slugs = await withTiming('cmsSlugs', () =>
     getSlugsForDomain(domain.id, cmsRepository, resolvedLocale ? { locale: resolvedLocale } : undefined)
   );
 
-  const content = (
-    <HomeContent
-      domainId={domain.id}
-      slugs={slugs}
-      withTiming={withTiming}
-      locale={resolvedLocale}
-    />
+  const content = await withTiming('homeContent', () =>
+    HomeContent({
+      domainId: domain.id,
+      slugs,
+      withTiming,
+      locale: resolvedLocale,
+    })
   );
 
   await flush();

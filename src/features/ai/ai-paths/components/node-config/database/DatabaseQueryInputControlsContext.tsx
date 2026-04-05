@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { DatabaseAction, DatabaseActionCategory, DbQueryConfig } from '@/shared/lib/ai-paths';
 
 import type { QueryValidationResult } from './query-utils';
@@ -63,10 +64,24 @@ export type DatabaseQueryInputControlsActionsContextValue = Pick<
   DatabaseQueryInputControlsActionKey
 >;
 
-const DatabaseQueryInputControlsStateContext =
-  React.createContext<DatabaseQueryInputControlsStateContextValue | null>(null);
-const DatabaseQueryInputControlsActionsContext =
-  React.createContext<DatabaseQueryInputControlsActionsContextValue | null>(null);
+const {
+  Context: DatabaseQueryInputControlsStateContext,
+  useStrictContext: useDatabaseQueryInputControlsStateContext,
+} = createStrictContext<DatabaseQueryInputControlsStateContextValue>({
+  hookName: 'useDatabaseQueryInputControlsStateContext',
+  providerName: 'DatabaseQueryInputControlsContextProvider',
+  displayName: 'DatabaseQueryInputControlsStateContext',
+  errorFactory: internalError,
+});
+const {
+  Context: DatabaseQueryInputControlsActionsContext,
+  useStrictContext: useDatabaseQueryInputControlsActionsContext,
+} = createStrictContext<DatabaseQueryInputControlsActionsContextValue>({
+  hookName: 'useDatabaseQueryInputControlsActionsContext',
+  providerName: 'DatabaseQueryInputControlsContextProvider',
+  displayName: 'DatabaseQueryInputControlsActionsContext',
+  errorFactory: internalError,
+});
 
 export function DatabaseQueryInputControlsContextProvider({
   value,
@@ -188,22 +203,7 @@ export function DatabaseQueryInputControlsContextProvider({
   );
 }
 
-export function useDatabaseQueryInputControlsStateContext(): DatabaseQueryInputControlsStateContextValue {
-  const context = React.useContext(DatabaseQueryInputControlsStateContext);
-  if (!context) {
-    throw internalError(
-      'useDatabaseQueryInputControlsStateContext must be used within DatabaseQueryInputControlsContextProvider'
-    );
-  }
-  return context;
-}
-
-export function useDatabaseQueryInputControlsActionsContext(): DatabaseQueryInputControlsActionsContextValue {
-  const context = React.useContext(DatabaseQueryInputControlsActionsContext);
-  if (!context) {
-    throw internalError(
-      'useDatabaseQueryInputControlsActionsContext must be used within DatabaseQueryInputControlsContextProvider'
-    );
-  }
-  return context;
-}
+export {
+  useDatabaseQueryInputControlsStateContext,
+  useDatabaseQueryInputControlsActionsContext,
+};

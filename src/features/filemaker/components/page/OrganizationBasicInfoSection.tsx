@@ -2,7 +2,9 @@
 
 import React from 'react';
 
-import { FormSection, FormField, Input, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
+import { Input } from '@/shared/ui/primitives.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   useAdminFilemakerOrganizationEditPageActionsContext,

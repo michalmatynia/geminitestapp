@@ -1,8 +1,7 @@
-'use client';
-
 import Image from 'next/image';
 
-import { AppModal, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export interface FilePreviewData {
   id?: string;

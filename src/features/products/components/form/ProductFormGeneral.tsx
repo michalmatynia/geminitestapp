@@ -21,23 +21,18 @@ import {
   sortValidatorPatterns,
 } from '@/features/products/validation-engine/core';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { ProductFormData } from '@/shared/contracts/products';
-import type { ProductValidationPattern } from '@/shared/contracts/products';
+import { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { isPatternReplacementEnabledForValidationScope } from '@/shared/lib/products/utils/validator-instance-behavior';
-import {
-  Input,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  SelectSimple,
-  FormSection,
-  FormField,
-  Alert,
-  Skeleton,
-} from '@/features/products/ui';
-import { cn } from '@/shared/utils';
+import { Alert } from '@/shared/ui/alert';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
+
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ValidatedField } from './ValidatedField';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

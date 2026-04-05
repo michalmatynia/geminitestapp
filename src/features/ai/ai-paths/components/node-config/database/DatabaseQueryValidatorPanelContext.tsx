@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { DatabaseConfig, DatabaseOperation, DbQueryConfig } from '@/shared/lib/ai-paths';
 
 import type { QueryValidationResult } from './query-utils';
@@ -16,8 +17,14 @@ export type DatabaseQueryValidatorPanelContextValue = {
   databaseConfig: DatabaseConfig;
 };
 
-const DatabaseQueryValidatorPanelContext =
-  React.createContext<DatabaseQueryValidatorPanelContextValue | null>(null);
+const {
+  Context: DatabaseQueryValidatorPanelContext,
+  useStrictContext: useDatabaseQueryValidatorPanelContextValue,
+} = createStrictContext<DatabaseQueryValidatorPanelContextValue>({
+  hookName: 'useDatabaseQueryValidatorPanelContext',
+  providerName: 'DatabaseQueryValidatorPanelContextProvider',
+  errorFactory: internalError,
+});
 
 export function DatabaseQueryValidatorPanelContextProvider({
   value,
@@ -33,12 +40,4 @@ export function DatabaseQueryValidatorPanelContextProvider({
   );
 }
 
-export function useDatabaseQueryValidatorPanelContext(): DatabaseQueryValidatorPanelContextValue {
-  const context = React.useContext(DatabaseQueryValidatorPanelContext);
-  if (!context) {
-    throw internalError(
-      'useDatabaseQueryValidatorPanelContext must be used within DatabaseQueryValidatorPanelContextProvider'
-    );
-  }
-  return context;
-}
+export const useDatabaseQueryValidatorPanelContext = useDatabaseQueryValidatorPanelContextValue;

@@ -4,10 +4,7 @@ import { randomUUID } from 'crypto';
 import { createRequire } from 'module';
 import os from 'os';
 import path from 'path';
-import vm from 'vm';
 
-import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import type { ImageStudioRunStatus } from '@/shared/contracts/image-studio';
 import {
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
   playwrightSettingsSchema,
@@ -19,9 +16,18 @@ import { buildAiPathsContextRegistrySystemPrompt } from '@/shared/lib/ai-paths/c
 import { sanitizePlaywrightStorageState } from '@/shared/lib/playwright/storage-state';
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/settings';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
-import { getFsPromises, joinRuntimePath } from '@/shared/lib/files/runtime-fs';
+import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+
+import { parseUserScript, safeStringify } from './playwright-node-runner.parser';
+export * from './playwright-node-runner.types';
+import type {
+  PlaywrightNodeRunArtifact,
+  PlaywrightNodeRunRecord,
+  PlaywrightNodeRunRequest,
+  PlaywrightNodeArtifactReadResult,
+} from './playwright-node-runner.types';
 
 import type {
   Browser,
@@ -34,7 +40,7 @@ import type {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
+export const RUN_ROOT_DIR = path.join(os.tmpdir(), 'ai-paths-playwright-runs');
 const RUN_TTL_MS = 24 * 60 * 60 * 1000;
 const nodeFs = getFsPromises();
 
@@ -43,16 +49,45 @@ const getPlaywright = (): typeof import('playwright') => {
   return requireFn('playwright') as typeof import('playwright');
 };
 
-const safeStringify = (value: unknown): string => {
-  if (typeof value === 'string') return value;
-  if (value === null || value === undefined) return '';
-  try {
-    return JSON.stringify(value);
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return '[unserializable]';
-  }
+
+type PlaywrightHelperTarget = {
+  scrollIntoViewIfNeeded?: (() => Promise<unknown> | unknown) | undefined;
+  click?: ((options?: Record<string, unknown>) => Promise<unknown> | unknown) | undefined;
+  boundingBox?:
+    | (() =>
+        | Promise<{ x: number; y: number; width: number; height: number } | null>
+        | { x: number; y: number; width: number; height: number }
+        | null)
+    | undefined;
 };
+
+const normalizeDelayRange = (min: number, max: number): { min: number; max: number } => {
+  const safeMin = Math.max(0, Math.trunc(Number.isFinite(min) ? min : 0));
+  const safeMax = Math.max(0, Math.trunc(Number.isFinite(max) ? max : 0));
+  return {
+    min: Math.min(safeMin, safeMax),
+    max: Math.max(safeMin, safeMax),
+  };
+};
+
+const pickDelayInRange = (min: number, max: number): number => {
+  const normalized = normalizeDelayRange(min, max);
+  if (normalized.min === normalized.max) {
+    return normalized.min;
+  }
+  return normalized.min + Math.floor(Math.random() * (normalized.max - normalized.min + 1));
+};
+
+const pickSignedOffset = (magnitude: number): number => {
+  const safeMagnitude = Math.max(0, Math.trunc(Number.isFinite(magnitude) ? magnitude : 0));
+  if (safeMagnitude === 0) {
+    return 0;
+  }
+  return Math.floor(Math.random() * (safeMagnitude * 2 + 1)) - safeMagnitude;
+};
+
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
 
 const resolveRunStatePath = (runId: string): string => path.join(RUN_ROOT_DIR, `${runId}.json`);
 
@@ -103,53 +138,6 @@ const cleanupOldRuns = async (): Promise<void> => {
   }
 };
 
-export type PlaywrightNodeRunArtifact = {
-  name: string;
-  path: string;
-  mimeType?: string | null;
-  kind?: string | null;
-};
-
-export type PlaywrightNodeRunRecord = {
-  runId: string;
-  ownerUserId: string | null;
-  status: ImageStudioRunStatus;
-  startedAt: string | null;
-  completedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  result?: unknown;
-  error?: string | null;
-  artifacts: PlaywrightNodeRunArtifact[];
-  logs: string[];
-};
-
-export type PlaywrightNodeRunRequest = {
-  script: string;
-  input?: Record<string, unknown> | undefined;
-  startUrl?: string | undefined;
-  timeoutMs?: number | undefined;
-  browserEngine?: 'chromium' | 'firefox' | 'webkit' | undefined;
-  personaId?: string | undefined;
-  settingsOverrides?: Record<string, unknown> | undefined;
-  launchOptions?: Record<string, unknown> | undefined;
-  contextOptions?: Record<string, unknown> | undefined;
-  policyAllowedHosts?: string[] | undefined;
-  contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
-  capture?:
-    | {
-        screenshot?: boolean | undefined;
-        html?: boolean | undefined;
-        video?: boolean | undefined;
-        trace?: boolean | undefined;
-      }
-    | undefined;
-};
-
-export type PlaywrightNodeArtifactReadResult = {
-  artifact: PlaywrightNodeRunArtifact;
-  content: Buffer;
-};
 
 const writeRunState = async (run: PlaywrightNodeRunRecord): Promise<void> => {
   await ensureRunRoot();
@@ -159,7 +147,7 @@ const writeRunState = async (run: PlaywrightNodeRunRecord): Promise<void> => {
   await nodeFs.rename(tempPath, targetPath);
 };
 
-const nowIso = (): string => new Date().toISOString();
+export const nowIso = (): string => new Date().toISOString();
 
 const buildBaseRunState = (runId: string): PlaywrightNodeRunRecord => {
   const now = nowIso();
@@ -176,7 +164,7 @@ const buildBaseRunState = (runId: string): PlaywrightNodeRunRecord => {
   };
 };
 
-const updateRunState = async (
+export const updateRunState = async (
   runId: string,
   patch: Partial<PlaywrightNodeRunRecord>
 ): Promise<PlaywrightNodeRunRecord> => {
@@ -312,49 +300,6 @@ const buildContextOptions = (
   return merged;
 };
 
-const parseUserScript = (
-  source: string,
-  logs: string[]
-): ((context: Record<string, unknown>) => Promise<unknown>) => {
-  const normalizedSource = source.replace(/^\s*export\s+default\s+/m, 'const defaultExport = ');
-  const bootstrap = `
-    "use strict";
-    let __playwrightNodeFn = null;
-    const module = { exports: {} };
-    const exports = module.exports;
-    ${normalizedSource}
-    if (typeof run === 'function') __playwrightNodeFn = run;
-    if (!__playwrightNodeFn && typeof defaultExport === 'function') __playwrightNodeFn = defaultExport;
-    if (!__playwrightNodeFn && typeof module.exports === 'function') __playwrightNodeFn = module.exports;
-    if (!__playwrightNodeFn && module.exports && typeof module.exports.default === 'function') __playwrightNodeFn = module.exports.default;
-    if (!__playwrightNodeFn && exports && typeof exports.default === 'function') __playwrightNodeFn = exports.default;
-    __playwrightNodeFn;
-  `;
-  const script = new vm.Script(bootstrap, {
-    filename: 'ai-paths-playwright-node.user.js',
-  });
-  const sandbox = {
-    console: {
-      log: (...args: unknown[]) => logs.push(`[console.log] ${args.map(safeStringify).join(' ')}`),
-      info: (...args: unknown[]) =>
-        logs.push(`[console.info] ${args.map(safeStringify).join(' ')}`),
-      warn: (...args: unknown[]) =>
-        logs.push(`[console.warn] ${args.map(safeStringify).join(' ')}`),
-      error: (...args: unknown[]) =>
-        logs.push(`[console.error] ${args.map(safeStringify).join(' ')}`),
-    },
-    setTimeout,
-    clearTimeout,
-    URL,
-    TextEncoder,
-    TextDecoder,
-  };
-  const resolved: unknown = script.runInNewContext(sandbox, { timeout: 250 });
-  if (typeof resolved !== 'function') {
-    throw new Error('Playwright script must export a default async function or define `run`.');
-  }
-  return resolved as (context: Record<string, unknown>) => Promise<unknown>;
-};
 
 const normalizePolicyAllowedHosts = (hosts: string[] | undefined): Set<string> => {
   if (!Array.isArray(hosts) || hosts.length === 0) {
@@ -421,28 +366,15 @@ const registerOutboundPolicyRoute = async (
   });
 };
 
-const resolveRelativeArtifactPath = (artifactPath: string): string =>
-  path.relative(RUN_ROOT_DIR, artifactPath).replace(/\\/g, '/');
-
-const saveFileArtifact = async (
-  runArtifactsDir: string,
-  name: string,
-  extension: string,
-  content: string | Buffer,
-  mimeType: string,
-  kind: string
-): Promise<PlaywrightNodeRunArtifact> => {
-  const safeName = name.trim().replace(/[^a-zA-Z0-9-_]+/g, '_') || kind;
-  const fileName = `${safeName}-${Date.now()}.${extension}`;
-  const filePath = joinRuntimePath(runArtifactsDir, fileName);
-  await nodeFs.writeFile(filePath, content);
-  return {
-    name,
-    path: resolveRelativeArtifactPath(filePath),
-    mimeType,
-    kind,
-  };
-};
+import {
+  saveFileArtifact,
+  createLiveRunStateCoordinator,
+  captureFinalRunArtifacts,
+  buildCompletedRunState,
+  captureFailureArtifacts,
+  buildFailedRunState,
+  persistVideoArtifact
+} from './playwright-node-runner.artifacts';
 
 const executePlaywrightNodeRun = async (
   runId: string,
@@ -459,24 +391,7 @@ const executePlaywrightNodeRun = async (
     logs,
     artifacts,
   });
-  let liveStateWriteChain: Promise<void> = Promise.resolve();
-  let isFinalizingLiveState = false;
-  const queueLiveRunStateUpdate = (patchFactory: () => Partial<PlaywrightNodeRunRecord>): void => {
-    if (isFinalizingLiveState) return;
-    liveStateWriteChain = liveStateWriteChain
-      .then(async () => {
-        if (isFinalizingLiveState) return;
-        await updateRunState(runId, patchFactory());
-      })
-      .catch((error) => {
-        void ErrorSystem.captureException(error);
-      });
-  };
-  const flushLiveRunStateUpdates = async (): Promise<void> => {
-    await liveStateWriteChain.catch((error) => {
-      void ErrorSystem.captureException(error);
-    });
-  };
+  const liveRunState = createLiveRunStateCoordinator(runId);
 
   const playwright = getPlaywright();
   const personaSettings = await resolvePersonaSettings(request.personaId);
@@ -509,10 +424,32 @@ const executePlaywrightNodeRun = async (
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
   let page: Page | null = null;
+  const runtimeLifecycle = {
+    browserDisconnected: false,
+    contextClosed: false,
+    pageClosed: false,
+    pageCrashed: false,
+  };
+  const logRuntimeLifecycle = (
+    key: keyof typeof runtimeLifecycle,
+    message: string
+  ): void => {
+    if (runtimeLifecycle[key]) {
+      return;
+    }
+    runtimeLifecycle[key] = true;
+    logs.push(message);
+  };
   try {
     logs.push(`[runtime] Launching ${browserEngine} browser.`);
     browser = await getBrowserType(playwright, browserEngine).launch(launchOptions);
+    browser.on('disconnected', () => {
+      logRuntimeLifecycle('browserDisconnected', '[runtime] Browser disconnected.');
+    });
     context = await browser.newContext(contextOptions);
+    context.on('close', () => {
+      logRuntimeLifecycle('contextClosed', '[runtime] Browser context closed.');
+    });
     context.setDefaultTimeout(effectiveSettings.timeout);
     context.setDefaultNavigationTimeout(effectiveSettings.navigationTimeout);
     await registerOutboundPolicyRoute(context, logs, policyAllowedHosts);
@@ -527,6 +464,23 @@ const executePlaywrightNodeRun = async (
     }
 
     page = await context.newPage();
+    page.on('close', () => {
+      logRuntimeLifecycle('pageClosed', '[runtime] Runner page closed.');
+    });
+    page.on('crash', () => {
+      logRuntimeLifecycle('pageCrashed', '[runtime] Runner page crashed.');
+    });
+
+    if (request.preventNewPages) {
+      const runnerPage = page;
+      context.on('page', async (newPage: Page) => {
+        if (newPage === runnerPage) {
+          return;
+        }
+        logs.push('[runtime] Blocked new page/tab — scripts must use the provided page.');
+        await newPage.close().catch(() => undefined);
+      });
+    }
 
     if (request.startUrl?.trim()) {
       const allowedByPolicyOverride = isPolicyAllowedHost(request.startUrl, policyAllowedHosts);
@@ -563,6 +517,120 @@ const executePlaywrightNodeRun = async (
       inlineArtifacts: [...inlineArtifacts],
     });
     const userScript = parseUserScript(request.script, logs);
+    const sleep = async (ms: number): Promise<void> => {
+      const safeMs = Math.max(0, Math.trunc(ms));
+      await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
+    };
+    const pauseForRange = async (min: number, max: number): Promise<number> => {
+      const delayMs = pickDelayInRange(min, max);
+      if (delayMs > 0) {
+        await sleep(delayMs);
+      }
+      return delayMs;
+    };
+    const pauseForAction = async (): Promise<number> =>
+      pauseForRange(effectiveSettings.actionDelayMin, effectiveSettings.actionDelayMax);
+    const typeText = async (
+      value: string,
+      options?: {
+        delayMs?: number | null;
+        typeOptions?: Record<string, unknown>;
+      }
+    ): Promise<void> => {
+      if (!page?.keyboard?.type) {
+        throw new Error('Playwright keyboard.type is not available.');
+      }
+      const typeOptions = { ...(options?.typeOptions ?? {}) };
+      const delayMs =
+        options?.delayMs == null
+          ? pickDelayInRange(effectiveSettings.inputDelayMin, effectiveSettings.inputDelayMax)
+          : Math.max(0, Math.trunc(options.delayMs));
+      if (delayMs > 0 && typeOptions['delay'] === undefined) {
+        typeOptions['delay'] = delayMs;
+      }
+      await page.keyboard.type(value, typeOptions);
+    };
+    const pressKey = async (
+      key: string,
+      options?: {
+        delayMs?: number | null;
+        pressOptions?: Record<string, unknown>;
+      }
+    ): Promise<void> => {
+      if (!page?.keyboard?.press) {
+        throw new Error('Playwright keyboard.press is not available.');
+      }
+      const pressOptions = { ...(options?.pressOptions ?? {}) };
+      const delayMs =
+        options?.delayMs == null
+          ? pickDelayInRange(effectiveSettings.inputDelayMin, effectiveSettings.inputDelayMax)
+          : Math.max(0, Math.trunc(options.delayMs));
+      if (delayMs > 0 && pressOptions['delay'] === undefined) {
+        pressOptions['delay'] = delayMs;
+      }
+      await page.keyboard.press(key, pressOptions);
+    };
+    const moveMouseToTarget = async (target: PlaywrightHelperTarget): Promise<boolean> => {
+      if (!effectiveSettings.humanizeMouse || !page?.mouse || typeof target?.boundingBox !== 'function') {
+        return false;
+      }
+      const box = await Promise.resolve(target.boundingBox()).catch(() => null);
+      if (
+        !box ||
+        !Number.isFinite(box.x) ||
+        !Number.isFinite(box.y) ||
+        !Number.isFinite(box.width) ||
+        !Number.isFinite(box.height)
+      ) {
+        return false;
+      }
+      const jitter = Math.max(0, Math.trunc(effectiveSettings.mouseJitter));
+      const safeWidth = Math.max(2, box.width);
+      const safeHeight = Math.max(2, box.height);
+      const centerX = box.x + safeWidth / 2;
+      const centerY = box.y + safeHeight / 2;
+      const offsetX = pickSignedOffset(jitter);
+      const offsetY = pickSignedOffset(jitter);
+      const targetX = clampNumber(centerX + offsetX, box.x + 1, box.x + safeWidth - 1);
+      const targetY = clampNumber(centerY + offsetY, box.y + 1, box.y + safeHeight - 1);
+      const steps = Math.max(6, Math.min(24, 8 + jitter));
+      await page.mouse.move(targetX, targetY, { steps });
+      return true;
+    };
+    const focusTarget = async (
+      target: PlaywrightHelperTarget,
+      options?: {
+        scroll?: boolean;
+        clickDelayMs?: number | null;
+        clickOptions?: Record<string, unknown>;
+      }
+    ): Promise<boolean> => {
+      if (!target) {
+        throw new Error('Playwright helper target is required.');
+      }
+      if (options?.scroll !== false && typeof target.scrollIntoViewIfNeeded === 'function') {
+        await Promise.resolve(target.scrollIntoViewIfNeeded()).catch(() => undefined);
+      }
+      await moveMouseToTarget(target).catch(() => false);
+      if (typeof target.click !== 'function') {
+        return false;
+      }
+      const clickOptions = { ...(options?.clickOptions ?? {}) };
+      const clickDelay =
+        options?.clickDelayMs == null
+          ? pickDelayInRange(effectiveSettings.clickDelayMin, effectiveSettings.clickDelayMax)
+          : Math.max(0, Math.trunc(options.clickDelayMs));
+      if (clickDelay > 0 && clickOptions['delay'] === undefined) {
+        clickOptions['delay'] = clickDelay;
+      }
+      await Promise.resolve(target.click(clickOptions));
+      return true;
+    };
+    const clearFocusedField = async (): Promise<void> => {
+      await pressKey('ControlOrMeta+A', { delayMs: 0 });
+      await pressKey('Delete', { delayMs: 0 });
+      await pressKey('Backspace', { delayMs: 0 });
+    };
     const userContext = {
       browser,
       context,
@@ -574,7 +642,7 @@ const executePlaywrightNodeRun = async (
         const normalizedPort = port.trim();
         if (!normalizedPort) return;
         emittedOutputs[normalizedPort] = value;
-        queueLiveRunStateUpdate(() => ({
+        liveRunState.queueUpdate(() => ({
           result: buildLiveResultSnapshot(),
         }));
       },
@@ -638,7 +706,7 @@ const executePlaywrightNodeRun = async (
         },
         add: (name: string, value: unknown): void => {
           inlineArtifacts.push({ name: name.trim() || 'artifact', value });
-          queueLiveRunStateUpdate(() => ({
+          liveRunState.queueUpdate(() => ({
             result: buildLiveResultSnapshot(),
           }));
         },
@@ -647,9 +715,104 @@ const executePlaywrightNodeRun = async (
         logs.push(`[user] ${args.map(safeStringify).join(' ')}`);
       },
       helpers: {
-        sleep: async (ms: number): Promise<void> => {
-          const safeMs = Math.max(0, Math.trunc(ms));
-          await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
+        sleep,
+        actionPause: async (): Promise<number> => pauseForAction(),
+        click: async (
+          target: PlaywrightHelperTarget,
+          options?: {
+            scroll?: boolean;
+            pauseBefore?: boolean;
+            pauseAfter?: boolean;
+            delayMs?: number | null;
+            clickOptions?: Record<string, unknown>;
+          }
+        ): Promise<void> => {
+          if (options?.pauseBefore !== false) {
+            await pauseForAction();
+          }
+          await focusTarget(target, {
+            scroll: options?.scroll,
+            clickDelayMs: options?.delayMs,
+            clickOptions: options?.clickOptions,
+          });
+          if (options?.pauseAfter !== false) {
+            await pauseForAction();
+          }
+        },
+        fill: async (
+          target: PlaywrightHelperTarget,
+          value: string,
+          options?: {
+            scroll?: boolean;
+            pauseBefore?: boolean;
+            pauseAfter?: boolean;
+            delayMs?: number | null;
+            clear?: boolean;
+            clickOptions?: Record<string, unknown>;
+          }
+        ): Promise<void> => {
+          if (options?.pauseBefore !== false) {
+            await pauseForAction();
+          }
+          const focused = await focusTarget(target, {
+            scroll: options?.scroll,
+            clickDelayMs: options?.delayMs,
+            clickOptions: options?.clickOptions,
+          });
+          if (!focused) {
+            throw new Error('Playwright fill helper target is not focusable.');
+          }
+          if (options?.clear !== false) {
+            await clearFocusedField();
+          }
+          if (value) {
+            await typeText(String(value), {
+              delayMs: options?.delayMs,
+            });
+          }
+          if (options?.pauseAfter !== false) {
+            await pauseForAction();
+          }
+        },
+        type: async (
+          value: string,
+          options?: {
+            pauseBefore?: boolean;
+            pauseAfter?: boolean;
+            delayMs?: number | null;
+            typeOptions?: Record<string, unknown>;
+          }
+        ): Promise<void> => {
+          if (options?.pauseBefore !== false) {
+            await pauseForAction();
+          }
+          await typeText(String(value), {
+            delayMs: options?.delayMs,
+            typeOptions: options?.typeOptions,
+          });
+          if (options?.pauseAfter !== false) {
+            await pauseForAction();
+          }
+        },
+        press: async (
+          key: string,
+          options?: {
+            pauseBefore?: boolean;
+            pauseAfter?: boolean;
+            delayMs?: number | null;
+            pressOptions?: Record<string, unknown>;
+          }
+        ): Promise<void> => {
+          if (options?.pauseBefore !== false) {
+            await pauseForAction();
+          }
+          await pressKey(key, {
+            delayMs: options?.delayMs,
+            pressOptions: options?.pressOptions,
+          });
+          if (options?.pauseAfter !== false) {
+            await pauseForAction();
+          }
         },
       },
     };
@@ -660,114 +823,66 @@ const executePlaywrightNodeRun = async (
       'Playwright script timed out.'
     );
 
-    if (request.capture?.screenshot) {
-      const screenshotArtifact = await saveFileArtifact(
-        runArtifactsDir,
-        'final',
-        'png',
-        await page.screenshot({ fullPage: true }),
-        'image/png',
-        'screenshot'
-      );
-      artifacts.push(screenshotArtifact);
-    }
-    if (request.capture?.html) {
-      const htmlArtifact = await saveFileArtifact(
-        runArtifactsDir,
-        'final',
-        'html',
-        await page.content(),
-        'text/html',
-        'html'
-      );
-      artifacts.push(htmlArtifact);
-    }
-
-    if (request.capture?.trace && context) {
-      const tracePath = path.join(runArtifactsDir, `trace-${Date.now()}.zip`);
-      await context.tracing.stop({ path: tracePath });
-      artifacts.push({
-        name: 'trace',
-        path: resolveRelativeArtifactPath(tracePath),
-        mimeType: 'application/zip',
-        kind: 'trace',
-      });
-      logs.push('[runtime] Trace capture saved.');
-    }
-
-    const completedAt = nowIso();
-    await flushLiveRunStateUpdates();
-    isFinalizingLiveState = true;
-    const existingRun = await readPlaywrightNodeRun(runId);
-    const result = {
-      returnValue,
-      outputs: emittedOutputs,
-      inlineArtifacts,
-      finalUrl: page.url(),
-      title: await page.title().catch(() => ''),
-    };
-    const finalState: PlaywrightNodeRunRecord = {
-      runId,
-      ownerUserId: existingRun?.ownerUserId ?? null,
-      status: 'completed',
-      startedAt,
-      completedAt,
-      createdAt: existingRun?.createdAt ?? startedAt,
-      updatedAt: completedAt,
-      result,
-      error: null,
+    await captureFinalRunArtifacts({
       artifacts,
+      context,
       logs,
-    };
+      page,
+      request,
+      runArtifactsDir,
+    });
+
+    await liveRunState.flush();
+    liveRunState.finalize();
+    const existingRun = await readPlaywrightNodeRun(runId);
+    const finalState = await buildCompletedRunState({
+      artifacts,
+      emittedOutputs,
+      existingRun,
+      inlineArtifacts,
+      logs,
+      page,
+      returnValue,
+      runId,
+      startedAt,
+    });
     await writeRunState(finalState);
     return finalState;
   } catch (error) {
     void ErrorSystem.captureException(error);
-    const completedAt = nowIso();
-    await flushLiveRunStateUpdates();
-    isFinalizingLiveState = true;
+    await liveRunState.flush();
+    liveRunState.finalize();
     const existingRun = await readPlaywrightNodeRun(runId);
     const message = error instanceof Error ? error.message : String(error);
-    logs.push(`[runtime][error] ${message}`);
-    const failedState: PlaywrightNodeRunRecord = {
-      runId,
-      ownerUserId: existingRun?.ownerUserId ?? null,
-      status: 'failed',
-      startedAt,
-      completedAt,
-      createdAt: existingRun?.createdAt ?? startedAt,
-      updatedAt: completedAt,
-      result: null,
-      error: message,
+    await captureFailureArtifacts({
       artifacts,
+      browserDisconnected: runtimeLifecycle.browserDisconnected,
+      contextClosed: runtimeLifecycle.contextClosed,
+      errorMessage: message,
+      page,
+      pageClosed: runtimeLifecycle.pageClosed,
+      pageCrashed: runtimeLifecycle.pageCrashed,
+      runArtifactsDir,
+    });
+    logs.push(`[runtime][error] ${message}`);
+    const failedState = buildFailedRunState({
+      artifacts,
+      errorMessage: message,
+      existingRun,
       logs,
-    };
+      runId,
+      startedAt,
+    });
     await writeRunState(failedState);
     return failedState;
   } finally {
-    let shouldPersistArtifacts = false;
-    if (page && request.capture?.video) {
-      try {
-        const video = page.video();
-        if (video) {
-          const videoPath = await video.path();
-          const targetVideoPath = path.join(runArtifactsDir, `video-${Date.now()}.webm`);
-          await nodeFs.copyFile(videoPath, targetVideoPath);
-          artifacts.push({
-            name: 'video',
-            path: resolveRelativeArtifactPath(targetVideoPath),
-            mimeType: 'video/webm',
-            kind: 'video',
-          });
-          logs.push('[runtime] Video capture saved.');
-          shouldPersistArtifacts = true;
-        }
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-      
-        // best effort
-      }
-    }
+    const shouldPersistArtifacts = await persistVideoArtifact({
+      artifacts,
+      logs,
+      page,
+      request,
+      runArtifactsDir,
+    });
     if (shouldPersistArtifacts) {
       await updateRunState(runId, { artifacts, logs }).catch(() => undefined);
     }

@@ -21,7 +21,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

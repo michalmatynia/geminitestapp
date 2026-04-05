@@ -1,17 +1,11 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import type {
-  AiNode,
-  AiPathRuntimeNodeStatusMap,
-  DataContractNodeIssueSummary,
-  Edge,
-  PathFlowIntensity,
-  RuntimeState,
-  SvgDetailLevel,
-} from '@/shared/lib/ai-paths';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
+import type { AiNode, AiPathRuntimeNodeStatusMap, Edge, PathFlowIntensity, RuntimeState, SvgDetailLevel } from '@/shared/lib/ai-paths';
 
 import type { ConnectorInfo } from './canvas-board-connectors';
 import type { RuntimeRunStatus, TriggerPreflightHint } from './CanvasBoard.types';
@@ -110,7 +104,13 @@ export interface CanvasBoardUIContextValue {
   onSelectEdge: (edgeId: string) => void;
 }
 
-const CanvasBoardUIContext = createContext<CanvasBoardUIContextValue | null>(null);
+const { Context: CanvasBoardUIContext, useStrictContext: useCanvasBoardUI } =
+  createStrictContext<CanvasBoardUIContextValue>({
+    hookName: 'useCanvasBoardUI',
+    providerName: 'CanvasBoardUIProvider',
+    displayName: 'CanvasBoardUIContext',
+    errorFactory: internalError,
+  });
 
 export function CanvasBoardUIProvider({
   children,
@@ -121,14 +121,7 @@ export function CanvasBoardUIProvider({
 }) {
   return <CanvasBoardUIContext.Provider value={value}>{children}</CanvasBoardUIContext.Provider>;
 }
-
-export function useCanvasBoardUI() {
-  const context = useContext(CanvasBoardUIContext);
-  if (!context) {
-    throw internalError('useCanvasBoardUI must be used within CanvasBoardUIProvider');
-  }
-  return context;
-}
+export { useCanvasBoardUI };
 
 export function useCanvasBoardUIState(): CanvasBoardUIContextValue {
   return useCanvasBoardUI();

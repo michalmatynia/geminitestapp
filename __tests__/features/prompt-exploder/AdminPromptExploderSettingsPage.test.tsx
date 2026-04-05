@@ -60,40 +60,20 @@ vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
   SettingsFieldsRenderer: () => null,
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/admin.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/admin.public')>();
+  return {
+    ...actual,
+    AdminAiEyebrow: ({ section }: { section: string }) => <span>{section}</span>,
+  };
+});
+
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: () => ({ toast: toastMock }),
-    AdminAiEyebrow: ({ section }: { section: string }) => <span>{section}</span>,
     Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    SectionHeader: ({ title, description, actions }: { title: string; description?: string; actions?: React.ReactNode }) => (
-      <section>
-        <h1>{title}</h1>
-        {description ? <p>{description}</p> : null}
-        {actions}
-      </section>
-    ),
-    FormSection: ({ title, description, actions, children }: { title: string; description?: string; actions?: React.ReactNode; children: React.ReactNode }) => (
-      <section>
-        <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
-        {actions}
-        {children}
-      </section>
-    ),
-    FormField: ({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) => {
-      const child = React.isValidElement<{ 'aria-label'?: string }>(children)
-        ? React.cloneElement(children, { 'aria-label': label })
-        : children;
-      return (
-        <label>
-          <span>{label}</span>
-          {description ? <small>{description}</small> : null}
-          {child}
-        </label>
-      );
-    },
     Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
     Button: ({
       children,
@@ -113,6 +93,43 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         <button type='button' onClick={onClick} disabled={disabled}>
           {children}
         </button>
+      );
+    },
+  };
+});
+
+vi.mock('@/shared/ui/forms-and-actions.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/forms-and-actions.public')>();
+  return {
+    ...actual,
+    FormSection: ({
+      title,
+      description,
+      actions,
+      children,
+    }: {
+      title: string;
+      description?: string;
+      actions?: React.ReactNode;
+      children: React.ReactNode;
+    }) => (
+      <section>
+        <h2>{title}</h2>
+        {description ? <p>{description}</p> : null}
+        {actions}
+        {children}
+      </section>
+    ),
+    FormField: ({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) => {
+      const child = React.isValidElement<{ 'aria-label'?: string }>(children)
+        ? React.cloneElement(children, { 'aria-label': label })
+        : children;
+      return (
+        <label>
+          <span>{label}</span>
+          {description ? <small>{description}</small> : null}
+          {child}
+        </label>
       );
     },
     SelectSimple: ({
@@ -167,8 +184,28 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         {children}
       </div>
     ),
-    DocsTooltipEnhancer: () => null,
-    SettingsFieldsRenderer: () => null,
+  };
+});
+
+vi.mock('@/shared/ui/navigation-and-layout.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/navigation-and-layout.public')>();
+  return {
+    ...actual,
+    SectionHeader: ({
+      title,
+      description,
+      actions,
+    }: {
+      title: string;
+      description?: string;
+      actions?: React.ReactNode;
+    }) => (
+      <section>
+        <h1>{title}</h1>
+        {description ? <p>{description}</p> : null}
+        {actions}
+      </section>
+    ),
   };
 });
 

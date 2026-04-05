@@ -10,7 +10,7 @@ import type {
 import { selectBestTutorAnchor } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { isKangurLaunchableGameContentId } from '@/features/kangur/ui/services/game-launch';
 
-import { getEstimatedBubbleHeight } from '../KangurAiTutorGuidedLayout';
+import { getEstimatedBubbleHeight } from '@/features/kangur/ui/components/KangurAiTutorGuidedLayout';
 import { selectBestSelectionAnchor } from './KangurAiTutorWidget.helpers';
 import {
   AVATAR_SIZE,
@@ -684,12 +684,12 @@ export function useKangurAiTutorFocusLayoutState({
                 label: selectionConversationAnchor.metadata?.label ?? activeSelectedText,
                 surface: selectionConversationAnchor.surface,
               }
-          : {
-              ...baseConversationFocus,
-              id: 'selection',
-              kind: 'selection',
-              label: activeSelectedText,
-            };
+            : {
+                ...baseConversationFocus,
+                id: 'selection',
+                kind: 'selection',
+                label: activeSelectedText,
+              };
 
       return {
         assignmentId: null,
@@ -834,12 +834,12 @@ export function useKangurAiTutorBubblePlacementState(input: {
     const estimatedBubbleHeight = isMobileSheet
       ? undefined
       : Math.max(
-        panelMeasuredHeight ?? 0,
-        getEstimatedBubbleHeight(
-          viewport,
-          (visibleProactiveNudge ? 108 : 0) + (visibleQuickActionCount > 2 ? 24 : 0)
-        )
-      );
+          panelMeasuredHeight ?? 0,
+          getEstimatedBubbleHeight(
+            viewport,
+            (visibleProactiveNudge ? 108 : 0) + (visibleQuickActionCount > 2 ? 24 : 0)
+          )
+        );
 
     return getTutorBubblePlacement(
       isOpen && !isMobileSheet ? displayFocusRect : null,

@@ -1,20 +1,15 @@
+'use client';
+
 import React, { useMemo, useState } from 'react';
 
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { AiNode, NodeDefinition } from '@/shared/lib/ai-paths';
 import { createParserMappings } from '@/shared/lib/ai-paths';
-import {
-  Button,
-  Input,
-  Label,
-  Textarea,
-  StatusBadge,
-  Card,
-  Badge,
-  CompactEmptyState,
-  Hint,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Input, Label, Textarea, Card, Badge } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   useGraphState,
@@ -27,7 +22,6 @@ import {
   useRuntimeState,
   useRuntimeActions,
 } from '../context';
-import { usePaletteWithTriggerButtons } from './ai-paths-settings/hooks/usePaletteWithTriggerButtons';
 import {
   CanvasRunControlNotice,
   CanvasSelectedWireDataPane,
@@ -41,6 +35,10 @@ type PaletteGroup = {
   title: string;
   types: NodeDefinition['type'][];
   icon: string;
+};
+
+type CanvasSidebarProps = {
+  palette: NodeDefinition[];
 };
 
 const readPortRuntimeValue = (
@@ -110,7 +108,7 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
   },
 ];
 
-export function CanvasSidebar(): React.JSX.Element {
+export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Element {
   const titleFieldId = React.useId();
   const descriptionFieldId = React.useId();
   const sourceConnectorDataId = React.useId();
@@ -133,7 +131,6 @@ export function CanvasSidebar(): React.JSX.Element {
   const { setPaletteCollapsed, togglePaletteGroup } = usePresetsActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen, setSimulationOpenNodeId } = useSelectionActions();
-  const palette: NodeDefinition[] = usePaletteWithTriggerButtons();
   const {
     handleDragStart,
     updateSelectedNode,

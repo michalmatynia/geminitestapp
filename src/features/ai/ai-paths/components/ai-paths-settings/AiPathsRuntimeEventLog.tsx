@@ -1,7 +1,9 @@
+'use client';
+
 import React, { useMemo } from 'react';
 
 import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
-import { CompactEmptyState } from '@/shared/ui';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { renderRuntimeEventEntry } from '../runtime-event-entry';
 
 type AiPathsRuntimeEventLogProps = {

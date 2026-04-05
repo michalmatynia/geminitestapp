@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 
 import {
@@ -14,6 +15,9 @@ import {
 } from '@/features/kangur/ui/routing/pending-route-loading-snapshot';
 import { resolveManagedKangurEmbeddedFromHref, resolveManagedKangurBasePath } from '@/features/kangur/ui/routing/managed-paths';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
+import {
+  getSkeletonContainerAnimationTiming,
+} from '@/features/kangur/ui/animations/skeleton-animations';
 
 type PendingRouteLoadingSnapshot =
   ReturnType<typeof useKangurPendingRouteLoadingSnapshot>;
@@ -133,6 +137,22 @@ export function FrontendRouteLoadingFallback({
   const { resolvePendingSnapshot, resolveTransitionTarget } = useKangurRouteAccess();
   const publicOwnerContext = useOptionalFrontendPublicOwner();
   const pathname = usePathname();
+  const skeletonVisibilityStartRef = useRef<number | null>(null);
+  // Animation timing is available for future enhancements
+  getSkeletonContainerAnimationTiming();
+
+  // Track skeleton visibility timing and enforce minimum display duration
+  useEffect(() => {
+    if (skeletonVisibilityStartRef.current === null) {
+      skeletonVisibilityStartRef.current = performance.now();
+    }
+
+    return () => {
+      // Reset on unmount (page content loaded)
+      skeletonVisibilityStartRef.current = null;
+    };
+  }, []);
+
   const pendingRouteLoadingSnapshot = resolveFrontendRouteLoadingSnapshot({
     currentHref: pathname,
     resolvePendingSnapshot,

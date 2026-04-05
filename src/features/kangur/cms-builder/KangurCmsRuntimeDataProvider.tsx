@@ -73,73 +73,65 @@ type KangurCmsRuntimeFallbackCopy = {
   xpIntoLevelLabelTemplate: string;
 };
 
-const getKangurCmsRuntimeFallbackCopy = (
-  locale: ReturnType<typeof normalizeSiteLocale>
-): KangurCmsRuntimeFallbackCopy => {
-  if (locale === 'uk') {
-    return {
-      completedParentEyebrow: 'Виконане завдання від батьків',
-      completedPercentTemplate: '{percent}% виконано',
-      continuePracticeTitle: 'Продовжити практику',
-      followUpEyebrow: 'Наступна практика',
-      levelSummary: (level, xp) => `Рівень ${level} · ${xp} XP усього`,
-      maxLevelLabel: 'Максимальний рівень!',
-      nextLevelLabel: (level, xp) => `До рівня ${level}: ${xp} XP`,
-      nextPracticeStep: 'Наступний крок у практиці.',
-      noActiveAssignment: 'Немає активного завдання.',
-      parentEyebrow: 'Завдання від батьків',
-      returnToPracticeAction: 'Повернутися до практики',
-      returnToPracticeDescription: 'Поверніться до практики і продовжіть виклик.',
-      selfPriority: 'Власний пріоритет',
-      sessionPriority: 'Сесія практики',
-      totalXpLabelTemplate: '{xp} XP усього',
-      xpIntoLevelLabelTemplate: '{xp} XP',
-    };
-  }
-
-  if (locale === 'de') {
-    return {
-      completedParentEyebrow: 'Abgeschlossene Elternaufgabe',
-      completedPercentTemplate: '{percent}% abgeschlossen',
-      continuePracticeTitle: 'Praxis fortsetzen',
-      followUpEyebrow: 'Weitere Praxis',
-      levelSummary: (level, xp) => `Level ${level} · ${xp} XP gesamt`,
-      maxLevelLabel: 'Maximales Level!',
-      nextLevelLabel: (level, xp) => `Bis Level ${level}: ${xp} XP`,
-      nextPracticeStep: 'Nächster Schritt in der Praxis.',
-      noActiveAssignment: 'Keine aktive Aufgabe.',
-      parentEyebrow: 'Elternaufgabe',
-      returnToPracticeAction: 'Zurück zur Praxis',
-      returnToPracticeDescription: 'Kehre zur Praxis zurück und setze die Herausforderung fort.',
-      selfPriority: 'Eigene Priorität',
-      sessionPriority: 'Praxisrunde',
-      totalXpLabelTemplate: '{xp} XP gesamt',
-      xpIntoLevelLabelTemplate: '{xp} XP',
-    };
-  }
-
-  if (locale === 'en') {
-    return {
-      completedParentEyebrow: 'Completed parent assignment',
-      completedPercentTemplate: '{percent}% completed',
-      continuePracticeTitle: 'Continue practice',
-      followUpEyebrow: 'Next practice',
-      levelSummary: (level, xp) => `Level ${level} · ${xp} XP total`,
-      maxLevelLabel: 'Maximum level!',
-      nextLevelLabel: (level, xp) => `To level ${level}: ${xp} XP`,
-      nextPracticeStep: 'Next step in practice.',
-      noActiveAssignment: 'No active assignment.',
-      parentEyebrow: 'Parent assignment',
-      returnToPracticeAction: 'Return to practice',
-      returnToPracticeDescription: 'Return to practice and continue the challenge.',
-      selfPriority: 'Self priority',
-      sessionPriority: 'Practice session',
-      totalXpLabelTemplate: '{xp} XP total',
-      xpIntoLevelLabelTemplate: '{xp} XP',
-    };
-  }
-
-  return {
+const KANGUR_CMS_RUNTIME_FALLBACK_COPY_BY_LOCALE: Record<
+  string,
+  KangurCmsRuntimeFallbackCopy
+> = {
+  uk: {
+    completedParentEyebrow: 'Виконане завдання від батьків',
+    completedPercentTemplate: '{percent}% виконано',
+    continuePracticeTitle: 'Продовжити практику',
+    followUpEyebrow: 'Наступна практика',
+    levelSummary: (level, xp) => `Рівень ${level} · ${xp} XP усього`,
+    maxLevelLabel: 'Максимальний рівень!',
+    nextLevelLabel: (level, xp) => `До рівня ${level}: ${xp} XP`,
+    nextPracticeStep: 'Наступний крок у практиці.',
+    noActiveAssignment: 'Немає активного завдання.',
+    parentEyebrow: 'Завдання від батьків',
+    returnToPracticeAction: 'Повернутися до практики',
+    returnToPracticeDescription: 'Поверніться до практики і продовжіть виклик.',
+    selfPriority: 'Власний пріоритет',
+    sessionPriority: 'Сесія практики',
+    totalXpLabelTemplate: '{xp} XP усього',
+    xpIntoLevelLabelTemplate: '{xp} XP',
+  },
+  de: {
+    completedParentEyebrow: 'Abgeschlossene Elternaufgabe',
+    completedPercentTemplate: '{percent}% abgeschlossen',
+    continuePracticeTitle: 'Praxis fortsetzen',
+    followUpEyebrow: 'Weitere Praxis',
+    levelSummary: (level, xp) => `Level ${level} · ${xp} XP gesamt`,
+    maxLevelLabel: 'Maximales Level!',
+    nextLevelLabel: (level, xp) => `Bis Level ${level}: ${xp} XP`,
+    nextPracticeStep: 'Nächster Schritt in der Praxis.',
+    noActiveAssignment: 'Keine aktive Aufgabe.',
+    parentEyebrow: 'Elternaufgabe',
+    returnToPracticeAction: 'Zurück zur Praxis',
+    returnToPracticeDescription: 'Kehre zur Praxis zurück und setze die Herausforderung fort.',
+    selfPriority: 'Eigene Priorität',
+    sessionPriority: 'Praxisrunde',
+    totalXpLabelTemplate: '{xp} XP gesamt',
+    xpIntoLevelLabelTemplate: '{xp} XP',
+  },
+  en: {
+    completedParentEyebrow: 'Completed parent assignment',
+    completedPercentTemplate: '{percent}% completed',
+    continuePracticeTitle: 'Continue practice',
+    followUpEyebrow: 'Next practice',
+    levelSummary: (level, xp) => `Level ${level} · ${xp} XP total`,
+    maxLevelLabel: 'Maximum level!',
+    nextLevelLabel: (level, xp) => `To level ${level}: ${xp} XP`,
+    nextPracticeStep: 'Next step in practice.',
+    noActiveAssignment: 'No active assignment.',
+    parentEyebrow: 'Parent assignment',
+    returnToPracticeAction: 'Return to practice',
+    returnToPracticeDescription: 'Return to practice and continue the challenge.',
+    selfPriority: 'Self priority',
+    sessionPriority: 'Practice session',
+    totalXpLabelTemplate: '{xp} XP total',
+    xpIntoLevelLabelTemplate: '{xp} XP',
+  },
+  pl: {
     completedParentEyebrow: 'Ukończone zadanie od rodzica',
     completedPercentTemplate: '{percent}% ukończono',
     continuePracticeTitle: 'Kontynuuj praktykę',
@@ -156,7 +148,17 @@ const getKangurCmsRuntimeFallbackCopy = (
     sessionPriority: 'Sesja praktyki',
     totalXpLabelTemplate: '{xp} XP łącznie',
     xpIntoLevelLabelTemplate: '{xp} XP',
-  };
+  },
+};
+
+const getKangurCmsRuntimeFallbackCopy = (
+  locale: ReturnType<typeof normalizeSiteLocale>
+): KangurCmsRuntimeFallbackCopy => {
+  const primary = KANGUR_CMS_RUNTIME_FALLBACK_COPY_BY_LOCALE[locale];
+  if (primary) return primary;
+  const secondary = KANGUR_CMS_RUNTIME_FALLBACK_COPY_BY_LOCALE['pl'];
+  if (!secondary) throw new Error('Missing primary fallback language');
+  return secondary;
 };
 
 export function KangurCmsRuntimeDataProvider({

@@ -31,6 +31,7 @@ import {
   resolveFilemakerEmailCampaignRetryDelayForAttemptCount,
   resolveFilemakerEmailCampaignRetryableDeliveries,
   syncFilemakerEmailCampaignRunWithDeliveries,
+  applyFilemakerEmailCampaignRunStatusToDeliveries,
   toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
   toPersistedFilemakerEmailCampaignEventRegistry,
@@ -69,6 +70,7 @@ import type {
   FilemakerCampaignRuntimeDeps,
   FilemakerCampaignRuntimeState,
   FilemakerCampaignRunLaunchResult,
+  FilemakerCampaignRunCancelResult,
   FilemakerCampaignRunProcessResult,
 } from './runtime-types';
 import {
@@ -409,6 +411,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
           campaignId: campaign.id,
           runId: run.id,
           deliveryId: delivery.id,
+          mailAccountId: campaign.mailAccountId ?? null,
           replyToEmail: campaign.replyToEmail ?? null,
           fromName: campaign.fromName ?? null,
         });
@@ -623,11 +626,81 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
     };
   };
 
+  const cancelRun = async (input: {
+    runId: string;
+    actor?: string | null;
+    message?: string | null;
+  }): Promise<FilemakerCampaignRunCancelResult> => {
+    const state = await readRuntimeState();
+    const run = state.runRegistry.runs.find((entry) => entry.id === input.runId);
+    if (!run) {
+      throw notFoundError(`Campaign run ${input.runId} not found.`);
+    }
+
+    const campaign = state.campaignRegistry.campaigns.find((entry) => entry.id === run.campaignId);
+    if (!campaign) {
+      throw notFoundError(`Campaign ${run.campaignId} not found.`);
+    }
+
+    const deliveries = getFilemakerEmailCampaignDeliveriesForRun(state.deliveryRegistry, run.id);
+    if (run.status === 'cancelled') {
+      return {
+        campaign,
+        run,
+        deliveries,
+      };
+    }
+
+    if (run.status === 'completed' || run.status === 'failed') {
+      throw badRequestError('Only pending, queued, or running runs can be cancelled.');
+    }
+
+    const nowIso = deps.now().toISOString();
+    const cancelledDeliveries = applyFilemakerEmailCampaignRunStatusToDeliveries({
+      deliveries,
+      runStatus: 'cancelled',
+    });
+    const cancelledRun = syncFilemakerEmailCampaignRunWithDeliveries({
+      run,
+      deliveries: cancelledDeliveries,
+      status: 'cancelled',
+    });
+    const eventRegistry = appendEventsToRegistry(state.eventRegistry, [
+      createFilemakerEmailCampaignEvent({
+        campaignId: campaign.id,
+        runId: run.id,
+        type: 'cancelled',
+        actor: input.actor ?? null,
+        message: input.message?.trim() || 'Run cancelled by admin.',
+        runStatus: 'cancelled',
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      }),
+    ]);
+
+    await persistRuntimeState({
+      runRegistry: replaceRunInRegistry(state.runRegistry, cancelledRun),
+      deliveryRegistry: replaceRunDeliveriesInRegistry(
+        state.deliveryRegistry,
+        run.id,
+        cancelledDeliveries
+      ),
+      eventRegistry,
+    });
+
+    return {
+      campaign,
+      run: cancelledRun,
+      deliveries: cancelledDeliveries,
+    };
+  };
+
   return {
     readRuntimeState,
     persistRuntimeState,
     launchRun,
     processRun,
+    cancelRun,
     launchCampaignRun: launchRun,
   };
 };

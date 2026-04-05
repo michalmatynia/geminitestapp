@@ -1,5 +1,7 @@
+'use client';
+
 import { useCallback } from 'react';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/base';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 type UseAiPathsNodeSwitchConfirmInput = {

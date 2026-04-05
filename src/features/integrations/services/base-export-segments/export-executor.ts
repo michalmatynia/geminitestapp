@@ -4,7 +4,7 @@ import {
   exportProductToBase,
   getExportStockFallbackEnabled,
 } from '@/features/integrations/server';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { BaseFieldMapping } from './common';

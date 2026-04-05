@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getBaseImportRunDetailOrThrow } from '@/features/integrations/server';
-import type {
-  BaseImportItemStatus,
-  BaseImportRunDetailResponse,
-} from '@/shared/contracts/integrations';
-import { baseImportRunDetailQuerySchema } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { BaseImportItemStatus, BaseImportRunDetailResponse } from '@/shared/contracts/integrations/base-com';
+import { baseImportRunDetailQuerySchema } from '@/shared/contracts/integrations/base-com';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const querySchema = baseImportRunDetailQuerySchema;
 

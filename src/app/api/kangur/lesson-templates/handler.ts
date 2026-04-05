@@ -12,7 +12,7 @@ import {
   kangurLessonTemplatesQuerySchema,
   kangurLessonTemplatesReplacePayloadSchema,
 } from '@/shared/contracts/kangur-lesson-templates';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 

@@ -4,8 +4,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
-import type { BreadcrumbItem } from '@/shared/contracts/ui';
-import { cn, getMotionSafeScrollBehavior } from '@/shared/utils';
+import type { BreadcrumbItem } from '@/shared/contracts/ui/base';
+import { cn } from '@/shared/utils/ui-utils';
+import { getMotionSafeScrollBehavior } from '@/shared/utils/motion-accessibility';
 
 import { Button } from './button';
 

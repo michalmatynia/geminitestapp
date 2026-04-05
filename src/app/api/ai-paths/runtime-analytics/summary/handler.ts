@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { startAiPathRunQueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
+import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/server';
-import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
 import type {
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummaryResponse,
@@ -14,7 +15,7 @@ import {
   aiPathRuntimeAnalyticsRangeQuerySchema,
   aiPathRuntimeAnalyticsRangeSchema,
 } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

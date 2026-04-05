@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * This file is a barrel for all English animations.
  * Individual animations are now located in the `./english/` directory for better maintainability.

@@ -1,10 +1,4 @@
-import type {
-  ProductValidationDenyBehavior,
-  ProductValidationLaunchScopeBehavior,
-  ProductValidationPatternDenyBehaviorOverride,
-  ProductValidationInstanceDenyBehaviorMap,
-  ProductValidationInstanceScope,
-} from '@/shared/contracts/products';
+import type { ProductValidationDenyBehavior, ProductValidationLaunchScopeBehavior, ProductValidationPatternDenyBehaviorOverride, ProductValidationInstanceDenyBehaviorMap, ProductValidationInstanceScope } from '@/shared/contracts/products/validation';
 
 export const PRODUCT_VALIDATION_INSTANCE_SCOPES: ProductValidationInstanceScope[] = [
   'draft_template',

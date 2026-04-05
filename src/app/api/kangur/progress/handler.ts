@@ -7,18 +7,14 @@ import {
   resolveKangurActor,
 } from '@/features/kangur/server';
 import { ActivityTypes } from '@/shared/constants/observability';
-import {
-  createDefaultKangurProgressState,
-  kangurLessonSubjectSchema,
-  type KangurLessonSubject,
-  type KangurProgressState,
-} from '@kangur/contracts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
+import { kangurLessonSubjectSchema } from '@kangur/contracts/kangur-lesson-constants';
+import { type KangurLessonSubject, type KangurProgressState } from '@kangur/contracts';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { parseKangurProgressUpdatePayload } from '@/shared/validations/kangur';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
 
 const KANGUR_PROGRESS_SOURCE_HEADER = 'x-kangur-progress-source';
 const KANGUR_PROGRESS_CTA_HEADER = 'x-kangur-progress-cta';
@@ -46,10 +42,7 @@ const readBodyJson = async (request: NextRequest): Promise<unknown> => {
   }
 };
 
-const resolveBodyJson = async (
-  request: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<unknown> => {
+const resolveBodyJson = async (request: NextRequest, ctx: ApiHandlerContext): Promise<unknown> => {
   if (ctx.body !== undefined) {
     return ctx.body;
   }
@@ -163,8 +156,11 @@ const parseTimestampMs = (value: string | null | undefined): number => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
-const buildOpenedTaskKey = (entry: { kind: string; href: string; openedAt?: string | null }): string =>
-  `${entry.kind}::${entry.href}::${entry.openedAt ?? ''}`;
+const buildOpenedTaskKey = (entry: {
+  kind: string;
+  href: string;
+  openedAt?: string | null;
+}): string => `${entry.kind}::${entry.href}::${entry.openedAt ?? ''}`;
 
 const resolveOpenedTaskActivity = (
   previous: KangurProgressState,

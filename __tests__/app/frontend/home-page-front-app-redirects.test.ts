@@ -59,7 +59,8 @@ vi.mock('@/features/kangur/server', () => ({
 }));
 
 vi.mock('@/features/kangur/public', () => ({
-  getKangurPublicAliasHref: (
+  getKangurPublicLaunchHref: (
+    route: string | undefined,
     slugSegments: readonly string[] = [],
     searchParams?: Record<string, string | string[] | undefined>
   ) => {
@@ -77,6 +78,10 @@ vi.mock('@/features/kangur/public', () => ({
         query.set(key, value);
       }
     });
+
+    if (route === 'dedicated_app' && slugSegments.length === 0) {
+      query.set('__kangurLaunch', 'dedicated_app');
+    }
 
     const serialized = query.toString();
     return serialized ? `${pathname}?${serialized}` : pathname;
@@ -105,6 +110,28 @@ vi.mock('@/app/(frontend)/home/home-helpers', () => {
     FRONT_PAGE_ALLOWED: frontPageAllowed,
     getFrontPageSetting: getFrontPageSettingMock,
     shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
+    resolveFrontPageSelection: async () => {
+      const enabled = shouldApplyFrontPageAppSelectionMock();
+      if (!enabled) {
+        return {
+          enabled: false,
+          setting: null,
+          publicOwner: 'cms',
+          redirectPath: null,
+          source: 'disabled',
+          fallbackReason: null,
+        };
+      }
+      const setting = await getFrontPageSettingMock();
+      return {
+        enabled: true,
+        setting,
+        publicOwner: getFrontPagePublicOwnerMock(setting),
+        redirectPath: getFrontPageRedirectPathMock(setting),
+        source: 'mongo',
+        fallbackReason: null,
+      };
+    },
   };
 });
 
@@ -120,7 +147,7 @@ describe('front page app selection', () => {
     getKangurConfiguredLaunchRouteMock.mockResolvedValue('web_mobile_view');
     headersMock.mockResolvedValue(new Headers());
     flushMock.mockResolvedValue(undefined);
-    homeContentMock.mockReturnValue(null);
+    homeContentMock.mockReturnValue('home-content');
     resolveCmsDomainFromHeadersMock.mockResolvedValue({ id: 'default-domain' });
     shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
     getFrontPagePublicOwnerMock.mockImplementation((value: string | null | undefined) =>
@@ -184,8 +211,8 @@ describe('front page app selection', () => {
     expect(result).toBeTruthy();
     expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).toHaveBeenCalled();
-    expect(headersMock).toHaveBeenCalled();
-    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
+    expect(headersMock).not.toHaveBeenCalled();
+    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalledWith(null);
     expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {}, undefined);
     expect(flushMock).toHaveBeenCalledTimes(1);
   });
@@ -201,9 +228,22 @@ describe('front page app selection', () => {
     expect(getFrontPageSettingMock).not.toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
     expect(getCmsRepositoryMock).toHaveBeenCalled();
-    expect(headersMock).toHaveBeenCalled();
-    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalled();
+    expect(headersMock).not.toHaveBeenCalled();
+    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalledWith(null);
     expect(getSlugsForDomainMock).toHaveBeenCalledWith('default-domain', {}, undefined);
     expect(flushMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads request headers only when domain zoning is enabled', async () => {
+    const { Home } = await loadHomeModule();
+
+    getFrontPageSettingMock.mockResolvedValue('products');
+    isDomainZoningEnabledMock.mockResolvedValue(true);
+
+    const result = await Home();
+
+    expect(result).toBeTruthy();
+    expect(headersMock).toHaveBeenCalledTimes(1);
+    expect(resolveCmsDomainFromHeadersMock).toHaveBeenCalledWith(expect.any(Headers));
   });
 });

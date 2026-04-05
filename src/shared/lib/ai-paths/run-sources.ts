@@ -5,6 +5,11 @@ export const AI_PATHS_RUN_SOURCE_VALUES = [
   'product_panel',
 ] as const;
 
+export const AI_PATHS_CANONICAL_RUN_SOURCE_FILTER = {
+  source: 'ai_paths_ui',
+  sourceMode: 'include',
+} as const;
+
 const normalizeTag = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();

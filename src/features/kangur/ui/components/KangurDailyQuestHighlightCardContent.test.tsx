@@ -11,7 +11,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-import { KangurDailyQuestHighlightCardContent } from '@/features/kangur/ui/components/KangurDailyQuestHighlightCardContent';
+import { KangurDailyQuestHighlightCardContent } from '@/features/kangur/ui/components/summary-cards/KangurDailyQuestHighlightCardContent';
 
 describe('KangurDailyQuestHighlightCardContent', () => {
   it('renders quest chips, content, footer, and optional action', () => {

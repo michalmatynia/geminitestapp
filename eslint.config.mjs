@@ -90,6 +90,22 @@ const preservedLegacyCoreRuleOffs = {
   'preserve-caught-error': 'off',
 };
 
+const kangurObservabilityContractImportNames = [
+  'KangurKnowledgeGraphPreviewRequest',
+  'KangurKnowledgeGraphPreviewResponse',
+  'KangurKnowledgeGraphSemanticReadiness',
+  'KangurKnowledgeGraphStatusSnapshot',
+  'KangurKnowledgeGraphSyncRequest',
+  'KangurKnowledgeGraphSyncResponse',
+  'KangurRecentAnalyticsEvent',
+  'kangurKnowledgeGraphPreviewRequestSchema',
+  'kangurKnowledgeGraphSyncRequestSchema',
+  'kangurKnowledgeGraphSyncResponseSchema',
+];
+
+const kangurObservabilityContractImportGuardMessage =
+  'Import Kangur observability contracts from "@/shared/contracts/kangur-observability".';
+
 const commonRules = {
   ...js.configs.recommended.rules,
   ...preservedLegacyCoreRuleOffs,
@@ -133,6 +149,23 @@ const commonRules = {
   'no-restricted-imports': [
     'error',
     {
+      paths: [
+        {
+          name: '@/shared/contracts',
+          importNames: kangurObservabilityContractImportNames,
+          message: kangurObservabilityContractImportGuardMessage,
+        },
+        {
+          name: '@/shared/contracts/admin',
+          importNames: kangurObservabilityContractImportNames,
+          message: kangurObservabilityContractImportGuardMessage,
+        },
+        {
+          name: '@/shared/contracts/kangur',
+          importNames: kangurObservabilityContractImportNames,
+          message: kangurObservabilityContractImportGuardMessage,
+        },
+      ],
       patterns: [
         {
           group: ['use client', 'use server'],

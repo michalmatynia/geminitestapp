@@ -25,7 +25,7 @@ import type {
 } from '@/shared/contracts/admin';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

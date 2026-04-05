@@ -41,30 +41,27 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsAccessOrInternal: requireAiPathsAccessOrInternalMock,
 }));
 
-vi.mock('@/features/notesapp/public', () => ({
-  noteUpdateSchema: {
-    safeParse: noteUpdateSafeParseMock,
-  },
-}));
-
-vi.mock('@/features/notesapp/server', () => ({
+vi.mock('@/features/notesapp/services/notes', () => ({
   noteService: {
     getById: noteGetByIdMock,
     update: noteUpdateMock,
   },
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/features/notesapp/validations/notes', () => ({
+  noteUpdateSchema: {
+    safeParse: noteUpdateSafeParseMock,
+  },
+}));
+
+vi.mock('@/shared/lib/api/parse-json', () => ({
   parseJsonBody: parseJsonBodyMock,
+}));
+
+vi.mock('@/shared/lib/products/validations', () => ({
   productUpdateSchema: {
     safeParse: productUpdateSafeParseMock,
   },
-  getProductDataProvider: getProductDataProviderMock,
-  productService: {
-    getProductById: productGetByIdMock,
-    updateProduct: productUpdateMock,
-  },
-  getProductRepository: getProductRepositoryMock,
 }));
 
 vi.mock('@/shared/lib/db/app-db-provider', () => ({

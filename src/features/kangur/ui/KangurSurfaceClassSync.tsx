@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 
-import type { CmsStorefrontAppearanceMode } from '@/features/cms/public';
-import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
+import type { CmsStorefrontAppearanceMode } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
+import { useOptionalCmsStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import { logger } from '@/shared/utils/logger';

@@ -1,1 +1,1 @@
-export { default } from '../../../../(frontend)/kangur/(app)/page';
+export { default } from '@/app/(frontend)/kangur/(app)/page';

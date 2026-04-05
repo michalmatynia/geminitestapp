@@ -1,4 +1,4 @@
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { describe, expect, it } from 'vitest';
 
 import {

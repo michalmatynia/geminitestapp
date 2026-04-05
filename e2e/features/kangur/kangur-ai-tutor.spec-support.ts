@@ -4,7 +4,7 @@ import {
   AVATAR_SIZE,
   GUIDED_AVATAR_SURFACE_GAP,
   KANGUR_AI_TUTOR_HOME_ONBOARDING_STORAGE_KEY,
-} from '@/features/kangur/ui/components/KangurAiTutorWidget.shared';
+} from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.shared';
 
 export async function openTutorFromSelection(page: Page): Promise<void> {
   const selectionAction = page.getByTestId('kangur-ai-tutor-selection-action');

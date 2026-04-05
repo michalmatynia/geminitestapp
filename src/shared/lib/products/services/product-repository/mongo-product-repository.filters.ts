@@ -1,11 +1,7 @@
 import { type Filter } from 'mongodb';
 
-import {
-  getProductAdvancedFilterMetrics,
-  type ProductAdvancedFilterCondition,
-  type ProductAdvancedFilterRule,
-  type ProductFilters,
-} from '@/shared/contracts/products';
+import { getProductAdvancedFilterMetrics } from '@/shared/contracts/products/filters';
+import { type ProductAdvancedFilterCondition, type ProductAdvancedFilterRule, type ProductFilters } from '@/shared/contracts/products';
 import { logger } from '@/shared/utils/logger';
 
 import { type ProductDocument } from './mongo-product-repository-mappers';

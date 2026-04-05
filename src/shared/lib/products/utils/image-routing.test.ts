@@ -63,6 +63,9 @@ describe('products image-routing utils', () => {
       '/gallery/photo.jpg'
     );
     expect(resolveProductImageUrl('gallery/photo.jpg')).toBe('/gallery/photo.jpg');
+    expect(resolveProductImageUrl('ftp://files.example.com/image.png', 'https://cdn.example.com')).toBe(
+      'ftp://files.example.com/image.png'
+    );
     expect(resolveProductImageUrl('http:// bad host/image.png', 'https://cdn.example.com')).toBe(
       'http:// bad host/image.png'
     );

@@ -6,11 +6,8 @@ import {
   runBrainChatCompletion,
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
-import {
-  imageStudioPromptExtractModeSchema,
-  type ImageStudioPromptExtractResponse,
-  type ImageStudioPromptExtractSource,
-} from '@/shared/contracts/image-studio';
+import { imageStudioPromptExtractModeSchema } from '@/shared/contracts/image-studio/misc';
+import { type ImageStudioPromptExtractResponse, type ImageStudioPromptExtractSource } from '@/shared/contracts/image-studio';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parsePersistedImageStudioSettings,
@@ -28,7 +25,7 @@ import type {
   PromptValidationIssue,
   PromptValidationSettings,
 } from '@/shared/contracts/prompt-engine';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

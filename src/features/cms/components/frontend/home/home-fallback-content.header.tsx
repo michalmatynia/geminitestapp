@@ -9,7 +9,7 @@ import { Link as LocaleLink } from '@/i18n/navigation';
 import {
   CmsStorefrontAppearanceButtons,
   type CmsAppearanceTone,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import {
   UI_CENTER_ROW_CLASSNAME,
   UI_CENTER_ROW_SPACED_CLASSNAME,

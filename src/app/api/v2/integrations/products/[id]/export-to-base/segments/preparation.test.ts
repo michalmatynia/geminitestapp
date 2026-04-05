@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { BaseExportRequestData } from '@/shared/contracts/integrations/base-com';
 import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const mocks = vi.hoisted(() => ({
   getExportActiveTemplateIdMock: vi.fn(),

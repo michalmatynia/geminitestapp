@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurAssignmentSnapshot } from '@kangur/platform';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import type {

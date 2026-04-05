@@ -9,19 +9,17 @@ import {
   useUpdateUserPreferences,
 } from '@/features/products/hooks/useUserPreferences';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Catalog } from '@/shared/contracts/products';
-import type { ProductListPreferences } from '@/shared/contracts/products';
-import {
-  AdminProductsPageLayout,
-  Button,
-  SelectSimple,
-  Input,
-  useToast,
-  FormSection,
-  FormField,
-  LoadingState,
-  FormActions,
-} from '@/shared/ui';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductListPreferences } from '@/shared/contracts/products/filters';
+import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
+import { Button } from '@/shared/ui/button';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { FormActions } from '@/shared/ui/FormActions';
+import { Input } from '@/shared/ui/input';
+import { LoadingState } from '@/shared/ui/LoadingState';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {

@@ -100,12 +100,12 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal();
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return { ...actual, useToast: vi.fn(() => ({ toast: vi.fn() })) };
 });
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: ({ navigation }) => (
     <div data-testid='top-navigation'>
       <nav aria-label='Główna nawigacja Kangur'>
@@ -123,31 +123,38 @@ vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => (
 }));
 
 // Static mocks for all widgets to ensure hoisting
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileAiTutorMoodWidget', () => ({ KangurLearnerProfileAiTutorMoodWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileAssignmentsWidget', () => ({ KangurLearnerProfileAssignmentsWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileHeroWidget', () => ({ KangurLearnerProfileHeroWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileLevelProgressWidget', () => ({ KangurLearnerProfileLevelProgressWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileMasteryWidget', () => ({ KangurLearnerProfileMasteryWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfilePerformanceWidget', () => ({ KangurLearnerProfilePerformanceWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileQuestSummaryWidget', () => ({ KangurLearnerProfileQuestSummaryWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileRecommendationsWidget', () => ({ KangurLearnerProfileRecommendationsWidget: () => <div>Plan na dziś</div> }));
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileSessionsWidget', () => ({ KangurLearnerProfileSessionsWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurGameHomeActionsWidget', () => ({ 
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileAiTutorMoodWidget', () => ({ KangurLearnerProfileAiTutorMoodWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileAssignmentsWidget', () => ({ KangurLearnerProfileAssignmentsWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileHeroWidget', () => ({ KangurLearnerProfileHeroWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileLevelProgressWidget', () => ({ KangurLearnerProfileLevelProgressWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileMasteryWidget', () => ({ KangurLearnerProfileMasteryWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfilePerformanceWidget', () => ({ KangurLearnerProfilePerformanceWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileQuestSummaryWidget', () => ({ KangurLearnerProfileQuestSummaryWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileRecommendationsWidget', () => ({ KangurLearnerProfileRecommendationsWidget: () => <div>Plan na dziś</div> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileSessionsWidget', () => ({ KangurLearnerProfileSessionsWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileResultsWidget', () => ({ KangurLearnerProfileResultsWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeActionsWidget', () => ({ 
   KangurGameHomeActionsWidget: () => (
     <div data-testid='kangurgamehomeactionswidget'>
       <h3 role='heading' aria-level='3' className='sr-only'>Wybierz aktywnosc</h3>
       <button className='home-action-featured' onClick={() => useKangurGameRuntimeMock().handleStartGame()}>Grajmy!</button>
-      <button className='home-action-featured' onClick={() => useKangurGameRuntimeMock().setScreen('kangur_setup')}>Kangur Matematyczny</button>
+      <button className='home-action-featured' onClick={() => useKangurGameRuntimeMock().setScreen('kangur_setup')}>StudiQ Matematyczny</button>
     </div>
   )
 }));
-vi.mock('@/features/kangur/ui/components/KangurGameHomeDuelsInvitesWidget', () => ({ KangurGameHomeDuelsInvitesWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurGameHomeHeroWidget', () => ({ KangurGameHomeHeroWidget: () => <div /> }));
-vi.mock('@/features/kangur/ui/components/KangurGameHomeQuestWidget', () => ({ KangurGameHomeQuestWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeDuelsInvitesWidget', () => ({ KangurGameHomeDuelsInvitesWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeHeroWidget', () => ({ KangurGameHomeHeroWidget: () => <div /> }));
+vi.mock('@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget', () => ({ KangurGameHomeQuestWidget: () => (
+  <div id='kangur-home-quest'>
+    <h3 id='kangur-home-quest-heading' className='sr-only'>Misja dla ucznia</h3>
+    <p data-testid='kangur-home-quest-description'></p>
+    <div role='progressbar' aria-label='Postęp' data-testid='kangur-home-quest-progress-bar'></div>
+  </div>
+) }));
 vi.mock('@/features/kangur/ui/components/KangurAssignmentSpotlight', () => ({ KangurAssignmentSpotlight: () => <div /> }));
 vi.mock('@/features/kangur/ui/components/KangurLearnerAssignmentsPanel', () => ({ KangurLearnerAssignmentsPanel: () => <div /> }));
 
-vi.mock('@/features/kangur/ui/components/KangurLearnerProfileOverviewWidget', () => ({
+vi.mock('@/features/kangur/ui/components/learner-profile/KangurLearnerProfileOverviewWidget', () => ({
   KangurLearnerProfileOverviewWidget: () => {
     const { openLoginModal } = useKangurLoginModalMock();
     return (
@@ -184,7 +191,7 @@ const renderLearnerProfilePage = async () => {
     user: { id: 'u1', activeLearner: { id: 'l1', name: 'Jan' } } as any,
     progress: commonProgress,
     snapshot: { 
-      level: { level: 1 }, 
+      level: { level: 1, minXp: 0, title: 'Beginner', color: 'blue' }, 
       totalXp: 1200, 
       unlockedBadges: 0, 
       totalBadges: 10,
@@ -197,7 +204,25 @@ const renderLearnerProfilePage = async () => {
       bestAccuracy: 0,
       averageAccuracy: 0,
       weeklyActivity: [],
-    },
+      operationPerformance: [],
+      recentSessions: [],
+      gamesPlayed: 0,
+      lessonsCompleted: 0,
+      perfectGames: 0,
+      unlockedBadgeIds: [],
+      nextLevel: null,
+      levelProgressPercent: 0,
+      currentStreakDays: 0,
+      longestStreakDays: 0,
+      lastPlayedAt: null,
+      dailyGoalGames: 0,
+      todayGames: 0,
+      averageXpPerSession: 0,
+      recommendedSessionsCompleted: 0,
+      recommendedSessionProgressPercent: 0,
+      recommendedSessionSummary: '',
+      recommendedSessionNextBadgeName: null,
+    } as any,
     isLoadingScores: false,
   });
   useKangurAuthMock.mockReturnValue({
@@ -216,11 +241,12 @@ const renderGamePage = (screenState = 'home') => {
   useKangurGameRuntimeMock.mockReturnValue({
     screen: screenState,
     user: null,
-    progress: { totalXp: 0, lessonMastery: {}, operationsPlayed: [] },
+    progress: { totalXp: 0, lessonMastery: {}, operationsPlayed: [], badges: [] },
     xpToast: { visible: false },
     basePath: '/kangur',
     setScreen: vi.fn(),
     handleStartGame: vi.fn(),
+    practiceAssignmentsByOperation: {},
   } as any);
 
   const queryClient = createTestQueryClient();
@@ -250,7 +276,7 @@ describe('Kangur accessibility smoke', () => {
     await renderLearnerProfilePage();
 
     expect(await screen.findByText('Plan na dziś')).toBeVisible();
-    expect(await screen.findByRole('link', { name: 'Zagraj teraz' })).toBeVisible();
+    expect(await screen.findByText('Zagraj teraz')).toBeVisible();
 
     expect(screen.getByRole('link', { name: 'Przejdź do głównej treści', hidden: true })).toHaveAttribute(
       'href',
@@ -263,7 +289,7 @@ describe('Kangur accessibility smoke', () => {
     expect(screen.getByRole('link', { name: 'Profil Jan' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Rodzic' })).toBeVisible();
     expect(screen.getByText('Plan na dziś')).toBeVisible();
-    expect(screen.getAllByRole('link', { name: 'Otwórz lekcję' }).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Otwórz lekcję')).length).toBeGreaterThan(0);
   });
 
   it('has no obvious accessibility violations in the learner profile shell', async () => {
@@ -285,9 +311,7 @@ describe('Kangur accessibility smoke', () => {
 
     await renderLearnerProfilePage();
 
-    const loginButton = screen.getByRole('button', {
-      name: 'Zaloguj się, aby synchronizować postęp',
-    });
+    const loginButton = await screen.findByText('Zaloguj się, aby synchronizować postęp');
     loginButton.focus();
 
     const user = userEvent.setup();
@@ -322,11 +346,12 @@ describe('Kangur accessibility smoke', () => {
     useKangurGameRuntimeMock.mockReturnValue({
       screen: 'operation',
       user: null,
-      progress: { totalXp: 0, lessonMastery: {}, operationsPlayed: [] },
+      progress: { totalXp: 0, lessonMastery: {}, operationsPlayed: [], badges: [] },
       xpToast: { visible: false },
       basePath: '/kangur',
       setScreen: vi.fn(),
       handleStartGame: vi.fn(),
+      practiceAssignmentsByOperation: {},
     } as any);
     
     vi.mock('@/features/kangur/ui/components/KangurGameOperationSelectorWidget', () => ({

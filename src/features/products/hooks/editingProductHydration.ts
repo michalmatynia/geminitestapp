@@ -1,4 +1,4 @@
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const EDIT_PRODUCT_HYDRATED_FLAG = '__editProductHydrated';

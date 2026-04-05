@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { LoadingState } from '@/shared/ui';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 export type MassListProgressPanelProps = {
   current: number;

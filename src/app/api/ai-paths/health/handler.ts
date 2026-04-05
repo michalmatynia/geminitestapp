@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { startAiPathRunQueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
+import { getAiPathRunQueueStatus } from '@/features/ai/ai-paths/workers/ai-path-run-queue/status';
+import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/server';
-import {
-  getAiPathRunQueueStatus,
-  startAiInsightsQueue,
-  startAiPathRunQueue,
-} from '@/features/jobs/server';
 import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { notifyAiPathsSloBreach } from '@/shared/lib/observability/ai-paths-slo-notifier';

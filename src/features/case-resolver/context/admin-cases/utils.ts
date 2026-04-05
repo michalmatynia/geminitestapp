@@ -1,5 +1,6 @@
 import type { UserPreferences } from '@/shared/contracts/auth';
-import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { type CaseListViewDefaults } from './types';
 

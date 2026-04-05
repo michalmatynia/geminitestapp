@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import {
@@ -11,13 +13,10 @@ import {
   ensureSafeDocumentHtml,
   stripHtmlToPlainText,
   toStorageDocumentValue,
-} from '@/features/document-editor/public';
-import type {
-  CaseResolverEditorNodeContext,
-  CaseResolverFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
-import type { Toast } from '@/shared/contracts/ui';
+} from '@/shared/lib/document-editor/public';
+import type { CaseResolverEditorNodeContext, CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import { createCaseResolverFile } from '../settings';
 import { type CaseResolverFileEditDraft } from '../types';

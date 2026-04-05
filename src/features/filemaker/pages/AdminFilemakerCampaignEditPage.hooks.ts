@@ -2,10 +2,11 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   buildFilemakerPartyOptions,
@@ -15,41 +16,55 @@ import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
-  getFilemakerEmailCampaignDeliveriesForRun,
   normalizeFilemakerEmailCampaignSuppressionRegistry,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
+  parseFilemakerEmailCampaignSchedulerStatus,
   parseFilemakerEmailCampaignSuppressionRegistry,
   removeFilemakerEmailCampaignSuppressionEntryByAddress,
+  resolveFilemakerEmailCampaignNextAutomationAt,
   resolveFilemakerEmailCampaignAudiencePreview,
   summarizeFilemakerEmailCampaignAnalytics,
-  syncFilemakerEmailCampaignRunWithDeliveries,
+  toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
+  toPersistedFilemakerEmailCampaignEventRegistry,
   toPersistedFilemakerEmailCampaignRegistry,
   toPersistedFilemakerEmailCampaignRunRegistry,
+  toPersistedFilemakerEmailCampaignSchedulerStatus,
   toPersistedFilemakerEmailCampaignSuppressionRegistry,
   upsertFilemakerEmailCampaignSuppressionEntry,
-  applyFilemakerEmailCampaignRunStatusToDeliveries,
 } from '../settings';
 import { decodeRouteParam } from './filemaker-page-utils';
-import { buildCampaignIdFromName, createBlankCampaignDraft } from './AdminFilemakerCampaignEditPage.utils';
+import {
+  buildCampaignIdFromName,
+  createBlankCampaignDraft,
+  createDuplicatedCampaignDraft,
+  removeCampaignArtifacts,
+} from './AdminFilemakerCampaignEditPage.utils';
+import { useFilemakerCampaignRunActions } from './useFilemakerCampaignRunActions';
 import type {
   FilemakerEmailCampaign,
   FilemakerEmailCampaignRun,
-  FilemakerEmailCampaignRunRegistry,
-  FilemakerEmailCampaignDeliveryRegistry,
   FilemakerEmailCampaignSuppressionRegistry,
   FilemakerEmailCampaignRunMode,
   FilemakerEmailCampaignLaunchRunResponse,
-  FilemakerEmailCampaignRunStatus,
+  FilemakerEmailCampaignTestSendResponse,
   FilemakerEmailCampaignSuppressionReason,
+  FilemakerMailAccount,
 } from '../types';
+
+type FilemakerMailAccountsResponse = {
+  accounts: FilemakerMailAccount[];
+};
 
 export function useAdminFilemakerCampaignEditState() {
   const params = useParams();
@@ -57,6 +72,8 @@ export function useAdminFilemakerCampaignEditState() {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
+  const { handleRunAction, isRunActionPending } = useFilemakerCampaignRunActions();
 
   const campaignId = useMemo(() => decodeRouteParam(params['campaignId']), [params]);
   const isCreateMode = campaignId === 'new' || !campaignId;
@@ -65,7 +82,9 @@ export function useAdminFilemakerCampaignEditState() {
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawRuns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
+  const rawAttempts = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY);
   const rawEvents = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY);
+  const rawSchedulerStatus = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY);
   const rawSuppressions = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY);
 
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
@@ -78,10 +97,18 @@ export function useAdminFilemakerCampaignEditState() {
     () => parseFilemakerEmailCampaignDeliveryRegistry(rawDeliveries),
     [rawDeliveries]
   );
+  const attemptRegistry = useMemo(
+    () => parseFilemakerEmailCampaignDeliveryAttemptRegistry(rawAttempts),
+    [rawAttempts]
+  );
   const eventRegistry = useMemo(() => parseFilemakerEmailCampaignEventRegistry(rawEvents), [rawEvents]);
   const suppressionRegistry = useMemo(
     () => parseFilemakerEmailCampaignSuppressionRegistry(rawSuppressions),
     [rawSuppressions]
+  );
+  const schedulerStatus = useMemo(
+    () => parseFilemakerEmailCampaignSchedulerStatus(rawSchedulerStatus),
+    [rawSchedulerStatus]
   );
 
   const existingCampaign = useMemo(
@@ -98,6 +125,9 @@ export function useAdminFilemakerCampaignEditState() {
   );
   const [draft, setDraft] = useState<FilemakerEmailCampaign>(initialDraft);
   const [launchingMode, setLaunchingMode] = useState<FilemakerEmailCampaignRunMode | null>(null);
+  const [mailAccounts, setMailAccounts] = useState<FilemakerMailAccount[]>([]);
+  const [testRecipientEmailDraft, setTestRecipientEmailDraft] = useState('');
+  const [isTestSendPending, setIsTestSendPending] = useState(false);
   const [suppressionEmailDraft, setSuppressionEmailDraft] = useState('');
   const [suppressionReasonDraft, setSuppressionReasonDraft] =
     useState<FilemakerEmailCampaignSuppressionReason>('manual_block');
@@ -106,6 +136,30 @@ export function useAdminFilemakerCampaignEditState() {
   useEffect(() => {
     setDraft(initialDraft);
   }, [initialDraft]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMailAccounts = async (): Promise<void> => {
+      try {
+        const result = await api.get<FilemakerMailAccountsResponse>('/api/filemaker/mail/accounts');
+        if (!isActive) return;
+        setMailAccounts(result.accounts);
+      } catch (error: unknown) {
+        if (!isActive) return;
+        logClientError(error);
+        toast(error instanceof Error ? error.message : 'Failed to load Filemaker mail accounts.', {
+          variant: 'error',
+        });
+      }
+    };
+
+    void loadMailAccounts();
+
+    return () => {
+      isActive = false;
+    };
+  }, [toast]);
 
   const organizationOptions = useMemo(
     () =>
@@ -135,6 +189,32 @@ export function useAdminFilemakerCampaignEditState() {
       })),
     [database]
   );
+  const selectedMailAccount = useMemo(
+    () => mailAccounts.find((account) => account.id === draft.mailAccountId) ?? null,
+    [draft.mailAccountId, mailAccounts]
+  );
+  const mailAccountOptions = useMemo(() => {
+    const options = mailAccounts.map((account) => ({
+      value: account.id,
+      label: `${account.name} <${account.emailAddress}>${account.status === 'active' ? '' : ' (paused)'}`,
+    }));
+    if (
+      draft.mailAccountId &&
+      !options.some((option) => option.value === draft.mailAccountId)
+    ) {
+      options.unshift({
+        value: draft.mailAccountId,
+        label: `Missing mail account (${draft.mailAccountId})`,
+      });
+    }
+    return [
+      {
+        value: '__shared__',
+        label: 'Shared Filemaker campaign delivery provider',
+      },
+      ...options,
+    ];
+  }, [draft.mailAccountId, mailAccounts]);
 
   const preview = useMemo(
     () => resolveFilemakerEmailCampaignAudiencePreview(database, draft.audience, suppressionRegistry),
@@ -164,6 +244,15 @@ export function useAdminFilemakerCampaignEditState() {
       }),
     [database, deliveryRegistry, draft, eventRegistry, runRegistry, suppressionRegistry]
   );
+  const nextAutomationAt = useMemo(
+    () => resolveFilemakerEmailCampaignNextAutomationAt(draft),
+    [draft]
+  );
+  const schedulerFailureMessage = useMemo(
+    () =>
+      schedulerStatus.launchFailures.find((failure) => failure.campaignId === draft.id)?.message ?? null,
+    [draft.id, schedulerStatus.launchFailures]
+  );
 
   const persistCampaignRegistry = useCallback(
     async (nextCampaigns: FilemakerEmailCampaign[]): Promise<void> => {
@@ -180,24 +269,64 @@ export function useAdminFilemakerCampaignEditState() {
     [updateSetting]
   );
 
-  const persistRunRegistry = useCallback(
-    async (nextRunRegistry: FilemakerEmailCampaignRunRegistry): Promise<void> => {
+  const persistCampaignDeletion = useCallback(
+    async (input: {
+      nextCampaigns: FilemakerEmailCampaign[];
+      campaignId: string;
+    }): Promise<void> => {
+      const cleaned = removeCampaignArtifacts({
+        campaignId: input.campaignId,
+        runRegistry,
+        deliveryRegistry,
+        attemptRegistry,
+        eventRegistry,
+        schedulerStatus,
+      });
+
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+        value: JSON.stringify(
+          toPersistedFilemakerEmailCampaignRegistry({
+            version: 1,
+            campaigns: input.nextCampaigns,
+          })
+        ),
+      });
       await updateSetting.mutateAsync({
         key: FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
-        value: JSON.stringify(toPersistedFilemakerEmailCampaignRunRegistry(nextRunRegistry)),
+        value: JSON.stringify(toPersistedFilemakerEmailCampaignRunRegistry(cleaned.runRegistry)),
       });
-    },
-    [updateSetting]
-  );
-
-  const persistDeliveryRegistry = useCallback(
-    async (nextDeliveryRegistry: FilemakerEmailCampaignDeliveryRegistry): Promise<void> => {
       await updateSetting.mutateAsync({
         key: FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
-        value: JSON.stringify(toPersistedFilemakerEmailCampaignDeliveryRegistry(nextDeliveryRegistry)),
+        value: JSON.stringify(
+          toPersistedFilemakerEmailCampaignDeliveryRegistry(cleaned.deliveryRegistry)
+        ),
+      });
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
+        value: JSON.stringify(
+          toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry(cleaned.attemptRegistry)
+        ),
+      });
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
+        value: JSON.stringify(toPersistedFilemakerEmailCampaignEventRegistry(cleaned.eventRegistry)),
+      });
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_EMAIL_CAMPAIGN_SCHEDULER_STATUS_KEY,
+        value: JSON.stringify(
+          toPersistedFilemakerEmailCampaignSchedulerStatus(cleaned.schedulerStatus)
+        ),
       });
     },
-    [updateSetting]
+    [
+      attemptRegistry,
+      deliveryRegistry,
+      eventRegistry,
+      runRegistry,
+      schedulerStatus,
+      updateSetting,
+    ]
   );
 
   const persistSuppressionRegistry = useCallback(
@@ -325,50 +454,141 @@ export function useAdminFilemakerCampaignEditState() {
     [buildPersistedCampaign, router, saveCampaign, settingsStore, toast]
   );
 
-  const handleRunStatusChange = useCallback(
-    async (runId: string, nextStatus: FilemakerEmailCampaignRunStatus): Promise<void> => {
-      const run = runRegistry.runs.find((entry: FilemakerEmailCampaignRun) => entry.id === runId);
-      if (!run) {
-        toast('Run was not found.', { variant: 'error' });
-        return;
-      }
-      const currentDeliveries = getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, runId);
-      const updatedDeliveries = applyFilemakerEmailCampaignRunStatusToDeliveries({
-        deliveries: currentDeliveries,
-        runStatus: nextStatus,
+  const handleSendTestEmail = useCallback(async (): Promise<void> => {
+    const recipientEmail = testRecipientEmailDraft.trim().toLowerCase();
+    if (!recipientEmail) {
+      toast('Recipient email is required before sending a test delivery.', {
+        variant: 'error',
       });
-      const nextRuns = runRegistry.runs.map((entry: FilemakerEmailCampaignRun): FilemakerEmailCampaignRun => {
-        if (entry.id !== runId) return entry;
-        return syncFilemakerEmailCampaignRunWithDeliveries({
-          run: entry,
-          deliveries: updatedDeliveries,
-          status: nextStatus,
-        });
-      });
-      const nextDeliveryRegistry = {
-        version: deliveryRegistry.version,
-        deliveries: deliveryRegistry.deliveries.map((delivery) => {
-          const replacement = updatedDeliveries.find((entry) => entry.id === delivery.id);
-          return replacement ?? delivery;
-        }),
-      };
+      return;
+    }
 
-      try {
-        await persistDeliveryRegistry(nextDeliveryRegistry);
-        await persistRunRegistry({
-          version: runRegistry.version,
-          runs: nextRuns,
-        });
-        toast('Run status updated.', { variant: 'success' });
-      } catch (error: unknown) {
-        logClientError(error);
-        toast(error instanceof Error ? error.message : 'Failed to update run status.', {
-          variant: 'error',
-        });
-      }
-    },
-    [deliveryRegistry, persistDeliveryRegistry, persistRunRegistry, runRegistry.runs, runRegistry.version, toast]
-  );
+    setIsTestSendPending(true);
+    try {
+      const response = await api.post<FilemakerEmailCampaignTestSendResponse>(
+        '/api/filemaker/campaigns/test-send',
+        {
+          campaign: buildPersistedCampaign(),
+          recipientEmail,
+        }
+      );
+      setTestRecipientEmailDraft(recipientEmail);
+      toast(
+        `Test email sent to ${response.recipientEmail}. ${response.providerMessage}`,
+        { variant: 'success' }
+      );
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to send campaign test email.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsTestSendPending(false);
+    }
+  }, [buildPersistedCampaign, testRecipientEmailDraft, toast]);
+
+  const handleDuplicateCampaign = useCallback(async (): Promise<void> => {
+    if (isCreateMode) return;
+
+    const duplicatedCampaign = createDuplicatedCampaignDraft({
+      campaign: buildPersistedCampaign(),
+      existingCampaigns: campaignRegistry.campaigns,
+    });
+
+    try {
+      await persistCampaignRegistry(
+        campaignRegistry.campaigns
+          .concat(duplicatedCampaign)
+          .sort((left, right) => left.name.localeCompare(right.name))
+      );
+      toast(`Campaign duplicated as ${duplicatedCampaign.name}.`, { variant: 'success' });
+      router.push(`/admin/filemaker/campaigns/${encodeURIComponent(duplicatedCampaign.id)}`);
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to duplicate campaign.', {
+        variant: 'error',
+      });
+    }
+  }, [buildPersistedCampaign, campaignRegistry.campaigns, isCreateMode, persistCampaignRegistry, router, toast]);
+
+  const handleToggleArchiveCampaign = useCallback(async (): Promise<void> => {
+    if (isCreateMode) return;
+
+    const isArchived = draft.status === 'archived';
+    const nextCampaign = buildPersistedCampaign({
+      status: isArchived ? 'draft' : 'archived',
+      approvalGrantedAt: isArchived ? draft.approvalGrantedAt : null,
+      approvedBy: isArchived ? draft.approvedBy : null,
+    });
+    const nextCampaigns = campaignRegistry.campaigns
+      .filter((campaign) => campaign.id !== nextCampaign.id)
+      .concat(nextCampaign)
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    try {
+      await persistCampaignRegistry(nextCampaigns);
+      setDraft(nextCampaign);
+      toast(isArchived ? 'Campaign restored to draft.' : 'Campaign archived.', {
+        variant: 'success',
+      });
+      settingsStore.refetch();
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to update campaign status.', {
+        variant: 'error',
+      });
+    }
+  }, [
+    buildPersistedCampaign,
+    campaignRegistry.campaigns,
+    draft.approvalGrantedAt,
+    draft.approvedBy,
+    draft.status,
+    isCreateMode,
+    persistCampaignRegistry,
+    settingsStore,
+    toast,
+  ]);
+
+  const handleDeleteCampaign = useCallback((): void => {
+    if (isCreateMode || !existingCampaign) return;
+
+    confirm({
+      title: 'Delete campaign?',
+      message:
+        'This will remove the campaign and its run history, delivery records, attempt history, events, and scheduler traces.',
+      confirmText: 'Delete campaign',
+      isDangerous: true,
+      onConfirm: async () => {
+        const nextCampaigns = campaignRegistry.campaigns.filter(
+          (campaign) => campaign.id !== existingCampaign.id
+        );
+        try {
+          await persistCampaignDeletion({
+            nextCampaigns,
+            campaignId: existingCampaign.id,
+          });
+          toast('Campaign deleted.', { variant: 'success' });
+          router.push('/admin/filemaker/campaigns');
+          settingsStore.refetch();
+        } catch (error: unknown) {
+          logClientError(error);
+          toast(error instanceof Error ? error.message : 'Failed to delete campaign.', {
+            variant: 'error',
+          });
+        }
+      },
+    });
+  }, [
+    campaignRegistry.campaigns,
+    confirm,
+    existingCampaign,
+    isCreateMode,
+    persistCampaignDeletion,
+    router,
+    settingsStore,
+    toast,
+  ]);
 
   const handleAddSuppressionEntry = useCallback(async (): Promise<void> => {
     const normalizedEmail = suppressionEmailDraft.trim().toLowerCase();
@@ -440,6 +660,10 @@ export function useAdminFilemakerCampaignEditState() {
     launchingMode,
     suppressionEmailDraft,
     setSuppressionEmailDraft,
+    testRecipientEmailDraft,
+    setTestRecipientEmailDraft,
+    isTestSendPending,
+    ConfirmationModal,
     suppressionReasonDraft,
     setSuppressionReasonDraft,
     suppressionNotesDraft,
@@ -447,15 +671,26 @@ export function useAdminFilemakerCampaignEditState() {
     organizationOptions,
     eventOptions,
     partyOptions,
+    mailAccountOptions,
+    selectedMailAccount,
     preview,
     launchEvaluation,
     recentRuns,
     suppressionEntries,
     analytics,
+    schedulerStatus,
+    nextAutomationAt,
+    schedulerFailureMessage,
     deliveryRegistry,
+    attemptRegistry,
     saveCampaign,
     handleLaunch,
-    handleRunStatusChange,
+    handleSendTestEmail,
+    handleDuplicateCampaign,
+    handleToggleArchiveCampaign,
+    handleDeleteCampaign,
+    handleRunAction,
+    isRunActionPending,
     handleAddSuppressionEntry,
     handleRemoveSuppressionEntry,
     isLoading: settingsStore.isLoading,

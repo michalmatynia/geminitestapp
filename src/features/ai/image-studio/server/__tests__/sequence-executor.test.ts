@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { resolveSequenceStepsForExecution } from '@/features/ai/image-studio/server/sequence-executor';
 import { defaultImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import type { ImageStudioSequenceRunRecord } from '@/shared/contracts/image-studio';
+import type { ImageStudioSequenceRunRecord } from '@/shared/contracts/image-studio/sequence';
 
 const makeRun = (
   overrides: Partial<ImageStudioSequenceRunRecord> = {}

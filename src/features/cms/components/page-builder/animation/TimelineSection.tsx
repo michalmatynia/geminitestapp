@@ -10,7 +10,8 @@ import {
   SCROLL_MODES,
   REVEAL_STYLES,
 } from '@/features/gsap/public';
-import { SelectSimple, FormSection, FormField, ToggleRow, Input } from '@/shared/ui';
+import { SelectSimple, FormSection, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { Input } from '@/shared/ui/primitives.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 

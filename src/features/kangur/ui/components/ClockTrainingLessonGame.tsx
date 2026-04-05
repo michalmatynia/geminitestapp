@@ -1,12 +1,10 @@
-'use client';
-
 import type { KangurClockTrainingSection } from '@/shared/contracts/kangur-game-runtime-renderer-props';
 
 import {
   TRAINING_PANEL_TASKS,
   type ClockPracticeTask,
 } from './ClockLesson.data';
-import ClockTrainingGame from './ClockTrainingGame';
+import ClockTrainingGame from './clock-training/ClockTrainingGame';
 
 type ClockTrainingLessonGameProps = {
   clockInitialMode?: 'practice' | 'challenge';

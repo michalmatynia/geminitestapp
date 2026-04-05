@@ -1,5 +1,3 @@
-'use client';
-
 import type { GeometryShapeId } from '@/features/kangur/ui/services/geometry-drawing';
 
 export type GeometryDrawingGameProps = {

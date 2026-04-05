@@ -4,7 +4,7 @@ import { createNumberBalanceMatch } from '@/features/kangur/number-balance';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/server';
 import { numberBalanceMatchCreateInputSchema } from '@/shared/contracts/kangur-multiplayer-number-balance';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export async function postNumberBalanceCreateHandler(
   req: NextRequest,

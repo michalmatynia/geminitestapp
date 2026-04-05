@@ -14,14 +14,14 @@ vi.mock('@/features/kangur/ui/context/KangurGameRuntimeContext', () => ({
   useKangurGameRuntime: useKangurGameRuntimeMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/XpToast', () => ({
+vi.mock('@/features/kangur/ui/components/game-runtime/XpToast', () => ({
   default: (props: unknown) => {
     xpToastPropsMock(props);
     return <div data-testid='mock-xp-toast'>xp-toast</div>;
   },
 }));
 
-import { KangurGameXpToastWidget } from '@/features/kangur/ui/components/KangurGameXpToastWidget';
+import { KangurGameXpToastWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameXpToastWidget';
 
 describe('KangurGameXpToastWidget', () => {
   it('forwards the full runtime toast state including recommendation and breakdown hints', () => {

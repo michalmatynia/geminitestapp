@@ -1,11 +1,15 @@
+'use client';
+
 import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, ThemeRecord } from '@/shared/contracts/notes';
-import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
+import type { PickerGroup, PickerOption } from '@/shared/contracts/ui/pickers';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { Button, EmptyState, Pagination, DocumentSearchPage } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { EmptyState, Pagination } from '@/shared/ui/navigation-and-layout.public';
+import { DocumentSearchPage } from '@/shared/ui/templates.public';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 
 import { NoteCard } from './NoteCard';

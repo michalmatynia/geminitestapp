@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import type { AuthUserRoleMap } from '@/features/auth/utils/auth-management';
 import type {
@@ -9,8 +9,17 @@ import type {
   AuthUserSecurityProfile,
 } from '@/shared/contracts/auth';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useUsersState, type UseUsersStateReturn } from '../hooks/useUsersState';
+
+const createUsersStrictContext = <T,>(hookName: string, displayName: string) =>
+  createStrictContext<T>({
+    hookName,
+    providerName: 'a UsersProvider',
+    displayName,
+    errorFactory: internalError,
+  });
 
 // --- Granular Contexts ---
 
@@ -28,23 +37,19 @@ export interface UsersData {
   loadingSecurity: boolean;
   mutations: UseUsersStateReturn['mutations'];
 }
-const DataContext = createContext<UsersData | null>(null);
-export const useUsersData = () => {
-  const context = useContext(DataContext);
-  if (!context) throw internalError('useUsersData must be used within UsersProvider');
-  return context;
-};
+export const {
+  Context: DataContext,
+  useStrictContext: useUsersData,
+} = createUsersStrictContext<UsersData>('useUsersData', 'UsersDataContext');
 
 export interface UsersSearch {
   search: string;
   setSearch: (query: string) => void;
 }
-const SearchContext = createContext<UsersSearch | null>(null);
-export const useUsersSearch = () => {
-  const context = useContext(SearchContext);
-  if (!context) throw internalError('useUsersSearch must be used within UsersProvider');
-  return context;
-};
+export const {
+  Context: SearchContext,
+  useStrictContext: useUsersSearch,
+} = createUsersStrictContext<UsersSearch>('useUsersSearch', 'UsersSearchContext');
 
 export interface UsersRoles {
   localUserRoles: AuthUserRoleMap;
@@ -52,12 +57,10 @@ export interface UsersRoles {
   dirtyRoles: boolean;
   saveRoles: () => Promise<void>;
 }
-const RolesContext = createContext<UsersRoles | null>(null);
-export const useUsersRoles = () => {
-  const context = useContext(RolesContext);
-  if (!context) throw internalError('useUsersRoles must be used within UsersProvider');
-  return context;
-};
+export const {
+  Context: RolesContext,
+  useStrictContext: useUsersRoles,
+} = createUsersStrictContext<UsersRoles>('useUsersRoles', 'UsersRolesContext');
 
 export interface UsersDialogs {
   editingUser: AuthUserSummary | null;
@@ -76,12 +79,10 @@ export interface UsersDialogs {
   mockPassword: string;
   setMockPassword: (password: string) => void;
 }
-const DialogsContext = createContext<UsersDialogs | null>(null);
-export const useUsersDialogs = () => {
-  const context = useContext(DialogsContext);
-  if (!context) throw internalError('useUsersDialogs must be used within UsersProvider');
-  return context;
-};
+export const {
+  Context: DialogsContext,
+  useStrictContext: useUsersDialogs,
+} = createUsersStrictContext<UsersDialogs>('useUsersDialogs', 'UsersDialogsContext');
 
 export function UsersProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const state = useUsersState();

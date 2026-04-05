@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/features/kangur/shared/utils';
 import {
   KANGUR_ACCENT_STYLES,

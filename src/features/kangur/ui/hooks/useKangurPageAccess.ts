@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 
 import { canAccessKangurPage } from '@/features/kangur/config/page-access';

@@ -38,8 +38,8 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
   }),
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: () => ({ toast: vi.fn() }),

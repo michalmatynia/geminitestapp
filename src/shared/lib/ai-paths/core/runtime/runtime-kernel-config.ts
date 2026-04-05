@@ -104,6 +104,54 @@ const appendChangedField = (
   }
 };
 
+const removeDeprecatedRuntimeKernelField = (
+  normalized: Record<string, unknown>,
+  field: string,
+  changedFields: RuntimeKernelConfigNormalizedField[],
+  changedField: RuntimeKernelConfigNormalizedField
+): void => {
+  if (!(field in normalized)) return;
+  delete normalized[field];
+  appendChangedField(changedFields, changedField);
+};
+
+const normalizeRuntimeKernelListField = (args: {
+  sourceValue: Record<string, unknown>;
+  normalized: Record<string, unknown>;
+  changedFields: RuntimeKernelConfigNormalizedField[];
+  canonicalField: 'nodeTypes' | 'codeObjectResolverIds';
+  legacyField: string;
+  changedField: Extract<
+    RuntimeKernelConfigNormalizedField,
+    'nodeTypes' | 'codeObjectResolverIds'
+  >;
+  translateLegacyAliases: boolean;
+  parseValue: (value: unknown) => string[] | undefined;
+}): void => {
+  const nextValue = args.parseValue(
+    args.translateLegacyAliases
+      ? (args.sourceValue[args.canonicalField] ?? args.sourceValue[args.legacyField])
+      : args.sourceValue[args.canonicalField]
+  );
+
+  if (nextValue) {
+    if (!matchesStringArray(args.sourceValue[args.canonicalField], nextValue)) {
+      args.normalized[args.canonicalField] = nextValue;
+      appendChangedField(args.changedFields, args.changedField);
+    }
+  } else if (args.canonicalField in args.normalized) {
+    delete args.normalized[args.canonicalField];
+    appendChangedField(args.changedFields, args.changedField);
+  }
+
+  removeDeprecatedRuntimeKernelField(
+    args.normalized,
+    args.legacyField,
+    args.changedFields,
+    args.changedField
+  );
+};
+
 export const normalizeRuntimeKernelValueSource = (
   value: unknown
 ): RuntimeKernelValueSource | null =>
@@ -131,58 +179,47 @@ export const normalizeRuntimeKernelConfigRecordDetailed = (
   const normalized: Record<string, unknown> = { ...value };
   const changedFields: RuntimeKernelConfigNormalizedField[] = [];
 
-  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD in normalized) {
-    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD];
-    appendChangedField(changedFields, 'mode');
-  }
-
-  const nodeTypes = parseRuntimeKernelNodeTypes(
-    translateLegacyAliases
-      ? (value['nodeTypes'] ?? value[DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD])
-      : value['nodeTypes']
+  removeDeprecatedRuntimeKernelField(
+    normalized,
+    DEPRECATED_RUNTIME_KERNEL_CONFIG_MODE_FIELD,
+    changedFields,
+    'mode'
   );
-  if (nodeTypes) {
-    if (!matchesStringArray(value['nodeTypes'], nodeTypes)) {
-      normalized['nodeTypes'] = nodeTypes;
-      appendChangedField(changedFields, 'nodeTypes');
-    }
-  } else if ('nodeTypes' in normalized) {
-    delete normalized['nodeTypes'];
-    appendChangedField(changedFields, 'nodeTypes');
-  }
-  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD in normalized) {
-    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD];
-    appendChangedField(changedFields, 'nodeTypes');
-  }
 
-  const resolverIds = parseRuntimeKernelCodeObjectResolverIds(
-    translateLegacyAliases
-      ? (value['codeObjectResolverIds'] ??
-          value[DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD])
-      : value['codeObjectResolverIds']
+  normalizeRuntimeKernelListField({
+    sourceValue: value,
+    normalized,
+    canonicalField: 'nodeTypes',
+    legacyField: DEPRECATED_RUNTIME_KERNEL_CONFIG_NODE_TYPES_FIELD,
+    changedField: 'nodeTypes',
+    translateLegacyAliases,
+    parseValue: parseRuntimeKernelNodeTypes,
+    changedFields,
+  });
+
+  normalizeRuntimeKernelListField({
+    sourceValue: value,
+    normalized,
+    canonicalField: 'codeObjectResolverIds',
+    legacyField: DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD,
+    changedField: 'codeObjectResolverIds',
+    translateLegacyAliases,
+    parseValue: parseRuntimeKernelCodeObjectResolverIds,
+    changedFields,
+  });
+
+  removeDeprecatedRuntimeKernelField(
+    normalized,
+    DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD,
+    changedFields,
+    'strictNativeRegistry'
   );
-  if (resolverIds) {
-    if (!matchesStringArray(value['codeObjectResolverIds'], resolverIds)) {
-      normalized['codeObjectResolverIds'] = resolverIds;
-      appendChangedField(changedFields, 'codeObjectResolverIds');
-    }
-  } else if ('codeObjectResolverIds' in normalized) {
-    delete normalized['codeObjectResolverIds'];
-    appendChangedField(changedFields, 'codeObjectResolverIds');
-  }
-  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD in normalized) {
-    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_RESOLVER_IDS_FIELD];
-    appendChangedField(changedFields, 'codeObjectResolverIds');
-  }
-
-  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD in normalized) {
-    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_NATIVE_FIELD];
-    appendChangedField(changedFields, 'strictNativeRegistry');
-  }
-  if (DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD in normalized) {
-    delete normalized[DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD];
-    appendChangedField(changedFields, 'strictNativeRegistry');
-  }
+  removeDeprecatedRuntimeKernelField(
+    normalized,
+    DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
+    changedFields,
+    'strictNativeRegistry'
+  );
 
   return {
     changed: changedFields.length > 0,

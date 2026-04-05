@@ -3,17 +3,16 @@
 import React, { useMemo, useEffect } from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';
-import type {
-  CatalogRecord,
-  ProductCategory,
-  ProductTag,
-  ProductParameter,
-  PriceGroupWithDetails,
-  ProductWithImages,
-  Producer,
-} from '@/shared/contracts/products';
-import type { ProductFormData } from '@/shared/contracts/products';
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductShippingGroup } from '@/shared/contracts/products/shipping-groups';
+import type { ProductTag } from '@/shared/contracts/products/tags';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { PriceGroupWithDetails, ProductWithImages } from '@/shared/contracts/products/product';
+import type { Producer } from '@/shared/contracts/products/producers';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import { api } from '@/shared/lib/api-client';
+import { matchesPriceGroupIdentifier } from '@/shared/lib/products/utils/price-group-identifiers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { isEditingProductHydrated } from './editingProductHydration';
@@ -24,6 +23,7 @@ import {
   useParameters,
   usePriceGroups,
   useProducers,
+  useShippingGroups,
   useTags,
 } from './useProductMetadataQueries';
 
@@ -39,6 +39,7 @@ export {
   usePriceGroups,
   useProducers,
   useSaveProducerMutation,
+  useShippingGroups,
   useTags,
 } from './useProductMetadataQueries';
 
@@ -52,6 +53,8 @@ export interface ProductMetadataHookResult {
   categoriesLoading: boolean;
   selectedCategoryId: string | null;
   setCategoryId: (categoryId: string | null) => void;
+  shippingGroups: ProductShippingGroup[];
+  shippingGroupsLoading: boolean;
   tags: ProductTag[];
   tagsLoading: boolean;
   selectedTagIds: string[];
@@ -228,6 +231,7 @@ export function useProductMetadata({
 
   const primaryCatalogId = selectedCatalogIds[0] || '';
   const categoriesQuery = useCategories(primaryCatalogId);
+  const shippingGroupsQuery = useShippingGroups(primaryCatalogId);
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);
   const categories = categoriesQuery.data || [];
@@ -352,7 +356,11 @@ export function useProductMetadata({
       selectedCatalogs.flatMap((catalog: CatalogRecord) => catalog.priceGroupIds ?? [])
     );
     const filteredPriceGroups = priceGroupIdSet.size
-      ? priceGroups.filter((group: PriceGroupWithDetails) => priceGroupIdSet.has(group.id))
+      ? priceGroups.filter((group: PriceGroupWithDetails) =>
+        Array.from(priceGroupIdSet).some((identifier) =>
+          matchesPriceGroupIdentifier(group, identifier)
+        )
+      )
       : priceGroups;
 
     return { filteredLanguages, filteredPriceGroups };
@@ -396,6 +404,8 @@ export function useProductMetadata({
     categoriesLoading: categoriesQuery.isLoading,
     selectedCategoryId,
     setCategoryId,
+    shippingGroups: shippingGroupsQuery.data || [],
+    shippingGroupsLoading: shippingGroupsQuery.isLoading,
     tags: tagsQuery.data || [],
     tagsLoading: tagsQuery.isLoading,
     selectedTagIds,

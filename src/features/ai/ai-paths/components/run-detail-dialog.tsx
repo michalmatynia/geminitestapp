@@ -5,15 +5,10 @@ import { useMemo, useState } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/contracts/ai-paths';
 import type { AiPathRunErrorSummary } from '@/shared/lib/ai-paths/error-reporting';
-import {
-  Alert,
-  Button,
-  Label,
-  SelectSimple,
-  LoadingState,
-  CollapsibleSection,
-  JsonViewer,
-} from '@/shared/ui';
+import { Alert, Button, Label, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { JsonViewer } from '@/shared/ui/data-display.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';

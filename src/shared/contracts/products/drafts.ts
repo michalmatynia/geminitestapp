@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { namedDtoSchema } from '../base';
 import type { LabeledOptionDto } from '../base';
-import { productParameterValueSchema } from './product';
+import { productImportSourceSchema, productParameterValueSchema } from './product';
 
 import type { ImageFileRecord } from '../files';
 import type { ManagedImageSlot } from '../image-slots';
@@ -31,6 +31,12 @@ import type {
   ProductTagCreateInput,
   ProductTagUpdateInput,
 } from './tags';
+import type {
+  ProductShippingGroup,
+  ProductShippingGroupCreateInput,
+  ProductShippingGroupFilters,
+  ProductShippingGroupUpdateInput,
+} from './shipping-groups';
 import type {
   ProductValidationPatternFormData,
   ProductValidationPattern,
@@ -91,6 +97,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   stock: z.number().nullable().optional(),
   catalogIds: z.array(z.string()).optional(),
   categoryId: z.string().nullable().optional(),
+  shippingGroupId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   producerIds: z.array(z.string()).optional(),
   parameters: z.array(productParameterValueSchema).optional(),
@@ -104,6 +111,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   openProductFormTab: productDraftOpenFormTabSchema.nullable().optional(),
   imageLinks: z.array(z.string()).optional(),
   baseProductId: z.string().nullable().optional(),
+  importSource: productImportSourceSchema.nullable().optional(),
 });
 
 export type ProductDraft = z.infer<typeof productDraftSchema>;
@@ -259,6 +267,20 @@ export type TagRepository = {
   updateTag(id: string, data: ProductTagUpdateInput): Promise<ProductTag>;
   deleteTag(id: string): Promise<void>;
   findByName(catalogId: string, name: string): Promise<ProductTag | null>;
+};
+
+export type ShippingGroupFilters = ProductShippingGroupFilters;
+
+export type ShippingGroupRepository = {
+  listShippingGroups(filters: ShippingGroupFilters): Promise<ProductShippingGroup[]>;
+  getShippingGroupById(id: string): Promise<ProductShippingGroup | null>;
+  createShippingGroup(data: ProductShippingGroupCreateInput): Promise<ProductShippingGroup>;
+  updateShippingGroup(
+    id: string,
+    data: ProductShippingGroupUpdateInput
+  ): Promise<ProductShippingGroup>;
+  deleteShippingGroup(id: string): Promise<void>;
+  findByName(catalogId: string, name: string): Promise<ProductShippingGroup | null>;
 };
 
 export type PatternFormData = ProductValidationPatternFormData;

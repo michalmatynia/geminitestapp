@@ -1,10 +1,6 @@
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
-import type {
-  ImageStudioSequenceRunStartResponse,
-  ImageStudioSequenceRunHistoryEvent,
-  ImageStudioSequenceRunStatus,
-  RunsTotalResponseDto,
-} from '@/shared/contracts/image-studio';
+import type { ImageStudioSequenceRunStartResponse, ImageStudioSequenceRunHistoryEvent, ImageStudioSequenceRunStatus } from '@/shared/contracts/image-studio/sequence';
+import type { RunsTotalResponseDto } from '@/shared/contracts/image-studio/base';
 
 export type SequenceRunStatus = ImageStudioSequenceRunStatus;
 

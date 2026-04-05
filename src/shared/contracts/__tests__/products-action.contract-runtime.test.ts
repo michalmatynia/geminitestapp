@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createProductCategorySchema,
-  productBulkImagesBase64ResponseSchema,
-  productCsvImportResponseSchema,
-  productDuplicateRequestSchema,
-  productImageBase64ResponseSchema,
-  productPatchInputSchema,
-  updateProductCategorySchema,
-} from '@/shared/contracts/products';
+import { createProductCategorySchema, updateProductCategorySchema } from '@/shared/contracts/products/categories';
+import { productBulkImagesBase64ResponseSchema, productImageBase64ResponseSchema } from '@/shared/contracts/products/product';
+import { productCsvImportResponseSchema, productDuplicateRequestSchema, productPatchInputSchema } from '@/shared/contracts/products/io';
 
 describe('product action contract runtime', () => {
   it('parses product action request payloads', () => {

@@ -3,15 +3,18 @@
 import { Copy, GripVertical, Pencil, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as PatternNodeItemProps } from '@/features/foldertree/public';
-import { StatusBadge, StatusToggle, TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
+import type { FolderTreeViewportRenderNodeInput as PatternNodeItemProps } from '@/shared/lib/foldertree/public';
+import { StatusBadge } from '@/shared/ui/status-badge';
+import { StatusToggle } from '@/shared/ui/status-toggle';
+import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui/tree';
+
 import {
   describeProductValidationSemanticAuditRecord,
   getLatestProductValidationSemanticAuditRecord,
   getProductValidationSemanticAuditRecordKey,
   getProductValidationSemanticAuditHistory,
 } from '@/shared/lib/products/utils/validator-semantic-state';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { fromPatternMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';

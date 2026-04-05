@@ -1,7 +1,8 @@
 import React from 'react';
 
 import type { PromptValidationRule, PromptValidationScope } from '@/shared/lib/prompt-engine/settings';
-import { FormField, Input, MultiSelect, SelectSimple, Textarea } from '@/shared/ui';
+import { FormField, MultiSelect, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { Input, Textarea } from '@/shared/ui/primitives.public';
 
 import {
   compileRegex,

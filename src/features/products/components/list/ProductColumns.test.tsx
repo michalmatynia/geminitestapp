@@ -1,10 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { createProduct, createRowVisualsContext, createRowRuntimeContext, setupProductListMocks } from './ProductColumns.fixtures';
 
 const {
   baseQuickExportButtonMock,
+  playwrightStatusButtonMock,
+  traderaQuickListButtonMock,
+  traderaStatusButtonMock,
   triggerButtonBarMock,
   useProductListActionsContextMock,
   useProductListHeaderActionsContextMock,
@@ -13,6 +17,9 @@ const {
   useProductListRowVisualsContextMock,
 } = vi.hoisted(() => ({
   baseQuickExportButtonMock: vi.fn(),
+  playwrightStatusButtonMock: vi.fn(),
+  traderaQuickListButtonMock: vi.fn(),
+  traderaStatusButtonMock: vi.fn(),
   triggerButtonBarMock: vi.fn(),
   useProductListActionsContextMock: vi.fn(),
   useProductListHeaderActionsContextMock: vi.fn(),
@@ -56,73 +63,30 @@ vi.mock('./columns/buttons/BaseQuickExportButton', () => ({
   },
 }));
 
+vi.mock('./columns/buttons/TraderaQuickListButton', () => ({
+  TraderaQuickListButton: (props: Record<string, unknown>) => {
+    traderaQuickListButtonMock(props);
+    return <button type='button'>T+</button>;
+  },
+}));
+
+vi.mock('./columns/buttons/PlaywrightStatusButton', () => ({
+  PlaywrightStatusButton: (props: Record<string, unknown>) => {
+    playwrightStatusButtonMock(props);
+    return <button type='button'>PW</button>;
+  },
+}));
+
+vi.mock('./columns/buttons/TraderaStatusButton', () => ({
+  TraderaStatusButton: (props: Record<string, unknown>) => {
+    traderaStatusButtonMock(props);
+    return <button type='button'>TR</button>;
+  },
+}));
+
 let getProductColumns: typeof import('./ProductColumns').getProductColumns;
 
-const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
-  ({
-    id: 'product-1',
-    sku: 'KEYCHA1212',
-    baseProductId: null,
-    defaultPriceGroupId: null,
-    ean: null,
-    gtin: null,
-    asin: null,
-    name: { en: 'Keychain', pl: null, de: null },
-    description: { en: '', pl: null, de: null },
-    name_en: 'Keychain',
-    name_pl: null,
-    name_de: null,
-    description_en: null,
-    description_pl: null,
-    description_de: null,
-    supplierName: null,
-    supplierLink: null,
-    priceComment: null,
-    stock: 1,
-    price: 10,
-    sizeLength: null,
-    sizeWidth: null,
-    weight: null,
-    length: null,
-    published: false,
-    categoryId: 'category-1',
-    catalogId: 'catalog-1',
-    tags: [],
-    producers: [],
-    images: [],
-    catalogs: [],
-    parameters: [],
-    imageLinks: [],
-    imageBase64s: [],
-    noteIds: [],
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    ...overrides,
-  }) as ProductWithImages;
 
-const createRowVisualsContext = (
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> => ({
-  productNameKey: 'name_en',
-  priceGroups: [],
-  currencyCode: 'USD',
-  categoryNameById: new Map([['category-1', 'Keychains']]),
-  thumbnailSource: 'file',
-  showTriggerRunFeedback: true,
-  imageExternalBaseUrl: null,
-  ...overrides,
-});
-
-const createRowRuntimeContext = (
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> => ({
-  showMarketplaceBadge: false,
-  integrationStatus: 'not_started',
-  showTraderaBadge: false,
-  traderaStatus: 'not_started',
-  productAiRunFeedback: null,
-  ...overrides,
-});
 
 describe('ProductColumns queued badge', () => {
   beforeEach(async () => {
@@ -148,19 +112,8 @@ describe('ProductColumns queued badge', () => {
 
   it('renders the queued badge when the product id is currently queued', () => {
     const product = createProduct();
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set(['product-1']),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
+    useProductListActionsContextMock.mockReturnValue({ productNameKey: 'name_en', queuedProductIds: new Set(['product-1']), categoryNameById: new Map([['category-1', 'Keychains']]), });
     useProductListRowRuntimeMock.mockReturnValue(
       createRowRuntimeContext({
         productAiRunFeedback: {
@@ -186,21 +139,134 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByText('Queued')).toBeInTheDocument();
   });
 
-  it('prefers the tracker-backed running badge over the queued fallback', () => {
+  it('passes Tradera badge runtime into the quick export button', async () => {
     const product = createProduct();
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set(['product-1']),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showTraderaBadge: false,
+        traderaStatus: 'queued',
       })
     );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    const cell = integrationsColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    await waitFor(() => {
+      expect(traderaQuickListButtonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          product: expect.objectContaining({ id: 'product-1' }),
+          showTraderaBadge: false,
+          traderaStatus: 'queued',
+          prefetchListings: expect.any(Function),
+          onOpenIntegrations: expect.any(Function),
+        })
+      );
+    });
+  });
+
+  it('scopes Base quick export recovery to the Base listings modal', async () => {
+    const product = createProduct();
+    const onIntegrationsClick = vi.fn();
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick: vi.fn(),
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(baseQuickExportButtonMock).toHaveBeenCalled();
+    });
+
+    const props = baseQuickExportButtonMock.mock.calls.at(-1)?.[0] as
+      | { onOpenIntegrations?: ((recoveryContext?: unknown) => void) | undefined }
+      | undefined;
+
+    props?.onOpenIntegrations?.({ source: 'base_quick_export_failed' });
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      { source: 'base_quick_export_failed' },
+      'baselinker'
+    );
+  });
+
+  it('scopes Tradera quick export recovery to the Tradera listings modal', async () => {
+    const product = createProduct();
+    const onIntegrationsClick = vi.fn();
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick,
+      onExportSettingsClick: vi.fn(),
+    });
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(traderaQuickListButtonMock).toHaveBeenCalled();
+    });
+
+    const props = traderaQuickListButtonMock.mock.calls.at(-1)?.[0] as
+      | { onOpenIntegrations?: ((recoveryContext?: unknown) => void) | undefined }
+      | undefined;
+
+    props?.onOpenIntegrations?.({ source: 'tradera_quick_export_failed' });
+
+    expect(onIntegrationsClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' }),
+      { source: 'tradera_quick_export_failed' },
+      'tradera'
+    );
+  });
+
+  it('passes productId into the Tradera status button when the badge is visible', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showTraderaBadge: true,
+        traderaStatus: 'auth_required',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          status: 'auth_required',
+          prefetchListings: expect.any(Function),
+          onOpenListings: expect.any(Function),
+        })
+      );
+    });
+  });
+
+  it('prefers the tracker-backed running badge over the queued fallback', () => {
+    const product = createProduct();
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
+    useProductListActionsContextMock.mockReturnValue({ productNameKey: 'name_en', queuedProductIds: new Set(['product-1']), categoryNameById: new Map([['category-1', 'Keychains']]), });
     useProductListRowRuntimeMock.mockReturnValue(
       createRowRuntimeContext({
         productAiRunFeedback: {
@@ -229,19 +295,8 @@ describe('ProductColumns queued badge', () => {
 
   it('renders the terminal completed badge when the tracker reports the finished run status', () => {
     const product = createProduct();
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set(['product-1']),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
+    useProductListActionsContextMock.mockReturnValue({ productNameKey: 'name_en', queuedProductIds: new Set(['product-1']), categoryNameById: new Map([['category-1', 'Keychains']]), });
     useProductListRowRuntimeMock.mockReturnValue(
       createRowRuntimeContext({
         productAiRunFeedback: {
@@ -270,19 +325,7 @@ describe('ProductColumns queued badge', () => {
 
   it('does not render the queued badge when the product id is not queued', () => {
     const product = createProduct();
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -309,19 +352,7 @@ describe('ProductColumns queued badge', () => {
         },
       ] as ProductWithImages['parameters'],
     });
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -341,19 +372,7 @@ describe('ProductColumns queued badge', () => {
       name_en:
         'The Vessel | 13 cm | Faux Leather | Gaming Wallet | Hollow Knight | Collector Edition',
     });
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
-    useProductListRowActionsContextMock.mockReturnValue({
-      onProductNameClick: vi.fn(),
-    });
-    useProductListRowVisualsContextMock.mockReturnValue(
-      createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-      })
-    );
+    setupProductListMocks(useProductListActionsContextMock, useProductListRowActionsContextMock, useProductListRowVisualsContextMock);
 
     const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
     if (!nameColumn || typeof nameColumn.cell !== 'function') {
@@ -692,6 +711,121 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByRole('button', { name: 'Nested Keychains' })).toBeInTheDocument();
   });
 
+  it('shows the auto-assigned shipping group summary in the name cell', () => {
+    const product = createProduct({
+      shippingGroupSource: 'category_rule',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: 'Jewellery 7 EUR',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 7,
+        autoAssignCategoryIds: ['category-1'],
+      },
+    });
+
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByText('Auto ship: Jewellery 7 EUR')).toBeInTheDocument();
+    expect(screen.getByTitle('Auto shipping group: Jewellery 7 EUR via Keychains')).toBeInTheDocument();
+  });
+
+  it('shows a shipping-rule conflict summary when multiple automatic rules match', () => {
+    const product = createProduct({
+      shippingGroupResolutionReason: 'multiple_category_rules',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroupMatchingGroupNames: ['Jewellery 7 EUR', 'Rings 5 EUR'],
+    });
+
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByText('Ship conflict')).toBeInTheDocument();
+    expect(
+      screen.getByTitle('Shipping rule conflict: Jewellery 7 EUR, Rings 5 EUR')
+    ).toBeInTheDocument();
+  });
+
+  it('shows a missing manual shipping-group summary when the assigned group no longer exists', () => {
+    const product = createProduct({
+      shippingGroupId: 'missing-group',
+      shippingGroupResolutionReason: 'manual_missing',
+    });
+
+    setupProductListMocks(
+      useProductListActionsContextMock,
+      useProductListRowActionsContextMock,
+      useProductListRowVisualsContextMock
+    );
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    render(nameColumn.cell({ row: { original: product } } as never));
+
+    expect(screen.getByText('Ship missing')).toBeInTheDocument();
+    expect(screen.getByTitle('Manual shipping group is missing: missing-group')).toBeInTheDocument();
+  });
+
+  it('does not render the imported badge when a product is only linked by Base id', () => {
+    const product = createProduct({
+      baseProductId: 'base-123',
+      importSource: null,
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.queryByLabelText('Imported product')).not.toBeInTheDocument();
+  });
+
+  it('renders the imported badge only for products with explicit import provenance', () => {
+    const product = createProduct({
+      baseProductId: 'base-123',
+      importSource: 'base',
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+  });
+
   it('renders a global trigger run feedback toggle in the integrations header', () => {
     const setShowTriggerRunFeedback = vi.fn();
     useProductListHeaderActionsContextMock.mockReturnValue({
@@ -840,33 +974,45 @@ describe('ProductColumns queued badge', () => {
     );
   });
 
-  it('routes the green BL button to the Base export settings modal path', async () => {
-    const product = createProduct({
-      baseProductId: 'base-123',
-    });
-    const onIntegrationsClick = vi.fn();
-    const onExportSettingsClick = vi.fn();
+  it('keeps product-row trigger buttons deferred until row runtime is ready', () => {
+    const product = createProduct();
 
-    useProductListActionsContextMock.mockReturnValue({
-      productNameKey: 'name_en',
-      queuedProductIds: new Set<string>(),
-      categoryNameById: new Map([['category-1', 'Keychains']]),
-    });
     useProductListRowActionsContextMock.mockReturnValue({
       onProductNameClick: vi.fn(),
-      onIntegrationsClick,
-      onExportSettingsClick,
+      onIntegrationsClick: vi.fn(),
+      onExportSettingsClick: vi.fn(),
     });
     useProductListRowVisualsContextMock.mockReturnValue(
       createRowVisualsContext({
-        categoryNameById: new Map([['category-1', 'Keychains']]),
-        showTriggerRunFeedback: true,
+        triggerButtonsReady: false,
       })
     );
+    useProductListRowRuntimeMock.mockReturnValue(createRowRuntimeContext());
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    const cell = integrationsColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(triggerButtonBarMock).not.toHaveBeenCalled();
+  });
+
+  it('renders the Playwright listing status button when the programmable badge is active', async () => {
+    const product = createProduct();
+
+    useProductListRowActionsContextMock.mockReturnValue({
+      onProductNameClick: vi.fn(),
+      onIntegrationsClick: vi.fn(),
+      onExportSettingsClick: vi.fn(),
+    });
+    useProductListRowVisualsContextMock.mockReturnValue(createRowVisualsContext());
     useProductListRowRuntimeMock.mockReturnValue(
       createRowRuntimeContext({
-        showMarketplaceBadge: true,
-        integrationStatus: 'active',
+        showPlaywrightProgrammableBadge: true,
+        playwrightProgrammableStatus: 'queued',
       })
     );
 
@@ -878,27 +1024,14 @@ describe('ProductColumns queued badge', () => {
     const cell = integrationsColumn.cell({ row: { original: product } } as never);
     render(cell);
 
-    expect(await screen.findByRole('button', { name: 'BL' })).toBeInTheDocument();
-
-    const props = baseQuickExportButtonMock.mock.calls
-      .map((call) => call[0])
-      .find(
-        (value) =>
-          typeof value === 'object' &&
-          value !== null &&
-          'showMarketplaceBadge' in value &&
-          (value as { showMarketplaceBadge?: boolean }).showMarketplaceBadge === true
-      ) as
-      | {
-          showMarketplaceBadge?: boolean;
-          onOpenExportSettings?: (() => void) | undefined;
-        }
-      | undefined;
-
-    expect(props?.showMarketplaceBadge).toBe(true);
-    props?.onOpenExportSettings?.();
-
-    expect(onExportSettingsClick).toHaveBeenCalledWith(product);
-    expect(onIntegrationsClick).not.toHaveBeenCalled();
+    expect(await screen.findByRole('button', { name: 'PW' })).toBeInTheDocument();
+    expect(playwrightStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'queued',
+        prefetchListings: expect.any(Function),
+        onOpenListings: expect.any(Function),
+      })
+    );
   });
+
 });

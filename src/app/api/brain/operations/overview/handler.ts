@@ -18,7 +18,7 @@ import {
   brainOperationsOverviewResponseSchema,
   brainOperationsRangeSchema,
 } from '@/shared/contracts/ai-brain';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

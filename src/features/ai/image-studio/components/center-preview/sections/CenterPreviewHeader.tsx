@@ -5,7 +5,7 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useSlotsState, useSlotsActions } from '@/features/ai/image-studio/context/SlotsContext';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import { ToggleButtonGroup } from '../../ToggleButtonGroup';
 import { useCenterPreviewContext } from '../CenterPreviewContext';

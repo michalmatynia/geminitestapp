@@ -125,7 +125,7 @@ vi.mock('@/features/kangur/ui/components/KangurTransitionLink', () => ({
   ),
 }));
 
-import KangurAssignmentManager from '@/features/kangur/ui/components/KangurAssignmentManager';
+import KangurAssignmentManager from '@/features/kangur/ui/components/assignment-manager/KangurAssignmentManager';
 
 const assignmentManagerMessages = plMessages.KangurAssignmentManager;
 

@@ -1,19 +1,19 @@
 'use client';
 
 import { useEffect, useLayoutEffect } from 'react';
-import type { KangurAiTutorWidgetState } from '../KangurAiTutorWidget.state';
-import type { TutorPoint } from '../KangurAiTutorWidget.types';
+import type { KangurAiTutorWidgetState } from '../ai-tutor-widget/KangurAiTutorWidget.state';
+import type { TutorPoint } from '../ai-tutor-widget/KangurAiTutorWidget.types';
 import {
   AVATAR_SIZE,
   EDGE_GAP,
   applyTutorPanelSnapState,
   clampTutorPanelPoint,
-} from '../KangurAiTutorWidget.shared';
+} from '../ai-tutor-widget/KangurAiTutorWidget.shared';
 import {
   clearPersistedTutorPanelPosition,
   persistTutorAvatarPosition,
   persistTutorPanelPosition,
-} from '../KangurAiTutorWidget.storage';
+} from '../ai-tutor-widget/KangurAiTutorWidget.storage';
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);

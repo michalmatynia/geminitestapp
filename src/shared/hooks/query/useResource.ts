@@ -1,4 +1,4 @@
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,

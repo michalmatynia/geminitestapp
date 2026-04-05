@@ -8,7 +8,7 @@ import type {
   AgentTeachingChatSource,
   AgentTeachingSearchResponse,
 } from '@/shared/contracts/agent-teaching';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

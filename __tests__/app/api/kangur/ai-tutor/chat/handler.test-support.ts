@@ -4,7 +4,7 @@ import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
 import {
   KANGUR_AI_TUTOR_APP_SETTINGS_KEY,
   KANGUR_AI_TUTOR_SETTINGS_KEY,
-} from '@/features/kangur/settings-ai-tutor';
+} from '@/features/kangur/ai-tutor/settings';
 import {
   __resetUsageCacheForTests,
   KANGUR_AI_TUTOR_USAGE_SETTINGS_KEY,
@@ -119,7 +119,7 @@ vi.mock('@/features/kangur/server/knowledge-graph/retrieval', () => ({
   resolveKangurWebsiteHelpGraphContext: resolveKangurWebsiteHelpGraphContextMock,
 }));
 
-vi.unmock('@/features/kangur/settings-ai-tutor');
+vi.unmock('@/features/kangur/ai-tutor/settings');
 
 import { postKangurAiTutorChatHandler as postKangurAiTutorChatHandlerImpl } from '@/app/api/kangur/ai-tutor/chat/handler';
 

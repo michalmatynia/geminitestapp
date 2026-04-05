@@ -8,7 +8,7 @@ import {
   cleanupStaleRunningProductAiJobs,
 } from '@/features/jobs/server';
 import { startProductAiJobQueue, getQueueStatus } from '@/features/jobs/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   optionalBooleanQuerySchema,

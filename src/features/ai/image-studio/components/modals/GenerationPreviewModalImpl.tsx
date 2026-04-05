@@ -2,9 +2,11 @@
 
 import React from 'react';
 
-import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
+import { FormActions } from '@/shared/ui/forms-and-actions.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
-import { formatDateTime, formatFileSize } from '@/shared/utils';
+import { formatDateTime, formatFileSize } from '@/shared/utils/formatting';
 
 import { InlineImagePreviewCanvas } from '../studio-modals/InlineImagePreviewCanvas';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';

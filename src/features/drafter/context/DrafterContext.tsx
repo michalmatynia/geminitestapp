@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 interface DrafterStateContextType {
   isCreatorOpen: boolean;
@@ -16,8 +17,27 @@ interface DrafterActionsContextType {
   handleSaveSuccess: () => void;
 }
 
-const DrafterStateContext = createContext<DrafterStateContextType | undefined>(undefined);
-const DrafterActionsContext = createContext<DrafterActionsContextType | undefined>(undefined);
+export const {
+  Context: DrafterStateContext,
+  useStrictContext: useDrafterState,
+  useOptionalContext: useOptionalDrafterState,
+} = createStrictContext<DrafterStateContextType>({
+  hookName: 'useDrafterState',
+  providerName: 'a DrafterProvider',
+  displayName: 'DrafterStateContext',
+  errorFactory: internalError,
+});
+
+export const {
+  Context: DrafterActionsContext,
+  useStrictContext: useDrafterActions,
+  useOptionalContext: useOptionalDrafterActions,
+} = createStrictContext<DrafterActionsContextType>({
+  hookName: 'useDrafterActions',
+  providerName: 'a DrafterProvider',
+  displayName: 'DrafterActionsContext',
+  errorFactory: internalError,
+});
 
 export function DrafterProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
@@ -62,28 +82,4 @@ export function DrafterProvider({ children }: { children: React.ReactNode }): Re
       <DrafterStateContext.Provider value={stateValue}>{children}</DrafterStateContext.Provider>
     </DrafterActionsContext.Provider>
   );
-}
-
-export function useDrafterState(): DrafterStateContextType {
-  const context = useContext(DrafterStateContext);
-  if (context === undefined) {
-    throw internalError('useDrafterState must be used within a DrafterProvider');
-  }
-  return context;
-}
-
-export function useDrafterActions(): DrafterActionsContextType {
-  const context = useContext(DrafterActionsContext);
-  if (context === undefined) {
-    throw internalError('useDrafterActions must be used within a DrafterProvider');
-  }
-  return context;
-}
-
-export function useOptionalDrafterState(): DrafterStateContextType | null {
-  return useContext(DrafterStateContext) ?? null;
-}
-
-export function useOptionalDrafterActions(): DrafterActionsContextType | null {
-  return useContext(DrafterActionsContext) ?? null;
 }

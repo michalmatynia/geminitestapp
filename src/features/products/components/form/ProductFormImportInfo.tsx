@@ -1,7 +1,8 @@
 import { useFormContext } from 'react-hook-form';
 
-import { ProductFormData } from '@/shared/contracts/products';
-import { Input, FormSection, FormField } from '@/features/products/ui';
+import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { FormSection, FormField } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
 
 export default function ProductFormImportInfo(): React.JSX.Element {
   const { register } = useFormContext<ProductFormData>();
@@ -9,21 +10,23 @@ export default function ProductFormImportInfo(): React.JSX.Element {
   return (
     <FormSection
       title='System Information'
-      description='Data imported from external integration platforms.'
+      description='Read-only linkage data used by external marketplace integrations.'
     >
       <FormField
         label='Base ID'
         id='baseProductId'
-        description='This ID is imported from Base.com and cannot be edited.'
+        description='External Base.com product ID used for sync and export linkage.'
       >
         <Input
           id='baseProductId'
           {...register('baseProductId')}
           disabled
           className='bg-muted cursor-not-allowed'
-          placeholder='Imported from Base.com'
+          placeholder='Linked Base.com product ID'
           aria-readonly='true'
-         aria-label='Imported from Base.com' title='Imported from Base.com'/>
+          aria-label='Linked Base.com product ID'
+          title='Linked Base.com product ID'
+        />
       </FormField>
     </FormSection>
   );

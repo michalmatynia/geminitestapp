@@ -13,13 +13,24 @@ import {
   type KangurSocialPost,
   type KangurSocialPostStore,
   type UpdateKangurSocialPostInput,
+  type KangurSocialPostListStatus,
+  type KangurSocialPostsPageResult,
 } from '@/shared/contracts/kangur-social-posts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 
+export type { KangurSocialPostListStatus } from '@/shared/contracts/kangur-social-posts';
+
 type KangurSocialPostDoc = Omit<KangurSocialPost, 'createdAt' | 'updatedAt'> & {
   createdAt: Date;
   updatedAt: Date;
+};
+
+type KangurSocialPostsPageOptions = {
+  page?: number;
+  pageSize?: number;
+  search?: string | null;
+  status?: KangurSocialPostListStatus | null;
 };
 
 let indexesEnsured: Promise<void> | null = null;
@@ -116,6 +127,135 @@ const matchPublished = (): Filter<KangurSocialPostDoc> => ({
   ],
 });
 
+const matchNotPublished = (): Filter<KangurSocialPostDoc> => ({
+  publishedAt: null,
+  linkedinPostId: null,
+  linkedinUrl: null,
+  status: { $ne: 'published' },
+});
+
+const normalizePageNumber = (value: number | undefined, fallback: number): number => {
+  if (!Number.isFinite(value)) return fallback;
+  const normalized = Math.floor(value as number);
+  return normalized > 0 ? normalized : fallback;
+};
+
+const normalizeSocialStatus = (
+  value: KangurSocialPostListStatus | null | undefined
+): KangurSocialPostListStatus => {
+  switch (value) {
+    case 'draft':
+    case 'scheduled':
+    case 'published':
+    case 'failed':
+      return value;
+    default:
+      return 'all';
+  }
+};
+
+const resolveListStatus = (post: KangurSocialPost): Exclude<KangurSocialPostListStatus, 'all'> =>
+  hasKangurSocialLinkedInPublication(post) ? 'published' : post.status;
+
+const buildSearchableText = (post: KangurSocialPost): string =>
+  [
+    post.titlePl,
+    post.titleEn,
+    post.bodyPl,
+    post.bodyEn,
+    post.combinedBody,
+    post.visualSummary,
+    ...(post.visualHighlights ?? []),
+    post.visualAnalysisModelId,
+    post.visualAnalysisJobId,
+    post.visualAnalysisError,
+    post.linkedinPostId,
+    post.linkedinUrl,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+const buildStatusCounts = (
+  posts: KangurSocialPost[]
+): Record<Exclude<KangurSocialPostListStatus, 'all'>, number> => ({
+  draft: posts.filter((post) => resolveListStatus(post) === 'draft').length,
+  scheduled: posts.filter((post) => resolveListStatus(post) === 'scheduled').length,
+  published: posts.filter((post) => resolveListStatus(post) === 'published').length,
+  failed: posts.filter((post) => resolveListStatus(post) === 'failed').length,
+});
+
+const filterPostsForAdminList = (
+  posts: KangurSocialPost[],
+  options?: KangurSocialPostsPageOptions
+): KangurSocialPostsPageResult => {
+  const page = normalizePageNumber(options?.page, 1);
+  const pageSize = normalizePageNumber(options?.pageSize, 8);
+  const normalizedSearch = options?.search?.trim().toLowerCase() ?? '';
+  const normalizedStatus = normalizeSocialStatus(options?.status);
+
+  const searchFilteredPosts = normalizedSearch
+    ? posts.filter((post) => buildSearchableText(post).includes(normalizedSearch))
+    : posts;
+  const statusCounts = buildStatusCounts(searchFilteredPosts);
+  const filteredPosts =
+    normalizedStatus === 'all'
+      ? searchFilteredPosts
+      : searchFilteredPosts.filter((post) => resolveListStatus(post) === normalizedStatus);
+  const total = filteredPosts.length;
+  const startIndex = (page - 1) * pageSize;
+
+  return {
+    posts: filteredPosts.slice(startIndex, startIndex + pageSize),
+    total,
+    page,
+    pageSize,
+    statusCounts,
+  };
+};
+
+const buildMongoSearchMatch = (search: string | null | undefined): Filter<KangurSocialPostDoc> => {
+  const normalizedSearch = search?.trim();
+  if (!normalizedSearch) {
+    return {};
+  }
+
+  const regex = new RegExp(escapeRegex(normalizedSearch), 'i');
+  return {
+    $or: [
+      { titlePl: { $regex: regex } },
+      { titleEn: { $regex: regex } },
+      { bodyPl: { $regex: regex } },
+      { bodyEn: { $regex: regex } },
+      { combinedBody: { $regex: regex } },
+      { visualSummary: { $regex: regex } },
+      { visualHighlights: { $regex: regex } },
+      { visualAnalysisModelId: { $regex: regex } },
+      { visualAnalysisJobId: { $regex: regex } },
+      { visualAnalysisError: { $regex: regex } },
+      { linkedinPostId: { $regex: regex } },
+      { linkedinUrl: { $regex: regex } },
+    ],
+  };
+};
+
+const buildMongoStatusMatch = (
+  status: KangurSocialPostListStatus
+): Filter<KangurSocialPostDoc> => {
+  switch (status) {
+    case 'published':
+      return matchPublished();
+    case 'draft':
+    case 'scheduled':
+    case 'failed':
+      return {
+        $and: [{ status }, matchNotPublished()],
+      };
+    default:
+      return {};
+  }
+};
+
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const buildLooseIdRegex = (id: string): RegExp =>
@@ -145,6 +285,111 @@ export async function listKangurSocialPosts(): Promise<KangurSocialPost[]> {
   const collection = await readCollection();
   const docs = await collection.find({}).sort({ updatedAt: -1 }).toArray();
   return docs.map(toSocialPost);
+}
+
+export async function listKangurSocialPostsPage(
+  options?: KangurSocialPostsPageOptions
+): Promise<KangurSocialPostsPageResult> {
+  const page = normalizePageNumber(options?.page, 1);
+  const pageSize = normalizePageNumber(options?.pageSize, 8);
+  const normalizedStatus = normalizeSocialStatus(options?.status);
+
+  if (!process.env['MONGODB_URI']) {
+    const store = await readLocalStore();
+    const posts = [...store.posts].sort((left, right) => {
+      const leftTs = left.updatedAt ? Date.parse(left.updatedAt) : 0;
+      const rightTs = right.updatedAt ? Date.parse(right.updatedAt) : 0;
+      return rightTs - leftTs;
+    });
+    return filterPostsForAdminList(posts, {
+      ...options,
+      page,
+      pageSize,
+      status: normalizedStatus,
+    });
+  }
+
+  await ensureIndexes();
+  const collection = await readCollection();
+  const skip = (page - 1) * pageSize;
+  const searchMatch = buildMongoSearchMatch(options?.search);
+  const statusMatch = buildMongoStatusMatch(normalizedStatus);
+
+  const [result] = await collection
+    .aggregate<{
+      posts?: KangurSocialPostDoc[];
+      total?: Array<{ total?: number }>;
+      statusCounts?: Array<{ _id: string; count: number }>;
+    }>([
+      { $match: searchMatch },
+      {
+        $facet: {
+          posts: [
+            ...(Object.keys(statusMatch).length > 0 ? [{ $match: statusMatch }] : []),
+            { $sort: { updatedAt: -1 } },
+            { $skip: skip },
+            { $limit: pageSize },
+          ],
+          total: [
+            ...(Object.keys(statusMatch).length > 0 ? [{ $match: statusMatch }] : []),
+            { $count: 'total' },
+          ],
+          statusCounts: [
+            {
+              $group: {
+                _id: {
+                  $cond: [
+                    {
+                      $or: [
+                        { $eq: ['$status', 'published'] },
+                        { $ne: ['$publishedAt', null] },
+                        { $ne: ['$linkedinPostId', null] },
+                        { $ne: ['$linkedinUrl', null] },
+                      ],
+                    },
+                    'published',
+                    '$status',
+                  ],
+                },
+                count: { $sum: 1 },
+              },
+            },
+          ],
+        },
+      },
+    ])
+    .toArray();
+
+  const docs = Array.isArray(result?.posts) ? result.posts : [];
+  const total =
+    result?.total && Array.isArray(result.total) && typeof result.total[0]?.total === 'number'
+      ? result.total[0].total
+      : 0;
+  const counts = {
+    draft: 0,
+    scheduled: 0,
+    published: 0,
+    failed: 0,
+  };
+
+  (result?.statusCounts ?? []).forEach((entry) => {
+    if (
+      entry &&
+      typeof entry._id === 'string' &&
+      Object.prototype.hasOwnProperty.call(counts, entry._id) &&
+      typeof entry.count === 'number'
+    ) {
+      counts[entry._id as keyof typeof counts] = entry.count;
+    }
+  });
+
+  return {
+    posts: docs.map(toSocialPost),
+    total,
+    page,
+    pageSize,
+    statusCounts: counts,
+  };
 }
 
 export async function listPublishedKangurSocialPosts(limit = 8): Promise<KangurSocialPost[]> {

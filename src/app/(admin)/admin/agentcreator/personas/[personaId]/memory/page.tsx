@@ -1,4 +1,4 @@
-import { AgentPersonaMemoryPage } from '@/features/ai/agentcreator/public';
+import { AgentPersonaMemoryPage } from '@/features/ai/public';
 
 export default async function AgentCreatorPersonaMemoryRoute({
   params,

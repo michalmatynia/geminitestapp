@@ -6,11 +6,15 @@ import {
   createMasterFolderTreeTransactionAdapter,
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/public';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/public';
+} from '@/shared/lib/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { SequenceGroupDraft } from '@/shared/contracts/products';
-import { Button, FolderTreePanel, FormField, Input } from '@/shared/ui';
+import type { SequenceGroupDraft } from '@/shared/contracts/products/validation';
+import { Button } from '@/shared/ui/button';
+import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
+import { FormField } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { PatternNodeItem } from './pattern-tree/PatternNodeItem';

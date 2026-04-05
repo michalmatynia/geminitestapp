@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';

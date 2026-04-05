@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import type { PendingExternalMappingsState, PendingMappingStats } from '@/shared/contracts/ui';
+import type { PendingExternalMappingsState, PendingMappingStats } from '@/shared/contracts/ui/api';
 
 type UsePendingMappingsConfig<TMapping> = {
   mappings: TMapping[];
@@ -65,9 +65,11 @@ export function usePendingMappings<TMapping>({
   const stats = useMemo<MappingStats>(() => {
     const total = internalIds.length;
     const mapped = internalIds.filter((id: string) => getCurrentMapping(id) !== null).length;
+    const unmapped = Math.max(0, total - mapped);
     return {
       total,
       mapped,
+      unmapped,
       pending: pendingMappings.size,
     };
   }, [getCurrentMapping, internalIds, pendingMappings.size]);

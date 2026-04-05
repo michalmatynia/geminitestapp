@@ -303,7 +303,7 @@
     "screens": {
       "home": {
         "label": "Ekran startowy",
-        "description": "Wybierz sposob cwiczenia i rozpocznij kolejna sesje."
+        "description": "Wybierz sposób ćwiczenia i rozpocznij kolejną sesję."
       },
       "training": {
         "label": "Konfiguracja treningu",
@@ -312,11 +312,11 @@
       },
       "kangur_setup": {
         "label": "Konfiguracja sesji StudiQ Matematycznego",
-        "description": "Przygotuj sesje StudiQ Matematycznego."
+        "description": "Przygotuj sesję StudiQ Matematycznego."
       },
       "kangur": {
         "label": "Sesja StudiQ Matematycznego",
-        "description": "Rozwiazuj zadania StudiQ Matematycznego krok po kroku."
+        "description": "Rozwiązuj zadania StudiQ Matematycznego krok po kroku."
       },
       "agentic_approval_gate_quiz": {
         "label": "Quiz bramki zgody",
@@ -372,7 +372,7 @@
       },
       "music_melody_repeat_quiz": {
         "label": "Powtarzanie melodii",
-        "description": "Posluchaj melodii i odtworz ja dzwiek po dzwieku."
+        "description": "Posłuchaj melodii i odtwórz ją dźwięk po dźwięku."
       },
       "music_piano_roll_free_play_quiz": {
         "label": "Swobodny piano roll",
@@ -468,7 +468,7 @@
       },
       "playing": {
         "label": "Pytanie do rozwiazania",
-        "description": "Rozwiaz aktualne pytanie bez podpowiedzi z gotowa odpowiedzia."
+        "description": "Rozwiąż aktualne pytanie bez podpowiedzi z gotową odpowiedzią."
       },
       "result": {
         "label": "Wynik gry",
@@ -835,9 +835,9 @@
   "KangurPageNotFound": {
     "unknownPage": "nieznana",
     "title": "Nie znaleziono strony",
-    "description": "Nie udalo sie znalezc strony \"{pageName}\" w tej aplikacji.",
+    "description": "Nie udało się znaleźć strony \"{pageName}\" w tej aplikacji.",
     "adminNoteLabel": "Notatka administratora",
-    "adminNoteDescription": "To moze oznaczac, ze AI nie zaimplementowalo jeszcze tej strony.",
+    "adminNoteDescription": "To może oznaczać, że AI nie zaimplementowało jeszcze tej strony.",
     "goHome": "Wróć do strony głównej"
   },
   "KangurUserAccess": {
@@ -1436,6 +1436,10 @@
       "previewEyebrow": "Live runtime",
       "previewTitle": "Podglad gry",
       "previewFallback": "Najpierw scaffoldujemy zegar. Kolejne gry podepniemy do tego modala pozniej.",
+      "instancesTitle": "Zapisane instancje",
+      "instancesLoading": "Trwa ladowanie zapisanych instancji gry...",
+      "instancesEmpty": "Nie ma jeszcze zapisanych instancji do uruchamiania.",
+      "linkedLessonsEmpty": "Ta gra nie jest jeszcze powiazana z komponentami lekcji.",
       "draftEyebrow": "Szkic sekcji",
       "draftTitle": "Utworz nowa sekcje gry w hubie",
       "editDraftTitle": "Edytuj zapisana sekcje gry w hubie",
@@ -1482,6 +1486,7 @@
       "sectionsLoading": "Ladowanie zapisanych sekcji huba...",
       "settingsEyebrow": "Ustawienia podgladu",
       "settingsTitle": "Ustawienia podgladu zegara",
+      "settingsEmpty": "Ta gra nie ma jeszcze zapisanych ustawien podgladu.",
       "resetPreviewSettingsButton": "Przywroc domyslne ustawienia",
       "settingsDescription": "Te opcje steruja teraz clock scaffoldem w modalu.",
       "settings": {
@@ -1711,9 +1716,16 @@
       "engineCategory": "Kategoria silnika",
       "mechanic": "Mechanika",
       "ageGroup": "Grupa wiekowa",
+      "contentSet": "Zestaw tresci",
+      "runtime": "Runtime",
+      "launchableRuntime": "Runtime uruchamiania",
+      "lessonRuntime": "Runtime lekcji",
+      "legacyActivity": "Legacy aktywnosc",
+      "legacyScreen": "Legacy screen",
       "allAgeGroups": "Wszystkie",
       "variants": "Warianty",
       "variantCount": "{count, plural, one {# wariant} few {# warianty} many {# wariantow} other {# wariantow}}",
+      "lessonCount": "{count, plural, one {# lekcja} few {# lekcje} many {# lekcji} other {# lekcji}}",
       "legacyScreens": "Legacy screeny",
       "lessonLinks": "Powiazane lekcje",
       "none": "Brak"
@@ -1898,7 +1910,7 @@
     },
     "timeout": {
       "create": "Tworzenie profilu trwa zbyt dlugo. Sprawdz polaczenie i sprobuj ponownie.",
-      "activate": "Aktywowanie profilu trwa zbyt dlugo. Sprobuj wybrac go recznie.",
+      "activate": "Aktywowanie profilu trwa zbyt długo. Spróbuj wybrać go ręcznie.",
       "refresh": "Odswiezanie panelu trwa zbyt dlugo.",
       "save": "Zapis profilu trwa zbyt dlugo. Sprobuj ponownie.",
       "delete": "Usuwanie profilu trwa zbyt dlugo. Sprobuj ponownie."
@@ -4490,7 +4502,7 @@
       "publicListAria": "Publiczne pojedynki",
       "publicCardAria": "Publiczne wyzwanie od {name}. {operation}, {difficulty}. {questionCount} pytan, {seconds} sekund na pytanie.",
       "publicJoinAria": "Dolacz do pojedynku z {name}",
-      "publicLoginToJoinAria": "Zaloguj sie, aby dolaczyc do pojedynku z {name}",
+      "publicLoginToJoinAria": "Zaloguj się, aby dołączyć do pojedynku z {name}",
       "invite": {
         "heading": "Zaproszenia",
         "description": "Prywatne pojedynki, do ktorych zostales zaproszony.",
@@ -4498,7 +4510,7 @@
         "cardAria": "Prywatne zaproszenie od {name}. {operation}, {difficulty}. {questionCount} pytan, {seconds} sekund na pytanie.",
         "meta": "Zaproszenie prywatne • {updated}",
         "joinAria": "Dolacz do prywatnego pojedynku z {name}",
-        "loginToJoinAria": "Zaloguj sie, aby dolaczyc do prywatnego pojedynku z {name}"
+        "loginToJoinAria": "Zaloguj się, aby dołączyć do prywatnego pojedynku z {name}"
       },
       "chips": {
         "fresh": "Nowe",
@@ -4564,7 +4576,7 @@
         "retry": "Sprobuj ponownie",
         "join": "Dolacz",
         "connecting": "Laczymy...",
-        "loginToJoin": "Zaloguj sie, aby dolaczyc",
+        "loginToJoin": "Zaloguj się, aby dołączyć",
         "loginToPlay": "Zaloguj sie, aby zagrac",
         "createChallenge": "Stworz wlasne wyzwanie",
         "loginToCreate": "Zaloguj sie, aby dodac wyzwanie",

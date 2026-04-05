@@ -4,7 +4,7 @@ import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue, processProductAiJob } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import { productAiJobEnqueueRequestSchema } from '@/shared/contracts/jobs';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

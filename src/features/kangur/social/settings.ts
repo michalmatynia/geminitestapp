@@ -5,6 +5,11 @@ import {
   kangurSocialProgrammableCaptureRouteSchema,
   type KangurSocialProgrammableCaptureRoute,
 } from '@/shared/contracts/kangur-social-image-addons';
+import {
+  type KangurSocialCaptureContentConfig,
+  DEFAULT_KANGUR_SOCIAL_CAPTURE_CONTENT_CONFIG,
+  normalizeCaptureContentConfig,
+} from './shared/social-capture-content-config';
 
 export const KANGUR_SOCIAL_SETTINGS_KEY = 'kangur_social_settings_v1';
 
@@ -20,6 +25,7 @@ export type KangurSocialSettings = {
   programmableCaptureScript: string;
   programmableCaptureRoutes: KangurSocialProgrammableCaptureRoute[];
   projectUrl: string | null;
+  captureContentConfig: KangurSocialCaptureContentConfig;
 };
 
 const DEFAULT_PRESET_IDS = KANGUR_SOCIAL_CAPTURE_PRESETS.map((preset) => preset.id);
@@ -37,6 +43,7 @@ export const DEFAULT_KANGUR_SOCIAL_SETTINGS: Readonly<KangurSocialSettings> = Ob
   programmableCaptureScript: KANGUR_SOCIAL_DEFAULT_PLAYWRIGHT_CAPTURE_SCRIPT,
   programmableCaptureRoutes: [],
   projectUrl: null,
+  captureContentConfig: DEFAULT_KANGUR_SOCIAL_CAPTURE_CONTENT_CONFIG,
 });
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -136,5 +143,6 @@ export const parseKangurSocialSettings = (
       parsed['programmableCaptureRoutes']
     ),
     projectUrl: normalizeBaseUrl(parsed['projectUrl']),
+    captureContentConfig: normalizeCaptureContentConfig(parsed['captureContentConfig']),
   };
 };

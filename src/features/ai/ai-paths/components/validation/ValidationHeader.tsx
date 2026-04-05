@@ -3,17 +3,13 @@
 import { RefreshCw, Save, ShieldCheck } from 'lucide-react';
 import React from 'react';
 
-import {
-  AdminAiPathsBreadcrumbs,
-  Badge,
-  Card,
-  Label,
-  PanelHeader,
-  SelectSimple,
-  StatusBadge,
-} from '@/shared/ui';
-import type { StatusVariant } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { AdminAiPathsBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Card, Label } from '@/shared/ui/primitives.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import type { StatusVariant } from '@/shared/contracts/ui/base';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { ValidationActionButton } from './ValidationActionButton';

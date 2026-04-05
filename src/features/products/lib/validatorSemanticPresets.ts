@@ -1,9 +1,5 @@
-import type {
-  CreateProductValidationPatternInput,
-  ProductValidationPattern,
-  ProductValidationSemanticState,
-} from '@/shared/contracts/products';
-import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION } from '@/shared/contracts/products';
+import type { CreateProductValidationPatternInput, ProductValidationPattern, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
+import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION } from '@/shared/contracts/products/validation';
 import {
   buildProductValidationSemanticOperationPresetLabel,
   buildProductValidationSemanticOperationPresetMessage,

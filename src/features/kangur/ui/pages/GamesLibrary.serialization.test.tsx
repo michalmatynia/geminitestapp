@@ -209,7 +209,7 @@ vi.mock('@/features/kangur/ui/design/primitives', async (importOriginal) => {
   };
 });
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: () => <div data-testid='games-library-top-nav' />,
 }));
 
@@ -240,12 +240,28 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
 vi.mock('@/features/kangur/ui/pages/GamesLibrary.tabs', () => ({
   CatalogTab: ({
     groupedGames,
+    setSelectedGame,
   }: {
     groupedGames: Array<{ entries: Array<{ game: { title: string } }> }>;
+    setSelectedGame: (
+      game: { title: string },
+      trigger?: HTMLElement | null
+    ) => void;
   }) => (
     <div data-testid='games-library-catalog-tab'>
       {groupedGames.flatMap((group) => group.entries).map((entry) => (
-        <div key={entry.game.title}>{entry.game.title}</div>
+        <button
+          key={entry.game.title}
+          onClick={(event) =>
+            setSelectedGame(
+              entry.game as { title: string },
+              event.currentTarget
+            )
+          }
+          type='button'
+        >
+          {entry.game.title}
+        </button>
       ))}
     </div>
   ),
@@ -268,11 +284,20 @@ vi.mock('@/features/kangur/ui/pages/GamesLibraryGameModal', () => ({
   GamesLibraryGameModal: ({
     open,
     game,
+    onOpenChange,
   }: {
     open: boolean;
     game: { title: string } | null;
+    onOpenChange: (open: boolean) => void;
   }) =>
-    open ? <div data-testid='games-library-modal'>{game?.title ?? 'No game'}</div> : null,
+    open ? (
+      <div data-testid='games-library-modal'>
+        <div>{game?.title ?? 'No game'}</div>
+        <button onClick={() => onOpenChange(false)} type='button'>
+          Close modal
+        </button>
+      </div>
+    ) : null,
 }));
 
 import GamesLibrary from '@/features/kangur/ui/pages/GamesLibrary';
@@ -388,7 +413,7 @@ describe('GamesLibrary page', () => {
   it('updates the exact game filter in the route and page data query', async () => {
     render(<GamesLibrary />);
 
-    fireEvent.change(screen.getByRole('combobox'), {
+    fireEvent.change(screen.getAllByRole('combobox')[0], {
       target: { value: 'division_groups' },
     });
 
@@ -403,6 +428,27 @@ describe('GamesLibrary page', () => {
       pageKey: 'GamesLibrary',
       scroll: false,
       sourceId: 'kangur-games-library:filters:gameId',
+    });
+  });
+
+  it('restores focus to the trigger after closing the preview modal', async () => {
+    render(<GamesLibrary />);
+
+    const firstGameTitle = ALL_TEST_GAMES[0]?.title ?? '';
+    const firstGameButton = screen.getByRole('button', { name: firstGameTitle });
+
+    firstGameButton.focus();
+    expect(firstGameButton).toHaveFocus();
+
+    fireEvent.click(firstGameButton);
+
+    expect(screen.getByTestId('games-library-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close modal' }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('games-library-modal')).not.toBeInTheDocument();
+      expect(firstGameButton).toHaveFocus();
     });
   });
 });

@@ -28,6 +28,9 @@ describe('getQuestionAuthoringSummary', () => {
     expect(summary.status).toBe('ready');
     expect(summary.blockers).toHaveLength(0);
     expect(summary.warnings).toHaveLength(0);
+    expect(summary.nextAction).toBe(
+      'Question is saved as a draft. Mark it ready when review is complete.'
+    );
   });
 
   it('returns blockers for missing structural requirements', () => {
@@ -152,5 +155,21 @@ describe('getQuestionAuthoringSummary', () => {
     expect(summary.nextAction).toBe(
       'Приберіть попередження review, перш ніж публікувати це запитання.'
     );
+  });
+
+  it('uses the published-clean message when no blockers or warnings remain', () => {
+    const summary = getQuestionAuthoringSummary(
+      makeQuestion({
+        editorial: {
+          source: 'manual',
+          reviewStatus: 'ready',
+          workflowStatus: 'published',
+          auditFlags: [],
+        },
+      })
+    );
+
+    expect(summary.status).toBe('ready');
+    expect(summary.nextAction).toBe('Question is published and structurally clean.');
   });
 });

@@ -1,4 +1,4 @@
-import type { BaseOrderImportQuickImportResponse } from '@/shared/contracts/products';
+import type { BaseOrderImportQuickImportResponse } from '@/shared/contracts/products/orders-import';
 
 export type BaseOrderQuickImportFeedback = {
   variant: 'success' | 'info';

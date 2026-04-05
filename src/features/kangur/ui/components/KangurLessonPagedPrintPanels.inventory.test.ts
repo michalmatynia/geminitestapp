@@ -11,7 +11,7 @@ const PAGED_PRINT_PANEL_FILES = [
     expectedCount: 2,
   },
   {
-    path: 'src/features/kangur/ui/components/LessonSlideSection.tsx',
+    path: 'src/features/kangur/ui/components/lesson-framework/LessonSlideSection.tsx',
     expectedCount: 1,
   },
   {
@@ -19,7 +19,7 @@ const PAGED_PRINT_PANEL_FILES = [
     expectedCount: 1,
   },
   {
-    path: 'src/features/kangur/ui/components/ClockTrainingGame.tsx',
+    path: 'src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx',
     expectedCount: 1,
   },
   {
@@ -39,7 +39,7 @@ const PAGED_PRINT_PANEL_FILES = [
 const PAGED_PRINT_MARKER = "data-kangur-print-paged-panel='true'";
 const PREFERRED_PRINT_TARGET_FILES = [
   {
-    path: 'src/features/kangur/ui/components/ClockTrainingGame.tsx',
+    path: 'src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx',
     expectedCount: 1,
   },
   {
@@ -51,7 +51,7 @@ const PREFERRED_PRINT_TARGET_FILES = [
     expectedCount: 3,
   },
   {
-    path: 'src/features/kangur/ui/components/LessonSlideSection.tsx',
+    path: 'src/features/kangur/ui/components/lesson-framework/LessonSlideSection.tsx',
     expectedCount: 1,
   },
 ] as const;

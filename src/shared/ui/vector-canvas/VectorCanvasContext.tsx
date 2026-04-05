@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { type VectorCanvasRect } from '../vector-canvas.geometry';
 
@@ -58,7 +59,18 @@ export interface VectorCanvasContextValue {
   syncCanvasSize: () => void;
 }
 
-export const VectorCanvasContext = createContext<VectorCanvasContextValue | null>(null);
+const {
+  Context: VectorCanvasContext,
+  useStrictContext: useVectorCanvasContext,
+  useOptionalContext: useOptionalVectorCanvasContext,
+} = createStrictContext<VectorCanvasContextValue>({
+  hookName: 'useVectorCanvasContext',
+  providerName: 'VectorCanvasProvider',
+  displayName: 'VectorCanvasContext',
+  errorFactory: internalError,
+});
+
+export { VectorCanvasContext, useOptionalVectorCanvasContext, useVectorCanvasContext };
 
 export function VectorCanvasProvider({
   children,
@@ -68,16 +80,4 @@ export function VectorCanvasProvider({
   value: VectorCanvasContextValue;
 }) {
   return <VectorCanvasContext.Provider value={value}>{children}</VectorCanvasContext.Provider>;
-}
-
-export function useVectorCanvasContext() {
-  const context = useContext(VectorCanvasContext);
-  if (!context) {
-    throw internalError('useVectorCanvasContext must be used within VectorCanvasProvider');
-  }
-  return context;
-}
-
-export function useOptionalVectorCanvasContext() {
-  return useContext(VectorCanvasContext);
 }

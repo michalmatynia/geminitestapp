@@ -43,7 +43,8 @@ describe('jobs api', () => {
   });
 
   it('calls the expected endpoints for read operations', async () => {
-    await getIntegrationJobs();
+    const signal = new AbortController().signal;
+    await getIntegrationJobs(signal);
     await getProductAiJobs();
     await getProductAiJobs('failed');
     await getProductAiJob('job-1');
@@ -53,7 +54,7 @@ describe('jobs api', () => {
     await getJobStatusDetail('job-2');
     await getTraderaQueueHealth();
 
-    expect(getMock).toHaveBeenNthCalledWith(1, '/api/v2/integrations/jobs');
+    expect(getMock).toHaveBeenNthCalledWith(1, '/api/v2/integrations/jobs', { signal });
     expect(getMock).toHaveBeenNthCalledWith(2, '/api/v2/products/ai-jobs', {
       params: { scope: 'all' },
     });

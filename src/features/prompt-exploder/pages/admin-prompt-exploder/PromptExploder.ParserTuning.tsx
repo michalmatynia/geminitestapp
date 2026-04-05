@@ -3,20 +3,14 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 
-import {
-  Button,
-  FormSection,
-  Input,
-  Label,
-  SelectSimple,
-  StatusToggle,
-  Textarea,
-} from '@/shared/ui';
+import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { FormSection, SelectSimple, StatusToggle } from '@/shared/ui/forms-and-actions.public';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import {
-  SettingsActionsContext,
-  SettingsStateContext,
+  useOptionalSettingsActions,
+  useOptionalSettingsState,
   useSettingsActions,
   useSettingsState,
 } from '../../context/SettingsContext';
@@ -37,8 +31,18 @@ type PromptExploderParserTuningContextValue = {
   isBusy: boolean;
 };
 
-const PromptExploderParserTuningContext =
-  React.createContext<PromptExploderParserTuningContextValue | null>(null);
+const {
+  Context: PromptExploderParserTuningContext,
+  useStrictContext: usePromptExploderParserTuningContext,
+} = createStrictContext<PromptExploderParserTuningContextValue>({
+  hookName: 'usePromptExploderParserTuningContext',
+  providerName: 'PromptExploderParserTuningProvider',
+  displayName: 'PromptExploderParserTuningContext',
+  errorFactory: () =>
+    internalError(
+      'usePromptExploderParserTuningContext must be used inside PromptExploderParserTuningProvider'
+    ),
+});
 
 export function PromptExploderParserTuningProvider({
   value,
@@ -48,8 +52,8 @@ export function PromptExploderParserTuningProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const router = useRouter();
-  const settingsState = React.useContext(SettingsStateContext);
-  const settingsActions = React.useContext(SettingsActionsContext);
+  const settingsState = useOptionalSettingsState();
+  const settingsActions = useOptionalSettingsActions();
 
   const resolvedValue = React.useMemo<PromptExploderParserTuningContextValue>(() => {
     if (value) return value;
@@ -83,16 +87,6 @@ export function PromptExploderParserTuningProvider({
       {children}
     </PromptExploderParserTuningContext.Provider>
   );
-}
-
-function usePromptExploderParserTuningContext(): PromptExploderParserTuningContextValue {
-  const context = React.useContext(PromptExploderParserTuningContext);
-  if (!context) {
-    throw internalError(
-      'usePromptExploderParserTuningContext must be used inside PromptExploderParserTuningProvider'
-    );
-  }
-  return context;
 }
 
 export function PromptExploderParserTuningPanel(): React.JSX.Element {

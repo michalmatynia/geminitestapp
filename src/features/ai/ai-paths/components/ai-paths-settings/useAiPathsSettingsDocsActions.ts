@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import {
@@ -5,7 +7,7 @@ import {
   DOCS_JOBS_SNIPPET,
   DOCS_WIRING_SNIPPET,
 } from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type UseAiPathsSettingsDocsActionsInput = {

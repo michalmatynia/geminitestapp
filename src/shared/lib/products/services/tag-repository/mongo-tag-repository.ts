@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 
-import type { TagRepository, TagFilters } from '@/shared/contracts/products';
-import type { ProductTag } from '@/shared/contracts/products';
+import type { TagRepository, TagFilters } from '@/shared/contracts/products/drafts';
+import type { ProductTag } from '@/shared/contracts/products/tags';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

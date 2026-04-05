@@ -54,7 +54,7 @@ describe('useMarketplaceMutations invalidation', () => {
 
     expect(api.post).toHaveBeenCalledWith('/api/marketplace/categories/fetch', {
       connectionId: 'conn-1',
-    });
+    }, { timeout: 360_000 });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(1));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.integrations.marketplace.categories('conn-1'),

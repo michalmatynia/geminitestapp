@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getKangurKnowledgeGraphStatusSnapshot } from '@/features/kangur/server/knowledge-graph/status-loader';
-import {
-  kangurKnowledgeGraphStatusResponseSchema,
-  type ApiHandlerContext,
-} from '@/shared/contracts';
+import { kangurKnowledgeGraphStatusResponseSchema } from '@/shared/contracts/kangur-observability';
+import { type ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/shared/contracts/kangur-knowledge-graph';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';

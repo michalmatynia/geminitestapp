@@ -5,7 +5,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { KangurKangurWordmark } from '@/features/kangur/ui/components/KangurKangurWordmark';
+import { KangurKangurWordmark } from '@/features/kangur/ui/components/wordmarks/KangurKangurWordmark';
 
 describe('KangurKangurWordmark', () => {
   it('renders the Polish Kangur wordmark as a standalone SVG path composition', () => {

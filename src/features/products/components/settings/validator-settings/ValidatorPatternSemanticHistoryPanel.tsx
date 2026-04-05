@@ -2,18 +2,16 @@
 
 import React from 'react';
 
-import type {
-  ProductValidationPattern,
-  ProductValidationSemanticState,
-} from '@/shared/contracts/products';
+import type { ProductValidationPattern, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
 import { getProductValidationSemanticOperationUiMetadata } from '@/shared/lib/products/utils/validator-semantic-operations';
 import {
   describeProductValidationSemanticAuditRecord,
   getProductValidationSemanticAuditRecordKey,
   getProductValidationSemanticAuditHistory,
 } from '@/shared/lib/products/utils/validator-semantic-state';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/button';
+
+import { cn } from '@/shared/utils/ui-utils';
 
 const SEMANTIC_AUDIT_SOURCE_LABELS = {
   manual_save: 'Manual Save',

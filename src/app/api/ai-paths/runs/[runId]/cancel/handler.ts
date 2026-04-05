@@ -5,10 +5,10 @@ import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
+import { removePathRunQueueEntries } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { cancelPathRunWithRepository } from '@/features/ai/ai-paths/server';
-import { removePathRunQueueEntries } from '@/features/ai/server';
 import { aiPathRunRouteParamsSchema, type AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { Badge } from '@/features/kangur/shared/ui';

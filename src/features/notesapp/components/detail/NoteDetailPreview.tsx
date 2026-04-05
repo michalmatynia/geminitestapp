@@ -3,8 +3,8 @@
 import React, { useMemo } from 'react';
 
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
-import { useToast } from '@/shared/ui';
-import { sanitizeHtml } from '@/shared/utils';
+import { useToast } from '@/shared/ui/primitives.public';
+import { sanitizeHtml } from '@/shared/utils/sanitization';
 
 import { NoteDetailRelatedNotes } from './NoteDetailRelatedNotes';
 import { renderMarkdownToHtml } from '../../utils';

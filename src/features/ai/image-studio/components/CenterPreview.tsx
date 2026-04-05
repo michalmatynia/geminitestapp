@@ -4,13 +4,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
-import {
-  imageStudioSlotScreenshotResponseSchema,
-  type ImageStudioSlotRecord,
-  type SlotGenerationMetadata,
-} from '@/shared/contracts/image-studio';
+import { imageStudioSlotScreenshotResponseSchema } from '@/shared/contracts/image-studio/slot';
+import { type ImageStudioSlotRecord, type SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/shared/contracts/vector';
-import type { VectorCanvasRect } from '@/shared/contracts/ui';
+import type { VectorCanvasRect } from '@/shared/contracts/ui/canvas';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -19,7 +16,8 @@ import {
 } from '@/shared/lib/products/constants';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { FocusModeTogglePortal, useToast } from '@/shared/ui';
+import { FocusModeTogglePortal } from '@/shared/ui/navigation-and-layout.public';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   CenterPreviewProvider,

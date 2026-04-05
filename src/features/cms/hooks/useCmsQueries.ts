@@ -1,5 +1,3 @@
-'use client';
-
 import { createDomain, deleteDomain, fetchDomains, updateDomain } from '@/features/cms/api/domains';
 import {
   createPage,
@@ -40,7 +38,7 @@ import type {
 } from '@/shared/contracts/cms';
 import type { IdInputDto } from '@/shared/contracts/base';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ListQuery, SingleQuery, CreateMutation, UpdateMutation } from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery, CreateMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
 import {
   createDeleteMutationV2,
   createListQueryV2,

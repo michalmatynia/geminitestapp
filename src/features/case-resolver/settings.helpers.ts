@@ -1,9 +1,4 @@
-import {
-  type CaseResolverDocumentDateProposal,
-  type CaseResolverDocumentFormatVersion,
-  type CaseResolverFileType,
-  type CaseResolverPartyReference,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverDocumentDateProposal, type CaseResolverDocumentFormatVersion, type CaseResolverFileType, type CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 
 import { type CaseResolverPartySearchKind } from './settings.constants';
 
@@ -143,10 +138,20 @@ export const normalizeDocumentDate = (value: unknown): CaseResolverDocumentDateP
   };
 };
 
+const isValidDocumentDatePart = (value: number, min: number, max: number): boolean =>
+  Number.isInteger(value) && value >= min && value <= max;
+
+const hasValidIsoDocumentDateParts = (year: number, month: number, day: number): boolean =>
+  isValidDocumentDatePart(year, 1900, 2099) &&
+  isValidDocumentDatePart(month, 1, 12) &&
+  isValidDocumentDatePart(day, 1, 31);
+
+const formatIsoDocumentDate = (year: number, month: number, day: number): string =>
+  `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
 export const toIsoDocumentDate = (year: number, month: number, day: number): string | null => {
-  if (year < 1900 || year > 2099) return null;
-  if (month < 1 || month > 12) return null;
-  if (day < 1 || day > 31) return null;
+  if (!hasValidIsoDocumentDateParts(year, month, day)) return null;
+
   const parsed = new Date(Date.UTC(year, month - 1, day));
   if (
     parsed.getUTCFullYear() !== year ||
@@ -155,7 +160,7 @@ export const toIsoDocumentDate = (year: number, month: number, day: number): str
   ) {
     return null;
   }
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return formatIsoDocumentDate(year, month, day);
 };
 
 export const sanitizePartyReference = (value: unknown): CaseResolverPartyReference | null => {

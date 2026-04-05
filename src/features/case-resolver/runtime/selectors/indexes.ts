@@ -1,9 +1,5 @@
-import type {
-  CaseResolverAssetFile,
-  CaseResolverFile,
-  CaseResolverFolderRecord,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { getCaseResolverWorkspaceRevision } from '../../workspace-persistence';
 

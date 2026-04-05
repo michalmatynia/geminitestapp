@@ -10,7 +10,7 @@ import {
   startKangurSocialPipelineQueue,
 } from '@/features/kangur/social/workers/kangurSocialPipelineQueue';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 import { isRedisAvailable, isRedisReachable } from '@/shared/lib/queue';
 

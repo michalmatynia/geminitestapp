@@ -107,25 +107,31 @@ const isWriteResultOperation = (config: DatabaseConfig, result: RuntimePortValue
   return false;
 };
 
+const readDatabaseErrorText = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const readDatabaseErrorFromRecord = (value: unknown): string | null => {
+  if (!isObjectRecord(value)) {
+    return null;
+  }
+  return readDatabaseErrorText(value['error']);
+};
+
+const DATABASE_ERROR_RESULT_KEYS = ['bundle', 'result'] as const;
+
 const extractDatabaseError = (result: RuntimePortValues): string | null => {
-  const directError = result['error'];
-  if (typeof directError === 'string' && directError.trim().length > 0) {
-    return directError.trim();
+  const directError = readDatabaseErrorText(result['error']);
+  if (directError) {
+    return directError;
   }
-  const bundle = result['bundle'];
-  if (isObjectRecord(bundle)) {
-    const bundleError = bundle['error'];
-    if (typeof bundleError === 'string' && bundleError.trim().length > 0) {
-      return bundleError.trim();
+
+  for (const key of DATABASE_ERROR_RESULT_KEYS) {
+    const nestedError = readDatabaseErrorFromRecord(result[key]);
+    if (nestedError) {
+      return nestedError;
     }
   }
-  const resultPayload = result['result'];
-  if (isObjectRecord(resultPayload)) {
-    const payloadError = resultPayload['error'];
-    if (typeof payloadError === 'string' && payloadError.trim().length > 0) {
-      return payloadError.trim();
-    }
-  }
+
   return null;
 };
 
@@ -167,6 +173,123 @@ const shouldTreatWriteErrorAsTerminal = (result: RuntimePortValues): boolean => 
   if (guardrailSeverity === 'error') return true;
   if (guardrailSeverity === 'warning') return false;
   return true;
+};
+
+const shouldLoadDatabaseSchema = ({
+  aiPromptTemplate,
+  dbConfig,
+  queryConfig,
+}: {
+  aiPromptTemplate: string;
+  dbConfig: DatabaseConfig;
+  queryConfig: DbQueryConfig;
+}): boolean => {
+  const templateSources: string[] = [
+    aiPromptTemplate,
+    queryConfig.queryTemplate ?? '',
+    dbConfig.updateTemplate ?? '',
+  ].filter((value: string): boolean => value.trim().length > 0);
+
+  return templateSources.some((value: string) => value.includes('{{Collection:'));
+};
+
+const resolveDatabaseSchemaInput = async (
+  resolvedInputs: Record<string, unknown>
+): Promise<SchemaResponse | null> => {
+  const schemaInput = resolvedInputs['schema'];
+  if (
+    schemaInput &&
+    typeof schemaInput === 'object' &&
+    'collections' in (schemaInput as Record<string, unknown>)
+  ) {
+    return schemaInput as SchemaResponse;
+  }
+
+  const schemaResult = await getCachedSchema();
+  if (schemaResult.ok) {
+    return schemaResult.data as SchemaResponse;
+  }
+  return null;
+};
+
+const resolveDatabaseSchemaData = async ({
+  aiPromptTemplate,
+  dbConfig,
+  queryConfig,
+  resolvedInputs,
+}: {
+  aiPromptTemplate: string;
+  dbConfig: DatabaseConfig;
+  queryConfig: DbQueryConfig;
+  resolvedInputs: Record<string, unknown>;
+}): Promise<SchemaResponse | null> => {
+  if (!shouldLoadDatabaseSchema({ aiPromptTemplate, dbConfig, queryConfig })) {
+    return null;
+  }
+
+  return await resolveDatabaseSchemaInput(resolvedInputs);
+};
+
+const handleWriteOperationResult = ({
+  dbConfig,
+  result,
+  writeOperationDetected,
+}: {
+  dbConfig: DatabaseConfig;
+  result: RuntimePortValues;
+  writeOperationDetected: boolean;
+}): {
+  result: RuntimePortValues;
+  terminalError: DatabaseTerminalError | null;
+  writeOperationDetected: boolean;
+} => {
+  const nextWriteOperationDetected =
+    writeOperationDetected || isWriteResultOperation(dbConfig, result);
+  const operationError = extractDatabaseError(result);
+
+  return {
+    result,
+    terminalError:
+      nextWriteOperationDetected &&
+      operationError &&
+      shouldTreatWriteErrorAsTerminal(result)
+        ? createDatabaseTerminalError(operationError, result)
+        : null,
+    writeOperationDetected: nextWriteOperationDetected,
+  };
+};
+
+const handleDatabaseUnexpectedFailure = ({
+  error,
+  nodeId,
+  reportAiPathsError,
+  writeOperationDetected,
+}: {
+  error: unknown;
+  nodeId: string;
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+  writeOperationDetected: boolean;
+}): RuntimePortValues => {
+  if (error instanceof ParameterInferenceGateError) {
+    throw error;
+  }
+  reportAiPathsError(
+    error,
+    { action: 'handleDatabase', nodeId },
+    'Unexpected database node failure:'
+  );
+  if (writeOperationDetected) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw createDatabaseTerminalError(
+      typeof error === 'string' ? error : 'Database write failed'
+    );
+  }
+  return {
+    result: null,
+    bundle: { error: error instanceof Error ? error.message : 'Unknown database error' },
+  };
 };
 
 export const handleDatabase: NodeHandler = async ({
@@ -224,30 +347,12 @@ export const handleDatabase: NodeHandler = async ({
       dbConfig.useMongoActions && dbConfig.actionCategory && dbConfig.action
     );
 
-    const templateSources: string[] = [
+    const schemaData = await resolveDatabaseSchemaData({
       aiPromptTemplate,
-      queryConfig.queryTemplate ?? '',
-      dbConfig.updateTemplate ?? '',
-    ].filter((value: string): boolean => value.trim().length > 0);
-    const wantsSchemaPlaceholders = templateSources.some((value: string) =>
-      value.includes('{{Collection:')
-    );
-    const schemaInput = resolvedInputs['schema'];
-    let schemaData: SchemaResponse | null = null;
-    if (wantsSchemaPlaceholders) {
-      if (
-        schemaInput &&
-        typeof schemaInput === 'object' &&
-        'collections' in (schemaInput as Record<string, unknown>)
-      ) {
-        schemaData = schemaInput as SchemaResponse;
-      } else {
-        const schemaResult = await getCachedSchema();
-        if (schemaResult.ok) {
-          schemaData = schemaResult.data as SchemaResponse;
-        }
-      }
-    }
+      dbConfig,
+      queryConfig,
+      resolvedInputs,
+    });
     const {
       templateInputValue,
       templateInputs,
@@ -286,19 +391,18 @@ export const handleDatabase: NodeHandler = async ({
         aiPrompt,
         ensureExistingParameterTemplateContext,
         strictFlowMode,
-      });
+        });
       if (mongoActionResult) {
-        writeOperationDetected =
-          writeOperationDetected || isWriteResultOperation(dbConfig, mongoActionResult);
-        const mongoError = extractDatabaseError(mongoActionResult);
-        if (
-          writeOperationDetected &&
-          mongoError &&
-          shouldTreatWriteErrorAsTerminal(mongoActionResult)
-        ) {
-          throw createDatabaseTerminalError(mongoError, mongoActionResult);
+        const mongoResult = handleWriteOperationResult({
+          dbConfig,
+          result: mongoActionResult,
+          writeOperationDetected,
+        });
+        writeOperationDetected = mongoResult.writeOperationDetected;
+        if (mongoResult.terminalError) {
+          throw mongoResult.terminalError;
         }
-        return mongoActionResult;
+        return mongoResult.result;
       }
     }
 
@@ -325,38 +429,23 @@ export const handleDatabase: NodeHandler = async ({
       ensureExistingParameterTemplateContext,
       strictFlowMode,
     });
-    writeOperationDetected =
-      writeOperationDetected || isWriteResultOperation(dbConfig, operationResult);
-    const operationError = extractDatabaseError(operationResult);
-    if (
-      writeOperationDetected &&
-      operationError &&
-      shouldTreatWriteErrorAsTerminal(operationResult)
-    ) {
-      throw createDatabaseTerminalError(operationError, operationResult);
+    const standardResult = handleWriteOperationResult({
+      dbConfig,
+      result: operationResult,
+      writeOperationDetected,
+    });
+    writeOperationDetected = standardResult.writeOperationDetected;
+    if (standardResult.terminalError) {
+      throw standardResult.terminalError;
     }
-    return operationResult;
+    return standardResult.result;
   } catch (error) {
     logClientError(error);
-    if (error instanceof ParameterInferenceGateError) {
-      throw error;
-    }
-    reportAiPathsError(
+    return handleDatabaseUnexpectedFailure({
       error,
-      { action: 'handleDatabase', nodeId: node.id },
-      'Unexpected database node failure:'
-    );
-    if (writeOperationDetected) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw createDatabaseTerminalError(
-        typeof error === 'string' ? error : 'Database write failed'
-      );
-    }
-    return {
-      result: null,
-      bundle: { error: error instanceof Error ? error.message : 'Unknown database error' },
-    };
+      nodeId: node.id,
+      reportAiPathsError,
+      writeOperationDetected,
+    });
   }
 };

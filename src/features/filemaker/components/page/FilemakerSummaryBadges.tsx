@@ -1,8 +1,6 @@
-'use client';
-
 import React from 'react';
 
-import { Badge } from '@/shared/ui';
+import { Badge } from '@/shared/ui/primitives.public';
 
 import { useAdminFilemakerPageStateContext } from '../../context/AdminFilemakerPageContext';
 

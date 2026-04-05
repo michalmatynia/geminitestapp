@@ -28,6 +28,52 @@ describe('a11y helpers', () => {
     );
   });
 
+  it('prefers explicit aria-labels and falls back to fallbackLabel only when text is absent', () => {
+    expect(
+      resolveAccessibleLabel({
+        children: null,
+        ariaLabel: 'Explicit label',
+        title: 'Title label',
+        fallbackLabel: 'Fallback label',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        textContent: '',
+        hasText: false,
+        ariaLabel: 'Explicit label',
+        hasAccessibleLabel: true,
+      })
+    );
+
+    expect(
+      resolveAccessibleLabel({
+        children: null,
+        fallbackLabel: 'Fallback label',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        textContent: '',
+        hasText: false,
+        ariaLabel: 'Fallback label',
+        hasAccessibleLabel: true,
+      })
+    );
+
+    expect(
+      resolveAccessibleLabel({
+        children: 'Visible text',
+        fallbackLabel: 'Fallback label',
+      })
+    ).toEqual(
+      expect.objectContaining({
+        textContent: 'Visible text',
+        hasText: true,
+        ariaLabel: undefined,
+        hasAccessibleLabel: true,
+      })
+    );
+  });
+
   it('treats aria-labelledby as an accessible label source', () => {
     expect(
       resolveAccessibleLabel({
@@ -35,5 +81,12 @@ describe('a11y helpers', () => {
         ariaLabelledBy: 'external-label',
       }).hasAccessibleLabel
     ).toBe(true);
+
+    expect(
+      resolveAccessibleLabel({
+        children: null,
+        ariaLabelledBy: '   ',
+      }).hasAccessibleLabel
+    ).toBe(false);
   });
 });

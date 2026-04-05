@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type {
@@ -12,7 +10,7 @@ import type { KangurMiniGameFinishActionProps } from '@/features/kangur/ui/types
 import AddingBallGame from './AddingBallGame';
 import AddingSynthesisGame from './AddingSynthesisGame';
 import CalendarInteractiveGame from './CalendarInteractiveGame';
-import ClockTrainingGame from './ClockTrainingGame';
+import ClockTrainingGame from './clock-training/ClockTrainingGame';
 import DivisionGame from './DivisionGame';
 import GeometryDrawingGame from './GeometryDrawingGame';
 import MultiplicationArrayGame from './MultiplicationArrayGame';

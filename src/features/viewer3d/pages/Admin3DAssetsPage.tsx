@@ -5,23 +5,11 @@ import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import {
-  Button,
-  StandardDataTablePanel,
-  SelectSimple,
-  SearchInput,
-  Alert,
-  FormSection,
-  FormField,
-  EmptyState,
-  StatusBadge,
-  PanelHeader,
-  Badge,
-  ActionMenu,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Alert, Badge, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel, PanelHeader } from '@/shared/ui/templates.public';
+import { SelectSimple, SearchInput, FormSection, FormField, ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { EmptyState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { Asset3DCard } from '../components/Asset3DCard';
 import { Asset3DEditModal } from '../components/Asset3DEditModalImpl';

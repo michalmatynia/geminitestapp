@@ -314,6 +314,13 @@ vi.mock('next-intl', () => {
     }),
     useMessages: () => plMessages,
     useLocale: () => 'pl',
+    usePathname: vi.fn(() => '/'),
+    useRouter: vi.fn(() => ({
+      push: vi.fn(),
+      replace: vi.fn(),
+      prefetch: vi.fn(),
+      back: vi.fn(),
+    })),
   };
 });
 

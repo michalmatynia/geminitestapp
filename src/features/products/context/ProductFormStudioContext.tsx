@@ -3,13 +3,11 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
-import {
-  ProductWithImages,
-  productStudioConfigResponseSchema,
-} from '@/shared/contracts/products';
+import { ProductWithImages } from '@/shared/contracts/products/product';
+import { productStudioConfigResponseSchema } from '@/shared/contracts/products/studio';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
 
 export interface ProductFormStudioStateContextType {
   studioProjectId: string | null;

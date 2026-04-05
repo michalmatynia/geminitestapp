@@ -14,6 +14,44 @@ type CliOptions = {
   help: boolean;
 };
 
+const normalizeCliValue = (value: string): string | null => {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const CLI_OPTION_APPLIERS: Array<{
+  prefix: string;
+  apply: (options: CliOptions, value: string) => void;
+}> = [
+  {
+    prefix: '--learner-id=',
+    apply: (options, value) => {
+      options.learnerId = normalizeCliValue(value);
+    },
+  },
+  {
+    prefix: '--login-name=',
+    apply: (options, value) => {
+      options.loginName = normalizeCliValue(value.toLowerCase());
+    },
+  },
+  {
+    prefix: '--password=',
+    apply: (options, value) => {
+      options.password = value.length > 0 ? value : null;
+    },
+  },
+];
+
+const applyCliOption = (options: CliOptions, arg: string): void => {
+  const matcher = CLI_OPTION_APPLIERS.find(({ prefix }) => arg.startsWith(prefix));
+  if (!matcher) {
+    return;
+  }
+
+  matcher.apply(options, arg.slice(matcher.prefix.length));
+};
+
 const parseCliOptions = (argv: string[]): CliOptions => {
   const options: CliOptions = {
     learnerId: null,
@@ -27,20 +65,8 @@ const parseCliOptions = (argv: string[]): CliOptions => {
       options.help = true;
       continue;
     }
-    if (arg.startsWith('--learner-id=')) {
-      const value = arg.slice('--learner-id='.length).trim();
-      options.learnerId = value.length > 0 ? value : null;
-      continue;
-    }
-    if (arg.startsWith('--login-name=')) {
-      const value = arg.slice('--login-name='.length).trim().toLowerCase();
-      options.loginName = value.length > 0 ? value : null;
-      continue;
-    }
-    if (arg.startsWith('--password=')) {
-      const value = arg.slice('--password='.length);
-      options.password = value.length > 0 ? value : null;
-    }
+
+    applyCliOption(options, arg);
   }
 
   return options;

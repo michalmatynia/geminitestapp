@@ -1,4 +1,6 @@
-import { createContext, type MouseEvent, type ReactNode } from 'react';
+'use client';
+
+import type { MouseEvent, ReactNode } from 'react';
 
 import type {
   LastErrorInfo,
@@ -6,17 +8,9 @@ import type {
   RuntimeControlHandlers,
   RuntimeNodeConfigHandlers,
 } from '@/shared/contracts/ai-paths';
-import type {
-  AiNode,
-  RuntimeState,
-  RuntimePortValues,
-  ParserSampleState,
-  UpdaterSampleState,
-  PathDebugSnapshot,
-  RuntimeHistoryEntry,
-  AiPathRuntimeNodeStatusMap,
-  AiPathRuntimeEvent,
-} from '@/shared/lib/ai-paths';
+import { internalError } from '@/shared/errors/app-error';
+import type { AiNode, RuntimeState, RuntimePortValues, ParserSampleState, UpdaterSampleState, PathDebugSnapshot, RuntimeHistoryEntry, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type { LastErrorInfo, RuntimeRunStatus, RuntimeControlHandlers, RuntimeNodeConfigHandlers };
 
@@ -119,5 +113,22 @@ export const INITIAL_RUNTIME_STATE: RuntimeState = {
 
 export const MAX_RUNTIME_EVENTS = 300;
 
-export const RuntimeStateContext = createContext<RuntimeStateData | null>(null);
-export const RuntimeActionsContext = createContext<RuntimeActions | null>(null);
+const {
+  Context: RuntimeStateContext,
+  useStrictContext: useRuntimeState,
+} = createStrictContext<RuntimeStateData>({
+  hookName: 'useRuntimeState',
+  providerName: 'a RuntimeProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: RuntimeActionsContext,
+  useStrictContext: useRuntimeActions,
+} = createStrictContext<RuntimeActions>({
+  hookName: 'useRuntimeActions',
+  providerName: 'a RuntimeProvider',
+  errorFactory: internalError,
+});
+
+export { RuntimeStateContext, RuntimeActionsContext, useRuntimeState, useRuntimeActions };

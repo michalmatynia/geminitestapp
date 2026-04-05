@@ -1,5 +1,5 @@
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import {
-  DOCUMENTATION_MODULE_IDS,
   IMAGE_STUDIO_CROP_DOC_KEYS,
   IMAGE_STUDIO_DOCS,
   IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS,
@@ -7,8 +7,8 @@ import {
   IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
   type ImageStudioDocEntry,
   type ImageStudioDocKey,
-} from '@/shared/lib/documentation';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
+} from '@/shared/lib/documentation/catalogs/image-studio';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 
 export type { ImageStudioDocEntry, ImageStudioDocKey };
 

@@ -1,10 +1,9 @@
-'use client';
-
 import React from 'react';
 
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import { DocsTooltipEnhancer, LoadingState } from '@/shared/ui';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/lib/documentation/DocumentationTooltipEnhancer';
 
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
 import { usePersistenceState } from '../../context';
@@ -15,7 +14,7 @@ import { AiPathsListView } from './sections/AiPathsListView';
 
 
 export function AiPathsSettingsView(): React.JSX.Element {
-  const { isFocusMode } = useAiPathsSettingsPageContext();
+  const { activeTab, isFocusMode } = useAiPathsSettingsPageContext();
   const { loading } = usePersistenceState();
 
   const { docsTooltipsEnabled } = useAiPathsDocsTooltips();
@@ -33,9 +32,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
         fallbackDocId='workflow_overview'
       />
 
-      <AiPathsCanvasView />
-      <AiPathsListView />
-      <AiPathsDocsView />
+      {activeTab === 'canvas' ? <AiPathsCanvasView /> : null}
+      {activeTab === 'paths' ? <AiPathsListView /> : null}
+      {activeTab === 'docs' ? <AiPathsDocsView /> : null}
 
       <AiPathsDialogs />
     </div>

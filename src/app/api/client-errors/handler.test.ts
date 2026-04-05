@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const { captureExceptionMock, logInfoMock, logWarningMock } = vi.hoisted(() => ({
   captureExceptionMock: vi.fn(),

@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-05'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Poll Job Migration Sheet (`poll`)
 
-Generated at: 2026-03-28T14:11:54.225Z
+Generated at: 2026-04-05T14:57:58.017Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-28T14:11:54.225Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/poll.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/poll.scaffold.json`
 - v3 object id: `node_obj_poll_portable_v3`
-- v3 object hash: `ce2a0f2961032dc076e515ebb53c81a0a1db75e74b0f7fef071a051251648396`
+- v3 object hash: `87c66145015d9d2ae49cd7221770ac879cbb706ec1aa704a2434169db58dec70`
 
 ## Ports
 

@@ -12,7 +12,7 @@ import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/server
 import { logAuthEvent } from '@/features/auth/server';
 import type { AuthUser } from '@/shared/contracts/auth';
 import type { MongoTimestampedSettingRecord } from '@/shared/contracts/settings';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   authError,
   badRequestError,

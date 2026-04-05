@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import React from 'react';
 
-import type { Catalog } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type CategoryFormData = {
   name: string;
@@ -30,7 +31,15 @@ type CategoryFormContextValue = {
   modalCatalogName: string | undefined;
 };
 
-const CategoryFormContext = createContext<CategoryFormContextValue | null>(null);
+const {
+  Context: CategoryFormContext,
+  useStrictContext: useCategoryFormContext,
+} = createStrictContext<CategoryFormContextValue>({
+  hookName: 'useCategoryFormContext',
+  providerName: 'CategoryFormProvider',
+  displayName: 'CategoryFormContext',
+  errorFactory: internalError,
+});
 
 export function CategoryFormProvider({
   value,
@@ -42,10 +51,4 @@ export function CategoryFormProvider({
   return <CategoryFormContext.Provider value={value}>{children}</CategoryFormContext.Provider>;
 }
 
-export function useCategoryFormContext(): CategoryFormContextValue {
-  const context = useContext(CategoryFormContext);
-  if (!context) {
-    throw internalError('useCategoryFormContext must be used within CategoryFormProvider');
-  }
-  return context;
-}
+export { useCategoryFormContext };

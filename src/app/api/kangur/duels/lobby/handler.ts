@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { listKangurDuelLobby, listKangurPublicDuelLobby } from '@/features/kangur/duels/server';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { AppErrorCodes, isAppError, validationError } from '@/shared/errors/app-error';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

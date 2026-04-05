@@ -1,15 +1,13 @@
-'use client';
-
 import type { ChatbotContextUploadResponse } from '@/shared/contracts/chatbot';
 import type { SettingRecord } from '@/shared/contracts/settings';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui/queries';
 import {
   createCreateMutationV2,
   createListQueryV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/base';
 
 import * as chatbotApi from '../api';
 

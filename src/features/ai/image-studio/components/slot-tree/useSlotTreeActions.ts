@@ -9,14 +9,9 @@ import {
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { useToast } from '@/shared/ui';
-import {
-  type MasterTreeId,
-  type MasterTreeNode,
-  normalizeTreePath,
-  canMoveTreePath,
-  getTreePathLeaf,
-} from '@/shared/utils';
+import { useToast } from '@/shared/ui/primitives.public';
+import { normalizeTreePath, canMoveTreePath, getTreePathLeaf } from '@/shared/utils/tree-operations';
+import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { IdDataDto } from '@/shared/contracts/base';
 
 import { useSlotsActions } from '../../context/SlotsContext';

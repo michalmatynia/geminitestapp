@@ -3,7 +3,7 @@ import {
   type ImageStudioUpscaleStrategy,
   type ImageStudioUpscaleSmoothingQuality,
 } from '@/features/ai/image-studio/contracts/upscale';
-import type { UploadedImageBinaryDto as UploadedClientUpscaleImage } from '@/shared/contracts/image-studio';
+import type { UploadedImageBinaryDto as UploadedClientUpscaleImage } from '@/shared/contracts/image-studio/base';
 import type { StudioSlotRecord } from '../types';
 
 export type { StudioSlotRecord, UploadedClientUpscaleImage };

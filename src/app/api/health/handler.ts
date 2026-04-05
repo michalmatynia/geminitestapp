@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 import { NextRequest } from 'next/server';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAppDbProvider, type AppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getNodeOtelRuntimeStatus } from '@/shared/lib/observability/otel-node';

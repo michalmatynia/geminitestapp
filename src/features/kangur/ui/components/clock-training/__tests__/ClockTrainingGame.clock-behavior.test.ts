@@ -14,8 +14,8 @@ import {
   getClockDistanceInMinutes,
   scheduleRetryTask,
   taskToKey,
-} from '../../ClockTrainingGame';
-import { CLOCK_TRAINING_TASKS } from '../../clock-training-data';
+} from '../ClockTrainingGame';
+import { CLOCK_TRAINING_TASKS } from '../clock-training-data';
 
 describe('ClockTrainingGame clock behavior', () => {
   it('moves hour hand proportionally when minutes advance', () => {

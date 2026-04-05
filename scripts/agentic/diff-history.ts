@@ -107,6 +107,28 @@ function attemptedSuppressionSet(snapshot: AgenticHistorySnapshot): Set<string> 
   );
 }
 
+const DIFF_HISTORY_DEFAULT_ARGUMENTS: {
+  currentPath: string;
+  previousPath: string;
+  outputPath: string;
+} = {
+  currentPath: 'artifacts/agent-history/latest.json',
+  previousPath: 'artifacts/agent-history/previous.json',
+  outputPath: 'artifacts/agent-history/diff.json',
+};
+
+const filterBundlesByPriority = (
+  bundles: readonly string[],
+  priorities: Map<string, string>,
+  priority: string,
+): string[] => bundles.filter((bundle) => priorities.get(bundle) === priority);
+
+const readCliOptionValue = (
+  argv: readonly string[],
+  index: number,
+  fallback: string,
+): string => argv[index + 1] ?? fallback;
+
 export function diffAgenticHistorySnapshots(
   currentSnapshot: AgenticHistorySnapshot,
   previousSnapshot: AgenticHistorySnapshot,
@@ -129,6 +151,12 @@ export function diffAgenticHistorySnapshots(
   const previousAttemptedSuppressions = attemptedSuppressionSet(previousSnapshot);
   const currentExecutionMap = executionMap(currentSnapshot);
   const previousExecutionMap = executionMap(previousSnapshot);
+  const addedBundles = difference(currentBundles, previousBundles);
+  const removedBundles = difference(previousBundles, currentBundles);
+  const newlyAttemptedSuppressions = difference(
+    [...currentAttemptedSuppressions],
+    [...previousAttemptedSuppressions],
+  );
 
   return {
     kind: 'agentic-history-diff',
@@ -137,15 +165,14 @@ export function diffAgenticHistorySnapshots(
     previousPath: paths.previousPath,
     currentGeneratedAt: currentSnapshot.generatedAt,
     previousGeneratedAt: previousSnapshot.generatedAt,
-    addedBundles: difference(currentBundles, previousBundles),
-    removedBundles: difference(previousBundles, currentBundles),
-    newlyHighRiskBundles: difference(currentBundles, previousBundles).filter(
-      (bundle) => currentPriorityMap.get(bundle) === 'high',
+    addedBundles,
+    removedBundles,
+    newlyHighRiskBundles: filterBundlesByPriority(addedBundles, currentPriorityMap, 'high'),
+    newlyAttemptedHighRiskSuppressions: filterBundlesByPriority(
+      newlyAttemptedSuppressions,
+      currentPriorityMap,
+      'high',
     ),
-    newlyAttemptedHighRiskSuppressions: difference(
-      [...currentAttemptedSuppressions],
-      [...previousAttemptedSuppressions],
-    ).filter((bundle) => currentPriorityMap.get(bundle) === 'high'),
     riskEscalations: allBundles
       .map((bundle) => {
         const currentPriority = currentPriorityMap.get(bundle);
@@ -253,32 +280,32 @@ async function loadSnapshot(relativePath: string): Promise<AgenticHistorySnapsho
   return JSON.parse(rawSnapshot) as AgenticHistorySnapshot;
 }
 
-function parseArguments(argv: readonly string[]): {
+export function parseDiffHistoryArguments(argv: readonly string[]): {
   currentPath: string;
   previousPath: string;
   outputPath: string;
 } {
-  let currentPath = 'artifacts/agent-history/latest.json';
-  let previousPath = 'artifacts/agent-history/previous.json';
-  let outputPath = 'artifacts/agent-history/diff.json';
+  let currentPath = DIFF_HISTORY_DEFAULT_ARGUMENTS.currentPath;
+  let previousPath = DIFF_HISTORY_DEFAULT_ARGUMENTS.previousPath;
+  let outputPath = DIFF_HISTORY_DEFAULT_ARGUMENTS.outputPath;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
 
     if (argument === '--current') {
-      currentPath = argv[index + 1] ?? currentPath;
+      currentPath = readCliOptionValue(argv, index, currentPath);
       index += 1;
       continue;
     }
 
     if (argument === '--previous') {
-      previousPath = argv[index + 1] ?? previousPath;
+      previousPath = readCliOptionValue(argv, index, previousPath);
       index += 1;
       continue;
     }
 
     if (argument === '--output') {
-      outputPath = argv[index + 1] ?? outputPath;
+      outputPath = readCliOptionValue(argv, index, outputPath);
       index += 1;
     }
   }
@@ -291,7 +318,7 @@ function parseArguments(argv: readonly string[]): {
 }
 
 async function main(): Promise<void> {
-  const { currentPath, previousPath, outputPath } = parseArguments(process.argv.slice(2));
+  const { currentPath, previousPath, outputPath } = parseDiffHistoryArguments(process.argv.slice(2));
   const currentSnapshot = await loadSnapshot(currentPath);
   const previousSnapshot = await loadSnapshot(previousPath);
   const diff = diffAgenticHistorySnapshots(currentSnapshot, previousSnapshot, {

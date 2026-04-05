@@ -3,8 +3,9 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { Checkbox, Input, Label, SelectSimple, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainAssignment, type AiBrainProvider } from '../settings';

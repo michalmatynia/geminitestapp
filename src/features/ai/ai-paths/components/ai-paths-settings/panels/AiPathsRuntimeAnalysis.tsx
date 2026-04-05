@@ -10,8 +10,9 @@ import type {
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { listAiPathRuns, type AiNode } from '@/shared/lib/ai-paths';
 import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
-import { Button, Card, StatusBadge, useToast } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Card, useToast } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   formatDurationMs,

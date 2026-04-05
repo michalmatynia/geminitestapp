@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createDefaultKangurProgressState,
-  type KangurAssignment,
-  type KangurScore,
-} from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
+import { type KangurAssignment } from '@kangur/contracts/kangur-assignments';
+import { type KangurScore } from '@kangur/contracts/kangur';
 
 import {
   buildKangurAssignmentDedupeKey,

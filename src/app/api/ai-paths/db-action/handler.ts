@@ -7,7 +7,7 @@ import {
   requireAiPathsAccessOrInternal,
 } from '@/features/ai/ai-paths/server';
 import { aiPathsDbActionRequestSchema } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import {
   normalizeAiPathsCollectionMap,

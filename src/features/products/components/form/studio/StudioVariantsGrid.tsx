@@ -4,12 +4,17 @@ import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import React, { useMemo } from 'react';
 
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
 import { useProductStudioContext } from '@/features/products/context/ProductStudioContext';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
-import { getImageStudioSlotImageSrc } from '@/features/ai/public';
-import { Button, FormSection, LoadingState, StatusBadge, GenericGridPicker } from '@/features/products/ui';
-import { cn } from '@/shared/utils';
-import type { GridPickerItem } from '@/shared/contracts/ui';
+import { Button } from '@/shared/ui/button';
+import { FormSection } from '@/shared/ui/form-section';
+import { LoadingState } from '@/shared/ui/LoadingState';
+import { StatusBadge } from '@/shared/ui/status-badge';
+import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPicker';
+
+import { cn } from '@/shared/utils/ui-utils';
+import type { GridPickerItem } from '@/shared/contracts/ui/pickers';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type StudioVariantGridItem = GridPickerItem<ImageStudioSlotRecord | null> & {

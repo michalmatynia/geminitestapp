@@ -1,6 +1,7 @@
 import { Document, Collection, Filter, WithId } from 'mongodb';
 
-import { ProductFilters, ProductWithImages } from '@/shared/contracts/products';
+import { ProductFilters } from '@/shared/contracts/products/drafts';
+import { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import { buildMongoWhere } from '../mongo-product-repository.filters';
@@ -20,12 +21,27 @@ export const buildListProjectStage = (filters: ProductFilters): Document | null 
     id: 1,
     sku: 1,
     baseProductId: 1,
+    importSource: 1,
     defaultPriceGroupId: 1,
     categoryId: 1,
     catalogId: 1,
     name_en: 1,
     name_pl: 1,
     name_de: 1,
+    category: {
+      id: '$category.id',
+      name: '$category.name',
+      description: '$category.description',
+      createdAt: '$category.createdAt',
+      updatedAt: '$category.updatedAt',
+      catalogId: '$category.catalogId',
+      name_en: '$category.name_en',
+      name_pl: '$category.name_pl',
+      name_de: '$category.name_de',
+      color: '$category.color',
+      parentId: '$category.parentId',
+      sortIndex: '$category.sortIndex',
+    },
     parameters: 1,
     price: 1,
     stock: 1,

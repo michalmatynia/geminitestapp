@@ -1,9 +1,7 @@
-'use client';
-
 import React from 'react';
 
 import { type DocumentationModuleId } from '@/shared/contracts/documentation';
-import { Tooltip } from '@/shared/ui';
+import { Tooltip } from '@/shared/ui/primitives.public';
 
 import { getDocumentationTooltip } from './tooltips';
 

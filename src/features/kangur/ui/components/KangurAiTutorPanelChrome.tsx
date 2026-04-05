@@ -6,7 +6,8 @@ import { useRef } from 'react';
 import { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 import { useKangurAiTutor } from '@/features/kangur/ui/context/KangurAiTutorContext';
 
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
+import { useKangurAiTutorPortalContext } from './KangurAiTutorPortal.context';
 import { KangurAiTutorRenderedPanel } from './KangurAiTutorPanelChrome.frame';
 import { KangurAiTutorPanelSurface } from './KangurAiTutorPanelChrome.surface';
 import {
@@ -34,141 +35,75 @@ import {
   useKangurAiTutorPanelFocusTrap,
 } from './KangurAiTutorPanelChrome.shared';
 
-import type {
-  TutorAvatarPointer,
-  TutorHorizontalSide,
-  TutorPanelChromeVariant,
-  TutorMotionProfile,
-  TutorPanelSnapState,
-  TutorReducedMotionPanelTransitions,
-} from './KangurAiTutorWidget.shared';
-import type { KangurAiTutorPanelBodyContextValue } from './KangurAiTutorPanelBody.context';
-import type { CSSProperties, JSX, PointerEvent, ReactNode } from 'react';
-import type { Transition } from 'framer-motion';
+import type { JSX, ReactNode } from 'react';
 
 type Props = {
-  attachedAvatarStyle: CSSProperties;
-  attachedLaunchOffset: {
-    x: number;
-    y: number;
-  };
-  avatarAnchorKind: string;
-  avatarAttachmentSide: TutorHorizontalSide;
-  avatarButtonClassName: string;
-  avatarPointer: TutorAvatarPointer | null;
-  bubbleEntryDirection: TutorHorizontalSide;
-  bubbleMode: 'bubble' | 'sheet';
-  bubbleLaunchOrigin: 'dock-bottom-right' | 'sheet';
-  bubbleStrategy: string;
-  bubbleStyle: Record<string, number | string | undefined>;
-  bubbleTailPlacement: 'bottom' | 'dock' | 'top';
-  bubbleWidth?: number;
-  canDetachPanelFromContext: boolean;
   children: ReactNode;
-  canMovePanelToContext: boolean;
-  chromeVariant: TutorPanelChromeVariant;
-  compactDockedTutorPanelWidth: number;
-  canResetPanelPosition: boolean;
-  isAskModalMode: boolean;
-  isCompactDockedTutorPanel: boolean;
-  isFollowingContext: boolean;
-  isGuidedTutorMode: boolean;
-  isMinimalPanelMode: boolean;
-  isOpen: boolean;
-  isPanelDraggable: boolean;
-  isPanelDragging: boolean;
-  isTutorHidden: boolean;
-  minimalPanelStyle: CSSProperties;
-  panelAvatarPlacement: string;
-  panelBodyContextValue: KangurAiTutorPanelBodyContextValue;
-  panelEmptyStateMessage: string;
-  panelOpenAnimation: 'dock-launch' | 'fade' | 'sheet';
-  panelSnapState: TutorPanelSnapState | 'none';
-  panelTransition: Transition;
-  pointerMarkerId: string;
-  prefersReducedMotion: boolean;
-  reducedMotionTransitions: TutorReducedMotionPanelTransitions;
-  sessionSurfaceLabel: string | null;
-  showAttachedAvatarShell: boolean;
-  suppressPanelSurface: boolean;
-  uiMode: string;
-  onAttachedAvatarClick: () => void;
-  onAttachedAvatarPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
-  onAttachedAvatarPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
-  onAttachedAvatarPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
-  onAttachedAvatarPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
-  onBackdropClose: () => void;
-  onClose: () => void;
-  onDetachPanelFromContext: () => void;
-  onDisableTutor: () => void;
-  onMovePanelToContext: () => void;
-  onResetPanelPosition: () => void;
-  onHeaderPointerCancel: (event: PointerEvent<HTMLDivElement>) => void;
-  onHeaderPointerDown: (event: PointerEvent<HTMLDivElement>) => void;
-  onHeaderPointerMove: (event: PointerEvent<HTMLDivElement>) => void;
-  onHeaderPointerUp: (event: PointerEvent<HTMLDivElement>) => void;
-  motionProfile: TutorMotionProfile;
 };
 
 export function KangurAiTutorPanelChrome({
-  attachedAvatarStyle,
-  avatarAnchorKind,
-  avatarAttachmentSide,
-  avatarButtonClassName,
-  avatarPointer,
-  bubbleEntryDirection,
-  bubbleMode,
-  bubbleLaunchOrigin,
-  bubbleStrategy,
-  bubbleStyle,
-  bubbleTailPlacement,
-  bubbleWidth,
-  canDetachPanelFromContext,
   children,
-  canMovePanelToContext,
-  chromeVariant,
-  compactDockedTutorPanelWidth,
-  canResetPanelPosition,
-  isAskModalMode,
-  isCompactDockedTutorPanel,
-  isFollowingContext,
-  isGuidedTutorMode,
-  isMinimalPanelMode,
-  isOpen,
-  isPanelDraggable,
-  isPanelDragging,
-  isTutorHidden,
-  minimalPanelStyle,
-  motionProfile,
-  panelAvatarPlacement,
-  panelBodyContextValue,
-  panelEmptyStateMessage,
-  panelOpenAnimation,
-  panelSnapState,
-  panelTransition,
-  pointerMarkerId,
-  prefersReducedMotion,
-  reducedMotionTransitions,
-  sessionSurfaceLabel,
-  showAttachedAvatarShell,
-  suppressPanelSurface,
-  uiMode,
-  onAttachedAvatarClick,
-  onAttachedAvatarPointerCancel,
-  onAttachedAvatarPointerDown,
-  onAttachedAvatarPointerMove,
-  onAttachedAvatarPointerUp,
-  onBackdropClose,
-  onClose,
-  onDetachPanelFromContext,
-  onDisableTutor,
-  onMovePanelToContext,
-  onResetPanelPosition,
-  onHeaderPointerCancel,
-  onHeaderPointerDown,
-  onHeaderPointerMove,
-  onHeaderPointerUp,
 }: Props): JSX.Element {
+  const { panel } = useKangurAiTutorPortalContext();
+  const {
+    attachedAvatarStyle,
+    avatarAnchorKind,
+    avatarAttachmentSide,
+    avatarButtonClassName,
+    avatarPointer,
+    bubbleEntryDirection,
+    bubbleMode,
+    bubbleLaunchOrigin,
+    bubbleStrategy,
+    bubbleStyle,
+    bubbleTailPlacement,
+    bubbleWidth,
+    canDetachPanelFromContext,
+    canMovePanelToContext,
+    chromeVariant,
+    compactDockedTutorPanelWidth,
+    canResetPanelPosition,
+    isAskModalMode,
+    isCompactDockedTutorPanel,
+    isFollowingContext,
+    isGuidedTutorMode,
+    isMinimalPanelMode,
+    isOpen,
+    isPanelDraggable,
+    isPanelDragging,
+    isTutorHidden,
+    minimalPanelStyle,
+    motionProfile,
+    panelAvatarPlacement,
+    panelBodyContextValue,
+    panelEmptyStateMessage,
+    panelOpenAnimation,
+    panelSnapState,
+    panelTransition,
+    pointerMarkerId,
+    prefersReducedMotion,
+    reducedMotionTransitions,
+    sessionSurfaceLabel,
+    showAttachedAvatarShell,
+    suppressPanelSurface,
+    uiMode,
+    onAttachedAvatarClick,
+    onAttachedAvatarPointerCancel,
+    onAttachedAvatarPointerDown,
+    onAttachedAvatarPointerMove,
+    onAttachedAvatarPointerUp,
+    onBackdropClose,
+    onClose,
+    onDetachPanelFromContext,
+    onDisableTutor,
+    onMovePanelToContext,
+    onResetPanelPosition,
+    onHeaderPointerCancel,
+    onHeaderPointerDown,
+    onHeaderPointerMove,
+    onHeaderPointerUp,
+  } = panel;
+
   const tutorContent = useKangurAiTutorContent();
   const tutor = useKangurAiTutor();
   const { panelMotionState, panelRef, tutorNarrationRootRef } =

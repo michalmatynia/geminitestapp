@@ -89,20 +89,19 @@ type AiPathsSettingsBackupPayload = {
 const parseBackupPayload = (raw: string): AiPathsSettingsBackupPayload | null => {
   const parsed = JSON.parse(raw) as unknown;
 
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    return null;
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    const parsedRecord = parsed as { records?: unknown; savedAt?: unknown };
+
+    if (!parsedRecord || !Array.isArray(parsedRecord.records)) return null;
+    if (typeof parsedRecord.savedAt !== 'number') return null;
+
+    return {
+      records: parsedRecord.records,
+      savedAt: parsedRecord.savedAt,
+    };
   }
 
-  const parsedRecord = parsed as { records?: unknown; savedAt?: unknown };
-
-  if (!Array.isArray(parsedRecord.records) || typeof parsedRecord.savedAt !== 'number') {
-    return null;
-  }
-
-  return {
-    records: parsedRecord.records,
-    savedAt: parsedRecord.savedAt,
-  };
+  return null;
 };
 
 const isFreshBackupTimestamp = (savedAt: number): boolean =>

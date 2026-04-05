@@ -10,7 +10,7 @@ import React, {
 
 import type { NoteWithRelations, TagRecord } from '@/shared/contracts/notes';
 import { useUndo } from '@/shared/hooks/ui/use-undo';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useNotesAppActions, useNotesAppState } from '../hooks/NotesAppContext';

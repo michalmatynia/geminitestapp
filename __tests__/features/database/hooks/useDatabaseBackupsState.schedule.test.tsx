@@ -12,7 +12,7 @@ import {
   DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
 } from '@/shared/lib/db/database-engine-constants';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   useCreateBackupMutation,
@@ -22,12 +22,20 @@ import {
   useUploadBackupMutation,
 } from '@/features/database/hooks/useDatabaseQueries';
 
+const routerPushMock = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: routerPushMock,
+  }),
+}));
+
 vi.mock('@/shared/hooks/use-settings', () => ({
   useSettingsMap: vi.fn(),
   useUpdateSetting: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   useToast: vi.fn(),
 }));
 
@@ -225,5 +233,23 @@ describe('useDatabaseBackupsState schedule persistence', () => {
 
     expect(parsed.repeatTickEnabled).toBe(true);
     expect(parsed.schedulerEnabled).toBe(false);
+  });
+
+  it('uses router navigation for preview flows', () => {
+    const { result } = renderHook(() => useDatabaseBackupsState(), { wrapper });
+
+    act(() => {
+      result.current.handlePreview('backup 1.archive');
+      result.current.handlePreviewCurrent();
+    });
+
+    expect(routerPushMock).toHaveBeenNthCalledWith(
+      1,
+      '/admin/databases/preview?backup=backup%201.archive&type=mongodb'
+    );
+    expect(routerPushMock).toHaveBeenNthCalledWith(
+      2,
+      '/admin/databases/preview?mode=current&type=mongodb'
+    );
   });
 });

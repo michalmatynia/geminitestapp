@@ -5,7 +5,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductFormData, ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 const { useProductFormMetadataMock, useProductValidationStateMock, setValueSpy } = vi.hoisted(

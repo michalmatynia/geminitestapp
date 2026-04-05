@@ -1,13 +1,7 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-
-import type {
-  IntegrationAllegroApiMethod,
-  IntegrationAllegroApiResponse,
-  IntegrationBaseApiResponse,
-} from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
+import type { IntegrationAllegroApiMethod, IntegrationAllegroApiResponse, IntegrationBaseApiResponse } from '@/shared/contracts/integrations/api';
+import { createStrictContext } from '../createStrictContext';
 
 export interface IntegrationsApiConsole {
   baseApiMethod: string;
@@ -28,11 +22,8 @@ export interface IntegrationsApiConsole {
   allegroApiResponse: IntegrationAllegroApiResponse | null;
 }
 
-export const IntegrationsApiConsoleContext = createContext<IntegrationsApiConsole | null>(null);
-
-export const useIntegrationsApiConsole = () => {
-  const context = useContext(IntegrationsApiConsoleContext);
-  if (!context)
-    throw internalError('useIntegrationsApiConsole must be used within IntegrationsProvider');
-  return context;
-};
+export const { Context: IntegrationsApiConsoleContext, useValue: useIntegrationsApiConsole } =
+  createStrictContext<IntegrationsApiConsole>({
+    displayName: 'IntegrationsApiConsoleContext',
+    errorMessage: 'useIntegrationsApiConsole must be used within IntegrationsProvider',
+  });

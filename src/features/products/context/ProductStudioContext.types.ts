@@ -1,10 +1,6 @@
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  ProductStudioAuditEntry,
-  ProductStudioRunStatus,
-  ProductStudioVariantsResponse,
-} from '@/shared/contracts/products';
+import type { ProductStudioAuditEntry, ProductStudioRunStatus, ProductStudioVariantsResponse } from '@/shared/contracts/products/studio';
 
 export type ProductImageSlotPreview = {
   index: number;

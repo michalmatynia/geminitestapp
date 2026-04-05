@@ -1,5 +1,3 @@
-'use client';
-
 import { FrontendBlocksSection } from './FrontendBlocksSection';
 
 export function FrontendAnnouncementBarSection(): React.ReactNode {

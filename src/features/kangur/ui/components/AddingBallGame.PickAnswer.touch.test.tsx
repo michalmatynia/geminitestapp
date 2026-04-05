@@ -78,6 +78,9 @@ describe('PickAnswer touch interactions', () => {
     const answerSlot = screen.getByTestId('adding-ball-answer-slot');
     fireEvent.click(answerSlot);
 
-    expect(within(answerSlot).getByText('5')).toBeInTheDocument();
+    const selectedPreview = within(answerSlot).getByText('5');
+    expect(selectedPreview).toBeInTheDocument();
+    expect(selectedPreview.closest('div.rounded-full')).toHaveClass('bg-red-400');
+    expect(selectedPreview.closest('div.rounded-full')).not.toHaveAttribute('style');
   });
 });

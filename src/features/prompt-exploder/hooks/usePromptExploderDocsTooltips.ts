@@ -1,4 +1,4 @@
-import { createDocsTooltipsState } from '@/shared/lib/documentation';
+import { createDocsTooltipsState } from '@/shared/lib/documentation/docs-tooltip-settings';
 
 export const PROMPT_EXPLODER_DOCS_TOOLTIP_KEY = 'prompt_exploder:docs_tooltips_enabled';
 

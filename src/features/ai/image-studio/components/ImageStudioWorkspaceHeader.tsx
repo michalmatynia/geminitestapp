@@ -4,15 +4,9 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import {
-  Button,
-  CopyButton,
-  TabsList,
-  TabsTrigger,
-  Tooltip,
-  UI_CENTER_ROW_CLASSNAME,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, TabsList, TabsTrigger, Tooltip } from '@/shared/ui/primitives.public';
+import { CopyButton } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_CLASSNAME, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import type { PreviewCanvasSize } from '../context/UiContext';
 import { ToggleButtonGroup } from './ToggleButtonGroup';

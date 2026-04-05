@@ -15,6 +15,7 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', async () => {
     compact?: boolean;
     defaultExpanded?: boolean;
     filters: Array<{ key: string }>;
+    onExpandedChange?: (expanded: boolean) => void;
     onFilterChange: (key: string, value: unknown) => void;
     onReset?: () => void;
     onSearchChange?: (search: string) => void;
@@ -31,6 +32,7 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', async () => {
       compact,
       defaultExpanded,
       filters,
+      onExpandedChange,
       onFilterChange,
       onReset,
       onSearchChange,
@@ -59,6 +61,9 @@ vi.mock('@/shared/ui/templates/panels/PanelFilters', async () => {
         <button type='button' onClick={() => onSearchChange?.('queued')}>
           change-search
         </button>
+        <button type='button' onClick={() => onExpandedChange?.(true)}>
+          expand
+        </button>
         <button type='button' onClick={() => onReset?.()}>
           reset
         </button>
@@ -79,6 +84,7 @@ describe('FilterPanel', () => {
   it('composes header, main filters, children, presets, and active count without a local runtime context', () => {
     const onFilterChange = vi.fn();
     const onSearchChange = vi.fn();
+    const onExpandedChange = vi.fn();
     const onReset = vi.fn();
     const onApplyPreset = vi.fn();
 
@@ -91,6 +97,7 @@ describe('FilterPanel', () => {
         searchPlaceholder='Search statuses...'
         onFilterChange={onFilterChange}
         onSearchChange={onSearchChange}
+        onExpandedChange={onExpandedChange}
         onReset={onReset}
         presets={[{ label: 'Published', values: { status: 'published' } }]}
         onApplyPreset={onApplyPreset}
@@ -126,11 +133,13 @@ describe('FilterPanel', () => {
 
     screen.getByRole('button', { name: 'change-filter' }).click();
     screen.getByRole('button', { name: 'change-search' }).click();
+    screen.getByRole('button', { name: 'expand' }).click();
     screen.getByRole('button', { name: 'reset' }).click();
     screen.getByRole('button', { name: 'Published' }).click();
 
     expect(onFilterChange).toHaveBeenCalledWith('status', 'published');
     expect(onSearchChange).toHaveBeenCalledWith('queued');
+    expect(onExpandedChange).toHaveBeenCalledWith(true);
     expect(onReset).toHaveBeenCalledTimes(1);
     expect(onApplyPreset).toHaveBeenCalledWith({ status: 'published' });
   });

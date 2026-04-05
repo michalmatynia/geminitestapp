@@ -8,7 +8,7 @@ import {
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
 } from '@/features/database/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { assertDatabaseEngineManageAccess } from '@/features/database/server';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';

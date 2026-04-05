@@ -7,7 +7,7 @@ import {
 import { contextRegistryEngine } from '@/features/ai/ai-context-registry/server';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
-import { enqueueChatbotJob, startChatbotJobQueue } from '@/features/jobs/server';
+import { enqueueChatbotJob, startChatbotJobQueue } from '@/features/ai/chatbot/workers/chatbotJobQueue';
 import type {
   ChatbotJobDto as ChatbotJob,
   EnqueueChatbotJobRequestDto as EnqueueJobRequest,
@@ -16,7 +16,7 @@ import {
   chatbotJobsDeleteQuerySchema,
   enqueueChatbotJobRequestSchema,
 } from '@/shared/contracts/chatbot';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

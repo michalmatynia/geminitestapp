@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import * as React from 'react';
 
-import type { NavigationCardProps } from '@/shared/contracts/ui';
-import { cn, getTextContent, warnMissingAccessibleLabel } from '@/shared/utils';
+import type { NavigationCardProps } from '@/shared/contracts/ui/base';
+import { cn } from '@/shared/utils/ui-utils';
+import { getTextContent, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 
 import { Card } from './card';
 import {

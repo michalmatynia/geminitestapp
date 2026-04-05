@@ -1,22 +1,20 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 
+import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import {
-  productStudioAuditResponseSchema,
-  productStudioLinkResponseSchema,
-  productStudioVariantsResponseSchema,
-} from '@/shared/contracts/products';
+import { productStudioAuditResponseSchema, productStudioLinkResponseSchema, productStudioVariantsResponseSchema } from '@/shared/contracts/products/studio';
 import { internalError } from '@/shared/errors/app-error';
 import {
   useOptionalContextRegistryPageEnvelope,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
-import { useStudioProjects } from '@/features/ai/public';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
+
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 
 import { useProductFormCore } from './ProductFormCoreContext';
@@ -39,7 +37,6 @@ import type {
   ProductStudioVariantsResponse,
 } from './ProductStudioContext.types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
 
 export type {
   ProductImageSlotPreview,
@@ -72,6 +69,7 @@ export function ProductStudioProvider({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
+  const router = useRouter();
   const { studioProjectId, setStudioProjectId, studioConfigLoading, studioConfigSaving } =
     useProductFormStudio();
 
@@ -280,7 +278,7 @@ export function ProductStudioProvider({
       );
       const sourceSlotId = response.sourceSlot?.id;
       if (!sourceSlotId) throw internalError('Source slot not found.');
-      window.location.href = `/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`;
+      router.push(`/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`);
     } catch (error) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to open.', { variant: 'error' });

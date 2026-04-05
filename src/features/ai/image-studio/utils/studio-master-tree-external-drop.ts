@@ -1,5 +1,6 @@
 import { type FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree';
-import { canNestTreeNodeV2, type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
+import { canNestTreeNodeV2 } from '@/shared/utils/folder-tree-profiles-v2';
+import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { canMoveTreePath } from '@/shared/utils/tree-operations';
 
 import {

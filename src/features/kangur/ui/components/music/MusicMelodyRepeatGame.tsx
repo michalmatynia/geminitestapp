@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-confusing-void-expression */
 'use client';
 
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
@@ -77,7 +73,7 @@ export const MUSIC_MELODY_REPEAT_TEST_IDS =
   KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS.repeat;
 
 const resolveExpectedNoteMessage = (noteId: DiatonicNoteId): string =>
-  `Teraz dotknij dzwieku ${DIATONIC_PIANO_KEYS_BY_ID[noteId].spokenLabel}.`;
+  `Teraz dotknij dźwięku ${DIATONIC_PIANO_KEYS_BY_ID[noteId].spokenLabel}.`;
 
 export default function MusicMelodyRepeatGame({
   onFinish,
@@ -250,11 +246,11 @@ export default function MusicMelodyRepeatGame({
     setPressedNoteId(null);
     setPressedVelocity(null);
     setAttemptOutcome(null);
-    setFeedback({
+      setFeedback({
       accent: round.accent,
       message: isAudioSupported
-        ? 'Sluchaj i patrz, ktore kolory zapalaja sie po kolei.'
-        : 'Ta przegladarka nie obsluguje odtwarzania dzwiekow.',
+        ? 'Słuchaj i patrz, które kolory zapalają się po kolei.'
+        : 'Ta przeglądarka nie obsługuje odtwarzania dźwięków.',
     });
 
     const started = await playSequence(melodyPlayback, {
@@ -270,8 +266,8 @@ export default function MusicMelodyRepeatGame({
       setFeedback({
         accent: 'rose',
         message: isAudioBlocked
-          ? 'Przegladarka zatrzymala dzwiek. Dotknij przycisku jeszcze raz.'
-          : 'Nie udalo sie uruchomic melodii. Sprobuj ponownie.',
+          ? 'Przeglądarka zatrzymała dźwięk. Dotknij przycisku jeszcze raz.'
+          : 'Nie udało się uruchomić melodii. Spróbuj ponownie.',
       });
       setAttemptOutcome('error');
       return;
@@ -282,8 +278,8 @@ export default function MusicMelodyRepeatGame({
     setFeedback({
       accent: 'emerald',
       message: firstNote
-        ? `Twoja kolej. Zacznij od dzwieku ${DIATONIC_PIANO_KEYS_BY_ID[firstNote].spokenLabel}.`
-        : 'Twoja kolej. Powtorz melodie.',
+        ? `Twoja kolej. Zacznij od dźwięku ${DIATONIC_PIANO_KEYS_BY_ID[firstNote].spokenLabel}.`
+        : 'Twoja kolej. Powtórz melodię.',
     });
   }, [
     clearTransientTimeouts,
@@ -342,7 +338,7 @@ export default function MusicMelodyRepeatGame({
         setEnteredNotes([]);
         setFeedback({
           accent: 'rose',
-          message: 'Ups. Posluchaj jeszcze raz i powtorz melodie od poczatku.',
+          message: 'Ups. Posłuchaj jeszcze raz i powtórz melodię od początku.',
         });
         feedbackTimeoutRef.current = scheduleKangurRoundFeedback(() => {
           void handleListen();
@@ -361,7 +357,7 @@ export default function MusicMelodyRepeatGame({
         setActiveStepIndex(null);
         setFeedback({
           accent: 'emerald',
-          message: 'Brawo! Cala melodia zabrzmiala poprawnie.',
+          message: 'Brawo! Cała melodia zabrzmiała poprawnie.',
         });
         queueNextRound();
         return;
@@ -530,20 +526,20 @@ export default function MusicMelodyRepeatGame({
         />
         <KangurPracticeGameSummaryProgress
           accent='sky'
-          ariaLabel='Melodie powtorzone za pierwszym razem'
+          ariaLabel='Melodie powtórzone za pierwszym razem'
           ariaValueText={`${firstTryPercent}% melodii za pierwszym razem`}
           dataTestId='music-melody-repeat-summary-progress-bar'
           percent={firstTryPercent}
         />
         <KangurPracticeGameSummaryMessage>
           {firstTrySuccesses === TOTAL_ROUNDS
-            ? 'Kazda melodia zabrzmiala czysto i pewnie — za pierwszym razem!'
+            ? 'Każda melodia zabrzmiała czysto i pewnie, za pierwszym razem!'
             : firstTryPercent >= 60
-              ? 'Coraz lepiej lapiesz melodie. Sprobuj jeszcze raz, aby zagrac wszystkie bez pomylek.'
-              : 'Posluchaj ponownie i podazaj za swiecacymi kolorami krok po kroku.'}
+              ? 'Coraz lepiej łapiesz melodię. Spróbuj jeszcze raz, aby zagrać wszystkie bez pomyłek.'
+              : 'Posłuchaj ponownie i podążaj za świecącymi kolorami krok po kroku.'}
         </KangurPracticeGameSummaryMessage>
         <KangurPracticeGameSummaryActions
-          finishLabel='Wroc do tematow'
+          finishLabel='Wróć do tematów'
           onFinish={onFinish}
           onRestart={handleRestart}
         />
@@ -579,14 +575,14 @@ export default function MusicMelodyRepeatGame({
             data-testid='music-melody-repeat-status-rail'
           >
             <KangurStatusChip
-              aria-label={isPlayingSequence ? 'Sluchaj' : phase === 'repeat' ? 'Twoja kolej' : 'Start'}
+              aria-label={isPlayingSequence ? 'Słuchaj' : phase === 'repeat' ? 'Twoja kolej' : 'Start'}
               className='bg-sky-100 text-sky-800'
               data-testid='music-melody-repeat-status-phase'
             >
               <KangurVisualCueContent
                 icon={isPlayingSequence ? '👂' : phase === 'repeat' ? '👉' : '▶'}
                 iconTestId='music-melody-repeat-status-phase-icon'
-                label={isPlayingSequence ? 'Sluchaj' : phase === 'repeat' ? 'Twoja kolej' : 'Start'}
+                label={isPlayingSequence ? 'Słuchaj' : phase === 'repeat' ? 'Twoja kolej' : 'Start'}
               />
             </KangurStatusChip>
             <KangurStatusChip
@@ -609,14 +605,14 @@ export default function MusicMelodyRepeatGame({
             </KangurStatusChip>
             {errorCountInCurrentRound > 0 ? (
               <KangurStatusChip
-                aria-label={`Proba ${errorCountInCurrentRound + 1}`}
+                aria-label={`Próba ${errorCountInCurrentRound + 1}`}
                 className='bg-amber-100 text-amber-700'
                 data-testid='music-melody-repeat-status-attempt'
               >
                 <KangurVisualCueContent
                   icon='🔄'
                   iconTestId='music-melody-repeat-status-attempt-icon'
-                  label={`Proba ${errorCountInCurrentRound + 1}`}
+                  label={`Próba ${errorCountInCurrentRound + 1}`}
                 />
               </KangurStatusChip>
             ) : null}
@@ -633,7 +629,7 @@ export default function MusicMelodyRepeatGame({
             </KangurStatusChip>
             {attemptOutcome ? (
               <KangurStatusChip
-                aria-label={attemptOutcome === 'success' ? 'Poprawnie' : 'Sprobuj jeszcze raz'}
+                aria-label={attemptOutcome === 'success' ? 'Poprawnie' : 'Spróbuj jeszcze raz'}
                 className={
                   attemptOutcome === 'success'
                     ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200/80'
@@ -644,7 +640,7 @@ export default function MusicMelodyRepeatGame({
                 <KangurVisualCueContent
                   icon={attemptOutcome === 'success' ? '✅' : '❌'}
                   iconTestId='music-melody-repeat-status-outcome-icon'
-                  label={attemptOutcome === 'success' ? 'Poprawnie' : 'Sprobuj jeszcze raz'}
+                  label={attemptOutcome === 'success' ? 'Poprawnie' : 'Spróbuj jeszcze raz'}
                 />
               </KangurStatusChip>
             ) : null}
@@ -664,7 +660,7 @@ export default function MusicMelodyRepeatGame({
         >
           {attemptOutcome ? (
             <div
-              aria-label={attemptOutcome === 'success' ? 'Melodia poprawna' : 'Melodia do powtorzenia'}
+              aria-label={attemptOutcome === 'success' ? 'Melodia poprawna' : 'Melodia do powtórzenia'}
               className={cn(
                 'flex items-center justify-center gap-2 rounded-[22px] border px-3 py-2.5 text-center shadow-[0_18px_40px_-30px_rgba(15,23,42,0.34)] motion-reduce:animate-none',
                 attemptOutcome === 'success'
@@ -754,7 +750,7 @@ export default function MusicMelodyRepeatGame({
                 data-testid='music-melody-repeat-listen-button-shell'
               >
                 <button
-                  aria-label='Posluchaj melodii'
+                  aria-label='Posłuchaj melodii'
                   className={cn(
                     'relative z-10 flex h-14 w-14 cursor-pointer items-center justify-center rounded-[22px] border border-sky-200/70 bg-[linear-gradient(160deg,rgba(224,242,254,0.9),rgba(186,230,253,0.74)_48%,rgba(224,231,255,0.64)_100%)] text-sky-700 shadow-[0_18px_34px_-26px_rgba(14,116,144,0.42)] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300/70',
                     isCoarsePointer

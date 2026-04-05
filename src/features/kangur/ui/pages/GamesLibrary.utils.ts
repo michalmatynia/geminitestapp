@@ -1,3 +1,5 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
 import type { useSearchParams } from 'next/navigation';
 import {
@@ -46,18 +48,18 @@ export const GAMES_LIBRARY_TABS: Array<{ id: GamesLibraryTabId; labelKey: string
 ];
 
 export const GAMES_LIBRARY_PANEL_SURFACE_CLASSNAME =
-  'rounded-[2rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_95%,var(--kangur-page-background))] p-5 shadow-[0_28px_84px_-58px_rgba(15,23,42,0.44)] sm:p-6';
+  'rounded-[2rem] border border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_98%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_94%,var(--kangur-page-background))_100%)] p-5 shadow-[0_34px_104px_-62px_rgba(15,23,42,0.48)] sm:p-6';
 
 export const GAMES_LIBRARY_MAIN_ID = 'kangur-games-library-main';
 
 export const GAMES_LIBRARY_PANEL_INSET_SURFACE_CLASSNAME =
-  'rounded-[1.4rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_96%,white)] p-4 sm:p-5';
+  'rounded-[1.4rem] border border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_98%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_94%,white)_100%)] p-4 shadow-[0_18px_44px_-38px_rgba(15,23,42,0.24)] sm:p-5';
 
 export const GAMES_LIBRARY_COMPACT_STAT_CARD_CLASSNAME =
-  'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_92%,white)] px-3 py-3';
+  'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_96%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_90%,white)_100%)] px-3 py-3 shadow-[0_16px_36px_-34px_rgba(15,23,42,0.24)]';
 
 export const GAMES_LIBRARY_DETAIL_SURFACE_CLASSNAME =
-  'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_89%,white)] px-3 py-3';
+  'rounded-[1.15rem] border border-[color:var(--kangur-soft-card-border)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_94%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_89%,white)_100%)] px-3 py-3 shadow-[0_16px_36px_-34px_rgba(15,23,42,0.24)]';
 
 export const getGamesLibraryTabIds = (
   tabId: GamesLibraryTabId

@@ -1,3 +1,5 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
 import { KangurPanelSectionHeading } from '@/features/kangur/ui/components/KangurPanelSectionHeading';
 import { KangurTransitionLink as Link } from '@/features/kangur/ui/components/KangurTransitionLink';

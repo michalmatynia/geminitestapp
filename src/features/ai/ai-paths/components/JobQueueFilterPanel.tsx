@@ -2,8 +2,8 @@
 
 import React, { useMemo } from 'react';
 
-import { FilterPanel } from '@/shared/ui';
-import type { FilterField } from '@/shared/contracts/ui';
+import { FilterPanel } from '@/shared/ui/templates.public';
+import type { FilterField } from '@/shared/contracts/ui/panels';
 
 import { useJobQueueActions, useJobQueueState } from './JobQueueContext';
 

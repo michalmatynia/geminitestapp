@@ -12,16 +12,8 @@ import {
   useKangurKnowledgeGraphStatus,
   useKangurObservabilitySummary,
 } from '@/features/kangur/observability/hooks';
-import type {
-  KangurKnowledgeGraphPreviewResponse,
-  KangurObservabilityRange,
-  KangurObservabilitySummary,
-} from '@/shared/contracts';
-import {
-  kangurKnowledgeGraphPreviewResponseSchema,
-  kangurKnowledgeGraphSyncResponseSchema,
-  kangurObservabilityRangeSchema,
-} from '@/shared/contracts';
+import type { KangurKnowledgeGraphPreviewResponse, KangurObservabilityRange, KangurObservabilitySummary } from '@/shared/contracts/kangur-observability';
+import { kangurKnowledgeGraphPreviewResponseSchema, kangurKnowledgeGraphSyncResponseSchema, kangurObservabilityRangeSchema } from '@/shared/contracts/kangur-observability';
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { api } from '@/shared/lib/api-client';
 import { AdminFavoriteBreadcrumbRow } from '@/shared/ui/admin-favorite-breadcrumb-row';

@@ -13,8 +13,10 @@ import {
   summarizeFilemakerEmailCampaignRecipientActivity,
   FilemakerCampaignPreferencesPage,
 } from '@/features/filemaker/public';
-import { readFilemakerCampaignSettingValue } from '@/features/filemaker/server/campaign-settings-store';
-import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
+import {
+  readFilemakerCampaignSettingValue,
+  parseFilemakerCampaignUnsubscribeToken,
+} from '@/features/filemaker/server';
 
 import type { Metadata } from 'next';
 import type { JSX } from 'react';

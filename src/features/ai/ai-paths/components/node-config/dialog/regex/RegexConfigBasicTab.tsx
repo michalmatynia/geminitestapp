@@ -4,16 +4,9 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { RegexConfig } from '@/shared/lib/ai-paths';
-import {
-  Button,
-  FormField,
-  Hint,
-  Input,
-  Label,
-  SelectSimple,
-  ToggleRow,
-  insetPanelVariants,
-} from '@/shared/ui';
+import { Button, Input, Label } from '@/shared/ui/primitives.public';
+import { FormField, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 import { extractRegexLiteral, normalizeRegexFlags } from '../regex-node-config-preview';
 

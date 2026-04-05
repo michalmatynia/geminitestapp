@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-04'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,34 +8,34 @@ canonical: true
 ---
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-28T16:51:31.878Z
+Generated at: 2026-04-04T20:31:39.103Z
 
 ## Snapshot
 
-- Source files: 8291
-- Source lines: 1382244
-- use client files: 1724
-- Files >= 1000 LOC: 19
+- Source files: 9739
+- Source lines: 1593475
+- use client files: 1722
+- Files >= 1000 LOC: 1
 - Files >= 1500 LOC: 0
-- Largest file: `src/features/filemaker/pages/AdminFilemakerCampaignEditPage.sections.tsx` (1256 LOC)
+- Largest file: `src/features/products/components/settings/ShippingGroupsSettings.tsx` (1004 LOC)
 - API routes: 30
-- API delegated server routes: 170
+- API delegated server routes: 177
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 296/30 (986.7%)
-- Cross-feature dependency pairs: 3
+- API explicit cache policy coverage: 303/30 (1010.0%)
+- Cross-feature dependency pairs: 0
 - Shared -> features imports: 0
 - setInterval occurrences: 0
-- Prop-drilling chains (depth >= 3): 0
-- Prop-drilling chains (depth >= 4): 0
+- Prop-drilling chains (depth >= 3): 230
+- Prop-drilling chains (depth >= 4): 66
 
 ## Top API Hotspots (by LOC)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 231 |
-| `src/app/api/agentcreator/[[...path]]/route.ts` | 228 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 235 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
 | `src/app/api/databases/[[...path]]/route.ts` | 203 |
+| `src/app/api/agentcreator/[[...path]]/route.ts` | 188 |
 | `src/app/api/chatbot/[[...path]]/route.ts` | 168 |
 | `src/app/api/v2/products/[[...path]]/route.ts` | 167 |
 | `src/app/api/image-studio/[[...path]]/route.ts` | 126 |
@@ -52,31 +52,28 @@ Generated at: 2026-03-28T16:51:31.878Z
 
 | Edge | References |
 | --- | ---: |
-| `kangur -> cms` | 11 |
-| `filemaker -> document-editor` | 3 |
-| `admin -> foldertree` | 2 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
-| `src/features/products/pages/AdminProductOrdersImportPage.test.tsx` | 3816 |
-| `src/features/kangur/ui/components/music/useKangurMusicSynth.test.tsx` | 3348 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.test.tsx` | 2426 |
-| `src/features/filemaker/__tests__/campaigns.test.ts` | 1664 |
-| `src/features/filemaker/pages/AdminFilemakerCampaignEditPage.sections.tsx` | 1256 |
-| `src/features/kangur/ui/components/KangurPrimaryNavigation.tsx` | 1140 |
-| `src/features/kangur/admin/components/KangurAiTutorContentSettingsPanel.tsx` | 1139 |
-| `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 1137 |
-| `src/features/kangur/ui/components/animations/AgenticCodingAnimations.Secondary.tsx` | 1137 |
-| `src/features/kangur/ui/components/KangurParentDashboardLearnerManagementWidget.tsx` | 1131 |
-| `src/features/products/pages/AdminProductOrdersImportPage.tsx` | 1130 |
-| `src/features/cms/components/frontend/CmsStorefrontAppearance.logic.ts` | 1128 |
-| `src/features/kangur/ui/components/NumberBalanceRushGame.tsx` | 1119 |
-| `src/features/filemaker/pages/AdminFilemakerCampaignRunPage.tsx` | 1095 |
-| `src/features/kangur/ui/services/delegated-assignments.ts` | 1083 |
-| `src/features/filemaker/server/campaign-runtime.ts` | 1082 |
-| `src/features/filemaker/server/filemaker-mail-service.ts` | 1082 |
-| `src/app/api/kangur/ai-tutor/chat/handler.ts` | 1049 |
-| `src/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget.tsx` | 1045 |
-| `src/features/kangur/ui/components/music/useKangurMusicSynth.ts` | 1045 |
+| `src/features/integrations/services/tradera-listing/browser.test.ts` | 1906 |
+| `src/features/products/components/list/ProductColumns.test.tsx` | 1038 |
+| `src/features/products/components/list/columns/buttons/BaseQuickExportButton.test.tsx` | 1016 |
+| `src/features/products/components/settings/ShippingGroupsSettings.tsx` | 1004 |
+| `src/features/ai/ai-paths/components/__tests__/run-trace-utils.test.ts` | 999 |
+| `src/features/ai/ai-paths/services/playwright-node-runner.ts` | 992 |
+| `src/shared/lib/products/services/product-ai-graph-model-payload.test.ts` | 991 |
+| `src/app/api/kangur/ai-tutor/chat/handler.ts` | 989 |
+| `src/features/filemaker/components/FilemakerMailSidebar.tsx` | 986 |
+| `src/features/kangur/social/admin/workspace/AdminKangurSocialPage.hooks.test.tsx` | 982 |
+| `src/features/kangur/ui/services/geometry-drawing.ts` | 981 |
+| `src/app/api/settings/handler.ts` | 978 |
+| `src/features/kangur/admin/AdminKangurLessonsManagerPage.tsx` | 977 |
+| `src/features/kangur/admin/KangurQuestionsManagerPanel.test.tsx` | 976 |
+| `src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.tsx` | 974 |
+| `src/features/kangur/social/admin/workspace/hooks/useSocialPipelineRunner.test.tsx` | 970 |
+| `src/features/kangur/ui/components/GeometrySymmetryGame.tsx` | 970 |
+| `src/features/kangur/ui/components/assignment-manager/KangurAssignmentManager.hooks.ts` | 969 |
+| `src/features/kangur/ui/components/KangurGameOperationSelectorWidget.test.tsx` | 968 |
+| `src/features/kangur/ui/components/game-setup/__tests__/KangurGameOperationSelectorWidget.test.tsx` | 968 |

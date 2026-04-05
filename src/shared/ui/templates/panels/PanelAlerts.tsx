@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { PanelAlert } from '@/shared/contracts/ui';
+import { PanelAlert } from '@/shared/contracts/ui/panels';
 import { Alert, type AlertVariant } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface PanelAlertsProps {
   alerts: PanelAlert[];

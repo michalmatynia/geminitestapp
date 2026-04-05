@@ -1,4 +1,4 @@
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { stableStringify } from '@/shared/lib/ai-paths';
 
 export {
@@ -34,7 +34,7 @@ export {
   createUniqueCaseFileName,
 } from './useCaseResolverState.helpers.naming';
 
-export { ensureSafeDocumentHtml } from '@/features/document-editor/public';
+export { ensureSafeDocumentHtml } from '@/shared/lib/document-editor/public';
 export {
   isLikelyImageFile,
   isLikelyPdfFile,

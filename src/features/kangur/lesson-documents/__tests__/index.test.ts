@@ -209,6 +209,28 @@ describe('kangur lesson documents', () => {
     expect(imageBlock.ttsDescription).toBe('Triangle narration');
   });
 
+  it('falls back to image captions when converting untitled image blocks back to text', () => {
+    const imageBlock = {
+      id: 'lesson-image-1',
+      type: 'image' as const,
+      title: '   ',
+      altText: 'Triangle alt',
+      caption: 'Caption-derived paragraph',
+      ttsDescription: 'Caption narration',
+      src: '/triangle.png',
+      align: 'center' as const,
+      fit: 'cover' as const,
+      maxWidth: 320,
+    };
+
+    const textBlock = convertKangurLessonInlineBlockType(imageBlock, 'text');
+
+    expect(textBlock.id).toBe('lesson-image-1');
+    expect(textBlock.type).toBe('text');
+    expect(textBlock.html).toContain('Caption-derived paragraph');
+    expect(textBlock.ttsText).toBe('Caption narration');
+  });
+
   it('converts root blocks between inline content and activities without changing the block id', () => {
     const textBlock = {
       id: 'lesson-root-1',

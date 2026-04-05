@@ -3,24 +3,13 @@
 import React, { ChangeEvent, ReactElement, useMemo } from 'react';
 
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
-import type {
-  PlaywrightSettingsContextType,
-  PlaywrightSettingsFormProps,
-  PlaywrightSettingsProviderProps,
-} from '@/shared/contracts/ui';
+import type { PlaywrightSettingsContextType, PlaywrightSettingsFormProps, PlaywrightSettingsProviderProps } from '@/shared/contracts/ui/playwright';
 import { internalError } from '@/shared/errors/app-error';
 import { playwrightDeviceOptions } from '@/shared/lib/playwright/settings';
-import {
-  CollapsibleSection,
-  FormActions,
-  FormField,
-  FormSection,
-  Hint,
-  Input,
-  SelectSimple,
-  ToggleRow,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { CollapsibleSection, Input } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export type {
   PlaywrightSettingsContextType,
@@ -28,7 +17,17 @@ export type {
   PlaywrightSettingsProviderProps,
 };
 
-const PlaywrightSettingsContext = React.createContext<PlaywrightSettingsContextType | null>(null);
+const {
+  Context: PlaywrightSettingsContext,
+  useStrictContext: usePlaywrightSettings,
+} = createStrictContext<PlaywrightSettingsContextType>({
+  hookName: 'usePlaywrightSettings',
+  providerName: 'a PlaywrightSettingsProvider',
+  displayName: 'PlaywrightSettingsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+export { usePlaywrightSettings };
 
 export function PlaywrightSettingsProvider({
   settings,
@@ -42,14 +41,6 @@ export function PlaywrightSettingsProvider({
   );
 }
 
-export function usePlaywrightSettings(): PlaywrightSettingsContextType {
-  const context = React.useContext(PlaywrightSettingsContext);
-  if (!context) {
-    throw internalError('usePlaywrightSettings must be used within a PlaywrightSettingsProvider');
-  }
-  return context;
-}
-
 type PlaywrightSettingsFormViewContextValue = {
   onSave?: () => void;
   saveLabel?: string;
@@ -58,15 +49,22 @@ type PlaywrightSettingsFormViewContextValue = {
   description?: string;
 };
 
-const PlaywrightSettingsFormViewContext =
-  React.createContext<PlaywrightSettingsFormViewContextValue | null>(null);
+const {
+  Context: PlaywrightSettingsFormViewContext,
+  useStrictContext: usePlaywrightSettingsFormView,
+} = createStrictContext<PlaywrightSettingsFormViewContextValue>({
+  hookName: 'usePlaywrightSettingsFormView',
+  providerName: 'PlaywrightSettingsFormViewProvider',
+  displayName: 'PlaywrightSettingsFormViewContext',
+  errorFactory: (message) => internalError(message),
+});
 
 type PlaywrightSettingsFormViewProviderProps = {
   value: PlaywrightSettingsFormViewContextValue;
   children: React.ReactNode;
 };
 
-function PlaywrightSettingsFormViewProvider({
+export function PlaywrightSettingsFormViewProvider({
   value,
   children,
 }: PlaywrightSettingsFormViewProviderProps): React.JSX.Element {
@@ -75,16 +73,6 @@ function PlaywrightSettingsFormViewProvider({
       {children}
     </PlaywrightSettingsFormViewContext.Provider>
   );
-}
-
-function usePlaywrightSettingsFormView(): PlaywrightSettingsFormViewContextValue {
-  const context = React.useContext(PlaywrightSettingsFormViewContext);
-  if (!context) {
-    throw internalError(
-      'usePlaywrightSettingsFormView must be used within PlaywrightSettingsFormViewProvider'
-    );
-  }
-  return context;
 }
 
 const toNumber = (value: string, fallback: number): number => {

@@ -12,16 +12,8 @@ import {
   useNoteMetadataContext,
 } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFormProps } from '@/shared/contracts/notes';
-import {
-  Button,
-  Input,
-  FormField,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  FormSection,
-} from '@/shared/ui';
+import { Button, Input, Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/primitives.public';
+import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';

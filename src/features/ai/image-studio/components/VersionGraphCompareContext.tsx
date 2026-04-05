@@ -4,6 +4,7 @@ import React from 'react';
 
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
@@ -15,9 +16,14 @@ type VersionGraphCompareContextValue = {
   onExit: () => void;
 };
 
-const VersionGraphCompareContext = React.createContext<VersionGraphCompareContextValue | null>(
-  null
-);
+const { Context: VersionGraphCompareContext, useStrictContext: useVersionGraphCompareContext } =
+  createStrictContext<VersionGraphCompareContextValue>({
+    hookName: 'useVersionGraphCompareContext',
+    providerName: 'VersionGraphCompareProvider',
+    displayName: 'VersionGraphCompareContext',
+    errorFactory: () =>
+      internalError('useVersionGraphCompareContext must be used inside VersionGraphCompareProvider'),
+  });
 
 export function VersionGraphCompareProvider({
   value,
@@ -32,13 +38,4 @@ export function VersionGraphCompareProvider({
     </VersionGraphCompareContext.Provider>
   );
 }
-
-export function useVersionGraphCompareContext(): VersionGraphCompareContextValue {
-  const context = React.useContext(VersionGraphCompareContext);
-  if (!context) {
-    throw internalError(
-      'useVersionGraphCompareContext must be used inside VersionGraphCompareProvider'
-    );
-  }
-  return context;
-}
+export { useVersionGraphCompareContext };

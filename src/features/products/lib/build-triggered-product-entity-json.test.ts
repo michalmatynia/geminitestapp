@@ -47,6 +47,14 @@ describe('buildTriggeredProductEntityJson', () => {
       expect(result['publicationStatus']).toBe('published');
     });
 
+    it('trims an existing status string before preserving it', () => {
+      const result = buildTriggeredProductEntityJson({
+        values: { status: '  active  ', published: false },
+      });
+      expect(result['status']).toBe('active');
+      expect(result['publicationStatus']).toBe('draft');
+    });
+
     it('does not overwrite existing publicationStatus when status is present', () => {
       const result = buildTriggeredProductEntityJson({
         values: { status: 'active', published: true, publicationStatus: 'archived' },

@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 import type { PathConfig, PathFlowIntensity } from '@/shared/contracts/ai-paths';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { useGraphActions, useGraphState } from '../../context';
 

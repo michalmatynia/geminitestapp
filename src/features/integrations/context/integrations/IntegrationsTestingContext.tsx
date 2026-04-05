@@ -1,11 +1,9 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-
-import type { TestLogEntry } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
+import type { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
 
 import type { StepWithResult } from '../integrations-context-types';
+import { createStrictContext } from '../createStrictContext';
 
 export interface IntegrationsTesting {
   isTesting: boolean;
@@ -27,10 +25,8 @@ export interface IntegrationsTesting {
   testSuccessMessage: string | null;
 }
 
-export const IntegrationsTestingContext = createContext<IntegrationsTesting | null>(null);
-
-export const useIntegrationsTesting = () => {
-  const context = useContext(IntegrationsTestingContext);
-  if (!context) throw internalError('useIntegrationsTesting must be used within IntegrationsProvider');
-  return context;
-};
+export const { Context: IntegrationsTestingContext, useValue: useIntegrationsTesting } =
+  createStrictContext<IntegrationsTesting>({
+    displayName: 'IntegrationsTestingContext',
+    errorMessage: 'useIntegrationsTesting must be used within IntegrationsProvider',
+  });

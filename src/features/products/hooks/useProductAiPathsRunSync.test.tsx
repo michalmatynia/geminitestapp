@@ -214,6 +214,26 @@ describe('useProductAiPathsRunSync', () => {
     expect(invalidateProductsAndDetailMock).toHaveBeenCalledWith(queryClient, 'product-1');
   });
 
+  it('stays idle when tracking is disabled', async () => {
+    const queryClient = createQueryClient();
+    renderHook(() => useProductAiPathsRunSync({ enabled: false }), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(AI_PATH_RUN_ENQUEUED_EVENT_NAME, {
+          detail: { runId: 'run-disabled', entityType: 'product', entityId: 'product-1' },
+        })
+      );
+    });
+    await flushAsync();
+
+    expect(listTriggerButtonRunFeedbackMock).not.toHaveBeenCalled();
+    expect(subscribeToTrackedAiPathRunMock).not.toHaveBeenCalled();
+    expect(markQueuedProductSourceMock).not.toHaveBeenCalled();
+  });
+
   it('exposes the tracked status for the product list and briefly shows the terminal result when the run finishes', async () => {
     const queryClient = createQueryClient();
     const view = renderHook(() => useProductAiPathsRunSync(), {

@@ -1,5 +1,3 @@
-'use client';
-
 import { type AriaAttributes, type ReactNode, type Ref } from 'react';
 
 export type KangurPrimaryNavigationPage =

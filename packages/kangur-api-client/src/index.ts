@@ -1,46 +1,8 @@
-import type {
-  KangurAssignmentCreateInput,
-  KangurAssignmentListQuery,
-  KangurAssignmentSnapshot,
-  KangurAssignmentUpdateInput,
-  KangurAuthUser,
-  KangurLearnerCreateInput,
-  KangurLearnerActivitySnapshot,
-  KangurLearnerActivityStatus,
-  KangurLearnerActivityUpdateInput,
-  KangurLearnerInteractionHistory,
-  KangurLearnerProfile,
-  KangurLearnerSignInInput,
-  KangurLearnerSessionHistory,
-  KangurLearnerUpdateInput,
-  KangurLessonSubject,
-  KangurProgressState,
-  KangurScore,
-  KangurScoreCreateInput,
-  KangurSubjectFocus,
-} from '@kangur/contracts';
-import type {
-  KangurDuelAnswerInput,
-  KangurDuelCreateInput,
-  KangurDuelHeartbeatInput,
-  KangurDuelJoinInput,
-  KangurDuelLeaderboardResponse,
-  KangurDuelLobbyPresenceResponse,
-  KangurDuelLobbyResponse,
-  KangurDuelOpponentsResponse,
-  KangurDuelVisibility,
-  KangurDuelReactionInput,
-  KangurDuelReactionResponse,
-  KangurDuelSearchResponse,
-  KangurDuelSpectatorStateResponse,
-  KangurDuelStateResponse,
-  KangurDuelLeaveInput,
-} from '@kangur/contracts';
-import type {
-  KangurDuelLobbyChatCreateInput,
-  KangurDuelLobbyChatListResponse,
-  KangurDuelLobbyChatSendResponse,
-} from '@kangur/contracts';
+import type { KangurAssignmentCreateInput, KangurAssignmentListQuery, KangurAssignmentSnapshot, KangurAssignmentUpdateInput } from '@kangur/contracts/kangur-assignments';
+import type { KangurAuthUser, KangurLearnerCreateInput, KangurLearnerActivitySnapshot, KangurLearnerActivityStatus, KangurLearnerActivityUpdateInput, KangurLearnerInteractionHistory, KangurLearnerProfile, KangurLearnerSignInInput, KangurLearnerSessionHistory, KangurLearnerUpdateInput, KangurProgressState, KangurScore, KangurScoreCreateInput } from '@kangur/contracts/kangur';
+import type { KangurLessonSubject, KangurSubjectFocus } from '@kangur/contracts/kangur-lesson-constants';
+import type { KangurDuelAnswerInput, KangurDuelCreateInput, KangurDuelHeartbeatInput, KangurDuelJoinInput, KangurDuelLeaderboardResponse, KangurDuelLobbyPresenceResponse, KangurDuelLobbyResponse, KangurDuelOpponentsResponse, KangurDuelVisibility, KangurDuelReactionInput, KangurDuelReactionResponse, KangurDuelSearchResponse, KangurDuelSpectatorStateResponse, KangurDuelStateResponse, KangurDuelLeaveInput } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelLobbyChatCreateInput, KangurDuelLobbyChatListResponse, KangurDuelLobbyChatSendResponse } from '@kangur/contracts/kangur-duels-chat';
 
 export type KangurApiClientOptions = {
   baseUrl?: string;

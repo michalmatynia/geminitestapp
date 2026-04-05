@@ -5,13 +5,16 @@ import React from 'react';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
   NoteWithRelations,
-  NoteRelationWithSource,
-  NoteRelationWithTarget,
   RelatedNote,
 } from '@/shared/contracts/notes';
-import { Breadcrumbs } from '@/shared/ui';
+import { Breadcrumbs } from '@/shared/ui/navigation-and-layout.public';
 
 import { buildBreadcrumbPath, darkenColor } from '../../utils';
+import {
+  dedupeRelatedNotes,
+  resolveNoteCardFooterRelatedNotes,
+  shouldRenderNoteCardFooter,
+} from './NoteCardFooter.helpers';
 
 type BreadcrumbItem = { id: string | null; name: string };
 
@@ -46,42 +49,16 @@ export function NoteCardFooter(props: NoteCardFooterProps): React.JSX.Element | 
     [note.categories, folderTree]
   );
 
-  const relatedNotes = React.useMemo((): RelatedNote[] => {
-    if (note.relations && note.relations.length > 0) {
-      return note.relations;
-    }
+  const relatedNotes = React.useMemo((): RelatedNote[] => resolveNoteCardFooterRelatedNotes(note), [note]);
 
-    const build = (
-      id: string | undefined,
-      title: string | undefined,
-      color: string | null | undefined
-    ): RelatedNote | null =>
-      id ? { id, title: title ?? 'Untitled note', color: color ?? null } : null;
-
-    const fromRelations = (note.relationsFrom ?? [])
-      .map((relation: NoteRelationWithTarget) =>
-        build(
-          relation.targetNote?.id ?? relation.targetNoteId,
-          relation.targetNote?.title,
-          relation.targetNote?.color
-        )
-      )
-      .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
-
-    const toRelations = (note.relationsTo ?? [])
-      .map((relation: NoteRelationWithSource) =>
-        build(
-          relation.sourceNote?.id ?? relation.sourceNoteId,
-          relation.sourceNote?.title,
-          relation.sourceNote?.color
-        )
-      )
-      .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
-
-    return [...fromRelations, ...toRelations];
-  }, [note]);
-
-  if (!(showTimestamps || showBreadcrumbs || (showRelatedNotes && relatedNotes.length > 0))) {
+  if (
+    !shouldRenderNoteCardFooter({
+      relatedNotes,
+      showBreadcrumbs,
+      showRelatedNotes,
+      showTimestamps,
+    })
+  ) {
     return null;
   }
 
@@ -113,11 +90,7 @@ export function NoteCardFooter(props: NoteCardFooterProps): React.JSX.Element | 
 
       {showRelatedNotes && relatedNotes.length > 0 && (
         <div className='mt-2 flex flex-wrap gap-2'>
-          {relatedNotes
-            .filter(
-              (item: RelatedNote, index: number, array: RelatedNote[]) =>
-                array.findIndex((entry: RelatedNote) => entry.id === item.id) === index
-            )
+          {dedupeRelatedNotes(relatedNotes)
             .slice(0, 4)
             .map((related: RelatedNote) => (
               <div

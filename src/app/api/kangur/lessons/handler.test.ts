@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDefaultKangurLessons } from '@/features/kangur/settings';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const { getKangurLessonRepositoryMock, listLessonsMock, replaceLessonsMock, resolveKangurActorMock } =
   vi.hoisted(() => ({

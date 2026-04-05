@@ -1,10 +1,5 @@
-import type {
-  PatternFormData,
-  ProductValidationLaunchOperator,
-  ProductValidationPattern,
-  ProductValidationSemanticState,
-  SequenceGroupView,
-} from '@/shared/contracts/products';
+import type { PatternFormData, SequenceGroupView } from '@/shared/contracts/products/drafts';
+import type { ProductValidationLaunchOperator, ProductValidationPattern, ProductValidationSemanticState } from '@/shared/contracts/products/validation';
 import type { UpdateProductValidationPatternInput as UpdateValidationPatternPayload } from '@/shared/contracts/products/validation';
 import {
   normalizeProductValidationPatternLaunchScopes,

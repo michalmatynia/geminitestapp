@@ -32,4 +32,10 @@ describe('kangur public barrel', () => {
     expect(kangurPublic.AdminKangurSettingsPage).toBeDefined();
     expect(kangurPublic.AdminKangurPageShell).toBeDefined();
   });
+
+  it('exposes representative learner and game widgets from the root barrel', () => {
+    expect(kangurPublic.KangurLessonsCatalogWidget).toBeDefined();
+    expect(kangurPublic.KangurGameQuestionWidget).toBeDefined();
+    expect(kangurPublic.KangurLearnerAssignmentsPanel).toBeDefined();
+  });
 });

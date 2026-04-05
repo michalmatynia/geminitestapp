@@ -1,6 +1,7 @@
 import { isLikelyImageStudioErrorText } from '@/features/ai/image-studio/utils/image-src';
 import type { ManagedImageSlot as ProductImageSlot } from '@/shared/contracts/image-slots';
-import type { ImageStudioAssetDto, ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { ImageStudioAssetDto } from '@/shared/contracts/image-studio/misc';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export const OBJECT_SLOT_INDEX = 0;
 export const TEMP_OBJECT_SLOT_ID = '__image_studio_temp_object__';

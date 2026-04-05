@@ -8,7 +8,9 @@ import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 import { dbApi } from '@/shared/lib/ai-paths/api';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, Label, SelectSimple, SearchInput, Pagination, Card, Hint } from '@/shared/ui';
+import { Button, Label, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple, SearchInput, Hint } from '@/shared/ui/forms-and-actions.public';
+import { Pagination } from '@/shared/ui/navigation-and-layout.public';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../AiPathConfigContext';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
 
 import KangurGame from '@/features/kangur/ui/components/KangurGame';

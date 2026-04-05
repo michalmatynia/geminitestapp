@@ -37,11 +37,11 @@ vi.mock('@/features/products/hooks/useProductSettings', () => ({
   useProductSettings: useProductSettingsMock,
 }));
 
-vi.mock('@/features/ai/public', () => ({
+vi.mock('@/features/ai/image-studio/image-src', () => ({
   getImageStudioSlotImageSrc: getImageStudioSlotImageSrcMock,
 }));
 
-vi.mock('@/features/products/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -55,6 +55,9 @@ vi.mock('@/features/products/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/form-section', () => ({
   FormSection: ({
     title,
     description,
@@ -70,8 +73,17 @@ vi.mock('@/features/products/ui', () => ({
       {children}
     </section>
   ),
+}));
+
+vi.mock('@/shared/ui/LoadingState', () => ({
   LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
+}));
+
+vi.mock('@/shared/ui/status-badge', () => ({
   StatusBadge: ({ status }: { status: string }) => <span>{status}</span>,
+}));
+
+vi.mock('@/shared/ui/templates/pickers/GenericGridPicker', () => ({
   GenericGridPicker: ({
     items,
     onSelect,

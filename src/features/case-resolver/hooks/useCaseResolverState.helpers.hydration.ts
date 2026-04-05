@@ -1,4 +1,4 @@
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import { getCaseResolverWorkspaceRevision } from '../workspace-persistence';
 
@@ -32,6 +32,25 @@ export type CaseResolverWorkspaceHydrationSourceSelection = {
   reason: CaseResolverWorkspaceHydrationSourceReason;
 };
 
+type CaseResolverWorkspaceHydrationDecisionResolver = (input: {
+  current: CaseResolverWorkspace;
+  incoming: CaseResolverWorkspace;
+  requestedFileId: string | null;
+}) => CaseResolverWorkspaceHydrationDecision | null;
+
+type PreferredCaseResolverWorkspaceSelectionContext = {
+  storeWorkspace: CaseResolverWorkspace;
+  resolvedNavigationWorkspace: CaseResolverWorkspace;
+  hasStoreWorkspace: boolean;
+  hasNavigationWorkspace: boolean;
+  normalizedRequestedFileId: string;
+  hasRequestedFileId: boolean;
+  navigationHasRequestedFile: boolean;
+  storeHasRequestedFile: boolean;
+  navigationRevision: number;
+  storeRevision: number;
+};
+
 const normalizeRequestedFileId = (value: string | null | undefined): string =>
   typeof value === 'string' ? value.trim() : '';
 
@@ -60,6 +79,179 @@ const isPlaceholderWorkspace = (workspace: CaseResolverWorkspace): boolean => {
   return normalizedWorkspaceId === '' || normalizedWorkspaceId === 'empty';
 };
 
+const resolveIncomingRevisionDecision = ({
+  current,
+  incoming,
+}: {
+  current: CaseResolverWorkspace;
+  incoming: CaseResolverWorkspace;
+}): CaseResolverWorkspaceHydrationDecision | null => {
+  const currentRevision = getCaseResolverWorkspaceRevision(current);
+  const incomingRevision = getCaseResolverWorkspaceRevision(incoming);
+  return incomingRevision > currentRevision
+    ? { adopt: true, reason: 'incoming_newer_revision' }
+    : null;
+};
+
+const resolvePlaceholderWorkspaceDecision = ({
+  current,
+  incoming,
+}: {
+  current: CaseResolverWorkspace;
+  incoming: CaseResolverWorkspace;
+}): CaseResolverWorkspaceHydrationDecision | null => {
+  const currentRevision = getCaseResolverWorkspaceRevision(current);
+  const incomingRevision = getCaseResolverWorkspaceRevision(incoming);
+  const currentIsPlaceholder = isPlaceholderWorkspace(current);
+  const incomingIsPlaceholder = isPlaceholderWorkspace(incoming);
+
+  if (incomingRevision === currentRevision && currentIsPlaceholder && !incomingIsPlaceholder) {
+    return { adopt: true, reason: 'equal_revision_current_placeholder' };
+  }
+
+  return currentIsPlaceholder && !incomingIsPlaceholder
+    ? { adopt: true, reason: 'current_default_placeholder' }
+    : null;
+};
+
+const resolveRequestedFileWorkspaceDecision = ({
+  current,
+  incoming,
+  requestedFileId,
+}: {
+  current: CaseResolverWorkspace;
+  incoming: CaseResolverWorkspace;
+  requestedFileId: string | null;
+}): CaseResolverWorkspaceHydrationDecision | null => {
+  const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
+  if (!normalizedRequestedFileId) {
+    return null;
+  }
+
+  const currentHasRequested = hasRequestedFile(current, normalizedRequestedFileId);
+  const incomingHasRequested = hasRequestedFile(incoming, normalizedRequestedFileId);
+  return !currentHasRequested && incomingHasRequested
+    ? { adopt: true, reason: 'requested_file_missing_in_current' }
+    : null;
+};
+
+const HYDRATION_DECISION_RESOLVERS: CaseResolverWorkspaceHydrationDecisionResolver[] = [
+  resolveIncomingRevisionDecision,
+  resolvePlaceholderWorkspaceDecision,
+  resolveRequestedFileWorkspaceDecision,
+];
+
+const resolveWorkspaceHydrationDecision = (input: {
+  current: CaseResolverWorkspace;
+  incoming: CaseResolverWorkspace;
+  requestedFileId: string | null;
+}): CaseResolverWorkspaceHydrationDecision | null => {
+  for (const resolver of HYDRATION_DECISION_RESOLVERS) {
+    const decision = resolver(input);
+    if (decision) {
+      return decision;
+    }
+  }
+  return null;
+};
+
+const buildHydrationSourceSelection = (
+  workspace: CaseResolverWorkspace,
+  source: CaseResolverWorkspaceHydrationSource,
+  reason: CaseResolverWorkspaceHydrationSourceReason
+): CaseResolverWorkspaceHydrationSourceSelection => ({
+  workspace,
+  source,
+  reason,
+});
+
+const buildPreferredCaseResolverWorkspaceSelectionContext = ({
+  storeWorkspace,
+  navigationWorkspace,
+  hasStoreWorkspace,
+  hasNavigationWorkspace,
+  requestedFileId,
+}: {
+  storeWorkspace: CaseResolverWorkspace;
+  navigationWorkspace?: CaseResolverWorkspace;
+  hasStoreWorkspace: boolean;
+  hasNavigationWorkspace?: boolean;
+  requestedFileId: string | null;
+}): PreferredCaseResolverWorkspaceSelectionContext => {
+  const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
+  const hasRequestedFileId = normalizedRequestedFileId.length > 0;
+  const resolvedNavigationWorkspace = navigationWorkspace ?? storeWorkspace;
+  return {
+    storeWorkspace,
+    resolvedNavigationWorkspace,
+    hasStoreWorkspace,
+    hasNavigationWorkspace: hasNavigationWorkspace === true,
+    normalizedRequestedFileId,
+    hasRequestedFileId,
+    navigationHasRequestedFile:
+      hasRequestedFileId && hasRequestedFile(resolvedNavigationWorkspace, normalizedRequestedFileId),
+    storeHasRequestedFile:
+      hasRequestedFileId && hasRequestedFile(storeWorkspace, normalizedRequestedFileId),
+    navigationRevision: getCaseResolverWorkspaceRevision(resolvedNavigationWorkspace),
+    storeRevision: getCaseResolverWorkspaceRevision(storeWorkspace),
+  };
+};
+
+const resolveNavigationRequestedFileFallbackSelection = (
+  context: PreferredCaseResolverWorkspaceSelectionContext
+): CaseResolverWorkspaceHydrationSourceSelection | null =>
+  context.hasRequestedFileId &&
+  context.hasNavigationWorkspace &&
+  context.navigationHasRequestedFile &&
+  !context.storeHasRequestedFile
+    ? buildHydrationSourceSelection(
+        context.resolvedNavigationWorkspace,
+        'navigation',
+        'navigation_requested_file_fallback'
+      )
+    : null;
+
+const resolveNewerNavigationWorkspaceSelection = (
+  context: PreferredCaseResolverWorkspaceSelectionContext
+): CaseResolverWorkspaceHydrationSourceSelection | null =>
+  context.hasNavigationWorkspace &&
+  context.navigationRevision > context.storeRevision &&
+  resolveRequestedFileSatisfied({
+    requestedFileId: context.normalizedRequestedFileId,
+    workspace: context.resolvedNavigationWorkspace,
+  })
+    ? buildHydrationSourceSelection(
+        context.resolvedNavigationWorkspace,
+        'navigation',
+        'navigation_newer_revision'
+      )
+    : null;
+
+const resolveStorePreferredWorkspaceSelection = (
+  context: PreferredCaseResolverWorkspaceSelectionContext
+): CaseResolverWorkspaceHydrationSourceSelection | null => {
+  if (!context.hasStoreWorkspace) {
+    return null;
+  }
+
+  return (
+    resolveNavigationRequestedFileFallbackSelection(context) ??
+    resolveNewerNavigationWorkspaceSelection(context) ??
+    buildHydrationSourceSelection(context.storeWorkspace, 'store', 'store_only')
+  );
+};
+
+const resolveNavigationOnlyWorkspaceSelection = (
+  context: PreferredCaseResolverWorkspaceSelectionContext
+): CaseResolverWorkspaceHydrationSourceSelection | null =>
+  context.hasNavigationWorkspace && context.navigationHasRequestedFile
+    ? buildHydrationSourceSelection(
+        context.resolvedNavigationWorkspace,
+        'navigation',
+        'navigation_only'
+      )
+    : null;
+
 export const shouldAdoptIncomingWorkspace = ({
   current,
   incoming,
@@ -69,33 +261,13 @@ export const shouldAdoptIncomingWorkspace = ({
   incoming: CaseResolverWorkspace;
   requestedFileId: string | null;
 }): CaseResolverWorkspaceHydrationDecision => {
-  const currentRevision = getCaseResolverWorkspaceRevision(current);
-  const incomingRevision = getCaseResolverWorkspaceRevision(incoming);
-  if (incomingRevision > currentRevision) {
-    return { adopt: true, reason: 'incoming_newer_revision' };
-  }
-
-  const currentIsPlaceholder = isPlaceholderWorkspace(current);
-  const incomingIsPlaceholder = isPlaceholderWorkspace(incoming);
-
-  if (incomingRevision === currentRevision && currentIsPlaceholder && !incomingIsPlaceholder) {
-    return { adopt: true, reason: 'equal_revision_current_placeholder' };
-  }
-
-  if (currentIsPlaceholder && !incomingIsPlaceholder) {
-    return { adopt: true, reason: 'current_default_placeholder' };
-  }
-
-  const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
-  if (normalizedRequestedFileId) {
-    const currentHasRequested = hasRequestedFile(current, normalizedRequestedFileId);
-    const incomingHasRequested = hasRequestedFile(incoming, normalizedRequestedFileId);
-    if (!currentHasRequested && incomingHasRequested) {
-      return { adopt: true, reason: 'requested_file_missing_in_current' };
-    }
-  }
-
-  return { adopt: false, reason: 'keep_current' };
+  return (
+    resolveWorkspaceHydrationDecision({
+      current,
+      incoming,
+      requestedFileId,
+    }) ?? { adopt: false, reason: 'keep_current' }
+  );
 };
 
 export const shouldRefetchSettingsStoreForRequestedFile = ({
@@ -135,62 +307,17 @@ export const resolvePreferredCaseResolverWorkspace = ({
   hasHeavyWorkspace?: boolean;
   requestedFileId: string | null;
 }): CaseResolverWorkspaceHydrationSourceSelection => {
-  const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
-  const resolvedNavigationWorkspace = navigationWorkspace ?? storeWorkspace;
-  const navigationHasRequestedFile =
-    normalizedRequestedFileId.length > 0 &&
-    hasRequestedFile(resolvedNavigationWorkspace, normalizedRequestedFileId);
-  const storeHasRequestedFile =
-    normalizedRequestedFileId.length > 0 &&
-    hasRequestedFile(storeWorkspace, normalizedRequestedFileId);
-  const navigationRevision = getCaseResolverWorkspaceRevision(resolvedNavigationWorkspace);
-  const storeRevision = getCaseResolverWorkspaceRevision(storeWorkspace);
+  const context = buildPreferredCaseResolverWorkspaceSelectionContext({
+    storeWorkspace,
+    navigationWorkspace,
+    hasStoreWorkspace,
+    hasNavigationWorkspace,
+    requestedFileId,
+  });
 
-  if (hasStoreWorkspace) {
-    if (
-      normalizedRequestedFileId.length > 0 &&
-      hasNavigationWorkspace &&
-      navigationHasRequestedFile &&
-      !storeHasRequestedFile
-    ) {
-      return {
-        workspace: resolvedNavigationWorkspace,
-        source: 'navigation',
-        reason: 'navigation_requested_file_fallback',
-      };
-    }
-    if (
-      hasNavigationWorkspace &&
-      navigationRevision > storeRevision &&
-      resolveRequestedFileSatisfied({
-        requestedFileId: normalizedRequestedFileId,
-        workspace: resolvedNavigationWorkspace,
-      })
-    ) {
-      return {
-        workspace: resolvedNavigationWorkspace,
-        source: 'navigation',
-        reason: 'navigation_newer_revision',
-      };
-    }
-    return {
-      workspace: storeWorkspace,
-      source: 'store',
-      reason: 'store_only',
-    };
-  }
-
-  if (hasNavigationWorkspace && navigationHasRequestedFile) {
-    return {
-      workspace: resolvedNavigationWorkspace,
-      source: 'navigation',
-      reason: 'navigation_only',
-    };
-  }
-
-  return {
-    workspace: storeWorkspace,
-    source: 'none',
-    reason: 'no_workspace_source',
-  };
+  return (
+    resolveStorePreferredWorkspaceSelection(context) ??
+    resolveNavigationOnlyWorkspaceSelection(context) ??
+    buildHydrationSourceSelection(storeWorkspace, 'none', 'no_workspace_source')
+  );
 };

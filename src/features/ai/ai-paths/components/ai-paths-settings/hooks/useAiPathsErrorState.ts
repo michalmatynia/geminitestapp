@@ -1,8 +1,10 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import { useAiPathsValidationActions } from './useAiPathsValidationActions';
 

@@ -16,20 +16,13 @@ import {
   useTemplates,
 } from '@/features/data-import-export/hooks/useImportQueries';
 import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
-import type {
-  BaseActiveTemplatePreferenceResponse,
-  BaseDefaultConnectionPreferenceResponse,
-  BaseDefaultInventoryPreferenceResponse,
-  BaseImageRetryPresetsResponse,
-  BaseSampleProductResponse,
-  BaseStockFallbackPreferenceResponse,
-  ImageRetryPreset,
-  ImportParameterCacheResponse,
-  IntegrationConnectionBasic,
-  Template,
-} from '@/shared/contracts/integrations';
-import { defaultBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
-import type { Toast } from '@/shared/contracts/ui';
+import type { BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferenceResponse, BaseImageRetryPresetsResponse, BaseSampleProductResponse, BaseStockFallbackPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import type { ImportParameterCacheResponse } from '@/shared/contracts/integrations/base-com';
+import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
+import type { Template } from '@/shared/contracts/integrations/import-export';
+import { defaultBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import { useImportExportPreferences } from './import-export/useImportExportPreferences';
 import { useImportExportTemplates } from './import-export/useImportExportTemplates';

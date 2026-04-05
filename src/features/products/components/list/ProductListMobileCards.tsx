@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { memo, useCallback, type ReactNode } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
+import { isMissingProductListingsError } from '@/features/integrations/hooks/useListingQueries';
 import {
   useProductListRowActionsContext,
   useProductListRowRuntime,
@@ -17,18 +18,26 @@ import {
   loadProductIntegrationsAdapter,
   type ProductTriggerButtonBarProps,
 } from '@/features/products/lib/product-integrations-adapter-loader';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
 } from '@/shared/lib/products/utils/priceCalculation';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { ActionMenu, Badge, Button, Checkbox, DropdownMenuItem } from '@/shared/ui';
+import { ActionMenu } from '@/shared/ui/ActionMenu';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
+
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   getProductDisplayName,
   getProductListDisplayName,
+  hasImportedProductOrigin,
   getImageFilepath,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
@@ -61,10 +70,32 @@ const BaseQuickExportButton = dynamic(
   }
 );
 
+const TraderaQuickListButton = dynamic(
+  () =>
+    import('./columns/buttons/TraderaQuickListButton').then(
+      (mod: typeof import('./columns/buttons/TraderaQuickListButton')) => mod.TraderaQuickListButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const TraderaStatusButton = dynamic(
   () =>
     import('./columns/buttons/TraderaStatusButton').then(
       (mod: typeof import('./columns/buttons/TraderaStatusButton')) => mod.TraderaStatusButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+const PlaywrightStatusButton = dynamic(
+  () =>
+    import('./columns/buttons/PlaywrightStatusButton').then(
+      (mod: typeof import('./columns/buttons/PlaywrightStatusButton')) => mod.PlaywrightStatusButton
     ),
   {
     ssr: false,
@@ -161,6 +192,10 @@ type ProductListMobileCardResolvedProps = {
   isImported: boolean;
   skuLabel: string;
   categoryLabel: string;
+  autoShippingGroupLabel: string;
+  autoShippingRuleLabel: string;
+  shippingRuleConflictLabel: string;
+  missingManualShippingLabel: string;
   thumbnailUrl: string | null;
   createdAtLabel: string;
   displayPrice: number | null;
@@ -184,6 +219,10 @@ const renderProductListMobileCard = ({
   isImported,
   skuLabel,
   categoryLabel,
+  autoShippingGroupLabel,
+  autoShippingRuleLabel,
+  shippingRuleConflictLabel,
+  missingManualShippingLabel,
   thumbnailUrl,
   createdAtLabel,
   displayPrice,
@@ -203,12 +242,14 @@ const renderProductListMobileCard = ({
     onExportSettingsClick,
     onPrefetchProductDetail,
   } = rowActions;
-  const { showTriggerRunFeedback } = rowVisuals;
+  const { showTriggerRunFeedback, triggerButtonsReady = true } = rowVisuals;
   const {
     showMarketplaceBadge,
     integrationStatus: status,
     showTraderaBadge,
     traderaStatus,
+    showPlaywrightProgrammableBadge,
+    playwrightProgrammableStatus,
     productAiRunFeedback,
   } = rowRuntime;
 
@@ -246,6 +287,26 @@ const renderProductListMobileCard = ({
               </span>
               <span className='truncate'>Category: {categoryLabel}</span>
             </div>
+            {autoShippingGroupLabel && (
+              <div className='space-y-0.5'>
+                <div className='truncate'>Auto shipping: {autoShippingGroupLabel}</div>
+                {autoShippingRuleLabel ? (
+                  <div className='truncate'>Auto via: {autoShippingRuleLabel}</div>
+                ) : null}
+              </div>
+            )}
+            {shippingRuleConflictLabel ? (
+              <div className='space-y-0.5 text-amber-300'>
+                <div className='truncate'>Ship conflict</div>
+                <div className='truncate'>{shippingRuleConflictLabel}</div>
+              </div>
+            ) : null}
+            {missingManualShippingLabel ? (
+              <div className='space-y-0.5 text-amber-300'>
+                <div className='truncate'>Ship missing</div>
+                <div className='truncate'>{missingManualShippingLabel}</div>
+              </div>
+            ) : null}
             {(isImported || productAiRunFeedback) && (
               <div className='flex flex-wrap items-center gap-2'>
                 {isImported && (
@@ -351,28 +412,53 @@ const renderProductListMobileCard = ({
           status={status}
           prefetchListings={() => prefetchListings(product.id)}
           showMarketplaceBadge={showMarketplaceBadge}
-          onOpenIntegrations={(recoveryContext) => onIntegrationsClick(product, recoveryContext)}
-          onOpenExportSettings={() => onExportSettingsClick(product)}
+          onOpenIntegrations={(recoveryContext) =>
+            onIntegrationsClick(product, recoveryContext, 'baselinker')
+          }
+        />
+        <TraderaQuickListButton
+          product={product}
+          prefetchListings={() => prefetchListings(product.id)}
+          onOpenIntegrations={(recoveryContext) =>
+            onIntegrationsClick(product, recoveryContext, 'tradera')
+          }
+          showTraderaBadge={showTraderaBadge}
+          traderaStatus={traderaStatus}
         />
 
-        <TriggerButtonBar
-          location='product_row'
-          entityType='product'
-          entityId={product.id}
-          getEntityJson={(): Record<string, unknown> =>
-            buildTriggeredProductEntityJson({
-              product,
-              values: {},
-            })}
-          showRunFeedback={showTriggerRunFeedback}
-          className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
-        />
+        {triggerButtonsReady ? (
+          <TriggerButtonBar
+            location='product_row'
+            entityType='product'
+            entityId={product.id}
+            getEntityJson={(): Record<string, unknown> =>
+              buildTriggeredProductEntityJson({
+                product,
+                values: {},
+              })}
+            showRunFeedback={showTriggerRunFeedback}
+            className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
+          />
+        ) : null}
 
         {showTraderaBadge && (
           <TraderaStatusButton
+            productId={product.id}
             status={traderaStatus}
             prefetchListings={() => prefetchListings(product.id)}
-            onOpenListings={() => onIntegrationsClick(product)}
+            onOpenListings={(recoveryContext) =>
+              onIntegrationsClick(product, recoveryContext, 'tradera')
+            }
+          />
+        )}
+
+        {showPlaywrightProgrammableBadge && (
+          <PlaywrightStatusButton
+            status={playwrightProgrammableStatus}
+            prefetchListings={() => prefetchListings(product.id)}
+            onOpenListings={() =>
+              onIntegrationsClick(product, undefined, 'playwright-programmable')
+            }
           />
         )}
       </div>
@@ -399,9 +485,30 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
 
   const nameKey = rowVisuals.productNameKey ?? 'name_en';
   const nameValue = getProductListDisplayName(product, nameKey);
-  const isImported: boolean = Boolean(product.baseProductId?.trim());
+  const isImported = hasImportedProductOrigin(product);
   const skuLabel = product.sku?.trim() || 'No SKU';
   const categoryLabel = resolveProductCategoryLabel(product, rowVisuals.categoryNameById, nameKey);
+  const autoShippingGroupLabel =
+    product.shippingGroupSource === 'category_rule' ? product.shippingGroup?.name?.trim() ?? '' : '';
+  const autoShippingRuleLabel =
+    product.shippingGroupSource === 'category_rule'
+      ? (product.shippingGroupMatchedCategoryRuleIds ?? [])
+          .map((categoryId) => rowVisuals.categoryNameById.get(categoryId) ?? categoryId)
+          .filter((label) => label.trim().length > 0)
+          .join(', ')
+      : '';
+  const shippingRuleConflictLabel =
+    product.shippingGroupResolutionReason === 'multiple_category_rules'
+      ? (product.shippingGroupMatchingGroupNames ?? [])
+          .filter((label) => label.trim().length > 0)
+          .join(', ')
+      : '';
+  const missingManualShippingLabel =
+    product.shippingGroupResolutionReason === 'manual_missing' &&
+    typeof product.shippingGroupId === 'string' &&
+    product.shippingGroupId.trim().length > 0
+      ? product.shippingGroupId.trim()
+      : '';
   const thumbnailUrl = resolveThumbnailUrl(
     product,
     rowVisuals.thumbnailSource,
@@ -447,6 +554,10 @@ const ProductListMobileCard = memo(function ProductListMobileCard({
     isImported,
     skuLabel,
     categoryLabel,
+    autoShippingGroupLabel,
+    autoShippingRuleLabel,
+    shippingRuleConflictLabel,
+    missingManualShippingLabel,
     thumbnailUrl,
     createdAtLabel,
     displayPrice,
@@ -481,11 +592,12 @@ export const ProductListMobileCards = memo(function ProductListMobileCards() {
   const prefetchListings = useCallback(
     (productId: string): void => {
       void loadProductIntegrationsAdapter().then(({ fetchProductListings, productListingsQueryKey }) => {
-        const queryKey = productListingsQueryKey(productId);
+        const queryKey = normalizeQueryKey(productListingsQueryKey(productId));
         void prefetchQueryV2(queryClient, {
           queryKey,
           queryFn: () => fetchProductListings(productId),
           staleTime: 30 * 1000,
+          logError: false,
           meta: {
             source: 'products.mobile.integrations.prefetchListings',
             operation: 'list',
@@ -495,7 +607,18 @@ export const ProductListMobileCards = memo(function ProductListMobileCards() {
             tags: ['integrations', 'listings', 'prefetch'],
             description: 'Loads integrations listings.',
           },
-        })();
+        })().catch((error: unknown) => {
+          if (isMissingProductListingsError(error)) {
+            queryClient.removeQueries({ queryKey });
+            return;
+          }
+          logClientCatch(error, {
+            source: 'products.mobile.integrations',
+            action: 'prefetchListings',
+            productId,
+            level: 'warn',
+          });
+        });
       });
     },
     [queryClient]

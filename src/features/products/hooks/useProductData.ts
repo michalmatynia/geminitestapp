@@ -1,9 +1,8 @@
 'use client';
 
-import { useQueryClient, type QueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 
-import { createProduct, updateProduct, deleteProduct } from '@/features/products/api';
 import {
   type UseProductsFilters,
   type UseProductsOptions,
@@ -11,102 +10,12 @@ import {
   useProductsCount as useProductsCountQuery,
   useProductsWithCount,
 } from '@/features/products/hooks/useProductsQuery';
-import {
-  addQueuedProductSource,
-  buildQueuedProductOfflineMutationSource,
-  removeQueuedProductSource,
-} from '@/features/products/state/queued-product-ops';
-import {
-  productAdvancedFilterGroupSchema,
-  type ProductWithImages,
-} from '@/shared/contracts/products';
-import type { IdDataDto } from '@/shared/contracts/base';
-import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
-import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
-import { api } from '@/shared/lib/api-client';
+import { productAdvancedFilterGroupSchema } from '@/shared/contracts/products/filters';
+import { type ProductWithImages } from '@/shared/contracts/products';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
-import {
-  productsAllQueryKey,
-  productsListsQueryKey,
-  productsCountsQueryKey,
-  getProductDetailQueryKey,
-  refetchProductsAndCounts,
-  invalidateProductsAndCounts,
-  invalidateProductsAndDetail,
-} from './productCache';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-
-const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
-const PRODUCT_UPDATE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('update');
-const PRODUCT_DELETE_QUEUE_SOURCE = buildQueuedProductOfflineMutationSource('delete');
-
-type ProductListCacheValue =
-  | ProductWithImages[]
-  | { items: ProductWithImages[]; total?: number }
-  | { products: ProductWithImages[] }
-  | null
-  | undefined;
-
-const isPaginatedItemsCacheValue = (
-  cacheValue: ProductListCacheValue
-): cacheValue is { items: ProductWithImages[]; total?: number } =>
-  !!cacheValue && !Array.isArray(cacheValue) && 'items' in cacheValue && Array.isArray(cacheValue.items);
-
-const isProductsArrayCacheValue = (
-  cacheValue: ProductListCacheValue
-): cacheValue is { products: ProductWithImages[] } =>
-  !!cacheValue &&
-  !Array.isArray(cacheValue) &&
-  'products' in cacheValue &&
-  Array.isArray(cacheValue.products);
-
-const patchProductListCacheValue = (
-  cacheValue: ProductListCacheValue,
-  savedProduct: ProductWithImages
-): ProductListCacheValue => {
-  if (!cacheValue) return cacheValue;
-  if (Array.isArray(cacheValue)) {
-    return cacheValue.map((product: ProductWithImages) =>
-      product.id === savedProduct.id ? { ...product, ...savedProduct } : product
-    );
-  }
-  if (isPaginatedItemsCacheValue(cacheValue)) {
-    return {
-      ...cacheValue,
-      items: cacheValue.items.map((product: ProductWithImages) =>
-        product.id === savedProduct.id ? { ...product, ...savedProduct } : product
-      ),
-    };
-  }
-  if (isProductsArrayCacheValue(cacheValue)) {
-    return {
-      ...cacheValue,
-      products: cacheValue.products.map((product: ProductWithImages) =>
-        product.id === savedProduct.id ? { ...product, ...savedProduct } : product
-      ),
-    };
-  }
-  return cacheValue;
-};
-
-const refreshUpdatedProductCaches = (
-  queryClient: QueryClient,
-  savedProduct: ProductWithImages
-): void => {
-  void invalidateProductsAndDetail(queryClient, savedProduct.id).catch((error) => {
-    logClientError(error, {
-      context: {
-        source: 'products.hooks.useUpdateProductMutation',
-        action: 'refreshUpdatedProductCaches',
-        productId: savedProduct.id,
-      },
-    });
-  });
-};
+import { refetchProductsAndCounts } from './productCache';
 
 const isValidAdvancedFilterPayload = (payload: string): boolean => {
   try {
@@ -128,224 +37,6 @@ export function useProducts(filters: UseProductsFilters, options: UseProductsOpt
 
 export function useProductsCount(filters: UseProductsFilters, options: UseProductsOptions = {}) {
   return useProductsCountQuery(filters, options);
-}
-
-// --- Mutations ---
-
-export function useCreateProductMutation(): UseMutationResult<unknown, Error, FormData, unknown> {
-  return useOfflineMutation((formData: FormData) => createProduct(formData), {
-    queryKey: productsAllQueryKey,
-    meta: {
-      source: 'products.hooks.useCreateProductMutation',
-      operation: 'create',
-      resource: 'products',
-      domain: 'products',
-      tags: ['products', 'create'],
-    },
-    extraInvalidateKeys: [productsCountsQueryKey],
-    invalidate: async (queryClient) => {
-      await invalidateProductsAndCounts(queryClient);
-    },
-    queuedMessage: 'Product creation queued in runtime queue.',
-    processedMessage: 'Queued product creation completed.',
-    errorMessage: 'Failed to create product',
-  });
-}
-
-export function useUpdateProductMutation(): UseMutationResult<
-  ProductWithImages | null,
-  Error,
-  IdDataDto<Partial<ProductWithImages> | FormData> & { originalSku?: string | null },
-  unknown
-  > {
-  const parseUpdateError = async (response: Response): Promise<string> => {
-    const errorData = (await response.json().catch(() => ({}))) as {
-      error?: string;
-      details?: unknown;
-    };
-    let message = errorData.error || 'Failed to update product';
-    if (Array.isArray(errorData.details) && errorData.details.length > 0) {
-      const detailMessages = errorData.details
-        .slice(0, 3)
-        .map((d: { field?: unknown; message?: unknown }) => {
-          const field = typeof d.field === 'string' && d.field ? d.field : 'field';
-          const msg = typeof d.message === 'string' && d.message ? d.message : 'invalid';
-          return `${field}: ${msg}`;
-        })
-        .join(', ');
-      if (detailMessages) message = `${message} (${detailMessages})`;
-    }
-    return message;
-  };
-
-  const resolveProductIdBySku = async (originalSku?: string | null): Promise<string | null> => {
-    const normalizedSku = typeof originalSku === 'string' ? originalSku.trim().toUpperCase() : '';
-    if (!normalizedSku) return null;
-
-    const products = await api
-      .get<
-        ProductWithImages[]
-      >(`/api/v2/products?sku=${encodeURIComponent(normalizedSku)}`, { cache: 'no-store', logError: false })
-      .catch(() => null);
-
-    if (!products) return null;
-
-    const exactMatches = products.filter(
-      (product: ProductWithImages): boolean =>
-        typeof product.sku === 'string' && product.sku.trim().toUpperCase() === normalizedSku
-    );
-
-    return exactMatches.length === 1 ? exactMatches[0]!.id : null;
-  };
-
-  return useOfflineMutation(
-    async ({
-      id,
-      data,
-      originalSku,
-    }: IdDataDto<Partial<ProductWithImages> | FormData> & {
-      originalSku?: string | null;
-    }): Promise<ProductWithImages> => {
-      if (data instanceof FormData) {
-        const putProductFormData = async (
-          targetId: string,
-          formData: FormData
-        ): Promise<Response> => {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), PRODUCT_UPDATE_FORM_TIMEOUT_MS);
-          try {
-            return await fetch(`/api/v2/products/${targetId}`, {
-              method: 'PUT',
-              body: formData,
-              headers: withCsrfHeaders(),
-              credentials: 'same-origin',
-              signal: controller.signal,
-            });
-          } catch (error) {
-            logClientError(error);
-            if (controller.signal.aborted) {
-              throw new Error(`Request timeout after ${PRODUCT_UPDATE_FORM_TIMEOUT_MS}ms`, {
-                cause: error,
-              });
-            }
-            throw error;
-          } finally {
-            clearTimeout(timeoutId);
-          }
-        };
-
-        let targetId = id;
-        let response = await putProductFormData(targetId, data);
-
-        if (response.status === 404) {
-          const resolvedId = await resolveProductIdBySku(originalSku);
-          if (resolvedId && resolvedId !== targetId) {
-            targetId = resolvedId;
-            response = await putProductFormData(targetId, data);
-          }
-        }
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw notFoundError(
-              'Product not found. It may have been moved or deleted. Refresh the product list and try again.'
-            );
-          }
-          throw badRequestError(await parseUpdateError(response));
-        }
-        return response.json() as Promise<ProductWithImages>;
-      }
-      return updateProduct(id, data);
-    },
-    {
-      queryKey: productsListsQueryKey,
-      meta: {
-        source: 'products.hooks.useUpdateProductMutation',
-        operation: 'update',
-        resource: 'products',
-        domain: 'products',
-        tags: ['products', 'update'],
-      },
-      extraInvalidateKeys: (variables: {
-        id: string;
-        data: Partial<ProductWithImages> | FormData;
-        originalSku?: string | null;
-      }) => [productsCountsQueryKey, getProductDetailQueryKey(variables.id)],
-      invalidate: (queryClient, savedProduct) => {
-        if (!savedProduct) return;
-        // Synchronously patch the detail caches
-        queryClient.setQueryData(
-          getProductDetailQueryKey(savedProduct.id),
-          (old: ProductWithImages | undefined) => (old ? { ...old, ...savedProduct } : savedProduct)
-        );
-        queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
-        // Patch lists in the background
-        setTimeout(() => {
-          queryClient.setQueriesData(
-            { queryKey: QUERY_KEYS.products.lists() },
-            (old: ProductListCacheValue) => patchProductListCacheValue(old, savedProduct)
-          );
-        }, 0);
-
-        refreshUpdatedProductCaches(queryClient, savedProduct);
-      },
-      queuedMessage: 'Product update queued in runtime queue.',
-      processedMessage: 'Queued product update completed.',
-      errorMessage: 'Failed to update product',
-      onQueued: (variables: {
-        id: string;
-        data: Partial<ProductWithImages> | FormData;
-        originalSku?: string | null;
-      }) => addQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
-      onProcessed: (variables: {
-        id: string;
-        data: Partial<ProductWithImages> | FormData;
-        originalSku?: string | null;
-      }) => removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
-      onFailed: (variables: {
-        id: string;
-        data: Partial<ProductWithImages> | FormData;
-        originalSku?: string | null;
-      }) => removeQueuedProductSource(variables.id, PRODUCT_UPDATE_QUEUE_SOURCE),
-    }
-  );
-}
-
-export function useBulkDeleteProductsMutation(): UseMutationResult<
-  { success: boolean } | null,
-  Error,
-  string[],
-  unknown
-  > {
-  return useOfflineMutation(
-    async (ids: string[]): Promise<{ success: boolean }> => {
-      const responses = await Promise.all(ids.map((id: string) => deleteProduct(id)));
-      if (responses.some((r: { success: boolean }) => !r.success)) {
-        throw operationFailedError('Failed to delete some products');
-      }
-      return { success: true };
-    },
-    {
-      queryKey: productsAllQueryKey,
-      meta: {
-        source: 'products.hooks.useBulkDeleteProductsMutation',
-        operation: 'delete',
-        resource: 'products.bulk',
-        domain: 'products',
-        tags: ['products', 'bulk-delete'],
-      },
-      extraInvalidateKeys: [productsCountsQueryKey],
-      queuedMessage: 'Product deletion queued in runtime queue.',
-      processedMessage: 'Queued product deletion completed.',
-      errorMessage: 'Failed to delete some products',
-      onQueued: (ids: string[]) =>
-        ids.forEach((id: string) => addQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
-      onProcessed: (ids: string[]) =>
-        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
-      onFailed: (ids: string[]) =>
-        ids.forEach((id: string) => removeQueuedProductSource(id, PRODUCT_DELETE_QUEUE_SOURCE)),
-    }
-  );
 }
 
 // --- Composite Hook ---
@@ -440,7 +131,7 @@ export function useProductData({
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
   const hasInitialized = useRef(false);
-  const [filtersInitialized, setFiltersInitialized] = useState(!preferencesLoaded);
+  const [filtersInitialized, setFiltersInitialized] = useState(true);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -478,13 +169,7 @@ export function useProductData({
     return () => clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    if (!preferencesLoaded) {
-      setFiltersInitialized(false);
-    }
-  }, [preferencesLoaded]);
-
-  const queriesEnabled = preferencesLoaded && filtersInitialized;
+  const queriesEnabled = filtersInitialized;
 
   const filters: UseProductsFilters = useMemo(
     () => ({
@@ -535,6 +220,7 @@ export function useProductData({
 
   const productsWithCountQuery = useProductsWithCount(filters, {
     enabled: queriesEnabled,
+    prefetchNextPage: page > 1,
   });
   const loadError = useMemo((): Error | null => {
     const error = productsWithCountQuery.error;

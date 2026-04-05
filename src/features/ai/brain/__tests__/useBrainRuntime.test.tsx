@@ -13,7 +13,7 @@ import {
   useUpdateSetting,
   useUpdateSettingsBulk,
 } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 vi.mock('../context/useBrainDerivedState', () => ({
   useBrainDerivedState: vi.fn(),

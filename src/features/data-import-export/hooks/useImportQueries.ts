@@ -1,46 +1,12 @@
-'use client';
-
-import type {
-  BaseActiveTemplatePreferencePayload,
-  BaseImportInventoriesPayload,
-  BaseImportInventoriesResponse,
-  BaseImportListPayload,
-  BaseImportListResponse,
-  BaseImportParametersClearResponse,
-  BaseImportParametersPayload,
-  BaseImportParametersResponse,
-  BaseImportWarehousesPayload,
-  BaseImportWarehousesResponse,
-  BaseActiveTemplatePreferenceResponse,
-  BaseDefaultConnectionPreferencePayload,
-  BaseDefaultConnectionPreferenceResponse,
-  BaseDefaultInventoryPreferencePayload,
-  BaseDefaultInventoryPreferenceResponse,
-  BaseImageRetryPresetsPayload,
-  BaseImageRetryPresetsResponse,
-  BaseSampleProductPayload,
-  BaseSampleProductResponse,
-  BaseStockFallbackPreferencePayload,
-  BaseStockFallbackPreferenceResponse,
-  CatalogOption as CatalogRecord,
-  ImportExportTemplateCreateInput,
-  BaseImportRunDetailResponse,
-  BaseImportRunResumePayload,
-  BaseImportRunStartPayload,
-  BaseImportStartResponse,
-  BaseImportItemStatus,
-  ImportParameterCacheResponse,
-  BaseInventory,
-  IntegrationWithConnections,
-  ImageRetryPreset,
-  BaseImportStartResponse as ImportResponse,
-  IntegrationTemplate as Template,
-} from '@/shared/contracts/integrations';
-import type {
-  ProductParameter,
-  ProductSimpleParameter,
-} from '@/shared/contracts/products';
-import type { DeleteResponse, ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
+import type { BaseActiveTemplatePreferencePayload, BaseActiveTemplatePreferenceResponse, BaseDefaultConnectionPreferencePayload, BaseDefaultConnectionPreferenceResponse, BaseDefaultInventoryPreferencePayload, BaseDefaultInventoryPreferenceResponse, BaseImageRetryPresetsPayload, BaseImageRetryPresetsResponse, BaseSampleProductPayload, BaseSampleProductResponse, BaseStockFallbackPreferencePayload, BaseStockFallbackPreferenceResponse } from '@/shared/contracts/integrations/preferences';
+import type { BaseImportInventoriesPayload, BaseImportInventoriesResponse, BaseImportListPayload, BaseImportListResponse, BaseImportParametersClearResponse, BaseImportParametersPayload, BaseImportParametersResponse, BaseImportWarehousesPayload, BaseImportWarehousesResponse, CatalogOption as CatalogRecord, ImportExportTemplateCreateInput } from '@/shared/contracts/integrations/import-export';
+import type { BaseImportRunDetailResponse, BaseImportRunResumePayload, BaseImportRunStartPayload, BaseImportStartResponse, BaseImportItemStatus, ImportParameterCacheResponse, BaseInventory, BaseImportStartResponse as ImportResponse } from '@/shared/contracts/integrations/base-com';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import type { IntegrationTemplate as Template } from '@/shared/contracts/integrations';
+import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
+import type { DeleteResponse } from '@/shared/contracts/ui/api';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,

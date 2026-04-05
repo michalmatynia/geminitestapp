@@ -3,12 +3,14 @@
 import { Plus } from 'lucide-react';
 import React from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Button, Input, Alert, Tag, MetadataItem } from '@/shared/ui';
+import { Button, Input, Alert } from '@/shared/ui/primitives.public';
+import { Tag } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
-import { formatFileSize } from '@/shared/utils';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
+import { formatFileSize } from '@/shared/utils/formatting';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 import { useAsset3DForm } from '../hooks/useAsset3DForm';

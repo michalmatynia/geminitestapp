@@ -14,7 +14,7 @@ vi.mock('@/features/integrations/context/CategoryMapperContext', () => ({
   useCategoryMapperData: mocks.useCategoryMapperData,
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/primitives.public', () => ({
   Label: ({
     children,
     className,
@@ -22,6 +22,9 @@ vi.mock('@/shared/ui', () => ({
     children: React.ReactNode;
     className?: string;
   }) => <label className={className}>{children}</label>,
+}));
+
+vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   SelectSimple: ({
     value,
     onValueChange,

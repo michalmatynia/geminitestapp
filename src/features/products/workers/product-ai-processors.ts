@@ -37,7 +37,6 @@ import {
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
 // OpenAI-specific request body limits (~20 MB hard cap from the API).
 // These constants are only applied when the resolved model vendor is 'openai'.
 const OPENAI_MAX_IMAGES = 10;

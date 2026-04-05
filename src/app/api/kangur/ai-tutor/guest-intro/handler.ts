@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { extractClientIp } from '@/features/auth/server';
 import { registerKangurGuestAiTutorIntroAppearance } from '@/features/kangur/server/guest-ai-tutor-intro';
 import { readKangurLearnerSession } from '@/features/kangur/services/kangur-learner-session';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
 import { readTolerantServerAuthSession } from '@/features/auth/server';
 

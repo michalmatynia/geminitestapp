@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
-import {
-  bulkCategoryMappingRequestSchema,
-  type MarketplaceBulkUpsertResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { bulkCategoryMappingRequestSchema } from '@/shared/contracts/integrations/base-com';
+import { type MarketplaceBulkUpsertResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 /**

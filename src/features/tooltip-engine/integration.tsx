@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { DocumentationModuleId } from '@/shared/contracts/documentation';
@@ -7,7 +5,7 @@ import type { DocumentationModuleId } from '@/shared/contracts/documentation';
 import { useDocsTooltipsSetting } from './docs-tooltip-settings';
 import { DocumentationTooltip } from './DocumentationTooltip';
 import { DocumentationTooltipEnhancer } from './DocumentationTooltipEnhancer';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
 
 type CreateDocsTooltipIntegrationConfig = {
   moduleId: DocumentationModuleId;

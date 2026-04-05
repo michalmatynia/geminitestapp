@@ -4,7 +4,7 @@ import { Globe } from 'lucide-react';
 import React from 'react';
 
 import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
-import { Input, Label } from '@/shared/ui';
+import { Input, Label } from '@/shared/ui/primitives.public';
 
 export function PageSeoTabContent(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();

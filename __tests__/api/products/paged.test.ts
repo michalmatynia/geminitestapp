@@ -3,8 +3,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Stub documentation modules required by product filter imports.
 vi.mock('@/shared/contracts/documentation', () => ({ DOCUMENTATION_MODULE_IDS: {} }));
-vi.mock('@/shared/lib/documentation', () => ({
-  DOCUMENTATION_MODULE_IDS: {},
+vi.mock('@/shared/lib/documentation/catalogs/ai-paths', () => ({
   AI_PATHS_TOOLTIP_CATALOG: [],
 }));
 

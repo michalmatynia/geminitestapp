@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import {

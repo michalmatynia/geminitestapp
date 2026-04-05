@@ -1,8 +1,9 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import {
+  GenerationToolbarDefaultsSectionRuntimeProvider,
   useGenerationToolbarAutoScalerSectionRuntime,
   useGenerationToolbarCenterSectionRuntime,
   useGenerationToolbarCropSectionRuntime,
@@ -76,5 +77,22 @@ describe('GenerationToolbar section runtime contexts', () => {
     expect(() => render(<AutoScalerRuntimeConsumer />)).toThrow(
       'useGenerationToolbarAutoScalerSectionRuntime must be used within its provider'
     );
+  });
+
+  it('provides defaults runtime through the shared provider path', () => {
+    render(
+      <GenerationToolbarDefaultsSectionRuntimeProvider
+        value={{
+          imageCount: '2',
+          imageCountOptions: [{ label: 'Two', value: '2' }],
+          model: 'gpt-image-1',
+          onImageCountChange: () => {},
+        }}
+      >
+        <DefaultsRuntimeConsumer />
+      </GenerationToolbarDefaultsSectionRuntimeProvider>
+    );
+
+    expect(screen.getByText('ok')).toBeInTheDocument();
   });
 });

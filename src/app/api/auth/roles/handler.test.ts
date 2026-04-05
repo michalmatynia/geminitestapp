@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 
 const {
@@ -24,6 +24,14 @@ const {
 
 vi.mock('@/features/auth/server', () => ({
   auth: authMock,
+  getAuthRoles: getAuthRolesMock,
+  getAuthPermissions: getAuthPermissionsMock,
+  getAuthUserRoles: getAuthUserRolesMock,
+  getAuthDefaultRoleId: getAuthDefaultRoleIdMock,
+  invalidateAuthAccessCache: invalidateAuthAccessCacheMock,
+  AUTH_SETTINGS_KEYS: {
+    userRoles: 'auth_user_roles',
+  },
 }));
 
 vi.mock('@/features/auth/services/auth-access', () => ({

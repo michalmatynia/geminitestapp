@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
-import KangurRewardBreakdownChips from '@/features/kangur/ui/components/KangurRewardBreakdownChips';
+import KangurRewardBreakdownChips from '@/features/kangur/ui/components/game-runtime/KangurRewardBreakdownChips';
 import {
   KangurButton,
   KangurDisplayEmoji,

@@ -14,6 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn as cpSpawn, spawnSync } from "node:child_process";
+import { setTimeout } from "node:timers";
 
 const MODELS = (
   process.env.MODEL_CHAIN ||

@@ -4,12 +4,9 @@ import { z } from 'zod';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurLessonSectionRepository } from '@/features/kangur/services/kangur-lesson-section-repository';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
-import {
-  kangurLessonAgeGroupSchema,
-  kangurLessonSubjectSchema,
-} from '@kangur/contracts';
+import { kangurLessonAgeGroupSchema, kangurLessonSubjectSchema } from '@kangur/contracts/kangur-lesson-constants';
 import { kangurLessonSectionsSchema } from '@/shared/contracts/kangur-lesson-sections';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema, optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { clearKangurLessonsCatalogCache } from '../lessons-catalog/handler';

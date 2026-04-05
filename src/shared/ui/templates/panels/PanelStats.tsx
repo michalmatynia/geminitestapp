@@ -1,9 +1,9 @@
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 
-import { PanelStat } from '@/shared/contracts/ui';
+import { PanelStat } from '@/shared/contracts/ui/panels';
 import { Card } from '@/shared/ui/card';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface PanelStatsProps {
   stats: PanelStat[];

@@ -208,4 +208,22 @@ describe('workspace-persistence: core lifecycle', () => {
     });
     expect(delay).toBeLessThanOrEqual(500);
   });
+
+  it('falls back to sane retry defaults when attempt and options are invalid', () => {
+    const delay = computeCaseResolverConflictRetryDelayMs(
+      0,
+      {
+        baseDelayMs: -10,
+        maxDelayMs: -20,
+        jitterMs: -5,
+      },
+      {
+        baseDelayMs: 200,
+        maxDelayMs: 400,
+        jitterMs: 0,
+      }
+    );
+
+    expect(delay).toBe(200);
+  });
 });

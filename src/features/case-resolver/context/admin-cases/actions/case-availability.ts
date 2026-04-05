@@ -4,7 +4,8 @@ import {
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '@/features/case-resolver/workspace-persistence';
-import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import {
   CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS,

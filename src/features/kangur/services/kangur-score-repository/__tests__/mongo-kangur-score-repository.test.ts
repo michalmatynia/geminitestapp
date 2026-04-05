@@ -154,4 +154,28 @@ describe('mongoKangurScoreRepository', () => {
       $or: [{ subject: 'english' }, { operation: { $regex: /^english_/i } }],
     });
   });
+
+  it('combines direct filters with subject-aware score filtering', async () => {
+    toArrayMock.mockResolvedValue([]);
+
+    await mongoKangurScoreRepository.listScores({
+      sort: '-score',
+      limit: 10,
+      filters: {
+        subject: 'music',
+        player_name: 'Ada',
+        operation: 'music_interval',
+        created_by: 'parent-1',
+        learner_id: 'learner-1',
+      },
+    });
+
+    expect(findMock).toHaveBeenCalledWith({
+      player_name: 'Ada',
+      operation: 'music_interval',
+      created_by: 'parent-1',
+      learner_id: 'learner-1',
+      $or: [{ subject: 'music' }, { operation: { $regex: /^music_/i } }],
+    });
+  });
 });

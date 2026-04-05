@@ -140,6 +140,41 @@ describe('playwright storage state sanitization', () => {
     });
   });
 
+  it('preserves leading-dot cookie domains from stored browser sessions', () => {
+    expect(
+      sanitizePlaywrightStorageState(
+        {
+          cookies: [
+            {
+              name: 'trd_at',
+              value: 'token',
+              domain: '.tradera.com',
+              path: '/',
+              secure: true,
+              httpOnly: true,
+              sameSite: 'Lax',
+            },
+          ],
+          origins: [],
+        },
+        { fallbackOrigin: 'https://www.tradera.com/en/selling/new' }
+      )
+    ).toEqual({
+      cookies: [
+        {
+          name: 'trd_at',
+          value: 'token',
+          domain: '.tradera.com',
+          path: '/',
+          secure: true,
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+      ],
+      origins: [],
+    });
+  });
+
   it('drops secure-prefixed storage-state cookies when fallback origin is localhost http', () => {
     expect(
       sanitizePlaywrightStorageState(

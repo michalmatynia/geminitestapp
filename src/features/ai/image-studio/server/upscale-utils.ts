@@ -2,17 +2,8 @@ import { createHash } from 'crypto';
 
 import sharp from 'sharp';
 
-import {
-  IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_PIXELS,
-  IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX,
-  IMAGE_STUDIO_UPSCALE_MAX_SCALE,
-  IMAGE_STUDIO_UPSCALE_MAX_SOURCE_PIXELS,
-  IMAGE_STUDIO_UPSCALE_MAX_SOURCE_SIDE_PX,
-  IMAGE_STUDIO_UPSCALE_MIN_SCALE,
-  type ImageStudioUpscaleMode,
-  type ImageStudioUpscaleStrategy,
-  type ImageStudioUpscaleSmoothingQuality,
-} from '@/shared/contracts/image-studio';
+import { IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_PIXELS, IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX, IMAGE_STUDIO_UPSCALE_MAX_SCALE, IMAGE_STUDIO_UPSCALE_MAX_SOURCE_PIXELS, IMAGE_STUDIO_UPSCALE_MAX_SOURCE_SIDE_PX, IMAGE_STUDIO_UPSCALE_MIN_SCALE } from '@/shared/contracts/image-studio-transform-contracts';
+import { type ImageStudioUpscaleMode, type ImageStudioUpscaleStrategy, type ImageStudioUpscaleSmoothingQuality } from '@/shared/contracts/image-studio';
 import type { ImageStudioSourceLimitValidation } from './types';
 
 export const normalizeUpscaleScale = (scale: number): number => {
@@ -117,16 +108,16 @@ export const resolveUpscaleOutputDimensions = (
   return { width, height };
 };
 
-export const resolveUpscaleOutputDimensionsByResolution = (
-  sourceWidth: number,
-  sourceHeight: number,
-  targetWidth: number,
-  targetHeight: number
-): { width: number; height: number; scale: number } => {
+const assertValidUpscaleSourceDimensions = (sourceWidth: number, sourceHeight: number): void => {
   if (!(sourceWidth > 0 && sourceHeight > 0)) {
     throw new Error('Source image dimensions are invalid.');
   }
+};
 
+const resolveTargetUpscaleDimensions = (
+  targetWidth: number,
+  targetHeight: number
+): { width: number; height: number } => {
   if (!(targetWidth > 0 && targetHeight > 0)) {
     throw new Error('Target resolution is invalid.');
   }
@@ -136,7 +127,15 @@ export const resolveUpscaleOutputDimensionsByResolution = (
   if (!validateUpscaleOutputDimensions(width, height)) {
     throw new Error('Upscaled output exceeds upscale processing limits.');
   }
+  return { width, height };
+};
 
+const assertTargetResolutionUpscalesSource = (
+  sourceWidth: number,
+  sourceHeight: number,
+  width: number,
+  height: number
+): void => {
   if (
     width < sourceWidth ||
     height < sourceHeight ||
@@ -146,6 +145,17 @@ export const resolveUpscaleOutputDimensionsByResolution = (
       'Target resolution must upscale at least one dimension and not reduce source dimensions.'
     );
   }
+};
+
+export const resolveUpscaleOutputDimensionsByResolution = (
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number
+): { width: number; height: number; scale: number } => {
+  assertValidUpscaleSourceDimensions(sourceWidth, sourceHeight);
+  const { width, height } = resolveTargetUpscaleDimensions(targetWidth, targetHeight);
+  assertTargetResolutionUpscalesSource(sourceWidth, sourceHeight, width, height);
 
   const scale = normalizeUpscaleScale(Math.max(width / sourceWidth, height / sourceHeight));
   return { width, height, scale };
@@ -172,6 +182,30 @@ export const deriveUpscaleScaleFromOutputDimensions = (input: {
   );
 };
 
+export const resolveUpscaleExecutionDimensions = (input: {
+  sourceWidth: number;
+  sourceHeight: number;
+  strategy: ImageStudioUpscaleStrategy;
+  scale?: number;
+  targetWidth?: number;
+  targetHeight?: number;
+}): { width: number; height: number; scale: number } =>
+  input.strategy === 'target_resolution'
+    ? resolveUpscaleOutputDimensionsByResolution(
+        input.sourceWidth,
+        input.sourceHeight,
+        input.targetWidth ?? Number.NaN,
+        input.targetHeight ?? Number.NaN
+      )
+    : {
+        ...resolveUpscaleOutputDimensions(
+          input.sourceWidth,
+          input.sourceHeight,
+          input.scale ?? Number.NaN
+        ),
+        scale: normalizeUpscaleScale(input.scale ?? Number.NaN),
+      };
+
 export async function upscaleImageWithSharp(input: {
   sourceBuffer: Buffer;
   sourceWidth: number;
@@ -189,22 +223,7 @@ export async function upscaleImageWithSharp(input: {
   scale: number;
   strategy: ImageStudioUpscaleStrategy;
 }> {
-  const resolved =
-    input.strategy === 'target_resolution'
-      ? resolveUpscaleOutputDimensionsByResolution(
-        input.sourceWidth,
-        input.sourceHeight,
-        input.targetWidth ?? Number.NaN,
-        input.targetHeight ?? Number.NaN
-      )
-      : {
-        ...resolveUpscaleOutputDimensions(
-          input.sourceWidth,
-          input.sourceHeight,
-          input.scale ?? Number.NaN
-        ),
-        scale: normalizeUpscaleScale(input.scale ?? Number.NaN),
-      };
+  const resolved = resolveUpscaleExecutionDimensions(input);
   const { width, height } = resolved;
   const outputBuffer = await sharp(input.sourceBuffer)
     .resize({

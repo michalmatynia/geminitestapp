@@ -8,10 +8,12 @@ import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider'
 
 // Mock next/navigation
 const mockPush = vi.fn();
+const mockPrefetch = vi.fn();
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(() => '/admin'),
   useRouter: vi.fn(() => ({
     push: mockPush,
+    prefetch: mockPrefetch,
   })),
 }));
 
@@ -36,23 +38,8 @@ const renderMenu = () => {
 };
 
 describe('Menu Component', () => {
-  const originalLocation = window.location;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.defineProperty(window, 'location', {
-      value: { ...originalLocation, assign: vi.fn() },
-      configurable: true,
-      writable: true,
-    });
-  });
-
-  afterAll(() => {
-    Object.defineProperty(window, 'location', {
-      value: originalLocation,
-      configurable: true,
-      writable: true,
-    });
   });
 
   it('renders main menu categories', () => {
@@ -113,5 +100,19 @@ describe('Menu Component', () => {
     fireEvent.click(systemTrigger);
     const systemLogsLink = await screen.findByRole('link', { name: /System Logs/i });
     expect(systemLogsLink).toHaveAttribute('href', '/admin/system/logs');
+  });
+
+  it('prefetches admin links on intent without prefetching the whole menu upfront', async () => {
+    renderMenu();
+
+    const workspaceTrigger = screen.getByText('Workspace');
+    fireEvent.click(workspaceTrigger);
+
+    const filesLink = await screen.findByRole('link', { name: /Files/i });
+    fireEvent.mouseEnter(filesLink);
+    fireEvent.focus(filesLink);
+
+    expect(mockPrefetch).toHaveBeenCalledWith('/admin/files');
+    expect(mockPrefetch).toHaveBeenCalledTimes(1);
   });
 });

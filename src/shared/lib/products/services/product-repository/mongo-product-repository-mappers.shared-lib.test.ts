@@ -16,6 +16,7 @@ describe('mongo product repository mappers shared-lib coverage', () => {
       asProductDocument({
         _id: 'product-1',
         id: 'product-1',
+        importSource: 'base',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z'),
         name_en: 'Name EN',
@@ -52,6 +53,7 @@ describe('mongo product repository mappers shared-lib coverage', () => {
 
     expect(result.name).toEqual({ en: 'Name EN', pl: null, de: 'Name DE' });
     expect(result.description).toEqual({ en: 'Desc EN', pl: 'Desc PL', de: null });
+    expect(result.importSource).toBe('base');
     expect(result.catalogId).toBe('catalog-mentios');
     expect(result.categoryId).toBe('category-1');
     expect(result.parameters).toEqual([
@@ -63,10 +65,47 @@ describe('mongo product repository mappers shared-lib coverage', () => {
     ]);
   });
 
+  it('preserves a normalized embedded category on both response and base mappers', () => {
+    const doc = asProductDocument({
+      _id: 'product-category-1',
+      id: 'product-category-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      published: true,
+      categoryId: 'category-1',
+      category: {
+        id: 'category-1',
+        name_en: 'Keychains',
+        catalogId: 'catalog-1',
+        color: null,
+        parentId: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      },
+    });
+
+    const response = toProductResponse(doc);
+    const base = toProductBase(doc);
+
+    expect(response.category).toEqual({
+      id: 'category-1',
+      name: 'Keychains',
+      name_en: 'Keychains',
+      catalogId: 'catalog-1',
+      color: null,
+      parentId: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-02T00:00:00.000Z',
+    });
+    expect(base.category).toEqual(response.category);
+  });
+
   it('maps canonical tags, producers, note ids, and default images through toProductBase', () => {
     const result = toProductBase({
       _id: 'product-base-1',
       id: 'product-base-1',
+      importSource: 'base',
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       catalogId: 'catalog-1',
@@ -91,6 +130,7 @@ describe('mongo product repository mappers shared-lib coverage', () => {
     } as ProductDocument);
 
     expect(result.noteIds).toEqual(['note-1', 'note-2']);
+    expect(result.importSource).toBe('base');
     expect(result.images).toEqual([]);
     expect(result.tags).toEqual([
       {

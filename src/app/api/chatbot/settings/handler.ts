@@ -9,7 +9,7 @@ import {
   chatbotSettingsQuerySchema,
   chatbotSettingsSaveRequestSchema,
 } from '@/shared/contracts/chatbot';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logger } from '@/shared/utils/logger';

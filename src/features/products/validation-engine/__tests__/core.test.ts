@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProductCategory, ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import {
   buildLatestFieldMirrorSemanticState,
@@ -353,6 +354,27 @@ describe('buildFieldIssues', () => {
       replacementAutoApply: false,
       replacementValue: 'SKU-101',
       replacementFields: ['sku'],
+    });
+
+    expect(
+      isPatternConfiguredForFormatterAutoApply({
+        pattern,
+        fieldName: 'sku',
+        validationScope: 'product_create',
+      })
+    ).toBe(false);
+  });
+
+  it('rejects formatter auto-apply when the field target does not match the pattern target', () => {
+    const pattern = makePattern({
+      regex: '^AUTO$',
+      target: 'name',
+      replacementEnabled: true,
+      replacementAutoApply: true,
+      replacementValue: 'Normalized name',
+      replacementFields: ['name_en'],
+      replacementAppliesToScopes: ['product_create'],
+      appliesToScopes: ['product_create'],
     });
 
     expect(

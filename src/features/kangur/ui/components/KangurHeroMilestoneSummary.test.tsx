@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import KangurHeroMilestoneSummary from '@/features/kangur/ui/components/KangurHeroMilestoneSummary';
 import { createDefaultKangurProgressState } from '@/features/kangur/shared/contracts/kangur';
 
-vi.mock('@/features/kangur/ui/components/KangurBadgeTrackHighlights', () => ({
+vi.mock('@/features/kangur/ui/components/badge-track/KangurBadgeTrackHighlights', () => ({
   default: ({ dataTestIdPrefix }: { dataTestIdPrefix?: string }) => (
     <div data-testid={`${dataTestIdPrefix ?? 'badge-track'}-mock`}>badge-track-highlights</div>
   ),

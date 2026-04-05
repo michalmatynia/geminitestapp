@@ -214,6 +214,46 @@ export const buildIncomingRelationsMap = (
   return incoming;
 };
 
+const applyNoteSearchScopeFilter = (
+  filter: Filter<NoteDocument>,
+  search: string,
+  searchScope: NoteFilters['searchScope']
+): void => {
+  const regex = { $regex: search, $options: 'i' };
+  if (searchScope === 'both') {
+    filter.$or = [{ title: regex }, { content: regex }];
+    return;
+  }
+  if (searchScope === 'title') {
+    filter['title'] = regex;
+    return;
+  }
+  if (searchScope === 'content') {
+    filter['content'] = regex;
+  }
+};
+
+const applyBooleanNoteFilter = (
+  filter: Filter<NoteDocument>,
+  key: 'isPinned' | 'isArchived' | 'isFavorite',
+  value: unknown
+): void => {
+  if (typeof value === 'boolean') {
+    filter[key] = value;
+  }
+};
+
+const applyEmbeddedIdFilter = (
+  filter: Filter<NoteDocument>,
+  key: 'tags' | 'categories',
+  embeddedKey: 'tagId' | 'categoryId',
+  values: string[] | undefined
+): void => {
+  if (values && values.length > 0) {
+    filter[key] = { $elemMatch: { [embeddedKey]: { $in: values } } };
+  }
+};
+
 export const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
   const filter: Filter<NoteDocument> = {};
   if (filters['notebookId']) {
@@ -221,39 +261,14 @@ export const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocumen
   }
 
   if (filters['search']) {
-    const regex = { $regex: filters['search'], $options: 'i' };
-    const searchScope = filters['searchScope'] || 'both';
-
-    if (searchScope === 'both') {
-      filter.$or = [{ title: regex }, { content: regex }];
-    } else if (searchScope === 'title') {
-      filter['title'] = regex;
-    } else if (searchScope === 'content') {
-      filter['content'] = regex;
-    }
+    applyNoteSearchScopeFilter(filter, filters['search'], filters['searchScope'] || 'both');
   }
 
-  if (typeof filters['isPinned'] === 'boolean') {
-    filter['isPinned'] = filters['isPinned'];
-  }
-
-  if (typeof filters['isArchived'] === 'boolean') {
-    filter['isArchived'] = filters['isArchived'];
-  }
-
-  if (typeof filters['isFavorite'] === 'boolean') {
-    filter['isFavorite'] = filters['isFavorite'];
-  }
-
-  if (filters['tagIds'] && filters['tagIds'].length > 0) {
-    filter['tags'] = { $elemMatch: { tagId: { $in: filters['tagIds'] } } };
-  }
-
-  if (filters['categoryIds'] && filters['categoryIds'].length > 0) {
-    filter['categories'] = {
-      $elemMatch: { categoryId: { $in: filters['categoryIds'] } },
-    };
-  }
+  applyBooleanNoteFilter(filter, 'isPinned', filters['isPinned']);
+  applyBooleanNoteFilter(filter, 'isArchived', filters['isArchived']);
+  applyBooleanNoteFilter(filter, 'isFavorite', filters['isFavorite']);
+  applyEmbeddedIdFilter(filter, 'tags', 'tagId', filters['tagIds']);
+  applyEmbeddedIdFilter(filter, 'categories', 'categoryId', filters['categoryIds']);
 
   return filter;
 };

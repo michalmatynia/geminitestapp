@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
@@ -21,7 +23,7 @@ export const findAuthUserByEmail = async (email: string) => {
   }
 };
 
-export const findAuthUserById = async (userId: string) => {
+export const findAuthUserById = cache(async (userId: string) => {
   try {
     return await repoFindById(userId);
   } catch (error) {
@@ -33,4 +35,4 @@ export const findAuthUserById = async (userId: string) => {
     });
     throw error;
   }
-};
+});

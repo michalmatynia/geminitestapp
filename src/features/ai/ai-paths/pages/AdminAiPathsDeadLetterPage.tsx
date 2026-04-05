@@ -4,26 +4,11 @@ import { RefreshCw, AlertCircle, Eye, RotateCcw } from 'lucide-react';
 import { useMemo } from 'react';
 
 import type { AiPathRunEventRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import {
-  Button,
-  Checkbox,
-  DataTable,
-  StandardDataTablePanel,
-  ConfirmModal,
-  FormSection,
-  StatusBadge,
-  Alert,
-  Pagination,
-  EmptyState,
-  MetadataItem,
-  Badge,
-  FilterPanel,
-  Hint,
-  Card,
-  PageLayout,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Checkbox, Alert, Badge, Card } from '@/shared/ui/primitives.public';
+import { DataTable, StatusBadge } from '@/shared/ui/data-display.public';
+import { StandardDataTablePanel, ConfirmModal, FilterPanel } from '@/shared/ui/templates.public';
+import { FormSection, Hint } from '@/shared/ui/forms-and-actions.public';
+import { Pagination, EmptyState, MetadataItem, PageLayout, UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { PAGE_SIZES, calculateNodeStatusSummary, formatTimestamp } from './dead-letter-utils';

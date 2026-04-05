@@ -1,4 +1,5 @@
 'use client';
+
 import { Table as ReactTable, Row } from '@tanstack/react-table';
 import { Trash2, Image as ImageIcon } from 'lucide-react';
 import React, { JSX, memo, useState } from 'react';
@@ -7,9 +8,11 @@ import {
   useBulkDeleteProducts,
   useBulkConvertImagesToBase64,
 } from '@/features/products/hooks/useProductsMutations';
-import { ProductWithImages } from '@/shared/contracts/products';
-import { Button, useToast } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { ProductWithImages } from '@/shared/contracts/products/product';
+import { Button } from '@/shared/ui/button';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
+import { useToast } from '@/shared/ui/toast';
+
 import { logger } from '@/shared/utils/logger';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

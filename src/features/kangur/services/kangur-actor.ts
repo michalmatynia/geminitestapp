@@ -3,7 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 
 import { findAuthUserById, normalizeAuthEmail } from '@/server/auth';
-import type { KangurAuthUser, KangurLearnerProfile } from '@kangur/contracts';
+import type { KangurAuthUser, KangurLearnerProfile } from '@kangur/contracts/kangur';
 import { authError, notFoundError } from '@/features/kangur/shared/errors/app-error';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 
@@ -120,7 +120,7 @@ export const resolveKangurActiveLearner = async (
 
     if (requestedLearnerId) {
       const requestedLearner = await getKangurLearnerById(requestedLearnerId);
-      if (requestedLearner && requestedLearner.ownerUserId === ownerUserId) {
+      if (requestedLearner?.ownerUserId === ownerUserId) {
         return requestedLearner;
       }
     }
@@ -156,12 +156,14 @@ export const resolveKangurActor = async (request?: NextRequest): Promise<KangurA
 
   if (session?.user?.id) {
     const ownerUserId = session.user.id;
-    const ownerRecord = await findAuthUserById(ownerUserId);
+    const [ownerRecord, learners] = await Promise.all([
+      findAuthUserById(ownerUserId),
+      listKangurLearnersByOwner(ownerUserId),
+    ]);
     const ownerEmail = normalizeKangurOwnerEmail(
       ownerRecord?.email ?? (typeof session.user.email === 'string' ? session.user.email : null)
     );
     const ownerName = typeof session.user.name === 'string' ? session.user.name.trim() : null;
-    const learners = await listKangurLearnersByOwner(ownerUserId);
     const activeLearner = pickActiveLearner(learners, requestedLearnerId);
 
     return {

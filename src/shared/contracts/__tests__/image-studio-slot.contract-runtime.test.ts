@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  imageStudioEnsureSlotFromUploadResponseSchema,
-  imageStudioSlotDeleteResponseSchema,
-  imageStudioSlotResponseSchema,
-  imageStudioSlotScreenshotResponseSchema,
-  studioSlotsResponseSchema,
-} from '@/shared/contracts/image-studio';
+import { imageStudioEnsureSlotFromUploadResponseSchema, imageStudioSlotDeleteResponseSchema, imageStudioSlotResponseSchema, imageStudioSlotScreenshotResponseSchema, studioSlotsResponseSchema } from '@/shared/contracts/image-studio/slot';
 
 const sampleSlot = {
   id: 'slot-1',

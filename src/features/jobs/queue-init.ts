@@ -148,6 +148,11 @@ export const initializeQueues = (): void => {
         | (() => void)
         | undefined
     )?.();
+    (
+      (queueModules[16] as Record<string, unknown>)['startFilemakerEmailCampaignSchedulerQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
     if (shouldStartKangurSocial) {
       (
         (queueModules[15] as Record<string, unknown>)['startKangurSocialSchedulerQueue'] as

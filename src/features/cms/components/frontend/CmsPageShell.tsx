@@ -4,7 +4,7 @@ import { CmsMenu } from '@/features/cms/components/frontend/CmsMenu';
 import {
   resolveCmsStorefrontAppearance,
   useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/components/frontend/CmsStorefrontAppearance';
+} from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 

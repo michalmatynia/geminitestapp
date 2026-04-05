@@ -1,5 +1,3 @@
-'use client';
-
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';

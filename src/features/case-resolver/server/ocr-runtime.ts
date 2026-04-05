@@ -2,7 +2,7 @@ import 'server-only';
 
 import path from 'path';
 
-import type { CaseResolverOcrFileKind } from '@/shared/contracts/case-resolver';
+import type { CaseResolverOcrFileKind } from '@/shared/contracts/case-resolver/ocr';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { caseResolverRoot } from '@/shared/lib/files/server-constants';
 

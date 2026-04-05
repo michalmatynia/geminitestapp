@@ -1,8 +1,6 @@
-'use client';
-
-
 import type { CaseSortKey } from '@/features/case-resolver/context/admin-cases/types';
-import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { Dispatch, SetStateAction } from 'react';

@@ -1,6 +1,8 @@
+'use client';
+
 import { useCallback } from 'react';
 
-import { imageStudioCropResponseSchema } from '@/shared/contracts/image-studio';
+import { imageStudioCropResponseSchema } from '@/shared/contracts/image-studio/slot';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

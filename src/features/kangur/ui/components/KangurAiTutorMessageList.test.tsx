@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useEffect, type ReactNode } from 'react';
@@ -11,8 +11,8 @@ import { KangurAiTutorMessageList } from './KangurAiTutorMessageList';
 import {
   KangurAiTutorWidgetStateProvider,
   useKangurAiTutorWidgetState,
-} from './KangurAiTutorWidget.state';
-import { getAssistantMessageFeedbackKey } from './KangurAiTutorWidget.helpers';
+} from './ai-tutor-widget/KangurAiTutorWidget.state';
+import { getAssistantMessageFeedbackKey } from './ai-tutor-widget/KangurAiTutorWidget.helpers';
 
 import type { KangurAiTutorRuntimeMessage as TutorRenderedMessage } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 

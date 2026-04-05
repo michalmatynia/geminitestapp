@@ -2,17 +2,15 @@
 
 import React from 'react';
 
-import type { PatternFormData, ProductValidationLaunchOperator } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationLaunchOperator } from '@/shared/contracts/products/validation';
 import { normalizeProductValidationPatternLaunchScopes } from '@/shared/lib/products/utils/validator-instance-behavior';
 import type { DynamicReplacementSourceMode } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import {
-  Input,
-  MultiSelect,
-  SelectSimple,
-  StatusToggle,
-  FormField,
-  FormSection,
-} from '@/shared/ui';
+import { FormField, FormSection } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { MultiSelect } from '@/shared/ui/multi-select';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { StatusToggle } from '@/shared/ui/status-toggle';
 
 import { PATTERN_SCOPE_OPTIONS } from '../constants';
 import {

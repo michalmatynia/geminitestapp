@@ -1,9 +1,6 @@
-import type {
-  KangurAssignmentSnapshot,
-  KangurLesson,
-  KangurLessonComponentId,
-  KangurProgressState,
-} from '@kangur/contracts';
+import type { KangurAssignmentSnapshot } from '@kangur/contracts/kangur-assignments';
+import type { KangurLesson, KangurProgressState } from '@kangur/contracts/kangur';
+import type { KangurLessonComponentId } from '@kangur/contracts/kangur-lesson-constants';
 
 import { getLocalizedKangurPortableLesson } from './lessons-i18n';
 import { localizeKangurCoreText } from './profile-i18n';

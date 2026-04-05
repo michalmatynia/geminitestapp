@@ -28,7 +28,8 @@ import type {
   ProductSyncRunStats,
   ProductSyncRunStatus,
 } from '@/shared/contracts/product-sync';
-import type { ProductWithImages, UpdateProductInput } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { UpdateProductInput } from '@/shared/contracts/products/io';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

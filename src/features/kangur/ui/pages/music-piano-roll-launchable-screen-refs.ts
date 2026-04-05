@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, useRef, type RefObject } from 'react';
 
 import type { KangurLaunchableGameScreen } from '@/shared/contracts/kangur-games';

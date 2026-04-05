@@ -1,39 +1,48 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import {
-  ListingSettingsProvider,
   useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
-import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal } from '@/shared/ui';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
+import { FormModal } from '@/shared/ui/forms-and-actions.public';
 
-import { BaseListingSettings } from './BaseListingSettings';
-import { ExportLogViewer } from './ExportLogViewer';
+import { ExportLogsPanel } from './ExportLogsPanel';
 import { useListProductForm } from './hooks/useListProductForm';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
+import { IntegrationSpecificListingSettings } from './IntegrationSpecificListingSettings';
+import { ListingSettingsModalProvider } from './ListingSettingsModalProvider';
 import { ListProductModalFormProvider } from './list-product-modal/context/ListProductModalFormContext';
 import {
   ListProductModalViewProvider,
   useListProductModalViewContext,
 } from './list-product-modal/context/ListProductModalViewContext';
+import { resolveConnectedIntegrations } from './integration-selector-options';
 import { IntegrationSelection } from './list-product-modal/IntegrationSelection';
 import { ListProductErrorPanel } from './list-product-modal/ListProductErrorPanel';
-import { TraderaListingSettings } from './TraderaListingSettings';
+import { resolveListProductModalCopy } from './product-listings-copy';
+import {
+  resolveIntegrationDisplayName,
+  resolveProductListingsProductName,
+} from './product-listings-labels';
 
 interface ListProductModalProps extends EntityModalProps<ProductWithImages> {
   initialIntegrationId?: string | null;
   initialConnectionId?: string | null;
+  autoSubmitOnOpen?: boolean;
 }
 
 function ListProductModalContent(): React.JSX.Element {
-  const { product, onClose, onSuccess, hasPresetSelection } = useListProductModalViewContext();
+  const { product, onClose, onSuccess, hasPresetSelection, autoSubmitOnOpen } =
+    useListProductModalViewContext();
   const {
     integrations,
     loadingIntegrations: loading,
     selectedConnectionId,
+    selectedIntegration,
     isBaseComIntegration,
     isTraderaIntegration,
   } = useListingSelection();
@@ -42,25 +51,39 @@ function ListProductModalContent(): React.JSX.Element {
     product.id
   );
 
-  const productName = product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
+  const productName = resolveProductListingsProductName(product);
+  const selectedIntegrationName = resolveIntegrationDisplayName(selectedIntegration?.name);
+  const { modalTitle, saveText } = resolveListProductModalCopy({
+    productName,
+    isBaseComIntegration,
+    isTraderaIntegration,
+    selectedIntegrationName,
+  });
+  const autoSubmitAttemptedRef = useRef(false);
 
-  const integrationsWithConnections = integrations.filter(
-    (i: IntegrationWithConnections) => i.connections.length > 0
-  );
+  const integrationsWithConnections = resolveConnectedIntegrations(integrations);
   const retryImageExport = (preset: ImageRetryPreset): void => {
     void handleImageRetry(preset, onSuccess);
   };
+
+  useEffect(() => {
+    if (!autoSubmitOnOpen || autoSubmitAttemptedRef.current) return;
+    if (loading || !selectedConnectionId) return;
+
+    autoSubmitAttemptedRef.current = true;
+    void handleSubmit(onSuccess);
+  }, [autoSubmitOnOpen, handleSubmit, loading, onSuccess, selectedConnectionId]);
 
   return (
     <FormModal
       open={true}
       onClose={onClose}
-      title={`List Product - ${productName}`}
+      title={modalTitle}
       onSave={() => {
         void handleSubmit(onSuccess);
       }}
       isSaving={submitting}
-      saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Product'}
+      saveText={saveText}
       cancelText='Cancel'
       size='md'
     >
@@ -77,27 +100,13 @@ function ListProductModalContent(): React.JSX.Element {
           {!loading && integrationsWithConnections.length > 0 ? (
             <div className='space-y-4'>
               {hasPresetSelection ? <IntegrationAccountSummary /> : <IntegrationSelection />}
-
-              {isBaseComIntegration && selectedConnectionId && (
-                <div className='pt-4 border-t border-border'>
-                  <BaseListingSettings />
-                </div>
-              )}
-              {isTraderaIntegration && selectedConnectionId && (
-                <div className='pt-4 border-t border-border'>
-                  <TraderaListingSettings />
-                </div>
-              )}
+              <IntegrationSpecificListingSettings />
             </div>
           ) : (
             <IntegrationSelection />
           )}
 
-          {exportLogs.length > 0 && (
-            <div className='mt-4 border-t border pt-4'>
-              <ExportLogViewer />
-            </div>
-          )}
+          <ExportLogsPanel logs={exportLogs} />
         </div>
       </ListProductModalFormProvider>
     </FormModal>
@@ -109,6 +118,7 @@ export function ListProductModal(props: ListProductModalProps): React.JSX.Elemen
     isOpen = true,
     initialIntegrationId,
     initialConnectionId,
+    autoSubmitOnOpen = false,
     item: product,
     onClose,
     onSuccess,
@@ -117,9 +127,9 @@ export function ListProductModal(props: ListProductModalProps): React.JSX.Elemen
   if (!product || !isOpen) return null;
 
   return (
-    <ListingSettingsProvider
-      initialIntegrationId={initialIntegrationId ?? null}
-      initialConnectionId={initialConnectionId ?? null}
+    <ListingSettingsModalProvider
+      initialIntegrationId={initialIntegrationId}
+      initialConnectionId={initialConnectionId}
     >
       <ListProductModalViewProvider
         value={{
@@ -127,11 +137,12 @@ export function ListProductModal(props: ListProductModalProps): React.JSX.Elemen
           onClose,
           onSuccess: onSuccess ?? (() => {}),
           hasPresetSelection: Boolean(initialIntegrationId && initialConnectionId),
+          autoSubmitOnOpen,
         }}
       >
         <ListProductModalContent />
       </ListProductModalViewProvider>
-    </ListingSettingsProvider>
+    </ListingSettingsModalProvider>
   );
 }
 

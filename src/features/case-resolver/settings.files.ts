@@ -5,15 +5,8 @@ import {
   ensureSafeDocumentHtml,
   stripHtmlToPlainText,
   toStorageDocumentValue,
-} from '@/features/document-editor/public';
-import {
-  type CaseResolverDocumentHistoryEntry,
-  type CaseResolverDocumentVersion,
-  type CaseResolverEditorType,
-  type CaseResolverFile,
-  type CaseResolverScanSlot,
-  type CreateCaseResolverFileInput,
-} from '@/shared/contracts/case-resolver';
+} from '@/shared/lib/document-editor/public';
+import { type CaseResolverDocumentHistoryEntry, type CaseResolverDocumentVersion, type CaseResolverEditorType, type CaseResolverFile, type CaseResolverScanSlot, type CreateCaseResolverFileInput } from '@/shared/contracts/case-resolver';
 
 import { sanitizeGraph } from './settings-graph';
 import { DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT } from './settings.constants';

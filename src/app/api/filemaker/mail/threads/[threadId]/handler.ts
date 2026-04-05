@@ -2,15 +2,15 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
 import { notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
-import { requireFilemakerMailAdminSession } from '@/features/filemaker/server/filemaker-mail-access';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
+import { requireFilemakerMailAdminSession } from '@/features/filemaker/server';
 import {
   buildFilemakerMailForwardDraft,
   buildFilemakerMailReplyDraft,
   deleteFilemakerMailThread,
   getFilemakerMailThreadDetail,
   markFilemakerMailThreadRead,
-} from '@/features/filemaker/server/filemaker-mail-service';
+} from '@/features/filemaker/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const filemakerMailThreadPatchSchema = z.object({

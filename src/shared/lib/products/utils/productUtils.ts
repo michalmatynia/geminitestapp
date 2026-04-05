@@ -1,4 +1,4 @@
-import type { ProductRecord } from '@/shared/contracts/products';
+import type { ProductRecord } from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { validateProductCreate } from '@/shared/lib/products/validations';

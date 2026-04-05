@@ -3,18 +3,10 @@
 import React from 'react';
 import { Link2, Plus, Trash2 } from 'lucide-react';
 
-import {
-  Button,
-  Card,
-  EmptyState,
-  FormSection,
-  Input,
-  Label,
-  SelectSimple,
-  SimpleSettingsList,
-  Textarea,
-  useToast,
-} from '@/shared/ui';
+import { Button, Card, Input, Label, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 
 import { SegmentDetailEditor } from '../../components/segment-editor/SegmentDetailEditor';
 import { PromptExploderSegmentsTreeEditor } from '../../components/tree/PromptExploderSegmentsTreeEditor';

@@ -1,8 +1,5 @@
-import type {
-  ProductValidationPattern,
-  ProductValidationPatternFormData as PatternFormData,
-  SequenceGroupView,
-} from '@/shared/contracts/products';
+import type { ProductValidationPattern, ProductValidationPatternFormData as PatternFormData } from '@/shared/contracts/products/validation';
+import type { SequenceGroupView } from '@/shared/contracts/products/drafts';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELD_LABELS,
@@ -23,7 +20,6 @@ import {
 } from '@/shared/lib/products/utils/validator-semantic-state';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { PRODUCT_VALIDATION_SEMANTIC_PRESET_IDS } from '@/features/products/lib/validatorSemanticPresets';
-
 
 export const DEFAULT_SEQUENCE_STEP = 10;
 

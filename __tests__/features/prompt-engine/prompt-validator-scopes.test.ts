@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatProgrammaticPrompt } from '@/features/prompt-engine';
-import { validateProgrammaticPrompt } from '@/features/prompt-engine';
+import { formatProgrammaticPrompt } from '@/features/prompt-engine/shared.public';
+import { validateProgrammaticPrompt } from '@/features/prompt-engine/shared.public';
 import type {
   PromptValidationRule,
   PromptValidationSettings,

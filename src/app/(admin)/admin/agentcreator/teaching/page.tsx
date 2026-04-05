@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { NavigationCard, NavigationCardGrid, PageLayout } from '@/shared/ui';
+import { NavigationCard, NavigationCardGrid, PageLayout } from '@/shared/ui/navigation-and-layout.public';
 
 export default function AgentTeachingLandingPage(): JSX.Element {
   const cards = [

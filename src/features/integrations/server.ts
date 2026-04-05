@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { CategoryMappingRepository } from '@/shared/contracts/integrations';
+import type { CategoryMappingRepository } from '@/shared/contracts/integrations/repositories';
 
 export type { BaseProductRecord } from '@/shared/contracts/integrations';
 export async function getCategoryMappingRepository(): Promise<CategoryMappingRepository> {
@@ -24,11 +24,15 @@ export * from './services/integration-repository';
 export * from './services/integration-service';
 export * from './services/producer-mapping-repository';
 export * from './services/product-listing-repository';
+export * from './services/playwright-import-service';
+export * from './services/playwright-listing-service';
 export * from './services/tag-mapping-repository';
 export * from './services/tradera-listing-service';
 export * from './services/base-token-resolver';
 export * from './workers/baseExportQueue';
 export * from './workers/baseImportQueue';
+export * from './workers/playwrightListingQueue';
 export * from './workers/traderaListingQueue';
 export * from './workers/traderaRelistSchedulerQueue';
 export * from '@/shared/lib/security/encryption';
+export * from './constants/tradera';

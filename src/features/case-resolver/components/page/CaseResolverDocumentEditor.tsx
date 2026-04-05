@@ -22,29 +22,12 @@ import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
 } from '@/features/filemaker/public';
-import type { DocumentWysiwygEditorProps } from '@/features/document-editor/public';
-import type { EditorDetailsTab } from '@/shared/contracts/case-resolver';
-import {
-  Badge,
-  Button,
-  Card,
-  FormField,
-  Input,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  MetadataItem,
-  Tooltip,
-  useToast,
-  SelectSimple,
-  CompactEmptyState,
-  FormSection,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-  UI_STACK_ROOMY_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { DocumentWysiwygEditorProps } from '@/shared/lib/document-editor/public';
+import type { EditorDetailsTab } from '@/shared/contracts/case-resolver/base';
+import { Badge, Button, Card, Input, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, useToast } from '@/shared/ui/primitives.public';
+import { FormField, SelectSimple, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { MetadataItem, CompactEmptyState, UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME, UI_STACK_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 import {
@@ -64,7 +47,7 @@ import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/uti
 export type { EditorDetailsTab };
 
 const LazyDocumentWysiwygEditor = React.lazy(() =>
-  import('@/features/document-editor/public').then((mod) => ({
+  import('@/shared/lib/document-editor/public').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
 ) as React.ComponentType<DocumentWysiwygEditorProps>;
@@ -451,12 +434,11 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               >
                 <LazyDocumentWysiwygEditor
                   key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
+                  engineInstance='case_resolver'
+                  showBrand
                   value={editingDocumentDraft.documentContentHtml ?? ''}
                   onChange={handleUpdateDraftDocumentContent}
                   disabled={isEditingDocumentLocked}
-                  allowFontFamily
-                  allowTextAlign
-                  enableAdvancedTools
                   surfaceOptions={{
                     className: 'min-h-[400px]',
                     editorContentClassName: '[&_.ProseMirror]:!min-h-[400px]',

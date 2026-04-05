@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { CalendarInteractiveTaskPoolId, TaskType, Season } from './CalendarInteractiveGame.types';
 

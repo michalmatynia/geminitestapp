@@ -11,16 +11,14 @@ import {
   buildProductEditorWorkspaceContextBundle,
   PRODUCT_EDITOR_CONTEXT_ROOT_IDS,
 } from '@/features/products/context-registry/workspace';
-import {
-  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
-  type ProductDraftOpenFormTab,
-} from '@/shared/contracts/products';
-import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
+import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
+import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import type { ProductValidationDenyBehavior } from '@/shared/contracts/products/validation';
 import {
   ContextRegistryPageProvider,
   useRegisterContextRegistryPageSource,
 } from '@/shared/lib/ai-context-registry/page-context';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/tabs';
 
 import { ProductFormFooter } from './form/ProductFormFooter';
 import ProductFormGeneral from './form/ProductFormGeneral';

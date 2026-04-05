@@ -8,7 +8,7 @@ import {
 } from '@/shared/lib/jobs/components/context/JobTableRuntimeContext';
 import { JobTable } from '@/shared/lib/jobs/components/JobTable';
 import type { JobRowData } from '@/shared/lib/jobs/types';
-import { StandardDataTablePanelRuntimeContext } from '@/shared/ui';
+import { StandardDataTablePanelRuntimeContext } from '@/shared/ui/templates.public';
 
 const standardDataTablePanelMock = vi.hoisted(() => vi.fn());
 

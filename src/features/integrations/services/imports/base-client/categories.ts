@@ -1,4 +1,5 @@
-import { BaseCategory, BaseInventory } from '@/shared/contracts/integrations';
+import { BaseCategory } from '@/shared/contracts/integrations/listings';
+import { BaseInventory } from '@/shared/contracts/integrations/base-com';
 
 import { callBaseApi, callBaseApiRaw, BaseApiRawResult } from './core';
 import { dedupeCategories, fetchBaseCategoriesFromPayload } from '../base-client-parsers';

@@ -18,7 +18,7 @@ import {
 } from '@tanstack/react-query';
 import { useRef } from 'react';
 
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import {
   attachTanstackFactoryMeta,
   resolveTanstackFactoryMeta,

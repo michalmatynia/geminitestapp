@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { CollapsibleSection, Hint, Textarea } from '@/shared/ui';
+import { CollapsibleSection, Textarea } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { useRuleItemContext } from './context/RuleItemContext';
 import { usePromptEngineActions } from '../context/PromptEngineContext';

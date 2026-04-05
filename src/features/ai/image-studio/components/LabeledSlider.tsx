@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import { Input, Label } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Input, Label } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface LabeledSliderProps {
   label: string;

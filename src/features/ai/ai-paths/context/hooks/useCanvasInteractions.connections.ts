@@ -1,14 +1,10 @@
+'use client';
+
 import { useCallback, useEffect, useRef } from 'react';
 
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/base';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
-import {
-  NODE_WIDTH,
-  getNodeInputPortCardinality,
-  getPortOffsetY,
-  sanitizeEdges,
-  validateConnection,
-} from '@/shared/lib/ai-paths';
+import { NODE_WIDTH, getNodeInputPortCardinality, getPortOffsetY, sanitizeEdges, validateConnection } from '@/shared/lib/ai-paths';
 
 import type { GraphMutationMeta } from '../GraphContext';
 

@@ -32,7 +32,7 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Card, useToast } from '@/shared/ui';
+import { Card, useToast } from '@/shared/ui/primitives.public';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';

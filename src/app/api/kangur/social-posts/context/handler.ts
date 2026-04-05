@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { buildKangurDocContext, resolveKangurDocReferences } from '@/features/kangur/social/server/social-posts-docs';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

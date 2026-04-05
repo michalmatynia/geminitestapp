@@ -1,7 +1,8 @@
 'use client';
 
-import { Card, FocusModeTogglePortal } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Card } from '@/shared/ui/primitives.public';
+import { FocusModeTogglePortal } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
 import { PortableEngineTrendSnapshotsPanel } from '../components/PortableEngineTrendSnapshotsPanel';

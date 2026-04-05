@@ -9,8 +9,9 @@ import { useUiState, useUiActions } from '@/features/ai/image-studio/context/UiC
 import { useVersionGraphState } from '@/features/ai/image-studio/context/VersionGraphContext';
 import { Viewer3D } from '@/features/viewer3d/public';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/shared/lib/vector-drawing';
-import { Button, LoadingState } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { SplitVariantPreview } from '../SplitVariantPreview';
 import { SplitViewControls } from '../SplitViewControls';

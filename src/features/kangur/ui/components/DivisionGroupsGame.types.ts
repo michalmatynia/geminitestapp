@@ -1,5 +1,3 @@
-'use client';
-
 export type TokenItem = {
   id: string;
   emoji: string;

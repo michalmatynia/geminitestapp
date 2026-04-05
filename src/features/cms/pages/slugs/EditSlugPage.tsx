@@ -15,7 +15,9 @@ import {
 import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/validations/api';
 import type { IdInputDto } from '@/shared/contracts/base';
 import type { Slug } from '@/shared/contracts/cms';
-import { AdminCmsPageLayout, Alert, LoadingState, useToast } from '@/shared/ui';
+import { AdminCmsPageLayout } from '@/shared/ui/admin.public';
+import { Alert, useToast } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { validateFormData } from '@/shared/validations/form-validation';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

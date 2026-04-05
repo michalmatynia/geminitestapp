@@ -1,17 +1,24 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export interface DocumentRelationSearchUiContextValue {
   showSortControl: boolean;
   showFileTypeFilter: boolean;
 }
 
-const DocumentRelationSearchUiContext = createContext<DocumentRelationSearchUiContextValue | null>(
-  null
-);
+const {
+  Context: DocumentRelationSearchUiContext,
+  useStrictContext: useDocumentRelationSearchUiContext,
+} = createStrictContext<DocumentRelationSearchUiContextValue>({
+  hookName: 'useDocumentRelationSearchUiContext',
+  providerName: 'a DocumentRelationSearchUiProvider',
+  displayName: 'DocumentRelationSearchUiContext',
+  errorFactory: internalError,
+});
 
 export function DocumentRelationSearchUiProvider({
   value,
@@ -27,12 +34,4 @@ export function DocumentRelationSearchUiProvider({
   );
 }
 
-export function useDocumentRelationSearchUiContext(): DocumentRelationSearchUiContextValue {
-  const context = useContext(DocumentRelationSearchUiContext);
-  if (!context) {
-    throw internalError(
-      'useDocumentRelationSearchUiContext must be used within a DocumentRelationSearchUiProvider'
-    );
-  }
-  return context;
-}
+export { useDocumentRelationSearchUiContext };

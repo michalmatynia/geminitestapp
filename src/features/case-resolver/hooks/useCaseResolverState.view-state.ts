@@ -1,10 +1,10 @@
+'use client';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type {
-  CaseResolverFile,
-  CaseResolverWorkspace,
-  CaseResolverRequestedCaseStatus,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverRequestedCaseStatus } from '@/shared/contracts/case-resolver/base';
 
 import {
   resolveCaseContainerIdForFileId,
@@ -12,6 +12,7 @@ import {
   resolveCaseResolverActiveCaseId,
   isCaseResolverCreateContextReady,
 } from './useCaseResolverState.helpers';
+import { resolveRequestedFileSyncResolution } from './useCaseResolverState.helpers.view-state';
 
 export interface UseCaseResolverStateViewStateValue {
   selectedFileId: string | null;
@@ -214,54 +215,33 @@ export function useCaseResolverStateViewState({
   );
 
   useEffect(() => {
-    if (!requestedFileId) {
-      handledRequestedFileIdRef.current = null;
-      return;
-    }
-    if (!requestedFileExists) {
-      handledRequestedFileIdRef.current = null;
-      if (selectedFileId !== requestedFileId) {
-        setSelectedFileId(requestedFileId);
-      }
-      if (selectedAssetId !== null) {
-        setSelectedAssetId(null);
-      }
-      if (selectedFolderPath !== null) {
-        setSelectedFolderPath(null);
-      }
-      if (workspace.activeFileId !== null) {
-        setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-          if (current.activeFileId === null) return current;
-          const nextWorkspace = {
-            ...current,
-            activeFileId: null,
-          };
-          syncPersistedWorkspaceTracking(nextWorkspace);
-          clearQueuedWorkspacePersistMutation();
-          return nextWorkspace;
-        });
-      }
-      return;
-    }
+    const resolution = resolveRequestedFileSyncResolution({
+      requestedFileId,
+      requestedFileExists,
+      handledRequestedFileId: handledRequestedFileIdRef.current,
+      selectedFileId,
+      selectedAssetId,
+      selectedFolderPath,
+      activeFileId: workspace.activeFileId,
+    });
 
-    if (handledRequestedFileIdRef.current === requestedFileId) return;
-
-    handledRequestedFileIdRef.current = requestedFileId;
-    if (selectedFileId !== requestedFileId) {
-      setSelectedFileId(requestedFileId);
+    handledRequestedFileIdRef.current = resolution.nextHandledRequestedFileId;
+    if (resolution.nextSelectedFileId !== undefined) {
+      setSelectedFileId(resolution.nextSelectedFileId);
     }
-    if (selectedAssetId !== null) {
+    if (resolution.shouldClearSelectedAsset) {
       setSelectedAssetId(null);
     }
-    if (selectedFolderPath !== null) {
+    if (resolution.shouldClearSelectedFolder) {
       setSelectedFolderPath(null);
     }
-    if (workspace.activeFileId !== requestedFileId) {
+    const nextActiveFileId = resolution.nextActiveFileId;
+    if (nextActiveFileId !== undefined) {
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-        if (current.activeFileId === requestedFileId) return current;
+        if (current.activeFileId === nextActiveFileId) return current;
         const nextWorkspace = {
           ...current,
-          activeFileId: requestedFileId,
+          activeFileId: nextActiveFileId,
         };
         syncPersistedWorkspaceTracking(nextWorkspace);
         clearQueuedWorkspacePersistMutation();

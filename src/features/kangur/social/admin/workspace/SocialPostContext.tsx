@@ -2,10 +2,14 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useAdminKangurSocialPage } from './AdminKangurSocialPage.hooks';
+import { useKangurSocialImageAddonsBatchJobs } from '@/features/kangur/social/hooks/useKangurSocialImageAddons';
 import { internalError } from '@/shared/errors/app-error';
 import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
-import type { KangurSocialImageAddon } from '@/shared/contracts/kangur-social-image-addons';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type {
+  KangurSocialImageAddon,
+  KangurSocialImageAddonsBatchJob,
+} from '@/shared/contracts/kangur-social-image-addons';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 
 type SocialPostContextValue = ReturnType<typeof useAdminKangurSocialPage> & {
   addonsQuery: ListQuery<KangurSocialImageAddon, KangurSocialImageAddon[]>;
@@ -16,6 +20,8 @@ type SocialPostContextValue = ReturnType<typeof useAdminKangurSocialPage> & {
   missingImageAddonActionErrorMessage: string | null;
   isSettingsModalOpen: boolean;
   setIsSettingsModalOpen: (open: boolean) => void;
+  batchCaptureRecentJobs: KangurSocialImageAddonsBatchJob[];
+  batchCaptureRecentJobsLoading: boolean;
   isPostEditorModalOpen: boolean;
   setIsPostEditorModalOpen: (open: boolean) => void;
   postToDelete: KangurSocialPost | null;
@@ -34,11 +40,17 @@ const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean 
 };
 
 export function SocialPostProvider({ children }: { children: React.ReactNode }) {
-  const socialPage = useAdminKangurSocialPage();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isPostEditorModalOpen, setIsPostEditorModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<KangurSocialPost | null>(null);
   const [postToUnpublish, setPostToUnpublish] = useState<KangurSocialPost | null>(null);
+  const socialPage = useAdminKangurSocialPage({
+    preloadSettingsModalData: isSettingsModalOpen,
+  });
+  const batchCaptureRecentJobsQuery = useKangurSocialImageAddonsBatchJobs({
+    limit: 5,
+    enabled: isSettingsModalOpen || socialPage.isProgrammablePlaywrightModalOpen,
+  });
 
   const handleOpenPostEditor = useCallback(
     (postId: string): void => {
@@ -96,6 +108,8 @@ export function SocialPostProvider({ children }: { children: React.ReactNode }) 
 
   const value: SocialPostContextValue = {
     ...socialPage,
+    batchCaptureRecentJobs: batchCaptureRecentJobsQuery.data ?? [],
+    batchCaptureRecentJobsLoading: batchCaptureRecentJobsQuery.isLoading,
     missingSelectedImageAddonIds: normalizedMissingSelectedImageAddonIds,
     handleRefreshMissingImageAddons: normalizedHandleRefreshMissingImageAddons,
     handleRemoveMissingAddons: normalizedHandleRemoveMissingAddons,

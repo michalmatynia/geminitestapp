@@ -1,9 +1,7 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
-
-import type { ProductWithImages } from '@/shared/contracts/products';
-import { internalError } from '@/shared/errors/app-error';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { createStrictViewContext } from '../../createStrictViewContext';
 
 type SelectProductForListingModalContextValue = {
   isLoadingProducts: boolean;
@@ -15,18 +13,14 @@ type SelectProductForListingModalContextValue = {
   error: string | null;
 };
 
-const SelectProductForListingModalContext =
-  createContext<SelectProductForListingModalContextValue | null>(null);
-
-export function useSelectProductForListingModalContext(): SelectProductForListingModalContextValue {
-  const context = useContext(SelectProductForListingModalContext);
-  if (!context) {
-    throw internalError(
-      'useSelectProductForListingModalContext must be used within SelectProductForListingModalProvider'
-    );
-  }
-  return context;
-}
+const {
+  Provider: StrictSelectProductForListingModalProvider,
+  useValue: useSelectProductForListingModalContext,
+} = createStrictViewContext<SelectProductForListingModalContextValue>({
+  providerName: 'SelectProductForListingModalProvider',
+  errorMessage:
+    'useSelectProductForListingModalContext must be used within SelectProductForListingModalProvider',
+});
 
 type SelectProductForListingModalProviderProps = SelectProductForListingModalContextValue & {
   children: React.ReactNode;
@@ -37,8 +31,10 @@ export function SelectProductForListingModalProvider({
   ...value
 }: SelectProductForListingModalProviderProps): React.JSX.Element {
   return (
-    <SelectProductForListingModalContext.Provider value={value}>
+    <StrictSelectProductForListingModalProvider value={value}>
       {children}
-    </SelectProductForListingModalContext.Provider>
+    </StrictSelectProductForListingModalProvider>
   );
 }
+
+export { useSelectProductForListingModalContext };

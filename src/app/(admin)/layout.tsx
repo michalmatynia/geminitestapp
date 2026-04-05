@@ -1,20 +1,16 @@
 import { redirect } from 'next/navigation';
 
 import { AdminLayout } from '@/features/admin/public';
-import { getUserPreferences } from '@/features/auth/server';
 import { readOptionalServerAuthSession } from '@/features/auth/server';
+import { ADMIN_LAYOUT_SESSION_HEADER, parseAdminLayoutSessionHeaderValue } from '@/shared/lib/auth/admin-layout-session';
 import { readOptionalRequestCookies } from '@/shared/lib/request/optional-cookies';
+import { readOptionalRequestHeaders } from '@/shared/lib/request/optional-headers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import type { JSX } from 'react';
 
 
-export const dynamic = 'force-dynamic';
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
-const ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS = (() => {
-  const parsed = Number(process.env['ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS']);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1200;
-})();
 const isPlaywrightRuntime = Boolean(
   process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] || process.env['PLAYWRIGHT_RUNTIME_AGENT_ID']
 );
@@ -39,10 +35,16 @@ export default async function Layout({
   children: React.ReactNode;
 }): Promise<JSX.Element> {
   let initialMenuCollapsed = false;
+  let hasInitialMenuPreference = false;
   let session: Awaited<ReturnType<typeof readOptionalServerAuthSession>> = null;
   let canReadAdminSettings = false;
   try {
-    session = await readOptionalServerAuthSession();
+    const requestHeaders = await readOptionalRequestHeaders();
+    session = parseAdminLayoutSessionHeaderValue(requestHeaders?.get(ADMIN_LAYOUT_SESSION_HEADER));
+
+    if (!session?.user?.id) {
+      session = await readOptionalServerAuthSession();
+    }
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'admin.layout',
@@ -55,49 +57,27 @@ export default async function Layout({
   if (!session?.user?.id) {
     redirect('/auth/signin');
   }
-  if (session.user.accountDisabled || session.user.accountBanned) {
-    redirect('/auth/signin?error=AccountDisabled');
-  }
-  if (!session.user.roleAssigned && !isPlaywrightRuntime) {
-    redirect('/auth/signin?error=AccessDenied');
-  }
   canReadAdminSettings =
     session.user.isElevated || session.user.permissions?.includes('settings.manage') === true;
   try {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const preferencesPromise = getUserPreferences(session.user.id).catch(() => null);
-    const preferences = await Promise.race([
-      preferencesPromise,
-      new Promise<null>((resolve) => {
-        timeoutId = setTimeout(() => resolve(null), ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS);
-      }),
-    ]);
-    if (timeoutId) clearTimeout(timeoutId);
-    if (preferences && typeof preferences.adminMenuCollapsed === 'boolean') {
-      initialMenuCollapsed = preferences.adminMenuCollapsed;
-    } else {
-      const cookieValue = await readAdminMenuCollapsedCookie();
-      if (cookieValue !== null) {
-        initialMenuCollapsed = cookieValue;
-      }
+    const cookieValue = await readAdminMenuCollapsedCookie();
+    if (cookieValue !== null) {
+      initialMenuCollapsed = cookieValue;
+      hasInitialMenuPreference = true;
     }
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'admin.layout',
       source: 'admin.layout',
-      action: 'loadUserPreferences',
+      action: 'loadAdminLayoutCookieState',
     });
-    // Fallback to cookie-derived value when preferences are unavailable.
-    const cookieValue = await readAdminMenuCollapsedCookie();
-    if (cookieValue !== null) {
-      initialMenuCollapsed = cookieValue;
-    }
   }
   const shouldEnableAdminSettingsStore = canReadAdminSettings || isPlaywrightRuntime;
   return (
     <AdminLayout
       session={session}
       initialMenuCollapsed={initialMenuCollapsed}
+      hasInitialMenuPreference={hasInitialMenuPreference}
       canReadAdminSettings={shouldEnableAdminSettingsStore}
     >
       {children}

@@ -30,7 +30,8 @@ import { PreviewNodeSelectionButton } from '@/features/cms/components/page-build
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '@/features/cms/public';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { BlockInstance } from '@/shared/contracts/cms';
-import { Separator, CompactEmptyState, Button } from '@/shared/ui';
+import { Separator, Button } from '@/shared/ui/primitives.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 export function PreviewGridSection() {
   const { colorSchemes, layout } = useCmsPageContext();

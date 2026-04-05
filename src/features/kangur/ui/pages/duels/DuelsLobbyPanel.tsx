@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 
-import { KangurDuelsWordmark } from '@/features/kangur/ui/components/KangurDuelsWordmark';
+import { KangurDuelsWordmark } from '@/features/kangur/ui/components/wordmarks/KangurDuelsWordmark';
 import {
   KangurButton,
   KangurGlassPanel,

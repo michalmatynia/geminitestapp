@@ -22,6 +22,27 @@ export const classifyTraderaFailure = (message: string): TraderaFailureCategory 
   ) {
     return 'AUTH';
   }
+  if (
+    normalized.includes('fail_sell_page_invalid') ||
+    normalized.includes('unexpected navigation away from tradera') ||
+    normalized.includes('external link target')
+  ) {
+    return 'NAVIGATION';
+  }
+  if (
+    normalized.includes('category mapping') ||
+    normalized.includes('fetch tradera categories') ||
+    normalized.includes('map the category') ||
+    normalized.includes('shipping group') ||
+    normalized.includes('shipping price in eur') ||
+    normalized.includes('tradera shipping price') ||
+    normalized.includes('fail_category_set') ||
+    normalized.includes('fail_shipping_set') ||
+    normalized.includes('fail_publish_validation') ||
+    normalized.includes('fail_price_set')
+  ) {
+    return 'FORM';
+  }
   if (normalized.includes('navigation') || normalized.includes('timeout')) {
     return 'NAVIGATION';
   }
@@ -103,8 +124,39 @@ export const findVisibleLocator = async (page: Page, selectors: string[]) => {
   return null;
 };
 
+export const buildCanonicalTraderaListingUrl = (externalListingId: string): string =>
+  `https://www.tradera.com/item/${externalListingId}`;
+
 export const extractExternalListingId = (url: string): string | null => {
-  const match = url.match(/(\d{6,})/);
-  if (!match?.[1]) return null;
-  return match[1];
+  const listingIdPattern = /\/(?:item\/(?:\d+\/)?|listing\/)(\d{6,})(?:[/?#]|$)/i;
+  try {
+    const parsedUrl = new URL(url, 'https://www.tradera.com');
+    const pathname = parsedUrl.pathname || '';
+    const match = pathname.match(listingIdPattern);
+    if (!match?.[1]) return null;
+    return match[1];
+  } catch {
+    const match = url.match(listingIdPattern);
+    if (!match?.[1]) return null;
+    return match[1];
+  }
+};
+
+export const includesAnyHint = (value: string, hints: readonly string[]): boolean => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  return hints.some((hint) => normalized.includes(hint));
+};
+
+export const readVisibleLocatorText = async (page: Page, selectors: readonly string[]): Promise<string> => {
+  for (const selector of selectors) {
+    const locator = page.locator(selector).first();
+    const visible = await locator.isVisible().catch(() => false);
+    if (!visible) continue;
+    const text = await locator.innerText().catch(() => '');
+    if (text.trim()) {
+      return text.trim();
+    }
+  }
+  return '';
 };

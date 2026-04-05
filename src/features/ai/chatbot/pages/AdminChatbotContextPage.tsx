@@ -3,21 +3,13 @@
 import { PlusIcon, FileUp, Link as LinkIcon, MessageSquareQuote, Save } from 'lucide-react';
 import React, { Suspense, useMemo, useCallback } from 'react';
 
-import {
-  AdminChatbotPageLayout,
-  Button,
-  Tag,
-  FileUploadTrigger,
-  StandardDataTablePanel,
-  StatusToggle,
-  useToast,
-  SearchInput,
-  EmptyState,
-  LoadingState,
-  Hint,
-} from '@/shared/ui';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import { AdminChatbotPageLayout } from '@/shared/ui/admin.public';
+import { Button, useToast } from '@/shared/ui/primitives.public';
+import { Tag, FileUploadTrigger, StatusToggle, SearchInput, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { EmptyState, LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/base';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ChatbotContextModal } from '../components/ChatbotContextModal';
 import { useChatbotContextState } from '../hooks/useChatbotContextState';

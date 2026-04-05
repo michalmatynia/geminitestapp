@@ -10,22 +10,19 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/public';
-import type { AiNode, CaseResolverEdge } from '@/shared/contracts/case-resolver';
-import {
-  type CaseResolverNodeMeta,
-  type CaseResolverEdgeMeta,
-  type CaseResolverGraph,
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  DEFAULT_CASE_RESOLVER_EDGE_META,
-} from '@/shared/contracts/case-resolver';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverEdge } from '@/shared/contracts/case-resolver/graph';
+import { DEFAULT_CASE_RESOLVER_NODE_META, DEFAULT_CASE_RESOLVER_EDGE_META } from '@/shared/contracts/case-resolver/constants';
+import { type CaseResolverNodeMeta, type CaseResolverEdgeMeta, type CaseResolverGraph } from '@/shared/contracts/case-resolver';
 import { AI_PATHS_UI_STATE_KEY, EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
 import {
   fetchAiPathsSettingsCached,
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import { Badge, Button, Card, EmptyState } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Card } from '@/shared/ui/primitives.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';

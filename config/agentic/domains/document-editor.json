@@ -3,7 +3,7 @@
   "label": "Document editing, markdown split view, and rich text editing",
   "riskLevel": "medium",
   "sourceRoots": [
-    "src/features/document-editor"
+    "src/shared/lib/document-editor"
   ],
   "ownedDocs": [],
   "generatedArtifacts": [],

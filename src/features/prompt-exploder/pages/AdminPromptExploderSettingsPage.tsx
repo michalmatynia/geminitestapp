@@ -16,24 +16,14 @@ import {
 } from '@/shared/contracts/validator';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
-import {
-  AdminAiEyebrow,
-  FormField,
-  FormActions,
-  FormSection,
-  Alert,
-  DocsTooltipEnhancer,
-  Input,
-  SectionHeader,
-  Button,
-  SelectSimple,
-  UI_GRID_ROOMY_CLASSNAME,
-  ToggleRow,
-  useToast,
-} from '@/shared/ui';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import { AdminAiEyebrow } from '@/shared/ui/admin.public';
+import { FormField, FormActions, FormSection, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { Alert, Input, Button, useToast } from '@/shared/ui/primitives.public';
+import { SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { DocumentationTooltipEnhancer as DocsTooltipEnhancer } from '@/shared/lib/documentation/DocumentationTooltipEnhancer';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { PanelHeader } from '@/shared/ui';
+import { PanelHeader } from '@/shared/ui/templates.public';
 
 import {
   useFileManagerActions,

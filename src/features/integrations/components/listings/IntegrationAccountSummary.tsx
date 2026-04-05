@@ -1,9 +1,7 @@
-'use client';
-
 import React from 'react';
 
 import { useOptionalListingSelection } from '@/features/integrations/context/ListingSettingsContext';
-import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations';
+import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/domain';
 
 interface IntegrationAccountSummaryProps {
   integrationName?: string;

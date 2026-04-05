@@ -1,6 +1,5 @@
-'use client';
-
-import { createContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { internalError } from '@/shared/errors/app-error';
 
 import type { ThemeRecord } from '@/shared/contracts/notes';
 
@@ -29,4 +28,12 @@ export interface NoteEditorData {
   previewTypographyStyle: React.CSSProperties;
 }
 
-export const NoteEditorContext = createContext<NoteEditorData | null>(null);
+const { Context: NoteEditorContext, useStrictContext: useNoteEditorContext } =
+  createStrictContext<NoteEditorData>({
+    hookName: 'useNoteEditorContext',
+    providerName: 'NoteFormProvider',
+    displayName: 'NoteEditorContext',
+    errorFactory: internalError,
+  });
+
+export { NoteEditorContext, useNoteEditorContext };

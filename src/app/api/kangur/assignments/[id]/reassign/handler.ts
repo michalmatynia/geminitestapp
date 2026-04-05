@@ -7,7 +7,7 @@ import {
   getKangurProgressRepository,
 } from '@/features/kangur/server';
 import { evaluateKangurAssignment } from '@/features/kangur/services/kangur-assignments';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError, notFoundError, validationError } from '@/shared/errors/app-error';
 
 import {
@@ -16,10 +16,7 @@ import {
   loadKangurScoresForLearner,
   resolveAssignmentActor,
 } from '../../shared';
-import type {
-  KangurAssignmentCreateTarget,
-  KangurAssignmentTarget,
-} from '@kangur/contracts';
+import type { KangurAssignmentCreateTarget, KangurAssignmentTarget } from '@kangur/contracts/kangur-assignments';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

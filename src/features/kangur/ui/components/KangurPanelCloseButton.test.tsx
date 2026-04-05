@@ -25,4 +25,16 @@ describe('KangurPanelCloseButton', () => {
     );
     expect(closeButton.firstElementChild).toHaveClass('block');
   });
+
+  it('supports a neutral panel variant for regular app modals', () => {
+    render(<KangurPanelCloseButton aria-label='Zamknij modal' variant='panel' />);
+
+    const closeButton = screen.getByRole('button', { name: 'Zamknij modal' });
+
+    expect(closeButton).toHaveClass(
+      'border-[color:var(--kangur-page-border)]',
+      'bg-[var(--kangur-soft-card-background,#ffffff)]',
+      'text-[color:var(--kangur-page-text)]'
+    );
+  });
 });

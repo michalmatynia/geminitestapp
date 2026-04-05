@@ -46,6 +46,8 @@ describe('useProductListSubContexts', () => {
     setEndDate: () => {},
     advancedFilter: null,
     activeAdvancedFilterPresetId: null,
+    advancedFilterPresets: [],
+    setAdvancedFilterPresets: async () => {},
     setAdvancedFilter: () => {},
     setAdvancedFilterState: () => {},
     baseExported: null,
@@ -102,6 +104,7 @@ describe('useProductListSubContexts', () => {
     onEditSave: async () => {},
     integrationsProduct: null,
     integrationsRecoveryContext: null,
+    integrationsFilterIntegrationSlug: null,
     onCloseIntegrations: () => {},
     onStartListing: () => {},
     showListProductModal: false,
@@ -124,6 +127,7 @@ describe('useProductListSubContexts', () => {
     traderaBadgeStatuses: new Map(),
     queuedProductIds: new Set(),
     productAiRunStatusByProductId: new Map(),
+    rowRuntimeReady: false,
   } as unknown as ProductListContextType;
 
   it('should split value into multiple memoized contexts', () => {
@@ -141,5 +145,8 @@ describe('useProductListSubContexts', () => {
 
     expect(result.current.filtersValue.page).toBe(1);
     expect(result.current.selectionValue.loadingGlobal).toBe(false);
+    expect(result.current.filtersValue.advancedFilterPresets).toEqual([]);
+    expect(result.current.headerActionsValue.triggerButtonsReady).toBe(false);
+    expect(result.current.rowVisualsValue.triggerButtonsReady).toBe(false);
   });
 });

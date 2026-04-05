@@ -4,7 +4,7 @@ import { vi } from 'vitest';
 
 import { SettingsFieldRenderer } from '@/features/cms/components/page-builder/SettingsFieldRenderer';
 import { ThemeSettingsProvider } from '@/features/cms/components/page-builder/ThemeSettingsContext';
-import { ToastProvider } from '@/shared/ui';
+import { ToastProvider } from '@/shared/ui/primitives.public';
 
 // Mock MediaLibraryPanel
 vi.mock('@/features/cms/components/page-builder/MediaLibraryPanel', () => ({

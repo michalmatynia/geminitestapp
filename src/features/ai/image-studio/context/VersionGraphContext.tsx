@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useVersionGraphRuntime } from './useVersionGraphRuntime';
 
@@ -17,8 +18,20 @@ export type {
   VersionGraphActions,
 } from './version-graph-context-types';
 
-const VersionGraphStateContext = createContext<VersionGraphState | null>(null);
-const VersionGraphActionsContext = createContext<VersionGraphActions | null>(null);
+const { Context: VersionGraphStateContext, useStrictContext: useVersionGraphState } =
+  createStrictContext<VersionGraphState>({
+    hookName: 'useVersionGraphState',
+    providerName: 'a VersionGraphProvider',
+    displayName: 'VersionGraphStateContext',
+    errorFactory: internalError,
+  });
+const { Context: VersionGraphActionsContext, useStrictContext: useVersionGraphActions } =
+  createStrictContext<VersionGraphActions>({
+    hookName: 'useVersionGraphActions',
+    providerName: 'a VersionGraphProvider',
+    displayName: 'VersionGraphActionsContext',
+    errorFactory: internalError,
+  });
 
 export function VersionGraphProvider({
   children,
@@ -36,18 +49,4 @@ export function VersionGraphProvider({
   );
 }
 
-export function useVersionGraphState(): VersionGraphState {
-  const context = useContext(VersionGraphStateContext);
-  if (!context) {
-    throw internalError('useVersionGraphState must be used within a VersionGraphProvider');
-  }
-  return context;
-}
-
-export function useVersionGraphActions(): VersionGraphActions {
-  const context = useContext(VersionGraphActionsContext);
-  if (!context) {
-    throw internalError('useVersionGraphActions must be used within a VersionGraphProvider');
-  }
-  return context;
-}
+export { useVersionGraphState, useVersionGraphActions };

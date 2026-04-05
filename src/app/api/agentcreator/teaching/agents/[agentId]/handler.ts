@@ -11,7 +11,7 @@ import type {
   AgentTeachingAgentRecord,
   AgentTeachingAgentResponse,
 } from '@/shared/contracts/agent-teaching';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const updateAgentSchema = z.object({

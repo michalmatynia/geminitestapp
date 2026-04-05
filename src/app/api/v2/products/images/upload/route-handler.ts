@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 import { ProductsImagesUploadPOST } from '@/features/products/server';
-import type { ApiRouteHandler } from '@/shared/contracts/ui';
+import type { ApiRouteHandler } from '@/shared/contracts/ui/api';
 import { authError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 

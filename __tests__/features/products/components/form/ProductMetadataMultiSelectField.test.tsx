@@ -9,7 +9,7 @@ import {
 
 const multiSelectSpy = vi.fn();
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/multi-select', () => ({
   MultiSelect: (props: Record<string, unknown>) => {
     multiSelectSpy(props);
     return null;

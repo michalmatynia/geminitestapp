@@ -2,12 +2,9 @@
 
 import { createContext, useContext } from 'react';
 
-import type {
-  Catalog,
-  PriceGroup,
-  ProductCategoryWithChildren,
-  ProductTag,
-} from '@/shared/contracts/products';
+import type { Catalog, PriceGroup } from '@/shared/contracts/products/catalogs';
+import type { ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
+import type { ProductTag } from '@/shared/contracts/products/tags';
 import { internalError } from '@/shared/errors/app-error';
 
 // --- Granular Contexts ---

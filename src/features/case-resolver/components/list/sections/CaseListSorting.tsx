@@ -3,7 +3,8 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CaseSortKey } from '@/features/case-resolver/context/admin-cases/types';
-import { Button, SelectSimple, Switch } from '@/shared/ui';
+import { Button, Switch } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useCaseListPanelControlsContext } from '../CaseListPanelControlsContext';
 

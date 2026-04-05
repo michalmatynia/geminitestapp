@@ -16,6 +16,10 @@ vi.mock('@/features/jobs/server', () => ({
   getAiPathRunQueueStatus: getAiPathRunQueueStatusMock,
 }));
 
+vi.mock('@/features/ai/ai-paths/workers/ai-path-run-queue/status', () => ({
+  getAiPathRunQueueStatus: getAiPathRunQueueStatusMock,
+}));
+
 import { GET_handler, __testOnly } from '@/app/api/ai-paths/runs/queue-status/handler';
 
 const mockContext: ApiHandlerContext = {

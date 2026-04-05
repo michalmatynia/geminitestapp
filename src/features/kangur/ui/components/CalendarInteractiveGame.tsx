@@ -1,6 +1,6 @@
 'use client';
 
-import { Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -32,194 +32,23 @@ import { cn } from '@/features/kangur/shared/utils';
 
 import { SEASONS, WEEKDAYS } from './CalendarInteractiveGame.constants';
 import { useCalendarInteractiveGameState } from './CalendarInteractiveGame.hooks';
+import { CalendarInteractiveProvider, useCalendarInteractiveContext } from './CalendarInteractive.context';
 import type {
   CalendarInteractiveGameProps,
   CalendarInteractiveSectionContent,
-  Season,
   Task,
 } from './CalendarInteractiveGame.types';
 import {
-  getCalendarCells,
-  getCalendarInteractiveMonthName,
   getCalendarInteractiveSeasonLabel,
   getCalendarInteractiveWeekdayAbbr,
   getCalendarInteractiveWeekdayShort,
-  getDayOfWeek,
-  resolveSeasonFromDroppableId,
   seasonDroppableId,
 } from './CalendarInteractiveGame.utils';
 
 const dragPortal = typeof document === 'undefined' ? null : document.body;
 
-const markCalendarInteractiveSuccess = ({
-  setFeedback,
-  setScore,
-}: {
-  setFeedback: (value: 'success' | 'error') => void;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
-}): void => {
-  setFeedback('success');
-  setScore((current) => current + 1);
-};
-
-const markCalendarInteractiveError = (
-  setFeedback: (value: 'success' | 'error') => void
-): void => {
-  setFeedback('error');
-};
-
-const resolveCalendarInteractiveGuidance = ({
-  section,
-  translations,
-}: {
-  section: ReturnType<typeof useCalendarInteractiveGameState>['section'];
-  translations: ReturnType<typeof useCalendarInteractiveGameState>['translations'];
-}): { prompt: string | null; title: string | null } =>
-  section === 'mixed'
-    ? { prompt: null, title: null }
-    : {
-        prompt: translations(`calendarInteractive.section.${section}.promptLabel`),
-        title: translations(`calendarInteractive.section.${section}.guidanceTitle`),
-      };
-
 const resolveCalendarInteractiveSummaryEmoji = (percent: number): string =>
   percent === 100 ? '🏆' : percent >= 70 ? '🌟' : '💪';
-
-const handleCalendarInteractiveDateSelection = ({
-  day,
-  targetDay,
-  setFeedback,
-  setScore,
-}: {
-  day: number;
-  setFeedback: (value: 'success' | 'error') => void;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
-  targetDay: number;
-}): void => {
-  if (day === targetDay) {
-    markCalendarInteractiveSuccess({ setFeedback, setScore });
-    return;
-  }
-
-  markCalendarInteractiveError(setFeedback);
-};
-
-const handleCalendarInteractiveWeekendSelection = ({
-  checkedAllWeekends,
-  day,
-  month,
-  setCheckedAllWeekends,
-  setFeedback,
-  setScore,
-  targetCount,
-  weekendDayIndex,
-  year,
-}: {
-  checkedAllWeekends: number[];
-  day: number;
-  month: number;
-  setCheckedAllWeekends: React.Dispatch<React.SetStateAction<number[]>>;
-  setFeedback: (value: 'success' | 'error') => void;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
-  targetCount: number;
-  weekendDayIndex: 5 | 6;
-  year: number;
-}): void => {
-  if (getDayOfWeek(year, month, day) !== weekendDayIndex) {
-    markCalendarInteractiveError(setFeedback);
-    return;
-  }
-  if (checkedAllWeekends.includes(day)) {
-    return;
-  }
-
-  const nextChecked = [...checkedAllWeekends, day];
-  setCheckedAllWeekends(nextChecked);
-  if (nextChecked.length === targetCount) {
-    markCalendarInteractiveSuccess({ setFeedback, setScore });
-  }
-};
-
-const handleCalendarInteractiveSeasonDrop = ({
-  correctSeason,
-  droppableId,
-  setFeedback,
-  setScore,
-}: {
-  correctSeason: Season;
-  droppableId: string;
-  setFeedback: (value: 'success' | 'error') => void;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
-}): void => {
-  const droppedSeason = resolveSeasonFromDroppableId(droppableId);
-  if (droppedSeason === correctSeason) {
-    markCalendarInteractiveSuccess({ setFeedback, setScore });
-    return;
-  }
-
-  markCalendarInteractiveError(setFeedback);
-};
-
-const handleCalendarInteractiveMonthFlip = ({
-  month,
-  delta,
-  setMonth,
-  setFeedback,
-  setScore,
-  targetMonth,
-}: {
-  delta: number;
-  month: number;
-  setFeedback: (value: 'success' | 'error') => void;
-  setMonth: React.Dispatch<React.SetStateAction<number>>;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
-  targetMonth: number;
-}): void => {
-  const nextMonth = (month + delta + 12) % 12;
-  setMonth(nextMonth);
-
-  if (nextMonth === targetMonth) {
-    markCalendarInteractiveSuccess({ setFeedback, setScore });
-  }
-};
-
-const handleCalendarInteractiveWeekdaySelection = ({
-  idx,
-  setFeedback,
-  setScore,
-  targetIdx,
-}: {
-  idx: number;
-  setFeedback: (value: 'success' | 'error') => void;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
-  targetIdx: number;
-}): void => {
-  if (idx === targetIdx) {
-    markCalendarInteractiveSuccess({ setFeedback, setScore });
-    return;
-  }
-
-  markCalendarInteractiveError(setFeedback);
-};
-
-const handleCalendarInteractiveSeasonSelection = ({
-  correctSeason,
-  seasonId,
-  setFeedback,
-  setScore,
-}: {
-  correctSeason: Season;
-  seasonId: Season;
-  setFeedback: (value: 'success' | 'error') => void;
-  setScore: React.Dispatch<React.SetStateAction<number>>;
-}): void => {
-  if (seasonId === correctSeason) {
-    markCalendarInteractiveSuccess({ setFeedback, setScore });
-    return;
-  }
-
-  markCalendarInteractiveError(setFeedback);
-};
 
 function CalendarInteractiveGameSummaryView({
   handleFinish,
@@ -328,19 +157,16 @@ function CalendarInteractivePromptCard({
   );
 }
 
-function CalendarInteractiveMonthToolbar({
-  disabled,
-  monthName,
-  onMonthChange,
-  translations,
-  year,
-}: {
-  disabled: boolean;
-  monthName: string;
-  onMonthChange: (delta: number) => void;
-  translations: ReturnType<typeof useCalendarInteractiveGameState>['translations'];
-  year: number;
-}): React.JSX.Element {
+function CalendarInteractiveMonthToolbar(): React.JSX.Element {
+  const {
+    feedback,
+    monthName,
+    handleMonthChange: onMonthChange,
+    translations,
+    year,
+  } = useCalendarInteractiveContext();
+  const disabled = feedback !== null;
+
   return (
     <div className='flex items-center justify-between rounded-2xl bg-white/60 p-2 shadow-sm'>
       <KangurButton
@@ -370,15 +196,14 @@ function CalendarInteractiveMonthToolbar({
   );
 }
 
-function CalendarInteractiveWeekdayChoices({
-  disabled,
-  onWeekdayClick,
-  translations,
-}: {
-  disabled: boolean;
-  onWeekdayClick: (idx: number) => void;
-  translations: ReturnType<typeof useCalendarInteractiveGameState>['translations'];
-}): React.JSX.Element {
+function CalendarInteractiveWeekdayChoices(): React.JSX.Element {
+  const {
+    feedback,
+    handleWeekdayClick: onWeekdayClick,
+    translations,
+  } = useCalendarInteractiveContext();
+  const disabled = feedback !== null;
+
   return (
     <div className='grid grid-cols-7 gap-1 sm:gap-2'>
       {WEEKDAYS.map((day, idx) => (
@@ -507,21 +332,16 @@ function CalendarInteractiveDayCell({
   );
 }
 
-function CalendarInteractiveDayGrid({
-  cells,
-  checkedAllWeekends,
-  feedback,
-  month,
-  onCellClick,
-  task,
-}: {
-  cells: Array<number | null>;
-  checkedAllWeekends: number[];
-  feedback: ReturnType<typeof useCalendarInteractiveGameState>['feedback'];
-  month: number;
-  onCellClick: (day: number | null) => void;
-  task: Task;
-}): React.JSX.Element {
+function CalendarInteractiveDayGrid(): React.JSX.Element {
+  const {
+    cells,
+    checkedAllWeekends,
+    feedback,
+    month,
+    handleCellClick: onCellClick,
+    task,
+  } = useCalendarInteractiveContext();
+
   return (
     <div className='grid grid-cols-7 gap-1 sm:gap-2'>
       {cells.map((day, idx) => (
@@ -559,23 +379,18 @@ function resolveCalendarInteractiveSeasonCardClassName({
   );
 }
 
-function CalendarInteractiveSeasonChoices({
-  accent,
-  feedback,
-  isCoarsePointer,
-  monthName,
-  onSeasonSelect,
-  task,
-  translations,
-}: {
-  accent: CalendarInteractiveSectionContent['accent'];
-  feedback: ReturnType<typeof useCalendarInteractiveGameState>['feedback'];
-  isCoarsePointer: boolean;
-  monthName: string;
-  onSeasonSelect: (seasonId: Season) => void;
-  task: Task;
-  translations: ReturnType<typeof useCalendarInteractiveGameState>['translations'];
-}): React.JSX.Element | null {
+function CalendarInteractiveSeasonChoices(): React.JSX.Element | null {
+  const {
+    feedback,
+    isCoarsePointer,
+    monthName,
+    handleSeasonSelect: onSeasonSelect,
+    sectionContent,
+    task,
+    translations,
+  } = useCalendarInteractiveContext();
+  const accent = sectionContent.accent;
+
   if (task.type !== 'drag_season') {
     return null;
   }
@@ -661,47 +476,18 @@ function CalendarInteractiveSeasonChoices({
   );
 }
 
-function CalendarInteractiveRoundView({
-  cells,
-  checkedAllWeekends,
-  feedback,
-  guidancePrompt,
-  guidanceTitle,
-  handleCellClick,
-  handleDragEnd,
-  handleMonthChange,
-  handleSeasonSelect,
-  handleWeekdayClick,
-  isCoarsePointer,
-  month,
-  monthName,
-  roundIndex,
-  sectionContent,
-  task,
-  totalRounds,
-  translations,
-  year,
-}: {
-  cells: Array<number | null>;
-  checkedAllWeekends: number[];
-  feedback: ReturnType<typeof useCalendarInteractiveGameState>['feedback'];
-  guidancePrompt: string | null;
-  guidanceTitle: string | null;
-  handleCellClick: (day: number | null) => void;
-  handleDragEnd: (result: DropResult) => void;
-  handleMonthChange: (delta: number) => void;
-  handleSeasonSelect: (seasonId: Season) => void;
-  handleWeekdayClick: (idx: number) => void;
-  isCoarsePointer: boolean;
-  month: number;
-  monthName: string;
-  roundIndex: number;
-  sectionContent: ReturnType<typeof useCalendarInteractiveGameState>['sectionContent'];
-  task: Task;
-  totalRounds: number;
-  translations: ReturnType<typeof useCalendarInteractiveGameState>['translations'];
-  year: number;
-}): React.JSX.Element {
+function CalendarInteractiveRoundView(): React.JSX.Element {
+  const {
+    guidancePrompt,
+    guidanceTitle,
+    handleDragEnd,
+    roundIndex,
+    sectionContent,
+    task,
+    TOTAL_ROUNDS: totalRounds,
+    translations,
+  } = useCalendarInteractiveContext();
+
   return (
     <KangurPracticeGameShell className='w-full max-w-2xl'>
       <KangurPracticeGameProgress
@@ -730,37 +516,12 @@ function CalendarInteractiveRoundView({
             className='soft-card flex flex-col gap-4 rounded-[28px] border border-white/70 bg-white/70 p-4'
             data-testid='calendar-interactive-calendar-shell'
           >
-            <CalendarInteractiveMonthToolbar
-              disabled={feedback !== null}
-              monthName={monthName}
-              onMonthChange={handleMonthChange}
-              translations={translations}
-              year={year}
-            />
+            <CalendarInteractiveMonthToolbar />
             {task.type === 'click_weekday_name' ? (
-              <CalendarInteractiveWeekdayChoices
-                disabled={feedback !== null}
-                onWeekdayClick={handleWeekdayClick}
-                translations={translations}
-              />
+              <CalendarInteractiveWeekdayChoices />
             ) : null}
-            <CalendarInteractiveDayGrid
-              cells={cells}
-              checkedAllWeekends={checkedAllWeekends}
-              feedback={feedback}
-              month={month}
-              onCellClick={handleCellClick}
-              task={task}
-            />
-            <CalendarInteractiveSeasonChoices
-              accent={sectionContent.accent}
-              feedback={feedback}
-              isCoarsePointer={isCoarsePointer}
-              monthName={monthName}
-              onSeasonSelect={handleSeasonSelect}
-              task={task}
-              translations={translations}
-            />
+            <CalendarInteractiveDayGrid />
+            <CalendarInteractiveSeasonChoices />
           </div>
         </KangurDragDropContext>
       </div>
@@ -768,36 +529,24 @@ function CalendarInteractiveRoundView({
   );
 }
 
-export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): React.JSX.Element {
-  const state = useCalendarInteractiveGameState(props);
+function CalendarInteractiveGameContent({
+  onFinish,
+  stage,
+}: {
+  onFinish?: () => void;
+  stage?: { onFinish: () => void };
+}): React.JSX.Element {
   const {
     translations,
-    isCoarsePointer,
-    roundIndex,
     score,
-    setScore,
-    month,
-    setMonth,
-    year,
-    task,
     feedback,
-    setFeedback,
     done,
-    checkedAllWeekends,
-    setCheckedAllWeekends,
-    section,
-    sectionContent,
     handleNext,
     handleRestart,
     TOTAL_ROUNDS,
-  } = state;
-  const handleFinish = props.onFinish ?? props.stage?.onFinish ?? (() => undefined);
-  const { prompt: guidancePrompt, title: guidanceTitle } = resolveCalendarInteractiveGuidance({
-    section,
-    translations,
-  });
-  const cells = getCalendarCells(month, year);
-  const monthName = getCalendarInteractiveMonthName(translations, month);
+  } = useCalendarInteractiveContext();
+
+  const handleFinish = onFinish ?? stage?.onFinish ?? (() => undefined);
 
   useEffect(() => {
     if (feedback === null || done) {
@@ -825,115 +574,19 @@ export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): Re
     );
   }
 
-  const handleCellClick = (day: number | null): void => {
-    if (day === null || feedback !== null) {
-      return;
-    }
-    if (task.type === 'click_date') {
-      handleCalendarInteractiveDateSelection({
-        day,
-        setFeedback,
-        setScore,
-        targetDay: task.targetDay,
-      });
-      return;
-    }
-    if (task.type === 'click_all_weekends') {
-      handleCalendarInteractiveWeekendSelection({
-        checkedAllWeekends,
-        day,
-        month,
-        setCheckedAllWeekends,
-        setFeedback,
-        setScore,
-        targetCount: task.targets.length,
-        weekendDayIndex: task.dayIdx,
-        year,
-      });
-    }
-  };
-
-  const handleDragEnd = (result: DropResult): void => {
-    if (feedback !== null || !result.destination || task.type !== 'drag_season') {
-      return;
-    }
-
-    handleCalendarInteractiveSeasonDrop({
-      correctSeason: task.correctSeason,
-      droppableId: result.destination.droppableId,
-      setFeedback,
-      setScore,
-    });
-  };
-
-  const handleMonthChange = (delta: number): void => {
-    if (feedback !== null) {
-      return;
-    }
-
-    if (task.type === 'flip_month') {
-      handleCalendarInteractiveMonthFlip({
-        month,
-        delta,
-        setFeedback,
-        setMonth,
-        setScore,
-        targetMonth: task.targetMonth,
-      });
-      return;
-    }
-
-    setMonth((current) => (current + delta + 12) % 12);
-  };
-
-  const handleWeekdayClick = (idx: number): void => {
-    if (feedback !== null || task.type !== 'click_weekday_name') {
-      return;
-    }
-
-    handleCalendarInteractiveWeekdaySelection({
-      idx,
-      setFeedback,
-      setScore,
-      targetIdx: task.targetIdx,
-    });
-  };
-
-  const handleSeasonSelect = (seasonId: Season): void => {
-    if (feedback !== null || task.type !== 'drag_season') {
-      return;
-    }
-
-    handleCalendarInteractiveSeasonSelection({
-      correctSeason: task.correctSeason,
-      seasonId,
-      setFeedback,
-      setScore,
-    });
-  };
-
   return (
-    <CalendarInteractiveRoundView
-      cells={cells}
-      checkedAllWeekends={checkedAllWeekends}
-      feedback={feedback}
-      guidancePrompt={guidancePrompt}
-      guidanceTitle={guidanceTitle}
-      handleCellClick={handleCellClick}
-      handleDragEnd={handleDragEnd}
-      handleMonthChange={handleMonthChange}
-      handleSeasonSelect={handleSeasonSelect}
-      handleWeekdayClick={handleWeekdayClick}
-      isCoarsePointer={isCoarsePointer}
-      month={month}
-      monthName={monthName}
-      roundIndex={roundIndex}
-      sectionContent={sectionContent}
-      task={task}
-      totalRounds={TOTAL_ROUNDS}
-      translations={translations}
-      year={year}
-    />
+    <CalendarInteractiveRoundView />
+  );
+}
+
+export function CalendarInteractiveGame(props: CalendarInteractiveGameProps): React.JSX.Element {
+  return (
+    <CalendarInteractiveProvider {...props}>
+      <CalendarInteractiveGameContent
+        onFinish={props.onFinish}
+        stage={props.stage}
+      />
+    </CalendarInteractiveProvider>
   );
 }
 

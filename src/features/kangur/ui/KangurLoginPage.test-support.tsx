@@ -1,6 +1,9 @@
+'use client';
+
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { render } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';

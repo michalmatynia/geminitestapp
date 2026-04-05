@@ -7,7 +7,7 @@ import {
   type AiPathRunListResult,
   type AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
-import type { StudioSlotsResponse } from '@/shared/contracts/image-studio';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';
 import {
   aiPathRunMatchesFilters,
   rememberOptimisticAiPathRun,
@@ -32,6 +32,50 @@ type RecentAiPathRunEnqueueRecord = {
   at: number;
   expiresAt: number;
 };
+
+const readRecentAiPathRunEnqueueStringField = (
+  record: Record<string, unknown>,
+  key: 'runId' | 'entityId' | 'entityType',
+  options?: { lowercase?: boolean }
+): string | null => {
+  const value = record[key];
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return options?.lowercase ? trimmed.toLowerCase() : trimmed;
+};
+
+const readRecentAiPathRunEnqueueNumberField = (
+  record: Record<string, unknown>,
+  key: 'at' | 'expiresAt',
+  options?: { positive?: boolean }
+): number | null => {
+  const value = record[key];
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+  if (options?.positive ? value <= 0 : value < 0) {
+    return null;
+  }
+  return value;
+};
+
+const buildRecentAiPathRunEnqueueRecord = (input: {
+  runId: string;
+  entityId: string | null;
+  entityType: string | null;
+  at: number;
+  expiresAt: number;
+}): RecentAiPathRunEnqueueRecord => ({
+  type: 'run-enqueued',
+  runId: input.runId,
+  entityId: input.entityId,
+  entityType: input.entityType,
+  at: input.at,
+  expiresAt: input.expiresAt,
+});
 
 const normalizeString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -94,37 +138,23 @@ const normalizeRecentAiPathRunEnqueueRecord = (
 ): RecentAiPathRunEnqueueRecord | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
-  const runId =
-    typeof record['runId'] === 'string' && record['runId'].trim().length > 0
-      ? record['runId'].trim()
-      : null;
-  const entityId =
-    typeof record['entityId'] === 'string' && record['entityId'].trim().length > 0
-      ? record['entityId'].trim()
-      : null;
-  const entityType =
-    typeof record['entityType'] === 'string' && record['entityType'].trim().length > 0
-      ? record['entityType'].trim().toLowerCase()
-      : null;
-  const at =
-    typeof record['at'] === 'number' && Number.isFinite(record['at']) && record['at'] >= 0
-      ? record['at']
-      : null;
-  const expiresAt =
-    typeof record['expiresAt'] === 'number' &&
-    Number.isFinite(record['expiresAt']) &&
-    record['expiresAt'] > 0
-      ? record['expiresAt']
-      : null;
+  const runId = readRecentAiPathRunEnqueueStringField(record, 'runId');
+  const entityId = readRecentAiPathRunEnqueueStringField(record, 'entityId');
+  const entityType = readRecentAiPathRunEnqueueStringField(record, 'entityType', {
+    lowercase: true,
+  });
+  const at = readRecentAiPathRunEnqueueNumberField(record, 'at');
+  const expiresAt = readRecentAiPathRunEnqueueNumberField(record, 'expiresAt', {
+    positive: true,
+  });
   if (!runId || at === null || expiresAt === null) return null;
-  return {
-    type: 'run-enqueued',
+  return buildRecentAiPathRunEnqueueRecord({
     runId,
     entityId,
     entityType,
     at,
     expiresAt,
-  };
+  });
 };
 
 export const rememberRecentAiPathRunEnqueue = (
@@ -138,14 +168,13 @@ export const rememberRecentAiPathRunEnqueue = (
     typeof parsed.at === 'number' && Number.isFinite(parsed.at) && parsed.at >= 0
       ? parsed.at
       : Date.now();
-  const record: RecentAiPathRunEnqueueRecord = {
-    type: 'run-enqueued',
+  const record = buildRecentAiPathRunEnqueueRecord({
     runId: parsed.runId,
     entityId: parsed.entityId ?? null,
     entityType: parsed.entityType ?? null,
     at,
     expiresAt: Date.now() + ttlMs,
-  };
+  });
   inMemoryRecentAiPathRunEnqueue = record;
   safeLocalStorageSetItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY, JSON.stringify(record));
 };
@@ -155,6 +184,71 @@ export const clearRecentAiPathRunEnqueue = (): void => {
   safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
 };
 
+const clearExpiredRecentAiPathRunEnqueueMemoryRecord = (): void => {
+  inMemoryRecentAiPathRunEnqueue = null;
+};
+
+const readRecentAiPathRunEnqueueMemoryRecord = (
+  now: number
+): RecentAiPathRunEnqueueRecord | null => {
+  const record = inMemoryRecentAiPathRunEnqueue;
+  if (!record || record.expiresAt <= now) {
+    clearExpiredRecentAiPathRunEnqueueMemoryRecord();
+    return null;
+  }
+  return record;
+};
+
+const parseRecentAiPathRunEnqueueStorageRecord = (
+  raw: string
+): RecentAiPathRunEnqueueRecord | null => {
+  try {
+    return normalizeRecentAiPathRunEnqueueRecord(JSON.parse(raw));
+  } catch (error) {
+    logClientCatch(error, {
+      source: 'query-invalidation',
+      action: 'parseRecentAiPathRunEnqueue',
+      storageKey: RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY,
+      level: 'warn',
+    });
+    return null;
+  }
+};
+
+const clearInvalidRecentAiPathRunEnqueueStorageRecord = (): void => {
+  safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+};
+
+const readRecentAiPathRunEnqueueStorageRecord = (
+  now: number
+): RecentAiPathRunEnqueueRecord | null => {
+  const raw = safeLocalStorageGetItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
+  if (!raw) return null;
+  const record = parseRecentAiPathRunEnqueueStorageRecord(raw);
+  if (!record || record.expiresAt <= now) {
+    clearInvalidRecentAiPathRunEnqueueStorageRecord();
+    return null;
+  }
+  return record;
+};
+
+const selectRecentAiPathRunEnqueueRecord = (
+  memoryRecord: RecentAiPathRunEnqueueRecord | null,
+  storageRecord: RecentAiPathRunEnqueueRecord | null
+): RecentAiPathRunEnqueueRecord | null => {
+  if (!storageRecord) return memoryRecord;
+  if (!memoryRecord) return storageRecord;
+  return storageRecord.at >= memoryRecord.at ? storageRecord : memoryRecord;
+};
+
+const toRecentAiPathRunEnqueueSnapshot = (record: RecentAiPathRunEnqueueRecord) => ({
+  type: record.type,
+  runId: record.runId,
+  entityId: record.entityId,
+  entityType: record.entityType,
+  at: record.at,
+});
+
 export const getRecentAiPathRunEnqueue = (): {
   type: 'run-enqueued';
   runId: string;
@@ -163,56 +257,13 @@ export const getRecentAiPathRunEnqueue = (): {
   at: number;
 } | null => {
   const now = Date.now();
-
-  const memoryRecord =
-    inMemoryRecentAiPathRunEnqueue && inMemoryRecentAiPathRunEnqueue.expiresAt > now
-      ? inMemoryRecentAiPathRunEnqueue
-      : null;
-  if (!memoryRecord) {
-    inMemoryRecentAiPathRunEnqueue = null;
-  }
-
-  let storageRecord: RecentAiPathRunEnqueueRecord | null = null;
-  const raw = safeLocalStorageGetItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-  if (raw) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (error) {
-      logClientCatch(error, {
-        source: 'query-invalidation',
-        action: 'parseRecentAiPathRunEnqueue',
-        storageKey: RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY,
-        level: 'warn',
-      });
-      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-      parsed = null;
-    }
-
-    const normalized = normalizeRecentAiPathRunEnqueueRecord(parsed);
-    if (!normalized) {
-      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-    } else if (normalized.expiresAt <= now) {
-      safeLocalStorageRemoveItem(RECENT_AI_PATH_RUN_ENQUEUE_STORAGE_KEY);
-    } else {
-      storageRecord = normalized;
-    }
-  }
-
-  const record =
-    storageRecord && (!memoryRecord || storageRecord.at >= memoryRecord.at)
-      ? storageRecord
-      : memoryRecord;
+  const memoryRecord = readRecentAiPathRunEnqueueMemoryRecord(now);
+  const storageRecord = readRecentAiPathRunEnqueueStorageRecord(now);
+  const record = selectRecentAiPathRunEnqueueRecord(memoryRecord, storageRecord);
   if (!record) return null;
 
   inMemoryRecentAiPathRunEnqueue = record;
-  return {
-    type: record.type,
-    runId: record.runId,
-    entityId: record.entityId,
-    entityType: record.entityType,
-    at: record.at,
-  };
+  return toRecentAiPathRunEnqueueSnapshot(record);
 };
 
 export const resolveQueueRunSource = (meta?: Record<string, unknown> | null): string | null => {
@@ -312,12 +363,18 @@ export const invalidateCatalogScopedData = async (
 ): Promise<void> => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(catalogId) }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.metadata.shippingGroups(catalogId),
+    }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(catalogId) }),
     queryClient.invalidateQueries({
       queryKey: QUERY_KEYS.products.metadata.simpleParameters(catalogId),
     }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(catalogId) }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.settings.shippingGroups(catalogId),
+    }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.tags(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.parameters(catalogId) }),
     queryClient.invalidateQueries({

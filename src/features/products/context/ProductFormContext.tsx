@@ -8,8 +8,9 @@ import {
   warnNonHydratedEditProduct,
 } from '@/features/products/hooks/editingProductHydration';
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
-import { ProductParameterValue } from '@/shared/contracts/products';
-import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
+import { ProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
@@ -128,6 +129,7 @@ type ProductFormProviderConfigContextType = {
   onSuccess?: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
   requireHydratedEditProduct?: boolean;
+  suppressNonHydratedEditWarning?: boolean;
   nonFormDirtyTrackingLockedRef: { current: boolean };
 };
 
@@ -349,8 +351,10 @@ export function ProductFormProvider(props: {
   onEditSave?: (saved: ProductWithImages) => void;
   requireSku?: boolean;
   requireHydratedEditProduct?: boolean;
+  suppressNonHydratedEditWarning?: boolean;
   initialSku?: string;
   initialCatalogId?: string;
+  validatorSessionKey?: string;
 }): React.ReactNode {
   const {
     children,
@@ -360,8 +364,10 @@ export function ProductFormProvider(props: {
     onEditSave,
     requireSku = true,
     requireHydratedEditProduct = false,
+    suppressNonHydratedEditWarning = false,
     initialSku,
     initialCatalogId,
+    validatorSessionKey,
   } = props;
 
   const runtime = useContext(ProductFormProviderRuntimeContext);
@@ -376,6 +382,7 @@ export function ProductFormProvider(props: {
       onSuccess,
       onEditSave,
       requireHydratedEditProduct,
+      suppressNonHydratedEditWarning,
       nonFormDirtyTrackingLockedRef,
     }),
     [
@@ -383,6 +390,7 @@ export function ProductFormProvider(props: {
       onEditSave,
       onSuccess,
       requireHydratedEditProduct,
+      suppressNonHydratedEditWarning,
       resolvedDraft,
       resolvedProduct,
     ]
@@ -394,6 +402,7 @@ export function ProductFormProvider(props: {
       draft={resolvedDraft}
       requireSku={requireSku}
       initialSku={initialSku}
+      validatorSessionKey={validatorSessionKey}
     >
       <ProductFormProviderConfigContext.Provider value={providerConfigContextValue}>
         <ProductFormSubProviders>{children}</ProductFormSubProviders>
@@ -405,7 +414,12 @@ export function ProductFormProvider(props: {
 function ProductFormSubProviders(props: { children: React.ReactNode }) {
   const { children } = props;
 
-  const { product, requireHydratedEditProduct, nonFormDirtyTrackingLockedRef } =
+  const {
+    product,
+    requireHydratedEditProduct,
+    suppressNonHydratedEditWarning,
+    nonFormDirtyTrackingLockedRef,
+  } =
     useProductFormProviderConfigContext();
   const markNonFormInteraction = (): void => {
     nonFormDirtyTrackingLockedRef.current = true;
@@ -416,10 +430,11 @@ function ProductFormSubProviders(props: { children: React.ReactNode }) {
     if (!requireHydratedEditProduct) return;
     if (!product) return;
     if (isEditingProductHydrated(product)) return;
+    if (suppressNonHydratedEditWarning) return;
     if (hydratedWarnedRef.current) return;
     hydratedWarnedRef.current = true;
     warnNonHydratedEditProduct(product);
-  }, [requireHydratedEditProduct, product]);
+  }, [product, requireHydratedEditProduct, suppressNonHydratedEditWarning]);
 
   return (
     <ProductFormInteractionProvider onInteraction={markNonFormInteraction}>

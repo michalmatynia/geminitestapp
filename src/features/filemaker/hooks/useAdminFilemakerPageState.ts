@@ -6,7 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   createFilemakerEvent,

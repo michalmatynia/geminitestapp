@@ -5,7 +5,8 @@ import React from 'react';
 
 import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
-import { Button, CopyButton, Badge } from '@/shared/ui';
+import { Button, Badge } from '@/shared/ui/primitives.public';
+import { CopyButton } from '@/shared/ui/forms-and-actions.public';
 
 export type NoteCardHeaderProps = {
   note: NoteWithRelations;

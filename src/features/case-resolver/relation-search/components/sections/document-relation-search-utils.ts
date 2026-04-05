@@ -1,7 +1,7 @@
 import { File, FileText, ScanText } from 'lucide-react';
 import React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import type { ResultHeight } from '../../context/DocumentRelationSearchContext';
 

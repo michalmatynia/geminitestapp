@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import { Label, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { Label, Card } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface StudioCardProps {
   label?: string | undefined;
@@ -16,15 +17,12 @@ type StudioCardRuntimeValue = {
   className?: string;
 };
 
-const StudioCardRuntimeContext = React.createContext<StudioCardRuntimeValue | null>(null);
-
-function useStudioCardRuntime(): StudioCardRuntimeValue {
-  const runtime = React.useContext(StudioCardRuntimeContext);
-  if (!runtime) {
-    throw new Error('useStudioCardRuntime must be used within StudioCardRuntimeContext.Provider');
-  }
-  return runtime;
-}
+const { Context: StudioCardRuntimeContext, useStrictContext: useStudioCardRuntime } =
+  createStrictContext<StudioCardRuntimeValue>({
+    hookName: 'useStudioCardRuntime',
+    providerName: 'StudioCardRuntimeContext.Provider',
+    displayName: 'StudioCardRuntimeContext',
+  });
 
 function StudioCardShell({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { className } = useStudioCardRuntime();

@@ -6,21 +6,11 @@ import React from 'react';
 import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/features/ai/image-studio/utils/studio-settings';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import {
-  Button,
-  FormField,
-  FormSection,
-  Input,
-  SelectSimple,
-  StatusBadge,
-  ToggleRow,
-  Switch,
-  Card,
-  Hint,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Input, Switch, Card } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, SelectSimple, ToggleRow, Hint } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   useImageStudioSettingsActions,

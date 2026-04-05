@@ -1,5 +1,3 @@
-'use client';
-
 import type { ReactNode } from 'react';
 
 import { LazyKangurDocsTooltipEnhancer } from '@/features/kangur/ui/components/LazyKangurDocsTooltipEnhancer';

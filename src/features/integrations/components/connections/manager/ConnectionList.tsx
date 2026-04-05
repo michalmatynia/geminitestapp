@@ -9,8 +9,10 @@ import {
   useIntegrationsForm,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
-import { IntegrationConnection } from '@/shared/contracts/integrations';
-import { Button, FormSection, SimpleSettingsList } from '@/shared/ui';
+import { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import { Button } from '@/shared/ui/primitives.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 
 import { ConnectionEditModal } from './ConnectionEditModal';
 

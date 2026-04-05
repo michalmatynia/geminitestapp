@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { NextRequest } from 'next/server';
 
-import type { AnalyticsEventCreateInput } from '@/shared/contracts';
+import type { AnalyticsEventCreateInput } from '@/shared/contracts/analytics';
 
 const normalizeOptionalString = (value: string | null | undefined): string | undefined => {
   const trimmed = value?.trim();

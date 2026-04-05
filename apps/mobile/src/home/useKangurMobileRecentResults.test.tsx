@@ -3,11 +3,8 @@
  */
 
 import React from 'react';
-import {
-  createDefaultKangurAiTutorLearnerMood,
-  createDefaultKangurProgressState,
-  type KangurScore,
-} from '@kangur/contracts';
+import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts/kangur-ai-tutor-mood';
+import { createDefaultKangurProgressState, type KangurScore } from '@kangur/contracts/kangur';
 import type {
   KangurAuthSession,
   KangurClientStorageAdapter,

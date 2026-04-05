@@ -8,29 +8,29 @@ import {
   useInternationalizationUi,
 } from '@/features/internationalization/context/InternationalizationContext';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
-import { LoadingState } from '@/shared/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
 
 import { useCountryForm } from './hooks/useCountryForm';
-import { renderSelectionChecklistGrid } from '../shared/renderSelectionChecklistGrid';
-
-type CountryFormState = {
-  code: string;
-  name: string;
-};
+import {
+  buildCountryModalFields,
+  buildCountryModalTitle,
+  resolveCountryFormChange,
+  resolveCountryModalDefaults,
+  toggleSelectedCountryCurrencyIds,
+} from './CountryModal.helpers';
+import type { CountryFormState } from './CountryModal.helpers';
 
 export function CountryModal(): React.JSX.Element | null {
   const { isCountryModalOpen, activeCountry } = useInternationalizationUi();
   const { handleCloseCountryModal } = useInternationalizationActions();
   const { currencies: currencyOptions, loadingCurrencies } = useInternationalizationData();
+  const defaultCountry = resolveCountryModalDefaults(countryCodeOptions);
 
-  const defaultOption = countryCodeOptions[0];
   const { form, setForm, selectedCurrencyIds, setSelectedCurrencyIds, saveMutation, handleSubmit } =
     useCountryForm({
       country: activeCountry ?? null,
-      defaultCountryCode: defaultOption?.code ?? '',
-      defaultCountryName: defaultOption?.name ?? '',
+      defaultCountryCode: defaultCountry.code,
+      defaultCountryName: defaultCountry.name,
     });
 
   if (!isCountryModalOpen) return null;
@@ -41,67 +41,26 @@ export function CountryModal(): React.JSX.Element | null {
   };
 
   const toggleCurrency = (id: string): void => {
-    setSelectedCurrencyIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedCurrencyIds((prev) => toggleSelectedCountryCurrencyIds(prev, id));
   };
 
-  const fields: SettingsPanelField<CountryFormState>[] = [
-    {
-      key: 'code',
-      label: 'Code',
-      type: 'select',
-      options: countryCodeOptions.map((opt) => ({
-        value: opt.code,
-        label: `${opt.code} · ${opt.name}`,
-      })),
-      required: true,
-    },
-    {
-      key: 'name',
-      label: 'Name',
-      type: 'text',
-      required: true,
-    },
-    {
-      key: 'name', // Using existing key for custom section
-      label: 'Associated Currencies',
-      type: 'custom',
-      render: () => (
-        <div className='space-y-2'>
-          {loadingCurrencies ? (
-            <LoadingState message='Loading currencies...' size='sm' className='py-4' />
-          ) : (
-            renderSelectionChecklistGrid({
-              className: 'mt-2',
-              items: currencyOptions.map((currency) => ({
-                id: currency.id,
-                label: `${currency.code} (${currency.name})`,
-              })),
-              selectedIds: selectedCurrencyIds,
-              onToggle: toggleCurrency,
-              emptyMessage: 'No currencies available.',
-            })
-          )}
-        </div>
-      ),
-    },
-  ];
+  const fields = buildCountryModalFields({
+    countryCodeOptions,
+    currencyOptions,
+    loadingCurrencies,
+    selectedCurrencyIds,
+    onToggleCurrency: toggleCurrency,
+  });
 
   const handleChange = (values: Partial<CountryFormState>) => {
-    if (values.code) {
-      const sel = countryCodeOptions.find((o) => o.code === values.code);
-      setForm({ code: values.code, name: sel?.name ?? '' });
-    } else {
-      setForm((prev) => ({ ...prev, ...values }));
-    }
+    setForm((prev) => resolveCountryFormChange(prev, values, countryCodeOptions));
   };
 
   return (
     <SettingsPanelBuilder
       open={isCountryModalOpen}
       onClose={handleCloseCountryModal}
-      title={activeCountry ? 'Edit Country' : 'Add Country'}
+      title={buildCountryModalTitle(Boolean(activeCountry))}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
       fields={fields}

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 import { isNeo4jEnabled } from '@/shared/lib/neo4j/config';
 

@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultKangurProgressState, type KangurAssignment } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
+import { type KangurAssignment } from '@kangur/contracts/kangur-assignments';
 import { authError } from '@/shared/errors/app-error';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   getKangurAssignmentRepositoryMock,

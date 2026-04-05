@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminKangurTestSuitesManagerPage } from '@/features/kangur/admin/AdminKangurTestSuitesManagerPage';
+import { AdminKangurTestSuitesManagerPage } from '@/features/kangur/public';
 
 export default function Page(): JSX.Element {
   return <AdminKangurTestSuitesManagerPage />;

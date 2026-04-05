@@ -108,7 +108,7 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: ({ navigation }: { navigation: unknown }) => {
     topNavigationPropsMock(navigation);
     return <div data-testid='parent-dashboard-top-navigation' />;
@@ -123,11 +123,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurTutorAnchor', () => ({
   useKangurTutorAnchor: (props: unknown) => tutorAnchorMock(props),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurParentDashboardHeroWidget', () => ({
+vi.mock('@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget', () => ({
   KangurParentDashboardHeroWidget: () => <div data-testid='parent-dashboard-hero-widget' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurParentDashboardTabsWidget', () => ({
+vi.mock('@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardTabsWidget', () => ({
   KangurParentDashboardTabsWidget: () => <div data-testid='parent-dashboard-tabs-widget' />,
   getParentDashboardTabIds: (tabId: string) => ({
     tabId: `parent-dashboard-tab-${tabId}`,
@@ -135,28 +135,28 @@ vi.mock('@/features/kangur/ui/components/KangurParentDashboardTabsWidget', () =>
   }),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurParentDashboardProgressWidget', () => ({
+vi.mock('@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardProgressWidget', () => ({
   KangurParentDashboardProgressWidget: ({ displayMode }: { displayMode?: string }) =>
     displayMode === 'active-tab' && runtimeState.value.activeTab !== 'progress' ? null : (
       <div data-testid='parent-dashboard-progress-widget' />
     ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurParentDashboardAssignmentsWidget', () => ({
+vi.mock('@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAssignmentsWidget', () => ({
   KangurParentDashboardAssignmentsWidget: ({ displayMode }: { displayMode?: string }) =>
     displayMode === 'active-tab' && runtimeState.value.activeTab !== 'assign' ? null : (
       <div data-testid='parent-dashboard-assignments-widget' />
     ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurParentDashboardAssignmentsMonitoringWidget', () => ({
+vi.mock('@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAssignmentsMonitoringWidget', () => ({
   KangurParentDashboardAssignmentsMonitoringWidget: ({ displayMode }: { displayMode?: string }) =>
     displayMode === 'active-tab' && runtimeState.value.activeTab !== 'monitoring' ? null : (
       <div data-testid='parent-dashboard-monitoring-widget' />
     ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurParentDashboardAiTutorWidget', () => ({
+vi.mock('@/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAiTutorWidget', () => ({
   KangurParentDashboardAiTutorWidget: ({ displayMode }: { displayMode?: string }) =>
     displayMode === 'active-tab' && runtimeState.value.activeTab !== 'ai-tutor' ? null : (
       <div data-testid='parent-dashboard-ai-tutor-widget' />

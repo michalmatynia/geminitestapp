@@ -5,7 +5,7 @@ import {
   DEFAULT_KANGUR_AI_TUTOR_NATIVE_GUIDE_STORE,
   type KangurAiTutorNativeGuideStore,
 } from '@/shared/contracts/kangur-ai-tutor-native-guide';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   getKangurAiTutorNativeGuideStoreMock,

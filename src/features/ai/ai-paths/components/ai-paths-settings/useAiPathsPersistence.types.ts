@@ -1,19 +1,5 @@
-import type { Toast } from '@/shared/contracts/ui';
-import type {
-  AiPathsSettingRecordDto,
-  AiNode,
-  Edge,
-  ParserSampleState,
-  PathConfig,
-  PathBlockedRunPolicy,
-  PathExecutionMode,
-  PathFlowIntensity,
-  AiPathsValidationConfig,
-  PathRunMode,
-  PathMeta,
-  RuntimeState,
-  UpdaterSampleState,
-} from '@/shared/lib/ai-paths';
+import type { Toast } from '@/shared/contracts/ui/base';
+import type { AiPathsSettingRecordDto, AiNode, Edge, ParserSampleState, PathConfig, PathBlockedRunPolicy, PathExecutionMode, PathFlowIntensity, AiPathsValidationConfig, PathRunMode, PathMeta, RuntimeState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 
 export type PathSaveOptions = {
   silent?: boolean | undefined;

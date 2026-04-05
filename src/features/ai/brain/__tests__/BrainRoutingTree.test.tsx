@@ -13,8 +13,8 @@ import {
 const useMasterFolderTreeShellMock = vi.fn();
 let latestTreeOptions: unknown = null;
 
-vi.mock('@/features/foldertree/v2', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/foldertree/v2')>();
+vi.mock('@/shared/lib/foldertree/v2', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/foldertree/v2')>();
   return {
     ...actual,
     createMasterFolderTreeTransactionAdapter: ({

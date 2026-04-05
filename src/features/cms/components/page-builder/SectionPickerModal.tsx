@@ -4,9 +4,9 @@ import { Trash2 } from 'lucide-react';
 import React, { createContext, useContext, useMemo } from 'react';
 
 import type { SectionDefinition } from '@/shared/contracts/cms';
-import type { ModalStateProps } from '@/shared/contracts/ui';
-import type { GridPickerItem } from '@/shared/contracts/ui';
-import { Button } from '@/shared/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
+import type { GridPickerItem } from '@/shared/contracts/ui/pickers';
+import { Button } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 
@@ -90,10 +90,10 @@ const CategorySection = ({ title, items }: CategorySectionProps): React.ReactNod
       <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>{title}</div>
       <GenericGridPicker
         items={pickerItems}
-        onSelect={(item) => {
+        onSelect={(item: any) => {
           if (item.value) onSelect(item.value.type);
         }}
-        renderItem={(item) => {
+        renderItem={(item: any) => {
           const def = item.value;
           if (!def) return null;
           return (

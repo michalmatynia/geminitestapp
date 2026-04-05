@@ -8,16 +8,11 @@ import {
   useAiInsightsNotifications,
   useClearAiInsightsNotifications,
 } from '@/features/admin/hooks/useAiInsightsNotifications';
-import type { AiInsightNotification } from '@/shared/contracts';
-import {
-  Button,
-  StatusBadge,
-  LoadingState,
-  CompactEmptyState,
-  Drawer,
-  DocumentationList,
-} from '@/shared/ui';
-import { useToast } from '@/shared/ui';
+import type { AiInsightNotification } from '@/shared/contracts/ai-insights';
+import { Button } from '@/shared/ui/primitives.public';
+import { StatusBadge, DocumentationList } from '@/shared/ui/data-display.public';
+import { LoadingState, CompactEmptyState, Drawer } from '@/shared/ui/navigation-and-layout.public';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

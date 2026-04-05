@@ -1,8 +1,4 @@
-import {
-  type CaseResolverWorkspace,
-  type CaseResolverDefaultDocumentFormat,
-  type CaseResolverSettings,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverWorkspace, type CaseResolverDefaultDocumentFormat, type CaseResolverSettings } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -57,6 +53,24 @@ export {
   resolveCaseResolverUploadFolder,
 } from './settings-workspace-helpers';
 
+const readParsedDefaultDocumentFormatCandidates = (parsed: unknown): unknown[] => {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return [parsed];
+  }
+  const record = parsed as Record<string, unknown>;
+  return [parsed, record['defaultDocumentFormat'], record['editorType']];
+};
+
+const resolveParsedDefaultDocumentFormat = (
+  parsed: unknown
+): CaseResolverDefaultDocumentFormat | null => {
+  for (const candidate of readParsedDefaultDocumentFormatCandidates(parsed)) {
+    const normalized = normalizeCaseResolverDefaultDocumentFormatValue(candidate);
+    if (normalized) return normalized;
+  }
+  return null;
+};
+
 export const parseCaseResolverDefaultDocumentFormat = (
   raw: string | null | undefined,
   fallback: CaseResolverDefaultDocumentFormat = 'wysiwyg'
@@ -64,17 +78,10 @@ export const parseCaseResolverDefaultDocumentFormat = (
   const direct = normalizeCaseResolverDefaultDocumentFormatValue(raw);
   if (direct) return direct;
 
-  if (typeof raw === 'string') {
-    const parsed = parseJsonSetting<unknown>(raw, null);
-    const parsedDirect = normalizeCaseResolverDefaultDocumentFormatValue(parsed);
-    if (parsedDirect) return parsedDirect;
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      const record = parsed as Record<string, unknown>;
-      const candidate = record['defaultDocumentFormat'] ?? null;
-      const parsedFromObject = normalizeCaseResolverDefaultDocumentFormatValue(candidate);
-      if (parsedFromObject) return parsedFromObject;
-    }
-  }
+  if (typeof raw !== 'string') return fallback;
+
+  const parsedFormat = resolveParsedDefaultDocumentFormat(parseJsonSetting<unknown>(raw, null));
+  if (parsedFormat) return parsedFormat;
 
   return fallback;
 };

@@ -2,10 +2,10 @@
 
 import React, { useMemo } from 'react';
 
-import type { GridPickerItem } from '@/shared/contracts/ui';
-import { Tooltip } from '@/shared/ui';
+import type { GridPickerItem } from '@/shared/contracts/ui/pickers';
+import { Tooltip } from '@/shared/ui/primitives.public';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ICON_LIBRARY, type IconLibraryItem } from '../lib/icon-library';
 
@@ -48,7 +48,7 @@ export function IconSelector(props: IconSelectorProps): React.JSX.Element {
 
   const gridItems = useMemo<IconGridItem[]>(
     () =>
-      items.map((item) => ({
+      items.map((item: any) => ({
         id: item.id,
         label: item.label,
         item,
@@ -61,7 +61,7 @@ export function IconSelector(props: IconSelectorProps): React.JSX.Element {
       <GenericGridPicker<IconGridItem>
         items={gridItems}
         selectedId={value ?? undefined}
-        onSelect={(item) => {
+        onSelect={(item: any) => {
           if (value === item.id && allowClear) {
             onChange(null);
           } else {

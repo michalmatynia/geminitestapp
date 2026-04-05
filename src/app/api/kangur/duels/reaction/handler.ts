@@ -4,7 +4,7 @@ import { sendKangurDuelReaction } from '@/features/kangur/duels/server';
 import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import { requireActiveLearner, resolveKangurActor } from '@/features/kangur/server';
 import { kangurDuelReactionInputSchema } from '@/shared/contracts/kangur-duels';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 export async function postKangurDuelReactionHandler(
   req: NextRequest,

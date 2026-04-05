@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Hint } from '@/shared/ui';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 export function ColorPickerField({
   label,

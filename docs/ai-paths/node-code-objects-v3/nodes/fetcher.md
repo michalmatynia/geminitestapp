@@ -1,6 +1,6 @@
 ---
 owner: 'AI Paths Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-05'
 status: 'generated'
 doc_type: 'generated'
 scope: 'feature:ai-paths'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Fetcher: Trigger Context Migration Sheet (`fetcher`)
 
-Generated at: 2026-03-28T14:11:54.225Z
+Generated at: 2026-04-05T14:57:58.017Z
 
 ## Status
 
@@ -29,7 +29,7 @@ Generated at: 2026-03-28T14:11:54.225Z
 - v2 code object: `docs/ai-paths/node-code-objects-v2/fetcher.json`
 - v3 scaffold: `docs/ai-paths/node-code-objects-v3/fetcher.scaffold.json`
 - v3 object id: `node_obj_fetcher_portable_v3`
-- v3 object hash: `8b5f846ecaf29b70bc9ef6646c305400b1158543bae6216634ef36725ccc4cda`
+- v3 object hash: `0f2c8d16e14c01d13c0bdb46868fe30886be3434ba706fffc84d679696416517`
 
 ## Ports
 

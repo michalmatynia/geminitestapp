@@ -1,9 +1,4 @@
-import type {
-  CaseResolverCaptureAction,
-  CaseResolverCaptureRole,
-  CaseResolverCaptureRoleMapping,
-  CaseResolverCaptureSettings,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverCaptureAction, CaseResolverCaptureRole, CaseResolverCaptureRoleMapping, CaseResolverCaptureSettings } from '@/shared/contracts/case-resolver/capture';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 

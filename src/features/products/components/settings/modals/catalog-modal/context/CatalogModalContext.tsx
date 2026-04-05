@@ -3,8 +3,9 @@
 import React from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';
-import type { PriceGroup } from '@/shared/contracts/products';
+import type { PriceGroup } from '@/shared/contracts/products/catalogs';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 type CatalogFormState = {
   name: string;
@@ -35,7 +36,15 @@ type CatalogModalContextValue = {
   loadingGroups: boolean;
 };
 
-const CatalogModalContext = React.createContext<CatalogModalContextValue | null>(null);
+const { Context: CatalogModalContext, useStrictContext: useCatalogModalContext } =
+  createStrictContext<CatalogModalContextValue>({
+    hookName: 'useCatalogModalContext',
+    providerName: 'CatalogModalProvider',
+    displayName: 'CatalogModalContext',
+    errorFactory: internalError,
+  });
+
+export { useCatalogModalContext };
 
 type CatalogModalProviderProps = {
   value: CatalogModalContextValue;
@@ -47,12 +56,4 @@ export function CatalogModalProvider({
   children,
 }: CatalogModalProviderProps): React.JSX.Element {
   return <CatalogModalContext.Provider value={value}>{children}</CatalogModalContext.Provider>;
-}
-
-export function useCatalogModalContext(): CatalogModalContextValue {
-  const context = React.useContext(CatalogModalContext);
-  if (!context) {
-    throw internalError('useCatalogModalContext must be used within CatalogModalProvider');
-  }
-  return context;
 }

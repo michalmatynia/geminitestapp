@@ -10,11 +10,7 @@ import {
 import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
-import {
-  ClientOnly,
-  Tabs,
-  TabsContent,
-} from '@/shared/ui';
+import { ClientOnly, Tabs, TabsContent } from '@/shared/ui/primitives.public';
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';

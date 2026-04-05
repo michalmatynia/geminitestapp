@@ -3,8 +3,8 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React from 'react';
 
-import type { TreeCaretProps } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import type { TreeCaretProps } from '@/shared/contracts/ui/menus';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useTreeNodeState } from './TreeContext';
 

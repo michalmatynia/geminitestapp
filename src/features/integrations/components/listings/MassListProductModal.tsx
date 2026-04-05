@@ -3,21 +3,25 @@
 import { useState } from 'react';
 
 import {
-  ListingSettingsProvider,
   useListingSelection,
 } from '@/features/integrations/context/ListingSettingsContext';
-import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal, Alert, LoadingState } from '@/shared/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
+import { FormModal } from '@/shared/ui/forms-and-actions.public';
+import { Alert } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
-import { BaseListingSettings } from './BaseListingSettings';
-import { ExportLogViewer } from './ExportLogViewer';
+import { ExportLogsPanel } from './ExportLogsPanel';
 import { useMassListForm } from './hooks/useMassListForm';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
+import { IntegrationSpecificListingSettings } from './IntegrationSpecificListingSettings';
+import { ListingSettingsModalProvider } from './ListingSettingsModalProvider';
 import {
   MassListProductModalViewProvider,
   useMassListProductModalViewContext,
 } from './mass-list-modal/context/MassListProductModalViewContext';
 import { MassListProgressPanel } from './mass-list-modal/MassListProgressPanel';
+import { resolveMassListProductModalCopy } from './product-listings-copy';
+import { resolveIntegrationDisplayName } from './product-listings-labels';
 
 interface MassListProductModalProps extends EntityModalProps<string[]> {
   integrationId: string;
@@ -35,17 +39,22 @@ function MassListProductModalContent(): React.JSX.Element {
   } = useListingSelection();
 
   const { error, progress, exportLogs, handleSubmit, submitting } = useMassListForm();
+  const { modalTitle, saveText } = resolveMassListProductModalCopy({
+    productCount: productIds.length,
+    selectedIntegrationName: resolveIntegrationDisplayName(selectedIntegration?.name),
+    isBaseComIntegration,
+  });
 
   return (
     <FormModal
       open={true}
       onClose={onClose}
-      title={`List ${productIds.length} Products to ${selectedIntegration?.name || 'Marketplace'}`}
+      title={modalTitle}
       onSave={(): void => {
         void handleSubmit();
       }}
       isSaving={submitting}
-      saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Products'}
+      saveText={saveText}
       cancelText='Cancel'
       size='md'
     >
@@ -67,16 +76,15 @@ function MassListProductModalContent(): React.JSX.Element {
             {loading ? (
               <LoadingState message='Loading details...' size='sm' className='py-4' />
             ) : (
-              <>{isBaseComIntegration && <BaseListingSettings />}</>
+              <IntegrationSpecificListingSettings
+                includeTradera={false}
+                withSectionDivider={false}
+              />
             )}
           </>
         )}
 
-        {exportLogs.length > 0 && (
-          <div className='mt-4 border-t border pt-4'>
-            <ExportLogViewer logs={exportLogs} isOpen={logsOpen} onToggle={setLogsOpen} />
-          </div>
-        )}
+        <ExportLogsPanel logs={exportLogs} isOpen={logsOpen} onToggle={setLogsOpen} />
       </div>
     </FormModal>
   );
@@ -88,7 +96,7 @@ export function MassListProductModal(props: MassListProductModalProps): React.JS
   if (!productIds || !isOpen) return null;
 
   return (
-    <ListingSettingsProvider
+    <ListingSettingsModalProvider
       initialIntegrationId={integrationId}
       initialConnectionId={connectionId}
     >
@@ -103,7 +111,7 @@ export function MassListProductModal(props: MassListProductModalProps): React.JS
       >
         <MassListProductModalContent />
       </MassListProductModalViewProvider>
-    </ListingSettingsProvider>
+    </ListingSettingsModalProvider>
   );
 }
 

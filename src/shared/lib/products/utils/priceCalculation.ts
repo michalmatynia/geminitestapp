@@ -1,8 +1,10 @@
-import type { PriceGroupForCalculation } from '@/shared/contracts/products';
+import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
 
 function normalizeCurrencyCode(code?: string | null): string {
   return (code ?? '').trim().toUpperCase();
 }
+
+const normalizePriceGroupIdentifier = (value?: string | null): string => (value ?? '').trim();
 
 const getPriceGroupKey = (group: PriceGroupForCalculation | undefined): string | null =>
   group?.id || group?.groupId || null;
@@ -22,7 +24,16 @@ const isSamePriceGroup = (
   if (!left || !right) {
     return false;
   }
-  return left.id === right.id || left.groupId === right.groupId;
+
+  const leftId = normalizePriceGroupIdentifier(left.id);
+  const rightId = normalizePriceGroupIdentifier(right.id);
+  if (leftId && rightId && leftId === rightId) {
+    return true;
+  }
+
+  const leftGroupId = normalizePriceGroupIdentifier(left.groupId);
+  const rightGroupId = normalizePriceGroupIdentifier(right.groupId);
+  return Boolean(leftGroupId && rightGroupId && leftGroupId === rightGroupId);
 };
 
 const resolvePriceGroupAdjustment = (

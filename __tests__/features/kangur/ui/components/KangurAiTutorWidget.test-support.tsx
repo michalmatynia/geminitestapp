@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 import { KangurTutorAnchorProvider } from '@/features/kangur/ui/context/KangurTutorAnchorContext';
 import { useKangurTutorAnchor } from '@/features/kangur/ui/hooks/useKangurTutorAnchor';
 import { DEFAULT_KANGUR_AI_TUTOR_CONTENT as importedDefaultKangurAiTutorContent } from '@/shared/contracts/kangur-ai-tutor-content';
-import { persistTutorVisibilityHidden as importedPersistTutorVisibilityHidden } from '@/features/kangur/ui/components/KangurAiTutorWidget.storage';
+import { persistTutorVisibilityHidden as importedPersistTutorVisibilityHidden } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
 
 import type {
   AnchorHTMLAttributes,
@@ -387,7 +387,7 @@ type TutorAnchorsOptions = {
 };
 
 type KangurAiTutorWidgetComponent =
-  typeof import('@/features/kangur/ui/components/KangurAiTutorWidget').KangurAiTutorWidget;
+  typeof import('@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget').KangurAiTutorWidget;
 
 export const buildTutorAnchorsTree = (
   KangurAiTutorWidget: KangurAiTutorWidgetComponent,
@@ -487,8 +487,10 @@ export async function prepareKangurAiTutorWidgetTest(): Promise<KangurAiTutorWid
   window.sessionStorage.clear();
   importedPersistTutorVisibilityHidden(false);
   resetTutorAuthAnchorRects();
-  vi.doUnmock('@/features/kangur/ui/components/KangurAiTutorWidget');
-  const { KangurAiTutorWidget } = await import('@/features/kangur/ui/components/KangurAiTutorWidget');
+  vi.doUnmock('@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget');
+  const { KangurAiTutorWidget } = await import(
+    '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget'
+  );
 
   Element.prototype.scrollIntoView = vi.fn();
   Object.defineProperty(window, 'speechSynthesis', {

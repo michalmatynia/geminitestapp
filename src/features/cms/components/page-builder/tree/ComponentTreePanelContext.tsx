@@ -5,7 +5,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import type { PageZone } from '@/features/cms/types/page-builder';
 import type { ClipboardData } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
-import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
+import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
 
 type ComponentTreeClipboard = ClipboardData | null;
 

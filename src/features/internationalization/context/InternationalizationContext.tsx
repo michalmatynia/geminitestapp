@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import React, { useMemo, useState, type ReactNode } from 'react';
 
 import {
   useDeleteCountryMutation,
@@ -14,7 +14,8 @@ import type {
 } from '@/shared/contracts/internationalization';
 import { internalError } from '@/shared/errors/app-error';
 import { useCountries, useCurrencies, useLanguages } from '@/shared/hooks/use-i18n-queries';
-import { useToast } from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useToast } from '@/shared/ui/primitives.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -67,42 +68,41 @@ export type InternationalizationContextType = InternationalizationDataContextTyp
   InternationalizationUiContextType &
   InternationalizationActionsContextType;
 
-const InternationalizationDataContext = createContext<InternationalizationDataContextType | null>(
-  null
-);
-const InternationalizationUiContext = createContext<InternationalizationUiContextType | null>(null);
-const InternationalizationActionsContext =
-  createContext<InternationalizationActionsContextType | null>(null);
+const {
+  Context: InternationalizationDataContext,
+  useStrictContext: useInternationalizationData,
+} = createStrictContext<InternationalizationDataContextType>({
+  hookName: 'useInternationalizationData',
+  providerName: 'an InternationalizationProvider',
+  displayName: 'InternationalizationDataContext',
+  errorFactory: internalError,
+});
 
-export function useInternationalizationData(): InternationalizationDataContextType {
-  const context = useContext(InternationalizationDataContext);
-  if (!context) {
-    throw internalError(
-      'useInternationalizationData must be used within an InternationalizationProvider'
-    );
-  }
-  return context;
-}
+const {
+  Context: InternationalizationUiContext,
+  useStrictContext: useInternationalizationUi,
+} = createStrictContext<InternationalizationUiContextType>({
+  hookName: 'useInternationalizationUi',
+  providerName: 'an InternationalizationProvider',
+  displayName: 'InternationalizationUiContext',
+  errorFactory: internalError,
+});
 
-export function useInternationalizationUi(): InternationalizationUiContextType {
-  const context = useContext(InternationalizationUiContext);
-  if (!context) {
-    throw internalError(
-      'useInternationalizationUi must be used within an InternationalizationProvider'
-    );
-  }
-  return context;
-}
+const {
+  Context: InternationalizationActionsContext,
+  useStrictContext: useInternationalizationActions,
+} = createStrictContext<InternationalizationActionsContextType>({
+  hookName: 'useInternationalizationActions',
+  providerName: 'an InternationalizationProvider',
+  displayName: 'InternationalizationActionsContext',
+  errorFactory: internalError,
+});
 
-export function useInternationalizationActions(): InternationalizationActionsContextType {
-  const context = useContext(InternationalizationActionsContext);
-  if (!context) {
-    throw internalError(
-      'useInternationalizationActions must be used within an InternationalizationProvider'
-    );
-  }
-  return context;
-}
+export {
+  useInternationalizationActions,
+  useInternationalizationData,
+  useInternationalizationUi,
+};
 
 export function useInternationalizationContext(): InternationalizationContextType {
   const data = useInternationalizationData();

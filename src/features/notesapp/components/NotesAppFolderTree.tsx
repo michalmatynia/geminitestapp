@@ -8,7 +8,7 @@ import {
   handleMasterTreeDrop,
   resolveFolderTreeIconSet,
   useMasterFolderTreeShell,
-} from '@/features/foldertree/public';
+} from '@/shared/lib/foldertree/public';
 import { useNotesAppActions, useNotesAppState } from '@/features/notesapp/hooks/NotesAppContext';
 import {
   buildMasterNodesFromNotesFolderTree,
@@ -24,8 +24,8 @@ import {
   resolveNotesExternalDropAction,
 } from '@/features/notesapp/utils/notes-master-tree-external-drop';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
-import { FolderTreePanel } from '@/shared/ui';
-import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
+import { FolderTreePanel } from '@/shared/ui/navigation-and-layout.public';
+import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
 
 

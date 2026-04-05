@@ -1,7 +1,5 @@
-'use client';
-
-import type { ProductCsvImportResponse } from '@/shared/contracts/products';
-import type { CreateMutation } from '@/shared/contracts/ui';
+import type { ProductCsvImportResponse } from '@/shared/contracts/products/io';
+import type { CreateMutation } from '@/shared/contracts/ui/queries';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductsAndCounts } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

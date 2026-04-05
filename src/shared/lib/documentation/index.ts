@@ -1,3 +1,4 @@
+/** @deprecated Do not import from this barrel! Use specific sub-barrel instead */
 export * from '@/shared/contracts/documentation';
 export * from './registry';
 export * from './tooltips';

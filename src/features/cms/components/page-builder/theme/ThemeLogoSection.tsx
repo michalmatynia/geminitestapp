@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
-import { Card, Hint, Button, FileUploadTrigger, FileUploadButton } from '@/shared/ui';
+import { Card, Button } from '@/shared/ui/primitives.public';
+import { Hint, FileUploadTrigger, FileUploadButton } from '@/shared/ui/forms-and-actions.public';
 import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 type LogoWidthSettings = {

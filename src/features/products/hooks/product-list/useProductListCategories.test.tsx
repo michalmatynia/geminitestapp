@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const { apiGetMock } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
@@ -77,17 +77,7 @@ describe('useProductListCategories', () => {
     apiGetMock.mockReset();
   });
 
-  it('loads category labels when the product row exposes nested category and catalog data', async () => {
-    apiGetMock.mockResolvedValue({
-      'catalog-1': [
-        {
-          id: 'category-1',
-          catalogId: 'catalog-1',
-          name_en: 'Keychains',
-        },
-      ],
-    });
-
+  it('reuses embedded category labels without fetching the batch endpoint', async () => {
     const queryClient = createQueryClient();
     const { result } = renderHook(
       () =>
@@ -108,6 +98,93 @@ describe('useProductListCategories', () => {
         wrapper: createWrapper(queryClient),
       }
     );
+
+    await waitFor(() => {
+      expect(result.current.categoryNameById.get('category-1')).toBe('Keychains');
+    });
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the category batch endpoint when the row is missing an embedded label', async () => {
+    apiGetMock.mockResolvedValue({
+      'catalog-1': [
+        {
+          id: 'category-1',
+          catalogId: 'catalog-1',
+          name_en: 'Keychains',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useProductListCategories({
+          data: [
+            {
+              ...createProduct(),
+              categoryId: 'category-1',
+              catalogId: 'catalog-1',
+            },
+          ],
+          nameLocale: 'name_en',
+        }),
+      {
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoryNameById.get('category-1')).toBe('Keychains');
+    });
+
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/products/categories/batch?catalogIds=catalog-1',
+      expect.objectContaining({
+        timeout: 60_000,
+      })
+    );
+  });
+
+  it('defers the category batch endpoint until explicitly enabled', async () => {
+    apiGetMock.mockResolvedValue({
+      'catalog-1': [
+        {
+          id: 'category-1',
+          catalogId: 'catalog-1',
+          name_en: 'Keychains',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+    const { result, rerender } = renderHook(
+      ({ enabled }: { enabled: boolean }) =>
+        useProductListCategories({
+          data: [
+            {
+              ...createProduct(),
+              categoryId: 'category-1',
+              catalogId: 'catalog-1',
+            },
+          ],
+          nameLocale: 'name_en',
+          enabled,
+        }),
+      {
+        initialProps: { enabled: false },
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoryNameById.get('category-1')).toBeUndefined();
+    });
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+
+    rerender({ enabled: true });
 
     await waitFor(() => {
       expect(result.current.categoryNameById.get('category-1')).toBe('Keychains');

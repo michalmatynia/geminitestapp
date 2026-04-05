@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { resolveAccessibleKangurRouteState } from '@/features/kangur/config/page-access';

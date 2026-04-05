@@ -17,6 +17,7 @@ export class ApiError extends Error {
   errorId?: string | undefined;
   category?: ErrorCategory | string | undefined;
   suggestedActions?: SuggestedAction[] | undefined;
+  retryAfterMs?: number | undefined;
   payload?: unknown | undefined;
   __logged?: boolean;
   endpoint?: string;
@@ -27,7 +28,8 @@ export class ApiError extends Error {
     status: number,
     errorId?: string | undefined,
     category?: ErrorCategory | string | undefined,
-    suggestedActions?: SuggestedAction[] | undefined
+    suggestedActions?: SuggestedAction[] | undefined,
+    retryAfterMs?: number | undefined
   ) {
     super(message);
     this.name = 'ApiError';
@@ -35,8 +37,21 @@ export class ApiError extends Error {
     this.errorId = errorId;
     this.category = category;
     this.suggestedActions = suggestedActions;
+    this.retryAfterMs = retryAfterMs;
   }
 }
+
+type ApiClientCooldownEntry = {
+  untilMs: number;
+  message: string;
+  status: number;
+  errorId?: string | undefined;
+  category?: ErrorCategory | string | undefined;
+  suggestedActions?: SuggestedAction[] | undefined;
+};
+
+const browserGetInFlightRequests = new Map<string, Promise<unknown>>();
+const browserGetCooldowns = new Map<string, ApiClientCooldownEntry>();
 
 const isAbortSignalInstance = (value: unknown): value is AbortSignal => {
   if (!value || typeof value !== 'object') return false;
@@ -56,6 +71,99 @@ function cleanConfig<T extends Record<string, unknown>>(obj: T): T {
   });
   return result;
 }
+
+const isBrowserRuntime = (): boolean => typeof window !== 'undefined';
+
+const normalizeMethod = (method: string | undefined, hasBody: boolean): string =>
+  (method || (hasBody ? 'POST' : 'GET')).toUpperCase();
+
+const buildRequestKey = (method: string, url: string): string => `${method}:${url}`;
+
+const clearExpiredCooldown = (requestKey: string, nowMs: number): void => {
+  const current = browserGetCooldowns.get(requestKey);
+  if (!current) {
+    return;
+  }
+
+  if (current.untilMs <= nowMs) {
+    browserGetCooldowns.delete(requestKey);
+  }
+};
+
+const parseRetryAfterMs = (
+  response: Response,
+  data: unknown
+): number | undefined => {
+  if (data && typeof data === 'object') {
+    const maybeRetryAfterMs = (data as { retryAfterMs?: unknown }).retryAfterMs;
+    if (
+      typeof maybeRetryAfterMs === 'number' &&
+      Number.isFinite(maybeRetryAfterMs) &&
+      maybeRetryAfterMs > 0
+    ) {
+      return Math.floor(maybeRetryAfterMs);
+    }
+  }
+
+  const retryAfterHeader = response.headers.get('Retry-After');
+  if (!retryAfterHeader) {
+    return undefined;
+  }
+
+  const asSeconds = Number(retryAfterHeader);
+  if (Number.isFinite(asSeconds) && asSeconds > 0) {
+    return Math.ceil(asSeconds * 1000);
+  }
+
+  const targetAtMs = Date.parse(retryAfterHeader);
+  if (!Number.isNaN(targetAtMs)) {
+    const deltaMs = targetAtMs - Date.now();
+    return deltaMs > 0 ? deltaMs : undefined;
+  }
+
+  return undefined;
+};
+
+const createCooldownError = (
+  entry: ApiClientCooldownEntry,
+  endpoint: string,
+  method: string
+): ApiError => {
+  const retryAfterMs = Math.max(1, entry.untilMs - Date.now());
+  const error = new ApiError(
+    entry.message,
+    entry.status,
+    entry.errorId,
+    entry.category,
+    entry.suggestedActions,
+    retryAfterMs
+  );
+  error.endpoint = endpoint;
+  error.method = method;
+  error.payload = { retryAfterMs, source: 'client-cooldown' };
+  error.__logged = true;
+  return error;
+};
+
+const setCooldownEntry = (
+  requestKey: string,
+  retryAfterMs: number,
+  entry: Omit<ApiClientCooldownEntry, 'untilMs'>
+): void => {
+  if (!isBrowserRuntime() || retryAfterMs <= 0) {
+    return;
+  }
+
+  browserGetCooldowns.set(requestKey, {
+    ...entry,
+    untilMs: Date.now() + retryAfterMs,
+  });
+};
+
+export const resetApiClientGuardState = (): void => {
+  browserGetInFlightRequests.clear();
+  browserGetCooldowns.clear();
+};
 
 export async function apiClient<T>(
   endpoint: string,
@@ -79,8 +187,29 @@ export async function apiClient<T>(
     }
   }
 
+  const method = normalizeMethod(customConfig.method, Boolean(customConfig.body));
+  const callerSignal = isAbortSignalInstance(customConfig.signal) ? customConfig.signal : undefined;
+  const requestAbortController =
+    typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+  let removeCallerAbortListener: (() => void) | undefined;
+
+  if (callerSignal && requestAbortController) {
+    const forwardCallerAbort = (): void => {
+      requestAbortController.abort();
+    };
+
+    if (callerSignal.aborted) {
+      requestAbortController.abort();
+    } else {
+      callerSignal.addEventListener('abort', forwardCallerAbort, { once: true });
+      removeCallerAbortListener = () => {
+        callerSignal.removeEventListener('abort', forwardCallerAbort);
+      };
+    }
+  }
+
   const config = cleanConfig({
-    method: customConfig.method || (customConfig.body ? 'POST' : 'GET'),
+    method,
     ...customConfig,
     headers: withCsrfHeaders({
       ...headers,
@@ -88,25 +217,49 @@ export async function apiClient<T>(
       ...customConfig.headers,
     } as Record<string, string>),
   }) as RequestInit;
-  if (isAbortSignalInstance(customConfig.signal)) {
-    config.signal = customConfig.signal;
+  if (requestAbortController) {
+    config.signal = requestAbortController.signal;
+  } else if (callerSignal) {
+    config.signal = callerSignal;
+  }
+
+  const requestKey = buildRequestKey(method, url);
+  const canApplyBrowserGetGuards =
+    isBrowserRuntime() && method === 'GET' && !callerSignal;
+
+  clearExpiredCooldown(requestKey, Date.now());
+  if (canApplyBrowserGetGuards) {
+    const cooldownEntry = browserGetCooldowns.get(requestKey);
+    if (cooldownEntry) {
+      throw createCooldownError(cooldownEntry, endpoint, method);
+    }
+
+    const existingRequest = browserGetInFlightRequests.get(requestKey);
+    if (existingRequest) {
+      return existingRequest as Promise<T>;
+    }
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
   let bodyTimer: ReturnType<typeof setTimeout> | undefined;
+  let didRequestTimeout = false;
+  let didBodyTimeout = false;
+  const requestAbortSignal = requestAbortController?.signal ?? callerSignal;
 
-  try {
+  const executeRequest = async (): Promise<T> => {
     const fetchPromise = fetch(url, config);
     const response =
       timeout > 0
         ? await Promise.race<Response>([
-          fetchPromise,
-          new Promise<Response>((_, reject) => {
-            timer = setTimeout(() => {
-              reject(new Error(`Request timeout after ${timeout}ms`));
-            }, timeout);
-          }),
-        ])
+            fetchPromise,
+            new Promise<Response>((_, reject) => {
+              timer = setTimeout(() => {
+                didRequestTimeout = true;
+                requestAbortController?.abort();
+                reject(new Error(`Request timeout after ${timeout}ms`));
+              }, timeout);
+            }),
+          ])
         : await fetchPromise;
 
     if (timer) {
@@ -130,6 +283,8 @@ export async function apiClient<T>(
       }),
       new Promise<never>((_, reject) => {
         bodyTimer = setTimeout(() => {
+          didBodyTimeout = true;
+          requestAbortController?.abort();
           reject(new Error(`Response body timeout after ${bodyTimeout}ms`));
         }, bodyTimeout);
       }),
@@ -158,12 +313,32 @@ export async function apiClient<T>(
       }
     }
 
-    const error = new ApiError(errorMessage, response.status, errorId, category, suggestedActions);
+    const retryAfterMs = parseRetryAfterMs(response, data);
+    const error = new ApiError(
+      errorMessage,
+      response.status,
+      errorId,
+      category,
+      suggestedActions,
+      retryAfterMs
+    );
     error.payload = data;
     error.endpoint = endpoint;
     error.method = config.method;
 
+    if (canApplyBrowserGetGuards && typeof retryAfterMs === 'number' && retryAfterMs > 0) {
+      setCooldownEntry(requestKey, retryAfterMs, {
+        message: errorMessage,
+        status: response.status,
+        errorId,
+        category,
+        suggestedActions,
+      });
+    }
+
     if (logError) {
+      const responsePayload =
+        data && typeof data === 'object' ? (data as Record<string, unknown>) : null;
       logClientError(error, {
         context: {
           endpoint,
@@ -171,6 +346,19 @@ export async function apiClient<T>(
           status: response.status,
           traceId: getTraceId(),
           params,
+          ...(typeof responsePayload?.['code'] === 'string'
+            ? { responseCode: responsePayload['code'] }
+            : {}),
+          ...(typeof responsePayload?.['errorId'] === 'string'
+            ? { responseErrorId: responsePayload['errorId'] }
+            : {}),
+          ...(typeof responsePayload?.['fingerprint'] === 'string'
+            ? { responseFingerprint: responsePayload['fingerprint'] }
+            : {}),
+          ...(responsePayload && 'details' in responsePayload
+            ? { responseDetails: responsePayload['details'] }
+            : {}),
+          ...(responsePayload ? { responsePayload } : {}),
         },
       });
       if (isLoggableObject(error)) {
@@ -179,49 +367,102 @@ export async function apiClient<T>(
     }
 
     throw error;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
+  };
 
-    if (isAbortLikeError(error, config.signal)) {
-      if (error instanceof Error) {
-        if (error.name !== 'AbortError') {
-          const abortError = new Error(error.message);
-          abortError.name = 'AbortError';
-          throw abortError;
+  const wrappedRequest = (async (): Promise<T> => {
+    try {
+      return await executeRequest();
+    } catch (error) {
+      if (didRequestTimeout) {
+        const timeoutError = new Error(`Request timeout after ${timeout}ms`);
+        if (logError) {
+          logClientError(timeoutError, {
+            context: {
+              endpoint,
+              method: config.method,
+              traceId: getTraceId(),
+              params,
+            },
+          });
+          if (isLoggableObject(timeoutError)) {
+            timeoutError.__logged = true;
+          }
         }
+        throw timeoutError;
+      }
+
+      if (didBodyTimeout) {
+        const bodyTimeout = Math.max(timeout, 30_000);
+        const timeoutError = new Error(`Response body timeout after ${bodyTimeout}ms`);
+        if (logError) {
+          logClientError(timeoutError, {
+            context: {
+              endpoint,
+              method: config.method,
+              traceId: getTraceId(),
+              params,
+            },
+          });
+          if (isLoggableObject(timeoutError)) {
+            timeoutError.__logged = true;
+          }
+        }
+        throw timeoutError;
+      }
+
+      if (error instanceof ApiError) {
         throw error;
       }
 
-      const abortError = new Error('Request aborted');
-      abortError.name = 'AbortError';
-      throw abortError;
-    }
+      if (isAbortLikeError(error, requestAbortSignal ?? config.signal)) {
+        if (error instanceof Error) {
+          if (error.name !== 'AbortError') {
+            const abortError = new Error(error.message);
+            abortError.name = 'AbortError';
+            throw abortError;
+          }
+          throw error;
+        }
 
-    const genericError = new Error(error instanceof Error ? error.message : 'Network Error');
-    if (logError) {
-      logClientError(genericError, {
-        context: {
-          endpoint,
-          method: config.method,
-          traceId: getTraceId(),
-          params,
-        },
-      });
-      if (isLoggableObject(genericError)) {
-        genericError.__logged = true;
+        const abortError = new Error('Request aborted');
+        abortError.name = 'AbortError';
+        throw abortError;
       }
+
+      const genericError = new Error(error instanceof Error ? error.message : 'Network Error');
+      if (logError) {
+        logClientError(genericError, {
+          context: {
+            endpoint,
+            method: config.method,
+            traceId: getTraceId(),
+            params,
+          },
+        });
+        if (isLoggableObject(genericError)) {
+          genericError.__logged = true;
+        }
+      }
+      throw genericError;
+    } finally {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      if (bodyTimer) {
+        clearTimeout(bodyTimer);
+      }
+      if (canApplyBrowserGetGuards) {
+        browserGetInFlightRequests.delete(requestKey);
+      }
+      removeCallerAbortListener?.();
     }
-    throw genericError;
-  } finally {
-    if (timer) {
-      clearTimeout(timer);
-    }
-    if (bodyTimer) {
-      clearTimeout(bodyTimer);
-    }
+  })();
+
+  if (canApplyBrowserGetGuards) {
+    browserGetInFlightRequests.set(requestKey, wrappedRequest as Promise<unknown>);
   }
+
+  return await wrappedRequest;
 }
 
 export interface Api {

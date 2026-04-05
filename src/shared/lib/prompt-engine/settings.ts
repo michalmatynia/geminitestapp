@@ -687,59 +687,94 @@ export const defaultPromptEngineSettings: PromptEngineSettings = {
   },
 };
 
+const DEFAULT_PROMPT_VALIDATION_RULES_BY_ID = new Map(
+  defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule])
+);
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const readStoredPromptValidationRules = (parsed: unknown): unknown[] | null => {
+  if (!isPlainObject(parsed)) return null;
+  const promptValidation = parsed['promptValidation'];
+  if (!isPlainObject(promptValidation)) return null;
+  return Array.isArray(promptValidation['rules']) ? promptValidation['rules'] : null;
+};
+
+const hasStoredAutofixMetadata = (rawRules: unknown[] | null): boolean =>
+  Array.isArray(rawRules)
+    ? rawRules.some(
+      (rule: unknown) => isPlainObject(rule) && Object.hasOwn(rule, 'autofix')
+    )
+    : false;
+
+const mergePromptValidationRuleAutofix = (
+  rule: PromptValidationRule,
+  hadAutofixInStorage: boolean
+): PromptValidationRule => {
+  const defaults = DEFAULT_PROMPT_VALIDATION_RULES_BY_ID.get(rule.id);
+  if (hadAutofixInStorage || !defaults?.autofix || defaults.autofix.operations.length === 0) {
+    return rule;
+  }
+
+  const needsAutofix =
+    !rule.autofix ||
+    !Array.isArray(rule.autofix.operations) ||
+    rule.autofix.operations.length === 0;
+  return needsAutofix ? { ...rule, autofix: defaults.autofix } : rule;
+};
+
+const appendMissingDefaultPromptValidationRules = (
+  rules: PromptValidationRule[]
+): PromptValidationRule[] => {
+  const existingRuleIds = new Set(rules.map((rule: PromptValidationRule) => rule.id));
+  const missingDefaults = defaultPromptValidationRules.filter(
+    (rule: PromptValidationRule): boolean => !existingRuleIds.has(rule.id)
+  );
+  return missingDefaults.length > 0 ? [...rules, ...missingDefaults] : rules;
+};
+
+const mergePromptValidationRuleAutofixWithDefaults = (input: {
+  rules: PromptValidationRule[];
+  hadAutofixInStorage: boolean;
+}): PromptValidationRule[] =>
+  input.rules.map((rule: PromptValidationRule) =>
+    mergePromptValidationRuleAutofix(rule, input.hadAutofixInStorage)
+  );
+
+const mergePromptValidationRulesWithDefaults = (input: {
+  rules: PromptValidationRule[];
+  hadAutofixInStorage: boolean;
+}): PromptValidationRule[] =>
+  appendMissingDefaultPromptValidationRules(
+    mergePromptValidationRuleAutofixWithDefaults(input)
+  );
+
+const normalizePromptEngineSettings = (input: {
+  parsed: unknown;
+  settings: PromptEngineSettings;
+}): PromptEngineSettings => ({
+  ...input.settings,
+  promptValidation: {
+    ...input.settings.promptValidation,
+    rules: mergePromptValidationRulesWithDefaults({
+      rules: input.settings.promptValidation.rules,
+      hadAutofixInStorage: hasStoredAutofixMetadata(readStoredPromptValidationRules(input.parsed)),
+    }),
+    learnedRules: input.settings.promptValidation.learnedRules ?? [],
+  },
+});
+
 export function parsePromptEngineSettings(raw: string | null | undefined): PromptEngineSettings {
   if (!raw) return defaultPromptEngineSettings;
   try {
     const parsed = JSON.parse(raw) as unknown;
     const result = promptEngineSettingsSchema.safeParse(parsed);
     if (!result.success) return defaultPromptEngineSettings;
-
-    const rawRules =
-      parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-        ? (parsed as Record<string, unknown>)?.['promptValidation']
-        : null;
-    const rawRulesArray =
-      rawRules && typeof rawRules === 'object' && !Array.isArray(rawRules)
-        ? (rawRules as Record<string, unknown>)?.['rules']
-        : null;
-    const hadAutofixInStorage = Array.isArray(rawRulesArray)
-      ? rawRulesArray.some(
-        (rule: unknown) =>
-          Boolean(rule) &&
-            typeof rule === 'object' &&
-            'autofix' in (rule as Record<string, unknown>)
-      )
-      : false;
-
-    const defaultById = new Map(
-      defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule])
-    );
-    const mergedRules = result.data.promptValidation.rules.map((rule: PromptValidationRule) => {
-      const defaults = defaultById.get(rule.id);
-      if (hadAutofixInStorage || !defaults?.autofix || defaults.autofix.operations.length === 0) {
-        return rule;
-      }
-      const needsAutofix =
-        !rule.autofix ||
-        !Array.isArray(rule.autofix.operations) ||
-        rule.autofix.operations.length === 0;
-      return needsAutofix ? { ...rule, autofix: defaults.autofix } : rule;
+    return normalizePromptEngineSettings({
+      parsed,
+      settings: result.data,
     });
-    const existingRuleIds = new Set(mergedRules.map((rule: PromptValidationRule) => rule.id));
-    const missingDefaults = defaultPromptValidationRules.filter(
-      (rule: PromptValidationRule): boolean => !existingRuleIds.has(rule.id)
-    );
-    const mergedWithMissingDefaults =
-      missingDefaults.length > 0 ? [...mergedRules, ...missingDefaults] : mergedRules;
-
-    return {
-      ...result.data,
-      promptValidation: {
-        ...result.data.promptValidation,
-        rules: mergedWithMissingDefaults,
-        learnedRules: result.data.promptValidation.learnedRules ?? [],
-      },
-    } as PromptEngineSettings;
   } catch (error) {
     logClientCatch(error, {
       source: 'prompt-engine.settings',
@@ -757,30 +792,13 @@ export function parsePromptValidationRules(
     const parsed = JSON.parse(raw) as unknown;
     const result = z.array(promptValidationRuleSchema).safeParse(parsed);
     if (result.success) {
-      const hadAutofix = Array.isArray(parsed)
-        ? parsed.some(
-          (rule: unknown) =>
-            Boolean(rule) &&
-              typeof rule === 'object' &&
-              'autofix' in (rule as Record<string, unknown>)
-        )
-        : false;
-      if (hadAutofix) return { ok: true, rules: result.data };
-
-      const defaultById = new Map(
-        defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule])
-      );
-      const mergedRules = result.data.map((rule: PromptValidationRule) => {
-        const defaults = defaultById.get(rule.id);
-        if (!defaults?.autofix || defaults.autofix.operations.length === 0) return rule;
-        const needsAutofix =
-          !rule.autofix ||
-          !Array.isArray(rule.autofix.operations) ||
-          rule.autofix.operations.length === 0;
-        return needsAutofix ? { ...rule, autofix: defaults.autofix } : rule;
-      });
-
-      return { ok: true, rules: mergedRules };
+      return {
+        ok: true,
+        rules: mergePromptValidationRuleAutofixWithDefaults({
+          rules: result.data,
+          hadAutofixInStorage: hasStoredAutofixMetadata(Array.isArray(parsed) ? parsed : null),
+        }),
+      };
     }
     return { ok: false, error: 'Invalid rules shape. Expected an array of rule objects.' };
   } catch (error) {

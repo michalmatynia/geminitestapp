@@ -12,11 +12,7 @@ import {
   type RuntimeEventInput,
   type SetNodeStatusInput,
 } from '@/shared/contracts/ai-paths-runtime';
-import type {
-  AiPathRuntimeEvent,
-  AiPathRuntimeNodeStatus,
-  AiPathRuntimeNodeStatusMap,
-} from '@/shared/lib/ai-paths';
+import type { AiPathRuntimeEvent, AiPathRuntimeNodeStatus, AiPathRuntimeNodeStatusMap } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { resolveRuntimeNodeDisplayStatus } from './utils';

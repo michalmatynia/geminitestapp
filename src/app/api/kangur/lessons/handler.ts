@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { resolveKangurActor } from '@/features/kangur/services/kangur-actor';
 import { getKangurLessonRepository } from '@/features/kangur/services/kangur-lesson-repository';
-import type { KangurLesson } from '@kangur/contracts';
+import type { KangurLesson } from '@kangur/contracts/kangur';
 import {
   kangurLessonAgeGroupSchema,
   kangurLessonComponentIdSchema,
@@ -10,7 +10,7 @@ import {
   kangurLessonsReplacePayloadSchema,
   kangurLessonSubjectSchema,
 } from '@/shared/contracts/kangur';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { clearKangurLessonsCatalogCache } from '../lessons-catalog/handler';
 

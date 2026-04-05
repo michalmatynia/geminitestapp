@@ -1,7 +1,5 @@
-import type {
-  KangurKnowledgeGraphSemanticReadiness,
-  KangurKnowledgeGraphStatusSnapshot,
-} from '@/shared/contracts';
+import type { KangurKnowledgeGraphSemanticReadiness } from '@/shared/contracts/kangur-observability';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
 
 import type { KangurKnowledgeGraphSyncStatus } from './neo4j-repository';
 

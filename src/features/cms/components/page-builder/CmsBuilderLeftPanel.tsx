@@ -3,7 +3,8 @@
 import { ArrowLeft, Menu, AppWindow, Settings, PanelLeftClose, Workflow } from 'lucide-react';
 import React from 'react';
 
-import { Button, SectionHeader } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import { AppEmbedsPanel } from './AppEmbedsPanel';
 import { ComponentTreePanel } from './ComponentTreePanel';

@@ -151,14 +151,22 @@ function ClockLabel({ label }: { label?: string }): React.JSX.Element | null {
   );
 }
 
-const resolveAnalogClockProps = (props: AnalogClockProps): ResolvedAnalogClockProps => ({
-  highlightHour: props.highlightHour ?? false,
-  highlightMinute: props.highlightMinute ?? false,
-  hours: props.hours,
-  label: props.label,
-  minutes: props.minutes,
-  showHourHand: props.showHourHand ?? true,
-  showMinuteHand: props.showMinuteHand ?? true,
+const resolveAnalogClockProps = ({
+  highlightHour = false,
+  highlightMinute = false,
+  hours,
+  label,
+  minutes,
+  showHourHand = true,
+  showMinuteHand = true,
+}: AnalogClockProps): ResolvedAnalogClockProps => ({
+  highlightHour,
+  highlightMinute,
+  hours,
+  label,
+  minutes,
+  showHourHand,
+  showMinuteHand,
 });
 
 const resolveClockHourHandStroke = (highlightHour: boolean): string =>

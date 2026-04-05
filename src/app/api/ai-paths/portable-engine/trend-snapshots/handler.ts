@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { portablePathTrendSnapshotsQuerySchema } from '@/shared/contracts/ai-paths-portable-engine';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine/portable-engine-observability';

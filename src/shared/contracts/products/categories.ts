@@ -59,16 +59,23 @@ export type ProductCategorySummaryDto = {
   sortIndex: number | null;
 };
 
+const normalizeNullableProductCategoryName = (value: string | null | undefined): string | null =>
+  value ?? null;
+
+const normalizeNullableProductCategorySortIndex = (
+  value: number | null | undefined
+): number | null => value ?? null;
+
 export const toProductCategorySummaryDto = (
   category: ProductCategory
 ): ProductCategorySummaryDto => ({
   id: category.id,
   name: category.name,
-  name_en: category.name_en ?? null,
-  name_pl: category.name_pl ?? null,
-  name_de: category.name_de ?? null,
+  name_en: normalizeNullableProductCategoryName(category.name_en),
+  name_pl: normalizeNullableProductCategoryName(category.name_pl),
+  name_de: normalizeNullableProductCategoryName(category.name_de),
   parentId: category.parentId,
-  sortIndex: category.sortIndex ?? null,
+  sortIndex: normalizeNullableProductCategorySortIndex(category.sortIndex),
 });
 
 export const productCategoryFiltersSchema = z.object({

@@ -7,18 +7,9 @@ import {
   coerceFiniteNumber,
   isFileLike,
 } from '@/features/ai/image-studio/server/image-handler-utils';
-import {
-  type ImageStudioAutoScalerRequest,
-  type ImageStudioAutoScalerResponse,
-  imageStudioAutoScalerResponseSchema,
-  type ImageStudioSlotRecord,
-  type ImageStudioAutoScalerMode,
-  type ImageStudioCenterShadowPolicy,
-  type ImageStudioCenterDetectionMode,
-  type UploadedClientAutoScaleImage,
-  type ImageStudioAutoScaleMetadata,
-  IMAGE_STUDIO_AUTOSCALER_ERROR_CODES,
-} from '@/shared/contracts/image-studio';
+import { imageStudioAutoScalerResponseSchema } from '@/shared/contracts/image-studio/autoscaler';
+import { IMAGE_STUDIO_AUTOSCALER_ERROR_CODES } from '@/shared/contracts/image-studio/base';
+import { type ImageStudioAutoScalerRequest, type ImageStudioAutoScalerResponse, type ImageStudioSlotRecord, type ImageStudioAutoScalerMode, type ImageStudioCenterShadowPolicy, type ImageStudioCenterDetectionMode, type UploadedClientAutoScaleImage, type ImageStudioAutoScaleMetadata } from '@/shared/contracts/image-studio';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 

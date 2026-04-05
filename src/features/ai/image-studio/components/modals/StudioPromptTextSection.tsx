@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { Label, Textarea } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Label, Textarea } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface StudioPromptTextSectionProps {
   label: string;

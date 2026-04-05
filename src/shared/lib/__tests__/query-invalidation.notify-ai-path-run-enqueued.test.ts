@@ -7,11 +7,14 @@ import {
   clearRecentAiPathRunEnqueue,
   getRecentAiPathRunEnqueue,
   notifyAiPathRunEnqueued,
+  rememberRecentAiPathRunEnqueue,
 } from '@/shared/lib/query-invalidation';
 
 describe('notifyAiPathRunEnqueued', () => {
   afterEach(() => {
     clearRecentAiPathRunEnqueue();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     window.localStorage.clear();
   });
@@ -160,5 +163,83 @@ describe('notifyAiPathRunEnqueued', () => {
       entityId: 'product-4',
       entityType: 'product',
     });
+  });
+
+  it('prefers a newer persisted enqueue record over an older in-memory record', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+
+    rememberRecentAiPathRunEnqueue({
+      type: 'run-enqueued',
+      runId: 'run-memory',
+      entityId: 'product-memory',
+      entityType: 'product',
+      at: Date.now(),
+    });
+
+    window.localStorage.setItem(
+      'ai-path-run-recent-enqueue',
+      JSON.stringify({
+        type: 'run-enqueued',
+        runId: 'run-storage',
+        entityId: 'product-storage',
+        entityType: 'product',
+        at: Date.now() + 1_000,
+        expiresAt: Date.now() + 30_000,
+      })
+    );
+
+    expect(getRecentAiPathRunEnqueue()).toEqual({
+      type: 'run-enqueued',
+      runId: 'run-storage',
+      entityId: 'product-storage',
+      entityType: 'product',
+      at: Date.now() + 1_000,
+    });
+  });
+
+  it('clears malformed persisted enqueue records', () => {
+    window.localStorage.setItem('ai-path-run-recent-enqueue', '{bad json');
+
+    expect(getRecentAiPathRunEnqueue()).toBeNull();
+    expect(window.localStorage.getItem('ai-path-run-recent-enqueue')).toBeNull();
+  });
+
+  it('normalizes persisted enqueue record fields and clears invalid timestamps', () => {
+    window.localStorage.setItem(
+      'ai-path-run-recent-enqueue',
+      JSON.stringify({
+        type: 'run-enqueued',
+        runId: ' run-storage ',
+        entityId: '   ',
+        entityType: ' PRODUCT ',
+        at: Date.now(),
+        expiresAt: Date.now() + 10_000,
+      })
+    );
+
+    expect(getRecentAiPathRunEnqueue()).toEqual({
+      type: 'run-enqueued',
+      runId: 'run-storage',
+      entityId: null,
+      entityType: 'product',
+      at: expect.any(Number),
+    });
+
+    clearRecentAiPathRunEnqueue();
+    window.localStorage.setItem(
+      'ai-path-run-recent-enqueue',
+      JSON.stringify({
+        type: 'run-enqueued',
+        runId: 'run-invalid',
+        entityId: 'product-invalid',
+        entityType: 'product',
+        at: -1,
+        expiresAt: Date.now() + 10_000,
+      })
+    );
+
+    expect(getRecentAiPathRunEnqueue()).toBeNull();
+    expect(window.localStorage.getItem('ai-path-run-recent-enqueue')).toBeNull();
   });
 });

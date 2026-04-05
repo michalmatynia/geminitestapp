@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('server-only', () => ({}));
 
@@ -26,11 +26,39 @@ vi.mock('@/shared/utils/observability/internal-observability-fallback', () => ({
 }));
 
 describe('logging-controls-server', () => {
+  const originalMongoUri = process.env['MONGODB_URI'];
+  const originalNodeEnv = process.env['NODE_ENV'];
+
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
     process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+    process.env['NODE_ENV'] = 'test';
     findProviderForKeyMock.mockResolvedValue(null);
+  });
+
+  afterAll(() => {
+    if (originalMongoUri === undefined) {
+      delete process.env['MONGODB_URI'];
+    } else {
+      process.env['MONGODB_URI'] = originalMongoUri;
+    }
+
+    if (originalNodeEnv === undefined) {
+      delete process.env['NODE_ENV'];
+    } else {
+      process.env['NODE_ENV'] = originalNodeEnv;
+    }
+  });
+
+  it('uses default controls without storage reads in development', async () => {
+    process.env['NODE_ENV'] = 'development';
+
+    const { isServerLoggingEnabled } = await import('./logging-controls-server');
+
+    await expect(isServerLoggingEnabled('error')).resolves.toBe(true);
+    expect(findProviderForKeyMock).not.toHaveBeenCalled();
+    expect(getMongoDbMock).not.toHaveBeenCalled();
   });
 
   it('silently falls back to default logging controls on transient mongo connectivity failures', async () => {

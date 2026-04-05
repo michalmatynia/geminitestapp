@@ -3,494 +3,281 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type {
-  CaseResolverCategory,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
-import type { ToastVariant } from '@/shared/contracts/ui';
-import {
-  useUpdateUserPreferences,
-  useUserPreferences,
-} from '@/shared/hooks/useUserPreferences';
+import type { CaseResolverCategory, CaseResolverIdentifier, CaseResolverTag } from '@/shared/contracts/case-resolver/relations';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { UserPreferencesUpdate } from '@/shared/contracts/auth';
+import { useUpdateUserPreferences, useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
-
-import {
-  CASE_RESOLVER_CATEGORIES_KEY,
-  CASE_RESOLVER_IDENTIFIERS_KEY,
-  CASE_RESOLVER_TAGS_KEY,
-  CASE_RESOLVER_WORKSPACE_KEY,
-  getCaseResolverWorkspaceSafeParseDiagnostics,
-  parseCaseResolverCategories,
-  parseCaseResolverIdentifiers,
-  parseCaseResolverTags,
-  safeParseCaseResolverWorkspace,
-} from '../settings';
-import { fetchCaseResolverWorkspaceRecordDetailed } from '../workspace-persistence';
-import { useAdminCaseResolverCasesActions } from './admin-cases/useAdminCaseResolverCasesActions';
-import { useAdminCaseResolverCasesState } from './admin-cases/useAdminCaseResolverCasesState';
-import {
-  getCaseResolverWorkspaceRevision,
-  normalizeCaseListViewDefaults,
-  shouldAdoptIncomingCaseResolverCasesWorkspace,
-  shouldBootstrapCaseResolverCasesFromRecord,
-} from './admin-cases/utils';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import type {
   AdminCaseResolverCasesActionsValue,
   AdminCaseResolverCasesStateValue,
 } from './AdminCaseResolverCasesContext.types';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { useAdminCaseResolverCasesActions } from './admin-cases/useAdminCaseResolverCasesActions';
+import { useAdminCaseResolverCasesState } from './admin-cases/useAdminCaseResolverCasesState';
+import {
+  normalizeCaseListViewDefaults,
+  shouldAdoptIncomingCaseResolverCasesWorkspace,
+  shouldBootstrapCaseResolverCasesFromRecord,
+} from './admin-cases/utils';
+import { buildCaseTree, buildPathLabelMap, flattenCaseTreeOptions } from '../pages/AdminCaseResolverCasesUtils';
+import {
+  CASE_RESOLVER_CATEGORIES_KEY,
+  CASE_RESOLVER_IDENTIFIERS_KEY,
+  CASE_RESOLVER_TAGS_KEY,
+  CASE_RESOLVER_WORKSPACE_KEY,
+  parseCaseResolverCategories,
+  parseCaseResolverIdentifiers,
+  parseCaseResolverTags,
+  safeParseCaseResolverWorkspace,
+} from '../settings';
+import {
+  fetchCaseResolverWorkspaceRecordDetailed,
+  getCaseResolverWorkspaceRevision,
+} from '../workspace-persistence';
 
-
-interface AdminCaseResolverCasesRuntimeResult {
-  actionsValue: AdminCaseResolverCasesActionsValue;
-  stateValue: AdminCaseResolverCasesStateValue;
-}
-
-const normalizeToastVariant = (value: string | undefined): ToastVariant | undefined => {
-  if (value === 'success') return 'success';
-  if (value === 'error') return 'error';
-  if (value === 'info') return 'info';
-  if (value === 'warning') return 'warning';
-  if (value === 'default') return 'default';
-  return undefined;
+const CASES_PAGE_WORKSPACE_FETCH_OPTIONS = {
+  attemptProfile: 'context_fast' as const,
+  maxTotalMs: 15_000,
+  attemptTimeoutMs: 5_000,
+  requiredFileId: null,
+  includeDetachedHistory: true,
+  includeDetachedDocuments: true,
 };
 
-export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntimeResult {
-  const preferencesQuery = useUserPreferences();
-  const updatePreferencesMutation = useUpdateUserPreferences();
+const buildTagOptions = (tags: CaseResolverTag[]): Array<LabeledOptionDto<string>> => {
+  const labels = buildPathLabelMap(
+    tags.map((tag) => ({
+      ...tag,
+      name: tag.label || tag.id,
+      parentId: tag.parentId ?? null,
+    }))
+  );
+  return tags.map((tag) => ({
+    value: tag.id,
+    label: labels.get(tag.id) || tag.label || tag.id,
+  }));
+};
+
+const buildIdentifierOptions = (
+  identifiers: CaseResolverIdentifier[]
+): Array<LabeledOptionDto<string>> => {
+  const labels = buildPathLabelMap(
+    identifiers.map((identifier) => ({
+      ...identifier,
+      name: identifier.name || identifier.label || identifier.id,
+      parentId: identifier.parentId ?? null,
+    }))
+  );
+  return identifiers.map((identifier) => ({
+    value: identifier.id,
+    label: labels.get(identifier.id) || identifier.name || identifier.label || identifier.id,
+  }));
+};
+
+const buildCategoryOptions = (
+  categories: CaseResolverCategory[]
+): Array<LabeledOptionDto<string>> => {
+  const labels = buildPathLabelMap(
+    categories.map((category) => ({
+      ...category,
+      name: category.name || category.id,
+      parentId: category.parentId ?? null,
+    }))
+  );
+  return categories.map((category) => ({
+    value: category.id,
+    label: labels.get(category.id) || category.name || category.id,
+  }));
+};
+
+const buildFolderOptions = (caseFiles: CaseResolverFile[]): Array<LabeledOptionDto<string>> =>
+  Array.from(
+    new Set(
+      caseFiles
+        .map((file) => file.folder.trim())
+        .filter((folder): folder is string => folder.length > 0)
+    )
+  )
+    .sort((left, right) => left.localeCompare(right))
+    .map((folder) => ({
+      value: folder,
+      label: folder,
+    }));
+
+export function useAdminCaseResolverCasesRuntime(): {
+  stateValue: AdminCaseResolverCasesStateValue;
+  actionsValue: AdminCaseResolverCasesActionsValue;
+} {
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
+  const userPreferencesQuery = useUserPreferences();
+  const updateUserPreferences = useUpdateUserPreferences();
 
-  const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
-  const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
-  const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
-  const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
+  const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ?? null;
+  const rawTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY) ?? null;
+  const rawIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY) ?? null;
+  const rawCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY) ?? null;
 
   const parsedWorkspace = useMemo(
     (): CaseResolverWorkspace => safeParseCaseResolverWorkspace(rawWorkspace),
     [rawWorkspace]
   );
-  const workspaceSafeParseDiagnostics = useMemo(
-    () => getCaseResolverWorkspaceSafeParseDiagnostics(parsedWorkspace),
-    [parsedWorkspace]
-  );
-
   const caseResolverTags = useMemo(
-    (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
-    [rawCaseResolverTags]
+    (): CaseResolverTag[] => parseCaseResolverTags(rawTags),
+    [rawTags]
   );
   const caseResolverIdentifiers = useMemo(
-    (): CaseResolverIdentifier[] => parseCaseResolverIdentifiers(rawCaseResolverIdentifiers),
-    [rawCaseResolverIdentifiers]
+    (): CaseResolverIdentifier[] => parseCaseResolverIdentifiers(rawIdentifiers),
+    [rawIdentifiers]
   );
   const caseResolverCategories = useMemo(
-    (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
-    [rawCaseResolverCategories]
+    (): CaseResolverCategory[] => parseCaseResolverCategories(rawCategories),
+    [rawCategories]
   );
-
-  const caseResolverTagOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      caseResolverTags.map((tag: CaseResolverTag) => ({
-        value: tag.id,
-        label: tag.label,
-      })),
-    [caseResolverTags]
-  );
-
-  const caseResolverCategoryOptions = useMemo<Array<LabeledOptionDto<string>>>(() => {
-    const byId = new Map<string, CaseResolverCategory>(
-      caseResolverCategories.map(
-        (category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category]
-      )
-    );
-    const resolveDepth = (category: CaseResolverCategory): number => {
-      let depth = 0;
-      let parentId = category.parentId;
-      while (parentId) {
-        const parent = byId.get(parentId);
-        if (!parent) break;
-        depth += 1;
-        parentId = parent.parentId;
-      }
-      return depth;
-    };
-    return caseResolverCategories
-      .map((category: CaseResolverCategory) => ({
-        value: category.id,
-        label: `${' '.repeat(resolveDepth(category) * 2)}${category.name}`,
-      }))
-      .sort((left, right) => left.label.localeCompare(right.label));
-  }, [caseResolverCategories]);
 
   const state = useAdminCaseResolverCasesState(parsedWorkspace);
-  const {
-    workspace,
-    setWorkspace,
-    lastPersistedWorkspaceValueRef,
-    lastPersistedWorkspaceRevisionRef,
-    isCreatingCase,
-    setIsCreatingCase,
-    createCaseMutationIdRef,
-    caseDraft,
-    setCaseDraft,
-    isCreateCaseModalOpen,
-    setIsCreateCaseModalOpen,
-    editingCaseId,
-    setEditingCaseId,
-    editingCaseName,
-    setEditingCaseName,
-    editingCaseParentId,
-    setEditingCaseParentId,
-    editingCaseReferenceCaseIds,
-    setEditingCaseReferenceCaseIds,
-    editingCaseTagId,
-    setEditingCaseTagId,
-    editingCaseCaseIdentifierId,
-    setEditingCaseCaseIdentifierId,
-    pendingCaseIdentifierIds,
-    setPendingCaseIdentifierIds,
-    editingCaseCategoryId,
-    setEditingCaseCategoryId,
-    collapsedCaseIds,
-    setCollapsedCaseIds,
-    heldCaseId,
-    setHeldCaseId,
-    caseSearchQuery,
-    setCaseSearchQuery,
-    caseSearchScope,
-    setCaseSearchScope,
-    caseFileTypeFilter,
-    setCaseFileTypeFilter,
-    caseFilterTagIds,
-    setCaseFilterTagIds,
-    caseFilterCaseIdentifierIds,
-    setCaseFilterCaseIdentifierIds,
-    caseFilterCategoryIds,
-    setCaseFilterCategoryIds,
-    caseFilterFolder,
-    setCaseFilterFolder,
-    caseFilterStatus,
-    setCaseFilterStatus,
-    caseFilterLocked,
-    setCaseFilterLocked,
-    caseFilterSent,
-    setCaseFilterSent,
-    caseFilterHierarchy,
-    setCaseFilterHierarchy,
-    caseFilterReferences,
-    setCaseFilterReferences,
-    caseSortBy,
-    setCaseSortBy,
-    caseSortOrder,
-    setCaseSortOrder,
-    caseViewMode,
-    setCaseViewMode,
-    caseShowNestedContent,
-    setCaseShowNestedContent,
-    caseFilterPanelDefaultExpanded,
-    setCaseFilterPanelDefaultExpanded,
-    didHydrateCaseListViewDefaults,
-    setDidHydrateCaseListViewDefaults,
-    confirmation,
-    setConfirmation,
-    casesLoadState,
-    setCasesLoadState,
-    casesLoadMessage,
-    setCasesLoadMessage,
-  } = state;
-
-  const workspaceRef = useRef(workspace);
-  workspaceRef.current = workspace;
-
   const settingsStoreRefetchRef = useRef(settingsStore.refetch);
-  settingsStoreRefetchRef.current = settingsStore.refetch;
-  const workspaceBootstrapRequestIdRef = useRef(0);
-  const isMountedRef = useRef(true);
+  const bootstrappedWorkspaceRef = useRef(false);
 
-  const toastForActions = useCallback(
-    (message: string, options?: { variant?: string }): void => {
-      const variant = normalizeToastVariant(options?.variant);
-      toast(message, variant ? { variant } : undefined);
+  useEffect(() => {
+    settingsStoreRefetchRef.current = settingsStore.refetch;
+  }, [settingsStore.refetch]);
+
+  const adoptWorkspace = useCallback(
+    (nextWorkspace: CaseResolverWorkspace): void => {
+      state.lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+      state.lastPersistedWorkspaceRevisionRef.current = getCaseResolverWorkspaceRevision(nextWorkspace);
+      state.setWorkspace(nextWorkspace);
+      state.setCasesLoadState('ready');
+      state.setCasesLoadMessage(null);
     },
-    [toast]
+    [state]
   );
 
-  const actions = useAdminCaseResolverCasesActions({
-    workspace,
-    setWorkspace,
-    lastPersistedWorkspaceValueRef,
-    lastPersistedWorkspaceRevisionRef,
-    isCreatingCase,
-    setIsCreatingCase,
-    createCaseMutationIdRef,
-    caseDraft,
-    setCaseDraft,
-    setIsCreateCaseModalOpen,
-    editingCaseId,
-    setEditingCaseId,
-    editingCaseName,
-    setEditingCaseName,
-    editingCaseParentId,
-    setEditingCaseParentId,
-    editingCaseReferenceCaseIds,
-    setEditingCaseReferenceCaseIds,
-    editingCaseTagId,
-    setEditingCaseTagId,
-    editingCaseCaseIdentifierId,
-    setEditingCaseCaseIdentifierId,
-    editingCaseCategoryId,
-    setEditingCaseCategoryId,
-    collapsedCaseIds: Array.from(collapsedCaseIds),
-    setCollapsedCaseIds: (ids: string[]) => setCollapsedCaseIds(new Set(ids)),
-    setHeldCaseId,
-    setCaseSearchQuery,
-    setCaseSearchScope,
-    setCaseFileTypeFilter,
-    setCaseFilterTagIds,
-    setCaseFilterCaseIdentifierIds,
-    setCaseFilterCategoryIds,
-    setCaseFilterFolder: (folder: string | null) => setCaseFilterFolder(folder ?? '__all__'),
-    setCaseFilterStatus,
-    setCaseFilterLocked,
-    setCaseFilterSent,
-    setCaseFilterHierarchy,
-    setCaseFilterReferences,
-    setCaseSortBy,
-    setCaseSortOrder,
-    setCaseViewMode,
-    setCaseShowNestedContent,
-    setCaseFilterPanelDefaultExpanded,
-    setDidHydrateCaseListViewDefaults,
-    setConfirmation,
-    setCasesLoadState,
-    setCasesLoadMessage,
-    toast: toastForActions,
-    settingsStoreRefetchRef,
-  });
+  useEffect(() => {
+    if (settingsStore.isLoading) return;
+    if (
+      shouldAdoptIncomingCaseResolverCasesWorkspace({
+        current: state.workspace,
+        incoming: parsedWorkspace,
+      })
+    ) {
+      adoptWorkspace(parsedWorkspace);
+      return;
+    }
 
-  const applyIncomingWorkspaceSnapshot = useCallback(
-    (incomingWorkspace: CaseResolverWorkspace): void => {
-      setWorkspace((currentWorkspace): CaseResolverWorkspace => {
-        if (
-          !shouldAdoptIncomingCaseResolverCasesWorkspace({
-            current: currentWorkspace,
-            incoming: incomingWorkspace,
-          })
-        ) {
-          return currentWorkspace;
-        }
-        lastPersistedWorkspaceValueRef.current = JSON.stringify(incomingWorkspace);
-        lastPersistedWorkspaceRevisionRef.current =
-          getCaseResolverWorkspaceRevision(incomingWorkspace);
-        return incomingWorkspace;
-      });
-    },
-    [lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace]
-  );
+    const parsedCaseCount = parsedWorkspace.files.filter(
+      (file: CaseResolverFile): boolean => file.fileType === 'case'
+    ).length;
+    if (parsedCaseCount > 0 && state.casesLoadState === 'loading') {
+      state.setCasesLoadState('ready');
+      state.setCasesLoadMessage(null);
+    }
+  }, [adoptWorkspace, parsedWorkspace, settingsStore.isLoading, state]);
 
-  const runWorkspaceBootstrap = useCallback(
-    async ({ source, force }: { source: string; force: boolean }): Promise<void> => {
-      try {
-        const shouldBootstrapFromRecord =
-          force ||
-          shouldBootstrapCaseResolverCasesFromRecord(workspaceRef.current) ||
-          workspaceSafeParseDiagnostics.parseFallbackApplied;
+  const refreshWorkspaceFromRecord = useCallback(
+    async (source: 'cases_page_bootstrap' | 'cases_page_manual_refresh'): Promise<void> => {
+      const result = await fetchCaseResolverWorkspaceRecordDetailed(
+        source,
+        CASES_PAGE_WORKSPACE_FETCH_OPTIONS
+      );
 
-        if (!shouldBootstrapFromRecord) {
-          setCasesLoadState((currentState) =>
-            currentState === 'loading' ? 'ready' : currentState
-          );
-          if (!workspaceSafeParseDiagnostics.parseFallbackApplied) {
-            setCasesLoadMessage(null);
-          }
-          return;
-        }
-
-        const requestId = workspaceBootstrapRequestIdRef.current + 1;
-        workspaceBootstrapRequestIdRef.current = requestId;
-        setCasesLoadState('loading');
-        if (force) {
-          setCasesLoadMessage(null);
-        }
-
-        const bootstrapTimeoutMs = 16_000;
-        let bootstrapTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
-        const bootstrapTimeoutPromise = new Promise<
-          Awaited<ReturnType<typeof fetchCaseResolverWorkspaceRecordDetailed>>
-        >((resolve): void => {
-          bootstrapTimeoutHandle = setTimeout(() => {
-            resolve({
-              status: 'unavailable',
-              reason: 'budget_exhausted',
-              durationMs: bootstrapTimeoutMs,
-              message: 'Case Resolver workspace bootstrap timed out.',
-            });
-          }, bootstrapTimeoutMs);
-        });
-        const result = await Promise.race([
-          fetchCaseResolverWorkspaceRecordDetailed(source, {
-            attemptProfile: 'context_fast',
-            requiredFileId: null,
-            maxTotalMs: 15_000,
-            attemptTimeoutMs: 5_000,
-            includeDetachedHistory: true,
-            includeDetachedDocuments: true,
-          }),
-          bootstrapTimeoutPromise,
-        ]);
-        if (bootstrapTimeoutHandle !== null) {
-          clearTimeout(bootstrapTimeoutHandle);
-        }
-        if (!isMountedRef.current || requestId !== workspaceBootstrapRequestIdRef.current) {
-          return;
-        }
-
-        if (result.status === 'resolved') {
-          applyIncomingWorkspaceSnapshot(result.workspace);
-          setCasesLoadState('ready');
-          setCasesLoadMessage(null);
-          return;
-        }
-
-        if (result.status === 'no_record') {
-          const hasExistingCases = workspaceRef.current.files.some(
-            (file): boolean => file.fileType === 'case'
-          );
-          if (hasExistingCases) {
-            setCasesLoadState('ready');
-            setCasesLoadMessage(null);
-            return;
-          }
-          setCasesLoadState('no_record');
-          if (workspaceSafeParseDiagnostics.parseFallbackApplied) {
-            setCasesLoadMessage(
-              `Workspace parse fallback applied: ${
-                workspaceSafeParseDiagnostics.parseFallbackReason ?? 'workspace_parse_failed'
-              }`
-            );
-          } else {
-            setCasesLoadMessage(result.message || 'Case Resolver workspace key is missing.');
-          }
-          return;
-        }
-
-        setCasesLoadState('unavailable');
-        setCasesLoadMessage(result.message || 'Could not load cases workspace.');
-      } catch (error: unknown) {
-        logClientError(error);
-        if (!isMountedRef.current) return;
-        setCasesLoadState('unavailable');
-        setCasesLoadMessage(
-          error instanceof Error ? error.message : 'Could not load cases workspace.'
-        );
+      if (result.status === 'resolved') {
+        adoptWorkspace(result.workspace);
+        return;
       }
+
+      if (result.status === 'no_record') {
+        state.setCasesLoadState('no_record');
+        state.setCasesLoadMessage(result.message);
+        return;
+      }
+
+      state.setCasesLoadState('unavailable');
+      state.setCasesLoadMessage(result.message);
     },
-    [
-      applyIncomingWorkspaceSnapshot,
-      setCasesLoadMessage,
-      setCasesLoadState,
-      workspaceSafeParseDiagnostics.parseFallbackApplied,
-      workspaceSafeParseDiagnostics.parseFallbackReason,
-    ]
+    [adoptWorkspace, state]
   );
 
-  useEffect((): (() => void) => {
-    isMountedRef.current = true;
-    return (): void => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  useEffect(() => {
+    if (settingsStore.isLoading) return;
+    if (bootstrappedWorkspaceRef.current) return;
+    bootstrappedWorkspaceRef.current = true;
 
-  useEffect((): void => {
-    applyIncomingWorkspaceSnapshot(parsedWorkspace);
-  }, [applyIncomingWorkspaceSnapshot, parsedWorkspace]);
+    if (shouldBootstrapCaseResolverCasesFromRecord(parsedWorkspace)) {
+      void refreshWorkspaceFromRecord('cases_page_bootstrap');
+      return;
+    }
 
-  useEffect((): void => {
-    void runWorkspaceBootstrap({
-      source: 'cases_page_bootstrap',
-      force: false,
-    });
-  }, [runWorkspaceBootstrap]);
+    state.setCasesLoadState('ready');
+    state.setCasesLoadMessage(null);
+  }, [parsedWorkspace, refreshWorkspaceFromRecord, settingsStore.isLoading, state]);
 
-  useEffect((): void => {
-    if (didHydrateCaseListViewDefaults) return;
-    if (preferencesQuery.isLoading) return;
-    const defaults = normalizeCaseListViewDefaults(preferencesQuery.data);
-    setCaseViewMode(defaults.viewMode);
-    setCaseSortBy(defaults.sortBy);
-    setCaseSortOrder(defaults.sortOrder);
-    setCaseSearchScope(defaults.searchScope);
-    setCaseFilterPanelDefaultExpanded(!defaults.filtersCollapsedByDefault);
-    setCaseShowNestedContent(defaults.showNestedContent);
-    setDidHydrateCaseListViewDefaults(true);
-  }, [
-    didHydrateCaseListViewDefaults,
-    preferencesQuery.data,
-    preferencesQuery.isLoading,
-    setCaseFilterPanelDefaultExpanded,
-    setCaseSearchScope,
-    setCaseShowNestedContent,
-    setCaseSortBy,
-    setCaseSortOrder,
-    setCaseViewMode,
-    setDidHydrateCaseListViewDefaults,
-  ]);
+  const hydratedDefaults = useMemo(
+    () => normalizeCaseListViewDefaults(userPreferencesQuery.data),
+    [userPreferencesQuery.data]
+  );
 
-  const caseIdentifierOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      caseResolverIdentifiers.map((identifierRecord: CaseResolverIdentifier) => {
-        const id = identifierRecord.id;
-        const name =
-          typeof identifierRecord['name'] === 'string' ? identifierRecord['name'].trim() : '';
-        const label =
-          typeof identifierRecord['label'] === 'string' ? identifierRecord['label'].trim() : '';
-        const type =
-          typeof identifierRecord['type'] === 'string' ? identifierRecord['type'].trim() : '';
-        const value =
-          typeof identifierRecord['value'] === 'string' ? identifierRecord['value'].trim() : '';
-        const resolvedLabel =
-          label || name || [type, value].filter((part) => part.length > 0).join(': ') || id;
-        return { value: id, label: resolvedLabel };
-      }),
+  useEffect(() => {
+    if (userPreferencesQuery.isLoading || state.didHydrateCaseListViewDefaults) return;
+
+    state.setCaseViewMode(hydratedDefaults.viewMode);
+    state.setCaseSortBy(hydratedDefaults.sortBy);
+    state.setCaseSortOrder(hydratedDefaults.sortOrder);
+    state.setCaseSearchScope(hydratedDefaults.searchScope);
+    state.setCaseShowNestedContent(hydratedDefaults.showNestedContent);
+    state.setCaseFilterPanelDefaultExpanded(!hydratedDefaults.filtersCollapsedByDefault);
+    state.setDidHydrateCaseListViewDefaults(true);
+  }, [hydratedDefaults, state, userPreferencesQuery.isLoading]);
+
+  useEffect(() => {
+    const requestedCaseIdentifierId = state.requestedCaseIdentifierFilterFromQuery;
+    if (!requestedCaseIdentifierId) return;
+    if (state.appliedCaseIdentifierFilterFromQueryRef.current === requestedCaseIdentifierId) return;
+
+    state.setCaseFilterCaseIdentifierIds([requestedCaseIdentifierId]);
+    state.appliedCaseIdentifierFilterFromQueryRef.current = requestedCaseIdentifierId;
+  }, [state]);
+
+  const caseResolverTagOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => buildTagOptions(caseResolverTags),
+    [caseResolverTags]
+  );
+  const caseIdentifierOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => buildIdentifierOptions(caseResolverIdentifiers),
     [caseResolverIdentifiers]
   );
-
-  const caseReferenceOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      workspace.files
-        .filter((file) => file.fileType === 'case')
-        .map((file) => ({
-          value: file.id,
-          label: file.folder ? `${file.name} (${file.folder})` : file.name,
-        }))
-        .sort((left, right) => left.label.localeCompare(right.label)),
-    [workspace.files]
+  const caseResolverCategoryOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => buildCategoryOptions(caseResolverCategories),
+    [caseResolverCategories]
   );
 
-  const parentCaseOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () => [{ value: '__none__', label: 'No parent (root case)' }, ...caseReferenceOptions],
-    [caseReferenceOptions]
+  const caseFiles = useMemo(
+    (): CaseResolverFile[] =>
+      state.workspace.files.filter((file: CaseResolverFile): boolean => file.fileType === 'case'),
+    [state.workspace.files]
   );
 
-  const folderOptions = useMemo(() => {
-    const folders = new Set<string>();
-    workspace.files.forEach((file) => {
-      if (file.folder) folders.add(file.folder);
-    });
-    return Array.from(folders)
-      .sort()
-      .map((folder) => ({ value: folder, label: folder }));
-  }, [workspace.files]);
-
-  const isLoading = casesLoadState === 'loading';
+  const parentCaseOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => flattenCaseTreeOptions(buildCaseTree(caseFiles)),
+    [caseFiles]
+  );
+  const caseReferenceOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> =>
+      [...parentCaseOptions].sort((left, right) => left.label.localeCompare(right.label)),
+    [parentCaseOptions]
+  );
+  const folderOptions = useMemo(
+    (): Array<LabeledOptionDto<string>> => buildFolderOptions(caseFiles),
+    [caseFiles]
+  );
 
   const handleToggleCaseCollapse = useCallback(
     (caseId: string): void => {
-      setCollapsedCaseIds((previous) => {
+      state.setCollapsedCaseIds((previous: Set<string>) => {
         const next = new Set(previous);
         if (next.has(caseId)) {
           next.delete(caseId);
@@ -500,92 +287,189 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
         return next;
       });
     },
-    [setCollapsedCaseIds]
+    [state]
   );
 
   const handleToggleHeldCase = useCallback(
     (caseId: string): void => {
-      setHeldCaseId((previous) => (previous === caseId ? null : caseId));
+      state.setHeldCaseId((previous: string | null) => (previous === caseId ? null : caseId));
     },
-    [setHeldCaseId]
+    [state]
   );
 
   const handleClearHeldCase = useCallback((): void => {
-    setHeldCaseId(null);
-  }, [setHeldCaseId]);
+    state.setHeldCaseId(null);
+  }, [state]);
 
   const handleRefreshWorkspace = useCallback(async (): Promise<void> => {
-    await runWorkspaceBootstrap({
-      source: 'cases_page_manual_refresh',
-      force: true,
-    });
-  }, [runWorkspaceBootstrap]);
+    settingsStoreRefetchRef.current();
+    state.setCasesLoadState('loading');
+    state.setCasesLoadMessage(null);
+    await refreshWorkspaceFromRecord('cases_page_manual_refresh');
+  }, [refreshWorkspaceFromRecord, state]);
 
   const handleSaveListViewDefaults = useCallback(async (): Promise<void> => {
-    try {
-      await updatePreferencesMutation.mutateAsync({
-        caseResolverCaseListViewMode: caseViewMode === 'list' ? 'list' : 'hierarchy',
-        caseResolverCaseListSortBy: caseSortBy,
-        caseResolverCaseListSortOrder: caseSortOrder,
-        caseResolverCaseListSearchScope: caseSearchScope,
-        caseResolverCaseListFiltersCollapsedByDefault: !caseFilterPanelDefaultExpanded,
-        caseResolverCaseListShowNestedContent: caseShowNestedContent,
-      });
-      setDidHydrateCaseListViewDefaults(true);
-      toast('Case list defaults saved.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error);
-      toast(error instanceof Error ? error.message : 'Failed to save case list defaults.', {
-        variant: 'error',
-      });
-    }
-  }, [
-    caseFilterPanelDefaultExpanded,
-    caseSearchScope,
-    caseShowNestedContent,
-    caseSortBy,
-    caseSortOrder,
-    caseViewMode,
-    setDidHydrateCaseListViewDefaults,
-    toast,
-    updatePreferencesMutation,
-  ]);
+    const payload: UserPreferencesUpdate = {
+      caseResolverCaseListViewMode: state.caseViewMode,
+      caseResolverCaseListSortBy: state.caseSortBy,
+      caseResolverCaseListSortOrder: state.caseSortOrder,
+      caseResolverCaseListSearchScope: state.caseSearchScope,
+      caseResolverCaseListFiltersCollapsedByDefault: !state.caseFilterPanelDefaultExpanded,
+      caseResolverCaseListShowNestedContent: state.caseShowNestedContent,
+    };
 
-  const stateValue = useMemo(
-    (): AdminCaseResolverCasesStateValue => ({
-      workspace,
-      caseDraft,
-      isCreatingCase,
-      isCreateCaseModalOpen,
-      editingCaseId,
-      editingCaseName,
-      editingCaseParentId,
-      editingCaseReferenceCaseIds,
-      editingCaseTagId,
-      editingCaseCaseIdentifierId,
-      editingCaseCategoryId,
-      pendingCaseIdentifierIds,
-      collapsedCaseIds,
-      heldCaseId,
-      caseSearchQuery,
-      caseSearchScope,
-      caseFileTypeFilter,
-      caseFilterTagIds,
-      caseFilterCaseIdentifierIds,
-      caseFilterCategoryIds,
-      caseFilterFolder,
-      caseFilterStatus,
-      caseFilterLocked,
-      caseFilterSent,
-      caseFilterHierarchy,
-      caseFilterReferences,
-      caseSortBy,
-      caseSortOrder,
-      caseViewMode,
-      caseShowNestedContent,
-      caseFilterPanelDefaultExpanded,
-      didHydrateCaseListViewDefaults,
-      confirmation,
+    await updateUserPreferences.mutateAsync(payload);
+    toast('Case list view defaults saved.', { variant: 'success' });
+  }, [state, toast, updateUserPreferences]);
+
+  const liftedActions = useAdminCaseResolverCasesActions({
+    workspace: state.workspace,
+    setWorkspace: state.setWorkspace,
+    lastPersistedWorkspaceValueRef: state.lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef: state.lastPersistedWorkspaceRevisionRef,
+    isCreatingCase: state.isCreatingCase,
+    setIsCreatingCase: state.setIsCreatingCase,
+    createCaseMutationIdRef: state.createCaseMutationIdRef,
+    caseDraft: state.caseDraft,
+    setCaseDraft: state.setCaseDraft,
+    setIsCreateCaseModalOpen: (open: boolean) => {
+      state.setIsCreateCaseModalOpen(open);
+    },
+    editingCaseId: state.editingCaseId,
+    setEditingCaseId: (id: string | null) => {
+      state.setEditingCaseId(id);
+    },
+    editingCaseName: state.editingCaseName,
+    setEditingCaseName: (name: string) => {
+      state.setEditingCaseName(name);
+    },
+    editingCaseParentId: state.editingCaseParentId,
+    setEditingCaseParentId: (id: string | null) => {
+      state.setEditingCaseParentId(id);
+    },
+    editingCaseReferenceCaseIds: state.editingCaseReferenceCaseIds,
+    setEditingCaseReferenceCaseIds: (ids: string[]) => {
+      state.setEditingCaseReferenceCaseIds(ids);
+    },
+    editingCaseTagId: state.editingCaseTagId,
+    setEditingCaseTagId: (id: string | null) => {
+      state.setEditingCaseTagId(id);
+    },
+    editingCaseCaseIdentifierId: state.editingCaseCaseIdentifierId,
+    setEditingCaseCaseIdentifierId: (id: string | null) => {
+      state.setEditingCaseCaseIdentifierId(id);
+    },
+    editingCaseCategoryId: state.editingCaseCategoryId,
+    setEditingCaseCategoryId: (id: string | null) => {
+      state.setEditingCaseCategoryId(id);
+    },
+    collapsedCaseIds: [...state.collapsedCaseIds],
+    setCollapsedCaseIds: (ids: string[]) => {
+      state.setCollapsedCaseIds(new Set(ids));
+    },
+    setHeldCaseId: (id: string | null) => {
+      state.setHeldCaseId(id);
+    },
+    setCaseSearchQuery: (query: string) => {
+      state.setCaseSearchQuery(query);
+    },
+    setCaseSearchScope: (scope) => {
+      state.setCaseSearchScope(scope);
+    },
+    setCaseFileTypeFilter: (filter) => {
+      state.setCaseFileTypeFilter(filter);
+    },
+    setCaseFilterTagIds: (ids: string[]) => {
+      state.setCaseFilterTagIds(ids);
+    },
+    setCaseFilterCaseIdentifierIds: (ids: string[]) => {
+      state.setCaseFilterCaseIdentifierIds(ids);
+    },
+    setCaseFilterCategoryIds: (ids: string[]) => {
+      state.setCaseFilterCategoryIds(ids);
+    },
+    setCaseFilterFolder: (folder: string | null) => {
+      state.setCaseFilterFolder(folder ?? '__all__');
+    },
+    setCaseFilterStatus: (status) => {
+      state.setCaseFilterStatus(status);
+    },
+    setCaseFilterLocked: (locked) => {
+      state.setCaseFilterLocked(locked);
+    },
+    setCaseFilterSent: (sent) => {
+      state.setCaseFilterSent(sent);
+    },
+    setCaseFilterHierarchy: (hierarchy) => {
+      state.setCaseFilterHierarchy(hierarchy);
+    },
+    setCaseFilterReferences: (references) => {
+      state.setCaseFilterReferences(references);
+    },
+    setCaseSortBy: (key) => {
+      state.setCaseSortBy(key);
+    },
+    setCaseSortOrder: (order) => {
+      state.setCaseSortOrder(order);
+    },
+    setCaseViewMode: (mode) => {
+      state.setCaseViewMode(mode);
+    },
+    setCaseShowNestedContent: (show: boolean) => {
+      state.setCaseShowNestedContent(show);
+    },
+    setCaseFilterPanelDefaultExpanded: (expanded: boolean) => {
+      state.setCaseFilterPanelDefaultExpanded(expanded);
+    },
+    setDidHydrateCaseListViewDefaults: (hydrated: boolean) => {
+      state.setDidHydrateCaseListViewDefaults(hydrated);
+    },
+    setConfirmation: state.setConfirmation,
+    setCasesLoadState: (nextState) => {
+      state.setCasesLoadState(nextState);
+    },
+    setCasesLoadMessage: (message: string | null) => {
+      state.setCasesLoadMessage(message);
+    },
+    toast,
+    settingsStoreRefetchRef,
+  });
+
+  const stateValue = useMemo<AdminCaseResolverCasesStateValue>(
+    () => ({
+      workspace: state.workspace,
+      caseDraft: state.caseDraft,
+      isCreatingCase: state.isCreatingCase,
+      isCreateCaseModalOpen: state.isCreateCaseModalOpen,
+      editingCaseId: state.editingCaseId,
+      editingCaseName: state.editingCaseName,
+      editingCaseParentId: state.editingCaseParentId,
+      editingCaseReferenceCaseIds: state.editingCaseReferenceCaseIds,
+      editingCaseTagId: state.editingCaseTagId,
+      editingCaseCaseIdentifierId: state.editingCaseCaseIdentifierId,
+      editingCaseCategoryId: state.editingCaseCategoryId,
+      pendingCaseIdentifierIds: state.pendingCaseIdentifierIds,
+      collapsedCaseIds: state.collapsedCaseIds,
+      heldCaseId: state.heldCaseId,
+      caseSearchQuery: state.caseSearchQuery,
+      caseSearchScope: state.caseSearchScope,
+      caseFileTypeFilter: state.caseFileTypeFilter,
+      caseFilterTagIds: state.caseFilterTagIds,
+      caseFilterCaseIdentifierIds: state.caseFilterCaseIdentifierIds,
+      caseFilterCategoryIds: state.caseFilterCategoryIds,
+      caseFilterFolder: state.caseFilterFolder,
+      caseFilterStatus: state.caseFilterStatus,
+      caseFilterLocked: state.caseFilterLocked,
+      caseFilterSent: state.caseFilterSent,
+      caseFilterHierarchy: state.caseFilterHierarchy,
+      caseFilterReferences: state.caseFilterReferences,
+      caseSortBy: state.caseSortBy,
+      caseSortOrder: state.caseSortOrder,
+      caseViewMode: state.caseViewMode,
+      caseShowNestedContent: state.caseShowNestedContent,
+      caseFilterPanelDefaultExpanded: state.caseFilterPanelDefaultExpanded,
+      didHydrateCaseListViewDefaults: state.didHydrateCaseListViewDefaults,
+      confirmation: state.confirmation,
       caseResolverTags,
       caseResolverIdentifiers,
       caseResolverCategories,
@@ -595,156 +479,86 @@ export function useAdminCaseResolverCasesRuntime(): AdminCaseResolverCasesRuntim
       caseReferenceOptions,
       caseIdentifierOptions,
       folderOptions,
-      isLoading,
-      casesLoadState,
-      casesLoadMessage,
+      isLoading: settingsStore.isLoading || userPreferencesQuery.isLoading,
+      casesLoadState: state.casesLoadState,
+      casesLoadMessage: state.casesLoadMessage,
     }),
     [
-      workspace,
-      caseDraft,
-      isCreatingCase,
-      isCreateCaseModalOpen,
-      editingCaseId,
-      editingCaseName,
-      editingCaseParentId,
-      editingCaseReferenceCaseIds,
-      editingCaseTagId,
-      editingCaseCaseIdentifierId,
-      editingCaseCategoryId,
-      pendingCaseIdentifierIds,
-      collapsedCaseIds,
-      heldCaseId,
-      caseSearchQuery,
-      caseSearchScope,
-      caseFileTypeFilter,
-      caseFilterTagIds,
-      caseFilterCaseIdentifierIds,
-      caseFilterCategoryIds,
-      caseFilterFolder,
-      caseFilterStatus,
-      caseFilterLocked,
-      caseFilterSent,
-      caseFilterHierarchy,
-      caseFilterReferences,
-      caseSortBy,
-      caseSortOrder,
-      caseViewMode,
-      caseShowNestedContent,
-      caseFilterPanelDefaultExpanded,
-      didHydrateCaseListViewDefaults,
-      confirmation,
-      caseResolverTags,
-      caseResolverIdentifiers,
-      caseResolverCategories,
-      caseResolverTagOptions,
-      caseResolverCategoryOptions,
-      parentCaseOptions,
-      caseReferenceOptions,
       caseIdentifierOptions,
+      caseReferenceOptions,
+      caseResolverCategories,
+      caseResolverCategoryOptions,
+      caseResolverIdentifiers,
+      caseResolverTags,
+      caseResolverTagOptions,
       folderOptions,
-      isLoading,
-      casesLoadState,
-      casesLoadMessage,
+      parentCaseOptions,
+      settingsStore.isLoading,
+      state,
+      userPreferencesQuery.isLoading,
     ]
   );
 
-  const actionsValue = useMemo(
-    (): AdminCaseResolverCasesActionsValue => ({
-      setWorkspace,
-      setCaseDraft,
-      setIsCreateCaseModalOpen,
-      setEditingCaseId,
-      setEditingCaseName,
-      setEditingCaseParentId,
-      setEditingCaseReferenceCaseIds,
-      setEditingCaseTagId,
-      setEditingCaseCaseIdentifierId,
-      setEditingCaseCategoryId,
-      setPendingCaseIdentifierIds,
-      setCollapsedCaseIds,
-      setHeldCaseId,
-      setCaseSearchQuery,
-      setCaseSearchScope,
-      setCaseFileTypeFilter,
-      setCaseFilterTagIds,
-      setCaseFilterCaseIdentifierIds,
-      setCaseFilterCategoryIds,
-      setCaseFilterFolder,
-      setCaseFilterStatus,
-      setCaseFilterLocked,
-      setCaseFilterSent,
-      setCaseFilterHierarchy,
-      setCaseFilterReferences,
-      setCaseSortBy,
-      setCaseSortOrder,
-      setCaseViewMode,
-      setCaseShowNestedContent,
-      setCaseFilterPanelDefaultExpanded,
-      setConfirmation,
-      handleCreateCase: actions.handleCreateCase,
-      handleUpdateCase: actions.handleUpdateCase,
-      handleDeleteCase: actions.handleDeleteCase,
+  const actionsValue = useMemo<AdminCaseResolverCasesActionsValue>(
+    () => ({
+      setWorkspace: state.setWorkspace,
+      setCaseDraft: state.setCaseDraft,
+      setIsCreateCaseModalOpen: state.setIsCreateCaseModalOpen,
+      setEditingCaseId: state.setEditingCaseId,
+      setEditingCaseName: state.setEditingCaseName,
+      setEditingCaseParentId: state.setEditingCaseParentId,
+      setEditingCaseReferenceCaseIds: state.setEditingCaseReferenceCaseIds,
+      setEditingCaseTagId: state.setEditingCaseTagId,
+      setEditingCaseCaseIdentifierId: state.setEditingCaseCaseIdentifierId,
+      setEditingCaseCategoryId: state.setEditingCaseCategoryId,
+      setPendingCaseIdentifierIds: state.setPendingCaseIdentifierIds,
+      setCollapsedCaseIds: state.setCollapsedCaseIds,
+      setHeldCaseId: state.setHeldCaseId,
+      setCaseSearchQuery: state.setCaseSearchQuery,
+      setCaseSearchScope: state.setCaseSearchScope,
+      setCaseFileTypeFilter: state.setCaseFileTypeFilter,
+      setCaseFilterTagIds: state.setCaseFilterTagIds,
+      setCaseFilterCaseIdentifierIds: state.setCaseFilterCaseIdentifierIds,
+      setCaseFilterCategoryIds: state.setCaseFilterCategoryIds,
+      setCaseFilterFolder: state.setCaseFilterFolder,
+      setCaseFilterStatus: state.setCaseFilterStatus,
+      setCaseFilterLocked: state.setCaseFilterLocked,
+      setCaseFilterSent: state.setCaseFilterSent,
+      setCaseFilterHierarchy: state.setCaseFilterHierarchy,
+      setCaseFilterReferences: state.setCaseFilterReferences,
+      setCaseSortBy: state.setCaseSortBy,
+      setCaseSortOrder: state.setCaseSortOrder,
+      setCaseViewMode: state.setCaseViewMode,
+      setCaseShowNestedContent: state.setCaseShowNestedContent,
+      setCaseFilterPanelDefaultExpanded: state.setCaseFilterPanelDefaultExpanded,
+      setConfirmation: state.setConfirmation,
+      handleCreateCase: liftedActions.handleCreateCase,
+      handleUpdateCase: liftedActions.handleUpdateCase,
+      handleDeleteCase: liftedActions.handleDeleteCase,
       handleToggleCaseCollapse,
       handleToggleHeldCase,
       handleClearHeldCase,
-      handleMoveCase: actions.handleMoveCase,
-      handleReorderCase: actions.handleReorderCase,
-      handleRenameCase: actions.handleRenameCase,
-      handleToggleCaseStatus: actions.handleToggleCaseStatus,
-      handleSaveCaseDraft: actions.handleSaveCaseDraft,
+      handleMoveCase: liftedActions.handleMoveCase,
+      handleReorderCase: liftedActions.handleReorderCase,
+      handleRenameCase: liftedActions.handleRenameCase,
+      handleToggleCaseStatus: liftedActions.handleToggleCaseStatus,
+      handleSaveCaseDraft: liftedActions.handleSaveCaseDraft,
       handleRefreshWorkspace,
       handleSaveListViewDefaults,
     }),
     [
-      setWorkspace,
-      setCaseDraft,
-      setIsCreateCaseModalOpen,
-      setEditingCaseId,
-      setEditingCaseName,
-      setEditingCaseParentId,
-      setEditingCaseReferenceCaseIds,
-      setEditingCaseTagId,
-      setEditingCaseCaseIdentifierId,
-      setEditingCaseCategoryId,
-      setPendingCaseIdentifierIds,
-      setCollapsedCaseIds,
-      setHeldCaseId,
-      setCaseSearchQuery,
-      setCaseSearchScope,
-      setCaseFileTypeFilter,
-      setCaseFilterTagIds,
-      setCaseFilterCaseIdentifierIds,
-      setCaseFilterCategoryIds,
-      setCaseFilterFolder,
-      setCaseFilterStatus,
-      setCaseFilterLocked,
-      setCaseFilterSent,
-      setCaseFilterHierarchy,
-      setCaseFilterReferences,
-      setCaseSortBy,
-      setCaseSortOrder,
-      setCaseViewMode,
-      setCaseShowNestedContent,
-      setCaseFilterPanelDefaultExpanded,
-      setConfirmation,
-      actions.handleCreateCase,
-      actions.handleUpdateCase,
-      actions.handleDeleteCase,
-      actions.handleMoveCase,
-      actions.handleReorderCase,
-      actions.handleRenameCase,
-      actions.handleToggleCaseStatus,
-      actions.handleSaveCaseDraft,
-      handleToggleCaseCollapse,
-      handleToggleHeldCase,
       handleClearHeldCase,
       handleRefreshWorkspace,
       handleSaveListViewDefaults,
+      handleToggleCaseCollapse,
+      handleToggleHeldCase,
+      liftedActions,
+      state,
     ]
   );
 
   return {
-    actionsValue,
     stateValue,
+    actionsValue,
   };
 }

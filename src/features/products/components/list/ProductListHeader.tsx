@@ -18,14 +18,17 @@ import {
 } from '@/features/products/context/ProductListContext';
 import type { ProductTriggerButtonBarProps } from '@/features/products/lib/product-integrations-adapter-loader';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { Catalog } from '@/shared/contracts/products';
-import type { ProductDraft } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/shared/lib/products/constants';
 import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
-import { FocusModeTogglePortal } from '@/shared/ui/FocusModeTogglePortal';
-import { AdminProductsBreadcrumbs, Button, SelectSimple, Pagination } from '@/shared/ui';
+import { AdminProductsBreadcrumbs } from '@/shared/ui/admin-products-breadcrumbs';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
+import { Button } from '@/shared/ui/button';
+import { FocusModeTogglePortal } from '@/shared/ui/FocusModeTogglePortal';
+import { Pagination } from '@/shared/ui/pagination';
+import { SelectSimple } from '@/shared/ui/select-simple';
 
 const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () =>
@@ -75,6 +78,7 @@ export const ProductListHeader = memo(function ProductListHeader({
     onCreateProduct,
     onCreateFromDraft,
     activeDrafts,
+    triggerButtonsReady = true,
   } = useProductListHeaderActionsContext();
   const {
     page,
@@ -216,13 +220,15 @@ export const ProductListHeader = memo(function ProductListHeader({
         ariaLabel='Filter by catalog'
        title='Catalog'/>
 
-      <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'>
-        <TriggerButtonBar
-          location='product_list'
-          entityType='product'
-          className='w-full flex-nowrap sm:w-auto'
-        />
-      </div>
+      {triggerButtonsReady ? (
+        <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap'>
+          <TriggerButtonBar
+            location='product_list'
+            entityType='product'
+            className='w-full flex-nowrap sm:w-auto'
+          />
+        </div>
+      ) : null}
     </>
   );
 

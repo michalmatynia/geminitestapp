@@ -141,6 +141,9 @@ export const LEARNER_AGENT_INPUT_PORTS = ['prompt', 'bundle'];
 export const LEARNER_AGENT_OUTPUT_PORTS = ['result', 'jobId', 'sources'];
 export const PLAYWRIGHT_INPUT_PORTS = ['url', 'bundle', 'context'];
 export const PLAYWRIGHT_OUTPUT_PORTS = ['result', 'jobId', 'screenshot', 'html'];
+/** Pre-configured capture variant — routes + appearanceMode fed in, capture artifacts returned. */
+export const PLAYWRIGHT_CAPTURE_INPUT_PORTS = ['captures', 'appearanceMode', 'bundle', 'context'];
+export const PLAYWRIGHT_CAPTURE_OUTPUT_PORTS = ['result', 'jobId', 'bundle'];
 export const HTTP_INPUT_PORTS = ['url', 'body', 'headers', 'bundle'];
 export const HTTP_OUTPUT_PORTS = ['result', 'status', 'headers'];
 export const API_ADVANCED_INPUT_PORTS = ['url', 'body', 'headers', 'params', 'bundle'];

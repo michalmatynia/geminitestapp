@@ -1,7 +1,9 @@
 import React from 'react';
 
-import type { AdminBreadcrumbNodeDto } from '@/shared/contracts/ui';
-import { AdminFilemakerBreadcrumbs, FormActions, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui';
+import type { AdminBreadcrumbNodeDto } from '@/shared/contracts/ui/base';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { FormActions } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 type FilemakerPartyEditPageLayoutParent = AdminBreadcrumbNodeDto;
 

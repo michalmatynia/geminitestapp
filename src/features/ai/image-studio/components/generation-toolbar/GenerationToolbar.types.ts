@@ -7,10 +7,7 @@ import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-stu
 import { type ImageStudioAnalysisSharedLayout } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { type ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
 import { type ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import {
-  type ImageStudioProjectRecord,
-  type ImageStudioSlotRecord,
-} from '@/shared/contracts/image-studio';
+import { type ImageStudioProjectRecord, type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
 import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 

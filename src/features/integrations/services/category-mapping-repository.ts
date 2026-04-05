@@ -1,11 +1,6 @@
-import type {
-  CategoryMappingAssignment,
-  CategoryMapping,
-  CategoryMappingWithDetails,
-  CategoryMappingCreateInput,
-  CategoryMappingUpdateInput,
-  CategoryMappingRepository,
-} from '@/shared/contracts/integrations';
+import type { CategoryMappingAssignment } from '@/shared/contracts/integrations/base-com';
+import type { CategoryMapping, CategoryMappingWithDetails, CategoryMappingCreateInput, CategoryMappingUpdateInput } from '@/shared/contracts/integrations/listings';
+import type { CategoryMappingRepository } from '@/shared/contracts/integrations/repositories';
 
 import { mongoCategoryMappingImpl } from './category-mapping/mongo-impl';
 

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { useFileUploadEventsContext } from '../contexts/FileUploadEventsContext';
 import { type FileUploadEventRecord } from '../hooks/useFileUploadEvents';

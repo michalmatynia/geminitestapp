@@ -3,7 +3,7 @@
 import { Copy } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';

@@ -3,8 +3,8 @@
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import type { CmsAppearanceTone } from '@/features/cms/components/frontend/CmsStorefrontAppearance';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { CmsAppearanceTone } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { HomeFallbackCollections } from './home-fallback-content.collections';
 import {
@@ -26,7 +26,7 @@ export type HomeFallbackContentProps = {
   appearanceTone?: CmsAppearanceTone;
 };
 
-export function renderHomeFallbackContent({
+export function HomeFallbackContent({
   showFallbackHeader,
   products,
   themeSettings,
@@ -59,4 +59,8 @@ export function renderHomeFallbackContent({
       {showFallbackHeader ? <HomeFallbackFooterWithTheme themeSettings={themeSettings} /> : null}
     </div>
   );
+}
+
+export function renderHomeFallbackContent(props: HomeFallbackContentProps): React.JSX.Element {
+  return <HomeFallbackContent {...props} />;
 }

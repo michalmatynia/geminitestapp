@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { BRAIN_MODEL_DEFAULT_VALUE } from '../AdminKangurSocialPage.Constants';
 import { useSocialPostContext } from '../SocialPostContext';
 
-export type SocialSettingsTab = 'models' | 'project' | 'documentation' | 'publishing' | 'capture';
+export type SocialSettingsTab = 'models' | 'project' | 'documentation' | 'publishing' | 'capture' | 'content-browser';
 export type SocialPostContextValue = ReturnType<typeof useSocialPostContext>;
 
 function buildModelSelectOptions(

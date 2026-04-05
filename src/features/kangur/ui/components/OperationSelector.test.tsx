@@ -39,11 +39,11 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,
 }));
 
-vi.mock('@/features/kangur/ui/components/DifficultySelector', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/DifficultySelector', () => ({
   default: () => <div data-testid='difficulty-selector'>difficulty-selector</div>,
 }));
 
-import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
+import OperationSelector from '@/features/kangur/ui/components/game-setup/OperationSelector';
 
 describe('OperationSelector', () => {
   it('renders a recommendation chip on the recommended operation card', () => {

@@ -3,12 +3,9 @@
 import React from 'react';
 
 import type { DatabaseInfo } from '@/shared/contracts/database';
-import {
-  ActionMenu,
-  DataTableSortableHeader,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/shared/ui';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { DataTableSortableHeader } from '@/shared/ui/data-display.public';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
 
 import {
   useDatabaseBackupsActionsContext,

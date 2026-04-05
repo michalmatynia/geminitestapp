@@ -2,8 +2,8 @@ import { createRequire } from 'module';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { caseResolverPdfExportRequestSchema } from '@/shared/contracts/case-resolver';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { caseResolverPdfExportRequestSchema } from '@/shared/contracts/case-resolver/file';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   badRequestError,
   configurationError,

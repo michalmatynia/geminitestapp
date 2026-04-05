@@ -4,7 +4,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { BaseOrderImportPreviewResponse } from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewResponse } from '@/shared/contracts/products/orders-import';
 
 const useAdminProductOrdersImportState = vi.fn();
 const buildColumns = vi.fn();
@@ -23,7 +23,7 @@ vi.mock('./AdminProductOrdersImportPage.OrderDetails', () => ({
   ),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/admin-products-page-layout', () => ({
   AdminProductsPageLayout: ({
     children,
     title,
@@ -39,6 +39,9 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/alert', () => ({
   Alert: ({
     title,
     children,
@@ -51,6 +54,9 @@ vi.mock('@/shared/ui', () => ({
       <div>{children}</div>
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/badge', () => ({
   Badge: ({
     children,
     onClick,
@@ -62,6 +68,9 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -79,6 +88,9 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/empty-state', () => ({
   EmptyState: ({
     title,
     description,
@@ -91,7 +103,13 @@ vi.mock('@/shared/ui', () => ({
       <div>{description}</div>
     </div>
   ),
+}));
+
+vi.mock('@/shared/ui/input', () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+}));
+
+vi.mock('@/shared/ui/search-input', () => ({
   SearchInput: ({
     value,
     onChange,
@@ -108,6 +126,9 @@ vi.mock('@/shared/ui', () => ({
       {...props}
     />
   ),
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
   SelectSimple: ({
     value,
     onChange,
@@ -139,6 +160,9 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
+}));
+
+vi.mock('@/shared/ui/templates/StandardDataTablePanel', () => ({
   StandardDataTablePanel: ({
     title,
     headerActions,

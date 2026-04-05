@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 import {
@@ -10,15 +11,10 @@ import {
   AI_INSIGHTS_CONTEXT_ROOT_IDS,
   buildAiInsightsWorkspaceContextBundle,
 } from '@/features/ai/insights/context-registry/workspace';
-import type { AiInsightRecord } from '@/shared/contracts';
-import {
-  Button,
-  CompactEmptyState,
-  FormSection,
-  LoadingState,
-  SectionHeader,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
+import { Button } from '@/shared/ui/primitives.public';
+import { CompactEmptyState, LoadingState, SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import { InsightCard } from '../components/InsightCard';
 import {
@@ -166,6 +162,8 @@ function AiInsightsContextRegistrySource(): React.JSX.Element {
 }
 
 function AdminAiInsightsPageContent(): React.JSX.Element {
+  const router = useRouter();
+
   return (
     <div className='page-section'>
       <AiInsightsContextRegistrySource />
@@ -177,7 +175,7 @@ function AdminAiInsightsPageContent(): React.JSX.Element {
           <Button
             variant='outline'
             size='sm'
-            onClick={() => window.location.assign('/admin/brain?tab=routing')}
+            onClick={() => router.push('/admin/brain?tab=routing')}
           >
             Settings
           </Button>

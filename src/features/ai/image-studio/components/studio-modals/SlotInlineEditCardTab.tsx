@@ -1,17 +1,10 @@
 import {} from 'lucide-react';
 import React from 'react';
 
-import {
-  ProductImageManager,
-  ProductImageManagerControllerProvider,
-  Button,
-  Input,
-  Label,
-  TabsContent,
-  LoadingState,
-  Hint,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { ProductImageManager, ProductImageManagerControllerProvider } from '@/shared/ui/media.public';
+import { Button, Input, Label, TabsContent } from '@/shared/ui/primitives.public';
+import { LoadingState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,

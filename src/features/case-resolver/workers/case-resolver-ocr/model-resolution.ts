@@ -1,5 +1,5 @@
 import { detectCaseResolverOcrProvider } from '@/features/case-resolver/ocr-provider';
-import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver';
+import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver/base';
 
 import type { CaseResolverResolvedOcrModel } from './types';
 

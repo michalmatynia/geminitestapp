@@ -1,9 +1,7 @@
 'use client';
 
-import React from 'react';
-
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import { createStrictViewContext } from '../../createStrictViewContext';
 
 type ListProductModalFormContextValue = {
   error: string | null;
@@ -11,32 +9,10 @@ type ListProductModalFormContextValue = {
   onRetryImageExport: (preset: ImageRetryPreset) => void;
 };
 
-const ListProductModalFormContext = React.createContext<ListProductModalFormContextValue | null>(
-  null
-);
-
-type ListProductModalFormProviderProps = {
-  value: ListProductModalFormContextValue;
-  children: React.ReactNode;
-};
-
-export function ListProductModalFormProvider({
-  value,
-  children,
-}: ListProductModalFormProviderProps): React.JSX.Element {
-  return (
-    <ListProductModalFormContext.Provider value={value}>
-      {children}
-    </ListProductModalFormContext.Provider>
-  );
-}
-
-export function useListProductModalFormContext(): ListProductModalFormContextValue {
-  const context = React.useContext(ListProductModalFormContext);
-  if (!context) {
-    throw internalError(
-      'useListProductModalFormContext must be used within ListProductModalFormProvider'
-    );
-  }
-  return context;
-}
+export const {
+  Provider: ListProductModalFormProvider,
+  useValue: useListProductModalFormContext,
+} = createStrictViewContext<ListProductModalFormContextValue>({
+  providerName: 'ListProductModalFormProvider',
+  errorMessage: 'useListProductModalFormContext must be used within ListProductModalFormProvider',
+});

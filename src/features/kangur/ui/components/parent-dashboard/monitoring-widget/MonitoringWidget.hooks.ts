@@ -90,7 +90,6 @@ export function useMonitoringWidgetState() {
           );
         }
       } catch (err) {
-        console.error(err);
         void ErrorSystem.captureException(err);
         if (reset) {
           setInteractionsError(translationsRef.current('widgets.monitoring.errors.load'));

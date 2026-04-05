@@ -1,9 +1,6 @@
 import type { DocumentationEntry, DocumentationModuleId } from '@/shared/contracts/documentation';
 
-import {
-  getDocumentationEntry,
-  resolveDocumentationEntryFromElement,
-} from '@/shared/lib/documentation';
+import { getDocumentationEntry, resolveDocumentationEntryFromElement } from '@/shared/lib/documentation/registry';
 
 export const formatDocumentationTooltip = (entry: DocumentationEntry): string =>
   `${entry.title}: ${entry.content}`;

@@ -1,10 +1,6 @@
 import 'server-only';
 
-import type {
-  BaseOrderImportPreviewItem,
-  BaseOrderImportPersistResult,
-  ImportedBaseOrderRecord,
-} from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewItem, BaseOrderImportPersistResult, ImportedBaseOrderRecord } from '@/shared/contracts/products/orders-import';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Document } from 'mongodb';

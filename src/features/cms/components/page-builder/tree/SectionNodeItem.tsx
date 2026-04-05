@@ -9,9 +9,10 @@ import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { useTreeActions } from '@/features/cms/hooks/useTreeActionsContext';
 import { readSectionDragData, setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import { setMasterTreeDragNodeData } from '@/features/foldertree/public';
-import { Button, Badge, TreeCaret } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { setMasterTreeDragNodeData } from '@/shared/lib/foldertree/public';
+import { Button, Badge } from '@/shared/ui/primitives.public';
+import { TreeCaret } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 
 import { BlockNodeItem } from './BlockNodeItem';

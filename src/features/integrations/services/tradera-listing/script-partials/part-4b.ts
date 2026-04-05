@@ -1,0 +1,1046 @@
+export const PART_4B = String.raw`
+
+    log?.('tradera.quicklist.field.selected', {
+      field: 'listing-confirmation',
+      option: 'checked',
+    });
+    return true;
+  };
+
+  const waitForPublishReadiness = async (publishButton, timeoutMs = 6_000) => {
+    const deadline = Date.now() + timeoutMs;
+    let lastMessages = [];
+    let lastDisabled = true;
+
+    while (Date.now() < deadline) {
+      lastMessages = await collectValidationMessages();
+      lastDisabled = await isControlDisabled(publishButton);
+
+      if (!lastDisabled && lastMessages.length === 0) {
+        log?.('tradera.quicklist.publish.ready', {
+          publishDisabled: false,
+          messages: [],
+        });
+        return {
+          publishDisabled: false,
+          messages: [],
+        };
+      }
+
+      await wait(300);
+    }
+
+    log?.('tradera.quicklist.publish.ready_timeout', {
+      publishDisabled: lastDisabled,
+      messages: lastMessages,
+    });
+
+    return {
+      publishDisabled: lastDisabled,
+      messages: lastMessages,
+    };
+  };
+
+  const chooseBuyNowListingFormat = async () => {
+    const FIXED_PRICE_INPUT_SELECTORS = ['input[name="price_fixedPrice"]', '#price_fixedPrice'];
+    const readLocatorTextSnapshot = async (locator) => {
+      if (!locator || typeof locator.evaluate !== 'function') {
+        return null;
+      }
+
+      return locator
+        .evaluate((element) => {
+          const inputValue =
+            element instanceof HTMLInputElement ||
+            element instanceof HTMLTextAreaElement ||
+            element instanceof HTMLSelectElement
+              ? element.value || ''
+              : '';
+
+          return {
+            text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
+            ariaLabel: element.getAttribute('aria-label') || '',
+            placeholder: element.getAttribute('placeholder') || '',
+            value: inputValue,
+          };
+        })
+        .catch(() => null);
+    };
+
+    const isBuyNowLikeValue = (value) => {
+      const normalized = normalizeWhitespace(value).toLowerCase();
+      if (!normalized) {
+        return false;
+      }
+
+      return BUY_NOW_OPTION_LABELS.some((label) =>
+        normalized.includes(normalizeWhitespace(label).toLowerCase())
+      );
+    };
+
+    const detectBuyNowListingFormatState = async (listingFormatTrigger = null) => {
+      const [triggerSnapshot, fixedPriceInput, genericPriceInput, publishButton] =
+        await Promise.all([
+          readLocatorTextSnapshot(listingFormatTrigger),
+          firstVisible(FIXED_PRICE_INPUT_SELECTORS).then(Boolean).catch(() => false),
+          firstVisible(PRICE_SELECTORS).then(Boolean).catch(() => false),
+          firstVisible(PUBLISH_SELECTORS).then(Boolean).catch(() => false),
+        ]);
+
+      const triggerText = [
+        triggerSnapshot?.text,
+        triggerSnapshot?.ariaLabel,
+        triggerSnapshot?.placeholder,
+        triggerSnapshot?.value,
+      ]
+        .filter((value) => typeof value === 'string' && value.trim().length > 0)
+        .join(' ');
+
+      if (isBuyNowLikeValue(triggerText)) {
+        return {
+          resolved: true,
+          reason: 'trigger-already-buy-now',
+          triggerText,
+          hasFixedPriceInput: fixedPriceInput,
+          hasGenericPriceInput: genericPriceInput,
+          hasPublishButton: publishButton,
+        };
+      }
+
+      if (fixedPriceInput) {
+        return {
+          resolved: true,
+          reason: 'fixed-price-input-visible',
+          triggerText,
+          hasFixedPriceInput: fixedPriceInput,
+          hasGenericPriceInput: genericPriceInput,
+          hasPublishButton: publishButton,
+        };
+      }
+
+      if (!listingFormatTrigger && genericPriceInput && publishButton) {
+        return {
+          resolved: true,
+          reason: 'listing-editor-ready-with-price',
+          triggerText,
+          hasFixedPriceInput: fixedPriceInput,
+          hasGenericPriceInput: genericPriceInput,
+          hasPublishButton: publishButton,
+        };
+      }
+
+      return {
+        resolved: false,
+        reason: 'unresolved',
+        triggerText,
+        hasFixedPriceInput: fixedPriceInput,
+        hasGenericPriceInput: genericPriceInput,
+        hasPublishButton: publishButton,
+      };
+    };
+
+    let lastObservedState = null;
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const listingFormatTrigger = await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS);
+      const inferredStateBeforeSelection = await detectBuyNowListingFormatState(
+        listingFormatTrigger
+      );
+      if (inferredStateBeforeSelection.resolved) {
+        log?.('tradera.quicklist.listing_format.inferred', {
+          attempt,
+          ...inferredStateBeforeSelection,
+        });
+        return;
+      }
+
+      if (!listingFormatTrigger) {
+        lastObservedState = {
+          attempt,
+          step: 'trigger-missing',
+          ...inferredStateBeforeSelection,
+        };
+        await wait(800);
+        continue;
+      }
+
+      await humanClick(listingFormatTrigger);
+      await wait(400);
+
+      for (const optionLabel of BUY_NOW_OPTION_LABELS) {
+        if (await clickMenuItemByName(optionLabel)) {
+          log?.('tradera.quicklist.field.selected', {
+            field: 'listing-format',
+            option: optionLabel,
+          });
+          return;
+        }
+      }
+
+      const inferredStateAfterSelection = await detectBuyNowListingFormatState(
+        await findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS)
+      );
+      if (inferredStateAfterSelection.resolved) {
+        log?.('tradera.quicklist.listing_format.inferred', {
+          attempt,
+          afterSelection: true,
+          ...inferredStateAfterSelection,
+        });
+        return;
+      }
+
+      lastObservedState = {
+        attempt,
+        step: 'option-missing',
+        ...inferredStateAfterSelection,
+      };
+      await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+        () => undefined
+      );
+      await wait(800);
+    }
+
+    if (lastObservedState?.step === 'trigger-missing') {
+      throw new Error(
+        'FAIL_PRICE_SET: Listing format selector not found. Last state: ' +
+          JSON.stringify(lastObservedState)
+      );
+    }
+
+    throw new Error(
+      'FAIL_PRICE_SET: Buy now listing format option not found. Last state: ' +
+        JSON.stringify(lastObservedState)
+    );
+  };
+
+  const isSafeDraftImageRemoveControl = async (locator) => {
+    const metadata = await readClickTargetMetadata(locator);
+    if (!metadata || typeof metadata !== 'object') {
+      return false;
+    }
+
+    const hrefCandidate = normalizeWhitespace(metadata.hrefAttribute || metadata.href || '');
+    const hasNavigationTarget =
+      metadata.tagName === 'a' ||
+      Boolean(hrefCandidate && hrefCandidate !== '#' && !hrefCandidate.startsWith('#')) ||
+      Boolean(normalizeWhitespace(metadata.targetAttribute));
+    if (hasNavigationTarget || resolveExternalClickTargetUrl(metadata)) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'navigating-target',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    const controlContext = await locator
+      .evaluate((element, scopeSelectors) => {
+        const closestButton = element.closest('button');
+        const closestLink = element.closest('a[href], a[role="link"], [role="link"][href]');
+        const insideImageScope = Array.isArray(scopeSelectors)
+          ? scopeSelectors.some((selector) => {
+              try {
+                return Boolean(element.closest(selector));
+              } catch {
+                return false;
+              }
+            })
+          : false;
+
+        return {
+          insideImageScope,
+          insideLink: Boolean(closestLink),
+          buttonAncestorTagName: closestButton ? closestButton.tagName.toLowerCase() : null,
+        };
+      }, DRAFT_IMAGE_REMOVE_SCOPE_SELECTORS)
+      .catch(() => ({
+        insideImageScope: false,
+        insideLink: false,
+        buttonAncestorTagName: null,
+      }));
+
+    if (controlContext.insideLink) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'inside-link',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    const isButtonLike =
+      metadata.tagName === 'button' ||
+      metadata.role === 'button' ||
+      metadata.type === 'button' ||
+      controlContext.buttonAncestorTagName === 'button';
+    if (!isButtonLike) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'not-button-like',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    const normalizedMetadataHaystack = [
+      metadata.ariaLabel,
+      metadata.text,
+      metadata.dataTestId,
+      metadata.id,
+      metadata.name,
+      metadata.title,
+      metadata.value,
+    ]
+      .map((value) =>
+        normalizeWhitespace(value)
+          .replace(/[^a-z0-9]+/gi, ' ')
+          .toLowerCase()
+      )
+      .join(' ');
+    const hasRemoveActionHint = DRAFT_IMAGE_REMOVE_ACTION_HINTS.some((hint) =>
+      normalizedMetadataHaystack.includes(hint)
+    );
+    if (!hasRemoveActionHint) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'missing-remove-hint',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    if (!controlContext.insideImageScope) {
+      log?.('tradera.quicklist.draft_image_remove.skipped', {
+        reason: 'outside-image-scope',
+        ...(metadata || {}),
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const countDraftImageRemoveControls = async () => {
+    let total = 0;
+
+    for (const selector of DRAFT_IMAGE_REMOVE_SELECTORS) {
+      const locator = page.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      if (!count) {
+        continue;
+      }
+
+      for (let index = 0; index < count; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (visible && (await isSafeDraftImageRemoveControl(candidate))) {
+          total += 1;
+        }
+      }
+    }
+
+    return total;
+  };
+
+  const readSelectedImageFileCount = async (imageInput) => {
+    if (!imageInput) return 0;
+    return imageInput
+      .evaluate((element) => {
+        if (!(element instanceof HTMLInputElement)) return 0;
+        return element.files?.length ?? 0;
+      })
+      .catch(() => 0);
+  };
+
+  const waitForSelectedImageFileCount = async (
+    imageInput,
+    expectedUploadCount = 1,
+    timeoutMs = 8_000
+  ) => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const selectedImageFileCount = await readSelectedImageFileCount(imageInput);
+      if (selectedImageFileCount >= Math.max(1, expectedUploadCount)) {
+        log?.('tradera.quicklist.image.selected', {
+          selectedImageFileCount,
+          expectedUploadCount,
+        });
+        return selectedImageFileCount;
+      }
+
+      await wait(250);
+    }
+
+    return readSelectedImageFileCount(imageInput);
+  };
+
+  const isImageUploadPromptVisible = async () => {
+    const prompt = await firstVisible(IMAGE_REQUIRED_HINT_SELECTORS);
+    return Boolean(prompt);
+  };
+
+  const isImageUploadPending = async () => {
+    const pendingIndicator = await firstVisible(IMAGE_UPLOAD_PENDING_SELECTORS);
+    return Boolean(pendingIndicator);
+  };
+
+  const readImageUploadErrorText = async () => {
+    for (const selector of IMAGE_UPLOAD_ERROR_SELECTORS) {
+      const locator = page.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      if (!count) continue;
+
+      for (let index = 0; index < count; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+
+        const textContent = await candidate.innerText().catch(() => '');
+        const normalized = normalizeWhitespace(textContent).toLowerCase();
+        if (!normalized) continue;
+        if (!IMAGE_UPLOAD_ERROR_HINTS.some((hint) => normalized.includes(hint))) {
+          continue;
+        }
+
+        return normalizeWhitespace(textContent);
+      }
+    }
+
+    return null;
+  };
+
+  const countUploadedImagePreviews = async () => {
+    let count = 0;
+
+    for (const selector of UPLOADED_IMAGE_PREVIEW_SELECTORS) {
+      const locator = page.locator(selector);
+      const candidateCount = await locator.count().catch(() => 0);
+      if (!candidateCount) continue;
+
+      for (let index = 0; index < candidateCount; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+
+        const box = await candidate.boundingBox().catch(() => null);
+        if (!box || box.width < 24 || box.height < 24) continue;
+        count += 1;
+      }
+    }
+
+    return count;
+  };
+
+  let draftImageCleanupCompleteRecoveryUsed = false;
+
+  const readDraftImageCleanupState = async () => {
+    const currentUrl = page.url();
+    const [draftImageRemoveControls, uploadedImagePreviewCount] = await Promise.all([
+      countDraftImageRemoveControls().catch(() => 0),
+      countUploadedImagePreviews().catch(() => 0),
+    ]);
+
+    return {
+      currentUrl,
+      draftImageRemoveControls,
+      uploadedImagePreviewCount,
+      onHomepage: isTraderaHomepage(currentUrl),
+      onSellingRoute: isTraderaSellingRoute(currentUrl),
+    };
+  };
+
+  const readListingEditorState = async () => {
+    const [
+      titleInput,
+      descriptionInput,
+      priceInput,
+      publishButton,
+      categoryTrigger,
+      listingFormatTrigger,
+      autofillPending,
+    ] = await Promise.all([
+      firstVisible(TITLE_SELECTORS),
+      firstVisible(DESCRIPTION_SELECTORS),
+      firstVisible(PRICE_SELECTORS),
+      firstVisible(PUBLISH_SELECTORS),
+      findFieldTriggerByLabels(CATEGORY_FIELD_LABELS),
+      findFieldTriggerByLabels(LISTING_FORMAT_FIELD_LABELS),
+      firstVisible(AUTOFILL_PENDING_SELECTORS).then(Boolean).catch(() => false),
+    ]);
+
+    return {
+      ready: Boolean(
+        titleInput &&
+          descriptionInput &&
+          (priceInput || publishButton || categoryTrigger || listingFormatTrigger) &&
+          !autofillPending
+      ),
+      hasTitleInput: Boolean(titleInput),
+      hasDescriptionInput: Boolean(descriptionInput),
+      hasPriceInput: Boolean(priceInput),
+      hasPublishButton: Boolean(publishButton),
+      hasCategoryTrigger: Boolean(categoryTrigger),
+      hasListingFormatTrigger: Boolean(listingFormatTrigger),
+      autofillPending: Boolean(autofillPending),
+    };
+  };
+
+  const waitForImageUploadsToSettle = async (
+    imageInput,
+    expectedUploadCount = 1,
+    baselinePreviewCount = 0,
+    timeoutMs = 120_000
+  ) => {
+    const deadline = Date.now() + timeoutMs;
+    let lastObservedState = null;
+    while (Date.now() < deadline) {
+      const [selectedImageFileCount, draftImageRemoveControls, uploadedImagePreviewCount] = await Promise.all([
+        readSelectedImageFileCount(imageInput),
+        countDraftImageRemoveControls(),
+        countUploadedImagePreviews(),
+      ]);
+      const [imageUploadPromptVisible, imageUploadPending, imageUploadErrorText] = await Promise.all([
+        isImageUploadPromptVisible(),
+        isImageUploadPending(),
+        readImageUploadErrorText(),
+      ]);
+      if (imageUploadErrorText) {
+        lastObservedState = {
+          selectedImageFileCount,
+          draftImageRemoveControls,
+          uploadedImagePreviewCount,
+          baselinePreviewCount,
+          imageUploadPromptVisible,
+          imageUploadPending,
+          continueButtonVisible: false,
+          continueButtonDisabled: null,
+          imageUploadErrorText,
+        };
+        log?.('tradera.quicklist.image.upload_error', lastObservedState);
+        return lastObservedState;
+      }
+      const continueButton = await firstVisible(CONTINUE_SELECTORS);
+      let continueButtonDisabled = null;
+      if (continueButton) {
+        continueButtonDisabled = await continueButton.isDisabled().catch(async () => {
+          return continueButton
+            .evaluate((element) => {
+              return (
+                element.hasAttribute('disabled') ||
+                element.getAttribute('aria-disabled') === 'true'
+              );
+            })
+            .catch(() => true);
+        });
+        if (!continueButtonDisabled) {
+          if (!imageUploadPromptVisible && !imageUploadPending) {
+            log?.('tradera.quicklist.image.settle', {
+              method: 'continue-enabled',
+              selectedImageFileCount,
+              draftImageRemoveControls,
+              imageUploadPromptVisible,
+              imageUploadPending,
+            });
+            return true;
+          }
+        }
+      }
+
+      lastObservedState = {
+        selectedImageFileCount,
+        draftImageRemoveControls,
+        uploadedImagePreviewCount,
+        baselinePreviewCount,
+        imageUploadPromptVisible,
+        imageUploadPending,
+        continueButtonVisible: Boolean(continueButton),
+        continueButtonDisabled,
+        imageUploadErrorText: null,
+      };
+
+      if (
+        uploadedImagePreviewCount > baselinePreviewCount &&
+        !imageUploadPending &&
+        !imageUploadErrorText
+      ) {
+        log?.('tradera.quicklist.image.settle', {
+          method: 'image-preview-visible',
+          selectedImageFileCount,
+          draftImageRemoveControls,
+          uploadedImagePreviewCount,
+          baselinePreviewCount,
+          imageUploadPromptVisible,
+          imageUploadPending,
+        });
+        return lastObservedState;
+      }
+
+      if (
+        draftImageRemoveControls > 0 ||
+        selectedImageFileCount >= Math.max(1, expectedUploadCount)
+      ) {
+        const listingEditorState = await readListingEditorState();
+        const listingFormReady = listingEditorState.ready;
+        if (listingFormReady && !imageUploadPromptVisible && !imageUploadPending) {
+          log?.('tradera.quicklist.image.settle', {
+            method: 'editor-with-upload-state',
+            selectedImageFileCount,
+            draftImageRemoveControls,
+            imageUploadPromptVisible,
+            imageUploadPending,
+            listingEditorState,
+          });
+          return true;
+        }
+      }
+
+      if (draftImageRemoveControls > 0 && !imageUploadPromptVisible && !imageUploadPending) {
+        log?.('tradera.quicklist.image.settle', {
+          method: 'draft-image-controls',
+          selectedImageFileCount,
+          draftImageRemoveControls,
+          imageUploadPromptVisible,
+          imageUploadPending,
+        });
+        return true;
+      }
+
+      await wait(1000);
+    }
+
+    log?.('tradera.quicklist.image.settle_timeout', lastObservedState);
+    return lastObservedState;
+  };
+
+  const advancePastImagesStep = async (
+    imageInput,
+    expectedUploadCount = 1,
+    baselinePreviewCount = 0
+  ) => {
+    const waitForListingFormReady = async (timeoutMs = 20_000) => {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        const listingEditorState = await readListingEditorState();
+        if (listingEditorState.ready) {
+          log?.('tradera.quicklist.image.editor_ready', listingEditorState);
+          return true;
+        }
+
+        await wait(500);
+      }
+
+      return false;
+    };
+
+    const clickContinueButton = async (button) => {
+      await button.scrollIntoViewIfNeeded().catch(() => undefined);
+      let primaryClickFailed = false;
+      try {
+        await humanClick(button);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error || '');
+        if (message.includes('FAIL_SELL_PAGE_INVALID:')) {
+          throw error;
+        }
+        primaryClickFailed = true;
+      }
+      await wait(400);
+
+      const stillVisible = await button.isVisible().catch(() => false);
+      if (stillVisible) {
+        await button.evaluate((element) => {
+          element.click();
+        }).catch(() => undefined);
+      } else if (primaryClickFailed) {
+        return;
+      }
+    };
+
+    const imageSettleState = await waitForImageUploadsToSettle(
+      imageInput,
+      expectedUploadCount,
+      baselinePreviewCount
+    );
+    if (!imageSettleState || imageSettleState === false) {
+      throw new Error('FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish.');
+    }
+
+    const settleReady =
+      imageSettleState === true ||
+      (typeof imageSettleState === 'object' &&
+        imageSettleState !== null &&
+        !imageSettleState.imageUploadErrorText &&
+        imageSettleState.imageUploadPending === false &&
+        ((imageSettleState.uploadedImagePreviewCount ?? 0) > (imageSettleState.baselinePreviewCount ?? 0) ||
+          (imageSettleState.selectedImageFileCount >= Math.max(1, expectedUploadCount) &&
+            imageSettleState.imageUploadPromptVisible === false) ||
+          imageSettleState.draftImageRemoveControls > 0 ||
+          imageSettleState.continueButtonDisabled === false));
+
+    if (!settleReady) {
+      throw new Error(
+        'FAIL_IMAGE_SET_INVALID: Tradera image upload step did not finish. Last state: ' +
+          JSON.stringify(imageSettleState)
+      );
+    }
+
+    const actionableContinueButton = await firstVisible(CONTINUE_SELECTORS);
+    if (!actionableContinueButton) {
+      const formReadyWithoutContinue = await waitForListingFormReady(8_000);
+      if (formReadyWithoutContinue) {
+        return false;
+      }
+
+      throw new Error(
+        'FAIL_IMAGE_SET_INVALID: Tradera listing form did not appear after the image step.'
+      );
+    }
+
+    const disabled = await isControlDisabled(actionableContinueButton);
+
+    if (disabled) {
+      return false;
+    }
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await clickContinueButton(actionableContinueButton);
+
+      const formReady = await waitForListingFormReady(20_000);
+      if (formReady) {
+        return true;
+      }
+
+      const continueStillVisible = await actionableContinueButton.isVisible().catch(() => false);
+      const continueStillDisabled = continueStillVisible
+        ? await actionableContinueButton.isDisabled().catch(() => false)
+        : false;
+
+      if (!continueStillVisible || continueStillDisabled) {
+        break;
+      }
+    }
+
+    const finalEditorState = await readListingEditorState();
+
+    throw new Error(
+      'FAIL_IMAGE_SET_INVALID: Continue completed the image step but the listing editor never became ready. Editor state: ' +
+        JSON.stringify(finalEditorState)
+    );
+  };
+
+  const guessExtension = (url, contentType) => {
+    if (typeof contentType === 'string') {
+      if (contentType.includes('png')) return 'png';
+      if (contentType.includes('webp')) return 'webp';
+      if (contentType.includes('gif')) return 'gif';
+      if (contentType.includes('jpeg') || contentType.includes('jpg')) return 'jpg';
+    }
+    try {
+      const pathname = new URL(url).pathname;
+      const match = pathname.match(/\.([a-z0-9]{2,5})\$/i);
+      if (match && match[1]) return match[1].toLowerCase();
+    } catch {}
+    return 'jpg';
+  };
+
+  const downloadImages = async () => {
+    const downloaded = [];
+
+    for (let index = 0; index < imageUrls.length; index += 1) {
+      const sourceUrl = imageUrls[index];
+      if (!sourceUrl) continue;
+      const response = await page.context().request.get(sourceUrl).catch(() => null);
+      if (!response || !response.ok()) {
+        log?.('tradera.quicklist.image.download_failed', { index, sourceUrl, status: response?.status() ?? null });
+        continue;
+      }
+      const bytes = await response.body().catch(() => null);
+      if (!bytes) {
+        log?.('tradera.quicklist.image.download_failed', { index, sourceUrl, reason: 'empty_body' });
+        continue;
+      }
+      if (bytes.byteLength < 10_240) {
+        log?.('tradera.quicklist.image.download_skipped', { index, sourceUrl, reason: 'too_small', size: bytes.byteLength });
+        continue;
+      }
+      const contentType = response.headers()['content-type'] || '';
+      const extension = guessExtension(sourceUrl, contentType);
+      const filename =
+        String(baseProductId).replace(/[^a-zA-Z0-9_-]+/g, '-') +
+        '_' +
+        String(index + 1).padStart(2, '0') +
+        '.' +
+        extension;
+      downloaded.push({
+        name: filename,
+        mimeType: contentType || 'image/jpeg',
+        buffer: bytes,
+      });
+    }
+
+    if (!downloaded.length) {
+      throw new Error(
+        'FAIL_IMAGE_SET_INVALID: No usable product images were downloaded. Attempted ' +
+        imageUrls.length + ' URL(s): ' + imageUrls.slice(0, 3).join(', ') +
+        (imageUrls.length > 3 ? ' ...' : '')
+      );
+    }
+
+    return downloaded;
+  };
+
+  const isListingEditorReady = async () => {
+    const readyLocators = await Promise.all([
+      firstVisible(TITLE_SELECTORS),
+      firstVisible(DESCRIPTION_SELECTORS),
+      firstVisible(PRICE_SELECTORS),
+      firstVisible(PUBLISH_SELECTORS),
+    ]);
+
+    return readyLocators.some(Boolean);
+  };
+
+  const ensureImageStepSellPageReady = async (context) => {
+    if (await isCreateListingPage()) {
+      return true;
+    }
+
+    const stableEntryPoint = await confirmStableSellPage(1_000, 6_000);
+    if (stableEntryPoint === 'form') {
+      return true;
+    }
+
+    const currentUrl = page.url();
+    if (
+      context === 'draft image cleanup complete' &&
+      !draftImageCleanupCompleteRecoveryUsed &&
+      (stableEntryPoint === 'homepage' || stableEntryPoint === 'trigger')
+    ) {
+      draftImageCleanupCompleteRecoveryUsed = true;
+      const beforeRecoveryState = await readDraftImageCleanupState();
+      log?.('tradera.quicklist.sell_page.image_step_recover', {
+        context,
+        stableEntryPoint,
+        currentUrl,
+        ...beforeRecoveryState,
+      });
+
+      try {
+        await ensureCreateListingPageReady(context + ' recovery', true);
+      } catch (error) {
+        log?.('tradera.quicklist.sell_page.image_step_recover_result', {
+          context,
+          stableEntryPoint,
+          recovered: false,
+          currentUrl: page.url(),
+          error: error instanceof Error ? error.message : String(error),
+          ...(await readDraftImageCleanupState().catch(() => ({
+            currentUrl: page.url(),
+          }))),
+        });
+      }
+
+      if (await isCreateListingPage()) {
+        log?.('tradera.quicklist.sell_page.image_step_recover_result', {
+          context,
+          stableEntryPoint,
+          recovered: true,
+          currentUrl: page.url(),
+          ...(await readDraftImageCleanupState().catch(() => ({
+            currentUrl: page.url(),
+          }))),
+        });
+        return true;
+      }
+    }
+
+    if (
+      stableEntryPoint === 'homepage' ||
+      stableEntryPoint === 'trigger' ||
+      stableEntryPoint === null
+    ) {
+      log?.('tradera.quicklist.sell_page.image_step_invalid', {
+        context,
+        stableEntryPoint,
+        currentUrl,
+      });
+      await captureFailureArtifacts('listing-page-missing', {
+        context,
+        stableEntryPoint,
+        currentUrl,
+      }).catch(() => undefined);
+      throw new Error(
+        'FAIL_SELL_PAGE_INVALID: Tradera listing editor was lost during ' +
+          context +
+          '. Entry point: ' +
+          String(stableEntryPoint) +
+          '. Current URL: ' +
+          currentUrl
+      );
+    }
+
+    await ensureCreateListingPageReady(context);
+    return true;
+  };
+
+  const openImageUploadControlsIfPresent = async () => {
+    for (const selector of IMAGE_UPLOAD_TRIGGER_SELECTORS) {
+      const locator = page.locator(selector);
+      const count = await locator.count().catch(() => 0);
+      if (!count) continue;
+
+      for (let index = 0; index < count; index += 1) {
+        const candidate = locator.nth(index);
+        const visible = await candidate.isVisible().catch(() => false);
+        if (!visible) continue;
+
+        await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
+        const clicked = await tryHumanClick(candidate);
+        if (!clicked) {
+          continue;
+        }
+        await wait(800);
+        log?.('tradera.quicklist.image.trigger_opened', { selector });
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const ensureImageInputReady = async (attempts = 4) => {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      await ensureImageStepSellPageReady('image input resolution');
+      await assertAllowedTraderaPage('image input resolution');
+      const imageInput = await firstExisting(IMAGE_INPUT_SELECTORS);
+      if (imageInput) {
+        return imageInput;
+      }
+
+      const editorReady = await isListingEditorReady();
+      const triggerOpened = await openImageUploadControlsIfPresent();
+      log?.('tradera.quicklist.image_input.retry', {
+        attempt,
+        editorReady,
+        triggerOpened,
+        url: page.url(),
+      });
+
+      await wait(triggerOpened ? 1200 : editorReady ? 1500 : 1000);
+    }
+
+    return firstExisting(IMAGE_INPUT_SELECTORS);
+  };
+
+  const resolveUploadFiles = async () => {
+    if (localImagePaths.length) {
+      log?.('tradera.quicklist.image.local_paths', {
+        count: localImagePaths.length,
+        sample: localImagePaths.slice(0, 3),
+      });
+      return localImagePaths;
+    }
+
+    return downloadImages();
+  };
+
+  const clearDraftImagesIfPresent = async () => {
+    await ensureImageStepSellPageReady('draft image cleanup');
+    let removedCount = 0;
+
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      let removedInAttempt = false;
+
+      for (const selector of DRAFT_IMAGE_REMOVE_SELECTORS) {
+        const locator = page.locator(selector);
+        const count = await locator.count().catch(() => 0);
+        if (!count) continue;
+
+        for (let index = 0; index < count; index += 1) {
+          const candidate = locator.nth(index);
+          const visible = await candidate.isVisible().catch(() => false);
+          if (!visible) continue;
+          const safeDraftRemoveControl = await isSafeDraftImageRemoveControl(candidate);
+          if (!safeDraftRemoveControl) continue;
+          await logClickTarget('draft-image-remove', candidate);
+          await candidate.scrollIntoViewIfNeeded().catch(() => undefined);
+          const clicked = await tryHumanClick(candidate);
+          if (!clicked) {
+            continue;
+          }
+          const postClickUrl = page.url();
+          log?.('tradera.quicklist.draft_image_remove.clicked', {
+            attempt,
+            selector,
+            index,
+            postClickUrl,
+          });
+          if (isTraderaHomepage(postClickUrl) || !isTraderaSellingRoute(postClickUrl)) {
+            await captureFailureArtifacts('draft-image-remove-navigation', {
+              attempt,
+              selector,
+              index,
+              postClickUrl,
+            }).catch(() => undefined);
+            throw new Error(
+              'FAIL_SELL_PAGE_INVALID: Tradera draft image cleanup navigated away from the listing editor. Current URL: ' +
+                postClickUrl
+            );
+          }
+          removedCount += 1;
+          removedInAttempt = true;
+          await wait(500);
+          break;
+        }
+
+        if (removedInAttempt) {
+          break;
+        }
+      }
+
+      if (!removedInAttempt) {
+        break;
+      }
+    }
+
+    if (removedCount > 0) {
+      log?.('tradera.quicklist.draft.reset', { removedCount });
+      await wait(800);
+      log?.('tradera.quicklist.draft.reset_state', {
+        removedCount,
+        ...(await readDraftImageCleanupState().catch(() => ({
+          currentUrl: page.url(),
+        }))),
+      });
+    }
+
+    await ensureImageStepSellPageReady('draft image cleanup complete');
+
+    return removedCount;
+  };
+
+  const checkDuplicate = async (term) => {
+    if (!term) return false;
+    const activeContextReady = await ensureActiveListingsContext();
+    if (!activeContextReady) {
+      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings context could not be confirmed.');
+    }
+    const searchInput = await openActiveSearchInput();
+    if (!searchInput) {
+      throw new Error('FAIL_DUPLICATE_UNCERTAIN: Active listings search input not found.');
+    }
+
+    await humanFill(searchInput, term, { pauseAfter: false });
+    const searchTrigger = await triggerActiveSearchSubmit();
+    log?.('tradera.quicklist.duplicate.search', { term, searchTrigger });
+    await wait(1200);
+
+    const duplicateMatch = await findListingLinkForTerm(term);
+    log?.('tradera.quicklist.duplicate.result', {
+      term,
+      duplicateFound: Boolean(duplicateMatch),
+      listingUrl: duplicateMatch?.listingUrl || null,
+      listingId: duplicateMatch?.listingId || null,
+    });
+
+    return duplicateMatch
+      ? {
+          duplicateFound: true,
+          listingUrl: duplicateMatch.listingUrl,
+`;

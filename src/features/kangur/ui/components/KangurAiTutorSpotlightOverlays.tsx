@@ -1,35 +1,27 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
+import { useKangurAiTutorPortalContext } from './KangurAiTutorPortal.context';
 
-import type { TutorReducedMotionStableTransitions } from './KangurAiTutorWidget.shared';
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 
 const LIGHT_MODE_SELECTION_TEXT = 'rgb(120 53 15)';
 const LIGHT_MODE_SELECTION_FILL = 'rgba(245, 158, 11, 0.18)';
 const LIGHT_MODE_SELECTION_SHADOW = 'rgba(217, 119, 6, 0.14)';
 
-type Props = {
-  guidedMode: 'auth' | 'home_onboarding' | 'section' | 'selection' | null;
-  prefersReducedMotion: boolean;
-  reducedMotionTransitions: TutorReducedMotionStableTransitions;
-  sectionContextSpotlightStyle: CSSProperties | null;
-  sectionDropHighlightStyle: CSSProperties | null;
-  selectionGlowStyles: CSSProperties[];
-  selectionContextSpotlightStyle: CSSProperties | null;
-  selectionSpotlightStyle: CSSProperties | null;
-};
+export function KangurAiTutorSpotlightOverlays(): JSX.Element {
+  const { spotlights } = useKangurAiTutorPortalContext();
+  const {
+    guidedMode,
+    prefersReducedMotion,
+    reducedMotionTransitions,
+    sectionContextSpotlightStyle,
+    sectionDropHighlightStyle,
+    selectionGlowStyles = [],
+    selectionContextSpotlightStyle,
+    selectionSpotlightStyle,
+  } = spotlights;
 
-export function KangurAiTutorSpotlightOverlays({
-  guidedMode,
-  prefersReducedMotion,
-  reducedMotionTransitions,
-  sectionContextSpotlightStyle,
-  sectionDropHighlightStyle,
-  selectionGlowStyles = [],
-  selectionContextSpotlightStyle,
-  selectionSpotlightStyle,
-}: Props): JSX.Element {
   const { highlightedSection, hoveredSectionAnchorId, selectionContextSpotlightTick, viewportTick } =
     useKangurAiTutorWidgetStateContext();
   const guidedSelectionOverlay =

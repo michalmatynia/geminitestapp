@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import type {
   CaseResolverCaptureProposalState,
@@ -8,18 +8,13 @@ import type {
 } from '@/features/case-resolver/capture/public';
 import type { CaseResolverCaptureAction } from '@/features/case-resolver/capture/public';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import type {
-  CaseResolverGraph,
-  CaseResolverRelationGraph,
-  EditorDetailsTab,
-  CaseResolverFileEditDraft,
-  CaseResolverNodeMeta,
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverFile,
-  CaseMetadataDraft,
-  WorkspaceView as CaseResolverWorkspaceView,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverGraph, CaseResolverNodeMeta } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverRelationGraph } from '@/shared/contracts/case-resolver/relations';
+import type { EditorDetailsTab, CaseMetadataDraft, WorkspaceView as CaseResolverWorkspaceView } from '@/shared/contracts/case-resolver/base';
+import type { CaseResolverFileEditDraft, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { CaseResolverStateValue } from '../types';
 export type { EditorDetailsTab };
@@ -168,8 +163,27 @@ export type CaseResolverViewStateValue = Omit<
   CaseResolverViewActionKey
 >;
 
-const CaseResolverViewStateContext = createContext<CaseResolverViewStateValue | null>(null);
-const CaseResolverViewActionsContext = createContext<CaseResolverViewActionsValue | null>(null);
+const {
+  Context: CaseResolverViewStateContext,
+  useStrictContext: useCaseResolverViewStateContext,
+} = createStrictContext<CaseResolverViewStateValue>({
+  hookName: 'useCaseResolverViewStateContext',
+  providerName: 'CaseResolverViewProvider',
+  displayName: 'CaseResolverViewStateContext',
+  errorFactory: internalError,
+});
+
+const {
+  Context: CaseResolverViewActionsContext,
+  useStrictContext: useCaseResolverViewActionsContext,
+} = createStrictContext<CaseResolverViewActionsValue>({
+  hookName: 'useCaseResolverViewActionsContext',
+  providerName: 'CaseResolverViewProvider',
+  displayName: 'CaseResolverViewActionsContext',
+  errorFactory: internalError,
+});
+
+export { useCaseResolverViewActionsContext, useCaseResolverViewStateContext };
 
 export function CaseResolverViewProvider({
   value,
@@ -188,22 +202,4 @@ export function CaseResolverViewProvider({
       </CaseResolverViewActionsContext.Provider>
     </CaseResolverViewStateContext.Provider>
   );
-}
-
-export function useCaseResolverViewStateContext(): CaseResolverViewStateValue {
-  const context = useContext(CaseResolverViewStateContext);
-  if (!context) {
-    throw internalError('useCaseResolverViewStateContext must be used within CaseResolverViewProvider');
-  }
-  return context;
-}
-
-export function useCaseResolverViewActionsContext(): CaseResolverViewActionsValue {
-  const context = useContext(CaseResolverViewActionsContext);
-  if (!context) {
-    throw internalError(
-      'useCaseResolverViewActionsContext must be used within CaseResolverViewProvider'
-    );
-  }
-  return context;
 }

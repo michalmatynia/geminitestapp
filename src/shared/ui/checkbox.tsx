@@ -4,8 +4,9 @@ import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Check } from 'lucide-react';
 import * as React from 'react';
 
-import type { DataAttributes } from '@/shared/contracts/ui';
-import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
+import type { DataAttributes } from '@/shared/contracts/ui/base';
+import { cn } from '@/shared/utils/ui-utils';
+import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 
 const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,

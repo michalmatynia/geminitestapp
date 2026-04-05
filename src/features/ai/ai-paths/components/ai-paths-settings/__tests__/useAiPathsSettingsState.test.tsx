@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockState = vi.hoisted(() => ({
   toast: vi.fn(),
@@ -229,6 +229,7 @@ const mockState = vi.hoisted(() => ({
   pathActionArgs: [] as Array<Record<string, unknown>>,
   canvasArgs: [] as Array<Record<string, unknown>>,
   runHistoryCalls: [] as Array<Record<string, unknown>>,
+  paletteHookArgs: [] as Array<Record<string, unknown> | undefined>,
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
@@ -292,7 +293,10 @@ vi.mock('../hooks/useAiPathsRuntimeManagement', () => ({
 }));
 
 vi.mock('../hooks/usePaletteWithTriggerButtons', () => ({
-  usePaletteWithTriggerButtons: () => [{ id: 'palette-trigger' }],
+  usePaletteWithTriggerButtons: (args?: Record<string, unknown>) => {
+    mockState.paletteHookArgs.push(args);
+    return [{ id: 'palette-trigger' }];
+  },
 }));
 
 vi.mock('../hooks/useAiPathsSettingsDerivedState', () => ({
@@ -361,6 +365,7 @@ import { useAiPathsSettingsState } from '../useAiPathsSettingsState';
 
 describe('useAiPathsSettingsState', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     mockState.toast.mockReset();
     mockState.confirm.mockReset();
     mockState.confirmNodeSwitch.mockReset().mockResolvedValue(true);
@@ -394,6 +399,12 @@ describe('useAiPathsSettingsState', () => {
     mockState.pathActionArgs.length = 0;
     mockState.canvasArgs.length = 0;
     mockState.runHistoryCalls.length = 0;
+    mockState.paletteHookArgs.length = 0;
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   it('orchestrates hook dependencies, registers handlers, and exposes the composed state', async () => {
@@ -428,9 +439,12 @@ describe('useAiPathsSettingsState', () => {
     expect(mockState.runHistoryCalls).toEqual([
       {
         activePathId: 'path-1',
+        enabled: true,
         toast: mockState.toast,
       },
     ]);
+    expect(mockState.paletteHookArgs[0]).toEqual({ enabled: false });
+    expect(mockState.canvasArgs[0]?.enabled).toBe(true);
     expect(mockState.canvasArgs[0]?.clearRuntimeInputsForEdges).toBe(
       mockState.runtimeMgmt.pruneRuntimeInputs
     );
@@ -440,6 +454,12 @@ describe('useAiPathsSettingsState', () => {
     );
     expect(mockState.persistenceArgs[0]?.normalizeTriggerLabel()).toBe('Fallback Trigger');
     expect(mockState.pathActionArgs[0]?.normalizeTriggerLabel('Another Trigger')).toBe('Another Trigger');
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(mockState.paletteHookArgs.at(-1)).toEqual({ enabled: true });
 
     await act(async () => {
       await mockState.canvasArgs[0]?.confirmNodeSwitch?.('node-9');
@@ -530,6 +550,12 @@ describe('useAiPathsSettingsState', () => {
     expect(mockState.pathActionArgs.at(-1)?.normalizeTriggerLabel('Already Normalized')).toBe(
       'Already Normalized'
     );
+    expect(mockState.runHistoryCalls.at(-1)).toEqual({
+      activePathId: 'path-2',
+      enabled: false,
+      toast: mockState.toast,
+    });
+    expect(mockState.canvasArgs.at(-1)?.enabled).toBe(false);
     expect(setOperationHandlers).toHaveBeenCalledWith({
       savePathConfig: mockState.persistence.handleSave,
       persistPathSettings: mockState.persistence.persistPathSettings,

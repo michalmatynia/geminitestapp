@@ -94,12 +94,62 @@ vi.mock('@/features/kangur/ui/context/KangurAiTutorContentContext', () => ({
   useKangurAiTutorContent: () => DEFAULT_KANGUR_AI_TUTOR_CONTENT,
 }));
 
-vi.mock('./KangurAiTutorWidget.state', () => ({
+vi.mock('./ai-tutor-widget/KangurAiTutorWidget.state', () => ({
   useKangurAiTutorWidgetStateContext: () => widgetStateContextMock,
 }));
 
 vi.mock('./KangurAiTutorPanelBody.context', () => ({
   useKangurAiTutorPanelBodyContext: () => panelBodyContextMock,
+}));
+
+const guidedCalloutStateMock = {
+  avatarPlacement: 'independent',
+  calloutKey: 'home_onboarding_1',
+  calloutTestId: 'kangur-ai-tutor-guided-callout',
+  detail: 'Poznaj mobilny tryb Kangura',
+  entryDirection: 'bottom',
+  headerLabel: 'Tryb mobilny',
+  mode: 'home_onboarding',
+  placement: 'bottom-center',
+  prefersReducedMotion: false,
+  reducedMotionTransitions: {
+    instant: { duration: 0 },
+    stableState: { opacity: 1, scale: 1, y: 0 },
+  },
+  sectionGuidanceLabel: 'Sekcja',
+  sectionResponsePendingKind: null,
+  shouldRender: true,
+  showSectionGuidanceCallout: false,
+  showSelectionGuidanceCallout: false,
+  stepLabel: 'Krok 1 z 3',
+  style: { left: 0, top: 0 },
+  title: 'Zaczynamy',
+  transitionDuration: 0.3,
+  onBackdropClose: vi.fn(),
+  onClose: vi.fn(),
+  onDetachPanelFromContext: vi.fn(),
+  onDisableTutor: vi.fn(),
+  onHeaderPointerCancel: vi.fn(),
+  onHeaderPointerDown: vi.fn(),
+  onHeaderPointerMove: vi.fn(),
+  onHeaderPointerUp: vi.fn(),
+  onMovePanelToContext: vi.fn(),
+  onResetPanelPosition: vi.fn(),
+} as any;
+
+vi.mock('@/features/kangur/ui/components/KangurAiTutorPortal.context', () => ({
+  useKangurAiTutorPortalState: () => ({
+    portalMode: 'overlay',
+    shouldShowContextualSpotlightLayer: false,
+    focusedSpotlightArea: null,
+    guidedCallout: guidedCalloutStateMock,
+  }),
+  useKangurAiTutorPortalContext: () => ({
+    portalMode: 'overlay',
+    shouldShowContextualSpotlightLayer: false,
+    focusedSpotlightArea: null,
+    guidedCallout: guidedCalloutStateMock,
+  }),
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
@@ -176,34 +226,9 @@ describe('KangurAiTutorGuidedCallout', () => {
   });
 
   it('renders the mobile home onboarding sheet without hitting a temporal dead zone error', () => {
+    guidedCalloutStateMock.stepLabel = 'Krok 2 z 3';
     render(
-      <KangurAiTutorGuidedCallout
-        avatarPlacement='bottom'
-        calloutKey='home-onboarding'
-        calloutTestId='kangur-ai-tutor-guided-callout'
-        detail='Dowiedz się, jak korzystać z tutora na telefonie.'
-        entryDirection='right'
-        headerLabel='Asystent'
-        mode='home_onboarding'
-        onAction={vi.fn()}
-        placement='bottom'
-        prefersReducedMotion
-        reducedMotionTransitions={{
-          instant: { duration: 0 },
-          stableState: { opacity: 1, scale: 1, y: 0 },
-        }}
-        sectionGuidanceLabel={null}
-        sectionResponsePendingKind={null}
-        selectionPreview={null}
-        shouldRender
-        showSectionGuidanceCallout={false}
-        showSelectionGuidanceCallout={false}
-        stepLabel='Krok 2 z 3'
-        style={{ bottom: 8, left: 16, position: 'fixed', width: 288 }}
-        title='Poznaj mobilny tryb Kangura'
-        transitionDuration={0}
-        transitionEase={[0.22, 1, 0.36, 1]}
-      />
+      <KangurAiTutorGuidedCallout />
     );
 
     expect(screen.getByTestId('kangur-ai-tutor-guided-callout')).toHaveTextContent(
@@ -288,35 +313,25 @@ describe('KangurAiTutorGuidedCallout', () => {
       },
     ];
 
-    render(
-      <KangurAiTutorGuidedCallout
-        avatarPlacement='left'
-        calloutKey='selection'
-        calloutTestId='kangur-ai-tutor-selection-guided-callout'
-        detail={null}
-        entryDirection='left'
-        headerLabel='Janek'
-        mode='selection'
-        onAction={vi.fn()}
-        placement='right'
-        prefersReducedMotion
-        reducedMotionTransitions={{
-          instant: { duration: 0 },
-          stableState: { opacity: 1, scale: 1, y: 0 },
-        }}
-        sectionGuidanceLabel={null}
-        sectionResponsePendingKind={null}
-        selectionPreview='🏗️ MISTRZOSTWO 67% 2/4 odznak'
-        shouldRender
-        showSectionGuidanceCallout={false}
-        showSelectionGuidanceCallout
-        stepLabel={null}
-        style={{ left: 16, position: 'fixed', top: 24, width: 320 }}
-        title='Wyjaśniam ten fragment.'
-        transitionDuration={0}
-        transitionEase={[0.22, 1, 0.36, 1]}
-      />
-    );
+    guidedCalloutStateMock.avatarPlacement = 'left';
+    guidedCalloutStateMock.calloutKey = 'selection';
+    guidedCalloutStateMock.calloutTestId = 'kangur-ai-tutor-selection-guided-callout';
+    guidedCalloutStateMock.detail = null;
+    guidedCalloutStateMock.entryDirection = 'left';
+    guidedCalloutStateMock.headerLabel = 'Janek';
+    guidedCalloutStateMock.mode = 'selection';
+    guidedCalloutStateMock.placement = 'right';
+    guidedCalloutStateMock.sectionGuidanceLabel = null;
+    guidedCalloutStateMock.sectionResponsePendingKind = null;
+    guidedCalloutStateMock.selectionPreview = '🏗️ MISTRZOSTWO 67% 2/4 odznak';
+    guidedCalloutStateMock.showSectionGuidanceCallout = false;
+    guidedCalloutStateMock.showSelectionGuidanceCallout = true;
+    guidedCalloutStateMock.stepLabel = null;
+    guidedCalloutStateMock.style = { left: 16, position: 'fixed', top: 24, width: 320 };
+    guidedCalloutStateMock.title = 'Wyjaśniam ten fragment.';
+    guidedCalloutStateMock.transitionDuration = 0;
+
+    render(<KangurAiTutorGuidedCallout />);
 
     expect(screen.getByText('Wyjaśniam ten fragment.')).toHaveClass('sr-only');
     expect(
@@ -416,34 +431,26 @@ describe('KangurAiTutorGuidedCallout', () => {
       },
     ];
 
+    guidedCalloutStateMock.avatarPlacement = 'left';
+    guidedCalloutStateMock.calloutKey = 'selection-test';
+    guidedCalloutStateMock.calloutTestId = 'kangur-ai-tutor-selection-guided-callout';
+    guidedCalloutStateMock.detail = null;
+    guidedCalloutStateMock.entryDirection = 'left';
+    guidedCalloutStateMock.headerLabel = 'Janek';
+    guidedCalloutStateMock.mode = 'selection';
+    guidedCalloutStateMock.placement = 'right';
+    guidedCalloutStateMock.sectionGuidanceLabel = null;
+    guidedCalloutStateMock.sectionResponsePendingKind = null;
+    guidedCalloutStateMock.selectionPreview = 'Który kwadrat został rozcięty wzdłuż pogrubionych linii?';
+    guidedCalloutStateMock.showSectionGuidanceCallout = false;
+    guidedCalloutStateMock.showSelectionGuidanceCallout = true;
+    guidedCalloutStateMock.stepLabel = null;
+    guidedCalloutStateMock.style = { left: 16, position: 'fixed', top: 24, width: 320 };
+    guidedCalloutStateMock.title = 'Wyjaśniam ten fragment.';
+    guidedCalloutStateMock.transitionDuration = 0;
+
     render(
-      <KangurAiTutorGuidedCallout
-        avatarPlacement='left'
-        calloutKey='selection-test'
-        calloutTestId='kangur-ai-tutor-selection-guided-callout'
-        detail={null}
-        entryDirection='left'
-        headerLabel='Janek'
-        mode='selection'
-        onAction={vi.fn()}
-        placement='right'
-        prefersReducedMotion
-        reducedMotionTransitions={{
-          instant: { duration: 0 },
-          stableState: { opacity: 1, scale: 1, y: 0 },
-        }}
-        sectionGuidanceLabel={null}
-        sectionResponsePendingKind={null}
-        selectionPreview='Który kwadrat został rozcięty wzdłuż pogrubionych linii?'
-        shouldRender
-        showSectionGuidanceCallout={false}
-        showSelectionGuidanceCallout
-        stepLabel={null}
-        style={{ left: 16, position: 'fixed', top: 24, width: 320 }}
-        title='Wyjaśniam ten fragment.'
-        transitionDuration={0}
-        transitionEase={[0.22, 1, 0.36, 1]}
-      />
+      <KangurAiTutorGuidedCallout />
     );
 
     expect(
@@ -520,34 +527,26 @@ describe('KangurAiTutorGuidedCallout', () => {
     };
     panelBodyContextMock.sessionSurface = 'game';
 
+    guidedCalloutStateMock.avatarPlacement = 'left';
+    guidedCalloutStateMock.calloutKey = 'selection-pending';
+    guidedCalloutStateMock.calloutTestId = 'kangur-ai-tutor-selection-guided-callout';
+    guidedCalloutStateMock.detail = null;
+    guidedCalloutStateMock.entryDirection = 'left';
+    guidedCalloutStateMock.headerLabel = 'Janek';
+    guidedCalloutStateMock.mode = 'selection';
+    guidedCalloutStateMock.placement = 'right';
+    guidedCalloutStateMock.sectionGuidanceLabel = null;
+    guidedCalloutStateMock.sectionResponsePendingKind = null;
+    guidedCalloutStateMock.selectionPreview = '🏗️ MISTRZOSTWO 67% 2/4 odznak';
+    guidedCalloutStateMock.showSectionGuidanceCallout = false;
+    guidedCalloutStateMock.showSelectionGuidanceCallout = true;
+    guidedCalloutStateMock.stepLabel = null;
+    guidedCalloutStateMock.style = { left: 16, position: 'fixed', top: 24, width: 320 };
+    guidedCalloutStateMock.title = 'Wyjaśniam ten fragment.';
+    guidedCalloutStateMock.transitionDuration = 0;
+
     render(
-      <KangurAiTutorGuidedCallout
-        avatarPlacement='left'
-        calloutKey='selection-pending'
-        calloutTestId='kangur-ai-tutor-selection-guided-callout'
-        detail={null}
-        entryDirection='left'
-        headerLabel='Janek'
-        mode='selection'
-        onAction={vi.fn()}
-        placement='right'
-        prefersReducedMotion
-        reducedMotionTransitions={{
-          instant: { duration: 0 },
-          stableState: { opacity: 1, scale: 1, y: 0 },
-        }}
-        sectionGuidanceLabel={null}
-        sectionResponsePendingKind={null}
-        selectionPreview='🏗️ MISTRZOSTWO 67% 2/4 odznak'
-        shouldRender
-        showSectionGuidanceCallout={false}
-        showSelectionGuidanceCallout
-        stepLabel={null}
-        style={{ left: 16, position: 'fixed', top: 24, width: 320 }}
-        title='Wyjaśniam ten fragment.'
-        transitionDuration={0}
-        transitionEase={[0.22, 1, 0.36, 1]}
-      />
+      <KangurAiTutorGuidedCallout />
     );
 
     expect(screen.getByTestId('kangur-ai-tutor-selection-guided-source')).toHaveTextContent(
@@ -638,34 +637,26 @@ describe('KangurAiTutorGuidedCallout', () => {
       },
     ];
 
+    guidedCalloutStateMock.avatarPlacement = 'left';
+    guidedCalloutStateMock.calloutKey = 'selection-en';
+    guidedCalloutStateMock.calloutTestId = 'kangur-ai-tutor-selection-guided-callout';
+    guidedCalloutStateMock.detail = null;
+    guidedCalloutStateMock.entryDirection = 'left';
+    guidedCalloutStateMock.headerLabel = 'Jamie';
+    guidedCalloutStateMock.mode = 'selection';
+    guidedCalloutStateMock.placement = 'right';
+    guidedCalloutStateMock.sectionGuidanceLabel = null;
+    guidedCalloutStateMock.sectionResponsePendingKind = null;
+    guidedCalloutStateMock.selectionPreview = 'Mastery 67%';
+    guidedCalloutStateMock.showSectionGuidanceCallout = false;
+    guidedCalloutStateMock.showSelectionGuidanceCallout = true;
+    guidedCalloutStateMock.stepLabel = null;
+    guidedCalloutStateMock.style = { left: 16, position: 'fixed', top: 24, width: 320 };
+    guidedCalloutStateMock.title = 'I am explaining this fragment.';
+    guidedCalloutStateMock.transitionDuration = 0;
+
     render(
-      <KangurAiTutorGuidedCallout
-        avatarPlacement='left'
-        calloutKey='selection-en'
-        calloutTestId='kangur-ai-tutor-selection-guided-callout'
-        detail={null}
-        entryDirection='left'
-        headerLabel='Jamie'
-        mode='selection'
-        onAction={vi.fn()}
-        placement='right'
-        prefersReducedMotion
-        reducedMotionTransitions={{
-          instant: { duration: 0 },
-          stableState: { opacity: 1, scale: 1, y: 0 },
-        }}
-        sectionGuidanceLabel={null}
-        sectionResponsePendingKind={null}
-        selectionPreview='Mastery 67%'
-        shouldRender
-        showSectionGuidanceCallout={false}
-        showSelectionGuidanceCallout
-        stepLabel={null}
-        style={{ left: 16, position: 'fixed', top: 24, width: 320 }}
-        title='I am explaining this fragment.'
-        transitionDuration={0}
-        transitionEase={[0.22, 1, 0.36, 1]}
-      />
+      <KangurAiTutorGuidedCallout />
     );
 
     expect(

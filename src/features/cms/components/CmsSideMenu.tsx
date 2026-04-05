@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { useCmsEditor } from '@/features/cms/components/CmsEditorContext';
 import type { Page } from '@/shared/contracts/cms';
-import { Button, SectionHeader, SidePanel } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SectionHeader, SidePanel } from '@/shared/ui/navigation-and-layout.public';
 
 import RichTextBlock, { type RichTextContent } from './RichTextBlock';
 

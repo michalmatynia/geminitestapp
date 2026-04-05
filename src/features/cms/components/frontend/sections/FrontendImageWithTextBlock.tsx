@@ -1,10 +1,8 @@
-'use client';
-
 import { Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 
 import type { BlockInstance } from '@/features/cms/types/page-builder';
-import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui';
+import { UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';

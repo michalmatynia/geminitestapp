@@ -4,7 +4,7 @@ import {
   chatbotContextUploadResponseSchema,
   type ChatbotContextUploadResponse,
 } from '@/shared/contracts/chatbot';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

@@ -1,7 +1,9 @@
 import React from 'react';
 
-import { Checkbox, Hint, Label, insetPanelVariants } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Checkbox, Label } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 type SelectionChecklistItem = {
   id: string;

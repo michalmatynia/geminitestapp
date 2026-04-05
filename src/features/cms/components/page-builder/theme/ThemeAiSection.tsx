@@ -3,7 +3,8 @@
 import React from 'react';
 
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
-import { Button, Label, Textarea, Input, Hint } from '@/shared/ui';
+import { Button, Label, Textarea, Input } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { useThemeColorsActions, useThemeColorsState } from './ThemeColorsContext';
 

@@ -525,31 +525,27 @@ const useKangurUnifiedLessonBaseProps = <SectionId extends string>(
   const resolvedLessonKey = panelProps?.lessonKey ?? lessonId;
   const resolvedSectionLabels = useMemo(
     () =>
-      panelProps
-        ? panelProps.sectionLabels ?? buildLessonSectionLabels(sections)
-        : undefined,
+      panelProps ? panelProps.sectionLabels ?? buildLessonSectionLabels(sections) : undefined,
     [panelProps, sections]
   );
   const {
     sectionProgress: subsectionProgress,
     markSectionOpened: markSubsectionOpened,
     markSectionViewedCount: markSubsectionViewedCount,
-  } =
-    useKangurLessonSubsectionProgress<SectionId>({
-      lessonId,
-      sections,
-    });
+  } = useKangurLessonSubsectionProgress<SectionId>({
+    lessonId,
+    sections,
+  });
   const {
     sectionProgress: panelProgress,
     markSectionOpened: markPanelOpened,
     markSectionViewedCount: markPanelViewedCount,
     recordPanelTime: recordTrackedPanelTime,
-  } =
-    useKangurLessonPanelProgress<SectionId>({
-      lessonKey: resolvedLessonKey,
-      slideSections: slides,
-      sectionLabels: resolvedSectionLabels,
-    });
+  } = useKangurLessonPanelProgress<SectionId>({
+    lessonKey: resolvedLessonKey,
+    slideSections: slides,
+    sectionLabels: resolvedSectionLabels,
+  });
 
   const { recordComplete, recordPanelTime } = useLessonTimeTracking({
     lessonId: resolvedLessonKey,
@@ -577,11 +573,7 @@ const useKangurUnifiedLessonBaseProps = <SectionId extends string>(
     };
   }
 
-  const {
-    progressMode: _progressMode,
-    scorePercent: _scorePercent,
-    ...baseProps
-  } = props;
+  const { progressMode: _progressMode, scorePercent: _scorePercent, ...baseProps } = props;
 
   return {
     ...baseProps,

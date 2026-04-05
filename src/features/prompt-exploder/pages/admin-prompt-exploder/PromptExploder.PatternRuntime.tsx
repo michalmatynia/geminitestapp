@@ -5,19 +5,10 @@ import React from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { getPromptValidationObservabilitySnapshot } from '@/shared/lib/prompt-core/runtime-observability';
 import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
-import {
-  Badge,
-  Button,
-  Card,
-  CompactEmptyState,
-  FormSection,
-  Hint,
-  Input,
-  Label,
-  SelectSimple,
-  StatusToggle,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Button, Card, Input, Label } from '@/shared/ui/primitives.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection, Hint, SelectSimple, StatusToggle } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useBenchmarkState } from '../../context/BenchmarkContext';
 import { useDocumentState } from '../../context/DocumentContext';

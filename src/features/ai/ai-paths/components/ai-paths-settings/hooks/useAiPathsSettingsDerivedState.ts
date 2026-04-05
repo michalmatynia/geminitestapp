@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 
 import type { AiNode, PathConfig, PathMeta } from '@/shared/lib/ai-paths';

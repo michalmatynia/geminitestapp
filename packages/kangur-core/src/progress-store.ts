@@ -1,8 +1,5 @@
-import {
-  createDefaultKangurProgressState,
-  normalizeKangurProgressState,
-  type KangurProgressState,
-} from '@kangur/contracts';
+import { createDefaultKangurProgressState, normalizeKangurProgressState } from '@kangur/contracts/kangur';
+import { type KangurProgressState } from '@kangur/contracts/kangur';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
 
 const cloneProgress = (progress: KangurProgressState): KangurProgressState => ({

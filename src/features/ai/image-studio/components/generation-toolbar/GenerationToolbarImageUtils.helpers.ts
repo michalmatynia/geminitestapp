@@ -65,21 +65,26 @@ const normalizeLocalImageSource = (value: string | null | undefined): string | n
   return normalizedPath ? `/${normalizedPath}` : null;
 };
 
+const CLIENT_PROCESSING_IMAGE_SOURCE_READERS = [
+  (slot: ImageStudioSlotRecord | null | undefined) => slot?.imageBase64 ?? null,
+  (slot: ImageStudioSlotRecord | null | undefined) => slot?.imageFile?.filepath ?? null,
+  (slot: ImageStudioSlotRecord | null | undefined) => slot?.imageUrl ?? null,
+] as const;
+
+const resolveFirstClientProcessingImageSource = (
+  slot: ImageStudioSlotRecord | null | undefined
+): string | null => {
+  for (const readSource of CLIENT_PROCESSING_IMAGE_SOURCE_READERS) {
+    const normalized = normalizeLocalImageSource(readSource(slot));
+    if (normalized) return normalized;
+  }
+  return null;
+};
+
 export const resolveClientProcessingImageSrc = (
   slot: ImageStudioSlotRecord | null | undefined,
   fallbackSrc: string | null
-): string | null => {
-  const inlineBase64 = normalizeLocalImageSource(slot?.imageBase64 ?? null);
-  if (inlineBase64) return inlineBase64;
-
-  const localFilepath = normalizeLocalImageSource(slot?.imageFile?.filepath ?? null);
-  if (localFilepath) return localFilepath;
-
-  const localUrl = normalizeLocalImageSource(slot?.imageUrl ?? null);
-  if (localUrl) return localUrl;
-
-  return fallbackSrc;
-};
+): string | null => resolveFirstClientProcessingImageSource(slot) ?? fallbackSrc;
 
 export const loadImageElement = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {

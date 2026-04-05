@@ -12,17 +12,13 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import type { CaseResolverCategory } from '@/shared/contracts/case-resolver';
+import type { CaseResolverCategory } from '@/shared/contracts/case-resolver/relations';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  AdminCaseResolverPageLayout,
-  Button,
-  EmptyState,
-  FormSection,
-  Skeleton,
-  useToast,
-} from '@/shared/ui';
+import { AdminCaseResolverPageLayout } from '@/shared/ui/admin.public';
+import { Button, Skeleton, useToast } from '@/shared/ui/primitives.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';

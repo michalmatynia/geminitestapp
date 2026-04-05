@@ -8,7 +8,7 @@ import type {
   ChatbotSessionListItem,
   ChatbotSessionsData as UseChatbotSessionManagerReturn,
 } from '@/shared/contracts/chatbot';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { useCreateChatbotSession, useDeleteChatbotSession } from './useChatbotMutations';

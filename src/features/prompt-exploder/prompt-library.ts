@@ -7,6 +7,10 @@ import type {
 import { promptExploderDocumentSchema } from '@/shared/contracts/prompt-exploder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { promptLibraryItemBaseSchema } from '@/shared/contracts/prompts';
+import {
+  resolvePromptExploderLibraryItemIdentity,
+  resolvePromptExploderLibraryItemName,
+} from './prompt-library.helpers';
 
 
 export const PROMPT_EXPLODER_LIBRARY_KEY = 'image_studio_prompt_exploder_library';
@@ -75,6 +79,17 @@ export const clonePromptExploderDocument = (
   }
 };
 
+const buildPromptExploderLibraryDocumentSnapshot = (args: {
+  documentState: PromptExploderDocument | null;
+  prompt: string;
+}): PromptExploderDocument | null =>
+  args.documentState
+    ? clonePromptExploderDocument({
+        ...args.documentState,
+        sourcePrompt: args.prompt,
+      })
+    : null;
+
 export const buildPromptExploderLibraryItem = (args: {
   prompt: string;
   libraryNameDraft: string;
@@ -84,25 +99,27 @@ export const buildPromptExploderLibraryItem = (args: {
   createItemId?: () => string;
 }): PromptExploderLibraryItem => {
   const createItemId = args.createItemId ?? createPromptExploderLibraryItemId;
-  const itemId = args.existingItem?.id ?? createItemId();
-  const itemName =
-    args.libraryNameDraft.trim() ||
-    args.existingItem?.name ||
-    derivePromptExploderLibraryItemName(args.prompt);
-  const documentSnapshot = args.documentState
-    ? clonePromptExploderDocument({
-      ...args.documentState,
-      sourcePrompt: args.prompt,
-    })
-    : null;
+  const itemIdentity = resolvePromptExploderLibraryItemIdentity({
+    existingItem: args.existingItem,
+    now: args.now,
+    createItemId,
+  });
+  const itemName = resolvePromptExploderLibraryItemName({
+    prompt: args.prompt,
+    libraryNameDraft: args.libraryNameDraft,
+    existingItem: args.existingItem,
+    deriveName: derivePromptExploderLibraryItemName,
+  });
+  const documentSnapshot = buildPromptExploderLibraryDocumentSnapshot({
+    documentState: args.documentState,
+    prompt: args.prompt,
+  });
 
   return {
-    id: itemId,
+    ...itemIdentity,
     name: itemName,
     prompt: args.prompt,
     document: documentSnapshot,
-    createdAt: args.existingItem?.createdAt ?? args.now,
-    updatedAt: args.now,
   };
 };
 

@@ -1,6 +1,8 @@
 import React from 'react';
 
-import { Button, InsetPanel, SelectSimple, Tooltip } from '@/shared/ui';
+import { Button, Tooltip } from '@/shared/ui/primitives.public';
+import { InsetPanel } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useGenerationToolbarContext, type CropMode } from './GenerationToolbarContext';
 import { useGenerationToolbarCropSectionRuntime } from './GenerationToolbarSectionContexts';

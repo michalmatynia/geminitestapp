@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getProducerRepository } from '@/features/products/server';
-import { createProducerSchema } from '@/shared/contracts/products';
+import { createProducerSchema } from '@/shared/contracts/products/producers';
 export { createProducerSchema as producerCreateSchema };
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError } from '@/shared/errors/app-error';
 
 /**

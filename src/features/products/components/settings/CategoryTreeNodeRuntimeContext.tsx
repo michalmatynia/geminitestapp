@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
-import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
+import type { ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
 import { internalError } from '@/shared/errors/app-error';
-import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
 
 export type CategoryTreeNodeRuntimeContextValue = {
   categoryById: Map<string, ProductCategoryWithChildren>;
@@ -15,9 +16,15 @@ export type CategoryTreeNodeRuntimeContextValue = {
   onDeleteCategory: (category: ProductCategoryWithChildren) => void;
 };
 
-const CategoryTreeNodeRuntimeContext = createContext<CategoryTreeNodeRuntimeContextValue | null>(
-  null
-);
+const {
+  Context: CategoryTreeNodeRuntimeContext,
+  useStrictContext: useCategoryTreeNodeRuntimeContext,
+} = createStrictContext<CategoryTreeNodeRuntimeContextValue>({
+  hookName: 'useCategoryTreeNodeRuntimeContext',
+  providerName: 'CategoryTreeNodeRuntimeProvider',
+  displayName: 'CategoryTreeNodeRuntimeContext',
+  errorFactory: internalError,
+});
 
 export function CategoryTreeNodeRuntimeProvider({
   value,
@@ -33,12 +40,4 @@ export function CategoryTreeNodeRuntimeProvider({
   );
 }
 
-export function useCategoryTreeNodeRuntimeContext(): CategoryTreeNodeRuntimeContextValue {
-  const context = useContext(CategoryTreeNodeRuntimeContext);
-  if (!context) {
-    throw internalError(
-      'useCategoryTreeNodeRuntimeContext must be used within CategoryTreeNodeRuntimeProvider'
-    );
-  }
-  return context;
-}
+export { useCategoryTreeNodeRuntimeContext };

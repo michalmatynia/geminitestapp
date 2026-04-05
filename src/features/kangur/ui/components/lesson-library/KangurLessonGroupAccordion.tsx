@@ -1,5 +1,3 @@
-'use client';
-
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
   KangurResolvedLessonGroupAccordion,

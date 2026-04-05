@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { VariantTooltipState } from './VariantTooltipPortal';
 
@@ -34,8 +35,20 @@ export interface CenterPreviewActionsContextValue {
 
 type CenterPreviewCombinedContextValue = CenterPreviewContextValue & CenterPreviewActionsContextValue;
 
-const CenterPreviewStateContext = createContext<CenterPreviewContextValue | null>(null);
-const CenterPreviewActionsContext = createContext<CenterPreviewActionsContextValue | null>(null);
+const { Context: CenterPreviewStateContext, useStrictContext: useCenterPreviewState } =
+  createStrictContext<CenterPreviewContextValue>({
+    hookName: 'useCenterPreviewState',
+    providerName: 'a CenterPreviewProvider',
+    displayName: 'CenterPreviewStateContext',
+    errorFactory: internalError,
+  });
+const { Context: CenterPreviewActionsContext, useStrictContext: useCenterPreviewActions } =
+  createStrictContext<CenterPreviewActionsContextValue>({
+    hookName: 'useCenterPreviewActions',
+    providerName: 'a CenterPreviewProvider',
+    displayName: 'CenterPreviewActionsContext',
+    errorFactory: internalError,
+  });
 
 export function CenterPreviewProvider({
   children,
@@ -115,21 +128,7 @@ export function CenterPreviewProvider({
   );
 }
 
-export function useCenterPreviewState(): CenterPreviewContextValue {
-  const context = useContext(CenterPreviewStateContext);
-  if (!context) {
-    throw internalError('useCenterPreviewState must be used within a CenterPreviewProvider');
-  }
-  return context;
-}
-
-export function useCenterPreviewActions(): CenterPreviewActionsContextValue {
-  const context = useContext(CenterPreviewActionsContext);
-  if (!context) {
-    throw internalError('useCenterPreviewActions must be used within a CenterPreviewProvider');
-  }
-  return context;
-}
+export { useCenterPreviewState, useCenterPreviewActions };
 
 export function useCenterPreviewContext(): CenterPreviewCombinedContextValue {
   const state = useCenterPreviewState();

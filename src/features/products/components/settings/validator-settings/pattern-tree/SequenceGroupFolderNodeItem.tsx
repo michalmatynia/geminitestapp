@@ -3,9 +3,10 @@
 import { GripVertical, Layers } from 'lucide-react';
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/features/foldertree/public';
-import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { FolderTreeViewportRenderNodeInput as SequenceGroupFolderNodeItemProps } from '@/shared/lib/foldertree/public';
+import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui/tree';
+
+import { cn } from '@/shared/utils/ui-utils';
 import { focusOnMount } from '@/shared/utils/focus-on-mount';
 
 import { fromSeqGroupMasterNodeId } from '../validator-pattern-master-tree';

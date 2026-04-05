@@ -30,22 +30,49 @@ const toActivityDto = (doc: ActivityLogDoc): ActivityLog => ({
   updatedAt: (doc.updatedAt ?? doc.createdAt).toISOString(),
 });
 
+const applyActivityTypeFilter = (
+  query: Filter<ActivityLogDoc>,
+  filters: Pick<ActivityFilters, 'type' | 'types'>
+): void => {
+  if (filters.types && filters.types.length > 0) {
+    query.type = { $in: filters.types };
+    return;
+  }
+
+  if (filters.type) {
+    query.type = filters.type;
+  }
+};
+
+const buildActivityQuery = (filters: ActivityFilters): Filter<ActivityLogDoc> => {
+  const query: Filter<ActivityLogDoc> = {};
+
+  if (filters.userId) query.userId = filters.userId;
+  applyActivityTypeFilter(query, filters);
+  if (filters.entityId) query.entityId = filters.entityId;
+  if (filters.entityType) query.entityType = filters.entityType;
+  if (filters.search) {
+    query.description = { $regex: filters.search, $options: 'i' };
+  }
+
+  return query;
+};
+
+const buildActivityLogDoc = (data: CreateActivityLog, now: Date): ActivityLogDoc => ({
+  type: data.type,
+  description: data.description,
+  userId: data.userId ?? null,
+  entityId: data.entityId ?? null,
+  entityType: data.entityType ?? null,
+  metadata: data.metadata ?? null,
+  createdAt: now,
+  updatedAt: now,
+} as ActivityLogDoc);
+
 export const mongoActivityRepository: ActivityRepository = {
   async listActivity(filters: ActivityFilters): Promise<ActivityLog[]> {
     const db = await getMongoDb();
-    const query: Filter<ActivityLogDoc> = {};
-
-    if (filters.userId) query.userId = filters.userId;
-    if (filters.types && filters.types.length > 0) {
-      query.type = { $in: filters.types };
-    } else if (filters.type) {
-      query.type = filters.type;
-    }
-    if (filters.entityId) query.entityId = filters.entityId;
-    if (filters.entityType) query.entityType = filters.entityType;
-    if (filters.search) {
-      query.description = { $regex: filters.search, $options: 'i' };
-    }
+    const query = buildActivityQuery(filters);
 
     const logs = await db
       .collection<ActivityLogDoc>(COLLECTION)
@@ -60,36 +87,13 @@ export const mongoActivityRepository: ActivityRepository = {
 
   async countActivity(filters: ActivityFilters): Promise<number> {
     const db = await getMongoDb();
-    const query: Filter<ActivityLogDoc> = {};
-
-    if (filters.userId) query.userId = filters.userId;
-    if (filters.types && filters.types.length > 0) {
-      query.type = { $in: filters.types };
-    } else if (filters.type) {
-      query.type = filters.type;
-    }
-    if (filters.entityId) query.entityId = filters.entityId;
-    if (filters.entityType) query.entityType = filters.entityType;
-    if (filters.search) {
-      query.description = { $regex: filters.search, $options: 'i' };
-    }
-
-    return db.collection<ActivityLogDoc>(COLLECTION).countDocuments(query);
+    return db.collection<ActivityLogDoc>(COLLECTION).countDocuments(buildActivityQuery(filters));
   },
 
   async createActivity(data: CreateActivityLog): Promise<ActivityLog> {
     const db = await getMongoDb();
     const now = new Date();
-    const doc = {
-      type: data.type,
-      description: data.description,
-      userId: data.userId ?? null,
-      entityId: data.entityId ?? null,
-      entityType: data.entityType ?? null,
-      metadata: data.metadata ?? null,
-      createdAt: now,
-      updatedAt: now,
-    } as ActivityLogDoc;
+    const doc = buildActivityLogDoc(data, now);
 
     const result = await db.collection<ActivityLogDoc>(COLLECTION).insertOne(doc);
     return toActivityDto({ ...doc, _id: result.insertedId });

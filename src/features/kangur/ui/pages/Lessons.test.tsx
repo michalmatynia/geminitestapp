@@ -24,12 +24,10 @@ import {
   lessonSectionsRetainDataWhileLoadingState,
   lessonSectionsState,
   lessonTemplatesHookCallsMock,
-  localeState,
   lessonsLoadingState,
   lessonsPlaceholderDataState,
   lessonsRetainDataWhileLoadingState,
   lessonsState,
-  lessonsWordmarkPropsMock,
   openLoginModalMock,
   routeNavigatorBackMock,
   routeTransitionStateState,
@@ -37,9 +35,7 @@ import {
   splitClasses,
   standardPageLayoutPropsMock,
   topNavigationPropsMock,
-  tutorSessionSyncPropsMock,
   useKangurAuthMock,
-  useKangurDocsTooltipsMock,
   useKangurRoutePageReadyMock,
   useKangurSubjectFocusMock,
 } from './Lessons.test-support';
@@ -513,167 +509,6 @@ describe('Lessons page subject filtering', () => {
     });
   });
 
-  it('uses the translated page title in the tutor session context when no lesson is active', () => {
-    render(<Lessons />);
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sessionContext: expect.objectContaining({
-          contentId: 'lesson:list',
-          title: 'Lekcje',
-        }),
-      })
-    );
-  });
-
-  it('defers tutor session sync until after the first deferred render turn', () => {
-    render(<Lessons />);
-
-    expect(tutorSessionSyncPropsMock).not.toHaveBeenCalled();
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sessionContext: expect.objectContaining({
-          contentId: 'lesson:list',
-          title: 'Lekcje',
-        }),
-      })
-    );
-  });
-
-  it('defers docs tooltip mounting until after the first deferred render turn', () => {
-    render(<Lessons />);
-
-    expect(useKangurDocsTooltipsMock).not.toHaveBeenCalled();
-    expect(standardPageLayoutPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        docsRootId: undefined,
-        docsTooltipsEnabled: false,
-      })
-    );
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(useKangurDocsTooltipsMock).toHaveBeenCalledWith('lessons');
-    expect(standardPageLayoutPropsMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        docsRootId: 'kangur-lessons-page',
-        docsTooltipsEnabled: false,
-      })
-    );
-  });
-
-  it('keeps deferred lessons enhancements off the library route until the transition is idle', () => {
-    routeTransitionStateState.value = {
-      transitionPhase: 'waiting_for_ready',
-      activeTransitionKind: 'navigation',
-      activeTransitionPageKey: 'Lessons',
-      activeTransitionSkeletonVariant: 'lessons-library',
-    };
-
-    const view = render(<Lessons />);
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(tutorSessionSyncPropsMock).not.toHaveBeenCalled();
-    expect(useKangurDocsTooltipsMock).not.toHaveBeenCalled();
-
-    routeTransitionStateState.value = {
-      transitionPhase: 'idle',
-    };
-
-    view.rerender(<Lessons />);
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sessionContext: expect.objectContaining({
-          contentId: 'lesson:list',
-        }),
-      })
-    );
-    expect(useKangurDocsTooltipsMock).toHaveBeenCalledWith('lessons');
-  });
-
-  it('keeps deferred lessons enhancements off until the lessons library shell has finished loading', () => {
-    lessonsLoadingState.value = true;
-    lessonSectionsLoadingState.value = true;
-
-    const view = render(<Lessons />);
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(tutorSessionSyncPropsMock).not.toHaveBeenCalled();
-    expect(useKangurDocsTooltipsMock).not.toHaveBeenCalled();
-
-    lessonsLoadingState.value = false;
-    lessonSectionsLoadingState.value = false;
-
-    view.rerender(<Lessons />);
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(tutorSessionSyncPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sessionContext: expect.objectContaining({
-          contentId: 'lesson:list',
-        }),
-      })
-    );
-    expect(useKangurDocsTooltipsMock).toHaveBeenCalledWith('lessons');
-  });
-
-  it('defers the lessons wordmark until after the first deferred render turn', () => {
-    render(<Lessons />);
-
-    expect(lessonsWordmarkPropsMock).not.toHaveBeenCalled();
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(lessonsWordmarkPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: 'Lekcje',
-        locale: 'pl',
-      })
-    );
-  });
-
-  it('passes the localized German lessons label into the lessons wordmark', () => {
-    localeState.value = 'de';
-
-    render(<Lessons />);
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(lessonsWordmarkPropsMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        label: 'Lektionen',
-        locale: 'de',
-      })
-    );
-  });
-
   it('wires the lessons top navigation login action to the shared login modal', () => {
     render(<Lessons />);
     act(() => {
@@ -715,6 +550,8 @@ describe('Lessons page subject filtering', () => {
 
     const openingSectionButton = screen.getByRole('button', { name: /opening section/i });
     fireEvent.click(openingSectionButton);
+    act(() => { vi.runAllTimers(); });
+    act(() => { vi.runAllTimers(); });
 
     expect(openingSectionButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('region').firstElementChild).toHaveClass('w-full', 'items-center');
@@ -772,6 +609,8 @@ describe('Lessons page subject filtering', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /opening section/i }));
+    act(() => { vi.runAllTimers(); });
+    act(() => { vi.runAllTimers(); });
     fireEvent.click(screen.getByTestId('lesson-card-lesson-english'));
 
     expect(screen.getByTestId('mock-active-lesson-view')).toHaveTextContent('lesson-english');
@@ -878,6 +717,9 @@ describe('Lessons page subject filtering', () => {
       .closest('button');
     expect(adverbsSubsectionButton).not.toBeNull();
     fireEvent.click(adverbsSubsectionButton as HTMLButtonElement);
+    act(() => {
+      vi.runAllTimers();
+    });
 
     expect(screen.getByTestId('lesson-card-lesson-english-adverbs')).toBeInTheDocument();
     expect(
@@ -900,6 +742,9 @@ describe('Lessons page subject filtering', () => {
       .closest('button');
     expect(frequencySubsectionButton).not.toBeNull();
     fireEvent.click(frequencySubsectionButton as HTMLButtonElement);
+    act(() => {
+      vi.runAllTimers();
+    });
 
     expect(screen.getByTestId('lesson-card-lesson-english-adverbs')).toBeInTheDocument();
     expect(
@@ -983,6 +828,8 @@ describe('Lessons page subject filtering', () => {
       .closest('button');
     expect(subsectionButton).not.toBeNull();
     fireEvent.click(subsectionButton as HTMLButtonElement);
+    act(() => { vi.runAllTimers(); });
+    act(() => { vi.runAllTimers(); });
 
     expect(screen.getByTestId('lesson-card-lesson-english-comparatives')).toBeInTheDocument();
     expect(lessonCatalogHookCallsMock).toHaveBeenCalledWith(

@@ -1,5 +1,3 @@
-'use client';
-
 export const ART_SHAPES_ROTATION_GAME_STYLES = `
   .art-shapes-rotation-game {
     --art-shapes-option-card-min-height: clamp(7.25rem, 28vw, 11.75rem);

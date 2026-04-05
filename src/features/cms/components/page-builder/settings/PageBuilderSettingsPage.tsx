@@ -5,7 +5,10 @@ import React, { useState } from 'react';
 
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Card, PanelHeader, useToast, LoadingState, ToggleRow } from '@/shared/ui';
+import { Card, useToast } from '@/shared/ui/primitives.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
+import { ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 export const PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY = 'page_builder_show_extract_placeholder';

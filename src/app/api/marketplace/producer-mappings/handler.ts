@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getProducerMappingRepository } from '@/features/integrations/server';
-import {
-  producerMappingCreateInputSchema,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { producerMappingCreateInputSchema } from '@/shared/contracts/integrations/producers';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';

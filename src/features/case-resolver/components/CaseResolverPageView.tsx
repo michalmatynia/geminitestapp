@@ -5,15 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import React from 'react';
 import { createPortal } from 'react-dom';
 
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/ui';
+import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/primitives.public';
 
 import { CaseResolverFolderTree } from './CaseResolverFolderTree';
 import {

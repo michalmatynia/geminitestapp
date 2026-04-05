@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/server';
-import { createProductValidationPatternSchema as createPatternSchema } from '@/shared/contracts/products';
+import { createProductValidationPatternSchema as createPatternSchema } from '@/shared/contracts/products/validation';
 export { createPatternSchema };
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   invalidateValidationPatternRuntimeCache,

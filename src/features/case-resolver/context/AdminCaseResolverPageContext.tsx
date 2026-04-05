@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useAdminCaseResolverPageState } from '../hooks/useAdminCaseResolverPageState';
 
@@ -23,12 +24,25 @@ export type AdminCaseResolverPageStateValue = Omit<
   AdminCaseResolverPageActionKey
 >;
 
-const AdminCaseResolverPageStateContext = createContext<AdminCaseResolverPageStateValue | null>(
-  null
-);
-const AdminCaseResolverPageActionsContext = createContext<AdminCaseResolverPageActionsValue | null>(
-  null
-);
+export const {
+  Context: AdminCaseResolverPageStateContext,
+  useStrictContext: useAdminCaseResolverPageStateContext,
+} = createStrictContext<AdminCaseResolverPageStateValue>({
+  hookName: 'useAdminCaseResolverPageStateContext',
+  providerName: 'AdminCaseResolverPageProvider',
+  displayName: 'AdminCaseResolverPageStateContext',
+  errorFactory: internalError,
+});
+
+export const {
+  Context: AdminCaseResolverPageActionsContext,
+  useStrictContext: useAdminCaseResolverPageActionsContext,
+} = createStrictContext<AdminCaseResolverPageActionsValue>({
+  hookName: 'useAdminCaseResolverPageActionsContext',
+  providerName: 'AdminCaseResolverPageProvider',
+  displayName: 'AdminCaseResolverPageActionsContext',
+  errorFactory: internalError,
+});
 
 export function AdminCaseResolverPageProvider({
   children,
@@ -46,24 +60,4 @@ export function AdminCaseResolverPageProvider({
       </AdminCaseResolverPageActionsContext.Provider>
     </AdminCaseResolverPageStateContext.Provider>
   );
-}
-
-export function useAdminCaseResolverPageStateContext(): AdminCaseResolverPageStateValue {
-  const context = useContext(AdminCaseResolverPageStateContext);
-  if (!context) {
-    throw internalError(
-      'useAdminCaseResolverPageStateContext must be used within AdminCaseResolverPageProvider'
-    );
-  }
-  return context;
-}
-
-export function useAdminCaseResolverPageActionsContext(): AdminCaseResolverPageActionsValue {
-  const context = useContext(AdminCaseResolverPageActionsContext);
-  if (!context) {
-    throw internalError(
-      'useAdminCaseResolverPageActionsContext must be used within AdminCaseResolverPageProvider'
-    );
-  }
-  return context;
 }

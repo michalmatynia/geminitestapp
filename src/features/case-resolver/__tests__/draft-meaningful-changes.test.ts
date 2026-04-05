@@ -6,7 +6,7 @@ import {
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
 import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 
 describe('case resolver meaningful draft changes', () => {
   it('treats legacy exploded version flag without exploded content as unchanged', () => {

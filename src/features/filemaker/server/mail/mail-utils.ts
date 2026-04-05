@@ -1,5 +1,3 @@
-'use client';
-
 import { createHash, randomUUID } from 'crypto';
 import type { ListResponse, MessageAddressObject, MessageEnvelopeObject } from 'imapflow';
 import {

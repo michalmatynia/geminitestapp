@@ -1,5 +1,3 @@
-'use client';
-
 import type { Point2d } from '@/shared/contracts/geometry';
 
 export const getKangurPointDistance = (a: Point2d, b: Point2d): number =>

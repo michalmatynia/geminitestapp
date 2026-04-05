@@ -4,7 +4,7 @@ import type {
   AgentBrowserSnapshotRecordDto as AgentBrowserSnapshotRecord,
   AgentRunRecord,
 } from '@/shared/contracts/agent-runtime';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
 

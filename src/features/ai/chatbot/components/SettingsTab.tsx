@@ -1,4 +1,5 @@
 'use client';
+
 import Link from 'next/link';
 import React from 'react';
 
@@ -12,16 +13,9 @@ import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { fetchPlaywrightPersonas } from '@/shared/lib/playwright/personas';
-import {
-  Button,
-  SelectSimple,
-  useToast,
-  FormSection,
-  FormField,
-  ToggleRow,
-  FormActions,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, useToast } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useChatbotSettings } from '../context/ChatbotContext';

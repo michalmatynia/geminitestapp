@@ -1,26 +1,5 @@
-import type { Toast } from '@/shared/contracts/ui';
-import type {
-  AiNode,
-  Edge,
-  NodeConfig,
-  NodeDefinition,
-  PathBlockedRunPolicy,
-  ParserSampleState,
-  PathConfig,
-  PathExecutionMode,
-  PathFlowIntensity,
-  AiPathsValidationConfig,
-  PathRunMode,
-  PathDebugSnapshot,
-  PathMeta,
-  RuntimeState,
-  UpdaterSampleState,
-  AiPathRuntimeEvent,
-  AiPathRuntimeNodeStatusMap,
-  DbQueryPreset,
-  DbNodePreset,
-  ClusterPreset,
-} from '@/shared/lib/ai-paths';
+import type { Toast } from '@/shared/contracts/ui/base';
+import type { AiNode, Edge, NodeConfig, NodeDefinition, PathBlockedRunPolicy, ParserSampleState, PathConfig, PathExecutionMode, PathFlowIntensity, AiPathsValidationConfig, PathRunMode, PathDebugSnapshot, PathMeta, RuntimeState, UpdaterSampleState, AiPathRuntimeEvent, AiPathRuntimeNodeStatusMap, DbQueryPreset, DbNodePreset, ClusterPreset } from '@/shared/lib/ai-paths';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 import type * as React from 'react';

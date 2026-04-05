@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,

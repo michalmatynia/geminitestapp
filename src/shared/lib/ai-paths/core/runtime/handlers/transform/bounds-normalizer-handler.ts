@@ -89,6 +89,29 @@ const fromPixelsTlbr = (
   return { left: x1, top: y1, width, height };
 };
 
+const parseGeminiMillirelativeBounds = (
+  raw: unknown
+): { y1: number; x1: number; y2: number; x2: number } | null => {
+  if (!Array.isArray(raw) || raw.length < 4) return null;
+  const y1 = toFinite(raw[0]);
+  const x1 = toFinite(raw[1]);
+  const y2 = toFinite(raw[2]);
+  const x2 = toFinite(raw[3]);
+  if (y1 === null || x1 === null || y2 === null || x2 === null) return null;
+  return { y1, x1, y2, x2 };
+};
+
+const toGeminiMillirelativePixels = (
+  bounds: { y1: number; x1: number; y2: number; x2: number },
+  imgW: number,
+  imgH: number
+): { left: number; top: number; width: number; height: number } => ({
+  left: Math.round((bounds.x1 / 1000) * imgW),
+  top: Math.round((bounds.y1 / 1000) * imgH),
+  width: Math.round(((bounds.x2 - bounds.x1) / 1000) * imgW),
+  height: Math.round(((bounds.y2 - bounds.y1) / 1000) * imgH),
+});
+
 /**
  * gemini_millirelative — array [y1,x1,y2,x2] on 0–1000 scale.
  * Requires image dimensions from context to convert to pixels.
@@ -98,16 +121,9 @@ const fromGeminiMillirelative = (
   imgW: number,
   imgH: number
 ): { left: number; top: number; width: number; height: number } | null => {
-  if (!Array.isArray(raw) || raw.length < 4) return null;
-  const y1 = toFinite(raw[0]);
-  const x1 = toFinite(raw[1]);
-  const y2 = toFinite(raw[2]);
-  const x2 = toFinite(raw[3]);
-  if (y1 === null || x1 === null || y2 === null || x2 === null) return null;
-  const left = Math.round((x1 / 1000) * imgW);
-  const top = Math.round((y1 / 1000) * imgH);
-  const width = Math.round(((x2 - x1) / 1000) * imgW);
-  const height = Math.round(((y2 - y1) / 1000) * imgH);
+  const bounds = parseGeminiMillirelativeBounds(raw);
+  if (!bounds) return null;
+  const { left, top, width, height } = toGeminiMillirelativePixels(bounds, imgW, imgH);
   if (width <= 0 || height <= 0) return null;
   return { left, top, width, height };
 };

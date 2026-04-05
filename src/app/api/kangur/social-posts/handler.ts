@@ -8,12 +8,14 @@ import { logKangurServerEvent } from '@/features/kangur/observability/server';
 import {
   deleteKangurSocialPost,
   getKangurSocialPostById,
+  type KangurSocialPostListStatus,
   listKangurSocialPosts,
+  listKangurSocialPostsPage,
   listPublishedKangurSocialPosts,
   upsertKangurSocialPost,
 } from '@/features/kangur/social/server/social-posts-repository';
 import { kangurSocialPostSchema } from '@/shared/contracts/kangur-social-posts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 import {
   optionalIntegerQuerySchema,
@@ -23,6 +25,12 @@ import {
 export const querySchema = z.object({
   scope: optionalTrimmedQueryString(z.enum(['public', 'admin'])),
   limit: optionalIntegerQuerySchema(z.number().int().min(1).max(50)),
+  page: optionalIntegerQuerySchema(z.number().int().min(1).max(10_000)),
+  pageSize: optionalIntegerQuerySchema(z.number().int().min(1).max(50)),
+  search: optionalTrimmedQueryString(z.string().max(200)),
+  status: optionalTrimmedQueryString(
+    z.enum(['all', 'draft', 'scheduled', 'published', 'failed'])
+  ),
 });
 
 export const deleteSocialPostsQuerySchema = z.object({
@@ -45,7 +53,19 @@ export async function getKangurSocialPostsHandler(
     if (actor.role !== 'admin') {
       throw forbiddenError('Only admins can access all social posts.');
     }
-    const posts = await listKangurSocialPosts();
+    const shouldReturnPagedPayload =
+      query.page !== undefined ||
+      query.pageSize !== undefined ||
+      query.search !== undefined ||
+      query.status !== undefined;
+    const posts = shouldReturnPagedPayload
+      ? await listKangurSocialPostsPage({
+          page: query.page,
+          pageSize: query.pageSize,
+          search: query.search,
+          status: query.status as KangurSocialPostListStatus | undefined,
+        })
+      : await listKangurSocialPosts();
     void logKangurServerEvent({
       source: 'kangur.social-posts.list',
       message: 'Kangur social posts listed',
@@ -55,7 +75,11 @@ export async function getKangurSocialPostsHandler(
       statusCode: 200,
       context: {
         scope,
-        count: posts.length,
+        count: Array.isArray(posts) ? posts.length : posts.total,
+        page: Array.isArray(posts) ? null : posts.page,
+        pageSize: Array.isArray(posts) ? null : posts.pageSize,
+        search: query.search ?? null,
+        status: (query.status as KangurSocialPostListStatus | undefined) ?? null,
       },
     });
     return NextResponse.json(posts, { headers: { 'Cache-Control': 'no-store' } });

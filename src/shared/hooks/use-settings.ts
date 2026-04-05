@@ -1,5 +1,3 @@
-'use client';
-
 import {
   fetchSettingsCached,
   fetchLiteSettingsCached,
@@ -7,7 +5,7 @@ import {
   type SettingsScope,
 } from '@/shared/api/settings-client';
 import type { SystemSetting } from '@/shared/contracts/settings';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

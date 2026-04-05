@@ -3,8 +3,10 @@
 import React from 'react';
 
 import { AiPathsValidationRule } from '@/shared/lib/ai-paths';
-import { Badge, Card, Hint, SelectSimple, StatusBadge } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Badge, Card } from '@/shared/ui/primitives.public';
+import { Hint, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { getCandidateTags, type CandidateChangeKind } from '../../pages/AdminAiPathsValidationUtils';

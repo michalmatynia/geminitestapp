@@ -4,14 +4,8 @@ import { ObjectId, type Filter, type UpdateFilter, type Document } from 'mongodb
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import {
-  CreateProductListingInput,
-  ProductListing,
-  ProductListingExportEvent,
-  ProductListingExportEventRecord,
-  ProductListingRepository,
-  ProductListingWithDetails,
-} from '@/shared/contracts/integrations';
+import { CreateProductListingInput, ProductListingExportEventRecord, ProductListingRepository } from '@/shared/contracts/integrations/repositories';
+import { ProductListing, ProductListingExportEvent, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -369,10 +363,12 @@ const mongoRepository: ProductListingRepository = {
 
   listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
     const collection = await getListingCollection();
+    const terminalStatuses = ['failed', 'auth_required', 'ended', 'expired', 'sold', 'removed', 'cancelled'];
     const count = await collection.countDocuments({
       $and: [
         buildLookupFilter('productId', productId),
         buildLookupFilter('connectionId', connectionId),
+        { status: { $nin: terminalStatuses } },
       ],
     } as Filter<ProductListingDocument>);
     return count > 0;
@@ -396,17 +392,34 @@ const mongoRepository: ProductListingRepository = {
   },
 
   listAllListings: async (): Promise<
-    Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+    Array<
+      Pick<
+        ProductListing,
+        'productId' | 'status' | 'integrationId' | 'marketplaceData' | 'updatedAt'
+      >
+    >
   > => {
     const collection = await getListingCollection();
     const listings = await collection
-      .find({}, { projection: { productId: 1, status: 1, integrationId: 1, marketplaceData: 1 } })
+      .find(
+        {},
+        {
+          projection: {
+            productId: 1,
+            status: 1,
+            integrationId: 1,
+            marketplaceData: 1,
+            updatedAt: 1,
+          },
+        }
+      )
       .toArray();
     return listings.map((l) => ({
       productId: normalizeLookupIdOrFallback(l.productId),
       status: l.status,
       integrationId: normalizeLookupIdOrFallback(l.integrationId),
       marketplaceData: l.marketplaceData ?? null,
+      updatedAt: l.updatedAt.toISOString(),
     }));
   },
 };

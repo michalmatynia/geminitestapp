@@ -153,7 +153,7 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: () => <div data-testid='tests-top-nav' />,
 }));
 

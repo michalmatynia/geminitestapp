@@ -4,7 +4,7 @@ import {
   systemLogsMetricsQuerySchema,
   systemLogLevelSchema,
 } from '@/shared/contracts/observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { getSystemLogMetrics } from '@/shared/lib/observability/system-log-repository';
 

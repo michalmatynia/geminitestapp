@@ -1,4 +1,7 @@
-import type { ProductDraft, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+
+import { normalizeProductTriggerStatus } from './build-triggered-product-entity-json.helpers';
 
 const normalizeTriggerCatalogIds = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
@@ -17,29 +20,6 @@ const normalizeTriggerCatalogIds = (value: unknown): string[] => {
     if (normalized) unique.add(normalized);
   });
   return Array.from(unique);
-};
-
-const normalizeProductTriggerStatus = (entityJson: Record<string, unknown>): void => {
-  const existingStatus =
-    typeof entityJson['status'] === 'string' ? entityJson['status'].trim() : '';
-  if (existingStatus) {
-    entityJson['status'] = existingStatus;
-    if (
-      typeof entityJson['publicationStatus'] !== 'string' &&
-      typeof entityJson['published'] === 'boolean'
-    ) {
-      entityJson['publicationStatus'] = entityJson['published'] ? 'published' : 'draft';
-    }
-    return;
-  }
-
-  if (typeof entityJson['published'] !== 'boolean') return;
-
-  const publicationStatus = entityJson['published'] ? 'published' : 'draft';
-  entityJson['status'] = publicationStatus;
-  if (typeof entityJson['publicationStatus'] !== 'string') {
-    entityJson['publicationStatus'] = publicationStatus;
-  }
 };
 
 export const buildTriggeredProductEntityJson = (args: {

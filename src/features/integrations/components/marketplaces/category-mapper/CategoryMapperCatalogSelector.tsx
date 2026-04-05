@@ -3,7 +3,8 @@
 import React, { useMemo } from 'react';
 
 import { useCategoryMapperData } from '@/features/integrations/context/CategoryMapperContext';
-import { Label, SelectSimple } from '@/shared/ui';
+import { Label } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
   const { selectedCatalogId, setSelectedCatalogId, catalogsLoading, catalogs, internalCategories } =

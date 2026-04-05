@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 export const baseQuickExportTestProduct = {
   id: 'product-1',

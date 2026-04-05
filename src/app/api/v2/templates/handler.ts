@@ -11,11 +11,9 @@ import {
   updateImportTemplate,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import {
-  createImportExportTemplateSchema,
-  type ImportExportTemplateCreateInput,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { createImportExportTemplateSchema } from '@/shared/contracts/integrations/import-export';
+import { type ImportExportTemplateCreateInput } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 export async function GET_templates_handler(

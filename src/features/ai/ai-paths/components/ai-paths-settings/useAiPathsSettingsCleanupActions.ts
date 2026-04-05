@@ -1,23 +1,12 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/base';
 import type { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import type {
-  AiNode,
-  Edge,
-  ParserSampleState,
-  PathBlockedRunPolicy,
-  PathConfig,
-  PathExecutionMode,
-  PathFlowIntensity,
-  AiPathsValidationConfig,
-  PathMeta,
-  PathRunMode,
-  RuntimeState,
-  UpdaterSampleState,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, ParserSampleState, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, AiPathsValidationConfig, PathMeta, PathRunMode, RuntimeState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

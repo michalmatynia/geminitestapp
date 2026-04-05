@@ -6,8 +6,10 @@ import {
   useIntegrationsData,
   useIntegrationsTesting,
 } from '@/features/integrations/context/IntegrationsContext';
-import { TestLogEntry } from '@/shared/contracts/integrations';
-import { StatusBadge, FormSection, SimpleSettingsList } from '@/shared/ui';
+import { TestLogEntry } from '@/shared/contracts/integrations/session-testing';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 
 export function ConnectionTestLog(): React.JSX.Element | null {
   const { activeIntegration } = useIntegrationsData();

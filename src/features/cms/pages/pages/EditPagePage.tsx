@@ -15,18 +15,11 @@ import {
 import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import type { Page, Slug } from '@/shared/contracts/cms';
-import {
-  AdminCmsBreadcrumbs,
-  Alert,
-  Button,
-  FormActions,
-  FormSection,
-  LoadingState,
-  SectionHeader,
-  ToggleRow,
-  StatusBadge,
-  SearchableList,
-} from '@/shared/ui';
+import { AdminCmsBreadcrumbs } from '@/shared/ui/admin.public';
+import { Alert, Button } from '@/shared/ui/primitives.public';
+import { FormActions, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge, SearchableList } from '@/shared/ui/data-display.public';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {

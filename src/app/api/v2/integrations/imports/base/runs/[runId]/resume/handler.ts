@@ -6,11 +6,9 @@ import {
   updateBaseImportRunQueueJob,
 } from '@/features/integrations/server';
 import { enqueueBaseImportRunJob } from '@/features/integrations/server';
-import type {
-  BaseImportStartResponse,
-} from '@/shared/contracts/integrations';
-import { baseImportRunResumePayloadSchema } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
+import { baseImportRunResumePayloadSchema } from '@/shared/contracts/integrations/base-com';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const requestSchema = baseImportRunResumePayloadSchema;
 

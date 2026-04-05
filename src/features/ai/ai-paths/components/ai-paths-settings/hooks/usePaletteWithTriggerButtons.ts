@@ -4,17 +4,15 @@ import { useMemo } from 'react';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { NodeDefinition } from '@/shared/lib/ai-paths';
-import {
-  palette,
-  derivePaletteNodeTypeId,
-  TRIGGER_INPUT_PORTS,
-  TRIGGER_OUTPUT_PORTS,
-  triggerButtonsApi,
-} from '@/shared/lib/ai-paths';
+import { palette, derivePaletteNodeTypeId, TRIGGER_INPUT_PORTS, TRIGGER_OUTPUT_PORTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-export function usePaletteWithTriggerButtons(): NodeDefinition[] {
+export function usePaletteWithTriggerButtons({
+  enabled = true,
+}: {
+  enabled?: boolean;
+} = {}): NodeDefinition[] {
   const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async () => {
@@ -22,6 +20,7 @@ export function usePaletteWithTriggerButtons(): NodeDefinition[] {
       if (!response.ok) throw new Error(response.error);
       return response.data;
     },
+    enabled,
     meta: {
       source: 'ai.ai-paths.settings.trigger-buttons',
       operation: 'list',

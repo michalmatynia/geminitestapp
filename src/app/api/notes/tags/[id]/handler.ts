@@ -4,8 +4,8 @@ import { tagUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { TagUpdateInput } from '@/shared/contracts/notes';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { removeUndefined } from '@/shared/utils';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+import { removeUndefined } from '@/shared/utils/object-utils';
 
 /**
  * PATCH /api/notes/tags/[id]

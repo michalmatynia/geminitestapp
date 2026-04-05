@@ -6,6 +6,7 @@ import { useCallback, useEffect, type Dispatch, type SetStateAction } from 'reac
 import { trackKangurClientEvent } from '@/features/kangur/observability/client';
 import { getKangurPlatform } from '@/features/kangur/services/kangur-platform';
 import { resolveKangurScoreSubject } from '@/shared/contracts/kangur';
+import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type { KangurUser } from '@kangur/platform';
 
 import {
@@ -13,7 +14,6 @@ import {
   clearPendingKangurGameQuickStart,
 } from '../KangurGameRuntimeContext.helpers';
 import { TOTAL_QUESTIONS } from '../KangurGameRuntimeContext.shared';
-
 import type {
   KangurDifficulty,
   KangurGameScreen,
@@ -28,10 +28,25 @@ import type {
 const kangurPlatform = getKangurPlatform();
 
 type Setter<T> = Dispatch<SetStateAction<T>>;
+type StartSession = (payload: {
+  difficulty: KangurDifficulty;
+  operation: KangurOperation;
+  questions: KangurQuestion[];
+  startTime: number;
+  recommendation: Parameters<typeof buildKangurCompletedGameOutcome>[0]['activeSessionRecommendation'];
+}) => void;
+type CompleteSession = (payload: { score: number; timeTaken: number }) => void;
+type ResetGame = (payload: {
+  screen: KangurGameScreen;
+  recommendation: Parameters<typeof buildKangurCompletedGameOutcome>[0]['activeSessionRecommendation'];
+  launchableGameInstanceId: KangurGameInstanceId | null;
+}) => void;
 
 type UseKangurGameRuntimeActionsInput = {
   activeSessionRecommendation: Parameters<typeof buildKangurCompletedGameOutcome>[0]['activeSessionRecommendation'];
+  advanceQuestion: () => void;
   canAccessParentAssignments: boolean;
+  completeSession: CompleteSession;
   currentQuestionIndex: number;
   difficulty: KangurDifficulty;
   guestPlayerName: string;
@@ -40,6 +55,7 @@ type UseKangurGameRuntimeActionsInput = {
   refreshAssignments: () => unknown;
   resultTranslate: Parameters<typeof buildKangurCompletedGameOutcome>[0]['resultTranslate'];
   progressTranslate: Parameters<typeof buildKangurCompletedGameOutcome>[0]['progressTranslate'];
+  resetGame: ResetGame;
   runGameLoopTimer: (fn: () => void, ms: number) => void;
   screen: KangurGameScreen;
   score: number;
@@ -66,6 +82,7 @@ type UseKangurGameRuntimeActionsInput = {
     dailyQuest?: KangurXpToastState['dailyQuest'],
     recommendation?: KangurXpToastState['recommendation']
   ) => void;
+  startSession: StartSession;
   startTime: number | null;
   subject: Parameters<typeof buildKangurCompletedGameOutcome>[0]['subject'];
   subjectKey: Parameters<typeof buildKangurCompletedGameOutcome>[0]['ownerKey'];
@@ -125,42 +142,21 @@ const applyQuestionSessionState = ({
   nextOperation,
   nextQuestions,
   options,
-  setActiveSessionRecommendation,
-  setCurrentQuestionIndex,
-  setDifficulty,
-  setLaunchableGameInstanceId,
-  setOperation,
-  setQuestions,
-  setScore,
-  setScreen,
-  setStartTime,
-  setTimeTaken,
+  startSession,
 }: {
   nextDifficulty: KangurDifficulty;
   nextOperation: KangurOperation;
   nextQuestions: KangurQuestion[];
   options?: KangurSessionStartOptions;
-  setActiveSessionRecommendation: UseKangurGameRuntimeActionsInput['setActiveSessionRecommendation'];
-  setCurrentQuestionIndex: Setter<number>;
-  setDifficulty: Setter<KangurDifficulty>;
-  setLaunchableGameInstanceId: Setter<string | null>;
-  setOperation: Setter<KangurOperation | null>;
-  setQuestions: Setter<KangurQuestion[]>;
-  setScore: Setter<number>;
-  setScreen: Setter<KangurGameScreen>;
-  setStartTime: Setter<number | null>;
-  setTimeTaken: Setter<number>;
+  startSession: StartSession;
 }): void => {
-  setLaunchableGameInstanceId(null);
-  setOperation(nextOperation);
-  setDifficulty(nextDifficulty);
-  setQuestions(nextQuestions);
-  setCurrentQuestionIndex(0);
-  setScore(0);
-  setTimeTaken(0);
-  setStartTime(Date.now());
-  setActiveSessionRecommendation(options?.recommendation ?? null);
-  setScreen('playing');
+  startSession({
+    difficulty: nextDifficulty,
+    operation: nextOperation,
+    questions: nextQuestions,
+    startTime: Date.now(),
+    recommendation: options?.recommendation ?? null,
+  });
 };
 
 const showCompletedGameToast = ({
@@ -187,10 +183,10 @@ const showCompletedGameToast = ({
 
 const scheduleNextQuestion = (
   runGameLoopTimer: UseKangurGameRuntimeActionsInput['runGameLoopTimer'],
-  setCurrentQuestionIndex: Setter<number>
+  advanceQuestion: UseKangurGameRuntimeActionsInput['advanceQuestion']
 ): void => {
   runGameLoopTimer(() => {
-    setCurrentQuestionIndex((current) => current + 1);
+    advanceQuestion();
   }, 1000);
 };
 
@@ -245,9 +241,8 @@ const completeGameAnswer = ({
   resultTranslate,
   runGameLoopTimer,
   screen,
-  setScore,
+  completeSession,
   setScreen,
-  setTimeTaken,
   showXpToast,
   startTime,
   subject,
@@ -267,9 +262,8 @@ const completeGameAnswer = ({
   resultTranslate: UseKangurGameRuntimeActionsInput['resultTranslate'];
   runGameLoopTimer: UseKangurGameRuntimeActionsInput['runGameLoopTimer'];
   screen: KangurGameScreen;
-  setScore: Setter<number>;
+  completeSession: CompleteSession;
   setScreen: Setter<KangurGameScreen>;
-  setTimeTaken: Setter<number>;
   showXpToast: UseKangurGameRuntimeActionsInput['showXpToast'];
   startTime: number | null;
   subject: UseKangurGameRuntimeActionsInput['subject'];
@@ -277,8 +271,7 @@ const completeGameAnswer = ({
   totalQuestions: number;
 }): void => {
   const taken = Math.round((Date.now() - (startTime ?? Date.now())) / 1000);
-  setTimeTaken(taken);
-  setScore(nextScore);
+  completeSession({ score: nextScore, timeTaken: taken });
   const outcome = buildKangurCompletedGameOutcome({
     activeSessionRecommendation,
     difficulty,
@@ -415,31 +408,10 @@ export function useKangurGameRuntimeActions(
           selection.count
         ),
         options,
-        setActiveSessionRecommendation: input.setActiveSessionRecommendation,
-        setCurrentQuestionIndex: input.setCurrentQuestionIndex,
-        setDifficulty: input.setDifficulty,
-        setLaunchableGameInstanceId: input.setLaunchableGameInstanceId,
-        setOperation: input.setOperation,
-        setQuestions: input.setQuestions,
-        setScore: input.setScore,
-        setScreen: input.setScreen,
-        setStartTime: input.setStartTime,
-        setTimeTaken: input.setTimeTaken,
+        startSession: input.startSession,
       });
     },
-    [
-      ensureSessionPlayerName,
-      input.setActiveSessionRecommendation,
-      input.setCurrentQuestionIndex,
-      input.setDifficulty,
-      input.setLaunchableGameInstanceId,
-      input.setOperation,
-      input.setQuestions,
-      input.setScore,
-      input.setScreen,
-      input.setStartTime,
-      input.setTimeTaken,
-    ]
+    [ensureSessionPlayerName, input.startSession]
   );
 
   const handleSelectOperation = useCallback(
@@ -454,31 +426,10 @@ export function useKangurGameRuntimeActions(
         nextOperation,
         nextQuestions: generateQuestions(nextOperation, nextDifficulty, TOTAL_QUESTIONS),
         options,
-        setActiveSessionRecommendation: input.setActiveSessionRecommendation,
-        setCurrentQuestionIndex: input.setCurrentQuestionIndex,
-        setDifficulty: input.setDifficulty,
-        setLaunchableGameInstanceId: input.setLaunchableGameInstanceId,
-        setOperation: input.setOperation,
-        setQuestions: input.setQuestions,
-        setScore: input.setScore,
-        setScreen: input.setScreen,
-        setStartTime: input.setStartTime,
-        setTimeTaken: input.setTimeTaken,
+        startSession: input.startSession,
       });
     },
-    [
-      ensureSessionPlayerName,
-      input.setActiveSessionRecommendation,
-      input.setCurrentQuestionIndex,
-      input.setDifficulty,
-      input.setLaunchableGameInstanceId,
-      input.setOperation,
-      input.setQuestions,
-      input.setScore,
-      input.setScreen,
-      input.setStartTime,
-      input.setTimeTaken,
-    ]
+    [ensureSessionPlayerName, input.startSession]
   );
 
   const handleAnswer = useCallback(
@@ -501,9 +452,8 @@ export function useKangurGameRuntimeActions(
           resultTranslate: input.resultTranslate,
           runGameLoopTimer: input.runGameLoopTimer,
           screen: input.screen,
-          setScore: input.setScore,
+          completeSession: input.completeSession,
           setScreen: input.setScreen,
-          setTimeTaken: input.setTimeTaken,
           showXpToast: input.showXpToast,
           startTime: input.startTime,
           subject: input.subject,
@@ -516,10 +466,12 @@ export function useKangurGameRuntimeActions(
       if (correct) {
         input.setScore(nextScore);
       }
-      scheduleNextQuestion(input.runGameLoopTimer, input.setCurrentQuestionIndex);
+      scheduleNextQuestion(input.runGameLoopTimer, input.advanceQuestion);
     },
     [
+      input.advanceQuestion,
       canEarnRewards,
+      input.completeSession,
       ensureSessionPlayerName,
       input.activeSessionRecommendation,
       input.canAccessParentAssignments,
@@ -533,10 +485,8 @@ export function useKangurGameRuntimeActions(
       input.runGameLoopTimer,
       input.score,
       input.screen,
-      input.setCurrentQuestionIndex,
       input.setScore,
       input.setScreen,
-      input.setTimeTaken,
       input.showXpToast,
       input.startTime,
       input.subject,
@@ -548,47 +498,44 @@ export function useKangurGameRuntimeActions(
   const handleStartGame = useCallback((): void => {
     clearPendingKangurGameQuickStart();
     ensureSessionPlayerName();
-    input.setActiveSessionRecommendation(null);
-    input.setLaunchableGameInstanceId(null);
-    input.setScreen('operation');
-  }, [
-    ensureSessionPlayerName,
-    input.setActiveSessionRecommendation,
-    input.setLaunchableGameInstanceId,
-    input.setScreen,
-  ]);
+    input.resetGame({
+      screen: 'operation',
+      recommendation: null,
+      launchableGameInstanceId: null,
+    });
+  }, [ensureSessionPlayerName, input.resetGame]);
 
   const handleStartKangur = useCallback(
     (mode: KangurMode, options?: KangurSessionStartOptions): void => {
       clearPendingKangurGameQuickStart();
       ensureSessionPlayerName();
       input.setKangurMode(mode);
-      input.setActiveSessionRecommendation(options?.recommendation ?? null);
-      input.setLaunchableGameInstanceId(null);
-      input.setScreen('kangur');
+      input.resetGame({
+        screen: 'kangur',
+        recommendation: options?.recommendation ?? null,
+        launchableGameInstanceId: null,
+      });
     },
-    [
-      ensureSessionPlayerName,
-      input.setActiveSessionRecommendation,
-      input.setKangurMode,
-      input.setLaunchableGameInstanceId,
-      input.setScreen,
-    ]
+    [ensureSessionPlayerName, input.resetGame, input.setKangurMode]
   );
 
   const handleRestart = useCallback((): void => {
     clearPendingKangurGameQuickStart();
-    input.setActiveSessionRecommendation(null);
-    input.setLaunchableGameInstanceId(null);
-    input.setScreen('operation');
-  }, [input.setActiveSessionRecommendation, input.setLaunchableGameInstanceId, input.setScreen]);
+    input.resetGame({
+      screen: 'operation',
+      recommendation: null,
+      launchableGameInstanceId: null,
+    });
+  }, [input.resetGame]);
 
   const handleHome = useCallback((): void => {
     clearPendingKangurGameQuickStart();
-    input.setActiveSessionRecommendation(null);
-    input.setLaunchableGameInstanceId(null);
-    input.setScreen('home');
-  }, [input.setActiveSessionRecommendation, input.setLaunchableGameInstanceId, input.setScreen]);
+    input.resetGame({
+      screen: 'home',
+      recommendation: null,
+      launchableGameInstanceId: null,
+    });
+  }, [input.resetGame]);
 
   return {
     handleAnswer,

@@ -1,11 +1,11 @@
-'use client';
-
 import {
   useUpdateValidatorSettingsMutation,
   useValidatorSettings,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { FormSection, ValidatorFormatterToggle } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { FormSection } from '@/shared/ui/form-section';
+import { ValidatorFormatterToggle } from '@/shared/ui/validator-formatter-toggle';
+
+import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';

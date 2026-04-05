@@ -4,17 +4,10 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 
 import type { TransientRecoverySettings } from '@/shared/contracts/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  AdminSettingsPageLayout,
-  Button,
-  FormField,
-  FormSection,
-  Input,
-  ToggleRow,
-  UI_GRID_RELAXED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-  useToast,
-} from '@/shared/ui';
+import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {

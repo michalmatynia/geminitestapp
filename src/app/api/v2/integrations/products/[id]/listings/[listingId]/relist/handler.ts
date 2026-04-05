@@ -1,17 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import {
+  isPlaywrightProgrammableSlug,
+  isTraderaIntegrationSlug,
+  isTraderaBrowserIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import {
   findProductListingByIdAcrossProviders,
   getIntegrationRepository,
 } from '@/features/integrations/server';
-import { enqueueTraderaListingJob } from '@/features/jobs/server';
+import {
+  enqueuePlaywrightListingJob,
+  enqueueTraderaListingJob,
+  initializeQueues,
+} from '@/features/jobs/server';
+import { productListingRelistPayloadSchema } from '@/shared/contracts/integrations/listings';
 import { type ProductListingRelistResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
 export async function POST_handler(
-  _req: NextRequest,
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string; listingId: string }
 ): Promise<Response> {
@@ -19,6 +31,13 @@ export async function POST_handler(
   if (!productId || !listingId) {
     throw badRequestError('Product id and listing id are required');
   }
+
+  const rawBody: unknown = await req.json().catch(() => ({}));
+  const payloadResult = productListingRelistPayloadSchema.safeParse(rawBody);
+  if (!payloadResult.success) {
+    throw badRequestError('Invalid relist payload');
+  }
+  const payload = payloadResult.data;
 
   const resolved = await findProductListingByIdAcrossProviders(listingId);
   if (resolved?.listing.productId !== productId) {
@@ -29,8 +48,18 @@ export async function POST_handler(
   const integration = await integrationRepository.getIntegrationById(
     resolved.listing.integrationId
   );
-  if (!isTraderaIntegrationSlug(integration?.slug)) {
-    throw badRequestError('Relist is only supported for Tradera listings');
+  const integrationSlug = integration?.slug ?? '';
+  if (!isTraderaIntegrationSlug(integrationSlug) && !isPlaywrightProgrammableSlug(integrationSlug)) {
+    throw badRequestError('Relist is only supported for Tradera and Playwright (Programmable) listings');
+  }
+  if (
+    payload.browserMode &&
+    !isPlaywrightProgrammableSlug(integrationSlug) &&
+    !isTraderaBrowserIntegrationSlug(integrationSlug)
+  ) {
+    throw badRequestError(
+      'Browser mode override is only supported for Playwright and Tradera browser relists'
+    );
   }
 
   const normalizedStatus = (resolved.listing.status ?? '').trim().toLowerCase();
@@ -57,10 +86,65 @@ export async function POST_handler(
   });
 
   const enqueuedAt = new Date().toISOString();
+
+  if (isPlaywrightProgrammableSlug(integrationSlug)) {
+    initializeQueues();
+    const jobId = await enqueuePlaywrightListingJob({
+      listingId,
+      action: 'relist',
+      source: 'manual',
+      ...(payload.browserMode ? { browserMode: payload.browserMode } : {}),
+    });
+    const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);
+    const previousPlaywrightData = toRecord(previousMarketplaceData['playwright']);
+    await resolved.repository.updateListing(listingId, {
+      marketplaceData: {
+        ...previousMarketplaceData,
+        marketplace: 'playwright-programmable',
+        playwright: {
+          ...previousPlaywrightData,
+          pendingExecution: {
+            requestedBrowserMode: payload.browserMode ?? 'connection_default',
+            requestId: jobId,
+            queuedAt: enqueuedAt,
+          },
+        },
+      },
+    });
+    const response: ProductListingRelistResponse = {
+      queued: true,
+      listingId,
+      queue: {
+        name: 'playwright-programmable-listings',
+        jobId,
+        enqueuedAt,
+      },
+    };
+    return NextResponse.json(response);
+  }
+
+  initializeQueues();
   const jobId = await enqueueTraderaListingJob({
     listingId,
     action: 'relist',
     source: 'manual',
+    ...(payload.browserMode ? { browserMode: payload.browserMode } : {}),
+  });
+  const previousMarketplaceData = toRecord(resolved.listing.marketplaceData);
+  const previousTraderaData = toRecord(previousMarketplaceData['tradera']);
+  await resolved.repository.updateListing(listingId, {
+    marketplaceData: {
+      ...previousMarketplaceData,
+      marketplace: 'tradera',
+      tradera: {
+        ...previousTraderaData,
+        pendingExecution: {
+          requestedBrowserMode: payload.browserMode ?? 'connection_default',
+          requestId: jobId,
+          queuedAt: enqueuedAt,
+        },
+      },
+    },
   });
 
   const response: ProductListingRelistResponse = {

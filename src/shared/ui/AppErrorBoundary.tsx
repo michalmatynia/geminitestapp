@@ -5,22 +5,20 @@ import React from 'react';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { Button } from './button';
 
-const AppErrorFallbackResetContext = React.createContext<(() => void) | null>(null);
-
-function useAppErrorFallbackReset(): () => void {
-  const resetErrorBoundary = React.useContext(AppErrorFallbackResetContext);
-  if (!resetErrorBoundary) {
-    throw new Error(
-      'useAppErrorFallbackReset must be used within AppErrorFallbackResetContext.Provider'
-    );
-  }
-  return resetErrorBoundary;
-}
+const {
+  Context: AppErrorFallbackResetContext,
+  useStrictContext: useAppErrorFallbackReset,
+} = createStrictContext<() => void>({
+  hookName: 'useAppErrorFallbackReset',
+  providerName: 'AppErrorFallbackResetContext.Provider',
+  displayName: 'AppErrorFallbackResetContext',
+});
 
 function AppErrorFallbackTryAgainButton(): React.JSX.Element {
   const resetErrorBoundary = useAppErrorFallbackReset();

@@ -5,9 +5,9 @@ import {
   getDocumentationTooltip,
   getDocumentationTooltipForElement,
 } from '@/features/tooltip-engine/tooltip-content';
-import * as documentation from '@/shared/lib/documentation';
+import * as documentationRegistry from '@/shared/lib/documentation/registry';
 
-vi.mock('@/shared/lib/documentation');
+vi.mock('@/shared/lib/documentation/registry');
 
 describe('tooltip-content', () => {
   describe('formatDocumentationTooltip', () => {
@@ -19,7 +19,7 @@ describe('tooltip-content', () => {
 
   describe('getDocumentationTooltip', () => {
     it('should return formatted tooltip for valid entry', () => {
-      vi.mocked(documentation.getDocumentationEntry).mockReturnValue({
+      vi.mocked(documentationRegistry.getDocumentationEntry).mockReturnValue({
         title: 'Test',
         content: 'Content',
       } as any);
@@ -29,7 +29,7 @@ describe('tooltip-content', () => {
     });
 
     it('should return null if entry not found', () => {
-      vi.mocked(documentation.getDocumentationEntry).mockReturnValue(null);
+      vi.mocked(documentationRegistry.getDocumentationEntry).mockReturnValue(null);
 
       const result = getDocumentationTooltip('products', 'invalid-id');
       expect(result).toBeNull();
@@ -39,7 +39,7 @@ describe('tooltip-content', () => {
   describe('getDocumentationTooltipForElement', () => {
     it('should resolve from element', () => {
       const element = document.createElement('div');
-      vi.mocked(documentation.resolveDocumentationEntryFromElement).mockReturnValue({
+      vi.mocked(documentationRegistry.resolveDocumentationEntryFromElement).mockReturnValue({
         title: 'Element Doc',
         content: 'Element content',
       } as any);
@@ -50,8 +50,8 @@ describe('tooltip-content', () => {
 
     it('should use fallback if element resolution fails', () => {
       const element = document.createElement('div');
-      vi.mocked(documentation.resolveDocumentationEntryFromElement).mockReturnValue(null);
-      vi.mocked(documentation.getDocumentationEntry).mockReturnValue({
+      vi.mocked(documentationRegistry.resolveDocumentationEntryFromElement).mockReturnValue(null);
+      vi.mocked(documentationRegistry.getDocumentationEntry).mockReturnValue({
         title: 'Fallback',
         content: 'Fallback content',
       } as any);
@@ -62,8 +62,8 @@ describe('tooltip-content', () => {
 
     it('should return null if no entry found', () => {
       const element = document.createElement('div');
-      vi.mocked(documentation.resolveDocumentationEntryFromElement).mockReturnValue(null);
-      vi.mocked(documentation.getDocumentationEntry).mockReturnValue(null);
+      vi.mocked(documentationRegistry.resolveDocumentationEntryFromElement).mockReturnValue(null);
+      vi.mocked(documentationRegistry.getDocumentationEntry).mockReturnValue(null);
 
       const result = getDocumentationTooltipForElement('products', element);
       expect(result).toBeNull();

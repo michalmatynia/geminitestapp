@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ImageStudioModelsResponse } from '@/shared/contracts/image-studio/misc';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

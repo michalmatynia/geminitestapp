@@ -28,6 +28,65 @@ export const formatByteCount = (value: number): string => {
   return `${rounded} ${units[unitIndex]}`;
 };
 
+const normalizePositiveInteger = (value: unknown, fallback: number): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+  const normalized = Math.floor(value);
+  return normalized > 0 ? normalized : fallback;
+};
+
+const normalizeNonNegativeInteger = (value: unknown, fallback: number): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+  const normalized = Math.floor(value);
+  return normalized >= 0 ? normalized : fallback;
+};
+
+const resolveCaseResolverConflictRetryConfig = (
+  attempt: number,
+  options?: {
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+    jitterMs?: number;
+  },
+  defaults?: {
+    baseDelayMs: number;
+    maxDelayMs: number;
+    jitterMs: number;
+  }
+): {
+  attempt: number;
+  baseDelayMs: number;
+  maxDelayMs: number;
+  jitterMs: number;
+} => {
+  const normalizedAttempt = normalizePositiveInteger(attempt, 1);
+  const baseDelayMs = normalizePositiveInteger(options?.baseDelayMs, defaults?.baseDelayMs ?? 150);
+  const maxDelayMs = Math.max(
+    baseDelayMs,
+    normalizePositiveInteger(options?.maxDelayMs, defaults?.maxDelayMs ?? 1500)
+  );
+  const jitterMs = normalizeNonNegativeInteger(options?.jitterMs, defaults?.jitterMs ?? 120);
+  return {
+    attempt: normalizedAttempt,
+    baseDelayMs,
+    maxDelayMs,
+    jitterMs,
+  };
+};
+
+const computeExponentialRetryDelayMs = (input: {
+  attempt: number;
+  baseDelayMs: number;
+  maxDelayMs: number;
+}): number =>
+  Math.min(input.maxDelayMs, input.baseDelayMs * Math.pow(2, input.attempt - 1));
+
+const computeRetryJitterMs = (jitterMs: number): number =>
+  jitterMs > 0 ? Math.floor(Math.random() * (jitterMs + 1)) : 0;
+
 export const computeCaseResolverConflictRetryDelayMs = (
   attempt: number,
   options?: {
@@ -41,23 +100,11 @@ export const computeCaseResolverConflictRetryDelayMs = (
     jitterMs: number;
   }
 ): number => {
-  const normalizedAttempt = Number.isFinite(attempt) && attempt > 0 ? Math.floor(attempt) : 1;
-  const baseDelayMs =
-    Number.isFinite(options?.baseDelayMs) && (options?.baseDelayMs ?? 0) > 0
-      ? Math.floor(options?.baseDelayMs ?? 0)
-      : (defaults?.baseDelayMs ?? 150);
-  const maxDelayMs =
-    Number.isFinite(options?.maxDelayMs) && (options?.maxDelayMs ?? 0) > 0
-      ? Math.max(baseDelayMs, Math.floor(options?.maxDelayMs ?? baseDelayMs))
-      : (defaults?.maxDelayMs ?? 1500);
-  const jitterMs =
-    Number.isFinite(options?.jitterMs) && (options?.jitterMs ?? 0) >= 0
-      ? Math.floor(options?.jitterMs ?? 0)
-      : (defaults?.jitterMs ?? 120);
-
-  const exponentialDelay = Math.min(maxDelayMs, baseDelayMs * Math.pow(2, normalizedAttempt - 1));
-  const jitter = jitterMs > 0 ? Math.floor(Math.random() * (jitterMs + 1)) : 0;
-  return exponentialDelay + jitter;
+  const config = resolveCaseResolverConflictRetryConfig(attempt, options, defaults);
+  return (
+    computeExponentialRetryDelayMs(config) +
+    computeRetryJitterMs(config.jitterMs)
+  );
 };
 
 export const createCaseResolverWorkspaceMutationId = (

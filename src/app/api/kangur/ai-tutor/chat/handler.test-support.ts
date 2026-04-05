@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const createRuntimeDocument = (input: {
   entityType: string;

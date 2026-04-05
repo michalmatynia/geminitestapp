@@ -4,16 +4,18 @@ import { ArrowLeft, Eye, EyeOff, Forward, Reply, Trash2 } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DocumentWysiwygEditor } from '@/features/document-editor/public';
+import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import { FilemakerMailSidebar } from '../components/FilemakerMailSidebar';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailThreadHref as buildThreadHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailSelectionHref as buildSelectionHref } from '../mail-ui-helpers';
 import { parseFilemakerMailParticipantsInput } from '../mail-utils';
-import { sanitizeHtml } from '@/shared/utils';
+import { sanitizeHtml } from '@/shared/utils/sanitization';
 
 import type { FilemakerMailParticipant, FilemakerMailThreadDetail } from '../types';
-import { Badge, Button, FormField, FormSection, Input, PanelHeader, useToast } from '@/shared/ui';
+import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
 
 type ThreadResponse = {
   detail: FilemakerMailThreadDetail;
@@ -432,12 +434,11 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                 />
               </FormField>
               <DocumentWysiwygEditor
+                engineInstance='filemaker_email'
+                showBrand
                 value={replyHtml}
                 onChange={setReplyHtml}
                 placeholder='Write your reply...'
-                enableAdvancedTools
-                allowFontFamily
-                allowTextAlign
               />
               <div className='flex justify-end'>
                 <Button

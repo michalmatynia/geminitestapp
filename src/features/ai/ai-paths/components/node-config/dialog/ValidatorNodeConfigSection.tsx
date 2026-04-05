@@ -1,7 +1,8 @@
 'use client';
 
 import { parsePathList } from '@/shared/lib/ai-paths';
-import { Label, SelectSimple, Textarea } from '@/shared/ui';
+import { Label, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

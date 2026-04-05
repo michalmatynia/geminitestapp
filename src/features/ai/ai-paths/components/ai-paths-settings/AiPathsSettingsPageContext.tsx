@@ -1,11 +1,13 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
-import type { AiPathsValidationConfig, DataContractPreflightReport } from '@/shared/lib/ai-paths';
-import type { StatusVariant } from '@/shared/contracts/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import type { DataContractPreflightReport } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
+import type { AiPathsValidationConfig } from '@/shared/lib/ai-paths';
+import type { StatusVariant } from '@/shared/contracts/ui/base';
 
 import type { UseAiPathsSettingsStateReturn } from './types';
 
@@ -20,6 +22,7 @@ export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
   simulationModalOpen: boolean;
   setSimulationModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   savePathConfig: UseAiPathsSettingsStateReturn['handleSave'];
+  diagnosticsReady: boolean;
   normalizedAiPathsValidation: AiPathsValidationConfig;
   nodeValidationEnabled: boolean;
   handleOpenNodeValidator: () => void;
@@ -55,7 +58,13 @@ export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
   handleInspectTraceNode: (nodeId: string, focus: 'all' | 'failed') => Promise<void>;
 };
 
-const AiPathsSettingsPageContext = createContext<AiPathsSettingsPageContextValue | null>(null);
+const { Context: AiPathsSettingsPageContext, useStrictContext: useAiPathsSettingsPageContext } =
+  createStrictContext<AiPathsSettingsPageContextValue>({
+    hookName: 'useAiPathsSettingsPageContext',
+    providerName: 'AiPathsSettingsPageProvider',
+    displayName: 'AiPathsSettingsPageContext',
+    errorFactory: internalError,
+  });
 
 export function AiPathsSettingsPageProvider({
   value,
@@ -70,13 +79,4 @@ export function AiPathsSettingsPageProvider({
     </AiPathsSettingsPageContext.Provider>
   );
 }
-
-export function useAiPathsSettingsPageContext(): AiPathsSettingsPageContextValue {
-  const context = useContext(AiPathsSettingsPageContext);
-  if (!context) {
-    throw internalError(
-      'useAiPathsSettingsPageContext must be used within AiPathsSettingsPageProvider'
-    );
-  }
-  return context;
-}
+export { useAiPathsSettingsPageContext };

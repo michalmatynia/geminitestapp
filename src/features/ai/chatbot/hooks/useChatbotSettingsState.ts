@@ -9,7 +9,7 @@ import {
 } from '@/shared/contracts/chatbot';
 import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/shared/lib/ai/chatbot/constants';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,
   logClientError,

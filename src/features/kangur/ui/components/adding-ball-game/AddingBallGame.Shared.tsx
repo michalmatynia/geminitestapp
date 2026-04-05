@@ -13,32 +13,7 @@ import { KANGUR_ACCENT_STYLES } from '@/features/kangur/ui/design/tokens';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import { usePointerDrag } from './PointerDragProvider';
 import type { DraggableBallProps, BallProps, SlotZoneProps, BallItem } from './types';
-import { getBallSurfaceStyle, getRectDropZoneSurface } from './utils';
-
-const renderBallFace = ({
-  ball,
-  isSelected,
-  sizeClass,
-}: {
-  ball: BallItem;
-  isSelected: boolean;
-  sizeClass: string;
-}): React.JSX.Element => (
-  <div
-    className={cn(
-      'relative flex items-center justify-center overflow-hidden rounded-full border text-white shadow-md select-none transition',
-      sizeClass,
-      isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
-    )}
-    style={getBallSurfaceStyle(ball.color)}
-  >
-    <span className='pointer-events-none absolute inset-x-[18%] top-[14%] h-[20%] rounded-full bg-white/55 blur-[1px]' />
-    <span className='pointer-events-none absolute inset-x-[20%] bottom-[14%] h-[28%] rounded-full bg-black/10 blur-[7px]' />
-    <span className='relative z-10 font-extrabold drop-shadow-[0_1px_2px_rgba(15,23,42,0.35)]'>
-      {ball.num}
-    </span>
-  </div>
-);
+import { getRectDropZoneSurface } from './utils';
 
 export function Ball({
   ball,
@@ -54,7 +29,16 @@ export function Ball({
       ? 'h-16 w-16 text-xl'
       : 'h-14 w-14 text-lg';
 
-  return renderBallFace({ ball, isSelected, sizeClass });
+  return (
+    <div
+      className={cn(
+        `${sizeClass} rounded-full ${ball.color} flex items-center justify-center shadow-md select-none transition`,
+        isSelected && 'ring-2 ring-amber-300/80 ring-offset-2 ring-offset-white'
+      )}
+    >
+      <span className='text-white font-extrabold'>{ball.num}</span>
+    </div>
+  );
 }
 
 export function DraggableBall({
@@ -135,7 +119,6 @@ export function SlotZone({
   const dragDisabled = checked;
   const selectedId = selectedBallId;
   const handleSelectBall = onSelectBall;
-  const sizeClass = isCoarsePointer ? 'h-12 w-12 text-base' : 'h-9 w-9 text-sm';
 
   return (
     <Droppable droppableId={id} direction='horizontal'>
@@ -209,7 +192,12 @@ export function SlotZone({
                           handleSelectBall(ball.id);
                         }}
                       >
-                        {renderBallFace({ ball, isSelected, sizeClass })}
+                        <Ball
+                          ball={ball}
+                          isCoarsePointer={isCoarsePointer}
+                          isSelected={isSelected}
+                          small
+                        />
                       </button>
                     );
 
@@ -245,8 +233,6 @@ export function PointerDraggableBall({
 }: PointerDraggableBallProps): React.JSX.Element {
   const { dragState, startDrag } = usePointerDrag();
   const isDragging = dragState?.ballId === ball.id;
-  const sizeClass = small ? 'h-12 w-12 text-base' : 'h-16 w-16 text-xl';
-
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
       if (isDragDisabled || event.button !== 0) return;
@@ -276,7 +262,7 @@ export function PointerDraggableBall({
       disabled={isDragDisabled}
       onPointerDown={handlePointerDown}
     >
-      {renderBallFace({ ball, isSelected: false, sizeClass })}
+      <Ball ball={ball} isCoarsePointer small={small} />
     </button>
   );
 }

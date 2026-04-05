@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext } from 'react';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {
@@ -9,7 +9,7 @@ import type {
 } from '@/shared/contracts/master-folder-tree';
 import type { IdDataDto } from '@/shared/contracts/base';
 import { internalError } from '@/shared/errors/app-error';
-import type { MasterTreeId } from '@/shared/utils';
+import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
 
 export interface SlotTreeContextValue {
@@ -43,10 +43,12 @@ export interface SlotTreeContextValue {
   deleteSlotMutationPending: boolean;
 }
 
-export const SlotTreeContext = createContext<SlotTreeContextValue | null>(null);
+const { Context: SlotTreeContext, useStrictContext: useSlotTreeContext } =
+  createStrictContext<SlotTreeContextValue>({
+    hookName: 'useSlotTreeContext',
+    providerName: 'SlotTree',
+    displayName: 'SlotTreeContext',
+    errorFactory: internalError,
+  });
 
-export function useSlotTreeContext(): SlotTreeContextValue {
-  const context = useContext(SlotTreeContext);
-  if (!context) throw internalError('useSlotTreeContext must be used within SlotTree');
-  return context;
-}
+export { SlotTreeContext, useSlotTreeContext };

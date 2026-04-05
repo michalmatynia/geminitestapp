@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AdminFrontManagePage } from '@/features/admin/pages/AdminFrontManagePage';
 import { useSettingsMap, useUpdateSetting, useLiteSettingsMap } from '@/shared/hooks/use-settings';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 // Mock shared hooks
 vi.mock('@/shared/hooks/use-settings', () => ({
@@ -22,8 +22,8 @@ const createTestQueryClient = () =>
   });
 
 // Mock useToast
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = (await importOriginal());
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),

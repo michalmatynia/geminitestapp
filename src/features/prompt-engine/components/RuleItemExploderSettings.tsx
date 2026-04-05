@@ -5,8 +5,9 @@ import type {
   PromptExploderCaptureNormalize,
   PromptExploderRuleSegmentType,
 } from '@/shared/lib/prompt-engine/settings';
-import { FormField, Input, SelectSimple } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { Input } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   CAPTURE_APPLY_TO_OPTIONS,

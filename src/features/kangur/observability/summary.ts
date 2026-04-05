@@ -2,10 +2,7 @@ import 'server-only';
 
 import { KANGUR_KNOWLEDGE_GRAPH_KEY } from '@/features/kangur/shared/contracts/kangur-knowledge-graph';
 
-import type {
-  KangurObservabilitySummary,
-  KangurObservabilityRange,
-} from '@/shared/contracts';
+import type { KangurObservabilitySummary, KangurObservabilityRange } from '@/shared/contracts/kangur-observability';
 
 import {
   emptyAnalyticsSnapshot,

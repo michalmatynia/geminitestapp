@@ -1,9 +1,7 @@
-'use client';
-
 import React from 'react';
 
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { VersionNode } from '../context/VersionGraphContext';

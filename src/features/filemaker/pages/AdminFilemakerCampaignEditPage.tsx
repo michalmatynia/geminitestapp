@@ -1,23 +1,20 @@
 'use client';
 
 import React from 'react';
-import {
-  AdminFilemakerBreadcrumbs,
-  Badge,
-  Button,
-  FormActions,
-  SectionHeader,
-} from '@/shared/ui';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { FormActions } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
-import {
-  getFilemakerEmailCampaignDeliveriesForRun,
-  summarizeFilemakerEmailCampaignRunDeliveries,
-} from '../settings';
 import { formatTimestamp } from './filemaker-page-utils';
-import { useAdminFilemakerCampaignEditState } from './AdminFilemakerCampaignEditPage.hooks';
+import {
+  CampaignEditProvider,
+  useCampaignEditContext,
+} from './AdminFilemakerCampaignEditPage.context';
 import {
   CampaignDetailsSection,
   ContentSection,
+  CampaignTestSendSection,
   AudienceSection,
   LaunchSection,
   DeliveryGovernanceSection,
@@ -26,37 +23,28 @@ import {
   RecentRunsSection,
 } from './AdminFilemakerCampaignEditPage.sections';
 
-export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
+function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
   const {
     isCreateMode,
     existingCampaign,
     draft,
-    setDraft,
     launchingMode,
-    suppressionEmailDraft,
-    setSuppressionEmailDraft,
-    suppressionReasonDraft,
-    setSuppressionReasonDraft,
-    suppressionNotesDraft,
-    setSuppressionNotesDraft,
-    organizationOptions,
-    eventOptions,
-    partyOptions,
+    ConfirmationModal,
+    isTestSendPending,
+    selectedMailAccount,
     preview,
-    launchEvaluation,
     recentRuns,
-    suppressionEntries,
-    analytics,
+    nextAutomationAt,
+    schedulerFailureMessage,
     saveCampaign,
     handleLaunch,
-    handleRunStatusChange,
-    handleAddSuppressionEntry,
-    handleRemoveSuppressionEntry,
+    handleDuplicateCampaign,
+    handleToggleArchiveCampaign,
+    handleDeleteCampaign,
     isLoading,
     isUpdatePending,
     router,
-    deliveryRegistry,
-  } = useAdminFilemakerCampaignEditState();
+  } = useCampaignEditContext();
 
   if (!isCreateMode && !existingCampaign && !isLoading) {
     return (
@@ -112,7 +100,44 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
               type='button'
               variant='outline'
               size='sm'
-              disabled={isUpdatePending || launchingMode !== null}
+              disabled={isUpdatePending || launchingMode !== null || isTestSendPending}
+              onClick={(): void => {
+                void handleDuplicateCampaign();
+              }}
+            >
+              Duplicate Campaign
+            </Button>
+            {!isCreateMode ? (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                disabled={isUpdatePending || launchingMode !== null || isTestSendPending}
+                onClick={(): void => {
+                  void handleToggleArchiveCampaign();
+                }}
+              >
+                {draft.status === 'archived' ? 'Restore Draft' : 'Archive Campaign'}
+              </Button>
+            ) : null}
+            {!isCreateMode ? (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                disabled={isUpdatePending || launchingMode !== null || isTestSendPending}
+                onClick={(): void => {
+                  handleDeleteCampaign();
+                }}
+              >
+                Delete Campaign
+              </Button>
+            ) : null}
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              disabled={isUpdatePending || launchingMode !== null || isTestSendPending}
               onClick={(): void => {
                 void handleLaunch('dry_run');
               }}
@@ -149,44 +174,49 @@ export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
         <Badge variant='outline' className='text-[10px]'>
           Last Launch: {formatTimestamp(draft.lastLaunchedAt)}
         </Badge>
+        <Badge variant='outline' className='text-[10px] capitalize'>
+          Automation: {draft.launch.mode}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Delivery Route:{' '}
+          {selectedMailAccount
+            ? `${selectedMailAccount.name}${selectedMailAccount.status === 'active' ? '' : ' (paused)'}`
+            : draft.mailAccountId
+              ? `Missing account (${draft.mailAccountId})`
+              : 'Shared provider'}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Next Due: {nextAutomationAt ? formatTimestamp(nextAutomationAt) : 'Manual only'}
+        </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Last Evaluated: {formatTimestamp(draft.lastEvaluatedAt)}
+        </Badge>
       </div>
 
-      <CampaignDetailsSection draft={draft} setDraft={setDraft} />
-      <ContentSection draft={draft} setDraft={setDraft} />
-      <AudienceSection
-        draft={draft}
-        setDraft={setDraft}
-        eventOptions={eventOptions}
-        organizationOptions={organizationOptions}
-        partyOptions={partyOptions}
-      />
-      <LaunchSection draft={draft} setDraft={setDraft} />
-      <DeliveryGovernanceSection
-        suppressionEntries={suppressionEntries}
-        suppressionEmailDraft={suppressionEmailDraft}
-        setSuppressionEmailDraft={setSuppressionEmailDraft}
-        suppressionReasonDraft={suppressionReasonDraft}
-        setSuppressionReasonDraft={setSuppressionReasonDraft}
-        suppressionNotesDraft={suppressionNotesDraft}
-        setSuppressionNotesDraft={setSuppressionNotesDraft}
-        handleAddSuppressionEntry={() => { void handleAddSuppressionEntry(); }}
-        handleRemoveSuppressionEntry={(email: string) => { void handleRemoveSuppressionEntry(email); }}
-        isUpdatePending={isUpdatePending}
-        unsubscribeLinkTemplate='{{unsubscribe_url}}'
-        preferencesLinkTemplate='{{preferences_url}}'
-        manageAllPreferencesLinkTemplate='{{manage_all_preferences_url}}'
-      />
-      <AudiencePreviewSection preview={preview} launchEvaluation={launchEvaluation} />
-      <CampaignAnalyticsSection analytics={analytics} />
-      <RecentRunsSection
-        recentRuns={recentRuns}
-        deliveryRegistry={deliveryRegistry}
-        getFilemakerEmailCampaignDeliveriesForRun={getFilemakerEmailCampaignDeliveriesForRun}
-        summarizeFilemakerEmailCampaignRunDeliveries={summarizeFilemakerEmailCampaignRunDeliveries}
-        handleRunStatusChange={handleRunStatusChange}
-        isUpdatePending={isUpdatePending}
-        router={router}
-      />
+      {schedulerFailureMessage ? (
+        <div className='rounded-md border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200'>
+          Latest scheduler launch failure: {schedulerFailureMessage}
+        </div>
+      ) : null}
+
+      <CampaignDetailsSection />
+      <ContentSection />
+      <CampaignTestSendSection />
+      <AudienceSection />
+      <LaunchSection />
+      <DeliveryGovernanceSection />
+      <AudiencePreviewSection />
+      <CampaignAnalyticsSection />
+      <RecentRunsSection />
+      <ConfirmationModal />
     </div>
+  );
+}
+
+export function AdminFilemakerCampaignEditPage(): React.JSX.Element {
+  return (
+    <CampaignEditProvider>
+      <AdminFilemakerCampaignEditPageContent />
+    </CampaignEditProvider>
   );
 }

@@ -58,7 +58,7 @@ vi.mock('@/features/kangur/ui/services/game-setup-recommendations', () => ({
   getRecommendedTrainingSetup: getRecommendedTrainingSetupMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameSetupShell', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurGameSetupShell', () => ({
   renderKangurGameSetupShell: ({
     children,
     description,
@@ -81,7 +81,7 @@ vi.mock('@/features/kangur/ui/components/KangurGameSetupShell', () => ({
   ),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTrainingSetupPanel', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurTrainingSetupPanel', () => ({
   KangurTrainingSetupPanel: () => <div data-testid='mock-training-setup-panel'>mock-training-setup-panel</div>,
 }));
 
@@ -89,7 +89,7 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBan
   default: () => <div data-testid='mock-practice-assignment-banner'>mock-practice-assignment-banner</div>,
 }));
 
-import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/KangurGameTrainingSetupWidget';
+import { KangurGameTrainingSetupWidget } from '@/features/kangur/ui/components/game-setup/KangurGameTrainingSetupWidget';
 
 describe('KangurGameTrainingSetupWidget', () => {
   beforeEach(() => {

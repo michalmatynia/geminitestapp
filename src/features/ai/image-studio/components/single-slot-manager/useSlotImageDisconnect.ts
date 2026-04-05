@@ -2,12 +2,10 @@
 
 import { useCallback } from 'react';
 
-import type {
-  ImageStudioSlotDto as ImageStudioSlot,
-  ImageStudioAssetDto as ImageStudioUploadedAsset,
-  StudioSlotsResponse,
-} from '@/shared/contracts/image-studio';
-import { imageStudioSlotResponseSchema } from '@/shared/contracts/image-studio';
+import type { ImageStudioAssetDto as ImageStudioUploadedAsset } from '@/shared/contracts/image-studio/misc';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio/slot';
+import type { ImageStudioSlotDto as ImageStudioSlot } from '@/shared/contracts/image-studio';
+import { imageStudioSlotResponseSchema } from '@/shared/contracts/image-studio/slot';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 

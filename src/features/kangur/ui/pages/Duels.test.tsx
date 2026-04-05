@@ -45,7 +45,7 @@ vi.mock('@/features/kangur/ui/context/KangurLoginModalContext', () => ({
   }),
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: ({ navigation }: { navigation: any }) => {
     navigationSpy(navigation);
     return <div data-testid='kangur-top-navigation' />;

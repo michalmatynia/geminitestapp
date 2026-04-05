@@ -10,12 +10,19 @@ import {
   createPlaywrightPersonaId,
 } from '@/features/playwright/utils/personas';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
-import { AdminSettingsBreadcrumbs, ItemLibrary, useToast } from '@/shared/ui';
+import { AdminSettingsBreadcrumbs } from '@/shared/ui/admin.public';
+import { ItemLibrary } from '@/shared/ui/data-display.public';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import type { SetStateAction } from 'react';
 
-export function PlaywrightPersonasPage(): React.JSX.Element {
+type Props = {
+  /** IDs of personas currently referenced by engine configs (e.g. AI Path nodes, Socials capture). */
+  usedPersonaIds?: ReadonlySet<string>;
+};
+
+export function PlaywrightPersonasPage({ usedPersonaIds }: Props = {}): React.JSX.Element {
   const { toast } = useToast();
 
   const { data: personas = [], isLoading: loading } = usePlaywrightPersonas();
@@ -101,6 +108,9 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
         ];
         if (settings.slowMo > 0) {
           tags.push(`SlowMo: ${settings.slowMo}ms`);
+        }
+        if (usedPersonaIds?.has(persona.id)) {
+          tags.push('In use');
         }
         return tags;
       }}

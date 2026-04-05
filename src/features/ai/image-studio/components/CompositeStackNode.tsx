@@ -7,7 +7,7 @@ import {
   COMPOSITE_LAYER_ROW_HEIGHT,
   getCompositeNodeHeight,
 } from '@/features/ai/image-studio/utils/version-graph';
-import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio/slot';
 
 
 import type { VersionNode } from '../context/VersionGraphContext';

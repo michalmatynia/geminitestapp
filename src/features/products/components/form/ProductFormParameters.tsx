@@ -7,25 +7,21 @@ import { useProductFormMetadata } from '@/features/products/context/ProductFormM
 import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
-import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
-import { insetPanelVariants } from '@/shared/ui';
-import {
-  Alert,
-  Button,
-  FormSection,
-  Input,
-  Label,
-  RadioGroup,
-  RadioGroupItem,
-  SelectSimple,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  Textarea,
-  ToggleRow,
-  CompactEmptyState,
-  LoadingState,
-} from '@/features/products/ui';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
+import { Alert } from '@/shared/ui/alert';
+import { Button } from '@/shared/ui/button';
+import { CompactEmptyState } from '@/shared/ui/empty-state';
+import { FormSection } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { insetPanelVariants } from '@/shared/ui/InsetPanel';
+import { Label } from '@/shared/ui/label';
+import { LoadingState } from '@/shared/ui/LoadingState';
+import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { Textarea } from '@/shared/ui/textarea';
+import { ToggleRow } from '@/shared/ui/toggle-row';
 
 const getParameterLabel = (
   parameter: { name_en: string; name_pl?: string | null; name_de?: string | null },

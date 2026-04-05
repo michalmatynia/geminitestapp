@@ -3,13 +3,10 @@
 import { Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
-import {
-  CompactEmptyState,
-  FormModal,
-  Label,
-  StandardDataTablePanel,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { CompactEmptyState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { FormModal } from '@/shared/ui/forms-and-actions.public';
+import { Label } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
 
 import { StudioActionButtonRow, type StudioActionButtonConfig } from './StudioActionButtonRow';
 import { StudioPromptTextSection } from './StudioPromptTextSection';

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getAgentPersonaById, searchAgentPersonaMemory } from '@/features/ai/agentcreator/server/persona-memory';
 import { agentPersonaMoodIdSchema } from '@/shared/contracts/agents';
 import { personaMemorySourceTypeSchema } from '@/shared/contracts/persona-memory';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import {
   normalizeOptionalQueryString,

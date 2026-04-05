@@ -1,4 +1,5 @@
 'use client';
+
 import { UseQueryResult } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -18,29 +19,20 @@ import {
   useCatalogs,
   useProductImages,
   useProducers,
-} from '@/features/products';
-import type {
-  ProductCategory,
-  ProductTag,
-  ProductParameter,
-  ProductParameterValue,
-  CreateProductDraftInput,
-} from '@/shared/contracts/products';
+} from '@/features/products/forms.public';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductTag } from '@/shared/contracts/products/tags';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
+import type { CreateProductDraftInput } from '@/shared/contracts/products/drafts';
 import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { IconSelector } from '@/shared/lib/icons';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  AppModal,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  useToast,
-  LoadingState,
-  Card,
-} from '@/shared/ui';
+import { AppModal } from '@/shared/ui/feedback.public';
+import { Tabs, TabsContent, TabsList, TabsTrigger, useToast, Card } from '@/shared/ui/primitives.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 

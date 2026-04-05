@@ -1,3 +1,5 @@
+'use client';
+
 import { useLocale, useTranslations } from 'next-intl';
 import KangurRecommendationCard from '@/features/kangur/ui/components/summary-cards/KangurRecommendationCard';
 import { KangurStatusChip } from '@/features/kangur/ui/design/primitives';

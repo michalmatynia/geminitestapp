@@ -1,5 +1,3 @@
-'use client';
-
 import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-tracker';
 import {
   resolveTriggerButtonRunFeedbackPresentation,

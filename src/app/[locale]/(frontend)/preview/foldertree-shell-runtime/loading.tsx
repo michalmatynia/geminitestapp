@@ -1,1 +1,1 @@
-export { default } from '../../../../(frontend)/preview/foldertree-shell-runtime/loading';
+export { default } from '@/app/(frontend)/preview/foldertree-shell-runtime/loading';

@@ -28,7 +28,7 @@ import type {
   TutorHorizontalSide,
   TutorPanelChromeVariant,
   TutorPanelSnapState,
-} from './KangurAiTutorWidget.shared';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
 import type { JSX, PointerEvent, ReactNode } from 'react';
 import type { useKangurAiTutorContent } from '@/features/kangur/ui/context/KangurAiTutorContentContext';
 

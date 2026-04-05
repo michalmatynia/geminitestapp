@@ -1,10 +1,8 @@
-'use client';
-
 import { type Query } from '@tanstack/react-query';
 
 import type { ChatbotJobsResponse } from '@/shared/contracts/chatbot';
-import type { ProductJob } from '@/shared/contracts/integrations';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { ProductJob } from '@/shared/contracts/integrations/domain';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { jobKeys } from '@/shared/lib/query-key-exports';
 
@@ -19,7 +17,7 @@ export function useIntegrationJobs(): ListQuery<ProductJob> {
   const queryKey = jobKeys.integrations();
   return createListQueryV2({
     queryKey,
-    queryFn: getIntegrationJobs,
+    queryFn: ({ signal }) => getIntegrationJobs(signal),
     refetchInterval: (query: Query<ProductJob[], Error, ProductJob[], readonly unknown[]>) => {
       const data = query.state.data;
       if (!Array.isArray(data)) return 5000;

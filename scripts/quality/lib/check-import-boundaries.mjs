@@ -15,6 +15,9 @@ const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']
 // Feature barrel exports — importing from these paths is acceptable
 const BARREL_SUFFIXES = ['/index', '/public', '/server', '/types'];
 
+const isFeatureBarrelSubPath = (subPath) =>
+  BARREL_SUFFIXES.some((s) => subPath === s.replace(/^\//, '')) || /\.public$/.test(subPath);
+
 const INTERNAL_IMPORT_ALLOWLIST = new Set([
   // Add justified cross-feature internal imports here
 ]);
@@ -159,7 +162,7 @@ export const analyzeImportBoundaries = ({ root = process.cwd() } = {}) => {
           featureGraph.get(currentFeature).add(importedFeature);
 
           // Check if it's an internal import (not a barrel)
-          if (subPath && !BARREL_SUFFIXES.some((s) => subPath === s.replace(/^\//, ''))) {
+          if (subPath && !isFeatureBarrelSubPath(subPath)) {
             const allowlistKey = `${relativePath}:${imp.path}`;
             if (!INTERNAL_IMPORT_ALLOWLIST.has(allowlistKey)) {
               issues.push(

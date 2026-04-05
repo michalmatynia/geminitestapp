@@ -1,9 +1,7 @@
-'use client';
-
 import type { JSX, ReactNode } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { FormActions } from './FormActions';
 import { SectionHeader } from './section-header';

@@ -1,44 +1,8 @@
-import type {
-  KangurAssignmentCreateInput,
-  KangurAssignmentListQuery,
-  KangurAssignmentSnapshot,
-  KangurAssignmentUpdateInput,
-  KangurAuthUser,
-  KangurLearnerActivitySnapshot,
-  KangurLearnerActivityStatus,
-  KangurLearnerActivityUpdateInput,
-  KangurLearnerCreateInput,
-  KangurLearnerInteractionHistory,
-  KangurLearnerProfile,
-  KangurLearnerSessionHistory,
-  KangurLearnerUpdateInput,
-  KangurLessonSubject,
-  KangurProgressState,
-  KangurScore,
-  KangurScoreCreateInput,
-} from '@kangur/contracts';
-import type {
-  KangurDuelAnswerInput as KangurDuelAnswerInputContract,
-  KangurDuelCreateInput as KangurDuelCreateInputContract,
-  KangurDuelHeartbeatInput as KangurDuelHeartbeatInputContract,
-  KangurDuelJoinInput as KangurDuelJoinInputContract,
-  KangurDuelLeaderboardResponse as KangurDuelLeaderboardResponseContract,
-  KangurDuelLobbyPresenceResponse as KangurDuelLobbyPresenceResponseContract,
-  KangurDuelLobbyResponse as KangurDuelLobbyResponseContract,
-  KangurDuelOpponentsResponse as KangurDuelOpponentsResponseContract,
-  KangurDuelReactionInput as KangurDuelReactionInputContract,
-  KangurDuelReactionResponse as KangurDuelReactionResponseContract,
-  KangurDuelSearchResponse as KangurDuelSearchResponseContract,
-  KangurDuelSpectatorStateResponse as KangurDuelSpectatorStateResponseContract,
-  KangurDuelLeaveInput as KangurDuelLeaveInputContract,
-  KangurDuelStateResponse as KangurDuelStateResponseContract,
-} from '@kangur/contracts';
-import type {
-  KangurDuelLobbyChatCreateInput as KangurDuelLobbyChatCreateInputContract,
-  KangurDuelLobbyChatListResponse as KangurDuelLobbyChatListResponseContract,
-  KangurDuelLobbyChatMessage as KangurDuelLobbyChatMessageContract,
-  KangurDuelLobbyChatSendResponse as KangurDuelLobbyChatSendResponseContract,
-} from '@kangur/contracts';
+import type { KangurAssignmentCreateInput, KangurAssignmentListQuery, KangurAssignmentSnapshot, KangurAssignmentUpdateInput } from '@kangur/contracts/kangur-assignments';
+import type { KangurAuthUser, KangurLearnerActivitySnapshot, KangurLearnerActivityStatus, KangurLearnerActivityUpdateInput, KangurLearnerCreateInput, KangurLearnerInteractionHistory, KangurLearnerProfile, KangurLearnerSessionHistory, KangurLearnerUpdateInput, KangurProgressState, KangurScore, KangurScoreCreateInput } from '@kangur/contracts/kangur';
+import type { KangurLessonSubject } from '@kangur/contracts/kangur-lesson-constants';
+import type { KangurDuelAnswerInput as KangurDuelAnswerInputContract, KangurDuelCreateInput as KangurDuelCreateInputContract, KangurDuelHeartbeatInput as KangurDuelHeartbeatInputContract, KangurDuelJoinInput as KangurDuelJoinInputContract, KangurDuelLeaderboardResponse as KangurDuelLeaderboardResponseContract, KangurDuelLobbyPresenceResponse as KangurDuelLobbyPresenceResponseContract, KangurDuelLobbyResponse as KangurDuelLobbyResponseContract, KangurDuelOpponentsResponse as KangurDuelOpponentsResponseContract, KangurDuelReactionInput as KangurDuelReactionInputContract, KangurDuelReactionResponse as KangurDuelReactionResponseContract, KangurDuelSearchResponse as KangurDuelSearchResponseContract, KangurDuelSpectatorStateResponse as KangurDuelSpectatorStateResponseContract, KangurDuelLeaveInput as KangurDuelLeaveInputContract, KangurDuelStateResponse as KangurDuelStateResponseContract } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelLobbyChatCreateInput as KangurDuelLobbyChatCreateInputContract, KangurDuelLobbyChatListResponse as KangurDuelLobbyChatListResponseContract, KangurDuelLobbyChatMessage as KangurDuelLobbyChatMessageContract, KangurDuelLobbyChatSendResponse as KangurDuelLobbyChatSendResponseContract } from '@kangur/contracts/kangur-duels-chat';
 
 export type KangurRole = 'admin' | 'user';
 
@@ -47,6 +11,8 @@ export type {
   KangurAssignmentListQuery,
   KangurAssignmentSnapshot,
   KangurAssignmentUpdateInput,
+} from '@kangur/contracts/kangur-assignments';
+export type {
   KangurLearnerActivitySnapshot,
   KangurLearnerActivityStatus,
   KangurLearnerActivityUpdateInput,
@@ -57,7 +23,7 @@ export type {
   KangurLearnerUpdateInput,
   KangurProgressState,
   KangurScoreCreateInput,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur';
 
 export type KangurUser = Omit<KangurAuthUser, 'ownerEmailVerified'> & {
   ownerEmailVerified?: boolean;

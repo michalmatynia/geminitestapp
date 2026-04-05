@@ -16,27 +16,66 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { isDomainZoningEnabled } from './cms-domain';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
 };
 
-const readMongoSetting = async (key: string): Promise<string | null> => {
-  if (!process.env['MONGODB_URI']) return null;
+const readFirstAvailableSettingValue = async (keys: string[]): Promise<string | null> => {
+  if (keys.length === 0 || !process.env['MONGODB_URI']) {
+    return null;
+  }
+
   try {
     const mongo = await getMongoDb();
-    const doc = await mongo
+    const docs = await mongo
       .collection<MongoStringSettingRecord<string | ObjectId>>('settings')
-      .findOne({ $or: [{ _id: toMongoId(key) }, { key }] });
-    return typeof doc?.value === 'string' ? doc.value : null;
+      .find(
+        {
+          $or: [
+            { _id: { $in: keys.map(toMongoId) } },
+            { key: { $in: keys } },
+          ],
+        },
+        {
+          projection: {
+            _id: 1,
+            key: 1,
+            value: 1,
+          },
+        }
+      )
+      .toArray();
+
+    const valuesByKey = new Map<string, string>();
+
+    for (const doc of docs) {
+      if (typeof doc.value !== 'string') {
+        continue;
+      }
+
+      if (typeof doc.key === 'string' && !valuesByKey.has(doc.key)) {
+        valuesByKey.set(doc.key, doc.value);
+      }
+
+      if (typeof doc._id === 'string' && !valuesByKey.has(doc._id)) {
+        valuesByKey.set(doc._id, doc.value);
+      }
+    }
+
+    for (const key of keys) {
+      const resolvedValue = valuesByKey.get(key);
+      if (typeof resolvedValue === 'string') {
+        return resolvedValue;
+      }
+    }
+
+    return null;
   } catch (error) {
     void ErrorSystem.captureException(error);
     return null;
   }
 };
-
-const readSettingValue = async (key: string): Promise<string | null> => readMongoSetting(key);
 
 export const getCmsMenuSettings = cache(async (
   domainId?: string | null,
@@ -45,10 +84,9 @@ export const getCmsMenuSettings = cache(async (
   const zoningEnabled = await isDomainZoningEnabled();
   const scopedDomainId = zoningEnabled ? (domainId ?? null) : null;
   const fallbackKeys = getCmsMenuSettingsFallbackKeys(scopedDomainId, locale);
+  const stored = await readFirstAvailableSettingValue(fallbackKeys);
 
-  const results = await Promise.all(fallbackKeys.map(readSettingValue));
-  for (const stored of results) {
-    if (!stored) continue;
+  if (stored) {
     const parsed = parseJsonSetting<unknown>(stored, null);
     return normalizeMenuSettings(parsed);
   }

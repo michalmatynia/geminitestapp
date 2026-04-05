@@ -8,4 +8,9 @@ describe('filemaker public barrel', () => {
     expect(filemakerPublic.AdminFilemakerMailComposePage).toBeDefined();
     expect(filemakerPublic.AdminFilemakerMailThreadPage).toBeDefined();
   });
+
+  it('exports representative public settings and types', () => {
+    expect(filemakerPublic.listFilemakerPartyOptions).toBeTypeOf('function');
+    expect(filemakerPublic.resolveFilemakerPartyLabel).toBeTypeOf('function');
+  });
 });

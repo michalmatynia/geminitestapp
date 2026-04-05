@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { LoadingPanel } from '@/shared/ui/LoadingPanel';

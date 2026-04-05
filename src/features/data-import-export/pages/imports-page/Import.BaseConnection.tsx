@@ -1,26 +1,18 @@
 'use client';
 
 import React from 'react';
-import {
-  Button,
-  Card,
-  FormField,
-  FormSection,
-  Hint,
-  SelectSimple,
-  StatusBadge,
-  ToggleRow,
-  UI_GRID_RELAXED_CLASSNAME,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, Hint, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { UI_GRID_RELAXED_CLASSNAME, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 import {
   useImportExportActions,
   useImportExportData,
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { CatalogOption, InventoryOption, Template } from '@/shared/contracts/integrations';
+import type { CatalogOption, InventoryOption, Template } from '@/shared/contracts/integrations/import-export';
 import {
   BASE_CONNECTION_PLACEHOLDER_OPTION,
   IMAGE_MODE_OPTIONS,

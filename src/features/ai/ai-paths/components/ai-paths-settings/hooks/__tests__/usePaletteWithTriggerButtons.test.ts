@@ -71,10 +71,12 @@ describe('usePaletteWithTriggerButtons', () => {
     const queryArgs = mockState.createListQueryCalls[0] as {
       queryKey: string[];
       queryFn: () => Promise<unknown>;
+      enabled?: boolean;
       meta: Record<string, unknown>;
     };
 
     expect(queryArgs.queryKey).toEqual(['trigger-buttons']);
+    expect(queryArgs.enabled).toBe(true);
     expect(queryArgs.meta).toEqual({
       source: 'ai.ai-paths.settings.trigger-buttons',
       operation: 'list',
@@ -158,5 +160,15 @@ describe('usePaletteWithTriggerButtons', () => {
       title: 'Trigger: Fresh',
       config: { trigger: { event: 'btn-5' } },
     });
+  });
+
+  it('allows the trigger-button query to stay disabled while the base palette renders', () => {
+    renderHook(() => usePaletteWithTriggerButtons({ enabled: false }));
+
+    expect(mockState.createListQueryCalls).toHaveLength(1);
+    const queryArgs = mockState.createListQueryCalls[0] as {
+      enabled?: boolean;
+    };
+    expect(queryArgs.enabled).toBe(false);
   });
 });

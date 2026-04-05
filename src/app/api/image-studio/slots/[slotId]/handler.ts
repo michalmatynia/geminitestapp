@@ -5,11 +5,8 @@ import {
   deleteImageStudioSlotCascade,
   updateImageStudioSlot,
 } from '@/features/ai/server';
-import {
-  imageStudioSlotDeleteResponseSchema,
-  imageStudioSlotResponseSchema,
-} from '@/shared/contracts/image-studio';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { imageStudioSlotDeleteResponseSchema, imageStudioSlotResponseSchema } from '@/shared/contracts/image-studio/slot';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 

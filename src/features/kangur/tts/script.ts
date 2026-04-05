@@ -1,4 +1,4 @@
-import { stripHtmlToPlainText } from '@/features/document-editor/public';
+import { stripHtmlToPlainText } from '@/shared/lib/document-editor/public';
 import { getKangurLessonActivityDefinition } from '@/features/kangur/lessons/activities';
 import { resolveKangurLessonDocumentPages } from '@/features/kangur/lesson-documents';
 import type {

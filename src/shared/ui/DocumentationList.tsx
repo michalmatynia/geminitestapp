@@ -2,8 +2,8 @@
 
 import React, { type ReactNode, useMemo, useState } from 'react';
 
-import type { DocumentationListItem, DocumentationListVariant } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import type { DocumentationListItem, DocumentationListVariant } from '@/shared/contracts/ui/base';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { DocumentationSection } from './documentation-section';
 import { SearchInput } from './search-input';

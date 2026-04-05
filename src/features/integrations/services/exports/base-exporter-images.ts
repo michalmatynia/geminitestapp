@@ -5,12 +5,8 @@ import path from 'path';
 
 import sharp from 'sharp';
 
-import {
-  type ImageExportLogger,
-  type ImageBase64Mode,
-  type ImageTransformOptions,
-} from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import { type ImageExportLogger, type ImageBase64Mode, type ImageTransformOptions } from '@/shared/contracts/integrations';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

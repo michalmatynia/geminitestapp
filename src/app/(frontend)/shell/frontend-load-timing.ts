@@ -9,6 +9,10 @@ export type FrontendLoadTimingPayload = {
     explicitKangurAlias: boolean;
     canonicalPublicLogin: boolean;
     rootPublicRoute: boolean;
+    requestHeadersTimedOut: boolean;
+    frontPageSelectionSource: string | null;
+    frontPageSelectionFallbackReason: string | null;
+    expectsRootRedirectToKangur: boolean;
     renderStandaloneKangurShell: boolean;
     injectKangurAuthBootstrap: boolean;
     loadKangurStorefrontBootstrap: boolean;

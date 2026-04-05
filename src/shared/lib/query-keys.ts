@@ -36,6 +36,8 @@ export const QUERY_KEYS = {
       catalogs: () => [...QUERY_KEYS.products.metadata.all, 'catalogs'] as const,
       categories: (catalogId: string | null) =>
         [...QUERY_KEYS.products.metadata.all, 'categories', catalogId] as const,
+      shippingGroups: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.metadata.all, 'shipping-groups', catalogId] as const,
       tags: (catalogId: string | null) =>
         [...QUERY_KEYS.products.metadata.all, 'tags', catalogId] as const,
       producers: () => [...QUERY_KEYS.products.metadata.all, 'producers'] as const,
@@ -52,6 +54,8 @@ export const QUERY_KEYS = {
       catalogs: () => [...QUERY_KEYS.products.settings.all, 'catalogs'] as const,
       categories: (catalogId: string | null) =>
         [...QUERY_KEYS.products.settings.all, 'categories', catalogId] as const,
+      shippingGroups: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.settings.all, 'shipping-groups', catalogId] as const,
       tags: (catalogId: string | null) =>
         [...QUERY_KEYS.products.settings.all, 'tags', catalogId] as const,
       parameters: (catalogId: string | null) =>
@@ -108,8 +112,17 @@ export const QUERY_KEYS = {
       ] as const,
     assignments: (options?: { includeArchived?: boolean | undefined }) =>
       [...QUERY_KEYS.kangur.all, 'assignments', { includeArchived: options?.includeArchived ?? false }] as const,
-    socialPosts: (options: { scope: string; limit: number | null }) =>
+    socialPosts: (options: {
+      scope: string;
+      limit?: number | null;
+      page?: number | null;
+      pageSize?: number | null;
+      search?: string | null;
+      status?: string | null;
+    }) =>
       [...QUERY_KEYS.kangur.all, 'social-posts', options] as const,
+    socialPost: (id: string | null) =>
+      [...QUERY_KEYS.kangur.all, 'social-post', id ?? null] as const,
     socialImageAddons: (options: { limit: number | null; ids?: string[] | null }) =>
       [...QUERY_KEYS.kangur.all, 'social-image-addons', options] as const,
     observability: {
@@ -202,6 +215,8 @@ export const QUERY_KEYS = {
     selection: {
       defaultConnection: () =>
         [...QUERY_KEYS.integrations.all, 'base', 'default-connection'] as const,
+      traderaDefaultConnection: () =>
+        [...QUERY_KEYS.integrations.all, 'tradera', 'default-connection'] as const,
       withConnections: () => QUERY_KEYS.integrations.withConnections(),
     },
     marketplace: {

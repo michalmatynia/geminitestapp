@@ -17,11 +17,19 @@ type MockListing = {
 
 let latestDetailsListing: MockListing | null = null;
 let latestActionsListing: MockListing | null = null;
+let latestCardClassName = '';
 
-vi.mock('@/shared/ui', () => ({
-  Card: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid='listing-card'>{children}</div>
-  ),
+vi.mock('@/shared/ui/primitives.public', () => ({
+  Card: ({
+    children,
+    className,
+  }: {
+    children?: React.ReactNode;
+    className?: string;
+  }) => {
+    latestCardClassName = className ?? '';
+    return <div data-testid='listing-card'>{children}</div>;
+  },
 }));
 
 vi.mock(
@@ -48,6 +56,7 @@ describe('renderProductListingItem', () => {
   beforeEach(() => {
     latestDetailsListing = null;
     latestActionsListing = null;
+    latestCardClassName = '';
   });
 
   it('passes the listing directly into details and actions without a runtime provider', () => {
@@ -66,5 +75,7 @@ describe('renderProductListingItem', () => {
     expect(screen.getByTestId('listing-actions')).toHaveTextContent('base');
     expect(latestDetailsListing).toBe(listing);
     expect(latestActionsListing).toBe(listing);
+    expect(latestCardClassName).toContain('flex-col');
+    expect(latestCardClassName).toContain('sm:flex-row');
   });
 });

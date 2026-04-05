@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { SimpleSettingsList, ToggleRow, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
+import { ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { APP_EMBED_OPTIONS } from '../lib/constants';
 

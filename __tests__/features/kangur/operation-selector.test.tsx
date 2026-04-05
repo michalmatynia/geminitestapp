@@ -5,7 +5,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import OperationSelector from '@/features/kangur/ui/components/OperationSelector';
+import OperationSelector from '@/features/kangur/ui/components/game-setup/OperationSelector';
 
 describe('OperationSelector', () => {
   it('highlights parent-assigned operations and surfaces their priority context', () => {

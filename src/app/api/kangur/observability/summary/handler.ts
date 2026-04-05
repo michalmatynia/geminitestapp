@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getKangurObservabilitySummary } from '@/features/kangur/observability/summary';
-import {
-  kangurObservabilityRangeSchema,
-  kangurObservabilitySummaryResponseSchema,
-  type ApiHandlerContext,
-} from '@/shared/contracts';
+import { kangurObservabilityRangeSchema, kangurObservabilitySummaryResponseSchema } from '@/shared/contracts/kangur-observability';
+import { type ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { normalizeOptionalQueryString } from '@/shared/lib/api/query-schema';

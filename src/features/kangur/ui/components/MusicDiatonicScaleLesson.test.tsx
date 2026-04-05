@@ -150,7 +150,7 @@ describe('MusicDiatonicScaleLesson', () => {
     expect(
       screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame}`)
     ).toBeInTheDocument();
-    expect(screen.getByText('Powtorz melodie')).toBeInTheDocument();
+    expect(screen.getByText('Powtórz melodię')).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByTestId(`lesson-hub-section-${MUSIC_DIATONIC_SCALE_SECTION_IDS.repeatGame}`)

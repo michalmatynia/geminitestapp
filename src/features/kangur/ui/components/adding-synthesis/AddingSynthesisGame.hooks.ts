@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useInterval } from '@/features/kangur/shared/hooks/use-interval';
+import { translateKangurMiniGameWithFallback } from '@/features/kangur/ui/constants/mini-game-i18n';
 import { useKangurProgressOwnerKey } from '@/features/kangur/ui/hooks/useKangurProgressOwnerKey';
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
 import {
@@ -21,7 +22,15 @@ import {
   loadProgress,
 } from '@/features/kangur/ui/services/progress';
 import { persistKangurSessionScore } from '@/features/kangur/ui/services/session-score';
+import type { KangurMiniGameFinishProps } from '@/features/kangur/ui/types';
+import { LANE_STYLES } from './AddingSynthesisGame.constants';
 import type { GamePhase, FeedbackState, GameSummary } from './AddingSynthesisGame.types';
+import {
+  resolveAddingSynthesisAccuracy,
+  resolveAddingSynthesisCurrentStage,
+  resolveAddingSynthesisExitLabels,
+  resolveAddingSynthesisViewKind,
+} from './AddingSynthesisGame.utils';
 
 const resolveAddingSynthesisElapsedProgress = ({
   noteElapsedMs,
@@ -314,5 +323,53 @@ export function useAddingSynthesisGameState() {
     currentNote,
     startSession,
     resolveChoice,
+  };
+}
+
+export function useAddingSynthesisSession(props: KangurMiniGameFinishProps) {
+  const state = useAddingSynthesisGameState();
+  const { currentStage, localizedStages } = resolveAddingSynthesisCurrentStage({
+    currentNote: state.currentNote,
+    translations: state.translations,
+  });
+  const accuracy = resolveAddingSynthesisAccuracy({
+    currentIndex: state.currentIndex,
+    feedback: state.feedback,
+    score: state.score,
+  });
+  const t = (
+    key: string,
+    fallback: string,
+    values?: Record<string, string | number>
+  ): string =>
+    translateKangurMiniGameWithFallback(state.translations, key, fallback, values);
+  const { exitLabel, inSessionExitLabel } = resolveAddingSynthesisExitLabels({
+    finishLabel: props.finishLabel,
+    t,
+  });
+  const viewKind = resolveAddingSynthesisViewKind({
+    phase: state.phase,
+    summary: state.summary,
+  });
+  const noteProgress = Math.min(
+    state.noteElapsedMs / ADDING_SYNTHESIS_NOTE_DURATION_MS,
+    1
+  );
+
+  return {
+    ...state,
+    accuracy,
+    currentStage,
+    exitLabel,
+    inSessionExitLabel,
+    introNoteCount: state.notes.length,
+    laneCount: LANE_STYLES.length,
+    localizedStages,
+    noteScale: 1 - noteProgress * 0.08,
+    noteTop: Math.round(noteProgress * 230),
+    onFinish: props.onFinish,
+    t,
+    upcomingNotes: state.notes.slice(state.currentIndex + 1, state.currentIndex + 4),
+    viewKind,
   };
 }

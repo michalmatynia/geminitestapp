@@ -9,7 +9,7 @@ import {
   type KangurLessonMastery,
   type KangurLessonMasteryEntry,
   type KangurProgressState,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
 

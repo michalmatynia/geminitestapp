@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { useEnglishAnimationSurfaceIds } from './EnglishAnimationSurface';
 import { cn } from '@/features/kangur/shared/utils';

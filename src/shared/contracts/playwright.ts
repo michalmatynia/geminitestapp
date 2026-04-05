@@ -108,3 +108,34 @@ export type PlaywrightScriptTemplate = {
   description: string;
   script: string;
 };
+
+/** Generic capture route used by the Playwright engine. Structurally compatible with KangurSocialProgrammableCaptureRoute. */
+export type PlaywrightCaptureRoute = {
+  id: string;
+  title: string;
+  path: string;
+  description: string;
+  selector: string | null;
+  waitForMs: number | null;
+  waitForSelectorMs: number | null;
+};
+
+export type PlaywrightEngineConfig = {
+  personaId: string | null;
+  script: string;
+  routes: PlaywrightCaptureRoute[];
+  baseUrl: string | null;
+};
+
+export type PlaywrightCaptureRouteValidation = {
+  routeId: string;
+  resolvedUrl: string | null;
+  issue: string | null;
+};
+
+export type PlaywrightCaptureValidationResult = {
+  isValid: boolean;
+  issueCount: number;
+  firstIssue: string | null;
+  routes: PlaywrightCaptureRouteValidation[];
+};

@@ -6,6 +6,7 @@ import { catalogSchema } from './catalogs';
 import { priceGroupSchema } from './catalogs';
 import { productCategorySchema } from './categories';
 import { producerSchema } from './producers';
+import { productShippingGroupSchema } from './shipping-groups';
 import { productTagSchema } from './tags';
 
 export const productCurrencySchema = namedDtoSchema.extend({
@@ -14,6 +15,10 @@ export const productCurrencySchema = namedDtoSchema.extend({
 });
 
 export type ProductCurrencyRecord = z.infer<typeof productCurrencySchema>;
+
+export const productImportSourceSchema = z.enum(['base']);
+
+export type ProductImportSource = z.infer<typeof productImportSourceSchema>;
 
 /**
  * Price Group With Details Contract
@@ -136,6 +141,7 @@ export type ResolvedProductParameterValue = z.infer<typeof resolvedProductParame
 export const productSchema = dtoBaseSchema.extend({
   sku: z.string().nullable(),
   baseProductId: z.string().nullable(),
+  importSource: productImportSourceSchema.nullable().optional(),
   defaultPriceGroupId: z.string().nullable(),
   ean: z.string().nullable(),
   gtin: z.string().nullable(),
@@ -159,8 +165,17 @@ export const productSchema = dtoBaseSchema.extend({
   length: z.number().nullable(),
   published: z.boolean(),
   categoryId: z.string().nullable(),
+  shippingGroupId: z.string().nullable().optional(),
   catalogId: z.string(),
   category: productCategorySchema.optional(),
+  shippingGroup: productShippingGroupSchema.optional(),
+  shippingGroupSource: z.enum(['manual', 'category_rule']).nullable().optional(),
+  shippingGroupResolutionReason: z
+    .enum(['manual', 'manual_missing', 'category_rule', 'multiple_category_rules', 'none'])
+    .nullable()
+    .optional(),
+  shippingGroupMatchedCategoryRuleIds: z.array(z.string()).optional(),
+  shippingGroupMatchingGroupNames: z.array(z.string()).optional(),
   tags: z.array(productTagRelationSchema).optional(),
   producers: z.array(productProducerRelationSchema).optional(),
   images: z.array(productImageSchema).optional(),

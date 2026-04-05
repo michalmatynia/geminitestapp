@@ -6,7 +6,7 @@ import { useOptionalContextRegistryPageEnvelope } from '@/features/ai/ai-context
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { type VectorShape, type VectorToolMode } from '@/shared/lib/vector-drawing';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   DEFAULT_MASK_DETECTION_SETTINGS,

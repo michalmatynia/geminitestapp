@@ -11,7 +11,7 @@ import {
 
 import { KangurAiTutorWarmInsetCard } from './KangurAiTutorChrome';
 import { useKangurAiTutorPanelBodyContext } from './KangurAiTutorPanelBody.context';
-import { useKangurAiTutorWidgetStateContext } from './KangurAiTutorWidget.state';
+import { useKangurAiTutorWidgetStateContext } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 import type { HTMLAttributes, JSX, ReactNode } from 'react';
 

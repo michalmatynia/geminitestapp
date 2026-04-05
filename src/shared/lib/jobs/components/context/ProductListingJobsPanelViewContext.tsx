@@ -3,13 +3,26 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 type ProductListingJobsPanelViewContextValue = {
   showBackToProducts: boolean;
 };
 
-const ProductListingJobsPanelViewContext =
-  React.createContext<ProductListingJobsPanelViewContextValue | null>(null);
+export const {
+  Context: ProductListingJobsPanelViewContextInternal,
+  useStrictContext: useProductListingJobsPanelView,
+} = createStrictContext<ProductListingJobsPanelViewContextValue>({
+  hookName: 'useProductListingJobsPanelView',
+  providerName: 'ProductListingJobsPanelViewProvider',
+  displayName: 'ProductListingJobsPanelViewContext',
+  errorFactory: internalError,
+});
+
+export const ProductListingJobsPanelViewContext =
+  ProductListingJobsPanelViewContextInternal as React.Context<
+    ProductListingJobsPanelViewContextValue | null
+  >;
 
 type ProductListingJobsPanelViewProviderProps = {
   value: ProductListingJobsPanelViewContextValue;
@@ -25,14 +38,4 @@ export function ProductListingJobsPanelViewProvider({
       {children}
     </ProductListingJobsPanelViewContext.Provider>
   );
-}
-
-export function useProductListingJobsPanelView(): ProductListingJobsPanelViewContextValue {
-  const context = React.useContext(ProductListingJobsPanelViewContext);
-  if (!context) {
-    throw internalError(
-      'useProductListingJobsPanelView must be used within ProductListingJobsPanelViewProvider'
-    );
-  }
-  return context;
 }

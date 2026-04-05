@@ -23,6 +23,32 @@ const MAX_VALUE_LENGTH = 4000;
 const MAX_STACK_LENGTH = 20000;
 const MAX_CAUSE_DEPTH = 5;
 
+const parseEnvBoolean = (value: string | undefined): boolean | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+
+  if (['0', 'false', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+
+  return null;
+};
+
+const shouldPersistSystemLogsToDatabase = (env: NodeJS.ProcessEnv = process.env): boolean => {
+  const explicit = parseEnvBoolean(env['ENABLE_DEV_SYSTEM_LOG_PERSISTENCE']);
+  if (explicit !== null) {
+    return explicit;
+  }
+
+  return env['NODE_ENV'] !== 'development';
+};
+
 type CreateSystemLogFn = (input: {
   level: SystemLogLevel;
   message: string;
@@ -613,7 +639,9 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           fingerprint: fingerprint ?? null,
           createdAt: new Date().toISOString(),
         });
-        const createSystemLog = await loadCreateSystemLog();
+        const createSystemLog = shouldPersistSystemLogsToDatabase()
+          ? await loadCreateSystemLog()
+          : null;
         if (!createSystemLog) {
           await forwardPromise;
           return;

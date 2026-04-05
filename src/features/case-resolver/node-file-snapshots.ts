@@ -1,9 +1,7 @@
 import { z } from 'zod';
 
-import {
-  type CaseResolverNodeFileSnapshot,
-  caseResolverNodeFileSnapshotSchema,
-} from '@/shared/contracts/case-resolver';
+import { caseResolverNodeFileSnapshotSchema } from '@/shared/contracts/case-resolver/graph';
+import { type CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';

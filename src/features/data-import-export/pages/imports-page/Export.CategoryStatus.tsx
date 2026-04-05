@@ -2,10 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {
-  Badge,
-  Hint,
-} from '@/shared/ui';
+import { Badge } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 import {
   useImportExportState,
 } from '@/features/data-import-export/context/ImportExportContext';
@@ -87,7 +85,7 @@ export function ExportCategoryStatusSection(): React.JSX.Element {
           <span>
             No active mappings found for this connection. Add mappings in{' '}
             <Link
-              href='/admin/integrations/aggregators/base-com/category-mapping'
+              href='/admin/integrations/marketplaces/category-mapper'
               className='text-amber-300 underline'
             >
               Category Mapper

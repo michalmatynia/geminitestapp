@@ -12,6 +12,7 @@ type TraderaListingQueueJobData = {
   action: 'list' | 'relist';
   source?: 'manual' | 'scheduler' | 'api';
   jobId?: string;
+  browserMode?: 'connection_default' | 'headless' | 'headed';
 };
 
 const queue: ManagedQueue<TraderaListingQueueJobData> =

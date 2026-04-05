@@ -1,11 +1,7 @@
 import { ObjectId } from 'mongodb';
 
-import {
-  IntegrationRecord,
-  IntegrationConnectionRecord,
-  ConnectionDeleteOptions,
-  ConnectionDependencyCounts,
-} from '@/shared/contracts/integrations';
+import { IntegrationRecord, IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { ConnectionDeleteOptions, ConnectionDependencyCounts } from '@/shared/contracts/integrations/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
@@ -19,6 +15,7 @@ export const ACTIVE_TEMPLATE_SETTING_KEY = 'base_export_active_template_id';
 export const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 
 export const CONNECTION_DEFAULTS = {
+  traderaBrowserMode: 'builtin' as const,
   playwrightHeadless: true,
   playwrightSlowMo: 0,
   playwrightTimeout: 30000,
@@ -37,6 +34,11 @@ export const CONNECTION_DEFAULTS = {
   playwrightEmulateDevice: false,
   playwrightDeviceName: 'Desktop Chrome',
   playwrightPersonaId: null,
+  playwrightListingScript: null,
+  playwrightImportScript: null,
+  playwrightImportBaseUrl: null,
+  playwrightImportCaptureRoutesJson: null,
+  playwrightFieldMapperJson: null,
   traderaDefaultTemplateId: '',
   traderaDefaultDurationHours: 72,
   traderaAutoRelistEnabled: true,
@@ -164,19 +166,23 @@ export const remapProductSyncProfilesSetting = (
   }
 };
 
-export const toIsoStringOrNull = (value: unknown): string | null => {
-  if (value == null) return null;
+const isValidDate = (value: Date): boolean => Number.isFinite(value.getTime());
+
+const resolveDateLikeValue = (value: unknown): Date | null => {
   if (value instanceof Date) {
-    const timestamp = value.getTime();
-    return Number.isFinite(timestamp) ? value.toISOString() : null;
+    return isValidDate(value) ? value : null;
   }
+
   if (typeof value === 'string' || typeof value === 'number') {
     const parsed = new Date(value);
-    const timestamp = parsed.getTime();
-    return Number.isFinite(timestamp) ? parsed.toISOString() : null;
+    return isValidDate(parsed) ? parsed : null;
   }
+
   return null;
 };
+
+export const toIsoStringOrNull = (value: unknown): string | null =>
+  resolveDateLikeValue(value)?.toISOString() ?? null;
 
 export const toRequiredIsoString = (value: unknown): string =>
   toIsoStringOrNull(value) ?? new Date(0).toISOString();
@@ -256,6 +262,18 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
       (d['playwrightDeviceName'] as string) ?? CONNECTION_DEFAULTS.playwrightDeviceName,
     playwrightPersonaId:
       (d['playwrightPersonaId'] as string) ?? CONNECTION_DEFAULTS.playwrightPersonaId,
+    playwrightListingScript:
+      (d['playwrightListingScript'] as string) ?? CONNECTION_DEFAULTS.playwrightListingScript,
+    playwrightImportScript:
+      (d['playwrightImportScript'] as string) ?? CONNECTION_DEFAULTS.playwrightImportScript,
+    playwrightImportBaseUrl:
+      (d['playwrightImportBaseUrl'] as string) ?? CONNECTION_DEFAULTS.playwrightImportBaseUrl,
+    playwrightImportCaptureRoutesJson:
+      (d['playwrightImportCaptureRoutesJson'] as string) ??
+      CONNECTION_DEFAULTS.playwrightImportCaptureRoutesJson,
+    playwrightFieldMapperJson:
+      (d['playwrightFieldMapperJson'] as string) ??
+      CONNECTION_DEFAULTS.playwrightFieldMapperJson,
     allegroAccessToken: (d['allegroAccessToken'] as string) ?? null,
     allegroRefreshToken: (d['allegroRefreshToken'] as string) ?? null,
     allegroTokenType: (d['allegroTokenType'] as string) ?? null,
@@ -274,6 +292,8 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     baseApiToken: (d['baseApiToken'] as string) ?? null,
     baseTokenUpdatedAt: toIsoStringOrNull(d['baseTokenUpdatedAt']),
     baseLastInventoryId: (d['baseLastInventoryId'] as string) ?? null,
+    traderaBrowserMode:
+      d['traderaBrowserMode'] === 'scripted' ? 'scripted' : CONNECTION_DEFAULTS.traderaBrowserMode,
     traderaDefaultTemplateId:
       (d['traderaDefaultTemplateId'] as string) ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
     traderaDefaultDurationHours:

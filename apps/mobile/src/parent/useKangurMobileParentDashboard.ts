@@ -7,8 +7,8 @@ import type {
   KangurLearnerProfile,
   KangurProgressState,
   KangurScore,
-} from '@kangur/contracts';
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+} from '@kangur/contracts/kangur';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import { useQuery } from '@tanstack/react-query';
 import type { Href } from 'expo-router';
 import { useMemo, useState } from 'react';

@@ -103,7 +103,7 @@ vi.mock('@/features/kangur/ui/services/daily-quests', () => ({
   getCurrentKangurDailyQuest: getCurrentKangurDailyQuestMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/OperationSelector', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/OperationSelector', () => ({
   default: (props: unknown) => {
     operationSelectorPropsMock(props);
     return <div data-testid='mock-operation-selector'>mock-operation-selector</div>;
@@ -132,7 +132,7 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBan
   default: () => <div data-testid='mock-practice-assignment-banner'>assignment-banner</div>,
 }));
 
-import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/KangurGameOperationSelectorWidget';
+import { KangurGameOperationSelectorWidget } from '@/features/kangur/ui/components/game-setup/KangurGameOperationSelectorWidget';
 
 describe('KangurGameOperationSelectorWidget', () => {
   beforeEach(() => {

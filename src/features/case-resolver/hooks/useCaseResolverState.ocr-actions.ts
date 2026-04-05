@@ -1,17 +1,16 @@
+'use client';
+
 import { useCallback } from 'react';
 
 import { buildCombinedOcrText } from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   deriveDocumentContentSync,
   toStorageDocumentValue,
-} from '@/features/document-editor/public';
-import type {
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverScanSlot,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
-import type { Toast } from '@/shared/contracts/ui';
+} from '@/shared/lib/document-editor/public';
+import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverScanSlot } from '@/shared/contracts/case-resolver/ocr';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { Toast } from '@/shared/contracts/ui/base';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 import {

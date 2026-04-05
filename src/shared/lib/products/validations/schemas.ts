@@ -1,11 +1,6 @@
-import {
-  productCreateInputSchema as productCreateSchema,
-  productUpdateInputSchema as productUpdateSchema,
-  productFilterSchema as productFilterDtoSchema,
-  type ProductCreateInput,
-  type ProductFilter as ProductFiltersParsed,
-  type ProductUpdateInput,
-} from '@/shared/contracts/products';
+import { productCreateInputSchema as productCreateSchema, productUpdateInputSchema as productUpdateSchema } from '@/shared/contracts/products/io';
+import { productFilterSchema as productFilterDtoSchema } from '@/shared/contracts/products/filters';
+import { type ProductCreateInput, type ProductFilter as ProductFiltersParsed, type ProductUpdateInput } from '@/shared/contracts/products';
 
 /**
  * Schema for filtering product lists.

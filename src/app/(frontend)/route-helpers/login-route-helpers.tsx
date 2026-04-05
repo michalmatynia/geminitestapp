@@ -10,10 +10,9 @@ import {
   loadSlugRenderData,
   resolveSlugToPage,
 } from '@/app/(frontend)/cms/slug-page-data';
-import { getFrontPageSetting, shouldApplyFrontPageAppSelection } from '@/app/(frontend)/home/home-helpers';
-import { getKangurStorefrontInitialState } from '@/features/kangur/appearance/server/storefront-appearance';
+import { resolveFrontPageSelection } from '@/app/(frontend)/home/home-helpers';
+import { getKangurStorefrontInitialState } from '@/features/kangur/server';
 import { FrontendPublicOwnerKangurShell } from '@/features/kangur/public';
-import { getFrontPagePublicOwner } from '@/shared/lib/front-page-app';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';
 
 import type { Metadata } from 'next';
@@ -25,12 +24,7 @@ type CanonicalLoginRouteOptions = {
 const LOGIN_SLUG = ['login'];
 
 const resolveCanonicalLoginPublicOwner = async (): Promise<'cms' | 'kangur'> => {
-  if (!shouldApplyFrontPageAppSelection()) {
-    return 'cms';
-  }
-
-  const frontPageSetting = await getFrontPageSetting();
-  return getFrontPagePublicOwner(frontPageSetting);
+  return (await resolveFrontPageSelection()).publicOwner;
 };
 
 const resolveCanonicalLoginLocale = (locale?: string | null): string | undefined => {

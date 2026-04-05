@@ -4,6 +4,7 @@ export * from './categories';
 export * from './parameters';
 export * from './producers';
 export * from './product';
+export * from './shipping-groups';
 export * from './tags';
 
 export * from './io';

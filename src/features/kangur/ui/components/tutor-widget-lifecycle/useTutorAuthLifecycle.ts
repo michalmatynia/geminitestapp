@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { KangurAiTutorWidgetState } from '../KangurAiTutorWidget.state';
-import { subscribeToTutorVisibilityChanges } from '../KangurAiTutorWidget.storage';
+import type { KangurAiTutorWidgetState } from '../ai-tutor-widget/KangurAiTutorWidget.state';
+import { subscribeToTutorVisibilityChanges } from '../ai-tutor-widget/KangurAiTutorWidget.storage';
 
 export function useTutorAuthLifecycle({
   authIsAuthenticated,

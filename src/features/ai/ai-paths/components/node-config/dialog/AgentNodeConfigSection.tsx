@@ -4,7 +4,9 @@ import Link from 'next/link';
 
 import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import type { AgentConfig } from '@/shared/lib/ai-paths';
-import { Button, SelectSimple, Textarea, LoadingState, FormField } from '@/shared/ui';
+import { Button, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

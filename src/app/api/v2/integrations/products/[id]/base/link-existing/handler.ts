@@ -7,11 +7,9 @@ import {
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getProductRepository } from '@/features/products/server';
-import {
-  baseProductLinkExistingPayloadSchema,
-  type BaseProductLinkExistingResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { baseProductLinkExistingPayloadSchema } from '@/shared/contracts/integrations/listings';
+import { type BaseProductLinkExistingResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const requestSchema = baseProductLinkExistingPayloadSchema;

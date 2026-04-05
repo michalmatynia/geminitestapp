@@ -3,16 +3,10 @@
 import { Activity, Radar } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  MetadataItem,
-  StatusBadge,
-  SectionHeader,
-  FormSection,
-  CompactEmptyState,
-  Card,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { MetadataItem, SectionHeader, CompactEmptyState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import { useBrain } from '../context/BrainContext';
 

@@ -1,9 +1,7 @@
-'use client';
-
 import React from 'react';
 
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
-import type { SettingsPanelField } from '@/shared/contracts/ui';
+import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 import { FONT_OPTIONS, WEIGHT_OPTIONS } from './theme-constants';
 import { ThemeSettingsFieldsSection } from './ThemeSettingsFieldsSection';

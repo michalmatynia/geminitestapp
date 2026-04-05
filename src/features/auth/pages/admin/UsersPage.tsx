@@ -6,19 +6,11 @@ import React, { useMemo } from 'react';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
-import {
-  Button,
-  StandardDataTablePanel,
-  SelectSimple,
-  StatusBadge,
-  SearchInput,
-  EmptyState,
-  ActionMenu,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  PageLayout,
-  UI_CENTER_ROW_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { SelectSimple, SearchInput, ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { EmptyState, PageLayout, UI_CENTER_ROW_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { MockSignInModal } from '../../components/admin/MockSignInModal';

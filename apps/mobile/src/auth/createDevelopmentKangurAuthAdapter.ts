@@ -8,7 +8,7 @@ import {
   createAnonymousKangurAuthSession,
   createAuthenticatedKangurAuthSession,
 } from '@kangur/platform';
-import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts';
+import { createDefaultKangurAiTutorLearnerMood } from '@kangur/contracts/kangur-ai-tutor-mood';
 import {
   KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
   KANGUR_MOBILE_AUTH_STATUS_STORAGE_KEY,

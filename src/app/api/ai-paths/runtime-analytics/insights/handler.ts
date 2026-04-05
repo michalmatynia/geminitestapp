@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { resolveAiInsightsContextRegistryEnvelope } from '@/features/ai/insights/context-registry/server';
-import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/server';
-import { listAiInsights } from '@/features/ai/insights/server';
-import { startAiInsightsQueue } from '@/features/jobs/server';
+import { generateRuntimeAnalyticsInsight } from '@/features/ai/insights/generator';
+import { listAiInsights } from '@/features/ai/insights/repository';
+import { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 import {
   runtimeAnalyticsInsightsListQuerySchema,
   runtimeAnalyticsInsightRunRequestSchema,
@@ -12,7 +12,7 @@ import {
   type AiInsightsResponse,
 } from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

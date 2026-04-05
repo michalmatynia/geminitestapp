@@ -3,7 +3,9 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, StandardDataTablePanel, MetadataItem } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useLocalRuns, type LocalRunsScope } from '../hooks/useLocalRuns';

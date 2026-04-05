@@ -1,4 +1,9 @@
-import { type AiNode, type DatabaseConfig, type DbQueryConfig } from '@/shared/contracts/ai-paths';
+import {
+  type AiNode,
+  type DatabaseConfig,
+  type DbQueryConfig,
+  type DbSchemaConfig,
+} from '@/shared/contracts/ai-paths';
 
 import { DATABASE_INPUT_PORTS } from '../../constants';
 import { ensureUniquePorts } from '../../utils/graph.ports';
@@ -13,6 +18,14 @@ type DerivedUpdateMapping = {
 const DIRECT_SET_TEMPLATE_REGEX = /^\{\s*"\$set"\s*:\s*\{([\s\S]*)\}\s*\}\s*$/;
 const DIRECT_SET_ASSIGNMENT_REGEX =
   /"([^"]+)"\s*:\s*(?:"{{\s*([^}]+)\s*}}"|{{\s*([^}]+)\s*}})\s*(?=,|$)/g;
+const DEFAULT_DB_SCHEMA_CONFIG: DbSchemaConfig = {
+  provider: 'auto',
+  mode: 'all',
+  collections: [],
+  includeFields: true,
+  includeRelations: true,
+  formatAs: 'text',
+};
 
 const deriveMappingsFromSimpleUpdateTemplate = (
   template: string
@@ -154,18 +167,14 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
 
 export const normalizeDbSchemaNode = (node: AiNode): AiNode => {
   const schemaConfig = node.config?.db_schema;
-  const normalizedProvider = schemaConfig?.provider === 'mongodb' ? 'mongodb' : 'auto';
   return {
     ...node,
     config: {
       ...node.config,
       db_schema: {
-        provider: normalizedProvider,
-        mode: schemaConfig?.mode ?? 'all',
-        collections: schemaConfig?.collections ?? [],
-        includeFields: schemaConfig?.includeFields ?? true,
-        includeRelations: schemaConfig?.includeRelations ?? true,
-        formatAs: schemaConfig?.formatAs ?? 'text',
+        ...DEFAULT_DB_SCHEMA_CONFIG,
+        ...schemaConfig,
+        provider: schemaConfig?.provider === 'mongodb' ? 'mongodb' : 'auto',
       },
     },
   };

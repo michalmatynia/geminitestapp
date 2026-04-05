@@ -13,12 +13,13 @@ import type {
 } from '@/features/case-resolver/capture/public';
 import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver/capture/public';
 import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver/capture/public';
-import { deriveDocumentContentSync, toStorageDocumentValue } from '@/features/document-editor/public';
+import { deriveDocumentContentSync, toStorageDocumentValue } from '@/shared/lib/document-editor/public';
 import { FILEMAKER_DATABASE_KEY, normalizeFilemakerDatabase } from '@/features/filemaker/public';
-import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 
 
 import { resolveCaptureMappingApplyGuardReason } from '../../capture-mapping-apply-guard';

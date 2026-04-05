@@ -24,25 +24,14 @@ import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/public';
+} from '@/shared/lib/foldertree/public';
 import type { AdminNavLeaf, AdminNavNodeEntry } from '@/shared/contracts/admin';
-import {
-  Button,
-  Checkbox,
-  Input,
-  SearchInput,
-  SelectSimple,
-  FormSection,
-  FormField,
-  SectionHeader,
-  StatusBadge,
-  PanelHeader,
-  ToggleRow,
-  FolderTreePanel,
-  UI_GRID_ROOMY_CLASSNAME,
-  insetPanelVariants,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Checkbox, Input } from '@/shared/ui/primitives.public';
+import { SearchInput, SelectSimple, FormSection, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader, FolderTreePanel, UI_GRID_ROOMY_CLASSNAME, insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   AdminMenuSettingsProvider,

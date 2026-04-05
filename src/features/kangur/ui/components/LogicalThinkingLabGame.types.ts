@@ -1,5 +1,3 @@
-'use client';
-
 export type StageId = 'pattern' | 'classify' | 'analogy';
 
 export type PatternZoneId = 'pattern-pool' | 'pattern-slot-1' | 'pattern-slot-2';

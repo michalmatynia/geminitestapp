@@ -7,25 +7,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   authMock,
   getKangurConfiguredLaunchRouteMock,
-  getFrontPagePublicOwnerMock,
-  getFrontPageSettingMock,
-  getKangurStorefrontInitialStateMock,
+  resolveFrontPageSelectionMock,
   notFoundMock,
   permanentRedirectMock,
   redirectMock,
   requireAccessibleKangurSlugRouteMock,
-  shouldApplyFrontPageAppSelectionMock,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
   getKangurConfiguredLaunchRouteMock: vi.fn(),
-  getFrontPagePublicOwnerMock: vi.fn(),
-  getFrontPageSettingMock: vi.fn(),
-  getKangurStorefrontInitialStateMock: vi.fn(),
+  resolveFrontPageSelectionMock: vi.fn(),
   notFoundMock: vi.fn(),
   permanentRedirectMock: vi.fn(),
   redirectMock: vi.fn(),
   requireAccessibleKangurSlugRouteMock: vi.fn(),
-  shouldApplyFrontPageAppSelectionMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', async (importOriginal) => {
@@ -45,12 +39,7 @@ vi.mock('@/features/auth/server', () => ({
 }));
 
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
-  getFrontPageSetting: getFrontPageSettingMock,
-  shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
-}));
-
-vi.mock('@/shared/lib/front-page-app', () => ({
-  getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
+  resolveFrontPageSelection: resolveFrontPageSelectionMock,
 }));
 
 vi.mock('@/features/kangur/server', () => {
@@ -60,44 +49,39 @@ vi.mock('@/features/kangur/server', () => {
   };
 });
 
-vi.mock('@/features/kangur/appearance/server/storefront-appearance', () => ({
-  getKangurStorefrontInitialState: getKangurStorefrontInitialStateMock,
+vi.mock('@/features/kangur/public', () => ({
+  getKangurPublicLaunchHref: (
+    route: string | undefined,
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(searchParams ?? {})) {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        continue;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    }
+
+    if (
+      route === 'dedicated_app' &&
+      slugSegments[0] !== 'games' &&
+      slugSegments[0] !== 'parent-dashboard'
+    ) {
+      query.set('__kangurLaunch', 'dedicated_app');
+    }
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
 }));
-
-vi.mock('@/features/kangur/config/routing', async () => {
-  const actual = await vi.importActual('@/features/kangur/config/routing');
-
-  return {
-    ...actual,
-    getKangurPublicLaunchHref: (
-      route: string | undefined,
-      slugSegments: readonly string[] = [],
-      searchParams?: Record<string, string | string[] | undefined>
-    ) => {
-      const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
-      const query = new URLSearchParams();
-
-      for (const [key, value] of Object.entries(searchParams ?? {})) {
-        if (Array.isArray(value)) {
-          value.forEach((entry) => {
-            query.append(key, entry);
-          });
-          continue;
-        }
-        if (value != null) {
-          query.set(key, value);
-        }
-      }
-
-      if (route === 'dedicated_app' && slugSegments[0] !== 'games' && slugSegments[0] !== 'parent-dashboard') {
-        query.set('__kangurLaunch', 'dedicated_app');
-      }
-
-      const serialized = query.toString();
-      return serialized ? `${pathname}?${serialized}` : pathname;
-    },
-  };
-});
 
 vi.mock('@/app/(frontend)/cms/render', () => ({
   renderCmsPage: vi.fn(),
@@ -122,9 +106,14 @@ describe('frontend slug launch route', () => {
     notFoundMock.mockImplementation(() => {
       throw new Error('notFound');
     });
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
-    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'kangur',
+      publicOwner: 'kangur',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
     authMock.mockResolvedValue(null);
     requireAccessibleKangurSlugRouteMock.mockImplementation(async (slugSegments: readonly string[]) => {
       const slug = slugSegments[0]?.trim().toLowerCase();
@@ -136,10 +125,6 @@ describe('frontend slug launch route', () => {
       if (session?.user?.role !== 'super_admin') {
         notFoundMock();
       }
-    });
-    getKangurStorefrontInitialStateMock.mockResolvedValue({
-      initialMode: 'default',
-      initialThemeSettings: {},
     });
   });
 

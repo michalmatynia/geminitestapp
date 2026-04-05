@@ -1,24 +1,19 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-  type ReactNode,
-} from 'react';
+import React, { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 
-import { useIntegrationListingBadges } from '@/features/integrations/public';
-import { useProductListListingStatuses } from '@/features/products/hooks/product-list/useProductListListingStatuses';
+import { useIntegrationListingBadges } from '@/features/integrations/hooks/useIntegrationOperations';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
+import { useProductListListingStatuses } from '../hooks/product-list/useProductListListingStatuses';
+
+import { useProductListSubContexts } from './hooks/useProductListSubContexts';
 import {
   createProductListRowRuntimeStore,
+  EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT,
   type ProductListRowRuntimeStore,
 } from './hooks/useProductListRowRuntimeStore';
-import { useProductListSubContexts } from './hooks/useProductListSubContexts';
 import type {
   ProductListActionsContextType,
   ProductListAlertsContextType,
@@ -47,195 +42,110 @@ export type {
   ProductListTableContextType,
 } from './ProductListContext.types';
 
-const ProductListFiltersContext = createContext<ProductListFiltersContextType | null>(null);
-const ProductListSelectionContext = createContext<ProductListSelectionContextType | null>(null);
-const ProductListTableContext = createContext<ProductListTableContextType | null>(null);
-const ProductListAlertsContext = createContext<ProductListAlertsContextType | null>(null);
-const ProductListActionsContext = createContext<ProductListActionsContextType | null>(null);
-const ProductListHeaderActionsContext = createContext<ProductListHeaderActionsContextType | null>(
-  null
-);
-const ProductListRowActionsContext = createContext<ProductListRowActionsContextType | null>(null);
-const ProductListRowVisualsContext = createContext<ProductListRowVisualsContextType | null>(null);
-const ProductListRowRuntimeStoreContext = createContext<ProductListRowRuntimeStore | null>(null);
-const ProductListModalsContext = createContext<ProductListModalsContextType | null>(null);
-
 type ProductListProviderValue = ProductListContextType & {
-  triggerListingStatusHighlight: (productId: string) => void;
+  rowRuntimeReady?: boolean;
+  triggerListingStatusHighlight?: (productId: string) => void;
 };
 
-type ProductListRuntimeBridgeProps = {
-  data: ProductListContextType['data'];
-  queuedProductIds: ProductListContextType['queuedProductIds'];
-  productAiRunStatusByProductId: ProductListContextType['productAiRunStatusByProductId'];
-  rowRuntimeStore: ProductListRowRuntimeStore;
-  triggerListingStatusHighlight: (productId: string) => void;
+type ProductListProviderProps = {
+  value: ProductListProviderValue;
+  children: React.ReactNode;
 };
 
-function useProductListRuntimeBridge({
-  data,
-  queuedProductIds,
-  productAiRunStatusByProductId,
-  rowRuntimeStore,
-  triggerListingStatusHighlight,
-}: ProductListRuntimeBridgeProps): void {
-  const visibleProductIds = useMemo(
-    () =>
-      data
-        .map((product) => product.id.trim())
-        .filter((productId) => productId.length > 0),
-    [data]
-  );
-  const visibleProductIdSet = useMemo(() => new Set(visibleProductIds), [visibleProductIds]);
-  const {
-    integrationBadgeIds,
-    integrationBadgeStatuses,
-    traderaBadgeIds,
-    traderaBadgeStatuses,
-  } = useIntegrationListingBadges(visibleProductIds);
-
-  useProductListListingStatuses({
-    data,
-    integrationBadgeStatuses,
-    traderaBadgeStatuses,
-    visibleProductIdSet,
-    triggerJobCompletionHighlight: triggerListingStatusHighlight,
+const createProductListStrictContext = <T,>(hookName: string, displayName: string) =>
+  createStrictContext<T>({
+    hookName,
+    providerName: 'a ProductListProvider',
+    displayName,
+    errorFactory: internalError,
   });
 
-  useEffect(() => {
-    rowRuntimeStore.setState({
-      integrationBadgeIds,
-      integrationBadgeStatuses,
-      traderaBadgeIds,
-      traderaBadgeStatuses,
-      queuedProductIds,
-      productAiRunStatusByProductId,
-    });
-  }, [
-    integrationBadgeIds,
-    integrationBadgeStatuses,
-    productAiRunStatusByProductId,
-    queuedProductIds,
-    rowRuntimeStore,
-    traderaBadgeIds,
-    traderaBadgeStatuses,
-  ]);
-}
+export const {
+  Context: ProductListFiltersContext,
+  useStrictContext: useProductListFiltersContext,
+} = createProductListStrictContext<ProductListFiltersContextType>(
+  'useProductListFiltersContext',
+  'ProductListFiltersContext'
+);
 
-export const useProductListFiltersContext = (): ProductListFiltersContextType => {
-  const context = useContext(ProductListFiltersContext);
-  if (!context) {
-    throw internalError('useProductListFiltersContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const {
+  Context: ProductListSelectionContext,
+  useStrictContext: useProductListSelectionContext,
+} = createProductListStrictContext<ProductListSelectionContextType>(
+  'useProductListSelectionContext',
+  'ProductListSelectionContext'
+);
 
-export const useProductListSelectionContext = (): ProductListSelectionContextType => {
-  const context = useContext(ProductListSelectionContext);
-  if (!context) {
-    throw internalError('useProductListSelectionContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const {
+  Context: ProductListTableContext,
+  useStrictContext: useProductListTableContext,
+} = createProductListStrictContext<ProductListTableContextType>(
+  'useProductListTableContext',
+  'ProductListTableContext'
+);
 
-export const useProductListTableContext = (): ProductListTableContextType => {
-  const context = useContext(ProductListTableContext);
-  if (!context) {
-    throw internalError('useProductListTableContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const {
+  Context: ProductListAlertsContext,
+  useStrictContext: useProductListAlertsContext,
+} = createProductListStrictContext<ProductListAlertsContextType>(
+  'useProductListAlertsContext',
+  'ProductListAlertsContext'
+);
 
-export const useProductListAlertsContext = (): ProductListAlertsContextType => {
-  const context = useContext(ProductListAlertsContext);
-  if (!context) {
-    throw internalError('useProductListAlertsContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const {
+  Context: ProductListActionsContext,
+  useStrictContext: useProductListActionsContext,
+} = createProductListStrictContext<ProductListActionsContextType>(
+  'useProductListActionsContext',
+  'ProductListActionsContext'
+);
 
-export const useProductListActionsContext = (): ProductListActionsContextType => {
-  const context = useContext(ProductListActionsContext);
-  if (!context) {
-    throw internalError('useProductListActionsContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+export const {
+  Context: ProductListHeaderActionsContext,
+  useStrictContext: useProductListHeaderActionsContext,
+} = createProductListStrictContext<ProductListHeaderActionsContextType>(
+  'useProductListHeaderActionsContext',
+  'ProductListHeaderActionsContext'
+);
 
-export const useProductListHeaderActionsContext = (): ProductListHeaderActionsContextType => {
-  const context = useContext(ProductListHeaderActionsContext);
-  if (!context) {
-    throw internalError(
-      'useProductListHeaderActionsContext must be used within a ProductListProvider'
-    );
-  }
-  return context;
-};
+export const {
+  Context: ProductListRowActionsContext,
+  useStrictContext: useProductListRowActionsContext,
+} = createProductListStrictContext<ProductListRowActionsContextType>(
+  'useProductListRowActionsContext',
+  'ProductListRowActionsContext'
+);
 
-export const useProductListRowActionsContext = (): ProductListRowActionsContextType => {
-  const context = useContext(ProductListRowActionsContext);
-  if (!context) {
-    throw internalError(
-      'useProductListRowActionsContext must be used within a ProductListProvider'
-    );
-  }
-  return context;
-};
+export const {
+  Context: ProductListRowVisualsContext,
+  useStrictContext: useProductListRowVisualsContext,
+} = createProductListStrictContext<ProductListRowVisualsContextType>(
+  'useProductListRowVisualsContext',
+  'ProductListRowVisualsContext'
+);
 
-export const useProductListRowVisualsContext = (): ProductListRowVisualsContextType => {
-  const context = useContext(ProductListRowVisualsContext);
-  if (!context) {
-    throw internalError(
-      'useProductListRowVisualsContext must be used within a ProductListProvider'
-    );
-  }
-  return context;
-};
+export const {
+  Context: ProductListModalsContext,
+  useStrictContext: useProductListModalsContext,
+} = createProductListStrictContext<ProductListModalsContextType>(
+  'useProductListModalsContext',
+  'ProductListModalsContext'
+);
 
-export const useProductListRowRuntime = (
-  productId: string,
-  baseProductId: string | null | undefined
-): ProductListRowRuntimeContextType => {
-  const store = useContext(ProductListRowRuntimeStoreContext);
-  if (!store) {
-    throw internalError('useProductListRowRuntime must be used within a ProductListProvider');
-  }
+const {
+  Context: ProductListRowRuntimeStoreContext,
+  useStrictContext: useProductListRowRuntimeStoreContext,
+} = createProductListStrictContext<ProductListRowRuntimeStore>(
+  'useProductListRowRuntimeStoreContext',
+  'ProductListRowRuntimeStoreContext'
+);
 
-  return useSyncExternalStore(
-    store.subscribe,
-    () => store.getSnapshot(productId, baseProductId),
-    () => store.getSnapshot(productId, baseProductId)
-  );
-};
-
-export const useProductListModalsContext = (): ProductListModalsContextType => {
-  const context = useContext(ProductListModalsContext);
-  if (!context) {
-    throw internalError('useProductListModalsContext must be used within a ProductListProvider');
-  }
-  return context;
-};
+const NOOP_TRIGGER_LISTING_STATUS_HIGHLIGHT = (_productId: string): void => {};
 
 export function ProductListProvider({
-  children,
   value,
-}: {
-  children: ReactNode;
-  value: ProductListProviderValue;
-}) {
-  const rowRuntimeStoreRef = useRef<ProductListRowRuntimeStore | null>(null);
-  if (!rowRuntimeStoreRef.current) {
-    rowRuntimeStoreRef.current = createProductListRowRuntimeStore({
-      integrationBadgeIds: value.integrationBadgeIds,
-      integrationBadgeStatuses: value.integrationBadgeStatuses,
-      traderaBadgeIds: value.traderaBadgeIds,
-      traderaBadgeStatuses: value.traderaBadgeStatuses,
-      queuedProductIds: value.queuedProductIds,
-      productAiRunStatusByProductId: value.productAiRunStatusByProductId,
-    });
-  }
-  const rowRuntimeStore = rowRuntimeStoreRef.current;
-
+  children,
+}: ProductListProviderProps): React.JSX.Element {
   const {
     filtersValue,
     selectionValue,
@@ -247,35 +157,90 @@ export function ProductListProvider({
     rowVisualsValue,
     modalsValue,
   } = useProductListSubContexts(value);
-  useProductListRuntimeBridge({
-    data: value.data,
-    queuedProductIds: value.queuedProductIds,
-    productAiRunStatusByProductId: value.productAiRunStatusByProductId,
-    rowRuntimeStore,
-    triggerListingStatusHighlight: value.triggerListingStatusHighlight,
+
+  const productIds = useMemo(() => value.data.map((product) => product.id), [value.data]);
+  const visibleProductIdSet = useMemo(() => new Set(productIds), [productIds]);
+
+  const badgeState = useIntegrationListingBadges(productIds, {
+    enabled: value.rowRuntimeReady ?? true,
   });
 
+  useProductListListingStatuses({
+    data: value.data,
+    integrationBadgeStatuses: badgeState.integrationBadgeStatuses,
+    traderaBadgeStatuses: badgeState.traderaBadgeStatuses,
+    playwrightProgrammableBadgeStatuses: badgeState.playwrightProgrammableBadgeStatuses,
+    visibleProductIdSet,
+    triggerJobCompletionHighlight:
+      value.triggerListingStatusHighlight ?? NOOP_TRIGGER_LISTING_STATUS_HIGHLIGHT,
+  });
+
+  const rowRuntimeStoreState = useMemo(
+    () => ({
+      integrationBadgeIds: badgeState.integrationBadgeIds,
+      integrationBadgeStatuses: badgeState.integrationBadgeStatuses,
+      traderaBadgeIds: badgeState.traderaBadgeIds,
+      traderaBadgeStatuses: badgeState.traderaBadgeStatuses,
+      playwrightProgrammableBadgeIds: badgeState.playwrightProgrammableBadgeIds,
+      playwrightProgrammableBadgeStatuses: badgeState.playwrightProgrammableBadgeStatuses,
+      queuedProductIds: value.queuedProductIds,
+      productAiRunStatusByProductId: value.productAiRunStatusByProductId,
+    }),
+    [
+      badgeState.integrationBadgeIds,
+      badgeState.integrationBadgeStatuses,
+      badgeState.traderaBadgeIds,
+      badgeState.traderaBadgeStatuses,
+      badgeState.playwrightProgrammableBadgeIds,
+      badgeState.playwrightProgrammableBadgeStatuses,
+      value.queuedProductIds,
+      value.productAiRunStatusByProductId,
+    ]
+  );
+
+  const rowRuntimeStoreRef = useRef<ProductListRowRuntimeStore | null>(null);
+  if (!rowRuntimeStoreRef.current) {
+    rowRuntimeStoreRef.current = createProductListRowRuntimeStore(rowRuntimeStoreState);
+  }
+
+  useEffect(() => {
+    rowRuntimeStoreRef.current?.setState(rowRuntimeStoreState);
+  }, [rowRuntimeStoreState]);
+
   return (
-    <ProductListFiltersContext.Provider value={filtersValue}>
-      <ProductListSelectionContext.Provider value={selectionValue}>
-        <ProductListAlertsContext.Provider value={alertsValue}>
+    <ProductListAlertsContext.Provider value={alertsValue}>
+      <ProductListFiltersContext.Provider value={filtersValue}>
+        <ProductListSelectionContext.Provider value={selectionValue}>
           <ProductListTableContext.Provider value={tableValue}>
             <ProductListActionsContext.Provider value={actionsValue}>
               <ProductListHeaderActionsContext.Provider value={headerActionsValue}>
                 <ProductListRowActionsContext.Provider value={rowActionsValue}>
-                  <ProductListRowRuntimeStoreContext.Provider value={rowRuntimeStore}>
-                    <ProductListRowVisualsContext.Provider value={rowVisualsValue}>
+                  <ProductListRowVisualsContext.Provider value={rowVisualsValue}>
+                    <ProductListRowRuntimeStoreContext.Provider value={rowRuntimeStoreRef.current}>
                       <ProductListModalsContext.Provider value={modalsValue}>
                         {children}
                       </ProductListModalsContext.Provider>
-                    </ProductListRowVisualsContext.Provider>
-                  </ProductListRowRuntimeStoreContext.Provider>
+                    </ProductListRowRuntimeStoreContext.Provider>
+                  </ProductListRowVisualsContext.Provider>
                 </ProductListRowActionsContext.Provider>
               </ProductListHeaderActionsContext.Provider>
             </ProductListActionsContext.Provider>
           </ProductListTableContext.Provider>
-        </ProductListAlertsContext.Provider>
-      </ProductListSelectionContext.Provider>
-    </ProductListFiltersContext.Provider>
+        </ProductListSelectionContext.Provider>
+      </ProductListFiltersContext.Provider>
+    </ProductListAlertsContext.Provider>
+  );
+}
+
+export function useProductListRowRuntime(
+  productId: string,
+  baseProductId: string | null | undefined
+): ProductListRowRuntimeContextType {
+  const store = useProductListRowRuntimeStoreContext();
+
+  return useSyncExternalStore(
+    store.subscribe,
+    () => store.getSnapshot(productId, baseProductId),
+    () => EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT
   );
 }

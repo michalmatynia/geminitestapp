@@ -8,7 +8,7 @@ import {
   deleteImageStudioSlotCascade,
   listImageStudioSlots,
 } from '@/features/ai/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { studioRoot } from '@/shared/lib/files/server-constants';
@@ -81,58 +81,134 @@ type DeleteFolderResult = {
   warnings: string[];
 };
 
-export async function DELETE_handler(
-  _req: NextRequest,
-  _ctx: ApiHandlerContext,
+type DeleteFolderProgress = {
+  deletedSlotIds: Set<string>;
+  failedRootSlotIds: string[];
+  warnings: string[];
+};
+
+const createDeleteFolderProgress = (): DeleteFolderProgress => ({
+  deletedSlotIds: new Set<string>(),
+  failedRootSlotIds: [],
+  warnings: [],
+});
+
+const validateProjectFolderDeleteRequest = (
+  ctx: ApiHandlerContext,
   params: { projectId: string }
-): Promise<Response> {
+): { projectId: string; safeFolder: string } => {
   const projectId = sanitizeProjectId(params.projectId);
   if (!projectId) throw badRequestError('Project id is required');
 
-  const query = (_ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
+  const query = (ctx.query ?? {}) as z.infer<typeof deleteQuerySchema>;
   const safeFolder = sanitizeFolderPath(query.folder ?? '');
   if (!safeFolder) {
     throw badRequestError('Folder query param is required');
   }
 
+  return { projectId, safeFolder };
+};
+
+const listTargetFolderRootSlots = async ({
+  projectId,
+  safeFolder,
+}: {
+  projectId: string;
+  safeFolder: string;
+}) => {
   const slots = await listImageStudioSlots(projectId);
-  const targetRootSlots = slots.filter((slot) =>
-    isTreePathWithin(slot.folderPath ?? '', safeFolder)
-  );
+  return slots.filter((slot) => isTreePathWithin(slot.folderPath ?? '', safeFolder));
+};
 
-  const deletedSlotIds = new Set<string>();
-  const failedRootSlotIds: string[] = [];
-  const warnings: string[] = [];
+const applyDeletedFolderSlotIds = ({
+  deletedSlotIds,
+  result,
+}: {
+  deletedSlotIds: Set<string>;
+  result: Awaited<ReturnType<typeof deleteImageStudioSlotCascade>>;
+}): boolean => {
+  const nextDeletedSlotIds = result.deletedSlotIds ?? [];
+  if (nextDeletedSlotIds.length === 0) {
+    return false;
+  }
+  nextDeletedSlotIds.forEach((deletedSlotId) => {
+    deletedSlotIds.add(deletedSlotId);
+  });
+  return true;
+};
 
+const deleteTargetFolderRootSlot = async ({
+  deletedSlotIds,
+  slotId,
+}: {
+  deletedSlotIds: Set<string>;
+  slotId: string;
+}): Promise<boolean> => {
+  const result = await deleteImageStudioSlotCascade(slotId);
+  return applyDeletedFolderSlotIds({ deletedSlotIds, result });
+};
+
+const deleteTargetFolderRootSlots = async (
+  targetRootSlots: Array<{ id: string }>,
+  progress: DeleteFolderProgress
+): Promise<void> => {
   for (const slot of targetRootSlots) {
-    if (deletedSlotIds.has(slot.id)) continue;
+    if (progress.deletedSlotIds.has(slot.id)) {
+      continue;
+    }
     try {
-      const result = await deleteImageStudioSlotCascade(slot.id);
-      if ((result.deletedSlotIds ?? []).length === 0) {
-        failedRootSlotIds.push(slot.id);
-        continue;
-      }
-      (result.deletedSlotIds ?? []).forEach((deletedSlotId) => {
-        deletedSlotIds.add(deletedSlotId);
+      const deleted = await deleteTargetFolderRootSlot({
+        deletedSlotIds: progress.deletedSlotIds,
+        slotId: slot.id,
       });
+      if (!deleted) {
+        progress.failedRootSlotIds.push(slot.id);
+      }
     } catch (error) {
       void ErrorSystem.captureException(error);
-      failedRootSlotIds.push(slot.id);
+      progress.failedRootSlotIds.push(slot.id);
     }
   }
+};
 
-  if (failedRootSlotIds.length > 0) {
-    warnings.push(`Some cards in folder "${safeFolder}" could not be deleted.`);
+const finalizeDeleteFolderResult = ({
+  progress,
+  safeFolder,
+  targetSlotCount,
+}: {
+  progress: DeleteFolderProgress;
+  safeFolder: string;
+  targetSlotCount: number;
+}): DeleteFolderResult => {
+  if (progress.failedRootSlotIds.length > 0) {
+    progress.warnings.push(`Some cards in folder "${safeFolder}" could not be deleted.`);
   }
 
-  const payload: DeleteFolderResult = {
+  return {
     ok: true,
     folder: safeFolder,
-    targetSlotCount: targetRootSlots.length,
-    deletedSlotIds: Array.from(deletedSlotIds),
-    failedRootSlotIds,
-    warnings,
+    targetSlotCount,
+    deletedSlotIds: Array.from(progress.deletedSlotIds),
+    failedRootSlotIds: progress.failedRootSlotIds,
+    warnings: progress.warnings,
   };
+};
+
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { projectId: string }
+): Promise<Response> {
+  const { projectId, safeFolder } = validateProjectFolderDeleteRequest(_ctx, params);
+  const targetRootSlots = await listTargetFolderRootSlots({ projectId, safeFolder });
+  const progress = createDeleteFolderProgress();
+  await deleteTargetFolderRootSlots(targetRootSlots, progress);
+
+  const payload = finalizeDeleteFolderResult({
+    progress,
+    safeFolder,
+    targetSlotCount: targetRootSlots.length,
+  });
   z.unknown().parse(payload);
 
   return NextResponse.json(payload);

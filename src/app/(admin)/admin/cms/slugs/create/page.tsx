@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import CreateSlugPage from '@/features/cms/pages/slugs/CreateSlugPage';
+import { CreateSlugPage } from '@/features/cms/public';
 import { LoadingState } from '@/shared/ui/LoadingState';
 
 export default function Page(): JSX.Element {

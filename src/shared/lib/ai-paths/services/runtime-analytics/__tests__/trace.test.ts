@@ -102,7 +102,7 @@ describe('runtime trace analytics', () => {
                   registry: 1,
                   override: 1,
                 },
-                codeObjectIds: ['code-1', 'code-2'],
+                codeObjectIds: ['code-1', 'code-2', 'code-1'],
               },
             },
           },
@@ -173,6 +173,33 @@ describe('runtime trace analytics', () => {
       },
       truncated: true,
     });
+  });
+
+  it('counts cached spans without treating them as failures', () => {
+    const summary = summarizeRuntimeTraceAnalytics({
+      runs: [
+        {
+          id: 'run-cached',
+          meta: {
+            runtimeTrace: {
+              spans: [
+                {
+                  spanId: 'span-cached',
+                  nodeId: 'node-cache',
+                  nodeType: 'fetcher',
+                  status: 'cached',
+                  durationMs: 15,
+                },
+              ],
+            },
+          },
+        },
+      ] as never,
+    });
+
+    expect(summary.cachedSpans).toBe(1);
+    expect(summary.failedSpans).toBe(0);
+    expect(summary.topFailedNodes).toEqual([]);
   });
 
   it('loads trace analytics from the repository and falls back to empty traces on errors', async () => {

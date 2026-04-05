@@ -1,3 +1,5 @@
+import { handleLinkedinApiTest } from './handler.linkedin';
+import { handleTraderaApiTest } from './handler.tradera-api';
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium, devices, type BrowserContextOptions } from 'playwright';
 
@@ -5,38 +7,37 @@ import {
   isTraderaApiIntegrationSlug,
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
+import {
+  DEFAULT_TRADERA_SYSTEM_SETTINGS,
+  normalizeTraderaListingFormUrl,
+} from '@/features/integrations/constants/tradera';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
-import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api-client';
 import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
-import type { PersistedStorageState } from '@/features/integrations/services/tradera-playwright-settings';
+import { validateTraderaQuickListProductConfig } from '@/features/integrations/services/tradera-listing/preflight';
 import {
-  integrationConnectionTestRequestSchema,
-  type IntegrationConnectionTestRequest,
-  type TestConnectionResponse,
-  type TestLogEntry,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { internalError } from '@/shared/errors/app-error';
+  resolveConnectionPlaywrightSettings,
+  type PersistedStorageState,
+} from '@/features/integrations/services/tradera-playwright-settings';
+import { integrationConnectionTestRequestSchema } from '@/shared/contracts/integrations/session-testing';
+import { type IntegrationConnectionTestRequest, type TestConnectionResponse, type TestLogEntry } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+import { internalError, isAppError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEFAULT_MANUAL_LOGIN_TIMEOUT_MS = 240000;
 const MAX_MANUAL_LOGIN_TIMEOUT_MS = 600000;
+const QUICKLIST_AUTH_REQUIRED_DETAIL =
+  'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.';
+const TRADERA_LISTING_FORM_URL = normalizeTraderaListingFormUrl(
+  DEFAULT_TRADERA_SYSTEM_SETTINGS.listingFormUrl
+);
 
-const toPositiveInt = (value: unknown): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return Math.floor(value);
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed);
-  }
-  return null;
-};
 
 /**
  * POST /api/v2/integrations/[id]/connections/[connectionId]/test
@@ -60,13 +61,23 @@ export async function postTestConnectionHandler(
     requestBody = parsedBody.data;
   }
 
-  const mode = requestBody.mode === 'manual' ? 'manual' : 'auto';
+  const mode =
+    requestBody.mode === 'manual'
+      ? 'manual'
+      : requestBody.mode === 'quicklist_preflight'
+        ? 'quicklist_preflight'
+        : 'auto';
   const manualMode = mode === 'manual';
+  const quicklistPreflightMode = mode === 'quicklist_preflight';
   const rawManualTimeout = requestBody.manualTimeoutMs;
   const manualLoginTimeoutMs =
     typeof rawManualTimeout === 'number' && Number.isFinite(rawManualTimeout)
       ? Math.max(30_000, Math.min(MAX_MANUAL_LOGIN_TIMEOUT_MS, Math.floor(rawManualTimeout)))
       : DEFAULT_MANUAL_LOGIN_TIMEOUT_MS;
+  const requestedProductId =
+    typeof requestBody.productId === 'string' && requestBody.productId.trim().length > 0
+      ? requestBody.productId.trim()
+      : null;
 
   const pushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => {
     steps.push({
@@ -119,163 +130,11 @@ export async function postTestConnectionHandler(
   }
 
   if (isTraderaApiIntegrationSlug(integration.slug)) {
-    if (manualMode) {
-      pushStep('Manual mode', 'ok', 'Manual login mode does not apply to Tradera API connections.');
-    }
-
-    pushStep('Decrypting credentials', 'pending', 'Validating Tradera API credentials');
-    const appId = toPositiveInt(connection.traderaApiAppId);
-    const userId = toPositiveInt(connection.traderaApiUserId);
-    const encryptedAppKey = connection.traderaApiAppKey;
-    const encryptedToken = connection.traderaApiToken;
-
-    if (!appId) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API App ID is missing. Update the connection first.'
-      );
-    }
-    if (!userId) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API User ID is missing. Update the connection first.'
-      );
-    }
-    if (!encryptedAppKey) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API App Key is missing. Update the connection first. Password fallback is disabled.'
-      );
-    }
-    if (!encryptedToken) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API token is missing. Update the connection first. Password fallback is disabled.'
-      );
-    }
-
-    let appKey: string;
-    let token: string;
-    try {
-      appKey = decryptSecret(encryptedAppKey).trim();
-      token = decryptSecret(encryptedToken).trim();
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return fail(
-        'Decrypting credentials',
-        `Unable to decrypt Tradera API credentials: ${message}`
-      );
-    }
-    if (!appKey || !token) {
-      return fail('Decrypting credentials', 'Tradera API credentials are empty after decryption.');
-    }
-    pushStep('Decrypting credentials', 'ok', 'Tradera API credentials decrypted');
-
-    pushStep('Testing API connection', 'pending', 'Calling RestrictedService.GetUserInfo');
-    try {
-      const profile = await getTraderaUserInfo({
-        appId,
-        appKey,
-        userId,
-        token,
-        sandbox: connection.traderaApiSandbox ?? false,
-      });
-      await repo.updateConnection(connection.id, {
-        traderaApiTokenUpdatedAt: new Date(),
-      });
-      pushStep(
-        'Testing API connection',
-        'ok',
-        profile.alias
-          ? `Authenticated as ${profile.alias}.`
-          : `Authenticated as user ${profile.userId}.`
-      );
-      const response: TestConnectionResponse = {
-        ok: true,
-        steps,
-        profile,
-      };
-
-      return NextResponse.json(response);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return fail('Testing API connection', message);
-    }
+    return handleTraderaApiTest(connection, repo, manualMode, steps, pushStep, fail);
   }
 
   if (integration.slug === 'linkedin') {
-    pushStep('Checking LinkedIn token', 'pending', 'Validating LinkedIn access token');
-    const encryptedToken = connection.linkedinAccessToken?.trim();
-    if (!encryptedToken) {
-      return fail(
-        'Checking LinkedIn token',
-        'LinkedIn access token is missing. Authorize LinkedIn in Admin > Integrations.'
-      );
-    }
-
-    let accessToken: string;
-    try {
-      accessToken = decryptSecret(encryptedToken).trim();
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      return fail(
-        'Checking LinkedIn token',
-        'Unable to decrypt LinkedIn access token. Reauthorize LinkedIn in Admin > Integrations.'
-      );
-    }
-    if (!accessToken) {
-      return fail('Checking LinkedIn token', 'LinkedIn access token is empty after decryption.');
-    }
-
-    const expiresAtValue = connection.linkedinExpiresAt;
-    const expiresAt =
-      typeof expiresAtValue === 'string'
-        ? expiresAtValue.trim()
-        : expiresAtValue instanceof Date
-          ? expiresAtValue.toISOString()
-          : '';
-    if (expiresAt) {
-      const expiresMs =
-        expiresAtValue instanceof Date ? expiresAtValue.getTime() : Date.parse(expiresAt);
-      if (!Number.isNaN(expiresMs) && expiresMs < Date.now()) {
-        return fail(
-          'Checking LinkedIn token',
-          `LinkedIn access token expired at ${expiresAt}. Reauthorize LinkedIn in Admin > Integrations.`
-        );
-      }
-    }
-    pushStep('Checking LinkedIn token', 'ok', 'Token present and not expired');
-
-    pushStep('Testing LinkedIn API', 'pending', 'Calling LinkedIn /v2/userinfo endpoint');
-    try {
-      const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!profileRes.ok) {
-        const body = await profileRes.text().catch(() => '');
-        return fail(
-          'Testing LinkedIn API',
-          `LinkedIn API returned ${profileRes.status}: ${body.slice(0, 200)}`
-        );
-      }
-      const profile = await profileRes.json() as { sub?: string; name?: string };
-      const personUrn = connection.linkedinPersonUrn ?? (profile.sub ? `urn:li:person:${profile.sub}` : null);
-      const displayName = profile.name ?? personUrn ?? 'Unknown';
-      pushStep('Testing LinkedIn API', 'ok', `Authenticated as ${displayName}`);
-
-      const response: TestConnectionResponse = {
-        ok: true,
-        steps,
-        profile: { alias: displayName },
-      };
-      return NextResponse.json(response);
-    } catch (error) {
-      void ErrorSystem.captureException(error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return fail('Testing LinkedIn API', message);
-    }
+    return handleLinkedinApiTest(connection, steps, pushStep, fail);
   }
 
   if (!isTraderaBrowserIntegrationSlug(integration.slug)) {
@@ -289,6 +148,9 @@ export async function postTestConnectionHandler(
   if (manualMode) {
     pushStep('Manual mode', 'ok', `Manual login enabled (timeout ${manualLoginTimeoutMs}ms).`);
   }
+  if (quicklistPreflightMode) {
+    pushStep('Quicklist preflight', 'ok', 'Fast stored-session validation enabled.');
+  }
 
   // Decrypt to ensure credentials are readable with the configured key.
   pushStep(
@@ -297,18 +159,21 @@ export async function postTestConnectionHandler(
     'Validating encryption key and decrypting password'
   );
   const encryptedPassword = connection.password;
-  if (!manualMode && !encryptedPassword) {
+  if (!manualMode && !quicklistPreflightMode && !encryptedPassword) {
     return fail('Decrypting credentials', 'No encrypted password configured for this connection.');
   }
   const loginUsername = connection.username;
-  if (!manualMode && !loginUsername) {
+  if (!manualMode && !quicklistPreflightMode && !loginUsername) {
     return fail('Decrypting credentials', 'No username configured for this connection.');
   }
-  const decryptedPassword = manualMode ? '' : decryptSecret(encryptedPassword as string);
+  const decryptedPassword =
+    manualMode || quicklistPreflightMode ? '' : decryptSecret(encryptedPassword as string);
   pushStep(
     'Decrypting credentials',
     'ok',
-    manualMode ? 'Skipped in manual mode.' : 'Password decrypted successfully'
+    manualMode || quicklistPreflightMode
+      ? 'Skipped in non-credential mode.'
+      : 'Password decrypted successfully'
   );
 
   let storedState: PersistedStorageState | null = null;
@@ -341,43 +206,79 @@ export async function postTestConnectionHandler(
     }
   }
 
-  const configuredHeadless = connection.playwrightHeadless ?? true;
-  const headless = manualMode ? false : configuredHeadless;
-  const slowMo = connection.playwrightSlowMo ?? 0;
-  const defaultTimeout = connection.playwrightTimeout ?? 15000;
-  const navigationTimeout = connection.playwrightNavigationTimeout ?? 30000;
-  const humanizeMouse = connection.playwrightHumanizeMouse ?? false;
-  const mouseJitter = Math.max(0, connection.playwrightMouseJitter ?? 0);
-  const clickDelayMin = Math.max(0, connection.playwrightClickDelayMin ?? 0);
-  const clickDelayMax = Math.max(
-    clickDelayMin,
-    connection.playwrightClickDelayMax ?? clickDelayMin
-  );
-  const inputDelayMin = Math.max(0, connection.playwrightInputDelayMin ?? 0);
-  const inputDelayMax = Math.max(
-    inputDelayMin,
-    connection.playwrightInputDelayMax ?? inputDelayMin
-  );
-  const actionDelayMin = Math.max(0, connection.playwrightActionDelayMin ?? 0);
-  const actionDelayMax = Math.max(
-    actionDelayMin,
-    connection.playwrightActionDelayMax ?? actionDelayMin
-  );
-  const proxyEnabled = connection.playwrightProxyEnabled ?? false;
-  const proxyServer = connection.playwrightProxyServer?.trim() ?? '';
-  const proxyUsername = connection.playwrightProxyUsername?.trim() ?? '';
-  let proxyPassword = '';
-  if (connection.playwrightProxyPassword) {
+  pushStep('Loading Playwright settings', 'pending', 'Resolving browser runtime settings');
+  let resolvedPlaywrightSettings;
+  try {
+    resolvedPlaywrightSettings = await resolveConnectionPlaywrightSettings(connection);
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return fail('Loading Playwright settings', `Failed to resolve Playwright settings: ${message}`);
+  }
+  pushStep('Loading Playwright settings', 'ok', 'Resolved browser runtime settings');
+
+  if (quicklistPreflightMode && requestedProductId) {
+    pushStep('Quicklist product config', 'pending', 'Validating Tradera product configuration');
     try {
-      proxyPassword = decryptSecret(connection.playwrightProxyPassword);
+      const productRepository = await getProductRepository();
+      const product = await productRepository.getProductById(requestedProductId);
+      if (!product) {
+        return fail('Quicklist product config', `Product not found: ${requestedProductId}`, 404);
+      }
+
+      await validateTraderaQuickListProductConfig({
+        product,
+        connection,
+      });
+      pushStep('Quicklist product config', 'ok', 'Product Tradera configuration is ready.');
     } catch (error) {
-      void ErrorSystem.captureException(error);
       const message = error instanceof Error ? error.message : 'Unknown error';
-      pushStep('Proxy setup', 'failed', `Failed to decrypt proxy password: ${message}`);
+      return fail(
+        'Quicklist product config',
+        message,
+        isAppError(error) ? error.httpStatus : 400
+      );
     }
   }
-  const emulateDevice = connection.playwrightEmulateDevice ?? false;
-  const deviceName = connection.playwrightDeviceName ?? '';
+
+  const headless = manualMode
+    ? false
+    : quicklistPreflightMode
+      ? true
+      : resolvedPlaywrightSettings.headless;
+  const slowMo = quicklistPreflightMode ? 0 : resolvedPlaywrightSettings.slowMo;
+  const defaultTimeout = resolvedPlaywrightSettings.timeout;
+  const navigationTimeout = resolvedPlaywrightSettings.navigationTimeout;
+  const humanizeMouse =
+    quicklistPreflightMode ? false : (connection.playwrightHumanizeMouse ?? false);
+  const mouseJitter = quicklistPreflightMode ? 0 : Math.max(0, connection.playwrightMouseJitter ?? 0);
+  const clickDelayMin = quicklistPreflightMode
+    ? 0
+    : Math.max(0, connection.playwrightClickDelayMin ?? 0);
+  const clickDelayMax = Math.max(
+    clickDelayMin,
+    quicklistPreflightMode ? clickDelayMin : (connection.playwrightClickDelayMax ?? clickDelayMin)
+  );
+  const inputDelayMin = quicklistPreflightMode
+    ? 0
+    : Math.max(0, connection.playwrightInputDelayMin ?? 0);
+  const inputDelayMax = Math.max(
+    inputDelayMin,
+    quicklistPreflightMode ? inputDelayMin : (connection.playwrightInputDelayMax ?? inputDelayMin)
+  );
+  const actionDelayMin = quicklistPreflightMode
+    ? 0
+    : Math.max(0, connection.playwrightActionDelayMin ?? 0);
+  const actionDelayMax = Math.max(
+    actionDelayMin,
+    quicklistPreflightMode ? actionDelayMin : (connection.playwrightActionDelayMax ?? actionDelayMin)
+  );
+  const proxyEnabled = resolvedPlaywrightSettings.proxyEnabled;
+  const proxyServer = resolvedPlaywrightSettings.proxyServer;
+  const proxyUsername = resolvedPlaywrightSettings.proxyUsername;
+  const proxyPassword = resolvedPlaywrightSettings.proxyPassword;
+  const emulateDevice = resolvedPlaywrightSettings.emulateDevice;
+  const deviceName = resolvedPlaywrightSettings.deviceName;
 
   if (proxyEnabled && !proxyServer) {
     return fail('Proxy setup', 'Proxy is enabled but no proxy server is set.');
@@ -396,6 +297,16 @@ export async function postTestConnectionHandler(
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
   let page: Page | null = null;
+  const deviceContextOptions: BrowserContextOptions = deviceProfile
+    ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
+    : {};
+
+  const isSellPageAccessible = (currentUrl: string): boolean => {
+    const normalized = currentUrl.trim().toLowerCase();
+    return normalized.includes('/selling');
+  };
+  const isLoginPageUrl = (currentUrl: string): boolean =>
+    currentUrl.trim().toLowerCase().includes('/login');
   try {
     try {
       pushStep(
@@ -416,10 +327,6 @@ export async function postTestConnectionHandler(
           }
           : {}),
       });
-
-      const deviceContextOptions: BrowserContextOptions = deviceProfile
-        ? (({ defaultBrowserType: _ignore, ...rest }) => rest)(deviceProfile)
-        : {};
 
       const contextOptions: BrowserContextOptions = {
         ...deviceContextOptions,
@@ -451,6 +358,7 @@ export async function postTestConnectionHandler(
       humanizedPause,
       humanizedClick,
       humanizedFill,
+      acceptCookieConsent,
       successSelector,
       errorSelector,
     } = createTraderaBrowserTestUtils({
@@ -468,23 +376,108 @@ export async function postTestConnectionHandler(
     });
 
     let sessionReused = false;
+    const formSelector = [
+      '#sign-in-form',
+      'form[data-sign-in-form="true"]',
+      'form[data-sentry-component="LoginForm"]',
+    ].join(', ');
+    const validateFreshStoredSession = async (
+      storageStateResult: PersistedStorageState
+    ): Promise<void> => {
+      if (!browser) throw internalError('Browser not initialized');
+
+      let validationContext: BrowserContext | null = null;
+      let validationPage: Page | null = null;
+      try {
+        validationContext = await browser.newContext({
+          ...deviceContextOptions,
+          storageState: storageStateResult,
+        });
+        validationContext.setDefaultTimeout(defaultTimeout);
+        validationContext.setDefaultNavigationTimeout(navigationTimeout);
+        validationPage = await validationContext.newPage();
+
+        const {
+          safeGoto: validationGoto,
+          safeWaitForLoadState: validationWaitForLoadState,
+          safeIsVisible: validationIsVisible,
+          acceptCookieConsent: validationAcceptCookieConsent,
+        } = createTraderaBrowserTestUtils({
+          page: validationPage,
+          connectionId: connection.id,
+          fail,
+          humanizeMouse: false,
+          mouseJitter: 0,
+          clickDelayMin: 0,
+          clickDelayMax: 0,
+          inputDelayMin: 0,
+          inputDelayMax: 0,
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+        });
+
+        await validationGoto(
+          TRADERA_LISTING_FORM_URL,
+          {
+            waitUntil: 'domcontentloaded',
+            timeout: 30000,
+          },
+          'Saved session validation'
+        );
+        await validationAcceptCookieConsent();
+        await validationWaitForLoadState(
+          'networkidle',
+          { timeout: 15000 },
+          'Saved session validation'
+        ).catch(() => undefined);
+
+        const currentUrl = validationPage.url();
+        const loginFormVisible = await validationIsVisible(
+          validationPage.locator(formSelector).first(),
+          'Saved session validation login form'
+        ).catch(() => false);
+
+        if (
+          !isSellPageAccessible(currentUrl) ||
+          isLoginPageUrl(currentUrl) ||
+          loginFormVisible
+        ) {
+          throw internalError(
+            `Saved session did not reopen the Tradera listing flow. Current URL: ${currentUrl}`
+          );
+        }
+      } finally {
+        await validationPage?.close().catch(() => undefined);
+        await validationContext?.close().catch(() => undefined);
+      }
+    };
     if (storedState) {
       pushStep('Reusing session', 'pending', 'Checking existing session');
       try {
         await safeGoto(
-          'https://www.tradera.com/en',
+          'https://www.tradera.com/en/my/listings?tab=active',
           {
             waitUntil: 'domcontentloaded',
             timeout: 30000,
           },
           'Session check'
         );
+        await acceptCookieConsent();
         await humanizedPause();
         if (!page) throw internalError('Page not found');
-        const loggedIn = await safeIsVisible(
+        const successVisible = await safeIsVisible(
           page.locator(successSelector).first(),
           'Session check'
         ).catch(() => false);
+        const loginFormVisible = await safeIsVisible(
+          page.locator(formSelector).first(),
+          'Session check login form'
+        ).catch(() => false);
+        const currentUrl = page.url();
+        const loggedIn =
+          successVisible ||
+          (!loginFormVisible &&
+            (currentUrl.includes('/my/') || currentUrl.includes('/my?')));
         if (loggedIn) {
           pushStep('Reusing session', 'ok', 'Session still valid');
           sessionReused = true;
@@ -496,6 +489,23 @@ export async function postTestConnectionHandler(
         const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Reusing session', 'failed', `Failed to check session: ${message}`);
       }
+    }
+
+    if (quicklistPreflightMode) {
+      pushStep('Quicklist preflight', 'pending', 'Validating stored Tradera session');
+      if (!storedState) {
+        return fail('Quicklist preflight', QUICKLIST_AUTH_REQUIRED_DETAIL, 409);
+      }
+      if (!sessionReused) {
+        return fail('Quicklist preflight', QUICKLIST_AUTH_REQUIRED_DETAIL, 409);
+      }
+      pushStep('Quicklist preflight', 'ok', 'Stored session is ready for one-click queueing.');
+      const response: TestConnectionResponse = {
+        ok: true,
+        steps,
+        sessionReady: true,
+      };
+      return NextResponse.json(response);
     }
 
     const loginUrls = [
@@ -513,6 +523,7 @@ export async function postTestConnectionHandler(
             { waitUntil: 'domcontentloaded', timeout: 30000 },
             'Opening login page'
           );
+          await acceptCookieConsent();
           await safeWaitForLoadState('networkidle', { timeout: 15000 }, 'Opening login page').catch(
             () => undefined
           );
@@ -532,11 +543,6 @@ export async function postTestConnectionHandler(
     };
     const loginUrl = sessionReused ? loginUrls[0]! : await openLoginPage();
 
-    const formSelector = [
-      '#sign-in-form',
-      'form[data-sign-in-form="true"]',
-      'form[data-sentry-component="LoginForm"]',
-    ].join(', ');
     const emailSelector = '#email, input[name="email"], input[type="email"]';
     const passwordSelector = '#password, input[name="password"], input[type="password"]';
 
@@ -572,6 +578,7 @@ export async function postTestConnectionHandler(
           },
           'Manual login'
         );
+        await acceptCookieConsent();
         await safeWaitForLoadState('networkidle', { timeout: 15000 }, 'Manual login').catch(
           () => undefined
         );
@@ -599,6 +606,7 @@ export async function postTestConnectionHandler(
           { state: 'attached', timeout: 15000 },
           'Login form'
         );
+        await acceptCookieConsent();
         if (!page) throw internalError('Page not found');
         const formLocator = page.locator(formSelector).first();
         const isVisible = await safeIsVisible(formLocator, 'Login form').catch(() => false);
@@ -629,6 +637,7 @@ export async function postTestConnectionHandler(
           try {
             await humanizedClick(signInTrigger);
             await humanizedPause();
+            await acceptCookieConsent();
           } catch (clickError) {
             void ErrorSystem.captureException(clickError);
             const clickMessage = clickError instanceof Error ? clickError.message : 'Unknown error';
@@ -760,6 +769,7 @@ export async function postTestConnectionHandler(
           humanizedClick(submitButton.locator),
         ]);
         await humanizedPause();
+        await acceptCookieConsent();
       } catch (error) {
         void ErrorSystem.captureException(error);
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -878,10 +888,75 @@ export async function postTestConnectionHandler(
       );
     }
 
+    pushStep('Verifying sell page', 'pending', 'Checking Tradera selling page access');
+    try {
+      if (!page) throw internalError('Page not found');
+      await safeGoto(
+        TRADERA_LISTING_FORM_URL,
+        {
+          waitUntil: 'domcontentloaded',
+          timeout: 30000,
+        },
+        'Sell page check'
+      );
+      await acceptCookieConsent();
+      await safeWaitForLoadState(
+        'networkidle',
+        { timeout: 15000 },
+        'Sell page check'
+      ).catch(() => undefined);
+      if (!isSellPageAccessible(page.url())) {
+        if (manualMode) {
+          pushStep(
+            'Verifying sell page',
+            'pending',
+            'Complete any extra Tradera verification in the opened browser window. Waiting for the selling page.'
+          );
+          await page.waitForURL(
+            (url) => isSellPageAccessible(url.toString()),
+            { timeout: manualLoginTimeoutMs }
+          );
+          await safeWaitForLoadState(
+            'networkidle',
+            { timeout: 15000 },
+            'Sell page check'
+          ).catch(() => undefined);
+        }
+      }
+      if (!isSellPageAccessible(page.url())) {
+        return await failWithDebug(
+          'Verifying sell page',
+          `Selling page is not accessible yet. Current URL: ${page.url()}`
+        );
+      }
+      pushStep('Verifying sell page', 'ok', 'Selling page accessible');
+    } catch (error) {
+      void ErrorSystem.captureException(error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return await failWithDebug('Verifying sell page', message);
+    }
+
     pushStep('Saving session', 'pending', 'Storing Playwright session cookies');
     try {
       if (!page) throw internalError('Page not found');
       const storageStateResult = await page.context().storageState();
+      pushStep(
+        'Validating saved session',
+        'pending',
+        'Opening a fresh browser context from stored session'
+      );
+      try {
+        await validateFreshStoredSession(storageStateResult);
+        pushStep(
+          'Validating saved session',
+          'ok',
+          'Stored session reopened the Tradera selling flow'
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        pushStep('Validating saved session', 'failed', message);
+        throw error;
+      }
       await repo.updateConnection(connection.id, {
         playwrightStorageState: encryptSecret(JSON.stringify(storageStateResult)),
         playwrightStorageStateUpdatedAt: new Date(),

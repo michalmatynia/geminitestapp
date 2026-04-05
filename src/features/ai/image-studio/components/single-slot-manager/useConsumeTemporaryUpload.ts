@@ -6,17 +6,11 @@ import {
   isImageStudioSlotImageLocked,
   setImageStudioSlotImageLocked,
 } from '@/features/ai/image-studio/utils/slot-image-lock';
-import {
-  imageStudioEnsureSlotFromUploadResponseSchema,
-  studioSlotsResponseSchema,
-  type StudioSlotsResponse,
-  type UpdateImageStudioSlotDto,
-} from '@/shared/contracts/image-studio';
+import { imageStudioEnsureSlotFromUploadResponseSchema, studioSlotsResponseSchema } from '@/shared/contracts/image-studio/slot';
+import { type StudioSlotsResponse, type UpdateImageStudioSlotDto } from '@/shared/contracts/image-studio';
 import type { IdDataDto } from '@/shared/contracts/base';
-import type {
-  ImageStudioSlotDto as ImageStudioSlot,
-  ImageStudioAssetDto as ImageStudioUploadedAsset,
-} from '@/shared/contracts/image-studio';
+import type { ImageStudioAssetDto as ImageStudioUploadedAsset } from '@/shared/contracts/image-studio/misc';
+import type { ImageStudioSlotDto as ImageStudioSlot } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 

@@ -2,13 +2,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
-import type {
-  TagMappingAssignment,
-  TagMapping,
-  TagMappingCreateInput,
-  TagMappingUpdateInput,
-  TagMappingWithDetails,
-} from '@/shared/contracts/integrations';
+import type { TagMappingAssignment, TagMapping, TagMappingCreateInput, TagMappingUpdateInput, TagMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getTagRepository } from '@/shared/lib/products/services/tag-repository';

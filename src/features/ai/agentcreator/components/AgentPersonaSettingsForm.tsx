@@ -8,7 +8,9 @@ import { buildAgentPersonaSettings } from '@/features/ai/agentcreator/utils/pers
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import type { AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
-import { Button, FormField, FormSection, Input, ToggleRow, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 type ModelField = {
   label: string;

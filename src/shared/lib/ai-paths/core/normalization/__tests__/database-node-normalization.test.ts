@@ -16,6 +16,19 @@ const buildDatabaseNode = (config: Record<string, unknown>): AiNode =>
     config,
   }) as AiNode;
 
+const buildDbSchemaNode = (config: Record<string, unknown>): AiNode =>
+  ({
+    id: 'db-schema-node-1',
+    type: 'db_schema',
+    title: 'Database Schema',
+    description: '',
+    position: { x: 0, y: 0 },
+    data: {},
+    inputs: [],
+    outputs: ['result'],
+    config,
+  }) as AiNode;
+
 describe('database node normalization', () => {
   it('uses canonical database.query config', () => {
     const [normalized] = normalizeNodes([
@@ -223,5 +236,29 @@ describe('database node normalization', () => {
         sourcePort: 'value',
       },
     ]);
+  });
+
+  it('normalizes db_schema nodes with defaults and canonical provider aliases', () => {
+    const [normalized] = normalizeNodes([
+      buildDbSchemaNode({
+        db_schema: {
+          provider: 'all',
+          mode: 'selected',
+          collections: ['products'],
+          includeFields: false,
+          includeRelations: false,
+          formatAs: 'json',
+        },
+      }),
+    ]);
+
+    expect(normalized?.config?.db_schema).toEqual({
+      provider: 'auto',
+      mode: 'selected',
+      collections: ['products'],
+      includeFields: false,
+      includeRelations: false,
+      formatAs: 'json',
+    });
   });
 });

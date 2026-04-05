@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { VariantThumbnailInfo } from './preview-utils';
 
@@ -32,7 +33,13 @@ export type VariantPanelContextValue = {
   ) => void;
 };
 
-const VariantPanelContext = createContext<VariantPanelContextValue | null>(null);
+const { Context: VariantPanelContext, useStrictContext: useVariantPanelContext } =
+  createStrictContext<VariantPanelContextValue>({
+    hookName: 'useVariantPanelContext',
+    providerName: 'VariantPanelProvider',
+    displayName: 'VariantPanelContext',
+    errorFactory: internalError,
+  });
 
 export function VariantPanelProvider({
   children,
@@ -43,11 +50,4 @@ export function VariantPanelProvider({
 }) {
   return <VariantPanelContext.Provider value={value}>{children}</VariantPanelContext.Provider>;
 }
-
-export function useVariantPanelContext() {
-  const context = useContext(VariantPanelContext);
-  if (!context) {
-    throw internalError('useVariantPanelContext must be used within VariantPanelProvider');
-  }
-  return context;
-}
+export { useVariantPanelContext };

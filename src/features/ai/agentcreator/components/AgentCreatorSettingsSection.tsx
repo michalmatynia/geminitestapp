@@ -2,14 +2,9 @@
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  Input,
-  SelectSimple,
-  FormSection,
-  FormField,
-  ToggleRow,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 const AGENT_BROWSER_OPTIONS = [
   { value: 'chromium', label: 'Chromium' },

@@ -10,14 +10,11 @@ import {
   useJobsActions,
   useJobsState,
 } from '@/shared/lib/jobs/context/JobsContext';
-import {
-  Button,
-  StandardDataTablePanel,
-  PanelHeader,
-  SearchInput,
-  StatusBadge,
-  EmptyState,
-} from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel, PanelHeader } from '@/shared/ui/templates.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

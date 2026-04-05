@@ -13,7 +13,7 @@ import {
   getPromptRuntimeLoadSnapshot,
   resetPromptRuntimeLoadSnapshot,
 } from '@/features/prompt-exploder/runtime-load-shedder';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import {
   getPromptValidationObservabilitySnapshot,

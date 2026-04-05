@@ -1,5 +1,3 @@
-'use client';
-
 import {
   ActiveNode,
   ATTACK_MS,

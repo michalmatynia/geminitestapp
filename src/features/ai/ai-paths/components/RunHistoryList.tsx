@@ -2,14 +2,10 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AiPathRunRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
-import {
-  Label,
-  SelectSimple,
-  StatusBadge,
-  Alert,
-  CompactEmptyState,
-  Card,
-} from '@/shared/ui';
+import { Label, Alert, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { RunHistoryEntries } from './RunHistoryEntries';

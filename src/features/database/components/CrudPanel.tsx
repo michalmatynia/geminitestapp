@@ -8,18 +8,11 @@ import type {
   DatabaseTableDetail,
   DatabaseType,
 } from '@/shared/contracts/database';
-import {
-  Input,
-  FormModal,
-  FormField,
-  StatusBadge,
-  Alert,
-  StandardDataTablePanel,
-  Card,
-  CompactEmptyState,
-  Pagination,
-  Button,
-} from '@/shared/ui';
+import { Input, Alert, Card, Button } from '@/shared/ui/primitives.public';
+import { FormModal, FormField } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
+import { StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { CompactEmptyState, Pagination } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import {
@@ -29,19 +22,13 @@ import {
 } from '../context/CrudPanelContext';
 import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCrudPanelState';
 import { DatabaseTableSelector } from './crud/DatabaseTableSelector';
+import { DATABASE_EMPTY_CELL_VALUE, formatDatabaseCellValue } from './format-cell-value';
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-function formatCellValue(value: unknown): string {
-  if (value === null || value === undefined) return '∅';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-}
-
 function parseInputValue(value: string, type: string): unknown {
-  if (value === '' || value === '∅') return null;
+  if (value === '' || value === DATABASE_EMPTY_CELL_VALUE) return null;
   const lowerType = type.toLowerCase();
   if (
     lowerType.includes('int') ||
@@ -81,7 +68,7 @@ function RowFormModal(props: {
     const initial: Record<string, string> = {};
     for (const col of columns) {
       if (initialData?.[col.name] !== undefined) {
-        initial[col.name] = formatCellValue(initialData[col.name]);
+        initial[col.name] = formatDatabaseCellValue(initialData[col.name]);
       } else {
         initial[col.name] = '';
       }
@@ -232,9 +219,9 @@ export function CrudPanel(props: {
       cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
         <span
           className='font-mono text-xs text-gray-300 truncate block max-w-[200px]'
-          title={formatCellValue(row.original[key])}
+          title={formatDatabaseCellValue(row.original[key])}
         >
-          {formatCellValue(row.original[key])}
+          {formatDatabaseCellValue(row.original[key])}
         </span>
       ),
     }));

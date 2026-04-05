@@ -18,19 +18,12 @@ import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/contracts/cms';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  AdminCmsPageLayout,
-  Button,
-  StandardDataTablePanel,
-  ToggleRow,
-  EmptyState,
-  SelectSimple,
-  StatusBadge,
-  ActionMenu,
-  DropdownMenuItem,
-  FilterPanel,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminCmsPageLayout } from '@/shared/ui/admin.public';
+import { Button, DropdownMenuItem } from '@/shared/ui/primitives.public';
+import { StandardDataTablePanel, FilterPanel } from '@/shared/ui/templates.public';
+import { ToggleRow, SelectSimple, ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { EmptyState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';

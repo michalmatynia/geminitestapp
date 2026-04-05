@@ -3,14 +3,47 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { auth } from '@/features/auth/edge';
 import { siteRouting } from '@/i18n/routing';
+import { buildAdminLayoutSessionHeaderValue, ADMIN_LAYOUT_SESSION_HEADER } from '@/shared/lib/auth/admin-layout-session';
 import {
   getDefaultSiteLocaleCode,
   getPathLocale,
   resolvePreferredSiteLocale,
 } from '@/shared/lib/i18n/site-locale';
+import { applyEdgeTrafficGuard } from '@/shared/lib/security/edge-traffic-guard';
 import { CSRF_COOKIE_NAME, ensureCsrfCookie } from '@/shared/lib/security/csrf';
 
+import type { Session } from 'next-auth';
+
 const intlMiddleware = createIntlMiddleware(siteRouting);
+
+const ADMIN_CANONICAL_REDIRECTS = new Map<string, string>([
+  ['/admin/ai-paths/jobs', '/admin/ai-paths/queue'],
+  ['/admin/databases', '/admin/databases/engine'],
+  ['/admin/databases/backups', '/admin/databases/engine?view=backups'],
+  ['/admin/databases/control', '/admin/databases/engine'],
+  ['/admin/databases/operations', '/admin/databases/engine?view=operations'],
+  ['/admin/databases/settings', '/admin/databases/engine'],
+  ['/admin/image-studio/settings', '/admin/image-studio?tab=settings'],
+  ['/admin/image-studio/validation-patterns', '/admin/image-studio?tab=validation'],
+  ['/admin/integrations/aggregators', '/admin/integrations/aggregators/base-com'],
+  [
+    '/admin/integrations/aggregators/base-com',
+    '/admin/integrations/aggregators/base-com/synchronization-engine',
+  ],
+  ['/admin/integrations/imports', '/admin/integrations/aggregators/base-com/import-export'],
+  [
+    '/admin/integrations/marketplaces/category-mapper',
+    '/admin/integrations/aggregators/base-com/category-mapping',
+  ],
+  ['/admin/products/builder', '/admin/products/settings'],
+  ['/admin/products/constructor', '/admin/products/settings'],
+  ['/admin/products/jobs', '/admin/ai-paths/queue?tab=paths-external'],
+  ['/admin/prompt-engine', '/admin/prompt-engine/validation'],
+  ['/admin/settings/ai', '/admin/brain?tab=routing'],
+  ['/admin/settings/brain', '/admin/brain?tab=routing'],
+  ['/admin/settings/database', '/admin/databases/engine'],
+  ['/admin/system/upload-events', '/admin/ai-paths/queue?tab=file-uploads'],
+]);
 
 const finalizeResponse = (request: NextRequest, response: NextResponse): NextResponse => {
   const existing = request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
@@ -18,16 +51,14 @@ const finalizeResponse = (request: NextRequest, response: NextResponse): NextRes
   return response;
 };
 
-const baseProxy = (request: NextRequest): NextResponse => {
-  const response = NextResponse.next();
+const baseProxy = (request: NextRequest, requestHeaders?: Headers): NextResponse => {
+  const response = requestHeaders ? NextResponse.next({ request: { headers: requestHeaders } }) : NextResponse.next();
   return finalizeResponse(request, response);
 };
 
-const handler =
-  typeof auth === 'function' ? auth((request: NextRequest): Response => baseProxy(request)) : null;
-
 type NextRequestHandler = NonNullable<typeof handler>;
 type HandlerContext = Parameters<NextRequestHandler>[1];
+type AuthenticatedProxyRequest = NextRequest & { auth?: Session | null };
 
 const isApiRequest = (pathname: string): boolean => pathname === '/api' || pathname.startsWith('/api/');
 
@@ -117,12 +148,47 @@ const resolvePublicLocaleResponse = (request: NextRequest): NextResponse | null 
   return finalizeResponse(request, intlMiddleware(request));
 };
 
+const resolveAdminRedirectResponse = (request: NextRequest): NextResponse | null => {
+  if (!isSafePageMethod(request)) {
+    return null;
+  }
+
+  const destination = ADMIN_CANONICAL_REDIRECTS.get(request.nextUrl.pathname);
+  if (!destination) {
+    return null;
+  }
+
+  return finalizeResponse(request, NextResponse.redirect(new URL(destination, request.url), 307));
+};
+
+const buildAdminRequestHeaders = (request: AuthenticatedProxyRequest): Headers | null => {
+  const sessionHeaderValue = buildAdminLayoutSessionHeaderValue(request.auth ?? null);
+  if (!sessionHeaderValue) return null;
+
+  const forwardedHeaders = new Headers(request.headers);
+  forwardedHeaders.set(ADMIN_LAYOUT_SESSION_HEADER, sessionHeaderValue);
+  return forwardedHeaders;
+};
+
+const handler =
+  typeof auth === 'function'
+    ? auth(
+      (request: AuthenticatedProxyRequest): Response =>
+        resolveAdminRedirectResponse(request) ?? baseProxy(request, buildAdminRequestHeaders(request) ?? undefined)
+    )
+    : null;
+
 export function proxy(
   request: NextRequest,
   context?: HandlerContext
 ): Promise<Response> | Response {
   const resolvedContext = context ?? ({ params: {} } as HandlerContext);
   const pathname = request.nextUrl.pathname;
+  const trafficGuardResponse = applyEdgeTrafficGuard(request);
+
+  if (trafficGuardResponse) {
+    return trafficGuardResponse;
+  }
 
   if (isApiRequest(pathname)) {
     return baseProxy(request);

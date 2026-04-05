@@ -1,13 +1,17 @@
-import React, { useMemo } from 'react';
+'use client';
+
+import React from 'react';
 
 import { useListingSelection } from '@/features/integrations/context/ListingSettingsContext';
-import type {
-  IntegrationWithConnections,
-  IntegrationConnectionBasic,
-} from '@/shared/contracts/integrations';
-import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { FormField, FormSection } from '@/shared/ui';
-import { SelectSimple } from '@/shared/ui';
+
+import { ConnectedIntegrationFieldsSection } from '../ConnectedIntegrationFieldsSection';
+import { IntegrationSelectionEmptyState } from '../IntegrationSelectionEmptyState';
+import { useConnectedIntegrationSelectorOptions } from '../hooks/useConnectedIntegrationSelectorOptions';
+import { resolveIntegrationDisplayName } from '../product-listings-labels';
+import {
+  resolveIntegrationSelectionConfiguredAccountsEmptyStateCopy,
+  resolveListProductIntegrationSelectionCopy,
+} from '../product-listings-copy';
 
 export function IntegrationSelection(): React.JSX.Element {
   const {
@@ -19,72 +23,77 @@ export function IntegrationSelection(): React.JSX.Element {
     setSelectedIntegrationId,
     setSelectedConnectionId,
   } = useListingSelection();
-  const integrationsWithConnections = integrations.filter(
-    (i: IntegrationWithConnections) => i.connections.length > 0
-  );
-  const integrationOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      integrationsWithConnections
-        .filter((integration: IntegrationWithConnections): boolean => Boolean(integration.id))
-        .map((integration: IntegrationWithConnections) => ({
-          value: integration.id,
-          label: integration.name,
-        })),
-    [integrationsWithConnections]
-  );
-  const connectionOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      (selectedIntegration?.connections ?? [])
-        .filter((connection: IntegrationConnectionBasic): boolean => Boolean(connection.id))
-        .map((connection: IntegrationConnectionBasic) => ({
-          value: connection.id,
-          label: connection.name,
-        })),
-    [selectedIntegration]
-  );
+  const { integrationsWithConnections, integrationOptions, connectionOptions } =
+    useConnectedIntegrationSelectorOptions(
+      integrations,
+      selectedIntegration?.connections ?? null
+    );
+  const {
+    sectionTitle,
+    marketplaceLabel,
+    marketplacePlaceholder,
+    accountLabel,
+    accountPlaceholder,
+    accountDescription,
+  } = resolveListProductIntegrationSelectionCopy({
+    selectedIntegrationName: resolveIntegrationDisplayName(selectedIntegration?.name),
+  });
+  const { message: emptyStateMessage, detail: emptyStateDetail } =
+    resolveIntegrationSelectionConfiguredAccountsEmptyStateCopy();
 
   if (loading) {
-    return <p className='text-sm text-gray-400'>Loading integrations...</p>;
+    return (
+      <ConnectedIntegrationFieldsSection
+        title={sectionTitle}
+        className='p-4 space-y-4'
+        loading={true}
+        loadingVariant='inline-text'
+        loadingClassName='text-sm text-gray-400'
+        marketplaceLabel={marketplaceLabel}
+        marketplacePlaceholder={marketplacePlaceholder}
+        selectedIntegrationId={selectedIntegrationId}
+        onIntegrationChange={setSelectedIntegrationId}
+        integrationOptions={integrationOptions}
+        showAccountField={Boolean(selectedIntegration)}
+        accountLabel={accountLabel}
+        accountPlaceholder={accountPlaceholder}
+        selectedConnectionId={selectedConnectionId}
+        onConnectionChange={setSelectedConnectionId}
+        connectionOptions={connectionOptions}
+        accountDescription={accountDescription}
+      />
+    );
   }
 
   if (integrationsWithConnections.length === 0) {
     return (
-      <FormSection
-        variant='subtle'
-        className='border-yellow-500/40 bg-yellow-500/10 p-6 text-center'
-      >
-        <p className='text-sm text-yellow-200'>No integrations with configured accounts found.</p>
-        <p className='mt-2 text-xs text-yellow-300/70'>
-          Please set up an integration with at least one account first.
-        </p>
-      </FormSection>
+      <IntegrationSelectionEmptyState
+        variant='section-detail'
+        message={emptyStateMessage}
+        detail={emptyStateDetail}
+      />
     );
   }
 
   return (
-    <FormSection title='Integration Target' className='p-4 space-y-4'>
-      <FormField label='Marketplace / Integration'>
-        <SelectSimple
-          value={selectedIntegrationId || undefined}
-          onValueChange={setSelectedIntegrationId}
-          options={integrationOptions}
-          placeholder='Select a marketplace...'
-         ariaLabel='Select a marketplace...' title='Select a marketplace...'/>
-      </FormField>
-
-      {selectedIntegration && (
-        <FormField
-          label='Account'
-          description={`Choose which account to use for listing this product on ${selectedIntegration.name}.`}
-        >
-          <SelectSimple
-            value={selectedConnectionId || undefined}
-            onValueChange={setSelectedConnectionId}
-            options={connectionOptions}
-            placeholder='Select an account...'
-           ariaLabel='Select an account...' title='Select an account...'/>
-        </FormField>
-      )}
-    </FormSection>
+    <ConnectedIntegrationFieldsSection
+      title={sectionTitle}
+      className='p-4 space-y-4'
+      loading={false}
+      loadingVariant='inline-text'
+      loadingClassName='text-sm text-gray-400'
+      marketplaceLabel={marketplaceLabel}
+      marketplacePlaceholder={marketplacePlaceholder}
+      selectedIntegrationId={selectedIntegrationId}
+      onIntegrationChange={setSelectedIntegrationId}
+      integrationOptions={integrationOptions}
+      showAccountField={Boolean(selectedIntegration)}
+      accountLabel={accountLabel}
+      accountPlaceholder={accountPlaceholder}
+      selectedConnectionId={selectedConnectionId}
+      onConnectionChange={setSelectedConnectionId}
+      connectionOptions={connectionOptions}
+      accountDescription={accountDescription}
+    />
   );
 }

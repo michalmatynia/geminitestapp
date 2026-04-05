@@ -1,9 +1,5 @@
-import type {
-  CaseResolverAssetFile,
-  CaseResolverFile,
-  CaseResolverGraph,
-  CaseResolverNodeFileRelationIndex,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverAssetFile, CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverGraph, CaseResolverNodeFileRelationIndex } from '@/shared/contracts/case-resolver/graph';
 
 const hasInlineNodeFileSnapshotText = (asset: CaseResolverAssetFile): boolean =>
   asset.kind === 'node_file' &&

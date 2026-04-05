@@ -1,4 +1,4 @@
-import { AdminRouteLoading } from '@/features/admin/layout/AdminRouteLoading';
+import { AdminRouteLoading } from '@/features/admin/public';
 
 export default function Loading(): React.JSX.Element {
   return <AdminRouteLoading />;

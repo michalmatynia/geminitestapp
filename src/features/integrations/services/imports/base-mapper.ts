@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import type { IntegrationTemplateMapping as TemplateMapping } from '@/shared/contracts/integrations';
-import type { ProductCreateInput } from '@/shared/contracts/products';
+import type { ProductCreateInput } from '@/shared/contracts/products/io';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { GenericMapperExternalCellProps } from '@/shared/contracts/ui';
+import type { GenericMapperExternalCellProps } from '@/shared/contracts/ui/api';
 import { SelectSimple } from '../../select-simple';
 
 export type { GenericMapperExternalCellProps };

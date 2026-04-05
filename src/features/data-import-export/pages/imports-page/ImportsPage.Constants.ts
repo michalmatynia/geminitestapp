@@ -1,5 +1,5 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { BaseImportMode } from '@/shared/contracts/integrations';
+import type { BaseImportMode } from '@/shared/contracts/integrations/base-com';
 
 export const BASE_CONNECTION_PLACEHOLDER_OPTION: LabeledOptionDto<string> = {
   value: '__none__',

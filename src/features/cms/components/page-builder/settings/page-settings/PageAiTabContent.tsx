@@ -2,7 +2,8 @@
 
 import React, { useMemo } from 'react';
 
-import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { usePageAiAssistant } from './usePageAiAssistant';
 

@@ -16,24 +16,11 @@ import type {
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  Hint,
-  JsonViewer,
-  ListPanel,
-  PanelHeader,
-  SearchInput,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Textarea,
-  UI_GRID_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Alert, Badge, Button, Card, Tabs, TabsContent, TabsList, TabsTrigger, Textarea } from '@/shared/ui/primitives.public';
+import { EmptyState, ListPanel, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { Hint, SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { JsonViewer } from '@/shared/ui/data-display.public';
+import { PanelHeader } from '@/shared/ui/templates.public';
 
 import {
   buildContextRegistryConsumerEnvelope,

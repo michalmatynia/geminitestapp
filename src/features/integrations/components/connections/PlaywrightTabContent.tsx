@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import React from 'react';
 
@@ -8,7 +10,9 @@ import {
 } from '@/features/integrations/context/IntegrationsContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
-import { Button, SelectSimple, FormSection, FormField, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';
 
@@ -20,7 +24,7 @@ const CUSTOM_PERSONA_OPTION: LabeledOptionDto<string> = {
 export function PlaywrightTabContent(): React.JSX.Element {
   const { playwrightPersonas, playwrightPersonasLoading } = useIntegrationsData();
   const { playwrightPersonaId } = useIntegrationsForm();
-  const { handleSelectPlaywrightPersona } = useIntegrationsActions();
+  const { handleSelectPlaywrightPersona, handleResetListingScript } = useIntegrationsActions();
   const personaOptions = React.useMemo(
     (): Array<LabeledOptionDto<string>> => [
       CUSTOM_PERSONA_OPTION,
@@ -89,6 +93,24 @@ export function PlaywrightTabContent(): React.JSX.Element {
       </FormSection>
 
       <DynamicPlaywrightSettingsForm />
+
+      <FormSection
+        title='Listing script'
+        description='Reset the custom listing script so this connection uses the latest managed default.'
+        className='p-4'
+      >
+        <div className='mt-4'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={(): void => {
+              void handleResetListingScript();
+            }}
+          >
+            Reset to managed default
+          </Button>
+        </div>
+      </FormSection>
     </>
   );
 }

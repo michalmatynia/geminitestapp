@@ -2,13 +2,9 @@
 
 import { useCallback, useRef, useState, useEffect } from 'react';
 
-import type {
-  ProductWithImages,
-  ProductFormData,
-  ProductParameterValue,
-  ResolvedProductParameterValue,
-} from '@/shared/contracts/products';
-import type { ProductImageSlot } from '@/shared/contracts/products';
+import type { ProductWithImages, ProductParameterValue, ResolvedProductParameterValue } from '@/shared/contracts/products/product';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductImageSlot } from '@/shared/contracts/products/drafts';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
@@ -16,11 +12,12 @@ import {
   normalizeParameterValuesByLanguage,
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
+
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { isEditingProductHydrated, markEditingProductHydrated } from './editingProductHydration';
-import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
+import { useCreateProductMutation, useUpdateProductMutation } from './useProductDataMutations';
 
 import type { BaseSyntheticEvent } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
@@ -266,22 +263,29 @@ export function useProductFormSubmit(
             return;
           }
 
-      const formData = buildFormData({
-        data,
-        imageSlots,
-        imageLinks,
-        imageBase64s,
-        selectedCatalogIds,
-        selectedCategoryId,
-        selectedTagIds,
-        selectedProducerIds,
-        selectedNoteIds,
-        parameterValues,
-        studioProjectId,
-      });
+          const formData = buildFormData({
+            data,
+            imageSlots,
+            imageLinks,
+            imageBase64s,
+            selectedCatalogIds,
+            selectedCategoryId,
+            selectedTagIds,
+            selectedProducerIds,
+            selectedNoteIds,
+            parameterValues,
+            studioProjectId,
+          });
 
           const savedProduct = product
-            ? await updateMutationRef.current.mutateAsync({ id: product.id, data: formData })
+            ? await updateMutationRef.current.mutateAsync({
+                id: product.id,
+                data: formData,
+                originalSku:
+                  typeof product.sku === 'string' && product.sku.trim().length > 0
+                    ? product.sku.trim()
+                    : undefined,
+              })
             : await createMutationRef.current.mutateAsync(formData);
 
           const isQueued = savedProduct == null;

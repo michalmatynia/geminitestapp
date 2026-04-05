@@ -1,3 +1,5 @@
+'use client';
+
 import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import { ReactProfilerMultiBoundaryAnimation, ReactProfilerTimingAnimation } from '@/features/kangur/ui/components/LessonAnimations';
 import { KangurLessonCallout, KangurLessonCaption, KangurLessonInset, KangurLessonLead, KangurLessonStack, KangurLessonVisual } from '@/features/kangur/ui/design/lesson-primitives';

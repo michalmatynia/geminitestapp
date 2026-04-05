@@ -29,6 +29,8 @@ import {
   resolveExistingParameterValueFromInputs,
 } from './parameter-inference/parameter-inference.merger';
 
+import { stableStringify } from '@/shared/utils/stable-stringify';
+
 export {
   coerceArrayLike,
   normalizeNonEmptyString,
@@ -52,7 +54,7 @@ const areParameterRecordArraysEqual = (
 ): boolean => {
   if (left.length !== right.length) return false;
   for (let index = 0; index < left.length; index += 1) {
-    if (JSON.stringify(left[index]) !== JSON.stringify(right[index])) {
+    if (stableStringify(left[index]) !== stableStringify(right[index])) {
       return false;
     }
   }
@@ -189,7 +191,7 @@ const createBlockedParameterInferenceResult = (args: {
   definitions?: number;
   repairedCandidates?: boolean;
   updates: Record<string, unknown>;
-  blockedReason: string;
+  reason: string;
   errorMessage: string;
 }): {
   updates: Record<string, unknown>;
@@ -212,7 +214,7 @@ const createBlockedParameterInferenceResult = (args: {
       ? { repairedCandidates: args.repairedCandidates }
       : {}),
     blocked: {
-      reason: args.blockedReason,
+      reason: args.reason,
       message: args.errorMessage,
     },
   },
@@ -790,7 +792,7 @@ export const applyParameterInferenceGuard = (args: {
     return createBlockedParameterInferenceResult({
       targetPath,
       updates: nextUpdates,
-      blockedReason: 'unsupported_target_path',
+      reason: 'unsupported_target_path',
       errorMessage,
     });
   }
@@ -824,7 +826,7 @@ export const applyParameterInferenceGuard = (args: {
       definitions: 0,
       repairedCandidates: candidateRepairApplied,
       updates: nextUpdates,
-      blockedReason: 'missing_definitions',
+      reason: 'missing_definitions',
       errorMessage,
     });
   }

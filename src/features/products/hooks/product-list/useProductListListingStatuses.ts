@@ -7,18 +7,20 @@ import {
   LISTING_IN_FLIGHT_STATUSES,
   normalizeListingStatus,
 } from '@/features/products/hooks/product-list-state-utils';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 export function useProductListListingStatuses({
   data,
   integrationBadgeStatuses,
   traderaBadgeStatuses,
+  playwrightProgrammableBadgeStatuses,
   visibleProductIdSet,
   triggerJobCompletionHighlight,
 }: {
   data: ProductWithImages[];
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
   visibleProductIdSet: Set<string>;
   triggerJobCompletionHighlight: (productId: string) => void;
 }) {
@@ -35,9 +37,15 @@ export function useProductListListingStatuses({
       if (traderaStatus) {
         statuses.set(`${product.id}:tradera`, traderaStatus);
       }
+      const playwrightProgrammableStatus = normalizeListingStatus(
+        playwrightProgrammableBadgeStatuses.get(product.id)
+      );
+      if (playwrightProgrammableStatus) {
+        statuses.set(`${product.id}:playwright-programmable`, playwrightProgrammableStatus);
+      }
     }
     return statuses;
-  }, [data, integrationBadgeStatuses, traderaBadgeStatuses]);
+  }, [data, integrationBadgeStatuses, playwrightProgrammableBadgeStatuses, traderaBadgeStatuses]);
 
   useEffect(() => {
     const previousStatuses = previousListingBadgeStatusesRef.current;

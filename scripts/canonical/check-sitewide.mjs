@@ -507,7 +507,7 @@ const FORBIDDEN_PRODUCTS_PAGED_HANDLER_IMPORT_SNIPPET = '@/app/api/products/page
 const REQUIRED_PRODUCTS_PAGED_HANDLER_IMPORT_SNIPPET = 'import { GET_handler } from \'./handler\';';
 const PROMPT_EXPLODER_SETTINGS_FILE = 'src/features/prompt-exploder/settings.ts';
 const PROMPT_EXPLODER_CONTRACT_SETTINGS_FILE = 'src/shared/contracts/prompt-exploder/settings.ts';
-const CHATBOT_CONTRACT_FILE = 'src/shared/contracts/chatbot.ts';
+const CHATBOT_CONTRACT_FILE = 'src/shared/contracts/chatbot-contracts/chatbot-settings.ts';
 const AGENT_PERSONAS_UTIL_FILE = 'src/features/ai/agentcreator/utils/personas.ts';
 const IMAGE_STUDIO_SETTINGS_UTIL_FILE = 'src/features/ai/image-studio/utils/studio-settings.ts';
 const FORBIDDEN_PROMPT_EXPLODER_DEPRECATED_AI_KEYS_SNIPPETS = [
@@ -1070,6 +1070,8 @@ const checkHardcodedSecrets = (sourceFileMap) => {
     'src/shared/lib/search/search-settings.ts',
     'src/shared/lib/auth/auth-secret-settings.ts',
     'src/shared/lib/products/utils/validator-semantic-operations.ts',
+    'src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.utils.ts',
+    'src/features/filemaker/server/campaign-email-delivery.ts',
   ]);
 
   for (const [relativeFile, content] of sourceFileMap.entries()) {

@@ -1,0 +1,25 @@
+
+> libapp2@0.1.0 typecheck
+> node scripts/testing/run-segmented-typecheck.mjs
+
+[typecheck] shared
+src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx(33,48): error TS6133: 'hasUnsavedChanges' is declared but its value is never read.
+src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx(51,9): error TS6133: 'hasBlockingRuntimeJob' is declared but its value is never read.
+src/features/kangur/social/admin/workspace/AdminKangurSocialSettingsModal.tsx(201,11): error TS2322: Type '{ onSave: () => void; isSaving: boolean; hasUnsavedChanges: boolean; }' is not assignable to type 'IntrinsicAttributes & { hasUnsavedChanges: boolean; }'.
+  Property 'onSave' does not exist on type 'IntrinsicAttributes & { hasUnsavedChanges: boolean; }'.
+src/features/kangur/ui/components/clock-training/ClockTraining.context.tsx(428,36): error TS2322: Type '{ props: { completionPrimaryActionLabel?: string; enableAdaptiveRetry?: boolean; hideModeSwitch?: boolean; initialMode?: ClockGameMode; onCompletionPrimaryAction?: () => void; onFinish: () => void; ... 9 more ...; showTimeDisplay?: boolean; }; state: { ...; }; actions: { ...; }; }' is not assignable to type 'ClockTrainingContextValue'.
+  The types of 'state.task' are incompatible between these types.
+    Type 'ClockTask | undefined' is not assignable to type 'ClockTask'.
+      Type 'undefined' is not assignable to type 'ClockTask'.
+src/features/kangur/ui/components/clock-training/ClockTrainingGame.tsx(21,1): error TS6133: 'getClockTrainingSectionContent' is declared but its value is never read.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardAssignmentsMonitoringWidget.tsx(718,5): error TS6133: 'interactionsError' is declared but its value is never read.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardHeroWidget.tsx(578,9): error TS6133: 'isCoarsePointer' is declared but its value is never read.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx(26,1): error TS6133: 'ProfileModalTabId' is declared but its value is never read.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx(33,6): error TS6196: 'ActiveLearnerRecord' is declared but never used.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx(34,6): error TS6196: 'ActiveProfileRecord' is declared but never used.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx(37,6): error TS6196: 'CreateFormState' is declared but never used.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx(604,5): error TS6133: 'overview' is declared but its value is never read.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.tsx(30,27): error TS2339: Property 'copy' does not exist on type 'KangurParentDashboardRuntimeOverviewStateContextValue'.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.tsx(31,60): error TS2339: Property 'copy' does not exist on type 'KangurParentDashboardRuntimeOverviewStateContextValue'.
+src/features/kangur/ui/components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.tsx(32,68): error TS2339: Property 'copy' does not exist on type 'KangurParentDashboardRuntimeOverviewStateContextValue'.
+src/features/kangur/ui/components/parent-dashboard/MonitoringWidget.context.tsx(3,44): error TS6133: 'useMemo' is declared but its value is never read.

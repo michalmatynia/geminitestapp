@@ -1,19 +1,20 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
-import type {
-  ProductListingWithDetails,
-} from '@/shared/contracts/integrations';
-import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import type { ProductWithImages } from '@/shared/contracts/products';
 import {
-  internalError,
-} from '@/shared/errors/app-error';
+  areProductListingsRecoveryContextsEqual,
+  mergeProductListingsRecoveryContext,
+  resolveProductListingsIntegrationScope,
+} from '@/features/integrations/utils/product-listings-recovery';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
+import type { PlaywrightRelistBrowserMode, ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
+import { createStrictContext } from './createStrictContext';
 import { useProductListingsActionsImpl } from './useProductListingsActionsImpl';
 
 // --- Granular Contexts ---
@@ -25,13 +26,11 @@ export interface ProductListingsData {
   error: string | null;
   setError: (error: string | null) => void;
 }
-const DataContext = createContext<ProductListingsData | null>(null);
-export const useProductListingsData = () => {
-  const context = useContext(DataContext);
-  if (!context)
-    throw internalError('useProductListingsData must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: DataContext, useValue: useProductListingsData } =
+  createStrictContext<ProductListingsData>({
+    displayName: 'ProductListingsDataContext',
+    errorMessage: 'useProductListingsData must be used within ProductListingsProvider',
+  });
 
 export interface ProductListingsUIState {
   deletingFromBase: string | null;
@@ -40,19 +39,18 @@ export interface ProductListingsUIState {
   savingInventoryId: string | null;
   syncingImages: string | null;
   relistingListing: string | null;
+  relistingBrowserMode: PlaywrightRelistBrowserMode | null;
   openingTraderaLogin: string | null;
   inventoryOverrides: Record<string, string>;
   setInventoryOverrides: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   historyOpenByListing: Record<string, boolean>;
   setHistoryOpenByListing: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
-const UIStateContext = createContext<ProductListingsUIState | null>(null);
-export const useProductListingsUIState = () => {
-  const context = useContext(UIStateContext);
-  if (!context)
-    throw internalError('useProductListingsUIState must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: UIStateContext, useValue: useProductListingsUIState } =
+  createStrictContext<ProductListingsUIState>({
+    displayName: 'ProductListingsUIStateContext',
+    errorMessage: 'useProductListingsUIState must be used within ProductListingsProvider',
+  });
 
 export interface ProductListingsModals {
   listingToDelete: string | null;
@@ -62,17 +60,22 @@ export interface ProductListingsModals {
   isSyncImagesConfirmOpen: boolean;
   setIsSyncImagesConfirmOpen: (open: boolean) => void;
   onClose: () => void;
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  onStartListing?:
+    | ((
+        integrationId: string,
+        connectionId: string,
+        options?: { autoSubmit?: boolean }
+      ) => void)
+    | undefined;
   filterIntegrationSlug?: string | null | undefined;
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
+  setRecoveryContext: React.Dispatch<React.SetStateAction<ProductListingsRecoveryContext | null>>;
 }
-const ModalsContext = createContext<ProductListingsModals | null>(null);
-export const useProductListingsModals = () => {
-  const context = useContext(ModalsContext);
-  if (!context)
-    throw internalError('useProductListingsModals must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: ModalsContext, useValue: useProductListingsModals } =
+  createStrictContext<ProductListingsModals>({
+    displayName: 'ProductListingsModalsContext',
+    errorMessage: 'useProductListingsModals must be used within ProductListingsProvider',
+  });
 
 export interface ProductListingsLogs {
   exportLogs: CapturedLog[];
@@ -80,37 +83,39 @@ export interface ProductListingsLogs {
   setLogsOpen: (open: boolean) => void;
   lastExportListingId: string | null;
 }
-const LogsContext = createContext<ProductListingsLogs | null>(null);
-export const useProductListingsLogs = () => {
-  const context = useContext(LogsContext);
-  if (!context)
-    throw internalError('useProductListingsLogs must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: LogsContext, useValue: useProductListingsLogs } =
+  createStrictContext<ProductListingsLogs>({
+    displayName: 'ProductListingsLogsContext',
+    errorMessage: 'useProductListingsLogs must be used within ProductListingsProvider',
+  });
 
 export interface ProductListingsActions {
   handleDeleteFromBase: (listingId: string) => Promise<void>;
   handlePurgeListing: (listingId: string) => Promise<void>;
   handleSaveInventoryId: (listingId: string) => Promise<void>;
   handleSyncBaseImages: (baseListing: ProductListingWithDetails | null) => Promise<void>;
-  handleRelistTradera: (listingId: string) => Promise<void>;
+  handleRelistTradera: (
+    listingId: string,
+    options?: {
+      skipSessionPreflight?: boolean;
+      browserMode?: PlaywrightRelistBrowserMode;
+    }
+  ) => Promise<void>;
   handleOpenTraderaLogin: (
     listingId: string,
     integrationId: string,
     connectionId: string
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   handleExportAgain: (listingId: string) => Promise<void>;
   handleExportImagesOnly: (listingId: string, preset?: ImageRetryPreset) => Promise<void>;
   handleImageRetry: (preset: ImageRetryPreset) => Promise<void>;
   refetchListings: () => Promise<void>;
 }
-const ActionsContext = createContext<ProductListingsActions | null>(null);
-export const useProductListingsActions = () => {
-  const context = useContext(ActionsContext);
-  if (!context)
-    throw internalError('useProductListingsActions must be used within ProductListingsProvider');
-  return context;
-};
+export const { Context: ActionsContext, useValue: useProductListingsActions } =
+  createStrictContext<ProductListingsActions>({
+    displayName: 'ProductListingsActionsContext',
+    errorMessage: 'useProductListingsActions must be used within ProductListingsProvider',
+  });
 
 export function ProductListingsProvider({
   product,
@@ -125,7 +130,13 @@ export function ProductListingsProvider({
   children: React.ReactNode;
   onListingsUpdated?: (() => void) | undefined;
   onClose: () => void;
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  onStartListing?:
+    | ((
+        integrationId: string,
+        connectionId: string,
+        options?: { autoSubmit?: boolean }
+      ) => void)
+    | undefined;
   filterIntegrationSlug?: string | null | undefined;
   recoveryContext?: ProductListingsRecoveryContext | null | undefined;
 }): React.JSX.Element {
@@ -141,10 +152,32 @@ export function ProductListingsProvider({
   const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
   const [syncingImages, setSyncingImages] = useState<string | null>(null);
   const [relistingListing, setRelistingListing] = useState<string | null>(null);
+  const [relistingBrowserMode, setRelistingBrowserMode] =
+    useState<PlaywrightRelistBrowserMode | null>(null);
   const [openingTraderaLogin, setOpeningTraderaLogin] = useState<string | null>(null);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
   const [listingToPurge, setListingToPurge] = useState<string | null>(null);
   const [isSyncImagesConfirmOpen, setIsSyncImagesConfirmOpen] = useState(false);
+  const [resolvedRecoveryContext, setResolvedRecoveryContext] =
+    useState<ProductListingsRecoveryContext | null>(recoveryContext ?? null);
+
+  useEffect(() => {
+    setResolvedRecoveryContext((current) => {
+      const nextRecoveryContext = mergeProductListingsRecoveryContext(recoveryContext ?? null, current);
+      return areProductListingsRecoveryContextsEqual(current, nextRecoveryContext)
+        ? current
+        : nextRecoveryContext;
+    });
+  }, [recoveryContext]);
+
+  const resolvedFilterIntegrationSlug = useMemo(
+    () =>
+      resolveProductListingsIntegrationScope({
+        filterIntegrationSlug,
+        recoveryContext: resolvedRecoveryContext,
+      }),
+    [filterIntegrationSlug, resolvedRecoveryContext]
+  );
 
   const listingsQuery = useProductListings(product.id);
   const listings = listingsQuery.data ?? [];
@@ -169,6 +202,8 @@ export function ProductListingsProvider({
     setListingToPurge,
     setLogsOpen,
     setOpeningTraderaLogin,
+    setRecoveryContext: setResolvedRecoveryContext,
+    setRelistingBrowserMode,
     setPurgingListing,
     setRelistingListing,
     setSavingInventoryId,
@@ -194,6 +229,7 @@ export function ProductListingsProvider({
       savingInventoryId,
       syncingImages,
       relistingListing,
+      relistingBrowserMode,
       openingTraderaLogin,
       inventoryOverrides,
       setInventoryOverrides,
@@ -207,6 +243,7 @@ export function ProductListingsProvider({
       savingInventoryId,
       syncingImages,
       relistingListing,
+      relistingBrowserMode,
       openingTraderaLogin,
       inventoryOverrides,
       historyOpenByListing,
@@ -223,8 +260,9 @@ export function ProductListingsProvider({
       setIsSyncImagesConfirmOpen,
       onClose,
       onStartListing,
-      filterIntegrationSlug,
-      recoveryContext,
+      filterIntegrationSlug: resolvedFilterIntegrationSlug,
+      recoveryContext: resolvedRecoveryContext,
+      setRecoveryContext: setResolvedRecoveryContext,
     }),
     [
       listingToDelete,
@@ -232,8 +270,8 @@ export function ProductListingsProvider({
       isSyncImagesConfirmOpen,
       onClose,
       onStartListing,
-      filterIntegrationSlug,
-      recoveryContext,
+      resolvedRecoveryContext,
+      resolvedFilterIntegrationSlug,
     ]
   );
 

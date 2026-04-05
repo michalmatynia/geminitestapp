@@ -96,6 +96,7 @@ export const createFilemakerEmailCampaign = (input?: Partial<FilemakerEmailCampa
         : 'draft',
     subject: normalizeString(input?.subject),
     previewText: normalizeString(input?.previewText) || null,
+    mailAccountId: normalizeString(input?.mailAccountId) || null,
     fromName: normalizeString(input?.fromName) || null,
     replyToEmail: normalizeString(input?.replyToEmail).toLowerCase() || null,
     bodyText: normalizeString(input?.bodyText) || null,

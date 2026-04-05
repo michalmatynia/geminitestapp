@@ -2,11 +2,8 @@ import 'server-only';
 
 import { ObjectId, type Filter, type SortDirection } from 'mongodb';
 
-import {
-  resolveKangurScoreSubject,
-  type KangurScore,
-  type KangurScoreRepositoryCreateInput,
-} from '@kangur/contracts';
+import { resolveKangurScoreSubject } from '@kangur/contracts/kangur';
+import { type KangurScore, type KangurScoreRepositoryCreateInput } from '@kangur/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { normalizeSort } from './shared';
@@ -17,6 +14,7 @@ import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-
 
 const KANGUR_SCORES_COLLECTION = 'kangur_scores';
 const KANGUR_SCORES_CLIENT_MUTATION_INDEX = 'kangur_scores_client_mutation_id_unique';
+type KangurScoreFilterSubject = NonNullable<KangurScoreListInput['filters']>['subject'];
 
 type KangurScoreDocument = {
   _id: ObjectId;
@@ -64,66 +62,99 @@ const toMongoSort = (sort: KangurScoreListInput['sort']): Record<string, SortDir
   };
 };
 
+const buildMathsSubjectFilter = (
+  subject: KangurScoreFilterSubject
+): Filter<KangurScoreDocument> => ({
+  $and: [
+    {
+      $or: [
+        { subject },
+        { subject: { $exists: false } },
+        { subject: null },
+      ],
+    },
+    {
+      $nor: [
+        { operation: ENGLISH_OPERATION_REGEX },
+        { operation: ALPHABET_OPERATION_REGEX },
+        { operation: ART_OPERATION_REGEX },
+        { operation: MUSIC_OPERATION_REGEX },
+      ],
+    },
+  ],
+});
+
+const buildRegexSubjectFilter = (
+  subject: KangurScoreFilterSubject,
+  regex: RegExp
+): Filter<KangurScoreDocument> => ({
+  $or: [{ subject }, { operation: { $regex: regex } }],
+});
+
+type RegexBackedKangurScoreSubject = 'alphabet' | 'english' | 'art' | 'music';
+
+const SUBJECT_FILTER_REGEX_BY_SUBJECT: Record<RegexBackedKangurScoreSubject, RegExp> = {
+  alphabet: ALPHABET_OPERATION_REGEX,
+  english: ENGLISH_OPERATION_REGEX,
+  art: ART_OPERATION_REGEX,
+  music: MUSIC_OPERATION_REGEX,
+};
+
+const isRegexBackedKangurScoreSubject = (
+  subject: KangurScoreFilterSubject
+): subject is RegexBackedKangurScoreSubject =>
+  subject === 'alphabet' || subject === 'english' || subject === 'art' || subject === 'music';
+
+const resolveSubjectMongoFilter = (
+  subject: KangurScoreFilterSubject
+): Filter<KangurScoreDocument> => {
+  if (subject === 'maths') {
+    return buildMathsSubjectFilter(subject);
+  }
+  if (isRegexBackedKangurScoreSubject(subject)) {
+    return buildRegexSubjectFilter(subject, SUBJECT_FILTER_REGEX_BY_SUBJECT[subject]);
+  }
+  return { subject };
+};
+
+type KangurScoreFilterValue = NonNullable<KangurScoreListInput['filters']>;
+type KangurScoreFilterKey = keyof KangurScoreFilterValue;
+
+const applyMongoScoreFilter = (
+  query: Filter<KangurScoreDocument>,
+  filters: KangurScoreFilterValue,
+  key: KangurScoreFilterKey
+): void => {
+  const value = filters[key];
+  if (!value) {
+    return;
+  }
+  switch (key) {
+    case 'player_name':
+      query.player_name = value;
+      return;
+    case 'operation':
+      query.operation = value;
+      return;
+    case 'subject':
+      Object.assign(query, resolveSubjectMongoFilter(value as KangurScoreFilterSubject));
+      return;
+    case 'created_by':
+      query.created_by = value;
+      return;
+    case 'learner_id':
+      query.learner_id = value;
+      return;
+  }
+};
+
 const toMongoFilters = (input?: KangurScoreListInput): Filter<KangurScoreDocument> => {
   const filters = input?.filters;
   const query: Filter<KangurScoreDocument> = {};
   if (!filters) return query;
 
-  if (filters.player_name) {
-    query.player_name = filters.player_name;
-  }
-  if (filters.operation) {
-    query.operation = filters.operation;
-  }
-  if (filters.subject) {
-    if (filters.subject === 'maths') {
-      const subjectMatch: Filter<KangurScoreDocument> = {
-        $or: [
-          { subject: filters.subject },
-          { subject: { $exists: false } },
-          { subject: null },
-        ],
-      };
-      const operationMatch: Filter<KangurScoreDocument> = {
-        $nor: [
-          { operation: ENGLISH_OPERATION_REGEX },
-          { operation: ALPHABET_OPERATION_REGEX },
-          { operation: ART_OPERATION_REGEX },
-          { operation: MUSIC_OPERATION_REGEX },
-        ],
-      };
-      query.$and = Array.isArray(query.$and)
-        ? [...query.$and, subjectMatch, operationMatch]
-        : [subjectMatch, operationMatch];
-    } else if (filters.subject === 'alphabet') {
-      query.$or = [
-        { subject: filters.subject },
-        { operation: { $regex: ALPHABET_OPERATION_REGEX } },
-      ];
-    } else if (filters.subject === 'english') {
-      query.$or = [
-        { subject: filters.subject },
-        { operation: { $regex: ENGLISH_OPERATION_REGEX } },
-      ];
-    } else if (filters.subject === 'art') {
-      query.$or = [
-        { subject: filters.subject },
-        { operation: { $regex: ART_OPERATION_REGEX } },
-      ];
-    } else if (filters.subject === 'music') {
-      query.$or = [
-        { subject: filters.subject },
-        { operation: { $regex: MUSIC_OPERATION_REGEX } },
-      ];
-    } else {
-      query.subject = filters.subject;
-    }
-  }
-  if (filters.created_by) {
-    query.created_by = filters.created_by;
-  }
-  if (filters.learner_id) {
-    query.learner_id = filters.learner_id;
+  for (const key of Object.keys(filters) as KangurScoreFilterKey[]) {
+    applyMongoScoreFilter(query, filters, key);
   }
   return query;
 };

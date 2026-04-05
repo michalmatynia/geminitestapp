@@ -14,7 +14,7 @@ import type {
   TutorMotionProfile,
   TutorPanelSnapState,
   TutorReducedMotionPanelTransitions,
-} from './KangurAiTutorWidget.shared';
+} from './ai-tutor-widget/KangurAiTutorWidget.shared';
 import type { CSSProperties, JSX, PointerEvent, ReactNode } from 'react';
 
 export type KangurAiTutorRenderedPanelProps = {

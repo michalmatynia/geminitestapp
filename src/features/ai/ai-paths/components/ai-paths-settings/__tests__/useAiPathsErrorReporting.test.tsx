@@ -15,17 +15,21 @@ const mockState = vi.hoisted(() => ({
   safeStringify: vi.fn((value: unknown) => JSON.stringify(value)),
 }));
 
-vi.mock('../../../context', () => ({
+vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphState: () => mockState.graphState,
   useRuntimeActions: () => ({
     setLastError: mockState.setLastError,
   }),
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
-  AI_PATHS_LAST_ERROR_KEY: 'ai-paths:last-error',
-  safeStringify: (value: unknown) => mockState.safeStringify(value),
-}));
+vi.mock('@/shared/lib/ai-paths', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/ai-paths')>();
+  return {
+    ...actual,
+    AI_PATHS_LAST_ERROR_KEY: 'ai-paths:last-error',
+    safeStringify: (value: unknown) => mockState.safeStringify(value),
+  };
+});
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({
   updateAiPathsSetting: (...args: unknown[]) => mockState.updateAiPathsSetting(...args),

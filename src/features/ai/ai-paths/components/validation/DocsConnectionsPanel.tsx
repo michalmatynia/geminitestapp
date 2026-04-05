@@ -4,7 +4,8 @@ import React from 'react';
 
 import { AI_PATHS_NODE_DOCS as NODE_DOCS_LIST } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES } from '@/shared/lib/ai-paths/core/validation-engine';
-import { Card, Hint, Label, SearchInput, Textarea, useToast } from '@/shared/ui';
+import { Card, Label, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { Hint, SearchInput } from '@/shared/ui/forms-and-actions.public';
 
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { parseDocsSourcesText } from '../../pages/AdminAiPathsValidationUtils';

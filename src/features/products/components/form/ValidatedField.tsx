@@ -6,9 +6,13 @@ import { useFormContext } from 'react-hook-form';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import type { FieldValidatorIssue } from '@/features/products/validation-engine/core';
-import { ProductFormData } from '@/shared/contracts/products';
-import { FormField, Input, Textarea, Hint } from '@/features/products/ui';
-import { cn } from '@/shared/utils';
+import { ProductFormData } from '@/shared/contracts/products/drafts';
+import { FormField } from '@/shared/ui/form-section';
+import { Hint } from '@/shared/ui/Hint';
+import { Input } from '@/shared/ui/input';
+import { Textarea } from '@/shared/ui/textarea';
+
+import { cn } from '@/shared/utils/ui-utils';
 
 import { IssueHintRow } from './ValidatorIssueHint';
 

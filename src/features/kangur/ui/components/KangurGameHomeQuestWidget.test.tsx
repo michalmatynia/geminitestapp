@@ -58,7 +58,7 @@ vi.mock('use-intl', async (importOriginal) => {
   };
 });
 
-import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/KangurGameHomeQuestWidget';
+import { KangurGameHomeQuestWidget } from '@/features/kangur/ui/components/game-home/KangurGameHomeQuestWidget';
 import type { KangurProgressState } from '@/features/kangur/ui/types';
 import { getKangurDailyQuestStorageKey } from '@/features/kangur/ui/services/daily-quests';
 

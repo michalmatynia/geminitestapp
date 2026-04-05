@@ -28,8 +28,8 @@ import {
   loadImageStudioActiveProjectLocal,
   saveImageStudioActiveProjectLocal,
 } from '@/features/ai/image-studio/utils/project-session';
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
-import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio/project';
+import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui/queries';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
@@ -37,7 +37,7 @@ import {
   useUpdateUserPreferences,
 } from '@/shared/hooks/useUserPreferences';
 import { ApiError } from '@/shared/lib/api-client';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

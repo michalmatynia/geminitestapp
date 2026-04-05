@@ -15,8 +15,8 @@ import type {
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
 import { internalError } from '@/shared/errors/app-error';
 
-import type { ActiveTutorFocus, TutorQuickAction } from './KangurAiTutorWidget.shared';
-import type { TutorSurface } from './KangurAiTutorWidget.types';
+import type { ActiveTutorFocus, TutorQuickAction } from './ai-tutor-widget/KangurAiTutorWidget.shared';
+import type { TutorSurface } from './ai-tutor-widget/KangurAiTutorWidget.types';
 
 export type TutorProactiveNudge = {
   mode: 'gentle' | 'coach';

@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-03-28'
+last_reviewed: '2026-04-02'
 status: 'generated'
 doc_type: 'generated'
 scope: 'generated'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-28T14:12:46.431Z
+Generated at: 2026-04-02T23:12:02.374Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -16,7 +16,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/v2/integrations/[[...path]]/route.ts` | 231 |
+| `src/app/api/v2/integrations/[[...path]]/route.ts` | 235 |
 | `src/app/api/agentcreator/[[...path]]/route.ts` | 228 |
 | `src/app/api/ai-paths/[[...path]]/route.ts` | 205 |
 | `src/app/api/databases/[[...path]]/route.ts` | 203 |
@@ -41,26 +41,26 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Page | LOC |
 | --- | ---: |
-| `src/app/[locale]/(frontend)/[...slug]/page.tsx` | 110 |
-| `src/app/(frontend)/[...slug]/page.tsx` | 92 |
-| `src/app/[locale]/(frontend)/page.tsx` | 88 |
-| `src/app/(frontend)/page.tsx` | 67 |
-| `src/app/[locale]/(frontend)/kangur/login/page.tsx` | 57 |
 | `src/app/(admin)/admin/agentcreator/teaching/page.tsx` | 48 |
 | `src/app/(admin)/admin/agentcreator/page.tsx` | 45 |
-| `src/app/(frontend)/kangur/login/page.tsx` | 41 |
 | `src/app/(frontend)/preview/[id]/page.tsx` | 40 |
-| `src/app/[locale]/(frontend)/filemaker/preferences/page.tsx` | 30 |
-| `src/app/[locale]/(frontend)/filemaker/unsubscribe/page.tsx` | 30 |
+| `src/app/[locale]/(frontend)/[...slug]/page.tsx` | 35 |
+| `src/app/(frontend)/[...slug]/page.tsx` | 32 |
 | `src/app/(admin)/admin/products/settings/page.tsx` | 29 |
 | `src/app/[locale]/(frontend)/login/page.tsx` | 29 |
-| `src/app/(frontend)/filemaker/preferences/page.tsx` | 27 |
-| `src/app/(frontend)/filemaker/unsubscribe/page.tsx` | 27 |
+| `src/app/(admin)/admin/filemaker/campaigns/preferences/page.tsx` | 24 |
+| `src/app/(admin)/admin/filemaker/campaigns/unsubscribe/page.tsx` | 24 |
 | `src/app/(frontend)/preview/foldertree-shell-runtime/page.tsx` | 21 |
-| `src/app/[locale]/(frontend)/products/[id]/page.tsx` | 20 |
+| `src/app/[locale]/(frontend)/kangur/login/page.tsx` | 20 |
 | `src/app/(admin)/admin/integrations/aggregators/base-com/synchronization-engine/page.tsx` | 17 |
+| `src/app/[locale]/(frontend)/page.tsx` | 17 |
+| `src/app/[locale]/(frontend)/products/[id]/page.tsx` | 17 |
 | `src/app/(admin)/admin/kangur/[...slug]/page.tsx` | 16 |
+| `src/app/(frontend)/kangur/login/page.tsx` | 16 |
 | `src/app/(frontend)/login/page.tsx` | 16 |
+| `src/app/(admin)/admin/ai-paths/queue/page.tsx` | 15 |
+| `src/app/(admin)/admin/chatbot/context/page.tsx` | 15 |
+| `src/app/(admin)/admin/chatbot/page.tsx` | 15 |
 
 ## Recommended First Runtime Profiling Targets
 

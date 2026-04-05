@@ -5,11 +5,13 @@ import {
   mapImageCropRectToCanvasRect,
   normalizeCenterLayoutConfig,
   polygonsFromShapes,
+  resolveClientProcessingImageSrc,
   resolveCanvasOverflowCropRect,
   resolveCropRectFromShapesWithDiagnostics,
   type ImageContentFrame,
   type MaskShapeForExport,
 } from '../GenerationToolbarImageUtils';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 const IMAGE_FRAME: ImageContentFrame = {
   x: 1 / 6,
@@ -248,5 +250,61 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
       shadowPolicy: 'auto',
       detection: 'white_bg_first_colored_pixel',
     });
+  });
+});
+
+describe('GenerationToolbarImageUtils source resolution', () => {
+  const makeSlot = (
+    overrides: Partial<ImageStudioSlotRecord> = {}
+  ): ImageStudioSlotRecord =>
+    ({
+      id: 'slot-1',
+      projectId: 'project-1',
+      name: 'Slot 1',
+      folderPath: 'products/item',
+      imageBase64: null,
+      imageUrl: null,
+      imageFile: null,
+      createdAt: '2026-04-03T10:00:00.000Z',
+      updatedAt: '2026-04-03T10:00:00.000Z',
+      ...overrides,
+    }) as ImageStudioSlotRecord;
+
+  it('prefers embedded base64 and preserves browser-safe sources', () => {
+    expect(
+      resolveClientProcessingImageSrc(
+        makeSlot({
+          imageBase64: ' data:image/png;base64,abc ',
+          imageFile: { filepath: 'tmp/image.png' } as ImageStudioSlotRecord['imageFile'],
+          imageUrl: 'https://example.com/fallback.png',
+        }),
+        '/fallback.png'
+      )
+    ).toBe('data:image/png;base64,abc');
+  });
+
+  it('normalizes local filepaths and local urls before falling back', () => {
+    expect(
+      resolveClientProcessingImageSrc(
+        makeSlot({
+          imageFile: { filepath: '\\tmp\\nested\\image.png' } as ImageStudioSlotRecord['imageFile'],
+        }),
+        '/fallback.png'
+      )
+    ).toBe('/tmp/nested/image.png');
+
+    expect(
+      resolveClientProcessingImageSrc(
+        makeSlot({
+          imageUrl: 'uploads/generated/image.png',
+        }),
+        '/fallback.png'
+      )
+    ).toBe('/uploads/generated/image.png');
+  });
+
+  it('falls back when the slot does not expose a usable source', () => {
+    expect(resolveClientProcessingImageSrc(makeSlot(), '/fallback.png')).toBe('/fallback.png');
+    expect(resolveClientProcessingImageSrc(null, null)).toBeNull();
   });
 });

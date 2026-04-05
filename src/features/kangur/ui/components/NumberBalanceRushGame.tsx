@@ -39,6 +39,10 @@ import { type NumberBalanceRushGameProps, type ZoneId } from './NumberBalanceRus
 type NumberBalanceRushState = ReturnType<typeof useNumberBalanceRushGameState>;
 type NumberBalanceRushTranslations = NumberBalanceRushState['translations'];
 
+import {
+  type NumberBalanceLeaderboardEntry,
+} from './NumberBalanceRushGame.runtime';
+
 const NUMBER_BALANCE_DROP_ZONE_CLASSNAME =
   'flex min-h-[120px] w-full flex-wrap items-center justify-center gap-2 rounded-3xl border-2 border-dashed p-3 transition touch-manipulation';
 const NUMBER_BALANCE_TRAY_CLASSNAME =
@@ -365,7 +369,7 @@ function NumberBalanceRushLeaderboard({
 
   return (
     <div className={`${KANGUR_GRID_TIGHT_CLASSNAME} sm:grid-cols-2`}>
-      {entries.map((entry) => (
+      {entries.map((entry: NumberBalanceLeaderboardEntry) => (
         <div
           key={entry.playerId}
           className={cn(

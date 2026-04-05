@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 interface EmptyStateProps {
   title: string;

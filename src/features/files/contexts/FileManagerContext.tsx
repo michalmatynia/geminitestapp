@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
+import React, { useState, useMemo, useCallback, ReactNode } from 'react';
 
 import { useFileAsset3dList } from '@/features/files/hooks/useFileAsset3dQueries';
 import {
@@ -9,11 +9,12 @@ import {
   useUpdateFileTags,
 } from '@/features/files/hooks/useFileQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ExpandedImageFile } from '@/shared/contracts/products';
+import type { ExpandedImageFile } from '@/shared/contracts/products/drafts';
 import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { useToast } from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type {
@@ -33,36 +34,55 @@ export type {
 } from './FileManagerContext.types';
 
 // --- Granular Contexts ---
-const ConfigContext = createContext<FileManagerConfig | null>(null);
-export const useFileManagerConfig = () => {
-  const context = useContext(ConfigContext);
-  if (!context) throw internalError('useFileManagerConfig must be used within FileManagerProvider');
-  return context;
-};
-const SearchContext = createContext<FileManagerSearch | null>(null);
-export const useFileManagerSearch = () => {
-  const context = useContext(SearchContext);
-  if (!context) throw internalError('useFileManagerSearch must be used within FileManagerProvider');
-  return context;
-};
-const UIStateContext = createContext<FileManagerUIState | null>(null);
-export const useFileManagerUIState = () => {
-  const context = useContext(UIStateContext);
-  if (!context) throw internalError('useFileManagerUIState must be used within FileManagerProvider');
-  return context;
-};
-const DataContext = createContext<FileManagerData | null>(null);
-export const useFileManagerData = () => {
-  const context = useContext(DataContext);
-  if (!context) throw internalError('useFileManagerData must be used within FileManagerProvider');
-  return context;
-};
-const ActionsContext = createContext<FileManagerActions | null>(null);
-export const useFileManagerActions = () => {
-  const context = useContext(ActionsContext);
-  if (!context) throw internalError('useFileManagerActions must be used within FileManagerProvider');
-  return context;
-};
+const {
+  Context: ConfigContext,
+  useStrictContext: useFileManagerConfigContext,
+} = createStrictContext<FileManagerConfig>({
+  hookName: 'useFileManagerConfig',
+  providerName: 'FileManagerProvider',
+  errorFactory: internalError,
+});
+export const useFileManagerConfig = useFileManagerConfigContext;
+
+const {
+  Context: SearchContext,
+  useStrictContext: useFileManagerSearchContext,
+} = createStrictContext<FileManagerSearch>({
+  hookName: 'useFileManagerSearch',
+  providerName: 'FileManagerProvider',
+  errorFactory: internalError,
+});
+export const useFileManagerSearch = useFileManagerSearchContext;
+
+const {
+  Context: UIStateContext,
+  useStrictContext: useFileManagerUIStateContext,
+} = createStrictContext<FileManagerUIState>({
+  hookName: 'useFileManagerUIState',
+  providerName: 'FileManagerProvider',
+  errorFactory: internalError,
+});
+export const useFileManagerUIState = useFileManagerUIStateContext;
+
+const {
+  Context: DataContext,
+  useStrictContext: useFileManagerDataContext,
+} = createStrictContext<FileManagerData>({
+  hookName: 'useFileManagerData',
+  providerName: 'FileManagerProvider',
+  errorFactory: internalError,
+});
+export const useFileManagerData = useFileManagerDataContext;
+
+const {
+  Context: ActionsContext,
+  useStrictContext: useFileManagerActionsContext,
+} = createStrictContext<FileManagerActions>({
+  hookName: 'useFileManagerActions',
+  providerName: 'FileManagerProvider',
+  errorFactory: internalError,
+});
+export const useFileManagerActions = useFileManagerActionsContext;
 
 const normalizeTag = (tag: string): string => tag.trim().toLowerCase();
 const parseTagInput = (input: string): string[] => {

@@ -1,27 +1,14 @@
-'use client';
-
 import { useQueryClient } from '@tanstack/react-query';
 
-import type {
-  ListingBadgesPayload,
-  MarketplaceBadgeEntry,
-  ProductListingCreatePayload,
-  ProductListingCreateResponse,
-  ProductListingCreateVariables,
-  ProductListingDeleteFromBaseResponse,
-  ProductListingDeleteFromBaseVariables,
-  ProductListingInventoryUpdateVariables,
-  ProductListingRelistResponse,
-  ProductListingRelistVariables,
-  ProductListingSyncBaseImagesResponse,
-  ProductListingSyncBaseImagesVariables,
-  ProductListingUpdateResponse,
-  ProductListingWithDetails,
-  ProductJob,
-  ExportToBaseVariables,
-  ExportResponse,
-} from '@/shared/contracts/integrations';
-import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
+import {
+  PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
+  TRADERA_INTEGRATION_SLUGS,
+  normalizeIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
+import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
+import type { ProductJob } from '@/shared/contracts/integrations/domain';
+import type { ExportToBaseVariables, ExportResponse } from '@/shared/contracts/integrations/base-com';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -70,8 +57,71 @@ interface ProductListingAndJobsContext {
   previousIntegrationJobs: ProductJob[] | undefined;
 }
 
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
 const toBadgeEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};
+
+const patchQueuedPlaywrightRelist = (
+  listing: ProductListingWithDetails,
+  options: {
+    browserMode?: ProductListingRelistVariables['browserMode'];
+    requestId?: string | null;
+    queuedAt?: string | null;
+  }
+): ProductListingWithDetails => {
+  const previousMarketplaceData = toRecord(listing.marketplaceData);
+  const previousPlaywrightData = toRecord(previousMarketplaceData['playwright']);
+
+  return {
+    ...listing,
+    status: 'queued_relist',
+    failureReason: null,
+    marketplaceData: {
+      ...previousMarketplaceData,
+      marketplace: 'playwright-programmable',
+      playwright: {
+        ...previousPlaywrightData,
+        pendingExecution: {
+          requestedBrowserMode: options.browserMode ?? 'connection_default',
+          requestId: options.requestId ?? null,
+          queuedAt: options.queuedAt ?? null,
+        },
+      },
+    },
+  };
+};
+
+const patchQueuedTraderaRelist = (
+  listing: ProductListingWithDetails,
+  options: {
+    browserMode?: ProductListingRelistVariables['browserMode'];
+    requestId?: string | null;
+    queuedAt?: string | null;
+  }
+): ProductListingWithDetails => {
+  const previousMarketplaceData = toRecord(listing.marketplaceData);
+  const previousTraderaData = toRecord(previousMarketplaceData['tradera']);
+
+  return {
+    ...listing,
+    status: 'queued_relist',
+    failureReason: null,
+    marketplaceData: {
+      ...previousMarketplaceData,
+      marketplace: 'tradera',
+      tradera: {
+        ...previousTraderaData,
+        pendingExecution: {
+          requestedBrowserMode: options.browserMode ?? 'connection_default',
+          requestId: options.requestId ?? null,
+          queuedAt: options.queuedAt ?? null,
+        },
+      },
+    },
+  };
+};
 
 const getListingBadgesSnapshot = (
   queryClient: ReturnType<typeof useQueryClient>
@@ -463,6 +513,39 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       if (queueName === 'tradera-listings') {
         setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
       }
+      if (queueName === 'playwright-programmable-listings') {
+        setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued');
+      }
+      await invalidateProductListingsAndBadges(queryClient, productId);
+    },
+  });
+}
+
+export function useLinkExistingTraderaListingMutation(productId: string): CreateMutation<
+  TraderaProductLinkExistingResponse,
+  TraderaProductLinkExistingPayload
+> {
+  return createCreateMutationV2({
+    mutationFn: ({ listingUrl, connectionId }: TraderaProductLinkExistingPayload) =>
+      api.post<TraderaProductLinkExistingResponse>(
+        `/api/v2/integrations/products/${productId}/tradera/link-existing`,
+        {
+          listingUrl,
+          ...(connectionId ? { connectionId } : {}),
+        }
+      ),
+    mutationKey: getProductListingsQueryKey(productId),
+    meta: {
+      source: 'integrations.hooks.useLinkExistingTraderaListingMutation',
+      operation: 'create',
+      resource: 'integrations.listings.tradera-link-existing',
+      domain: 'integrations',
+      mutationKey: getProductListingsQueryKey(productId),
+      tags: ['integrations', 'listings', 'tradera', 'link-existing'],
+      description: 'Links an existing Tradera listing to a product.',
+    },
+    invalidate: async (queryClient) => {
+      setListingBadgeStatus(queryClient, productId, 'tradera', 'active');
       await invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
@@ -472,11 +555,16 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
   ProductListingRelistResponse,
   ProductListingRelistVariables
 > {
+  const queryClient = useQueryClient();
+  const listingQueryKey = getProductListingsQueryKey(productId);
+
   return createCreateMutationV2({
-    mutationFn: ({ listingId }: ProductListingRelistVariables) =>
+    mutationFn: ({ listingId, browserMode }: ProductListingRelistVariables) =>
       api.post<ProductListingRelistResponse>(
         `/api/v2/integrations/products/${productId}/listings/${listingId}/relist`,
-        {}
+        {
+          ...(browserMode ? { browserMode } : {}),
+        }
       ),
     mutationKey: getProductListingsQueryKey(productId),
     meta: {
@@ -484,11 +572,88 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
       operation: 'create',
       resource: 'integrations.listings.tradera-relist',
       domain: 'integrations',
-      mutationKey: getProductListingsQueryKey(productId),
+      mutationKey: listingQueryKey,
       tags: ['integrations', 'listings', 'tradera', 'relist'],
       description: 'Creates integrations listings tradera relist.'},
-    invalidate: async (queryClient) => {
-      setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
+    onMutate: async (vars): Promise<ProductListingAndJobsContext> => {
+      await cancelProductListingsAndJobs(queryClient, productId);
+
+      const previousListings =
+        queryClient.getQueryData<ProductListingWithDetails[]>(listingQueryKey);
+      const previousIntegrationJobs =
+        queryClient.getQueryData<ProductJob[]>(integrationJobsQueryKey);
+
+      if (previousListings) {
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          previousListings.map((listing) => {
+            if (listing.id !== vars.listingId) return listing;
+
+            const integrationSlug = normalizeIntegrationSlug(listing.integration?.slug);
+            if (integrationSlug === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) {
+              return patchQueuedPlaywrightRelist(listing, { browserMode: vars.browserMode });
+            }
+            if (TRADERA_INTEGRATION_SLUGS.has(integrationSlug)) {
+              return patchQueuedTraderaRelist(listing, { browserMode: vars.browserMode });
+            }
+
+            return { ...listing, status: 'queued_relist', failureReason: null };
+          })
+        );
+      }
+
+      return { previousListings, previousIntegrationJobs };
+    },
+    onError: (_error, _vars, context: ProductListingAndJobsContext | undefined): void => {
+      if (context?.previousListings) {
+        queryClient.setQueryData(listingQueryKey, context.previousListings);
+      }
+      if (context?.previousIntegrationJobs) {
+        queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
+      }
+    },
+    invalidate: async (queryClient, data, vars) => {
+      if (data.queue?.name === 'playwright-programmable-listings') {
+        const queuedAt = data.queue.enqueuedAt ?? null;
+        const requestId = data.queue.jobId ?? null;
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          (current) =>
+            current?.map((listing) =>
+              listing.id === vars.listingId
+                ? patchQueuedPlaywrightRelist(listing, {
+                    browserMode: vars.browserMode,
+                    requestId,
+                    queuedAt,
+                  })
+                : listing
+            ) ?? current
+        );
+      }
+      if (data.queue?.name === 'tradera-listings') {
+        const queuedAt = data.queue.enqueuedAt ?? null;
+        const requestId = data.queue.jobId ?? null;
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          (current) =>
+            current?.map((listing) =>
+              listing.id === vars.listingId
+                ? patchQueuedTraderaRelist(listing, {
+                    browserMode: vars.browserMode,
+                    requestId,
+                    queuedAt,
+                  })
+                : listing
+            ) ?? current
+        );
+      }
+      const queueName = data.queue?.name ?? null;
+      if (queueName === 'tradera-listings') {
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
+      }
+      if (queueName === 'playwright-programmable-listings') {
+        setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued_relist');
+      }
       await invalidateProductListingsAndBadges(queryClient, productId);
       await invalidateProducts(queryClient);
     },

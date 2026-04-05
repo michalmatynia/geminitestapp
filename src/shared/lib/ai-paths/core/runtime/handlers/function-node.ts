@@ -22,32 +22,58 @@ const getAtPath = (value: unknown, path: string): unknown => {
   return current;
 };
 
+const toObjectRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+const normalizePathSegments = (path: string): string[] => path.split('.').filter(Boolean);
+
+const ensureNestedObjectSegment = (
+  cursor: Record<string, unknown>,
+  segment: string
+): Record<string, unknown> => {
+  const existing = cursor[segment];
+  if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
+    return existing as Record<string, unknown>;
+  }
+
+  const next: Record<string, unknown> = {};
+  cursor[segment] = next;
+  return next;
+};
+
+const resolveWritablePath = (
+  target: unknown,
+  path: string
+): { base: Record<string, unknown>; cursor: Record<string, unknown>; segment: string } | null => {
+  const segments = normalizePathSegments(path);
+  const segment = segments.pop();
+  if (!segment) {
+    return null;
+  }
+
+  const base = toObjectRecord(target);
+  const cursor = segments.reduce(
+    (current: Record<string, unknown>, part: string) => ensureNestedObjectSegment(current, part),
+    base
+  );
+
+  return { base, cursor, segment };
+};
+
 const setAtPath = (target: unknown, path: string, nextValue: unknown): Record<string, unknown> => {
-  const base: Record<string, unknown> =
-    target && typeof target === 'object' && !Array.isArray(target)
-      ? (target as Record<string, unknown>)
-      : {};
   if (!path.trim()) {
-    return base;
+    return toObjectRecord(target);
   }
-  const segments = path.split('.').filter(Boolean);
-  let cursor: Record<string, unknown> = base;
-  for (let index = 0; index < segments.length; index += 1) {
-    const segment = segments[index]!;
-    if (index === segments.length - 1) {
-      cursor[segment] = nextValue;
-      break;
-    }
-    const existing = cursor[segment];
-    if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
-      const next: Record<string, unknown> = {};
-      cursor[segment] = next;
-      cursor = next;
-    } else {
-      cursor = existing as Record<string, unknown>;
-    }
+
+  const resolved = resolveWritablePath(target, path);
+  if (!resolved) {
+    return toObjectRecord(target);
   }
-  return base;
+
+  resolved.cursor[resolved.segment] = nextValue;
+  return resolved.base;
 };
 
 const cloneValue = <T>(value: T): T => {
@@ -101,6 +127,129 @@ const buildFunctionContext = (config: FunctionConfig | undefined): Record<string
   };
 };
 
+const FORBIDDEN_SAFE_MODE_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /\bprocess\./i, label: 'process.*' },
+  { pattern: /\brequire\s*\(/i, label: 'require(...)' },
+  { pattern: /\bimport\s*\(/i, label: 'import(...)' },
+  { pattern: /\beval\s*\(/i, label: 'eval(...)' },
+  { pattern: /\bFunction\s*\(/, label: 'Function(...)' },
+  { pattern: /\bglobalThis\b/, label: 'globalThis' },
+  { pattern: /\bwindow\b/, label: 'window' },
+  { pattern: /\bdocument\b/, label: 'document' },
+];
+
+const buildFunctionNodeFailure = (
+  prevOutputs: RuntimePortValues,
+  error: string,
+  errorCode: string,
+  extra: RuntimePortValues = {}
+): RuntimePortValues => ({
+  ...prevOutputs,
+  ...extra,
+  status: 'failed',
+  error,
+  errorCode,
+});
+
+const findForbiddenSafeModeToken = (script: string): string | null => {
+  const violated = FORBIDDEN_SAFE_MODE_PATTERNS.find(({ pattern }) => pattern.test(script));
+  return violated?.label ?? null;
+};
+
+const createFunctionLogger = (logs: string[]): ((...args: unknown[]) => void) => {
+  return (...args: unknown[]): void => {
+    const payload = args.length === 1 ? args[0] : args;
+    logs.push(safeStringify(payload));
+  };
+};
+
+const compileFunctionScript = (
+  script: string
+):
+  | { ok: true; fn: (inputs: RuntimePortValues, context: Record<string, unknown>) => unknown }
+  | { ok: false; error: string } => {
+  try {
+    return {
+      ok: true,
+      fn: new Function('inputs', 'context', `"use strict";\n${script}`) as (
+        inputs: RuntimePortValues,
+        context: Record<string, unknown>
+      ) => unknown,
+    };
+  } catch (error) {
+    logClientError(error);
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? `Function script compile error: ${error.message}`
+          : 'Failed to compile function script.',
+    };
+  }
+};
+
+const hasFunctionExecutionTimedOut = (
+  startedAt: number,
+  maxExecutionMs: number | undefined
+): { elapsedMs: number; timedOut: boolean } => {
+  const elapsedMs = Date.now() - startedAt;
+  return {
+    elapsedMs,
+    timedOut: typeof maxExecutionMs === 'number' && elapsedMs > maxExecutionMs,
+  };
+};
+
+const toFunctionOutputs = (result: unknown): RuntimePortValues =>
+  result !== null && typeof result === 'object' && !Array.isArray(result)
+    ? (result as RuntimePortValues)
+    : { value: result };
+
+const getPrimaryFunctionValue = (outputs: RuntimePortValues, result: unknown): unknown =>
+  outputs['value'] !== undefined ? outputs['value'] : result;
+
+const resolveFunctionOutputTypeMismatch = (
+  expectedType: FunctionConfig['expectedType'],
+  primaryValue: unknown
+): string | null => {
+  if (!expectedType || primaryValue === undefined) {
+    return null;
+  }
+
+  const actualTag = resolveTypeTag(primaryValue);
+  const matches =
+    (expectedType === 'array' && actualTag === 'array') ||
+    (expectedType === 'object' && actualTag === 'object') ||
+    (expectedType === 'string' && actualTag === 'string') ||
+    (expectedType === 'number' && actualTag === 'number') ||
+    (expectedType === 'boolean' && actualTag === 'boolean');
+
+  return matches ? null : actualTag;
+};
+
+const attachFunctionLogs = (outputs: RuntimePortValues, logs: string[]): RuntimePortValues =>
+  logs.length > 0
+    ? {
+      ...outputs,
+      __logs: logs,
+    }
+    : outputs;
+
+const resolveFunctionOutputSize = (
+  outputs: RuntimePortValues,
+  maxOutputBytes: number | undefined
+): { size: number; exceeded: boolean } => {
+  if (typeof maxOutputBytes !== 'number' || maxOutputBytes <= 0) {
+    return { size: 0, exceeded: false };
+  }
+
+  const serialized = safeStringify(outputs);
+  const size = typeof serialized === 'string' ? serialized.length : 0;
+  return {
+    size,
+    exceeded: size > maxOutputBytes,
+  };
+};
+
 export const handleFunctionNode: NodeHandler = ({
   node,
   nodeInputs,
@@ -119,117 +268,66 @@ export const handleFunctionNode: NodeHandler = ({
     };
   }
 
-  const forbiddenPatterns: Array<{ pattern: RegExp; label: string }> = [
-    { pattern: /\bprocess\./i, label: 'process.*' },
-    { pattern: /\brequire\s*\(/i, label: 'require(...)' },
-    { pattern: /\bimport\s*\(/i, label: 'import(...)' },
-    { pattern: /\beval\s*\(/i, label: 'eval(...)' },
-    { pattern: /\bFunction\s*\(/, label: 'Function(...)' },
-    { pattern: /\bglobalThis\b/, label: 'globalThis' },
-    { pattern: /\bwindow\b/, label: 'window' },
-    { pattern: /\bdocument\b/, label: 'document' },
-  ];
-
   if (config?.safeMode) {
-    const violated = forbiddenPatterns.find(({ pattern }) => pattern.test(script));
-    if (violated) {
-      return {
-        ...prevOutputs,
-        status: 'failed',
-        error: `Function script blocked by safeMode: forbidden token "${violated.label}".`,
-        errorCode: 'FUNCTION_SAFE_MODE_FORBIDDEN_TOKEN',
-      };
+    const forbiddenToken = findForbiddenSafeModeToken(script);
+    if (forbiddenToken) {
+      return buildFunctionNodeFailure(
+        prevOutputs,
+        `Function script blocked by safeMode: forbidden token "${forbiddenToken}".`,
+        'FUNCTION_SAFE_MODE_FORBIDDEN_TOKEN'
+      );
     }
   }
 
   const logs: string[] = [];
   const fnContext = {
     ...buildFunctionContext(config),
-    log: (...args: unknown[]): void => {
-      const payload = args.length === 1 ? args[0] : args;
-      logs.push(safeStringify(payload));
-    },
+    log: createFunctionLogger(logs),
   };
 
-  let fn: (inputs: RuntimePortValues, context: Record<string, unknown>) => unknown;
-  try {
-    fn = new Function('inputs', 'context', `"use strict";\n${script}`) as (
-      inputs: RuntimePortValues,
-      context: Record<string, unknown>
-    ) => unknown;
-  } catch (error) {
-    logClientError(error);
-    return {
-      ...prevOutputs,
-      status: 'failed',
-      error:
-        error instanceof Error
-          ? `Function script compile error: ${error.message}`
-          : 'Failed to compile function script.',
-      errorCode: 'FUNCTION_SCRIPT_COMPILE_ERROR',
-    };
+  const compiled = compileFunctionScript(script);
+  if (!compiled.ok) {
+    return buildFunctionNodeFailure(
+      prevOutputs,
+      compiled.error,
+      'FUNCTION_SCRIPT_COMPILE_ERROR'
+    );
   }
 
   const startedAt = Date.now();
 
   try {
-    const result = fn(nodeInputs, fnContext);
+    const result = compiled.fn(nodeInputs, fnContext);
 
-    const elapsedMs = Date.now() - startedAt;
-    if (typeof config?.maxExecutionMs === 'number' && elapsedMs > config.maxExecutionMs) {
-      return {
-        ...prevOutputs,
-        status: 'failed',
-        error: `Function script exceeded maxExecutionMs (${elapsedMs}ms > ${config.maxExecutionMs}ms).`,
-        errorCode: 'FUNCTION_EXECUTION_TIMEOUT',
-      };
+    const timeout = hasFunctionExecutionTimedOut(startedAt, config?.maxExecutionMs);
+    if (timeout.timedOut) {
+      return buildFunctionNodeFailure(
+        prevOutputs,
+        `Function script exceeded maxExecutionMs (${timeout.elapsedMs}ms > ${config?.maxExecutionMs}ms).`,
+        'FUNCTION_EXECUTION_TIMEOUT'
+      );
     }
 
-    let outputs: RuntimePortValues =
-      result !== null && typeof result === 'object' && !Array.isArray(result)
-        ? (result as RuntimePortValues)
-        : { value: result };
-
-    const primaryValue = outputs['value'] !== undefined ? outputs['value'] : result;
-
-    if (config?.expectedType) {
-      const actualTag = resolveTypeTag(primaryValue);
-      const expected = config.expectedType;
-      const matches =
-        (expected === 'array' && actualTag === 'array') ||
-        (expected === 'object' && actualTag === 'object') ||
-        (expected === 'string' && actualTag === 'string') ||
-        (expected === 'number' && actualTag === 'number') ||
-        (expected === 'boolean' && actualTag === 'boolean');
-
-      if (!matches && primaryValue !== undefined) {
-        return {
-          ...prevOutputs,
-          status: 'failed',
-          error: `Function output type mismatch: expected ${expected}, got ${actualTag}.`,
-          errorCode: 'FUNCTION_OUTPUT_TYPE_MISMATCH',
-        };
-      }
+    let outputs = toFunctionOutputs(result);
+    const primaryValue = getPrimaryFunctionValue(outputs, result);
+    const outputTypeMismatch = resolveFunctionOutputTypeMismatch(config?.expectedType, primaryValue);
+    if (outputTypeMismatch) {
+      return buildFunctionNodeFailure(
+        prevOutputs,
+        `Function output type mismatch: expected ${config?.expectedType}, got ${outputTypeMismatch}.`,
+        'FUNCTION_OUTPUT_TYPE_MISMATCH'
+      );
     }
 
-    if (logs.length > 0) {
-      outputs = {
-        ...outputs,
-        __logs: logs,
-      };
-    }
+    outputs = attachFunctionLogs(outputs, logs);
 
-    if (typeof config?.maxOutputBytes === 'number' && config.maxOutputBytes > 0) {
-      const serialized = safeStringify(outputs);
-      const size = typeof serialized === 'string' ? serialized.length : 0;
-      if (size > config.maxOutputBytes) {
-        return {
-          ...prevOutputs,
-          status: 'failed',
-          error: `Function script output too large (${size} bytes > ${config.maxOutputBytes} bytes).`,
-          errorCode: 'FUNCTION_OUTPUT_TOO_LARGE',
-        };
-      }
+    const outputSize = resolveFunctionOutputSize(outputs, config?.maxOutputBytes);
+    if (outputSize.exceeded) {
+      return buildFunctionNodeFailure(
+        prevOutputs,
+        `Function script output too large (${outputSize.size} bytes > ${config?.maxOutputBytes} bytes).`,
+        'FUNCTION_OUTPUT_TOO_LARGE'
+      );
     }
 
     return outputs;
@@ -237,20 +335,21 @@ export const handleFunctionNode: NodeHandler = ({
     logClientError(error);
     const serializedError =
       error instanceof Error ? error.message : safeStringify(error ?? 'Unknown error');
-    return {
-      ...prevOutputs,
-      status: 'failed',
-      error: `Function script execution failed: ${serializedError}`,
-      errorCode: 'FUNCTION_SCRIPT_RUNTIME_ERROR',
-      errorRaw:
-        error instanceof Error
-          ? {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-            logs: logs.length > 0 ? logs : undefined,
-          }
-          : undefined,
-    };
+    return buildFunctionNodeFailure(
+      prevOutputs,
+      `Function script execution failed: ${serializedError}`,
+      'FUNCTION_SCRIPT_RUNTIME_ERROR',
+      {
+        errorRaw:
+          error instanceof Error
+            ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+              logs: logs.length > 0 ? logs : undefined,
+            }
+            : undefined,
+      }
+    );
   }
 };

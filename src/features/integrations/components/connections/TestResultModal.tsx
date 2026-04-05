@@ -1,10 +1,10 @@
-'use client';
-
 import React from 'react';
 
 import { useIntegrationsTesting } from '@/features/integrations/context/integrations/IntegrationsTestingContext';
-import type { ModalStateProps } from '@/shared/contracts/ui';
-import { MetadataItem, Hint, Alert, CopyButton } from '@/shared/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui/base';
+import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
+import { Hint, CopyButton } from '@/shared/ui/forms-and-actions.public';
+import { Alert } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface TestResultModalProps extends Omit<ModalStateProps, 'onSuccess'> {

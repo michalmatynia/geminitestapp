@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import type { TreeContextMenuItem, TreeContextMenuProps } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import type { TreeContextMenuItem, TreeContextMenuProps } from '@/shared/contracts/ui/menus';
+import { cn } from '@/shared/utils/ui-utils';
 
 export type { TreeContextMenuItem, TreeContextMenuProps };
 
@@ -92,7 +92,7 @@ export function TreeContextMenu({
           style={{ position: 'fixed', top: position.y, left: position.x }}
           role='menu'
         >
-          {items.map((item) => {
+          {items.map((item: any) => {
             if (item.separator) {
               return <div key={item.id} className='-mx-1 my-1 h-px bg-foreground/10' />;
             }

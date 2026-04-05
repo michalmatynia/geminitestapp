@@ -1,7 +1,6 @@
-'use client';
-
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import { Card, StatusBadge } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { useBrain } from '../context/BrainContext';
 import { AI_BRAIN_SETTINGS_KEY } from '../settings';

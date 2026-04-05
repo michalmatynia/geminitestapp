@@ -1,7 +1,8 @@
 import React from 'react';
 
-import type { AiInsightRecord } from '@/shared/contracts';
-import { StatusBadge, ResourceCard, DocumentationList } from '@/shared/ui';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
+import { StatusBadge, DocumentationList } from '@/shared/ui/data-display.public';
+import { ResourceCard } from '@/shared/ui/navigation-and-layout.public';
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;

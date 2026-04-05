@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { registryBackend } from '@/features/ai/ai-context-registry/server';
 import { contextSearchRequestSchema } from '@/shared/contracts/ai-context-registry';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

@@ -6,20 +6,17 @@ import { useMemo } from 'react';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { useProductSettings } from '@/features/products/hooks/useProductSettings';
 import { internalError } from '@/shared/errors/app-error';
-import {
-  Button,
-  FormSection,
-  ProductImageManager,
-  type ProductImageManagerController,
-  ProductImageManagerControllerProvider,
-} from '@/features/products/ui';
+import { Button } from '@/shared/ui/button';
+import { FormSection } from '@/shared/ui/form-section';
+import { ProductImageManager, ProductImageManagerControllerProvider } from '@/shared/ui/image-slot-manager';
+import type { ProductImageManagerController } from '@/shared/ui/image-slot-manager';
 
 import {
   useOptionalProductImagesTabActionsContext,
   useOptionalProductImagesTabStateContext,
 } from './ProductImagesTabContext';
 
-const FileManager = dynamic(() => import('@/features/files/public'), {
+const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
 });
 

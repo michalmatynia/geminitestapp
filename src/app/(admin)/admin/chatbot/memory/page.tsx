@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminChatbotMemoryPage } from '@/features/ai/chatbot/public';
+import { AdminChatbotMemoryPage } from '@/features/ai/public';
 
 export default function Page(): JSX.Element {
   return <AdminChatbotMemoryPage />;

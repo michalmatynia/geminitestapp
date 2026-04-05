@@ -21,7 +21,7 @@ import {
   aiTriggerButtonsQuerySchema,
   type AiTriggerButtonRecord,
 } from '@/shared/contracts/ai-trigger-buttons';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import {
   isPlaywrightAiPathsFixtureTriggerButton,

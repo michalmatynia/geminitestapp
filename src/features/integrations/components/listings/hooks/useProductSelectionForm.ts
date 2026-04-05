@@ -1,5 +1,8 @@
+'use client';
+
 import { useState } from 'react';
 
+import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   useListingBaseComSettings,
   useListingSelection,
@@ -9,7 +12,12 @@ import {
   useCreateListingMutation,
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
+import {
+  isTraderaBrowserAuthRequiredMessage,
+  preflightTraderaQuickListSession,
+} from '@/features/integrations/utils/tradera-browser-session';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -28,8 +36,15 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
   const [productSearch, setProductSearch] = useState('');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const { selectedIntegrationId, selectedConnectionId, isBaseComIntegration } =
+  const {
+    selectedIntegrationId,
+    selectedConnectionId,
+    selectedIntegration,
+    isBaseComIntegration,
+    isTraderaIntegration,
+  } =
     useListingSelection();
 
   const { selectedInventoryId, selectedTemplateId, allowDuplicateSku } =
@@ -73,6 +88,15 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
         }
         await exportToBaseMutation.mutateAsync(exportData);
       } else {
+        const isTraderaBrowserIntegration =
+          isTraderaIntegration && isTraderaBrowserIntegrationSlug(selectedIntegration?.slug);
+        if (isTraderaBrowserIntegration && selectedConnectionId) {
+          await preflightTraderaQuickListSession({
+            integrationId: selectedIntegrationId,
+            connectionId: selectedConnectionId,
+            productId: selectedProductId,
+          });
+        }
         await createListingMutation.mutateAsync({
           integrationId: selectedIntegrationId,
           connectionId: selectedConnectionId,
@@ -81,7 +105,11 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
       onSuccess();
     } catch (err: unknown) {
       logClientCatch(err, { source: 'SelectProductForListingModal', action: 'submit' });
-      setError(err instanceof Error ? err.message : 'Failed to list product');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to list product';
+      if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+        toast(errorMessage, { variant: 'error' });
+      }
+      setError(errorMessage);
     }
   };
 

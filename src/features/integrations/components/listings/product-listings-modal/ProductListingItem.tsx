@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Card } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
 
 import { ProductListingActions } from './listing-item/ProductListingActions';
 import { ProductListingDetails } from './listing-item/ProductListingDetails';
@@ -12,7 +12,11 @@ export function ProductListingItem({
   listing,
 }: ProductListingItemProps): React.JSX.Element {
   return (
-    <Card variant='subtle' padding='md' className='flex items-center justify-between'>
+    <Card
+      variant='subtle'
+      padding='md'
+      className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'
+    >
       <ProductListingDetails listing={listing} />
       <ProductListingActions listing={listing} />
     </Card>

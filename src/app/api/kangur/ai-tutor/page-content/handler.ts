@@ -11,7 +11,7 @@ import {
   parseKangurPageContentStore,
   type KangurPageContentStore,
 } from '@/shared/contracts/kangur-page-content';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError } from '@/shared/errors/app-error';
 import { normalizeOptionalQueryString } from '@/shared/lib/api';
 import { normalizeSiteLocale } from '@/shared/lib/i18n/site-locale';

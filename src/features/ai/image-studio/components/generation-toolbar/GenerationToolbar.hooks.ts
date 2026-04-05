@@ -1,3 +1,5 @@
+'use client';
+
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -16,8 +18,8 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/shared/lib/products/constants';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { ToastOptions } from '@/shared/contracts/ui';
-import { useToast } from '@/shared/ui';
+import type { ToastOptions } from '@/shared/contracts/ui/base';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 import {

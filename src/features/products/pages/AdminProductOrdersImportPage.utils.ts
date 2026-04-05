@@ -1,8 +1,4 @@
-import type {
-  BaseOrderImportPreviewItem,
-  BaseOrderImportPreviousSnapshot,
-  BaseOrderImportState,
-} from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewItem, BaseOrderImportPreviousSnapshot, BaseOrderImportState } from '@/shared/contracts/products/orders-import';
 
 export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 

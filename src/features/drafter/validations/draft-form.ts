@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products';
+import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 

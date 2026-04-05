@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as ComponentTreeNodeRendererProps } from '@/features/foldertree/public';
-import { Button } from '@/shared/ui';
+import type { FolderTreeViewportRenderNodeInput as ComponentTreeNodeRendererProps } from '@/shared/lib/foldertree/public';
+import { Button } from '@/shared/ui/primitives.public';
 
 import { useComponentTreeNodeRuntimeContext } from './ComponentTreeNodeRuntimeContext';
 import { SectionDropTarget } from './SectionDropTarget';

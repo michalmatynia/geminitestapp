@@ -4,12 +4,8 @@ import { randomUUID } from 'crypto';
 
 import { type Filter } from 'mongodb';
 
-import type {
-  KangurAssignment,
-  KangurAssignmentRepositoryCreateInput,
-  KangurAssignmentUpdateInput,
-} from '@kangur/contracts';
-import { kangurAssignmentSchema } from '@kangur/contracts';
+import type { KangurAssignment, KangurAssignmentRepositoryCreateInput, KangurAssignmentUpdateInput } from '@kangur/contracts/kangur-assignments';
+import { kangurAssignmentSchema } from '@kangur/contracts/kangur-assignments';
 import { notFoundError } from '@/features/kangur/shared/errors/app-error';
 import {
   KANGUR_LEGACY_SETTINGS_COLLECTION,

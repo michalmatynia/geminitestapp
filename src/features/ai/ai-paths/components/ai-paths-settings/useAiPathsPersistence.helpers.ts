@@ -2,13 +2,7 @@ import { z } from 'zod';
 
 import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
 import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
-import {
-  AI_PATHS_HISTORY_RETENTION_DEFAULT,
-  AI_PATHS_HISTORY_RETENTION_MAX,
-  AI_PATHS_HISTORY_RETENTION_MIN,
-  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
-  stableStringify,
-} from '@/shared/lib/ai-paths';
+import { AI_PATHS_HISTORY_RETENTION_DEFAULT, AI_PATHS_HISTORY_RETENTION_MAX, AI_PATHS_HISTORY_RETENTION_MIN, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT, stableStringify } from '@/shared/lib/ai-paths';
 
 import type { RunEnqueuePayloadIssue as PathSavePayloadIssue } from './runtime/payload-validation';
 
@@ -192,6 +186,54 @@ const hasSameNodeSignature = (left: AiNode, right: AiNode): boolean =>
 const findNodeBySignature = (candidates: AiNode[], needle: AiNode): AiNode | undefined =>
   candidates.find((node: AiNode): boolean => hasSameNodeSignature(node, needle));
 
+const resolveExpectedNodeByIdOrIndex = ({
+  expectedNode,
+  expectedNodes,
+}: {
+  expectedNode: AiNode;
+  expectedNodes: AiNode[];
+}): AiNode | undefined => {
+  const expectedNodeIndex = expectedNodes.findIndex(
+    (node: AiNode): boolean => node.id === expectedNode.id
+  );
+  const expectedNodeByIndex = expectedNodeIndex >= 0 ? expectedNodes[expectedNodeIndex] : undefined;
+
+  return (
+    expectedNodes.find((node: AiNode): boolean => node.id === expectedNode.id) ??
+    (expectedNodeByIndex?.type === expectedNode.type ? expectedNodeByIndex : undefined)
+  );
+};
+
+const resolveExpectedPersistedNode = ({
+  expectedNode,
+  expectedNodes,
+}: {
+  expectedNode: AiNode;
+  expectedNodes: AiNode[];
+}): AiNode | undefined =>
+  resolveExpectedNodeByIdOrIndex({ expectedNode, expectedNodes }) ??
+  findNodeBySignature(expectedNodes, expectedNode);
+
+const resolvePersistedNodeByExpectedNode = ({
+  persistedNodes,
+  resolvedExpectedNode,
+}: {
+  persistedNodes: AiNode[];
+  resolvedExpectedNode: AiNode;
+}): AiNode | undefined =>
+  persistedNodes.find((node: AiNode): boolean => node.id === resolvedExpectedNode.id) ??
+  findNodeBySignature(persistedNodes, resolvedExpectedNode);
+
+const hasMatchingPersistedNodeConfig = ({
+  persistedNode,
+  resolvedExpectedNode,
+}: {
+  persistedNode: AiNode;
+  resolvedExpectedNode: AiNode;
+}): boolean =>
+  stableStringify(resolvedExpectedNode.config ?? null) ===
+  stableStringify(persistedNode.config ?? null);
+
 export const resolvePersistedNodeConfigMismatch = (args: {
   expectedNode: AiNode;
   expectedConfig: PathConfig;
@@ -201,14 +243,10 @@ export const resolvePersistedNodeConfigMismatch = (args: {
   const persistedNodes = Array.isArray(args.persistedConfig.nodes)
     ? args.persistedConfig.nodes
     : [];
-  const expectedNodeIndex = expectedNodes.findIndex(
-    (node: AiNode): boolean => node.id === args.expectedNode.id
-  );
-  const expectedNodeByIndex = expectedNodeIndex >= 0 ? expectedNodes[expectedNodeIndex] : undefined;
-  const resolvedExpectedNode =
-    expectedNodes.find((node: AiNode): boolean => node.id === args.expectedNode.id) ??
-    (expectedNodeByIndex?.type === args.expectedNode.type ? expectedNodeByIndex : undefined) ??
-    findNodeBySignature(expectedNodes, args.expectedNode);
+  const resolvedExpectedNode = resolveExpectedPersistedNode({
+    expectedNode: args.expectedNode,
+    expectedNodes,
+  });
   if (!resolvedExpectedNode) {
     return {
       reason: 'expected_node_missing',
@@ -218,9 +256,10 @@ export const resolvePersistedNodeConfigMismatch = (args: {
     };
   }
 
-  const persistedNode =
-    persistedNodes.find((node: AiNode): boolean => node.id === resolvedExpectedNode.id) ??
-    findNodeBySignature(persistedNodes, resolvedExpectedNode);
+  const persistedNode = resolvePersistedNodeByExpectedNode({
+    persistedNodes,
+    resolvedExpectedNode,
+  });
   if (!persistedNode) {
     return {
       reason: 'persisted_node_missing',
@@ -230,9 +269,7 @@ export const resolvePersistedNodeConfigMismatch = (args: {
     };
   }
 
-  const expectedConfigHash = stableStringify(resolvedExpectedNode.config ?? null);
-  const persistedConfigHash = stableStringify(persistedNode.config ?? null);
-  if (expectedConfigHash === persistedConfigHash) {
+  if (hasMatchingPersistedNodeConfig({ persistedNode, resolvedExpectedNode })) {
     return null;
   }
 
@@ -248,41 +285,71 @@ export const normalizeLoadedPathName = (_pathId: string, name: unknown): string 
   return typeof name === 'string' ? name.trim() : '';
 };
 
+type NormalizedLoadedPathMeta = PathMeta & {
+  createdAtInferred: boolean;
+  updatedAtInferred: boolean;
+};
+
+const normalizeLoadedPathTimestamp = (
+  value: unknown,
+  fallbackValue: string
+): { value: string; inferred: boolean } =>
+  typeof value === 'string' && value.trim().length > 0
+    ? { value, inferred: false }
+    : { value: fallbackValue, inferred: true };
+
+const normalizeLoadedPathMeta = (
+  meta: PathMeta,
+  fallbackTimestamp: string
+): NormalizedLoadedPathMeta | null => {
+  const id = typeof meta.id === 'string' ? meta.id.trim() : '';
+  if (!id) return null;
+
+  const normalizedCreatedAt = normalizeLoadedPathTimestamp(meta.createdAt, fallbackTimestamp);
+  const normalizedUpdatedAt = normalizeLoadedPathTimestamp(
+    meta.updatedAt,
+    normalizedCreatedAt.value
+  );
+  return {
+    ...meta,
+    id,
+    name: normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`,
+    createdAt: normalizedCreatedAt.value,
+    updatedAt: normalizedUpdatedAt.value,
+    createdAtInferred: normalizedCreatedAt.inferred,
+    updatedAtInferred: normalizedUpdatedAt.inferred,
+  };
+};
+
+const mergeNormalizedPathMeta = (
+  existing: NormalizedLoadedPathMeta | undefined,
+  nextMeta: NormalizedLoadedPathMeta
+): NormalizedLoadedPathMeta => {
+  if (!existing) return nextMeta;
+  if (existing.updatedAtInferred !== nextMeta.updatedAtInferred) {
+    return existing.updatedAtInferred ? nextMeta : existing;
+  }
+
+  const existingUpdatedAt = Date.parse(existing.updatedAt || '') || 0;
+  const nextUpdatedAt = Date.parse(nextMeta.updatedAt || '') || 0;
+  return nextUpdatedAt >= existingUpdatedAt ? nextMeta : existing;
+};
+
+const toPathMeta = ({
+  createdAtInferred: _createdAtInferred,
+  updatedAtInferred: _updatedAtInferred,
+  ...meta
+}: NormalizedLoadedPathMeta): PathMeta => meta;
+
 export const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
-  const byId = new Map<string, PathMeta>();
+  const byId = new Map<string, NormalizedLoadedPathMeta>();
   metas.forEach((meta: PathMeta) => {
-    const id = typeof meta.id === 'string' ? meta.id.trim() : '';
-    if (!id) return;
-    const normalizedName = normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
-    const fallbackTimestamp = new Date().toISOString();
-    const normalizedCreatedAt =
-      typeof meta.createdAt === 'string' && meta.createdAt.trim().length > 0
-        ? meta.createdAt
-        : fallbackTimestamp;
-    const normalizedUpdatedAt =
-      typeof meta.updatedAt === 'string' && meta.updatedAt.trim().length > 0
-        ? meta.updatedAt
-        : normalizedCreatedAt;
-    const normalizedMeta: PathMeta = {
-      ...meta,
-      id,
-      name: normalizedName,
-      createdAt: normalizedCreatedAt,
-      updatedAt: normalizedUpdatedAt,
-    };
-    const existing = byId.get(id);
-    if (!existing) {
-      byId.set(id, normalizedMeta);
-      return;
-    }
-    const existingUpdatedAt = Date.parse(existing.updatedAt || '') || 0;
-    const nextUpdatedAt = Date.parse(normalizedMeta.updatedAt || '') || 0;
-    if (nextUpdatedAt >= existingUpdatedAt) {
-      byId.set(id, normalizedMeta);
-    }
+    const normalizedMeta = normalizeLoadedPathMeta(meta, new Date().toISOString());
+    if (!normalizedMeta) return;
+    byId.set(normalizedMeta.id, mergeNormalizedPathMeta(byId.get(normalizedMeta.id), normalizedMeta));
   });
 
-  return Array.from(byId.values()).sort((a: PathMeta, b: PathMeta): number =>
-    b.updatedAt.localeCompare(a.updatedAt)
-  );
+  return Array.from(byId.values())
+    .map(toPathMeta)
+    .sort((a: PathMeta, b: PathMeta): number => b.updatedAt.localeCompare(a.updatedAt));
 };

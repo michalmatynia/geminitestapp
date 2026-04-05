@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight, FilePlus, FolderPlus, Copy, Edit2, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as NotesAppTreeNodeProps } from '@/features/foldertree/public';
+import type { FolderTreeViewportRenderNodeInput as NotesAppTreeNodeProps } from '@/shared/lib/foldertree/public';
 import { useNotesAppActions } from '@/features/notesapp/hooks/NotesAppContext';
 import {
   fromFolderMasterNodeId,
@@ -11,9 +11,9 @@ import {
 } from '@/features/notesapp/utils/master-folder-tree';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import { Button, Input, Tooltip } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { Button, Input, Tooltip } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { useNotesAppTreeNodeRuntimeContext } from './NotesAppTreeNodeRuntimeContext';
 

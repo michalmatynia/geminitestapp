@@ -5,7 +5,7 @@ import {
   sortCaseTreeNodes,
 } from '@/features/case-resolver/components/list/case-list-utils';
 import { toCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const buildCaseFile = (id: string, name: string, happeningDate: string | null): CaseResolverFile =>
@@ -109,5 +109,72 @@ describe('case list utilities', () => {
     expect(sortOrderByNodeId.get(toCaseResolverCaseNodeId('case-1'))).toBe(0);
     expect(sortOrderByNodeId.get(toCaseResolverCaseNodeId('case-2'))).toBe(1);
     expect(sortOrderByNodeId.get(toCaseResolverCaseNodeId('case-3'))).toBe(2);
+  });
+
+  it('falls back to node metadata timestamps when a case file is unavailable', () => {
+    const sorted = sortCaseTreeNodes({
+      nodes: [
+        {
+          ...buildCaseNode('case-1', 'Case 1', 0),
+          metadata: { createdAt: '2026-04-11T00:00:00.000Z' },
+        },
+        {
+          ...buildCaseNode('case-2', 'Case 2', 1),
+          metadata: { createdAt: '2026-02-10T00:00:00.000Z' },
+        },
+      ],
+      filesById: new Map<string, CaseResolverFile>(),
+      caseIdentifierPathById: new Map<string, string>(),
+      sortBy: 'created',
+      sortOrder: 'asc',
+    });
+
+    const sortOrderByNodeId = new Map<string, number>(
+      sorted.map((node: MasterTreeNode): [string, number] => [node.id, node.sortOrder])
+    );
+    expect(sortOrderByNodeId.get(toCaseResolverCaseNodeId('case-2'))).toBe(0);
+    expect(sortOrderByNodeId.get(toCaseResolverCaseNodeId('case-1'))).toBe(1);
+  });
+
+  it('sorts empty signatures before labeled signatures in descending mode', () => {
+    const filesById = new Map<string, CaseResolverFile>([
+      [
+        'case-1',
+        {
+          ...buildCaseFile('case-1', 'Case 1', null),
+          caseIdentifierId: 'signature-a',
+        } as CaseResolverFile,
+      ],
+      ['case-2', buildCaseFile('case-2', 'Case 2', null)],
+      [
+        'case-3',
+        {
+          ...buildCaseFile('case-3', 'Case 3', null),
+          caseIdentifierId: 'signature-b',
+        } as CaseResolverFile,
+      ],
+    ]);
+
+    const sorted = sortCaseTreeNodes({
+      nodes: [
+        buildCaseNode('case-1', 'Case 1', 0),
+        buildCaseNode('case-2', 'Case 2', 1),
+        buildCaseNode('case-3', 'Case 3', 2),
+      ],
+      filesById,
+      caseIdentifierPathById: new Map<string, string>([
+        ['signature-a', 'Alpha'],
+        ['signature-b', 'Beta'],
+      ]),
+      sortBy: 'signature',
+      sortOrder: 'desc',
+    });
+
+    const sortOrderByNodeId = new Map<string, number>(
+      sorted.map((node: MasterTreeNode): [string, number] => [node.id, node.sortOrder])
+    );
+    expect(sortOrderByNodeId.get(toCaseResolverCaseNodeId('case-2'))).toBe(0);
+    expect(sortOrderByNodeId.get(toCaseResolverCaseNodeId('case-3'))).toBe(1);
+    expect(sortOrderByNodeId.get(toCaseResolverCaseNodeId('case-1'))).toBe(2);
   });
 });

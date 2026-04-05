@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -12,7 +12,6 @@ const {
   useProductListFiltersContextMock,
   useProducersMock,
   useTagsMock,
-  useUserPreferencesMock,
 } = vi.hoisted(() => ({
   filterPanelMock: vi.fn(),
   useCatalogsMock: vi.fn(),
@@ -21,7 +20,6 @@ const {
   useProductListFiltersContextMock: vi.fn(),
   useProducersMock: vi.fn(),
   useTagsMock: vi.fn(),
-  useUserPreferencesMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/context/ProductListContext', () => ({
@@ -29,32 +27,21 @@ vi.mock('@/features/products/context/ProductListContext', () => ({
 }));
 
 vi.mock('@/features/products/hooks/useCategoryQueries', () => ({
-  useProductCategories: () => useProductCategoriesMock(),
+  useProductCategories: (...args: unknown[]) => useProductCategoriesMock(...args),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
-  useCatalogs: () => useCatalogsMock(),
-  useMultiTags: () => useMultiTagsMock(),
-  useProducers: () => useProducersMock(),
-  useTags: () => useTagsMock(),
-}));
-
-vi.mock('@/features/products/hooks/useUserPreferences', () => ({
-  useUserPreferences: () => useUserPreferencesMock(),
+  useCatalogs: (...args: unknown[]) => useCatalogsMock(...args),
+  useMultiTags: (...args: unknown[]) => useMultiTagsMock(...args),
+  useProducers: (...args: unknown[]) => useProducersMock(...args),
+  useTags: (...args: unknown[]) => useTagsMock(...args),
 }));
 
 vi.mock('@/features/products/components/list/advanced-filter', () => ({
   AdvancedFilterModal: () => <div data-testid='advanced-filter-modal' />,
 }));
 
-vi.mock('@/shared/ui/templates/FilterPanel', () => ({
-  FilterPanel: (props: Record<string, unknown>) => {
-    filterPanelMock(props);
-    return <div data-testid='filter-panel'>{props.actions as React.ReactNode}</div>;
-  },
-}));
-
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/button', () => ({
   Button: ({
     children,
     className,
@@ -65,6 +52,13 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock('@/shared/ui/templates/FilterPanel', () => ({
+  FilterPanel: (props: Record<string, unknown>) => {
+    filterPanelMock(props);
+    return <div data-testid='filter-panel'>{props.actions as React.ReactNode}</div>;
+  },
 }));
 
 import { ProductFilters } from './ProductFilters';
@@ -99,6 +93,8 @@ const buildFiltersContextValue = (
   endDate: '',
   setEndDate: vi.fn(),
   advancedFilter: '',
+  advancedFilterPresets: [],
+  setAdvancedFilterPresets: vi.fn(),
   setAdvancedFilterState: vi.fn(),
   baseExported: '',
   setBaseExported: vi.fn(),
@@ -115,10 +111,6 @@ describe('ProductFilters layout contract', () => {
     useTagsMock.mockReturnValue({ data: [] });
     useMultiTagsMock.mockReturnValue([]);
     useProducersMock.mockReturnValue({ data: [] });
-    useUserPreferencesMock.mockReturnValue({
-      preferences: { advancedFilterPresets: [] },
-      setAdvancedFilterPresets: vi.fn(),
-    });
   });
 
   it('passes the current Products list layout props into FilterPanel', () => {
@@ -146,6 +138,11 @@ describe('ProductFilters layout contract', () => {
 
     const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(filterPanelProps.defaultExpanded).toBe(false);
+    expect(useProductCategoriesMock).toHaveBeenCalledWith(undefined, { enabled: false });
+    expect(useCatalogsMock).toHaveBeenCalledWith({ enabled: false });
+    expect(useTagsMock).toHaveBeenCalledWith(undefined, { enabled: false });
+    expect(useMultiTagsMock).toHaveBeenCalledWith([], { enabled: false });
+    expect(useProducersMock).toHaveBeenCalledWith({ enabled: false });
   });
 
   it('passes a deterministic id base when rendered for a specific layout instance', () => {
@@ -153,5 +150,23 @@ describe('ProductFilters layout contract', () => {
 
     const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(filterPanelProps.idBase).toBe('products-mobile');
+  });
+
+  it('enables metadata queries when the advanced filter modal opens from a collapsed panel', async () => {
+    useProductListFiltersContextMock.mockReturnValue(
+      buildFiltersContextValue({ filtersCollapsedByDefault: true })
+    );
+
+    render(<ProductFilters />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced Filter' }));
+
+    await waitFor(() => {
+      expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: true });
+      expect(useTagsMock).toHaveBeenLastCalledWith(undefined, { enabled: true });
+      expect(useMultiTagsMock).toHaveBeenLastCalledWith([], { enabled: true });
+      expect(useProducersMock).toHaveBeenLastCalledWith({ enabled: true });
+      expect(screen.getByTestId('advanced-filter-modal')).toBeInTheDocument();
+    });
   });
 });

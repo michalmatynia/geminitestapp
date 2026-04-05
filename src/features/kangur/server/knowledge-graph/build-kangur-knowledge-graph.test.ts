@@ -183,6 +183,19 @@ describe('buildKangurKnowledgeGraph', () => {
     expect(loginAnchor?.locale).toBe('en');
   });
 
+  it('falls back to polish localized reference content when the requested locale is missing', () => {
+    const snapshot = buildKangurKnowledgeGraph({ locale: 'de' });
+    const lessonsPage = snapshot.nodes.find((node) => node.id === 'page:kangur-lessons');
+
+    expect(snapshot.locale).toBe('de');
+    expect(lessonsPage).toMatchObject({
+      title: 'Lekcje',
+      summary: 'Biblioteka lekcji i ekran nawigacji po lekcjach w Kangurze.',
+      triggerPhrases: expect.arrayContaining(['lekcje', 'otwórz lekcje']),
+      tags: expect.arrayContaining(['lekcje', 'biblioteka-lekcji']),
+    });
+  });
+
   it('uses the provided page-content store instead of only the repo defaults', () => {
     const snapshot = buildKangurKnowledgeGraph({
       pageContentStore: {

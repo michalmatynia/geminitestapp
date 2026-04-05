@@ -2,7 +2,8 @@
 
 import React, { useEffect } from 'react';
 
-import { SidePanel, Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
+import { SidePanel } from '@/shared/ui/navigation-and-layout.public';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/primitives.public';
 
 import { AnimationConfigPanel } from './AnimationConfigPanel';
 import {

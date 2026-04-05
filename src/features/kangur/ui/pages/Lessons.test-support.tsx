@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @vitest-environment jsdom
  */
@@ -297,7 +299,7 @@ vi.mock('@/features/kangur/ui/components/lesson-runtime/KangurLessonNavigationWi
   KangurLessonNavigationWidget: () => <div data-testid='mock-lesson-navigation' />,
 }));
 
-vi.mock('@/features/kangur/ui/components/LazyKangurLessonsWordmark', () => ({
+vi.mock('@/features/kangur/ui/components/wordmarks/LazyKangurLessonsWordmark', () => ({
   LazyKangurLessonsWordmark: (props: unknown) => {
     lessonsWordmarkPropsMock(props);
     return <div data-testid='mock-lessons-wordmark' />;
@@ -357,7 +359,7 @@ vi.mock('@/features/kangur/ui/components/KangurStandardPageLayout', () => ({
   },
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurTopNavigationController', () => ({
+vi.mock('@/features/kangur/ui/components/primary-navigation/KangurTopNavigationController', () => ({
   KangurTopNavigationController: ({ navigation }: { navigation: unknown }) => {
     topNavigationPropsMock(navigation);
     return <div data-testid='mock-top-nav' />;
@@ -375,6 +377,9 @@ vi.mock('@/features/kangur/ui/pages/lessons/LazyActiveLessonView', () => ({
         {snapshot?.activeLessonId ?? 'active-lesson'}
       </div>
     );
+  },
+  prefetchActiveLessonView: () => {
+    // Mock prefetch function
   },
 }));
 
@@ -522,6 +527,24 @@ vi.mock('@/features/kangur/ui/hooks/useKangurLessons', () => ({
   useKangurLessonDocuments: () => ({
     data: {},
   }),
+}));
+
+vi.mock('@/features/kangur/ui/hooks/useKangurLessonsCatalog', () => ({
+  useKangurLessonsCatalog: (options: LessonsCatalogMockOptions = {}) => {
+    lessonCatalogHookCallsMock(options);
+    const lessons = resolveFilteredCatalogRecords(lessonsState.value, options);
+    const { hasRetainedData, isLoading, isPlaceholderData } = resolveLessonsLoadingMeta();
+
+    return {
+      data: isLoading && !hasRetainedData ? undefined : { lessons },
+      isFetching: isLoading,
+      isLoading: isLoading && !hasRetainedData,
+      isPending: isLoading && !hasRetainedData,
+      isPlaceholderData,
+      isRefetching: hasRetainedData,
+      refetch: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurLessonSections', () => ({

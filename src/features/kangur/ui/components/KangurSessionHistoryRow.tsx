@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/KangurIconSummaryCardContent';
+import { KangurIconSummaryCardContent } from '@/features/kangur/ui/components/summary-cards/KangurIconSummaryCardContent';
 import {
   KangurInfoCard,
   KangurIconBadge,

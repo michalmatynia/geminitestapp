@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef, type RefObject } from 'react';
+import { useCallback, useRef, type RefObject } from 'react';
 
 import {
   redrawKangurCanvasStrokes,
   type KangurDrawingCanvasBaseLayerCache,
+  type KangurDrawingCanvasStrokeLayerCache,
 } from '@/features/kangur/ui/components/drawing-engine/render';
 import {
   createKangurPointDrawingSnapshot,
@@ -88,6 +89,13 @@ export const useKangurPointCanvasDrawing = ({
   touchLockEnabled = true,
 }: UseKangurPointCanvasDrawingOptions): UseKangurPointCanvasDrawingResult => {
   const baseLayerCacheRef = useRef<KangurDrawingCanvasBaseLayerCache | null>(null);
+  const strokeLayerCacheRef = useRef<KangurDrawingCanvasStrokeLayerCache<null> | null>(null);
+  const engineRef = useRef<Point2d[][]>([]);
+  const resolveMappedStyle = useCallback(
+    (stroke: { meta: null; points: Point2d[] }, index: number) =>
+      resolveStyle(engineRef.current[index] ?? stroke.points, index),
+    [resolveStyle]
+  );
 
   const engine = useKangurPointDrawingEngine({
     canvasRef,
@@ -98,9 +106,11 @@ export const useKangurPointCanvasDrawing = ({
     onPointerStart,
     onPointerUp,
     onStartRejected,
-    redraw: (strokes) => {
+    redraw: ({ activeStroke, strokes }) => {
+      engineRef.current = strokes;
       const mappedStrokes = strokes.map((points) => ({ meta: null, points }));
       redrawKangurCanvasStrokes({
+        activeStroke: activeStroke ? { meta: null, points: activeStroke } : null,
         backgroundFill,
         baseLayerCache: baseLayerCacheRef,
         baseLayerCacheKey,
@@ -108,7 +118,8 @@ export const useKangurPointCanvasDrawing = ({
         canvas: canvasRef.current,
         logicalHeight,
         logicalWidth,
-        resolveStyle: (_, index) => resolveStyle(strokes[index] ?? [], index),
+        resolveStyle: resolveMappedStyle,
+        strokeLayerCache: strokeLayerCacheRef,
         strokes: mappedStrokes,
       });
     },
@@ -117,6 +128,8 @@ export const useKangurPointCanvasDrawing = ({
     shouldStartStroke,
     touchLockEnabled,
   });
+
+  engineRef.current = engine.strokes;
 
   const {
     exportDataUrl,

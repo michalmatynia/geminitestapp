@@ -1,4 +1,4 @@
-import type { BasePreferenceScope } from '@/shared/contracts/integrations';
+import type { BasePreferenceScope } from '@/shared/contracts/integrations/preferences';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
 

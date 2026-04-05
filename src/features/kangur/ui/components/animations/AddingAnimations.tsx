@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * This file is a barrel for all adding animations.
  * Individual animations are now located in the `./adding/` directory for better maintainability.

@@ -1,8 +1,4 @@
-import type {
-  BaseOrderImportLineItem,
-  BaseOrderImportPreviewItem,
-  BaseOrderImportStatusOption,
-} from '@/shared/contracts/products';
+import type { BaseOrderImportLineItem, BaseOrderImportPreviewItem, BaseOrderImportStatusOption } from '@/shared/contracts/products/orders-import';
 import { hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils/runtime';
 
 type UnknownRecord = Record<string, unknown>;

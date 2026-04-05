@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getDiskPathFromPublicPath, isHttpFilepath } from '@/features/files/server';
 import { getAsset3DRepository } from '@/features/viewer3d/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 
 export async function GET_handler(

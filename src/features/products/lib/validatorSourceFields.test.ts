@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ProductCategory } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELD_OPTIONS,

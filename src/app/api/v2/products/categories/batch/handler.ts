@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
-import type { ProductCategory } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import {
   optionalBooleanQuerySchema,

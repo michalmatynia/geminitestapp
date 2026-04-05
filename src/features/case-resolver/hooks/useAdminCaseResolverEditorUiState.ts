@@ -1,10 +1,9 @@
+'use client';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type {
-  CaseResolverFileEditDraft,
-  EditorDetailsTab,
-  WorkspaceView,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { EditorDetailsTab, WorkspaceView } from '@/shared/contracts/case-resolver/base';
 
 export function useAdminCaseResolverEditorUiState({
   editingDocumentDraft,

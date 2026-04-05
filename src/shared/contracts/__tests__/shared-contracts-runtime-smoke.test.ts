@@ -161,6 +161,20 @@ describe('shared contracts runtime smoke', () => {
       name: 'Books',
       parentId: null,
     });
+    expect(
+      toProductCategorySummaryDto({
+        ...category,
+        name_en: undefined,
+        name_pl: undefined,
+        name_de: undefined,
+        sortIndex: undefined,
+      })
+    ).toMatchObject({
+      name_en: null,
+      name_pl: null,
+      name_de: null,
+      sortIndex: null,
+    });
     expect(productCategoryFiltersSchema.parse({ parentId: null }).parentId).toBeNull();
     expect(
       reorderProductCategorySchema.parse({

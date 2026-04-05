@@ -10,7 +10,7 @@ import { useCallback } from 'react';
 
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface QueuedMutation {
@@ -148,6 +148,7 @@ export function useOfflineMutation<
       context: TContext | undefined
     ) => Promise<void> | void;
     optimisticUpdate?: (oldData: TContext | undefined, variables: TVariables) => TContext;
+    skipBaseInvalidation?: boolean;
     successMessage?: string;
     errorMessage?: string;
     queuedMessage?: string;
@@ -234,7 +235,9 @@ export function useOfflineMutation<
       }
       if (!isOnline) return;
 
-      void queryClient.invalidateQueries({ queryKey: options.queryKey });
+      if (!options.skipBaseInvalidation) {
+        void queryClient.invalidateQueries({ queryKey: options.queryKey });
+      }
       const extraKeys = resolveExtraKeys(variables);
       extraKeys.forEach((key: readonly unknown[]) => {
         void queryClient.invalidateQueries({ queryKey: key });

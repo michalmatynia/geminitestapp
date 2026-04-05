@@ -3,9 +3,10 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { type CanvasResizeDirection } from '@/features/ai/image-studio/utils/canvas-resize';
-import { Button, FormActions, Input, Label } from '@/shared/ui';
+import { Button, Input, Label } from '@/shared/ui/primitives.public';
+import { FormActions } from '@/shared/ui/forms-and-actions.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   CANVAS_RESIZE_DIRECTION_OPTIONS,

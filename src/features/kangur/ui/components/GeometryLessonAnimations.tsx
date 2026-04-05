@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * This file is a barrel for all geometry animations.
  * Individual animations are now located in the `./geometry/` directory for better maintainability.

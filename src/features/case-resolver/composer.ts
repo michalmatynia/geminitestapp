@@ -1,19 +1,6 @@
-import type {
-  CaseResolverCompiledSegment,
-  CaseResolverCompileResult,
-} from '@/shared/contracts/case-resolver';
-import {
-  type AiNode,
-  type CaseResolverEdge,
-  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
-  DEFAULT_CASE_RESOLVER_EDGE_META,
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  type CaseResolverEdgeMeta,
-  type CaseResolverGraph,
-  type CaseResolverJoinMode,
-  type CaseResolverNodeMeta,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverCompiledSegment, CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
+import { CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS, CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT, DEFAULT_CASE_RESOLVER_EDGE_META, DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver/constants';
+import { type AiNode, type CaseResolverEdge, type CaseResolverEdgeMeta, type CaseResolverGraph, type CaseResolverJoinMode, type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

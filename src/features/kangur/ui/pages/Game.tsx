@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 
 import { useKangurDocsTooltips } from '@/features/kangur/docs/tooltips';
-import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/KangurGameNavigationWidget';
+import { KangurGameNavigationWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameNavigationWidget';
 import { KangurStandardPageLayout } from '@/features/kangur/ui/components/KangurStandardPageLayout';
 import {
   GAME_PAGE_STANDARD_CONTAINER_CLASSNAME,
@@ -41,7 +41,7 @@ import type { KangurAiTutorConversationContext } from '@/features/kangur/shared/
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 
-const XpToast = dynamic(() => import('@/features/kangur/ui/components/XpToast'), {
+const XpToast = dynamic(() => import('@/features/kangur/ui/components/game-runtime/XpToast'), {
   ssr: false,
 });
 

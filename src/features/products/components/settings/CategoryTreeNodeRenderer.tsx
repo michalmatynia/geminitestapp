@@ -2,9 +2,10 @@
 
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput as CategoryTreeNodeRendererProps } from '@/features/foldertree/public';
-import { TreeActionButton, TreeActionSlot, TreeCaret } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { FolderTreeViewportRenderNodeInput as CategoryTreeNodeRendererProps } from '@/shared/lib/foldertree/public';
+import { TreeActionButton, TreeActionSlot, TreeCaret } from '@/shared/ui/tree';
+
+import { cn } from '@/shared/utils/ui-utils';
 
 import { fromCategoryMasterNodeId } from './category-master-tree';
 import { useCategoryTreeNodeRuntimeContext } from './CategoryTreeNodeRuntimeContext';

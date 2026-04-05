@@ -1,6 +1,3 @@
-'use client';
-
-
 import { fetchAgentPersonaMemory, type FetchAgentPersonaMemoryParams } from '@/features/ai/agentcreator/api/persona-memory';
 import type { PersonaMemorySearchResponse } from '@/shared/contracts/persona-memory';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';

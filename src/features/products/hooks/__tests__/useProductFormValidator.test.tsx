@@ -58,7 +58,9 @@ vi.mock('@/features/products/hooks/useProductValidatorIssues', () => ({
   useProductValidatorIssues: (args: unknown) => useProductValidatorIssuesMock(args),
 }));
 
-import type { ProductFormData, ProductValidationPattern, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { buildSkuAutoIncrementSequenceBundle } from '@/features/products/lib/validatorSemanticPresets';
 

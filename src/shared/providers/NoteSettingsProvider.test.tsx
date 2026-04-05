@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   NoteSettingsProvider,
+  useNoteSettingsActions,
   useNoteSettingsState,
 } from '@/shared/providers/NoteSettingsProvider';
 
@@ -49,6 +50,12 @@ describe('NoteSettingsProvider', () => {
     });
   });
 
+  it('throws when actions hook is used outside the provider', () => {
+    expect(() => renderHook(() => useNoteSettingsActions())).toThrow(
+      'useNoteSettingsActions must be used within a NoteSettingsProvider'
+    );
+  });
+
   it('hydrates note settings from the lite settings map', async () => {
     render(
       <NoteSettingsProvider>
@@ -64,5 +71,23 @@ describe('NoteSettingsProvider', () => {
     });
 
     expect(mocks.useLiteSettingsMap).toHaveBeenCalled();
+  });
+
+  it('provides actions inside the provider', () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <NoteSettingsProvider>{children}</NoteSettingsProvider>
+    );
+
+    const { result } = renderHook(
+      () => ({
+        actions: useNoteSettingsActions(),
+        state: useNoteSettingsState(),
+      }),
+      { wrapper }
+    );
+
+    expect(result.current.state.settings.editorMode).toBeDefined();
+    expect(result.current.actions.updateSettings).toBeTypeOf('function');
+    expect(result.current.actions.resetToDefaults).toBeTypeOf('function');
   });
 });

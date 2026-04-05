@@ -4,7 +4,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDefaultKangurProgressState } from '@kangur/contracts';
+import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 
 const {
   createActorAwareHeadersMock,

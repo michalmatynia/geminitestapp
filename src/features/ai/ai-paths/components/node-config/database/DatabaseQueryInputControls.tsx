@@ -4,7 +4,8 @@ import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { DatabaseAction, DatabaseActionCategory } from '@/shared/lib/ai-paths';
-import { Button, Textarea, SelectSimple } from '@/shared/ui';
+import { Button, Textarea } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import {
   useDatabaseQueryInputControlsActionsContext,

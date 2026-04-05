@@ -2,12 +2,11 @@
 
 import React from 'react';
 
-import {
-  DOCUMENTATION_MODULE_IDS,
-  DocumentationTooltip,
-  getDocumentationEntry,
-  useDocsTooltipsSetting,
-} from '@/shared/lib/documentation';
+import { getDocumentationEntry } from '@/shared/lib/documentation/registry';
+import { useDocsTooltipsSetting } from '@/shared/lib/documentation/docs-tooltip-settings';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import { DocumentationTooltip } from '@/shared/lib/documentation/DocumentationTooltip';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type { ValidatorUiDoc } from './validator-docs-catalog';
 
@@ -20,9 +19,14 @@ type ValidatorDocsTooltipContextValue = {
 const STORAGE_KEY = 'validator_docs_tooltips_enabled';
 const MODULE_ID = DOCUMENTATION_MODULE_IDS.validator;
 
-const ValidatorDocsTooltipContext = React.createContext<ValidatorDocsTooltipContextValue | null>(
-  null
-);
+const { Context: ValidatorDocsTooltipContext, useStrictContext: useValidatorDocsTooltips } =
+  createStrictContext<ValidatorDocsTooltipContextValue>({
+    hookName: 'useValidatorDocsTooltips',
+    providerName: 'ValidatorDocsTooltipsProvider',
+    displayName: 'ValidatorDocsTooltipContext',
+  });
+
+export { useValidatorDocsTooltips };
 
 export function ValidatorDocsTooltipsProvider({
   children,
@@ -48,14 +52,6 @@ export function ValidatorDocsTooltipsProvider({
       {children}
     </ValidatorDocsTooltipContext.Provider>
   );
-}
-
-export function useValidatorDocsTooltips(): ValidatorDocsTooltipContextValue {
-  const context = React.useContext(ValidatorDocsTooltipContext);
-  if (!context) {
-    throw new Error('useValidatorDocsTooltips must be used inside ValidatorDocsTooltipsProvider');
-  }
-  return context;
 }
 
 export function ValidatorDocTooltip({

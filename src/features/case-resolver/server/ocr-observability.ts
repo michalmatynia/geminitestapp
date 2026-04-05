@@ -1,11 +1,6 @@
 import 'server-only';
 
-import type {
-  CaseResolverOcrErrorCategory,
-  CaseResolverOcrJobRecord,
-  CaseResolverOcrObservabilitySnapshot,
-  CaseResolverOcrPercentileSnapshot as PercentileSnapshot,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverOcrErrorCategory, CaseResolverOcrJobRecord, CaseResolverOcrObservabilitySnapshot, CaseResolverOcrPercentileSnapshot as PercentileSnapshot } from '@/shared/contracts/case-resolver/ocr';
 
 import { listCaseResolverRecentOcrJobs } from './ocr-runtime-job-store';
 

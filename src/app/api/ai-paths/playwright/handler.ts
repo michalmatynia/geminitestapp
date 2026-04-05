@@ -4,14 +4,14 @@ import { resolveAiPathsContextRegistryEnvelope } from '@/features/ai/ai-paths/co
 import {
   enforceAiPathsActionRateLimit,
   requireAiPathsAccessOrInternal,
-} from '@/features/ai/ai-paths/server';
+} from '@/features/ai/ai-paths/server/access';
 import {
   enqueuePlaywrightNodeRun,
   type PlaywrightNodeRunRecord,
 } from '@/features/ai/ai-paths/services/playwright-node-runner';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { aiPathsPlaywrightEnqueueRequestSchema } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 type CapturePayload = {
   screenshot?: boolean;

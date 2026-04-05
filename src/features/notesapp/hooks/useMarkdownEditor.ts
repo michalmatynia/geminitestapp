@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import type { MarkdownToolbarActionHandlers as UseMarkdownEditorReturn } from '@/features/document-editor/public';
+import type { MarkdownToolbarActionHandlers as UseMarkdownEditorReturn } from '@/shared/lib/document-editor/public';
 
 export type UseMarkdownEditorProps = {
   content: string;

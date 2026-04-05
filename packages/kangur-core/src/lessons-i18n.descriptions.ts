@@ -1,4 +1,4 @@
-import type { KangurLessonComponentId } from '@kangur/contracts';
+import type { KangurLessonComponentId } from '@kangur/contracts/kangur-lesson-constants';
 
 import type { KangurCoreLocale } from './profile-i18n';
 

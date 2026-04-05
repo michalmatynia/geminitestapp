@@ -1,10 +1,9 @@
-'use client';
-
 import {
   useIntegrationsActions,
   useIntegrationsData,
 } from '@/features/integrations/context/IntegrationsContext';
-import { integrationDefinitions, type Integration } from '@/shared/contracts/integrations';
+import { integrationDefinitions } from '@/shared/contracts/integrations/domain';
+import { type Integration } from '@/shared/contracts/integrations';
 
 export function useIntegrationList() {
   const { integrations } = useIntegrationsData();

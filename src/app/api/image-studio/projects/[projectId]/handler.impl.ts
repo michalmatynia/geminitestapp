@@ -8,7 +8,7 @@ import { deleteImageStudioSlotLinksForProject } from '@/features/ai/server';
 import { deleteImageStudioSlotsByProject } from '@/features/ai/server';
 import { getImageStudioProjectSettingsKey } from '@/features/ai/server';
 import { getImageFileRepository } from '@/features/files/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';

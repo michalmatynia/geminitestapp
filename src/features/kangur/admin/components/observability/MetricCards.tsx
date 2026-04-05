@@ -4,7 +4,7 @@ import { type JSX, type ReactNode } from 'react';
 
 import { Button, Card, MetadataItem, StatusBadge } from '@/features/kangur/shared/ui';
 import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
-import type { KangurObservabilitySummary, KangurRouteHealth } from '@/shared/contracts';
+import type { KangurObservabilitySummary, KangurRouteHealth } from '@/shared/contracts/kangur-observability';
 
 import { useObservabilitySummaryContext } from '../../AdminKangurObservabilityPage';
 import { formatDuration, formatNumber, formatPercent } from './utils';

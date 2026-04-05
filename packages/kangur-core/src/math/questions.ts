@@ -1,4 +1,4 @@
-import type { KangurQuestionChoice } from '@kangur/contracts';
+import type { KangurQuestionChoice } from '@kangur/contracts/kangur';
 
 import type {
   KangurDifficulty,

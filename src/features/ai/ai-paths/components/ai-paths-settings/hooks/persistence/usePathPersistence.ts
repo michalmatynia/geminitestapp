@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useRef, useState } from 'react';
 
 import {
@@ -7,17 +9,9 @@ import {
 import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
 import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext';
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
+import type { LastErrorInfo } from '@/shared/contracts/ai-paths-runtime-ui-types';
 import type { AiNode, Edge, PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
-import {
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-  STORAGE_VERSION,
-  compileGraph,
-  normalizeNodes,
-  safeParseJson,
-  stableStringify,
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, STORAGE_VERSION, compileGraph, normalizeNodes, safeParseJson, stableStringify, sanitizeEdges } from '@/shared/lib/ai-paths';
 import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
 
@@ -37,13 +31,263 @@ import {
 import type { PathSaveOptions, UseAiPathsPersistenceArgs } from '../../useAiPathsPersistence.types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+type PathNodeLintResult = ReturnType<typeof lintPathNodeRoles>;
+type GraphCompileReport = ReturnType<typeof compileGraph>;
+
+const hasNewDuplicateRoleViolation = (
+  activePathId: string,
+  lintResult: PathNodeLintResult,
+  pathConfigs: Record<string, PathConfig>
+): boolean => {
+  const baselineNodes = pathConfigs[activePathId]?.nodes ?? [];
+  const baselineLint = lintPathNodeRoles(Array.isArray(baselineNodes) ? baselineNodes : []);
+  const baselineDuplicateCounts = new Map<string, number>(
+    baselineLint.duplicateRoleTypes.map(
+      (item: { type: string; count: number }): [string, number] => [item.type, item.count]
+    )
+  );
+
+  return lintResult.duplicateRoleTypes.some(
+    (item: { type: string; count: number }): boolean =>
+      item.count > (baselineDuplicateCounts.get(item.type) ?? 1)
+  );
+};
+
+const notifyLintWarnings = (
+  toast: UseAiPathsPersistenceArgs['toast'],
+  lintResult: PathNodeLintResult,
+  silent: boolean
+): void => {
+  if (silent || lintResult.warnings.length === 0) {
+    return;
+  }
+
+  lintResult.warnings.forEach((message: string): void => {
+    toast(message, { variant: 'info' });
+  });
+};
+
+const resolveEdgesForPathSave = ({
+  edgesOverride,
+  nodesForSave,
+  rawEdges,
+  setEdges,
+  silent,
+  toast,
+}: {
+  edgesOverride?: Edge[];
+  nodesForSave: AiNode[];
+  rawEdges: Edge[];
+  setEdges: (edges: Edge[]) => void;
+  silent: boolean;
+  toast: UseAiPathsPersistenceArgs['toast'];
+}): { edgesForSaveResolved: Edge[]; normalizedNodesForSave: AiNode[] } => {
+  const normalizedNodesForSave = normalizeNodes(nodesForSave);
+  const edgesForSave = sanitizeEdges(normalizedNodesForSave, rawEdges);
+  const repairedEdges = pruneSingleCardinalityIncomingEdges(normalizedNodesForSave, edgesForSave);
+
+  if (!silent && repairedEdges.removedEdges.length > 0) {
+    const count = repairedEdges.removedEdges.length;
+    toast(
+      `Auto-repaired ${count} duplicate wire${count === 1 ? '' : 's'} on single-cardinality inputs.`,
+      { variant: 'warning' }
+    );
+  }
+  if (!edgesOverride && stableStringify(rawEdges) !== stableStringify(repairedEdges.edges)) {
+    setEdges(repairedEdges.edges);
+  }
+
+  return {
+    edgesForSaveResolved: repairedEdges.edges,
+    normalizedNodesForSave,
+  };
+};
+
+const validatePathSavePayload = ({
+  activePathId,
+  args,
+  edgesForSaveResolved,
+  normalizedNodesForSave,
+  silent,
+}: {
+  activePathId: string;
+  args: UseAiPathsPersistenceArgs;
+  edgesForSaveResolved: Edge[];
+  normalizedNodesForSave: AiNode[];
+  silent: boolean;
+}): boolean => {
+  const savePayloadIssues = collectInvalidPathSavePayloadIssues(
+    normalizedNodesForSave,
+    edgesForSaveResolved
+  );
+
+  if (savePayloadIssues.length === 0) {
+    return true;
+  }
+
+  const firstIssue = savePayloadIssues[0];
+  const message = firstIssue
+    ? `Path save blocked: invalid graph payload (${firstIssue.path}: ${firstIssue.message}).`
+    : 'Path save blocked: invalid graph payload.';
+  args.reportAiPathsError(
+    new Error(message),
+    {
+      action: silent ? 'validateSavePayloadSilent' : 'validateSavePayload',
+      pathId: activePathId,
+      savePayloadIssues: savePayloadIssues.slice(0, 10),
+    },
+    'Failed to validate AI Paths payload before save:'
+  );
+  if (!silent) {
+    args.toast(message, { variant: 'error' });
+  }
+
+  return false;
+};
+
+const notifyCompileReport = ({
+  compileReport,
+  silent,
+  toast,
+}: {
+  compileReport: GraphCompileReport;
+  silent: boolean;
+  toast: UseAiPathsPersistenceArgs['toast'];
+}): void => {
+  if (silent) {
+    return;
+  }
+
+  if (compileReport.errors > 0) {
+    const primaryError = compileReport.findings.find(
+      (finding): boolean => finding.severity === 'error'
+    );
+    const message =
+      primaryError?.message ??
+      `Graph compile reports ${compileReport.errors} blocking issue(s). Runs will be blocked until fixed.`;
+    toast(message, { variant: 'warning' });
+  }
+  if (compileReport.warnings > 0) {
+    toast(buildCompileWarningMessage(compileReport), { variant: 'warning' });
+  }
+};
+
+const buildNextPathsForSave = (
+  activePathId: string,
+  paths: PathMeta[],
+  resolvedName: string,
+  updatedAt: string
+): PathMeta[] =>
+  paths.map((path: PathMeta): PathMeta =>
+    path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
+  );
+
+const verifyPersistedNodeOverride = ({
+  activePathId,
+  args,
+  config,
+  finalConfig,
+  nodeOverride,
+  silent,
+}: {
+  activePathId: string;
+  args: UseAiPathsPersistenceArgs;
+  config: PathConfig;
+  finalConfig: PathConfig;
+  nodeOverride?: AiNode;
+  silent: boolean;
+}): boolean => {
+  if (!nodeOverride) {
+    return true;
+  }
+
+  const mismatch = resolvePersistedNodeConfigMismatch({
+    expectedNode: nodeOverride,
+    expectedConfig: sanitizePathConfig(config),
+    persistedConfig: finalConfig,
+  });
+  if (!mismatch) {
+    return true;
+  }
+
+  const message =
+    'Failed to save node settings. Persisted node configuration did not match the requested update.';
+  args.reportAiPathsError(
+    new Error(message),
+    {
+      action: silent ? 'verifyNodeConfigSilent' : 'verifyNodeConfig',
+      pathId: activePathId,
+      ...mismatch,
+    },
+    'Failed to verify persisted AI Paths node settings:'
+  );
+  if (!silent) {
+    args.toast(message, { variant: 'error' });
+  }
+
+  return false;
+};
+
+const resolvePersistedUpdatedAt = (finalConfig: PathConfig, updatedAt: string): string =>
+  typeof finalConfig.updatedAt === 'string' && finalConfig.updatedAt.trim().length > 0
+    ? finalConfig.updatedAt
+    : updatedAt;
+
+const resolveFinalSelectedNodeId = (
+  finalNodes: AiNode[],
+  preferredSelectedNodeId: string | null | undefined
+): string | null =>
+  preferredSelectedNodeId &&
+  finalNodes.some((node: AiNode): boolean => node.id === preferredSelectedNodeId)
+    ? preferredSelectedNodeId
+    : (finalNodes[0]?.id ?? null);
+
+const applyPersistedPathState = ({
+  activePathId,
+  finalConfig,
+  finalPaths,
+  pathConfigs,
+  persistLastError,
+  preferredSelectedNodeId,
+  selectNode,
+  setEdges,
+  setLastError,
+  setNodes,
+  setPathConfigs,
+  setPaths,
+}: {
+  activePathId: string;
+  finalConfig: PathConfig;
+  finalPaths: PathMeta[];
+  pathConfigs: Record<string, PathConfig>;
+  persistLastError: (error: LastErrorInfo | null) => Promise<void>;
+  preferredSelectedNodeId: string | null | undefined;
+  selectNode: (nodeId: string | null) => void;
+  setEdges: (edges: Edge[]) => void;
+  setLastError: (error: LastErrorInfo | null) => void;
+  setNodes: (nodes: AiNode[]) => void;
+  setPathConfigs: (pathConfigs: Record<string, PathConfig>) => void;
+  setPaths: (paths: PathMeta[]) => void;
+}): void => {
+  const finalNodes = normalizeNodes(finalConfig.nodes);
+  const finalEdges = sanitizeEdges(finalNodes, finalConfig.edges);
+
+  setPathConfigs({ ...pathConfigs, [activePathId]: finalConfig });
+  setNodes(finalNodes);
+  setEdges(finalEdges);
+  selectNode(resolveFinalSelectedNodeId(finalNodes, preferredSelectedNodeId));
+  setPaths(finalPaths);
+  setLastError(null);
+  void persistLastError(null);
+};
+
 
 export function usePathPersistence(
   args: UseAiPathsPersistenceArgs,
   core: {
     enqueueSettingsWrite: <T>(operation: () => Promise<T>) => Promise<T>;
     stringifyForStorage: (value: unknown, label: string) => string;
-    persistLastError: (error: unknown) => Promise<void>;
+    persistLastError: (error: LastErrorInfo | null) => Promise<void>;
   }
 ) {
   const { setNodes, setEdges, setPathConfigs, setPaths } = useGraphActions();
@@ -247,88 +491,41 @@ export function usePathPersistence(
           ? resolvedNodes
           : buildNodesForAutoSave(resolvedNodes);
         const lintResult = lintPathNodeRoles(nodesForSave);
-        if (lintResult.errors.length > 0) {
-          const baselineNodes = pathConfigsRef.current[args.activePathId]?.nodes ?? [];
-          const baselineLint = lintPathNodeRoles(Array.isArray(baselineNodes) ? baselineNodes : []);
-          const baselineDuplicateCounts = new Map<string, number>(
-            baselineLint.duplicateRoleTypes.map(
-              (item: { type: string; count: number }): [string, number] => [item.type, item.count]
-            )
-          );
-          const hasNewDuplicateRoleViolation = lintResult.duplicateRoleTypes.some(
-            (item: { type: string; count: number }): boolean =>
-              item.count > (baselineDuplicateCounts.get(item.type) ?? 1)
-          );
-          if (hasNewDuplicateRoleViolation) {
-            if (!silent) {
-              args.toast(lintResult.errors.join(' '), { variant: 'error' });
-            }
-            return false;
-          }
-        }
-        if (!silent && lintResult.warnings.length > 0) {
-          lintResult.warnings.forEach((message: string): void => {
-            args.toast(message, { variant: 'info' });
-          });
-        }
-        const rawEdgesForSave = options?.edgesOverride ?? edgesRef.current;
-        const normalizedNodesForSave = normalizeNodes(nodesForSave);
-        const edgesForSave = sanitizeEdges(normalizedNodesForSave, rawEdgesForSave);
-        const repairedEdges = pruneSingleCardinalityIncomingEdges(
-          normalizedNodesForSave,
-          edgesForSave
-        );
-        const edgesForSaveResolved = repairedEdges.edges;
-        if (!silent && repairedEdges.removedEdges.length > 0) {
-          const count = repairedEdges.removedEdges.length;
-          args.toast(
-            `Auto-repaired ${count} duplicate wire${count === 1 ? '' : 's'} on single-cardinality inputs.`,
-            { variant: 'warning' }
-          );
-        }
-        const savePayloadIssues = collectInvalidPathSavePayloadIssues(
-          normalizedNodesForSave,
-          edgesForSaveResolved
-        );
-        if (savePayloadIssues.length > 0) {
-          const firstIssue = savePayloadIssues[0];
-          const message = firstIssue
-            ? `Path save blocked: invalid graph payload (${firstIssue.path}: ${firstIssue.message}).`
-            : 'Path save blocked: invalid graph payload.';
-          args.reportAiPathsError(
-            new Error(message),
-            {
-              action: silent ? 'validateSavePayloadSilent' : 'validateSavePayload',
-              pathId: args.activePathId,
-              savePayloadIssues: savePayloadIssues.slice(0, 10),
-            },
-            'Failed to validate AI Paths payload before save:'
-          );
+        if (
+          lintResult.errors.length > 0 &&
+          hasNewDuplicateRoleViolation(args.activePathId, lintResult, pathConfigsRef.current)
+        ) {
           if (!silent) {
-            args.toast(message, { variant: 'error' });
+            args.toast(lintResult.errors.join(' '), { variant: 'error' });
           }
           return false;
         }
+        notifyLintWarnings(args.toast, lintResult, silent);
+        const { edgesForSaveResolved, normalizedNodesForSave } = resolveEdgesForPathSave({
+          edgesOverride: options?.edgesOverride,
+          nodesForSave,
+          rawEdges: options?.edgesOverride ?? edgesRef.current,
+          setEdges,
+          silent,
+          toast: args.toast,
+        });
         if (
-          !options?.edgesOverride &&
-          stableStringify(rawEdgesForSave) !== stableStringify(edgesForSaveResolved)
+          !validatePathSavePayload({
+            activePathId: args.activePathId,
+            args,
+            edgesForSaveResolved,
+            normalizedNodesForSave,
+            silent,
+          })
         ) {
-          setEdges(edgesForSaveResolved);
+          return false;
         }
         const compileReport = compileGraph(nodesForSave, edgesForSaveResolved);
-        if (!silent && compileReport.errors > 0) {
-          const primaryError = compileReport.findings.find(
-            (finding): boolean => finding.severity === 'error'
-          );
-          const message =
-            primaryError?.message ??
-            `Graph compile reports ${compileReport.errors} blocking issue(s). Runs will be blocked until fixed.`;
-          args.toast(message, { variant: 'warning' });
-        }
-        if (!silent && compileReport.warnings > 0) {
-          const warningMessage = buildCompileWarningMessage(compileReport);
-          args.toast(warningMessage, { variant: 'warning' });
-        }
+        notifyCompileReport({
+          compileReport,
+          silent,
+          toast: args.toast,
+        });
         const config = buildActivePathConfig(
           updatedAt,
           nodesForSave,
@@ -336,60 +533,47 @@ export function usePathPersistence(
           edgesForSaveResolved,
           options?.runtimeStateOverride
         );
-        const nextPaths = pathsRef.current.map(
-          (path: PathMeta): PathMeta =>
-            path.id === args.activePathId ? { ...path, name: resolvedName, updatedAt } : path
+        const nextPaths = buildNextPathsForSave(
+          args.activePathId,
+          pathsRef.current,
+          resolvedName,
+          updatedAt
         );
         const persistedConfig = await persistPathSettings(nextPaths, args.activePathId, config);
         const finalConfig = persistedConfig ?? config;
-        if (options?.nodeOverride) {
-          const mismatch = resolvePersistedNodeConfigMismatch({
-            expectedNode: options.nodeOverride,
-            expectedConfig: sanitizePathConfig(config),
-            persistedConfig: finalConfig,
-          });
-          if (mismatch) {
-            const message =
-              'Failed to save node settings. Persisted node configuration did not match the requested update.';
-            args.reportAiPathsError(
-              new Error(message),
-              {
-                action: silent ? 'verifyNodeConfigSilent' : 'verifyNodeConfig',
-                pathId: args.activePathId,
-                ...mismatch,
-              },
-              'Failed to verify persisted AI Paths node settings:'
-            );
-            if (!silent) {
-              args.toast(message, { variant: 'error' });
-            }
-            return false;
-          }
+        if (
+          !verifyPersistedNodeOverride({
+            activePathId: args.activePathId,
+            args,
+            config,
+            finalConfig,
+            nodeOverride: options?.nodeOverride,
+            silent,
+          })
+        ) {
+          return false;
         }
-        const finalUpdatedAt =
-          typeof finalConfig.updatedAt === 'string' && finalConfig.updatedAt.trim().length > 0
-            ? finalConfig.updatedAt
-            : updatedAt;
-        const finalPaths = nextPaths.map(
-          (path: PathMeta): PathMeta =>
-            path.id === args.activePathId ? { ...path, updatedAt: finalUpdatedAt } : path
+        const finalUpdatedAt = resolvePersistedUpdatedAt(finalConfig, updatedAt);
+        const finalPaths = buildNextPathsForSave(
+          args.activePathId,
+          nextPaths,
+          resolvedName,
+          finalUpdatedAt
         );
-        const finalNodes = normalizeNodes(finalConfig.nodes);
-        const finalEdges = sanitizeEdges(finalNodes, finalConfig.edges);
-        const preferredSelectedNodeId = args.selectedNodeId;
-        const finalSelectedNodeId =
-          preferredSelectedNodeId &&
-          finalNodes.some((node: AiNode): boolean => node.id === preferredSelectedNodeId)
-            ? preferredSelectedNodeId
-            : (finalNodes[0]?.id ?? null);
-
-        setPathConfigs({ ...pathConfigsRef.current, [args.activePathId]: finalConfig });
-        setNodes(finalNodes);
-        setEdges(finalEdges);
-        selectNode(finalSelectedNodeId);
-        setPaths(finalPaths);
-        setLastError(null);
-        void core.persistLastError(null);
+        applyPersistedPathState({
+          activePathId: args.activePathId,
+          finalConfig,
+          finalPaths,
+          pathConfigs: pathConfigsRef.current,
+          persistLastError: core.persistLastError,
+          preferredSelectedNodeId: args.selectedNodeId,
+          selectNode,
+          setEdges,
+          setLastError,
+          setNodes,
+          setPathConfigs,
+          setPaths,
+        });
         lastSavedSnapshotRef.current = buildPathSnapshot(resolvedName);
         if (!silent) {
           args.toast('AI Paths saved.', { variant: 'success' });

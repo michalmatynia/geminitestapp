@@ -6,7 +6,8 @@ import React, { useState } from 'react';
 import { ThemeForm, type ThemeFormSubmitData } from '@/features/cms/components/ThemeForm';
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
-import { AdminCmsPageLayout, Alert } from '@/shared/ui';
+import { AdminCmsPageLayout } from '@/shared/ui/admin.public';
+import { Alert } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 

@@ -1,6 +1,3 @@
-'use client';
-
-
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { fetchAgentPersonas } from '@/shared/lib/agent-personas';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';

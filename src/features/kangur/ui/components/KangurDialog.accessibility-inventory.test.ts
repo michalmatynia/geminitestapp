@@ -6,13 +6,13 @@ import { describe, expect, it } from 'vitest';
 const UI_ROOT = path.join(process.cwd(), 'src/features/kangur/ui');
 
 const EXPECTED_DIALOG_SHELL_FILES = [
-  'components/KangurAssignmentManager.modals.tsx',
-  'components/KangurAssignmentManagerTimeLimitModal.tsx',
   'components/KangurChoiceDialog.tsx',
   'components/KangurLoginModal.tsx',
-  'components/KangurParentDashboardLearnerManagementWidget.sections.tsx',
-  'components/KangurPrimaryNavigation.overlays.tsx',
+  'components/assignment-manager/KangurAssignmentManager.modals.tsx',
+  'components/assignment-manager/KangurAssignmentManagerTimeLimitModal.tsx',
   'components/music/KangurMusicPianoRollControls.tsx',
+  'components/parent-dashboard/KangurParentDashboardLearnerManagementWidget.sections.tsx',
+  'components/primary-navigation/KangurPrimaryNavigation.tsx',
   'pages/GamesLibraryGameModal.components.tsx',
 ] as const;
 

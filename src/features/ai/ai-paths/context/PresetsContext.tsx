@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  createContext,
-  useContext,
   useState,
   useMemo,
   useCallback,
@@ -11,12 +9,8 @@ import {
 } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import type {
-  ClusterPreset,
-  DbQueryPreset,
-  DbNodePreset,
-  DatabaseConfig,
-} from '@/shared/lib/ai-paths';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import type { ClusterPreset, DbQueryPreset, DbNodePreset, DatabaseConfig } from '@/shared/lib/ai-paths';
 import { createPresetId, databaseConfigSchema } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -128,8 +122,25 @@ const normalizeDatabasePresetConfig = (value: unknown): DatabaseConfig => {
 // Contexts (split for re-render optimization)
 // ---------------------------------------------------------------------------
 
-const PresetsStateContext = createContext<PresetsState | null>(null);
-const PresetsActionsContext = createContext<PresetsActions | null>(null);
+const {
+  Context: PresetsStateContext,
+  useStrictContext: usePresetsState,
+} = createStrictContext<PresetsState>({
+  hookName: 'usePresetsState',
+  providerName: 'a PresetsProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: PresetsActionsContext,
+  useStrictContext: usePresetsActions,
+} = createStrictContext<PresetsActions>({
+  hookName: 'usePresetsActions',
+  providerName: 'a PresetsProvider',
+  errorFactory: internalError,
+});
+
+export { usePresetsState, usePresetsActions };
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -322,27 +333,3 @@ export function PresetsProvider({
 // ---------------------------------------------------------------------------
 // Consumer Hooks
 // ---------------------------------------------------------------------------
-
-/**
- * Get the current presets state.
- * Components using this will re-render when presets state changes.
- */
-export function usePresetsState(): PresetsState {
-  const context = useContext(PresetsStateContext);
-  if (!context) {
-    throw internalError('usePresetsState must be used within a PresetsProvider');
-  }
-  return context;
-}
-
-/**
- * Get presets actions.
- * Components using this will NOT re-render when state changes.
- */
-export function usePresetsActions(): PresetsActions {
-  const context = useContext(PresetsActionsContext);
-  if (!context) {
-    throw internalError('usePresetsActions must be used within a PresetsProvider');
-  }
-  return context;
-}

@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { Card, MetadataItem } from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
+import { MetadataItem } from '@/shared/ui/navigation-and-layout.public';
 
 export interface DocsRuntimeState {
   projectId: string;

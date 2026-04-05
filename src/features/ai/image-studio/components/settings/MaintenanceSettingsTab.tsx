@@ -2,15 +2,9 @@
 
 import React from 'react';
 
-import {
-  Button,
-  FormField,
-  FormSection,
-  Input,
-  Label,
-  ToggleRow,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Input, Label } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   useImageStudioSettingsActions,

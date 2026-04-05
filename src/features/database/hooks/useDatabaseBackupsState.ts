@@ -1,13 +1,9 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type {
-  DatabaseBackupResponse,
-  DatabaseInfo,
-  DatabaseRestoreResponse,
-  DatabaseType,
-} from '@/shared/contracts';
+import type { DatabaseBackupResponse, DatabaseInfo, DatabaseRestoreResponse, DatabaseType } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { isValidDatabaseEngineBackupTimeUtc } from '@/shared/lib/db/database-engine-backup-schedule';
 import {
@@ -18,8 +14,8 @@ import {
   type DatabaseEngineBackupType,
 } from '@/shared/lib/db/database-engine-constants';
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
-import type { FileUploadHelpers } from '@/shared/contracts/ui';
-import { useToast } from '@/shared/ui';
+import type { FileUploadHelpers } from '@/shared/contracts/ui/base';
+import { useToast } from '@/shared/ui/primitives.public';
 import {
   logClientCatch,
   logClientError,
@@ -38,6 +34,7 @@ import {
 } from '../hooks/useDatabaseQueries';
 
 export function useDatabaseBackupsState() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<DatabaseType>('mongodb');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState('');
@@ -347,11 +344,11 @@ ${String(error)}`);
 
   const handlePreview = (backupName: string): void => {
     const url = `/admin/databases/preview?backup=${encodeURIComponent(backupName)}&type=${activeTab}`;
-    window.location.assign(url);
+    router.push(url);
   };
 
   const handlePreviewCurrent = (): void => {
-    window.location.assign(`/admin/databases/preview?mode=current&type=${activeTab}`);
+    router.push(`/admin/databases/preview?mode=current&type=${activeTab}`);
   };
 
   const handleSchedulerEnabledDraftChange = useCallback((enabled: boolean): void => {

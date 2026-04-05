@@ -1,5 +1,3 @@
-'use client';
-
 import type { KangurMiniGameTranslate } from '@/features/kangur/ui/constants/mini-game-i18n';
 
 import type {

@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 import * as builders from './client-native-code-object-registry-contract-subset.builders';
+import {
+  createSignalEdge,
+  createValueEdge,
+  evaluateClientGraphForTest,
+  expectBlockedNodeOutput,
+  expectSkippedNodeOutput,
+} from './client-native-code-object-registry-contract-subset.test-helpers';
 import {
   CLIENT_LEGACY_HANDLER_NODE_TYPES,
   CLIENT_NATIVE_CODE_OBJECT_HANDLER_IDS,
-  evaluateGraphClient,
 } from '../engine-client';
 
 const {
@@ -56,11 +63,10 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('executes prompt nodes through client native contract resolver mapping', async () => {
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode()],
       edges: [],
       runtimeKernelNodeTypes: ['prompt'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(result.outputs?.['node-prompt']?.['prompt']).toBe('hello-from-prompt');
@@ -70,20 +76,18 @@ describe('client native code-object registry contract subset', () => {
     mockAiJobsEnqueue.mockClear();
     mockAiJobsPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildModelNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-model',
           from: 'node-prompt',
           to: 'node-model',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'model'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
@@ -111,7 +115,7 @@ describe('client native code-object registry contract subset', () => {
       },
     };
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [
         builders.buildConstantNode({
           id: 'node-bundle',
@@ -127,33 +131,29 @@ describe('client native code-object registry contract subset', () => {
         builders.buildModelNode(),
       ],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-bundle-prompt',
           from: 'node-bundle',
           to: 'node-prompt',
           fromPort: 'value',
           toPort: 'bundle',
-          kind: 'value',
-        },
-        {
+        }),
+        createValueEdge({
           id: 'edge-result-prompt',
           from: 'node-result-missing',
           to: 'node-prompt',
           fromPort: 'result',
           toPort: 'result',
-          kind: 'value',
-        },
-        {
+        }),
+        createValueEdge({
           id: 'edge-prompt-model-template-required',
           from: 'node-prompt',
           to: 'node-model',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['constant', 'prompt', 'model'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).not.toHaveBeenCalled();
@@ -175,21 +175,19 @@ describe('client native code-object registry contract subset', () => {
       engineVersion: 'test-engine',
     };
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildModelNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-model-context',
           from: 'node-prompt',
           to: 'node-model',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       contextRegistry,
       runtimeKernelNodeTypes: ['prompt', 'model'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
@@ -222,20 +220,18 @@ describe('client native code-object registry contract subset', () => {
       },
     };
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), modelNode],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-model-requested-model',
           from: 'node-prompt',
           to: 'node-model',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'model'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).toHaveBeenCalledWith(
@@ -258,65 +254,66 @@ describe('client native code-object registry contract subset', () => {
     mockAiJobsEnqueue.mockClear();
     mockAiJobsPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildModelNode()],
       edges: [],
       runtimeKernelNodeTypes: ['model'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).not.toHaveBeenCalled();
     expect(mockAiJobsPoll).not.toHaveBeenCalled();
-    expect(result.outputs?.['node-model']?.['status']).toBe('blocked');
-    expect(result.outputs?.['node-model']?.['blockedReason']).toBe('missing_inputs');
-    expect(result.outputs?.['node-model']?.['waitingOnPorts']).toEqual(['prompt']);
+    expectBlockedNodeOutput({
+      result,
+      nodeId: 'node-model',
+      blockedReason: 'missing_inputs',
+      waitingOnPorts: ['prompt'],
+    });
   });
 
   it('skips model nodes when AI jobs are disabled', async () => {
     mockAiJobsEnqueue.mockClear();
     mockAiJobsPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildModelNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-model-skip-ai-jobs',
           from: 'node-prompt',
           to: 'node-model',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'model'],
       skipAiJobs: true,
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).not.toHaveBeenCalled();
     expect(mockAiJobsPoll).not.toHaveBeenCalled();
-    expect(result.outputs?.['node-model']?.['status']).toBe('skipped');
-    expect(result.outputs?.['node-model']?.['skipReason']).toBe('ai_jobs_disabled');
+    expectSkippedNodeOutput({
+      result,
+      nodeId: 'node-model',
+      skipReason: 'ai_jobs_disabled',
+    });
   });
 
   it('executes model wait-for-result path through client native contract resolver mapping', async () => {
     mockAiJobsEnqueue.mockClear();
     mockAiJobsPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildModelWaitNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-model-wait',
           from: 'node-prompt',
           to: 'node-model-wait',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'model'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
@@ -337,20 +334,18 @@ describe('client native code-object registry contract subset', () => {
       },
     });
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildModelWaitNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-model-wait-failed',
           from: 'node-prompt',
           to: 'node-model-wait',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'model'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
@@ -368,20 +363,18 @@ describe('client native code-object registry contract subset', () => {
       data: { jobId: ' ' },
     });
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildModelNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-model-missing-job-id',
           from: 'node-prompt',
           to: 'node-model',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'model'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockAiJobsEnqueue).toHaveBeenCalledTimes(1);
@@ -397,20 +390,18 @@ describe('client native code-object registry contract subset', () => {
     mockAgentEnqueue.mockClear();
     mockAgentPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildAgentNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-agent',
           from: 'node-prompt',
           to: 'node-agent',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'agent'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockSettingsList).toHaveBeenCalledTimes(1);
@@ -430,19 +421,21 @@ describe('client native code-object registry contract subset', () => {
     mockAgentEnqueue.mockClear();
     mockAgentPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildAgentNode()],
       edges: [],
       runtimeKernelNodeTypes: ['agent'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockSettingsList).not.toHaveBeenCalled();
     expect(mockAgentEnqueue).not.toHaveBeenCalled();
     expect(mockAgentPoll).not.toHaveBeenCalled();
-    expect(result.outputs?.['node-agent']?.['status']).toBe('blocked');
-    expect(result.outputs?.['node-agent']?.['blockedReason']).toBe('missing_inputs');
-    expect(result.outputs?.['node-agent']?.['waitingOnPorts']).toEqual(['prompt']);
+    expectBlockedNodeOutput({
+      result,
+      nodeId: 'node-agent',
+      blockedReason: 'missing_inputs',
+      waitingOnPorts: ['prompt'],
+    });
   });
 
   it('skips agent nodes when AI jobs are disabled', async () => {
@@ -450,30 +443,29 @@ describe('client native code-object registry contract subset', () => {
     mockAgentEnqueue.mockClear();
     mockAgentPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildAgentNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-agent-skip-ai-jobs',
           from: 'node-prompt',
           to: 'node-agent',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'agent'],
       skipAiJobs: true,
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockSettingsList).not.toHaveBeenCalled();
     expect(mockAgentEnqueue).not.toHaveBeenCalled();
     expect(mockAgentPoll).not.toHaveBeenCalled();
-    expect(result.outputs?.['node-agent']?.['status']).toBe('skipped');
-    expect(result.outputs?.['node-agent']?.['skipReason']).toBe('ai_jobs_disabled');
-    expect(result.outputs?.['node-agent']?.['bundle']).toMatchObject({
-      status: 'skipped',
+    expectSkippedNodeOutput({
+      result,
+      nodeId: 'node-agent',
+      skipReason: 'ai_jobs_disabled',
+      bundle: { status: 'skipped' },
     });
   });
 
@@ -482,20 +474,18 @@ describe('client native code-object registry contract subset', () => {
     mockAgentEnqueue.mockClear();
     mockAgentPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildAgentWaitNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-agent-wait',
           from: 'node-prompt',
           to: 'node-agent-wait',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'agent'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockSettingsList).toHaveBeenCalledTimes(1);
@@ -522,20 +512,18 @@ describe('client native code-object registry contract subset', () => {
       },
     });
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildAgentWaitNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-agent-wait-failed',
           from: 'node-prompt',
           to: 'node-agent-wait',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'agent'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockSettingsList).toHaveBeenCalledTimes(1);
@@ -552,20 +540,18 @@ describe('client native code-object registry contract subset', () => {
   it('executes learner agent nodes through client native contract resolver mapping', async () => {
     mockLearnerAgentsChat.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildLearnerAgentNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-learner-agent',
           from: 'node-prompt',
           to: 'node-learner-agent',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'learner_agent'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockLearnerAgentsChat).toHaveBeenCalledTimes(1);
@@ -593,20 +579,18 @@ describe('client native code-object registry contract subset', () => {
       },
     };
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), learnerNodeMissingAgentId],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-learner-agent-missing-id',
           from: 'node-prompt',
           to: learnerNodeMissingAgentId.id,
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'learner_agent'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockLearnerAgentsChat).not.toHaveBeenCalled();
@@ -622,28 +606,27 @@ describe('client native code-object registry contract subset', () => {
   it('skips learner agent nodes when AI jobs are disabled', async () => {
     mockLearnerAgentsChat.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildLearnerAgentNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-learner-agent-skip-ai-jobs',
           from: 'node-prompt',
           to: 'node-learner-agent',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'learner_agent'],
       skipAiJobs: true,
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockLearnerAgentsChat).not.toHaveBeenCalled();
-    expect(result.outputs?.['node-learner-agent']?.['status']).toBe('skipped');
-    expect(result.outputs?.['node-learner-agent']?.['skipReason']).toBe('ai_jobs_disabled');
-    expect(result.outputs?.['node-learner-agent']?.['bundle']).toMatchObject({
-      status: 'skipped',
+    expectSkippedNodeOutput({
+      result,
+      nodeId: 'node-learner-agent',
+      skipReason: 'ai_jobs_disabled',
+      bundle: { status: 'skipped' },
     });
   });
 
@@ -654,20 +637,18 @@ describe('client native code-object registry contract subset', () => {
       error: 'learner-chat-failed',
     });
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildLearnerAgentNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-learner-agent-failed',
           from: 'node-prompt',
           to: 'node-learner-agent',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'learner_agent'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockLearnerAgentsChat).toHaveBeenCalledTimes(1);
@@ -680,11 +661,10 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('executes trigger nodes through client native contract resolver mapping', async () => {
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildTriggerNode()],
       edges: [],
       runtimeKernelNodeTypes: ['trigger'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(result.outputs?.['node-trigger']?.['trigger']).toBe(true);
@@ -692,11 +672,10 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('executes simulation nodes through client native contract resolver mapping', async () => {
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildSimulationNode()],
       edges: [],
       runtimeKernelNodeTypes: ['simulation'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(result.outputs?.['node-simulation']?.['entityType']).toBe('product');
@@ -708,20 +687,18 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('executes fetcher nodes through client native contract resolver mapping', async () => {
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildTriggerNode(), builders.buildFetcherNode()],
       edges: [
-        {
+        createSignalEdge({
           id: 'edge-trigger-fetcher',
           from: 'node-trigger',
           to: 'node-fetcher',
           fromPort: 'trigger',
           toPort: 'trigger',
-          kind: 'signal',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['trigger', 'fetcher'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(result.outputs?.['node-fetcher']?.['context']).toMatchObject({
@@ -736,11 +713,10 @@ describe('client native code-object registry contract subset', () => {
   it('executes db schema nodes through client native contract resolver mapping', async () => {
     mockDbApiSchema.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildDbSchemaNode()],
       edges: [],
       runtimeKernelNodeTypes: ['db_schema'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockDbApiSchema).toHaveBeenCalledTimes(1);
@@ -764,20 +740,18 @@ describe('client native code-object registry contract subset', () => {
     mockPlaywrightEnqueue.mockClear();
     mockPlaywrightPoll.mockClear();
 
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPromptNode(), builders.buildPlaywrightNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-prompt-playwright',
           from: 'node-prompt',
           to: 'node-playwright',
           fromPort: 'prompt',
           toPort: 'prompt',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['prompt', 'playwright'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(mockPlaywrightEnqueue).not.toHaveBeenCalled();
@@ -794,11 +768,10 @@ describe('client native code-object registry contract subset', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     try {
-      const result = await evaluateGraphClient({
+      const result = await evaluateClientGraphForTest({
         nodes: [builders.buildApiAdvancedNode()],
         edges: [],
         runtimeKernelNodeTypes: ['api_advanced'],
-        reportAiPathsError: (): void => {},
       });
 
       expect(fetchMock).not.toHaveBeenCalled();
@@ -816,11 +789,10 @@ describe('client native code-object registry contract subset', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     try {
-      const result = await evaluateGraphClient({
+      const result = await evaluateClientGraphForTest({
         nodes: [builders.buildDatabaseNode()],
         edges: [],
         runtimeKernelNodeTypes: ['database'],
-        reportAiPathsError: (): void => {},
       });
       const bundle = result.outputs?.['node-database']?.['bundle'] as
         | Record<string, unknown>
@@ -839,11 +811,10 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('executes audio oscillator nodes through client native contract resolver mapping', async () => {
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildAudioOscillatorNode()],
       edges: [],
       runtimeKernelNodeTypes: ['audio_oscillator'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(result.outputs?.['node-audio-oscillator']?.['status']).toBe('ready');
@@ -855,20 +826,18 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('executes audio speaker nodes through client native contract resolver mapping', async () => {
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildAudioOscillatorNode(), builders.buildAudioSpeakerNode()],
       edges: [
-        {
+        createValueEdge({
           id: 'edge-osc-speaker-audio-signal',
           from: 'node-audio-oscillator',
           to: 'node-audio-speaker',
           fromPort: 'audioSignal',
           toPort: 'audioSignal',
-          kind: 'value',
-        },
+        }),
       ],
       runtimeKernelNodeTypes: ['audio_oscillator', 'audio_speaker'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(result.outputs?.['node-audio-speaker']?.['status']).toBe('unsupported_environment');
@@ -880,11 +849,10 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('executes http nodes through client native contract resolver mapping', async () => {
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildHttpNode()],
       edges: [],
       runtimeKernelNodeTypes: ['http'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(result.outputs?.['node-http']?.['value']).toBeNull();
@@ -896,11 +864,10 @@ describe('client native code-object registry contract subset', () => {
   });
 
   it('executes poll nodes through client native contract resolver mapping', async () => {
-    const result = await evaluateGraphClient({
+    const result = await evaluateClientGraphForTest({
       nodes: [builders.buildPollNode()],
       edges: [],
       runtimeKernelNodeTypes: ['poll'],
-      reportAiPathsError: (): void => {},
     });
 
     expect(result.outputs?.['node-poll']).toEqual({});
@@ -908,11 +875,10 @@ describe('client native code-object registry contract subset', () => {
 
   it('blocks legacy-backed nodes forced into runtime-kernel mode when no v3 contract exists', async () => {
     await expect(
-      evaluateGraphClient({
+      evaluateClientGraphForTest({
         nodes: [builders.buildFunctionNode()],
         edges: [],
         runtimeKernelNodeTypes: ['function'],
-        reportAiPathsError: (): void => {},
       })
     ).rejects.toThrow(
       'Node type \'function\' is not supported in client-side execution. Use Server execution.'
@@ -921,11 +887,10 @@ describe('client native code-object registry contract subset', () => {
 
   it('keeps unsupported server-only nodes blocked in client execution', async () => {
     await expect(
-      evaluateGraphClient({
+      evaluateClientGraphForTest({
         nodes: [builders.buildUnsupportedClientNode()],
         edges: [],
         runtimeKernelNodeTypes: ['unsupported_client_node'],
-        reportAiPathsError: (): void => {},
       })
     ).rejects.toThrow(
       'Node type \'unsupported_client_node\' is not supported in client-side execution. Use Server execution.'

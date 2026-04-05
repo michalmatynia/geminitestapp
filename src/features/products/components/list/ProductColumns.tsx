@@ -7,6 +7,7 @@ import { memo, useMemo } from 'react';
 
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
+import { isMissingProductListingsError } from '@/features/integrations/hooks/useListingQueries';
 import {
   useProductListHeaderActionsContext,
   useProductListRowActionsContext,
@@ -18,21 +19,30 @@ import {
   loadProductIntegrationsAdapter,
   type ProductTriggerButtonBarProps,
 } from '@/features/products/lib/product-integrations-adapter-loader';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import { getDocumentationTooltip } from '@/shared/lib/documentation';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
 } from '@/shared/lib/products/utils/priceCalculation';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { Badge, Button, Checkbox, ActionMenu, DropdownMenuItem, Tooltip } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { ActionMenu } from '@/shared/ui/ActionMenu';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
+import { Tooltip } from '@/shared/ui/tooltip';
+
+import { cn } from '@/shared/utils/ui-utils';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
   getProductListDisplayName,
   getProductDisplayName,
+  hasImportedProductOrigin,
   getImageFilepath,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
@@ -73,10 +83,31 @@ const BaseQuickExportButton = dynamic(
   }
 );
 
+const TraderaQuickListButton = dynamic(
+  () =>
+    import('./columns/buttons/TraderaQuickListButton').then(
+      (mod: typeof import('./columns/buttons/TraderaQuickListButton')) => mod.TraderaQuickListButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 const TraderaStatusButton = dynamic(
   () =>
     import('./columns/buttons/TraderaStatusButton').then(
       (mod: typeof import('./columns/buttons/TraderaStatusButton')) => mod.TraderaStatusButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+const PlaywrightStatusButton = dynamic(
+  () =>
+    import('./columns/buttons/PlaywrightStatusButton').then(
+      (mod: typeof import('./columns/buttons/PlaywrightStatusButton')) => mod.PlaywrightStatusButton
     ),
   {
     ssr: false,
@@ -212,13 +243,46 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
   const nameKey = productNameKey ?? 'name_en';
   const nameValue = getProductListDisplayName(product, nameKey);
 
-  const isImported: boolean = !!product.baseProductId;
+  const isImported = hasImportedProductOrigin(product);
   const normalizedSku = (product.sku ?? '').trim();
   const categoryLabel = resolveProductCategoryLabel(
     product,
     categoryNameById,
     productNameKey ?? 'name_en'
   );
+  const autoShippingGroupLabel =
+    product.shippingGroupSource === 'category_rule' ? product.shippingGroup?.name?.trim() ?? '' : '';
+  const autoShippingRuleLabel = useMemo(() => {
+    if (product.shippingGroupSource !== 'category_rule') {
+      return '';
+    }
+    const labels = (product.shippingGroupMatchedCategoryRuleIds ?? [])
+      .map((categoryId) => categoryNameById.get(categoryId) ?? categoryId)
+      .filter((label) => label.trim().length > 0);
+    return labels.join(', ');
+  }, [categoryNameById, product.shippingGroupMatchedCategoryRuleIds, product.shippingGroupSource]);
+  const autoShippingTooltipLabel = autoShippingRuleLabel
+    ? `Auto shipping group: ${autoShippingGroupLabel} via ${autoShippingRuleLabel}`
+    : `Auto shipping group: ${autoShippingGroupLabel}`;
+  const shippingRuleConflictLabel = useMemo(() => {
+    if (product.shippingGroupResolutionReason !== 'multiple_category_rules') {
+      return '';
+    }
+    const labels = product.shippingGroupMatchingGroupNames ?? [];
+    return labels.join(', ');
+  }, [product.shippingGroupMatchingGroupNames, product.shippingGroupResolutionReason]);
+  const shippingRuleConflictTooltip = autoShippingRuleLabel
+    ? `Shipping rule conflict: ${shippingRuleConflictLabel} via ${autoShippingRuleLabel}`
+    : `Shipping rule conflict: ${shippingRuleConflictLabel}`;
+  const missingManualShippingLabel =
+    product.shippingGroupResolutionReason === 'manual_missing' &&
+    typeof product.shippingGroupId === 'string' &&
+    product.shippingGroupId.trim().length > 0
+      ? product.shippingGroupId.trim()
+      : '';
+  const missingManualShippingTooltip = missingManualShippingLabel
+    ? `Manual shipping group is missing: ${missingManualShippingLabel}`
+    : 'Manual shipping group is missing';
 
   return (
     <div className='min-w-0 cursor-text select-text'>
@@ -263,6 +327,45 @@ const NameCell: React.FC<{ row: Row<ProductWithImages> }> = memo(function NameCe
             {categoryLabel}
           </button>
         </Tooltip>
+        {autoShippingGroupLabel && (
+          <>
+            <span aria-hidden='true' className='text-gray-600'>
+              |
+            </span>
+            <Tooltip content={autoShippingTooltipLabel}>
+              <span className='max-w-[12rem] truncate' title={autoShippingTooltipLabel}>
+                Auto ship: {autoShippingGroupLabel}
+              </span>
+            </Tooltip>
+          </>
+        )}
+        {shippingRuleConflictLabel && (
+          <>
+            <span aria-hidden='true' className='text-gray-600'>
+              |
+            </span>
+            <Tooltip content={shippingRuleConflictTooltip}>
+              <span
+                className='max-w-[12rem] truncate text-amber-300'
+                title={shippingRuleConflictTooltip}
+              >
+                Ship conflict
+              </span>
+            </Tooltip>
+          </>
+        )}
+        {missingManualShippingLabel && (
+          <>
+            <span aria-hidden='true' className='text-gray-600'>
+              |
+            </span>
+            <Tooltip content={missingManualShippingTooltip}>
+              <span className='max-w-[12rem] truncate text-amber-300' title={missingManualShippingTooltip}>
+                Ship missing
+              </span>
+            </Tooltip>
+          </>
+        )}
         {isImported && (
           <Tooltip
             content={
@@ -374,16 +477,15 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
   row,
 }) {
   const product: ProductWithImages = row.original;
-  const {
-    onIntegrationsClick: handleClick,
-    onExportSettingsClick,
-  } = useProductListRowActionsContext();
-  const { showTriggerRunFeedback } = useProductListRowVisualsContext();
+  const { onIntegrationsClick: handleClick } = useProductListRowActionsContext();
+  const { showTriggerRunFeedback, triggerButtonsReady = true } = useProductListRowVisualsContext();
   const {
     showMarketplaceBadge,
     integrationStatus: status,
     showTraderaBadge,
     traderaStatus,
+    showPlaywrightProgrammableBadge,
+    playwrightProgrammableStatus,
   } = useProductListRowRuntime(product.id, product.baseProductId);
 
   const queryClient = useQueryClient();
@@ -391,11 +493,12 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
   if (!handleClick) return null;
   const prefetchListings = (): void => {
     void loadProductIntegrationsAdapter().then(({ fetchProductListings, productListingsQueryKey }) => {
-      const queryKey = productListingsQueryKey(product.id);
+      const queryKey = normalizeQueryKey(productListingsQueryKey(product.id));
       void prefetchQueryV2(queryClient, {
         queryKey,
         queryFn: () => fetchProductListings(product.id),
         staleTime: 30 * 1000,
+        logError: false,
         meta: {
           source: 'products.columns.integrations.prefetchListings',
           operation: 'list',
@@ -405,7 +508,18 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
           tags: ['integrations', 'listings', 'prefetch'],
           description: 'Loads integrations listings.',
         },
-      })();
+      })().catch((error: unknown) => {
+        if (isMissingProductListingsError(error)) {
+          queryClient.removeQueries({ queryKey });
+          return;
+        }
+        logClientCatch(error, {
+          source: 'products.columns.integrations',
+          action: 'prefetchListings',
+          productId: product.id,
+          level: 'warn',
+        });
+      });
     });
   };
   return (
@@ -429,26 +543,48 @@ const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(functio
         status={status}
         prefetchListings={prefetchListings}
         showMarketplaceBadge={showMarketplaceBadge}
-        onOpenIntegrations={(recoveryContext): void => handleClick(product, recoveryContext)}
-        onOpenExportSettings={(): void => onExportSettingsClick(product)}
+        onOpenIntegrations={(recoveryContext): void =>
+          handleClick(product, recoveryContext, 'baselinker')
+        }
       />
-      <TriggerButtonBar
-        location='product_row'
-        entityType='product'
-        entityId={product.id}
-        getEntityJson={(): Record<string, unknown> =>
-          buildTriggeredProductEntityJson({
-            product,
-            values: {},
-          })}
-        showRunFeedback={showTriggerRunFeedback}
-        className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
+      <TraderaQuickListButton
+        product={product}
+        prefetchListings={prefetchListings}
+        onOpenIntegrations={(recoveryContext): void =>
+          handleClick(product, recoveryContext, 'tradera')
+        }
+        showTraderaBadge={showTraderaBadge}
+        traderaStatus={traderaStatus}
       />
+      {triggerButtonsReady ? (
+        <TriggerButtonBar
+          location='product_row'
+          entityType='product'
+          entityId={product.id}
+          getEntityJson={(): Record<string, unknown> =>
+            buildTriggeredProductEntityJson({
+              product,
+              values: {},
+            })}
+          showRunFeedback={showTriggerRunFeedback}
+          className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
+        />
+      ) : null}
       {showTraderaBadge && (
         <TraderaStatusButton
+          productId={product.id}
           status={traderaStatus}
           prefetchListings={prefetchListings}
-          onOpenListings={(): void => handleClick(product)}
+          onOpenListings={(recoveryContext): void =>
+            handleClick(product, recoveryContext, 'tradera')
+          }
+        />
+      )}
+      {showPlaywrightProgrammableBadge && (
+        <PlaywrightStatusButton
+          status={playwrightProgrammableStatus}
+          prefetchListings={prefetchListings}
+          onOpenListings={(): void => handleClick(product, undefined, 'playwright-programmable')}
         />
       )}
     </div>

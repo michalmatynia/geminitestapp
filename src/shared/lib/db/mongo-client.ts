@@ -22,6 +22,8 @@ const POOL_LOG_COOLDOWN_MS = 30_000; // suppress repeated events of the same typ
 const SLOW_COMMAND_THRESHOLD_MS = parsePositiveInt(process.env['MONGODB_SLOW_COMMAND_MS'], 3_000);
 const MONITOR_COMMANDS = process.env['MONGODB_MONITOR_COMMANDS'] === 'true';
 const DEBUG_MONGODB_POOL = process.env['DEBUG_MONGODB_POOL'] === 'true';
+const DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS = 5_000;
+const DEFAULT_MONGO_CONNECT_TIMEOUT_MS = 5_000;
 
 const poolLoggedAt = new Map<string, number>();
 const shouldEmit = (key: string): boolean => {
@@ -161,14 +163,21 @@ const getMongoClientOptions = (): MongoClientOptions => ({
   maxIdleTimeMS: parsePositiveInt(process.env['MONGODB_MAX_IDLE_TIME_MS'], 60_000),
   serverSelectionTimeoutMS: parsePositiveInt(
     process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'],
-    5_000
+    DEFAULT_MONGO_SERVER_SELECTION_TIMEOUT_MS
   ),
-  connectTimeoutMS: parsePositiveInt(process.env['MONGODB_CONNECT_TIMEOUT_MS'], 5_000),
+  connectTimeoutMS: parsePositiveInt(
+    process.env['MONGODB_CONNECT_TIMEOUT_MS'],
+    DEFAULT_MONGO_CONNECT_TIMEOUT_MS
+  ),
   socketTimeoutMS: parsePositiveInt(process.env['MONGODB_SOCKET_TIMEOUT_MS'], 120_000),
   retryWrites: true,
   // Enable command monitoring only when explicitly opted in (adds minor overhead).
   ...(MONITOR_COMMANDS ? { monitorCommands: true } : {}),
 });
+
+export const __testOnly = {
+  getMongoClientOptions,
+};
 
 export async function getMongoClient(): Promise<MongoClient> {
   const uri = getMongoUri();

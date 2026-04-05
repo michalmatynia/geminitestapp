@@ -4,7 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
-import { StandardDataTablePanel, StandardDataTablePanelRuntimeContext } from '@/shared/ui';
+import { StandardDataTablePanel, StandardDataTablePanelRuntimeContext } from '@/shared/ui/templates.public';
 
 import { type JobRowData } from '../types';
 import { useJobTablePanelRuntime } from './context/JobTableRuntimeContext';

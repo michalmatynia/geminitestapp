@@ -3,7 +3,7 @@ import 'server-only';
 import type { KangurAiTutorConversationContext, KangurAiTutorMessageArtifact } from '@/shared/contracts/kangur-ai-tutor';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
-import { sanitizeSvg } from '@/shared/utils';
+import { sanitizeSvg } from '@/shared/utils/sanitization';
 
 // ---------------------------------------------------------------------------
 // Constants

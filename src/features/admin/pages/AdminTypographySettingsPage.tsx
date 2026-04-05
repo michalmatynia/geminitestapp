@@ -10,18 +10,10 @@ import {
 } from '@/shared/constants/typography';
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  AdminSettingsPageLayout,
-  FormActions,
-  FormField,
-  FormSection,
-  Hint,
-  LoadingState,
-  MetadataItem,
-  SelectSimple,
-  UI_GRID_ROOMY_CLASSNAME,
-  useToast,
-} from '@/shared/ui';
+import { AdminSettingsPageLayout } from '@/shared/ui/admin.public';
+import { FormActions, FormField, FormSection, Hint, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState, MetadataItem, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const APP_FONT_SET_OPTIONS: Array<LabeledOptionWithDescriptionDto<AppFontSetId>> = APP_FONT_SETS.map(

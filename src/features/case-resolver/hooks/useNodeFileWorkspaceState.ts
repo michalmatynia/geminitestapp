@@ -11,15 +11,10 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/public';
-import type {
-  AiNode,
-  CaseResolverNodeMeta,
-  CaseResolverEdgeMeta,
-  CaseResolverFile,
-  CaseResolverNodeFileSnapshot,
-  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
-  CaseResolverCompileResult,
-} from '@/shared/contracts/case-resolver';
+import type { AiNode } from '@/shared/contracts/case-resolver/../ai-paths-core';
+import type { CaseResolverNodeMeta, CaseResolverEdgeMeta, CaseResolverNodeFileSnapshot, CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta } from '@/shared/contracts/case-resolver/graph';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverCompileResult } from '@/shared/contracts/case-resolver/capture';
 
 import {
   useCaseResolverPageActions,

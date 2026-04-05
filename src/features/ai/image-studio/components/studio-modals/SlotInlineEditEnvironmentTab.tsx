@@ -1,7 +1,8 @@
 import {} from 'lucide-react';
 import React from 'react';
 
-import { Button, TabsContent, Hint } from '@/shared/ui';
+import { Button, TabsContent } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
 import {

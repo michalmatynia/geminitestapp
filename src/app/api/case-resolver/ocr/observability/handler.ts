@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getCaseResolverOcrObservabilitySnapshot } from '@/features/case-resolver/server/ocr-observability';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getCaseResolverOcrObservabilitySnapshot } from '@/features/case-resolver/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 
 export const querySchema = z.object({

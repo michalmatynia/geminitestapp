@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   getKangurSocialPipelineQueueMock,
   getHealthStatusMock,
   getQueueMock,
+  getJobsMock,
   isPausedMock,
   isRedisAvailableMock,
   isRedisReachableMock,
@@ -15,6 +16,7 @@ const {
   getKangurSocialPipelineQueueMock: vi.fn(),
   getHealthStatusMock: vi.fn(),
   getQueueMock: vi.fn(),
+  getJobsMock: vi.fn(),
   isPausedMock: vi.fn(),
   isRedisAvailableMock: vi.fn(),
   isRedisReachableMock: vi.fn(),
@@ -70,8 +72,10 @@ describe('social pipeline status handler', () => {
     });
     getQueueMock.mockReturnValue({
       isPaused: isPausedMock,
+      getJobs: getJobsMock,
     });
     isPausedMock.mockResolvedValue(false);
+    getJobsMock.mockResolvedValue([]);
     isRedisAvailableMock.mockReturnValue(true);
     isRedisReachableMock.mockResolvedValue(true);
     getKangurSocialPipelineWorkerHeartbeatMock.mockResolvedValue(null);
@@ -102,6 +106,7 @@ describe('social pipeline status handler', () => {
       timeSinceWorkerHeartbeat: undefined,
       isPaused: false,
       repeatEveryMs: 600000,
+      activeProcessSummary: undefined,
     });
   });
 
@@ -146,6 +151,7 @@ describe('social pipeline status handler', () => {
       timeSinceWorkerHeartbeat: undefined,
       isPaused: false,
       repeatEveryMs: 600000,
+      activeProcessSummary: undefined,
     });
   });
 
@@ -179,6 +185,7 @@ describe('social pipeline status handler', () => {
       timeSinceWorkerHeartbeat: undefined,
       isPaused: false,
       repeatEveryMs: 600000,
+      activeProcessSummary: undefined,
     });
   });
 
@@ -225,5 +232,31 @@ describe('social pipeline status handler', () => {
     expect(payload.timeSinceWorkerHeartbeat).toBeTypeOf('number');
     expect(payload.timeSinceWorkerHeartbeat).toBeGreaterThanOrEqual(0);
     expect(payload).not.toHaveProperty('statusReason');
+  });
+
+  it('includes the first active process label in the status payload when queue work is running', async () => {
+    getJobsMock.mockResolvedValueOnce([
+      {
+        data: {
+          type: 'manual-post-visual-analysis',
+        },
+      },
+    ]);
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/kangur/social-pipeline/status'),
+      createContext()
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        activeProcessSummary: {
+          label: 'Image analysis',
+          additionalRunningCount: 0,
+        },
+      })
+    );
+    expect(getJobsMock).toHaveBeenCalledWith(['active'], 0, 4);
   });
 });

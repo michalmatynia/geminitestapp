@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { linkProductImageToStudio } from '@/features/ai/server';
-import {
-  productStudioLinkRequestSchema as linkSchema,
-  productStudioLinkResponseSchema,
-} from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { productStudioLinkRequestSchema as linkSchema, productStudioLinkResponseSchema } from '@/shared/contracts/products/studio';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_handler(

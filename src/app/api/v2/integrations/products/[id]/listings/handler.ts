@@ -1,151 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
-  findProductListingByIdAcrossProviders,
-  getExportDefaultConnectionId,
-  getExportDefaultInventoryId,
+  isBaseIntegrationSlug,
+  isPlaywrightProgrammableSlug,
+  isTraderaIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
+import {
   getProductListingRepository,
   listingExistsAcrossProviders,
-  listProductListingsByProductIdAcrossProviders,
 } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
-import { enqueueTraderaListingJob } from '@/features/jobs/server';
-import { getProductRepository } from '@/features/products/server';
-import { parseJsonBody } from '@/features/products/server';
+import { listCanonicalBaseProductListings } from '@/features/integrations/services/base-listing-canonicalization';
 import {
-  productListingCreatePayloadSchema,
-  type ProductListingCreateResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+  enqueuePlaywrightListingJob,
+  enqueueTraderaListingJob,
+  initializeQueues,
+} from '@/features/jobs/server';
+import { getProductRepository, parseJsonBody } from '@/features/products/server';
+import { productListingCreatePayloadSchema } from '@/shared/contracts/integrations/listings';
+import { type ProductListingCreateResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { resolveError } from '@/shared/errors/resolve-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-
-const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
-  const normalized = (value ?? '').trim().toLowerCase();
-  return normalized === 'base' || normalized === 'base-com' || normalized === 'baselinker';
-};
-
-type BaseListingLinkContext = {
-  integrationId: string;
-  connectionId: string;
-  inventoryId: string | null;
-};
-
-type ProductListings = Awaited<ReturnType<typeof listProductListingsByProductIdAcrossProviders>>;
 
 const requireProductId = (productId: string | null | undefined): string => {
   if (!productId) {
     throw badRequestError('Product id is required');
   }
   return productId;
-};
-
-const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext | null> => {
-  const integrationRepo = await getIntegrationRepository();
-  const integrations = await integrationRepo.listIntegrations();
-  const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
-    isBaseIntegrationSlug(integration.slug)
-  );
-  if (!baseIntegration) return null;
-
-  const connections = await integrationRepo.listConnections(baseIntegration.id);
-  if (connections.length === 0) return null;
-
-  const defaultConnectionId = (await getExportDefaultConnectionId())?.trim() || '';
-  const preferredConnection =
-    (defaultConnectionId
-      ? connections.find(
-        (connection: (typeof connections)[number]) => connection.id === defaultConnectionId
-      )
-      : null) ??
-    connections.find((connection: (typeof connections)[number]) =>
-      Boolean(connection.baseApiToken)
-    ) ??
-    connections[0] ??
-    null;
-  if (!preferredConnection?.id) return null;
-
-  const defaultInventoryId = (await getExportDefaultInventoryId())?.trim() || '';
-  return {
-    integrationId: baseIntegration.id,
-    connectionId: preferredConnection.id,
-    inventoryId: defaultInventoryId || null,
-  };
-};
-
-const syncBaseListingsWithProductId = async (
-  productId: string,
-  normalizedBaseProductId: string,
-  listings: ProductListings
-): Promise<ProductListings> => {
-  if (!normalizedBaseProductId) {
-    return listings;
-  }
-
-  const baseListingsWithoutExternalId = listings.filter(
-    (listing: ProductListings[number]) =>
-      isBaseIntegrationSlug(listing.integration.slug) && !listing.externalListingId?.trim()
-  );
-  if (baseListingsWithoutExternalId.length === 0) {
-    return listings;
-  }
-
-  await Promise.all(
-    baseListingsWithoutExternalId.map(async (listing) => {
-      const resolved = await findProductListingByIdAcrossProviders(listing.id);
-      if (!resolved) {
-        return;
-      }
-
-      await resolved.repository.updateListingExternalId(listing.id, normalizedBaseProductId);
-      if ((resolved.listing.status ?? '').trim().length === 0) {
-        await resolved.repository.updateListingStatus(listing.id, 'active');
-      }
-    })
-  );
-
-  return listProductListingsByProductIdAcrossProviders(productId);
-};
-
-const backfillBaseListingIfMissing = async (
-  productId: string,
-  normalizedBaseProductId: string,
-  listings: ProductListings
-): Promise<ProductListings> => {
-  if (!normalizedBaseProductId) {
-    return listings;
-  }
-  if (listings.some((listing: ProductListings[number]) => isBaseIntegrationSlug(listing.integration.slug))) {
-    return listings;
-  }
-
-  const linkContext = await resolveBaseListingLinkContext();
-  if (!linkContext) {
-    return listings;
-  }
-
-  const existsForConnection = await listingExistsAcrossProviders(productId, linkContext.connectionId);
-  if (existsForConnection) {
-    return listings;
-  }
-
-  const listingRepo = await getProductListingRepository();
-  await listingRepo.createListing({
-    productId,
-    integrationId: linkContext.integrationId,
-    connectionId: linkContext.connectionId,
-    status: 'active',
-    externalListingId: normalizedBaseProductId,
-    inventoryId: linkContext.inventoryId,
-    marketplaceData: {
-      source: 'base-import-backfill',
-      marketplace: 'base',
-    },
-  });
-
-  return listProductListingsByProductIdAcrossProviders(productId);
 };
 
 /**
@@ -159,24 +42,20 @@ export async function GET_handler(
 ): Promise<Response> {
   try {
     const productId = requireProductId(params.id);
-    let listings = await listProductListingsByProductIdAcrossProviders(productId);
-    const productRepo = await getProductRepository();
-    const product = await productRepo.getProductById(productId);
-    const normalizedBaseProductId = product?.baseProductId?.trim() || '';
-
-    listings = await syncBaseListingsWithProductId(
-      productId,
-      normalizedBaseProductId,
-      listings
-    );
-    listings = await backfillBaseListingIfMissing(productId, normalizedBaseProductId, listings);
-
+    const listings = await listCanonicalBaseProductListings(productId);
     return NextResponse.json(listings);
   } catch (error) {
     void ErrorSystem.captureException(error);
+    const resolved = resolveError(error, {
+      fallbackMessage: 'Failed to load marketplace listings.',
+    });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
-      { status: 500 }
+      {
+        error: resolved.message,
+        code: resolved.code,
+        ...(resolved.meta ? { details: resolved.meta } : {}),
+      },
+      { status: resolved.httpStatus }
     );
   }
 }
@@ -247,9 +126,15 @@ export async function POST_handler(
       productId,
       integrationId: data.integrationId,
       connectionId: data.connectionId,
-      status: isTraderaIntegrationSlug(integration.slug) ? 'queued' : 'pending',
+      status:
+        isTraderaIntegrationSlug(integration.slug) ||
+        isPlaywrightProgrammableSlug(integration.slug)
+          ? 'queued'
+          : 'pending',
       marketplaceData: isTraderaIntegrationSlug(integration.slug)
         ? { source: 'manual-listing', marketplace: 'tradera' }
+        : isPlaywrightProgrammableSlug(integration.slug)
+          ? { source: 'manual-listing', marketplace: 'playwright-programmable' }
         : isBaseIntegrationSlug(integration.slug)
           ? { source: 'manual-listing', marketplace: 'base' }
           : { source: 'manual-listing' },
@@ -267,6 +152,7 @@ export async function POST_handler(
     });
 
     if (isTraderaIntegrationSlug(integration.slug)) {
+      initializeQueues();
       const enqueuedAt = new Date().toISOString();
       const jobId = await enqueueTraderaListingJob({
         listingId: listing.id,
@@ -285,13 +171,40 @@ export async function POST_handler(
       return NextResponse.json(response, { status: 201 });
     }
 
+    if (isPlaywrightProgrammableSlug(integration.slug)) {
+      initializeQueues();
+      const enqueuedAt = new Date().toISOString();
+      const jobId = await enqueuePlaywrightListingJob({
+        listingId: listing.id,
+        action: 'list',
+        source: 'api',
+      });
+      const response: ProductListingCreateResponse = {
+        ...listing,
+        queued: true,
+        queue: {
+          name: 'playwright-programmable-listings',
+          jobId,
+          enqueuedAt,
+        },
+      };
+      return NextResponse.json(response, { status: 201 });
+    }
+
     const response: ProductListingCreateResponse = listing;
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
     void ErrorSystem.captureException(error);
+    const resolved = resolveError(error, {
+      fallbackMessage: 'Failed to create marketplace listing.',
+    });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
-      { status: 500 }
+      {
+        error: resolved.message,
+        code: resolved.code,
+        ...(resolved.meta ? { details: resolved.meta } : {}),
+      },
+      { status: resolved.httpStatus }
     );
   }
 }

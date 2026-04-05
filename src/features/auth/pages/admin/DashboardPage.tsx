@@ -6,19 +6,8 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  useToast,
-  SectionHeader,
-  Alert,
-  MetadataItem,
-  LoadingState,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, Alert } from '@/shared/ui/primitives.public';
+import { SectionHeader, MetadataItem, LoadingState, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export default function AuthDashboardPage(): React.JSX.Element {

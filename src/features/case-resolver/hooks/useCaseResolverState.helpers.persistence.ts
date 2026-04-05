@@ -1,4 +1,4 @@
-import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

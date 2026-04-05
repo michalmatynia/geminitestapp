@@ -1,31 +1,37 @@
 import { type AiNode } from '@/shared/contracts/ai-paths';
 
-export const normalizeAudioOscillatorNode = (node: AiNode): AiNode => {
-  return {
-    ...node,
-    config: {
-      ...node.config,
-      audioOscillator: {
-        waveform: node.config?.audioOscillator?.waveform ?? 'sine',
-        frequencyHz: node.config?.audioOscillator?.frequencyHz ?? 440,
-        gain: node.config?.audioOscillator?.gain ?? 0.25,
-        durationMs: node.config?.audioOscillator?.durationMs ?? 400,
-      },
-    },
-  };
-};
+const DEFAULT_AUDIO_OSCILLATOR_CONFIG = {
+  waveform: 'sine',
+  frequencyHz: 440,
+  gain: 0.25,
+  durationMs: 400,
+} as const;
 
-export const normalizeAudioSpeakerNode = (node: AiNode): AiNode => {
-  return {
-    ...node,
-    config: {
-      ...node.config,
-      audioSpeaker: {
-        enabled: node.config?.audioSpeaker?.enabled ?? true,
-        autoPlay: node.config?.audioSpeaker?.autoPlay ?? true,
-        gain: node.config?.audioSpeaker?.gain ?? 1,
-        stopPrevious: node.config?.audioSpeaker?.stopPrevious ?? true,
-      },
+const DEFAULT_AUDIO_SPEAKER_CONFIG = {
+  enabled: true,
+  autoPlay: true,
+  gain: 1,
+  stopPrevious: true,
+} as const;
+
+export const normalizeAudioOscillatorNode = (node: AiNode): AiNode => ({
+  ...node,
+  config: {
+    ...node.config,
+    audioOscillator: {
+      ...DEFAULT_AUDIO_OSCILLATOR_CONFIG,
+      ...(node.config?.audioOscillator ?? {}),
     },
-  };
-};
+  },
+});
+
+export const normalizeAudioSpeakerNode = (node: AiNode): AiNode => ({
+  ...node,
+  config: {
+    ...node.config,
+    audioSpeaker: {
+      ...DEFAULT_AUDIO_SPEAKER_CONFIG,
+      ...(node.config?.audioSpeaker ?? {}),
+    },
+  },
+});

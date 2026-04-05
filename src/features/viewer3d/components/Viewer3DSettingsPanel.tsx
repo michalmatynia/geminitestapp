@@ -4,20 +4,9 @@ import { Sun, Moon, Sparkles, Eye } from 'lucide-react';
 import React, { useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  Button,
-  SelectSimple,
-  Input,
-  FormSection,
-  FormField,
-  Checkbox,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  ToggleRow,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, Input, Checkbox, Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   useViewer3DActions,

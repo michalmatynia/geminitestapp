@@ -1,11 +1,5 @@
-import type {
-  KangurAnalyticsCount,
-  KangurAnalyticsSnapshot,
-  KangurKnowledgeGraphStatusSnapshot,
-  KangurObservabilityAlert,
-  KangurObservabilityRange,
-  KangurObservabilityStatus,
-} from '@/shared/contracts';
+import type { KangurAnalyticsCount, KangurAnalyticsSnapshot, KangurObservabilityAlert, KangurObservabilityRange, KangurObservabilityStatus } from '@/shared/contracts/kangur-observability';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
 
 export const eventCount = (analytics: KangurAnalyticsSnapshot, name: string): number =>
   analytics.importantEvents.find((entry: KangurAnalyticsCount) => entry.name === name)?.count ?? 0;

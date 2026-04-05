@@ -1,18 +1,22 @@
-'use client';
-
-import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
-import type { ListQuery } from '@/shared/contracts/ui';
+import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products/categories';
+import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 
-import { useCategories as useMetadataCategories } from './useProductMetadataQueries';
+import {
+  type ProductMetadataQueryOptions,
+  useCategories as useMetadataCategories,
+} from './useProductMetadataQueries';
 
 /**
  * Hook to fetch product categories for a catalog
  */
-export function useProductCategories(catalogId?: string): ListQuery<ProductCategory> {
-  return useMetadataCategories(catalogId);
+export function useProductCategories(
+  catalogId?: string,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCategory> {
+  return useMetadataCategories(catalogId, options);
 }
 
 /**

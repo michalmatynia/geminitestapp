@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  imageStudioAnalysisResponseSchema,
-  imageStudioAnalysisRequestSchema,
-  imageStudioAutoScalerResponseSchema,
-  imageStudioAutoScalerRequestSchema,
-} from '@/shared/contracts/image-studio';
+import { imageStudioAnalysisResponseSchema, imageStudioAnalysisRequestSchema } from '@/shared/contracts/image-studio/analysis';
+import { imageStudioAutoScalerResponseSchema, imageStudioAutoScalerRequestSchema } from '@/shared/contracts/image-studio/autoscaler';
 
 describe('imageStudioAnalysisRequestSchema', () => {
   it('accepts a server analysis payload with layout', () => {

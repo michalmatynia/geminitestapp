@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { cn } from '@/features/kangur/shared/utils';
 import {
@@ -105,8 +103,8 @@ export function GamesLibrarySidebarSection(input: {
         GAMES_LIBRARY_PANEL_INSET_SURFACE_CLASSNAME,
         'space-y-4 transition',
         isActive
-          ? 'border-[color:var(--kangur-page-accent)] [background:color-mix(in_srgb,var(--kangur-soft-card-background)_90%,white)] shadow-[0_26px_64px_-50px_rgba(59,130,246,0.42)]'
-          : '[background:color-mix(in_srgb,var(--kangur-soft-card-background)_96%,white)]'
+          ? 'border-[color:var(--kangur-page-accent)] bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_98%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_90%,var(--kangur-accent-sky-start,#38bdf8))_100%)] shadow-[0_26px_64px_-50px_rgba(59,130,246,0.42)]'
+          : 'bg-[var(--kangur-soft-card-background,#ffffff)] [background:linear-gradient(180deg,color-mix(in_srgb,var(--kangur-soft-card-background)_98%,white)_0%,color-mix(in_srgb,var(--kangur-soft-card-background)_95%,white)_100%)]'
       )}
     >
       <div className='space-y-1'>

@@ -1,14 +1,7 @@
 import { type ImageStudioSequenceStep } from '@/features/ai/image-studio/server';
 import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
-import {
-  DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS,
-  type ProductStudioExecutionRoute,
-  type ProductStudioSequenceGenerationMode,
-  type ProductStudioSequencingConfig,
-  type ProductStudioSequencingDiagnostics,
-  type ProductStudioSequenceStepPlanEntry,
-  type ProductStudioSequenceReadiness,
-} from '@/shared/contracts/products';
+import { DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS } from '@/shared/contracts/products/studio';
+import { type ProductStudioExecutionRoute, type ProductStudioSequenceGenerationMode, type ProductStudioSequencingConfig, type ProductStudioSequencingDiagnostics, type ProductStudioSequenceStepPlanEntry, type ProductStudioSequenceReadiness } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 
 import { clamp01, trimString } from './product-studio-service.helpers';
@@ -31,129 +24,173 @@ export type ResolvePostProductionRouteResult = {
 const PRODUCT_STUDIO_STRICT_SEQUENCE_MODE =
   process.env['PRODUCT_STUDIO_STRICT_SEQUENCE_MODE'] !== 'false';
 
+const buildRouteDecision = (params: {
+  executionRoute: ProductStudioExecutionRoute;
+  runKind: 'generation' | 'sequence';
+  resolvedMode: ProductStudioSequenceGenerationMode;
+  warnings?: string[];
+}): ResolvePostProductionRouteResult => ({
+  executionRoute: params.executionRoute,
+  runKind: params.runKind,
+  resolvedMode: params.resolvedMode,
+  warnings: params.warnings ?? [],
+});
+
+const resolveForcedPostProductionRoute = (
+  requestedMode: ProductStudioSequenceGenerationMode
+): ResolvePostProductionRouteResult | null => {
+  if (requestedMode === 'studio_prompt_then_sequence') {
+    return buildRouteDecision({
+      executionRoute: 'studio_sequencer',
+      runKind: 'sequence',
+      resolvedMode: 'studio_prompt_then_sequence',
+    });
+  }
+  if (requestedMode === 'studio_native_sequencer_prior_generation') {
+    return buildRouteDecision({
+      executionRoute: 'studio_native_sequencer_prior_generation',
+      runKind: 'sequence',
+      resolvedMode: 'studio_native_sequencer_prior_generation',
+    });
+  }
+  return null;
+};
+
+const resolveStrictSequencerRoute = (params: {
+  sequencerEnabled: boolean;
+  requestedMode: ProductStudioSequenceGenerationMode;
+}): ResolvePostProductionRouteResult | null => {
+  if (!params.sequencerEnabled || !PRODUCT_STUDIO_STRICT_SEQUENCE_MODE) {
+    return null;
+  }
+  const warnings =
+    params.requestedMode === 'model_full_sequence'
+      ? [
+          'Project sequencing is enabled, so Product Studio runs the Image Studio sequence exactly as configured.',
+        ]
+      : [];
+  return buildRouteDecision({
+    executionRoute: 'studio_sequencer',
+    runKind: 'sequence',
+    resolvedMode: 'studio_prompt_then_sequence',
+    warnings,
+  });
+};
+
+const resolveDisabledSequencerRoute = (params: {
+  requestedMode: ProductStudioSequenceGenerationMode;
+  modelSupportsFullSequence: boolean;
+  hasConfiguredSequenceSteps: boolean;
+  modelId: string;
+}): ResolvePostProductionRouteResult => {
+  const warnings: string[] = [];
+
+  if (params.requestedMode === 'model_full_sequence') {
+    if (params.modelSupportsFullSequence) {
+      return buildRouteDecision({
+        executionRoute: 'ai_model_full_sequence',
+        runKind: 'generation',
+        resolvedMode: 'model_full_sequence',
+      });
+    }
+    if (params.hasConfiguredSequenceSteps) {
+      warnings.push(
+        `Model "${params.modelId || 'selected model'}" does not support full-sequence generation and persisted project sequencing is disabled, so Product Studio will run direct generation only.`
+      );
+    }
+    return buildRouteDecision({
+      executionRoute: 'ai_direct_generation',
+      runKind: 'generation',
+      resolvedMode: 'model_full_sequence',
+      warnings,
+    });
+  }
+
+  if (params.requestedMode === 'auto' && params.modelSupportsFullSequence) {
+    return buildRouteDecision({
+      executionRoute: 'ai_model_full_sequence',
+      runKind: 'generation',
+      resolvedMode: 'model_full_sequence',
+    });
+  }
+
+  if (params.hasConfiguredSequenceSteps) {
+    warnings.push(
+      'Persisted project sequencing is disabled, so Product Studio cannot run project sequence steps until Image Studio Sequencing defaults are saved.'
+    );
+  }
+
+  return buildRouteDecision({
+    executionRoute: 'ai_direct_generation',
+    runKind: 'generation',
+    resolvedMode:
+      params.requestedMode === 'auto' ? 'studio_prompt_then_sequence' : params.requestedMode,
+    warnings,
+  });
+};
+
+const resolveEnabledSequencerRoute = (params: {
+  requestedMode: ProductStudioSequenceGenerationMode;
+  modelSupportsFullSequence: boolean;
+  modelId: string;
+}): ResolvePostProductionRouteResult => {
+  if (params.requestedMode === 'model_full_sequence') {
+    if (params.modelSupportsFullSequence) {
+      return buildRouteDecision({
+        executionRoute: 'ai_model_full_sequence',
+        runKind: 'generation',
+        resolvedMode: 'model_full_sequence',
+      });
+    }
+    return buildRouteDecision({
+      executionRoute: 'studio_native_sequencer_prior_generation',
+      runKind: 'sequence',
+      resolvedMode: 'studio_native_sequencer_prior_generation',
+      warnings: [
+        `Model "${params.modelId || 'selected model'}" does not support full-sequence generation. Falling back to native Image Studio sequencer with prior generation.`,
+      ],
+    });
+  }
+
+  return params.modelSupportsFullSequence
+    ? buildRouteDecision({
+        executionRoute: 'ai_model_full_sequence',
+        runKind: 'generation',
+        resolvedMode: 'model_full_sequence',
+      })
+    : buildRouteDecision({
+        executionRoute: 'studio_native_sequencer_prior_generation',
+        runKind: 'sequence',
+        resolvedMode: 'studio_native_sequencer_prior_generation',
+      });
+};
+
 export const resolvePostProductionRoute = (
   input: ResolvePostProductionRouteInput
 ): ResolvePostProductionRouteResult => {
-  const warnings: string[] = [];
   const modelSupportsFullSequence = supportsImageSequenceGeneration(input.modelId);
   const sequencerEnabled = input.sequencing.enabled && input.sequencing.runViaSequence;
   const hasConfiguredSequenceSteps = input.sequencing.sequenceStepCount > 0;
 
-  if (input.requestedMode === 'studio_prompt_then_sequence') {
-    return {
-      executionRoute: 'studio_sequencer',
-      runKind: 'sequence',
-      resolvedMode: 'studio_prompt_then_sequence',
-      warnings,
-    };
-  }
-
-  if (input.requestedMode === 'studio_native_sequencer_prior_generation') {
-    return {
-      executionRoute: 'studio_native_sequencer_prior_generation',
-      runKind: 'sequence',
-      resolvedMode: 'studio_native_sequencer_prior_generation',
-      warnings,
-    };
-  }
-
-  if (sequencerEnabled && PRODUCT_STUDIO_STRICT_SEQUENCE_MODE) {
-    if (input.requestedMode === 'model_full_sequence') {
-      warnings.push(
-        'Project sequencing is enabled, so Product Studio runs the Image Studio sequence exactly as configured.'
-      );
-    }
-    return {
-      executionRoute: 'studio_sequencer',
-      runKind: 'sequence',
-      resolvedMode: 'studio_prompt_then_sequence',
-      warnings,
-    };
-  }
-
-  if (!sequencerEnabled) {
-    if (input.requestedMode === 'model_full_sequence') {
-      if (modelSupportsFullSequence) {
-        return {
-          executionRoute: 'ai_model_full_sequence',
-          runKind: 'generation',
-          resolvedMode: 'model_full_sequence',
-          warnings,
-        };
-      }
-      if (hasConfiguredSequenceSteps) {
-        warnings.push(
-          `Model "${input.modelId || 'selected model'}" does not support full-sequence generation and persisted project sequencing is disabled, so Product Studio will run direct generation only.`
-        );
-      }
-      return {
-        executionRoute: 'ai_direct_generation',
-        runKind: 'generation',
-        resolvedMode: 'model_full_sequence',
-        warnings,
-      };
-    }
-
-    if (input.requestedMode === 'auto' && modelSupportsFullSequence) {
-      return {
-        executionRoute: 'ai_model_full_sequence',
-        runKind: 'generation',
-        resolvedMode: 'model_full_sequence',
-        warnings,
-      };
-    }
-
-    if (hasConfiguredSequenceSteps) {
-      warnings.push(
-        'Persisted project sequencing is disabled, so Product Studio cannot run project sequence steps until Image Studio Sequencing defaults are saved.'
-      );
-    }
-
-    return {
-      executionRoute: 'ai_direct_generation',
-      runKind: 'generation',
-      resolvedMode:
-        input.requestedMode === 'auto' ? 'studio_prompt_then_sequence' : input.requestedMode,
-      warnings,
-    };
-  }
-
-  if (input.requestedMode === 'model_full_sequence') {
-    if (modelSupportsFullSequence) {
-      return {
-        executionRoute: 'ai_model_full_sequence',
-        runKind: 'generation',
-        resolvedMode: 'model_full_sequence',
-        warnings,
-      };
-    }
-    const modelLabel = input.modelId || 'selected model';
-    warnings.push(
-      `Model "${modelLabel}" does not support full-sequence generation. Falling back to native Image Studio sequencer with prior generation.`
-    );
-    return {
-      executionRoute: 'studio_native_sequencer_prior_generation',
-      runKind: 'sequence',
-      resolvedMode: 'studio_native_sequencer_prior_generation',
-      warnings,
-    };
-  }
-
-  if (modelSupportsFullSequence) {
-    return {
-      executionRoute: 'ai_model_full_sequence',
-      runKind: 'generation',
-      resolvedMode: 'model_full_sequence',
-      warnings,
-    };
-  }
-
-  return {
-    executionRoute: 'studio_native_sequencer_prior_generation',
-    runKind: 'sequence',
-    resolvedMode: 'studio_native_sequencer_prior_generation',
-    warnings,
-  };
+  return (
+    resolveForcedPostProductionRoute(input.requestedMode) ??
+    resolveStrictSequencerRoute({
+      sequencerEnabled,
+      requestedMode: input.requestedMode,
+    }) ??
+    (sequencerEnabled
+      ? resolveEnabledSequencerRoute({
+          requestedMode: input.requestedMode,
+          modelSupportsFullSequence,
+          modelId: input.modelId,
+        })
+      : resolveDisabledSequencerRoute({
+          requestedMode: input.requestedMode,
+          modelSupportsFullSequence,
+          hasConfiguredSequenceSteps,
+          modelId: input.modelId,
+        }))
+  );
 };
 
 export const validateProductStudioSequenceSteps = (inputSteps: ImageStudioSequenceStep[]): void => {

@@ -1,13 +1,10 @@
-/**
- * @vitest-environment jsdom
- */
 'use client';
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/features/document-editor/public', () => ({
+vi.mock('@/shared/lib/document-editor/public', () => ({
   DocumentWysiwygEditor: ({
     value,
     onChange,
@@ -50,6 +47,11 @@ vi.mock('@/features/cms/public', async (importOriginal) => {
 import { KangurLessonDocumentEditor } from '@/features/kangur/admin/KangurLessonDocumentEditor';
 import { LessonContentEditorProvider } from '@/features/kangur/admin/context/LessonContentEditorContext';
 import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/shared/contracts/kangur';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '@/shared/ui/toast';
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
 
 const arithmeticLesson: KangurLesson = {
   id: 'lesson-adding',
@@ -66,15 +68,45 @@ const arithmeticLesson: KangurLesson = {
   enabled: true,
 };
 
+const buildTextBlock = (id: string, html: string) => ({
+  id,
+  type: 'text' as const,
+  html,
+  align: 'left' as const,
+});
+
+const buildDocumentPage = (
+  page: Partial<KangurLessonDocument['pages'][number]> & {
+    id: string;
+    blocks?: KangurLessonDocument['blocks'];
+  }
+) => ({
+  title: '',
+  blocks: [],
+  ...page,
+});
+
+const buildDocumentFromPages = (
+  pages: Array<ReturnType<typeof buildDocumentPage>>
+): KangurLessonDocument => ({
+  version: 1,
+  pages,
+  blocks: pages.flatMap((page) => page.blocks),
+});
+
 function renderEditor(
   value: KangurLessonDocument,
   onChange: (next: KangurLessonDocument) => void,
   lesson: KangurLesson | null = null
 ): ReturnType<typeof render> {
   return render(
-    <LessonContentEditorProvider lesson={lesson} document={value} onChange={onChange}>
-      <KangurLessonDocumentEditor />
-    </LessonContentEditorProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <LessonContentEditorProvider lesson={lesson} document={value} onChange={onChange}>
+          <KangurLessonDocumentEditor />
+        </LessonContentEditorProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -98,9 +130,13 @@ function StatefulEditorHarness({
   );
 
   return (
-    <LessonContentEditorProvider lesson={lesson} document={document} onChange={handleChange}>
-      <KangurLessonDocumentEditor />
-    </LessonContentEditorProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <LessonContentEditorProvider lesson={lesson} document={document} onChange={handleChange}>
+          <KangurLessonDocumentEditor />
+        </LessonContentEditorProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -182,55 +218,24 @@ describe('KangurLessonDocumentEditor', () => {
 
     render(
       <StatefulEditorHarness
-        value={{
-          version: 1,
-          pages: [
-            {
-              id: 'page-1',
-              sectionKey: 'numbers',
-              sectionTitle: 'Numbers',
-              sectionDescription: 'Count objects before solving tasks.',
-              title: 'Counting intro',
-              blocks: [
-                {
-                  id: 'text-1',
-                  type: 'text',
-                  html: '<p>Start here</p>',
-                  align: 'left',
-                },
-              ],
-            },
-            {
-              id: 'page-2',
-              sectionKey: 'practice',
-              sectionTitle: 'Practice',
-              sectionDescription: 'Try the worksheet tasks.',
-              title: 'Quiz',
-              blocks: [
-                {
-                  id: 'text-2',
-                  type: 'text',
-                  html: '<p>Practice page</p>',
-                  align: 'left',
-                },
-              ],
-            },
-          ],
-          blocks: [
-            {
-              id: 'text-1',
-              type: 'text',
-              html: '<p>Start here</p>',
-              align: 'left',
-            },
-            {
-              id: 'text-2',
-              type: 'text',
-              html: '<p>Practice page</p>',
-              align: 'left',
-            },
-          ],
-        }}
+        value={buildDocumentFromPages([
+          buildDocumentPage({
+            id: 'page-1',
+            sectionKey: 'numbers',
+            sectionTitle: 'Numbers',
+            sectionDescription: 'Count objects before solving tasks.',
+            title: 'Counting intro',
+            blocks: [buildTextBlock('text-1', '<p>Start here</p>')],
+          }),
+          buildDocumentPage({
+            id: 'page-2',
+            sectionKey: 'practice',
+            sectionTitle: 'Practice',
+            sectionDescription: 'Try the worksheet tasks.',
+            title: 'Quiz',
+            blocks: [buildTextBlock('text-2', '<p>Practice page</p>')],
+          }),
+        ])}
         onChange={handleChange}
       />
     );
@@ -262,34 +267,16 @@ describe('KangurLessonDocumentEditor', () => {
 
     render(
       <StatefulEditorHarness
-        value={{
-          version: 1,
-          pages: [
-            {
-              id: 'page-1',
-              sectionKey: 'shapes',
-              sectionTitle: 'Shapes',
-              sectionDescription: 'Learn names and examples.',
-              title: 'Overview',
-              blocks: [
-                {
-                  id: 'text-1',
-                  type: 'text',
-                  html: '<p>Overview</p>',
-                  align: 'left',
-                },
-              ],
-            },
-          ],
-          blocks: [
-            {
-              id: 'text-1',
-              type: 'text',
-              html: '<p>Overview</p>',
-              align: 'left',
-            },
-          ],
-        }}
+        value={buildDocumentFromPages([
+          buildDocumentPage({
+            id: 'page-1',
+            sectionKey: 'shapes',
+            sectionTitle: 'Shapes',
+            sectionDescription: 'Learn names and examples.',
+            title: 'Overview',
+            blocks: [buildTextBlock('text-1', '<p>Overview</p>')],
+          }),
+        ])}
         onChange={handleChange}
       />
     );

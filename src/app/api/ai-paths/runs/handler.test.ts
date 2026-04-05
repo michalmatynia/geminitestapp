@@ -7,6 +7,7 @@ const {
   canAccessGlobalAiPathRunsMock,
   enforceAiPathsActionRateLimitMock,
   recoverStaleRunningRunsMock,
+  recoverStaleBaseExportRunsMock,
   resolvePathRunRepositoryMock,
   deletePathRunsWithRepositoryMock,
 } = vi.hoisted(() => ({
@@ -15,6 +16,7 @@ const {
   canAccessGlobalAiPathRunsMock: vi.fn(),
   enforceAiPathsActionRateLimitMock: vi.fn(),
   recoverStaleRunningRunsMock: vi.fn(),
+  recoverStaleBaseExportRunsMock: vi.fn(),
   resolvePathRunRepositoryMock: vi.fn(),
   deletePathRunsWithRepositoryMock: vi.fn(),
 }));
@@ -39,6 +41,10 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOrigi
   };
 });
 
+vi.mock('@/features/integrations/services/base-export-run-recovery', () => ({
+  recoverStaleBaseExportRuns: (...args: unknown[]) => recoverStaleBaseExportRunsMock(...args),
+}));
+
 import { __testOnly, GET_handler } from './handler';
 
 describe('ai-paths runs handler', () => {
@@ -53,6 +59,7 @@ describe('ai-paths runs handler', () => {
     canAccessGlobalAiPathRunsMock.mockReset().mockReturnValue(false);
     enforceAiPathsActionRateLimitMock.mockReset().mockResolvedValue(undefined);
     recoverStaleRunningRunsMock.mockReset().mockResolvedValue(undefined);
+    recoverStaleBaseExportRunsMock.mockReset().mockResolvedValue(0);
     deletePathRunsWithRepositoryMock.mockReset().mockResolvedValue({ count: 0 });
     repo.listRuns.mockReset().mockResolvedValue({
       runs: [{ id: 'run-1', status: 'queued', pathId: 'path-1' }],
@@ -148,5 +155,18 @@ describe('ai-paths runs handler', () => {
         requestId: 'req-alt',
       })
     );
+  });
+
+  it('repairs stale Base export runs before listing the Base export path', async () => {
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/runs?pathId=integration-base-export&fresh=1'),
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(recoverStaleBaseExportRunsMock).toHaveBeenCalledWith({
+      repo,
+      userId: 'user-1',
+    });
   });
 });

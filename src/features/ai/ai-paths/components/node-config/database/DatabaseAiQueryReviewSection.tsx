@@ -2,7 +2,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 
 import type { AiQuery } from '@/shared/contracts/database';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import {
   useDatabaseConstructorActionsContext,

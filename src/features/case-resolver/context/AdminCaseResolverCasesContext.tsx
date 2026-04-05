@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useAdminCaseResolverCasesRuntime } from './useAdminCaseResolverCasesRuntime';
 
@@ -28,11 +29,25 @@ export type {
   CaseViewMode,
 } from './AdminCaseResolverCasesContext.types';
 
-const AdminCaseResolverCasesStateContext = createContext<AdminCaseResolverCasesStateValue | null>(
-  null
-);
-const AdminCaseResolverCasesActionsContext =
-  createContext<AdminCaseResolverCasesActionsValue | null>(null);
+export const {
+  Context: AdminCaseResolverCasesStateContext,
+  useStrictContext: useAdminCaseResolverCasesStateContext,
+} = createStrictContext<AdminCaseResolverCasesStateValue>({
+  hookName: 'useAdminCaseResolverCasesStateContext',
+  providerName: 'AdminCaseResolverCasesProvider',
+  displayName: 'AdminCaseResolverCasesStateContext',
+  errorFactory: internalError,
+});
+
+export const {
+  Context: AdminCaseResolverCasesActionsContext,
+  useStrictContext: useAdminCaseResolverCasesActionsContext,
+} = createStrictContext<AdminCaseResolverCasesActionsValue>({
+  hookName: 'useAdminCaseResolverCasesActionsContext',
+  providerName: 'AdminCaseResolverCasesProvider',
+  displayName: 'AdminCaseResolverCasesActionsContext',
+  errorFactory: internalError,
+});
 
 export function AdminCaseResolverCasesProvider({
   children,
@@ -48,26 +63,6 @@ export function AdminCaseResolverCasesProvider({
       </AdminCaseResolverCasesActionsContext.Provider>
     </AdminCaseResolverCasesStateContext.Provider>
   );
-}
-
-export function useAdminCaseResolverCasesStateContext(): AdminCaseResolverCasesStateValue {
-  const context = useContext(AdminCaseResolverCasesStateContext);
-  if (!context) {
-    throw internalError(
-      'useAdminCaseResolverCasesStateContext must be used within AdminCaseResolverCasesProvider'
-    );
-  }
-  return context;
-}
-
-export function useAdminCaseResolverCasesActionsContext(): AdminCaseResolverCasesActionsValue {
-  const context = useContext(AdminCaseResolverCasesActionsContext);
-  if (!context) {
-    throw internalError(
-      'useAdminCaseResolverCasesActionsContext must be used within AdminCaseResolverCasesProvider'
-    );
-  }
-  return context;
 }
 
 export function useAdminCaseResolverCases(): AdminCaseResolverCasesContextValue {

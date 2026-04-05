@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 
 import { useCaseResolverCaseSearchIndex } from './useCaseResolverCaseSearchIndex';
 import {

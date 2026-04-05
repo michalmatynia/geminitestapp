@@ -1,9 +1,13 @@
 'use client';
 
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Badge, Button, Checkbox, StatusBadge } from '@/shared/ui';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { StatusBadge } from '@/shared/ui/status-badge';
+
 import type { ColumnDef, Row, Table } from '@tanstack/react-table';
-import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products';
+import type { BaseOrderImportPreviewItem } from '@/shared/contracts/products/orders-import';
 import {
   formatOrderDate,
   formatOrderTotal,

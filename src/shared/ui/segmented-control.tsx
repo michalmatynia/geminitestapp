@@ -2,9 +2,10 @@
 
 import * as React from 'react';
 
-import type { SegmentedControlOption, SegmentedControlProps } from '@/shared/contracts/ui';
+import type { SegmentedControlOption, SegmentedControlProps } from '@/shared/contracts/ui/controls';
 
-import { cn, getTextContent, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { getTextContent, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 
 export type { SegmentedControlOption, SegmentedControlProps };
 

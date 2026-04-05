@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type ComponentTreeNodeRuntimeContextValue = {
   rootSectionsByZone: Record<PageZone, SectionInstance[]>;
@@ -11,9 +12,15 @@ export type ComponentTreeNodeRuntimeContextValue = {
   sectionIndexById: Map<string, number>;
 };
 
-const ComponentTreeNodeRuntimeContext = createContext<ComponentTreeNodeRuntimeContextValue | null>(
-  null
-);
+const {
+  Context: ComponentTreeNodeRuntimeContext,
+  useStrictContext: useComponentTreeNodeRuntimeContext,
+} = createStrictContext<ComponentTreeNodeRuntimeContextValue>({
+  hookName: 'useComponentTreeNodeRuntimeContext',
+  providerName: 'ComponentTreeNodeRuntimeProvider',
+  displayName: 'ComponentTreeNodeRuntimeContext',
+  errorFactory: internalError,
+});
 
 export function ComponentTreeNodeRuntimeProvider({
   value,
@@ -29,12 +36,4 @@ export function ComponentTreeNodeRuntimeProvider({
   );
 }
 
-export function useComponentTreeNodeRuntimeContext(): ComponentTreeNodeRuntimeContextValue {
-  const context = useContext(ComponentTreeNodeRuntimeContext);
-  if (!context) {
-    throw internalError(
-      'useComponentTreeNodeRuntimeContext must be used within ComponentTreeNodeRuntimeProvider'
-    );
-  }
-  return context;
-}
+export { useComponentTreeNodeRuntimeContext };

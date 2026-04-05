@@ -2,8 +2,12 @@
 
 import React from 'react';
 
-import type { PatternFormData, ProductValidationRuntimeType } from '@/shared/contracts/products';
-import { Textarea, SelectSimple, StatusToggle, FormField, FormSection } from '@/shared/ui';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
+import type { ProductValidationRuntimeType } from '@/shared/contracts/products/validation';
+import { FormField, FormSection } from '@/shared/ui/form-section';
+import { SelectSimple } from '@/shared/ui/select-simple';
+import { StatusToggle } from '@/shared/ui/status-toggle';
+import { Textarea } from '@/shared/ui/textarea';
 
 import { RUNTIME_TYPE_OPTIONS } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';

@@ -3,14 +3,10 @@
 import { useCallback, useState } from 'react';
 
 import { useTemplateMutation } from '@/features/data-import-export/hooks/useImportQueries';
-import {
-  type Template,
-  type TemplateMapping,
-  defaultBaseImportParameterImportSettings,
-  normalizeBaseImportParameterImportSettings,
-  type ImportTemplateParameterImport,
-} from '@/shared/contracts/integrations';
-import type { Toast } from '@/shared/contracts/ui';
+import { defaultBaseImportParameterImportSettings, normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/parameter-import';
+import { type ImportTemplateParameterImport } from '@/shared/contracts/integrations/templates';
+import { type Template, type TemplateMapping } from '@/shared/contracts/integrations';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

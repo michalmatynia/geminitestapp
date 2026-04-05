@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readAgentPersonaAvatarThumbnailByRef } from '@/features/ai/agentcreator/server/persona-avatar-thumbnails';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/agents';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { normalizeAgentPersonas } from '@/shared/lib/agent-personas';
 import { readStoredSettingValue, upsertStoredSettingValue } from '@/shared/lib/ai-brain/server';

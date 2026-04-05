@@ -68,6 +68,7 @@ const SETTINGS_KEY = 'base_export_templates';
 const ACTIVE_TEMPLATE_KEY = 'base_export_active_template_id';
 const DEFAULT_INVENTORY_KEY = 'base_export_default_inventory_id';
 const DEFAULT_CONNECTION_KEY = 'base_export_default_connection_id';
+const TRADERA_DEFAULT_CONNECTION_KEY = 'tradera_export_default_connection_id';
 const STOCK_FALLBACK_KEY = 'base_export_stock_fallback_enabled';
 const IMAGE_RETRY_PRESETS_KEY = 'base_export_image_retry_presets';
 const BASEHOST_MAPPING_KEYS = new Set(['images_basehost_all', 'image_basehost_all']);
@@ -198,6 +199,16 @@ const readDefaultConnectionValue = async (): Promise<string | null> => {
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
+const readTraderaDefaultConnectionValue = async (): Promise<string | null> => {
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .findOne({
+      $or: [{ _id: toMongoId(TRADERA_DEFAULT_CONNECTION_KEY) }, { key: TRADERA_DEFAULT_CONNECTION_KEY }],
+    });
+  return typeof doc?.value === 'string' ? doc.value : null;
+};
+
 const readImageRetryPresetsValue = async (): Promise<string | null> => {
   const mongo = await getMongoDb();
   const doc = await mongo
@@ -302,6 +313,29 @@ const writeDefaultConnectionValue = async (value: string): Promise<void> => {
         $set: {
           value,
           key: DEFAULT_CONNECTION_KEY,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+};
+
+const writeTraderaDefaultConnectionValue = async (value: string): Promise<void> => {
+  const mongo = await getMongoDb();
+  await mongo
+    .collection<MongoTimestampedStringSettingDocument<string | _ObjectId>>('settings')
+    .updateOne(
+      {
+        $or: [
+          { _id: toMongoId(TRADERA_DEFAULT_CONNECTION_KEY) },
+          { key: TRADERA_DEFAULT_CONNECTION_KEY },
+        ],
+      },
+      {
+        $set: {
+          value,
+          key: TRADERA_DEFAULT_CONNECTION_KEY,
           updatedAt: new Date(),
         },
         $setOnInsert: { createdAt: new Date() },
@@ -522,6 +556,28 @@ export const getExportDefaultConnectionId = async (): Promise<string | null> => 
 
 export const setExportDefaultConnectionId = async (value: string | null): Promise<void> => {
   await writeDefaultConnectionValue(value?.trim() ? value.trim() : '');
+};
+
+export const getTraderaDefaultConnectionId = async (): Promise<string | null> => {
+  try {
+    const value = await readTraderaDefaultConnectionValue();
+    return value ? value : null;
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    await logGuardFailure(
+      '[ExportTemplateRepository] Failed to read default Tradera connection, returning null',
+      error,
+      {
+        action: 'getTraderaDefaultConnectionId',
+        fallbackValue: null,
+      }
+    );
+    return null;
+  }
+};
+
+export const setTraderaDefaultConnectionId = async (value: string | null): Promise<void> => {
+  await writeTraderaDefaultConnectionValue(value?.trim() ? value.trim() : '');
 };
 
 export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> => {

@@ -1,11 +1,10 @@
+'use client';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
-import type {
-  CaseResolverWorkspace,
-  CaseResolverRequestedCaseIssue,
-  CaseResolverRequestedCaseStatus,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
+import type { CaseResolverRequestedCaseIssue, CaseResolverRequestedCaseStatus } from '@/shared/contracts/case-resolver/base';
 
 import {
   fetchCaseResolverWorkspaceRecordDetailed,

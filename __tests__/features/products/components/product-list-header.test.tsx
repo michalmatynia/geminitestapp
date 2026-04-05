@@ -13,8 +13,8 @@ vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () 
   TriggerButtonBar: () => null,
 }));
 
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/shared/ui')>();
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     useToast: () => ({

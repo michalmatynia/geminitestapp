@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryErrorResetBoundary } from '@tanstack/react-query';
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import React from 'react';
 
 import { AppErrorBoundary } from './AppErrorBoundary';
@@ -15,11 +15,13 @@ interface QueryErrorBoundaryProps {
  * the standard AppErrorBoundary fallback UI and observability.
  */
 export function QueryErrorBoundary({ children }: QueryErrorBoundaryProps) {
-  const { reset } = useQueryErrorResetBoundary();
-
   return (
-    <AppErrorBoundary source='QueryErrorBoundary' onReset={reset}>
-      {children}
-    </AppErrorBoundary>
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <AppErrorBoundary source='QueryErrorBoundary' onReset={reset}>
+          {children}
+        </AppErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
   );
 }

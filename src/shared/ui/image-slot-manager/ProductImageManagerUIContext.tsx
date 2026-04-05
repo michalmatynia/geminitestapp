@@ -1,12 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
-import { DebugInfo } from '@/shared/contracts/products';
+import { DebugInfo } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useOptionalProductImageManagerController } from './ProductImageManagerControllerContext';
 
@@ -26,10 +27,24 @@ export type {
   SlotViewMode,
 } from './ProductImageManagerUIContext.types';
 
-const ProductImageManagerUIStateContext =
-  createContext<ProductImageManagerUIStateContextValue | null>(null);
-const ProductImageManagerUIActionsContext =
-  createContext<ProductImageManagerUIActionsContextValue | null>(null);
+const productImageManagerUIStateContextResult =
+  createStrictContext<ProductImageManagerUIStateContextValue>({
+    hookName: 'useProductImageManagerUIState',
+    providerName: 'ProductImageManagerUIProvider',
+    displayName: 'ProductImageManagerUIStateContext',
+    errorFactory: (message) => internalError(message),
+  });
+
+const productImageManagerUIActionsContextResult =
+  createStrictContext<ProductImageManagerUIActionsContextValue>({
+    hookName: 'useProductImageManagerUIActions',
+    providerName: 'ProductImageManagerUIProvider',
+    displayName: 'ProductImageManagerUIActionsContext',
+    errorFactory: (message) => internalError(message),
+  });
+
+const ProductImageManagerUIStateContext = productImageManagerUIStateContextResult.Context;
+const ProductImageManagerUIActionsContext = productImageManagerUIActionsContextResult.Context;
 export const PRODUCT_IMAGE_MANAGER_DEBUG_ENABLED = process.env[
   'NEXT_PUBLIC_PRODUCT_IMAGE_MANAGER_DEBUG'
 ] === 'true';
@@ -452,22 +467,7 @@ export function ProductImageManagerUIProvider({
   );
 }
 
-export function useProductImageManagerUIState(): ProductImageManagerUIStateContextValue {
-  const context = useContext(ProductImageManagerUIStateContext);
-  if (!context) {
-    throw internalError(
-      'useProductImageManagerUIState must be used within ProductImageManagerUIProvider'
-    );
-  }
-  return context;
-}
+export const useProductImageManagerUIState = productImageManagerUIStateContextResult.useStrictContext;
 
-export function useProductImageManagerUIActions(): ProductImageManagerUIActionsContextValue {
-  const context = useContext(ProductImageManagerUIActionsContext);
-  if (!context) {
-    throw internalError(
-      'useProductImageManagerUIActions must be used within ProductImageManagerUIProvider'
-    );
-  }
-  return context;
-}
+export const useProductImageManagerUIActions =
+  productImageManagerUIActionsContextResult.useStrictContext;

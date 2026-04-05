@@ -6,13 +6,11 @@ import {
 } from '@/features/jobs/server';
 import {
   launchFilemakerEmailCampaignRun,
-} from '@/features/filemaker/server/campaign-runtime';
-import type {
-  FilemakerEmailCampaignLaunchRunRequest,
-  FilemakerEmailCampaignLaunchRunResponse,
-} from '@/features/filemaker/types';
+  type FilemakerEmailCampaignLaunchRunRequest,
+  type FilemakerEmailCampaignLaunchRunResponse,
+} from '@/features/filemaker/server';
 import { filemakerEmailCampaignLaunchRunRequestSchema } from '@/shared/contracts/filemaker';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

@@ -96,7 +96,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   }),
 }));
 
-vi.mock('@/features/cms/public', () => ({
+vi.mock('@/shared/ui/cms-appearance/CmsStorefrontAppearance', () => ({
   resolveKangurStorefrontAppearance: () => ({
     background: 'linear-gradient(180deg, #111827 0%, #1f2937 100%)',
   }),

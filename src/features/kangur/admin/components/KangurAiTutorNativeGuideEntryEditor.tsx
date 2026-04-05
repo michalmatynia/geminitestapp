@@ -1,5 +1,3 @@
-'use client';
-
 import * as React from 'react';
 import { Card } from '@/features/kangur/shared/ui';
 import type { KangurAiTutorNativeGuideEntry } from '@/features/kangur/shared/contracts/kangur-ai-tutor-native-guide';

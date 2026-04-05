@@ -3,14 +3,9 @@
 import React, { useState } from 'react';
 
 import { useSyncAllBaseImagesMutation } from '@/features/integrations/hooks/useIntegrationMutations';
-import {
-  AdminIntegrationsPageLayout,
-  Button,
-  Card,
-  NavigationCard,
-  NavigationCardGrid,
-  useToast,
-} from '@/shared/ui';
+import { AdminIntegrationsPageLayout } from '@/shared/ui/admin.public';
+import { Button, Card, useToast } from '@/shared/ui/primitives.public';
+import { NavigationCard, NavigationCardGrid } from '@/shared/ui/navigation-and-layout.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -22,10 +17,16 @@ const marketplaces = [
     href: '/admin/integrations/marketplaces/allegro',
   },
   {
+    name: 'Playwright (Programmable)',
+    description:
+      'Build custom Playwright listing and import scripts for marketplaces outside the built-in integrations.',
+    href: '/admin/integrations/marketplaces/playwright',
+  },
+  {
     name: 'Category Mapper',
     description:
       'Map external marketplace categories to your internal product categories for import/export.',
-    href: '/admin/integrations/aggregators/base-com/category-mapping',
+    href: '/admin/integrations/marketplaces/category-mapper',
   },
 ];
 

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { type AiNode, type DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { CanvasConnectorTooltip } from './canvas/CanvasConnectorTooltip';
 import { CanvasLongPressIndicator } from './canvas/CanvasLongPressIndicator';

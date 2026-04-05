@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getProductStudioSequencePreflight } from '@/features/ai/server';
-import {
-  productStudioPreflightResponseSchema,
-  productStudioSequenceGenerationModeSchema,
-} from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { productStudioPreflightResponseSchema, productStudioSequenceGenerationModeSchema } from '@/shared/contracts/products/studio';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function GET_handler(

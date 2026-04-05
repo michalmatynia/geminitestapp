@@ -1,6 +1,7 @@
 'use client';
 
-import { Input, Textarea, FormField, FormActions } from '@/shared/ui';
+import { Input, Textarea } from '@/shared/ui/primitives.public';
+import { FormField, FormActions } from '@/shared/ui/forms-and-actions.public';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {

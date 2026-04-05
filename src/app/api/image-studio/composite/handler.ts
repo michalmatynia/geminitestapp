@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import { z } from 'zod';
 
 import { getImageStudioSlotById } from '@/features/ai/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 

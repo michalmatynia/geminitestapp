@@ -11,7 +11,7 @@ import {
   toCaseResolverCaseContentFolderNodeId,
   toCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver/file';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 
 const FolderClosedIcon = () => <span data-testid='folder-closed-icon' />;

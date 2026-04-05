@@ -10,7 +10,7 @@ import {
   kangurSocialManualPipelineProgressSchema,
   kangurSocialManualVisualAnalysisProgressSchema,
 } from '@/shared/contracts/kangur-social-pipeline';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { conflictError, forbiddenError, notFoundError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 

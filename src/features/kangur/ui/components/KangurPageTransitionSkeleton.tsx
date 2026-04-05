@@ -8,7 +8,7 @@ import { useSession } from 'next-auth/react';
 import { cn } from '@/features/kangur/shared/utils';
 import { useOptionalKangurAuth } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/KangurTopNavigationSkeleton';
+import { KangurTopNavigationSkeleton } from '@/features/kangur/ui/components/primary-navigation/KangurTopNavigationSkeleton';
 import {
   HOME_ACTION_SKELETONS,
   HomeActionSkeletonCard,
@@ -55,6 +55,10 @@ import {
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import { useKangurRouteAccess } from '@/features/kangur/ui/routing/useKangurRouteAccess';
 import { readKangurTopBarHeightCssValue } from '@/features/kangur/ui/utils/readKangurTopBarHeightCssValue';
+import {
+  SKELETON_ANIMATION_CLASSES,
+  getSkeletonAnimationCssVariables,
+} from '@/features/kangur/ui/animations/skeleton-animations';
 
 const FALLBACK_PAGE_LABELS: Record<KangurRouteTransitionSkeletonVariant, string> = {
   'game-home': 'Game',
@@ -482,6 +486,7 @@ export function KangurPageTransitionSkeleton(
     `${KANGUR_TOP_BAR_DEFAULT_HEIGHT_PX}px`;
 
   const rootClassName = cn(
+    SKELETON_ANIMATION_CLASSES.fadeInContainer,
     'relative z-30 cursor-progress overflow-hidden',
     isInlineTopNavigationSkeleton
       ? 'fixed inset-0 flex flex-col'
@@ -493,14 +498,16 @@ export function KangurPageTransitionSkeleton(
     background:
       'var(--kangur-page-background, radial-gradient(circle at top, #fffdfd 0%, #f7f3f6 45%, #f3f1f8 100%))',
   };
+  const animationCssVars = getSkeletonAnimationCssVariables();
   const rootStyle: CSSProperties | undefined = isInlineTopNavigationSkeleton
     ? ({
         ...rootBackgroundStyle,
         '--kangur-top-bar-height': topBarHeightCssValue,
-      } as KangurTopBarHeightStyle)
+        ...animationCssVars,
+      } as KangurTopBarHeightStyle & Record<string, string>)
     : isEmbedded
-      ? rootBackgroundStyle
-      : { ...rootBackgroundStyle, top: topBarHeightCssValue };
+      ? ({ ...rootBackgroundStyle, ...animationCssVars } as Record<string, string>)
+      : { ...rootBackgroundStyle, top: topBarHeightCssValue, ...animationCssVars };
 
   const renderContent = (): React.JSX.Element => {
     switch (resolvedVariant) {

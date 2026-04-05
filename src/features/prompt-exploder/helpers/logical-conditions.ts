@@ -96,19 +96,41 @@ export const normalizeLogicalComparatorText = (
 
 // ── Value parsing/formatting ────────────────────────────────────────────────
 
-export const parseLogicalValueText = (value: string | null | undefined): unknown => {
+const normalizeLogicalValueInput = (value: string | null | undefined): string | null => {
   const trimmed = (value ?? '').trim();
-  if (!trimmed) return null;
-  if (/^(true|false)$/i.test(trimmed)) return /^true$/i.test(trimmed);
-  if (/^null$/i.test(trimmed)) return null;
-  if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const parseLogicalBooleanValue = (trimmed: string): boolean | null => {
+  if (!/^(true|false)$/i.test(trimmed)) return null;
+  return /^true$/i.test(trimmed);
+};
+
+const isLogicalNullValue = (trimmed: string): boolean => /^null$/i.test(trimmed);
+
+const parseLogicalNumericValue = (trimmed: string): number | null =>
+  /^-?\d+(?:\.\d+)?$/.test(trimmed) ? Number(trimmed) : null;
+
+const stripQuotedLogicalValue = (trimmed: string): string | null => {
   if (
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
     (trimmed.startsWith('\'') && trimmed.endsWith('\''))
   ) {
     return trimmed.slice(1, -1);
   }
-  return trimmed;
+  return null;
+};
+
+export const parseLogicalValueText = (value: string | null | undefined): unknown => {
+  const trimmed = normalizeLogicalValueInput(value);
+  if (!trimmed) return null;
+
+  const booleanValue = parseLogicalBooleanValue(trimmed);
+  if (booleanValue !== null) return booleanValue;
+  if (isLogicalNullValue(trimmed)) return null;
+
+  const numericValue = parseLogicalNumericValue(trimmed);
+  return numericValue ?? stripQuotedLogicalValue(trimmed) ?? trimmed;
 };
 
 export const formatLogicalValueText = (value: unknown): string => {
@@ -120,6 +142,41 @@ export const formatLogicalValueText = (value: unknown): string => {
 
 // ── Subsection condition parsing ────────────────────────────────────────────
 
+const SUBSECTION_CONDITION_OPERATOR_REGEX = /^(if|only if|unless|when)\s+(.+)$/i;
+const SUBSECTION_CONDITION_EXPRESSION_REGEX =
+  /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i;
+
+const parseSubsectionConditionExpression = (
+  expression: string
+): {
+  paramPath: string;
+  comparatorText: string | undefined;
+  rawValue: string | undefined;
+} | null => {
+  const expressionMatch = SUBSECTION_CONDITION_EXPRESSION_REGEX.exec(expression);
+  if (!expressionMatch) return null;
+
+  const paramPath = (expressionMatch[1] ?? '').trim().replace(/^params\./i, '');
+  if (!paramPath) return null;
+
+  return {
+    paramPath,
+    comparatorText: expressionMatch[2],
+    rawValue: expressionMatch[3],
+  };
+};
+
+const resolveSubsectionComparator = (
+  operator: PromptExploderLogicalOperator,
+  comparatorText: string | undefined
+): PromptExploderLogicalComparator =>
+  normalizeLogicalComparatorText(comparatorText) ?? (operator === 'unless' ? 'falsy' : 'truthy');
+
+const resolveSubsectionConditionValue = (
+  comparator: PromptExploderLogicalComparator,
+  rawValue: string | undefined
+): unknown => (comparator === 'truthy' || comparator === 'falsy' ? null : parseLogicalValueText(rawValue));
+
 export const parseSubsectionConditionText = (
   condition: string | null | undefined
 ): {
@@ -130,26 +187,22 @@ export const parseSubsectionConditionText = (
 } | null => {
   const trimmed = (condition ?? '').trim().replace(/:$/, '');
   if (!trimmed) return null;
-  const operatorMatch = /^(if|only if|unless|when)\s+(.+)$/i.exec(trimmed);
+
+  const operatorMatch = SUBSECTION_CONDITION_OPERATOR_REGEX.exec(trimmed);
   if (!operatorMatch) return null;
+
   const operator = normalizeLogicalOperatorText(operatorMatch[1] ?? '');
   if (!operator) return null;
+
   const expression = (operatorMatch[2] ?? '').trim();
-  const expressionMatch =
-    /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(expression);
-  if (!expressionMatch) return null;
-  const paramPath = (expressionMatch[1] ?? '').trim().replace(/^params\./i, '');
-  if (!paramPath) return null;
-  const comparator =
-    normalizeLogicalComparatorText(expressionMatch[2]) ??
-    (operator === 'unless' ? 'falsy' : 'truthy');
-  const value =
-    comparator === 'truthy' || comparator === 'falsy'
-      ? null
-      : parseLogicalValueText(expressionMatch[3]);
+  const parsedExpression = parseSubsectionConditionExpression(expression);
+  if (!parsedExpression) return null;
+
+  const comparator = resolveSubsectionComparator(operator, parsedExpression.comparatorText);
+  const value = resolveSubsectionConditionValue(comparator, parsedExpression.rawValue);
   return {
     operator,
-    paramPath,
+    paramPath: parsedExpression.paramPath,
     comparator,
     value,
   };

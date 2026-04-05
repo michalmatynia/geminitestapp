@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiPathRunRecord, RuntimeState } from '@/shared/contracts/ai-paths';
-import {
-  AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY,
-  AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY,
-  createDefaultPathConfig,
-} from '@/shared/lib/ai-paths';
+import { AI_PATHS_RUNTIME_KERNEL_CODE_OBJECT_RESOLVER_IDS_KEY, AI_PATHS_RUNTIME_KERNEL_NODE_TYPES_KEY, createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import {
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_PILOT_NODE_TYPES_ENV,
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_ENV,

@@ -8,10 +8,8 @@ import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import type {
-  CaseResolverFileEditDraft,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver/file';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 
 import type { Dispatch, SetStateAction } from 'react';
 

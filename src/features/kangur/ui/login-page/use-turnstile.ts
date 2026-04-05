@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import {
   KANGUR_PARENT_CAPTCHA_SITE_KEY,

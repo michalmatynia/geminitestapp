@@ -2,7 +2,9 @@ import {} from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
-import { Button, TabsContent, Hint, LoadingState } from '@/shared/ui';
+import { Button, TabsContent } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
 import { formatBytes, formatLinkedVariantTimestamp } from './slot-inline-edit-utils';

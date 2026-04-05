@@ -1,15 +1,9 @@
 import { Slot } from '@radix-ui/react-slot';
 import React from 'react';
 
-import type {
-  TreeActionButtonProps,
-  TreeActionSize,
-  TreeActionSlotAlign,
-  TreeActionSlotProps,
-  TreeActionSlotShow,
-  TreeActionTone,
-} from '@/shared/contracts/ui';
-import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils';
+import type { TreeActionButtonProps, TreeActionSize, TreeActionSlotAlign, TreeActionSlotProps, TreeActionSlotShow, TreeActionTone } from '@/shared/contracts/ui/menus';
+import { cn } from '@/shared/utils/ui-utils';
+import { resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/shared/utils/a11y';
 
 export type {
   TreeActionButtonProps,

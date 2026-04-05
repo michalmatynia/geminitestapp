@@ -30,6 +30,16 @@ describe('canvas-resize utilities', () => {
         direction: 'up-left',
       })
     ).toEqual({ x: 20, y: 40 });
+
+    expect(
+      computeCanvasResizeShiftPx({
+        oldCanvasWidth: 100,
+        oldCanvasHeight: 100,
+        newCanvasWidth: 120,
+        newCanvasHeight: 140,
+        direction: 'invalid' as never,
+      })
+    ).toEqual({ x: 0, y: 0 });
   });
 
   it('remaps normalized mask points to preserve canvas-space position', () => {

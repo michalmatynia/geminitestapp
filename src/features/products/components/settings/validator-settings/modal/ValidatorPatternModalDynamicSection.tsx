@@ -2,14 +2,16 @@
 
 import React from 'react';
 
-import type { PatternFormData } from '@/shared/contracts/products';
+import type { PatternFormData } from '@/shared/contracts/products/drafts';
 import type {
   DynamicReplacementMathOperation,
   DynamicReplacementRoundMode,
   DynamicReplacementLogicOperator,
   DynamicReplacementLogicAction,
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
-import { Input, SelectSimple, FormField, FormSection } from '@/shared/ui';
+import { FormField, FormSection } from '@/shared/ui/form-section';
+import { Input } from '@/shared/ui/input';
+import { SelectSimple } from '@/shared/ui/select-simple';
 
 import {
   LOGIC_ACTION_OPTIONS,

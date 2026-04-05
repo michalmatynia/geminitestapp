@@ -1,5 +1,5 @@
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { ProductCategory } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/shared/lib/products/constants';
 
 export const PRODUCT_VALIDATION_REPLACEMENT_FIELD_LABELS: Record<string, string> = {

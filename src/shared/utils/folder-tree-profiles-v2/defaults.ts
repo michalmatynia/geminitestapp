@@ -638,6 +638,41 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  kangur_social_capture_browser: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Lessons',
+      inlineDropLabel: 'Lessons',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: null,
+        root: null,
+        dragHandle: null,
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    search: {
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
   brain_routing_tree: {
     version: 2,
     placeholders: {

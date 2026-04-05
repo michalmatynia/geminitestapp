@@ -338,31 +338,18 @@
             "normalizeUpdateDoc(update || updates)"
           ],
           "requiredSnippets": [
-            "query: z.never().optional(),",
-            "updates: z.never().optional(),",
             "const where = coerceQuery(filter);",
             "const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);",
             "const flatUpdates = extractFlatUpdates(update);",
             "const replacement = normalizeReplaceDoc(update);",
             "const updateDoc = normalizeUpdateDoc(update);"
-          ],
-          "replacements": [
-            {
-              "from": "coerceQuery(filter || query)",
-              "to": "coerceQuery(filter)"
-            },
-            {
-              "from": "extractFlatUpdates(update || updates)",
-              "to": "extractFlatUpdates(update)"
-            },
-            {
-              "from": "normalizeReplaceDoc(update || updates)",
-              "to": "normalizeReplaceDoc(update)"
-            },
-            {
-              "from": "normalizeUpdateDoc(update || updates)",
-              "to": "normalizeUpdateDoc(update)"
-            }
+          ]
+        },
+        {
+          "file": "src/shared/contracts/ai-paths.ts",
+          "requiredSnippets": [
+            "query: z.never().optional(),",
+            "updates: z.never().optional(),"
           ]
         }
       ]
@@ -715,39 +702,6 @@
               "to": "reason: 'unsupported_database_query_provider'"
             }
           ]
-        },
-        {
-          "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
-          "forbiddenSnippets": [
-            "contains deprecated database schemaSnapshot",
-            "contains deprecated database query provider \"all\"",
-            "reason: 'deprecated_database_schema_snapshot'",
-            "reason: 'deprecated_database_query_provider'"
-          ],
-          "requiredSnippets": [
-            "AI Path trigger payload contains unsupported database schemaSnapshot.",
-            "AI Path trigger payload contains unsupported database query provider \"all\".",
-            "reason: 'unsupported_database_schema_snapshot'",
-            "reason: 'unsupported_database_query_provider'"
-          ],
-          "replacements": [
-            {
-              "from": "contains deprecated database schemaSnapshot",
-              "to": "contains unsupported database schemaSnapshot"
-            },
-            {
-              "from": "contains deprecated database query provider \"all\"",
-              "to": "contains unsupported database query provider \"all\""
-            },
-            {
-              "from": "reason: 'deprecated_database_schema_snapshot'",
-              "to": "reason: 'unsupported_database_schema_snapshot'"
-            },
-            {
-              "from": "reason: 'deprecated_database_query_provider'",
-              "to": "reason: 'unsupported_database_query_provider'"
-            }
-          ]
         }
       ]
     },
@@ -962,7 +916,7 @@
       "description": "Maintenance handler payload schema must derive action enum from maintenance constants.",
       "targets": [
         {
-          "file": "src/app/api/ai-paths/settings/maintenance/handler.ts",
+          "file": "src/shared/contracts/ai-paths-maintenance.ts",
           "forbiddenSnippets": [],
           "requiredSnippets": [
             "z.enum(AI_PATHS_MAINTENANCE_ACTION_IDS)"
@@ -1413,7 +1367,7 @@
           ]
         },
         {
-          "file": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
+          "file": "src/shared/lib/ai-paths/core/validation-engine/loaders/manifest-loader.ts",
           "forbiddenSnippets": [
             "LEGACY_FALLBACK_MANIFEST",
             "version: 'fallback.v1'"
@@ -1601,7 +1555,7 @@
       "targets": [
         {
           "mode": "const_array",
-          "file": "src/shared/contracts/ai-paths.ts",
+          "file": "src/shared/contracts/ai-paths-maintenance.ts",
           "arrayName": "AI_PATHS_MAINTENANCE_ACTION_IDS",
           "expectedItems": [
             "compact_oversized_configs",

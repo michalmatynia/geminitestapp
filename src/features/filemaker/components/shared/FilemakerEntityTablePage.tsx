@@ -2,8 +2,10 @@
 
 import React from 'react';
 
-import type { PanelAction } from '@/shared/contracts/ui';
-import { EmptyState, PanelHeader, SearchInput, StandardDataTablePanel } from '@/shared/ui';
+import type { PanelAction } from '@/shared/contracts/ui/panels';
+import { EmptyState } from '@/shared/ui/navigation-and-layout.public';
+import { PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.public';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

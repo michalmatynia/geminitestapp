@@ -7,17 +7,11 @@ import React, { useMemo } from 'react';
 
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/shared/contracts/cms';
-import {
-  AdminCmsPageLayout,
-  Button,
-  EmptyState,
-  ActionMenu,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  StandardDataTablePanel,
-  FilterPanel,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminCmsPageLayout } from '@/shared/ui/admin.public';
+import { Button, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui/primitives.public';
+import { EmptyState, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { StandardDataTablePanel, FilterPanel } from '@/shared/ui/templates.public';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 

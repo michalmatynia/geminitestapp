@@ -8,16 +8,11 @@ import {
   useProductListingsModals,
   useProductListingsUIState,
 } from '@/features/integrations/context/ProductListingsContext';
-import type { SyncDirection } from '@/shared/contracts/products';
-import {
-  Button,
-  Card,
-  Hint,
-  Badge,
-  UI_CENTER_ROW_RELAXED_CLASSNAME,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import type { SyncDirection } from '@/shared/contracts/products/migration';
+import { Button, Card, Badge } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_RELAXED_CLASSNAME, UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
@@ -30,6 +25,15 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
   const baseListing = listings.find((listing) =>
     ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug))
   );
+  const normalizedBaseListingStatus = (baseListing?.status ?? '').trim().toLowerCase();
+  const isBaseListingExportBusy = [
+    'queued',
+    'queued_relist',
+    'running',
+    'processing',
+    'pending',
+    'in_progress',
+  ].includes(normalizedBaseListingStatus);
 
   const syncFields = [
     {
@@ -185,7 +189,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
           type='button'
           variant='secondary'
           size='sm'
-          disabled={!baseListing || syncingImages === baseListing.id}
+          disabled={!baseListing || syncingImages === baseListing.id || isBaseListingExportBusy}
           onClick={(): void => setIsSyncImagesConfirmOpen(true)}
           className='w-full'
           loading={syncingImages === baseListing?.id}

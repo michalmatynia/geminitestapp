@@ -2,13 +2,10 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type {
-  CatalogCreateInput,
-  CatalogRecord,
-  CatalogRepository,
-  CatalogUpdateInput,
-} from '@/shared/contracts/products';
+import type { CatalogCreateInput, CatalogRecord, CatalogUpdateInput } from '@/shared/contracts/products/catalogs';
+import type { CatalogRepository } from '@/shared/contracts/products/drafts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { normalizePriceGroupSelectionForStorage } from '@/shared/lib/products/services/price-group-storage-normalization';
 
 import type { WithId } from 'mongodb';
 
@@ -28,18 +25,32 @@ type CatalogDocument = {
 
 const CATALOG_COLLECTION = 'catalogs';
 
-const toRecord = (doc: WithId<CatalogDocument>): CatalogRecord => ({
-  id: doc.id ?? doc._id,
-  name: doc.name,
-  description: doc.description ?? null,
-  isDefault: doc.isDefault,
-  defaultLanguageId: doc.defaultLanguageId ?? null,
-  defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
-  createdAt: doc.createdAt.toISOString(),
-  updatedAt: doc.updatedAt.toISOString(),
-  languageIds: Array.isArray(doc.languageIds) ? doc.languageIds : [],
-  priceGroupIds: Array.isArray(doc.priceGroupIds) ? doc.priceGroupIds : [],
-});
+const toRecord = async (
+  doc: WithId<CatalogDocument>,
+  mongo: Pick<Awaited<ReturnType<typeof getMongoDb>>, 'collection'>
+): Promise<CatalogRecord> => {
+  const normalizedPriceGroupSelection = await normalizePriceGroupSelectionForStorage(
+    'mongodb',
+    {
+      priceGroupIds: Array.isArray(doc.priceGroupIds) ? doc.priceGroupIds : [],
+      defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
+    },
+    { mongo }
+  );
+
+  return {
+    id: doc.id ?? doc._id,
+    name: doc.name,
+    description: doc.description ?? null,
+    isDefault: doc.isDefault,
+    defaultLanguageId: doc.defaultLanguageId ?? null,
+    defaultPriceGroupId: normalizedPriceGroupSelection.defaultPriceGroupId,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
+    languageIds: Array.isArray(doc.languageIds) ? doc.languageIds : [],
+    priceGroupIds: normalizedPriceGroupSelection.priceGroupIds,
+  };
+};
 
 export const mongoCatalogRepository: CatalogRepository = {
   async listCatalogs() {
@@ -49,7 +60,9 @@ export const mongoCatalogRepository: CatalogRepository = {
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
-    return docs.map((doc: WithId<CatalogDocument>) => toRecord({ ...doc, _id: doc._id }));
+    return await Promise.all(
+      docs.map((doc: WithId<CatalogDocument>) => toRecord({ ...doc, _id: doc._id }, db))
+    );
   },
 
   async getCatalogById(id: string) {
@@ -57,7 +70,7 @@ export const mongoCatalogRepository: CatalogRepository = {
     const doc = await db
       .collection<CatalogDocument>(CATALOG_COLLECTION)
       .findOne({ $or: [{ _id: id }, { id }] });
-    return doc ? toRecord({ ...doc, _id: doc._id }) : null;
+    return doc ? await toRecord({ ...doc, _id: doc._id }, db) : null;
   },
 
   async createCatalog(input: CatalogCreateInput) {
@@ -69,6 +82,14 @@ export const mongoCatalogRepository: CatalogRepository = {
     }
     const now = new Date();
     const id = randomUUID();
+    const normalizedPriceGroupSelection = await normalizePriceGroupSelectionForStorage(
+      'mongodb',
+      {
+        priceGroupIds: input.priceGroupIds ?? [],
+        defaultPriceGroupId: input.defaultPriceGroupId ?? null,
+      },
+      { mongo: db }
+    );
     const doc: CatalogDocument = {
       _id: id,
       id,
@@ -76,14 +97,14 @@ export const mongoCatalogRepository: CatalogRepository = {
       description: input.description ?? null,
       isDefault: Boolean(input.isDefault),
       defaultLanguageId: input.defaultLanguageId ?? null,
-      defaultPriceGroupId: input.defaultPriceGroupId ?? null,
+      defaultPriceGroupId: normalizedPriceGroupSelection.defaultPriceGroupId,
       createdAt: now,
       updatedAt: now,
       languageIds: input.languageIds ?? [],
-      priceGroupIds: input.priceGroupIds ?? [],
+      priceGroupIds: normalizedPriceGroupSelection.priceGroupIds,
     };
     await db.collection<CatalogDocument>(CATALOG_COLLECTION).insertOne(doc);
-    return toRecord(doc as WithId<CatalogDocument>);
+    return await toRecord(doc as WithId<CatalogDocument>, db);
   },
 
   async updateCatalog(id: string, input: CatalogUpdateInput) {
@@ -93,6 +114,19 @@ export const mongoCatalogRepository: CatalogRepository = {
         .collection<CatalogDocument>(CATALOG_COLLECTION)
         .updateMany({}, { $set: { isDefault: false } });
     }
+    const normalizedPriceGroupSelection =
+      input.priceGroupIds !== undefined || input.defaultPriceGroupId !== undefined
+        ? await normalizePriceGroupSelectionForStorage(
+            'mongodb',
+            {
+              ...(input.priceGroupIds !== undefined ? { priceGroupIds: input.priceGroupIds } : {}),
+              ...(input.defaultPriceGroupId !== undefined
+                ? { defaultPriceGroupId: input.defaultPriceGroupId }
+                : {}),
+            },
+            { mongo: db }
+          )
+        : null;
     const updateDoc: Partial<CatalogDocument> = {
       ...(input.name !== undefined ? { name: input.name } : null),
       ...(input.description !== undefined ? { description: input.description ?? null } : null),
@@ -101,10 +135,12 @@ export const mongoCatalogRepository: CatalogRepository = {
         ? { defaultLanguageId: input.defaultLanguageId ?? null }
         : null),
       ...(input.defaultPriceGroupId !== undefined
-        ? { defaultPriceGroupId: input.defaultPriceGroupId ?? null }
+        ? { defaultPriceGroupId: normalizedPriceGroupSelection?.defaultPriceGroupId ?? null }
         : null),
       ...(input.languageIds !== undefined ? { languageIds: input.languageIds } : null),
-      ...(input.priceGroupIds !== undefined ? { priceGroupIds: input.priceGroupIds } : null),
+      ...(input.priceGroupIds !== undefined
+        ? { priceGroupIds: normalizedPriceGroupSelection?.priceGroupIds ?? [] }
+        : null),
       updatedAt: new Date(),
     };
     const result = await db
@@ -114,7 +150,7 @@ export const mongoCatalogRepository: CatalogRepository = {
         { $set: updateDoc },
         { returnDocument: 'after' }
       );
-    return result ? toRecord({ ...result, _id: result._id }) : null;
+    return result ? await toRecord({ ...result, _id: result._id }, db) : null;
   },
 
   async deleteCatalog(id: string) {
@@ -131,7 +167,9 @@ export const mongoCatalogRepository: CatalogRepository = {
       .collection<CatalogDocument>(CATALOG_COLLECTION)
       .find({ $or: [{ _id: { $in: Array.from(ids) } }, { id: { $in: ids } }] })
       .toArray();
-    return docs.map((doc: WithId<CatalogDocument>) => toRecord({ ...doc, _id: doc._id }));
+    return await Promise.all(
+      docs.map((doc: WithId<CatalogDocument>) => toRecord({ ...doc, _id: doc._id }, db))
+    );
   },
 
   async setDefaultCatalog(id: string) {

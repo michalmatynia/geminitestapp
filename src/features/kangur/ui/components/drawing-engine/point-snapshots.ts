@@ -1,5 +1,3 @@
-'use client';
-
 import type { Point2d } from '@/shared/contracts/geometry';
 import type { KangurDrawingSnapshotDto, KangurDrawingSnapshotInputDto } from './snapshot-types';
 

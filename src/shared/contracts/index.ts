@@ -1,3 +1,4 @@
+/** @deprecated Do not import from this barrel! Use @/shared/contracts/[domain] instead */
 export * from './admin';
 export { VALIDATOR_PATTERN_LISTS_KEY } from './admin';
 export * from './agent-runtime';

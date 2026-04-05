@@ -4,12 +4,9 @@ import { fetchBaseProducers } from '@/features/integrations/server';
 import { getExternalProducerRepository } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/server';
-import {
-  marketplaceConnectionRequestSchema,
-  type MarketplaceConnectionRequest,
-  type MarketplaceFetchResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { marketplaceConnectionRequestSchema } from '@/shared/contracts/integrations/marketplace';
+import { type MarketplaceConnectionRequest, type MarketplaceFetchResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 

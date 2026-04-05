@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   Pencil,
   Save,
+  Send,
   SlidersHorizontal,
   Store,
   Trash2,
@@ -24,24 +25,18 @@ import {
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
-import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
-import type { ProductAdvancedFilterPreset, ProductWithImages } from '@/shared/contracts/products';
-import {
-  ActionMenu,
-  AppModal,
-  Button,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  Input,
-  SelectionBar,
-  useToast,
-  JSONImportModal,
-  Chip,
-} from '@/shared/ui';
+import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
+import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { ActionMenu } from '@/shared/ui/ActionMenu';
+import { AppModal } from '@/shared/ui/app-modal';
+import { Button } from '@/shared/ui/button';
+import { Chip } from '@/shared/ui/chip';
+import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/shared/ui/dropdown-menu';
+import { Input } from '@/shared/ui/input';
+import { SelectionBar } from '@/shared/ui/selection-bar';
+import { JSONImportModal } from '@/shared/ui/templates/modals/JSONImportModal';
+import { useToast } from '@/shared/ui/toast';
 
 import {
   buildPresetBundle,
@@ -56,7 +51,6 @@ import {
 } from './product-filters-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const {
     data,
@@ -67,10 +61,14 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     onDeleteSelected,
     onAddToMarketplace,
   } = useProductListSelectionContext();
-  const { advancedFilter, activeAdvancedFilterPresetId, setAdvancedFilterState } =
-    useProductListFiltersContext();
+  const {
+    advancedFilter,
+    activeAdvancedFilterPresetId,
+    advancedFilterPresets,
+    setAdvancedFilterPresets,
+    setAdvancedFilterState,
+  } = useProductListFiltersContext();
   const { toast } = useToast();
-  const { preferences, setAdvancedFilterPresets } = useUserPreferences();
   const [isPresetDialogOpen, setIsPresetDialogOpen] = useState(false);
   const [presetDialogMode, setPresetDialogMode] = useState<'create' | 'rename'>('create');
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
@@ -81,7 +79,8 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync: convertSelectedToBase64, isPending: isConvertingSelected } =
     useBulkConvertImagesToBase64();
-  const advancedFilterPresets = preferences.advancedFilterPresets;
+  const { execute: executeTraderaMassExport, isRunning: isTraderaMassExportRunning } =
+    useTraderaMassQuickExport();
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]
@@ -113,6 +112,15 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
       );
     }
   }, [convertSelectedToBase64, rowSelection, setRowSelection, toast]);
+
+  const handleQuickExportTradera = useCallback(async (): Promise<void> => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to export.', { variant: 'error' });
+      return;
+    }
+    await executeTraderaMassExport(selectedProductIds);
+  }, [executeTraderaMassExport, rowSelection, toast]);
 
   const selectedCount = useMemo(
     () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
@@ -389,6 +397,16 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
             >
               <Store className='h-4 w-4' />
               Add to Marketplace
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                void handleQuickExportTradera();
+              }}
+              className='cursor-pointer gap-2'
+              disabled={isTraderaMassExportRunning || selectedCount === 0}
+            >
+              <Send className='h-4 w-4' />
+              {isTraderaMassExportRunning ? 'Exporting to Tradera...' : 'Quick Export to Tradera'}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {

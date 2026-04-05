@@ -7,11 +7,11 @@ import type {
 import type {
   KangurKnowledgeGraphPreviewRequest,
   KangurKnowledgeGraphPreviewResponse,
-  KangurKnowledgeGraphStatusSnapshot,
   KangurKnowledgeGraphSemanticReadiness,
   KangurRecentAnalyticsEvent,
-} from '@/shared/contracts';
-import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts';
+} from '@/shared/contracts/kangur-observability';
+import type { KangurKnowledgeGraphStatusSnapshot } from '@/shared/contracts/kangur-observability';
+import { kangurKnowledgeGraphPreviewRequestSchema } from '@/shared/contracts/kangur-observability';
 import {
   KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO,
   type KangurAiTutorPageCoverageEntry,
@@ -410,19 +410,19 @@ export const resolveKnowledgeGraphBadgeStatus = (
     return 'critical';
   }
 
-  switch (status.semanticReadiness) {
-    case 'vector_ready':
-      return 'ok';
-    case 'metadata_only':
-    case 'embeddings_without_index':
-    case 'vector_index_pending':
-      return 'warning';
-    case 'no_graph':
-    case 'no_semantic_text':
-      return 'critical';
-    default:
-      return 'insufficient_data';
-  }
+  return KNOWLEDGE_GRAPH_BADGE_STATUS_BY_READINESS[status.semanticReadiness] ?? 'insufficient_data';
+};
+
+const KNOWLEDGE_GRAPH_BADGE_STATUS_BY_READINESS: Record<
+  KangurKnowledgeGraphSemanticReadiness,
+  'ok' | 'warning' | 'critical'
+> = {
+  vector_ready: 'ok',
+  metadata_only: 'warning',
+  embeddings_without_index: 'warning',
+  vector_index_pending: 'warning',
+  no_graph: 'critical',
+  no_semantic_text: 'critical',
 };
 
 export const resolveKnowledgeGraphPreviewBadgeStatus = (
@@ -465,21 +465,34 @@ const readKnowledgeGraphPreviewReplayBoolean = (
   return typeof value === 'boolean' ? value : null;
 };
 
-const resolveKnowledgeGraphPreviewCoveragePresetId = (input: {
+const hasKnowledgeGraphPreviewCoverageInput = (input: {
+  surface: string;
+  focusKind: string;
+  focusId: string;
+}): boolean => Boolean(input.surface && input.focusKind && input.focusId);
+
+const matchesKnowledgeGraphPreviewCoveragePreset = (
+  entry: KangurAiTutorPageCoverageEntry,
+  input: {
+    surface: string;
+    focusKind: string;
+    focusId: string;
+  }
+): boolean => {
+  if (entry.surface !== input.surface) return false;
+  if (entry.focusKind !== input.focusKind) return false;
+  return entry.anchorIdPrefix !== null && input.focusId.startsWith(entry.anchorIdPrefix);
+};
+
+export const resolveKnowledgeGraphPreviewCoveragePresetId = (input: {
   surface: string;
   focusKind: string;
   focusId: string;
 }): string => {
-  if (!input.surface || !input.focusKind || !input.focusId) {
-    return '';
-  }
+  if (!hasKnowledgeGraphPreviewCoverageInput(input)) return '';
 
   const match = KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO.find(
-    (entry) =>
-      entry.surface === input.surface &&
-      entry.focusKind === input.focusKind &&
-      entry.anchorIdPrefix !== null &&
-      input.focusId.startsWith(entry.anchorIdPrefix)
+    (entry) => matchesKnowledgeGraphPreviewCoveragePreset(entry, input)
   );
 
   return match?.id ?? '';

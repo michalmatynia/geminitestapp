@@ -1,16 +1,23 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { useAdminAiPathsValidationState } from '../hooks/useAdminAiPathsValidationState';
 
 export type AdminAiPathsValidationContextValue = ReturnType<typeof useAdminAiPathsValidationState>;
 
-const AdminAiPathsValidationContext = createContext<AdminAiPathsValidationContextValue | null>(
-  null
-);
+const {
+  Context: AdminAiPathsValidationContext,
+  useStrictContext: useAdminAiPathsValidationContext,
+} = createStrictContext<AdminAiPathsValidationContextValue>({
+  hookName: 'useAdminAiPathsValidationContext',
+  providerName: 'AdminAiPathsValidationProvider',
+  displayName: 'AdminAiPathsValidationContext',
+  errorFactory: internalError,
+});
 
 export function AdminAiPathsValidationProvider({
   children,
@@ -24,13 +31,4 @@ export function AdminAiPathsValidationProvider({
     </AdminAiPathsValidationContext.Provider>
   );
 }
-
-export function useAdminAiPathsValidationContext(): AdminAiPathsValidationContextValue {
-  const context = useContext(AdminAiPathsValidationContext);
-  if (!context) {
-    throw internalError(
-      'useAdminAiPathsValidationContext must be used within AdminAiPathsValidationProvider'
-    );
-  }
-  return context;
-}
+export { useAdminAiPathsValidationContext };

@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 
 import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from '@/shared/contracts/cms';
-import { Input, FormSection, FormField, FormActions } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
+import { FormSection, FormField, FormActions } from '@/shared/ui/forms-and-actions.public';
 
 export type ThemeFormSubmitData = {
   name: string;

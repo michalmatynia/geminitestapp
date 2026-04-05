@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type {
@@ -9,7 +9,8 @@ import type {
   PromptExploderParamEntriesState,
 } from '@/shared/contracts/prompt-exploder';
 import { internalError } from '@/shared/errors/app-error';
-import { useToast } from '@/shared/ui';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { useToast } from '@/shared/ui/primitives.public';
 
 import {
   type PromptExploderBridgeSource,
@@ -85,12 +86,47 @@ export interface DocumentActions {
   updateParameterDescription: (segmentId: string, path: string, description: string | null) => void;
 }
 
-export const DocumentPromptContext = createContext<DocumentPromptState | null>(null);
-const DocumentCoreContext = createContext<DocumentCoreState | null>(null);
-const DocumentSelectionContext = createContext<DocumentSelectionState | null>(null);
-const DocumentParamsContext = createContext<DocumentParamsState | null>(null);
-const DocumentMetricsContext = createContext<DocumentMetricsState | null>(null);
-export const DocumentActionsContext = createContext<DocumentActions | null>(null);
+const documentPromptContextResult = createStrictContext<DocumentPromptState>({
+  hookName: 'useDocumentPrompt',
+  providerName: 'DocumentProvider',
+  displayName: 'DocumentPromptContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const documentCoreContextResult = createStrictContext<DocumentCoreState>({
+  hookName: 'useDocumentCore',
+  providerName: 'DocumentProvider',
+  displayName: 'DocumentCoreContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const documentSelectionContextResult = createStrictContext<DocumentSelectionState>({
+  hookName: 'useDocumentSelection',
+  providerName: 'DocumentProvider',
+  displayName: 'DocumentSelectionContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const documentParamsContextResult = createStrictContext<DocumentParamsState>({
+  hookName: 'useDocumentParams',
+  providerName: 'DocumentProvider',
+  displayName: 'DocumentParamsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const documentMetricsContextResult = createStrictContext<DocumentMetricsState>({
+  hookName: 'useDocumentMetrics',
+  providerName: 'DocumentProvider',
+  displayName: 'DocumentMetricsContext',
+  errorFactory: (message) => internalError(message),
+});
+
+const documentActionsContextResult = createStrictContext<DocumentActions>({
+  hookName: 'useDocumentActions',
+  providerName: 'DocumentProvider',
+  displayName: 'DocumentActionsContext',
+  errorFactory: (message) => internalError(message),
+});
 
 export interface DocumentState
   extends
@@ -100,7 +136,20 @@ export interface DocumentState
     DocumentParamsState,
     DocumentMetricsState {}
 
-export const DocumentStateContext = createContext<DocumentState | null>(null);
+const documentStateContextResult = createStrictContext<DocumentState>({
+  hookName: 'useDocumentState',
+  providerName: 'DocumentProvider',
+  displayName: 'DocumentStateContext',
+  errorFactory: (message) => internalError(message),
+});
+
+export const DocumentPromptContext = documentPromptContextResult.Context;
+const DocumentCoreContext = documentCoreContextResult.Context;
+const DocumentSelectionContext = documentSelectionContextResult.Context;
+const DocumentParamsContext = documentParamsContextResult.Context;
+const DocumentMetricsContext = documentMetricsContextResult.Context;
+export const DocumentActionsContext = documentActionsContextResult.Context;
+export const DocumentStateContext = documentStateContextResult.Context;
 
 export function DocumentProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
@@ -412,44 +461,16 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   );
 }
 
-export function useDocumentPrompt(): DocumentPromptState {
-  const context = useContext(DocumentPromptContext);
-  if (!context) throw internalError('useDocumentPrompt must be used within DocumentProvider');
-  return context;
-}
+export const useDocumentPrompt = documentPromptContextResult.useStrictContext;
 
-export function useDocumentCore(): DocumentCoreState {
-  const context = useContext(DocumentCoreContext);
-  if (!context) throw internalError('useDocumentCore must be used within DocumentProvider');
-  return context;
-}
+export const useDocumentCore = documentCoreContextResult.useStrictContext;
 
-export function useDocumentSelection(): DocumentSelectionState {
-  const context = useContext(DocumentSelectionContext);
-  if (!context) throw internalError('useDocumentSelection must be used within DocumentProvider');
-  return context;
-}
+export const useDocumentSelection = documentSelectionContextResult.useStrictContext;
 
-export function useDocumentParams(): DocumentParamsState {
-  const context = useContext(DocumentParamsContext);
-  if (!context) throw internalError('useDocumentParams must be used within DocumentProvider');
-  return context;
-}
+export const useDocumentParams = documentParamsContextResult.useStrictContext;
 
-export function useDocumentMetrics(): DocumentMetricsState {
-  const context = useContext(DocumentMetricsContext);
-  if (!context) throw internalError('useDocumentMetrics must be used within DocumentProvider');
-  return context;
-}
+export const useDocumentMetrics = documentMetricsContextResult.useStrictContext;
 
-export function useDocumentActions(): DocumentActions {
-  const context = useContext(DocumentActionsContext);
-  if (!context) throw internalError('useDocumentActions must be used within DocumentProvider');
-  return context;
-}
+export const useDocumentActions = documentActionsContextResult.useStrictContext;
 
-export function useDocumentState(): DocumentState {
-  const context = useContext(DocumentStateContext);
-  if (!context) throw internalError('useDocumentState must be used within DocumentProvider');
-  return context;
-}
+export const useDocumentState = documentStateContextResult.useStrictContext;

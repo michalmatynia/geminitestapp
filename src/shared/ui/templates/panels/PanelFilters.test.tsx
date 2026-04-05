@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/shared/ui', () => ({
@@ -152,5 +152,29 @@ describe('PanelFilters layout contract', () => {
       'id',
       'panel-filter-sku-products-mobile'
     );
+  });
+
+  it('reports expansion changes when the user toggles the panel', () => {
+    const onExpandedChange = vi.fn();
+
+    render(
+      <PanelFilters
+        filters={filters}
+        values={{ sku: 'sku-1' }}
+        search=''
+        searchPlaceholder='Search by product name...'
+        onFilterChange={vi.fn()}
+        onSearchChange={vi.fn()}
+        onExpandedChange={onExpandedChange}
+        collapsible
+        defaultExpanded={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Show Filters/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Hide Filters/ }));
+
+    expect(onExpandedChange).toHaveBeenNthCalledWith(1, true);
+    expect(onExpandedChange).toHaveBeenNthCalledWith(2, false);
   });
 });

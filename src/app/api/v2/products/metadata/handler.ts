@@ -10,7 +10,7 @@ import {
   getParameterRepository,
 } from '@/features/products/server';
 import { paginationQuerySchema, type PaginationQuery } from '@/shared/contracts/base';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';

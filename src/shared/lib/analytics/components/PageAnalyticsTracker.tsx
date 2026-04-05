@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
-import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
+import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts/analytics';
 import { useTrackEventMutation } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -76,21 +76,40 @@ const getTimeZone = (): string | null => {
   }
 };
 
-const getConnectionInfo = (): AnalyticsEventCreateInput['connection'] => {
-  const nav = navigator as Navigator & {
-    connection?: {
-      effectiveType?: string;
-      downlink?: number;
-      rtt?: number;
-      saveData?: boolean;
-    };
+type AnalyticsNavigator = Navigator & {
+  deviceMemory?: number;
+  connection?: {
+    effectiveType?: string;
+    downlink?: number;
+    rtt?: number;
+    saveData?: boolean;
   };
-  if (!nav.connection) return null;
+  webdriver?: boolean;
+};
+
+const getAnalyticsNavigator = (): AnalyticsNavigator | null =>
+  typeof navigator !== 'undefined' ? (navigator as AnalyticsNavigator) : null;
+
+const getOptionalNumber = (value: unknown): number | null =>
+  typeof value === 'number' ? value : null;
+
+const getOptionalBoolean = (value: unknown): boolean | null =>
+  typeof value === 'boolean' ? value : null;
+
+const getOptionalString = (value: unknown): string | null =>
+  typeof value === 'string' ? value : null;
+
+const getNavigatorWebdriver = (nav: AnalyticsNavigator | null): boolean | null =>
+  nav && 'webdriver' in nav ? getOptionalBoolean(nav.webdriver) : null;
+
+const getConnectionInfo = (): AnalyticsEventCreateInput['connection'] => {
+  const connection = getAnalyticsNavigator()?.connection;
+  if (!connection) return null;
   return {
-    effectiveType: nav.connection.effectiveType ?? null,
-    downlink: typeof nav.connection.downlink === 'number' ? nav.connection.downlink : null,
-    rtt: typeof nav.connection.rtt === 'number' ? nav.connection.rtt : null,
-    saveData: typeof nav.connection.saveData === 'boolean' ? nav.connection.saveData : null,
+    effectiveType: getOptionalString(connection.effectiveType),
+    downlink: getOptionalNumber(connection.downlink),
+    rtt: getOptionalNumber(connection.rtt),
+    saveData: getOptionalBoolean(connection.saveData),
   };
 };
 
@@ -144,54 +163,45 @@ const getPerformanceMeta = (): Record<string, unknown> | null => {
   };
 };
 
-const getClientMeta = (): AnalyticsEventCreateInput['meta'] => {
-  const nav = navigator as Navigator & {
-    deviceMemory?: number;
-    connection?: {
-      saveData?: boolean;
-    };
-  };
+const getClientEnvironmentMeta = (nav: AnalyticsNavigator | null): Record<string, unknown> => ({
+  historyLength: typeof history !== 'undefined' ? history.length : null,
+  onLine: nav?.onLine ?? null,
+  cookieEnabled: nav?.cookieEnabled ?? null,
+  platform: nav?.platform ?? null,
+  vendor: nav?.vendor ?? null,
+  hardwareConcurrency: nav?.hardwareConcurrency ?? null,
+  deviceMemory: getOptionalNumber(nav?.deviceMemory),
+  maxTouchPoints: nav?.maxTouchPoints ?? null,
+  doNotTrack: nav?.doNotTrack ?? null,
+  webdriver: getNavigatorWebdriver(nav),
+});
 
-  const meta = {
-    client: {
-      historyLength: typeof history !== 'undefined' ? history.length : null,
-      onLine: typeof navigator !== 'undefined' ? navigator.onLine : null,
-      cookieEnabled: typeof navigator !== 'undefined' ? navigator.cookieEnabled : null,
-      platform: typeof navigator !== 'undefined' ? navigator.platform ?? null : null,
-      vendor: typeof navigator !== 'undefined' ? navigator.vendor ?? null : null,
-      hardwareConcurrency:
-        typeof navigator !== 'undefined' ? navigator.hardwareConcurrency ?? null : null,
-      deviceMemory:
-        typeof nav.deviceMemory === 'number' ? nav.deviceMemory : null,
-      maxTouchPoints:
-        typeof navigator !== 'undefined' ? navigator.maxTouchPoints ?? null : null,
-      doNotTrack:
-        typeof navigator !== 'undefined' ? navigator.doNotTrack ?? null : null,
-      webdriver:
-        typeof navigator !== 'undefined' ? ('webdriver' in navigator ? navigator.webdriver : null) : null,
-    },
-    document: {
-      visibilityState: typeof document !== 'undefined' ? document.visibilityState ?? null : null,
-      readyState: typeof document !== 'undefined' ? document.readyState ?? null : null,
-      hidden: typeof document !== 'undefined' ? document.hidden : null,
-    },
-    window: {
-      outerWidth: typeof window !== 'undefined' ? window.outerWidth ?? null : null,
-      outerHeight: typeof window !== 'undefined' ? window.outerHeight ?? null : null,
-      screenOrientation:
-        typeof window !== 'undefined' ? window.screen?.orientation?.type ?? null : null,
-    },
-    preferences: {
-      colorScheme: getMediaPreference('(prefers-color-scheme: dark)', 'dark', 'light'),
-      reducedMotion: getMediaPreference('(prefers-reduced-motion: reduce)', true, false),
-      contrast: getMediaPreference('(prefers-contrast: more)', 'more', 'no-preference'),
-      pointer: getMediaPreference('(pointer: coarse)', 'coarse', 'fine'),
-    },
-    performance: getPerformanceMeta(),
-  } satisfies Record<string, unknown>;
+const getDocumentMeta = (): Record<string, unknown> => ({
+  visibilityState: typeof document !== 'undefined' ? document.visibilityState ?? null : null,
+  readyState: typeof document !== 'undefined' ? document.readyState ?? null : null,
+  hidden: typeof document !== 'undefined' ? document.hidden : null,
+});
 
-  return meta;
-};
+const getWindowMeta = (): Record<string, unknown> => ({
+  outerWidth: typeof window !== 'undefined' ? window.outerWidth ?? null : null,
+  outerHeight: typeof window !== 'undefined' ? window.outerHeight ?? null : null,
+  screenOrientation: typeof window !== 'undefined' ? window.screen?.orientation?.type ?? null : null,
+});
+
+const getPreferencesMeta = (): Record<string, unknown> => ({
+  colorScheme: getMediaPreference('(prefers-color-scheme: dark)', 'dark', 'light'),
+  reducedMotion: getMediaPreference('(prefers-reduced-motion: reduce)', true, false),
+  contrast: getMediaPreference('(prefers-contrast: more)', 'more', 'no-preference'),
+  pointer: getMediaPreference('(pointer: coarse)', 'coarse', 'fine'),
+});
+
+const getClientMeta = (): AnalyticsEventCreateInput['meta'] => ({
+  client: getClientEnvironmentMeta(getAnalyticsNavigator()),
+  document: getDocumentMeta(),
+  window: getWindowMeta(),
+  preferences: getPreferencesMeta(),
+  performance: getPerformanceMeta(),
+});
 
 const getUtm = (searchParams: URLSearchParams): AnalyticsEventCreateInput['utm'] => {
   const utm: Record<string, string> = {};

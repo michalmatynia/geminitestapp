@@ -18,7 +18,7 @@ vi.mock('@/features/kangur/ui/context/KangurSubjectFocusContext', () => ({
   useKangurSubjectFocus: () => useKangurSubjectFocusMock(),
 }));
 
-import KangurAssignmentSpotlight from '@/features/kangur/ui/components/KangurAssignmentSpotlight';
+import { KangurAssignmentSpotlight } from "@/features/kangur/ui/components/assignments/KangurAssignmentSpotlight";
 
 describe('KangurAssignmentSpotlight', () => {
   beforeEach(() => {

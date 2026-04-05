@@ -4,10 +4,13 @@ import { useMemo } from 'react';
 
 import {
   buildCategoryNameById,
+  resolveCategoryLabelByLocale,
+  resolveCategoryRecordId,
   resolveProductCatalogId,
   resolveProductCategoryId,
 } from '@/features/products/hooks/product-list-state-utils';
-import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -18,20 +21,43 @@ const PRODUCT_CATEGORY_BATCH_TIMEOUT_MS = 60_000;
 export function useProductListCategories({
   data,
   nameLocale,
+  enabled = true,
 }: {
   data: ProductWithImages[];
   nameLocale?: string;
+  enabled?: boolean;
 }) {
+  const locale = (nameLocale ?? 'name_en') as 'name_en' | 'name_pl' | 'name_de';
+
+  const embeddedCategoryNameById = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    data.forEach((product: ProductWithImages) => {
+      const category = product.category;
+      if (!category || typeof category !== 'object' || Array.isArray(category)) return;
+
+      const categoryId = resolveCategoryRecordId(category);
+      if (!categoryId || map.has(categoryId)) return;
+
+      const label = resolveCategoryLabelByLocale(category, locale);
+      if (!label) return;
+
+      map.set(categoryId, label);
+    });
+    return map;
+  }, [data, locale]);
+
   const categoryLookupCatalogIds = useMemo((): string[] => {
     const ids = new Set<string>();
     data.forEach((product: ProductWithImages) => {
       const categoryId = resolveProductCategoryId(product);
+      if (!categoryId || embeddedCategoryNameById.has(categoryId)) return;
+
       const catalogId = resolveProductCatalogId(product);
-      if (!categoryId || !catalogId) return;
+      if (!catalogId) return;
       ids.add(catalogId);
     });
     return Array.from(ids).sort();
-  }, [data]);
+  }, [data, embeddedCategoryNameById]);
 
   const batchCategoryQueryKey = useMemo(
     () =>
@@ -59,7 +85,7 @@ export function useProductListCategories({
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    enabled: categoryLookupCatalogIds.length > 0,
+    enabled: enabled && categoryLookupCatalogIds.length > 0,
     meta: {
       source: 'products.hooks.useProductListCategories',
       operation: 'list',
@@ -71,10 +97,16 @@ export function useProductListCategories({
   });
 
   const categoryNameById = useMemo((): Map<string, string> => {
-    const locale = (nameLocale ?? 'name_en') as 'name_en' | 'name_pl' | 'name_de';
     const grouped = categoryBatchQuery.data ?? {};
-    return buildCategoryNameById(grouped, locale);
-  }, [categoryBatchQuery.data, nameLocale]);
+    const fetchedCategoryNameById = buildCategoryNameById(grouped, locale);
+    if (embeddedCategoryNameById.size === 0) return fetchedCategoryNameById;
+
+    const merged = new Map(fetchedCategoryNameById);
+    embeddedCategoryNameById.forEach((label: string, categoryId: string) => {
+      merged.set(categoryId, label);
+    });
+    return merged;
+  }, [categoryBatchQuery.data, embeddedCategoryNameById, locale]);
 
   return {
     categoryNameById,

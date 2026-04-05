@@ -6,7 +6,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { KangurProgressActivitySummary } from '@kangur/core';
 
-import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/KangurActivitySummaryCard';
+import { KangurActivitySummaryCard } from '@/features/kangur/ui/components/summary-cards/KangurActivitySummaryCard';
 
 const activity: KangurProgressActivitySummary = {
   key: 'training:clock:hours',

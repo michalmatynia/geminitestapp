@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation';
+import { JSX } from 'react';
 
-export default function Page(): never {
-  redirect('/admin/integrations/aggregators/base-com/category-mapping');
+import { CategoryMapperPage } from '@/features/integrations/public';
+
+export default function Page(): JSX.Element {
+  return <CategoryMapperPage />;
 }

@@ -3,14 +3,9 @@
 import { Plus } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  Input,
-  Textarea,
-  FormSection,
-  FormField,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
+import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 export type DocumentAddFormProps = {
   title: string;

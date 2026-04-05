@@ -1,5 +1,3 @@
-'use client';
-
 import type { AiInsightResponse } from '@/shared/contracts/ai-insights';
 import {
   type ClearLogsTargetDto as ClearLogsTarget,
@@ -7,7 +5,7 @@ import {
   MongoRebuildIndexesResponseDto as MongoRebuildIndexesResponse,
   mongoRebuildIndexesResponseSchema,
 } from '@/shared/contracts/observability';
-import type { UpdateMutation } from '@/shared/contracts/ui';
+import type { UpdateMutation } from '@/shared/contracts/ui/queries';
 import { useOptionalContextRegistryPageEnvelope } from '@/shared/lib/ai-context-registry/page-context';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';

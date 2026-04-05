@@ -1,8 +1,5 @@
-import type {
-  ProductParameterValue,
-  ProductRecord,
-  ProductWithImages,
-} from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductParameterValue, ProductRecord, ProductWithImages } from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import {
@@ -110,6 +107,58 @@ const resolveCanonicalCategoryId = (doc: ProductDocument, productId: string): st
   }
   const direct = rawCategoryId.trim();
   return direct.length > 0 ? direct : null;
+};
+
+const toOptionalIsoString = (value: unknown): string | undefined => {
+  if (value instanceof Date) return value.toISOString();
+  return toTrimmedString(value) ?? undefined;
+};
+
+const normalizeProductCategory = (
+  category: unknown,
+  fallbackCatalogId: string
+): ProductCategory | undefined => {
+  const record = toPlainRecord(category);
+  if (!record) return undefined;
+
+  const id = toTrimmedString(record['id']) ?? toTrimmedString(record['_id']);
+  const nameEn = toTrimmedString(record['name_en']);
+  const namePl = toTrimmedString(record['name_pl']);
+  const nameDe = toTrimmedString(record['name_de']);
+  const name = toTrimmedString(record['name']) ?? nameEn ?? namePl ?? nameDe;
+  const catalogId = toTrimmedString(record['catalogId']) ?? fallbackCatalogId;
+
+  if (!id || !name || !catalogId) return undefined;
+
+  const descriptionValue = record['description'];
+  const colorValue = record['color'];
+  const parentIdValue = record['parentId'];
+  const updatedAtValue = record['updatedAt'];
+  const normalized: ProductCategory = {
+    id,
+    name,
+    catalogId,
+    color: colorValue === null ? null : toTrimmedString(colorValue) ?? null,
+    parentId: parentIdValue === null ? null : toTrimmedString(parentIdValue) ?? null,
+  };
+  const description =
+    descriptionValue === null ? null : toTrimmedString(descriptionValue) ?? undefined;
+  const createdAt = toOptionalIsoString(record['createdAt']);
+  const updatedAt =
+    updatedAtValue === null ? null : toOptionalIsoString(updatedAtValue) ?? undefined;
+  const sortIndex = record['sortIndex'];
+
+  if (description !== undefined) normalized.description = description;
+  if (createdAt !== undefined) normalized.createdAt = createdAt;
+  if (updatedAt !== undefined) normalized.updatedAt = updatedAt;
+  if (nameEn !== null) normalized.name_en = nameEn;
+  if (namePl !== null) normalized.name_pl = namePl;
+  if (nameDe !== null) normalized.name_de = nameDe;
+  if (typeof sortIndex === 'number' && Number.isFinite(sortIndex)) {
+    normalized.sortIndex = sortIndex;
+  }
+
+  return normalized;
 };
 
 const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
@@ -379,11 +428,14 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
       ? canonicalProducers
       : normalizeLegacyTopLevelProducerRelations(doc, productId);
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
+  const catalogId = resolveCanonicalCatalogId(doc);
+  const category = normalizeProductCategory(doc.category, catalogId);
 
   return {
     id: productId,
     sku: doc.sku ?? null,
     baseProductId: doc.baseProductId ?? null,
+    importSource: doc.importSource ?? null,
     defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
     ean: doc.ean ?? null,
     gtin: doc.gtin ?? null,
@@ -406,7 +458,9 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     weight: doc.weight ?? null,
     length: doc.length ?? null,
     published: doc.published ?? false,
-    catalogId: resolveCanonicalCatalogId(doc),
+    catalogId,
+    category,
+    shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
     parameters: normalizeParameterValues(doc.parameters),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
@@ -448,11 +502,14 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     canonicalProducers.length > 0
       ? canonicalProducers
       : normalizeLegacyTopLevelProducerRelations(doc, productId);
+  const catalogId = resolveCanonicalCatalogId(doc);
+  const category = normalizeProductCategory(doc.category, catalogId);
 
   return {
     id: productId,
     sku: doc.sku ?? null,
     baseProductId: doc.baseProductId ?? null,
+    importSource: doc.importSource ?? null,
     defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
     ean: doc.ean ?? null,
     gtin: doc.gtin ?? null,
@@ -475,7 +532,9 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     weight: doc.weight ?? null,
     length: doc.length ?? null,
     published: doc.published ?? false,
-    catalogId: resolveCanonicalCatalogId(doc),
+    catalogId,
+    category,
+    shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
     parameters: normalizeParameterValues(doc.parameters),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],

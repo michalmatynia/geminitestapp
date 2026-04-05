@@ -10,9 +10,9 @@ const validationRulesEditorMocks = vi.hoisted(() => ({
   useAdminAiPathsValidationContextMock: vi.fn(),
 }));
 
-vi.mock('../../../context/AdminAiPathsValidationContext', () => ({
+vi.mock('@/features/ai/ai-paths/context/AdminAiPathsValidationContext', () => ({
   useAdminAiPathsValidationContext:
-    validationRulesEditorMocks.useAdminAiPathsValidationContextMock as typeof import('../../../context/AdminAiPathsValidationContext').useAdminAiPathsValidationContext,
+    validationRulesEditorMocks.useAdminAiPathsValidationContextMock as typeof import('@/features/ai/ai-paths/context/AdminAiPathsValidationContext').useAdminAiPathsValidationContext,
 }));
 
 const buildRule = (overrides: Partial<AiPathsValidationRule> = {}): AiPathsValidationRule =>

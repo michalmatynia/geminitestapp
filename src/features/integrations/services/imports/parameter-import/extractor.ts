@@ -1,5 +1,5 @@
 import type { ImportTemplateParameterImport } from '@/shared/contracts/integrations';
-import type { ExtractedBaseParameter } from '@/shared/contracts/integrations';
+import type { ExtractedBaseParameter } from '@/shared/contracts/integrations/parameter-import';
 
 import type { BaseProductRecord } from '../base-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

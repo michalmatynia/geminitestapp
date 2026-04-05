@@ -52,6 +52,12 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
   const missingAddonIds = Array.isArray(missingSelectedImageAddonIds)
     ? missingSelectedImageAddonIds
     : [];
+  const shouldLoadPersonas =
+    isVisualAnalysisModalOpen &&
+    availableRecentAddons.some(
+      (addon) =>
+        selectedImageAddonIds.includes(addon.id) && Boolean(addon.playwrightPersonaId?.trim())
+    );
 
   const selectedAddons = React.useMemo(
     () => availableRecentAddons.filter((addon) => selectedImageAddonIds.includes(addon.id)),
@@ -75,7 +81,7 @@ export function SocialPostVisualAnalysisModal(): React.JSX.Element | null {
     }
   };
   const personasQuery = usePlaywrightPersonas({
-    enabled: selectedAddons.some((addon) => Boolean(addon.playwrightPersonaId?.trim())),
+    enabled: shouldLoadPersonas,
   });
   const personaNameById = React.useMemo(
     () =>

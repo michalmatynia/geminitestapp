@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 const LazyDocumentWysiwygEditor = React.lazy(() =>
-  import('@/features/document-editor/public').then((mod) => ({
+  import('@/shared/lib/document-editor/public').then((mod) => ({
     default: mod.DocumentWysiwygEditor,
   }))
 );
@@ -43,13 +43,12 @@ function CaseResolverRichTextEditorRuntime(): React.JSX.Element {
       }
     >
       <LazyDocumentWysiwygEditor
+        engineInstance='case_resolver'
+        showBrand
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         appearance={appearance}
-        allowFontFamily
-        allowTextAlign
-        enableAdvancedTools
       />
     </React.Suspense>
   );

@@ -9,7 +9,7 @@ import {
   setStoredActiveLearnerId,
 } from '@/features/kangur/services/kangur-active-learner';
 import { saveProgressOwnerKey } from '@/features/kangur/ui/services/progress';
-import { kangurAuthUserSchema } from '@kangur/contracts';
+import { kangurAuthUserSchema } from '@kangur/contracts/kangur';
 
 import { clearScoreQueryCache } from './local-kangur-platform-score-cache';
 import { createActorAwareHeaders } from './local-kangur-platform-shared';

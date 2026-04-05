@@ -1,4 +1,4 @@
-import type { KangurDuelLeaderboardEntry } from '@kangur/contracts';
+import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
 import type { Href } from 'expo-router';
 import { Text, View } from 'react-native';
 

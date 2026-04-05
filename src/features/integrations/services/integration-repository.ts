@@ -1,4 +1,5 @@
-import type { IntegrationRepository, IntegrationWithConnections } from '@/shared/contracts/integrations';
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
+import type { IntegrationRepository } from '@/shared/contracts/integrations/repositories';
 import { getMongoIntegrationRepository } from './integration-repository/mongo-impl';
 
 export async function getIntegrationRepository(): Promise<IntegrationRepository> {
@@ -11,7 +12,23 @@ export async function getIntegrationsWithConnections(): Promise<IntegrationWithC
 
   return Promise.all(
     integrations.map(async (integration) => {
-      const connections = await repo.listConnections(integration.id);
+      const connections = (await repo.listConnections(integration.id)).map(
+        (connection): IntegrationConnectionBasic => ({
+          id: connection.id,
+          name: connection.name,
+          integrationId: connection.integrationId,
+          traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
+          hasPlaywrightListingScript: Boolean(connection.playwrightListingScript?.trim()),
+          traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
+          traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
+          traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,
+          traderaAutoRelistLeadMinutes: connection.traderaAutoRelistLeadMinutes ?? 180,
+          traderaApiAppId: connection.traderaApiAppId ?? null,
+          traderaApiPublicKey: connection.traderaApiPublicKey ?? null,
+          traderaApiUserId: connection.traderaApiUserId ?? null,
+          traderaApiSandbox: connection.traderaApiSandbox ?? false,
+        })
+      );
       return {
         ...integration,
         connections,

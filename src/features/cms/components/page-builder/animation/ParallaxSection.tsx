@@ -17,7 +17,8 @@ import {
   PARALLAX_DEFAULTS,
   PARALLAX_PATTERNS,
 } from '@/shared/contracts/gsap';
-import { Checkbox, Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Checkbox, Input } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAnimationConfigActions, useAnimationConfigState } from './AnimationConfigContext';
 

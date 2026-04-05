@@ -403,14 +403,14 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.queryByTestId('music-melody-repeat-feedback')).not.toBeInTheDocument();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Posluchaj melodii' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Posłuchaj melodii' }));
       await vi.advanceTimersByTimeAsync(1_200);
     });
 
     expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
     expect(screen.queryByTestId('music-melody-repeat-listen-ring')).not.toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
-      'Twoja kolej. Zacznij od dzwieku do.'
+      'Twoja kolej. Zacznij od dźwięku do.'
     );
     expect(
       screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-0`)
@@ -429,7 +429,7 @@ describe('MusicMelodyRepeatGame', () => {
       'played'
     );
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
-      'Dobrze! Teraz dotknij dzwieku re.'
+      'Dobrze! Teraz dotknij dźwięku re.'
     );
 
     await act(async () => {
@@ -452,7 +452,7 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.getByTestId('music-melody-repeat-outcome-banner')).toHaveTextContent('Brawo!');
     expect(screen.getByTestId('music-melody-repeat-status-outcome-icon')).toHaveTextContent('✅');
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
-      'Brawo! Cala melodia zabrzmiala poprawnie.'
+      'Brawo! Cała melodia zabrzmiała poprawnie.'
     );
 
     await act(async () => {
@@ -485,7 +485,7 @@ describe('MusicMelodyRepeatGame', () => {
     render(<MusicMelodyRepeatGame onFinish={() => undefined} />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Posluchaj melodii' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Posłuchaj melodii' }));
       await vi.advanceTimersByTimeAsync(1_200);
     });
 
@@ -495,7 +495,7 @@ describe('MusicMelodyRepeatGame', () => {
 
     expect(screen.getByTestId('music-melody-repeat-status-outcome')).toHaveAttribute(
       'aria-label',
-      'Sprobuj jeszcze raz'
+      'Spróbuj jeszcze raz'
     );
     expect(screen.getByTestId('music-melody-repeat-outcome-shell')).toHaveAttribute(
       'data-outcome',
@@ -503,7 +503,7 @@ describe('MusicMelodyRepeatGame', () => {
     );
     expect(screen.getByTestId('music-melody-repeat-outcome-banner')).toHaveAttribute(
       'aria-label',
-      'Melodia do powtorzenia'
+      'Melodia do powtórzenia'
     );
     expect(screen.getByTestId('music-melody-repeat-outcome-banner-icon')).toHaveTextContent('❌');
     expect(screen.getByTestId('music-melody-repeat-outcome-banner')).toHaveTextContent(
@@ -511,7 +511,7 @@ describe('MusicMelodyRepeatGame', () => {
     );
     expect(screen.getByTestId('music-melody-repeat-status-outcome-icon')).toHaveTextContent('❌');
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
-      'Ups. Posluchaj jeszcze raz i powtorz melodie od poczatku.'
+      'Ups. Posłuchaj jeszcze raz i powtórz melodię od początku.'
     );
     expect(screen.getByTestId('music-melody-repeat-status-phase')).toHaveAttribute(
       'aria-label',
@@ -533,7 +533,7 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.queryByTestId('music-melody-repeat-outcome-banner')).not.toBeInTheDocument();
     expect(screen.queryByTestId('music-melody-repeat-status-outcome')).not.toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
-      'Twoja kolej. Zacznij od dzwieku do.'
+      'Twoja kolej. Zacznij od dźwięku do.'
     );
     expect(
       screen.getByTestId(`${melodyRepeatTestIds.pianoRoll.stepPrefix}-0`)
@@ -553,7 +553,7 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Posluchaj melodii' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Posłuchaj melodii' }));
       await vi.advanceTimersByTimeAsync(1_200);
     });
 
@@ -575,12 +575,12 @@ describe('MusicMelodyRepeatGame', () => {
 
     expect(screen.getByTestId('music-melody-repeat-status-phase')).toHaveAttribute(
       'aria-label',
-      'Sluchaj'
+      'Słuchaj'
     );
     expect(screen.getByTestId('music-melody-repeat-listen-button')).toHaveClass('cursor-pointer');
     expect(screen.queryByTestId('music-melody-repeat-listen-glow')).not.toBeInTheDocument();
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
-      'Sluchaj i patrz, ktore kolory zapalaja sie po kolei.'
+      'Słuchaj i patrz, które kolory zapalają się po kolei.'
     );
 
     await act(async () => {
@@ -665,7 +665,7 @@ describe('MusicMelodyRepeatGame', () => {
     expect(screen.getByTestId('music-melody-repeat-status-mode-icon')).toHaveTextContent('✨');
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Posluchaj melodii' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Posłuchaj melodii' }));
       await vi.advanceTimersByTimeAsync(1_200);
     });
 
@@ -727,7 +727,7 @@ describe('MusicMelodyRepeatGame', () => {
     });
 
     expect(screen.getByTestId('music-melody-repeat-feedback')).toHaveTextContent(
-      'Dobrze! Teraz dotknij dzwieku re.'
+      'Dobrze! Teraz dotknij dźwięku re.'
     );
 
     await act(async () => {

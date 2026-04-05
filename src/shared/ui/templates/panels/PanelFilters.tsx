@@ -3,12 +3,13 @@
 import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 
-import { FilterField } from '@/shared/contracts/ui';
-import { Button, Label, SelectSimple, SearchInput } from '@/shared/ui';
+import { FilterField } from '@/shared/contracts/ui/panels';
+import { Button, Label } from '@/shared/ui/primitives.public';
+import { SelectSimple, SearchInput } from '@/shared/ui/forms-and-actions.public';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import { MultiSelect } from '@/shared/ui/multi-select';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 const isActiveFilterValue = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;
@@ -64,6 +65,7 @@ interface PanelFiltersProps {
   compact?: boolean;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   toggleButtonAlignment?: 'start' | 'end';
   actions?: React.ReactNode;
   className?: string;
@@ -91,6 +93,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
     compact = false,
     collapsible = false,
     defaultExpanded,
+    onExpandedChange,
     toggleButtonAlignment = 'end',
     actions,
     className,
@@ -134,7 +137,8 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
     onReset?.();
     setLocalSearch('');
     setIsExpanded(false);
-  }, [onReset]);
+    onExpandedChange?.(false);
+  }, [onExpandedChange, onReset]);
 
   const activeFilterSource = activeValues ?? values;
   const hasActiveFilters = Object.values(activeFilterSource).some((value) => isActiveFilterValue(value));
@@ -187,7 +191,9 @@ export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersPro
               variant={hasActiveFilters ? 'default' : 'outline'}
               onClick={() => {
                 userToggledRef.current = true;
-                setIsExpanded(!isExpanded);
+                const nextExpanded = !isExpanded;
+                setIsExpanded(nextExpanded);
+                onExpandedChange?.(nextExpanded);
               }}
               className={cn(
                 'h-8 w-full justify-center gap-1.5 px-3 tabular-nums sm:w-[10rem] sm:shrink-0',
@@ -289,7 +295,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
   switch (field.type) {
     case 'multi-select':
     case 'select': {
-      const options = (field.options ?? []).map((option) => ({
+      const options = (field.options ?? []).map((option: any) => ({
         value: String(option.value),
         label: option.label,
       }));
@@ -325,7 +331,7 @@ const PanelFilterControl: React.FC<PanelFilterControlProps> = (props: PanelFilte
           <SelectSimple
             size='sm'
             value={getSingleSelectValue(value)}
-            onValueChange={(val) => onChange(val)}
+            onValueChange={(val: boolean) => onChange(val)}
             options={options}
             placeholder={field.placeholder}
             triggerClassName='h-8 w-full min-w-[9rem]'

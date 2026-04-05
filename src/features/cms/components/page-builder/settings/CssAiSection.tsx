@@ -3,19 +3,9 @@
 import React, { useMemo, useState } from 'react';
 
 import { buildDiffLines } from '@/features/cms/components/page-builder/utils/ai-helpers';
-import {
-  Button,
-  ToggleRow,
-  Textarea,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  Input,
-  FormSection,
-  FormField,
-  UI_CENTER_ROW_SPACED_CLASSNAME,
-} from '@/shared/ui';
+import { Button, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, Input } from '@/shared/ui/primitives.public';
+import { ToggleRow, FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 import { useInspectorAiActions, useInspectorAiState } from '../context/InspectorAiContext';
 

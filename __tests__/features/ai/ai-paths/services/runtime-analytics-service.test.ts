@@ -18,42 +18,89 @@ const buildRun = (input: { id: string; nodeSpans?: unknown[] }): AiPathRunRecord
     },
   }) as AiPathRunRecord;
 
+const AGGREGATED_TRACE_RUNS = [
+  buildRun({
+    id: 'run-1',
+    nodeSpans: [
+      {
+        spanId: 'span-1',
+        nodeId: 'node-a',
+        nodeType: 'model',
+        status: 'completed',
+        durationMs: 120,
+      },
+      {
+        spanId: 'span-2',
+        nodeId: 'node-b',
+        nodeType: 'http',
+        status: 'failed',
+        durationMs: 250,
+      },
+    ],
+  }),
+  buildRun({
+    id: 'run-2',
+    nodeSpans: [
+      {
+        spanId: 'span-3',
+        nodeId: 'node-c',
+        nodeType: 'database',
+        status: 'cached',
+        durationMs: 50,
+      },
+    ],
+  }),
+] as const;
+
+const EXPECTED_SLOWEST_SPAN = {
+  runId: 'run-1',
+  spanId: 'span-2',
+  nodeId: 'node-b',
+  nodeType: 'http',
+  status: 'failed',
+  durationMs: 250,
+} as const;
+
+const EXPECTED_TOP_SLOW_NODES = [
+  {
+    nodeId: 'node-b',
+    nodeType: 'http',
+    spanCount: 1,
+    avgDurationMs: 250,
+    maxDurationMs: 250,
+    totalDurationMs: 250,
+  },
+  {
+    nodeId: 'node-a',
+    nodeType: 'model',
+    spanCount: 1,
+    avgDurationMs: 120,
+    maxDurationMs: 120,
+    totalDurationMs: 120,
+  },
+  {
+    nodeId: 'node-c',
+    nodeType: 'database',
+    spanCount: 1,
+    avgDurationMs: 50,
+    maxDurationMs: 50,
+    totalDurationMs: 50,
+  },
+] as const;
+
+const EXPECTED_TOP_FAILED_NODES = [
+  {
+    nodeId: 'node-b',
+    nodeType: 'http',
+    failedCount: 1,
+    spanCount: 1,
+  },
+] as const;
+
 describe('runtime-analytics-service summarizeRuntimeTraceAnalytics', () => {
   it('aggregates span counts, duration percentiles, and slowest span', () => {
     const summary = summarizeRuntimeTraceAnalytics({
-      runs: [
-        buildRun({
-          id: 'run-1',
-          nodeSpans: [
-            {
-              spanId: 'span-1',
-              nodeId: 'node-a',
-              nodeType: 'model',
-              status: 'completed',
-              durationMs: 120,
-            },
-            {
-              spanId: 'span-2',
-              nodeId: 'node-b',
-              nodeType: 'http',
-              status: 'failed',
-              durationMs: 250,
-            },
-          ],
-        }),
-        buildRun({
-          id: 'run-2',
-          nodeSpans: [
-            {
-              spanId: 'span-3',
-              nodeId: 'node-c',
-              nodeType: 'database',
-              status: 'cached',
-              durationMs: 50,
-            },
-          ],
-        }),
-      ],
+      runs: AGGREGATED_TRACE_RUNS,
       total: 5,
     });
 
@@ -66,48 +113,9 @@ describe('runtime-analytics-service summarizeRuntimeTraceAnalytics', () => {
     expect(summary.avgDurationMs).toBe(140);
     expect(summary.p95DurationMs).toBe(250);
     expect(summary.truncated).toBe(true);
-    expect(summary.slowestSpan).toEqual({
-      runId: 'run-1',
-      spanId: 'span-2',
-      nodeId: 'node-b',
-      nodeType: 'http',
-      status: 'failed',
-      durationMs: 250,
-    });
-    expect(summary.topSlowNodes).toEqual([
-      {
-        nodeId: 'node-b',
-        nodeType: 'http',
-        spanCount: 1,
-        avgDurationMs: 250,
-        maxDurationMs: 250,
-        totalDurationMs: 250,
-      },
-      {
-        nodeId: 'node-a',
-        nodeType: 'model',
-        spanCount: 1,
-        avgDurationMs: 120,
-        maxDurationMs: 120,
-        totalDurationMs: 120,
-      },
-      {
-        nodeId: 'node-c',
-        nodeType: 'database',
-        spanCount: 1,
-        avgDurationMs: 50,
-        maxDurationMs: 50,
-        totalDurationMs: 50,
-      },
-    ]);
-    expect(summary.topFailedNodes).toEqual([
-      {
-        nodeId: 'node-b',
-        nodeType: 'http',
-        failedCount: 1,
-        spanCount: 1,
-      },
-    ]);
+    expect(summary.slowestSpan).toEqual(EXPECTED_SLOWEST_SPAN);
+    expect(summary.topSlowNodes).toEqual(EXPECTED_TOP_SLOW_NODES);
+    expect(summary.topFailedNodes).toEqual(EXPECTED_TOP_FAILED_NODES);
   });
 
   it('derives span duration from startedAt/finishedAt when durationMs is missing', () => {

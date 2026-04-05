@@ -19,11 +19,8 @@ const {
   deleteFilemakerMailThreadMock: vi.fn(),
 }));
 
-vi.mock('@/features/filemaker/server/filemaker-mail-access', () => ({
+vi.mock('@/features/filemaker/server', () => ({
   requireFilemakerMailAdminSession: requireFilemakerMailAdminSessionMock,
-}));
-
-vi.mock('@/features/filemaker/server/filemaker-mail-service', () => ({
   buildFilemakerMailForwardDraft: buildFilemakerMailForwardDraftMock,
   getFilemakerMailThreadDetail: getFilemakerMailThreadDetailMock,
   buildFilemakerMailReplyDraft: buildFilemakerMailReplyDraftMock,

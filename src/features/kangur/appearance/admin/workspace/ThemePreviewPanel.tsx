@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { resolveKangurStorefrontAppearance } from '@/features/cms/public';
+import { resolveKangurStorefrontAppearance } from '@/shared/ui/cms-appearance/CmsStorefrontAppearance';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   AppearanceSlot,

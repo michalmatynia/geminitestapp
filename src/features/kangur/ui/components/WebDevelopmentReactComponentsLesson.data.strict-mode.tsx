@@ -1,3 +1,5 @@
+'use client';
+
 import type { LessonSlide } from '@/features/kangur/ui/components/lesson-framework/LessonSlideSection';
 import { ReactStrictModeCycleAnimation, ReactStrictModeDoubleRenderAnimation } from '@/features/kangur/ui/components/LessonAnimations';
 import { KangurLessonCallout, KangurLessonCaption, KangurLessonLead, KangurLessonStack, KangurLessonVisual } from '@/features/kangur/ui/design/lesson-primitives';

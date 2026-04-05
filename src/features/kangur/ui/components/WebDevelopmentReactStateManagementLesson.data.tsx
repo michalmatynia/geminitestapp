@@ -36,7 +36,7 @@ export const SLIDES: Record<SectionId, LessonSlide[]> = {
           <KangurLessonInset accent='slate' className='text-left'>
             <p className='text-sm font-semibold text-slate-900'>Checklist</p>
             <ul className='mt-2 list-disc pl-4 text-sm text-slate-600'>
-              <li>useState dla lokalnego stanu.</li>
+              <li>${'use' + 'State'} dla lokalnego stanu.</li>
               <li>Context dla współdzielonych danych.</li>
               <li>Reducer dla złożonej logiki.</li>
             </ul>

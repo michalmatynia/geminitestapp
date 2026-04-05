@@ -1,4 +1,5 @@
-import type { CategoryMapperTreeRow, ExternalCategory } from '@/shared/contracts/integrations';
+import type { CategoryMapperTreeRow } from '@/shared/contracts/integrations/context';
+import type { ExternalCategory } from '@/shared/contracts/integrations/listings';
 
 export type CategoryRow = CategoryMapperTreeRow;
 

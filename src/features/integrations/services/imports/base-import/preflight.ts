@@ -1,7 +1,4 @@
-import type {
-  BaseImportPreflight,
-  BaseImportPreflightIssue,
-} from '@/shared/contracts/integrations';
+import type { BaseImportPreflight, BaseImportPreflightIssue } from '@/shared/contracts/integrations/base-com';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 

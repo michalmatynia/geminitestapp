@@ -8,6 +8,204 @@ import { coerceInput, getValueAtMappingPath } from '@/shared/lib/ai-paths/core/u
 import { extractImageUrls } from '../../utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+type ParserSourceRecord = Record<string, unknown>;
+
+const normalizeParserOutputValue = (key: string, value: unknown): unknown => {
+  const normalizedKey = key.trim().toLowerCase();
+  if (normalizedKey === 'images' || normalizedKey === 'imageurls') {
+    const urls = extractImageUrls(value);
+    return urls.length > 0 ? urls : value;
+  }
+  return value;
+};
+
+const readContextEntitySource = (contextInput: unknown): ParserSourceRecord | undefined =>
+  contextInput && typeof contextInput === 'object'
+    ? (((contextInput as ParserSourceRecord)['entity'] as ParserSourceRecord | undefined) ??
+        ((contextInput as ParserSourceRecord)['entityJson'] as ParserSourceRecord | undefined) ??
+        ((contextInput as ParserSourceRecord)['product'] as ParserSourceRecord | undefined))
+    : undefined;
+
+const readParserHydrationEntityId = (contextInput: unknown): string | null => {
+  if (!contextInput || typeof contextInput !== 'object') return null;
+  const contextRecord = contextInput as ParserSourceRecord;
+  if (typeof contextRecord['entityId'] === 'string' && contextRecord['entityId'].trim().length > 0) {
+    return contextRecord['entityId'].trim();
+  }
+  if (typeof contextRecord['productId'] === 'string' && contextRecord['productId'].trim().length > 0) {
+    return contextRecord['productId'].trim();
+  }
+  return null;
+};
+
+const readParserHydrationEntityType = (
+  contextInput: unknown,
+  simulationEntityType: string | null
+): string | null => {
+  if (!contextInput || typeof contextInput !== 'object') return simulationEntityType;
+  const contextRecord = contextInput as ParserSourceRecord;
+  if (typeof contextRecord['entityType'] === 'string' && contextRecord['entityType'].trim().length > 0) {
+    return contextRecord['entityType'].trim();
+  }
+  return simulationEntityType;
+};
+
+const hydrateParserSourceFromContext = async (args: {
+  contextInput: unknown;
+  simulationEntityType: string | null;
+  fetchEntityCached: NodeHandlerContext['fetchEntityCached'];
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+  node: NodeHandlerContext['node'];
+}): Promise<ParserSourceRecord | undefined> => {
+  const contextEntityId = readParserHydrationEntityId(args.contextInput);
+  const contextEntityType = readParserHydrationEntityType(
+    args.contextInput,
+    args.simulationEntityType
+  );
+  if (!contextEntityId || !contextEntityType) return undefined;
+
+  try {
+    const hydrated = await args.fetchEntityCached(contextEntityType, contextEntityId);
+    return hydrated && typeof hydrated === 'object' ? hydrated : undefined;
+  } catch (error) {
+    logClientError(error);
+    args.reportAiPathsError(
+      error,
+      {
+        service: 'ai-paths-runtime',
+        nodeId: args.node.id,
+        nodeType: args.node.type,
+        contextEntityId,
+        contextEntityType,
+      },
+      `Parser context hydration failed for ${contextEntityType}:${contextEntityId}`
+    );
+    return undefined;
+  }
+};
+
+const isEmptyParserValue = (value: unknown): boolean =>
+  value === undefined ||
+  value === null ||
+  (typeof value === 'string' && value.trim() === '') ||
+  (Array.isArray(value) && value.length === 0);
+
+const fallbackParserValue = (source: ParserSourceRecord, key: string): unknown => {
+  const normalized = key.trim().toLowerCase();
+  if (normalized === 'title' || normalized === 'name') {
+    return (
+      source['title'] ??
+      source['name'] ??
+      source['name_en'] ??
+      source['name_pl'] ??
+      source['label'] ??
+      source['productName']
+    );
+  }
+  if (normalized === 'images' || normalized === 'imageurls') {
+    return (
+      source['images'] ??
+      source['imageLinks'] ??
+      source['media'] ??
+      source['gallery'] ??
+      source['imageFiles'] ??
+      source['photos']
+    );
+  }
+  if (normalized === 'productid' || normalized === 'entityid' || normalized === 'id') {
+    return source['id'] ?? source['_id'] ?? source['productId'] ?? source['entityId'];
+  }
+  if (normalized === 'content_en' || normalized === 'description_en') {
+    return (
+      source['content_en'] ??
+      source['description_en'] ??
+      source['description'] ??
+      source['content']
+    );
+  }
+  return undefined;
+};
+
+const resolveParserOutputValue = (
+  source: ParserSourceRecord,
+  outputKey: string,
+  value: unknown
+): unknown => {
+  const resolved = isEmptyParserValue(value) ? (fallbackParserValue(source, outputKey) ?? value) : value;
+  return resolved !== undefined ? normalizeParserOutputValue(outputKey, resolved) : undefined;
+};
+
+const buildParsedOutputs = (args: {
+  source: ParserSourceRecord;
+  mappings: Record<string, string | undefined>;
+}): RuntimePortValues =>
+  Object.entries(args.mappings).reduce<RuntimePortValues>(
+    (acc: RuntimePortValues, [output, rawMapping]): RuntimePortValues => {
+      const key = output.trim();
+      if (!key) return acc;
+      const mapping = rawMapping?.trim() ?? '';
+      const directValue = mapping ? getValueAtMappingPath(args.source, mapping) : args.source[key];
+      const resolvedValue = resolveParserOutputValue(args.source, key, directValue);
+      if (resolvedValue !== undefined) {
+        acc[key] = resolvedValue;
+      }
+      return acc;
+    },
+    {}
+  );
+
+const buildDeclaredOutputs = (
+  outputs: string[],
+  sourceRecord: ParserSourceRecord,
+  source: ParserSourceRecord
+): Record<string, unknown> =>
+  outputs.reduce<Record<string, unknown>>(
+    (acc: Record<string, unknown>, output: string): Record<string, unknown> => {
+      if (output === 'bundle') return acc;
+      const outputKey = output.trim();
+      if (!outputKey) return acc;
+      const resolvedValue = resolveParserOutputValue(source, outputKey, sourceRecord[outputKey]);
+      if (resolvedValue !== undefined) {
+        acc[outputKey] = resolvedValue;
+      }
+      return acc;
+    },
+    {}
+  );
+
+const normalizeParserBundle = (source: ParserSourceRecord): ParserSourceRecord => {
+  const bundle = { ...source };
+  if (bundle['images'] !== undefined) {
+    bundle['images'] = normalizeParserOutputValue('images', bundle['images']);
+  }
+  if (bundle['imageUrls'] !== undefined) {
+    bundle['imageUrls'] = normalizeParserOutputValue('imageUrls', bundle['imageUrls']);
+  }
+  return bundle;
+};
+
+const hasParserMappings = (mappings: Record<string, string | undefined>): boolean =>
+  Object.keys(mappings).some((key: string): boolean => !!key.trim());
+
+const buildBundleParserResult = (args: {
+  source: ParserSourceRecord;
+  parsed: RuntimePortValues;
+  hasMappings: boolean;
+  outputs: string[];
+}): RuntimePortValues => {
+  if (!args.hasMappings || Object.keys(args.parsed).length === 0) {
+    const fullBundle = normalizeParserBundle(args.source);
+    const declaredOutputs = buildDeclaredOutputs(args.outputs, fullBundle, args.source);
+    return { bundle: fullBundle, ...declaredOutputs };
+  }
+
+  const extraOutputs = buildDeclaredOutputs(
+    args.outputs,
+    args.parsed as ParserSourceRecord,
+    args.source
+  );
+  return { bundle: args.parsed, ...extraOutputs };
+};
 
 export const handleParser: NodeHandler = async ({
   node,
@@ -18,68 +216,22 @@ export const handleParser: NodeHandler = async ({
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   try {
-    const normalizeParserOutputValue = (key: string, value: unknown): unknown => {
-      const normalizedKey = key.trim().toLowerCase();
-      if (normalizedKey === 'images' || normalizedKey === 'imageurls') {
-        const urls = extractImageUrls(value);
-        return urls.length > 0 ? urls : value;
-      }
-      return value;
-    };
     const contextInput = coerceInput(nodeInputs['context']);
-    const contextEntity =
-      contextInput && typeof contextInput === 'object'
-        ? (((contextInput as Record<string, unknown>)['entity'] as
-            | Record<string, unknown>
-            | undefined) ??
-          ((contextInput as Record<string, unknown>)['entityJson'] as
-            | Record<string, unknown>
-            | undefined) ??
-          ((contextInput as Record<string, unknown>)['product'] as
-            | Record<string, unknown>
-            | undefined))
-        : undefined;
+    const contextEntity = readContextEntitySource(contextInput);
     let source =
-      (coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined) ??
+      (coerceInput(nodeInputs['entityJson']) as ParserSourceRecord | undefined) ??
       contextEntity ??
-      (resolvedEntity as Record<string, unknown> | undefined);
+      (resolvedEntity as ParserSourceRecord | undefined);
 
     // In strict mode, hydration by explicit context identity is allowed (not a hidden fallback).
-    if (!source && contextInput && typeof contextInput === 'object') {
-      const contextRecord = contextInput as Record<string, unknown>;
-      const contextEntityId =
-        typeof contextRecord['entityId'] === 'string' && contextRecord['entityId'].trim().length > 0
-          ? contextRecord['entityId'].trim()
-          : typeof contextRecord['productId'] === 'string' &&
-              contextRecord['productId'].trim().length > 0
-            ? contextRecord['productId'].trim()
-            : null;
-      const contextEntityType =
-        typeof contextRecord['entityType'] === 'string' &&
-        contextRecord['entityType'].trim().length > 0
-          ? contextRecord['entityType'].trim()
-          : simulationEntityType;
-      if (contextEntityId && contextEntityType) {
-        try {
-          const hydrated = await fetchEntityCached(contextEntityType, contextEntityId);
-          if (hydrated && typeof hydrated === 'object') {
-            source = hydrated;
-          }
-        } catch (error) {
-          logClientError(error);
-          reportAiPathsError(
-            error,
-            {
-              service: 'ai-paths-runtime',
-              nodeId: node.id,
-              nodeType: node.type,
-              contextEntityId,
-              contextEntityType,
-            },
-            `Parser context hydration failed for ${contextEntityType}:${contextEntityId}`
-          );
-        }
-      }
+    if (!source) {
+      source = await hydrateParserSourceFromContext({
+        contextInput,
+        simulationEntityType,
+        fetchEntityCached,
+        reportAiPathsError,
+        node,
+      });
     }
 
     if (!source) {
@@ -92,98 +244,21 @@ export const handleParser: NodeHandler = async ({
     const parserConfig = node.config?.parser;
     const mappings = parserConfig?.mappings ?? {};
     const outputMode = parserConfig?.outputMode ?? 'individual';
-    const hasMappings = Object.keys(mappings).some((key: string): boolean => !!key.trim());
-    const isEmptyValue = (value: unknown): boolean =>
-      value === undefined ||
-      value === null ||
-      (typeof value === 'string' && value.trim() === '') ||
-      (Array.isArray(value) && value.length === 0);
-
-    const fallbackForKey = (key: string): unknown => {
-      const normalized = key.trim().toLowerCase();
-      if (normalized === 'title' || normalized === 'name') {
-        return (
-          source['title'] ??
-          source['name'] ??
-          source['name_en'] ??
-          source['name_pl'] ??
-          source['label'] ??
-          source['productName']
-        );
-      }
-      if (normalized === 'images' || normalized === 'imageurls') {
-        return (
-          source['images'] ??
-          source['imageLinks'] ??
-          source['media'] ??
-          source['gallery'] ??
-          source['imageFiles'] ??
-          source['photos']
-        );
-      }
-      if (normalized === 'productid' || normalized === 'entityid' || normalized === 'id') {
-        return source['id'] ?? source['_id'] ?? source['productId'] ?? source['entityId'];
-      }
-      if (normalized === 'content_en' || normalized === 'description_en') {
-        return (
-          source['content_en'] ??
-          source['description_en'] ??
-          source['description'] ??
-          source['content']
-        );
-      }
-      return undefined;
-    };
-
-    const parsed: RuntimePortValues = {};
-    Object.keys(mappings).forEach((output: string): void => {
-      const key = output.trim();
-      if (!key) return;
-      const mapping = mappings[output]?.trim() ?? '';
-      const value = mapping ? getValueAtMappingPath(source, mapping) : source[key];
-      const resolved = isEmptyValue(value) ? (fallbackForKey(key) ?? value) : value;
-      if (resolved !== undefined) {
-        parsed[key] = normalizeParserOutputValue(key, resolved);
-      }
+    const hasMappings = hasParserMappings(mappings);
+    const parsed = buildParsedOutputs({
+      source,
+      mappings: mappings as Record<string, string | undefined>,
     });
 
-    const buildDeclaredOutputs = (sourceRecord: Record<string, unknown>): Record<string, unknown> =>
-      node.outputs.reduce<Record<string, unknown>>(
-        (acc: Record<string, unknown>, output: string): Record<string, unknown> => {
-          if (output === 'bundle') return acc;
-          const outputKey = output.trim();
-          if (!outputKey) return acc;
-          const direct = sourceRecord[outputKey];
-          const resolved = isEmptyValue(direct) ? (fallbackForKey(outputKey) ?? direct) : direct;
-          if (resolved !== undefined) {
-            acc[outputKey] = normalizeParserOutputValue(outputKey, resolved);
-          }
-          return acc;
-        },
-        {}
-      );
-
     if (outputMode === 'bundle') {
-      if (!hasMappings || Object.keys(parsed).length === 0) {
-        const fullBundle: Record<string, unknown> =
-          typeof source === 'object' && source !== null ? { ...source } : {};
-        if (fullBundle['images'] !== undefined) {
-          fullBundle['images'] = normalizeParserOutputValue('images', fullBundle['images']);
-        }
-        if (fullBundle['imageUrls'] !== undefined) {
-          fullBundle['imageUrls'] = normalizeParserOutputValue(
-            'imageUrls',
-            fullBundle['imageUrls']
-          );
-        }
-        const declaredOutputs = buildDeclaredOutputs(fullBundle);
-        return { bundle: fullBundle, ...declaredOutputs };
-      }
-      const extraOutputs = buildDeclaredOutputs(parsed);
-      return { bundle: parsed, ...extraOutputs };
-    } else {
-      return parsed;
+      return buildBundleParserResult({
+        source,
+        parsed,
+        hasMappings,
+        outputs: node.outputs,
+      });
     }
+    return parsed;
   } catch (error) {
     logClientError(error);
     reportAiPathsError(

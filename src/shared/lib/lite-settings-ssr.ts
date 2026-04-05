@@ -5,6 +5,41 @@ import { cloneLiteSettings, getLiteSettingsCache } from '@/shared/lib/settings-l
 
 import type { SettingRecord } from '@/shared/contracts/settings';
 
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+
+const LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS = parsePositiveInt(
+  process.env['LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS'],
+  process.env['NODE_ENV'] === 'development' ? 75 : 250
+);
+
+const waitForLiteSettingsPrewarm = async (): Promise<void> => {
+  const prewarmPromise = prewarmLiteSettingsServerCache();
+  void prewarmPromise.catch(() => {});
+
+  if (LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS <= 0) {
+    await prewarmPromise;
+    return;
+  }
+
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    await Promise.race([
+      prewarmPromise,
+      new Promise<void>((resolve) => {
+        timeoutId = setTimeout(resolve, LITE_SETTINGS_SSR_PREWARM_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
 /**
  * Fetch lite settings on the server and return them for SSR hydration.
  * The result is injected into a <script> tag so the client can skip the
@@ -12,7 +47,7 @@ import type { SettingRecord } from '@/shared/contracts/settings';
  */
 export async function getLiteSettingsForHydration(): Promise<SettingRecord[]> {
   try {
-    await prewarmLiteSettingsServerCache();
+    await waitForLiteSettingsPrewarm();
     const cache = getLiteSettingsCache();
     return cache ? cloneLiteSettings(cache.data) : [];
   } catch {

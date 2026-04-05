@@ -3,13 +3,7 @@
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import {
-  type CaseResolverFile,
-  type ResultHeight,
-  type CaseRow,
-  type DocumentRelationFileTypeFilter,
-  type DocumentRelationSortMode,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverFile, type ResultHeight, type CaseRow, type DocumentRelationFileTypeFilter, type DocumentRelationSortMode } from '@/shared/contracts/case-resolver';
 import { internalError } from '@/shared/errors/app-error';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

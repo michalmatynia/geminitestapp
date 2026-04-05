@@ -5,7 +5,6 @@ import type { Collection, Db, Document, Filter } from 'mongodb';
 import { getKangurGameContentSetsForGame, getKangurGameDefinition } from '@/features/kangur/games';
 import type { KangurGameContentSet } from '@/shared/contracts/kangur-game-instances';
 import { kangurGameContentSetSchema } from '@/shared/contracts/kangur-game-instances';
-import type { KangurGameId } from '@/shared/contracts/kangur-games';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type {
@@ -102,7 +101,7 @@ const seedMissingBuiltInContentSetsForGame = async (
   }
 
   const builtInContentSets = getKangurGameContentSetsForGame(
-    getKangurGameDefinition(gameId as KangurGameId)
+    getKangurGameDefinition(gameId)
   );
   if (builtInContentSets.length === 0) {
     return false;

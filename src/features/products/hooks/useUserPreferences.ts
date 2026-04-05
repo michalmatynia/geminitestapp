@@ -1,16 +1,14 @@
 'use client';
 
 import { type UseMutationResult } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import {
   type UserPreferencesResponse,
   userPreferencesUpdateSchema,
 } from '@/shared/contracts/auth';
-import type {
-  ProductAdvancedFilterPreset,
-  ProductListPreferences,
-} from '@/shared/contracts/products';
+import type { ProductAdvancedFilterPreset, ProductListPreferences } from '@/shared/contracts/products/filters';
+import { productListPreferencesSchema } from '@/shared/contracts/products/filters';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
@@ -36,6 +34,8 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
 };
 
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
+const PRODUCT_LIST_NAME_LOCALES = new Set(['name_en', 'name_pl', 'name_de']);
+const PRODUCT_LIST_THUMBNAIL_SOURCES = new Set(['file', 'link', 'base64']);
 
 const mapProductListPreferences = (
   data: UserPreferencesResponse | null | undefined
@@ -74,11 +74,144 @@ async function updateUserPreference(
   await api.patch('/api/user/preferences', payload);
 }
 
+function getProductListPreferenceStorageKey(key: keyof ProductListPreferences): string {
+  return `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+}
+
+function serializeProductListPreferenceValue(value: unknown): string {
+  if (value === null) return 'null';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 function updateLocalStorage(key: keyof ProductListPreferences, value: unknown): void {
   if (typeof window === 'undefined') return;
 
-  const storageKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
-  window.localStorage.setItem(storageKey, String(value));
+  window.localStorage.setItem(
+    getProductListPreferenceStorageKey(key),
+    serializeProductListPreferenceValue(value)
+  );
+}
+
+function parseStoredBooleanPreference(value: string | null): boolean | undefined {
+  if (value == null) return undefined;
+  if (value === 'true' || value === '1') return true;
+  if (value === 'false' || value === '0') return false;
+  return undefined;
+}
+
+function parseStoredJsonPreference(value: string | null): unknown {
+  if (!value) return undefined;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function readStoredProductListPreferences(): ProductListPreferences | null {
+  if (typeof window === 'undefined') return null;
+
+  const partial: Partial<ProductListPreferences> = {};
+  let hasStoredValue = false;
+
+  const nameLocale = window.localStorage.getItem(getProductListPreferenceStorageKey('nameLocale'));
+  if (nameLocale != null) {
+    hasStoredValue = true;
+    if (PRODUCT_LIST_NAME_LOCALES.has(nameLocale)) {
+      partial.nameLocale = nameLocale as ProductListPreferences['nameLocale'];
+    }
+  }
+
+  const catalogFilter = window.localStorage.getItem(
+    getProductListPreferenceStorageKey('catalogFilter')
+  );
+  if (catalogFilter != null) {
+    hasStoredValue = true;
+    partial.catalogFilter = catalogFilter;
+  }
+
+  const currencyCode = window.localStorage.getItem(
+    getProductListPreferenceStorageKey('currencyCode')
+  );
+  if (currencyCode != null) {
+    hasStoredValue = true;
+    partial.currencyCode = currencyCode === 'null' ? null : currencyCode;
+  }
+
+  const pageSize = window.localStorage.getItem(getProductListPreferenceStorageKey('pageSize'));
+  if (pageSize != null) {
+    hasStoredValue = true;
+    partial.pageSize = normalizeProductPageSize(Number.parseInt(pageSize, 10), 12);
+  }
+
+  const thumbnailSource = window.localStorage.getItem(
+    getProductListPreferenceStorageKey('thumbnailSource')
+  );
+  if (thumbnailSource != null) {
+    hasStoredValue = true;
+    if (PRODUCT_LIST_THUMBNAIL_SOURCES.has(thumbnailSource)) {
+      partial.thumbnailSource = thumbnailSource as ProductListPreferences['thumbnailSource'];
+    }
+  }
+
+  const filtersCollapsedByDefault = parseStoredBooleanPreference(
+    window.localStorage.getItem(getProductListPreferenceStorageKey('filtersCollapsedByDefault'))
+  );
+  if (filtersCollapsedByDefault != null) {
+    hasStoredValue = true;
+    partial.filtersCollapsedByDefault = filtersCollapsedByDefault;
+  }
+
+  const showTriggerRunFeedback = parseStoredBooleanPreference(
+    window.localStorage.getItem(getProductListPreferenceStorageKey('showTriggerRunFeedback'))
+  );
+  if (showTriggerRunFeedback != null) {
+    hasStoredValue = true;
+    partial.showTriggerRunFeedback = showTriggerRunFeedback;
+  }
+
+  const advancedFilterPresets = parseStoredJsonPreference(
+    window.localStorage.getItem(getProductListPreferenceStorageKey('advancedFilterPresets'))
+  );
+  if (advancedFilterPresets !== undefined) {
+    hasStoredValue = true;
+    if (Array.isArray(advancedFilterPresets)) {
+      partial.advancedFilterPresets = advancedFilterPresets as ProductAdvancedFilterPreset[];
+    }
+  }
+
+  const appliedAdvancedFilter = window.localStorage.getItem(
+    getProductListPreferenceStorageKey('appliedAdvancedFilter')
+  );
+  if (appliedAdvancedFilter != null) {
+    hasStoredValue = true;
+    partial.appliedAdvancedFilter = appliedAdvancedFilter;
+  }
+
+  const appliedAdvancedFilterPresetId = window.localStorage.getItem(
+    getProductListPreferenceStorageKey('appliedAdvancedFilterPresetId')
+  );
+  if (appliedAdvancedFilterPresetId != null) {
+    hasStoredValue = true;
+    partial.appliedAdvancedFilterPresetId =
+      appliedAdvancedFilterPresetId === 'null' ? null : appliedAdvancedFilterPresetId;
+  }
+
+  if (!hasStoredValue) return null;
+
+  const parsed = productListPreferencesSchema.safeParse({
+    ...DEFAULT_PREFERENCES,
+    ...partial,
+  });
+
+  return parsed.success ? parsed.data : DEFAULT_PREFERENCES;
 }
 
 async function updateUserPreferences(data: Partial<ProductListPreferences>): Promise<void> {
@@ -120,10 +253,13 @@ export interface UserPreferencesHookResult {
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {
+  const [storedPreferences] = useState<ProductListPreferences | null>(() =>
+    readStoredProductListPreferences()
+  );
   const query = createSingleQueryV2<UserPreferencesResponse, ProductListPreferences>({
     id: 'current',
     queryKey: userPreferencesQueryKey,
-    queryFn: () => fetchUserPreferences(),
+    queryFn: (context) => fetchUserPreferences(context.signal),
     select: mapProductListPreferences,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -141,7 +277,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
   });
 
   const { data, isLoading } = query;
-  const preferences = data || DEFAULT_PREFERENCES;
+  const preferences = data || storedPreferences || DEFAULT_PREFERENCES;
 
   const { mutateAsync: updateBulk } = useUpdateUserPreferences();
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { toNumber } from '@/shared/lib/ai-paths';
-import { Input, ToggleRow, FormField, Hint } from '@/shared/ui';
+import { Input } from '@/shared/ui/primitives.public';
+import { ToggleRow, FormField, Hint } from '@/shared/ui/forms-and-actions.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

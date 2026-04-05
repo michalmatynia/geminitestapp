@@ -12,7 +12,7 @@ import {
   KangurBadgeTrackCardBody,
   KangurBadgeTrackCardBar,
   KANGUR_BADGE_TRACK_ACCENTS,
-} from '@/features/kangur/ui/components/KangurBadgeTrackSummaryCard';
+} from '@/features/kangur/ui/components/badge-track/KangurBadgeTrackSummaryCard';
 
 const track: KangurBadgeTrackSummary = {
   key: 'challenge',

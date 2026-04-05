@@ -1,7 +1,7 @@
 import { Collection, Document, AnyBulkWriteOperation, UpdateFilter, Filter } from 'mongodb';
 
 import type { ImageFile } from '@/shared/contracts/files';
-import { ProductImageRecord } from '@/shared/contracts/products';
+import { ProductImageRecord } from '@/shared/contracts/products/product';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
 import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';

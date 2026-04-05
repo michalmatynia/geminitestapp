@@ -8,19 +8,10 @@ import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  AdminFilemakerBreadcrumbs,
-  Badge,
-  Button,
-  Checkbox,
-  FormActions,
-  FormField,
-  FormSection,
-  Input,
-  SectionHeader,
-  SelectSimple,
-  useToast,
-} from '@/shared/ui';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button, Checkbox, Input, useToast } from '@/shared/ui/primitives.public';
+import { FormActions, FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   createFilemakerAddress,

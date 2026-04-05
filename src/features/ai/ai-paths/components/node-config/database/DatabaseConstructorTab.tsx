@@ -14,7 +14,9 @@ import {
 } from '@/features/ai/ai-paths/config/query-presets';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { type UpdaterSampleState } from '@/shared/lib/ai-paths';
-import { Button, Label, Textarea, SelectSimple, Input, Card, insetPanelVariants } from '@/shared/ui';
+import { Button, Label, Textarea, Input, Card } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   formatCollectionLabel,

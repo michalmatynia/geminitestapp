@@ -69,10 +69,6 @@ is specifically for shared build, CI, and package-manager workflow guidance.
   `npm run check:toolchain:contract:node`
 - Shared npm-first toolchain contract test bundle:
   `npm run test:toolchain:contract`
-- Shared Vercel production alias sync check:
-  `npm run check:vercel:production:sync`
-- Shared GitHub main branch protection check:
-  `npm run check:github:branch-protection`
 - CodeQL scanning workflow and triage guide:
   [`docs/build/codeql.md`](./codeql.md)
 - Shared high-risk coverage gate:

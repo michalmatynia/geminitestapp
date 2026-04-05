@@ -1,14 +1,8 @@
 import 'server-only';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import {
-  ImageStudioRunDispatchMode,
-  ImageStudioRunRecord,
-  ImageStudioRunStatus,
-  ImageStudioRunHistoryEvent,
-  ImageStudioRunHistoryEventSource,
-  ImageStudioRunRequest,
-} from '@/shared/contracts/image-studio';
+import { ImageStudioRunDispatchMode, ImageStudioRunRecord, ImageStudioRunRequest } from '@/shared/contracts/image-studio/run';
+import { ImageStudioRunStatus, ImageStudioRunHistoryEvent, ImageStudioRunHistoryEventSource } from '@/shared/contracts/image-studio/base';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -178,15 +172,115 @@ const buildHistoryEventDocument = (
   ...(event.payload && isObjectRecord(event.payload) ? { payload: toJsonSafe(event.payload) } : {}),
 });
 
+const normalizeExpectedOutputs = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 1;
+  return Math.max(1, Math.min(10, Math.floor(value)));
+};
+
+const normalizeListRunsLimit = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 50;
+  return Math.max(1, Math.min(200, Math.floor(value)));
+};
+
+const normalizeListRunsOffset = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+};
+
+const buildCreateImageStudioRunDocument = (
+  input: CreateImageStudioRunInput,
+  now: string
+): ImageStudioRunDocument => {
+  const expectedOutputs = normalizeExpectedOutputs(input.expectedOutputs);
+
+  return {
+    _id: createId(),
+    projectId: input.projectId,
+    status: 'queued',
+    dispatchMode: null,
+    request: input.request,
+    expectedOutputs,
+    outputs: [],
+    errorMessage: null,
+    createdAt: now,
+    updatedAt: now,
+    startedAt: null,
+    finishedAt: null,
+    historyEvents: [
+      buildHistoryEventDocument(
+        {
+          type: 'accepted',
+          source: 'api',
+          message: 'Generation run accepted.',
+          payload: {
+            projectId: input.projectId,
+            expectedOutputs,
+            request: input.request,
+          },
+        },
+        now
+      ),
+    ],
+  };
+};
+
+const buildUpdateImageStudioRunPatch = (
+  update: UpdateImageStudioRunInput,
+  now: string
+): Partial<ImageStudioRunDocument> => {
+  const patch: Partial<ImageStudioRunDocument> = {
+    updatedAt: now,
+  };
+
+  if (update.status !== undefined) patch.status = update.status;
+  if (update.dispatchMode !== undefined) patch.dispatchMode = update.dispatchMode;
+  if (update.expectedOutputs !== undefined) {
+    patch.expectedOutputs = normalizeExpectedOutputs(update.expectedOutputs);
+  }
+  if (update.outputs !== undefined) patch.outputs = update.outputs;
+  if (update.errorMessage !== undefined) patch.errorMessage = update.errorMessage;
+  if (update.startedAt !== undefined) patch.startedAt = update.startedAt;
+  if (update.finishedAt !== undefined) patch.finishedAt = update.finishedAt;
+
+  return patch;
+};
+
+const buildHistoryEventDocuments = (
+  events: UpdateImageStudioRunInput['appendHistoryEvents'],
+  fallbackAt: string
+): ImageStudioRunHistoryEventDocument[] =>
+  Array.isArray(events)
+    ? events
+      .map((event) => buildHistoryEventDocument(event, fallbackAt))
+      .filter((event): event is ImageStudioRunHistoryEventDocument => Boolean(event))
+    : [];
+
+const buildUpdateImageStudioRunDocument = (
+  patch: Partial<ImageStudioRunDocument>,
+  historyEvents: ImageStudioRunHistoryEventDocument[]
+): UpdateFilter<ImageStudioRunDocument> => {
+  const updateDocument: UpdateFilter<ImageStudioRunDocument> = {
+    $set: patch,
+  };
+
+  if (historyEvents.length > 0) {
+    updateDocument.$push = {
+      historyEvents: {
+        $each: historyEvents,
+      },
+    } as NonNullable<UpdateFilter<ImageStudioRunDocument>['$push']>;
+  }
+
+  return updateDocument;
+};
+
 const toRecord = (doc: ImageStudioRunDocument): ImageStudioRunRecord => ({
   id: doc._id,
   projectId: doc.projectId,
   status: doc.status,
   dispatchMode: doc.dispatchMode ?? null,
   request: doc.request,
-  expectedOutputs: Number.isFinite(doc.expectedOutputs)
-    ? Math.max(1, Math.floor(doc.expectedOutputs))
-    : 1,
+  expectedOutputs: normalizeExpectedOutputs(doc.expectedOutputs),
   outputs: Array.isArray(doc.outputs) ? doc.outputs : [],
   errorMessage: doc.errorMessage ?? null,
   createdAt: doc.createdAt,
@@ -206,35 +300,7 @@ export async function createImageStudioRun(
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const now = new Date().toISOString();
-  const doc: ImageStudioRunDocument = {
-    _id: createId(),
-    projectId: input.projectId,
-    status: 'queued',
-    dispatchMode: null,
-    request: input.request,
-    expectedOutputs: Math.max(1, Math.min(10, Math.floor(input.expectedOutputs || 1))),
-    outputs: [],
-    errorMessage: null,
-    createdAt: now,
-    updatedAt: now,
-    startedAt: null,
-    finishedAt: null,
-    historyEvents: [
-      buildHistoryEventDocument(
-        {
-          type: 'accepted',
-          source: 'api',
-          message: 'Generation run accepted.',
-          payload: {
-            projectId: input.projectId,
-            expectedOutputs: Math.max(1, Math.min(10, Math.floor(input.expectedOutputs || 1))),
-            request: input.request,
-          },
-        },
-        now
-      ),
-    ],
-  };
+  const doc = buildCreateImageStudioRunDocument(input, now);
 
   await db.collection<ImageStudioRunDocument>(COLLECTION).insertOne(doc);
   return toRecord(doc);
@@ -255,38 +321,11 @@ export async function updateImageStudioRun(
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const now = new Date().toISOString();
-
-  const patch: Partial<ImageStudioRunDocument> = {
-    updatedAt: now,
-  };
-
-  if (update.status !== undefined) patch.status = update.status;
-  if (update.dispatchMode !== undefined) patch.dispatchMode = update.dispatchMode;
-  if (update.expectedOutputs !== undefined)
-    patch.expectedOutputs = Math.max(1, Math.min(10, Math.floor(update.expectedOutputs || 1)));
-  if (update.outputs !== undefined) patch.outputs = update.outputs;
-  if (update.errorMessage !== undefined) patch.errorMessage = update.errorMessage;
-  if (update.startedAt !== undefined) patch.startedAt = update.startedAt;
-  if (update.finishedAt !== undefined) patch.finishedAt = update.finishedAt;
-
-  const nextHistoryEvents = Array.isArray(update.appendHistoryEvents)
-    ? update.appendHistoryEvents
-      .map((event) => buildHistoryEventDocument(event, now))
-      .filter((event): event is ImageStudioRunHistoryEventDocument => Boolean(event))
-    : [];
+  const patch = buildUpdateImageStudioRunPatch(update, now);
+  const nextHistoryEvents = buildHistoryEventDocuments(update.appendHistoryEvents, now);
 
   const collection = db.collection<ImageStudioRunDocument>(COLLECTION);
-  const updateDocument: UpdateFilter<ImageStudioRunDocument> = {
-    $set: patch,
-  };
-  if (nextHistoryEvents.length > 0) {
-    updateDocument.$push = {
-      historyEvents: {
-        $each: nextHistoryEvents,
-      },
-    } as NonNullable<UpdateFilter<ImageStudioRunDocument>['$push']>;
-  }
-
+  const updateDocument = buildUpdateImageStudioRunDocument(patch, nextHistoryEvents);
   const result = await collection.findOneAndUpdate({ _id: runId }, updateDocument, {
     returnDocument: 'after',
   });
@@ -302,10 +341,8 @@ export async function listImageStudioRuns(
   const db = await getMongoDb();
   const collection = db.collection<ImageStudioRunDocument>(COLLECTION);
 
-  const limit = Number.isFinite(input.limit)
-    ? Math.max(1, Math.min(200, Math.floor(input.limit ?? 50)))
-    : 50;
-  const offset = Number.isFinite(input.offset) ? Math.max(0, Math.floor(input.offset ?? 0)) : 0;
+  const limit = normalizeListRunsLimit(input.limit);
+  const offset = normalizeListRunsOffset(input.offset);
 
   const query: Record<string, unknown> = {};
   if (input.status) query['status'] = input.status;

@@ -1,5 +1,3 @@
-'use client';
-
 import type { DatabaseConfig } from '@/shared/contracts/ai-paths';
 import {
   SELECTOR_TYPES_REQUIRING_OPTIONS,

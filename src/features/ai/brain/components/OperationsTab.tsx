@@ -22,14 +22,10 @@ import type {
   BrainOperationsRange,
   BrainOperationsTrend,
 } from '@/shared/contracts/ai-brain';
-import {
-  Card,
-  CompactEmptyState,
-  SectionHeader,
-  SelectSimple,
-  StatusBadge,
-  UI_GRID_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { Card } from '@/shared/ui/primitives.public';
+import { CompactEmptyState, SectionHeader, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 import { useBrain } from '../context/BrainContext';
 

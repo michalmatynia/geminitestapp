@@ -12,7 +12,7 @@ import {
   useRunProductSyncProfileMutation,
   useUpdateProductSyncProfileMutation,
 } from '@/features/product-sync/hooks/useProductSyncSettings';
-import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations';
+import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
 import {
   PRODUCT_SYNC_APP_FIELDS,
   PRODUCT_SYNC_DIRECTION_OPTIONS,
@@ -34,18 +34,9 @@ import {
   useIntegrationsWithConnections,
 } from '@/shared/hooks/useIntegrationQueries';
 import { api } from '@/shared/lib/api-client';
-import {
-  Badge,
-  Button,
-  Input,
-  SelectSimple,
-  useToast,
-  SimpleSettingsList,
-  FormSection,
-  FormField,
-  ToggleRow,
-  FormActions,
-} from '@/shared/ui';
+import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui/forms-and-actions.public';
+import { SimpleSettingsList } from '@/shared/ui/templates.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

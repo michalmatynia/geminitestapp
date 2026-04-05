@@ -34,6 +34,7 @@ const {
 vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
   redirect: redirectMock,
+  permanentRedirect: redirectMock,
 }));
 
 vi.mock('next-intl/server', () => ({
@@ -46,6 +47,28 @@ vi.mock('next-intl/server', () => ({
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
   getFrontPageSetting: getFrontPageSettingMock,
   shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
+  resolveFrontPageSelection: async () => {
+    const enabled = shouldApplyFrontPageAppSelectionMock();
+    if (!enabled) {
+      return {
+        enabled: false,
+        setting: null,
+        publicOwner: 'cms',
+        redirectPath: null,
+        source: 'disabled',
+        fallbackReason: null,
+      };
+    }
+    const setting = await getFrontPageSettingMock();
+    return {
+      enabled: true,
+      setting,
+      publicOwner: getFrontPagePublicOwnerMock(setting),
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    };
+  },
 }));
 
 vi.mock('@/shared/lib/front-page-app', () => ({
@@ -53,6 +76,33 @@ vi.mock('@/shared/lib/front-page-app', () => ({
 }));
 
 vi.mock('@/features/kangur/public', () => ({
+  getKangurPublicLaunchHref: (
+    route: string | undefined,
+    slugSegments: readonly string[] = [],
+    searchParams?: Record<string, string | string[] | undefined>
+  ) => {
+    const pathname = slugSegments.length > 0 ? `/kangur/${slugSegments.join('/')}` : '/kangur';
+    const query = new URLSearchParams();
+
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          query.append(key, entry);
+        });
+        return;
+      }
+      if (value != null) {
+        query.set(key, value);
+      }
+    });
+
+    if (route === 'dedicated_app' && slugSegments[0] !== 'games' && slugSegments[0] !== 'parent-dashboard') {
+      query.set('__kangurLaunch', 'dedicated_app');
+    }
+
+    const serialized = query.toString();
+    return serialized ? `${pathname}?${serialized}` : pathname;
+  },
   KangurPublicApp: kangurPublicAppMock,
   KangurFeatureRouteShell: kangurFeatureRouteShellMock,
   getKangurPublicAliasHref: (

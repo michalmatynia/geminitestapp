@@ -24,3 +24,8 @@ export const isTraderaApiIntegrationSlug = (value: string | null | undefined): b
 
 export const isLinkedInIntegrationSlug = (value: string | null | undefined): boolean =>
   normalizeIntegrationSlug(value) === LINKEDIN_INTEGRATION_SLUG;
+
+export const PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG = 'playwright-programmable';
+
+export const isPlaywrightProgrammableSlug = (value: string | null | undefined): boolean =>
+  normalizeIntegrationSlug(value) === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG;

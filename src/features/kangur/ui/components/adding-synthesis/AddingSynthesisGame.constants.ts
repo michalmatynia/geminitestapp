@@ -1,7 +1,11 @@
-'use client';
-
 import type { KangurAccent } from '@/features/kangur/ui/design/tokens';
 import type { FeedbackKind } from './AddingSynthesisGame.types';
+
+export const ADDING_SYNTHESIS_VIEW_KINDS = {
+  intro: 'intro',
+  playing: 'playing',
+  summary: 'summary',
+} as const;
 
 export const LANE_STYLES = [
   {

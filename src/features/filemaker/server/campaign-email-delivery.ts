@@ -9,7 +9,11 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   FilemakerEmailCampaignDeliveryFailureCategory,
   FilemakerEmailCampaignDeliveryProvider,
+  FilemakerMailAccount,
 } from '../types';
+import { getFilemakerMailAccount } from './filemaker-mail-service';
+import { createSmtpTransport } from './mail/mail-smtp';
+import { buildAccountSecretSettingKey } from './mail/mail-utils';
 
 export const FILEMAKER_CAMPAIGN_EMAIL_SECRET_SETTINGS_KEYS = {
   webhookUrl: 'filemaker_campaign_email_webhook_url',
@@ -44,6 +48,7 @@ export type FilemakerCampaignEmailDeliveryRecord = {
   campaignId: string;
   runId: string;
   deliveryId: string;
+  mailAccountId: string | null;
   replyToEmail: string | null;
   fromName: string | null;
   sentAt: string;
@@ -265,6 +270,73 @@ const formatFromHeader = (fromName: string | null, from: string): string => {
   return `"${escaped}" <${from}>`;
 };
 
+const toCampaignDeliveryError = (
+  error: unknown,
+  input?: {
+    provider?: FilemakerEmailCampaignDeliveryProvider | null;
+    failureCategory?: FilemakerEmailCampaignDeliveryFailureCategory;
+  }
+): FilemakerCampaignEmailDeliveryError => {
+  if (error instanceof FilemakerCampaignEmailDeliveryError) {
+    return error;
+  }
+  const message =
+    error instanceof Error ? error.message : 'Filemaker campaign email delivery failed.';
+  return new FilemakerCampaignEmailDeliveryError({
+    message,
+    provider: input?.provider ?? null,
+    failureCategory:
+      input?.failureCategory ??
+      (input?.provider === 'smtp'
+        ? classifyFilemakerCampaignFailureFromMessage(message)
+        : 'unknown'),
+  });
+};
+
+const resolveAccountDeliveryConfig = async (input: {
+  mailAccountId: string;
+  fromName: string | null;
+  replyToEmail: string | null;
+}): Promise<{
+  account: FilemakerMailAccount;
+  password: string;
+  fromName: string | null;
+  replyToEmail: string | null;
+}> => {
+  let account: FilemakerMailAccount;
+  try {
+    account = await getFilemakerMailAccount(input.mailAccountId);
+  } catch (error) {
+    throw toCampaignDeliveryError(error);
+  }
+
+  if (account.status !== 'active') {
+    throw new FilemakerCampaignEmailDeliveryError({
+      message: `Mail account ${account.name || account.id} is paused and cannot send campaigns.`,
+      provider: null,
+      failureCategory: 'unknown',
+    });
+  }
+
+  const secretKey = buildAccountSecretSettingKey(account.id, 'smtp_password');
+  const values = await readSecretSettingValues([secretKey]);
+  const password = values[secretKey] ?? null;
+  if (!password) {
+    throw new FilemakerCampaignEmailDeliveryError({
+      message: `SMTP password missing for mail account ${account.name || account.id}.`,
+      provider: null,
+      failureCategory: 'unknown',
+    });
+  }
+
+  return {
+    account,
+    password,
+    fromName: input.fromName?.trim() || account.fromName?.trim() || null,
+    replyToEmail: input.replyToEmail?.trim() || account.replyToEmail?.trim() || null,
+  };
+};
+
 export const sendFilemakerCampaignEmail = async (input: {
   to: string;
   subject: string;
@@ -273,10 +345,11 @@ export const sendFilemakerCampaignEmail = async (input: {
   campaignId: string;
   runId: string;
   deliveryId: string;
+  mailAccountId?: string | null;
   replyToEmail?: string | null;
   fromName?: string | null;
 }): Promise<FilemakerCampaignEmailSendResult> => {
-  const record: FilemakerCampaignEmailDeliveryRecord = {
+  const baseRecord: FilemakerCampaignEmailDeliveryRecord = {
     to: input.to.trim().toLowerCase(),
     subject: input.subject.trim(),
     text: input.text,
@@ -284,11 +357,50 @@ export const sendFilemakerCampaignEmail = async (input: {
     campaignId: input.campaignId,
     runId: input.runId,
     deliveryId: input.deliveryId,
+    mailAccountId: input.mailAccountId?.trim() || null,
     replyToEmail: input.replyToEmail?.trim() || null,
     fromName: input.fromName?.trim() || null,
     sentAt: new Date().toISOString(),
   };
 
+  if (baseRecord.mailAccountId) {
+    const accountConfig = await resolveAccountDeliveryConfig({
+      mailAccountId: baseRecord.mailAccountId,
+      fromName: baseRecord.fromName,
+      replyToEmail: baseRecord.replyToEmail,
+    });
+    const record: FilemakerCampaignEmailDeliveryRecord = {
+      ...baseRecord,
+      fromName: accountConfig.fromName,
+      replyToEmail: accountConfig.replyToEmail,
+    };
+
+    if (shouldPersistCampaignOutboxRecord()) {
+      deliveredCampaignEmails.push(record);
+    }
+
+    const transport = createSmtpTransport(accountConfig.account, accountConfig.password);
+    try {
+      await transport.sendMail({
+        from: formatFromHeader(record.fromName, accountConfig.account.emailAddress),
+        to: record.to,
+        subject: record.subject,
+        text: record.text,
+        ...(record.html ? { html: record.html } : {}),
+        ...(record.replyToEmail ? { replyTo: record.replyToEmail } : {}),
+      });
+    } catch (error) {
+      throw toCampaignDeliveryError(error, { provider: 'smtp' });
+    }
+
+    return {
+      provider: 'smtp',
+      providerMessage: `Sent through the Filemaker mail account "${accountConfig.account.name}".`,
+      sentAt: record.sentAt,
+    };
+  }
+
+  const record = baseRecord;
   if (shouldPersistCampaignOutboxRecord()) {
     deliveredCampaignEmails.push(record);
   }

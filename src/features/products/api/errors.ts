@@ -1,9 +1,5 @@
 import type { ErrorCategory } from '@/shared/contracts/observability';
-import type {
-  ProductApiError,
-  ProductApiErrorCode,
-  ProductApiErrorDetail,
-} from '@/shared/contracts/products';
+import type { ProductApiError, ProductApiErrorCode, ProductApiErrorDetail } from '@/shared/contracts/products/errors';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 
 export type ErrorCode = ProductApiErrorCode;

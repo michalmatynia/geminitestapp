@@ -19,22 +19,9 @@ import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
 } from '@/features/filemaker/public';
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  FormField,
-  Input,
-  SelectSimple,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  UI_GRID_ROOMY_CLASSNAME,
-  UI_STACK_RELAXED_CLASSNAME,
-  UI_STACK_ROOMY_CLASSNAME,
-} from '@/shared/ui';
+import { Badge, Button, Card, Input, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+import { EmptyState, UI_GRID_ROOMY_CLASSNAME, UI_STACK_RELAXED_CLASSNAME, UI_STACK_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import {
   useCaseResolverViewActionsContext,

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductListing, ProductListingRepository } from '@/shared/contracts/integrations';
+import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type { ProductListingRepository } from '@/shared/contracts/integrations/repositories';
 
 const mocks = vi.hoisted(() => ({
   findByIdMock: vi.fn(),

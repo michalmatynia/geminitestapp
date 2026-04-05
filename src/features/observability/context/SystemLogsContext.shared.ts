@@ -15,7 +15,8 @@ import type {
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts/observability';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { FilterField, Toast } from '@/shared/contracts/ui';
+import type { FilterField } from '@/shared/contracts/ui/panels';
+import type { Toast } from '@/shared/contracts/ui/base';
 
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import type { ComponentType, Dispatch, SetStateAction } from 'react';

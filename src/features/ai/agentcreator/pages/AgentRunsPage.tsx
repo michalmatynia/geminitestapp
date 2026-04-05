@@ -5,19 +5,11 @@ import React, { useCallback } from 'react';
 
 import type { AgentRunRecord } from '@/shared/contracts/agent-runtime';
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
-import {
-  AdminAgentCreatorBreadcrumbs,
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Hint,
-  ListPanel,
-  MetadataItem,
-  StatusBadge,
-  UI_GRID_RELAXED_CLASSNAME,
-  UI_STACK_RELAXED_CLASSNAME,
-} from '@/shared/ui';
+import { AdminAgentCreatorBreadcrumbs } from '@/shared/ui/admin.public';
+import { Alert, Badge, Button, Card } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
+import { ListPanel, MetadataItem, UI_GRID_RELAXED_CLASSNAME, UI_STACK_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { StatusBadge } from '@/shared/ui/data-display.public';
 
 
 import { AgentRunDetailModal } from '../components/AgentRunDetailModal';

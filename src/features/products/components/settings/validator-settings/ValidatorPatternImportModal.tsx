@@ -7,7 +7,9 @@ import type {
   ImportValidationPatternsResult,
 } from '@/features/products/api/settings';
 import { useImportValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import { JSONImportModal, useToast } from '@/shared/ui';
+import { JSONImportModal } from '@/shared/ui/templates/modals/JSONImportModal';
+import { useToast } from '@/shared/ui/toast';
+
 import {
   logClientCatch,
   logClientError,

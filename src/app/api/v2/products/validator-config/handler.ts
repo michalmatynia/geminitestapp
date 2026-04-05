@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { optionalBooleanQuerySchema } from '@/shared/lib/api/query-schema';
 import { listValidationPatternsCached } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 

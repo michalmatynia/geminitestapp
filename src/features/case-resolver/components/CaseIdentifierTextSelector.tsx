@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
-import { MultiSelect } from '@/shared/ui';
+import { MultiSelect } from '@/shared/ui/forms-and-actions.public';
 
 import { useAdminCaseResolverCasesStateContext } from '../context/AdminCaseResolverCasesContext';
 

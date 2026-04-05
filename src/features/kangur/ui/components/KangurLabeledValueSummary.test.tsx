@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { KangurLabeledValueSummary } from '@/features/kangur/ui/components/KangurLabeledValueSummary';
+import { KangurLabeledValueSummary } from '@/features/kangur/ui/components/summary-cards/KangurLabeledValueSummary';
 
 describe('KangurLabeledValueSummary', () => {
   it('renders label, value, and optional description with shared text styles', () => {

@@ -24,18 +24,21 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: mocks.logClientError,
 }));
 
-vi.mock('@/shared/ui', async () => {
+vi.mock('@/shared/ui/input', async () => {
   const ReactModule = await import('react');
 
   return {
     Input: ReactModule.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
       (props, ref) => <input ref={ref} {...props} />
     ),
-    useToast: () => ({
-      toast: mocks.toast,
-    }),
   };
 });
+
+vi.mock('@/shared/ui/toast', () => ({
+  useToast: () => ({
+    toast: mocks.toast,
+  }),
+}));
 
 import { EditableCell } from './EditableCell';
 

@@ -1,15 +1,10 @@
 import React from 'react';
 import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
-import { formatDurationMs } from '@/shared/lib/ai-paths';
-import {
-  Label,
-  StatusBadge,
-  Card,
-  JsonViewer,
-  CollapsibleSection,
-  insetPanelVariants,
-} from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { formatDurationMs } from '@/shared/lib/ai-paths/format-duration';
+import { Label, Card, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { StatusBadge, JsonViewer } from '@/shared/ui/data-display.public';
+import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 import {
   readRuntimeTraceSummary,
   type RunTracePayloadDiff,

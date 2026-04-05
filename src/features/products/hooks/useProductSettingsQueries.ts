@@ -1,5 +1,3 @@
-'use client';
-
 import {
   type Catalog,
   type CatalogRecord,
@@ -13,6 +11,11 @@ import {
   type ReorderProductCategory as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
 import {
+  type ProductShippingGroup,
+  type ProductShippingGroupCreateInput,
+  type ProductShippingGroupUpdateInput,
+} from '@/shared/contracts/products/shipping-groups';
+import {
   type ProductParameter,
   type ProductSimpleParameter,
 } from '@/shared/contracts/products/parameters';
@@ -25,14 +28,7 @@ import {
   type UpdateProductValidationPatternInput as UpdateValidationPatternPayload,
   type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
 } from '@/shared/contracts/products/validation';
-import type {
-  UpdateMutation,
-  DeleteMutation,
-  SaveMutation,
-  CreateMutation,
-  ListQuery,
-  SingleQuery,
-} from '@/shared/contracts/ui';
+import type { UpdateMutation, DeleteMutation, SaveMutation, CreateMutation, ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import {
   type ProductValidatorImportRequest as ImportValidationPatternsPayload,
   type ProductValidatorImportResult as ImportValidationPatternsResult,
@@ -58,8 +54,10 @@ export { productSettingsKeys };
 import {
   useCatalogs as useMetadataCatalogs,
   useParameters as useMetadataParameters,
+  type ProductMetadataQueryOptions,
   useSimpleParameters as useMetadataSimpleParameters,
   usePriceGroups as useMetadataPriceGroups,
+  useShippingGroups as useMetadataShippingGroups,
   useTags as useMetadataTags,
 } from './useProductMetadataQueries';
 import * as api from '../api/settings';
@@ -107,20 +105,23 @@ const toCategoryCreatePayload = (
   };
 };
 
-export function usePriceGroups(): ListQuery<PriceGroup> {
-  return useMetadataPriceGroups();
+export function usePriceGroups(options?: ProductMetadataQueryOptions): ListQuery<PriceGroup> {
+  return useMetadataPriceGroups(options);
 }
 
-export function useCatalogs(): ListQuery<CatalogRecord> {
-  return useMetadataCatalogs();
+export function useCatalogs(options?: ProductMetadataQueryOptions): ListQuery<CatalogRecord> {
+  return useMetadataCatalogs(options);
 }
 
-export function useCategories(catalogId: string | null): ListQuery<ProductCategoryWithChildren> {
+export function useCategories(
+  catalogId: string | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductCategoryWithChildren> {
   const queryKey = productSettingsKeys.categoryTree(catalogId);
   return createListQueryV2({
     queryKey,
     queryFn: () => api.getCategories(catalogId),
-    enabled: !!catalogId,
+    enabled: Boolean(catalogId) && (options?.enabled ?? true),
     ...STABLE_SETTINGS_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useCategories',
@@ -133,12 +134,25 @@ export function useCategories(catalogId: string | null): ListQuery<ProductCatego
   });
 }
 
-export function useTags(catalogId: string | null): ListQuery<ProductTag> {
-  return useMetadataTags(catalogId ?? undefined);
+export function useTags(
+  catalogId: string | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductTag> {
+  return useMetadataTags(catalogId ?? undefined, options);
 }
 
-export function useParameters(catalogId: string | null): ListQuery<ProductParameter> {
-  return useMetadataParameters(catalogId ?? undefined);
+export function useShippingGroups(
+  catalogId: string | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductShippingGroup> {
+  return useMetadataShippingGroups(catalogId ?? undefined, options);
+}
+
+export function useParameters(
+  catalogId: string | null,
+  options?: ProductMetadataQueryOptions
+): ListQuery<ProductParameter> {
+  return useMetadataParameters(catalogId ?? undefined, options);
 }
 
 export function useSimpleParameters(catalogId: string | null): ListQuery<ProductSimpleParameter> {
@@ -402,6 +416,104 @@ export function useSaveTagMutation(): SaveMutation<
     invalidate: async (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       await invalidateCatalogScopedData(queryClient, catalogId);
+    },
+  });
+}
+
+const toShippingGroupUpdatePayload = (
+  data: Partial<ProductShippingGroup>
+): ProductShippingGroupUpdateInput => {
+  const payload: ProductShippingGroupUpdateInput = {};
+
+  if (data.name !== undefined) payload.name = data.name;
+  if (data.description !== undefined) payload.description = data.description;
+  if (data.catalogId !== undefined) payload.catalogId = data.catalogId;
+  if (data.traderaShippingCondition !== undefined) {
+    payload.traderaShippingCondition = data.traderaShippingCondition;
+  }
+  if (data.traderaShippingPriceEur !== undefined) {
+    payload.traderaShippingPriceEur = data.traderaShippingPriceEur;
+  }
+  if (data.autoAssignCategoryIds !== undefined) {
+    payload.autoAssignCategoryIds = data.autoAssignCategoryIds;
+  }
+
+  return payload;
+};
+
+const toShippingGroupCreatePayload = (
+  data: Partial<ProductShippingGroup>
+): ProductShippingGroupCreateInput => {
+  const name = data.name?.trim();
+  const catalogId = data.catalogId?.trim();
+
+  if (!name) {
+    throw new Error('Shipping group name is required');
+  }
+  if (!catalogId) {
+    throw new Error('Shipping group catalogId is required');
+  }
+
+  return {
+    ...toShippingGroupUpdatePayload(data),
+    name,
+    catalogId,
+  };
+};
+
+export function useSaveShippingGroupMutation(): SaveMutation<
+  ProductShippingGroup,
+  { id: string | undefined; data: Partial<ProductShippingGroup> }
+> {
+  const mutationKey = productSettingsKeys.all;
+  return createMutationV2({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string | undefined;
+      data: Partial<ProductShippingGroup>;
+    }) =>
+      id
+        ? api.updateShippingGroup(id, toShippingGroupUpdatePayload(data))
+        : api.createShippingGroup(toShippingGroupCreatePayload(data)),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSaveShippingGroupMutation',
+      operation: 'action',
+      resource: 'products.settings.shipping-groups',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'shipping-groups', 'save'],
+      description: 'Runs products settings shipping groups.',
+    },
+    invalidate: async (queryClient, _data, variables) => {
+      const catalogId = variables.data.catalogId ?? null;
+      await invalidateCatalogScopedData(queryClient, catalogId);
+    },
+  });
+}
+
+export function useDeleteShippingGroupMutation(): UpdateMutation<
+  void,
+  { id: string; catalogId: string | null }
+> {
+  const mutationKey = productSettingsKeys.all;
+  return createDeleteMutationV2({
+    mutationFn: ({ id }: { id: string; catalogId: string | null }) =>
+      api.deleteShippingGroup(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteShippingGroupMutation',
+      operation: 'delete',
+      resource: 'products.settings.shipping-groups',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'shipping-groups', 'delete'],
+      description: 'Deletes products settings shipping groups.',
+    },
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }

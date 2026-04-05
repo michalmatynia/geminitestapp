@@ -1,28 +1,28 @@
 import { primeFrontPageSettingRuntime } from '@/app/(frontend)/home/home-helpers';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {
   invalidateKangurStorefrontInitialStateCache,
   isKangurStorefrontInitialStateDependencyKey,
-} from '@/features/kangur/appearance/server/storefront-appearance';
-import {
+  primeKangurLaunchRouteRuntime,
   KANGUR_STOREFRONT_APPEARANCE_SETTING_KEYS,
   ensureKangurStorefrontAppearanceSettingsSeeded,
-} from '@/features/kangur/appearance/server/storefront-appearance-source';
-import { ensureKangurThemeCatalogSeeded } from '@/features/kangur/appearance/server/theme-catalog-source';
-import { ensureKangurThemePresetManifestSeeded } from '@/features/kangur/appearance/server/theme-preset-manifest-source';
-import { ensureKangurThemeSlotAssignmentsSeeded } from '@/features/kangur/appearance/server/theme-slot-assignments-source';
-import {
+  ensureKangurThemeCatalogSeeded,
+  ensureKangurThemePresetManifestSeeded,
+  ensureKangurThemeSlotAssignmentsSeeded,
   isKangurSettingKey,
   listKangurSettings,
   readKangurSettingValue,
   upsertKangurSettingValue,
-} from '@/features/kangur/services/kangur-settings-repository';
-import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
+} from '@/features/kangur/server';
+import { writeKangurLaunchRouteDevSnapshot } from '@/features/kangur/server/launch-route-dev-snapshot';
+import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/server';
 import {
+  KANGUR_LAUNCH_ROUTE_SETTINGS_KEY,
   KANGUR_SLOT_ASSIGNMENTS_KEY,
   KANGUR_THEME_CATALOG_KEY,
   KANGUR_THEME_PRESET_MANIFEST_KEY,
@@ -31,7 +31,8 @@ import {
   type MongoPersistedStringSettingDocument,
   upsertSettingSchema as settingSchema,
 } from '@/shared/contracts/settings';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
@@ -59,6 +60,7 @@ import {
   FILE_STORAGE_SOURCE_SETTING_KEY,
 } from '@/shared/lib/files/constants';
 import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
+import { writeFrontPageDevSnapshot } from '@/shared/lib/front-page-dev-snapshot';
 import {
   getFrontPagePublicOwner,
   getFrontPageRedirectPath,
@@ -111,6 +113,20 @@ const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_SCOPE: SettingsScope = 'light';
 const FRONT_PAGE_SETTING_KEY = 'front_page_app';
 let settingsIndexesEnsured: Promise<void> | null = null;
+const FRONT_PAGE_REVALIDATION_PATHS = Array.from(
+  new Set([
+    '/',
+    '/login',
+    '/kangur/login',
+    ...DEFAULT_SITE_I18N_CONFIG.locales
+      .filter((locale) => locale.enabled)
+      .flatMap((locale) => [
+        `/${locale.code}`,
+        `/${locale.code}/login`,
+        `/${locale.code}/kangur/login`,
+      ]),
+  ])
+);
 
 const TRADERA_RELIST_SCHEDULER_SETTING_KEYS = new Set<string>([
   TRADERA_SETTINGS_KEYS.schedulerEnabled,
@@ -128,6 +144,26 @@ const syncTraderaRelistSchedulerWorker = async (key: string): Promise<void> => {
     await ErrorSystem.logWarning('[settings] Failed to sync Tradera relist scheduler worker.', {
       service: 'api/settings',
       key,
+      error,
+    });
+  }
+};
+
+const revalidateFrontPageSelectionRoutes = async (): Promise<void> => {
+  try {
+    revalidatePath('/', 'layout');
+    FRONT_PAGE_REVALIDATION_PATHS.forEach((path) => {
+      revalidatePath(path);
+    });
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'api/settings',
+      source: 'api/settings',
+      action: 'revalidateFrontPageSelectionRoutes',
+    });
+    await ErrorSystem.logWarning('[settings] Failed to revalidate front page selection routes.', {
+      service: 'api/settings',
+      paths: FRONT_PAGE_REVALIDATION_PATHS,
       error,
     });
   }
@@ -905,6 +941,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
   }
+  if (setting.key === KANGUR_LAUNCH_ROUTE_SETTINGS_KEY) {
+    primeKangurLaunchRouteRuntime(normalizedSetting.value);
+    await writeKangurLaunchRouteDevSnapshot(normalizedSetting.value);
+  }
   if (
     setting.key === FILE_STORAGE_SOURCE_SETTING_KEY ||
     setting.key === FASTCOMET_STORAGE_CONFIG_SETTING_KEY
@@ -924,10 +964,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   await syncTraderaRelistSchedulerWorker(setting.key);
   if (setting.key === FRONT_PAGE_SETTING_KEY) {
     primeFrontPageSettingRuntime(normalizedSetting.value);
+    await writeFrontPageDevSnapshot(normalizedSetting.value);
     await logFrontPageSettingChange({
       previousValue: previousFrontPageValue,
       nextValue: normalizedSetting.value,
     });
+    await revalidateFrontPageSelectionRoutes();
   }
   return NextResponse.json(normalizedSetting);
 }

@@ -13,7 +13,7 @@ import {
   createCaseResolverFile,
   createEmptyCaseResolverRelationGraph,
 } from '@/features/case-resolver/settings';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { buildMasterTree } from '@/shared/utils/master-folder-tree-engine';
 
 describe('case-resolver master tree', () => {

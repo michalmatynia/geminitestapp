@@ -104,4 +104,39 @@ describe('resolveNotesExternalDropAction', () => {
       targetFolderId: 'work',
     });
   });
+
+  it('treats same-note drops as move-note actions into the target folder', () => {
+    const folderId = toFolderMasterNodeId('work');
+    const targetNoteId = toNoteMasterNodeId('note-a');
+    const nodes: MasterTreeNode[] = [folderNode('work', null, 0), noteNode('note-a', folderId, 0)];
+    const action = resolveNotesExternalDropAction({
+      draggedNodeId: toNoteMasterNodeId('note-a'),
+      targetId: targetNoteId,
+      nodes,
+      roots: nodes,
+    });
+
+    expect(action).toEqual({
+      type: 'move_note',
+      noteId: 'note-a',
+      targetFolderId: 'work',
+    });
+  });
+
+  it('falls back to move-folder when root-top reorder has no anchor', () => {
+    const roots: MasterTreeNode[] = [folderNode('solo', null, 0)];
+    const action = resolveNotesExternalDropAction({
+      draggedNodeId: toFolderMasterNodeId('solo'),
+      targetId: null,
+      nodes: roots,
+      roots,
+      rootDropZone: 'top',
+    });
+
+    expect(action).toEqual({
+      type: 'move_folder',
+      folderId: 'solo',
+      targetFolderId: null,
+    });
+  });
 });

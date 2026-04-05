@@ -53,6 +53,7 @@ import {
   DEFAULT_GAIN,
   DEFAULT_VELOCITY,
   type KangurMusicPlayableNote,
+  type ReverbChain,
   type StopSustainedNoteOptions,
   type SustainedNode,
 } from '../useKangurMusicSynth.types';
@@ -61,7 +62,7 @@ import { ensureCompressorNode, ensureReverbChain } from '../useKangurMusicSynth.
 export function useKangurMusicSynthSustainedEngine<NoteId extends string>(
   _audioContextRef: React.MutableRefObject<AudioContext | null>,
   compressorNodeRef: React.MutableRefObject<DynamicsCompressorNode | null>,
-  reverbChainRef: React.MutableRefObject<any | null>,
+  reverbChainRef: React.MutableRefObject<ReverbChain | null>,
   ensureAudioContext: () => Promise<AudioContext | null>,
   clearActivePlayback: () => void
 ) {

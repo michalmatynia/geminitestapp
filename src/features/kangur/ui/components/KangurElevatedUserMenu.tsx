@@ -1,11 +1,9 @@
-'use client';
-
 import { LayoutGrid, LogOut } from 'lucide-react';
 import Link from 'next/link';
 
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
 import type { ElevatedSessionUserSnapshot } from '@/shared/lib/auth/elevated-session-user';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import {
   DropdownMenu,
   DropdownMenuContent,

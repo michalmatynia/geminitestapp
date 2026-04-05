@@ -3,7 +3,8 @@ import 'server-only';
 import fs from 'fs/promises';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
+import { SlotGenerationMetadata } from '@/shared/contracts/image-studio/slot';
+import { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
@@ -261,7 +262,7 @@ const removeImageFileIfOrphaned = async (params: {
   await repo.deleteImageFile(normalizedFileId).catch(() => null);
 };
 
-const resolveSlotIdAliases = (slotId: string): string[] => {
+export const resolveSlotIdAliases = (slotId: string): string[] => {
   const normalized = asTrimmedString(slotId);
   if (!normalized) return [];
 
@@ -280,78 +281,83 @@ const resolveSlotIdAliases = (slotId: string): string[] => {
   return Array.from(candidates);
 };
 
-const getSourceSlotIdsFromMetadata = (metadata: Record<string, unknown> | null): string[] => {
+const addSourceSlotAliases = (target: Set<string>, slotId: string | null): void => {
+  if (!slotId) return;
+  resolveSlotIdAliases(slotId).forEach((candidate: string) => {
+    target.add(candidate);
+  });
+};
+
+export const getSourceSlotIdsFromMetadata = (metadata: Record<string, unknown> | null): string[] => {
   if (!metadata) return [];
   const sourceIds = new Set<string>();
-
-  const primarySourceSlotId = asTrimmedString(metadata['sourceSlotId']);
-  if (primarySourceSlotId) {
-    resolveSlotIdAliases(primarySourceSlotId).forEach((candidate: string) => {
-      sourceIds.add(candidate);
-    });
-  }
+  addSourceSlotAliases(sourceIds, asTrimmedString(metadata['sourceSlotId']));
 
   const nestedSourceSlotIds = metadata['sourceSlotIds'];
   if (Array.isArray(nestedSourceSlotIds)) {
     nestedSourceSlotIds.forEach((value: unknown) => {
-      const sourceId = asTrimmedString(value);
-      if (!sourceId) return;
-      resolveSlotIdAliases(sourceId).forEach((candidate: string) => {
-        sourceIds.add(candidate);
-      });
+      addSourceSlotAliases(sourceIds, asTrimmedString(value));
     });
   }
 
   return Array.from(sourceIds);
 };
 
-const collectCascadeSlotIds = (
-  rootSlotId: string,
+const resolveExistingSlotIdAlias = (
+  slotId: string,
+  docsById: Map<string, CascadeSlotDoc>
+): string | null =>
+  resolveSlotIdAliases(slotId).find((candidate: string) => docsById.has(candidate)) ?? null;
+
+const appendChildIdsByMetadataSource = (
+  childIdsBySource: Map<string, Set<string>>,
+  doc: CascadeSlotDoc,
+  docsById: Map<string, CascadeSlotDoc>
+): void => {
+  const metadata = asRecord(doc.metadata);
+  getSourceSlotIdsFromMetadata(metadata).forEach((sourceSlotId: string) => {
+    const normalizedSourceSlotId = resolveExistingSlotIdAlias(sourceSlotId, docsById);
+    if (!normalizedSourceSlotId) return;
+    const childIds = childIdsBySource.get(normalizedSourceSlotId) ?? new Set<string>();
+    childIds.add(doc._id);
+    childIdsBySource.set(normalizedSourceSlotId, childIds);
+  });
+};
+
+const buildChildIdsBySource = (
   docs: CascadeSlotDoc[],
-  options?: {
-    linkedChildIdsBySource?: Map<string, Set<string>>;
-  }
-): string[] => {
-  if (docs.length === 0) return [];
-
-  const docsById = new Map<string, CascadeSlotDoc>(
-    docs.map((doc: CascadeSlotDoc) => [doc._id, doc])
-  );
-  const rootCandidates = resolveSlotIdAliases(rootSlotId).filter((candidate: string) =>
-    docsById.has(candidate)
-  );
-  const resolvedRootSlotId = rootCandidates[0];
-  if (!resolvedRootSlotId) return [];
-
+  docsById: Map<string, CascadeSlotDoc>
+): Map<string, Set<string>> => {
   const childIdsBySource = new Map<string, Set<string>>();
   docs.forEach((doc: CascadeSlotDoc) => {
     if (!doc.metadata) return;
-    const metadata = asRecord(doc.metadata);
-    const sourceSlotIds = getSourceSlotIdsFromMetadata(metadata);
-    sourceSlotIds.forEach((sourceSlotId: string) => {
-      const normalizedSourceSlotId = resolveSlotIdAliases(sourceSlotId).find((candidate: string) =>
-        docsById.has(candidate)
-      );
-      if (!normalizedSourceSlotId) return;
-      const childIds = childIdsBySource.get(normalizedSourceSlotId) ?? new Set<string>();
-      childIds.add(doc._id);
-      childIdsBySource.set(normalizedSourceSlotId, childIds);
-    });
+    appendChildIdsByMetadataSource(childIdsBySource, doc, docsById);
   });
-  if (options?.linkedChildIdsBySource) {
-    options.linkedChildIdsBySource.forEach((childIds: Set<string>, sourceId: string) => {
-      if (!docsById.has(sourceId)) return;
-      const current = childIdsBySource.get(sourceId) ?? new Set<string>();
-      childIds.forEach((childId: string) => {
-        if (!docsById.has(childId)) return;
-        current.add(childId);
-      });
-      childIdsBySource.set(sourceId, current);
-    });
-  }
+  return childIdsBySource;
+};
 
+const mergeLinkedChildIdsBySource = (
+  childIdsBySource: Map<string, Set<string>>,
+  docsById: Map<string, CascadeSlotDoc>,
+  linkedChildIdsBySource: Map<string, Set<string>>
+): void => {
+  linkedChildIdsBySource.forEach((childIds: Set<string>, sourceId: string) => {
+    if (!docsById.has(sourceId)) return;
+    const current = childIdsBySource.get(sourceId) ?? new Set<string>();
+    childIds.forEach((childId: string) => {
+      if (!docsById.has(childId)) return;
+      current.add(childId);
+    });
+    childIdsBySource.set(sourceId, current);
+  });
+};
+
+const collectReachableSlotIds = (
+  rootSlotId: string,
+  childIdsBySource: Map<string, Set<string>>
+): string[] => {
   const deletedSlotIds = new Set<string>();
-  const queue: string[] = [resolvedRootSlotId];
+  const queue: string[] = [rootSlotId];
   while (queue.length > 0) {
     const currentSlotId = queue.shift();
     if (!currentSlotId || deletedSlotIds.has(currentSlotId)) continue;
@@ -367,19 +373,53 @@ const collectCascadeSlotIds = (
   return Array.from(deletedSlotIds);
 };
 
-const isGenerationDerivedSlotMetadata = (metadata: Record<string, unknown> | null): boolean => {
-  if (!metadata) return false;
-  const role = asTrimmedString(metadata['role'])?.toLowerCase() ?? '';
-  if (role === 'generation') return true;
-  const relationType = asTrimmedString(metadata['relationType'])?.toLowerCase() ?? '';
-  return (
-    relationType.startsWith('generation:') ||
-    relationType.startsWith('center:') ||
-    relationType.startsWith('crop:') ||
-    relationType.startsWith('upscale:') ||
-    relationType.startsWith('autoscale:') ||
-    relationType.startsWith('sequence:')
+export const collectCascadeSlotIds = (
+  rootSlotId: string,
+  docs: CascadeSlotDoc[],
+  options?: {
+    linkedChildIdsBySource?: Map<string, Set<string>>;
+  }
+): string[] => {
+  if (docs.length === 0) return [];
+
+  const docsById = new Map<string, CascadeSlotDoc>(
+    docs.map((doc: CascadeSlotDoc) => [doc._id, doc])
   );
+  const resolvedRootSlotId = resolveExistingSlotIdAlias(rootSlotId, docsById);
+  if (!resolvedRootSlotId) return [];
+
+  const childIdsBySource = buildChildIdsBySource(docs, docsById);
+  if (options?.linkedChildIdsBySource) {
+    mergeLinkedChildIdsBySource(childIdsBySource, docsById, options.linkedChildIdsBySource);
+  }
+
+  return collectReachableSlotIds(resolvedRootSlotId, childIdsBySource);
+};
+
+const GENERATION_DERIVED_RELATION_PREFIXES = [
+  'generation:',
+  'center:',
+  'crop:',
+  'upscale:',
+  'autoscale:',
+  'sequence:',
+] as const;
+
+const readNormalizedSlotMetadataField = (
+  metadata: Record<string, unknown> | null,
+  key: string
+): string => asTrimmedString(metadata?.[key])?.toLowerCase() ?? '';
+
+const hasGenerationDerivedRelationType = (relationType: string): boolean =>
+  GENERATION_DERIVED_RELATION_PREFIXES.some((prefix) => relationType.startsWith(prefix));
+
+export const isGenerationDerivedSlotMetadata = (
+  metadata: Record<string, unknown> | null
+): boolean => {
+  if (!metadata) return false;
+  const role = readNormalizedSlotMetadataField(metadata, 'role');
+  if (role === 'generation') return true;
+  return hasGenerationDerivedRelationType(readNormalizedSlotMetadataField(metadata, 'relationType'));
 };
 
 const hasDirectDerivedSlotChildren = async (params: {
@@ -405,6 +445,26 @@ const hasDirectDerivedSlotChildren = async (params: {
 
   return await hasImageStudioSlotLinksForSources(params.projectId, aliasSet).catch(() => false);
 };
+
+const buildSlotCreateDocument = (
+  projectId: string,
+  now: string,
+  slot: SlotCreateInput
+): ImageStudioSlotDocument => ({
+  _id: slot.id?.trim() || createId(),
+  projectId,
+  name: slot.name ?? null,
+  folderPath: slot.folderPath ?? null,
+  position: null,
+  imageUrl: slot.imageUrl ?? null,
+  imageBase64: slot.imageBase64 ?? null,
+  imageFileId: slot.imageFileId ?? null,
+  asset3dId: slot.asset3dId ?? null,
+  screenshotFileId: slot.screenshotFileId ?? null,
+  metadata: slot.metadata ?? null,
+  createdAt: now,
+  updatedAt: now,
+});
 
 export async function listImageStudioSlots(projectId: string): Promise<ImageStudioSlotRecord[]> {
   await ensureIndexesOnce();
@@ -468,21 +528,9 @@ export async function createImageStudioSlots(
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const now = new Date().toISOString();
-  const docs: ImageStudioSlotDocument[] = inputs.map((slot: SlotCreateInput) => ({
-    _id: slot.id?.trim() || createId(),
-    projectId,
-    name: slot.name ?? null,
-    folderPath: slot.folderPath ?? null,
-    position: null,
-    imageUrl: slot.imageUrl ?? null,
-    imageBase64: slot.imageBase64 ?? null,
-    imageFileId: slot.imageFileId ?? null,
-    asset3dId: slot.asset3dId ?? null,
-    screenshotFileId: slot.screenshotFileId ?? null,
-    metadata: slot.metadata ?? null,
-    createdAt: now,
-    updatedAt: now,
-  }));
+  const docs: ImageStudioSlotDocument[] = inputs.map((slot: SlotCreateInput) =>
+    buildSlotCreateDocument(projectId, now, slot)
+  );
   if (docs.length === 0) return [];
   await db.collection<ImageStudioSlotDocument>(COLLECTION).insertMany(docs);
   const { imageFileMap, screenshotMap } = await resolveImageFiles(docs);

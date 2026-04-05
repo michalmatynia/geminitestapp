@@ -5,6 +5,7 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 
 import {
   collectInvalidPathSavePayloadIssues,
+  normalizeLoadedPathMetas,
   resolvePersistedNodeConfigMismatch,
   shouldExposePathSaveRawMessage,
 } from '../useAiPathsPersistence.helpers';
@@ -215,6 +216,46 @@ describe('resolvePersistedNodeConfigMismatch', () => {
       expect.objectContaining({
         reason: 'config_mismatch',
         expectedNodeId: expectedNode.id,
+      })
+    );
+  });
+});
+
+describe('normalizeLoadedPathMetas', () => {
+  it('normalizes names, timestamps, and keeps the most recent duplicate', () => {
+    const metas = normalizeLoadedPathMetas([
+      {
+        id: ' path-a ',
+        name: '  ',
+        createdAt: '',
+        updatedAt: '',
+      } as unknown as import('@/shared/contracts/ai-paths').PathMeta,
+      {
+        id: 'path-a',
+        name: 'Alpha',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-02-01T00:00:00.000Z',
+      } as unknown as import('@/shared/contracts/ai-paths').PathMeta,
+      {
+        id: 'path-b',
+        name: 'Beta',
+        createdAt: '2026-01-03T00:00:00.000Z',
+        updatedAt: '2026-01-04T00:00:00.000Z',
+      } as unknown as import('@/shared/contracts/ai-paths').PathMeta,
+    ]);
+
+    expect(metas).toHaveLength(2);
+    expect(metas[0]).toEqual(
+      expect.objectContaining({
+        id: 'path-a',
+        name: 'Alpha',
+        updatedAt: '2026-02-01T00:00:00.000Z',
+      })
+    );
+    expect(metas[1]).toEqual(
+      expect.objectContaining({
+        id: 'path-b',
+        name: 'Beta',
       })
     );
   });

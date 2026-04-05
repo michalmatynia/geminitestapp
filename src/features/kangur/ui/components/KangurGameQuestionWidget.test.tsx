@@ -63,7 +63,7 @@ vi.mock('@/features/kangur/ui/components/assignments/KangurPracticeAssignmentBan
 import deMessages from '@/i18n/messages/de.json';
 import plMessages from '@/i18n/messages/pl.json';
 
-import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/KangurGameQuestionWidget';
+import { KangurGameQuestionWidget } from '@/features/kangur/ui/components/game-runtime/KangurGameQuestionWidget';
 
 const renderQuestionWidget = (
   locale: 'pl' | 'de',

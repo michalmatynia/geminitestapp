@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { cancelBaseImportRun, toStartResponse } from '@/features/integrations/server';
-import type { BaseImportStartResponse } from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { BaseImportStartResponse } from '@/shared/contracts/integrations/base-com';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 
 const paramsSchema = z.object({

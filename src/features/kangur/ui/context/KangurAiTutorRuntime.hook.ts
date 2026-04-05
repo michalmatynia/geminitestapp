@@ -32,9 +32,7 @@ import {
   type KangurAiTutorSurface,
   type KangurAiTutorUsageResponse,
 } from '@/features/kangur/shared/contracts/kangur-ai-tutor';
-import {
-  getKangurAiTutorMoodCopy,
-} from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
+import { getKangurAiTutorMoodCopy } from '@/features/kangur/shared/contracts/kangur-ai-tutor-content';
 import {
   createDefaultKangurAiTutorLearnerMood,
   type KangurAiTutorLearnerMood,
@@ -77,10 +75,6 @@ import type {
   KangurAiTutorSessionRegistryContextValue,
 } from './KangurAiTutorRuntime.types';
 
-// ---------------------------------------------------------------------------
-// Internal types
-// ---------------------------------------------------------------------------
-
 type KangurAiTutorRuntimeResult = {
   value: KangurAiTutorContextValue;
   sessionRegistryValue: KangurAiTutorSessionRegistryContextValue;
@@ -101,10 +95,6 @@ const trimReplayableTelemetryText = (
 
   return trimmed.slice(0, maxLength);
 };
-
-// ---------------------------------------------------------------------------
-// Main runtime hook
-// ---------------------------------------------------------------------------
 
 export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
   const tutorContent = useKangurAiTutorContent();
@@ -405,10 +395,10 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       updateSessionState(activeSessionKey, (currentState) =>
         currentState.isLoading || currentState.isUsageLoading
           ? {
-            ...currentState,
-            isLoading: false,
-            isUsageLoading: false,
-          }
+              ...currentState,
+              isLoading: false,
+              isUsageLoading: false,
+            }
           : currentState
       );
     }
@@ -526,12 +516,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         targetSearch: input.targetSearch ?? null,
       });
     },
-    [
-      activeLearnerMemoryKey,
-      activeSessionContext,
-      allowLearnerMemory,
-      updateLearnerMemory,
-    ]
+    [activeLearnerMemoryKey, activeSessionContext, allowLearnerMemory, updateLearnerMemory]
   );
 
   const sendMessage = useCallback(
@@ -590,20 +575,14 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         ...(options?.focusId ? { focusId: options.focusId } : {}),
         ...(options?.focusLabel ? { focusLabel: options.focusLabel } : {}),
         ...(options?.assignmentId ? { assignmentId: options.assignmentId } : {}),
-        ...(options?.knowledgeReference
-          ? { knowledgeReference: options.knowledgeReference }
-          : {}),
+        ...(options?.knowledgeReference ? { knowledgeReference: options.knowledgeReference } : {}),
         ...(options?.interactionIntent ? { interactionIntent: options.interactionIntent } : {}),
         ...(options?.drawingImageData
           ? { drawingImageData: options.drawingImageData.trim() }
           : {}),
         ...(repeatCount > 0 ? { repeatedQuestionCount: repeatCount } : {}),
-        ...(recentHintRecoverySignal
-          ? { recentHintRecoverySignal }
-          : {}),
-        ...(previousCoachingMode
-          ? { previousCoachingMode }
-          : {}),
+        ...(recentHintRecoverySignal ? { recentHintRecoverySignal } : {}),
+        ...(previousCoachingMode ? { previousCoachingMode } : {}),
       });
       const telemetryContext = {
         surface: nextContext.surface ?? null,
@@ -655,9 +634,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
           ...(activeLearnerMemory ? { memory: activeLearnerMemory } : {}),
         });
         const sources = showSources && Array.isArray(result.sources) ? result.sources : [];
-        const followUpActions = Array.isArray(result.followUpActions)
-          ? result.followUpActions
-          : [];
+        const followUpActions = Array.isArray(result.followUpActions) ? result.followUpActions : [];
         const followUpReporting = summarizeKangurAiTutorFollowUpActions(followUpActions);
         const coachingFrame =
           kangurAiTutorCoachingFrameSchema.safeParse(result.coachingFrame).data ?? null;
@@ -747,8 +724,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
         const usageFromError =
           error instanceof ApiError && error.payload && typeof error.payload === 'object'
             ? kangurAiTutorUsageSummarySchema
-              .safeParse((error.payload as Record<string, unknown>)['details'])
-              .data ?? null
+                .safeParse((error.payload as Record<string, unknown>)['details'])
+                .data ?? null
             : null;
         updateSessionState(activeSessionKey, (currentState) => ({
           ...currentState,
@@ -774,8 +751,8 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
     },
     [
       activeLearnerId,
-      activeLearnerMemoryKey,
       activeLearnerMemory,
+      activeLearnerMemoryKey,
       activeSessionContext,
       activeSessionKey,
       allowLearnerMemory,
@@ -785,6 +762,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       messages,
       pageContextRegistry,
       showSources,
+      tutorContent.common.sendFailureFallback,
       updateLearnerMemory,
       updateSessionState,
     ]
@@ -843,6 +821,7 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       selectionExplainRequest,
     }),
     [
+      activeLearnerMemory,
       activeSessionContext,
       appSettings,
       closeChat,
@@ -867,7 +846,6 @@ export const useKangurAiTutorRuntime = (): KangurAiTutorRuntimeResult => {
       tutorName,
       tutorPersona,
       tutorSettings,
-      activeLearnerMemory,
       usageSummary,
     ]
   );

@@ -3,11 +3,8 @@
 import { useEffect, useMemo, type MutableRefObject } from 'react';
 
 import { useCatalogs } from '@/features/data-import-export/hooks/useImportQueries';
-import type {
-  CatalogOption,
-  IntegrationConnectionBasic,
-  IntegrationWithConnections,
-} from '@/shared/contracts/integrations';
+import type { CatalogOption } from '@/shared/contracts/integrations/import-export';
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQueries';
 
 interface ImportExportBootstrapResourcesParams {

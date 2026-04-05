@@ -1,14 +1,22 @@
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import type {
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignDelivery,
+  FilemakerEmailCampaignDeliveryAttemptRegistry,
+  FilemakerEmailCampaignDeliveryRegistry,
+  FilemakerEmailCampaignEventRegistry,
   FilemakerEmailCampaignLifecycleStatus,
   FilemakerEmailCampaignLaunchMode,
   FilemakerEmailCampaignRun,
+  FilemakerEmailCampaignRunRegistry,
   FilemakerEmailCampaignSuppressionReason,
-  FilemakerEmailCampaignRunStatus,
   FilemakerPartyKind,
 } from '../types';
-import { createFilemakerEmailCampaign } from '../settings';
+import {
+  createFilemakerEmailCampaign,
+  resolveFilemakerEmailCampaignRetryableDeliveries,
+} from '../settings';
+import type { FilemakerEmailCampaignSchedulerStatus } from '../settings';
 
 export const CAMPAIGN_STATUS_OPTIONS: Array<
   LabeledOptionWithDescriptionDto<FilemakerEmailCampaignLifecycleStatus>
@@ -88,6 +96,91 @@ export const buildCampaignIdFromName = (name: string): string => {
   return `filemaker-email-campaign-${token || 'draft'}`;
 };
 
+const normalizeCampaignName = (value: string | null | undefined): string =>
+  value?.trim() || 'Untitled campaign';
+
+export const createDuplicatedCampaignDraft = (input: {
+  campaign: FilemakerEmailCampaign;
+  existingCampaigns: FilemakerEmailCampaign[];
+  nowIso?: string;
+}): FilemakerEmailCampaign => {
+  const nowIso = input.nowIso ?? new Date().toISOString();
+  const existingNameKeys = new Set(
+    input.existingCampaigns.map((campaign) => normalizeCampaignName(campaign.name).toLowerCase())
+  );
+  const existingIds = new Set(input.existingCampaigns.map((campaign) => campaign.id));
+  const sourceName = normalizeCampaignName(input.campaign.name);
+  const baseCopyName = `${sourceName} Copy`;
+
+  let duplicateName = baseCopyName;
+  let suffix = 2;
+  while (
+    existingNameKeys.has(duplicateName.toLowerCase()) ||
+    existingIds.has(buildCampaignIdFromName(duplicateName))
+  ) {
+    duplicateName = `${baseCopyName} ${suffix}`;
+    suffix += 1;
+  }
+
+  return createFilemakerEmailCampaign({
+    ...input.campaign,
+    id: buildCampaignIdFromName(duplicateName),
+    name: duplicateName,
+    status: 'draft',
+    approvalGrantedAt: null,
+    approvedBy: null,
+    lastLaunchedAt: null,
+    lastEvaluatedAt: null,
+    createdAt: nowIso,
+    updatedAt: nowIso,
+  });
+};
+
+export const removeCampaignArtifacts = (input: {
+  campaignId: string;
+  runRegistry: FilemakerEmailCampaignRunRegistry;
+  deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+  attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
+  eventRegistry: FilemakerEmailCampaignEventRegistry;
+  schedulerStatus: FilemakerEmailCampaignSchedulerStatus;
+}): {
+  runRegistry: FilemakerEmailCampaignRunRegistry;
+  deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;
+  attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
+  eventRegistry: FilemakerEmailCampaignEventRegistry;
+  schedulerStatus: FilemakerEmailCampaignSchedulerStatus;
+} => ({
+  runRegistry: {
+    ...input.runRegistry,
+    runs: input.runRegistry.runs.filter((run) => run.campaignId !== input.campaignId),
+  },
+  deliveryRegistry: {
+    ...input.deliveryRegistry,
+    deliveries: input.deliveryRegistry.deliveries.filter(
+      (delivery) => delivery.campaignId !== input.campaignId
+    ),
+  },
+  attemptRegistry: {
+    ...input.attemptRegistry,
+    attempts: input.attemptRegistry.attempts.filter(
+      (attempt) => attempt.campaignId !== input.campaignId
+    ),
+  },
+  eventRegistry: {
+    ...input.eventRegistry,
+    events: input.eventRegistry.events.filter((event) => event.campaignId !== input.campaignId),
+  },
+  schedulerStatus: {
+    ...input.schedulerStatus,
+    launchedRuns: input.schedulerStatus.launchedRuns.filter(
+      (entry) => entry.campaignId !== input.campaignId
+    ),
+    launchFailures: input.schedulerStatus.launchFailures.filter(
+      (entry) => entry.campaignId !== input.campaignId
+    ),
+  },
+});
+
 export const createBlankCampaignDraft = (): FilemakerEmailCampaign => {
   const draft = createFilemakerEmailCampaign({
     id: '',
@@ -101,6 +194,7 @@ export const createBlankCampaignDraft = (): FilemakerEmailCampaign => {
     name: '',
     subject: '',
     previewText: null,
+    mailAccountId: null,
     fromName: null,
     replyToEmail: null,
     bodyText: null,
@@ -138,19 +232,58 @@ export const toDateTimeLocalValue = (value: string | null | undefined): string =
   return `${year}-${month}-${day}T${hour}:${minute}`;
 };
 
-export const getRunActions = (run: FilemakerEmailCampaignRun): Array<{
+export type FilemakerCampaignRunActionId = 'process' | 'retry' | 'cancel';
+
+export const getRunActions = (input: {
+  run: FilemakerEmailCampaignRun;
+  deliveries: FilemakerEmailCampaignDelivery[];
+  attemptRegistry: FilemakerEmailCampaignDeliveryAttemptRegistry;
+}): Array<{
+  action: FilemakerCampaignRunActionId;
   label: string;
-  nextStatus: FilemakerEmailCampaignRunStatus;
 }> => {
-  if (run.status === 'pending' || run.status === 'queued') {
-    return [{ label: 'Mark Running', nextStatus: 'running' }];
+  const queuedCount = input.deliveries.filter((delivery) => delivery.status === 'queued').length;
+  const retryableCount = resolveFilemakerEmailCampaignRetryableDeliveries({
+    deliveries: input.deliveries,
+    attemptRegistry: input.attemptRegistry,
+  }).retryableDeliveries.length;
+  const actions: Array<{
+    action: FilemakerCampaignRunActionId;
+    label: string;
+  }> = [];
+
+  if (
+    queuedCount > 0 &&
+    (input.run.status === 'pending' || input.run.status === 'queued')
+  ) {
+    actions.push({
+      action: 'process',
+      label: queuedCount === 1 ? 'Process queued (1)' : `Process queued (${queuedCount})`,
+    });
   }
-  if (run.status === 'running') {
-    return [
-      { label: 'Mark Completed', nextStatus: 'completed' },
-      { label: 'Mark Failed', nextStatus: 'failed' },
-      { label: 'Cancel Run', nextStatus: 'cancelled' },
-    ];
+
+  if (
+    input.run.mode === 'live' &&
+    retryableCount > 0 &&
+    input.run.status !== 'running' &&
+    input.run.status !== 'cancelled'
+  ) {
+    actions.push({
+      action: 'retry',
+      label: retryableCount === 1 ? 'Retry failed (1)' : `Retry failed (${retryableCount})`,
+    });
   }
-  return [];
+
+  if (
+    input.run.status === 'pending' ||
+    input.run.status === 'queued' ||
+    input.run.status === 'running'
+  ) {
+    actions.push({
+      action: 'cancel',
+      label: 'Cancel run',
+    });
+  }
+
+  return actions;
 };

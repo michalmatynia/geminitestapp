@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { SingleQuery } from '@/shared/contracts/ui';
+import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import {
   DEFAULT_PROMPT_VALIDATION_SCOPES,
   PROMPT_ENGINE_SETTINGS_KEY,
@@ -11,7 +11,7 @@ import {
   parsePromptValidationRules,
   type PromptValidationRule,
 } from '@/shared/lib/prompt-engine/settings';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/primitives.public';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';

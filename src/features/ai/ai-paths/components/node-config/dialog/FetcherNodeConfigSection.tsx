@@ -2,7 +2,8 @@
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
-import { Card, Input, SelectSimple, FormField } from '@/shared/ui';
+import { Card, Input } from '@/shared/ui/primitives.public';
+import { SelectSimple, FormField } from '@/shared/ui/forms-and-actions.public';
 
 import { useAiPathOrchestrator, useAiPathSelection } from '../../AiPathConfigContext';
 

@@ -7,6 +7,7 @@ import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-re
 import { readOptionalServerAuthSession } from '@/features/auth/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getRedisConnection } from '@/shared/lib/queue';
+import { AI_PATHS_CANONICAL_RUN_SOURCE_FILTER } from '@/shared/lib/ai-paths/run-sources';
 
 import type { NextRequest } from 'next/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -254,6 +255,7 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
         repo.listRuns({
           userId: access.userId,
           createdAfter: new Date(now - windowMs).toISOString(),
+          ...AI_PATHS_CANONICAL_RUN_SOURCE_FILTER,
           limit: RUN_RATE_MAX,
           offset: 0,
           includeTotal: false,
@@ -266,6 +268,7 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
         repo.listRuns({
           userId: access.userId,
           statuses: activeStatuses,
+          ...AI_PATHS_CANONICAL_RUN_SOURCE_FILTER,
           limit: RUN_ACTIVE_MAX,
           offset: 0,
           includeTotal: false,
@@ -274,7 +277,10 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
       )
       : null,
     RUN_GLOBAL_QUEUED_MAX > 0
-      ? withSoftTimeout(repo.getQueueStats(), RUN_RATE_QUERY_TIMEOUT_MS)
+      ? withSoftTimeout(
+        repo.getQueueStats(AI_PATHS_CANONICAL_RUN_SOURCE_FILTER),
+        RUN_RATE_QUERY_TIMEOUT_MS
+      )
       : null,
   ]);
   const recent = recentProbe?.value ?? null;
@@ -309,6 +315,7 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
           repo.listRuns({
             userId: access.userId,
             statuses: activeStatuses,
+            ...AI_PATHS_CANONICAL_RUN_SOURCE_FILTER,
             limit: RUN_ACTIVE_MAX,
             offset: 0,
             includeTotal: false,

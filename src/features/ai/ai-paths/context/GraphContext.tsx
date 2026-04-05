@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  createContext,
-  useContext,
   useState,
   useMemo,
   useCallback,
@@ -10,24 +8,9 @@ import {
 } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
-import type {
-  AiNode,
-  AiPathsValidationConfig,
-  Edge,
-  NodeConfig,
-  PathBlockedRunPolicy,
-  PathConfig,
-  PathExecutionMode,
-  PathFlowIntensity,
-  PathMeta,
-  PathRunMode,
-} from '@/shared/lib/ai-paths';
-import {
-  initialNodes,
-  initialEdges,
-  normalizeNodes,
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import type { AiNode, AiPathsValidationConfig, Edge, NodeConfig, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, PathMeta, PathRunMode } from '@/shared/lib/ai-paths';
+import { initialNodes, initialEdges, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -61,8 +44,25 @@ export type {
   GraphState,
 } from './GraphContext.shared';
 
-const GraphStateContext = createContext<GraphState | null>(null);
-const GraphActionsContext = createContext<GraphActions | null>(null);
+const {
+  Context: GraphStateContext,
+  useStrictContext: useGraphState,
+} = createStrictContext<GraphState>({
+  hookName: 'useGraphState',
+  providerName: 'a GraphProvider',
+  errorFactory: internalError,
+});
+
+const {
+  Context: GraphActionsContext,
+  useStrictContext: useGraphActions,
+} = createStrictContext<GraphActions>({
+  hookName: 'useGraphActions',
+  providerName: 'a GraphProvider',
+  errorFactory: internalError,
+});
+
+export { useGraphState, useGraphActions };
 
 export function GraphProvider({
   children,
@@ -472,27 +472,3 @@ export function GraphProvider({
 // ---------------------------------------------------------------------------
 // Consumer Hooks
 // ---------------------------------------------------------------------------
-
-/**
- * Get the current graph state.
- * Components using this will re-render when graph state changes.
- */
-export function useGraphState(): GraphState {
-  const context = useContext(GraphStateContext);
-  if (!context) {
-    throw internalError('useGraphState must be used within a GraphProvider');
-  }
-  return context;
-}
-
-/**
- * Get graph actions.
- * Components using this will NOT re-render when state changes.
- */
-export function useGraphActions(): GraphActions {
-  const context = useContext(GraphActionsContext);
-  if (!context) {
-    throw internalError('useGraphActions must be used within a GraphProvider');
-  }
-  return context;
-}

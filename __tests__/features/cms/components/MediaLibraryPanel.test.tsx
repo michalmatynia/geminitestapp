@@ -32,8 +32,8 @@ vi.mock('next/dynamic', () => ({
 }));
 
 // Mock Dialog components to just render children if open
-vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+vi.mock('@/shared/ui/primitives.public', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui/primitives.public')>();
   return {
     ...actual,
     Dialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>

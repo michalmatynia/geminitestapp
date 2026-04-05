@@ -1,4 +1,4 @@
-import { BaseProductRecord, BaseApiResponse } from '@/shared/contracts/integrations';
+import { BaseProductRecord, BaseApiResponse } from '@/shared/contracts/integrations/base-api';
 
 import { callBaseApi } from './core';
 import { extractProductIds, extractProducts, toStringId } from '../base-client-parsers';

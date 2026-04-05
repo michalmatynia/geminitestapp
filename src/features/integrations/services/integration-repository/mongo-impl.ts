@@ -21,11 +21,7 @@ import {
   ConnectionDeleteOptions,
   ConnectionDependencyCounts,
 } from './common';
-import {
-  IntegrationRecord,
-  IntegrationConnectionRecord,
-  IntegrationRepository,
-} from '@/shared/contracts/integrations';
+import { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository } from '@/shared/contracts/integrations/repositories';
 
 type IntegrationDocument = {
   name: string;
@@ -39,6 +35,7 @@ type IntegrationConnectionDocument = {
   name: string;
   username: string;
   password: string;
+  traderaBrowserMode?: 'builtin' | 'scripted';
   playwrightStorageState?: string | null;
   playwrightStorageStateUpdatedAt?: Date | null;
   playwrightHeadless?: boolean;
@@ -60,6 +57,11 @@ type IntegrationConnectionDocument = {
   playwrightEmulateDevice?: boolean;
   playwrightDeviceName?: string;
   playwrightPersonaId?: string | null;
+  playwrightListingScript?: string | null;
+  playwrightImportScript?: string | null;
+  playwrightImportBaseUrl?: string | null;
+  playwrightImportCaptureRoutesJson?: string | null;
+  playwrightFieldMapperJson?: string | null;
   allegroAccessToken?: string | null;
   allegroRefreshToken?: string | null;
   allegroTokenType?: string | null;

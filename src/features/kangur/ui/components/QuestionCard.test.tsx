@@ -11,7 +11,7 @@ vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
 
 import type { KangurQuestion } from '@/features/kangur/ui/types';
 
-import QuestionCard from '@/features/kangur/ui/components/QuestionCard';
+import QuestionCard from '@/features/kangur/ui/components/game-runtime/QuestionCard';
 import { KANGUR_CLOCK_THEME_COLORS } from '@/features/kangur/ui/components/clock-theme';
 
 const sampleQuestion: KangurQuestion = {

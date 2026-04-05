@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type {
   PromptValidationRule,
   PromptValidationSimilarPattern,
@@ -39,24 +40,25 @@ interface RuleItemActionsContextValue {
 
 type RuleItemContextValue = RuleItemStateContextValue & RuleItemActionsContextValue;
 
-const RuleItemStateContext = createContext<RuleItemStateContextValue | null>(null);
-const RuleItemActionsContext = createContext<RuleItemActionsContextValue | null>(null);
+const {
+  Context: RuleItemStateContext,
+  useStrictContext: useRuleItemState,
+} = createStrictContext<RuleItemStateContextValue>({
+  hookName: 'useRuleItemState',
+  providerName: 'a RuleItemProvider',
+  displayName: 'RuleItemStateContext',
+  errorFactory: internalError,
+});
 
-export function useRuleItemState(): RuleItemStateContextValue {
-  const context = useContext(RuleItemStateContext);
-  if (!context) {
-    throw internalError('useRuleItemState must be used within a RuleItemProvider');
-  }
-  return context;
-}
-
-export function useRuleItemActions(): RuleItemActionsContextValue {
-  const context = useContext(RuleItemActionsContext);
-  if (!context) {
-    throw internalError('useRuleItemActions must be used within a RuleItemProvider');
-  }
-  return context;
-}
+const {
+  Context: RuleItemActionsContext,
+  useStrictContext: useRuleItemActions,
+} = createStrictContext<RuleItemActionsContextValue>({
+  hookName: 'useRuleItemActions',
+  providerName: 'a RuleItemProvider',
+  displayName: 'RuleItemActionsContext',
+  errorFactory: internalError,
+});
 
 export function useRuleItemContext(): RuleItemContextValue {
   const state = useRuleItemState();

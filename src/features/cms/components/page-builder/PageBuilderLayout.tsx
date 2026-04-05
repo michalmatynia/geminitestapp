@@ -5,7 +5,7 @@ import React, { useEffect, useRef } from 'react';
 
 import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
 import { useAdminLayoutActions } from '@/shared/providers/AdminLayoutProvider';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 
 import { CmsBuilderLeftPanel } from './CmsBuilderLeftPanel';
 import { PageBuilderPageSkeleton } from './PageBuilderPageSkeleton';

@@ -6,7 +6,8 @@ import React, { useCallback, useMemo } from 'react';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { SettingsField, SettingsFieldOption } from '@/shared/contracts/cms';
 import type { ColorScheme } from '@/shared/contracts/cms-theme';
-import { Label, RadioGroup, RadioGroupItem, Button, SelectSimple } from '@/shared/ui';
+import { Label, RadioGroup, RadioGroupItem, Button } from '@/shared/ui/primitives.public';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 import { BackgroundField } from './settings/fields/composite/BackgroundField';
 import { BorderField } from './settings/fields/composite/BorderField';

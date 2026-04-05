@@ -4,12 +4,9 @@ import React, { useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  AdminFilemakerBreadcrumbs,
-  Badge,
-  Button,
-  SectionHeader,
-} from '@/shared/ui';
+import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
+import { Badge, Button } from '@/shared/ui/primitives.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 
 import {
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
@@ -24,12 +21,15 @@ import {
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
 } from '../settings';
+import { getRunActions } from './AdminFilemakerCampaignEditPage.utils';
 import { formatTimestamp } from './filemaker-page-utils';
+import { useFilemakerCampaignRunActions } from './useFilemakerCampaignRunActions';
 
 export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams<{ runId?: string | string[] }>();
   const settingsStore = useSettingsStore();
+  const { handleRunAction, isRunActionPending } = useFilemakerCampaignRunActions();
   const runIdParam = params?.runId;
   const runId = Array.isArray(runIdParam) ? (runIdParam[0] ?? '') : (runIdParam ?? '');
 
@@ -74,6 +74,17 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
         (entry) => entry.runId === runId || entry.campaignId === campaign?.id
       ),
     [campaign, eventRegistry.events, runId]
+  );
+  const runActions = useMemo(
+    () =>
+      run
+        ? getRunActions({
+            run,
+            deliveries,
+            attemptRegistry,
+          })
+        : [],
+    [attemptRegistry, deliveries, run]
   );
 
   if (!run || !campaign) {
@@ -157,6 +168,25 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
           Attempts: {attempts.length}
         </Badge>
       </div>
+
+      {runActions.length > 0 ? (
+        <div className='flex flex-wrap gap-2'>
+          {runActions.map((action) => (
+            <Button
+              key={`${run.id}-${action.action}`}
+              type='button'
+              size='sm'
+              variant='outline'
+              disabled={isRunActionPending(run.id, action.action)}
+              onClick={(): void => {
+                void handleRunAction(run.id, action.action);
+              }}
+            >
+              {action.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
 
       <section className='rounded-xl border border-gray-200 bg-white p-5 shadow-sm'>
         <h2 className='text-sm font-semibold text-gray-900'>Run Summary</h2>

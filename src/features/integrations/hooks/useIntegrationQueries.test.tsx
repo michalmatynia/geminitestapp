@@ -23,7 +23,11 @@ vi.mock('@/shared/lib/api-client', () => ({
   ApiError: class ApiError extends Error {},
 }));
 
-import { useIntegrationConnections, useIntegrations } from './useIntegrationQueries';
+import {
+  useDefaultTraderaConnection,
+  useIntegrationConnections,
+  useIntegrations,
+} from './useIntegrationQueries';
 
 describe('useIntegrationQueries', () => {
   beforeEach(() => {
@@ -44,6 +48,18 @@ describe('useIntegrationQueries', () => {
     expect(apiGetMock).toHaveBeenCalledWith('/api/v2/integrations', {
       timeout: 30_000,
     });
+  });
+
+  it('supports disabling integrations list and connections queries explicitly', () => {
+    renderHook(() => useIntegrations({ enabled: false }));
+    const integrationsConfig = createListQueryV2Mock.mock.calls[0]?.[0];
+
+    expect(integrationsConfig.enabled).toBe(false);
+
+    renderHook(() => useIntegrationConnections('integration-1', { enabled: false }));
+    const connectionsConfig = createListQueryV2Mock.mock.calls[1]?.[0];
+
+    expect(connectionsConfig.enabled).toBe(false);
   });
 
   it('uses the extended timeout for integration connections and skips empty ids', async () => {
@@ -67,5 +83,20 @@ describe('useIntegrationQueries', () => {
     expect(withoutIdConfig.enabled).toBe(false);
     await expect(withoutIdConfig.queryFn()).resolves.toEqual([]);
     expect(apiGetMock).not.toHaveBeenCalled();
+  });
+
+  it('loads the default Tradera connection from the dedicated preference endpoint', async () => {
+    apiGetMock.mockResolvedValue({ connectionId: 'conn-tradera-1' });
+
+    const { result } = renderHook(() => useDefaultTraderaConnection());
+    const config = createSingleQueryV2Mock.mock.calls[0]?.[0];
+
+    expect(result.current).toEqual({ kind: 'single-query' });
+    expect(config.queryKey).toEqual(integrationKeys.selection.traderaDefaultConnection());
+
+    await expect(config.queryFn()).resolves.toEqual({ connectionId: 'conn-tradera-1' });
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/exports/tradera/default-connection'
+    );
   });
 });

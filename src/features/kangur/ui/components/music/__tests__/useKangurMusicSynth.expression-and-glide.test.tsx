@@ -5,7 +5,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import * as synthSupport from './useKangurMusicSynth.test-support';
+import * as synthSupport from '../useKangurMusicSynth.test-support';
 
 const {
   createdContexts,

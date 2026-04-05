@@ -3,15 +3,24 @@
 import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 type FileUploadEventsPanelContextValue = {
   title: string;
   description: string;
 };
 
-const FileUploadEventsPanelContext = React.createContext<FileUploadEventsPanelContextValue | null>(
-  null
-);
+const {
+  Context: FileUploadEventsPanelContext,
+  useStrictContext: useFileUploadEventsPanelContext,
+} = createStrictContext<FileUploadEventsPanelContextValue>({
+  hookName: 'useFileUploadEventsPanelContext',
+  providerName: 'FileUploadEventsPanelProvider',
+  displayName: 'FileUploadEventsPanelContext',
+  errorFactory: internalError,
+});
+
+export { useFileUploadEventsPanelContext };
 
 type FileUploadEventsPanelProviderProps = {
   value: FileUploadEventsPanelContextValue;
@@ -27,14 +36,4 @@ export function FileUploadEventsPanelProvider({
       {children}
     </FileUploadEventsPanelContext.Provider>
   );
-}
-
-export function useFileUploadEventsPanelContext(): FileUploadEventsPanelContextValue {
-  const context = React.useContext(FileUploadEventsPanelContext);
-  if (!context) {
-    throw internalError(
-      'useFileUploadEventsPanelContext must be used within FileUploadEventsPanelProvider'
-    );
-  }
-  return context;
 }

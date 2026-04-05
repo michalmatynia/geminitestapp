@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useRef, useState } from 'react';
 
 import {
@@ -130,7 +132,7 @@ export function useVectorCanvasInteractions({
       panRafIdRef.current = 0;
       const pending = pendingPanRef.current;
       if (!pending) return;
-      setViewTransform((prev) => ({ ...prev, panX: pending.panX, panY: pending.panY }));
+      setViewTransform((prev: any) => ({ ...prev, panX: pending.panX, panY: pending.panY }));
     });
   }, []);
 
@@ -409,7 +411,7 @@ export function useVectorCanvasInteractions({
     const zoomFactor = 1 - normalizedDeltaY * 0.001;
     const nextScale = Math.min(8, Math.max(0.25, currentScale * zoomFactor));
     if (nextScale === currentScale) return;
-    setViewTransform((prev) => ({ ...prev, scale: nextScale }));
+    setViewTransform((prev: any) => ({ ...prev, scale: nextScale }));
   }, []);
 
   const handleMouseDown = useCallback(
@@ -450,11 +452,11 @@ export function useVectorCanvasInteractions({
   }, [stopPan]);
 
   const handleZoomIn = useCallback((): void => {
-    setViewTransform((prev) => ({ ...prev, scale: Math.min(8, prev.scale * 1.2) }));
+    setViewTransform((prev: any) => ({ ...prev, scale: Math.min(8, prev.scale * 1.2) }));
   }, []);
 
   const handleZoomOut = useCallback((): void => {
-    setViewTransform((prev) => ({ ...prev, scale: Math.max(0.25, prev.scale / 1.2) }));
+    setViewTransform((prev: any) => ({ ...prev, scale: Math.max(0.25, prev.scale / 1.2) }));
   }, []);
 
   const handleFitToScreen = useCallback((): void => {

@@ -3,19 +3,43 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   authMock,
-  getFrontPagePublicOwnerMock,
-  getFrontPageSettingMock,
+  resolveFrontPageSelectionMock,
   getKangurCanonicalPublicHrefMock,
   redirectMock,
-  shouldApplyFrontPageAppSelectionMock,
-} = vi.hoisted(() => ({
-  authMock: vi.fn(),
-  getFrontPagePublicOwnerMock: vi.fn(),
-  getFrontPageSettingMock: vi.fn(),
-  getKangurCanonicalPublicHrefMock: vi.fn(),
-  redirectMock: vi.fn(),
-  shouldApplyFrontPageAppSelectionMock: vi.fn(),
-}));
+  buildCanonicalHref,
+} = vi.hoisted(() => {
+  const buildCanonicalHref = (
+    slug: string[],
+    searchParams?: Record<string, string | string[] | undefined>
+  ): string => {
+    const path = slug.length > 0 ? `/${slug.join('/')}` : '/';
+    const query = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(searchParams ?? {})) {
+      if (Array.isArray(value)) {
+        for (const entry of value) {
+          query.append(key, entry);
+        }
+        continue;
+      }
+
+      if (typeof value === 'string') {
+        query.set(key, value);
+      }
+    }
+
+    const serialized = query.toString();
+    return serialized ? `${path}?${serialized}` : path;
+  };
+
+  return {
+    authMock: vi.fn(),
+    resolveFrontPageSelectionMock: vi.fn(),
+    getKangurCanonicalPublicHrefMock: vi.fn(),
+    redirectMock: vi.fn(),
+    buildCanonicalHref,
+  };
+});
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
@@ -32,12 +56,7 @@ vi.mock('next-intl/server', () => ({
 }));
 
 vi.mock('@/app/(frontend)/home/home-helpers', () => ({
-  getFrontPageSetting: getFrontPageSettingMock,
-  shouldApplyFrontPageAppSelection: shouldApplyFrontPageAppSelectionMock,
-}));
-
-vi.mock('@/shared/lib/front-page-app', () => ({
-  getFrontPagePublicOwner: getFrontPagePublicOwnerMock,
+  resolveFrontPageSelection: resolveFrontPageSelectionMock,
 }));
 
 vi.mock('@/features/kangur/public', async () => {
@@ -55,30 +74,6 @@ vi.mock('@/features/kangur/public', async () => {
   };
 });
 
-const buildCanonicalHref = (
-  slug: string[],
-  searchParams?: Record<string, string | string[] | undefined>
-): string => {
-  const path = slug.length > 0 ? `/${slug.join('/')}` : '/';
-  const query = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(searchParams ?? {})) {
-    if (Array.isArray(value)) {
-      for (const entry of value) {
-        query.append(key, entry);
-      }
-      continue;
-    }
-
-    if (typeof value === 'string') {
-      query.set(key, value);
-    }
-  }
-
-  const serialized = query.toString();
-  return serialized ? `${path}?${serialized}` : path;
-};
-
 describe('kangur login alias route', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -86,9 +81,14 @@ describe('kangur login alias route', () => {
     redirectMock.mockImplementation((href: string) => {
       throw new Error(`redirect:${href}`);
     });
-    shouldApplyFrontPageAppSelectionMock.mockReturnValue(true);
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'kangur' });
-    getFrontPagePublicOwnerMock.mockReturnValue('kangur');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'kangur',
+      publicOwner: 'kangur',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
     authMock.mockResolvedValue(null);
     getKangurCanonicalPublicHrefMock.mockImplementation(
       (slug: string[], searchParams?: Record<string, string | string[] | undefined>) =>
@@ -175,8 +175,14 @@ describe('kangur login alias route', () => {
   });
 
   it('renders the legacy login shell when Kangur does not own home', async () => {
-    getFrontPageSettingMock.mockResolvedValue({ publicOwner: 'cms' });
-    getFrontPagePublicOwnerMock.mockReturnValue('cms');
+    resolveFrontPageSelectionMock.mockResolvedValue({
+      enabled: true,
+      setting: 'cms',
+      publicOwner: 'cms',
+      redirectPath: null,
+      source: 'mongo',
+      fallbackReason: null,
+    });
 
     const { default: Page } = await import('@/app/(frontend)/kangur/login/page');
     const result = await Page({});

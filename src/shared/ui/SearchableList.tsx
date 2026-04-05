@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 
-import type { SearchableListProps } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import type { SearchableListProps } from '@/shared/contracts/ui/controls';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Badge } from './badge';
 import { Card } from './card';
@@ -86,7 +86,7 @@ export function SearchableList<T>(props: SearchableListProps<T>): React.JSX.Elem
           {filteredItems.length === 0 ? (
             <div className='py-8 text-center text-xs text-gray-600 italic'>{emptyMessage}</div>
           ) : (
-            filteredItems.map((item) => {
+            filteredItems.map((item: any) => {
               const id = getId(item);
               const checked = selectedIds.includes(id);
               return (

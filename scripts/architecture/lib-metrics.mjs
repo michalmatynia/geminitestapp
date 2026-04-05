@@ -226,8 +226,14 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   const filesOver1000 = sourceScopeRecords.filter((record) => record.lines >= 1000);
   const filesOver1500 = sourceScopeRecords.filter((record) => record.lines >= 1500);
 
-  const useClientFiles = sourceScopeRecords.filter((record) =>
-    /^\s*['"]use client['"]\s*;?/m.test(record.content)
+  const USE_CLIENT_RE = /^\s*['"]use client['"]\s*;?/m;
+  const CLIENT_HOOK_RE =
+    /\b(useState|useEffect|useRef|useMemo|useCallback|useReducer|useContext|useLayoutEffect|usePathname|useRouter|useSearchParams|useTranslations|useLocale|useImperativeHandle|useId|useTransition|useDeferredValue)\b/;
+
+  const useClientFiles = sourceScopeRecords.filter((record) => USE_CLIENT_RE.test(record.content));
+
+  const hooksWithoutUseClient = sourceScopeRecords.filter(
+    (record) => CLIENT_HOOK_RE.test(record.content) && !USE_CLIENT_RE.test(record.content)
   );
 
   const apiRouteRecords = sourceRecords.filter(
@@ -435,8 +441,9 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     }))
     .map((h) => ({ ...h, total: h.useEffectCount + h.useCallbackCount + h.useMemoCount }))
     .filter((h) => h.total > 0)
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 25);
+    .sort((a, b) => b.total - a.total);
+    
+  const highComplexityHooksCount = hookComplexity.filter((h) => h.total > 4).length;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -444,6 +451,7 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
       totalFiles: sourceRecords.length,
       totalLines: totalSourceLines,
       useClientFiles: useClientFiles.length,
+      hooksWithoutUseClient: hooksWithoutUseClient.length,
       filesOver800: filesOver800.length,
       filesOver1000: filesOver1000.length,
       filesOver1500: filesOver1500.length,
@@ -483,7 +491,8 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     codeHealth: {
       deepRelativeImportCount: deepRelativeImportFiles.length,
       circularFeatureDeps,
-      hookComplexity,
+      hookComplexity: hookComplexity.slice(0, 25),
+      highComplexityHooksCount,
     },
     hotspots: {
       topFilesByLines: getTopByLineCount(sourceRecords, 30),
@@ -515,7 +524,7 @@ export const formatCompactSummary = (metrics) => {
   if (metrics.codeHealth) {
     lines.push(`Deep relative imports (3+ levels): ${metrics.codeHealth.deepRelativeImportCount}`);
     lines.push(`Circular feature deps: ${metrics.codeHealth.circularFeatureDeps.length}`);
-    lines.push(`Top hook complexity: ${metrics.codeHealth.hookComplexity.length} hooks tracked`);
+    lines.push(`Top hook complexity: ${metrics.codeHealth.hookComplexity.length} hooks tracked (hooks with total > 4: ${metrics.codeHealth.highComplexityHooksCount})`);
   }
   if (metrics.propDrilling) {
     lines.push(

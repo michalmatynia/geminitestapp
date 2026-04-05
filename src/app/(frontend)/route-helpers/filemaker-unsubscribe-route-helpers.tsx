@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { FilemakerCampaignUnsubscribePage } from '@/features/filemaker/public';
-import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
+import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server';
 
 import type { Metadata } from 'next';
 import type { JSX } from 'react';

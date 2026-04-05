@@ -36,48 +36,71 @@ export type PortablePathSigningPolicyTrendReporterBootstrapEnvironmentSettings =
   expectedProfilesBySurface: PortablePathSigningPolicyExpectedProfilesBySurface;
 };
 
+const resolveTrendReporterEnabledFromEnvironment = (
+  env: Record<string, string | undefined>
+): boolean =>
+  parseBooleanFromEnvironment(env[PORTABLE_PATH_SIGNING_POLICY_TREND_REPORTER_ENABLED_ENV]) ??
+  true;
+
+const resolveTrendReporterPersistenceEnabledFromEnvironment = (
+  env: Record<string, string | undefined>
+): boolean =>
+  resolvePortablePathSigningPolicyTrendPersistenceEnabledFromEnvironment(
+    env[PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_ENABLED_ENV]
+  ) ?? true;
+
+const resolveTrendReporterAlertLevelsFromEnvironment = (
+  env: Record<string, string | undefined>
+): Pick<
+  PortablePathSigningPolicyTrendReporterBootstrapEnvironmentSettings,
+  'driftAlertLevel' | 'sinkFailureAlertLevel'
+> => ({
+  driftAlertLevel:
+    resolvePortablePathSigningPolicyTrendAlertLevelFromEnvironment(
+      env[PORTABLE_PATH_SIGNING_POLICY_DRIFT_ALERT_LEVEL_ENV]
+    ) ?? 'warn',
+  sinkFailureAlertLevel:
+    resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment(
+      env[PORTABLE_PATH_AUDIT_SINK_FAILURE_ALERT_LEVEL_ENV]
+    ) ?? 'warn',
+});
+
+const resolveTrendReporterExpectedProfilesFromEnvironment = (
+  env: Record<string, string | undefined>,
+  environmentProfile: PortablePathSigningPolicyProfile
+): PortablePathSigningPolicyExpectedProfilesBySurface =>
+  parsePortablePathSigningPolicyExpectedProfilesBySurfaceFromEnvironment(
+    env['PORTABLE_PATH_SIGNING_POLICY_ALLOWED_PROFILES_BY_SURFACE'],
+    environmentProfile
+  );
+
 export const resolvePortablePathSigningPolicyTrendReporterBootstrapSettingsFromEnvironment = (
   env: Record<string, string | undefined> = process.env
 ): PortablePathSigningPolicyTrendReporterBootstrapEnvironmentSettings => {
-  const enabled =
-    parseBooleanFromEnvironment(env[PORTABLE_PATH_SIGNING_POLICY_TREND_REPORTER_ENABLED_ENV]) ??
-    true;
   const environmentProfile = resolvePortablePathEnvelopeVerificationAuditSinkProfileFromEnvironment(
     env['NODE_ENV']
   );
   const reportEveryUses = resolvePortablePathSigningPolicyTrendReportEveryUsesFromEnvironment(
     env[PORTABLE_PATH_SIGNING_POLICY_TREND_REPORT_EVERY_USES_ENV]
   );
-  const persistenceEnabled =
-    resolvePortablePathSigningPolicyTrendPersistenceEnabledFromEnvironment(
-      env[PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_ENABLED_ENV]
-    ) ?? true;
   const persistenceMaxSnapshots =
     resolvePortablePathSigningPolicyTrendPersistenceMaxSnapshotsFromEnvironment(
       env[PORTABLE_PATH_SIGNING_POLICY_TREND_PERSISTENCE_MAX_SNAPSHOTS_ENV]
     );
-  const driftAlertLevel =
-    resolvePortablePathSigningPolicyTrendAlertLevelFromEnvironment(
-      env[PORTABLE_PATH_SIGNING_POLICY_DRIFT_ALERT_LEVEL_ENV]
-    ) ?? 'warn';
-  const sinkFailureAlertLevel =
-    resolvePortablePathAuditSinkFailureAlertLevelFromEnvironment(
-      env[PORTABLE_PATH_AUDIT_SINK_FAILURE_ALERT_LEVEL_ENV]
-    ) ?? 'warn';
-  const expectedProfilesBySurface =
-    parsePortablePathSigningPolicyExpectedProfilesBySurfaceFromEnvironment(
-      env['PORTABLE_PATH_SIGNING_POLICY_ALLOWED_PROFILES_BY_SURFACE'],
-      environmentProfile
-    );
+  const { driftAlertLevel, sinkFailureAlertLevel } =
+    resolveTrendReporterAlertLevelsFromEnvironment(env);
 
   return {
-    enabled,
+    enabled: resolveTrendReporterEnabledFromEnvironment(env),
     environmentProfile,
     reportEveryUses,
-    persistenceEnabled,
+    persistenceEnabled: resolveTrendReporterPersistenceEnabledFromEnvironment(env),
     persistenceMaxSnapshots,
     driftAlertLevel,
     sinkFailureAlertLevel,
-    expectedProfilesBySurface,
+    expectedProfilesBySurface: resolveTrendReporterExpectedProfilesFromEnvironment(
+      env,
+      environmentProfile
+    ),
   };
 };

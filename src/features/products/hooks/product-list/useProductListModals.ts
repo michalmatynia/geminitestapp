@@ -2,10 +2,43 @@
 
 import { useCallback, useState } from 'react';
 
-import { useIntegrationModalOperations } from '@/features/integrations/public';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations';
-import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
-import type { Toast } from '@/shared/contracts/ui';
+import { useIntegrationModalOperations } from '@/features/integrations/hooks/useIntegrationOperations';
+import {
+  isTraderaQuickExportRecoveryContext,
+  resolveProductListingsIntegrationScope,
+} from '@/features/integrations/utils/product-listings-recovery';
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
+import { readPersistedTraderaQuickListFeedback } from '@/features/integrations/utils/traderaQuickListFeedback';
+import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { Toast } from '@/shared/contracts/ui/base';
+
+const enrichRecoveryContext = (
+  productId: string,
+  recoveryContext?: ProductListingsRecoveryContext
+): ProductListingsRecoveryContext | null => {
+  if (!recoveryContext) return null;
+
+  if (!isTraderaQuickExportRecoveryContext(recoveryContext)) {
+    return recoveryContext;
+  }
+
+  const persistedFeedback = readPersistedTraderaQuickListFeedback(productId);
+  if (!persistedFeedback) return recoveryContext;
+
+  return {
+    ...recoveryContext,
+    runId: recoveryContext.runId ?? persistedFeedback.runId ?? null,
+    failureReason:
+      ('failureReason' in recoveryContext ? recoveryContext.failureReason : null) ??
+      persistedFeedback.failureReason ??
+      null,
+    requestId: recoveryContext.requestId ?? persistedFeedback.requestId ?? null,
+    integrationId: recoveryContext.integrationId ?? persistedFeedback.integrationId ?? null,
+    connectionId: recoveryContext.connectionId ?? persistedFeedback.connectionId ?? null,
+  };
+};
 
 export function useProductListModals({
   handleOpenCreateModal,
@@ -25,6 +58,8 @@ export function useProductListModals({
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
   const [integrationsRecoveryContext, setIntegrationsRecoveryContext] =
     useState<ProductListingsRecoveryContext | null>(null);
+  const [integrationsFilterIntegrationSlug, setIntegrationsFilterIntegrationSlug] =
+    useState<string | null>(null);
 
   const {
     integrationsProduct,
@@ -47,16 +82,30 @@ export function useProductListModals({
   const handleOpenIntegrationsModal = useCallback(
     (
       product: ProductWithImages,
-      recoveryContext?: ProductListingsRecoveryContext
+      recoveryContext?: ProductListingsRecoveryContext,
+      filterIntegrationSlug?: string | null
     ) => {
+      const resolvedFilterIntegrationSlug = resolveProductListingsIntegrationScope({
+        filterIntegrationSlug,
+        recoveryContext,
+      });
+      const shouldRefreshListings =
+        isTraderaIntegrationSlug(resolvedFilterIntegrationSlug) ||
+        isTraderaQuickExportRecoveryContext(recoveryContext);
       prefetchIntegrationSelectionData();
       prefetchProductListingsData(product.id);
-      setIntegrationsRecoveryContext(recoveryContext ?? null);
+      if (shouldRefreshListings) {
+        refreshProductListingsData(product.id);
+      }
+      setIntegrationsRecoveryContext(enrichRecoveryContext(product.id, recoveryContext));
+      setIntegrationsFilterIntegrationSlug(resolvedFilterIntegrationSlug);
       setIntegrationsProduct(product);
     },
     [
       prefetchIntegrationSelectionData,
       prefetchProductListingsData,
+      refreshProductListingsData,
+      setIntegrationsFilterIntegrationSlug,
       setIntegrationsProduct,
       setIntegrationsRecoveryContext,
     ]
@@ -73,8 +122,14 @@ export function useProductListModals({
   const handleCloseIntegrations = useCallback(() => {
     setIntegrationsProduct(null);
     setIntegrationsRecoveryContext(null);
+    setIntegrationsFilterIntegrationSlug(null);
     setShowListProductModal(false);
-  }, [setIntegrationsProduct, setIntegrationsRecoveryContext, setShowListProductModal]);
+  }, [
+    setIntegrationsFilterIntegrationSlug,
+    setIntegrationsProduct,
+    setIntegrationsRecoveryContext,
+    setShowListProductModal,
+  ]);
 
   const handleCloseListProduct = useCallback(() => {
     setShowListProductModal(false);
@@ -83,12 +138,30 @@ export function useProductListModals({
 
   const handleListProductSuccess = useCallback(() => {
     setListProductPreset(null);
+    setIntegrationsRecoveryContext(null);
+    if (integrationsProduct?.id) {
+      refreshProductListingsData(integrationsProduct.id);
+    }
     baseHandleListProductSuccess();
-  }, [setListProductPreset, baseHandleListProductSuccess]);
+  }, [
+    baseHandleListProductSuccess,
+    integrationsProduct?.id,
+    refreshProductListingsData,
+    setIntegrationsRecoveryContext,
+    setListProductPreset,
+  ]);
 
   const handleStartListing = useCallback(
-    (integrationId: string, connectionId: string) => {
-      setListProductPreset({ integrationId, connectionId });
+    (
+      integrationId: string,
+      connectionId: string,
+      options?: { autoSubmit?: boolean }
+    ) => {
+      setListProductPreset({
+        integrationId,
+        connectionId,
+        ...(options?.autoSubmit ? { autoSubmit: true } : {}),
+      });
       setShowListProductModal(true);
     },
     [setListProductPreset, setShowListProductModal]
@@ -161,6 +234,7 @@ export function useProductListModals({
     handleAddToMarketplace,
     integrationsProduct,
     integrationsRecoveryContext,
+    integrationsFilterIntegrationSlug,
     showListProductModal,
     listProductPreset,
     exportSettingsProduct,

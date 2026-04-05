@@ -12,17 +12,9 @@ import type {
   DbQueryPreset,
   Edge,
 } from '@/shared/contracts/ai-paths';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast } from '@/shared/contracts/ui/base';
 import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
-import {
-  BUNDLE_INPUT_PORTS,
-  CLUSTER_PRESETS_KEY,
-  DB_NODE_PRESETS_KEY,
-  DB_QUERY_PRESETS_KEY,
-  TEMPLATE_INPUT_PORTS,
-  createPresetId,
-  parsePathList,
-} from '@/shared/lib/ai-paths';
+import { BUNDLE_INPUT_PORTS, CLUSTER_PRESETS_KEY, DB_NODE_PRESETS_KEY, DB_QUERY_PRESETS_KEY, TEMPLATE_INPUT_PORTS, createPresetId, parsePathList } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';

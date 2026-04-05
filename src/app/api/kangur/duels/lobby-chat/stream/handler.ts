@@ -8,7 +8,7 @@ import {
   KANGUR_DUELS_LOBBY_CHAT_MAX_LIMIT,
   KANGUR_DUELS_LOBBY_CHAT_DEFAULT_LIMIT,
 } from '@/shared/contracts/kangur-duels-chat';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError, validationError } from '@/shared/errors/app-error';
 import { optionalIntegerQuerySchema } from '@/shared/lib/api/query-schema';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';

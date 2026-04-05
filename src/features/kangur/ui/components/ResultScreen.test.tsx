@@ -5,7 +5,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import ResultScreen from '@/features/kangur/ui/components/ResultScreen';
+import ResultScreen from '@/features/kangur/ui/components/game-runtime/ResultScreen';
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,

@@ -1,8 +1,6 @@
-'use client';
-
 import React from 'react';
 
-import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver/history';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 export type CaseResolverHistoryEntriesRuntimeValue = {

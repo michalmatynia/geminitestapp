@@ -1,316 +1,804 @@
 'use client';
 
-import {
-  Menu,
-  X,
-} from 'lucide-react';
-import React from 'react';
+import { Menu, X } from 'lucide-react';
+import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 
-import {
-  useOptionalCmsStorefrontAppearance,
-} from '@/features/cms/public';
-import {
-  getKangurHomeHref,
-  getKangurPageHref as createPageUrl,
-  isKangurEmbeddedBasePath,
-} from '@/features/kangur/config/routing';
-import { persistTutorVisibilityHidden } from '@/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.storage';
 import {
   KangurButton,
   KangurPageTopBar,
   KangurTopNavGroup,
 } from '@/features/kangur/ui/design/primitives';
 import {
-  getLocalizedKangurAgeGroupLabel,
-  getLocalizedKangurSubjectLabel,
-} from '@/features/kangur/lessons/lesson-catalog-i18n';
+  KANGUR_TIGHT_ROW_CLASSNAME,
+} from '@/features/kangur/ui/design/tokens';
 import {
-  DEFAULT_KANGUR_AGE_GROUP,
-  KANGUR_AGE_GROUPS,
-  getKangurDefaultSubjectForAgeGroup,
-  getKangurSubjectsForAgeGroup,
-} from '@/features/kangur/lessons/lesson-catalog-metadata';
+  KangurDialogMeta
+} from '@/features/kangur/ui/components/KangurDialogMeta';
+import {
+  KangurPanelCloseButton
+} from '@/features/kangur/ui/components/KangurPanelCloseButton';
+import KangurVisualCueContent from '@/features/kangur/ui/components/KangurVisualCueContent';
+import { useKangurPageContentEntry } from '@/features/kangur/ui/hooks/useKangurPageContent';
+
+import {
+  resolveMobileMenuHeaderActions,
+  buildActionWithClose,
+  buildPrimaryNavigationLogoutAction,
+  resolveKangurPrimaryNavigationUtilityVisibility,
+  resolveUtilityElevatedUserMenuNode,
+  resolveUtilityLanguageSwitcherNode,
+  resolveUtilityParentDashboardNode,
+  resolveUtilityProfileMenuNode,
+} from './KangurPrimaryNavigation.utility-runtime';
+import {
+  KangurPrimaryNavigationProvider,
+  useKangurPrimaryNavigationContext,
+  KANGUR_PRIMARY_NAV_DIALOG_IDS,
+} from './KangurPrimaryNavigation.context';
+import type { KangurPrimaryNavigationContextValue } from './KangurPrimaryNavigation.context';
+import type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
+export type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
+import { ICON_CLASSNAME, renderNavAction } from './KangurPrimaryNavigation.utils';
 import {
   getKangurSixYearOldAgeGroupVisual,
   getKangurSixYearOldSubjectVisual,
 } from '@/features/kangur/ui/constants/six-year-old-visuals';
-import { DEFAULT_SITE_I18N_CONFIG } from '@/shared/contracts/site-i18n';
+import {
+  getKangurDefaultSubjectForAgeGroup,
+} from '@/features/kangur/lessons/lesson-catalog-metadata';
+import type { KangurChoiceDialogOption } from '@/features/kangur/ui/components/KangurChoiceDialog';
+import type { KangurIntlTranslate } from '@/features/kangur/ui/types';
+import type { KangurLessonAgeGroup } from '@/features/kangur/shared/contracts/kangur';
 
-import {
-  useKangurPrimaryNavigationState,
-} from './KangurPrimaryNavigation.hooks';
-import {
-  useKangurPrimaryNavigationRuntime,
-  buildAgeGroupAction,
-  buildDuelsAction,
-  buildGamesLibraryAction,
-  buildHomeAction,
-  buildLessonsAction,
-  buildParentDashboardAction,
-  buildSubjectAction,
-  buildTutorToggleAction,
-} from './KangurPrimaryNavigation.runtime';
-import {
-  resolveAppearanceControls,
-  resolveMobileMenuHeaderActions,
-} from './KangurPrimaryNavigation.utility-runtime';
-import {
-  buildAgeGroupOptions,
-  buildSubjectOptions,
-  KangurPrimaryNavigationAuthActions,
-  KangurPrimaryNavigationPrimaryActions,
-  KangurPrimaryNavigationUtilityActions,
-} from './KangurPrimaryNavigation.sections';
-import {
-  buildKangurPrimaryNavigationAgeGroupDialog,
-  buildKangurPrimaryNavigationSubjectDialog,
-  KangurPrimaryNavigationChoiceDialogs,
-  KangurPrimaryNavigationMobileMenuOverlay,
-} from './KangurPrimaryNavigation.overlays';
-import type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
-export type { KangurPrimaryNavigationProps } from './KangurPrimaryNavigation.types';
-import {
-  ICON_CLASSNAME,
-} from './KangurPrimaryNavigation.utils';
+const KangurChoiceDialog = dynamic(() =>
+  import('@/features/kangur/ui/components/KangurChoiceDialog').then((m) => ({
+    default: function KangurChoiceDialogEntry(
+      props: import('@/features/kangur/ui/components/KangurChoiceDialog').KangurChoiceDialogProps
+    ) {
+      return m.renderKangurChoiceDialog(props);
+    },
+  }))
+);
 
-const resolveTutorFallbackCopy = (
-  value: string | null | undefined,
-  fallback: string
-): string => {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    return fallback;
+// --- Internal Components (previously components.tsx) ---
+
+function KangurPrimaryNavigationLoginAction({
+  className,
+  fallbackLabel,
+  loginActionRef,
+  onActionClick,
+  onLogin,
+}: {
+  className?: string;
+  fallbackLabel: string;
+  loginActionRef: React.RefObject<HTMLButtonElement | null>;
+  onActionClick?: () => void;
+  onLogin: () => void;
+}): React.JSX.Element {
+  const { entry: loginActionContent } = useKangurPageContentEntry('shared-nav-login-action');
+  const loginLabel = loginActionContent?.title?.trim() || fallbackLabel;
+  const loginTitle = loginActionContent?.summary?.trim() || undefined;
+
+  return renderNavAction(
+    buildActionWithClose(
+      {
+        content: <span className='truncate'>{loginLabel}</span>,
+        docId: 'auth_login',
+        ariaLabel: loginLabel,
+        onClick: onLogin,
+        elementRef: loginActionRef,
+        className,
+        testId: 'kangur-primary-nav-login',
+        title: loginTitle,
+      },
+      onActionClick
+    )
+  );
+}
+
+function KangurPrimaryNavigationGuestPlayerNameAction({
+  commitGuestPlayerName,
+  fallbackCopy,
+  guestPlayerName,
+  guestPlayerNameValue,
+  guestPlayerPlaceholderText,
+  handleGuestPlayerNameChange,
+  hasGuestPlayerName,
+  isEditingGuestPlayerName,
+  setIsEditingGuestPlayerName,
+}: {
+  commitGuestPlayerName: () => void;
+  fallbackCopy: KangurPrimaryNavigationContextValue['fallbackCopy'];
+  guestPlayerName?: string;
+  guestPlayerNameValue: string;
+  guestPlayerPlaceholderText: string;
+  handleGuestPlayerNameChange: (value: string) => void;
+  hasGuestPlayerName: boolean;
+  isEditingGuestPlayerName: boolean;
+  setIsEditingGuestPlayerName: (value: boolean) => void;
+}): React.JSX.Element {
+  if (isEditingGuestPlayerName) {
+    return (
+      <form
+        className='flex items-center gap-2'
+        onSubmit={(e) => {
+          e.preventDefault();
+          commitGuestPlayerName();
+        }}
+      >
+        <input
+          aria-label={fallbackCopy.guestPlayerNameLabel}
+          autoFocus
+          className='h-9 w-32 rounded-lg border border-sky-200 bg-white/90 px-3 text-xs font-bold text-sky-900 placeholder:text-sky-300/70 focus:border-sky-400 focus:outline-none'
+          onChange={(e) => handleGuestPlayerNameChange(e.target.value)}
+          onBlur={() => setIsEditingGuestPlayerName(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setIsEditingGuestPlayerName(false);
+              return;
+            }
+
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitGuestPlayerName();
+            }
+          }}
+          placeholder={guestPlayerPlaceholderText}
+          type='text'
+          value={guestPlayerNameValue}
+        />
+        <button
+          aria-label={fallbackCopy.guestPlayerNameLabel}
+          className='flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm transition hover:bg-sky-600 active:scale-95'
+          type='submit'
+        >
+          <span className='text-sm'>OK</span>
+        </button>
+      </form>
+    );
   }
 
-  return value;
-};
+  return (
+    <button
+      aria-label={hasGuestPlayerName ? guestPlayerName : fallbackCopy.guestPlayerNameLabel}
+      className='flex h-10 items-center gap-2 rounded-xl border border-sky-100 bg-white/80 px-3 py-2 transition hover:bg-white active:scale-95 sm:h-11'
+      onClick={() => setIsEditingGuestPlayerName(true)}
+      type='button'
+    >
+      <span aria-hidden='true' className='text-lg'>👤</span>
+      <span className='text-xs font-black uppercase tracking-wider text-sky-800'>
+        {hasGuestPlayerName ? guestPlayerName : fallbackCopy.guestPlayerNameLabel}
+      </span>
+    </button>
+  );
+}
 
-const resolvePrimaryNavigationProfileDisplayName = ({
-  activeLearner,
-  authUser,
+// --- Sections (previously sections.tsx) ---
+
+function KangurPrimaryNavigationAuthActions({
+  onActionClick,
 }: {
-  activeLearner: ReturnType<typeof useKangurPrimaryNavigationState>['activeLearner'];
-  authUser: ReturnType<typeof useKangurPrimaryNavigationState>['authUser'];
-}): string | null => {
-  const candidates = [
-    activeLearner?.displayName,
-    activeLearner?.loginName,
-    authUser?.full_name,
-  ];
+  onActionClick?: () => void;
+}): React.ReactNode {
+  const {
+    effectiveIsAuthenticated,
+    fallbackCopy,
+    isLoggingOut,
+    loginActionRef,
+    props,
+    derived,
+    commitGuestPlayerName,
+    guestPlayerNameValue,
+    guestPlayerPlaceholderText,
+    handleGuestPlayerNameChange,
+    hasGuestPlayerName,
+    isEditingGuestPlayerName,
+    setIsEditingGuestPlayerName,
+    showGuestPlayerNameInput,
+  } = useKangurPrimaryNavigationContext();
 
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string') {
-      const trimmed = candidate.trim();
-      if (trimmed.length > 0) {
-        return trimmed;
+  const { mobileNavItemClassName } = derived;
+  const { guestPlayerName, onLogin } = props;
+
+  if (effectiveIsAuthenticated) {
+    return renderNavAction(
+      buildActionWithClose(
+        buildPrimaryNavigationLogoutAction({
+          fallbackCopy,
+          isLoggingOut,
+          mobileNavItemClassName,
+          onLogout: props.onLogout,
+        }),
+        onActionClick
+      )
+    );
+  }
+
+  if (!onLogin && !showGuestPlayerNameInput) {
+    return null;
+  }
+
+  return (
+    <>
+      {showGuestPlayerNameInput ? (
+        <KangurPrimaryNavigationGuestPlayerNameAction
+          commitGuestPlayerName={commitGuestPlayerName}
+          fallbackCopy={fallbackCopy}
+          guestPlayerName={guestPlayerName}
+          guestPlayerNameValue={guestPlayerNameValue}
+          guestPlayerPlaceholderText={guestPlayerPlaceholderText}
+          handleGuestPlayerNameChange={handleGuestPlayerNameChange}
+          hasGuestPlayerName={hasGuestPlayerName}
+          isEditingGuestPlayerName={isEditingGuestPlayerName}
+          setIsEditingGuestPlayerName={setIsEditingGuestPlayerName}
+        />
+      ) : null}
+      {onLogin ? (
+        <KangurPrimaryNavigationLoginAction
+          className={mobileNavItemClassName}
+          fallbackLabel={fallbackCopy.loginLabel}
+          loginActionRef={loginActionRef}
+          onActionClick={onActionClick}
+          onLogin={onLogin}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function KangurPrimaryNavigationPrimaryActions({
+  onActionClick,
+  wrapperClassName,
+}: {
+  onActionClick?: () => void;
+  wrapperClassName?: string;
+}): React.JSX.Element {
+  const { isTutorHidden, derived } = useKangurPrimaryNavigationContext();
+  const {
+    homeAction,
+    canAccessGamesLibrary,
+    gamesLibraryAction,
+    lessonsAction,
+    duelsAction,
+    subjectAction,
+    ageGroupAction,
+    tutorToggleAction,
+    inlineAppearanceWithTutor,
+    appearanceControlsInline,
+  } = derived;
+
+  const tutorInlineClassName = [tutorToggleAction.className, 'max-sm:!w-auto']
+    .filter(Boolean)
+    .join(' ');
+  const tutorInlineAction = renderNavAction(
+    buildActionWithClose(
+      {
+        ...tutorToggleAction,
+        className: tutorInlineClassName,
+      },
+      onActionClick
+    )
+  );
+  const tutorDefaultAction = renderNavAction(
+    buildActionWithClose(tutorToggleAction, onActionClick)
+  );
+  const tutorRow = isTutorHidden
+    ? null
+    : inlineAppearanceWithTutor && appearanceControlsInline
+      ? (
+          <div className='flex w-full items-center justify-center gap-2'>
+            {tutorInlineAction}
+            <div className='flex shrink-0 items-center'>{appearanceControlsInline}</div>
+          </div>
+        )
+      : tutorDefaultAction;
+
+  return (
+    <div
+      className={
+        wrapperClassName ??
+        'grid w-full min-w-0 grid-cols-2 gap-2 max-[420px]:grid-cols-1 sm:flex sm:w-auto sm:flex-nowrap sm:items-center'
       }
-    }
-  }
+      data-testid='kangur-primary-nav-primary-actions'
+    >
+      {renderNavAction(buildActionWithClose(homeAction, onActionClick))}
+      {canAccessGamesLibrary
+        ? renderNavAction(buildActionWithClose(gamesLibraryAction, onActionClick))
+        : null}
+      {renderNavAction(buildActionWithClose(lessonsAction, onActionClick))}
+      {renderNavAction(buildActionWithClose(duelsAction, onActionClick))}
+      {renderNavAction(buildActionWithClose(subjectAction, onActionClick))}
+      {renderNavAction(buildActionWithClose(ageGroupAction, onActionClick))}
+      {tutorRow}
+    </div>
+  );
+}
 
-  return null;
-};
-
-const resolvePrimaryNavigationLabel = ({
-  fallbackCopy,
-  profileDisplayName,
+function KangurPrimaryNavigationUtilityActions({
+  authActions,
+  rightAccessory,
+  onActionClick,
+  testId = 'kangur-primary-nav-utility-actions',
+  wrapperClassName,
+  hideAppearanceControls,
+  hideLanguageSwitcher,
 }: {
-  fallbackCopy: ReturnType<typeof useKangurPrimaryNavigationState>['fallbackCopy'];
-  profileDisplayName: string | null;
-}): string =>
-  profileDisplayName
-    ? fallbackCopy.profileLabelWithName(profileDisplayName)
-    : fallbackCopy.profileLabel;
+  authActions: React.ReactNode;
+  rightAccessory: React.ReactNode;
+  onActionClick?: () => void;
+  testId?: string;
+  wrapperClassName?: string;
+  hideAppearanceControls?: boolean;
+  hideLanguageSwitcher?: boolean;
+}): React.ReactNode {
+  const {
+    elevatedSessionUser,
+    fallbackCopy,
+    isCoarsePointer,
+    profileAvatar,
+    shouldRenderElevatedUserMenu,
+    shouldRenderProfileMenu,
+    props,
+    derived,
+  } = useKangurPrimaryNavigationContext();
 
-const resolveKangurPrimaryNavigationEffectiveHomeActive = ({
-  currentPage,
-  homeActive,
-}: {
-  currentPage: KangurPrimaryNavigationProps['currentPage'];
-  homeActive?: boolean;
-}): boolean => homeActive ?? currentPage === 'Game';
-
-type KangurPrimaryNavigationTransitionPhase =
-  Parameters<typeof buildHomeAction>[0]['transitionPhase'];
-
-const resolveKangurPrimaryNavigationTransitionPhase = (
-  routeTransitionState: ReturnType<typeof useKangurPrimaryNavigationState>['routeTransitionState']
-): KangurPrimaryNavigationTransitionPhase => routeTransitionState?.transitionPhase ?? 'idle';
-
-const resolveKangurPrimaryNavigationActiveTransitionSourceId = (
-  routeTransitionState: ReturnType<typeof useKangurPrimaryNavigationState>['routeTransitionState']
-): string | null => routeTransitionState?.activeTransitionSourceId ?? null;
-
-const resolveKangurPrimaryNavigationCanAccessGamesLibrary = ({
-  effectiveIsAuthenticated,
-  isSuperAdmin,
-}: {
-  effectiveIsAuthenticated: boolean;
-  isSuperAdmin: boolean;
-}): boolean => effectiveIsAuthenticated && isSuperAdmin;
-
-const resolveKangurPrimaryNavigationShouldRenderLanguageSwitcher = (
-  basePath: string
-): boolean =>
-  !isKangurEmbeddedBasePath(basePath) &&
-  DEFAULT_SITE_I18N_CONFIG.locales.filter((entry) => entry.enabled).length > 1;
-
-const resolveKangurPrimaryNavigationMobileMenuLabel = ({
-  isMobileMenuOpen,
-  navTranslations,
-}: {
-  isMobileMenuOpen: boolean;
-  navTranslations: ReturnType<typeof useKangurPrimaryNavigationState>['navTranslations'];
-}): string =>
-  isMobileMenuOpen
-    ? navTranslations('mobileMenu.close')
-    : navTranslations('mobileMenu.open');
-
-const KANGUR_PRIMARY_NAV_DIALOG_IDS = {
-  ageGroup: 'kangur-primary-nav-age-group-dialog',
-  mobileMenu: 'kangur-mobile-menu',
-  subject: 'kangur-primary-nav-subject-dialog',
-} as const;
-
-const KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS = {
-  duels: 'kangur-primary-nav:duels',
-  gamesLibrary: 'kangur-primary-nav:games-library',
-  home: 'kangur-primary-nav:home',
-  lessons: 'kangur-primary-nav:lessons',
-  parentDashboard: 'kangur-primary-nav:parent-dashboard',
-  profile: 'kangur-primary-nav:profile',
-} as const;
-
-const resolveKangurPrimaryNavigationClassNames = ({
-  isCoarsePointer,
-}: {
-  isCoarsePointer: boolean;
-}) => {
-  const mobileNavItemClassName = `max-sm:col-span-1 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'}`;
-  const mobileWideNavItemClassName = `max-sm:col-span-2 max-sm:min-w-0 max-sm:w-full max-sm:justify-center ${isCoarsePointer ? 'max-sm:min-h-12 max-sm:px-4' : 'max-sm:px-3'}`;
-
-  return {
-    amberPillActionClassName: `border-amber-300/90 bg-[linear-gradient(180deg,rgba(254,243,199,0.96)_0%,rgba(253,230,138,0.92)_100%)] px-4 text-amber-800 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.58)] ring-1 ring-amber-200/90 hover:border-amber-300 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(253,230,138,0.94)_100%)] hover:text-amber-900 ${mobileWideNavItemClassName}`,
+  const {
+    appearanceControls,
+    shouldRenderLanguageSwitcher,
+    basePath,
     mobileNavItemClassName,
-    yellowPillActionClassName: `border-amber-200/90 bg-[linear-gradient(180deg,rgba(255,251,235,0.98)_0%,rgba(254,243,199,0.94)_100%)] px-4 text-amber-700 shadow-[0_14px_24px_-18px_rgba(245,158,11,0.55)] ring-1 ring-amber-100/90 hover:border-amber-200 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(254,243,199,0.96)_100%)] hover:text-amber-800 ${mobileWideNavItemClassName}`,
-  };
+    parentDashboardAction,
+    profileHref,
+    profileLabel,
+    profileTransitionSourceId,
+  } = derived;
+
+  const accessibleCurrentPage = props.currentPage;
+  const forceLanguageSwitcherFallbackPath =
+    props.forceLanguageSwitcherFallbackPath ?? false;
+  const learnerProfileIsActive = accessibleCurrentPage === 'LearnerProfile';
+
+  const resolvedAppearanceControls = hideAppearanceControls ? null : appearanceControls;
+  const resolvedShouldRenderLanguageSwitcher =
+    shouldRenderLanguageSwitcher && !hideLanguageSwitcher;
+
+  if (
+    !resolveKangurPrimaryNavigationUtilityVisibility({
+      authActions,
+      parentDashboardAction,
+      resolvedAppearanceControls,
+      resolvedShouldRenderLanguageSwitcher,
+      rightAccessory,
+      shouldRenderElevatedUserMenu,
+      shouldRenderProfileMenu,
+    })
+  ) {
+    return null;
+  }
+
+  return (
+    <div
+      className={
+        wrapperClassName ??
+        `ml-auto ${KANGUR_TIGHT_ROW_CLASSNAME} items-stretch justify-end max-sm:ml-0 max-sm:justify-start sm:w-auto sm:flex-wrap sm:items-center`
+      }
+      data-testid={testId}
+    >
+      {resolveUtilityLanguageSwitcherNode({
+        accessibleCurrentPage,
+        basePath,
+        forceLanguageSwitcherFallbackPath,
+        mobileNavItemClassName,
+        resolvedShouldRenderLanguageSwitcher,
+      })}
+      {resolvedAppearanceControls}
+      {rightAccessory}
+      {resolveUtilityParentDashboardNode({ onActionClick, parentDashboardAction })}
+      {resolveUtilityElevatedUserMenuNode({
+        elevatedSessionUser,
+        fallbackCopy,
+        isCoarsePointer,
+        onLogout: props.onLogout,
+        shouldRenderElevatedUserMenu,
+      })}
+      {resolveUtilityProfileMenuNode({
+        learnerProfileIsActive,
+        mobileNavItemClassName,
+        profileAvatar,
+        profileHref,
+        profileLabel,
+        profileTransitionSourceId,
+        shouldRenderProfileMenu,
+      })}
+      {authActions}
+    </div>
+  );
+}
+
+// --- Overlays (previously overlays.tsx) ---
+
+type KangurChoiceDialogConfig = {
+  closeAriaLabel: string;
+  contentId: string;
+  currentChoiceLabel: React.ReactNode;
+  defaultChoiceLabel: React.ReactNode;
+  description: string;
+  doneAriaLabel: string;
+  doneLabel?: React.ReactNode;
+  groupAriaLabel: string;
+  label: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  options: KangurChoiceDialogOption[];
+  title: React.ReactNode;
 };
 
-const resolveKangurPrimaryNavigationChoiceModel = ({
-  activeLearner,
-  ageGroup,
-  authUser,
-  fallbackCopy,
-  normalizedLocale,
-  setAgeGroup,
-  setSubject,
-  subject,
+function renderKangurPrimaryNavigationVisualChoiceLabel({
+  detailTestId,
+  iconTestId,
+  isSixYearOld,
+  label,
+  visual,
 }: {
-  activeLearner: ReturnType<typeof useKangurPrimaryNavigationState>['activeLearner'];
-  ageGroup: ReturnType<typeof useKangurPrimaryNavigationState>['ageGroup'];
-  authUser: ReturnType<typeof useKangurPrimaryNavigationState>['authUser'];
-  fallbackCopy: ReturnType<typeof useKangurPrimaryNavigationState>['fallbackCopy'];
-  normalizedLocale: string;
-  setAgeGroup: ReturnType<typeof useKangurPrimaryNavigationState>['setAgeGroup'];
-  setSubject: ReturnType<typeof useKangurPrimaryNavigationState>['setSubject'];
-  subject: ReturnType<typeof useKangurPrimaryNavigationState>['subject'];
-}) => {
-  const isSixYearOld = ageGroup === 'six_year_old';
-  const subjectChoiceLabel = getLocalizedKangurSubjectLabel(subject, normalizedLocale);
-  const ageGroupChoiceLabel = getLocalizedKangurAgeGroupLabel(ageGroup, normalizedLocale);
-  const defaultSubjectLabel = getLocalizedKangurSubjectLabel(
-    getKangurDefaultSubjectForAgeGroup(ageGroup),
-    normalizedLocale
+  detailTestId: string;
+  iconTestId: string;
+  isSixYearOld: boolean;
+  label: string;
+  visual: { detail: string; icon: React.ReactNode };
+}): React.ReactNode {
+  if (!isSixYearOld) {
+    return label;
+  }
+
+  return (
+    <KangurVisualCueContent
+      detail={visual.detail}
+      detailClassName='text-sm font-bold'
+      detailTestId={detailTestId}
+      icon={visual.icon}
+      iconClassName='text-lg'
+      iconTestId={iconTestId}
+      label={label}
+    />
   );
-  const defaultAgeGroupLabel = getLocalizedKangurAgeGroupLabel(
-    KANGUR_AGE_GROUPS.find((group) => group.default)?.id ?? DEFAULT_KANGUR_AGE_GROUP,
-    normalizedLocale
+}
+
+function resolveKangurPrimaryNavigationDoneLabel(
+  isSixYearOld: boolean,
+  iconTestId: string
+): React.ReactNode | undefined {
+  if (!isSixYearOld) {
+    return undefined;
+  }
+
+  return (
+    <KangurVisualCueContent
+      icon='✅'
+      iconClassName='text-lg'
+      iconTestId={iconTestId}
+      label='Gotowe'
+    />
   );
-  const subjectVisual = getKangurSixYearOldSubjectVisual(subject);
-  const ageGroupVisual = getKangurSixYearOldAgeGroupVisual(ageGroup);
-  const availableSubjects = getKangurSubjectsForAgeGroup(ageGroup);
+}
+
+function resolveKangurPrimaryNavigationDialogTitle({
+  detail,
+  detailTestId,
+  icon,
+  iconTestId,
+  isSixYearOld,
+  label,
+}: {
+  detail: string;
+  detailTestId: string;
+  icon: React.ReactNode;
+  iconTestId: string;
+  isSixYearOld: boolean;
+  label: string;
+}): React.ReactNode {
+  if (!isSixYearOld) {
+    return label;
+  }
+
+  return (
+    <KangurVisualCueContent
+      detail={detail}
+      detailClassName='text-sm'
+      detailTestId={detailTestId}
+      icon={icon}
+      iconClassName='text-lg'
+      iconTestId={iconTestId}
+      label={label}
+    />
+  );
+}
+
+function buildKangurPrimaryNavigationSubjectDialog(input: {
+  ageGroup: KangurLessonAgeGroup;
+  defaultSubjectLabel: string;
+  isSixYearOld: boolean;
+  navTranslations: KangurIntlTranslate;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  options: KangurChoiceDialogOption[];
+  subjectChoiceLabel: string;
+  subjectVisual: KangurPrimaryNavigationContextValue['derived']['subjectVisual'];
+}): KangurChoiceDialogConfig {
+  const subjectLabel = input.navTranslations('subject.label');
+  const defaultSubjectVisual = getKangurSixYearOldSubjectVisual(
+    getKangurDefaultSubjectForAgeGroup(input.ageGroup)
+  );
 
   return {
-    ageGroupChoiceLabel,
-    ageGroupOptions: buildAgeGroupOptions({
-      ageGroup,
-      isSixYearOld,
-      normalizedLocale,
-      setAgeGroup,
+    closeAriaLabel: input.navTranslations('subject.closeAriaLabel'),
+    contentId: 'kangur-primary-nav-subject-dialog',
+    currentChoiceLabel: renderKangurPrimaryNavigationVisualChoiceLabel({
+      detailTestId: 'kangur-primary-nav-subject-modal-current-detail',
+      iconTestId: 'kangur-primary-nav-subject-modal-current-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: input.subjectChoiceLabel,
+      visual: input.subjectVisual,
     }),
-    ageGroupVisual,
-    defaultAgeGroupLabel,
-    defaultSubjectLabel,
-    isSixYearOld,
-    profileLabel: resolvePrimaryNavigationLabel({
-      fallbackCopy,
-      profileDisplayName: resolvePrimaryNavigationProfileDisplayName({
-        activeLearner,
-        authUser,
-      }),
+    defaultChoiceLabel: renderKangurPrimaryNavigationVisualChoiceLabel({
+      detailTestId: 'kangur-primary-nav-subject-modal-default-detail',
+      iconTestId: 'kangur-primary-nav-subject-modal-default-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: input.defaultSubjectLabel,
+      visual: defaultSubjectVisual,
     }),
-    subjectChoiceLabel,
-    subjectOptions: buildSubjectOptions({
-      availableSubjects,
-      isSixYearOld,
-      normalizedLocale,
-      setSubject,
-      subject,
+    description: input.navTranslations('subject.dialogDescription'),
+    doneAriaLabel: 'Gotowe',
+    doneLabel: resolveKangurPrimaryNavigationDoneLabel(
+      input.isSixYearOld,
+      'kangur-primary-nav-subject-modal-done-icon'
+    ),
+    groupAriaLabel: input.navTranslations('subject.groupAriaLabel'),
+    label: subjectLabel,
+    onOpenChange: input.onOpenChange,
+    open: input.open,
+    options: input.options,
+    title: resolveKangurPrimaryNavigationDialogTitle({
+      detail: '👆',
+      detailTestId: 'kangur-primary-nav-subject-modal-title-detail',
+      icon: '📚',
+      iconTestId: 'kangur-primary-nav-subject-modal-title-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: subjectLabel,
     }),
-    subjectVisual,
   };
-};
+}
 
-const resolveKangurPrimaryNavigationTutorLabels = ({
-  fallbackCopy,
-  tutorContent,
-}: {
-  fallbackCopy: ReturnType<typeof useKangurPrimaryNavigationState>['fallbackCopy'];
-  tutorContent: ReturnType<typeof useKangurPrimaryNavigationState>['tutorContent'];
-}) => ({
-  disableTutorLabel: resolveTutorFallbackCopy(
-    tutorContent.common.disableTutorAria,
-    fallbackCopy.disableTutorLabel
-  ),
-  enableTutorLabel: resolveTutorFallbackCopy(
-    tutorContent.common.enableTutorLabel ?? tutorContent.navigation.restoreTutorLabel,
-    fallbackCopy.enableTutorLabel
-  ),
-});
+function buildKangurPrimaryNavigationAgeGroupDialog(input: {
+  ageGroupChoiceLabel: string;
+  defaultAgeGroupLabel: string;
+  isSixYearOld: boolean;
+  navTranslations: KangurIntlTranslate;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  options: KangurChoiceDialogOption[];
+  ageGroupVisual: KangurPrimaryNavigationContextValue['derived']['ageGroupVisual'];
+}): KangurChoiceDialogConfig {
+  const ageGroupLabel = input.navTranslations('ageGroup.label');
+  const defaultAgeGroupVisual = getKangurSixYearOldAgeGroupVisual('ten_year_old');
 
-const buildKangurPrimaryNavigationTutorToggleHandler = ({
-  isTutorHidden,
-  tutor,
-}: {
-  isTutorHidden: boolean;
-  tutor: ReturnType<typeof useKangurPrimaryNavigationState>['tutor'];
-}) => (): void => {
-  const nextHidden = !isTutorHidden;
-  persistTutorVisibilityHidden(nextHidden);
-  if (!nextHidden && tutor?.enabled) {
-    tutor.openChat();
-  }
-};
+  return {
+    closeAriaLabel: input.navTranslations('ageGroup.closeAriaLabel'),
+    contentId: 'kangur-primary-nav-age-group-dialog',
+    currentChoiceLabel: renderKangurPrimaryNavigationVisualChoiceLabel({
+      detailTestId: 'kangur-primary-nav-age-group-modal-current-detail',
+      iconTestId: 'kangur-primary-nav-age-group-modal-current-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: input.ageGroupChoiceLabel,
+      visual: input.ageGroupVisual,
+    }),
+    defaultChoiceLabel: renderKangurPrimaryNavigationVisualChoiceLabel({
+      detailTestId: 'kangur-primary-nav-age-group-modal-default-detail',
+      iconTestId: 'kangur-primary-nav-age-group-modal-default-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: input.defaultAgeGroupLabel,
+      visual: defaultAgeGroupVisual,
+    }),
+    description: input.navTranslations('ageGroup.dialogDescription'),
+    doneAriaLabel: 'Gotowe',
+    doneLabel: resolveKangurPrimaryNavigationDoneLabel(
+      input.isSixYearOld,
+      'kangur-primary-nav-age-group-modal-done-icon'
+    ),
+    groupAriaLabel: input.navTranslations('ageGroup.groupAriaLabel'),
+    label: ageGroupLabel,
+    onOpenChange: input.onOpenChange,
+    open: input.open,
+    options: input.options,
+    title: resolveKangurPrimaryNavigationDialogTitle({
+      detail: '👆',
+      detailTestId: 'kangur-primary-nav-age-group-modal-title-detail',
+      icon: '👥',
+      iconTestId: 'kangur-primary-nav-age-group-modal-title-icon',
+      isSixYearOld: input.isSixYearOld,
+      label: ageGroupLabel,
+    }),
+  };
+}
 
-function KangurPrimaryNavigationTopBarContent({
-  isCoarsePointer,
+function KangurPrimaryNavigationMobileMenuOverlay({
+  closeMobileMenu,
+  closeMobileMenuLabel,
+  headerActions,
   isMobileMenuOpen,
   isMobileViewport,
-  mobileMenuId,
-  mobileMenuLabel,
+  menuDescription,
+  menuId,
+  menuRef,
+  menuTitle,
   navigationLabel,
-  onToggleMobileMenu,
+  primaryActions,
+  textColor,
+  toneBackground,
+  utilityActions,
+}: {
+  closeMobileMenu: () => void;
+  closeMobileMenuLabel: string;
+  headerActions: React.ReactNode;
+  isMobileMenuOpen: boolean;
+  isMobileViewport: boolean;
+  menuDescription: string;
+  menuId: string;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  menuTitle: string;
+  navigationLabel: string;
+  primaryActions: React.ReactNode;
+  textColor: string;
+  toneBackground: string;
+  utilityActions: React.ReactNode;
+}): React.ReactNode {
+  if (!isMobileViewport && !isMobileMenuOpen) {
+    return null;
+  }
+
+  const mobileMenuTitleId = `${menuId}-title`;
+  const mobileMenuDescriptionId = `${menuId}-description`;
+
+  return (
+    <div
+      aria-hidden={!isMobileMenuOpen}
+      className={`fixed inset-0 z-50 transition-opacity duration-200 sm:hidden ${
+        isMobileMenuOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
+    >
+      <button
+        aria-hidden='true'
+        className='absolute inset-0 cursor-pointer border-0 bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.72)_100%)] p-0 touch-manipulation active:opacity-95'
+        onClick={closeMobileMenu}
+        tabIndex={-1}
+        type='button'
+      />
+      <div
+        aria-describedby={mobileMenuDescriptionId}
+        aria-labelledby={mobileMenuTitleId}
+        aria-modal='true'
+        className={`relative flex h-full w-full flex-col kangur-panel-gap overflow-y-auto px-4 pb-[calc(var(--kangur-mobile-bottom-clearance,env(safe-area-inset-bottom))+32px)] pt-[calc(env(safe-area-inset-top)+20px)] transition-transform duration-200 min-[420px]:px-5 ${
+          isMobileMenuOpen ? 'translate-y-0' : 'translate-y-4'
+        }`}
+        id={menuId}
+        onClick={(event) => event.stopPropagation()}
+        ref={menuRef}
+        role='dialog'
+        style={{
+          backgroundColor: toneBackground,
+          color: textColor,
+        }}
+      >
+        <h2 className='sr-only' id={mobileMenuTitleId}>
+          {menuTitle}
+        </h2>
+        <p className='sr-only' id={mobileMenuDescriptionId}>
+          {menuDescription}
+        </p>
+        <KangurTopNavGroup className='w-full flex-col' label={navigationLabel}>
+          <div className='flex w-full items-center gap-2' data-testid='kangur-primary-nav-mobile-header'>
+            {headerActions ? (
+              <div
+                className='flex min-w-0 items-center gap-2'
+                data-testid='kangur-primary-nav-mobile-header-actions'
+              >
+                {headerActions}
+              </div>
+            ) : null}
+            <div className='ml-auto flex shrink-0 items-center'>
+              <KangurPanelCloseButton
+                aria-label={closeMobileMenuLabel}
+                id='kangur-mobile-menu-close'
+                onClick={closeMobileMenu}
+                variant='chat'
+              />
+            </div>
+          </div>
+          {primaryActions}
+          {utilityActions}
+        </KangurTopNavGroup>
+      </div>
+    </div>
+  );
+}
+
+function KangurPrimaryNavigationChoiceDialogs({
+  ageGroupDialog,
+  subjectDialog,
+}: {
+  ageGroupDialog: KangurChoiceDialogConfig;
+  subjectDialog: KangurChoiceDialogConfig;
+}): React.ReactNode {
+  return (
+    <Suspense fallback={null}>
+      {subjectDialog.open ? (
+        <KangurChoiceDialog
+          closeAriaLabel={subjectDialog.closeAriaLabel}
+          contentId={subjectDialog.contentId}
+          currentChoiceLabel={subjectDialog.currentChoiceLabel}
+          defaultChoiceLabel={subjectDialog.defaultChoiceLabel}
+          doneAriaLabel={subjectDialog.doneAriaLabel}
+          doneLabel={subjectDialog.doneLabel}
+          groupAriaLabel={subjectDialog.groupAriaLabel}
+          header={
+            <KangurDialogMeta
+              description={subjectDialog.description}
+              title={subjectDialog.label}
+            />
+          }
+          onOpenChange={subjectDialog.onOpenChange}
+          open={subjectDialog.open}
+          options={subjectDialog.options}
+          title={subjectDialog.title}
+        />
+      ) : null}
+      {ageGroupDialog.open ? (
+        <KangurChoiceDialog
+          closeAriaLabel={ageGroupDialog.closeAriaLabel}
+          contentId={ageGroupDialog.contentId}
+          currentChoiceLabel={ageGroupDialog.currentChoiceLabel}
+          defaultChoiceLabel={ageGroupDialog.defaultChoiceLabel}
+          doneAriaLabel={ageGroupDialog.doneAriaLabel}
+          doneLabel={ageGroupDialog.doneLabel}
+          groupAriaLabel={ageGroupDialog.groupAriaLabel}
+          header={
+            <KangurDialogMeta
+              description={ageGroupDialog.description}
+              title={ageGroupDialog.label}
+            />
+          }
+          onOpenChange={ageGroupDialog.onOpenChange}
+          open={ageGroupDialog.open}
+          options={ageGroupDialog.options}
+          title={ageGroupDialog.title}
+        />
+      ) : null}
+    </Suspense>
+  );
+}
+
+// --- Main Container Logic ---
+
+function KangurPrimaryNavigationTopBarContent({
   primaryActions,
   utilityActions,
 }: {
-  isCoarsePointer: boolean;
-  isMobileMenuOpen: boolean;
-  isMobileViewport: boolean;
-  mobileMenuId: string;
-  mobileMenuLabel: string;
-  navigationLabel: string;
-  onToggleMobileMenu: () => void;
   primaryActions: React.ReactNode;
   utilityActions: React.ReactNode;
 }): React.JSX.Element {
+  const {
+    isCoarsePointer,
+    isMobileMenuOpen,
+    isMobileViewport,
+    navTranslations,
+    navigationLabel,
+    toggleMobileMenu,
+  } = useKangurPrimaryNavigationContext();
+
+  const mobileMenuLabel = isMobileMenuOpen
+    ? navTranslations('mobileMenu.close')
+    : navTranslations('mobileMenu.open');
+
   return (
     <>
       <div aria-hidden={isMobileViewport} className='hidden w-full min-w-0 sm:block'>
@@ -322,14 +810,14 @@ function KangurPrimaryNavigationTopBarContent({
       <div aria-hidden={!isMobileViewport} className='w-full min-w-0 sm:hidden'>
         <KangurTopNavGroup label={navigationLabel}>
           <KangurButton
-            aria-controls={mobileMenuId}
+            aria-controls={KANGUR_PRIMARY_NAV_DIALOG_IDS.mobileMenu}
             aria-expanded={isMobileMenuOpen}
             aria-haspopup='dialog'
             aria-label={mobileMenuLabel}
             className={isCoarsePointer ? 'min-h-12 px-4 py-3' : 'px-4 py-3'}
             data-testid='kangur-primary-nav-mobile-toggle'
             fullWidth
-            onClick={onToggleMobileMenu}
+            onClick={toggleMobileMenu}
             size='md'
             type='button'
             variant='navigation'
@@ -347,82 +835,25 @@ function KangurPrimaryNavigationTopBarContent({
   );
 }
 
-export function KangurPrimaryNavigation({
-  basePath,
-  canManageLearners = false,
-  className,
-  contentClassName,
-  currentPage,
-  forceLanguageSwitcherFallbackPath = false,
-  guestPlayerName,
-  guestPlayerNamePlaceholder,
-  homeActive,
-  isAuthenticated,
-  navLabel,
-  onGuestPlayerNameChange,
-  onHomeClick,
-  onLogin,
-  onLogout,
-  rightAccessory,
-  showParentDashboard = canManageLearners,
-}: KangurPrimaryNavigationProps): React.JSX.Element {
+function KangurPrimaryNavigationContent(): React.JSX.Element {
   const {
-    activeLearner,
     ageGroup,
-    authUser,
     closeMobileMenu,
-    effectiveIsAuthenticated,
-    effectiveShowParentDashboard,
-    elevatedSessionUser,
-    fallbackCopy,
     isAgeGroupModalOpen,
-    isCoarsePointer,
-    isLoggingOut,
     isMobileMenuOpen,
     isMobileViewport,
     isSubjectModalOpen,
-    isSuperAdmin,
-    isTutorHidden,
     kangurAppearance,
     navTranslations,
     navigationLabel,
-    normalizedLocale,
-    profileAvatar,
-    queryClient,
-    routeTransitionState,
-    setAgeGroup,
     setIsAgeGroupModalOpen,
-    setIsMobileMenuOpen,
     setIsSubjectModalOpen,
-    setSubject,
-    shouldRenderElevatedUserMenu,
-    shouldRenderProfileMenu,
-    subject,
-    toggleMobileMenu,
-    tutor,
-    tutorContent,
-  } = useKangurPrimaryNavigationState({
-    canManageLearners,
-    currentPage,
-    isAuthenticated,
-    navLabel,
-    showParentDashboard,
-  });
-  const storefrontAppearance = useOptionalCmsStorefrontAppearance();
-  const accessibleCurrentPage = currentPage;
-  const effectiveHomeActive = resolveKangurPrimaryNavigationEffectiveHomeActive({
-    currentPage: accessibleCurrentPage,
-    homeActive,
-  });
-  const learnerProfileIsActive = accessibleCurrentPage === 'LearnerProfile';
-  const transitionPhase =
-    resolveKangurPrimaryNavigationTransitionPhase(routeTransitionState);
-  const activeTransitionSourceId =
-    resolveKangurPrimaryNavigationActiveTransitionSourceId(routeTransitionState);
-  const canAccessGamesLibrary = resolveKangurPrimaryNavigationCanAccessGamesLibrary({
-    effectiveIsAuthenticated,
-    isSuperAdmin,
-  });
+    mobileMenuRef,
+    props,
+    derived,
+  } = useKangurPrimaryNavigationContext();
+
+  const { className, contentClassName, rightAccessory } = props;
   const {
     ageGroupChoiceLabel,
     ageGroupOptions,
@@ -430,305 +861,49 @@ export function KangurPrimaryNavigation({
     defaultAgeGroupLabel,
     defaultSubjectLabel,
     isSixYearOld,
-    profileLabel,
     subjectChoiceLabel,
     subjectOptions,
     subjectVisual,
-  } = resolveKangurPrimaryNavigationChoiceModel({
-    activeLearner,
-    ageGroup,
-    authUser,
-    fallbackCopy,
-    normalizedLocale,
-    setAgeGroup,
-    setSubject,
-    subject,
-  });
-  const { amberPillActionClassName, mobileNavItemClassName, yellowPillActionClassName } =
-    resolveKangurPrimaryNavigationClassNames({ isCoarsePointer });
-  const { disableTutorLabel, enableTutorLabel } =
-    resolveKangurPrimaryNavigationTutorLabels({
-      fallbackCopy,
-      tutorContent,
-    });
-  const {
-    commitGuestPlayerName,
-    guestPlayerNameValue,
-    guestPlayerPlaceholderText,
-    handleGuestPlayerNameChange,
-    hasGuestPlayerName,
-    isEditingGuestPlayerName,
-    loginActionRef,
-    mobileMenuRef,
-    prefetchLessonsCatalogOnIntent,
-    setIsEditingGuestPlayerName,
-    showGuestPlayerNameInput,
-  } = useKangurPrimaryNavigationRuntime({
-    ageGroup,
-    currentPage: accessibleCurrentPage,
-    effectiveIsAuthenticated,
-    fallbackCopy,
-    guestPlayerName,
-    guestPlayerNamePlaceholder,
-    isMobileMenuOpen,
-    normalizedLocale,
-    onGuestPlayerNameChange,
-    onLogin,
-    queryClient,
-    setIsMobileMenuOpen,
-    subject,
-  });
-  const homeHref = getKangurHomeHref(basePath);
-  const gamesLibraryHref = createPageUrl('GamesLibrary', basePath);
-  const lessonsHref = createPageUrl('Lessons', basePath);
-  const duelsHref = createPageUrl('Duels', basePath);
-  const parentDashboardHref = createPageUrl('ParentDashboard', basePath);
-  const profileHref = createPageUrl('LearnerProfile', basePath);
-  const homeAction = buildHomeAction({
-    activeTransitionSourceId,
-    effectiveHomeActive,
-    homeHref,
-    homeTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.home,
-    navTranslations,
-    onHomeClick,
-    transitionPhase,
-  });
-  const lessonsAction = buildLessonsAction({
-    accessibleCurrentPage,
-    activeTransitionSourceId,
-    isSixYearOld,
-    lessonsHref,
-    lessonsTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.lessons,
-    mobileNavItemClassName,
-    navTranslations,
-    prefetchLessonsCatalogOnIntent,
-    transitionPhase,
-  });
-  const gamesLibraryAction = buildGamesLibraryAction({
-    accessibleCurrentPage,
-    activeTransitionSourceId,
-    gamesLibraryHref,
-    gamesLibraryTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.gamesLibrary,
-    isSixYearOld,
-    mobileNavItemClassName,
-    navTranslations,
-    transitionPhase,
-  });
-  const subjectAction = buildSubjectAction({
-    className: yellowPillActionClassName,
-    isSixYearOld,
-    isSubjectModalOpen,
-    navTranslations,
-    onOpen: () => setIsSubjectModalOpen(true),
-    subjectChoiceLabel,
-    subjectDialogId: KANGUR_PRIMARY_NAV_DIALOG_IDS.subject,
-    subjectVisual,
-  });
-  const ageGroupAction = buildAgeGroupAction({
-    ageGroupChoiceLabel,
-    ageGroupDialogId: KANGUR_PRIMARY_NAV_DIALOG_IDS.ageGroup,
-    ageGroupVisual,
-    className: amberPillActionClassName,
-    isAgeGroupModalOpen,
-    isSixYearOld,
-    navTranslations,
-    onOpen: () => setIsAgeGroupModalOpen(true),
-  });
-  const duelsAction = buildDuelsAction({
-    accessibleCurrentPage,
-    activeTransitionSourceId,
-    duelsHref,
-    duelsTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.duels,
-    isSixYearOld,
-    mobileNavItemClassName,
-    navTranslations,
-    transitionPhase,
-  });
-  const parentDashboardAction = buildParentDashboardAction({
-    accessibleCurrentPage,
-    activeTransitionSourceId,
-    effectiveShowParentDashboard,
-    isSixYearOld,
-    mobileNavItemClassName,
-    navTranslations,
-    parentDashboardHref,
-    parentDashboardTransitionSourceId: KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.parentDashboard,
-    transitionPhase,
-  });
-  const tutorToggleAction = buildTutorToggleAction({
-    disableTutorLabel,
-    enableTutorLabel,
-    isTutorHidden,
-    mobileNavItemClassName,
-    onToggle: buildKangurPrimaryNavigationTutorToggleHandler({
-      isTutorHidden,
-      tutor,
-    }),
-    yellowPillActionClassName,
-  });
-  const shouldRenderLanguageSwitcher =
-    resolveKangurPrimaryNavigationShouldRenderLanguageSwitcher(basePath);
-  const appearanceControls = resolveAppearanceControls({
-    kangurAppearanceLabels: {
-      default: 'Daily',
-      dawn: 'Dawn',
-      sunset: 'Sunset',
-      dark: 'Nightly',
-    },
-    kangurAppearanceModes: ['default', 'dawn', 'sunset', 'dark'],
-    kangurAppearanceTone: kangurAppearance.tone,
-    storefrontAppearance,
-  });
-  const appearanceControlsInline = resolveAppearanceControls({
-    inline: true,
-    kangurAppearanceLabels: {
-      default: 'Daily',
-      dawn: 'Dawn',
-      sunset: 'Sunset',
-      dark: 'Nightly',
-    },
-    kangurAppearanceModes: ['default', 'dawn', 'sunset', 'dark'],
-    kangurAppearanceTone: kangurAppearance.tone,
-    storefrontAppearance,
-  });
-  const authActions = (
-    <KangurPrimaryNavigationAuthActions
-      commitGuestPlayerName={commitGuestPlayerName}
-      effectiveIsAuthenticated={effectiveIsAuthenticated}
-      fallbackCopy={fallbackCopy}
-      guestPlayerName={guestPlayerName}
-      guestPlayerNameValue={guestPlayerNameValue}
-      guestPlayerPlaceholderText={guestPlayerPlaceholderText}
-      handleGuestPlayerNameChange={handleGuestPlayerNameChange}
-      hasGuestPlayerName={hasGuestPlayerName}
-      isEditingGuestPlayerName={isEditingGuestPlayerName}
-      isLoggingOut={isLoggingOut}
-      loginActionRef={loginActionRef}
-      mobileNavItemClassName={mobileNavItemClassName}
-      onLogin={onLogin}
-      onLogout={onLogout}
-      setIsEditingGuestPlayerName={setIsEditingGuestPlayerName}
-      showGuestPlayerNameInput={showGuestPlayerNameInput}
-    />
-  );
-  const homeActionWithMobileClassName = {
-    ...homeAction,
-    className: `${homeAction.className} ${mobileNavItemClassName}`,
-  };
-  const primaryActions = (
-    <KangurPrimaryNavigationPrimaryActions
-      ageGroupAction={ageGroupAction}
-      appearanceControlsInline={appearanceControlsInline}
-      canAccessGamesLibrary={canAccessGamesLibrary}
-      duelsAction={duelsAction}
-      gamesLibraryAction={gamesLibraryAction}
-      homeAction={homeActionWithMobileClassName}
-      isTutorHidden={isTutorHidden}
-      lessonsAction={lessonsAction}
-      subjectAction={subjectAction}
-      tutorToggleAction={tutorToggleAction}
-    />
-  );
+    appearanceControlsInline,
+    basePath,
+    shouldRenderLanguageSwitcher,
+  } = derived;
+
+  const authActions = <KangurPrimaryNavigationAuthActions />;
+  const primaryActions = <KangurPrimaryNavigationPrimaryActions />;
   const utilityActions = (
     <KangurPrimaryNavigationUtilityActions
-      accessibleCurrentPage={accessibleCurrentPage}
-      appearanceControls={appearanceControls}
       authActions={authActions}
-      basePath={basePath}
-      elevatedSessionUser={elevatedSessionUser}
-      fallbackCopy={fallbackCopy}
-      forceLanguageSwitcherFallbackPath={forceLanguageSwitcherFallbackPath}
-      isCoarsePointer={isCoarsePointer}
-      learnerProfileIsActive={learnerProfileIsActive}
-      mobileNavItemClassName={mobileNavItemClassName}
-      onLogout={onLogout}
-      parentDashboardAction={parentDashboardAction}
-      profileAvatar={profileAvatar}
-      profileHref={profileHref}
-      profileLabel={profileLabel}
-      profileTransitionSourceId={KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.profile}
       rightAccessory={rightAccessory}
-      shouldRenderElevatedUserMenu={shouldRenderElevatedUserMenu}
-      shouldRenderLanguageSwitcher={shouldRenderLanguageSwitcher}
-      shouldRenderProfileMenu={shouldRenderProfileMenu}
     />
   );
-  const mobileMenuLabel = resolveKangurPrimaryNavigationMobileMenuLabel({
-    isMobileMenuOpen,
-    navTranslations,
-  });
+
   const mobileMenuHeaderActions = resolveMobileMenuHeaderActions({
     appearanceControlsInline,
     basePath,
-    currentPage: accessibleCurrentPage,
-    forceLanguageSwitcherFallbackPath,
+    currentPage: props.currentPage,
+    forceLanguageSwitcherFallbackPath: props.forceLanguageSwitcherFallbackPath ?? false,
     shouldRenderLanguageSwitcher,
   });
+
   const mobileAuthActions = (
-    <KangurPrimaryNavigationAuthActions
-      commitGuestPlayerName={commitGuestPlayerName}
-      effectiveIsAuthenticated={effectiveIsAuthenticated}
-      fallbackCopy={fallbackCopy}
-      guestPlayerName={guestPlayerName}
-      guestPlayerNameValue={guestPlayerNameValue}
-      guestPlayerPlaceholderText={guestPlayerPlaceholderText}
-      handleGuestPlayerNameChange={handleGuestPlayerNameChange}
-      hasGuestPlayerName={hasGuestPlayerName}
-      isEditingGuestPlayerName={isEditingGuestPlayerName}
-      isLoggingOut={isLoggingOut}
-      loginActionRef={loginActionRef}
-      mobileNavItemClassName={mobileNavItemClassName}
-      onActionClick={closeMobileMenu}
-      onLogin={onLogin}
-      onLogout={onLogout}
-      setIsEditingGuestPlayerName={setIsEditingGuestPlayerName}
-      showGuestPlayerNameInput={showGuestPlayerNameInput}
-    />
+    <KangurPrimaryNavigationAuthActions onActionClick={closeMobileMenu} />
   );
   const mobilePrimaryActions = (
     <KangurPrimaryNavigationPrimaryActions
-      ageGroupAction={ageGroupAction}
-      appearanceControlsInline={appearanceControlsInline}
-      canAccessGamesLibrary={canAccessGamesLibrary}
-      duelsAction={duelsAction}
-      gamesLibraryAction={gamesLibraryAction}
-      homeAction={homeActionWithMobileClassName}
-      inlineAppearanceWithTutor={false}
-      isTutorHidden={isTutorHidden}
-      lessonsAction={lessonsAction}
       onActionClick={closeMobileMenu}
-      subjectAction={subjectAction}
-      tutorToggleAction={tutorToggleAction}
       wrapperClassName='flex w-full flex-col gap-2'
     />
   );
   const mobileUtilityActions = (
     <KangurPrimaryNavigationUtilityActions
-      accessibleCurrentPage={accessibleCurrentPage}
-      appearanceControls={appearanceControls}
       authActions={mobileAuthActions}
-      basePath={basePath}
-      elevatedSessionUser={elevatedSessionUser}
-      fallbackCopy={fallbackCopy}
-      forceLanguageSwitcherFallbackPath={forceLanguageSwitcherFallbackPath}
-      hideAppearanceControls={Boolean(appearanceControlsInline)}
-      hideLanguageSwitcher={shouldRenderLanguageSwitcher}
-      isCoarsePointer={isCoarsePointer}
-      learnerProfileIsActive={learnerProfileIsActive}
-      mobileNavItemClassName={mobileNavItemClassName}
       onActionClick={closeMobileMenu}
-      onLogout={onLogout}
-      parentDashboardAction={parentDashboardAction}
-      profileAvatar={profileAvatar}
-      profileHref={profileHref}
-      profileLabel={profileLabel}
-      profileTransitionSourceId={KANGUR_PRIMARY_NAV_TRANSITION_SOURCE_IDS.profile}
       rightAccessory={rightAccessory}
-      shouldRenderElevatedUserMenu={shouldRenderElevatedUserMenu}
-      shouldRenderLanguageSwitcher={shouldRenderLanguageSwitcher}
-      shouldRenderProfileMenu={shouldRenderProfileMenu}
       testId='kangur-primary-nav-mobile-utility-actions'
       wrapperClassName='flex w-full flex-col gap-2'
+      hideAppearanceControls={Boolean(appearanceControlsInline)}
+      hideLanguageSwitcher={shouldRenderLanguageSwitcher}
     />
   );
 
@@ -739,13 +914,6 @@ export function KangurPrimaryNavigation({
         contentClassName={contentClassName}
         left={
           <KangurPrimaryNavigationTopBarContent
-            isCoarsePointer={isCoarsePointer}
-            isMobileMenuOpen={isMobileMenuOpen}
-            isMobileViewport={isMobileViewport}
-            mobileMenuId={KANGUR_PRIMARY_NAV_DIALOG_IDS.mobileMenu}
-            mobileMenuLabel={mobileMenuLabel}
-            navigationLabel={navigationLabel}
-            onToggleMobileMenu={toggleMobileMenu}
             primaryActions={primaryActions}
             utilityActions={utilityActions}
           />
@@ -779,7 +947,7 @@ export function KangurPrimaryNavigation({
           options: ageGroupOptions,
         })}
         subjectDialog={buildKangurPrimaryNavigationSubjectDialog({
-          ageGroup,
+          ageGroup: ageGroup,
           defaultSubjectLabel,
           isSixYearOld,
           navTranslations,
@@ -791,6 +959,14 @@ export function KangurPrimaryNavigation({
         })}
       />
     </>
+  );
+}
+
+export function KangurPrimaryNavigation(props: KangurPrimaryNavigationProps): React.JSX.Element {
+  return (
+    <KangurPrimaryNavigationProvider {...props}>
+      <KangurPrimaryNavigationContent />
+    </KangurPrimaryNavigationProvider>
   );
 }
 

@@ -1,11 +1,12 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { PaginationContextValue, PaginationProps } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
+import type { PaginationContextValue, PaginationProps } from '@/shared/contracts/ui/controls';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { Button } from './button';
 import { Label } from './label';
@@ -14,13 +15,12 @@ import { UI_STACK_RELAXED_CLASSNAME } from './layout';
 
 export type { PaginationContextValue, PaginationProps };
 
-const PaginationContext = createContext<PaginationContextValue | null>(null);
-
-function usePaginationContext(): PaginationContextValue {
-  const context = useContext(PaginationContext);
-  if (!context) throw new Error('Pagination components must be used within Pagination');
-  return context;
-}
+const { Context: PaginationContext, useStrictContext: usePaginationContext } =
+  createStrictContext<PaginationContextValue>({
+    hookName: 'usePaginationContext',
+    providerName: 'Pagination',
+    displayName: 'PaginationContext',
+  });
 
 function PaginationInfo(): React.JSX.Element | null {
   const { showInfo, variant, totalCount, isLoading, startItem, endItem } = usePaginationContext();
@@ -80,7 +80,7 @@ function PaginationPageSize(): React.JSX.Element | null {
       <SelectSimple
         size='sm'
         value={String(pageSize)}
-        onValueChange={(value) => {
+        onValueChange={(value: string) => {
           onPageSizeChange(Number(value));
           onPageChange(1);
         }}

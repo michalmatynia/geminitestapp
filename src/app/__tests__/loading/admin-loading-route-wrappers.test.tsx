@@ -9,7 +9,7 @@ const { adminRouteLoadingMock } = vi.hoisted(() => ({
   adminRouteLoadingMock: vi.fn(() => <div data-testid='admin-route-loading-probe' />),
 }));
 
-vi.mock('@/features/admin/layout/AdminRouteLoading', () => ({
+vi.mock('@/features/admin/public', () => ({
   AdminRouteLoading: adminRouteLoadingMock,
 }));
 

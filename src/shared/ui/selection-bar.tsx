@@ -1,7 +1,7 @@
 import { CheckSquare, Settings2, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 import { ActionMenu } from './ActionMenu';
 import { Badge } from './badge';

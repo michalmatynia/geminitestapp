@@ -3,11 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import {
-  integrationAllegroApiPayloadSchema,
-  type IntegrationAllegroApiResponse,
-} from '@/shared/contracts/integrations';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { integrationAllegroApiPayloadSchema } from '@/shared/contracts/integrations/api';
+import { type IntegrationAllegroApiResponse } from '@/shared/contracts/integrations';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import {
   badRequestError,
   configurationError,

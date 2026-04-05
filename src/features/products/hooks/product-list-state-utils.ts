@@ -1,4 +1,11 @@
-import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import {
+  resolveCatalogRelationIdValue,
+  resolveCategoryDisplayLabel,
+  resolveCategoryRecordIdValue,
+  resolveCategoryRecordLabel,
+} from './product-list-state-utils.helpers';
 
 export const EDIT_PRODUCT_DETAIL_STALE_TIME_MS = 30_000;
 export const PRODUCT_ROW_HIGHLIGHT_DURATION_MS = 900;
@@ -72,31 +79,60 @@ export const isIncomingProductDetailNewer = (
   return incomingUpdatedAt > currentUpdatedAt;
 };
 
+export const isIncomingProductDetailSameRevision = (
+  incoming: ProductWithImages,
+  current: ProductWithImages
+): boolean => {
+  const incomingUpdatedAt = toMillis(incoming.updatedAt);
+  const currentUpdatedAt = toMillis(current.updatedAt);
+
+  if (incomingUpdatedAt == null || currentUpdatedAt == null) return false;
+  return incomingUpdatedAt === currentUpdatedAt;
+};
+
+const resolveComparableLocalizedText = (
+  product: ProductWithImages,
+  prefix: 'name' | 'description',
+  locale: 'en' | 'pl' | 'de'
+): string => {
+  const directValue = toTrimmedString(
+    (product as Record<string, unknown>)[`${prefix}_${locale}`]
+  );
+  if (directValue) return directValue;
+
+  const localizedRecord = toRecord((product as Record<string, unknown>)[prefix]);
+  return toTrimmedString(localizedRecord?.[locale]);
+};
+
+export const hasIncomingProductDetailGeneratedTextChanges = (
+  incoming: ProductWithImages,
+  current: ProductWithImages
+): boolean => {
+  const locales: Array<'en' | 'pl' | 'de'> = ['en', 'pl', 'de'];
+
+  return locales.some((locale) => {
+    return (
+      resolveComparableLocalizedText(incoming, 'name', locale) !==
+        resolveComparableLocalizedText(current, 'name', locale) ||
+      resolveComparableLocalizedText(incoming, 'description', locale) !==
+        resolveComparableLocalizedText(current, 'description', locale)
+    );
+  });
+};
+
 export const resolveCategoryLabelByLocale = (
   category: ProductCategory | Record<string, unknown>,
   locale: 'name_en' | 'name_pl' | 'name_de'
 ): string => {
   const record = toRecord(category) ?? {};
-  const localizedName = toTrimmedString(record[locale]);
-  if (localizedName) return localizedName;
-
-  return (
-    toTrimmedString(record['name_en']) ||
-    toTrimmedString(record['name']) ||
-    toTrimmedString(record['name_pl']) ||
-    toTrimmedString(record['name_de'])
-  );
+  return resolveCategoryRecordLabel(record, locale);
 };
 
 export const resolveCategoryRecordId = (
   category: ProductCategory | Record<string, unknown>
 ): string => {
   const record = toRecord(category) ?? {};
-  return (
-    toTrimmedString(record['id']) ||
-    toTrimmedString(record['_id']) ||
-    toTrimmedString(record['categoryId'])
-  );
+  return resolveCategoryRecordIdValue(record);
 };
 
 const resolveProductCategoryRecord = (product: ProductWithImages): Record<string, unknown> | null => {
@@ -130,10 +166,11 @@ export const resolveProductCategoryDisplayLabel = (
   const normalizedCategoryId = toTrimmedString(categoryId);
   if (!normalizedCategoryId) return 'Unassigned';
 
-  const label = toTrimmedString(categoryNameById.get(normalizedCategoryId));
-  if (label) return label;
-
-  return OPAQUE_CATEGORY_ID_PATTERN.test(normalizedCategoryId) ? '—' : normalizedCategoryId;
+  return resolveCategoryDisplayLabel(
+    normalizedCategoryId,
+    categoryNameById,
+    OPAQUE_CATEGORY_ID_PATTERN
+  );
 };
 
 export const resolveProductCategoryId = (product: ProductWithImages): string => {
@@ -143,24 +180,16 @@ export const resolveProductCategoryId = (product: ProductWithImages): string => 
   const categoryRecord = resolveProductCategoryRecord(product);
   if (!categoryRecord) return '';
 
-  return (
-    toTrimmedString(categoryRecord['id']) ||
-    toTrimmedString(categoryRecord['_id']) ||
-    toTrimmedString(categoryRecord['categoryId'])
-  );
+  return resolveCategoryRecordIdValue(categoryRecord);
 };
 
 export const resolveProductCatalogId = (product: ProductWithImages): string => {
   const catalogs = product.catalogs;
   if (Array.isArray(catalogs)) {
     const first = catalogs[0] as Record<string, unknown> | undefined;
-    if (first) {
-      const relationCatalogId = toTrimmedString(
-        (first['catalogId'] as string | undefined) ||
-          ((first['catalog'] as Record<string, unknown> | undefined)?.['id'] as string | undefined) ||
-          (first['id'] as string | undefined)
-      );
-      if (relationCatalogId) return relationCatalogId;
+    const relationCatalogId = resolveCatalogRelationIdValue(first);
+    if (relationCatalogId) {
+      return relationCatalogId;
     }
   }
 

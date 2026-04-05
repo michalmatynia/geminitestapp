@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from '@/features/jobs/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const actionSchema = z.object({

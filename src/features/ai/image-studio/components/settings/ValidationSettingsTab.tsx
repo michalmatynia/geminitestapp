@@ -3,8 +3,9 @@
 import React from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { FormField, FormSection, SelectSimple, Textarea, ToggleRow } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { FormField, FormSection, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
+import { Textarea } from '@/shared/ui/primitives.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import {
   useImageStudioSettingsActions,

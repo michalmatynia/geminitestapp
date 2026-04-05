@@ -14,9 +14,9 @@ import {
 import { KangurAiTutorGuestIntroPanel } from './KangurAiTutorGuestIntroPanel';
 import {
   KangurAiTutorWidgetStateProvider,
-} from './KangurAiTutorWidget.state';
+} from './ai-tutor-widget/KangurAiTutorWidget.state';
 
-import type { KangurAiTutorWidgetState } from './KangurAiTutorWidget.state';
+import type { KangurAiTutorWidgetState } from './ai-tutor-widget/KangurAiTutorWidget.state';
 
 vi.mock('@/features/kangur/ui/hooks/useKangurCoarsePointer', () => ({
   useKangurCoarsePointer: () => true,

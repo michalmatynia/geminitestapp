@@ -4,7 +4,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import * as React from 'react';
 
 import { RadixOverlayContentShell } from '@/shared/ui/radix-overlay-content-shell';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 
 const Dialog = DialogPrimitive.Root;
 

@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn, resolveAccessibleLabel, warnMissingAccessibleLabel } from '@/features/kangur/shared/utils';
-import type { DataAttributesDto } from '@/shared/contracts/ui';
+import type { DataAttributesDto } from '@/shared/contracts/ui/base';
 
 import {
   KANGUR_SEGMENTED_CONTROL_ITEM_ACTIVE_CLASSNAME,

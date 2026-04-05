@@ -11,9 +11,9 @@ import {
   getAiPathsSetting,
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
+import { assertAiPathRunQueueReadyForEnqueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { upsertAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
-import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
-import { parseJsonBody } from '@/features/products/server';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
   aiPathRunEnqueueRequestSchema,
   aiPathRunEnqueueResponseSchema,
@@ -21,19 +21,9 @@ import {
   type Edge,
   type PathConfig,
 } from '@/shared/contracts/ai-paths';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, internalError, serviceUnavailableError } from '@/shared/errors/app-error';
-import {
-  compileGraph,
-  evaluateAiPathsValidationPreflight,
-  normalizeNodes,
-  normalizeAiPathsValidationConfig,
-  PATH_CONFIG_PREFIX,
-  palette,
-  sanitizeEdges,
-  stableStringify,
-  validateCanonicalPathNodeIdentities,
-} from '@/shared/lib/ai-paths';
+import { compileGraph, evaluateAiPathsValidationPreflight, normalizeNodes, normalizeAiPathsValidationConfig, PATH_CONFIG_PREFIX, palette, sanitizeEdges, stableStringify, validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths';
 import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import {
   remediateRemovedLegacyTriggerContextModes,

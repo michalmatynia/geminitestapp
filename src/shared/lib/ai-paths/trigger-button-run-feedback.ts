@@ -2,7 +2,7 @@
 
 import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import type { StatusVariant } from '@/shared/contracts/ui';
+import type { StatusVariant } from '@/shared/contracts/ui/base';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

@@ -1,3 +1,5 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
 import { KangurAssignmentPriorityChip } from '@/features/kangur/ui/components/assignments/KangurAssignmentPriorityChip';
 import KangurRecommendationCard from '@/features/kangur/ui/components/summary-cards/KangurRecommendationCard';

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   authMock,
@@ -29,7 +29,11 @@ vi.mock('@/shared/lib/analytics/server', () => ({
   listAnalyticsEvents: listAnalyticsEventsMock,
 }));
 
-import { GET_handler, POST_handler } from './handler';
+import {
+  GET_handler,
+  POST_handler,
+  resetAnalyticsEventsIngestionGuardState,
+} from './handler';
 
 const createRequestContext = (query: Record<string, unknown>): ApiHandlerContext =>
   ({
@@ -66,6 +70,8 @@ const buildAnalyticsEventRequestPayload = (
 describe('analytics events handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
+    resetAnalyticsEventsIngestionGuardState();
     authMock.mockResolvedValue({
       user: {
         id: 'user-1',
@@ -78,6 +84,10 @@ describe('analytics events handler', () => {
     });
     extractClientIpMock.mockReturnValue('203.0.113.42');
     insertAnalyticsEventMock.mockResolvedValue({ id: 'analytics-event-created-1' });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('passes pagination and pageview filters through to the repository', async () => {
@@ -291,5 +301,81 @@ describe('analytics events handler', () => {
         requestId: 'request-analytics-events-1',
       })
     );
+  });
+
+  it('deduplicates identical analytics event payloads from retry loops', async () => {
+    const requestPayload = buildAnalyticsEventRequestPayload({});
+
+    const firstResponse = await POST_handler(
+      new NextRequest('http://localhost/api/analytics/events', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+      }),
+      createRequestContext({})
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const secondResponse = await POST_handler(
+      new NextRequest('http://localhost/api/analytics/events', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+      }),
+      createRequestContext({})
+    );
+
+    expect(firstResponse.status).toBe(202);
+    expect(insertAnalyticsEventMock).toHaveBeenCalledTimes(1);
+    expect(secondResponse.status).toBe(200);
+    expect(secondResponse.headers.get('x-analytics-event-guard')).toBe('deduplicated');
+    await expect(secondResponse.json()).resolves.toMatchObject({
+      ok: true,
+      queued: false,
+      deduplicated: true,
+      requestId: 'request-analytics-events-1',
+    });
+  });
+
+  it('allows the same analytics event payload again after the dedupe window expires', async () => {
+    vi.useFakeTimers();
+    const requestPayload = buildAnalyticsEventRequestPayload({});
+
+    const firstRequest = POST_handler(
+      new NextRequest('http://localhost/api/analytics/events', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+      }),
+      createRequestContext({})
+    );
+
+    await expect(firstRequest).resolves.toHaveProperty('status', 202);
+    await vi.runAllTimersAsync();
+
+    await vi.advanceTimersByTimeAsync(30_001);
+
+    const secondRequest = POST_handler(
+      new NextRequest('http://localhost/api/analytics/events', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+      }),
+      createRequestContext({})
+    );
+
+    await expect(secondRequest).resolves.toHaveProperty('status', 202);
+    await vi.runAllTimersAsync();
+
+    expect(insertAnalyticsEventMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -8,7 +8,7 @@ import {
   requireActiveLearner,
 } from '@/features/kangur/server';
 import type { KangurLearnerProfile } from '@kangur/platform';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { forbiddenError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
 import { startIntervalTask, type IntervalTaskHandle } from '@/shared/lib/timers';

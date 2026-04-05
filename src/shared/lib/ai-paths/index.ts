@@ -1,3 +1,4 @@
+/** @deprecated Do not import from this barrel! Use specific sub-barrel instead */
 export * from '@/shared/contracts/ai-paths';
 export * from '@/shared/contracts/ai-paths-runtime';
 // Resolve TS2308 by re-exporting the concrete runtime types explicitly.

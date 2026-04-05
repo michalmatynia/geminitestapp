@@ -1,9 +1,7 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-
-import type { SessionCookie, SessionOrigin } from '@/shared/contracts/integrations';
-import { internalError } from '@/shared/errors/app-error';
+import type { SessionCookie, SessionOrigin } from '@/shared/contracts/integrations/session-testing';
+import { createStrictContext } from '../createStrictContext';
 
 export interface IntegrationsSession {
   showSessionModal: boolean;
@@ -15,10 +13,8 @@ export interface IntegrationsSession {
   sessionUpdatedAt: string | null;
 }
 
-export const IntegrationsSessionContext = createContext<IntegrationsSession | null>(null);
-
-export const useIntegrationsSession = () => {
-  const context = useContext(IntegrationsSessionContext);
-  if (!context) throw internalError('useIntegrationsSession must be used within IntegrationsProvider');
-  return context;
-};
+export const { Context: IntegrationsSessionContext, useValue: useIntegrationsSession } =
+  createStrictContext<IntegrationsSession>({
+    displayName: 'IntegrationsSessionContext',
+    errorMessage: 'useIntegrationsSession must be used within IntegrationsProvider',
+  });

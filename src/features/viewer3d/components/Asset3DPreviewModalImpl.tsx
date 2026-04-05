@@ -4,11 +4,12 @@ import { Download, RotateCcw, Settings2, ChevronDown, ChevronUp } from 'lucide-r
 import React from 'react';
 import { useState } from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { EntityModalProps } from '@/shared/contracts/ui/modals';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/primitives.public';
 import { DetailModal } from '@/shared/ui/templates/modals';
-import { cn, formatFileSize } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { formatFileSize } from '@/shared/utils/formatting';
 
 import {
   Asset3DPreviewModalViewProvider,

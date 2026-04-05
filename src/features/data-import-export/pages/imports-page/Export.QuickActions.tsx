@@ -2,14 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {
-  Button,
-  Card,
-  MetadataItem,
-  SectionHeader,
-  ToggleRow,
-  Hint,
-} from '@/shared/ui';
+import { Button, Card } from '@/shared/ui/primitives.public';
+import { MetadataItem, SectionHeader } from '@/shared/ui/navigation-and-layout.public';
+import { ToggleRow, Hint } from '@/shared/ui/forms-and-actions.public';
 import {
   useImportExportActions,
   useImportExportData,

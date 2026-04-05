@@ -58,7 +58,7 @@ vi.mock('@/features/kangur/ui/services/game-setup-recommendations', () => ({
   getRecommendedKangurMode: getRecommendedKangurModeMock,
 }));
 
-vi.mock('@/features/kangur/ui/components/KangurGameSetupShell', () => ({
+vi.mock('@/features/kangur/ui/components/game-setup/KangurGameSetupShell', () => ({
   renderKangurGameSetupShell: ({
     children,
     description,
@@ -85,7 +85,7 @@ vi.mock('@/features/kangur/ui/components/KangurSetup', () => ({
   default: () => <div data-testid='mock-kangur-setup'>mock-kangur-setup</div>,
 }));
 
-import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/KangurGameKangurSetupWidget';
+import { KangurGameKangurSetupWidget } from '@/features/kangur/ui/components/game-setup/KangurGameKangurSetupWidget';
 
 describe('KangurGameKangurSetupWidget', () => {
   beforeEach(() => {

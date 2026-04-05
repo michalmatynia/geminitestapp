@@ -2,14 +2,8 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import {
-  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
-  type ProductDraft,
-  type CreateProductDraftInput,
-  type UpdateProductDraftInput,
-  type ProductDraftOpenFormTab,
-  type ProductParameterValue,
-} from '@/shared/contracts/products';
+import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
+import { type ProductDraft, type CreateProductDraftInput, type UpdateProductDraftInput, type ProductDraftOpenFormTab, type ProductParameterValue } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 type MongoDraftDoc = {
@@ -50,6 +44,7 @@ type MongoDraftDoc = {
   openProductFormTab?: string | null;
   imageLinks?: string[];
   baseProductId?: string | null;
+  importSource?: 'base' | null;
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -134,6 +129,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
     openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
+    importSource: draft.importSource ?? null,
     createdAt: (draft.createdAt || new Date()).toISOString(),
     updatedAt: (draft.updatedAt || new Date()).toISOString(),
   }));
@@ -183,6 +179,7 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
     openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
+    importSource: draft.importSource ?? null,
     createdAt: (draft.createdAt || new Date()).toISOString(),
     updatedAt: (draft.updatedAt || new Date()).toISOString(),
   };
@@ -217,6 +214,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     priceComment: input.priceComment || null,
     stock: input.stock || null,
     baseProductId: input.baseProductId || null,
+    importSource: input.importSource ?? null,
     defaultPriceGroupId: input.defaultPriceGroupId || null,
     catalogIds: input.catalogIds || [],
     categoryId: input.categoryId || null,
@@ -275,6 +273,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: draft.imageLinks || [],
     baseProductId: input.baseProductId || null,
+    importSource: input.importSource ?? null,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   };
@@ -381,6 +380,7 @@ const updateDraft_Mongo = async (
     openProductFormTab: normalizeOpenProductFormTab(doc.openProductFormTab),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     baseProductId: doc.baseProductId || null,
+    importSource: doc.importSource ?? null,
     createdAt: (doc.createdAt || now).toISOString(),
     updatedAt: now.toISOString(),
   };

@@ -263,6 +263,51 @@ describe('filemaker campaign runtime service', () => {
     );
   });
 
+  it('cancels queued runs and marks queued deliveries as skipped', async () => {
+    const { service, store } = createRuntimeHarness();
+
+    const launch = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    const result = await service.cancelRun({
+      runId: launch.run.id,
+      actor: 'admin',
+      message: 'Run cancelled from test.',
+    });
+
+    expect(result.run.status).toBe('cancelled');
+    expect(result.deliveries.every((delivery) => delivery.status === 'skipped')).toBe(true);
+
+    const storedRuns = parseFilemakerEmailCampaignRunRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY)
+    );
+    const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    const storedEvents = parseFilemakerEmailCampaignEventRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
+    );
+
+    expect(storedRuns.runs[0]?.status).toBe('cancelled');
+    expect(
+      storedDeliveries.deliveries.every((delivery) => delivery.status === 'skipped')
+    ).toBe(true);
+    expect(storedEvents.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          campaignId: 'campaign-1',
+          runId: launch.run.id,
+          type: 'cancelled',
+          actor: 'admin',
+          message: 'Run cancelled from test.',
+          runStatus: 'cancelled',
+        }),
+      ])
+    );
+  });
+
   it('processes queued deliveries into sent records and completes the run', async () => {
     const { service, store, sendCampaignEmail } = createRuntimeHarness();
     const launched = await service.launchRun({
@@ -303,6 +348,29 @@ describe('filemaker campaign runtime service', () => {
       storedEvents.events.filter((event) => event.type === 'delivery_sent')
     ).toHaveLength(2);
     expect(storedEvents.events.some((event) => event.type === 'completed')).toBe(true);
+  });
+
+  it('passes the selected mail account id into campaign delivery processing', async () => {
+    const { service, sendCampaignEmail } = createRuntimeHarness({
+      campaign: createCampaign({
+        mailAccountId: 'mail-account-sales',
+      }),
+    });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    await service.processRun({
+      runId: launched.run.id,
+    });
+
+    expect(sendCampaignEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        campaignId: 'campaign-1',
+        mailAccountId: 'mail-account-sales',
+      })
+    );
   });
 
   it('derives plain-text delivery content from html when no text override is set', async () => {

@@ -16,19 +16,15 @@ import {
   toPersistedFilemakerEmailCampaignEventRegistry,
   toPersistedFilemakerEmailCampaignSuppressionRegistry,
   upsertFilemakerEmailCampaignSuppressionEntry,
-} from '@/features/filemaker/settings';
-import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
-} from '@/features/filemaker/server/campaign-settings-store';
-import { parseFilemakerCampaignUnsubscribeToken } from '@/features/filemaker/server/campaign-unsubscribe-token';
-import type {
-  FilemakerEmailCampaignPreferenceStatus,
-  FilemakerEmailCampaignPreferencesRequest,
-  FilemakerEmailCampaignPreferencesResponse,
-} from '@/features/filemaker/types';
+  parseFilemakerCampaignUnsubscribeToken,
+  type FilemakerEmailCampaignPreferenceStatus,
+  type FilemakerEmailCampaignPreferencesRequest,
+  type FilemakerEmailCampaignPreferencesResponse,
+} from '@/features/filemaker/server';
 import { filemakerEmailCampaignPreferencesRequestSchema } from '@/shared/contracts/filemaker';
-import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const buildPreferenceNotes = (source: string | null | undefined, action: 'unsubscribe'): string =>

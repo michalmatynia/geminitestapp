@@ -9,7 +9,8 @@ import type { PageStatus, Slug } from '@/features/cms/types';
 import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
-import { Button, Input, Label, Checkbox, Badge, ToggleRow, SegmentedControl } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, Badge } from '@/shared/ui/primitives.public';
+import { ToggleRow, SegmentedControl } from '@/shared/ui/forms-and-actions.public';
 
 const STATUS_OPTIONS: Array<LabeledOptionDto<PageStatus>> = [
   { label: 'Draft', value: 'draft' },

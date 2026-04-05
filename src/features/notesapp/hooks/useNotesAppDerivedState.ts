@@ -8,8 +8,8 @@ import type {
   TagRecord,
   UndoAction,
 } from '@/shared/contracts/notes';
-import { UI_GRID_RELAXED_CLASSNAME, UI_GRID_SPACED_CLASSNAME } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { UI_GRID_RELAXED_CLASSNAME, UI_GRID_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { cn } from '@/shared/utils/ui-utils';
 
 import type { NotesAppStateValue } from './NotesAppContext.types';
 

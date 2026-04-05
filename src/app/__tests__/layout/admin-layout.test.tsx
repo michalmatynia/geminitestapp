@@ -9,14 +9,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   adminLayoutMock,
   captureExceptionMock,
-  getUserPreferencesMock,
+  readOptionalRequestHeadersMock,
   readOptionalServerAuthSessionMock,
   readOptionalRequestCookiesMock,
   redirectMock,
 } = vi.hoisted(() => ({
   adminLayoutMock: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
   captureExceptionMock: vi.fn(),
-  getUserPreferencesMock: vi.fn(),
+  readOptionalRequestHeadersMock: vi.fn(),
   readOptionalServerAuthSessionMock: vi.fn(),
   readOptionalRequestCookiesMock: vi.fn(),
   redirectMock: vi.fn(),
@@ -31,12 +31,15 @@ vi.mock('@/features/admin/public', () => ({
 }));
 
 vi.mock('@/features/auth/server', () => ({
-  getUserPreferences: getUserPreferencesMock,
   readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 
 vi.mock('@/shared/lib/request/optional-cookies', () => ({
   readOptionalRequestCookies: readOptionalRequestCookiesMock,
+}));
+
+vi.mock('@/shared/lib/request/optional-headers', () => ({
+  readOptionalRequestHeaders: readOptionalRequestHeadersMock,
 }));
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
@@ -50,6 +53,7 @@ describe('admin app layout', () => {
     vi.resetModules();
     vi.clearAllMocks();
     adminLayoutMock.mockImplementation(({ children }: { children: ReactNode }) => <>{children}</>);
+    readOptionalRequestHeadersMock.mockResolvedValue(null);
     readOptionalServerAuthSessionMock.mockResolvedValue({
       user: {
         id: 'user-1',
@@ -57,9 +61,6 @@ describe('admin app layout', () => {
         permissions: ['settings.manage'],
         roleAssigned: true,
       },
-    });
-    getUserPreferencesMock.mockResolvedValue({
-      adminMenuCollapsed: true,
     });
     readOptionalRequestCookiesMock.mockResolvedValue({
       get: vi.fn(),
@@ -69,32 +70,7 @@ describe('admin app layout', () => {
     });
   });
 
-  it('passes user preference state into the admin layout shell', async () => {
-    const { default: Layout } = await import('@/app/(admin)/layout');
-
-    const layout = await Layout({
-      children: <div data-testid='admin-content'>admin</div>,
-    });
-    render(layout);
-
-    expect(adminLayoutMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        initialMenuCollapsed: true,
-        canReadAdminSettings: true,
-        session: expect.objectContaining({
-          user: expect.objectContaining({
-            id: 'user-1',
-          }),
-        }),
-      }),
-      undefined
-    );
-    expect(readOptionalRequestCookiesMock).not.toHaveBeenCalled();
-  });
-
-  it('falls back to cookie-derived menu state when preference loading fails', async () => {
-    const error = new Error('preferences unavailable');
-    getUserPreferencesMock.mockRejectedValue(error);
+  it('passes cookie-derived menu state into the admin layout shell', async () => {
     readOptionalRequestCookiesMock.mockResolvedValue({
       get: vi.fn().mockReturnValue({ value: 'true' }),
     });
@@ -106,11 +82,74 @@ describe('admin app layout', () => {
     });
     render(layout);
 
-    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(adminLayoutMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hasInitialMenuPreference: true,
+        initialMenuCollapsed: true,
+        canReadAdminSettings: true,
+        session: expect.objectContaining({
+          user: expect.objectContaining({
+            id: 'user-1',
+          }),
+        }),
+      }),
+      undefined
+    );
+    expect(readOptionalRequestCookiesMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses the forwarded admin session header without calling server auth again', async () => {
+    readOptionalRequestHeadersMock.mockResolvedValue(
+      new Headers({
+        'x-admin-layout-session':
+          '%7B%22user%22%3A%7B%22id%22%3A%22user-edge%22%2C%22name%22%3A%22Edge%20Admin%22%2C%22email%22%3A%22edge%40example.com%22%2C%22role%22%3A%22admin%22%2C%22roleLevel%22%3A100%2C%22isElevated%22%3Atrue%2C%22roleAssigned%22%3Atrue%2C%22permissions%22%3A%5B%22settings.manage%22%5D%2C%22accountDisabled%22%3Afalse%2C%22accountBanned%22%3Afalse%7D%7D',
+      })
+    );
+
+    const { default: Layout } = await import('@/app/(admin)/layout');
+
+    const layout = await Layout({
+      children: <div data-testid='admin-content'>admin</div>,
+    });
+    render(layout);
+
+    expect(readOptionalServerAuthSessionMock).not.toHaveBeenCalled();
+    expect(adminLayoutMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canReadAdminSettings: true,
+        session: expect.objectContaining({
+          user: expect.objectContaining({
+            id: 'user-edge',
+            email: 'edge@example.com',
+          }),
+        }),
+      }),
+      undefined
+    );
+  });
+
+  it('captures cookie read errors and falls back to the default menu state', async () => {
+    const error = new Error('cookie store unavailable');
+    readOptionalRequestCookiesMock.mockRejectedValue(error);
+
+    const { default: Layout } = await import('@/app/(admin)/layout');
+
+    const layout = await Layout({
+      children: <div data-testid='admin-content'>admin</div>,
+    });
+    render(layout);
+
+    expect(captureExceptionMock).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        action: 'loadAdminLayoutCookieState',
+      })
+    );
     expect(readOptionalRequestCookiesMock).toHaveBeenCalledTimes(1);
     expect(adminLayoutMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        initialMenuCollapsed: true,
+        hasInitialMenuPreference: false,
+        initialMenuCollapsed: false,
       }),
       undefined
     );
@@ -130,48 +169,38 @@ describe('admin app layout', () => {
     expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 
-  it('preserves the account-disabled redirect target', async () => {
-    readOptionalServerAuthSessionMock.mockResolvedValue({
-      user: {
-        id: 'user-1',
-        isElevated: true,
-        permissions: ['settings.manage'],
-        roleAssigned: true,
-        accountDisabled: true,
-      },
-    });
-
-    const { default: Layout } = await import('@/app/(admin)/layout');
-
-    await expect(
-      Layout({
-        children: <div data-testid='admin-content'>admin</div>,
-      })
-    ).rejects.toThrow('redirect:/auth/signin?error=AccountDisabled');
-
-    expect(captureExceptionMock).not.toHaveBeenCalled();
-  });
-
-  it('preserves the access-denied redirect target for users without a role', async () => {
+  it('does not duplicate account-state redirects already enforced by edge auth', async () => {
     readOptionalServerAuthSessionMock.mockResolvedValue({
       user: {
         id: 'user-1',
         isElevated: false,
         permissions: [],
         roleAssigned: false,
-        accountDisabled: false,
+        accountDisabled: true,
         accountBanned: false,
       },
     });
 
     const { default: Layout } = await import('@/app/(admin)/layout');
 
-    await expect(
-      Layout({
-        children: <div data-testid='admin-content'>admin</div>,
-      })
-    ).rejects.toThrow('redirect:/auth/signin?error=AccessDenied');
+    const layout = await Layout({
+      children: <div data-testid='admin-content'>admin</div>,
+    });
+    render(layout);
 
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(adminLayoutMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canReadAdminSettings: false,
+        session: expect.objectContaining({
+          user: expect.objectContaining({
+            accountDisabled: true,
+            roleAssigned: false,
+          }),
+        }),
+      }),
+      undefined
+    );
     expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 });

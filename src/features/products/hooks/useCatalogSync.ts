@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { LanguageRecord, CurrencyRecord } from '@/shared/contracts/internationalization';
-import type { Catalog, PriceGroupWithDetails } from '@/shared/contracts/products';
+import type { Catalog } from '@/shared/contracts/products/catalogs';
+import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
@@ -24,8 +24,6 @@ const supportedLanguageMap: Record<string, LanguageOption> = {
 };
 
 const PRICE_GROUPS_ENDPOINT = '/api/v2/products/metadata/price-groups';
-const LANGUAGES_ENDPOINT = '/api/v2/metadata/languages';
-const CURRENCIES_ENDPOINT = '/api/v2/metadata/currencies';
 const CATALOGS_ENDPOINT = '/api/v2/products/entities/catalogs';
 
 // API fetch functions
@@ -35,14 +33,6 @@ async function fetchCatalogs(signal?: AbortSignal): Promise<Catalog[]> {
 
 async function fetchPriceGroups(signal?: AbortSignal): Promise<PriceGroupWithDetails[]> {
   return api.get<PriceGroupWithDetails[]>(PRICE_GROUPS_ENDPOINT, { signal });
-}
-
-async function fetchLanguages(signal?: AbortSignal): Promise<LanguageRecord[]> {
-  return api.get<LanguageRecord[]>(LANGUAGES_ENDPOINT, { signal });
-}
-
-async function fetchCurrencies(signal?: AbortSignal): Promise<CurrencyRecord[]> {
-  return api.get<CurrencyRecord[]>(CURRENCIES_ENDPOINT, { signal });
 }
 
 export interface UseCatalogSyncResult {
@@ -59,6 +49,24 @@ export interface UseCatalogSyncResult {
 }
 
 export type UseCatalogSyncOptions = UseProductsOptions;
+
+const DEFAULT_LANGUAGE_OPTIONS: LanguageOption[] = [
+  supportedLanguageMap['EN']!,
+  supportedLanguageMap['PL']!,
+  supportedLanguageMap['DE']!,
+];
+
+const resolveSupportedLanguageOption = (value: string | null | undefined): LanguageOption | undefined => {
+  const normalizedValue = String(value ?? '').trim().toUpperCase();
+  if (!normalizedValue) return undefined;
+  if (normalizedValue in supportedLanguageMap) {
+    return supportedLanguageMap[normalizedValue]!;
+  }
+
+  const suffix = normalizedValue.split(/[-_]/).pop();
+  if (!suffix) return undefined;
+  return supportedLanguageMap[suffix];
+};
 
 export function useCatalogSync(
   catalogFilter: string,
@@ -118,49 +126,11 @@ export function useCatalogSync(
           tags: ['products', 'metadata', 'price-groups', 'sync'],
         },
       },
-      {
-        queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.languages()),
-        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<LanguageRecord[]> =>
-          fetchLanguages(signal),
-        enabled: queriesEnabled,
-        staleTime: 1000 * 60 * 5,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        meta: {
-          source: 'products.hooks.useCatalogSync.fetchLanguages',
-          operation: 'list',
-          resource: 'products.metadata.languages',
-          description: 'Loads products metadata languages.',
-          domain: 'products',
-          tags: ['products', 'metadata', 'languages', 'sync'],
-        },
-      },
-      {
-        queryKey: normalizeQueryKey(QUERY_KEYS.internationalization.currencies()),
-        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<CurrencyRecord[]> =>
-          fetchCurrencies(signal),
-        enabled: queriesEnabled,
-        staleTime: 1000 * 60 * 5,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-        meta: {
-          source: 'products.hooks.useCatalogSync.fetchCurrencies',
-          operation: 'list',
-          resource: 'internationalization.currencies',
-          description: 'Loads internationalization currencies.',
-          domain: 'global',
-          tags: ['internationalization', 'currencies', 'sync'],
-        },
-      },
     ] as const,
   });
 
   const catalogsQuery = results[0];
   const priceGroupsQuery = results[1];
-  const languagesQuery = results[2];
-  const currenciesQuery = results[3];
 
   // Log errors
   useEffect(() => {
@@ -174,17 +144,7 @@ export function useCatalogSync(
         context: { source: 'useCatalogSync', action: 'fetchPriceGroups' },
       });
     }
-    if (languagesQuery.error) {
-      logClientError(languagesQuery.error as Error, {
-        context: { source: 'useCatalogSync', action: 'fetchLanguages' },
-      });
-    }
-    if (currenciesQuery.error) {
-      logClientError(currenciesQuery.error as Error, {
-        context: { source: 'useCatalogSync', action: 'fetchCurrencies' },
-      });
-    }
-  }, [catalogsQuery.error, priceGroupsQuery.error, languagesQuery.error, currenciesQuery.error]);
+  }, [catalogsQuery.error, priceGroupsQuery.error]);
 
   // Extract data with defaults
   const rawCatalogs = useMemo(() => (catalogsQuery.data as Catalog[]) ?? [], [catalogsQuery.data]);
@@ -192,18 +152,6 @@ export function useCatalogSync(
     () => (priceGroupsQuery.data as PriceGroupWithDetails[]) ?? [],
     [priceGroupsQuery.data]
   );
-  const languages = useMemo(
-    () => (languagesQuery.data as LanguageRecord[]) ?? [],
-    [languagesQuery.data]
-  );
-
-  // Compute allowed currency codes
-  const allowedCurrencyCodes = useMemo(() => {
-    const data = (currenciesQuery.data as CurrencyRecord[]) ?? [];
-    return data
-      .map((entry) => entry.code?.trim().toUpperCase())
-      .filter((code): code is string => Boolean(code));
-  }, [currenciesQuery.data]);
 
   // Memoize catalog transformation to prevent new references
   const catalogs = useMemo(
@@ -239,13 +187,7 @@ export function useCatalogSync(
       )
     ).map((code) => code.trim().toUpperCase());
 
-    const allowedSet = new Set(allowedCurrencyCodes.map((code) => code.trim().toUpperCase()));
-    if (allowedSet.size > 0) {
-      codes = codes.filter((code) => allowedSet.has(code));
-    } else {
-      // Basic safety filter if no allowed list available.
-      codes = codes.filter((code) => /^[A-Z]{3,5}$/.test(code));
-    }
+    codes = codes.filter((code) => /^[A-Z]{3,5}$/.test(code));
 
     const defaultGroupId = catalog?.defaultPriceGroupId ?? null;
     const defaultGroup = defaultGroupId
@@ -255,7 +197,7 @@ export function useCatalogSync(
     const fallbackCode = defaultGroup?.currency?.code || codes[0] || '';
 
     return { codes, fallbackCode };
-  }, [catalogFilter, catalogs, priceGroups, allowedCurrencyCodes]);
+  }, [catalogFilter, catalogs, priceGroups]);
 
   // Sync Currency Options based on Catalog
   const currencyOptions = codes;
@@ -285,60 +227,25 @@ export function useCatalogSync(
       ? catalogs.find((entry) => entry.id === catalogFilter)
       : undefined;
     const allowedIds = catalog?.languageIds ?? [];
-    const normalizedAllowed = new Set(
-      allowedIds.map((value) => String(value).trim().toUpperCase()).filter(Boolean)
-    );
-
-    const scopedLanguages =
-      allowedIds.length > 0
-        ? languages.filter((lang) => {
-          const idKey = String(lang.id).trim().toUpperCase();
-          const codeKey = String(lang.code).trim().toUpperCase();
-          return normalizedAllowed.has(idKey) || normalizedAllowed.has(codeKey);
-        })
-        : languages;
 
     const seen = new Set<string>();
-    scopedLanguages.forEach((lang) => {
-      const key = lang.code?.trim().toUpperCase();
-      const option = supportedLanguageMap[key];
+    (allowedIds.length > 0 ? allowedIds : Object.keys(supportedLanguageMap)).forEach((languageId) => {
+      const option = resolveSupportedLanguageOption(languageId);
       if (!option || seen.has(option.value)) return;
       seen.add(option.value);
       options.push(option);
     });
 
     if (options.length === 0) {
-      if (normalizedAllowed.size > 0) {
-        normalizedAllowed.forEach((code) => {
-          const option = supportedLanguageMap[code];
-          if (!option || seen.has(option.value)) return;
-          seen.add(option.value);
-          options.push(option);
-        });
-      }
-      if (options.length === 0) {
-        options.push(supportedLanguageMap['EN']!);
-        options.push(supportedLanguageMap['PL']!);
-        options.push(supportedLanguageMap['DE']!);
-      }
+      options.push(...DEFAULT_LANGUAGE_OPTIONS);
     }
 
     const defaultLanguageId = catalog?.defaultLanguageId ?? null;
-    const defaultLang = defaultLanguageId
-      ? languages.find((lang) => {
-        const value = String(defaultLanguageId).trim().toUpperCase();
-        const idKey = String(lang.id).trim().toUpperCase();
-        const codeKey = String(lang.code).trim().toUpperCase();
-        return value === idKey || value === codeKey;
-      })
-      : null;
-    const defaultOption = defaultLang
-      ? supportedLanguageMap[defaultLang.code?.trim().toUpperCase() || '']
-      : undefined;
+    const defaultOption = resolveSupportedLanguageOption(defaultLanguageId);
     const fallbackNameLocale = defaultOption?.value ?? options[0]?.value;
 
     return { languageOptions: options, fallbackNameLocale };
-  }, [catalogFilter, catalogs, languages]);
+  }, [catalogFilter, catalogs]);
 
   return {
     catalogs,

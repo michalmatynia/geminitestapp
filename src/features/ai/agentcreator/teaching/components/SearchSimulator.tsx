@@ -4,7 +4,8 @@ import { Search } from 'lucide-react';
 import React from 'react';
 
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
-import { Button, Input, Textarea, FormSection, FormField, Alert, Card } from '@/shared/ui';
+import { Button, Input, Textarea, Alert, Card } from '@/shared/ui/primitives.public';
+import { FormSection, FormField } from '@/shared/ui/forms-and-actions.public';
 
 export type SearchSimulatorProps = {
   query: string;

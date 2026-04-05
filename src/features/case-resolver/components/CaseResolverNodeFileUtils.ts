@@ -1,14 +1,5 @@
-import {
-  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  type CaseResolverFile,
-  type CaseResolverJoinMode,
-  type CaseResolverScanSlot,
-  type NodeFileDocumentSearchScope,
-  type NodeFileDocumentSearchRow,
-  type NodeFileDocumentFolderNode,
-  type NodeFileDocumentFolderTree,
-} from '@/shared/contracts/case-resolver';
+import { CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS, CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS } from '@/shared/contracts/case-resolver/constants';
+import { type CaseResolverFile, type CaseResolverJoinMode, type CaseResolverScanSlot, type NodeFileDocumentSearchScope, type NodeFileDocumentSearchRow, type NodeFileDocumentFolderNode, type NodeFileDocumentFolderTree } from '@/shared/contracts/case-resolver';
 
 export type {
   NodeFileDocumentSearchScope,

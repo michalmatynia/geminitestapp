@@ -17,8 +17,8 @@ import { cn } from '@/features/kangur/shared/utils';
 import { KANGUR_CLOCK_THEME_COLORS } from '@/features/kangur/ui/components/clock-theme';
 
 import type { ClockTrainingTaskPoolId } from './types';
-import type { Feedback, Hand, MinuteSnapMode } from '../clock-training-utils';
-import { translateClockTrainingWithFallback } from '../clock-training-i18n';
+import type { Feedback, Hand, MinuteSnapMode } from './clock-training-utils';
+import { translateClockTrainingWithFallback } from './clock-training-i18n';
 
 export type DraggableClockSubmitNextStep = 'next-stage' | 'next-task' | 'summary' | null;
 type DraggableClockTranslations = ReturnType<typeof useTranslations>;

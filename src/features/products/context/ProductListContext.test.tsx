@@ -4,7 +4,8 @@ import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 const {
   useIntegrationListingBadgesMock,
@@ -34,6 +35,8 @@ type BadgeState = {
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeIds: Set<string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
 };
 
 const createBadgeState = (overrides: Partial<BadgeState> = {}): BadgeState => ({
@@ -41,6 +44,8 @@ const createBadgeState = (overrides: Partial<BadgeState> = {}): BadgeState => ({
   integrationBadgeStatuses: new Map<string, string>(),
   traderaBadgeIds: new Set<string>(),
   traderaBadgeStatuses: new Map<string, string>(),
+  playwrightProgrammableBadgeIds: new Set<string>(),
+  playwrightProgrammableBadgeStatuses: new Map<string, string>(),
   ...overrides,
 });
 
@@ -94,8 +99,16 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     ...overrides,
   }) as ProductWithImages;
 
-const createProviderValue = (): ProductListContextType & {
+const createProviderValue = (
+  overrides: Partial<
+    ProductListContextType & {
+      triggerListingStatusHighlight: (productId: string) => void;
+      rowRuntimeReady: boolean;
+    }
+  > = {}
+): ProductListContextType & {
   triggerListingStatusHighlight: (productId: string) => void;
+  rowRuntimeReady: boolean;
 } =>
   ({
     onCreateProduct: vi.fn(),
@@ -142,6 +155,8 @@ const createProviderValue = (): ProductListContextType & {
     setEndDate: vi.fn(),
     advancedFilter: '',
     activeAdvancedFilterPresetId: null,
+    advancedFilterPresets: [] as ProductAdvancedFilterPreset[],
+    setAdvancedFilterPresets: vi.fn(),
     setAdvancedFilter: vi.fn(),
     setAdvancedFilterState: vi.fn(),
     baseExported: '',
@@ -178,6 +193,8 @@ const createProviderValue = (): ProductListContextType & {
     integrationBadgeStatuses: new Map<string, string>(),
     traderaBadgeIds: new Set<string>(),
     traderaBadgeStatuses: new Map<string, string>(),
+    playwrightProgrammableBadgeIds: new Set<string>(),
+    playwrightProgrammableBadgeStatuses: new Map<string, string>(),
     queuedProductIds: new Set<string>(),
     productAiRunStatusByProductId: new Map(),
     categoryNameById: new Map<string, string>(),
@@ -201,6 +218,7 @@ const createProviderValue = (): ProductListContextType & {
     onEditSave: vi.fn(),
     integrationsProduct: null,
     integrationsRecoveryContext: null,
+    integrationsFilterIntegrationSlug: null,
     onCloseIntegrations: vi.fn(),
     onStartListing: vi.fn(),
     showListProductModal: false,
@@ -218,8 +236,11 @@ const createProviderValue = (): ProductListContextType & {
     onCloseIntegrationModal: vi.fn(),
     onSelectIntegrationFromModal: vi.fn(),
     triggerListingStatusHighlight: vi.fn(),
+    rowRuntimeReady: true,
+    ...overrides,
   }) as ProductListContextType & {
     triggerListingStatusHighlight: (productId: string) => void;
+    rowRuntimeReady: boolean;
   };
 
 describe('ProductListProvider runtime bridge', () => {
@@ -283,5 +304,49 @@ describe('ProductListProvider runtime bridge', () => {
 
     expect(tableRenderCount).toBe(1);
     expect(rowRuntimeRenderCount).toBeGreaterThan(1);
+  });
+
+  it('keeps provider-side badge polling disabled until row runtime is ready', () => {
+    render(
+      <ProductListProvider value={createProviderValue({ rowRuntimeReady: false })}>
+        <div>probe</div>
+      </ProductListProvider>
+    );
+
+    expect(useIntegrationListingBadgesMock).toHaveBeenCalledWith(['product-1'], {
+      enabled: false,
+    });
+  });
+
+  it('surfaces programmable Playwright badge state through the row runtime bridge', async () => {
+    function RowRuntimeProbe(): React.JSX.Element {
+      const runtime = useProductListRowRuntime('product-1', null);
+      return (
+        <div data-testid='row-runtime-playwright'>
+          {String(runtime.showPlaywrightProgrammableBadge)}:{runtime.playwrightProgrammableStatus}
+        </div>
+      );
+    }
+
+    render(
+      <ProductListProvider value={createProviderValue()}>
+        <RowRuntimeProbe />
+      </ProductListProvider>
+    );
+
+    expect(screen.getByTestId('row-runtime-playwright').textContent).toBe('false:not_started');
+
+    act(() => {
+      publishBadgeState(
+        createBadgeState({
+          playwrightProgrammableBadgeIds: new Set(['product-1']),
+          playwrightProgrammableBadgeStatuses: new Map([['product-1', 'queued']]),
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('row-runtime-playwright').textContent).toBe('true:queued');
+    });
   });
 });

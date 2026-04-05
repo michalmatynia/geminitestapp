@@ -47,6 +47,34 @@ describe('base-import-service helpers', () => {
     });
   });
 
+  it('classifies rate-limited app errors with retry metadata intact', () => {
+    const error = createAppError('Too many requests', {
+      code: AppErrorCodes.rateLimited,
+      httpStatus: 429,
+      retryable: true,
+      retryAfterMs: 2500,
+    });
+
+    const classified = classifyBaseImportError(error);
+
+    expect(classified).toMatchObject({
+      code: 'RATE_LIMITED',
+      errorClass: 'transient',
+      retryable: true,
+      retryAfterMs: 2500,
+    });
+  });
+
+  it('classifies duplicate sku errors as permanent and non-retryable', () => {
+    const classified = classifyBaseImportError(new Error('Duplicate SKU conflict detected.'));
+
+    expect(classified).toMatchObject({
+      code: 'DUPLICATE_SKU',
+      errorClass: 'permanent',
+      retryable: false,
+    });
+  });
+
   it('derives terminal statuses deterministically from stats', () => {
     const baseStats = {
       total: 10,

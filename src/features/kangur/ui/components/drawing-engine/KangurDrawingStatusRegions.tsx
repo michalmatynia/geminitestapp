@@ -1,5 +1,3 @@
-'use client';
-
 type KangurDrawingStatusRegionsProps = {
   keyboardStatus: string;
   keyboardStatusTestId: string;

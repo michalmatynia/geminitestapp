@@ -1,8 +1,8 @@
 import { Download, Link2, Save } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
-import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui';
+import { Button } from '@/shared/ui/primitives.public';
+import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/api';
 
 type CategoryMapperTableHeaderActionsProps = GenericMapperHeaderActionsProps & {
   onAutoMatchByName: () => void;
@@ -37,7 +37,7 @@ export function CategoryMapperTableHeaderActions(
         disabled={autoMatchDisabled}
       >
         <Link2 className='mr-2 h-3.5 w-3.5' />
-        Auto-match Names
+        Auto-match Paths & Names
       </Button>
 
       <Button

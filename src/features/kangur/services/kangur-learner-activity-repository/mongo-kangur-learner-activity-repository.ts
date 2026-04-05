@@ -1,10 +1,10 @@
 import 'server-only';
 
+import { kangurLearnerActivitySnapshotSchema } from '@kangur/contracts/kangur';
 import {
-  kangurLearnerActivitySnapshotSchema,
   type KangurLearnerActivitySnapshot,
   type KangurLearnerActivityUpdateInput,
-} from '@kangur/contracts';
+} from '@kangur/contracts/kangur';
 import {
   KANGUR_LEGACY_SETTINGS_COLLECTION,
   type KangurLegacySettingDocument,

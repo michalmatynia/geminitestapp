@@ -20,23 +20,57 @@ vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
   useProductFormMetadata: vi.fn(),
 }));
 
-vi.mock('@/shared/ui', () => ({
+vi.mock('@/shared/ui/alert', () => ({
+  Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/button', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
-  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+}));
+
+vi.mock('@/shared/ui/empty-state', () => ({
+  CompactEmptyState: ({ title, description }: { title: string; description: string }) => (
+    <div>
+      <div>{title}</div>
+      <div>{description}</div>
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/form-section', () => ({
   FormSection: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
-  Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/input', () => ({
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+}));
+
+vi.mock('@/shared/ui/InsetPanel', () => ({
+  insetPanelVariants: () => '',
+}));
+
+vi.mock('@/shared/ui/label', () => ({
   Label: ({ children, htmlFor, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
     <label htmlFor={htmlFor} {...props}>
       {children}
     </label>
   ),
+}));
+
+vi.mock('@/shared/ui/LoadingState', () => ({
+  LoadingState: ({ message }: { message: string }) => <div>{message}</div>,
+}));
+
+vi.mock('@/shared/ui/radio-group', () => ({
   RadioGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   RadioGroupItem: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input type='radio' {...props} />
   ),
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
   SelectSimple: ({
     value,
     onValueChange,
@@ -66,6 +100,9 @@ vi.mock('@/shared/ui', () => ({
       ))}
     </select>
   ),
+}));
+
+vi.mock('@/shared/ui/tabs', () => ({
   Tabs: ({
     children,
     value,
@@ -103,9 +140,9 @@ vi.mock('@/shared/ui', () => ({
         {React.Children.map(children, (child: React.ReactNode) =>
           React.isValidElement(child)
             ? React.cloneElement(child as React.ReactElement, {
-              ...(activeValue !== undefined ? { activeValue } : {}),
-              ...(onValueChange !== undefined ? { onValueChange } : {}),
-            })
+                ...(activeValue !== undefined ? { activeValue } : {}),
+                ...(onValueChange !== undefined ? { onValueChange } : {}),
+              })
             : child
         )}
       </div>
@@ -132,7 +169,14 @@ vi.mock('@/shared/ui', () => ({
       {children}
     </button>
   ),
-  insetPanelVariants: () => '',
+}));
+
+vi.mock('@/shared/ui/textarea', () => ({
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+}));
+
+vi.mock('@/shared/ui/toggle-row', () => ({
+  ToggleRow: () => null,
 }));
 
 describe('ProductFormParameters multilingual values', () => {

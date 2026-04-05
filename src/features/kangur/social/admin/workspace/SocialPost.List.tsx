@@ -16,7 +16,7 @@ import {
   ListPanel,
   SelectSimple,
 } from '@/features/kangur/shared/ui';
-import { cn } from '@/shared/utils';
+import { cn } from '@/shared/utils/ui-utils';
 import {
   hasKangurSocialLinkedInPublication,
   hasKangurSocialLinkedInPublicationTarget,
@@ -29,20 +29,20 @@ import {
 import { KANGUR_ADMIN_CARD_CLASS_NAME } from '@/features/kangur/admin/components/KangurAdminCard';
 import { SocialJobStatusPill } from './SocialJobStatusPill';
 import { useSocialPostContext } from './SocialPostContext';
+import {
+  useKangurSocialPostsPage,
+  type KangurSocialPostListStatus,
+} from '@/features/kangur/social/hooks/useKangurSocialPosts';
 
 const PAGE_SIZE = 8;
 
-const STATUS_FILTER_OPTIONS = [
+const STATUS_FILTER_OPTIONS: Array<{ value: KangurSocialPostListStatus; label: string }> = [
   { value: 'all', label: 'All statuses' },
   { value: 'draft', label: 'Drafts' },
   { value: 'scheduled', label: 'Scheduled' },
   { value: 'published', label: 'Published' },
   { value: 'failed', label: 'Failed' },
 ] as const;
-type SocialPostStatusFilter = (typeof STATUS_FILTER_OPTIONS)[number]['value'];
-
-const isSocialPostStatusFilter = (value: string): value is SocialPostStatusFilter =>
-  STATUS_FILTER_OPTIONS.some((option) => option.value === value);
 
 const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean => {
   const normalized = status?.trim().toLowerCase();
@@ -50,34 +50,13 @@ const isSocialRuntimeJobInFlight = (status: string | null | undefined): boolean 
   return normalized !== 'completed' && normalized !== 'failed';
 };
 
-const buildSearchText = (post: KangurSocialPost): string =>
-  [
-    post.titlePl,
-    post.titleEn,
-    post.bodyPl,
-    post.bodyEn,
-    post.combinedBody,
-    post.visualSummary,
-    ...(post.visualHighlights ?? []),
-    post.visualAnalysisModelId,
-    post.visualAnalysisJobId,
-    post.visualAnalysisError,
-    post.linkedinPostId,
-    post.linkedinUrl,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-
 const resolveSocialPostListStatus = (post: KangurSocialPost): KangurSocialPost['status'] =>
   hasKangurSocialLinkedInPublication(post) ? 'published' : post.status;
 
 export function SocialPostList(): React.JSX.Element {
   const {
-    posts,
     activePostId,
     setActivePostId,
-    postsQuery,
     handleOpenPostEditor,
     handleQuickPublishPost,
     handleUnpublishPost,
@@ -92,46 +71,47 @@ export function SocialPostList(): React.JSX.Element {
   } = useSocialPostContext();
 
   const [searchValue, setSearchValue] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState<SocialPostStatusFilter>('all');
+  const [debouncedSearchValue, setDebouncedSearchValue] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<KangurSocialPostListStatus>('all');
   const [page, setPage] = React.useState(1);
+  const postsPageQuery = useKangurSocialPostsPage({
+    page,
+    pageSize: PAGE_SIZE,
+    search: debouncedSearchValue,
+    status: statusFilter,
+  });
+  const posts = postsPageQuery.data?.posts ?? [];
+  const totalMatches = postsPageQuery.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalMatches / PAGE_SIZE));
+  const statusCounts = postsPageQuery.data?.statusCounts ?? {
+    draft: 0,
+    scheduled: 0,
+    published: 0,
+    failed: 0,
+  };
 
-  const filteredPosts = React.useMemo(() => {
-    const normalizedSearch = searchValue.trim().toLowerCase();
-    return posts.filter((post) => {
-      const listStatus = resolveSocialPostListStatus(post);
-      if (statusFilter !== 'all' && listStatus !== statusFilter) {
-        return false;
-      }
-      if (!normalizedSearch) {
-        return true;
-      }
-      return buildSearchText(post).includes(normalizedSearch);
-    });
-  }, [posts, searchValue, statusFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / PAGE_SIZE));
-  const paginatedPosts = React.useMemo(() => {
-    const startIndex = (page - 1) * PAGE_SIZE;
-    return filteredPosts.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [filteredPosts, page]);
-
-  const statusCounts = React.useMemo(
-    () => ({
-      draft: posts.filter((post) => resolveSocialPostListStatus(post) === 'draft').length,
-      scheduled: posts.filter((post) => resolveSocialPostListStatus(post) === 'scheduled').length,
-      published: posts.filter((post) => resolveSocialPostListStatus(post) === 'published').length,
-      failed: posts.filter((post) => resolveSocialPostListStatus(post) === 'failed').length,
-    }),
-    [posts]
-  );
+  React.useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchValue(searchValue.trim());
+    }, 200);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchValue]);
 
   React.useEffect(() => {
     setPage(1);
-  }, [searchValue, statusFilter]);
+  }, [debouncedSearchValue, statusFilter]);
 
   React.useEffect(() => {
     setPage((current) => Math.min(current, totalPages));
   }, [totalPages]);
+
+  React.useEffect(() => {
+    if (activePostId) return;
+    const firstPostId = posts[0]?.id ?? null;
+    if (firstPostId) {
+      setActivePostId(firstPostId);
+    }
+  }, [activePostId, posts, setActivePostId]);
 
   return (
     <ListPanel
@@ -144,7 +124,7 @@ export function SocialPostList(): React.JSX.Element {
             </div>
           </div>
           <div className='flex flex-wrap gap-2 text-xs'>
-            <Badge variant='outline'>{posts.length} total</Badge>
+            <Badge variant='outline'>{totalMatches} total</Badge>
             <Badge variant='outline'>{statusCounts.draft} drafts</Badge>
             <Badge variant='outline'>{statusCounts.scheduled} scheduled</Badge>
             <Badge variant='outline'>{statusCounts.published} published</Badge>
@@ -159,7 +139,13 @@ export function SocialPostList(): React.JSX.Element {
             />
             <SelectSimple
               value={statusFilter}
-              onValueChange={(value) => setStatusFilter(isSocialPostStatusFilter(value) ? value : 'all')}
+              onValueChange={(value: string) =>
+                setStatusFilter(
+                  STATUS_FILTER_OPTIONS.some((option) => option.value === value)
+                    ? (value as KangurSocialPostListStatus)
+                    : 'all'
+                )
+              }
               options={STATUS_FILTER_OPTIONS.map((option) => ({
                 value: option.value,
                 label: option.label,
@@ -170,9 +156,9 @@ export function SocialPostList(): React.JSX.Element {
             />
             <div className='flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs text-muted-foreground'>
               <span>
-                {filteredPosts.length === 0
+                {totalMatches === 0
                   ? 'No matches'
-                  : `${filteredPosts.length} match${filteredPosts.length === 1 ? '' : 'es'}`}
+                  : `${totalMatches} match${totalMatches === 1 ? '' : 'es'}`}
               </span>
               <span>
                 Page {page}/{totalPages}
@@ -183,28 +169,22 @@ export function SocialPostList(): React.JSX.Element {
       }
       className={KANGUR_ADMIN_CARD_CLASS_NAME}
       contentClassName='space-y-2'
-      isLoading={postsQuery.isLoading}
+      isLoading={postsPageQuery.isLoading}
       loadingMessage='Loading social posts...'
     >
-      {posts.length === 0 ? (
+      {totalMatches === 0 ? (
         <Card
           variant='subtle'
           padding='md'
           className='rounded-2xl border-border/60 bg-background/30 text-sm text-muted-foreground'
         >
-          No social posts yet. Create a new draft to start.
-        </Card>
-      ) : filteredPosts.length === 0 ? (
-        <Card
-          variant='subtle'
-          padding='md'
-          className='rounded-2xl border-border/60 bg-background/30 text-sm text-muted-foreground'
-        >
-          No social posts match the current search and status filter.
+          {searchValue.trim() || statusFilter !== 'all'
+            ? 'No social posts match the current search and status filter.'
+            : 'No social posts yet. Create a new draft to start.'}
         </Card>
       ) : (
         <>
-          {paginatedPosts.map((post) => {
+          {posts.map((post) => {
           const title = post.titlePl || post.titleEn || 'Untitled update';
           const isActive = activePostId === post.id;
           const listStatus = resolveSocialPostListStatus(post);
@@ -612,7 +592,7 @@ export function SocialPostList(): React.JSX.Element {
           {totalPages > 1 ? (
             <div className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/30 px-4 py-3 text-sm'>
               <div className='text-xs text-muted-foreground'>
-                Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filteredPosts.length)} of {filteredPosts.length}
+                Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, totalMatches)} of {totalMatches}
               </div>
               <div className='flex items-center gap-2'>
                 <Button

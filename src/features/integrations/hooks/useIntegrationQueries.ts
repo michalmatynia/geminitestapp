@@ -1,34 +1,24 @@
-'use client';
-
 import { z } from 'zod';
 
 export { useIntegrationsWithConnections } from '@/shared/hooks/useIntegrationQueries';
 export {
   useBaseInventories,
   useDefaultExportConnection,
+  useDefaultTraderaConnection,
   useDefaultExportInventory,
 } from '@/shared/hooks/useIntegrationQueries';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
-import {
-  type BaseImportInventoriesPayload,
-  type BaseImportInventoriesResponse,
-  type BaseActiveTemplatePreferenceResponse,
-  type BaseDefaultInventoryPreferenceResponse,
-  importExportTemplateSchema,
-  type ImportExportTemplate,
-  integrationSchema,
-  integrationConnectionSchema,
-  sessionPayloadSchema,
-  type SessionPayload,
-} from '@/shared/contracts/integrations';
-import type {
-  Integration,
-  IntegrationConnection,
-  BaseInventory,
-} from '@/shared/contracts/integrations';
+import { importExportTemplateSchema } from '@/shared/contracts/integrations/import-export';
+import { integrationSchema } from '@/shared/contracts/integrations/base';
+import { integrationConnectionSchema } from '@/shared/contracts/integrations/connections';
+import { sessionPayloadSchema } from '@/shared/contracts/integrations/session-testing';
+import { type BaseImportInventoriesPayload, type BaseImportInventoriesResponse, type BaseActiveTemplatePreferenceResponse, type BaseDefaultInventoryPreferenceResponse, type ImportExportTemplate, type SessionPayload } from '@/shared/contracts/integrations';
+import type { Integration } from '@/shared/contracts/integrations/base';
+import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
+import type { BaseInventory } from '@/shared/contracts/integrations/base-com';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { normalizePlaywrightPersonas } from '@/shared/lib/playwright/personas';
 import {
@@ -41,7 +31,7 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 const INTEGRATIONS_QUERY_TIMEOUT_MS = 30_000;
 
-export function useIntegrations(): ListQuery<Integration> {
+export function useIntegrations(options?: { enabled?: boolean }): ListQuery<Integration> {
   const queryKey = integrationKeys.all;
   const queryFn = async (): Promise<Integration[]> => {
     const data = await api.get<Integration[]>('/api/v2/integrations', {
@@ -53,6 +43,7 @@ export function useIntegrations(): ListQuery<Integration> {
   return createListQueryV2({
     queryKey,
     queryFn,
+    enabled: options?.enabled ?? true,
     meta: {
       source: 'integrations.hooks.useIntegrations',
       operation: 'list',
@@ -65,7 +56,8 @@ export function useIntegrations(): ListQuery<Integration> {
 }
 
 export function useIntegrationConnections(
-  integrationId?: string
+  integrationId?: string,
+  options?: { enabled?: boolean }
 ): ListQuery<IntegrationConnection> {
   const queryKey = integrationKeys.connections(integrationId);
   const queryFn = async (): Promise<IntegrationConnection[]> => {
@@ -82,7 +74,7 @@ export function useIntegrationConnections(
   return createListQueryV2({
     queryKey,
     queryFn,
-    enabled: !!integrationId,
+    enabled: Boolean(integrationId) && (options?.enabled ?? true),
     meta: {
       source: 'integrations.hooks.useIntegrationConnections',
       operation: 'list',

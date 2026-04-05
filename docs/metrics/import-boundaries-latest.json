@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-03T10:11:41.708Z",
-  "status": "passed",
+  "generatedAt": "2026-04-05T10:13:28.137Z",
+  "status": "failed",
   "summary": {
-    "total": 0,
-    "errorCount": 0,
+    "total": 54,
+    "errorCount": 54,
     "warningCount": 0,
     "infoCount": 0,
-    "status": "passed",
-    "fileCount": 6700,
+    "status": "failed",
+    "fileCount": 6948,
     "featureCount": 11,
     "circularDependencyCount": 0
   },
@@ -69,7 +69,555 @@
     ]
   },
   "circularDependencies": [],
-  "issues": [],
-  "rules": [],
-  "durationMs": 2366
+  "issues": [
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-paths/services/playwright-node-runner.parser. Use the barrel export instead.",
+      "file": "src/features/integrations/services/tradera-listing/script-validation.ts",
+      "line": 1,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/ai-paths/services/playwright-node-runner.parser. Use the barrel export instead.",
+      "file": "src/features/integrations/services/tradera-listing/tradera-browser-scripted.ts",
+      "line": 2,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"playwright\": @/features/playwright/engine. Use the barrel export instead.",
+      "file": "src/features/kangur/social/shared/social-playwright-capture.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"files\": @/features/files/components/FileManager. Use the barrel export instead.",
+      "file": "src/features/products/components/EditProductForm.tsx",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"files\": @/features/files/components/FileManager. Use the barrel export instead.",
+      "file": "src/features/products/components/form/ProductImagesTabContent.tsx",
+      "line": 19,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/image-studio/components/center-preview/CenterPreviewContext. Use the barrel export instead.",
+      "file": "src/features/products/components/form/studio/StudioPreviewCanvas.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/image-studio/components/center-preview/SplitVariantPreview. Use the barrel export instead.",
+      "file": "src/features/products/components/form/studio/StudioPreviewCanvas.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/image-studio/image-src. Use the barrel export instead.",
+      "file": "src/features/products/components/form/studio/StudioVariantsGrid.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/hooks/useIntegrationSelection. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/constants/slugs. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
+      "line": 16,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useProductListingMutations. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
+      "line": 17,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/BaseQuickExportButton.tsx",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/hooks/useIntegrationSelection. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportConnection.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/constants/slugs. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportConnection.ts",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/services/tradera-listing/default-script. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportConnection.ts",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useListingQueries. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportFeedback.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/traderaQuickListFeedback. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportFeedback.ts",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/tradera-listing-client-utils. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportFeedback.ts",
+      "line": 18,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useListingQueries. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportPolling.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/traderaQuickListFeedback. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportPolling.ts",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/tradera-listing-client-utils. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/hooks/useTraderaQuickExportPolling.ts",
+      "line": 15,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/hooks/useIntegrationSelection. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx",
+      "line": 7,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useProductListingMutations. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/tradera-browser-session. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaQuickListButton.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaStatusButton.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/traderaQuickListFeedback. Use the barrel export instead.",
+      "file": "src/features/products/components/list/columns/buttons/TraderaStatusButton.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useListingQueries. Use the barrel export instead.",
+      "file": "src/features/products/components/list/ProductColumns.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useListingQueries. Use the barrel export instead.",
+      "file": "src/features/products/components/list/ProductListMobileCards.tsx",
+      "line": 9,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/constants/slugs. Use the barrel export instead.",
+      "file": "src/features/products/components/list/TraderaLinkModal.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useIntegrationQueries. Use the barrel export instead.",
+      "file": "src/features/products/components/list/TraderaLinkModal.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useProductListingMutations. Use the barrel export instead.",
+      "file": "src/features/products/components/list/TraderaLinkModal.tsx",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 15,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"files\": @/features/files/components/FileManager. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 39,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/ListProductModal. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 58,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/ListProductModal. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 59,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/MassListProductModal. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 67,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/MassListProductModal. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 68,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/ProductListingsModal. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 76,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/ProductListingsModal. Use the barrel export instead.",
+      "file": "src/features/products/components/ProductModals.tsx",
+      "line": 77,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/image-studio/hooks/useImageStudioQueries. Use the barrel export instead.",
+      "file": "src/features/products/components/settings/ProductImageRoutingSettings.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useIntegrationOperations. Use the barrel export instead.",
+      "file": "src/features/products/context/ProductListContext.tsx",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/image-studio/image-src. Use the barrel export instead.",
+      "file": "src/features/products/context/ProductStudioContext.derived.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"ai\": @/features/ai/image-studio/hooks/useImageStudioQueries. Use the barrel export instead.",
+      "file": "src/features/products/context/ProductStudioContext.tsx",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useListingQueries. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useProductListIntegrations.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/hooks/useIntegrationOperations. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useProductListModals.ts",
+      "line": 5,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/product-listings-recovery. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useProductListModals.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/traderaQuickListFeedback. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useProductListModals.ts",
+      "line": 10,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/components/listings/hooks/useIntegrationSelection. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useTraderaMassQuickExport.ts",
+      "line": 6,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/constants/slugs. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useTraderaMassQuickExport.ts",
+      "line": 11,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/services/tradera-listing/default-script. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useTraderaMassQuickExport.ts",
+      "line": 12,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/utils/traderaQuickListFeedback. Use the barrel export instead.",
+      "file": "src/features/products/hooks/product-list/useTraderaMassQuickExport.ts",
+      "line": 13,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/product-integrations-adapter. Use the barrel export instead.",
+      "file": "src/features/products/lib/product-integrations-adapter-loader.ts",
+      "line": 8,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "cross-feature-internal-import",
+      "message": "Imports internal path from feature \"integrations\": @/features/integrations/product-integrations-adapter. Use the barrel export instead.",
+      "file": "src/features/products/lib/product-integrations-adapter-loader.ts",
+      "line": 15,
+      "column": null,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "cross-feature-internal-import",
+      "errorCount": 54,
+      "warningCount": 0,
+      "infoCount": 0
+    }
+  ],
+  "durationMs": 427
 }
